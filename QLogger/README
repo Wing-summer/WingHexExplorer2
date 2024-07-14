@@ -1,0 +1,145 @@
+QLogger - A tiny Qt log framework.
+
+The purpose of this log framework is to be easy to configure and use on 
+a Qt project.
+QLogger rely only on Qt framework, so it does not have any other 
+external dependencies.
+
+The project is available as QtCreator console project. One could just create a
+Lib project or add the source directly to a project. In the source folder there
+is a main file with some tests that can be used also as example.
+
+If you want to fork, share, use or just give suggestions feel free. I'll be glad to hear
+comments and critics on the code too, don't hesitate to contact me.
+
+The code is licensed under MIT License.
+
+-------------------------------------------------------------------------------
+// simple use:
+#include "qlogger.h"
+using namespace qlogger;
+int main(int argc, char *argv[])
+{
+    QLOG_FATAL("this is quick log using the default root logger");
+	//or for the ones who does not like macros
+	QLogger::fatal("this is quick logged using the default root logger");
+...
+-------------------------------------------------------------------------------
+
+This simple example logs a message on the console based on a default logger called "root".
+This log is always created and can be used without passing any arguments, it is default
+to ERROR level. Log levels are defined as: q0FATAL, q1ERROR, q2WARN, q3INFO, q4DEBUG, q5TRACE
+
+-------------------------------------------------------------------------------
+// overriding log configurations:
+#include "qlogger.h"
+using namespace qlogger;
+int main(int argc, char *argv[])
+{
+	QLogger::addLogger("root", Configuration::q2WARN, Configuration::TEXTFILE);
+    QLOG_WARN("this is quick logged using the default root logger");
+...
+-------------------------------------------------------------------------------
+ 
+On this example we add another level to "root" logger, but this time the logging will
+be done to a text file. A logger can have multiple outputs. But note that the log message
+will not be displayed on the cosole because its on a level greater than ERROR, if we change
+code to:
+    QLOG_ERROR("this is quick logged using the default root logger");
+	
+then we will have a log on both console and text file.
+
+A logger can be created with a whole custom configuration:
+
+
+-------------------------------------------------------------------------------
+// overriding log configurations:
+#include "qlogger.h"
+using namespace qlogger;
+int main(int argc, char *argv[])
+{
+	Configuration* cfg =
+        new Configuration("config", Configuration::q3INFO, Configuration::TEXTFILE,
+                          "dd-MM-yyyy hh:mm:ss", "%t [%l] <%o> : %m",
+                          "myfile_%3_%2_%1.log", "ddMMyyyy_hhmmss", "c:\\", 10000);
+    QLogger::addLogger(cfg);	
+	...
+	QLOG_WARN("this will be saved on a file at c:", "config");
+...
+-------------------------------------------------------------------------------
+
+By default text files are saved on application path, but this can be configured as
+the example above shows, also there is options to change the text log format the 
+file name and the maximum size of a log file (when this limit is reached the logger
+just create another file). 
+
+Console and TextFile logs uses a mask to generate the log string to be displayed.
+The default mask is: %t [%o] <%l> (%f) {line:%n} - %m where the sysmbols are:
+%t - the log timestamp
+%o - the log owner ("root", or on the previous example "config")
+%l - the level of the log.
+%f - the name of the function where the log was called 
+	(note that this rely on the macro __FUNCTION__ and only works with macro loggers).
+%n - the line number where the log was called (use the macro __LINE__, same as above).
+%m - the log message itself.
+
+Date Time masks are available for both file name and the log, both masks use Qt DateTime
+formatting rules.
+
+-------------------------------------------------------------------------------
+// log configurations loaded from a qlogger.cfg file:
+#include "qlogger.h"
+using namespace qlogger;
+int main(int argc, char *argv[])
+{
+	QLOG_WARN("loaded a log from config and save to a file !!!!", "file");
+...
+-------------------------------------------------------------------------------
+This example shows a logger that was added from a configuration file. In order 
+to use a configuration file, one can simply add a qlogger.ini (ini file format) file
+onto application path. QLogger will parse the file when the first instance of 
+logger is called. Note that this also allows adding logs programatically so
+they both can be used together.
+
+Example of a configuration file for QLogger:
+
+-------------------------------------------------------------------------------
+# line comment 
+
+# first configuration will log to warn level to a file on c:\ with 10Mb of size 
+
+[file]
+level=warn
+outputType=text
+
+# in this option is possible to pass file sizes in plain int (number of bytes) or with the following 
+# options: x Mb, xM, xm, xMB, x mb, xKB, xk, xK, xKb, xkb, xg, xG, xgb, xGb, xGB as x being a number.
+# examples: 100 kb, 100k, 10M, 1MB, 5g, 10 Mb...           
+# 100 kb file
+maxFileSize=100k
+path=c:/temp/
+maxFileSize=10000
+path=c:/temp/
+
+# second config will log to console with trace level and customized log text mask 
+[cons]
+level=trace
+outputType=console
+logMask=time:%t owner:%o level:%l function:%f line:%n message:%m
+
+# third a xml output 
+[xml]
+level=trace
+outputType=xml
+fileName=XML_log_%1_%2_%3.xml
+path=c:/temp/
+-------------------------------------------------------------------------------
+
+This small readme covered almost everything QLogger is capable to do, there are some
+other configurations and details, but they are pretty straight forward to understand
+by reading the code.
+
+I hope this tiny project could be useful to you.
+
+Regards,
+Sandro.
