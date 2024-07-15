@@ -1,4 +1,5 @@
 #include "SingleApplication/singleapplication.h"
+#include "src/class/languagemanager.h"
 #include "src/class/skinmanager.h"
 #include "src/dialog/mainwindow.h"
 #include "src/utilities.h"
@@ -25,6 +26,8 @@ int main(int argc, char *argv[]) {
 
     SingleApplication a(argc, argv);
     SkinManager::instance();
+
+    LanguageManager::instance();
 
     MainWindow w;
 

@@ -27,6 +27,7 @@ QUrl WingFileDialog::getExistingDirectoryUrl(
     filedialog->setWindowFlag(Qt::Widget);
 
     FramelessDialog d(parent);
+    d.setResizeable(false, d.contentsMargins());
     d.buildUpContent(filedialog);
     d.setWindowTitle(caption);
 
@@ -51,6 +52,7 @@ void WingFileDialog::getOpenFileContent(
     dialog->setWindowFlag(Qt::Widget);
 
     FramelessDialog d(parent);
+    d.setResizeable(true, d.contentsMargins());
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
 
@@ -122,6 +124,7 @@ QUrl WingFileDialog::getOpenFileUrl(QWidget *parent, const QString &caption,
     dialog->setWindowFlag(Qt::Widget);
 
     FramelessDialog d(parent);
+    d.setResizeable(true, d.contentsMargins());
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
 
@@ -150,6 +153,7 @@ QList<QUrl> WingFileDialog::getOpenFileUrls(
     dialog->setWindowFlag(Qt::Widget);
 
     FramelessDialog d(parent);
+    d.setResizeable(true, d.contentsMargins());
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
 
@@ -196,6 +200,7 @@ QUrl WingFileDialog::getSaveFileUrl(QWidget *parent, const QString &caption,
     dialog->setAcceptMode(QFileDialog::AcceptSave);
 
     FramelessDialog d(parent);
+    d.setResizeable(true, d.contentsMargins());
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
 
@@ -223,6 +228,7 @@ void WingFileDialog::saveFileContent(const QByteArray &fileContent,
     dialog->setWindowFlag(Qt::Widget);
 
     FramelessDialog d(parent);
+    d.setResizeable(true, d.contentsMargins());
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
 

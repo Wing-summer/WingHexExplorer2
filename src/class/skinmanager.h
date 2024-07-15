@@ -3,8 +3,6 @@
 
 #include <QObject>
 
-constexpr auto SKIN_THEME = "skin.theme";
-
 class SkinManager : public QObject {
     Q_OBJECT
 public:
