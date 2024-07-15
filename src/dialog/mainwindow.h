@@ -246,6 +246,7 @@ private:
                        const QKeySequence &shortcut = QKeySequence()) {
         auto a = new QAction(parent);
         a->setText(title);
+        a->setShortcutVisibleInContextMenu(true);
         a->setShortcut(shortcut);
         a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);
@@ -259,6 +260,7 @@ private:
         auto a = new QAction;
         a->setText(title);
         a->setIcon(ICONRES(iconName));
+        a->setShortcutVisibleInContextMenu(true);
         a->setShortcut(shortcut);
         a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);

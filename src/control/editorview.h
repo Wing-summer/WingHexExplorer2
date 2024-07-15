@@ -71,6 +71,7 @@ private:
         a->setText(title);
         a->setIcon(ICONRES(icon));
         a->setShortcut(shortcut);
+        a->setShortcutVisibleInContextMenu(true);
         connect(a, &QAction::triggered, this, slot);
         parent->addAction(a);
     }

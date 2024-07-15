@@ -2,7 +2,9 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QLibraryInfo>
 #include <QLocale>
+#include <QTranslator>
 
 LanguageManager &LanguageManager::instance() {
     static LanguageManager ins;
@@ -10,6 +12,8 @@ LanguageManager &LanguageManager::instance() {
 }
 
 LanguageManager::LanguageManager() {
+    m_langMap = {{"zh_CN", tr("Chinese(Simplified)")}};
+
     auto langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
 
@@ -25,7 +29,52 @@ LanguageManager::LanguageManager() {
         if (locale == QLocale::C) {
             continue;
         }
-        // TODO
-        m_langs << QLocale::countryToString(locale.country());
+        m_langs << lang;
+        m_localeMap.insert(lang, locale);
+    }
+
+    auto defaultLocale = QLocale::system();
+    bool found = false;
+    for (auto p = m_localeMap.begin(); p != m_localeMap.end(); ++p) {
+#if QT_DEPRECATED_SINCE(6, 0)
+        if (p->territory() == defaultLocale.territory() &&
+#else
+        if (p->country() == defaultLocale.country() &&
+#endif
+            p->language() == p->language() &&
+            p->script() == defaultLocale.script()) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        defaultLocale = m_localeMap.value(m_langs.first());
+    }
+
+    auto qtPath =
+#if QT_DEPRECATED_SINCE(6, 0)
+        QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+        QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+
+    auto qtTranslator = new QTranslator(this);
+    if (qtTranslator->load(defaultLocale, QStringLiteral("qtbase"),
+                           QStringLiteral("_"), qtPath)) {
+
+        qApp->installTranslator(qtTranslator);
+    }
+
+    qtTranslator = new QTranslator(this);
+    if (qtTranslator->load(defaultLocale, QStringLiteral("qt"),
+                           QStringLiteral("_"), qtPath)) {
+
+        qApp->installTranslator(qtTranslator);
+    }
+
+    auto translator = new QTranslator(this);
+    if (translator->load(defaultLocale, QStringLiteral("ws"),
+                         QStringLiteral("_"), langPath)) {
+        qApp->installTranslator(translator);
     }
 }

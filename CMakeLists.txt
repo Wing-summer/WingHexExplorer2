@@ -13,7 +13,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network
+                                                       LinguistTools)
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
   if(Qt5Widgets_VERSION VERSION_LESS 5.10.0)
@@ -118,7 +119,9 @@ set(CLASS_SRC
     src/class/scriptmanager.h
     src/class/scriptmanager.cpp
     src/class/languagemanager.h
-    src/class/languagemanager.cpp)
+    src/class/languagemanager.cpp
+    src/class/settingmanager.h
+    src/class/settingmanager.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h src/settings/generalsettingdialog.cpp
@@ -130,12 +133,13 @@ set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
 
 set(TS_FILES lang/ws_zh_CN.ts)
 
+set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
 if(${QT_VERSION_MAJOR} EQUAL 5)
-    set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+  qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+elseif(${QT_VERSION_MAJOR} EQUAL 6)
+  qt6_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
-    qt_add_lrelease(QM_FILES ${TS_FILES})
-    add_custom_target(translations ALL DEPENDS ${QM_FILES})
+  message(FATAL_ERROR "Unsupported QT version")
 endif()
 
 set(PROJECT_SOURCES
@@ -155,8 +159,9 @@ set(PROJECT_SOURCES
     theme/breeze.qrc
     resources.qrc)
 
-add_custom_target(build-time-make-directory ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lang")
+add_custom_target(
+  build-time-make-directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory
+                                        "${CMAKE_BINARY_DIR}/lang")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   if(WIN32)

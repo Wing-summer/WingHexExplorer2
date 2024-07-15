@@ -25,11 +25,11 @@
 
 #define PROEXT ".wingpro"
 
-static Q_DECL_UNUSED inline QString NAMEICONRES(const QString &name) {
+Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
     return ":/com.wingsummer.winghex/images/" + name + ".png";
 }
 
-static Q_DECL_UNUSED inline QIcon ICONRES(const QString &name) {
+Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {
     return QIcon(NAMEICONRES(name));
 }
 
@@ -72,7 +72,7 @@ public:
     }
 
     static QString processBytesCount(qint64 bytescount) {
-        QString B[] = {"B", "KB", "MB", "GB", "TB"};
+        QStringList B{"B", "KB", "MB", "GB", "TB"};
         auto av = bytescount;
         auto r = av;
 
@@ -81,11 +81,11 @@ public:
             r = lld.quot;
             av = lld.rem;
             if (r == 0) {
-                return QString("%1 %2").arg(av).arg(B[i]);
+                return QStringLiteral("%1 %2").arg(av).arg(B.at(i));
             }
         }
 
-        return QString("%1 TB").arg(av);
+        return QStringLiteral("%1 TB").arg(av);
     }
 
     static QStringList getEncodings() {
@@ -192,7 +192,7 @@ public:
     static bool isTextFile(const QFileInfo &info) {
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(info);
-        return t.inherits("text/plain");
+        return t.inherits(QStringLiteral("text/plain"));
     }
 };
 

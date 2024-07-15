@@ -19,6 +19,7 @@
 #include "sponsordialog.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QGridLayout>
@@ -101,6 +102,8 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     // launch plugin system
     PluginSystem::instance().LoadPlugin();
+    auto plgview = m_Tbtneditors.value(PLUGIN_VIEWS);
+    plgview->setEnabled(!plgview->menu()->isEmpty());
 
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
@@ -151,6 +154,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 auto editview = qobject_cast<EditorView *>(now);
                 if (editview) {
                     swapEditorConnection(m_curEditor, editview);
+                } else {
+                    setEditModeEnabled(false);
                 }
                 m_curEditor = editview;
             });
@@ -696,6 +701,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             pannel, QStringLiteral("metahide"), tr("MetaHideAll"),
             &MainWindow::on_metahideall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_HIDE));
+        m_editStateWidgets << pannel;
     }
 
     {
@@ -753,7 +759,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                     }
                 }
             });
-
         m_editStateWidgets << pannel;
     }
 
@@ -2264,5 +2269,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             (*p)->close();
         }
     }
+
+    m_dock->saveState(1);
+
     FramelessMainWindow::closeEvent(event);
 }
