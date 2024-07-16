@@ -29,13 +29,21 @@ Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
 void Toast::toast(QWidget *parent, const QPixmap &icon,
                   const QString &strContent, int fontPointSize,
                   int nToastInterval) {
-    auto toast = new Toast(strContent, icon, nToastInterval, parent);
+    static Toast *toast = nullptr;
+
+    if (toast) {
+        toast->deleteLater();
+    }
+
+    toast = new Toast(strContent, icon, nToastInterval, parent);
     toast->m_drawFont.setPointSize(fontPointSize);
+
+    connect(toast, &Toast::destroyed, [&] { toast = nullptr; });
 
     auto e0 = new EventFilter(QEvent::Move, parent);
     auto e1 = new EventFilter(QEvent::Resize, parent);
 
-    auto callback = [toast](QObject *, QEvent *) {
+    auto callback = [&](QObject *, QEvent *) {
         toast->setToastPos(toast->lastToastPos());
     };
     connect(e0, &EventFilter::eventTriggered, toast, callback);

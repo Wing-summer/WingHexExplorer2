@@ -10,10 +10,12 @@
 #include "commands/hex/removecommand.h"
 #include "commands/hex/replacecommand.h"
 #include "commands/meta/metashowcommand.h"
+
 #include <QApplication>
 #include <QBuffer>
 #include <QClipboard>
 #include <QFile>
+#include <QMimeData>
 
 /*======================*/
 // added by wingsummer
@@ -320,20 +322,21 @@ void QHexDocument::applyBookMarks(QList<BookMarkStruct> books) {
 }
 
 void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
-                                QList<quint64> &results, qsizetype maxCount) {
+                                QList<qsizetype> &results, qsizetype maxCount,
+                                const std::function<bool()> &pred) {
     results.clear();
     if (!b.length())
         return;
-    qlonglong p = begin > 0 ? begin : 0;
-    qlonglong e = end > begin ? end : -1;
+    qsizetype p = begin > 0 ? begin : 0;
+    qsizetype e = end > begin ? end : -1;
     auto offset = b.size();
-    while (1) {
+    while (pred()) {
         p = m_buffer->indexOf(b, p);
         if (p < 0 || (e > 0 && p > e) ||
             (maxCount > 0 && results.count() >= maxCount)) {
             break;
         }
-        results.append(quint64(p));
+        results.append(qsizetype(p));
         p += offset + 1;
     }
 }
@@ -591,7 +594,8 @@ bool QHexDocument::copy(bool hex) {
         bytes = bytes.toHex(' ').toUpper();
 
     auto mime = new QMimeData;
-    mime->setData("text/plain;charset=utf-8", bytes); // don't use setText()
+    mime->setData(QStringLiteral("application/octet-stream"),
+                  bytes); // don't use setText()
     c->setMimeData(mime);
 
     // fix the bug by wingsummer
@@ -603,8 +607,8 @@ void QHexDocument::Paste(int nibbleindex, bool hex) {
     Q_UNUSED(hex)
 
     QClipboard *c = qApp->clipboard();
-    QByteArray data =
-        c->mimeData()->data("text/plain;charset=utf-8"); // don't use getText()
+    QByteArray data = c->mimeData()->data(
+        QStringLiteral("application/octet-stream")); // don't use getText()
 
     if (data.isEmpty())
         return;

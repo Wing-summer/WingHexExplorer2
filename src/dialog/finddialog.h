@@ -8,14 +8,23 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QRadioButton>
+#include <QSpinBox>
 
-enum class SearchDirection { None, Foreword, Backword, Selection };
+enum class SearchDirection { None, Region, Foreword, Backword, Selection };
 
 class FindDialog : public FramelessDialog {
     Q_OBJECT
 public:
-    FindDialog(bool sel = true, QWidget *parent = nullptr);
-    QByteArray getResult(SearchDirection &dir);
+    struct Result {
+        SearchDirection dir = SearchDirection::None;
+        int start = 0;
+        int stop = 0;
+    };
+
+public:
+    FindDialog(bool isBigFile, int start, int stop, bool sel = true,
+               QWidget *parent = nullptr);
+    QByteArray getResult(Result &result);
 
 private:
     void on_accept();
@@ -29,7 +38,10 @@ private:
     QComboBox *m_encodings;
     QByteArray _findarr;
 
-    SearchDirection _dir = SearchDirection::None;
+    QSpinBox *m_regionStart;
+    QSpinBox *m_regionStop;
+
+    Result _result;
 };
 
 #endif // FINDDIALOG_H

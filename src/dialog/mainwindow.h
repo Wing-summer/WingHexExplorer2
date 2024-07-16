@@ -7,10 +7,12 @@
 #include <QMainWindow>
 #include <QMap>
 #include <QPixmap>
+#include <QShortcut>
 #include <QTableWidget>
 #include <QTextBrowser>
 #include <QToolButton>
 #include <QTreeWidget>
+#include <QtConcurrent/QtConcurrent>
 
 #include "../../QWingRibbon/ribbon.h"
 #include "../../QWingRibbon/ribbonbuttongroup.h"
@@ -18,6 +20,7 @@
 #include "../../Qt-Advanced-Docking-System/src/DockManager.h"
 #include "../../Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "../class/recentfilemanager.h"
+#include "../class/wingprogressdialog.h"
 #include "../control/editorview.h"
 #include "../control/scriptingconsole.h"
 #include "../plugin/iwingplugin.h"
@@ -212,7 +215,13 @@ private:
         auto a = new QToolButton(pannel);
         a->setText(title);
         a->setIcon(icon);
-        a->setShortcut(shortcut);
+
+        if (!shortcut.isEmpty()) {
+            auto shortCut = new QShortcut(shortcut, this);
+            shortCut->setContext(Qt::ApplicationShortcut);
+            connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
+        }
+
         a->setMenu(menu);
         if (menu) {
             a->setPopupMode(QToolButton::InstantPopup);
@@ -233,7 +242,11 @@ private:
         a->setIcon(ICONRES(iconName));
         a->setCheckable(true);
         a->setChecked(false);
-        a->setShortcut(shortcut);
+
+        if (!shortcut.isEmpty()) {
+            auto shortCut = new QShortcut(shortcut, this);
+            connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
+        }
 
         connect(a, &QToolButton::toggled, this, slot);
         pannel->addButton(a);
@@ -247,7 +260,12 @@ private:
         auto a = new QAction(parent);
         a->setText(title);
         a->setShortcutVisibleInContextMenu(true);
-        a->setShortcut(shortcut);
+
+        if (!shortcut.isEmpty()) {
+            auto shortCut = new QShortcut(shortcut, this);
+            connect(shortCut, &QShortcut::activated, a, &QAction::trigger);
+        }
+
         a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);
         return a;
@@ -261,7 +279,12 @@ private:
         a->setText(title);
         a->setIcon(ICONRES(iconName));
         a->setShortcutVisibleInContextMenu(true);
-        a->setShortcut(shortcut);
+
+        if (!shortcut.isEmpty()) {
+            auto shortCut = new QShortcut(shortcut, this);
+            connect(shortCut, &QShortcut::activated, a, &QAction::trigger);
+        }
+
         a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);
         return a;
@@ -279,6 +302,70 @@ private:
             }
         }
         return source;
+    }
+
+    /* =============== some templates for async execution ===============*/
+    template <typename ReturnType, typename ExecFunc, typename FinishFunc>
+    void ExecAsync(ExecFunc &&execFunc, FinishFunc &&finishFunc,
+                   const QString &tip = QString()) {
+        QFutureWatcher<ReturnType> *watcher = new QFutureWatcher<ReturnType>();
+
+        QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished, this,
+                         [=]() mutable {
+                             ReturnType paramName = watcher->result();
+                             finishFunc(paramName);
+                             watcher->deleteLater();
+                         });
+
+        auto fu = QtConcurrent::run([=]() -> ReturnType { return execFunc(); });
+        watcher->setFuture(fu);
+
+        if (!tip.isEmpty()) {
+            std::unique_ptr<WingProgressDialog> pdialog(
+                new WingProgressDialog(tip, QString(), 0, 0));
+            auto dialog = pdialog->dialog();
+            dialog->setModal(true);
+            dialog->setValue(0);
+
+            QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished,
+                             this, [dialog]() mutable {
+                                 dialog->cancel();
+                                 dialog->deleteLater();
+                             });
+
+            pdialog->pdialog()->exec();
+        }
+    }
+
+    template <typename ExecFunc, typename FinishFunc>
+    void ExecAsync_VOID(ExecFunc &&execFunc, FinishFunc &&finishFunc,
+                        const QString &tip = QString()) {
+        QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
+
+        QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
+                         [=]() mutable {
+                             finishFunc();
+                             watcher->deleteLater();
+                         });
+
+        auto fu = QtConcurrent::run([=]() -> void { return execFunc(); });
+        watcher->setFuture(fu);
+
+        if (!tip.isEmpty()) {
+            std::unique_ptr<WingProgressDialog> pdialog(
+                new WingProgressDialog(tip, QString(), 0, 0));
+            auto dialog = pdialog->dialog();
+            dialog->setModal(true);
+            dialog->setValue(0);
+
+            QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
+                             [dialog]() mutable {
+                                 dialog->cancel();
+                                 dialog->deleteLater();
+                             });
+
+            pdialog->pdialog()->exec();
+        }
     }
 
 private:

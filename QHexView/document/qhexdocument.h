@@ -81,8 +81,10 @@ public:
     bool existBookMark();
     bool existBookMark(qsizetype pos);
 
-    void findAllBytes(qint64 begin, qint64 end, QByteArray b,
-                      QList<quint64> &results, qsizetype maxCount = -1);
+    void findAllBytes(
+        qint64 begin, qint64 end, QByteArray b, QList<qsizetype> &results,
+        qsizetype maxCount = -1,
+        const std::function<bool()> &pred = [] { return true; });
     bool isDocSaved();
     void setDocSaved(bool b = true);
 

@@ -25,6 +25,8 @@ public:
 
     bool isNewFile() const;
 
+    bool isBigFile() const;
+
 public slots:
     void registerView(QWidget *view);
 

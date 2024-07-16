@@ -1,4 +1,5 @@
 #include "qfilebuffer.h"
+#include "QHexEdit2/chunks.h"
 
 /*
  * this file is implemented by wingsummer,

@@ -1,9 +1,10 @@
 #ifndef QFILEBUFFER_H
 #define QFILEBUFFER_H
 
-#include "QHexEdit2/chunks.h"
 #include "qhexbuffer.h"
 #include <QFile>
+
+class Chunks;
 
 class QFileBuffer : public QHexBuffer {
     Q_OBJECT

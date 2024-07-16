@@ -148,16 +148,18 @@ PluginSystem &PluginSystem::instance() {
 
 void PluginSystem::LoadPlugin() {
 #ifdef QT_DEBUG
-    QDir plugindir(QCoreApplication::applicationDirPath() + "/plugin");
+    QDir plugindir(QCoreApplication::applicationDirPath() +
+                   QStringLiteral("/plugin"));
     //这是我的插件调试目录，如果调试插件，请更换路径
 #ifdef Q_OS_WIN
-    plugindir.setNameFilters(QStringList("*.dll"));
+    plugindir.setNameFilters({"*.dll"});
 #else
-    plugindir.setNameFilters(QStringList("*.so"));
+    plugindir.setNameFilters({"*.so"});
 #endif
 #else
-    QDir plugindir(QCoreApplication::applicationDirPath() + "/plugin");
-    plugindir.setNameFilters(QStringList("*.wingplg"));
+    QDir plugindir(QCoreApplication::applicationDirPath() +
+                   QStringLiteral("/plugin"));
+    plugindir.setNameFilters({"*.wingplg"});
 #endif
     auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
