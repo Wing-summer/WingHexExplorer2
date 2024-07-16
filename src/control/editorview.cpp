@@ -1,5 +1,6 @@
 #include "editorview.h"
 
+#include "../../QHexView/document/buffer/qfilebuffer.h"
 #include "../../QHexView/document/buffer/qfileregionbuffer.h"
 #include "../../QHexView/document/buffer/qmemorybuffer.h"
 #include "../../Qt-Advanced-Docking-System/src/DockWidgetTab.h"
@@ -468,6 +469,10 @@ void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     return m_isNewFile;
+}
+
+bool EditorView::isBigFile() const {
+    return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
 }
 
 bool EditorView::isWorkSpace() const {

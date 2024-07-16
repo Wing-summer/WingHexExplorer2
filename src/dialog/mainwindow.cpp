@@ -527,7 +527,7 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Basic"));
         addPannelAction(pannel, QStringLiteral("new"), tr("New"),
-                        &MainWindow::on_newfile, QKeySequence::Open);
+                        &MainWindow::on_newfile, QKeySequence::New);
 
         addPannelAction(pannel, QStringLiteral("open"), tr("OpenF"),
                         &MainWindow::on_openfile, QKeySequence::Open);
@@ -1253,31 +1253,36 @@ void MainWindow::on_findfile() {
     if (m_curEditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    FindDialog *fd = new FindDialog(hexeditor->selectlength() > 1, this);
+    // TODO
+
+    auto editor = m_curEditor.loadAcquire();
+    auto hexeditor = editor->hexEditor();
+    FindDialog *fd =
+        new FindDialog(editor->isBigFile(), 0, hexeditor->documentBytes(),
+                       hexeditor->selectlength() > 1, this);
     if (fd->exec()) {
         auto th = QThread::create([this, fd, hexeditor] {
             if (m_findMutex.tryLock(3000)) {
-                SearchDirection sd;
+                FindDialog::Result sd;
                 auto res = fd->getResult(sd);
                 auto d = hexeditor->document();
-                QList<quint64> results;
+                QList<qsizetype> results;
                 if (d == nullptr)
                     return;
-                qint64 begin, end;
-                switch (sd) {
+                qsizetype begin, end;
+                switch (sd.dir) {
                 case SearchDirection::Foreword: {
                     begin = 0;
-                    end = qlonglong(hexeditor->currentOffset());
+                    end = hexeditor->currentOffset();
                 } break;
                 case SearchDirection::Backword: {
-                    begin = qlonglong(hexeditor->currentOffset());
+                    begin = hexeditor->currentOffset();
                     end = -1;
                 } break;
                 case SearchDirection::Selection: {
                     auto cur = hexeditor->document()->cursor();
-                    begin = qlonglong(cur->selectionStart().offset());
-                    end = qlonglong(cur->selectionEnd().offset());
+                    begin = cur->selectionStart().offset();
+                    end = cur->selectionEnd().offset();
                 } break;
                 default: {
                     begin = -1;
@@ -1290,11 +1295,12 @@ void MainWindow::on_findfile() {
                     m_findresult->setRowCount(0);
                 }
                 auto len = results.length();
-                _findresitem = new QTableWidgetItem[ulong(len)][3];
+                _findresitem = new QTableWidgetItem[len][3];
+                auto filename = m_curEditor.loadAcquire()->fileName();
                 for (auto i = 0; i < len; i++) {
                     auto frow = _findresitem[i];
                     m_findresult->insertRow(i);
-                    frow[0].setText(m_curEditor.loadAcquire()->fileName());
+                    frow[0].setText(filename);
                     frow[0].setData(Qt::UserRole, results.at(i));
                     frow[1].setText(QString::number(
                         results.at(i) + hexeditor->addressBase(), 16));
@@ -1888,7 +1894,7 @@ void MainWindow::on_loadplg() {
 #endif
 #else
     auto filename = QFileDialog::getOpenFileName(
-        this, tr("ChoosePlugin"), lastusedpath, tr("PluginFile (*.wingplg)"));
+        this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.wingplg)"));
 #endif
 
     if (!filename.isEmpty()) {

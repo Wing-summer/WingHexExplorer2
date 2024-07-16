@@ -12,7 +12,9 @@
 #include <QTextCodec>
 #endif
 
-FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
+FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
+                       QWidget *parent)
+    : FramelessDialog(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
@@ -52,6 +54,34 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
 
     m_hex->setChecked(true);
 
+    auto regionw = new QWidget(this);
+    auto regionLayout = new QHBoxLayout(regionw);
+
+    regionLayout->addWidget(new QLabel(tr("Region:"), regionw));
+
+    m_regionStart = new QSpinBox(regionw);
+    Q_ASSERT(stop >= start);
+    m_regionStart->setRange(start, stop);
+    m_regionStart->setEnabled(false);
+    m_regionStart->setValue(start);
+    m_regionStart->setDisplayIntegerBase(16);
+    m_regionStart->setPrefix(QStringLiteral("0x"));
+    regionLayout->addWidget(m_regionStart, 1);
+
+    regionLayout->addWidget(new QLabel(QStringLiteral(" - "), regionw));
+
+    m_regionStop = new QSpinBox(regionw);
+    m_regionStop->setRange(start, stop);
+    connect(m_regionStart, &QSpinBox::valueChanged, m_regionStop,
+            &QSpinBox::setMinimum);
+    m_regionStop->setEnabled(false);
+    m_regionStop->setValue(qMin(start + 1024 * 1024, stop));
+    m_regionStop->setDisplayIntegerBase(16);
+    m_regionStop->setPrefix(QStringLiteral("0x"));
+    regionLayout->addWidget(m_regionStop, 1);
+
+    layout->addWidget(regionw);
+
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
 
@@ -64,8 +94,22 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
     auto b = new QPushButton(tr("None"), this);
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [=](bool b) {
-        if (b)
-            _dir = SearchDirection::None;
+        if (b) {
+            _result.dir = SearchDirection::None;
+        }
+    });
+    group->addButton(b, id++);
+    b->setEnabled(!isBigFile);
+    buttonLayout->addWidget(b);
+
+    b = new QPushButton(tr("Region"), this);
+    b->setCheckable(true);
+    connect(b, &QPushButton::toggled, this, [=](bool b) {
+        if (b) {
+            _result.dir = SearchDirection::Region;
+        }
+        m_regionStart->setEnabled(b);
+        m_regionStop->setEnabled(b);
     });
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
@@ -73,8 +117,9 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
     b = new QPushButton(tr("BeforeCursor"), this);
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [=](bool b) {
-        if (b)
-            _dir = SearchDirection::Foreword;
+        if (b) {
+            _result.dir = SearchDirection::Foreword;
+        }
     });
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
@@ -82,8 +127,9 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
     b = new QPushButton(tr("AfterCursor"), this);
     b->setCheckable(true);
     connect(b, &QPushButton::toggled, this, [=](bool b) {
-        if (b)
-            _dir = SearchDirection::Backword;
+        if (b) {
+            _result.dir = SearchDirection::Backword;
+        }
     });
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
@@ -92,8 +138,9 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
     b->setCheckable(true);
     if (sel) {
         connect(b, &QPushButton::toggled, this, [=](bool b) {
-            if (b)
-                _dir = SearchDirection::Selection;
+            if (b) {
+                _result.dir = SearchDirection::Selection;
+            }
         });
     } else {
         b->setEnabled(false);
@@ -101,7 +148,7 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
 
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
-    group->button(0)->setChecked(true);
+    group->button(isBigFile ? 1 : 0)->setChecked(true);
 
     layout->addWidget(btnBox);
     layout->addSpacing(20);
@@ -119,8 +166,14 @@ FindDialog::FindDialog(bool sel, QWidget *parent) : FramelessDialog(parent) {
     this->setWindowTitle(tr("find"));
 }
 
-QByteArray FindDialog::getResult(SearchDirection &dir) {
-    dir = _dir;
+QByteArray FindDialog::getResult(Result &result) {
+    _result.start = 0;
+    _result.stop = 0;
+    if (m_regionStart->isEnabled()) {
+        _result.start = m_regionStart->value();
+        _result.stop = m_regionStop->value();
+    }
+    result = _result;
     return _findarr;
 }
 

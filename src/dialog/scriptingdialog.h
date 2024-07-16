@@ -13,6 +13,7 @@
 #include "internal/QCodeEditor.hpp"
 
 #include <QListWidget>
+#include <QShortcut>
 #include <QTableWidget>
 #include <QTextBrowser>
 
@@ -55,7 +56,10 @@ private:
         auto a = new QToolButton(pannel);
         a->setText(title);
         a->setIcon(icon);
-        a->setShortcut(shortcut);
+        if (!shortcut.isEmpty()) {
+            auto shortCut = new QShortcut(shortcut, a);
+            connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
+        }
         a->setMenu(menu);
         if (menu) {
             a->setPopupMode(QToolButton::InstantPopup);

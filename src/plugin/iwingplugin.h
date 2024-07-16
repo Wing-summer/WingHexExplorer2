@@ -425,7 +425,7 @@ public:
         return {};
     }
 
-    virtual bool init(const QList<WingPluginInfo> loadedplugin) = 0;
+    virtual bool init(const QList<WingPluginInfo> &loadedplugin) = 0;
     virtual void unload() = 0;
     virtual const QString pluginName() const = 0;
     virtual const QString pluginAuthor() const = 0;
@@ -444,7 +444,7 @@ public:
 
 public slots:
     virtual void plugin2MessagePipe(WingPluginMessage type,
-                                    QList<QVariant> msg) = 0;
+                                    const QVariantList &msg) = 0;
 
 signals:
     // extension and exposed to WingHexAngelScript

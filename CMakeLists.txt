@@ -12,9 +12,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network LinguistTools)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
+                                                  LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network
-                                                       LinguistTools)
+                                                       Concurrent LinguistTools)
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
   if(Qt5Widgets_VERSION VERSION_LESS 5.10.0)
@@ -121,15 +122,19 @@ set(CLASS_SRC
     src/class/languagemanager.h
     src/class/languagemanager.cpp
     src/class/settingmanager.h
-    src/class/settingmanager.cpp)
+    src/class/settingmanager.cpp
+    src/class/wingprogressdialog.h
+    src/class/wingprogressdialog.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h src/settings/generalsettingdialog.cpp
     src/settings/generalsettingdialog.ui src/settings/pluginsettingdialog.h
     src/settings/pluginsettingdialog.cpp src/settings/pluginsettingdialog.ui)
 
-set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
-               src/plugin/pluginsystem.h)
+set(PLUGIN_SRC
+    src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
+    src/plugin/pluginsystem.h src/plugin/settingpage.h
+    src/plugin/settingpage.cpp)
 
 set(TS_FILES lang/ws_zh_CN.ts)
 
@@ -196,8 +201,9 @@ target_link_libraries(
           qt${QT_VERSION_MAJOR}advanceddocking)
 
 target_link_libraries(
-  ${CMAKE_PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-                                Qt${QT_VERSION_MAJOR}::Network)
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network
+          Qt${QT_VERSION_MAJOR}::Concurrent)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1. If
 # you are developing for iOS or macOS you should consider setting an explicit,

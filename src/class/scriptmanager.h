@@ -2,7 +2,6 @@
 #define SCRIPTMANAGER_H
 
 #include <QObject>
-
 #include <iostream>
 
 class ScriptManager : public QObject {
@@ -27,9 +26,28 @@ private:
     };
 
 public:
-    explicit ScriptManager(QObject *parent = nullptr);
+    static ScriptManager &instance();
+
+public:
+    enum class STD_OUTPUT { STD_OUT, STD_ERROR };
+    Q_ENUM(STD_OUTPUT)
 
 signals:
+    void messageOut(STD_OUTPUT io, QString message);
+
+private:
+    explicit ScriptManager();
+    virtual ~ScriptManager();
+
+    void messageCallBack(ScriptManager::STD_OUTPUT io, char const *str,
+                         std::streamsize size);
+
+private:
+    callback_streambuf *sout = nullptr;
+    callback_streambuf *serr = nullptr;
+
+    std::streambuf *std_out = nullptr;
+    std::streambuf *std_err = nullptr;
 };
 
 #endif // SCRIPTMANAGER_H

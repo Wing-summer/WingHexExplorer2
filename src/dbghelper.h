@@ -10,10 +10,11 @@
 
 #include <QDebug>
 #include <QFileInfo>
-#include <ctime>
+
 #include <qnamespace.h>
 
 #ifdef QT_DEBUG
+#include <ctime>
 static clock_t m_clock;
 #endif
 
