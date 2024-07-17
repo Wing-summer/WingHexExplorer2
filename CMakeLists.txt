@@ -17,6 +17,10 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network
                                                        Concurrent LinguistTools)
 
+if(WIN32)
+  add_definitions(-DNOMINMAX)
+endif()
+
 if(${QT_VERSION_MAJOR} EQUAL 5)
   if(Qt5Widgets_VERSION VERSION_LESS 5.10.0)
     message(FATAL_ERROR "Minimum supported Qt5 version is 5.10!")

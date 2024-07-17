@@ -1,6 +1,8 @@
 #ifndef IWINGPLUGIN_H
 #define IWINGPLUGIN_H
 
+#include "settingpage.h"
+
 #include <QCryptographicHash>
 #include <QDockWidget>
 #include <QList>
@@ -11,16 +13,37 @@
 #include <QWidget>
 #include <QtCore>
 
+#include <QFileDialog>
+#include <QInputDialog>
 #include <QMessageBox>
 
-#define SDKVERSION 12
-#define GETPLUGINQM(name)                                                      \
-    (QCoreApplication::applicationDirPath() + "/plglang/" + name)
-#define PLUGINDIR (QCoreApplication::applicationDirPath() + "/plugin")
+/**
+ * Don't try to modify this file, unless you are the dev
+ * 不要尝试来修改该文件，除非你是开发者
+ */
 
-#define HOSTRESPIMG(name) ":/com.wingsummer.winghex/images/" name ".png"
-#define HOSTAUTHORPIMG ":/com.wingsummer.winghex/images/author.jpg"
-#define SPONSORQRCODE ":/com.wingsummer.winghex/images/sponsorqr.png"
+namespace WingHex {
+
+Q_DECL_UNUSED constexpr auto SDKVERSION = 12;
+
+Q_DECL_UNUSED static QString GETPLUGINQM(const QString &name) {
+    return QCoreApplication::applicationDirPath() +
+           QStringLiteral("/plglang/") + name;
+};
+
+Q_DECL_UNUSED static QString PLUGINDIR() {
+    return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
+}
+
+Q_DECL_UNUSED static QString HOSTRESPIMG(const QString &name) {
+    return QStringLiteral(":/com.wingsummer.winghex/images/") + name +
+           QStringLiteral(".png");
+}
+
+Q_DECL_UNUSED constexpr auto HOSTAUTHORPIMG =
+    ":/com.wingsummer.winghex/images/author.jpg";
+Q_DECL_UNUSED constexpr auto SPONSORQRCODE =
+    ":/com.wingsummer.winghex/images/sponsorqr.png";
 
 enum ErrFile : uint {
     Success,
@@ -38,12 +61,10 @@ enum ErrFile : uint {
 struct FindResult {
     int fid;
     QList<int> indices;
-
-    FindResult() {}
 };
 
 struct BookMark {
-    qlonglong pos;
+    qsizetype pos = -1;
     QString comment;
 };
 
@@ -148,18 +169,14 @@ enum HookIndex {
     NewFileEnd = 32,
     DocumentSwitched = 64
 };
-
-Q_DECLARE_METATYPE(WingPluginMessage)
-Q_DECLARE_METATYPE(ResponseMsg)
-Q_DECLARE_METATYPE(HookIndex)
-Q_DECLARE_METATYPE(ErrFile)
+Q_DECLARE_FLAGS(HookIndices, HookIndex)
 
 namespace WingPlugin {
+
 class Reader : public QObject {
     Q_OBJECT
 signals:
-    qsizetype currentDoc();
-    qsizetype currentHostDoc();
+    bool isCurrentDocEditing();
     QString currentDocFilename();
 
     // document
@@ -199,10 +216,10 @@ signals:
     QString readString(qsizetype offset, const QString encoding = QString());
     QByteArray readBytes(qsizetype offset, qsizetype count);
 
-    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
-    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
-    void findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
-                      QList<quint64> &results, qsizetype maxCount = -1);
+    qsizetype searchForward(qsizetype begin, const QByteArray ba);
+    qsizetype searchBackward(qsizetype begin, const QByteArray ba);
+    QList<quint64> findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
+                                qsizetype maxCount = -1);
 
     // render
     qsizetype documentLastLine();
@@ -218,11 +235,11 @@ signals:
     QList<qsizetype> getsBookmarkPos(qsizetype line);
     BookMark bookMark(qsizetype pos);
     QString bookMarkComment(qsizetype pos);
-    void getBookMarks(QList<BookMark> &bookmarks);
+    QList<BookMark> getBookMarks();
     bool existBookMark(qsizetype pos);
 
     // extension
-    QList<QString> getOpenFiles();
+    QStringList getOpenFiles();
     QStringList getSupportedEncodings();
     QString currentEncoding();
 };
@@ -234,38 +251,38 @@ signals:
     bool switchDocument(qsizetype index, bool gui = false);
     bool setLockedFile(bool b);
     bool setKeepSize(bool b);
-    void setStringVisible(bool b);
-    void setAddressVisible(bool b);
-    void setHeaderVisible(bool b);
-    void setAddressBase(quintptr base);
+    bool setStringVisible(bool b);
+    bool setAddressVisible(bool b);
+    bool setHeaderVisible(bool b);
+    bool setAddressBase(quintptr base);
 
-    void undo();
-    void redo();
+    bool undo();
+    bool redo();
     bool cut(bool hex = false);
-    void paste(bool hex = false);
+    bool paste(bool hex = false);
 
-    bool write(qsizetype offset, uchar b);
-    bool write(qsizetype offset, const QByteArray &data);
+    bool write(qsizetype offset, const uchar b);
+    bool write(qsizetype offset, const QByteArray data);
 
     // extesion
     bool writeInt8(qsizetype offset, qint8 value);
     bool writeInt16(qsizetype offset, qint16 value);
     bool writeInt32(qsizetype offset, qint32 value);
     bool writeInt64(qsizetype offset, qint64 value);
-    bool writeString(qsizetype offset, const QString &value,
-                     const QString &encoding = QString());
+    bool writeString(qsizetype offset, const QString value,
+                     const QString encoding = QString());
     bool writeBytes(qsizetype offset, QByteArray bytes);
 
     bool insert(qsizetype offset, const uchar b);
-    bool insert(qsizetype offset, const QByteArray &data);
+    bool insert(qsizetype offset, const QByteArray data);
 
     // extesion
     bool insertInt8(qsizetype offset, qint8 value);
     bool insertInt16(qsizetype offset, qint16 value);
     bool insertInt32(qsizetype offset, qint32 value);
     bool insertInt64(qsizetype offset, qint64 value);
-    bool insertString(qsizetype offset, const QString &value,
-                      const QString &encoding = QString());
+    bool insertString(qsizetype offset, const QString value,
+                      const QString encoding = QString());
     bool insertBytes(qsizetype offset, QByteArray bytes);
 
     bool append(uchar b);
@@ -276,14 +293,13 @@ signals:
     bool appendInt16(qint16 value);
     bool appendInt32(qint32 value);
     bool appendInt64(qint64 value);
-    bool appendString(const QString &value,
-                      const QString &encoding = QString());
+    bool appendString(const QString value, const QString encoding = QString());
 
     bool remove(qsizetype offset, qsizetype len);
     bool removeAll(qsizetype offset); // extension
 
     // cursor
-    void moveTo(const HexPosition &pos);
+    void moveTo(const HexPosition pos);
     void moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
     void moveTo(qsizetype offset);
     void select(qsizetype line, qsizetype column, int nibbleindex = 1);
@@ -293,11 +309,11 @@ signals:
     void selectLength(qsizetype offset, qsizetype length);
 
     // metadata
-    bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
-                  const QColor &bgcolor, const QString &comment);
+    bool metadata(qsizetype begin, qsizetype end, const QColor fgcolor,
+                  const QColor bgcolor, const QString comment);
     bool metadata(qsizetype line, qsizetype start, qsizetype length,
-                  const QColor &fgcolor, const QColor &bgcolor,
-                  const QString &comment);
+                  const QColor fgcolor, const QColor bgcolor,
+                  const QString comment);
     bool removeMetadata(qsizetype offset);
     bool clearMeta();
     bool color(qsizetype line, qsizetype start, qsizetype length,
@@ -352,48 +368,147 @@ signals:
     bool setCurrentEncoding(const QString &encoding);
 };
 
-/**
- * @brief The UI class
- */
-class UI : public QObject {
+class MessageBox : public QObject {
     Q_OBJECT
 signals:
-    // for WingMsgBox
-    void msgAboutQt(QWidget *parent = nullptr,
-                    const QString &title = QString());
+    void aboutQt(QWidget *parent = nullptr, const QString &title = QString());
 
-    QMessageBox::StandardButton msgInformation(
+    QMessageBox::StandardButton information(
         QWidget *parent, const QString &title, const QString &text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok,
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    QMessageBox::StandardButton msgQuestion(
+    QMessageBox::StandardButton question(
         QWidget *parent, const QString &title, const QString &text,
         QMessageBox::StandardButtons buttons =
             QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    QMessageBox::StandardButton msgWarning(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+    QMessageBox::StandardButton
+    warning(QWidget *parent, const QString &title, const QString &text,
+            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    QMessageBox::StandardButton msgCritical(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+    QMessageBox::StandardButton
+    critical(QWidget *parent, const QString &title, const QString &text,
+             QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+             QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    void msgAbout(QWidget *parent, const QString &title, const QString &text);
+    void about(QWidget *parent, const QString &title, const QString &text);
 
     QMessageBox::StandardButton
     msgbox(QWidget *parent, QMessageBox::Icon icon, const QString &title,
            const QString &text,
            QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+};
 
-    // InputBox
+class InputBox : public QObject {
+    Q_OBJECT
+signals:
+    QString getText(QWidget *parent, const QString &title, const QString &label,
+                    QLineEdit::EchoMode echo = QLineEdit::Normal,
+                    const QString &text = QString(), bool *ok = nullptr,
+                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+    QString
+    getMultiLineText(QWidget *parent, const QString &title,
+                     const QString &label, const QString &text = QString(),
+                     bool *ok = nullptr,
+                     Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
 
-    // Create Window
+    QString getItem(QWidget *parent, const QString &title, const QString &label,
+                    const QStringList &items, int current = 0,
+                    bool editable = true, bool *ok = nullptr,
+                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+
+    int getInt(QWidget *parent, const QString &title, const QString &label,
+               int value = 0, int minValue = -2147483647,
+               int maxValue = 2147483647, int step = 1, bool *ok = nullptr);
+
+    double getDouble(QWidget *parent, const QString &title,
+                     const QString &label, double value = 0,
+                     double minValue = -2147483647,
+                     double maxValue = 2147483647, int decimals = 1,
+                     bool *ok = nullptr, double step = 1);
+};
+
+class FileDialog : public QObject {
+    Q_OBJECT
+signals:
+    QString getExistingDirectory(
+        QWidget *parent = nullptr, const QString &caption = QString(),
+        const QString &dir = QString(),
+        QFileDialog::Options options = QFileDialog::ShowDirsOnly);
+
+    QUrl getExistingDirectoryUrl(
+        QWidget *parent = nullptr, const QString &caption = QString(),
+        const QUrl &dir = QUrl(),
+        QFileDialog::Options options = QFileDialog::ShowDirsOnly,
+        const QStringList &supportedSchemes = QStringList());
+
+    QString getOpenFileName(
+        QWidget *parent = nullptr, const QString &caption = QString(),
+        const QString &dir = QString(), const QString &filter = QString(),
+        QString *selectedFilter = nullptr,
+        QFileDialog::Options options = QFileDialog::Options());
+
+    QStringList getOpenFileNames(
+        QWidget *parent = nullptr, const QString &caption = QString(),
+        const QString &dir = QString(), const QString &filter = QString(),
+        QString *selectedFilter = nullptr,
+        QFileDialog::Options options = QFileDialog::Options());
+
+    QUrl getOpenFileUrl(QWidget *parent = nullptr,
+                        const QString &caption = QString(),
+                        const QUrl &dir = QUrl(),
+                        const QString &filter = QString(),
+                        QString *selectedFilter = nullptr,
+                        QFileDialog::Options options = QFileDialog::Options(),
+                        const QStringList &supportedSchemes = QStringList());
+
+    QList<QUrl>
+    getOpenFileUrls(QWidget *parent = nullptr,
+                    const QString &caption = QString(),
+                    const QUrl &dir = QUrl(), const QString &filter = QString(),
+                    QString *selectedFilter = nullptr,
+                    QFileDialog::Options options = QFileDialog::Options(),
+                    const QStringList &supportedSchemes = QStringList());
+
+    QString getSaveFileName(
+        QWidget *parent = nullptr, const QString &caption = QString(),
+        const QString &dir = QString(), const QString &filter = QString(),
+        QString *selectedFilter = nullptr,
+        QFileDialog::Options options = QFileDialog::Options());
+
+    QUrl getSaveFileUrl(QWidget *parent = nullptr,
+                        const QString &caption = QString(),
+                        const QUrl &dir = QUrl(),
+                        const QString &filter = QString(),
+                        QString *selectedFilter = nullptr,
+                        QFileDialog::Options options = QFileDialog::Options(),
+                        const QStringList &supportedSchemes = QStringList());
+
+    void saveFileContent(const QByteArray &fileContent,
+                         const QString &fileNameHint,
+                         const QString &caption = QString(),
+                         QWidget *parent = nullptr);
+};
+
+class ColorDialog : public QObject {
+    Q_OBJECT
+signals:
+    QColor getColor(const QString &caption, QWidget *parent = nullptr);
+};
+
+/**
+ * @brief The UI class
+ */
+class UI {
+public:
+    MessageBox msgd;
+    InputBox inputd;
+    FileDialog filed;
+    ColorDialog colord;
 };
 
 } // namespace WingPlugin
@@ -406,7 +521,48 @@ struct WingPluginInfo {
     QString pluginComment;
 };
 
-#define WINGSUMMER "wingsummer"
+const auto WINGSUMMER = QStringLiteral("wingsummer");
+
+struct WingDockWidgetInfo {
+    QString widgetName;
+    QString displayName;
+    QWidget *widget = nullptr;
+    Qt::DockWidgetArea area = Qt::DockWidgetArea::NoDockWidgetArea;
+};
+
+struct WingRibbonToolBoxInfo {
+    struct RibbonCatagories {
+        const QString FILE = QStringLiteral("File");
+        const QString EDIT = QStringLiteral("Edit");
+        const QString VIEW = QStringLiteral("View");
+        const QString SCRIPT = QStringLiteral("Script");
+        const QString PLUGIN = QStringLiteral("Plugin");
+        const QString SETTING = QStringLiteral("Setting");
+        const QString ABOUT = QStringLiteral("About");
+    };
+
+    QString catagory;
+    QString displayName;
+
+    struct Toolbox {
+        QString name;
+        QList<QToolButton *> tools;
+    };
+    QList<Toolbox> toolboxs;
+};
+
+class WingEditorViewWidget : public QWidget {
+    Q_OBJECT
+public slots:
+    virtual void toggled(bool isVisible) = 0;
+
+    virtual void loadState(QByteArray state) {}
+
+    virtual QByteArray saveState() { return {}; }
+
+signals:
+    void raise();
+};
 
 class IWingPlugin : public QObject {
     Q_OBJECT
@@ -416,28 +572,29 @@ public:
     QString const puid() { return GetPUID(this); }
     virtual ~IWingPlugin() = default;
 
-    virtual QHash<QWidget *, Qt::DockWidgetArea> registeredDockWidgets() const {
-        return {};
-    }
-    virtual QHash<QString, QMenu *> registeredContextMenu() const { return {}; }
-    virtual QHash<QString, QPair<QString, QList<QToolButton *>>>
-    registerToolBars() {
-        return {};
-    }
-
     virtual bool init(const QList<WingPluginInfo> &loadedplugin) = 0;
     virtual void unload() = 0;
     virtual const QString pluginName() const = 0;
     virtual const QString pluginAuthor() const = 0;
     virtual uint pluginVersion() const = 0;
     virtual const QString pluginComment() const = 0;
-    virtual HookIndex getHookSubscribe() const { return HookIndex::None; }
+    virtual HookIndices getHookSubscribe() const { return HookIndex::None; }
+
+    virtual QList<WingDockWidgetInfo> registeredDockWidgets() const {
+        return {};
+    }
+    virtual QMenu *registeredHexContextMenu() const { return nullptr; }
+    virtual QList<WingRibbonToolBoxInfo> registeredRibbonTools() const {
+        return {};
+    }
+    virtual QList<SettingPage *> registeredSettingPages() const { return {}; }
+    virtual QList<WingEditorViewWidget *> registeredEditorViewWidgets() const {
+        return {};
+    }
 
     static QString GetPUID(IWingPlugin *plugin) {
-        auto str =
-            QString("%1%2%3%4")
-                .arg(WINGSUMMER, plugin->pluginName(), plugin->pluginAuthor(),
-                     QString::number(plugin->pluginVersion()));
+        auto str = WINGSUMMER + plugin->pluginName() + plugin->pluginAuthor() +
+                   QString::number(plugin->pluginVersion());
         return QCryptographicHash::hash(str.toLatin1(), QCryptographicHash::Md5)
             .toHex();
     }
@@ -448,7 +605,7 @@ public slots:
 
 signals:
     // extension and exposed to WingHexAngelScript
-    void toast(const QIcon &icon, const QString &message);
+    void toast(const QPixmap &icon, const QString &message);
     void debug(const QString &message);
     void warn(const QString &message);
     void error(const QString &message);
@@ -460,8 +617,14 @@ public:
     WingPlugin::UI ui;
 };
 
-#define IWINGPLUGIN_INTERFACE_IID "com.wingsummer.iwingplugin"
+} // namespace WingHex
 
-Q_DECLARE_INTERFACE(IWingPlugin, IWINGPLUGIN_INTERFACE_IID)
+constexpr auto IWINGPLUGIN_INTERFACE_IID = "com.wingsummer.iwingplugin";
+
+Q_DECLARE_METATYPE(WingHex::WingPluginMessage)
+Q_DECLARE_METATYPE(WingHex::ResponseMsg)
+Q_DECLARE_METATYPE(WingHex::HookIndex)
+Q_DECLARE_METATYPE(WingHex::ErrFile)
+Q_DECLARE_INTERFACE(WingHex::IWingPlugin, IWINGPLUGIN_INTERFACE_IID)
 
 #endif // IWINGPLUGIN_H
