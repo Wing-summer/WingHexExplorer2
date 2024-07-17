@@ -108,7 +108,7 @@ public:
 
 public:
     bool RemoveSelection(int nibbleindex = 1);
-    QByteArray read(qint64 offset, qsizetype len = 0);
+    QByteArray read(qsizetype offset, qsizetype len = -1);
     QByteArray selectedBytes() const;
     char at(qsizetype offset) const;
     void SetBaseAddress(quintptr baseaddress);

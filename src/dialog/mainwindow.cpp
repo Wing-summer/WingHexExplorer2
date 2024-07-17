@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 
 #include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-#include "../class/eventfilter.h"
 #include "../class/logger.h"
 #include "../class/qkeysequences.h"
 #include "../class/wingfiledialog.h"
@@ -91,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     m_scriptDialog = new ScriptingDialog(this);
 
     setEditModeEnabled(false);
-    m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
+    m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("WingHexExplorer"));
@@ -101,8 +100,11 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     this->setMinimumSize(800, 600);
 
     // launch plugin system
-    PluginSystem::instance().LoadPlugin();
-    auto plgview = m_Tbtneditors.value(PLUGIN_VIEWS);
+    auto &plg = PluginSystem::instance();
+    plg.setMainWindow(this);
+    plg.LoadPlugin();
+
+    auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
     // Don't call show(WindowState::Maximized) diretly.
@@ -122,13 +124,21 @@ void MainWindow::buildUpRibbonBar() {
 
     loadCacheIcon();
 
-    buildFilePage(m_ribbon->addTab(tr("File")));
-    m_editStateWidgets << buildEditPage(m_ribbon->addTab(tr("Edit")));
-    buildViewPage(m_ribbon->addTab(tr("View")));
-    buildScriptPage(m_ribbon->addTab(tr("Script")));
-    buildPluginPage(m_ribbon->addTab(tr("Plugin")));
-    buildSettingPage(m_ribbon->addTab(tr("Setting")));
-    buildAboutPage(m_ribbon->addTab(tr("About")));
+    using RibbonCatagories = WingHex::WingRibbonToolBoxInfo::RibbonCatagories;
+    RibbonCatagories catagories;
+
+    m_ribbonMaps[catagories.FILE] = buildFilePage(m_ribbon->addTab(tr("File")));
+    m_editStateWidgets << (m_ribbonMaps[catagories.EDIT] =
+                               buildEditPage(m_ribbon->addTab(tr("Edit"))));
+    m_ribbonMaps[catagories.VIEW] = buildViewPage(m_ribbon->addTab(tr("View")));
+    m_ribbonMaps[catagories.SCRIPT] =
+        buildScriptPage(m_ribbon->addTab(tr("Script")));
+    m_ribbonMaps[catagories.PLUGIN] =
+        buildPluginPage(m_ribbon->addTab(tr("Plugin")));
+    m_ribbonMaps[catagories.SETTING] =
+        buildSettingPage(m_ribbon->addTab(tr("Setting")));
+    m_ribbonMaps[catagories.ABOUT] =
+        buildAboutPage(m_ribbon->addTab(tr("About")));
 }
 
 void MainWindow::buildUpDockSystem(QWidget *container) {
@@ -183,6 +193,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     // build up basic docking widgets
     auto rightArea = buildUpLogDock(m_dock, ads::RightDockWidgetArea);
+    m_rightViewArea = rightArea;
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
@@ -193,6 +204,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     buildUpVisualDataDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
     buildUpScriptVarShowDock(m_dock, ads::CenterDockWidgetArea,
                              bottomRightArea);
+    m_bottomViewArea = bottomRightArea;
 
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
@@ -210,21 +222,13 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
                                                  ads::DockWidgetArea area,
                                                  ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     m_logbrowser = new QTextBrowser(this);
     m_logbrowser->setFocusPolicy(Qt::StrongFocus);
     m_logbrowser->setOpenExternalLinks(true);
     m_logbrowser->setUndoRedoEnabled(false);
 
-    auto dw = new CDockWidget(tr("Log"), dock);
-    dw->setObjectName(QStringLiteral("Log"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-
-    dw->setWidget(m_logbrowser);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw =
+        buildDockWidget(dock, QStringLiteral("Log"), tr("Log"), m_logbrowser);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -232,8 +236,6 @@ ads::CDockAreaWidget *
 MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     auto findresultMenu = new QMenu(this);
     findresultMenu->addAction(newAction(QStringLiteral("export"),
                                         tr("ExportFindResult"),
@@ -269,13 +271,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             item->data(Qt::UserRole).toLongLong());
     });
 
-    auto dw = new CDockWidget(tr("FindResult"), dock);
-    dw->setObjectName(QStringLiteral("FindResult"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_findresult);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
+                              tr("FindResult"), m_findresult);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -283,8 +280,6 @@ ads::CDockAreaWidget *
 MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     m_numshowtable = new QTableWidget(8, 1, this);
     m_numshowtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
     m_numshowtable->setSelectionBehavior(
@@ -346,15 +341,8 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
         m_numshowtable->setItem(i, 0, item);
     }
 
-    auto dw = new CDockWidget(tr("Number"), dock);
-    dw->setObjectName(QStringLiteral("Number"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-
-    m_numshowtable->setMinimumSize(450, 300);
-    dw->setWidget(m_numshowtable);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw = buildDockWidget(dock, QStringLiteral("Number"), tr("Number"),
+                              m_numshowtable);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -362,8 +350,6 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     m_bookmarks = new QListWidget(this);
     auto menu = new QMenu(m_bookmarks);
     auto a = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
@@ -403,14 +389,8 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     connect(m_bookmarks, &QListWidget::customContextMenuRequested, this,
             [=] { menu->popup(cursor().pos()); });
 
-    auto dw = new CDockWidget(tr("BookMark"), dock);
-    dw->setObjectName(QStringLiteral("BookMark"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-
-    dw->setWidget(m_bookmarks);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw = buildDockWidget(dock, QStringLiteral("BookMark"), tr("BookMark"),
+                              m_bookmarks);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -418,19 +398,11 @@ ads::CDockAreaWidget *
 MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
                                        ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     m_txtDecode = new QTextBrowser(this);
     m_txtDecode->setUndoRedoEnabled(false);
 
-    auto dw = new CDockWidget(tr("DecodeText"), dock);
-    dw->setObjectName(QStringLiteral("DecodeText"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-
-    dw->setWidget(m_txtDecode);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
+                              tr("DecodeText"), m_txtDecode);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -438,18 +410,10 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
-    using namespace ads;
-
     m_scriptConsole = new ScriptingConsole(this);
 
-    auto dw = new CDockWidget(tr("ScriptConsole"), dock);
-    dw->setObjectName(QStringLiteral("ScriptConsole"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-
-    dw->setWidget(m_scriptConsole);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+    auto dw = buildDockWidget(dock, QStringLiteral("ScriptConsole"),
+                              tr("ScriptConsole"), m_scriptConsole);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -457,7 +421,6 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptVarShowDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
-    using namespace ads;
     m_varshowtable = new QTableWidget(0, 2, this);
     m_varshowtable->setEditTriggers(QTableWidget::EditTrigger::DoubleClicked);
     m_varshowtable->setSelectionBehavior(
@@ -466,13 +429,8 @@ MainWindow::buildUpScriptVarShowDock(ads::CDockManager *dock,
         QStringList({tr("Name"), tr("Value")}));
     m_varshowtable->horizontalHeader()->setStretchLastSection(true);
 
-    auto dw = new CDockWidget(tr("ScriptVarShow"), dock);
-    dw->setObjectName(QStringLiteral("DVList"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_varshowtable);
-
+    auto dw = buildDockWidget(dock, QStringLiteral("ScriptVarShow"),
+                              tr("ScriptVarShow"), m_varshowtable);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -483,42 +441,26 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     using namespace ads;
 
     m_infolist = new QListWidget(this);
-    auto dw = new CDockWidget(tr("DVList"), dock);
-    dw->setObjectName(QStringLiteral("DVList"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_infolist);
+    auto dw = buildDockWidget(dock, QStringLiteral("DVList"), tr("DVList"),
+                              m_infolist);
     auto ar = dock->addDockWidget(area, dw, areaw);
 
     auto m_infotree = new QTreeWidget(this);
     m_infotree->setHeaderLabel(QString());
-    dw = new CDockWidget(tr("DVTree"), dock);
-    dw->setObjectName(QStringLiteral("DVTree"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_infotree);
+    dw = buildDockWidget(dock, QStringLiteral("DVTree"), tr("DVTree"),
+                         m_infotree);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     auto m_infotable = new QTableWidget(this);
-    dw = new CDockWidget(tr("DVTable"), dock);
-    dw->setObjectName(QStringLiteral("DVTable"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_infotable);
+    dw = buildDockWidget(dock, QStringLiteral("DVTable"), tr("DVTable"),
+                         m_infotable);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     auto m_infotxt = new QTextBrowser(this);
-    dw = new CDockWidget(tr("DVText"), dock);
-    dw->setObjectName(QStringLiteral("DVText"));
-    dw->setFeatures(CDockWidget::DockWidgetMovable |
-                    CDockWidget::DockWidgetClosable |
-                    CDockWidget::DockWidgetPinnable);
-    dw->setWidget(m_infotxt);
+    dw = buildDockWidget(dock, QStringLiteral("DVText"), tr("DVText"),
+                         m_infotxt);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
-    m_Tbtneditors.value(TOOL_VIEWS)->menu()->addAction(dw->toggleViewAction());
+
     return ar;
 }
 
@@ -583,11 +525,11 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
-        m_Tbtneditors.insert(
+        m_toolBtneditors.insert(
             ToolButtonIndex::UNDO_ACTION,
             addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
                             &MainWindow::on_undofile, QKeySequence::Undo));
-        m_Tbtneditors.insert(
+        m_toolBtneditors.insert(
             ToolButtonIndex::REDO_ACTION,
             addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
                             &MainWindow::on_redofile, QKeySequence::Redo));
@@ -764,18 +706,18 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Window"));
-        m_Tbtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
-                             addPannelAction(pannel, QStringLiteral("file"),
-                                             tr("Editor"), EMPTY_FUNC, {},
-                                             new QMenu(this)));
-        m_Tbtneditors.insert(ToolButtonIndex::TOOL_VIEWS,
-                             addPannelAction(pannel, QStringLiteral("general"),
-                                             tr("Tools"), EMPTY_FUNC, {},
-                                             new QMenu(this)));
-        m_Tbtneditors.insert(ToolButtonIndex::PLUGIN_VIEWS,
-                             addPannelAction(pannel, QStringLiteral("edit"),
-                                             tr("Plugin"), EMPTY_FUNC, {},
-                                             new QMenu(this)));
+        m_toolBtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
+                                addPannelAction(pannel, QStringLiteral("file"),
+                                                tr("Editor"), EMPTY_FUNC, {},
+                                                new QMenu(this)));
+        m_toolBtneditors.insert(
+            ToolButtonIndex::TOOL_VIEWS,
+            addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
+                            EMPTY_FUNC, {}, new QMenu(this)));
+        m_toolBtneditors.insert(ToolButtonIndex::PLUGIN_VIEWS,
+                                addPannelAction(pannel, QStringLiteral("edit"),
+                                                tr("Plugin"), EMPTY_FUNC, {},
+                                                new QMenu(this)));
     }
 
     {
@@ -1934,6 +1876,23 @@ QString MainWindow::saveLog() {
     return QString();
 }
 
+ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
+                                              const QString &widgetName,
+                                              const QString &displayName,
+                                              QWidget *content,
+                                              ToolButtonIndex index) {
+    using namespace ads;
+    auto dw = new CDockWidget(displayName, dock);
+    dw->setObjectName(widgetName);
+    dw->setFeatures(CDockWidget::DockWidgetMovable |
+                    CDockWidget::DockWidgetClosable |
+                    CDockWidget::DockWidgetPinnable);
+
+    dw->setWidget(content);
+    m_toolBtneditors.value(index)->menu()->addAction(dw->toggleViewAction());
+    return dw;
+}
+
 EditorView *MainWindow::findEditorView(const QString &filename) {
     for (auto it = m_views.keyBegin(); it != m_views.keyEnd(); ++it) {
         if ((*it)->fileName() == filename) {
@@ -1955,7 +1914,7 @@ bool MainWindow::newOpenFileSafeCheck() {
 void MainWindow::registerEditorView(EditorView *editor) {
     connectEditorView(editor);
     m_views.insert(editor, {});
-    auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
     Q_ASSERT(menu);
     menu->addAction(editor->toggleViewAction());
@@ -1994,7 +1953,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
             m_curEditor = nullptr;
         }
         editor->deleteDockWidget();
-        m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
+        m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
             ->setEnabled(m_views.size() != 0);
     });
 }
@@ -2021,10 +1980,10 @@ void MainWindow::swapEditorConnection(EditorView *old, EditorView *cur) {
     connect(hexeditor, &QHexView::documentBookMarkChanged, this,
             &MainWindow::on_bookmarkChanged);
     connect(hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
-        m_Tbtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
+        m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
     });
     connect(hexeditor, &QHexView::canRedoChanged, this, [this](bool b) {
-        m_Tbtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(b);
+        m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(b);
     });
     connect(hexeditor, &QHexView::documentSaved, this, [this](bool b) {
         m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);

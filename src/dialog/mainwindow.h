@@ -28,8 +28,12 @@
 
 #include "scriptingdialog.h"
 
+class PluginSystem;
+
 class MainWindow : public FramelessMainWindow {
     Q_OBJECT
+
+    friend class PluginSystem;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -171,6 +175,11 @@ private slots:
 private:
     QString saveLog();
 
+    ads::CDockWidget *buildDockWidget(ads::CDockManager *dock,
+                                      const QString &widgetName,
+                                      const QString &displayName,
+                                      QWidget *content,
+                                      ToolButtonIndex index = TOOL_VIEWS);
     EditorView *findEditorView(const QString &filename);
 
     bool newOpenFileSafeCheck();
@@ -386,6 +395,7 @@ private:
     QTextBrowser *m_txtDecode = nullptr;
     QListWidget *m_bookmarks = nullptr;
     QListWidget *m_metadatas = nullptr;
+
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
 
     // data visualization widgets
@@ -394,8 +404,7 @@ private:
     QTableWidget *m_infotable = nullptr;
     QTextBrowser *m_infotxt = nullptr;
 
-    QMap<uint, QVector<RibbonButtonGroup *>> m_contextPannels;
-    QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
+    QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 
     //===================================================
 
@@ -445,6 +454,20 @@ private:
 
     QPixmap _pixLock;
     QPixmap _pixCanOver, _pixCannotOver;
+
+    //================================
+
+    // for plugin system use
+    QHash<QString, RibbonTabContent *> m_ribbonMaps;
+    QList<QMenu *> m_hexContextMenu;
+    QList<WingEditorViewWidget *> m_editorViewWidgets;
+    QList<SettingPage *> m_settingPages;
+
+    ads::CDockAreaWidget *m_leftViewArea = nullptr;
+    ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空
+    ads::CDockAreaWidget *m_topViewArea = nullptr;
+    ads::CDockAreaWidget *m_bottomViewArea = nullptr; // 该值使用时必不为空
+
     //================================
 
     QString m_lastusedpath;

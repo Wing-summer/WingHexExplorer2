@@ -13,10 +13,17 @@
 #include <QToolButton>
 #include <QVariant>
 
+using namespace WingHex;
+
+class MainWindow;
+class EditorView;
+
 class PluginSystem : public QObject {
     Q_OBJECT
 public:
     static PluginSystem &instance();
+
+    void setMainWindow(MainWindow *win);
 
     void LoadPlugin();
     void UnloadPlugin();
@@ -26,29 +33,31 @@ public:
     void loadPlugin(QFileInfo filename);
 
 private:
+    void subscribeDispatcher(IWingPlugin *plg, HookIndex hookIndex);
+
+    void connectInterface(IWingPlugin *plg);
+    void connectBaseInterface(IWingPlugin *plg);
+    void connectReaderInterface(IWingPlugin *plg);
+    void connectControllerInterface(IWingPlugin *plg);
+    void connectUIInterface(IWingPlugin *plg);
+
+    EditorView *pluginCurrentEditor(QObject *sender) const;
+
+private:
     const QList<QVariant> emptyparam;
-
-signals:
-    void sigPluginContextMenuNeedAdd(QHash<QString, QMenu *> contextMenus);
-    void sigPluginToolBarAdd(
-        QHash<QString, QPair<QString, QList<QToolButton *>>> toolbars);
-
-    void
-    PluginDockWidgetAdd(const QString &pluginname,
-                        const QHash<QDockWidget *, Qt::DockWidgetArea> &rdw);
-    void PluginToolButtonAdd(QToolButton *btn);
-
-    void ConnectBase(const IWingPlugin *plugin);
 
 private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();
 
 private:
+    MainWindow *_win;
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
     QMap<HookIndex, QList<IWingPlugin *>> dispatcher;
     QMutex mutex;
+
+    QMap<QObject *, EditorView *> m_plgviewMap;
 };
 
 #endif // PLUGINSYSTEM_H

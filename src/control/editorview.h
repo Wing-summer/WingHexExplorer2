@@ -10,6 +10,8 @@
 #include "../plugin/iwingplugin.h"
 #include "../utilities.h"
 
+using namespace WingHex;
+
 class EditorView : public ads::CDockWidget {
     Q_OBJECT
 
