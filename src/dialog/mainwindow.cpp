@@ -871,15 +871,18 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     return tab;
 }
 
-void MainWindow::on_newfile() {
+EditorView *MainWindow::newfileGUI() {
     if (!newOpenFileSafeCheck()) {
-        return;
+        return nullptr;
     }
     auto editor = new EditorView(m_enablePlugin);
     editor->newFile(m_newIndex++);
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, m_editorViewArea);
+    return editor;
 }
+
+void MainWindow::on_newfile() { newfileGUI(); }
 
 void MainWindow::on_openfile() {
     auto filename =

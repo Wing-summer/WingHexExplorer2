@@ -190,7 +190,7 @@ signals:
     qsizetype currentRow();
     qsizetype currentColumn();
     qsizetype currentOffset();
-    qsizetype selectLength();
+    qsizetype selectedLength();
     QByteArray selectedBytes();
 
     bool stringVisible();
@@ -213,13 +213,13 @@ signals:
     qint16 readInt16(qsizetype offset);
     qint32 readInt32(qsizetype offset);
     qint64 readInt64(qsizetype offset);
-    QString readString(qsizetype offset, const QString encoding = QString());
+    QString readString(qsizetype offset, const QString &encoding = QString());
     QByteArray readBytes(qsizetype offset, qsizetype count);
 
-    qsizetype searchForward(qsizetype begin, const QByteArray ba);
-    qsizetype searchBackward(qsizetype begin, const QByteArray ba);
-    QList<quint64> findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
-                                qsizetype maxCount = -1);
+    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
+    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
+    QList<qsizetype> findAllBytes(qsizetype begin, qsizetype end, QByteArray &b,
+                                  qsizetype maxCount = -1);
 
     // render
     qsizetype documentLastLine();
@@ -262,28 +262,26 @@ signals:
     bool paste(bool hex = false);
 
     bool write(qsizetype offset, const uchar b);
-    bool write(qsizetype offset, const QByteArray data);
+    bool write(qsizetype offset, const QByteArray &data);
 
     // extesion
     bool writeInt8(qsizetype offset, qint8 value);
     bool writeInt16(qsizetype offset, qint16 value);
     bool writeInt32(qsizetype offset, qint32 value);
     bool writeInt64(qsizetype offset, qint64 value);
-    bool writeString(qsizetype offset, const QString value,
-                     const QString encoding = QString());
-    bool writeBytes(qsizetype offset, QByteArray bytes);
+    bool writeString(qsizetype offset, const QString &value,
+                     const QString &encoding = QString());
 
     bool insert(qsizetype offset, const uchar b);
-    bool insert(qsizetype offset, const QByteArray data);
+    bool insert(qsizetype offset, const QByteArray &data);
 
     // extesion
     bool insertInt8(qsizetype offset, qint8 value);
     bool insertInt16(qsizetype offset, qint16 value);
     bool insertInt32(qsizetype offset, qint32 value);
     bool insertInt64(qsizetype offset, qint64 value);
-    bool insertString(qsizetype offset, const QString value,
-                      const QString encoding = QString());
-    bool insertBytes(qsizetype offset, QByteArray bytes);
+    bool insertString(qsizetype offset, const QString &value,
+                      const QString &encoding = QString());
 
     bool append(uchar b);
     bool append(const QByteArray &data);
@@ -293,27 +291,27 @@ signals:
     bool appendInt16(qint16 value);
     bool appendInt32(qint32 value);
     bool appendInt64(qint64 value);
-    bool appendString(const QString value, const QString encoding = QString());
+    bool appendString(const QString &value,
+                      const QString &encoding = QString());
 
     bool remove(qsizetype offset, qsizetype len);
-    bool removeAll(qsizetype offset); // extension
+    bool removeAll(); // extension
 
     // cursor
-    void moveTo(const HexPosition pos);
-    void moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
-    void moveTo(qsizetype offset);
-    void select(qsizetype line, qsizetype column, int nibbleindex = 1);
-    void selectOffset(qsizetype offset, qsizetype length);
-    void setInsertionMode(bool isinsert);
-    void enabledCursor(bool b);
-    void selectLength(qsizetype offset, qsizetype length);
+    bool moveTo(const HexPosition pos);
+    bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
+    bool moveTo(qsizetype offset);
+    bool select(qsizetype line, qsizetype column, int nibbleindex = 1);
+    bool selectOffset(qsizetype offset, qsizetype length);
+    bool setInsertionMode(bool isinsert);
+    bool enabledCursor(bool b);
 
     // metadata
-    bool metadata(qsizetype begin, qsizetype end, const QColor fgcolor,
-                  const QColor bgcolor, const QString comment);
+    bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
+                  const QColor &bgcolor, const QString &comment);
     bool metadata(qsizetype line, qsizetype start, qsizetype length,
-                  const QColor fgcolor, const QColor bgcolor,
-                  const QString comment);
+                  const QColor &fgcolor, const QColor &bgcolor,
+                  const QString &comment);
     bool removeMetadata(qsizetype offset);
     bool clearMeta();
     bool color(qsizetype line, qsizetype start, qsizetype length,
@@ -324,48 +322,46 @@ signals:
                     const QColor &bgcolor);
     bool comment(qsizetype line, qsizetype start, qsizetype length,
                  const QString &comment);
-    void applyMetas(const QList<HexMetadataAbsoluteItem> &metas);
+    bool applyMetas(const QList<HexMetadataAbsoluteItem> &metas);
     bool setMetaVisible(bool b);
-    void setMetafgVisible(bool b);
-    void setMetabgVisible(bool b);
-    void setMetaCommentVisible(bool b);
+    bool setMetafgVisible(bool b);
+    bool setMetabgVisible(bool b);
+    bool setMetaCommentVisible(bool b);
 
     // mainwindow
-    void newFile();
-    ErrFile openFile(const QString &filename, qsizetype *openedIndex = nullptr);
-    ErrFile openRegionFile(const QString &filename,
-                           qsizetype *openedIndex = nullptr,
-                           qsizetype start = 0, qsizetype length = 1024);
-    ErrFile openDriver(const QString &driver);
-    ErrFile closeFile(qsizetype index, bool force = false);
-    ErrFile saveFile(qsizetype index, bool ignoreMd5 = false);
-    ErrFile exportFile(const QString &filename, qsizetype index,
+    bool newFile();
+    ErrFile openFile(const QString filename);
+    ErrFile openRegionFile(const QString filename, qsizetype start = 0,
+                           qsizetype length = 1024);
+    ErrFile openDriver(const QString driver);
+    ErrFile closeFile(const QString filename, bool force = false);
+    ErrFile saveFile(const QString filename, bool ignoreMd5 = false);
+    ErrFile exportFile(const QString filename, const QString savename,
                        bool ignoreMd5 = false);
-    void exportFileGUI();
-    ErrFile saveasFile(const QString &filename, qsizetype index,
+    bool exportFileGUI();
+    ErrFile saveasFile(const QString filename, const QString savename,
                        bool ignoreMd5 = false);
-    void saveasFileGUI();
+    bool saveasFileGUI();
     ErrFile closeCurrentFile(bool force = false);
     ErrFile saveCurrentFile(bool ignoreMd5 = false);
-    void openFileGUI();
-    void openRegionFileGUI();
-    void openDriverGUI();
-    void findGUI();
-    void gotoGUI();
-    void fillGUI();
-    void fillzeroGUI();
-    void fillnopGUI();
+    bool openFileGUI();
+    bool openRegionFileGUI();
+    bool openDriverGUI();
+    bool findGUI();
+    bool gotoGUI();
+    bool fillGUI();
+    bool fillZeroGUI();
 
     // bookmark
-    bool addBookMark(qsizetype pos, const QString &comment);
-    bool modBookMark(qsizetype pos, const QString &comment);
-    void applyBookMarks(const QList<BookMark> &books);
+    bool addBookMark(qsizetype pos, const QString comment);
+    bool modBookMark(qsizetype pos, const QString comment);
+    bool applyBookMarks(const QList<BookMark> books);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
     // workspace
-    bool openWorkSpace(const QString &filename);
-    bool setCurrentEncoding(const QString &encoding);
+    bool openWorkSpace(const QString filename);
+    bool setCurrentEncoding(const QString encoding);
 };
 
 class MessageBox : public QObject {

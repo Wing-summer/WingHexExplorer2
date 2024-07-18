@@ -106,6 +106,9 @@ private:
     RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
 
+private:
+    EditorView *newfileGUI();
+
 private slots:
     void on_newfile();
     void on_openfile();
