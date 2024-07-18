@@ -53,7 +53,6 @@ bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
 
     _ctxMgr = new CContextMgr;
     _ctxMgr->RegisterCoRoutineSupport(_engine);
-    _ctxMgr->RegisterThreadSupport(_engine);
     Q_ASSERT(_engine->SetContextCallbacks(
                  &ScriptMachine::requestContextCallback,
                  &ScriptMachine::returnContextCallback, this) >= 0);

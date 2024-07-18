@@ -41,6 +41,8 @@ private:
     void connectControllerInterface(IWingPlugin *plg);
     void connectUIInterface(IWingPlugin *plg);
 
+    static bool checkSender(QObject *sender);
+
     EditorView *pluginCurrentEditor(QObject *sender) const;
 
 private:
@@ -51,7 +53,8 @@ private:
     ~PluginSystem();
 
 private:
-    MainWindow *_win;
+    MainWindow *_win = nullptr;
+    QThread *_plgThread = nullptr;
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
     QMap<HookIndex, QList<IWingPlugin *>> dispatcher;
