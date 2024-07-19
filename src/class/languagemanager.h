@@ -13,6 +13,8 @@ public:
 private:
     LanguageManager();
 
+    Q_DISABLE_COPY(LanguageManager)
+
 private:
     QStringList m_langs;
     QHash<QString, QString> m_langMap;

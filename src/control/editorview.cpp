@@ -100,10 +100,10 @@ void EditorView::switchView(qindextype index) {
 }
 
 void EditorView::newFile(size_t index) {
-    this->setWindowTitle(tr("Untitled") + QString::number(index));
+    auto istr = QString::number(index);
+    this->setWindowTitle(tr("Untitled") + istr);
     m_docType = DocumentType::File;
-    m_isNewFile = true;
-    m_fileName = QString();
+    m_fileName = QStringLiteral(":") + istr;
 }
 
 ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
@@ -350,7 +350,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
 
-    if (m_isNewFile) {
+    if (isNewFile()) {
         if (fileName.isEmpty()) {
             return ErrFile::IsNewFile;
         }
@@ -399,10 +399,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             if (!isExport) {
                 m_isWorkSpace = true;
             }
-        } else {
-            if (!isExport) {
-                m_isNewFile = false;
-            }
         }
 
         if (!isExport) {
@@ -418,7 +414,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
 ErrFile EditorView::reload() {
     Q_ASSERT(m_docType != DocumentType::InValid);
-    Q_ASSERT(!m_isNewFile);
+    Q_ASSERT(!isNewFile());
 
     switch (documentType()) {
     case DocumentType::File:
@@ -468,7 +464,7 @@ void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
 
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
-    return m_isNewFile;
+    return m_fileName.startsWith(':');
 }
 
 bool EditorView::isBigFile() const {

@@ -24,6 +24,8 @@ private:
     Theme m_theme;
 
     explicit SkinManager(QObject *parent = nullptr);
+
+    Q_DISABLE_COPY(SkinManager)
 };
 
 #endif // SKINMANAGER_H
