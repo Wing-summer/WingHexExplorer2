@@ -1,6 +1,4 @@
 #include "recentfilemanager.h"
-//#include "appmanager.h"
-//#include "settings.h"
 #include "../class/winginputdialog.h"
 #include "../control/toast.h"
 #include "../utilities.h"
@@ -10,8 +8,9 @@
 
 RecentFileManager::RecentFileManager(QMenu *menu) : QObject(), m_menu(menu) {}
 
-void RecentFileManager::apply(QWidget *parent) {
+void RecentFileManager::apply(QWidget *parent, const QStringList &files) {
     Q_ASSERT(parent);
+    this->setParent(parent);
     m_parent = parent;
 
     QAction *a;
@@ -44,26 +43,24 @@ void RecentFileManager::apply(QWidget *parent) {
     m_menu->addAction(a);
 
     m_menu->addSeparator();
-    // auto s = Settings::instance()->loadRecent();
-    // int i = 0;
-    // for (auto &item : s) {
-    //     if (QFile::exists(item)) {
-    //         if (m_recents.count() > 10)
-    //             break;
-    //         m_recents << item;
-    //         a = new QAction(m_menu);
-    //         a->setText(QString("%1 : %2").arg(i++).arg(item));
-    //         a->setData(item);
-    //         connect(a, &QAction::triggered, this,
-    //         &RecentFileManager::trigger); hitems.push_back(a);
-    //         m_menu->addAction(a);
-    //     }
-    // }
+
+    int i = 0;
+    for (auto &item : files) {
+        if (QFile::exists(item)) {
+            if (m_recents.count() > 10)
+                break;
+            m_recents << item;
+            a = new QAction(m_menu);
+            a->setText(QStringLiteral("%1 : %2").arg(i++).arg(item));
+            a->setData(item);
+            connect(a, &QAction::triggered, this, &RecentFileManager::trigger);
+            hitems.push_back(a);
+            m_menu->addAction(a);
+        }
+    }
 }
 
-RecentFileManager::~RecentFileManager() {
-    // Settings::instance()->saveRecent(m_recents);
-}
+RecentFileManager::~RecentFileManager() { emit onSaveRecent(m_recents); }
 
 void RecentFileManager::addRecentFile(QString filename) {
     int o = 0;
@@ -132,7 +129,7 @@ void RecentFileManager::clearFile() {
     }
     m_recents.clear();
     hitems.clear();
-    // Settings::instance()->saveRecent(m_recents);
+    emit onSaveRecent({});
     Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
                  tr("HistoryClearFinished"));
 }

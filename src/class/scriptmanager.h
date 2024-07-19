@@ -39,6 +39,8 @@ private:
     explicit ScriptManager();
     virtual ~ScriptManager();
 
+    Q_DISABLE_COPY(ScriptManager)
+
     void messageCallBack(ScriptManager::STD_OUTPUT io, char const *str,
                          std::streamsize size);
 

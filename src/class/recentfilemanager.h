@@ -13,7 +13,10 @@ public:
     ~RecentFileManager();
     void addRecentFile(QString filename);
     void clearFile();
-    void apply(QWidget *parent);
+    void apply(QWidget *parent, const QStringList &files);
+
+signals:
+    void onSaveRecent(const QStringList &content);
 
 private:
     QMenu *m_menu;
@@ -21,6 +24,7 @@ private:
     QStringList m_recents;
     QList<QAction *> hitems;
 
+private slots:
     void trigger();
 };
 

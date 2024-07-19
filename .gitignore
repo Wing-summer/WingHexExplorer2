@@ -30,6 +30,7 @@ Thumbs.db
 *.res
 *.rc
 !app.rc
+!favicon.rc
 
 /.qmake.cache
 /.qmake.stash

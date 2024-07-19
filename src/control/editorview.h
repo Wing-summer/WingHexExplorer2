@@ -112,7 +112,6 @@ private:
     QMenu *m_hexMenu = nullptr;
 
     DocumentType m_docType = DocumentType::InValid;
-    bool m_isNewFile = false;
     bool m_isWorkSpace = false;
 
     bool _enableplugin = true;

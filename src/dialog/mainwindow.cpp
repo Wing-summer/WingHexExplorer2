@@ -876,7 +876,9 @@ EditorView *MainWindow::newfileGUI() {
         return nullptr;
     }
     auto editor = new EditorView(m_enablePlugin);
-    editor->newFile(m_newIndex++);
+    auto index = m_newIndex++;
+    editor->newFile(index);
+    m_openedFileNames << editor->fileName();
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, m_editorViewArea);
     return editor;
@@ -997,10 +999,17 @@ void MainWindow::on_save() {
     }
 
     auto editor = m_curEditor.loadAcquire();
+    auto isNewFile = editor->isNewFile();
+    if (isNewFile) {
+        on_saveas();
+        return;
+    }
+
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
     }
+
     auto res = editor->save(workspace);
     if (res == ErrFile::Permission) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
@@ -1027,6 +1036,7 @@ void MainWindow::on_saveas() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
     auto editor = m_curEditor.loadAcquire();
+    auto oldFileName = editor->fileName();
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
@@ -1039,6 +1049,8 @@ restart:
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
         m_views[editor] = workspace;
+        auto namep = m_openedFileNames.indexOf(oldFileName);
+        m_openedFileNames.replace(namep, filename);
         break;
     }
     case ErrFile::WorkSpaceUnSaved: {

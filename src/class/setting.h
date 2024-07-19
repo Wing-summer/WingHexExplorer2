@@ -30,6 +30,9 @@
 #define READ_CONFIG_BOOL(var, config, dvalue)                                  \
     var = READ_CONFIG(config, dvalue).toBool()
 
+#define READ_CONFIG_QSIZETYPE(var, config, dvalue)                             \
+    READ_CONFIG_SAFE(var, config, dvalue, toLongLong)
+
 #define READ_CONFIG_INT_POSITIVE(var, config, dvalue)                          \
     {                                                                          \
         Q_ASSERT(dvalue > 0);                                                  \
