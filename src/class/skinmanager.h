@@ -21,6 +21,9 @@ public:
     Theme currentTheme() const;
 
 private:
+    Q_DECL_UNUSED void translate();
+
+private:
     Theme m_theme;
 
     explicit SkinManager(QObject *parent = nullptr);

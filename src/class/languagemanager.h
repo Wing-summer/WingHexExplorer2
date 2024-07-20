@@ -10,6 +10,8 @@ class LanguageManager : public QObject {
 public:
     static LanguageManager &instance();
 
+    QStringList langsDisplay() const;
+
 private:
     LanguageManager();
 
@@ -17,6 +19,7 @@ private:
 
 private:
     QStringList m_langs;
+    QStringList m_langsDisplay;
     QHash<QString, QString> m_langMap;
     QHash<QString, QLocale> m_localeMap;
 };

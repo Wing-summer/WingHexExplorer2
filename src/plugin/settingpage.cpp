@@ -2,4 +2,4 @@
 
 using namespace WingHex;
 
-SettingPage::SettingPage() {}
+SettingPage::SettingPage(QWidget *parent) : QWidget(parent) {}

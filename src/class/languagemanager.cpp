@@ -30,6 +30,7 @@ LanguageManager::LanguageManager() {
             continue;
         }
         m_langs << lang;
+        m_langsDisplay << m_langMap.value(lang, lang);
         m_localeMap.insert(lang, locale);
     }
 
@@ -78,3 +79,5 @@ LanguageManager::LanguageManager() {
         qApp->installTranslator(translator);
     }
 }
+
+QStringList LanguageManager::langsDisplay() const { return m_langsDisplay; }

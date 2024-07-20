@@ -2,6 +2,7 @@
 #include "../../QWingRibbon/ribbontabcontent.h"
 #include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "../class/qkeysequences.h"
+#include "../class/settingmanager.h"
 #include "../class/skinmanager.h"
 #include "../class/wingmessagebox.h"
 #include "internal/QSyntaxStyle.hpp"
@@ -33,7 +34,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
-    m_recentmanager->apply(this);
+    m_recentmanager->apply(this,
+                           SettingManager::instance().recentScriptFiles());
 
     // build up UI
     buildUpRibbonBar();

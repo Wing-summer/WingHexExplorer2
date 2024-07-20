@@ -80,6 +80,8 @@ public:
 private:
     SettingManager();
 
+    void load();
+
     Q_DISABLE_COPY(SettingManager)
 private:
     int m_themeID = 0;

@@ -3,6 +3,7 @@
 #include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "../class/logger.h"
 #include "../class/qkeysequences.h"
+#include "../class/settingmanager.h"
 #include "../class/wingfiledialog.h"
 #include "../class/winginputdialog.h"
 #include "../class/wingmessagebox.h"
@@ -16,6 +17,11 @@
 #include "metadialog.h"
 #include "openregiondialog.h"
 #include "sponsordialog.h"
+
+#include "../settings/editorsettingdialog.h"
+#include "../settings/generalsettingdialog.h"
+#include "../settings/pluginsettingdialog.h"
+#include "../settings/scriptsettingdialog.h"
 
 #include <QAction>
 #include <QActionGroup>
@@ -46,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
-    m_recentmanager->apply(this);
+    m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
     // build up UI
     buildUpRibbonBar();
@@ -106,6 +112,9 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
+
+    // ok, build up the dialog of setting
+    buildUpSettingDialog();
 
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
@@ -869,6 +878,13 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
                     [this] { WingMessageBox::aboutQt(this); });
 
     return tab;
+}
+
+void MainWindow::buildUpSettingDialog() {
+    m_setdialog = new SettingDialog(this);
+    auto generalPage = new GeneralSettingDialog(m_setdialog);
+    m_setdialog->addPage(generalPage);
+    m_setdialog->build();
 }
 
 EditorView *MainWindow::newfileGUI() {
@@ -1861,7 +1877,7 @@ void MainWindow::on_loadplg() {
     }
 }
 
-void MainWindow::on_setting_general() {}
+void MainWindow::on_setting_general() { m_setdialog->showConfig(); }
 
 void MainWindow::on_setting_plugin() {}
 

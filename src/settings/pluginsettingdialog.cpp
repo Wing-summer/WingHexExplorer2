@@ -1,9 +1,58 @@
 #include "pluginsettingdialog.h"
+#include "../class/settingmanager.h"
+#include "../dbghelper.h"
+#include "../utilities.h"
 #include "ui_pluginsettingdialog.h"
 
 PluginSettingDialog::PluginSettingDialog(QWidget *parent)
-    : QWidget(parent), ui(new Ui::PluginSettingDialog) {
+    : WingHex::SettingPage(parent), ui(new Ui::PluginSettingDialog) {
     ui->setupUi(this);
+    reload();
 }
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }
+
+void PluginSettingDialog::buildUp(const QList<SettingPage *> &pages) {
+    ASSERT_SINGLETON;
+    for (auto &page : pages) {
+        if (page->isInPluginPage()) {
+            ui->tabWidget->addTab(page, page->categoryIcon(), page->name());
+            _pages << page;
+        }
+    }
+}
+
+void PluginSettingDialog::reload() {
+    auto &set = SettingManager::instance();
+    ui->cbEnablePlugin->setChecked(set.enablePlugin());
+    ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
+}
+
+QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }
+
+QString PluginSettingDialog::name() const { return tr("Plugin"); }
+
+bool PluginSettingDialog::isInPluginPage() const { return false; }
+
+void PluginSettingDialog::apply() {
+    auto &set = SettingManager::instance();
+    set.setEnablePlugin(ui->cbEnablePlugin->isChecked());
+    set.setEnablePlgInRoot(ui->cbEnablePluginRoot->isChecked());
+    set.save(SettingManager::SETTING::PLUGIN);
+
+    emit sigEnablePlugin(set.enablePlugin());
+    emit sigEnablePlgInRoot(set.enablePlgInRoot());
+
+    for (auto &page : _pages) {
+        page->apply();
+    }
+}
+
+void PluginSettingDialog::reset() {
+    SettingManager::instance().reset(SettingManager::SETTING::PLUGIN);
+    for (auto &page : _pages) {
+        page->reset();
+    }
+}
+
+void PluginSettingDialog::cancel() { reload(); }

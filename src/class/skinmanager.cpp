@@ -52,3 +52,8 @@ SkinManager &SkinManager::instance() {
 void SkinManager::setTheme(SkinManager::Theme theme) { m_theme = theme; }
 
 SkinManager::Theme SkinManager::currentTheme() const { return m_theme; }
+
+void SkinManager::translate() {
+    tr("Dark");
+    tr("Light");
+}
