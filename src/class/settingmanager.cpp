@@ -1,12 +1,17 @@
 #include "settingmanager.h"
 #include "setting.h"
 
+#include "../class/skinmanager.h"
+#include "../utilities.h"
+#include <QMetaEnum>
+
 const auto DOCK_LAYOUT = QStringLiteral("dock.layout");
 
 const auto SKIN_THEME = QStringLiteral("skin.theme");
 const auto APP_FONTFAMILY = QStringLiteral("app.fontfamily");
 const auto APP_FONTSIZE = QStringLiteral("app.fontsize");
 const auto APP_WINDOWSIZE = QStringLiteral("app.windowsize");
+const auto APP_LANGUAGE = QStringLiteral("app.lang");
 
 const auto PLUGIN_ENABLE = QStringLiteral("plugin.enableplugin");
 const auto PLUGIN_ENABLE_ROOT = QStringLiteral("plugin.rootenableplugin");
@@ -24,11 +29,17 @@ const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
+    load();
+}
+
+void SettingManager::load() {
     auto defaultFontSize = _defaultFont.pointSize();
     Q_ASSERT(defaultFontSize > 0);
-
     HANDLE_CONFIG;
-    READ_CONFIG_INT_POSITIVE(m_themeID, SKIN_THEME, 0);
+    READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
+    m_themeID = qBound(0, m_themeID,
+                       QMetaEnum::fromType<SkinManager::Theme>().keyCount());
+    m_defaultLang = READ_CONFIG(APP_LANGUAGE, QString()).toString();
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
     m_appFontFamily =
         READ_CONFIG(APP_FONTFAMILY, _defaultFont.family()).toString();
@@ -44,6 +55,10 @@ SettingManager::SettingManager() {
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
     m_editorEncoding =
         READ_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII")).toString();
+    auto encodings = Utilities::getEncodings();
+    if (!encodings.contains(m_editorEncoding)) {
+        m_editorEncoding = QStringLiteral("ASCII");
+    }
     READ_CONFIG_QSIZETYPE(m_findmaxcount, EDITOR_FIND_MAXCOUNT, 100);
     READ_CONFIG_QSIZETYPE(m_copylimit, EDITOR_COPY_LIMIT, 100);
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 10);
@@ -101,6 +116,7 @@ void SettingManager::save(SETTINGS cat) {
     WRITE_CONFIG(SCRIPT_RECENTFILES, m_recentScriptFiles);
     if (cat.testFlag(SETTING::APP)) {
         WRITE_CONFIG(SKIN_THEME, m_themeID);
+        WRITE_CONFIG(APP_LANGUAGE, m_defaultLang);
         WRITE_CONFIG(APP_FONTFAMILY, m_appFontFamily);
         WRITE_CONFIG(APP_FONTSIZE, m_appfontSize);
         WRITE_CONFIG(APP_WINDOWSIZE, m_defaultWinState);
@@ -125,6 +141,7 @@ void SettingManager::reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::APP)) {
         WRITE_CONFIG(SKIN_THEME, 0);
+        WRITE_CONFIG(APP_LANGUAGE, QString());
         WRITE_CONFIG(APP_FONTFAMILY, _defaultFont.family());
         WRITE_CONFIG(APP_FONTSIZE, _defaultFont.pointSize());
         WRITE_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized);
@@ -143,6 +160,7 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
     }
+    load();
 }
 
 qsizetype SettingManager::decodeStrlimit() const { return m_decodeStrlimit; }

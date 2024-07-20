@@ -17,6 +17,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network
                                                        Concurrent LinguistTools)
 
+add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}")
+
 if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
@@ -131,9 +133,18 @@ set(CLASS_SRC
     src/class/wingprogressdialog.cpp)
 
 set(SETTING_SRC
-    src/settings/generalsettingdialog.h src/settings/generalsettingdialog.cpp
-    src/settings/generalsettingdialog.ui src/settings/pluginsettingdialog.h
-    src/settings/pluginsettingdialog.cpp src/settings/pluginsettingdialog.ui)
+    src/settings/generalsettingdialog.h
+    src/settings/generalsettingdialog.cpp
+    src/settings/generalsettingdialog.ui
+    src/settings/pluginsettingdialog.h
+    src/settings/pluginsettingdialog.cpp
+    src/settings/pluginsettingdialog.ui
+    src/settings/editorsettingdialog.h
+    src/settings/editorsettingdialog.cpp
+    src/settings/editorsettingdialog.ui
+    src/settings/scriptsettingdialog.h
+    src/settings/scriptsettingdialog.cpp
+    src/settings/scriptsettingdialog.ui)
 
 set(PLUGIN_SRC
     src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp

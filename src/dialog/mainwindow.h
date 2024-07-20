@@ -27,6 +27,7 @@
 #include "../utilities.h"
 
 #include "scriptingdialog.h"
+#include "settingdialog.h"
 
 class PluginSystem;
 
@@ -105,6 +106,8 @@ private:
     RibbonTabContent *buildPluginPage(RibbonTabContent *tab);
     RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
+
+    void buildUpSettingDialog();
 
 private:
     EditorView *newfileGUI();
@@ -425,7 +428,7 @@ private:
 
     size_t m_newIndex = 1;
     QAtomicPointer<EditorView> m_curEditor = nullptr;
-
+    SettingDialog *m_setdialog = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
     QMenu *m_recentMenu = nullptr;
 

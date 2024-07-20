@@ -1,37 +1,31 @@
 #include "settingdialog.h"
 #include "ui_settingdialog.h"
 
+#include "../class/wingmessagebox.h"
 #include "../dbghelper.h"
 #include "../utilities.h"
 
 #include <QApplication>
 #include <QPushButton>
-#include <QShowEvent>
 
 SettingDialog::SettingDialog(QWidget *parent)
-    : FramelessDialog(parent), ui(new Ui::SettingDialog) {
+    : QWidget(parent), ui(new Ui::SettingDialog) {
     ui->setupUi(this);
-    ui->buttonBox->button(QDialogButtonBox::Reset)
-        ->setToolTip(tr("Reset All settings"));
-    ui->buttonBox->button(QDialogButtonBox::RestoreDefaults)
-        ->setToolTip(tr("Reset settings of the current page"));
 
-    ui->splitter->setStretchFactor(1, 1);
-    connect(ui->listWidget, &QListWidget::currentRowChanged, ui->stackedWidget,
-            [=](int index) {
-                ui->stackedWidget->setCurrentIndex(index);
-                auto page = m_pages[index];
-                // if (page->blocked()) {
-                //     pmb::PopMsgBox::instance().enqueueMessage(
-                //         qAppName(), tr("Please stop scanning task to edit"),
-                //         Qt::black);
-                // }
-            });
+    _dialog = new FramelessDialog(parent);
+    _dialog->buildUpContent(this);
+    _dialog->setWindowTitle(this->windowTitle());
+    connect(_dialog, &FramelessDialog::rejected, this, [=] {
+        for (auto &page : m_pages) {
+            page->cancel();
+        }
+    });
+    _dialog->setResizeable(true, this->contentsMargins());
 }
 
 SettingDialog::~SettingDialog() { delete ui; }
 
-void SettingDialog::addPage(QWidget *page) {
+void SettingDialog::addPage(WingHex::SettingPage *page) {
     if (page == nullptr) {
         qWarning("SettingDialog::addPage: Invaild Page");
         return;
@@ -41,17 +35,17 @@ void SettingDialog::addPage(QWidget *page) {
 
 void SettingDialog::build() {
     ASSERT_SINGLETON;
-    // for (auto &page : m_pages) {
-    //     auto name = page->displayName();
-    //     auto icon = page->categoryIcon();
-    //     auto item = new QListWidgetItem(icon, name);
-    //     item->setSizeHint(QSize(0, 40));
-    //     ui->listWidget->addItem(item);
-    //     ui->stackedWidget->addWidget(page);
-    // }
-    // if (m_pages.size()) {
-    //     ui->listWidget->setCurrentRow(0);
-    // }
+    for (auto &page : m_pages) {
+        auto name = page->name();
+        auto icon = page->categoryIcon();
+        auto item = new QListWidgetItem(icon, name);
+        item->setSizeHint(QSize(0, 40));
+        ui->listWidget->addItem(item);
+        ui->stackedWidget->addWidget(page);
+    }
+    if (m_pages.size()) {
+        ui->listWidget->setCurrentRow(0);
+    }
 }
 
 void SettingDialog::showConfig(int index) {
@@ -59,66 +53,40 @@ void SettingDialog::showConfig(int index) {
         ui->listWidget->setCurrentRow(index);
     }
     Utilities::moveToCenter(this);
-    exec();
-}
-
-void SettingDialog::reload() {
-    for (auto &page : m_pages) {
-        // page->reload();
-    }
-}
-
-void SettingDialog::setBlocked(bool blocked) {
-    for (auto &page : m_pages) {
-        // if (page->canBlocked()) {
-        //     page->setBlocked(blocked);
-        // }
-    }
+    _dialog->exec();
 }
 
 void SettingDialog::on_buttonBox_clicked(QAbstractButton *button) {
     auto btnbox = ui->buttonBox;
-    auto btn = qobject_cast<QPushButton *>(button);
-    if (btn == btnbox->button(QDialogButtonBox::Ok)) {
-        //   HANDLE_CONFIG;
-        //   for (auto &page : m_pages) {
-        //     page->apply(CONFIG);
-        //   }
-        //   done(1);
-        // } else if (btn == btnbox->button(QDialogButtonBox::Apply)) {
-        //   HANDLE_CONFIG;
-        //   for (auto &page : m_pages) {
-        //     page->apply(CONFIG);
-        //   }
-        // } else if (btn == btnbox->button(QDialogButtonBox::RestoreDefaults))
-        // {
-        //   auto index = ui->listWidget->currentRow();
-        //   HANDLE_CONFIG;
-        //   m_pages[index]->reset(CONFIG);
-        // } else if (btn == btnbox->button(QDialogButtonBox::Reset)) {
-        //   auto res = QMessageBox::warning(
-        //       this, qAppName(),
-        //       tr("This will reset all settings. Are you sure to continue?"),
-        //       QMessageBox::Yes | QMessageBox::No);
-        //   if (res == QMessageBox::No)
-        //     return;
+    if (button == btnbox->button(QDialogButtonBox::Ok)) {
+        for (auto &page : m_pages) {
+            page->apply();
+        }
+        _dialog->done(1);
+    } else if (button == btnbox->button(QDialogButtonBox::Apply)) {
+        for (auto &page : m_pages) {
+            page->apply();
+        }
+    } else if (button == btnbox->button(QDialogButtonBox::RestoreDefaults)) {
+        for (auto &page : m_pages) {
+            page->reset();
+        }
 
-        //   HANDLE_CONFIG;
-        //   for (auto &page : m_pages) {
-        //     page->reset(CONFIG);
-        //   }
-        // } else if (btn == btnbox->button(QDialogButtonBox::Cancel)) {
-        //   for (auto &page : m_pages) {
-        //     page->cancel();
-        //   }
-        done(0);
+    } else if (button == btnbox->button(QDialogButtonBox::Reset)) {
+        auto res = WingMessageBox::warning(
+            this, qAppName(),
+            tr("This will reset all settings. Are you sure to continue?"),
+            QMessageBox::Yes | QMessageBox::No);
+        if (res == QMessageBox::No)
+            return;
+
+        for (auto &page : m_pages) {
+            page->reset();
+        }
+    } else if (button == btnbox->button(QDialogButtonBox::Cancel)) {
+        for (auto &page : m_pages) {
+            page->cancel();
+        }
+        _dialog->done(0);
     }
-}
-
-void SettingDialog::showEvent(QShowEvent *event) {
-    FramelessDialog::showEvent(event);
-    // if (m_pages[ui->listWidget->currentRow()]->blocked()) {
-    //   pmb::PopMsgBox::instance().enqueueMessage(
-    //       qAppName(), tr("Please stop scanning task to edit"), Qt::black);
-    // }
 }
