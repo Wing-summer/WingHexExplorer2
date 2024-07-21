@@ -23,6 +23,8 @@ public:
 private slots:
     void on_buttonBox_clicked(QAbstractButton *button);
 
+    void on_listWidget_currentRowChanged(int currentRow);
+
 private:
     Ui::SettingDialog *ui;
     QList<WingHex::SettingPage *> m_pages;

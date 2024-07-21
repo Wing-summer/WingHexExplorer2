@@ -27,6 +27,9 @@ const auto EDITOR_DECSTRLIMIT = QStringLiteral("editor.decstrlimit");
 const auto EDITOR_RECENTFILES = QStringLiteral("editor.recentfiles");
 const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 
+const auto SCRIPT_USRDISPLAYCATS = QStringLiteral("script.usrDisplayCats");
+const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
+
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
     load();
@@ -66,7 +69,15 @@ void SettingManager::load() {
         READ_CONFIG(EDITOR_RECENTFILES, QStringList()).toStringList();
     m_recentScriptFiles =
         READ_CONFIG(SCRIPT_RECENTFILES, QStringList()).toStringList();
+    m_usrDisplayCats =
+        READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
+    m_sysDisplayCats =
+        READ_CONFIG(SCRIPT_SYSDISPLAYCATS, QStringList()).toStringList();
 }
+
+QStringList SettingManager::sysDisplayCats() const { return m_sysDisplayCats; }
+
+QStringList SettingManager::usrDisplayCats() const { return m_usrDisplayCats; }
 
 QStringList SettingManager::recentScriptFiles() const {
     return m_recentScriptFiles;

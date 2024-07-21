@@ -6,34 +6,34 @@
 #define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"
 #define WARNLOG(msg) "<font color=\"gold\">" + msg + "</font>"
 
-Logger *Logger::instance = new Logger;
+Logger *Logger::ins = new Logger;
 
 Logger::Logger(QObject *parent) : QObject(parent) {}
 
-Logger *Logger::getInstance() { return instance; }
+Logger *Logger::instance() { return ins; }
 
-void Logger::_log(const QString &message) { emit instance->log(message); }
+void Logger::_log(const QString &message) { emit ins->log(message); }
 
 void Logger::warning(const QString &message) {
     qlogger::QLogger::warn(message);
     QString str = message;
-    emit instance->log(WARNLOG(tr("[Warn]") + str.replace("\n", "<br />")));
+    emit ins->log(WARNLOG(tr("[Warn]") + str.replace("\n", "<br />")));
 }
 
 void Logger::info(const QString &message) {
     qlogger::QLogger::info(message);
     QString str = message;
-    emit instance->log(INFOLOG(tr("[Info]") + str.replace("\n", "<br />")));
+    emit ins->log(INFOLOG(tr("[Info]") + str.replace("\n", "<br />")));
 }
 
 void Logger::debug(const QString &message) {
     qlogger::QLogger::debug(message);
     QString str = message;
-    emit instance->log(tr("[Debug]") + str.replace("\n", "<br />"));
+    emit ins->log(tr("[Debug]") + str.replace("\n", "<br />"));
 }
 
 void Logger::critical(const QString &message) {
     qlogger::QLogger::error(message);
     QString str = message;
-    emit instance->log(ERRLOG(tr("[Error]") + str.replace("\n", "<br />")));
+    emit ins->log(ERRLOG(tr("[Error]") + str.replace("\n", "<br />")));
 }

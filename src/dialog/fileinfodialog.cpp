@@ -8,8 +8,6 @@
 #include <QPicture>
 #include <QTextBrowser>
 
-#define TextBroswerWidth 400
-
 FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
                                QWidget *parent)
     : FramelessDialog(parent) {
@@ -38,7 +36,7 @@ FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
         b->append(tr("FilePath:") + finfo.filePath());
         b->append(tr("FileSize:") + Utilities::processBytesCount(finfo.size()));
         b->append(tr("Mime:") + t.name());
-        b->append(tr("Md5:") + Utilities::getMd5(filename).toHex());
+        b->append(tr("Md5:") + Utilities::getMd5(filename).toHex().toUpper());
         b->append(
             tr("FileBirthTime:") +
             finfo.fileTime(QFile::FileTime::FileBirthTime).toString(dfmt));
@@ -50,9 +48,6 @@ FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
                       .toString(dfmt));
         b->append(tr("LastRead:") + finfo.lastRead().toString(dfmt));
         b->append(tr("LastMod:") + finfo.lastModified().toString(dfmt));
-
-        auto w = b->fontMetrics().horizontalAdvance('=');
-        b->append(QString(TextBroswerWidth / w, '='));
         b->append(tr("IsRegionFile:") +
                   (isRegionFile ? tr("True") : tr("False")));
     }
@@ -74,12 +69,12 @@ FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
 
     layout->addWidget(l, Qt::AlignHCenter);
     layout->addSpacing(10);
-    b->setFixedSize(TextBroswerWidth, 300);
     layout->addWidget(b);
 
     buildUpContent(widget);
 
     setWindowTitle(tr("FileInfo"));
+    this->resize(500, 450);
 }
 
 FileInfoDialog::~FileInfoDialog() {}

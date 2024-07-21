@@ -119,40 +119,12 @@ public:
 
     static QByteArray getMd5(QString filename) {
         QFile sourceFile(filename);
-        qint64 fileSize = sourceFile.size();
-        const qint64 bufferSize = 10240;
-
         if (sourceFile.open(QIODevice::ReadOnly)) {
-            char buffer[bufferSize];
-            int bytesRead;
-            auto readSize = qMin(fileSize, bufferSize);
-
-#if QT_DEPRECATED_SINCE(6, 4)
-            QByteArray hash;
-#else
             QCryptographicHash hash(QCryptographicHash::Md5);
-#endif
-
-            while (readSize > 0 &&
-                   (bytesRead = int(sourceFile.read(buffer, readSize))) > 0) {
-                fileSize -= bytesRead;
-#if QT_DEPRECATED_SINCE(6, 4)
-                hash +=
-                    QCryptographicHash::hash(buffer, QCryptographicHash::Md5);
-#else
-                hash.addData(buffer, bytesRead);
-#endif
-                readSize = qMin(fileSize, bufferSize);
+            if (hash.addData(&sourceFile)) {
+                return hash.result();
             }
-
-            sourceFile.close();
-#if QT_DEPRECATED_SINCE(6, 4)
-            return hash;
-#else
-            return hash.result();
-#endif
         }
-
         return QByteArray();
     }
 

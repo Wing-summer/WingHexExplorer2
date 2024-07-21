@@ -36,8 +36,8 @@ endif()
 
 add_subdirectory(QLogger)
 add_subdirectory(QHexView)
+add_subdirectory(QScintilla)
 add_subdirectory(Qt-Advanced-Docking-System)
-add_subdirectory(QCodeEditor)
 add_subdirectory(AngelScript/angelscript/projects/cmake)
 
 set(QAPPLICATION_CLASS
@@ -181,7 +181,8 @@ set(PROJECT_SOURCES
 
 add_custom_target(
   build-time-make-directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory
-                                        "${CMAKE_BINARY_DIR}/lang")
+                                        "${CMAKE_BINARY_DIR}/lang"
+                                        "${CMAKE_BINARY_DIR}/scripts")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   if(WIN32)
@@ -211,7 +212,7 @@ target_link_libraries(
           SingleApplication::SingleApplication
           QHexView
           QLoggerLib
-          QCodeEditor
+          QScintilla
           angelscript
           qt${QT_VERSION_MAJOR}advanceddocking)
 

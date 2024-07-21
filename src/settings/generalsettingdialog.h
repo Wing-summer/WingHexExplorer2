@@ -13,7 +13,7 @@ class GeneralSettingDialog : public WingHex::SettingPage {
 
 public:
     explicit GeneralSettingDialog(QWidget *parent = nullptr);
-    ~GeneralSettingDialog();
+    virtual ~GeneralSettingDialog() override;
 
 signals:
     void sigAppfontSizeChanged(int v);

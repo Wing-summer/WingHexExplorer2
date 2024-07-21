@@ -66,6 +66,8 @@ public slots:
 
     qsizetype copyLimit() const;
 
+    void connectDocSavedFlag();
+
 private:
     template <typename Func>
     inline void newAction(QMenu *parent, const QString &icon,
@@ -107,6 +109,7 @@ private:
     QHexView *m_hex = nullptr;
     QList<QWidget *> m_others;
     QString m_fileName;
+    QString m_rawName;
     QByteArray m_md5;
 
     QMenu *m_hexMenu = nullptr;

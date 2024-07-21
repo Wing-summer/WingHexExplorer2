@@ -10,7 +10,7 @@
 #include "../class/recentfilemanager.h"
 #include "../class/scriptmachine.h"
 #include "../utilities.h"
-#include "internal/QCodeEditor.hpp"
+#include "Qsci/qsciscintilla.h"
 
 #include <QListWidget>
 #include <QShortcut>
@@ -109,11 +109,9 @@ private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
 
-    QMap<QCodeEditor *, QString> m_files;
+    QMap<QsciScintilla *, QString> m_files;
     QList<QWidget *> m_editStateWidgets;
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
-
-    QSyntaxStyle *m_editorStyle = nullptr;
 
     QMenu *m_recentMenu = nullptr;
     RecentFileManager *m_recentmanager = nullptr;

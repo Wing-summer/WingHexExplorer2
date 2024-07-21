@@ -91,6 +91,7 @@
 1. 本软件源代码不得私自应用于闭源商业用途，除非你完整开源（GPL协议的要求）。如果要将软件仓库的代码商用闭源，必须找我购买商业授权签订合同，价格私聊，非诚勿扰。
 2. 本软件是用我的业余时间编写，不能及时修复 Bug 或者提供技术支持，请见谅。
 3. 本人非计算机专业，编写程序难免有 Bug ，欢迎提交 PR 。
+4. 无论在什么时候有疑问，请详细阅读 Wiki 。
 
 ### issue 前必读
 
@@ -132,35 +133,27 @@
 
 &emsp;&emsp;起初我打算使用`QHexEdit2`作为十六进制编辑器为基础进行开发，该组件虽然轻松打开超大文件，但是它的编辑功能能用是能用，但有很多大大小小的 Bug ，我还逐一修了修，但发现仅仅我的力量和时间是杯水车薪。然后我找到了`QHexView`，也就是上面所属的组件，但它有一个致命的缺陷，无法打开超大文件，被我放弃掉了，后来我尝试用了它，发现开发者在开发改组件是下了足够大的功夫的，编辑十分流畅。最近看到`QHexView`贡献者们想搞一个`QHexView 5.0`，对代码进行了重构，但并没有实现任何功能，差不多是个空空的框架，不过从接口看出更强大的易用性，这个是原组件所不具有的，这花费我比较多的时间来阅读源代码，并向外扩展接口以适应我的开发需求。
 
-&emsp;&emsp;然后我想，既然`QHexEdit2`具有强大的打开文件的能力，而`QHexView`不具备，但它具有强大的编辑界面，于是乎，我移植`QHexEdit2`的打开超大文件的代码到`QHexView`当中，并做好了适配和功能增强。原仓库的链接： <https://github.com/Simsys/qhexedit2> ，它的协议为`GPL`。
+&emsp;&emsp;然后我想，既然`QHexEdit2`具有强大的打开文件的能力，而`QHexView`不具备，但它具有强大的编辑界面，于是乎，我移植`QHexEdit2`的打开超大文件的代码到`QHexView`当中，并做好了适配和功能增强。原仓库的链接： <https://github.com/Simsys/qhexedit2> ，原协议为`GPL`。
 
 #### Qt-Advanced-Docking-System
 
 &emsp;&emsp;QT Advanced Docking System 允许你使用完整的特色窗户对接系统创建可自定义的布局，类似于许多流行的集成开发环境（IDE）（例如Visual Studio）。该库功能十分强大，为了增强软件的易用性，就采用这个库。我略微修改了构建文件以方便直接嵌入到我的项目当中，也方便更新组件。
 
-&emsp;&emsp;原仓库的链接： <https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System> ，它的协议为`LGPL`。
+&emsp;&emsp;原仓库的链接： <https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System> ，原协议为`LGPL`。
 
-#### QCodeEditor
+#### QScintilla
 
-&emsp;&emsp;一个代码编辑器，功能强大。该项目用来以文本模式下阅读文件和开发以及调试针对羽云编辑器的`AngelScript`脚本。我增加了该组件对`QT6`的支持，后续也会添加断点栏来增强该组件。
-
-&emsp;&emsp;本人对改组件的改进如下：
-
-1. 添加断点支持
-2. 升级兼容 QT6
-3. 添加代码折叠支持
-
-&emsp;&emsp;原仓库的链接： <https://github.com/Megaxela/QCodeEditor> ，它的协议为`MIT`。
+&emsp;&emsp;一个文本编辑器，功能强大。该项目用来开发以及调试针对羽云编辑器的`AngelScript`脚本。我添加了`CMake`编译方式并且只保留核心部分，移除了自带的词法分析器，因为对我这个项目来说重点不是这个。官方链接： <https://riverbankcomputing.com/software/qscintilla/intro> ，协议细节请看官方文档。
 
 #### QWingRibbon
 
 &emsp;&emsp;虽然这个带`Wing`这个玩意，但并不是完全是我写的，这个是基于`Qt-Ribbon-Widget`魔改来的。之所以换名字是改动的有点多，打算自己维护一个自己的用来给该编辑器使用的。
 
-&emsp;&emsp;原仓库的链接： <https://github.com/martijnkoopman/Qt-Ribbon-Widget> ，它的协议为`LGPL`。
+&emsp;&emsp;原仓库的链接： <https://github.com/martijnkoopman/Qt-Ribbon-Widget> ，原协议为`LGPL`。
 
 #### QLogger
 
-&emsp;&emsp;一个日志框架，原仓库的链接： <https://github.com/sfadiga/QLogger> ，它的协议为`MIT`。
+&emsp;&emsp;一个日志框架，原仓库的链接： <https://github.com/sfadiga/QLogger> ，原协议为`MIT`。
 
 #### SingleApplication
 
@@ -168,19 +161,19 @@
 
 #### QPathEdit
 
-&emsp;&emsp;以优化和简单的方式获取本地文件和文件夹路径的一个 QT 组件。原仓库的链接： <https://github.com/Skycoder42/QPathEdit> ，它的协议为`MIT`。
+&emsp;&emsp;以优化和简单的方式获取本地文件和文件夹路径的一个 QT 组件。原仓库的链接： <https://github.com/Skycoder42/QPathEdit> ，原协议为`MIT`。
 
 #### Qt-FramelessWindow
 
 &emsp;&emsp;这个无边框窗体是本项目界面的基础。我对其进行了一些修改，修复了窗体使用缩放的问题以及增加了标题栏的系统响应，以及最大化后窗体大小的处理优化和`QT6`的代码进一步兼容。然后做了一些封装之后，成为本软件的所有界面组成。
 
-&emsp;&emsp;原仓库的链接： <https://github.com/winsoft666/Qt-FramelessWindow> ，它的协议为`Apache v2.0`。
+&emsp;&emsp;原仓库的链接： <https://github.com/winsoft666/Qt-FramelessWindow> ，原协议为`Apache v2.0`。
 
 #### AngelScript
 
 &emsp;&emsp;让 C++ 成为具有惊人功能的脚本语言！这个功能强大，且不需要外部依赖，直接编译进去就行，不像之前版本必须携带一个`Python`解释器和库，不太方便编译。
 
-&emsp;&emsp;我只找到了镜像库： <https://github.com/IngwiePhoenix/AngelScript> ，它的协议为`zlib license`，还是比较宽松的开源协议。
+&emsp;&emsp;我只找到了镜像库： <https://github.com/IngwiePhoenix/AngelScript> ，原协议为`zlib license`，还是比较宽松的开源协议。
 
 #### 主题
 
@@ -188,7 +181,10 @@
 
 ## 效果图
 
-> 暂时没有
+<p align="center">
+<img alt="效果图" src="screenshot.png">
+<p align="center">羽云十六进制浏览器</p>
+</p>
 
 ## 捐助
 
@@ -209,7 +205,13 @@
 
 ## 有关仓库
 
-&emsp;&emsp;目前只有 Github： <https://github.com/Wing-summer/WingHexExplorer2> 。
+&emsp;&emsp;目前我认定的官方仓库 Github： <https://github.com/Wing-summer/WingHexExplorer2> 。
+
+&emsp;&emsp;当然还有其他仓库作为国内用户镜像仓库（会滞后更新）：
+
+- Gitee：<https://gitee.com/wing-cloud/WingHexExplorer2>
+- Gitlink：<https://www.gitlink.org.cn/wingsummer/WingHexExplorer2>
+- GitCode：不考虑，因为“窃码”，读书人的事叫偷吗？！
 
 ## WIKI
 

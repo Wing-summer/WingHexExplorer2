@@ -160,7 +160,10 @@ QHexView::QHexView(QWidget *parent)
         QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false, this)));
 }
 
-QHexView::~QHexView() { m_document.clear(); }
+QHexView::~QHexView() {
+    m_document->disconnect();
+    m_document.clear();
+}
 
 QSharedPointer<QHexDocument> QHexView::document() { return m_document; }
 

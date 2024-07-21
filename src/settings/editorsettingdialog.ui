@@ -70,7 +70,14 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QSpinBox" name="sbFontSize"/>
+       <widget class="QSpinBox" name="sbFontSize">
+        <property name="minimum">
+         <number>10</number>
+        </property>
+        <property name="maximum">
+         <number>50</number>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
@@ -80,7 +87,11 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="sbFindMax"/>
+       <widget class="QSpinBox" name="sbFindMax">
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
@@ -93,6 +104,9 @@
        <widget class="QSpinBox" name="sbCopyLimit">
         <property name="suffix">
          <string notr="true"> MB</string>
+        </property>
+        <property name="maximum">
+         <number>1024</number>
         </property>
        </widget>
       </item>
@@ -107,6 +121,9 @@
        <widget class="QSpinBox" name="sbDecStrLimit">
         <property name="suffix">
          <string notr="true"> MB</string>
+        </property>
+        <property name="maximum">
+         <number>1024</number>
         </property>
        </widget>
       </item>

@@ -72,8 +72,8 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
 
     m_regionStop = new QSpinBox(regionw);
     m_regionStop->setRange(start, stop);
-    connect(m_regionStart, &QSpinBox::valueChanged, m_regionStop,
-            &QSpinBox::setMinimum);
+    connect(m_regionStart, QOverload<int>::of(&QSpinBox::valueChanged),
+            m_regionStop, &QSpinBox::setMinimum);
     m_regionStop->setEnabled(false);
     m_regionStop->setValue(qMin(start + 1024 * 1024, stop));
     m_regionStop->setDisplayIntegerBase(16);

@@ -20,7 +20,9 @@ SettingDialog::SettingDialog(QWidget *parent)
             page->cancel();
         }
     });
-    _dialog->setResizeable(true, this->contentsMargins());
+    _dialog->setResizeable(true, _dialog->contentsMargins());
+    _dialog->resize(800, 700);
+    Utilities::moveToCenter(_dialog);
 }
 
 SettingDialog::~SettingDialog() { delete ui; }
@@ -89,4 +91,8 @@ void SettingDialog::on_buttonBox_clicked(QAbstractButton *button) {
         }
         _dialog->done(0);
     }
+}
+
+void SettingDialog::on_listWidget_currentRowChanged(int currentRow) {
+    ui->stackedWidget->setCurrentWidget(m_pages.at(currentRow));
 }

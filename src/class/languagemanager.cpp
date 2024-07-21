@@ -12,8 +12,6 @@ LanguageManager &LanguageManager::instance() {
 }
 
 LanguageManager::LanguageManager() {
-    m_langMap = {{"zh_CN", tr("Chinese(Simplified)")}};
-
     auto langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
 
@@ -30,14 +28,13 @@ LanguageManager::LanguageManager() {
             continue;
         }
         m_langs << lang;
-        m_langsDisplay << m_langMap.value(lang, lang);
         m_localeMap.insert(lang, locale);
     }
 
     auto defaultLocale = QLocale::system();
     bool found = false;
     for (auto p = m_localeMap.begin(); p != m_localeMap.end(); ++p) {
-#if QT_DEPRECATED_SINCE(6, 0)
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
         if (p->territory() == defaultLocale.territory() &&
 #else
         if (p->country() == defaultLocale.country() &&
@@ -53,7 +50,7 @@ LanguageManager::LanguageManager() {
     }
 
     auto qtPath =
-#if QT_DEPRECATED_SINCE(6, 0)
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
         QLibraryInfo::path(QLibraryInfo::TranslationsPath);
 #else
         QLibraryInfo::location(QLibraryInfo::TranslationsPath);
@@ -77,6 +74,12 @@ LanguageManager::LanguageManager() {
     if (translator->load(defaultLocale, QStringLiteral("ws"),
                          QStringLiteral("_"), langPath)) {
         qApp->installTranslator(translator);
+    }
+
+    m_langMap = {{"zh_CN", tr("Chinese(Simplified)")}};
+
+    for (auto &lang : m_langs) {
+        m_langsDisplay << m_langMap.value(lang, lang);
     }
 }
 
