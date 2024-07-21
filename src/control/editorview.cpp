@@ -101,9 +101,11 @@ void EditorView::switchView(qindextype index) {
 
 void EditorView::newFile(size_t index) {
     auto istr = QString::number(index);
-    this->setWindowTitle(tr("Untitled") + istr);
+    m_rawName = tr("Untitled") + istr;
+    this->setWindowTitle(m_rawName);
     m_docType = DocumentType::File;
     m_fileName = QStringLiteral(":") + istr;
+    connectDocSavedFlag();
 }
 
 ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
@@ -150,9 +152,11 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
 
         m_docType = DocumentType::File;
         m_fileName = filename;
+        m_rawName = info.fileName();
         p->setDocSaved();
 
-        this->setWindowTitle(info.fileName());
+        this->setWindowTitle(m_rawName);
+        connectDocSavedFlag();
 
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
@@ -260,8 +264,10 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
 
         p->setDocSaved();
         m_fileName = filename;
+        m_rawName = info.fileName();
 
-        this->setWindowTitle(info.fileName());
+        this->setWindowTitle(m_rawName);
+        connectDocSavedFlag();
 
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
@@ -324,8 +330,10 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 
         p->setDocSaved();
         m_fileName = driver;
+        m_rawName = info.fileName();
 
-        this->setWindowTitle(info.fileName());
+        this->setWindowTitle(m_rawName);
+        connectDocSavedFlag();
 
         auto tab = this->tabWidget();
         tab->setIcon(ICONRES(QStringLiteral("opendriver")));
@@ -403,6 +411,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
         if (!isExport) {
             m_fileName = fileName;
+            m_rawName = QFileInfo(fileName).fileName();
             doc->setDocSaved();
         }
 
@@ -455,6 +464,17 @@ void EditorView::setCopyLimit(qsizetype sizeMB) {
 
 qsizetype EditorView::copyLimit() const {
     return m_hex->document()->copyLimit();
+}
+
+void EditorView::connectDocSavedFlag() {
+    connect(m_hex->document().get(), &QHexDocument::documentSaved, this,
+            [=](bool b) {
+                if (b) {
+                    this->setWindowTitle(m_rawName);
+                } else {
+                    this->setWindowTitle(QStringLiteral("* ") + m_rawName);
+                }
+            });
 }
 
 void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {

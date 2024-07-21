@@ -3,6 +3,7 @@
 #include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "../class/logger.h"
 #include "../class/qkeysequences.h"
+#include "../class/scriptmanager.h"
 #include "../class/settingmanager.h"
 #include "../class/wingfiledialog.h"
 #include "../class/winginputdialog.h"
@@ -45,10 +46,6 @@
 constexpr auto EMPTY_FUNC = [] {};
 
 MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
-    // launch logging system
-    connect(Logger::getInstance(), &Logger::log, m_logbrowser,
-            &QTextBrowser::append);
-
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
@@ -105,6 +102,10 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
                             : ICONRES(QStringLiteral("icon")));
     this->setMinimumSize(800, 600);
 
+    // launch logging system
+    connect(Logger::instance(), &Logger::log, m_logbrowser,
+            &QTextBrowser::append);
+
     // launch plugin system
     auto &plg = PluginSystem::instance();
     plg.setMainWindow(this);
@@ -122,6 +123,8 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 }
 
 MainWindow::~MainWindow() {
+    Logger::instance()->disconnect();
+
     Q_ASSERT(_numsitem);
     delete[] _numsitem;
     if (_findresitem)
@@ -161,6 +164,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::DragPreviewHasWindowFrame, false);
     CDockManager::setConfigFlag(CDockManager::EqualSplitOnInsertion, true);
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
+                                true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
@@ -496,6 +501,9 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("opendriver"), tr("OpenD"),
                         &MainWindow::on_opendriver);
 
+        addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
+                        EMPTY_FUNC, {}, m_recentMenu);
+
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
                                               tr("Reload"),
                                               &MainWindow::on_reload);
@@ -816,7 +824,7 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
         pannel->setVisible(false);
         connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
-        // TODO
+        m_scriptDBGroup = pannel;
     }
 
     return tab;
@@ -883,7 +891,41 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 void MainWindow::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
+    connect(generalPage, &GeneralSettingDialog::sigAppfontSizeChanged, this,
+            [=](int v) {});
+    connect(generalPage, &GeneralSettingDialog::sigAppFontFamilyChanged, this,
+            [=](const QString &font) {
+
+            });
+    connect(generalPage, &GeneralSettingDialog::sigThemeIDChanged, this,
+            [=](int id) {
+
+            });
+    connect(generalPage, &GeneralSettingDialog::sigDefaultWinStateChanged, this,
+            [=](Qt::WindowState s) {
+
+            });
     m_setdialog->addPage(generalPage);
+
+    auto editorPage = new EditorSettingDialog(m_setdialog);
+    m_setdialog->addPage(editorPage);
+    auto plgPage = new PluginSettingDialog(m_setdialog);
+    m_setdialog->addPage(plgPage);
+
+    auto scriptPage = new ScriptSettingDialog(m_setdialog);
+    // TODO
+    for (auto &cat : scriptPage->sysDisplayCats()) {
+        addPannelAction(m_scriptDBGroup,
+                        ICONRES(QStringLiteral("scriptfolder")), cat,
+                        EMPTY_FUNC, {}, new QMenu(this));
+    }
+    for (auto &cat : scriptPage->usrDisplayCats()) {
+        addPannelAction(m_scriptDBGroup,
+                        ICONRES(QStringLiteral("scriptfolderusr")), cat,
+                        EMPTY_FUNC, {}, new QMenu(this));
+    }
+    m_setdialog->addPage(scriptPage);
+
     m_setdialog->build();
 }
 
@@ -1027,17 +1069,31 @@ void MainWindow::on_save() {
     }
 
     auto res = editor->save(workspace);
+restart:
     if (res == ErrFile::Permission) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
         return;
     }
-    if (res == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
-        editor->raise();
-        editor->setFocus();
+    if (res == ErrFile::SourceFileChanged) {
+        if (WingMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
+                                    QMessageBox::Yes | QMessageBox::No) ==
+            QMessageBox::Yes) {
+            res = editor->save(workspace);
+            goto restart;
+        } else {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                         tr("SaveSourceFileError"));
+        }
+    }
+    if (res == ErrFile::WorkSpaceUnSaved) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                     tr("SaveWSError"));
         return;
-    };
+    }
+
     m_views[editor] = workspace;
+    Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                 tr("SaveSuccessfully"));
 }
 
 void MainWindow::on_saveas() {
@@ -1231,7 +1287,7 @@ void MainWindow::on_findfile() {
     auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     FindDialog *fd =
-        new FindDialog(editor->isBigFile(), 0, hexeditor->documentBytes(),
+        new FindDialog(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
                        hexeditor->selectlength() > 1, this);
     if (fd->exec()) {
         auto th = QThread::create([this, fd, hexeditor] {
@@ -1268,7 +1324,7 @@ void MainWindow::on_findfile() {
                     m_findresult->setRowCount(0);
                 }
                 auto len = results.length();
-                _findresitem = new QTableWidgetItem[len][3];
+                _findresitem = new QTableWidgetItem[size_t(len)][3];
                 auto filename = m_curEditor.loadAcquire()->fileName();
                 for (auto i = 0; i < len; i++) {
                     auto frow = _findresitem[i];
@@ -1276,7 +1332,8 @@ void MainWindow::on_findfile() {
                     frow[0].setText(filename);
                     frow[0].setData(Qt::UserRole, results.at(i));
                     frow[1].setText(QString::number(
-                        results.at(i) + hexeditor->addressBase(), 16));
+                        quintptr(results.at(i)) + hexeditor->addressBase(),
+                        16));
                     frow[2].setText(res.toHex(' '));
                     m_findresult->setItem(i, 0, frow);
                     m_findresult->setItem(i, 1, frow + 1);
@@ -1879,7 +1936,7 @@ void MainWindow::on_loadplg() {
 
 void MainWindow::on_setting_general() { m_setdialog->showConfig(); }
 
-void MainWindow::on_setting_plugin() {}
+void MainWindow::on_setting_plugin() { m_setdialog->showConfig(2); }
 
 void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 
@@ -1970,11 +2027,23 @@ void MainWindow::connectEditorView(EditorView *editor) {
             &MainWindow::on_pastefile);
 
     connect(editor, &EditorView::closeRequested, this, [this] {
-        // TODO add save check
-
         auto editor = qobject_cast<EditorView *>(sender());
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
+
+        auto hexeditor = editor->hexEditor();
+        if (!hexeditor->isSaved()) {
+            auto ret = m_isOnClosing ? QMessageBox::Yes : this->saveRequest();
+            if (ret == QMessageBox::Cancel) {
+                return;
+            } else if (ret == QMessageBox::Yes) {
+                this->on_save();
+                if (!hexeditor->isSaved()) {
+                    return;
+                }
+            }
+        }
+
         auto file = editor->fileName();
         if (!file.isEmpty()) {
             m_openedFileNames.removeOne(file);
@@ -2257,12 +2326,57 @@ void MainWindow::loadCacheIcon() {
     _pixCannotOver = QPixmap(NAMEICONRES("unover"));
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
-    if (!m_views.isEmpty()) {
-        // TODO
+QMessageBox::StandardButton MainWindow::saveRequest() {
+    auto ret = WingMessageBox::warning(this, qAppName(), tr("ConfirmSave"),
+                                       QMessageBox::Yes | QMessageBox::No |
+                                           QMessageBox::Cancel);
+    return ret;
+}
 
+void MainWindow::closeEvent(QCloseEvent *event) {
+    m_isOnClosing = true;
+    if (!m_views.isEmpty()) {
+        QStringList unSavedFiles;
+        QList<EditorView *> need2CloseView;
         for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); p++) {
-            (*p)->close();
+            auto editor = *p;
+            bool saved = editor->hexEditor()->isSaved();
+            if (saved) {
+                need2CloseView << editor;
+            } else {
+                unSavedFiles << editor->fileName();
+            }
+        }
+
+        for (auto &view : need2CloseView) {
+            emit view->closeRequested();
+        }
+
+        auto ret =
+            unSavedFiles.isEmpty()
+                ? QMessageBox::No
+                : WingMessageBox::warning(
+                      this, qAppName(), tr("ConfirmAPPSave"),
+                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        if (ret == QMessageBox::Yes) {
+            for (auto &p : m_views.keys()) {
+                emit p->closeRequested();
+            }
+            m_isOnClosing = false;
+            if (!m_views.isEmpty()) {
+                event->ignore();
+                return;
+            }
+        } else if (ret == QMessageBox::No) {
+            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); p++) {
+                auto editor = *p;
+                editor->closeDockWidget(); // force close
+            }
+            m_isOnClosing = false;
+        } else {
+            event->ignore();
+            m_isOnClosing = false;
+            return;
         }
     }
 

@@ -7,7 +7,7 @@ class Logger : public QObject {
     Q_OBJECT
 public:
     explicit Logger(QObject *parent = nullptr);
-    static Logger *getInstance();
+    static Logger *instance();
 
 signals:
     void log(const QString &message);
@@ -23,7 +23,7 @@ public slots:
     static void critical(const QString &message);
 
 private:
-    static Logger *instance;
+    static Logger *ins;
 };
 
 #endif // LOGGER_H

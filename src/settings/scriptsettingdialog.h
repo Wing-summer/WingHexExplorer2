@@ -13,10 +13,17 @@ class ScriptSettingDialog : public WingHex::SettingPage {
 
 public:
     explicit ScriptSettingDialog(QWidget *parent = nullptr);
-    ~ScriptSettingDialog();
+    virtual ~ScriptSettingDialog() override;
 
 private:
     Ui::ScriptSettingDialog *ui;
+
+    QStringList m_usrDisplayCats;
+    QStringList m_sysDisplayCats;
+
+private:
+    void loadData();
+    void addCatagory(const QString &cat, bool isUser, bool checked);
 
     // SettingPage interface
 public:
@@ -26,6 +33,13 @@ public:
     virtual void apply() override;
     virtual void reset() override;
     virtual void cancel() override;
+
+    QStringList usrDisplayCats() const;
+
+    QStringList sysDisplayCats() const;
+
+private slots:
+    void on_btnRefresh_clicked();
 };
 
 #endif // SCRIPTSETTINGDIALOG_H

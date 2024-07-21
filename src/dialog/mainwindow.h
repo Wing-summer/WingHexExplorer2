@@ -205,6 +205,7 @@ private:
     void enableDirverLimit(bool isdriver);
 
     void loadCacheIcon();
+    QMessageBox::StandardButton saveRequest();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -432,6 +433,8 @@ private:
     RecentFileManager *m_recentmanager = nullptr;
     QMenu *m_recentMenu = nullptr;
 
+    RibbonButtonGroup *m_scriptDBGroup = nullptr;
+
     //===================================================
 
     QLabel *m_lblloc = nullptr;
@@ -479,5 +482,6 @@ private:
     QString m_lastusedpath;
     bool m_islittle = true;
     bool m_enablePlugin = true;
+    bool m_isOnClosing = false;
 };
 #endif // MAINWINDOW_H

@@ -12,7 +12,8 @@ public:
         APP = 1,
         PLUGIN = 2,
         EDITOR = 4,
-        ALL = APP | PLUGIN | EDITOR
+        SCRIPT = 8,
+        ALL = APP | PLUGIN | EDITOR | SCRIPT
     };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)
 public:
@@ -77,6 +78,10 @@ public:
     QStringList recentScriptFiles() const;
     void setRecentScriptFiles(const QStringList &newRecentScriptFiles);
 
+    QStringList usrDisplayCats() const;
+
+    QStringList sysDisplayCats() const;
+
 private:
     SettingManager();
 
@@ -105,6 +110,9 @@ private:
     QStringList m_recentHexFiles;
     QStringList m_recentScriptFiles;
     Qt::WindowState m_defaultWinState = Qt::WindowMaximized;
+
+    QStringList m_usrDisplayCats;
+    QStringList m_sysDisplayCats;
 
 private:
     QFont _defaultFont;

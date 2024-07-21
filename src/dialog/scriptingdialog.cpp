@@ -5,7 +5,6 @@
 #include "../class/settingmanager.h"
 #include "../class/skinmanager.h"
 #include "../class/wingmessagebox.h"
-#include "internal/QSyntaxStyle.hpp"
 #include "sponsordialog.h"
 
 #include <QDesktopServices>
@@ -13,21 +12,17 @@
 #include <QPicture>
 #include <QStatusBar>
 
+#include "Qsci/qscilexercpp.h"
+
 ScriptingDialog::ScriptingDialog(QWidget *parent)
     : FramelessMainWindow(parent) {
     auto &skin = SkinManager::instance();
     switch (skin.currentTheme()) {
     case SkinManager::Theme::Dark: {
-        auto darkstyle = new QSyntaxStyle(this);
-        QFile file(":/qcodeedit/drakula.xml");
-        if (file.open(QFile::ReadOnly)) {
-            darkstyle->load(file.readAll());
-            file.close();
-        }
-        m_editorStyle = darkstyle;
+
     } break;
     case SkinManager::Theme::Light:
-        m_editorStyle = QSyntaxStyle::defaultStyle();
+
         break;
     }
 
@@ -81,6 +76,10 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
 
         addPannelAction(pannel, QStringLiteral("open"), tr("OpenF"),
                         &ScriptingDialog::on_openfile, QKeySequence::Open);
+
+        addPannelAction(
+            pannel, QStringLiteral("recent"), tr("RecentFiles"), [] {}, {},
+            m_recentMenu);
 
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
                                               tr("Reload"),
@@ -265,8 +264,10 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
 
     // only for test
     auto dw = new ads::CDockWidget("Test");
-    auto ce = new QCodeEditor(this);
-    ce->setSyntaxStyle(m_editorStyle);
+    auto ce = new QsciScintilla(this);
+    ce->setLexer(new QsciLexerCPP(ce));
+    // ce->setSyntaxStyle(m_editorStyle);
+
     dw->setWidget(ce);
 
     m_dock->addDockWidget(ads::CenterDockWidgetArea, dw, m_editorViewArea);

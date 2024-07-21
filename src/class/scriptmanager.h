@@ -1,32 +1,27 @@
 #ifndef SCRIPTMANAGER_H
 #define SCRIPTMANAGER_H
 
+#include <QFileSystemWatcher>
 #include <QObject>
 #include <iostream>
+
+class callback_streambuf;
 
 class ScriptManager : public QObject {
     Q_OBJECT
 
-private:
-    class callback_streambuf : public std::streambuf {
-    public:
-        callback_streambuf(
-            std::function<void(char const *, std::streamsize)> callback)
-            : callback(callback) {}
-
-    protected:
-        std::streamsize xsputn(char_type const *s,
-                               std::streamsize count) override {
-            callback(s, count);
-            return count;
-        }
-
-    private:
-        std::function<void(char const *, std::streamsize)> callback;
-    };
-
 public:
     static ScriptManager &instance();
+
+    QString userScriptPath() const;
+
+    QString systemScriptPath() const;
+
+    QStringList usrScriptsDbCats() const;
+
+    QStringList sysScriptsDbCats() const;
+
+    void refresh();
 
 public:
     enum class STD_OUTPUT { STD_OUT, STD_ERROR };
@@ -50,6 +45,12 @@ private:
 
     std::streambuf *std_out = nullptr;
     std::streambuf *std_err = nullptr;
+
+    QFileSystemWatcher *m_watcher;
+    QString m_sysScriptsPath;
+    QString m_usrScriptsPath;
+    QStringList m_usrScriptsDbCats;
+    QStringList m_sysScriptsDbCats;
 };
 
 #endif // SCRIPTMANAGER_H

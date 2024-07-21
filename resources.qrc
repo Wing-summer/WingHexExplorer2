@@ -87,12 +87,10 @@
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
         <file alias="README.md">src/README.md</file>
-        <file>images/dat.png</file>
+        <file>images/recent.png</file>
+        <file>images/scriptfolderusr.png</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>
-    </qresource>
-    <qresource prefix="/qcodeedit">
-        <file alias="drakula.xml">src/drakula.xml</file>
     </qresource>
 </RCC>

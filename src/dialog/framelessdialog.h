@@ -9,7 +9,7 @@ class FramelessDialog : public FramelessWindowBase {
     Q_OBJECT
 public:
     FramelessDialog(QWidget *parent = nullptr);
-    virtual ~FramelessDialog();
+    virtual ~FramelessDialog() override;
 
     void buildUpContent(QWidget *content);
 
