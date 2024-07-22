@@ -5,7 +5,7 @@
 #include <QMainWindow>
 #include <QSpinBox>
 
-#include "../../QPathEdit/qpathedit.h"
+#include "QPathEdit/qpathedit.h"
 #include "framelessdialog.h"
 
 struct RegionFileResult {

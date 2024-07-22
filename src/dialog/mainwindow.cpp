@@ -1,15 +1,6 @@
 #include "mainwindow.h"
 
-#include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-#include "../class/logger.h"
-#include "../class/qkeysequences.h"
-#include "../class/scriptmanager.h"
-#include "../class/settingmanager.h"
-#include "../class/wingfiledialog.h"
-#include "../class/winginputdialog.h"
-#include "../class/wingmessagebox.h"
-#include "../control/toast.h"
-#include "../plugin/pluginsystem.h"
+#include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "aboutsoftwaredialog.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
@@ -18,11 +9,19 @@
 #include "metadialog.h"
 #include "openregiondialog.h"
 #include "sponsordialog.h"
-
-#include "../settings/editorsettingdialog.h"
-#include "../settings/generalsettingdialog.h"
-#include "../settings/pluginsettingdialog.h"
-#include "../settings/scriptsettingdialog.h"
+#include "src/class/logger.h"
+#include "src/class/qkeysequences.h"
+#include "src/class/scriptmanager.h"
+#include "src/class/settingmanager.h"
+#include "src/class/wingfiledialog.h"
+#include "src/class/winginputdialog.h"
+#include "src/class/wingmessagebox.h"
+#include "src/control/toast.h"
+#include "src/plugin/pluginsystem.h"
+#include "src/settings/editorsettingdialog.h"
+#include "src/settings/generalsettingdialog.h"
+#include "src/settings/pluginsettingdialog.h"
+#include "src/settings/scriptsettingdialog.h"
 
 #include <QAction>
 #include <QActionGroup>
@@ -727,14 +726,29 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                                 addPannelAction(pannel, QStringLiteral("file"),
                                                 tr("Editor"), EMPTY_FUNC, {},
                                                 new QMenu(this)));
+        auto edwins = new QMenu(this);
+        edwins->addAction(newAction(QStringLiteral("file"), tr("Hex"), [this] {
+            if (m_curEditor == nullptr) {
+                return;
+            }
+            auto editor = m_curEditor.loadAcquire();
+            editor->switchView(-1);
+        }));
+        m_toolBtneditors.insert(ToolButtonIndex::EDITOR_WINS,
+                                addPannelAction(pannel, QStringLiteral("win"),
+                                                tr("View"), EMPTY_FUNC, {},
+                                                edwins));
         m_toolBtneditors.insert(
             ToolButtonIndex::TOOL_VIEWS,
             addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
                             EMPTY_FUNC, {}, new QMenu(this)));
+
         m_toolBtneditors.insert(ToolButtonIndex::PLUGIN_VIEWS,
                                 addPannelAction(pannel, QStringLiteral("edit"),
                                                 tr("Plugin"), EMPTY_FUNC, {},
                                                 new QMenu(this)));
+        m_editStateWidgets << m_toolBtneditors.value(
+            ToolButtonIndex::EDITOR_WINS);
     }
 
     {
@@ -1286,89 +1300,40 @@ void MainWindow::on_findfile() {
 
     auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
-    FindDialog *fd =
-        new FindDialog(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
-                       hexeditor->selectlength() > 1, this);
-    if (fd->exec()) {
-        auto th = QThread::create([this, fd, hexeditor] {
-            if (m_findMutex.tryLock(3000)) {
-                FindDialog::Result sd;
-                auto res = fd->getResult(sd);
-                auto d = hexeditor->document();
-                QList<qsizetype> results;
-                if (d == nullptr)
-                    return;
-                qsizetype begin, end;
-                switch (sd.dir) {
-                case SearchDirection::Foreword: {
-                    begin = 0;
-                    end = hexeditor->currentOffset();
-                } break;
-                case SearchDirection::Backword: {
-                    begin = hexeditor->currentOffset();
-                    end = -1;
-                } break;
-                case SearchDirection::Selection: {
-                    auto cur = hexeditor->document()->cursor();
-                    begin = cur->selectionStart().offset();
-                    end = cur->selectionEnd().offset();
-                } break;
-                default: {
-                    begin = -1;
-                    end = -1;
-                } break;
+    FindDialog fd(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
+                  hexeditor->selectlength() > 1, this);
+    if (fd.exec()) {
+        FindDialog::Result r;
+        auto res = fd.getResult(r);
+        ExecAsync<EditorView::FindError>(
+            [this, r, res]() -> EditorView::FindError {
+                return m_curEditor.loadAcquire()->find(res, r, this->_findmax);
+            },
+            [this](EditorView::FindError err) {
+                switch (err) {
+                case EditorView::FindError::Success:
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
+                                 tr("FindFininish"));
+                    break;
+                case EditorView::FindError::Busy:
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
+                                 tr("FindFininishBusy"));
+                    break;
+                case EditorView::FindError::MayOutOfRange:
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
+                                 tr("MayTooMuchFindResult"));
+                    break;
                 }
-                d->findAllBytes(begin, end, res, results, _findmax);
-                if (_findresitem) {
-                    delete[] _findresitem;
-                    m_findresult->setRowCount(0);
-                }
-                auto len = results.length();
-                _findresitem = new QTableWidgetItem[size_t(len)][3];
-                auto filename = m_curEditor.loadAcquire()->fileName();
-                for (auto i = 0; i < len; i++) {
-                    auto frow = _findresitem[i];
-                    m_findresult->insertRow(i);
-                    frow[0].setText(filename);
-                    frow[0].setData(Qt::UserRole, results.at(i));
-                    frow[1].setText(QString::number(
-                        quintptr(results.at(i)) + hexeditor->addressBase(),
-                        16));
-                    frow[2].setText(res.toHex(' '));
-                    m_findresult->setItem(i, 0, frow);
-                    m_findresult->setItem(i, 1, frow + 1);
-                    m_findresult->setItem(i, 2, frow + 2);
-                }
-
-                if (len == _findmax) {
-                    _findres = 1;
-                } else {
-                    _findres = -1;
-                }
-            } else {
-                _findres = 0;
-            }
-        });
-        connect(th, &QThread::finished, this, [this, fd, th] {
-            if (_findres > 0) {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                             tr("TooMuchFindResult"));
-            } else if (_findres < 0) {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                             tr("FindFininish"));
-            } else {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("find")),
-                             tr("FindFininishError"));
-            }
-            delete fd;
-            delete th;
-            m_findMutex.unlock();
-        });
-        th->start();
+            });
     }
 }
 
-void MainWindow::on_gotoline() {}
+void MainWindow::on_gotoline() {
+    if (m_curEditor == nullptr) {
+        return;
+    }
+    m_curEditor.loadAcquire()->triggerGoto();
+}
 
 void MainWindow::on_encoding() {
     if (m_curEditor == nullptr) {

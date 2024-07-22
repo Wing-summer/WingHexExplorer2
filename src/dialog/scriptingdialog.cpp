@@ -1,11 +1,11 @@
 #include "scriptingdialog.h"
-#include "../../QWingRibbon/ribbontabcontent.h"
-#include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-#include "../class/qkeysequences.h"
-#include "../class/settingmanager.h"
-#include "../class/skinmanager.h"
-#include "../class/wingmessagebox.h"
+#include "QWingRibbon/ribbontabcontent.h"
+#include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "sponsordialog.h"
+#include "src/class/qkeysequences.h"
+#include "src/class/settingmanager.h"
+#include "src/class/skinmanager.h"
+#include "src/class/wingmessagebox.h"
 
 #include <QDesktopServices>
 #include <QPainter>
@@ -223,6 +223,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::DragPreviewHasWindowFrame, false);
     CDockManager::setConfigFlag(CDockManager::EqualSplitOnInsertion, true);
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
+                                true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
@@ -265,7 +267,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     // only for test
     auto dw = new ads::CDockWidget("Test");
     auto ce = new QsciScintilla(this);
-    ce->setLexer(new QsciLexerCPP(ce));
+    // ce->setLexer(new QsciLexerCPP(ce));
     // ce->setSyntaxStyle(m_editorStyle);
 
     dw->setWidget(ce);

@@ -1,5 +1,5 @@
 #include "fileinfodialog.h"
-#include "../utilities.h"
+#include "src/utilities.h"
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -31,6 +31,9 @@ FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
         auto t = db.mimeTypeForFile(filename);
         auto ico = t.iconName();
         icon = QIcon::fromTheme(ico, QIcon(ico));
+        if (icon.isNull()) {
+            icon = this->style()->standardIcon(QStyle::SP_FileIcon);
+        }
         QFileInfo finfo(filename);
         b->append(tr("FileName:") + finfo.fileName());
         b->append(tr("FilePath:") + finfo.filePath());

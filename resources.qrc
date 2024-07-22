@@ -63,6 +63,7 @@
         <file>images/pro.png</file>
         <file>images/qt.png</file>
         <file>images/readonly.png</file>
+        <file>images/recent.png</file>
         <file>images/redo.png</file>
         <file>images/reload.png</file>
         <file>images/save.png</file>
@@ -71,6 +72,7 @@
         <file>images/savesel.png</file>
         <file>images/script.png</file>
         <file>images/scriptfolder.png</file>
+        <file>images/scriptfolderusr.png</file>
         <file>images/setting.png</file>
         <file>images/settingplugin.png</file>
         <file>images/soft.png</file>
@@ -87,8 +89,6 @@
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
         <file alias="README.md">src/README.md</file>
-        <file>images/recent.png</file>
-        <file>images/scriptfolderusr.png</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>

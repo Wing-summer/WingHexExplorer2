@@ -1,8 +1,8 @@
 #include "pluginsystem.h"
-#include "../../Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-#include "../class/logger.h"
-#include "../control/toast.h"
-#include "../dialog/mainwindow.h"
+#include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "src/class/logger.h"
+#include "src/control/toast.h"
+#include "src/dialog/mainwindow.h"
 
 #include <QDir>
 #include <QFileInfoList>

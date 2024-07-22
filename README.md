@@ -9,7 +9,7 @@
     - [QHexView](#qhexview)
     - [QHexEdit2](#qhexedit2)
     - [Qt-Advanced-Docking-System](#qt-advanced-docking-system)
-    - [QCodeEditor](#qcodeeditor)
+    - [QScintilla](#qscintilla)
     - [QWingRibbon](#qwingribbon)
     - [QLogger](#qlogger)
     - [SingleApplication](#singleapplication)

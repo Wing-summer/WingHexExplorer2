@@ -34,9 +34,7 @@ public:
     QSharedPointer<QHexDocument> document();
     QHexRenderer *renderer();
 
-    // note: you should delete it manually
-    void setDocument(const QSharedPointer<QHexDocument> &document,
-                     bool keepSignal = false);
+    void setDocument(const QSharedPointer<QHexDocument> &document);
 
     /*=============================*/
     // added by wingsummer

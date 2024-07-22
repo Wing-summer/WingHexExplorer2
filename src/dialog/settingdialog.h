@@ -1,8 +1,8 @@
 #ifndef SETTINGDIALOG_H
 #define SETTINGDIALOG_H
 
-#include "../plugin/settingpage.h"
 #include "framelessdialog.h"
+#include "src/plugin/settingpage.h"
 #include <QAbstractButton>
 
 namespace Ui {

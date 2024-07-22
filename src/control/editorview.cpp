@@ -1,15 +1,15 @@
 #include "editorview.h"
 
-#include "../../QHexView/document/buffer/qfilebuffer.h"
-#include "../../QHexView/document/buffer/qfileregionbuffer.h"
-#include "../../QHexView/document/buffer/qmemorybuffer.h"
-#include "../../Qt-Advanced-Docking-System/src/DockWidgetTab.h"
-#include "../class/eventfilter.h"
-#include "../class/qkeysequences.h"
-#include "../class/workspacemanager.h"
-#include "../dialog/fileinfodialog.h"
-#include "../plugin/pluginsystem.h"
-#include "../utilities.h"
+#include "QHexView/document/buffer/qfilebuffer.h"
+#include "QHexView/document/buffer/qfileregionbuffer.h"
+#include "QHexView/document/buffer/qmemorybuffer.h"
+#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
+#include "src/class/eventfilter.h"
+#include "src/class/qkeysequences.h"
+#include "src/class/workspacemanager.h"
+#include "src/dialog/fileinfodialog.h"
+#include "src/plugin/pluginsystem.h"
+#include "src/utilities.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -28,8 +28,22 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     m_stack = new QStackedWidget(this);
     this->setWidget(m_stack);
 
+    m_hexContainer = new QWidget(m_stack);
+    auto hexLayout = new QVBoxLayout(m_hexContainer);
+    hexLayout->setSpacing(0);
+    hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView;
-    m_stack->addWidget(m_hex);
+    hexLayout->addWidget(m_hex);
+    m_goto = new GotoWidget(this);
+    connect(m_goto, &GotoWidget::jumpToLine, this,
+            [=](qsizetype pos, bool isline) {
+                auto cur = m_hex->document()->cursor();
+                isline ? cur->moveTo(pos, 0) : cur->moveTo(pos);
+            });
+    hexLayout->addWidget(m_goto);
+    m_goto->hide();
+
+    m_stack->addWidget(m_hexContainer);
 
     auto efilter = new EventFilter(QEvent::MouseButtonPress, this->tabWidget());
     connect(efilter, &EventFilter::eventTriggered, this,
@@ -82,7 +96,13 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     connect(m_hex, &QHexView::customContextMenuRequested, this,
             &EditorView::on_hexeditor_customContextMenuRequested);
 
-    m_stack->setCurrentWidget(m_hex);
+    m_stack->setCurrentWidget(m_hexContainer);
+}
+
+EditorView::~EditorView() {
+    if (_findresitem) {
+        delete[] _findresitem;
+    }
 }
 
 void EditorView::registerView(QWidget *view) {
@@ -92,11 +112,67 @@ void EditorView::registerView(QWidget *view) {
 
 void EditorView::switchView(qindextype index) {
     if (index < 0) {
-        m_stack->setCurrentWidget(qobject_cast<QWidget *>(m_hex));
+        m_stack->setCurrentWidget(m_hex);
     } else {
         m_stack->setCurrentWidget(m_others.at(index));
     }
     emit viewChanged(index);
+}
+
+EditorView::FindError EditorView::find(const QByteArray &data,
+                                       const FindDialog::Result &result,
+                                       qsizetype findMaxCount) {
+    if (m_findMutex.tryLock(3000)) {
+        auto d = m_hex->document();
+        QList<qsizetype> results;
+        qsizetype begin, end;
+        switch (result.dir) {
+        case SearchDirection::Foreword: {
+            begin = 0;
+            end = m_hex->currentOffset();
+        } break;
+        case SearchDirection::Backword: {
+            begin = m_hex->currentOffset();
+            end = -1;
+        } break;
+        case SearchDirection::Selection: {
+            auto cur = m_hex->document()->cursor();
+            begin = cur->selectionStart().offset();
+            end = cur->selectionEnd().offset();
+        } break;
+        default: {
+            begin = -1;
+            end = -1;
+        } break;
+        }
+        d->findAllBytes(begin, end, data, results, findMaxCount);
+        if (_findresitem) {
+            delete[] _findresitem;
+        }
+        auto len = results.length();
+        _findresitem = new QTableWidgetItem[size_t(len)][2];
+
+        for (auto i = 0; i < len; i++) {
+            auto frow = _findresitem[i];
+            frow[0].setText(QString::number(
+                quintptr(results.at(i)) + m_hex->addressBase(), 16));
+            frow[1].setText(data.toHex(' '));
+        }
+
+        if (len == findMaxCount) {
+            return FindError::MayOutOfRange;
+        } else {
+            return FindError::Success;
+        }
+    } else {
+        return FindError::Busy;
+    }
+}
+
+void EditorView::triggerGoto() {
+    m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
+                        m_hex->currentOffset(), m_hex->documentBytes(),
+                        int(m_hex->documentLines()));
 }
 
 void EditorView::newFile(size_t index) {
@@ -490,6 +566,8 @@ bool EditorView::isNewFile() const {
 bool EditorView::isBigFile() const {
     return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
 }
+
+const QTableWidgetItem (*EditorView::findResult())[2] { return _findresitem; }
 
 bool EditorView::isWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);

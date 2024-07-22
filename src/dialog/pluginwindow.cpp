@@ -1,5 +1,5 @@
 #include "pluginwindow.h"
-#include "../utilities.h"
+#include "src/utilities.h"
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QPushButton>

@@ -170,23 +170,26 @@ QSharedPointer<QHexDocument> QHexView::document() { return m_document; }
 QHexRenderer *QHexView::renderer() { return m_renderer; }
 
 // modified by wingsummer
-void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
-                           bool keepSignal) {
-
+void QHexView::setDocument(const QSharedPointer<QHexDocument> &document) {
     // modified by wingsummer
-    if (m_renderer)
-        m_renderer->deleteLater();
+    if (!document) {
+        return;
+    }
 
-    //  if (m_document)
-    //    m_document->deleteLater();
-
-    if (m_document && !keepSignal) {
+    if (m_document) {
         m_document->disconnect();
         m_document->cursor()->disconnect();
+        m_document.clear();
     }
 
     m_document = document;
-    m_renderer = new QHexRenderer(m_document.data(), this->fontMetrics(), this);
+
+    if (m_renderer) {
+        m_renderer->switchDoc(m_document.get());
+    } else {
+        m_renderer =
+            new QHexRenderer(m_document.data(), this->fontMetrics(), this);
+    }
 
     establishSignal(m_document.data());
 

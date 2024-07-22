@@ -1,8 +1,8 @@
 #include "settingmanager.h"
 #include "setting.h"
 
-#include "../class/skinmanager.h"
-#include "../utilities.h"
+#include "src/class/skinmanager.h"
+#include "src/utilities.h"
 #include <QMetaEnum>
 
 const auto DOCK_LAYOUT = QStringLiteral("dock.layout");

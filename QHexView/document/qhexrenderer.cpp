@@ -57,11 +57,19 @@ void QHexRenderer::SetEncoding(QString encoding) {
         new EncodingChangeCommand(this, m_encoding, encoding));
 }
 
+void QHexRenderer::switchDoc(QHexDocument *doc) {
+    if (doc)
+        m_document = doc;
+}
+
 bool QHexRenderer::setEncoding(const QString &encoding) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     auto enc = encoding;
-    if (encoding.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive) == 0) {
-        enc = QStringLiteral("ISO-8859-1");
+    if (encoding.compare(QStringLiteral("ISO-8859-1"), Qt::CaseInsensitive) ==
+        0) {
+        m_encoding = QStringLiteral("ASCII");
+        m_document->documentChanged();
+        return true;
     }
     if (QStringConverter::encodingForName(enc.toUtf8())) {
 #else

@@ -1,7 +1,7 @@
 #ifndef FINDDIALOG_H
 #define FINDDIALOG_H
 
-#include "../QHexView/qhexview.h"
+#include "QHexView/qhexview.h"
 #include "framelessdialog.h"
 
 #include <QComboBox>
@@ -17,8 +17,8 @@ class FindDialog : public FramelessDialog {
 public:
     struct Result {
         SearchDirection dir = SearchDirection::None;
-        int start = 0;
-        int stop = 0;
+        qsizetype start = 0;
+        qsizetype stop = 0;
     };
 
 public:
