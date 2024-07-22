@@ -1,8 +1,8 @@
 #include "metadialog.h"
-#include "../control/toast.h"
-#include "../utilities.h"
+#include "src/control/toast.h"
+#include "src/utilities.h"
 
-#include "../class/wingcolordialog.h"
+#include "src/class/wingcolordialog.h"
 #include <QDialogButtonBox>
 #include <QShortcut>
 

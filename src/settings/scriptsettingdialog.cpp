@@ -1,7 +1,7 @@
 #include "scriptsettingdialog.h"
-#include "../class/scriptmanager.h"
-#include "../class/settingmanager.h"
-#include "../utilities.h"
+#include "src/class/scriptmanager.h"
+#include "src/class/settingmanager.h"
+#include "src/utilities.h"
 #include "ui_scriptsettingdialog.h"
 
 #include <QListWidgetItem>

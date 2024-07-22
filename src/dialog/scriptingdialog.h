@@ -3,14 +3,14 @@
 
 #include "framelessmainwindow.h"
 
-#include "../../QWingRibbon/ribbonbuttongroup.h"
-#include "../../Qt-Advanced-Docking-System/src/DockManager.h"
-#include "../../Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "../QWingRibbon/ribbon.h"
-#include "../class/recentfilemanager.h"
-#include "../class/scriptmachine.h"
-#include "../utilities.h"
+#include "QWingRibbon/ribbon.h"
+#include "QWingRibbon/ribbonbuttongroup.h"
 #include "Qsci/qsciscintilla.h"
+#include "Qt-Advanced-Docking-System/src/DockManager.h"
+#include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "src/class/recentfilemanager.h"
+#include "src/class/scriptmachine.h"
+#include "src/utilities.h"
 
 #include <QListWidget>
 #include <QShortcut>

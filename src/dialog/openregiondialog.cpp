@@ -1,6 +1,6 @@
 #include "openregiondialog.h"
-#include "../control/toast.h"
-#include "../utilities.h"
+#include "src/control/toast.h"
+#include "src/utilities.h"
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileInfo>

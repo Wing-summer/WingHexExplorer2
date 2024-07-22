@@ -4,11 +4,15 @@
 #include <QObject>
 #include <QStackedWidget>
 
-#include "../../QHexView/qhexview.h"
-#include "../../Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "../define.h"
-#include "../plugin/iwingplugin.h"
-#include "../utilities.h"
+#include "QHexView/qhexview.h"
+#include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "gotowidget.h"
+#include "src/define.h"
+#include "src/dialog/finddialog.h"
+#include "src/plugin/iwingplugin.h"
+#include "src/utilities.h"
+
+#include <QTableWidgetItem>
 
 using namespace WingHex;
 
@@ -18,8 +22,11 @@ class EditorView : public ads::CDockWidget {
 public:
     enum class DocumentType { InValid, File, RegionFile, Driver };
 
+    enum class FindError { Success, Busy, MayOutOfRange };
+
 public:
     explicit EditorView(bool enableplugin, QWidget *parent = nullptr);
+    virtual ~EditorView() override;
 
     QString fileName() const;
 
@@ -29,29 +36,29 @@ public:
 
     bool isBigFile() const;
 
+    const QTableWidgetItem (*findResult())[2];
+
 public slots:
     void registerView(QWidget *view);
-
     void switchView(qindextype index);
 
-    void newFile(size_t index);
+    FindError find(const QByteArray &data, const FindDialog::Result &result,
+                   qsizetype findMaxCount);
 
+    void triggerGoto();
+
+    void newFile(size_t index);
     ErrFile openFile(const QString &filename,
                      const QString &encoding = QString());
-
     ErrFile openWorkSpace(const QString &filename,
                           const QString &encoding = QString());
-
     ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length,
                            const QString &encoding = QString());
-
     ErrFile openDriver(const QString &driver,
                        const QString &encoding = QString());
-
     ErrFile save(const QString &workSpaceName, const QString &path = QString(),
                  bool isExport = false, bool forceWorkSpace = false,
                  bool ignoreMd5 = false);
-
     ErrFile reload();
 
     bool change2WorkSpace() const;
@@ -106,11 +113,16 @@ signals:
 
 private:
     QStackedWidget *m_stack = nullptr;
+    GotoWidget *m_goto = nullptr;
+    QWidget *m_hexContainer = nullptr;
     QHexView *m_hex = nullptr;
     QList<QWidget *> m_others;
     QString m_fileName;
     QString m_rawName;
     QByteArray m_md5;
+
+    QMutex m_findMutex;
+    QTableWidgetItem (*_findresitem)[2] = {nullptr};
 
     QMenu *m_hexMenu = nullptr;
 

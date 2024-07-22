@@ -1,8 +1,8 @@
 #ifndef FRAMELESSWINDOWBASE_H
 #define FRAMELESSWINDOWBASE_H
 
-#include "../control/titlebar.h"
-#include "../framelesswindow.h"
+#include "src/control/titlebar.h"
+#include "src/framelesswindow.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>

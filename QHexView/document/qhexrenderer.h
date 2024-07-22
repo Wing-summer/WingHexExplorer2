@@ -43,6 +43,8 @@ public:
     bool setEncoding(const QString &encoding);
     void SetEncoding(QString encoding);
 
+    void switchDoc(QHexDocument *doc);
+
     /*==============================*/
 
 public:

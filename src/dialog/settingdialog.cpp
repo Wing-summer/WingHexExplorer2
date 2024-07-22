@@ -1,9 +1,9 @@
 #include "settingdialog.h"
 #include "ui_settingdialog.h"
 
-#include "../class/wingmessagebox.h"
-#include "../dbghelper.h"
-#include "../utilities.h"
+#include "src/class/wingmessagebox.h"
+#include "src/dbghelper.h"
+#include "src/utilities.h"
 
 #include <QApplication>
 #include <QPushButton>

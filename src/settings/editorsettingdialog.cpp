@@ -1,8 +1,8 @@
 #include "editorsettingdialog.h"
 #include "ui_editorsettingdialog.h"
 
-#include "../class/settingmanager.h"
-#include "../utilities.h"
+#include "src/class/settingmanager.h"
+#include "src/utilities.h"
 
 EditorSettingDialog::EditorSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::EditorSettingDialog) {

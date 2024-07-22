@@ -1,7 +1,7 @@
 #ifndef PLUGINSYSTEM_H
 #define PLUGINSYSTEM_H
 
-#include "../plugin/iwingplugin.h"
+#include "src/plugin/iwingplugin.h"
 #include <QDockWidget>
 #include <QHash>
 #include <QList>

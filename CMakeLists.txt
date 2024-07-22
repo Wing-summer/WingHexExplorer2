@@ -98,7 +98,10 @@ set(CONTROL_SRC
     src/control/toast.h
     src/control/toast.cpp
     src/control/scriptingconsole.cpp
-    src/control/scriptingconsole.h)
+    src/control/scriptingconsole.h
+    src/control/gotowidget.h
+    src/control/gotowidget.cpp
+    src/control/gotowidget.ui)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -155,9 +158,11 @@ set(TS_FILES lang/ws_zh_CN.ts)
 
 set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+  qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES} OPTIONS
+                         -no-obsolete)
 elseif(${QT_VERSION_MAJOR} EQUAL 6)
-  qt6_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+  qt6_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES} OPTIONS
+                         -no-obsolete)
 else()
   message(FATAL_ERROR "Unsupported QT version")
 endif()
@@ -180,9 +185,9 @@ set(PROJECT_SOURCES
     resources.qrc)
 
 add_custom_target(
-  build-time-make-directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory
-                                        "${CMAKE_BINARY_DIR}/lang"
-                                        "${CMAKE_BINARY_DIR}/scripts")
+  build-time-make-directory ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lang"
+          "${CMAKE_BINARY_DIR}/scripts")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   if(WIN32)
@@ -209,6 +214,8 @@ endif()
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
   PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+          Qt${QT_VERSION_MAJOR}::Network
+          Qt${QT_VERSION_MAJOR}::Concurrent
           SingleApplication::SingleApplication
           QHexView
           QLoggerLib
@@ -216,10 +223,8 @@ target_link_libraries(
           angelscript
           qt${QT_VERSION_MAJOR}advanceddocking)
 
-target_link_libraries(
-  ${CMAKE_PROJECT_NAME}
-  PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network
-          Qt${QT_VERSION_MAJOR}::Concurrent)
+target_include_directories(${CMAKE_PROJECT_NAME}
+                           PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1. If
 # you are developing for iOS or macOS you should consider setting an explicit,

@@ -14,17 +14,17 @@
 #include <QTreeWidget>
 #include <QtConcurrent/QtConcurrent>
 
-#include "../../QWingRibbon/ribbon.h"
-#include "../../QWingRibbon/ribbonbuttongroup.h"
-#include "../../QWingRibbon/ribbontabcontent.h"
-#include "../../Qt-Advanced-Docking-System/src/DockManager.h"
-#include "../../Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "../class/recentfilemanager.h"
-#include "../class/wingprogressdialog.h"
-#include "../control/editorview.h"
-#include "../control/scriptingconsole.h"
-#include "../plugin/iwingplugin.h"
-#include "../utilities.h"
+#include "QWingRibbon/ribbon.h"
+#include "QWingRibbon/ribbonbuttongroup.h"
+#include "QWingRibbon/ribbontabcontent.h"
+#include "Qt-Advanced-Docking-System/src/DockManager.h"
+#include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "src/class/recentfilemanager.h"
+#include "src/class/wingprogressdialog.h"
+#include "src/control/editorview.h"
+#include "src/control/scriptingconsole.h"
+#include "src/plugin/iwingplugin.h"
+#include "src/utilities.h"
 
 #include "scriptingdialog.h"
 #include "settingdialog.h"
@@ -54,6 +54,7 @@ private:
         EDITOR_VIEWS,
         TOOL_VIEWS,
         PLUGIN_VIEWS,
+        EDITOR_WINS,
         UNDO_ACTION,
         REDO_ACTION
     };
@@ -391,8 +392,6 @@ private:
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
     QTableWidget *m_varshowtable = nullptr;
-
-    QMutex m_findMutex;
 
     QTableWidget *m_findresult = nullptr;
     QTableWidget *m_numshowtable = nullptr;

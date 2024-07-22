@@ -1,5 +1,5 @@
 #include "framelesswindowbase.h"
-#include "../class/eventfilter.h"
+#include "src/class/eventfilter.h"
 
 #include <QLineEdit>
 #include <QPainter>
