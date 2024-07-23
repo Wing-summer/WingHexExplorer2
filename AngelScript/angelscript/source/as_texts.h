@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -50,7 +50,8 @@
 
 #define TXT_BOTH_MUST_BE_SAME                     "Can't find unambiguous implicit conversion to make both expressions have the same type"
 #define TXT_BOTH_CONDITIONS_MUST_CALL_CONSTRUCTOR "Both conditions must call constructor"
-#define TEXT_BASE_DOESNT_HAVE_DEF_CONSTR          "Base class doesn't have default constructor. Make explicit call to base constructor"
+#define TXT_BASE_DOESNT_HAVE_DEF_CONSTR           "Base class doesn't have default constructor. Make explicit call to base constructor"
+#define TXT_BASE_DOESNT_HAVE_CPY_CONSTR_OR_DEF_CONSTR  "Base class doesn't have copy constructor or default constructor and assign operator. Make explicit call to base constructor"
 
 #define TXT_CANDIDATES_ARE                         "Candidates are:"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS       "Can't call a constructor in loops"
@@ -58,6 +59,8 @@
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE          "Can't call a constructor multiple times"
 #define TXT_CANNOT_CREATE_DELEGATE                 "Can't create delegate"
 #define TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES "Can't create delegate for types that do not support handles"
+#define TXT_CANNOT_DELETE_NON_AUTO_FUNC            "Cannot flag function that will not be auto generated as deleted"
+#define TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED     "Conflict with explicit declaration of function and deleted function"
 #define TXT_CANNOT_FORM_ARRAY_OF_s                 "Can't form arrays of subtype '%s'"
 #define TXT_CANNOT_IMPLEMENT_SELF                  "Can't implement itself, or another interface that implements this interface"
 #define TXT_CANNOT_INHERIT_FROM_s_FINAL            "Can't inherit from class '%s' marked as final"
@@ -73,6 +76,7 @@
 #define TXT_CHANGE_SIGN                            "Implicit conversion changed sign of value"
 #define TXT_CLASS_CANT_BE_FINAL_AND_ABSTRACT       "A class cannot be both abstract and final"
 #define TXT_COMPILING_s                            "Compiling %s"
+#define TXT_COMPILING_AUTO_s                       "Compiling auto generated %s"
 #define TXT_COMPOUND_ASGN_ON_VALUE_TYPE            "Compound assignments with property accessors on value types are not supported"
 #define TXT_COMPOUND_ASGN_WITH_IDX_PROP            "Compound assignments with indexed property accessors are not supported"
 #define TXT_COMPOUND_ASGN_REQUIRE_GET_SET          "Compound assignments with property accessors require both get and set accessors"
@@ -84,12 +88,13 @@
 #define TXT_DEFAULT_MUST_BE_LAST                    "The default case must be the last one"
 #define TXT_DEF_ARG_MISSING_IN_FUNC_s               "All subsequent parameters after the first default value must have default values in function '%s'"
 #define TXT_DEF_ARG_TYPE_DOESNT_MATCH               "The type of the default argument expression doesn't match the function parameter type"
-#define TXT_DUPLICATE_NAMED_ARG                     "Duplicate named argument"
+#define TXT_DELETED_FUNC_CANT_HAVE_IMPL             "Deleted functions cannot have implementation"
 #define TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s "The method in the derived class must have the same return type as in the base class: '%s'"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM            "The destructor must not have any parameters"
 #define TXT_DESTRUCTOR_s_s_NAME_ERROR               "The name of the destructor '%s::~%s' must be the same as the class"
 #define TXT_DISALLOW_ASSIGN_ON_REF_TYPE             "Value assignment on reference types is not allowed. Did you mean to do a handle assignment?"
 #define TXT_DISALLOW_COMPOUND_ASSIGN_ON_REF_TYPE    "Compound assignment on reference types is not allowed"
+#define TXT_DUPLICATE_NAMED_ARG                     "Duplicate named argument"
 #define TXT_DUPLICATE_SWITCH_CASE                   "Duplicate switch case"
 
 #define TXT_ELSE_WITH_EMPTY_STATEMENT         "Else with empty statement"
@@ -271,7 +276,6 @@
 #define TXT_SWITCH_MUST_BE_INTEGRAL                    "Switch expressions must be integral numbers"
 
 #define TXT_TMPL_s_EXPECTS_d_SUBTYPES          "Template '%s' expects %d sub type(s)"
-#define TXT_TMPL_SUBTYPE_MUST_NOT_BE_READ_ONLY "Template subtype must not be read-only"
 #define TXT_TOO_MANY_JUMP_LABELS               "The function has too many jump labels to handle. Split the function into smaller ones."
 #define TXT_TOO_MANY_VALUES_FOR_LIST           "Too many values to match pattern"
 #define TXT_TYPE_s_CANNOT_BE_REFERENCE         "Type '%s' cannot be a reference"

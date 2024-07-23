@@ -336,7 +336,7 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
             (maxCount > 0 && results.count() >= maxCount)) {
             break;
         }
-        results.append(qsizetype(p));
+        results.append(p);
         p += offset + 1;
     }
 }

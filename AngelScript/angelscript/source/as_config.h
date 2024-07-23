@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -218,6 +218,9 @@
 
 // AS_ARM64
 // Use assembler code for the ARM64/AArch64 CPU family
+
+// AS_RISCV64
+// Use assembler code for the RISC-V 64bit CPU family
 
 // AS_SOFTFP
 // Use to tell compiler that ARM soft-float ABI
@@ -792,14 +795,32 @@
 		#elif (defined(__aarch64__))
 			// The IPhone 5S+ uses an ARM64 processor
 
-			// AngelScript currently doesn't support native calling
-			// for 64bit ARM processors so it's necessary to turn on
-			// portability mode
-			#define AS_MAX_PORTABILITY
+			#define AS_ARM64
 
-			// STDCALL is not available on ARM
 			#undef STDCALL
 			#define STDCALL
+
+			#undef GNU_STYLE_VIRTUAL_METHOD
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+
+			#define HAS_128_BIT_PRIMITIVES
+
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
+			#undef COMPLEX_RETURN_MASK
+			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
 
 		#elif (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
@@ -1026,6 +1047,37 @@
 			// STDCALL is not available on 64bit Linux
 			#undef STDCALL
 			#define STDCALL
+		#elif defined(__riscv)
+			// RISC-V CPU families
+			#if defined(__LP64__)
+				// 64-bit
+				#define AS_RISCV64
+
+				#define GNU_STYLE_VIRTUAL_METHOD
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
+
+				#define HAS_128_BIT_PRIMITIVES
+				#define SPLIT_OBJS_BY_MEMBER_TYPES
+
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+				#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+				#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+				#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+			#else
+				// 32-bit
+				#define AS_MAX_PORTABILITY
+			#endif
+			
+			// STDCALL is not available on RISC-V Linux
+			#undef STDCALL
+			#define STDCALL
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
@@ -1164,6 +1216,17 @@
 			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+		#elif defined(__LP64__) && !defined(__aarch64__)
+			// Android Intel x86_64 (same config as Linux x86_64). Tested with Intel x86_64 Atom System Image.
+			#define AS_X64_GCC
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+			#define HAS_128_BIT_PRIMITIVES
+			#define SPLIT_OBJS_BY_MEMBER_TYPES
+			#define AS_LARGE_OBJS_PASSED_BY_REF
+			#define AS_LARGE_OBJ_MIN_SIZE 5
+			// STDCALL is not available on 64bit Linux
+			#undef STDCALL
+			#define STDCALL
 		#elif defined(__mips__)
 			#define AS_MIPS
 			#undef STDCALL
@@ -1300,7 +1363,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM) && !defined(AS_ARM64) && !defined(AS_X64_MINGW))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM) && !defined(AS_ARM64) && !defined(AS_X64_MINGW) && !defined(AS_RISCV64))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
@@ -1321,7 +1384,7 @@
 
 
 // The assert macro
-#if defined(ANDROID)
+#if defined(ANDROID) || defined(__ANDROID__)
 	#if defined(AS_DEBUG)
 		#include <android/log.h>
 		#include <stdlib.h>

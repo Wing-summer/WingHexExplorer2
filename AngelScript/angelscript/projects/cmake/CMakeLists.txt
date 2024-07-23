@@ -6,32 +6,26 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(AS_NO_EXCEPTIONS "Disable exception handling in script context" OFF)
 
 if(MSVC)
-  set(MSVC_COMPILE_FLAGS
-      "/MP"
-      CACHE STRING "Compiler flags to use with MSVC")
+    set(MSVC_COMPILE_FLAGS "/MP" CACHE STRING "Compiler flags to use with MSVC")
 endif()
 
 if(APPLE)
-  option(BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
+    option(BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
 endif()
 
 file(READ ../../include/angelscript.h ANGELSCRIPT_H)
-string(REGEX MATCH
-             "#define ANGELSCRIPT_VERSION_STRING \"([0-9]*).([0-9]*).([0-9]*)"
-             ANGELSCRIPT_VERSION_REGEX ${ANGELSCRIPT_H})
+string(REGEX MATCH "#define ANGELSCRIPT_VERSION_STRING \"([0-9]*).([0-9]*).([0-9]*)" ANGELSCRIPT_VERSION_REGEX ${ANGELSCRIPT_H})
 set(ANGELSCRIPT_VERSION_MAJOR ${CMAKE_MATCH_1})
 set(ANGELSCRIPT_VERSION_MINOR ${CMAKE_MATCH_2})
 set(ANGELSCRIPT_VERSION_PATCH ${CMAKE_MATCH_3})
-set(PROJECT_VERSION
-    ${ANGELSCRIPT_VERSION_MAJOR}.${ANGELSCRIPT_VERSION_MINOR}.${ANGELSCRIPT_VERSION_PATCH}
-)
+set(PROJECT_VERSION ${ANGELSCRIPT_VERSION_MAJOR}.${ANGELSCRIPT_VERSION_MINOR}.${ANGELSCRIPT_VERSION_PATCH})
 
 set(ARCHFLAGS "${CMAKE_SYSTEM_PROCESSOR}")
-if(APPLE AND NOT IOS)
-  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+if (APPLE AND NOT IOS)
+  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
     set(ARCHFLAGS "aarch64")
-  endif()
-endif()
+  endif ()
+endif ()
 
 message(STATUS "Configuring angelscript ${PROJECT_VERSION}")
 
@@ -41,7 +35,6 @@ file(GLOB_RECURSE ANGELSCRIPT_ADDON_H
      "${CMAKE_CURRENT_SOURCE_DIR}/../../../add_on/*.h")
 file(GLOB_RECURSE ANGELSCRIPT_ADDON_SRC
      "${CMAKE_CURRENT_SOURCE_DIR}/../../../add_on/*.cpp")
-
 set(ANGELSCRIPT_HEADERS
     ../../include/angelscript.h
     ../../source/as_array.h
@@ -71,13 +64,13 @@ set(ANGELSCRIPT_HEADERS
     ../../source/as_scriptobject.h
     ../../source/as_string.h
     ../../source/as_string_util.h
-    ../../source/as_symboltable.h
     ../../source/as_texts.h
     ../../source/as_thread.h
     ../../source/as_tokendef.h
     ../../source/as_tokenizer.h
     ../../source/as_typeinfo.h
-    ../../source/as_variablescope.h)
+    ../../source/as_variablescope.h
+)
 
 set(ANGELSCRIPT_SOURCE
     ../../source/as_atomic.cpp
@@ -112,114 +105,92 @@ set(ANGELSCRIPT_SOURCE
     ../../source/as_thread.cpp
     ../../source/as_tokenizer.cpp
     ../../source/as_typeinfo.cpp
-    ../../source/as_variablescope.cpp)
+    ../../source/as_variablescope.cpp
+)
 
 if(MSVC AND CMAKE_CL_64)
-  enable_language(ASM_MASM)
-  if(CMAKE_ASM_MASM_COMPILER_WORKS)
-    set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE}
-                           ../../source/as_callfunc_x64_msvc_asm.asm)
-  else()
-    message(FATAL ERROR "MSVC x86_64 target requires a working assembler")
-  endif()
+    enable_language(ASM_MASM)
+    if(CMAKE_ASM_MASM_COMPILER_WORKS)
+        set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_x64_msvc_asm.asm)
+    else()
+        message(FATAL ERROR "MSVC x86_64 target requires a working assembler")
+    endif()
 endif()
 
 if(${ARCHFLAGS} MATCHES "^arm")
-  enable_language(ASM)
-  if(CMAKE_ASM_COMPILER_WORKS)
-    set(ANGELSCRIPT_SOURCE
-        ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp
-        ../../source/as_callfunc_arm_gcc.S)
-    set_property(
-      SOURCE ../../source/as_callfunc_arm_gcc.S
-      APPEND
-      PROPERTY COMPILE_FLAGS " -Wa,-mimplicit-it=always")
-  else()
-    message(FATAL ERROR "ARM target requires a working assembler")
-  endif()
+    enable_language(ASM)
+    if(CMAKE_ASM_COMPILER_WORKS)
+        set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp ../../source/as_callfunc_arm_gcc.S)
+        set_property(SOURCE ../../source/as_callfunc_arm_gcc.S APPEND PROPERTY COMPILE_FLAGS " -Wa,-mimplicit-it=always")
+    else()
+        message(FATAL ERROR "ARM target requires a working assembler")
+    endif()
 endif()
 
 if(${ARCHFLAGS} MATCHES "^aarch64")
-  enable_language(ASM)
-  if(CMAKE_ASM_COMPILER_WORKS)
-    if(NOT APPLE)
-      set(ANGELSCRIPT_SOURCE
-          ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm64.cpp
-          ../../source/as_callfunc_arm64_gcc.S)
+    enable_language(ASM)
+    if(CMAKE_ASM_COMPILER_WORKS)
+        if(NOT APPLE)
+            set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm64.cpp ../../source/as_callfunc_arm64_gcc.S)
+        else()
+            set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm64.cpp ../../source/as_callfunc_arm64_xcode.S)
+        endif()
     else()
-      set(ANGELSCRIPT_SOURCE
-          ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm64.cpp
-          ../../source/as_callfunc_arm64_xcode.S)
+        message(FATAL ERROR "ARM target requires a working assembler")
     endif()
-  else()
-    message(FATAL ERROR "ARM target requires a working assembler")
-  endif()
 endif()
 
 if(MSVC)
-  set(CMAKE_DEBUG_POSTFIX "d")
+    set(CMAKE_DEBUG_POSTFIX "d")  
 endif()
 
 if(NOT BUILD_FRAMEWORK)
-  set(ANGELSCRIPT_LIBRARY_NAME angelscript)
+    set(ANGELSCRIPT_LIBRARY_NAME angelscript)
 else()
-  set(ANGELSCRIPT_LIBRARY_NAME Angelscript) # OS X frameworks should have
-                                            # capitalized name
-  set(BUILD_SHARED_LIBS TRUE)
+    set(ANGELSCRIPT_LIBRARY_NAME Angelscript) # OS X frameworks should have capitalized name
+    set(BUILD_SHARED_LIBS TRUE)
 endif()
-set(ANGELSCRIPT_LIBRARY_NAME
-    ${ANGELSCRIPT_LIBRARY_NAME}
-    CACHE STRING "" FORCE)
+set(ANGELSCRIPT_LIBRARY_NAME ${ANGELSCRIPT_LIBRARY_NAME} CACHE STRING "" FORCE)
 
 add_library(
   ${ANGELSCRIPT_LIBRARY_NAME} ${ANGELSCRIPT_SOURCE} ${ANGELSCRIPT_HEADERS}
                               ${ANGELSCRIPT_ADDON_H} ${ANGELSCRIPT_ADDON_SRC})
 
-target_include_directories(
-  ${ANGELSCRIPT_LIBRARY_NAME}
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>")
+target_include_directories(${ANGELSCRIPT_LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>")
 
 if(MSVC)
-  target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME}
-                             PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -D_CRT_SECURE_NO_WARNINGS)    
 endif()
 
-target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME}
-                           PRIVATE -DANGELSCRIPT_EXPORT -D_LIB)
+target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -DANGELSCRIPT_EXPORT -D_LIB)
 
 if(AS_NO_EXCEPTIONS)
-  target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME}
-                             PRIVATE AS_NO_EXCEPTIONS)
+	target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE AS_NO_EXCEPTIONS)
 endif()
 
 # Fix x64 issues on Linux
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64"
-   AND UNIX
-   AND NOT APPLE)
-  target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND UNIX AND NOT APPLE)
+    target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
 endif()
 
-# Don't override the default library output path to avoid conflicts when
-# building for multiple target platforms set(LIBRARY_OUTPUT_PATH
-# ${PROJECT_SOURCE_DIR}/../../lib)
+# Don't override the default library output path to avoid conflicts when building for multiple target platforms
+#set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../lib)
 target_link_libraries(${ANGELSCRIPT_LIBRARY_NAME} Threads::Threads)
 
-set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES VERSION
-                                                             ${PROJECT_VERSION})
+set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 if(BUILD_FRAMEWORK)
-  set_target_properties(
-    ${ANGELSCRIPT_LIBRARY_NAME}
-    PROPERTIES FRAMEWORK TRUE
-               FRAMEWORK_VERSION ${PROJECT_VERSION}
-               MACOSX_FRAMEWORK_IDENTIFIER com.angelcode.Angelscript
-               MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
-               MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
-               XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-               PUBLIC_HEADER ../../include/angelscript.h)
+    set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES
+        FRAMEWORK TRUE
+        FRAMEWORK_VERSION ${PROJECT_VERSION}
+        MACOSX_FRAMEWORK_IDENTIFIER com.angelcode.Angelscript
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
+        XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
+        PUBLIC_HEADER ../../include/angelscript.h
+    )
 endif()
 
 if(MSVC AND MSVC_COMPILE_FLAGS)
-  target_compile_options(${ANGELSCRIPT_LIBRARY_NAME}
-                         PRIVATE "${MSVC_COMPILE_FLAGS}")
+	target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE "${MSVC_COMPILE_FLAGS}")
 endif()

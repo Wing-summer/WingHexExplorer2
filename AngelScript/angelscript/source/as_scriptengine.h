@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2022 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -82,8 +82,8 @@ public:
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
 	// JIT Compiler
-	virtual int SetJITCompiler(asIJITCompiler *compiler);
-	virtual asIJITCompiler *GetJITCompiler() const;
+	virtual int                     SetJITCompiler(asIJITCompilerAbstract *compiler);
+	virtual asIJITCompilerAbstract *GetJITCompiler() const;
 
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
@@ -99,7 +99,7 @@ public:
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const;
 
 	// Type registration
-	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
+	virtual int            RegisterObjectType(const char *obj, int byteSize, asQWORD flags);
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset = 0, bool isCompositeIndirect = false);
 	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false);
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false);
@@ -148,6 +148,7 @@ public:
 	virtual asIScriptModule *GetModuleByIndex(asUINT index) const;
 
 	// Script functions
+	virtual int                GetLastFunctionId() const;
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
 
 	// Type identification
@@ -428,7 +429,7 @@ public:
 	void                       *msgCallbackObj;
 	struct preMessage_t
 	{
-		preMessage_t() { isSet = false; }
+		preMessage_t() { isSet = false; r = c = 0; }
 		bool      isSet;
 		asCString message;
 		asCString scriptname;
@@ -437,7 +438,7 @@ public:
 	} preMessage;
 
 	// JIt compilation
-	asIJITCompiler             *jitCompiler;
+	asIJITCompilerAbstract *jitCompiler;
 
 	// Namespaces
 	// These are shared between all entities and are
@@ -489,7 +490,7 @@ public:
 		bool   expandDefaultArrayToTemplate;
 		bool   autoGarbageCollect;
 		bool   disallowGlobalVars;
-		bool   alwaysImplDefaultConstruct;
+		asUINT alwaysImplDefaultConstruct;
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
 		// TODO: 3.0.0: Remove the alterSyntaxNamedArgs
@@ -506,6 +507,10 @@ public:
 		asUINT maxCallStackSize;
 		bool   ignoreDuplicateSharedIntf;
 		bool   noDebugOutput;
+		bool   disableScriptClassGC;
+		asUINT jitInterfaceVersion;
+		asUINT alwaysImplDefaultCopy;
+		asUINT alwaysImplDefaultCopyConstruct;
 	} ep;
 
 	// Callbacks

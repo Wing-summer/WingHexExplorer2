@@ -322,7 +322,7 @@
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="180"/>
+        <location filename="../src/control/editorview.cpp" line="170"/>
         <source>Untitled</source>
         <translation>未命名</translation>
     </message>
@@ -622,7 +622,7 @@
     <message>
         <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="32"/>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="33"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="141"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="134"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
@@ -631,14 +631,14 @@
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="28"/>
         <location filename="../Qt-Advanced-Docking-System/examples/sidebar/MainWindow.ui" line="75"/>
         <location filename="../Qt-Advanced-Docking-System/examples/simple/MainWindow.ui" line="28"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="144"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="739"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="137"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="731"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
         <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="44"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="152"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="145"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
@@ -699,759 +699,754 @@
         <translation>选长：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="143"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="136"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="146"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="139"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="148"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="748"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="872"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="141"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="740"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="864"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="150"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="143"/>
         <source>Setting</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="244"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="819"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="237"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="811"/>
         <source>Log</source>
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="254"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="247"/>
         <source>ExportFindResult</source>
         <translation>导出搜索结果</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="257"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="250"/>
         <source>ClearFindResult</source>
         <translation>清空记录</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="265"/>
-        <source>file</source>
-        <translation>文件名</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="265"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="259"/>
         <source>addr</source>
         <translation>地址偏移</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="265"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="259"/>
         <source>value</source>
         <translation>值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="288"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="279"/>
         <source>FindResult</source>
         <translation>搜索结果</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="300"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="442"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="291"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="434"/>
         <source>Value</source>
         <translation>值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="310"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="554"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="301"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="546"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="315"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1272"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1383"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="306"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1264"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1376"/>
         <source>CopyToClipBoard</source>
         <translation>数据已拷贝到粘贴板</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="325"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="316"/>
         <source>LittleEndian</source>
         <translation>小端</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="335"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
         <source>BigEndian</source>
         <translation>大端</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="357"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="349"/>
         <source>Number</source>
         <translation>数值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="369"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="605"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="361"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="597"/>
         <source>DeleteBookMark</source>
         <translation>删除书签</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="385"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="609"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="377"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="601"/>
         <source>ClearBookMark</source>
         <translation>清空书签</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="405"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="601"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1451"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1459"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="397"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="593"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1444"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1452"/>
         <source>BookMark</source>
         <translation>书签</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="418"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="410"/>
         <source>DecodeText</source>
         <translation>解码字符串</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="429"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="421"/>
         <source>ScriptConsole</source>
         <translation>脚本控制台</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="442"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="434"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="446"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="438"/>
         <source>ScriptVarShow</source>
         <translation>脚本变量</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="457"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="449"/>
         <source>DVList</source>
         <translation>可视化列表</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="463"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="455"/>
         <source>DVTree</source>
         <translation>可视化树数据</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="468"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="460"/>
         <source>DVTable</source>
         <translation>可视化表格</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="473"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="465"/>
         <source>DVText</source>
         <translation>格式化文本</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="483"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="831"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="475"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="823"/>
         <source>Basic</source>
         <translation>基础</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="484"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="476"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="487"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="479"/>
         <source>OpenF</source>
         <translation>打开文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="491"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="483"/>
         <source>OpenFR</source>
         <translation>打开局部文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="496"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="488"/>
         <source>OpenWorkSpace</source>
         <translation>打开工作区</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="500"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="492"/>
         <source>OpenD</source>
         <translation>打开驱动器</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="503"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="495"/>
         <source>RecentFiles</source>
         <translation>最近打开</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="507"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="499"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="512"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="514"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="504"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="506"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="519"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="511"/>
         <source>SaveAs</source>
         <translation>另存为</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="525"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="517"/>
         <source>Export</source>
         <translation>导出</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="531"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="523"/>
         <source>SaveSel</source>
         <translation>保存选区字节</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="543"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="849"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="866"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="868"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="535"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="841"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="858"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="860"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="546"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="538"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="550"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="542"/>
         <source>Redo</source>
         <translation>恢复</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="552"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="544"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="556"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="548"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="558"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="550"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="563"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="555"/>
         <source>Lookup</source>
         <translation>查询</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="564"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="556"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="567"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="559"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="571"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="563"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="574"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="566"/>
         <source>FileInfo</source>
         <translation>文件信息</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="580"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="730"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="572"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="722"/>
         <source>Hex</source>
         <translation>十六进制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="581"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="573"/>
         <source>CutHex</source>
         <translation>剪切（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="585"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="577"/>
         <source>CopyHex</source>
         <translation>复制（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="588"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="580"/>
         <source>PasteHex</source>
         <translation>粘贴（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="591"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1404"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="583"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1397"/>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="594"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="586"/>
         <source>FillZero</source>
         <translation>填充零</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="600"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="612"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="635"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="651"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="592"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="604"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="627"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="643"/>
         <source>MetaData</source>
         <translation>标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="616"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="608"/>
         <source>MetaDataEdit</source>
         <translation>添加标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="620"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="612"/>
         <source>DeleteMetaData</source>
         <translation>删除标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="624"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="616"/>
         <source>ClearMetaData</source>
         <translation>清空标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="640"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="632"/>
         <source>ShowMetafg</source>
         <translation>标注前景色</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="644"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="636"/>
         <source>ShowMetabg</source>
         <translation>标注背景色</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="648"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="640"/>
         <source>ShowMetaComment</source>
         <translation>批注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="655"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="647"/>
         <source>MetaShowAll</source>
         <translation>显示所有标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="659"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="651"/>
         <source>MetaHideAll</source>
         <translation>隐藏所有标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="666"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="658"/>
         <source>FileStatus</source>
         <translation>文件状态</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="668"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="660"/>
         <source>InfoSave</source>
         <translation>是否保存</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="670"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="662"/>
         <source>ReadOnly</source>
         <translation>可读写</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="672"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="664"/>
         <source>IsWorkSpace</source>
         <translation>是否保存工作区</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="680"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="672"/>
         <source>AlreadyWorkSpace</source>
         <translation>工作区已经被打开</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="681"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="673"/>
         <source>Path:</source>
         <translation>路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="685"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="677"/>
         <source>Convert2WorkSpace?</source>
         <translation>你确认要将转化为项目文件吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="691"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="683"/>
         <source>SetLocked</source>
         <translation>启用/禁用锁定编辑</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="697"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="689"/>
         <source>ErrUnLock</source>
         <translation>锁定编辑失败</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="701"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="693"/>
         <source>SetOver</source>
         <translation>启用/禁用改变大小</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="713"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="705"/>
         <source>ErrUnOver</source>
         <translation>锁定文件大小失败</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="716"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="708"/>
         <source>InfoCanOverLimit</source>
         <translation>当前编辑处于受限模式！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="724"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="716"/>
         <source>Window</source>
         <translation>窗体</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="727"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="719"/>
         <source>Editor</source>
         <translation>编辑器</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="743"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="735"/>
         <source>Tools</source>
         <translation>工具</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="755"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="747"/>
         <source>HexEditorLayout</source>
         <translation>编辑器布局</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="757"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="749"/>
         <source>SetBaseAddr</source>
         <translation>设置基址</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="764"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="756"/>
         <source>addressBase</source>
         <translation>基址</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="764"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="756"/>
         <source>inputAddressBase</source>
         <translation>请输入基址</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="774"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="766"/>
         <source>WarnBigBaseAddress</source>
         <translation>基址过大，你得到的地址将会不正确！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="779"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="771"/>
         <source>ErrBaseAddress</source>
         <translation>非法基址输入</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="784"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="776"/>
         <source>SetColInfo</source>
         <translation>显示/隐藏地址栏</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="792"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="784"/>
         <source>SetHeaderInfo</source>
         <translation>显示/隐藏表头</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="800"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="792"/>
         <source>SetAsciiString</source>
         <translation>显示/隐藏解码字符串</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="811"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="803"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="812"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="804"/>
         <source>Fullscreen</source>
         <translation>全屏</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="814"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="806"/>
         <source>RestoreLayout</source>
         <translation>恢复默认布局</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="820"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="812"/>
         <source>ExportLog</source>
         <translation>导出日志</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="822"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="814"/>
         <source>ClearLog</source>
         <translation>清空日志</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="832"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="824"/>
         <source>ScriptEditor</source>
         <translation>脚本编辑器</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="837"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="829"/>
         <source>Scripts</source>
         <translation>脚本仓库</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="850"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="842"/>
         <source>LoadPlugin</source>
         <translation>加载插件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="855"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="847"/>
         <source>PluginFunctions</source>
         <translation>插件功能</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="878"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="870"/>
         <source>PluginSettings</source>
         <translation>插件设置</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="888"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="880"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="890"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="882"/>
         <source>Software</source>
         <translation>软件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="893"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="885"/>
         <source>Sponsor</source>
         <translation>赞助</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="896"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="888"/>
         <source>Wiki</source>
         <translation>网页 Wiki</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="899"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="891"/>
         <source>AboutQT</source>
         <translation>关于 QT</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="963"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1011"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="955"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1003"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="969"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="973"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="993"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="997"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1018"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1022"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1036"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1045"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1049"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1088"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1960"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2101"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="961"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="965"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="985"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="989"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1010"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1014"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1028"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1037"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1041"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1080"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1965"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2140"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="969"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="993"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1018"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1045"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="961"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="985"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1010"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1037"/>
         <source>FileNotExist</source>
         <translation>文件不存在！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="973"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="997"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1022"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1049"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1088"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="965"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="989"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1014"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1041"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1080"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1011"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1003"/>
         <source>ProjectFile (*.wingpro)</source>
         <translation>项目文件 (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1036"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1028"/>
         <source>Root Required!</source>
         <translation>需要管理员权限继续操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1118"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1217"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1110"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1209"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1732"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1320"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1311"/>
         <source>FindFininishBusy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1324"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1315"/>
         <source>MayTooMuchFindResult</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2295"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2334"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2324"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2363"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1110"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1136"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1102"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1128"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1104"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1144"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1096"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1136"/>
         <source>SaveWSError</source>
         <translation>保存工作区错误！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1092"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1148"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1193"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1084"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1140"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1185"/>
         <source>Warn</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1092"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1148"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1193"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1084"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1140"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1185"/>
         <source>SourceChanged</source>
         <translation>局部打开原始文件更改！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1099"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1155"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1091"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1147"/>
         <source>SaveSourceFileError</source>
         <translation>由于原文件更改，保存文件失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1161"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1153"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1172"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1164"/>
         <source>ChooseExportFile</source>
         <translation>请选择导出文件路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1189"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1181"/>
         <source>ExportSuccessfully</source>
         <translation>导出成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1200"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1192"/>
         <source>ExportSourceFileError</source>
         <translation>由于原文件更改，导出文件失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1206"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1198"/>
         <source>ExportUnSuccessfully</source>
         <translation>导出失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1228"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1220"/>
         <source>SaveSelSuccess</source>
         <translation>保存选区字节成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1231"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1223"/>
         <source>SaveSelError</source>
         <translation>保存选区字节失败，因文件不具有可写权限！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1258"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1369"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1250"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1362"/>
         <source>CutToClipBoard</source>
         <translation>数据已剪切到粘贴板！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1261"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1372"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1253"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1365"/>
         <source>UnCutToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到粘贴板失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1275"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1386"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1267"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1379"/>
         <source>UnCopyToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到复制板失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1316"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1307"/>
         <source>FindFininish</source>
         <translation>查找结果完毕！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1404"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1397"/>
         <source>PleaseInputFill</source>
         <translation>请输入填充字节值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1417"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1410"/>
         <source>FillInputError</source>
         <translation>填充字节输入错误</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1442"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1476"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1493"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1507"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1535"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1580"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1596"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1435"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1469"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1486"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1500"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1528"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1573"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1589"/>
         <source>CheckKeepSize</source>
         <translation>请检查锁定文件大小是否开启！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1451"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1459"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1444"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1452"/>
         <source>InputComment</source>
         <translation>请输入批注：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1522"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1567"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1515"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1560"/>
         <source>NoSelection</source>
         <translation>没有选区，无法继续的操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1563"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1556"/>
         <source>NoMetaData</source>
         <translation>无可编辑标记</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1615"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1635"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1608"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1628"/>
         <source>Addr : 0x%1</source>
         <translation>地址：0x%1</translation>
     </message>
@@ -1461,69 +1456,69 @@
         <translation>没有可导出的搜索结果！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1751"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1756"/>
         <source>SaveFindResult</source>
         <translation>导出搜索结果成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1755"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1760"/>
         <source>SaveFindResultError</source>
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1844"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1849"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1859"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1864"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1862"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1867"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1870"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1875"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1885"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1888"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1892"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1890"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1893"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1897"/>
         <source>ChoosePlugin</source>
         <translation>请选择插件文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1885"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1890"/>
         <source>PluginFile (*.dll)</source>
         <translation>插件文件 (*.dll)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1888"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1893"/>
         <source>PluginFile (*.so)</source>
         <translation>插件文件 (*.so)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1892"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1897"/>
         <source>PluginFile (*.wingplg)</source>
         <translation>插件文件 (*.wingplg)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1961"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1966"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2064"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2069"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2102"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2141"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
