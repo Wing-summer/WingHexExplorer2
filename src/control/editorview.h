@@ -36,7 +36,11 @@ public:
 
     bool isBigFile() const;
 
-    const QTableWidgetItem (*findResult())[2];
+    const QList<qsizetype> &findResult() const;
+
+    int findResultCount() const;
+
+    QByteArray lastFindData() const;
 
 public slots:
     void registerView(QWidget *view);
@@ -44,6 +48,8 @@ public slots:
 
     FindError find(const QByteArray &data, const FindDialog::Result &result,
                    qsizetype findMaxCount);
+
+    void clearFindResult();
 
     void triggerGoto();
 
@@ -122,7 +128,8 @@ private:
     QByteArray m_md5;
 
     QMutex m_findMutex;
-    QTableWidgetItem (*_findresitem)[2] = {nullptr};
+    QList<qsizetype> m_findResults;
+    QByteArray m_lastFindData;
 
     QMenu *m_hexMenu = nullptr;
 

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2021 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -99,7 +99,8 @@ struct sPropertyInitializer
 
 struct sClassDeclaration
 {
-	sClassDeclaration() {script = 0; node = 0; validState = 0; typeInfo = 0; isExistingShared = false; isFinal = false;}
+	sClassDeclaration() { script = 0; node = 0; validState = 0; typeInfo = 0; isExistingShared = false; isFinal = false;
+		isDefaultConstructorDeleted = false; isDefaultCopyConstructorDeleted = false; isDefaultCopyDeleted = false; }
 
 	asCScriptCode *script;
 	asCScriptNode *node;
@@ -108,6 +109,9 @@ struct sClassDeclaration
 	asCTypeInfo   *typeInfo;
 	bool           isExistingShared;
 	bool           isFinal;
+	bool           isDefaultConstructorDeleted;
+	bool           isDefaultCopyConstructorDeleted;
+	bool           isDefaultCopyDeleted;
 
 	asCArray<sPropertyInitializer> propInits;
 };
@@ -207,8 +211,8 @@ protected:
 	void               AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *errNode, asCObjectType *intf);
 	void               AddInterfaceFromMixinToClass(sClassDeclaration *decl, asCScriptNode *errNode, sMixinClass *mixin);
 
-	int                RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false, bool isMixin = false);
-	int                RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits);
+	int                RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false, bool isMixin = false, sClassDeclaration *decl = 0);
+	int                RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits, sClassDeclaration* decl);
 	int                RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false);
 	int                RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
@@ -225,6 +229,7 @@ protected:
 	void               GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits &traits, asSNameSpace *implicitNamespace);
 	bool               DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);
 	void               AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
+	void               AddDefaultCopyConstructor(asCObjectType *objType, asCScriptCode *file);		
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, bool isProtected, bool isInherited, asCScriptCode *file = 0, asCScriptNode *node = 0);
 	int                CreateVirtualFunction(asCScriptFunction *func, int idx);
 	void               ParseScripts();

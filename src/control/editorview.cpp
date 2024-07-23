@@ -99,11 +99,7 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     m_stack->setCurrentWidget(m_hexContainer);
 }
 
-EditorView::~EditorView() {
-    if (_findresitem) {
-        delete[] _findresitem;
-    }
-}
+EditorView::~EditorView() {}
 
 void EditorView::registerView(QWidget *view) {
     Q_ASSERT(view);
@@ -123,6 +119,7 @@ EditorView::FindError EditorView::find(const QByteArray &data,
                                        const FindDialog::Result &result,
                                        qsizetype findMaxCount) {
     if (m_findMutex.tryLock(3000)) {
+        std::unique_lock<QMutex> locker(m_findMutex, std::adopt_lock_t());
         auto d = m_hex->document();
         QList<qsizetype> results;
         qsizetype begin, end;
@@ -146,20 +143,11 @@ EditorView::FindError EditorView::find(const QByteArray &data,
         } break;
         }
         d->findAllBytes(begin, end, data, results, findMaxCount);
-        if (_findresitem) {
-            delete[] _findresitem;
-        }
-        auto len = results.length();
-        _findresitem = new QTableWidgetItem[size_t(len)][2];
 
-        for (auto i = 0; i < len; i++) {
-            auto frow = _findresitem[i];
-            frow[0].setText(QString::number(
-                quintptr(results.at(i)) + m_hex->addressBase(), 16));
-            frow[1].setText(data.toHex(' '));
-        }
+        m_findResults.swap(results);
+        m_lastFindData = data;
 
-        if (len == findMaxCount) {
+        if (m_findResults.size() == findMaxCount) {
             return FindError::MayOutOfRange;
         } else {
             return FindError::Success;
@@ -168,6 +156,8 @@ EditorView::FindError EditorView::find(const QByteArray &data,
         return FindError::Busy;
     }
 }
+
+void EditorView::clearFindResult() { m_findResults.clear(); }
 
 void EditorView::triggerGoto() {
     m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
@@ -558,6 +548,8 @@ void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
     m_hexMenu->popup(QCursor::pos());
 }
 
+QByteArray EditorView::lastFindData() const { return m_lastFindData; }
+
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     return m_fileName.startsWith(':');
@@ -567,7 +559,9 @@ bool EditorView::isBigFile() const {
     return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
 }
 
-const QTableWidgetItem (*EditorView::findResult())[2] { return _findresitem; }
+const QList<qsizetype> &EditorView::findResult() const { return m_findResults; }
+
+int EditorView::findResultCount() const { return m_findResults.size(); }
 
 bool EditorView::isWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);

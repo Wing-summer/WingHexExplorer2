@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -259,7 +259,7 @@ void asCBuilder::EvaluateTemplateInstances(asUINT startIdx, bool keepSilent)
 	// Set the new temporary message stream
 	asCOutputBuffer outBuffer;
 	if( keepSilent )
-		engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
+		engine->SetMessageCallback(asFUNCTION(asCOutputBuffer::CDeclCallback), &outBuffer, asCALL_CDECL_OBJLAST);
 
 	// Evaluate each of the template instances that have been created since the start of the build
 	// TODO: This is not exactly correct, since another thread may have created template instances in parallel
@@ -735,7 +735,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunctionFromNode(node, decl->script, CastToObjectType(decl->typeInfo), false, false, 0, decl->isExistingShared);
+					RegisterScriptFunctionFromNode(node, decl->script, CastToObjectType(decl->typeInfo), false, false, 0, decl->isExistingShared, false, decl);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
@@ -746,34 +746,63 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 
-			// Make sure the default factory & constructor exists for classes
-			asCObjectType *ot = CastToObjectType(decl->typeInfo);
-			if( ot->beh.construct == engine->scriptTypeBehaviours.beh.construct )
+			if (!decl->isExistingShared)
 			{
-				if( ot->beh.constructors.GetLength() == 1 || engine->ep.alwaysImplDefaultConstruct )
+				// Add the default copy operator if needed (only if no other opAssign with single parameter is defined)
+				bool copyOperatorExists = false;
+				asCObjectType* ot = CastToObjectType(decl->typeInfo);
+				for (asUINT i = 0; i < ot->methods.GetLength(); i++)
+				{
+					asCScriptFunction* f = engine->scriptFunctions[ot->methods[i]];
+					if (f->name == "opAssign" && f->parameterTypes.GetLength() == 1)
+					{
+						copyOperatorExists = true;
+						break;
+					}
+				}
+				if (engine->ep.alwaysImplDefaultCopy == 2 || decl->isDefaultCopyDeleted ||
+					(copyOperatorExists && ot->beh.copy == engine->scriptTypeBehaviours.beh.copy && engine->ep.alwaysImplDefaultCopy == 0))
+				{
+					// Script class has a declared constructor, so remove the default opAssign
+					// unless the engine is configured to always provide a default opAssign
+					engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
+					ot->beh.copy = 0;
+				}
+
+				// Add the default constructors if needed (only if no other constructor is explicitly defined)
+				if ( !decl->isDefaultConstructorDeleted && 
+					 ((engine->ep.alwaysImplDefaultConstruct == 0 && ot->beh.construct == engine->scriptTypeBehaviours.beh.construct && ot->beh.constructors.GetLength() == 1) ||
+					 engine->ep.alwaysImplDefaultConstruct == 1) )
 				{
 					AddDefaultConstructor(ot, decl->script);
 				}
-				else
+
+				// Add the default copy constructor if needed (only if no other constructor with single parameter is explicitly defined)
+				bool copyConstructExists = false;
+				for (asUINT i = 0; i < ot->beh.constructors.GetLength(); i++)
 				{
-					// As the class has another constructor we shouldn't provide the default constructor
-					if( ot->beh.construct )
+					if (engine->scriptFunctions[ot->beh.constructors[i]]->parameterTypes.GetLength() == 1)
 					{
-						engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
-						ot->beh.construct = 0;
-						ot->beh.constructors.RemoveIndex(0);
+						copyConstructExists = true;
+						break;
 					}
-					if( ot->beh.factory )
+				}
+				if ( !decl->isDefaultCopyConstructorDeleted &&
+					 ((engine->ep.alwaysImplDefaultCopyConstruct == 0 && !copyConstructExists) || engine->ep.alwaysImplDefaultCopyConstruct == 1) )
+					AddDefaultCopyConstructor(ot, decl->script);
+
+				// If the default constructor has not been generated now, then release the dummy 
+				if (ot->beh.construct == engine->scriptTypeBehaviours.beh.construct)
+				{
+					engine->scriptFunctions[ot->beh.construct]->ReleaseInternal();
+					ot->beh.construct = 0;
+					ot->beh.constructors.RemoveIndex(0);
+
+					if (ot->beh.factory)
 					{
 						engine->scriptFunctions[ot->beh.factory]->ReleaseInternal();
 						ot->beh.factory = 0;
 						ot->beh.factories.RemoveIndex(0);
-					}
-					// Only remove the opAssign method if the script hasn't provided one
-					if( ot->beh.copy == engine->scriptTypeBehaviours.beh.copy )
-					{
-						engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
-						ot->beh.copy = 0;
 					}
 				}
 			}
@@ -939,19 +968,38 @@ void asCBuilder::CompileFunctions()
 		}
 		else if( current->objType && current->name == current->objType->name )
 		{
-			asCScriptNode *node = classDecl->node;
+			asCScriptNode *node = classDecl ? classDecl->node : 0;
 
-			int r = 0, c = 0;
-			if( node )
-				current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+			if (func->parameterTypes.GetLength() == 0)
+			{
+				int r = 0, c = 0;
+				if (node)
+					current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-			asCString str = func->GetDeclarationStr();
-			str.Format(TXT_COMPILING_s, str.AddressOf());
-			WriteInfo(current->script->name, str, r, c, true);
+				asCString str = func->GetDeclarationStr();
+				str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
+				WriteInfo(current->script->name, str, r, c, true);
 
-			// This is the default constructor that is generated
-			// automatically if not implemented by the user.
-			compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
+				// This is the default constructor that is generated
+				// automatically if not implemented by the user.
+				r = compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
+			}
+			else
+			{
+				asASSERT(func->parameterTypes.GetLength() == 1 && func->parameterTypes[0].GetTypeInfo() == current->objType);
+
+				int r = 0, c = 0;
+				if (node)
+					current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				asCString str = func->GetDeclarationStr();
+				str.Format(TXT_COMPILING_AUTO_s, str.AddressOf());
+				WriteInfo(current->script->name, str, r, c, true);
+
+				// This is the default copy constructor that is generated
+				// automatically if not implemented by the user.
+				r = compiler.CompileDefaultCopyConstructor(this, current->script, node, func, classDecl);
+			}
 
 			engine->preMessage.isSet = false;
 		}
@@ -2322,6 +2370,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 		// completes, and until it is known, the callback must assume the class
 		// is garbage collected.
 		st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
+		if (engine->ep.disableScriptClassGC)
+			st->flags &= ~asOBJ_GC;
 
 		if (isShared)
 			st->flags |= asOBJ_SHARED;
@@ -2526,7 +2576,7 @@ void asCBuilder::CompileGlobalVariables()
 
 	// Set the new temporary message stream
 	asCOutputBuffer outBuffer;
-	engine->SetMessageCallback(asMETHOD(asCOutputBuffer, Callback), &outBuffer, asCALL_THISCALL);
+	engine->SetMessageCallback(asFUNCTION(asCOutputBuffer::CDeclCallback), &outBuffer, asCALL_CDECL_OBJLAST);
 
 	asCOutputBuffer finalOutput;
 	asCScriptFunction *initFunc = 0;
@@ -3718,6 +3768,128 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 
 	if( numErrors > 0 ) return;
 
+	// Iterate through classes and verify if any automatically generated copy constructor can really be compiled,
+	// i.e. all members and the base class can be copied. If not, then remove the auto generated copy constructor 
+	// so it will not be compiled. This is done here when it is known the order of class inheritance, and all classes
+	// have received their members from mixins, etc.
+	for (n = 0; n < classDeclarations.GetLength(); n++)
+	{
+		sClassDeclaration* decl = classDeclarations[n];
+		if (decl->isExistingShared)
+			continue;
+
+		asCObjectType* ot = CastToObjectType(decl->typeInfo);
+		if (ot == 0 || ot->beh.copyconstruct == 0)
+			continue;
+
+		// Find the sFunctionDescriptor to determine if the copy constructor is auto generated or not
+		asUINT funcDesc = asUINT(-1);
+		for (asUINT d = 0; d < functions.GetLength(); d++)
+			if (functions[d] && functions[d]->funcId == ot->beh.copyconstruct)
+			{
+				funcDesc = d;
+				break;
+			}
+
+		if (funcDesc != asUINT(-1) && functions[funcDesc]->node == 0)
+		{
+			// The copy constructor is auto generated. Check if all members and base class can be copied
+			bool canBeCopied = true;
+			asCScriptFunction *func = engine->scriptFunctions[ot->beh.copyconstruct];
+			asCObjectType* objType = func->objectType;
+			if (objType->derivedFrom)
+			{
+				if (objType->derivedFrom->beh.copyconstruct == 0 &&
+					(objType->derivedFrom->beh.construct == 0 || objType->derivedFrom->beh.copy == 0))
+					canBeCopied = false;
+				else
+				{
+					// The base class can be copied. Check if it can be done from a const object
+					// TODO: Should allow it anyway, but the copy constructor should be generated as taking a non-const reference
+					asCScriptFunction* baseFunc = engine->scriptFunctions[objType->derivedFrom->beh.copyconstruct];
+					if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+						canBeCopied = false;
+					else if (!baseFunc)
+					{
+						baseFunc = engine->scriptFunctions[objType->derivedFrom->beh.copy];
+						if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+							canBeCopied = false;
+					}
+				}
+			}
+
+			for (asUINT m = 0; canBeCopied && m < objType->properties.GetLength(); m++)
+			{
+				asCObjectProperty* prop = objType->properties[m];
+
+				// Check if the property is inherited
+				asCScriptNode* declNode = 0;
+				for (asUINT p = 0; p < decl->propInits.GetLength(); p++)
+				{
+					if (decl->propInits[p].name == prop->name)
+					{
+						declNode = decl->propInits[p].declNode;
+						break;
+					}
+				}
+
+				// If declNode is null then the property was inherited
+				if (declNode == 0)
+					continue;
+
+				// Check if the property can be copied
+				asCObjectType* propObjType = CastToObjectType(prop->type.GetTypeInfo());
+				if (propObjType && !prop->type.IsObjectHandle() && propObjType->beh.copyconstruct == 0 &&
+					(propObjType->beh.construct == 0 || propObjType->beh.copy == 0))
+					canBeCopied = false;
+				else if(propObjType && !prop->type.IsObjectHandle())
+				{
+					// The property can be copied. Check if it can be done from a const object
+					// TODO: Should allow it anyway, but the copy constructor should be generated as taking a non-const reference
+					asCScriptFunction* baseFunc = engine->scriptFunctions[propObjType->beh.copyconstruct];
+					if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+						canBeCopied = false;
+					else if (!baseFunc)
+					{
+						baseFunc = engine->scriptFunctions[propObjType->beh.copy];
+						if (baseFunc && !baseFunc->parameterTypes[0].IsObjectConst())
+							canBeCopied = false;
+					}
+				}
+			}
+
+			if (!canBeCopied)
+			{
+				// Remove the function descriptor and the script function that was prepared for compilation
+				asDELETE(functions[funcDesc], sFunctionDescription);
+				functions.RemoveIndex(funcDesc);
+
+				module->m_scriptFunctions.RemoveValue(func);
+				func->module = 0;
+				func->ReleaseInternal();
+				ot->beh.constructors.RemoveValue(ot->beh.copyconstruct);
+				ot->beh.copyconstruct = 0;
+				func->ReleaseInternal();
+
+				// Do the same for the copyfactory
+				for (asUINT d = 0; d < functions.GetLength(); d++)
+					if (functions[d] && functions[d]->funcId == ot->beh.copyfactory)
+					{
+						asDELETE(functions[d], sFunctionDescription);
+						functions.RemoveIndex(d);
+						break;
+					}
+				func = engine->scriptFunctions[ot->beh.copyfactory];
+				module->m_scriptFunctions.RemoveValue(func);
+				func->module = 0;
+				func->ReleaseInternal();
+				ot->beh.factories.RemoveValue(ot->beh.copyfactory);
+				ot->beh.copyfactory = 0;
+				func->ReleaseInternal();
+			}
+		}
+	}
+
 	// Verify which script classes can really form circular references, and mark only those as garbage collected.
 	// This must be done in the correct order, so that a class that contains another class isn't needlessly marked
 	// as garbage collected, just because the contained class was evaluated afterwards.
@@ -3731,190 +3903,193 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 	//                         existing module. However, the applications that want to use that should use a special
 	//                         build flag to not finalize the module.
 
-	asCArray<asCObjectType*> typesToValidate;
-	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	if( !engine->ep.disableScriptClassGC )
 	{
-		// Existing shared classes won't need evaluating, nor interfaces
-		sClassDeclaration *decl = classDeclarations[n];
-		if( decl->isExistingShared ) continue;
-
-		asCObjectType *ot = CastToObjectType(decl->typeInfo);
-		if( ot->IsInterface() ) continue;
-
-		typesToValidate.PushLast(ot);
-	}
-
-	asUINT numReevaluations = 0;
-	while( typesToValidate.GetLength() )
-	{
-		if( numReevaluations > typesToValidate.GetLength() )
+		asCArray<asCObjectType*> typesToValidate;
+		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
-			// No types could be completely evaluated in the last iteration so
-			// we consider the remaining types in the array as garbage collected
-			break;
+			// Existing shared classes won't need evaluating, nor interfaces
+			sClassDeclaration *decl = classDeclarations[n];
+			if( decl->isExistingShared ) continue;
+	
+			asCObjectType *ot = CastToObjectType(decl->typeInfo);
+			if( ot->IsInterface() ) continue;
+	
+			typesToValidate.PushLast(ot);
 		}
-
-		asCObjectType *type = typesToValidate[0];
-		typesToValidate.RemoveIndex(0);
-
-		// If the type inherits from another type that is yet to be validated, then reinsert it at the end
-		if( type->derivedFrom && typesToValidate.Exists(type->derivedFrom) )
+	
+		asUINT numReevaluations = 0;
+		while( typesToValidate.GetLength() )
 		{
-			typesToValidate.PushLast(type);
-			numReevaluations++;
-			continue;
-		}
-
-		// If the type inherits from a known garbage collected type, then this type must also be garbage collected
-		if( type->derivedFrom && (type->derivedFrom->flags & asOBJ_GC) )
-		{
-			type->flags |= asOBJ_GC;
-			continue;
-		}
-
-		// Evaluate template instances (silently) before verifying each of the classes, since it is possible that
-		// a class will be marked as non-garbage collected, which in turn will mark the template instance that uses
-		// it as non-garbage collected, which in turn means the class that contains the array also do not have to be
-		// garbage collected
-		EvaluateTemplateInstances(numTempl, true);
-
-		// Is there some path in which this structure is involved in circular references?
-		// If the type contains a member of a type that is yet to be validated, then reinsert it at the end
-		bool mustReevaluate = false;
-		bool gc = false;
-		for( asUINT p = 0; p < type->properties.GetLength(); p++ )
-		{
-			asCDataType dt = type->properties[p]->type;
-
-			if (dt.IsFuncdef())
+			if( numReevaluations > typesToValidate.GetLength() )
 			{
-				// If a class holds a function pointer as member then the class must be garbage collected as the
-				// function pointer can form circular references with the class through use of a delegate. Example:
-				//
-				//   class A { B @b; void f(); }
-				//   class B { F @f; }
-				//   funcdef void F();
-				//
-				//   A a;
-				//   @a.b = B();       // instance of A refers to instance of B
-				//   @a.b.f = F(a.f);  // instance of B refers to delegate that refers to instance of A
-				//
-				gc = true;
+				// No types could be completely evaluated in the last iteration so
+				// we consider the remaining types in the array as garbage collected
 				break;
 			}
-
-			if( !dt.IsObject() )
-				continue;
-
-			if( typesToValidate.Exists(CastToObjectType(dt.GetTypeInfo())) )
-				mustReevaluate = true;
-			else
+	
+			asCObjectType *type = typesToValidate[0];
+			typesToValidate.RemoveIndex(0);
+	
+			// If the type inherits from another type that is yet to be validated, then reinsert it at the end
+			if( type->derivedFrom && typesToValidate.Exists(type->derivedFrom) )
 			{
-				if( dt.IsTemplate() )
+				typesToValidate.PushLast(type);
+				numReevaluations++;
+				continue;
+			}
+	
+			// If the type inherits from a known garbage collected type, then this type must also be garbage collected
+			if( type->derivedFrom && (type->derivedFrom->flags & asOBJ_GC) )
+			{
+				type->flags |= asOBJ_GC;
+				continue;
+			}
+	
+			// Evaluate template instances (silently) before verifying each of the classes, since it is possible that
+			// a class will be marked as non-garbage collected, which in turn will mark the template instance that uses
+			// it as non-garbage collected, which in turn means the class that contains the array also do not have to be
+			// garbage collected
+			EvaluateTemplateInstances(numTempl, true);
+	
+			// Is there some path in which this structure is involved in circular references?
+			// If the type contains a member of a type that is yet to be validated, then reinsert it at the end
+			bool mustReevaluate = false;
+			bool gc = false;
+			for( asUINT p = 0; p < type->properties.GetLength(); p++ )
+			{
+				asCDataType dt = type->properties[p]->type;
+	
+				if (dt.IsFuncdef())
 				{
-					// Check if any of the subtypes are yet to be evaluated
-					bool skip = false;
-					for( asUINT s = 0; s < dt.GetTypeInfo()->GetSubTypeCount(); s++ )
-					{
-						asCObjectType *t = reinterpret_cast<asCObjectType*>(dt.GetTypeInfo()->GetSubType(s));
-						if( typesToValidate.Exists(t) )
-						{
-							mustReevaluate = true;
-							skip = true;
-							break;
-						}
-					}
-					if( skip )
-						continue;
+					// If a class holds a function pointer as member then the class must be garbage collected as the
+					// function pointer can form circular references with the class through use of a delegate. Example:
+					//
+					//   class A { B @b; void f(); }
+					//   class B { F @f; }
+					//   funcdef void F();
+					//
+					//   A a;
+					//   @a.b = B();       // instance of A refers to instance of B
+					//   @a.b.f = F(a.f);  // instance of B refers to delegate that refers to instance of A
+					//
+					gc = true;
+					break;
 				}
-
-				if( dt.IsObjectHandle() )
+	
+				if( !dt.IsObject() )
+					continue;
+	
+				if( typesToValidate.Exists(CastToObjectType(dt.GetTypeInfo())) )
+					mustReevaluate = true;
+				else
 				{
-					// If it is known that the handle can't be involved in a circular reference
-					// then this object doesn't need to be marked as garbage collected.
-					asCObjectType *prop = CastToObjectType(dt.GetTypeInfo());
-
-					if( prop->flags & asOBJ_SCRIPT_OBJECT )
+					if( dt.IsTemplate() )
 					{
-						// For script objects, treat non-final classes as if they can contain references
-						// as it is not known what derived classes might do. For final types, check all
-						// properties to determine if any of those can cause a circular reference with this
-						// class.
-						if( prop->flags & asOBJ_NOINHERIT )
+						// Check if any of the subtypes are yet to be evaluated
+						bool skip = false;
+						for( asUINT s = 0; s < dt.GetTypeInfo()->GetSubTypeCount(); s++ )
 						{
-							for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
+							asCObjectType *t = reinterpret_cast<asCObjectType*>(dt.GetTypeInfo()->GetSubType(s));
+							if( typesToValidate.Exists(t) )
 							{
-								asCDataType sdt = prop->properties[sp]->type;
-
-								if( sdt.IsObject() )
+								mustReevaluate = true;
+								skip = true;
+								break;
+							}
+						}
+						if( skip )
+							continue;
+					}
+	
+					if( dt.IsObjectHandle() )
+					{
+						// If it is known that the handle can't be involved in a circular reference
+						// then this object doesn't need to be marked as garbage collected.
+						asCObjectType *prop = CastToObjectType(dt.GetTypeInfo());
+	
+						if( prop->flags & asOBJ_SCRIPT_OBJECT )
+						{
+							// For script objects, treat non-final classes as if they can contain references
+							// as it is not known what derived classes might do. For final types, check all
+							// properties to determine if any of those can cause a circular reference with this
+							// class.
+							if( prop->flags & asOBJ_NOINHERIT )
+							{
+								for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
 								{
-									if( sdt.IsObjectHandle() )
+									asCDataType sdt = prop->properties[sp]->type;
+	
+									if( sdt.IsObject() )
 									{
-										// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
-										if( sdt.GetTypeInfo()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
+										if( sdt.IsObjectHandle() )
 										{
+											// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
+											if( sdt.GetTypeInfo()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
+											{
+												gc = true;
+												break;
+											}
+										}
+										else if( sdt.GetTypeInfo()->flags & asOBJ_GC )
+										{
+											// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+											//                         Only if the object is of a type that can reference this type, either directly or indirectly
 											gc = true;
 											break;
 										}
 									}
-									else if( sdt.GetTypeInfo()->flags & asOBJ_GC )
-									{
-										// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-										//                         Only if the object is of a type that can reference this type, either directly or indirectly
-										gc = true;
-										break;
-									}
 								}
+	
+								if( gc )
+									break;
 							}
-
-							if( gc )
+							else
+							{
+								// Assume it is garbage collected as it is not known at compile time what might inherit from this type
+								gc = true;
 								break;
+							}
 						}
-						else
+						else if( prop->flags & asOBJ_GC )
 						{
-							// Assume it is garbage collected as it is not known at compile time what might inherit from this type
+							// If a type is not a script object, adopt its GC flag
+							// TODO: runtime optimize: Just because an application registered class is garbage collected, doesn't mean it
+							//                         can form a circular reference with this script class. Perhaps need a flag to tell
+							//                         if the script classes that contains the type should be garbage collected or not.
 							gc = true;
 							break;
 						}
 					}
-					else if( prop->flags & asOBJ_GC )
+					else if( dt.GetTypeInfo()->flags & asOBJ_GC )
 					{
-						// If a type is not a script object, adopt its GC flag
-						// TODO: runtime optimize: Just because an application registered class is garbage collected, doesn't mean it
-						//                         can form a circular reference with this script class. Perhaps need a flag to tell
-						//                         if the script classes that contains the type should be garbage collected or not.
+						// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+						//                         Only if the object is of a type that can reference this type, either directly or indirectly
 						gc = true;
 						break;
 					}
 				}
-				else if( dt.GetTypeInfo()->flags & asOBJ_GC )
-				{
-					// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-					//                         Only if the object is of a type that can reference this type, either directly or indirectly
-					gc = true;
-					break;
-				}
 			}
+	
+			// If the class wasn't found to require garbage collection, but it
+			// contains another type that has yet to be evaluated then it must be
+			// re-evaluated.
+			if( !gc && mustReevaluate )
+			{
+				typesToValidate.PushLast(type);
+				numReevaluations++;
+				continue;
+			}
+	
+			// Update the flag in the object type
+			if( gc )
+				type->flags |= asOBJ_GC;
+			else
+				type->flags &= ~asOBJ_GC;
+	
+			// Reset the counter
+			numReevaluations = 0;
 		}
-
-		// If the class wasn't found to require garbage collection, but it
-		// contains another type that has yet to be evaluated then it must be
-		// re-evaluated.
-		if( !gc && mustReevaluate )
-		{
-			typesToValidate.PushLast(type);
-			numReevaluations++;
-			continue;
-		}
-
-		// Update the flag in the object type
-		if( gc )
-			type->flags |= asOBJ_GC;
-		else
-			type->flags &= ~asOBJ_GC;
-
-		// Reset the counter
-		numReevaluations = 0;
 	}
 }
 
@@ -4240,8 +4415,77 @@ bool asCBuilder::DoesMethodExist(asCObjectType *objType, int methodId, asUINT *m
 	return false;
 }
 
+void asCBuilder::AddDefaultCopyConstructor(asCObjectType* objType, asCScriptCode* file)
+{
+	// Check if a copy constructor does not already exist, in which case this should be skipped
+	if (objType->beh.copyconstruct != 0)
+		return;
+
+	int funcId = engine->GetNextScriptFunctionId();
+
+	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
+	asCArray<asCDataType> parameterTypes;
+	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString*> defaultArgs;
+	asCArray<asCString> parameterNames;
+
+	parameterTypes.PushLast(asCDataType::CreateType(objType, true));
+	parameterTypes[0].MakeReference(true);
+	parameterNames.PushLast("other");
+	inOutFlags.PushLast(asTM_INOUTREF);
+	defaultArgs.PushLast(0);
+
+	// Add the script function
+	// TODO: declaredAt should be set to where the class has been declared
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false, objType, false, asSFunctionTraits(), objType->nameSpace);
+
+	// Add it as constructor
+	objType->beh.constructors.PushLast(funcId);
+	asASSERT(objType->beh.copyconstruct == 0);
+	objType->beh.copyconstruct = funcId;
+	engine->scriptFunctions[funcId]->AddRefInternal();
+
+	// The bytecode for the default constructor will be generated
+	// only after the potential inheritance has been established
+	sFunctionDescription* func = asNEW(sFunctionDescription);
+	if (func == 0)
+	{
+		// Out of memory
+		return;
+	}
+
+	functions.PushLast(func);
+
+	func->script = file;
+	func->node = 0;
+	func->name = objType->name;
+	func->objType = objType;
+	func->funcId = funcId;
+	func->isExistingShared = false;
+
+	// Add a factory as well
+	funcId = engine->GetNextScriptFunctionId();
+	objType->beh.factories.PushLast(funcId);
+	objType->beh.copyfactory = funcId;
+	returnType = asCDataType::CreateObjectHandle(objType, false);
+	// TODO: should be the same as the constructor
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false);
+	functions.PushLast(0);
+	asCCompiler compiler(engine);
+	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
+	engine->scriptFunctions[funcId]->AddRefInternal();
+
+	// If the object is shared, then the factory must also be marked as shared
+	if (objType->flags & asOBJ_SHARED)
+		engine->scriptFunctions[funcId]->SetShared(true);
+}
+
 void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file)
 {
+	// Check if a default constructor does not already exist, in which case this should be skipped
+	if (objType->beh.construct != engine->scriptTypeBehaviours.beh.construct)
+		return;
+
 	int funcId = engine->GetNextScriptFunctionId();
 
 	asCDataType returnType = asCDataType::CreatePrimitive(ttVoid, false);
@@ -4662,6 +4906,8 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 				funcTraits.SetTrait(asTRAIT_EXPLICIT, true);
 			else if (file->TokenEquals(decorator->tokenPos, decorator->tokenLength, PROPERTY_TOKEN))
 				funcTraits.SetTrait(asTRAIT_PROPERTY, true);
+			else if (file->TokenEquals(decorator->tokenPos, decorator->tokenLength, DELETE_TOKEN))
+				funcTraits.SetTrait(asTRAIT_DELETED, true);
 			else
 			{
 				asCString msg(&file->code[decorator->tokenPos], decorator->tokenLength);
@@ -4766,7 +5012,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
+int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, sClassDeclaration* decl)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -4789,7 +5035,7 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits, ns);
 
-	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits);
+	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, funcTraits, decl);
 }
 
 asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode *file, asCScriptFunction *funcDef, const asCString &name, asSNameSpace *ns, bool isShared)
@@ -4822,7 +5068,7 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	asCString funcName = name;
 	asSFunctionTraits traits;
 	traits.SetTrait(asTRAIT_SHARED, isShared);
-	int r = RegisterScriptFunction(args, file, 0, 0, true, ns, false, false, funcName, funcDef->returnType, parameterNames, funcDef->parameterTypes, funcDef->inOutFlags, defaultArgs, traits);
+	int r = RegisterScriptFunction(args, file, 0, 0, true, ns, false, false, funcName, funcDef->returnType, parameterNames, funcDef->parameterTypes, funcDef->inOutFlags, defaultArgs, traits, 0);
 	if( r < 0 )
 		return 0;
 
@@ -4830,7 +5076,7 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	return engine->scriptFunctions[functions[functions.GetLength()-1]->funcId];
 }
 
-int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits)
+int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, asSFunctionTraits funcTraits, sClassDeclaration* classDecl)
 {
 	// Determine default namespace if not specified
 	if( ns == 0 )
@@ -4955,9 +5201,52 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			WriteError(str, file, node);
 		}
 		
+		// Set the type as dummy so the clean-up works correctly
 		func.funcType = asFUNC_DUMMY;
 	}
 	
+	// If the method is deleted, then don't register it
+	if (funcTraits.GetTrait(asTRAIT_DELETED))
+	{
+		// Delete can only be used for default constructor, default copy constructor, and default copy operator
+		if (classDecl && funcTraits.GetTrait(asTRAIT_CONSTRUCTOR) && parameterTypes.GetLength() == 0)
+		{
+			classDecl->isDefaultConstructorDeleted = true;
+
+			if (objType->beh.construct && objType->beh.construct != engine->scriptTypeBehaviours.beh.construct)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else if (classDecl && funcTraits.GetTrait(asTRAIT_CONSTRUCTOR) && parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+		{
+			classDecl->isDefaultCopyConstructorDeleted = true;
+
+			if (objType->beh.copyconstruct)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else if (classDecl && name == "opAssign" && parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+		{
+			classDecl->isDefaultCopyDeleted = true;
+
+			if (objType->beh.copy && objType->beh.copy != engine->scriptTypeBehaviours.beh.copy)
+				WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
+		}
+		else
+			WriteError(TXT_CANNOT_DELETE_NON_AUTO_FUNC, file, node);
+
+		// Deleted functions must not have implementation
+		if (node && node->lastChild && node->lastChild->nodeType == snStatementBlock)
+			WriteError(TXT_DELETED_FUNC_CANT_HAVE_IMPL, file, node);
+
+		// Free the default args
+		for (asUINT n = 0; n < defaultArgs.GetLength(); n++)
+			if (defaultArgs[n])
+				asDELETE(defaultArgs[n], asCString);
+
+		node->Destroy(engine);
+
+		return 0;
+	}
+
 	isExistingShared = false;
 	int funcId = engine->GetNextScriptFunctionId();
 	if( !isInterface )
@@ -5018,13 +5307,13 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 		}
 
 		// External shared function must not try to redefine the interface
-		if (funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node->tokenType == ttEndStatement || node->lastChild->tokenType == ttEndStatement))
+		if (funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node == 0 || node->tokenType == ttEndStatement || (node->lastChild && node->lastChild->tokenType == ttEndStatement)))
 		{
 			asCString str;
 			str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
 			WriteError(str, file, node);
 		}
-		else if (!funcTraits.GetTrait(asTRAIT_EXTERNAL) && !(node->nodeType == snStatementBlock || node->lastChild->nodeType == snStatementBlock) )
+		else if (!funcTraits.GetTrait(asTRAIT_EXTERNAL) && (node == 0 || !(node->nodeType == snStatementBlock || (node->lastChild && node->lastChild->nodeType == snStatementBlock))) )
 		{
 			asCString str;
 			str.Format(TXT_MISSING_DEFINITION_OF_s, name.AddressOf());
@@ -5169,6 +5458,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				engine->scriptFunctions[objType->beh.factory]->ReleaseInternal();
 				objType->beh.factory = factoryId;
 				objType->beh.factories[0] = factoryId;
+
+				if( classDecl->isDefaultConstructorDeleted )
+					WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 			}
 			else
 			{
@@ -5184,6 +5476,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 					objType->beh.copyconstruct = funcId;
 					objType->beh.copyfactory = factoryId;
+
+					if (classDecl->isDefaultCopyConstructorDeleted)
+						WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 				}
 
 				// Register as a normal constructor
@@ -5226,6 +5521,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				engine->scriptFunctions[objType->beh.copy]->ReleaseInternal();
 				objType->beh.copy = funcId;
 				f->AddRefInternal();
+
+				if (classDecl->isDefaultCopyDeleted)
+					WriteError(TXT_CANNOT_DEFINE_FUNC_THAT_IS_DELETED, file, node);
 			}
 
 			objType->methods.PushLast(funcId);
@@ -5320,7 +5618,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				funcNode = funcNode->next;
 			}
 
-			while (funcNode && funcNode->nodeType != snStatementBlock)
+			while (funcNode && (funcNode->nodeType != snStatementBlock && funcNode->tokenType != ttEndStatement))
 			{
 				if (funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, FINAL_TOKEN))
 					funcTraits.SetTrait(asTRAIT_FINAL, true);
@@ -5339,7 +5637,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			if (funcNode)
 				funcNode->DisconnectParent();
 
-			if (funcNode == 0 && (objType == 0 || !objType->IsInterface()))
+			if ((funcNode == 0 || funcNode->nodeType != snStatementBlock) && (objType == 0 || !objType->IsInterface()))
 			{
 				// TODO: getset: If no implementation is supplied the builder should provide an automatically generated implementation
 				//               The compiler needs to be able to handle the different types, primitive, value type, and handle
@@ -5368,7 +5666,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		if( success )
 		{
 			if( !isExistingShared )
-				RegisterScriptFunction(funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, funcTraits);
+				RegisterScriptFunction(funcNode ? funcNode : node, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, funcTraits, 0);
 			else
 			{
 				// Free the funcNode as it won't be used
@@ -5432,6 +5730,10 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 			break;
 		}
 	}
+
+	// Check for invalid function traits
+	if (funcTraits.GetTrait(asTRAIT_DELETED))
+		WriteError(TXT_CANNOT_DELETE_NON_AUTO_FUNC, file, node);
 
 	// Read the module name as well
 	asCScriptNode *nd = node->lastChild;
@@ -6139,16 +6441,6 @@ asCObjectType *asCBuilder::GetTemplateInstanceFromNode(asCScriptNode *node, asCS
 		// that should be allowed.
 		asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : (currentType ? currentType : templateType));
 		subTypes.PushLast(subType);
-
-		if (subType.IsReadOnly())
-		{
-			asCString msg;
-			msg.Format(TXT_TMPL_SUBTYPE_MUST_NOT_BE_READ_ONLY);
-			WriteError(msg, file, n);
-
-			// Return a dummy
-			return 0;
-		}
 	}
 
 	if (next)

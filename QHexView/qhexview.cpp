@@ -727,6 +727,10 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
     if (isReadOnly() || isLocked() || (e->modifiers() & Qt::ControlModifier))
         return false;
 
+    if (e->text().isEmpty()) {
+        return false;
+    }
+
     uchar key = static_cast<uchar>(e->text()[0].toLatin1());
 
     if ((m_renderer->selectedArea() == QHexRenderer::HexArea)) {

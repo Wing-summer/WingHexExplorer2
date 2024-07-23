@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2023 Andreas Jonsson
+   Copyright (c) 2003-2024 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -101,17 +101,18 @@ enum asEObjVarInfoOption
 
 enum asEFuncTrait
 {
-	asTRAIT_CONSTRUCTOR = 1,    // method
-	asTRAIT_DESTRUCTOR  = 2,    // method
-	asTRAIT_CONST       = 4,    // method
-	asTRAIT_PRIVATE     = 8,    // method
-	asTRAIT_PROTECTED   = 16,   // method
-	asTRAIT_FINAL       = 32,   // method
-	asTRAIT_OVERRIDE    = 64,   // method
-	asTRAIT_SHARED      = 128,  // function
-	asTRAIT_EXTERNAL    = 256,  // function
-	asTRAIT_EXPLICIT    = 512,  // method
-	asTRAIT_PROPERTY    = 1024  // method/function
+	asTRAIT_CONSTRUCTOR = 1<<0,  // method
+	asTRAIT_DESTRUCTOR  = 1<<1,  // method
+	asTRAIT_CONST       = 1<<2,  // method
+	asTRAIT_PRIVATE     = 1<<3,  // method
+	asTRAIT_PROTECTED   = 1<<4,  // method
+	asTRAIT_FINAL       = 1<<5,  // method
+	asTRAIT_OVERRIDE    = 1<<6,  // method
+	asTRAIT_SHARED      = 1<<7,  // function
+	asTRAIT_EXTERNAL    = 1<<8,  // function
+	asTRAIT_EXPLICIT    = 1<<9,  // method
+	asTRAIT_PROPERTY    = 1<<10, // method/function
+	asTRAIT_DELETED     = 1<<11  // method
 };
 
 struct asSFunctionTraits
@@ -196,9 +197,12 @@ public:
 	int                  GetVar(asUINT index, const char **name, int *typeId = 0) const;
 	const char *         GetVarDecl(asUINT index, bool includeNamespace = false) const;
 	int                  FindNextLineWithCode(int line) const;
+	int                  GetDeclaredAt(const char** scriptSection, int* row, int* col) const;
 
 	// For JIT compilation
-	asDWORD             *GetByteCode(asUINT *length = 0);
+	asDWORD *            GetByteCode(asUINT *length = 0);
+	int                  SetJITFunction(asJITFunction jitFunc);
+	asJITFunction        GetJITFunction() const;
 
 	// User data
 	void                *SetUserData(void *userData, asPWORD type);

@@ -193,7 +193,9 @@ private:
     void registerEditorView(EditorView *editor);
 
     void connectEditorView(EditorView *editor);
-    void swapEditorConnection(EditorView *old, EditorView *cur);
+    void swapEditor(EditorView *old, EditorView *cur);
+
+    void loadFindResult(EditorView *view);
 
     void openFiles(const QStringList &files);
     ErrFile openFile(const QString &file, EditorView **editor);
@@ -395,8 +397,7 @@ private:
 
     QTableWidget *m_findresult = nullptr;
     QTableWidget *m_numshowtable = nullptr;
-    QTableWidgetItem *_numsitem = nullptr;
-    QTableWidgetItem (*_findresitem)[3] = {nullptr};
+    QVector<QTableWidgetItem *> _numsitem;
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
     QListWidget *m_bookmarks = nullptr;
@@ -423,7 +424,6 @@ private:
     QList<QWidget *> m_driverStateWidgets;
 
     qsizetype _findmax = 100;
-    int _findres = 0;
     qsizetype _decstrlim = 10;
 
     size_t m_newIndex = 1;
