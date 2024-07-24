@@ -154,3 +154,7 @@ void FramelessWindowBase::setTitleColor(const QColor &newTitleColor) {
     m_titleColor = newTitleColor;
     emit titleColorChanged();
 }
+
+int FramelessWindowBase::titleHeight() const {
+    return m_titlebar->titleHeight();
+}

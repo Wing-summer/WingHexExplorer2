@@ -40,9 +40,6 @@ void PluginSettingDialog::apply() {
     set.setEnablePlgInRoot(ui->cbEnablePluginRoot->isChecked());
     set.save(SettingManager::SETTING::PLUGIN);
 
-    emit sigEnablePlugin(set.enablePlugin());
-    emit sigEnablePlgInRoot(set.enablePlgInRoot());
-
     for (auto &page : _pages) {
         page->apply();
     }

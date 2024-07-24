@@ -3,10 +3,13 @@
 
 #include <QByteArray>
 #include <QFont>
+#include <QObject>
 #include <QString>
 #include <QStringList>
 
-class SettingManager {
+class SettingManager : public QObject {
+    Q_OBJECT
+
 public:
     enum SETTING {
         APP = 1,
@@ -81,6 +84,15 @@ public:
     QStringList usrDisplayCats() const;
 
     QStringList sysDisplayCats() const;
+
+signals:
+    void sigEditorfontSizeChanged(int v);
+    void sigFindmaxcountChanged(int v);
+    void sigDecodeStrlimitChanged(int v);
+    void sigCopylimitChanged(int v);
+
+    void sigAppfontSizeChanged(int v);
+    void sigAppFontFamilyChanged(const QString &font);
 
 private:
     SettingManager();

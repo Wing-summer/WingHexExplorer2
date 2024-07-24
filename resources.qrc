@@ -7,6 +7,7 @@
         <file>images/bookmarkdel.png</file>
         <file>images/canover.png</file>
         <file>images/clearhis.png</file>
+        <file>images/clone.png</file>
         <file>images/closefile.png</file>
         <file>images/copy.png</file>
         <file>images/copyhex.png</file>
@@ -27,7 +28,6 @@
         <file>images/export.png</file>
         <file>images/file.png</file>
         <file>images/fill.png</file>
-        <file>images/fillNop.png</file>
         <file>images/fillZero.png</file>
         <file>images/find.png</file>
         <file>images/fullscreen.png</file>
@@ -70,6 +70,8 @@
         <file>images/saveas.png</file>
         <file>images/saved.png</file>
         <file>images/savesel.png</file>
+        <file>images/scale.png</file>
+        <file>images/scalereset.png</file>
         <file>images/script.png</file>
         <file>images/scriptfolder.png</file>
         <file>images/scriptfolderusr.png</file>

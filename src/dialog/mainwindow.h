@@ -132,6 +132,7 @@ private slots:
     void on_copyfile();
     void on_pastefile();
     void on_delete();
+    void on_clone();
 
     void on_findfile();
     void on_gotoline();
@@ -207,6 +208,8 @@ private:
     void setEditModeEnabled(bool b, bool isdriver = false);
     void enableDirverLimit(bool isdriver);
 
+    void setCurrentHexEditorScale(qreal rate);
+
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
 
@@ -244,6 +247,7 @@ private:
         a->setMenu(menu);
         if (menu) {
             a->setPopupMode(QToolButton::InstantPopup);
+            a->setArrowType(Qt::DownArrow);
         }
         connect(a, &QToolButton::clicked, this, slot);
         pannel->addButton(a);
@@ -291,12 +295,10 @@ private:
     }
 
     template <typename Func>
-    inline QAction *newAction(const QString &iconName, const QString &title,
-                              Func &&slot,
+    inline QAction *newAction(const QString &title, Func &&slot,
                               const QKeySequence &shortcut = QKeySequence()) {
         auto a = new QAction;
         a->setText(title);
-        a->setIcon(ICONRES(iconName));
         a->setShortcutVisibleInContextMenu(true);
 
         if (!shortcut.isEmpty()) {
@@ -304,8 +306,16 @@ private:
             connect(shortCut, &QShortcut::activated, a, &QAction::trigger);
         }
 
-        a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);
+        return a;
+    }
+
+    template <typename Func>
+    inline QAction *newAction(const QString &iconName, const QString &title,
+                              Func &&slot,
+                              const QKeySequence &shortcut = QKeySequence()) {
+        QAction *a = newAction(title, slot, shortcut);
+        a->setIcon(ICONRES(iconName));
         return a;
     }
 

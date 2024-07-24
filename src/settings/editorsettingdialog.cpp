@@ -42,15 +42,6 @@ void EditorSettingDialog::apply() {
     set.setDecodeStrlimit(ui->sbDecStrLimit->value());
     set.setCopylimit(ui->sbCopyLimit->value());
     set.save(SettingManager::SETTING::EDITOR);
-
-    emit sigEditorShowAddrChanged(set.editorShowAddr());
-    emit sigEditorShowcolChanged(set.editorShowcol());
-    emit sigEditorShowtextChanged(set.editorShowtext());
-    emit sigEditorEncodingChanged(set.editorEncoding());
-    emit sigEditorfontSizeChanged(set.editorfontSize());
-    emit sigFindmaxcountChanged(set.findmaxcount());
-    emit sigDecodeStrlimitChanged(set.decodeStrlimit());
-    emit sigCopylimitChanged(set.copylimit());
 }
 
 void EditorSettingDialog::reset() {

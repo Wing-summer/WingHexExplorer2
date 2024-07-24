@@ -2950,6 +2950,14 @@ RibbonButtonGroup QToolButton:pressed
     background-color: #3daee9;
 }
 
+RibbonButtonGroup QToolButton::right-arrow,
+RibbonButtonGroup QToolButton::left-arrow,
+RibbonButtonGroup QToolButton::up-arrow,
+RibbonButtonGroup QToolButton::down-arrow
+{
+
+}
+
 RibbonButtonGroup QFrame[frameShape="4"]:hover,
 RibbonButtonGroup QFrame[frameShape="5"]:hover
 {

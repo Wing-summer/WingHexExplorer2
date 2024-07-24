@@ -91,11 +91,6 @@ void GeneralSettingDialog::apply() {
     }
     set.setDefaultWinState(state);
     set.save(SettingManager::SETTING::APP);
-
-    emit sigAppfontSizeChanged(set.appfontSize());
-    emit sigAppFontFamilyChanged(set.appFontFamily());
-    emit sigThemeIDChanged(set.themeID());
-    emit sigDefaultWinStateChanged(set.defaultWinState());
 }
 
 void GeneralSettingDialog::reset() {

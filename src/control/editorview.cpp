@@ -548,6 +548,10 @@ void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
     m_hexMenu->popup(QCursor::pos());
 }
 
+void EditorView::setIsWorkSpace(bool newIsWorkSpace) {
+    m_isWorkSpace = newIsWorkSpace;
+}
+
 QByteArray EditorView::lastFindData() const { return m_lastFindData; }
 
 bool EditorView::isNewFile() const {

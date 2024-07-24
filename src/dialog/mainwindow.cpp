@@ -549,6 +549,8 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
                         &MainWindow::on_pastefile, QKeySequence::Paste);
         addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
                         &MainWindow::on_delete, QKeySequence::Delete);
+        addPannelAction(pannel, QStringLiteral("clone"), tr("Clone"),
+                        &MainWindow::on_clone);
     }
 
     {
@@ -624,6 +626,41 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
 RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
+        auto pannel = tab->addGroup(tr("Display"));
+        auto menu = new QMenu(this);
+        menu->addAction(newAction(QStringLiteral("80%"), [this] {
+            this->setCurrentHexEditorScale(0.8);
+        }));
+        menu->addAction(newAction(QStringLiteral("90%"), [this] {
+            this->setCurrentHexEditorScale(0.9);
+        }));
+        menu->addAction(newAction(QStringLiteral("100%"), [this] {
+            this->setCurrentHexEditorScale(1.0);
+        }));
+        menu->addSeparator();
+        menu->addAction(newAction(QStringLiteral("120%"), [this] {
+            this->setCurrentHexEditorScale(1.2);
+        }));
+        menu->addAction(newAction(QStringLiteral("150%"), [this] {
+            this->setCurrentHexEditorScale(1.5);
+        }));
+        menu->addAction(newAction(QStringLiteral("200%"), [this] {
+            this->setCurrentHexEditorScale(2.0);
+        }));
+        menu->addAction(newAction(QStringLiteral("250%"), [this] {
+            this->setCurrentHexEditorScale(2.5);
+        }));
+        menu->addAction(newAction(QStringLiteral("300%"), [this] {
+            this->setCurrentHexEditorScale(3.0);
+        }));
+        addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
+                        EMPTY_FUNC, {}, menu);
+        addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
+                        [this] { this->setCurrentHexEditorScale(1.0); });
+        m_editStateWidgets << pannel;
+    }
+
+    {
         auto pannel = tab->addGroup(tr("MetaData"));
 
         auto menu = new QMenu(this);
@@ -656,10 +693,14 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("FileStatus"));
-
-        m_iSaved = addPannelAction(pannel, _infoSaved, tr("InfoSave"), []() {});
+        auto disableStyle =
+            QStringLiteral("border:none;background:transparent;");
+        m_iSaved =
+            addPannelAction(pannel, _infoSaved, tr("InfoSave"), EMPTY_FUNC);
+        m_iSaved->setStyleSheet(disableStyle);
         m_iReadWrite =
-            addPannelAction(pannel, _infoReadonly, tr("ReadOnly"), []() {});
+            addPannelAction(pannel, _infoReadonly, tr("ReadOnly"), EMPTY_FUNC);
+        m_iReadWrite->setStyleSheet(disableStyle);
         m_iWorkSpace =
             addPannelAction(pannel, _infouw, tr("IsWorkSpace"), [this]() {
                 if (m_curEditor == nullptr) {
@@ -676,7 +717,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 auto ret = WingMessageBox::question(this, qAppName(),
                                                     tr("Convert2WorkSpace?"));
                 if (ret == QMessageBox::Yes) {
-                    // TODO
+                    editor->setIsWorkSpace(true);
                 }
             });
         m_iLocked =
@@ -897,22 +938,7 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 void MainWindow::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
-    connect(generalPage, &GeneralSettingDialog::sigAppfontSizeChanged, this,
-            [=](int v) {});
-    connect(generalPage, &GeneralSettingDialog::sigAppFontFamilyChanged, this,
-            [=](const QString &font) {
-
-            });
-    connect(generalPage, &GeneralSettingDialog::sigThemeIDChanged, this,
-            [=](int id) {
-
-            });
-    connect(generalPage, &GeneralSettingDialog::sigDefaultWinStateChanged, this,
-            [=](Qt::WindowState s) {
-
-            });
     m_setdialog->addPage(generalPage);
-
     auto editorPage = new EditorSettingDialog(m_setdialog);
     m_setdialog->addPage(editorPage);
     auto plgPage = new PluginSettingDialog(m_setdialog);
@@ -999,7 +1025,7 @@ void MainWindow::on_openregion() {
 }
 
 void MainWindow::on_openworkspace() {
-    auto filename = QFileDialog::getOpenFileName(
+    auto filename = WingFileDialog::getOpenFileName(
         this, tr("ChooseFile"), m_lastusedpath, tr("ProjectFile (*.wingpro)"));
     if (filename.isEmpty())
         return;
@@ -1283,6 +1309,8 @@ void MainWindow::on_delete() {
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->document()->RemoveSelection();
 }
+
+void MainWindow::on_clone() {}
 
 void MainWindow::on_findfile() {
     if (m_curEditor == nullptr) {
@@ -1740,6 +1768,8 @@ void MainWindow::on_exportfindresult() {
 
     QFile f(filename);
     if (f.open(QFile::WriteOnly)) {
+        QJsonObject fobj;
+        fobj.insert(QStringLiteral("file"), editor->fileName());
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             QJsonObject jobj;
@@ -1749,7 +1779,9 @@ void MainWindow::on_exportfindresult() {
                         m_findresult->item(i, 1)->text());
             arr.append(jobj);
         }
-        QJsonDocument doc(arr);
+        fobj.insert(QStringLiteral("data"), arr);
+
+        QJsonDocument doc(fobj);
         if (f.write(doc.toJson(QJsonDocument::JsonFormat::Indented)) >= 0) {
             f.close();
             Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
@@ -1893,7 +1925,7 @@ void MainWindow::on_loadplg() {
         this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.so)"));
 #endif
 #else
-    auto filename = QFileDialog::getOpenFileName(
+    auto filename = WingFileDialog::getOpenFileName(
         this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.wingplg)"));
 #endif
 
@@ -2040,6 +2072,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         hexeditor->disconnect(SLOT(documentKeepSize(bool)));
         hexeditor->disconnect(SLOT(documentLockedFile(bool)));
         hexeditor->disconnect(SLOT(copyLimitRaised()));
+        hexeditor->disconnect(SLOT(scaleRateChanged()));
         hexeditor->document()->disconnect();
     }
 
@@ -2067,6 +2100,13 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     connect(hexeditor, &QHexView::copyLimitRaised, this, [this] {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyLimit"));
+    });
+    connect(hexeditor, &QHexView::scaleRateChanged, this, [this] {
+        auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
+        Q_ASSERT(hexeditor);
+        Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
+                     QString::number(hexeditor->scaleRate() * 100) +
+                         QStringLiteral("%"));
     });
 
     auto doc = hexeditor->document().get();
@@ -2306,6 +2346,14 @@ void MainWindow::enableDirverLimit(bool isdriver) {
     for (auto &item : m_driverStateWidgets) {
         item->setEnabled(e);
     }
+}
+
+void MainWindow::setCurrentHexEditorScale(qreal rate) {
+    if (m_curEditor == nullptr) {
+        return;
+    }
+    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
+    hexeditor->setScaleRate(rate);
 }
 
 void MainWindow::loadCacheIcon() {
