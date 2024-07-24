@@ -20,6 +20,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport
 if(MSVC)
   string(APPEND CMAKE_CXX_FLAGS " /utf-8")
   string(APPEND CMAKE_C_FLAGS " /utf-8")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 file(GLOB_RECURSE SCINTILLA_H "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/*.h")
@@ -32,7 +33,7 @@ if(MSVC)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
-  target_compile_options(QScintilla PRIVATE -Wall -Wextra)
+  target_compile_options(QScintilla PRIVATE -Wall -Wextra -Wno-deprecated)
 endif()
 
 add_library(QScintilla STATIC ${SCINTILLA_H} ${SCINTILLA_SRC} ${QSCINTILLA_H}

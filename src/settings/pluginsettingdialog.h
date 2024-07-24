@@ -17,10 +17,6 @@ public:
 
     void buildUp(const QList<WingHex::SettingPage *> &pages);
 
-signals:
-    void sigEnablePlugin(bool b);
-    void sigEnablePlgInRoot(bool b);
-
 private:
     Ui::PluginSettingDialog *ui;
     QList<WingHex::SettingPage *> _pages;

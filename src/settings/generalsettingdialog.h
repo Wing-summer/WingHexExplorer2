@@ -15,12 +15,6 @@ public:
     explicit GeneralSettingDialog(QWidget *parent = nullptr);
     virtual ~GeneralSettingDialog() override;
 
-signals:
-    void sigAppfontSizeChanged(int v);
-    void sigAppFontFamilyChanged(const QString &font);
-    void sigThemeIDChanged(int id);
-    void sigDefaultWinStateChanged(Qt::WindowState s);
-
 private:
     Ui::GeneralSettingDialog *ui;
 

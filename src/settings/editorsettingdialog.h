@@ -15,16 +15,6 @@ public:
     explicit EditorSettingDialog(QWidget *parent = nullptr);
     ~EditorSettingDialog();
 
-signals:
-    void sigEditorShowAddrChanged(bool b);
-    void sigEditorShowcolChanged(bool b);
-    void sigEditorShowtextChanged(bool b);
-    void sigEditorEncodingChanged(const QString &en);
-    void sigEditorfontSizeChanged(int v);
-    void sigFindmaxcountChanged(int v);
-    void sigDecodeStrlimitChanged(int v);
-    void sigCopylimitChanged(int v);
-
 private:
     Ui::EditorSettingDialog *ui;
 

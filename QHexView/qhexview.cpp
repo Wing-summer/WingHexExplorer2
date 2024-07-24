@@ -249,7 +249,17 @@ QPoint QHexView::absolutePosition(const QPoint &pos) const {
     return pos + shift;
 }
 
+qreal QHexView::scaleRate() const { return m_scaleRate; }
+
 qreal QHexView::fontSize() const { return m_fontSize; }
+
+void QHexView::setScaleRate(qreal rate) {
+    if (m_scaleRate > 0) {
+        m_scaleRate = rate;
+        setFontSize(fontSize());
+        emit scaleRateChanged();
+    }
+}
 
 QColor QHexView::selBackgroundColor() const {
     return m_renderer->selBackgroundColor();
@@ -260,10 +270,11 @@ void QHexView::setSelBackgroundColor(const QColor &newSelBackgroundColor) {
     emit selBackgroundColorChanged();
 }
 
-void QHexView::setFontSizeF(qreal size) {
+void QHexView::setFontSize(qreal size) {
     Q_ASSERT(size > 0);
     auto font = this->font();
-    font.setPointSizeF(size);
+    font.setPointSizeF(size * m_scaleRate);
+    this->setFont(font);
     m_fontSize = size;
 }
 
@@ -395,6 +406,12 @@ void QHexView::focusOutEvent(QFocusEvent *e) {
 }
 
 void QHexView::wheelEvent(QWheelEvent *e) {
+    if (qApp->keyboardModifiers() == Qt::ControlModifier) {
+        auto dela = e->angleDelta().y() / 1200.0 / 2;
+        setScaleRate(scaleRate() + dela);
+        return;
+    }
+
     if (e->angleDelta().y() == 0) {
         int value = this->verticalScrollBar()->value();
 

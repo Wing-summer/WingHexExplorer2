@@ -42,6 +42,8 @@ public:
 
     QByteArray lastFindData() const;
 
+    void setIsWorkSpace(bool newIsWorkSpace);
+
 public slots:
     void registerView(QWidget *view);
     void switchView(qindextype index);

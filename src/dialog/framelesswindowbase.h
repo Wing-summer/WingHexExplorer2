@@ -21,6 +21,8 @@ public:
     QColor titleColor() const;
     void setTitleColor(const QColor &newTitleColor);
 
+    int titleHeight() const;
+
 signals:
     void titleColorChanged();
 

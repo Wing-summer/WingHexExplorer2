@@ -26,6 +26,8 @@ class QHexView : public QAbstractScrollArea {
                    NOTIFY selectionColorChanged FINAL)
     Q_PROPERTY(QColor selBackgroundColor READ selBackgroundColor WRITE
                    setSelBackgroundColor NOTIFY selBackgroundColorChanged FINAL)
+    Q_PROPERTY(qreal scaleRate READ scaleRate WRITE setScaleRate NOTIFY
+                   scaleRateChanged FINAL)
 
 public:
     explicit QHexView(QWidget *parent = nullptr);
@@ -85,8 +87,11 @@ public:
     QColor selBackgroundColor() const;
     void setSelBackgroundColor(const QColor &newSelBackgroundColor);
 
-    void setFontSizeF(qreal size);
+    void setFontSize(qreal size);
     qreal fontSize() const;
+
+    void setScaleRate(qreal rate);
+    qreal scaleRate() const;
 
 private:
     void establishSignal(QHexDocument *doc);
@@ -105,6 +110,7 @@ signals:
     void metaCommentVisibleChanged(bool b);
     void metaStatusChanged();
 
+    void scaleRateChanged();
     void copyLimitRaised();
 
     /*=============================*/
@@ -159,6 +165,7 @@ private:
     QTimer *m_blinktimer;
 
     qreal m_fontSize;
+    qreal m_scaleRate = 1.0;
 };
 
 #endif // QHEXVIEW_H
