@@ -29,7 +29,11 @@ PluginSystem::~PluginSystem() {
     _plgThread->deleteLater();
 }
 
-QList<IWingPlugin *> PluginSystem::plugins() { return loadedplgs; }
+const QList<IWingPlugin *> &PluginSystem::plugins() const { return loadedplgs; }
+
+const IWingPlugin *PluginSystem::plugin(qindextype index) const {
+    return loadedplgs.at(index);
+}
 
 void PluginSystem::raiseDispatch(HookIndex hookindex, QList<QVariant> params) {
     auto dispatch = dispatcher[hookindex];

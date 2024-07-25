@@ -30,10 +30,7 @@ const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 const auto SCRIPT_USRDISPLAYCATS = QStringLiteral("script.usrDisplayCats");
 const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
 
-SettingManager::SettingManager() {
-    _defaultFont = qApp->font();
-    load();
-}
+SettingManager::SettingManager() { _defaultFont = qApp->font(); }
 
 void SettingManager::load() {
     auto defaultFontSize = _defaultFont.pointSize();
@@ -46,6 +43,11 @@ void SettingManager::load() {
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
     m_appFontFamily =
         READ_CONFIG(APP_FONTFAMILY, _defaultFont.family()).toString();
+    // check font
+    QFont fm(m_appFontFamily);
+    if (!QFontInfo(fm).exactMatch()) {
+        m_appFontFamily = _defaultFont.family();
+    }
     READ_CONFIG_INT_POSITIVE(m_appfontSize, APP_FONTSIZE, defaultFontSize);
     m_defaultWinState = READ_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized)
                             .value<Qt::WindowState>();
@@ -53,7 +55,7 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, EDITOR_FONTSIZE,
                              defaultFontSize);
-    READ_CONFIG_BOOL(m_editorShowAddr, EDITOR_SHOW_ADDR, true);
+    READ_CONFIG_BOOL(m_editorShowHeader, EDITOR_SHOW_ADDR, true);
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
     m_editorEncoding =
@@ -63,11 +65,12 @@ void SettingManager::load() {
         m_editorEncoding = QStringLiteral("ASCII");
     }
     READ_CONFIG_QSIZETYPE(m_findmaxcount, EDITOR_FIND_MAXCOUNT, 100);
-    m_findmaxcount = qBound(10, m_findmaxcount, 10000);
+    m_findmaxcount = qBound(qsizetype(10), m_findmaxcount, qsizetype(10000));
     READ_CONFIG_QSIZETYPE(m_copylimit, EDITOR_COPY_LIMIT, 100);
-    m_copylimit = qBound(100, m_copylimit, 1024);
+    m_copylimit = qBound(qsizetype(100), m_copylimit, qsizetype(1024));
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 100);
-    m_decodeStrlimit = qBound(100, m_decodeStrlimit, 1024);
+    m_decodeStrlimit =
+        qBound(qsizetype(100), m_decodeStrlimit, qsizetype(1024));
     m_recentHexFiles =
         READ_CONFIG(EDITOR_RECENTFILES, QStringList()).toStringList();
     m_recentScriptFiles =
@@ -76,6 +79,13 @@ void SettingManager::load() {
         READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
     m_sysDisplayCats =
         READ_CONFIG(SCRIPT_SYSDISPLAYCATS, QStringList()).toStringList();
+
+    emit sigAppFontFamilyChanged(m_appFontFamily);
+    emit sigAppfontSizeChanged(m_appfontSize);
+    emit sigEditorfontSizeChanged(m_editorfontSize);
+    emit sigCopylimitChanged(m_copylimit);
+    emit sigDecodeStrlimitChanged(m_decodeStrlimit);
+    emit sigFindmaxcountChanged(m_findmaxcount);
 }
 
 QStringList SettingManager::sysDisplayCats() const { return m_sysDisplayCats; }
@@ -100,10 +110,10 @@ void SettingManager::setAppFontFamily(const QString &newAppFontFamily) {
     }
 }
 
-bool SettingManager::editorShowAddr() const { return m_editorShowAddr; }
+bool SettingManager::editorShowHeader() const { return m_editorShowHeader; }
 
-void SettingManager::setEditorShowAddr(bool newEditorShowAddr) {
-    m_editorShowAddr = newEditorShowAddr;
+void SettingManager::setEditorShowHeader(bool newEditorShowAddr) {
+    m_editorShowHeader = newEditorShowAddr;
 }
 
 bool SettingManager::enablePlugin() const { return m_enablePlugin; }
@@ -124,6 +134,7 @@ Qt::WindowState SettingManager::defaultWinState() const {
 
 void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
     switch (newDefaultWinState) {
+    case Qt::WindowNoState:
     case Qt::WindowMinimized:
     case Qt::WindowMaximized:
     case Qt::WindowFullScreen:
@@ -153,7 +164,7 @@ void SettingManager::save(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::EDITOR)) {
         WRITE_CONFIG(EDITOR_FONTSIZE, m_editorfontSize);
-        WRITE_CONFIG(EDITOR_SHOW_ADDR, m_editorShowAddr);
+        WRITE_CONFIG(EDITOR_SHOW_ADDR, m_editorShowHeader);
         WRITE_CONFIG(EDITOR_SHOW_COL, m_editorShowcol);
         WRITE_CONFIG(EDITOR_SHOW_TEXT, m_editorShowtext);
         WRITE_CONFIG(EDITOR_ENCODING, m_editorEncoding);
@@ -193,7 +204,8 @@ qsizetype SettingManager::decodeStrlimit() const { return m_decodeStrlimit; }
 
 void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
     if (m_decodeStrlimit != newDecodeStrlimit) {
-        m_decodeStrlimit = qBound(100, newDecodeStrlimit, 1024);
+        m_decodeStrlimit =
+            qBound(qsizetype(100), newDecodeStrlimit, qsizetype(1024));
         emit sigDecodeStrlimitChanged(m_decodeStrlimit);
     }
 }
@@ -202,7 +214,7 @@ qsizetype SettingManager::copylimit() const { return m_copylimit; }
 
 void SettingManager::setCopylimit(qsizetype newCopylimit) {
     if (m_copylimit != newCopylimit) {
-        m_copylimit = qBound(100, newCopylimit, 1024);
+        m_copylimit = qBound(qsizetype(100), newCopylimit, qsizetype(1024));
         emit sigDecodeStrlimitChanged(m_copylimit);
     }
 }
@@ -211,7 +223,8 @@ qsizetype SettingManager::findmaxcount() const { return m_findmaxcount; }
 
 void SettingManager::setFindmaxcount(qsizetype newFindmaxcount) {
     if (m_findmaxcount != newFindmaxcount) {
-        m_findmaxcount = qBound(10, newFindmaxcount, 10000);
+        m_findmaxcount =
+            qBound(qsizetype(10), newFindmaxcount, qsizetype(10000));
         emit sigFindmaxcountChanged(m_findmaxcount);
     }
 }

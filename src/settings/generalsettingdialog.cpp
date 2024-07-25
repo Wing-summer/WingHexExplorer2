@@ -16,7 +16,7 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::GeneralSettingDialog) {
     ui->setupUi(this);
 
-    ui->cbLanguage->addItems(LanguageManager::instance().langsDisplay());
+    ui->cbLanguage->addItem(tr("SystemDefault"));
 
     auto e = QMetaEnum::fromType<SkinManager::Theme>();
     for (int i = 0; i < e.keyCount(); ++i) {
@@ -38,6 +38,16 @@ GeneralSettingDialog::~GeneralSettingDialog() { delete ui; }
 
 void GeneralSettingDialog::reload() {
     auto &set = SettingManager::instance();
+
+    auto langs = LanguageManager::instance().langsDisplay();
+    ui->cbLanguage->addItems(langs);
+    auto lang = set.defaultLang();
+    if (lang.isEmpty()) {
+        ui->cbLanguage->setCurrentIndex(0);
+    } else {
+        ui->cbLanguage->setCurrentIndex(langs.indexOf(lang) + 1);
+    }
+
     ui->sbFontSize->setValue(set.appfontSize());
     ui->cbFont->setCurrentText(set.appFontFamily());
     ui->cbTheme->setCurrentIndex(set.themeID());

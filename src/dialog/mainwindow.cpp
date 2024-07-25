@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "aboutsoftwaredialog.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
@@ -62,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     layout->addWidget(q_check_ptr(m_ribbon));
 
     buildUpDockSystem(cw);
+    _defaultLayout = m_dock->saveState();
 
     layout->addWidget(m_dock, 1);
 
@@ -113,8 +115,40 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
+    // connect settings signals
+    auto &set = SettingManager::instance();
+    connect(&set, &SettingManager::sigAppFontFamilyChanged, this,
+            [](const QString &fontfam) {
+                QFont font(fontfam);
+                qApp->setFont(font);
+            });
+    connect(&set, &SettingManager::sigAppfontSizeChanged, this, [](int v) {
+        auto font = qApp->font();
+        font.setPointSize(v);
+        qApp->setFont(font);
+    });
+    connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
+            [this](int v) {
+                for (auto &p : m_views.keys()) {
+                    p->setFontSize(qreal(v));
+                }
+            });
+    connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
+        for (auto &p : m_views.keys()) {
+            p->setCopyLimit(v);
+        }
+    });
+    connect(&set, &SettingManager::sigDecodeStrlimitChanged, this,
+            [this](int v) { _decstrlim = v; });
+    connect(&set, &SettingManager::sigFindmaxcountChanged, this,
+            [this](int v) { _findmax = v; });
+    set.load();
+
     // ok, build up the dialog of setting
     buildUpSettingDialog();
+
+    // load saved docking layout
+    // m_dock->restoreState(set.dockLayout());
 
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
@@ -198,10 +232,19 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
     // build up basic docking widgets
-    auto rightArea = buildUpLogDock(m_dock, ads::RightDockWidgetArea);
-    m_rightViewArea = rightArea;
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
+
+    auto splitter =
+        ads::internal::findParent<ads::CDockSplitter *>(m_editorViewArea);
+    if (splitter) {
+        splitter->setSizes({1, 4});
+    }
+
+    auto rightArea =
+        buildUpLogDock(m_dock, ads::RightDockWidgetArea, m_editorViewArea);
+    m_rightViewArea = rightArea;
+
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpHexBookMarkDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
@@ -935,6 +978,16 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     return tab;
 }
 
+QMenu *MainWindow::buildUpScriptDirMenu(const QStringList &files) {
+    auto menu = new QMenu(this);
+    for (auto &file : files) {
+        menu->addAction(ICONRES(QStringLiteral("script")),
+                        QFileInfo(file).fileName(),
+                        [=] { ScriptManager::instance().runScript(file); });
+    }
+    return menu;
+}
+
 void MainWindow::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
@@ -945,16 +998,19 @@ void MainWindow::buildUpSettingDialog() {
     m_setdialog->addPage(plgPage);
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
-    // TODO
+    auto &sm = ScriptManager::instance();
+
     for (auto &cat : scriptPage->sysDisplayCats()) {
         addPannelAction(m_scriptDBGroup,
                         ICONRES(QStringLiteral("scriptfolder")), cat,
-                        EMPTY_FUNC, {}, new QMenu(this));
+                        EMPTY_FUNC, {},
+                        buildUpScriptDirMenu(sm.getSysScriptFileNames(cat)));
     }
     for (auto &cat : scriptPage->usrDisplayCats()) {
         addPannelAction(m_scriptDBGroup,
                         ICONRES(QStringLiteral("scriptfolderusr")), cat,
-                        EMPTY_FUNC, {}, new QMenu(this));
+                        EMPTY_FUNC, {},
+                        buildUpScriptDirMenu(sm.getUsrScriptFileNames(cat)));
     }
     m_setdialog->addPage(scriptPage);
 
@@ -1887,7 +1943,7 @@ void MainWindow::on_locChanged() {
 
 void MainWindow::on_fullScreen() { this->show(WindowState::FullScreen); }
 
-void MainWindow::on_restoreLayout() {}
+void MainWindow::on_restoreLayout() { m_dock->restoreState(_defaultLayout); }
 
 void MainWindow::on_exportlog() {
     auto nfile = saveLog();
@@ -1984,9 +2040,9 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 }
 
 EditorView *MainWindow::findEditorView(const QString &filename) {
-    for (auto it = m_views.keyBegin(); it != m_views.keyEnd(); ++it) {
-        if ((*it)->fileName() == filename) {
-            return *it;
+    for (auto &p : m_views.keys()) {
+        if (p->fileName() == filename) {
+            return p;
         }
     }
     return nullptr;
@@ -2154,8 +2210,9 @@ void MainWindow::loadFindResult(EditorView *view) {
                             .toUpper());
                     tab0->setData(Qt::UserRole, result.at(i));
                     m_findresult->setItem(i, 0, tab0);
-                    m_findresult->setItem(
-                        i, 1, new QTableWidgetItem(data.toHex(' ').toUpper()));
+                    m_findresult->setItem(i, 1,
+                                          new QTableWidgetItem(QString(
+                                              data.toHex(' ').toUpper())));
                 }
             },
             EMPTY_FUNC);
@@ -2420,9 +2477,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                 return;
             }
         } else if (ret == QMessageBox::No) {
-            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); p++) {
-                auto editor = *p;
-                editor->closeDockWidget(); // force close
+            for (auto &p : m_views.keys()) {
+                p->closeDockWidget(); // force close
             }
             m_isOnClosing = false;
         } else {
@@ -2432,7 +2488,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         }
     }
 
-    m_dock->saveState(1);
+    SettingManager::instance().setDockLayout(m_dock->saveState());
 
     FramelessMainWindow::closeEvent(event);
 }

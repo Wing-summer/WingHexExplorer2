@@ -1,6 +1,7 @@
 #include "pluginsettingdialog.h"
 #include "../class/settingmanager.h"
 #include "../dbghelper.h"
+#include "../plugin/pluginsystem.h"
 #include "../utilities.h"
 #include "ui_pluginsettingdialog.h"
 
@@ -26,6 +27,15 @@ void PluginSettingDialog::reload() {
     auto &set = SettingManager::instance();
     ui->cbEnablePlugin->setChecked(set.enablePlugin());
     ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
+
+    auto &plgsys = PluginSystem::instance();
+    auto pico = ICONRES("plugin");
+    ui->plglist->clear();
+    for (auto &p : plgsys.plugins()) {
+        ui->plglist->addItem(new QListWidgetItem(pico, p->pluginName()));
+    }
+
+    ui->txtc->clear();
 }
 
 QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }
@@ -53,3 +63,16 @@ void PluginSettingDialog::reset() {
 }
 
 void PluginSettingDialog::cancel() { reload(); }
+
+void PluginSettingDialog::on_plglist_itemSelectionChanged() {
+    auto &plgsys = PluginSystem::instance();
+
+    auto plg = plgsys.plugin(ui->plglist->currentRow());
+
+    ui->txtc->append(tr("pluginName") + " : " + plg->pluginName());
+    ui->txtc->append(tr("pluginAuthor") + " : " + plg->pluginAuthor());
+    ui->txtc->append(tr("pluginVersion") + " : " +
+                     QString::number(plg->pluginVersion()));
+    ui->txtc->append(tr("pluginComment") + " : " + plg->pluginComment());
+    ui->txtc->append(tr("PUID") + " : " + plg->puid());
+}

@@ -38,6 +38,8 @@ public:
 
     const QList<qsizetype> &findResult() const;
 
+    void setFontSize(qreal size);
+
     int findResultCount() const;
 
     QByteArray lastFindData() const;
@@ -82,6 +84,8 @@ public slots:
     qsizetype copyLimit() const;
 
     void connectDocSavedFlag();
+
+    void applySettings();
 
 private:
     template <typename Func>

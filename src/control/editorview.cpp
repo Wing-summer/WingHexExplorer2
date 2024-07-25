@@ -6,6 +6,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "src/class/eventfilter.h"
 #include "src/class/qkeysequences.h"
+#include "src/class/settingmanager.h"
 #include "src/class/workspacemanager.h"
 #include "src/dialog/fileinfodialog.h"
 #include "src/plugin/pluginsystem.h"
@@ -97,6 +98,8 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
             &EditorView::on_hexeditor_customContextMenuRequested);
 
     m_stack->setCurrentWidget(m_hexContainer);
+
+    applySettings();
 }
 
 EditorView::~EditorView() {}
@@ -543,6 +546,15 @@ void EditorView::connectDocSavedFlag() {
             });
 }
 
+void EditorView::applySettings() {
+    auto &set = SettingManager::instance();
+    m_hex->setHeaderVisible(set.editorShowHeader());
+    m_hex->setAddressVisible(set.editorShowcol());
+    m_hex->setAsciiVisible(set.editorShowtext());
+    m_hex->setFontSize(set.editorfontSize());
+    m_hex->renderer()->SetEncoding(set.editorEncoding());
+}
+
 void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
     Q_UNUSED(pos)
     m_hexMenu->popup(QCursor::pos());
@@ -564,6 +576,8 @@ bool EditorView::isBigFile() const {
 }
 
 const QList<qsizetype> &EditorView::findResult() const { return m_findResults; }
+
+void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
 
 int EditorView::findResultCount() const { return m_findResults.size(); }
 
