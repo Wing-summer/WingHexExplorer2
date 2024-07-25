@@ -72,8 +72,8 @@ public:
     bool enablePlugin() const;
     void setEnablePlugin(bool newEnablePlugin);
 
-    bool editorShowAddr() const;
-    void setEditorShowAddr(bool newEditorShowAddr);
+    bool editorShowHeader() const;
+    void setEditorShowHeader(bool newEditorShowAddr);
 
     QString appFontFamily() const;
     void setAppFontFamily(const QString &newAppFontFamily);
@@ -84,6 +84,8 @@ public:
     QStringList usrDisplayCats() const;
 
     QStringList sysDisplayCats() const;
+
+    void load();
 
 signals:
     void sigEditorfontSizeChanged(int v);
@@ -97,8 +99,6 @@ signals:
 private:
     SettingManager();
 
-    void load();
-
     Q_DISABLE_COPY(SettingManager)
 private:
     int m_themeID = 0;
@@ -110,7 +110,7 @@ private:
     QByteArray m_dockLayout;
     QString m_appFontFamily;
 
-    bool m_editorShowAddr = true;
+    bool m_editorShowHeader = true;
     bool m_editorShowcol = true;
     bool m_editorShowtext = true;
     QString m_editorEncoding;

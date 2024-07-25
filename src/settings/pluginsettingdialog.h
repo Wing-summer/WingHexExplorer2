@@ -31,6 +31,9 @@ public:
     virtual void apply() override;
     virtual void reset() override;
     virtual void cancel() override;
+
+private slots:
+    void on_plglist_itemSelectionChanged();
 };
 
 #endif // PLUGINSETTINGDIALOG_H

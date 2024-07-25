@@ -109,11 +109,42 @@ void ScriptManager::messageCallBack(STD_OUTPUT io, const char *str,
                             std::string(str, std::string::size_type(size))));
 }
 
+QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
+    if (!dir.exists()) {
+        return {};
+    }
+    QStringList ret;
+    for (auto &info : dir.entryInfoList({"*.as"}, QDir::Files)) {
+        ret << info.absoluteFilePath();
+    }
+    return ret;
+}
+
 QStringList ScriptManager::sysScriptsDbCats() const {
     return m_sysScriptsDbCats;
 }
 
+QStringList ScriptManager::getUsrScriptFileNames(const QString &cat) const {
+    QDir scriptDir(m_usrScriptsPath);
+    if (!scriptDir.exists()) {
+        return {};
+    }
+    scriptDir.cd(cat);
+    return getScriptFileNames(scriptDir);
+}
+
+QStringList ScriptManager::getSysScriptFileNames(const QString &cat) const {
+    QDir scriptDir(m_sysScriptsPath);
+    if (!scriptDir.exists()) {
+        return {};
+    }
+    scriptDir.cd(cat);
+    return getScriptFileNames(scriptDir);
+}
+
 void ScriptManager::refresh() {}
+
+void ScriptManager::runScript(const QString &filename) {}
 
 QStringList ScriptManager::usrScriptsDbCats() const {
     return m_usrScriptsDbCats;

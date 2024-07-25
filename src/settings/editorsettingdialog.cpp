@@ -15,7 +15,7 @@ EditorSettingDialog::~EditorSettingDialog() { delete ui; }
 
 void EditorSettingDialog::reload() {
     auto &set = SettingManager::instance();
-    ui->cbShowaddr->setChecked(set.editorShowAddr());
+    ui->cbShowaddr->setChecked(set.editorShowHeader());
     ui->cbShowcol->setChecked(set.editorShowcol());
     ui->cbShowtext->setChecked(set.editorShowtext());
     ui->cbEncodingBox->setCurrentText(set.editorEncoding());
@@ -33,7 +33,7 @@ bool EditorSettingDialog::isInPluginPage() const { return false; }
 
 void EditorSettingDialog::apply() {
     auto &set = SettingManager::instance();
-    set.setEditorShowAddr(ui->cbShowaddr->isChecked());
+    set.setEditorShowHeader(ui->cbShowaddr->isChecked());
     set.setEditorShowcol(ui->cbShowcol->isChecked());
     set.setEditorShowtext(ui->cbShowtext->isChecked());
     set.setEditorEncoding(ui->cbEncodingBox->currentText());

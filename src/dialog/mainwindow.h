@@ -108,6 +108,8 @@ private:
     RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
 
+    QMenu *buildUpScriptDirMenu(const QStringList &files);
+
     void buildUpSettingDialog();
 
 private:
@@ -247,7 +249,6 @@ private:
         a->setMenu(menu);
         if (menu) {
             a->setPopupMode(QToolButton::InstantPopup);
-            a->setArrowType(Qt::DownArrow);
         }
         connect(a, &QToolButton::clicked, this, slot);
         pannel->addButton(a);
@@ -436,6 +437,7 @@ private:
     qsizetype _findmax = 100;
     qsizetype _decstrlim = 10;
 
+    QByteArray _defaultLayout;
     size_t m_newIndex = 1;
     QAtomicPointer<EditorView> m_curEditor = nullptr;
     SettingDialog *m_setdialog = nullptr;
