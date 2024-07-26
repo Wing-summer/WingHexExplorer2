@@ -19,7 +19,7 @@ public:
     enum { HeaderArea, AddressArea, HexArea, AsciiArea, ExtraArea };
 
 public:
-    explicit QHexRenderer(QHexDocument *document,
+    explicit QHexRenderer(QHexDocument *document, QHexCursor *cursor,
                           const QFontMetricsF &fontmetrics,
                           QObject *parent = nullptr);
     void renderFrame(QPainter *painter);
@@ -85,6 +85,9 @@ public:
     QColor selBackgroundColor() const;
     void setSelBackgroundColor(const QColor &newSelBackgroundColor);
 
+    QHexCursor *cursor() const;
+    void setCursor(QHexCursor *newCursor);
+
 private:
     QString hexString(qsizetype line, QByteArray *rawline = nullptr) const;
 
@@ -131,6 +134,7 @@ private:
 
 private:
     QHexDocument *m_document;
+    QHexCursor *m_cursor;
     QFontMetricsF m_fontmetrics;
 
     int m_selectedarea;

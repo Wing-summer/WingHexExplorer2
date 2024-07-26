@@ -83,10 +83,10 @@ bool QHexRenderer::setEncoding(const QString &encoding) {
 }
 /*===================================*/
 
-QHexRenderer::QHexRenderer(QHexDocument *document,
+QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
                            const QFontMetricsF &fontmetrics, QObject *parent)
-    : QObject(parent), m_document(document), m_fontmetrics(fontmetrics),
-      m_encoding("ASCII") {
+    : QObject(parent), m_document(document), m_cursor(cursor),
+      m_fontmetrics(fontmetrics), m_encoding("ASCII") {
     m_selectedarea = QHexRenderer::HexArea;
     m_cursorenabled = false;
 
@@ -426,12 +426,11 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
 
 void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
                                   Factor factor) const {
-    QHexCursor *cursor = m_document->cursor();
-    if (!cursor->isLineSelected(line))
+    if (!m_cursor->isLineSelected(line))
         return;
 
-    const QHexPosition &startsel = cursor->selectionStart();
-    const QHexPosition &endsel = cursor->selectionEnd();
+    const QHexPosition &startsel = m_cursor->selectionStart();
+    const QHexPosition &endsel = m_cursor->selectionEnd();
 
     if (startsel.line == endsel.line) {
         textcursor.setPosition(startsel.column * factor);
@@ -463,17 +462,16 @@ void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
 
 void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,
                                     qsizetype line) const {
-    QHexCursor *cursor = m_document->cursor();
-    if ((line != cursor->currentLine()) || !m_cursorenabled)
+    if ((line != m_cursor->currentLine()) || !m_cursorenabled)
         return;
 
     textcursor.clearSelection();
-    textcursor.setPosition(m_document->cursor()->currentColumn());
+    textcursor.setPosition(m_cursor->currentColumn());
     textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
 
     QTextCharFormat charformat;
 
-    if ((cursor->insertionMode() == QHexCursor::OverwriteMode) ||
+    if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
         (m_selectedarea != QHexRenderer::AsciiArea)) {
         charformat.setForeground(m_bytesBackground);
         if (m_selectedarea == QHexRenderer::AsciiArea)
@@ -489,15 +487,13 @@ void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,
 
 void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
                                   qsizetype line) const {
-    QHexCursor *cursor = m_document->cursor();
-    if ((line != cursor->currentLine()) || !m_cursorenabled)
+    if ((line != m_cursor->currentLine()) || !m_cursorenabled)
         return;
 
     textcursor.clearSelection();
-    textcursor.setPosition(m_document->cursor()->currentColumn() * 3);
+    textcursor.setPosition(m_cursor->currentColumn() * 3);
 
-    if ((m_selectedarea == QHexRenderer::HexArea) &&
-        !m_document->cursor()->currentNibble())
+    if ((m_selectedarea == QHexRenderer::HexArea) && !m_cursor->currentNibble())
         textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor);
 
     textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
@@ -506,7 +502,7 @@ void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
     QTextCharFormat charformat;
 
-    if ((cursor->insertionMode() == QHexCursor::OverwriteMode) ||
+    if ((m_cursor->insertionMode() == QHexCursor::OverwriteMode) ||
         (m_selectedarea != QHexRenderer::HexArea)) {
         charformat.setForeground(m_bytesBackground);
         if (m_selectedarea == QHexRenderer::HexArea)
@@ -676,6 +672,10 @@ void QHexRenderer::drawHeader(QPainter *painter) {
                           m_encoding);
     painter->restore();
 }
+
+QHexCursor *QHexRenderer::cursor() const { return m_cursor; }
+
+void QHexRenderer::setCursor(QHexCursor *newCursor) { m_cursor = newCursor; }
 
 QColor QHexRenderer::bytesColor() const { return m_bytesColor; }
 

@@ -23,8 +23,7 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
         ui->cbTheme->addItem(SkinManager::tr(e.valueToKey(i)));
     }
 
-    ui->cbWinState->addItems(
-        {tr("Normal"), tr("Minimized"), tr("Maximized"), tr("FullScreen")});
+    ui->cbWinState->addItems({tr("Normal"), tr("Maximized"), tr("FullScreen")});
 
     ui->lblQtVersion->setText(QLibraryInfo::build());
     ui->lblOS->setText(QSysInfo::prettyProductName());
@@ -59,13 +58,11 @@ void GeneralSettingDialog::reload() {
         s = 0;
         break;
     case Qt::WindowMinimized:
+    case Qt::WindowMaximized:
         s = 1;
         break;
-    case Qt::WindowMaximized:
-        s = 2;
-        break;
     case Qt::WindowFullScreen:
-        s = 3;
+        s = 2;
         break;
     }
 
@@ -90,9 +87,6 @@ void GeneralSettingDialog::apply() {
         state = Qt::WindowState::WindowNoState;
         break;
     case 1:
-        state = Qt::WindowState::WindowMinimized;
-        break;
-    case 2:
         state = Qt::WindowState::WindowMaximized;
         break;
     default:

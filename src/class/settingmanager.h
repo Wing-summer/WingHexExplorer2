@@ -87,6 +87,9 @@ public:
 
     void load();
 
+    QString lastUsedPath() const;
+    void setLastUsedPath(const QString &newLastUsedPath);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigFindmaxcountChanged(int v);
@@ -125,6 +128,8 @@ private:
 
     QStringList m_usrDisplayCats;
     QStringList m_sysDisplayCats;
+
+    QString m_lastUsedPath;
 
 private:
     QFont _defaultFont;

@@ -20,7 +20,7 @@ class EditorView : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    enum class DocumentType { InValid, File, RegionFile, Driver };
+    enum class DocumentType { InValid, File, RegionFile, Driver, Cloned };
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
@@ -31,10 +31,9 @@ public:
     QString fileName() const;
 
     bool isWorkSpace() const;
-
     bool isNewFile() const;
-
     bool isBigFile() const;
+    bool isCloneFile() const;
 
     const QList<qsizetype> &findResult() const;
 
@@ -46,8 +45,17 @@ public:
 
     void setIsWorkSpace(bool newIsWorkSpace);
 
+    EditorView *cloneParent() const;
+
+    bool isCloned() const;
+
+    bool enablePlugin() const;
+    void setEnablePlugin(bool newEnableplugin);
+
 public slots:
-    void registerView(QWidget *view);
+    EditorView *clone();
+
+    void registerView(WingEditorViewWidget *view);
     void switchView(qindextype index);
 
     FindError find(const QByteArray &data, const FindDialog::Result &result,
@@ -77,13 +85,11 @@ public slots:
 
     DocumentType documentType() const;
 
-    QWidget *otherEditor(qindextype index) const;
+    WingEditorViewWidget *otherEditor(qindextype index) const;
 
     void setCopyLimit(qsizetype sizeMB);
 
     qsizetype copyLimit() const;
-
-    void connectDocSavedFlag();
 
     void applySettings();
 
@@ -100,6 +106,8 @@ private:
         connect(a, &QAction::triggered, this, slot);
         parent->addAction(a);
     }
+
+    void connectDocSavedFlag();
 
 private slots:
     void on_hexeditor_customContextMenuRequested(const QPoint &pos);
@@ -127,11 +135,16 @@ private:
     QStackedWidget *m_stack = nullptr;
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
+
     QHexView *m_hex = nullptr;
-    QList<QWidget *> m_others;
+
+    QList<WingEditorViewWidget *> m_others;
     QString m_fileName;
     QString m_rawName;
     QByteArray m_md5;
+
+    QList<EditorView *> m_cloneChildren;
+    EditorView *m_cloneParent = nullptr;
 
     QMutex m_findMutex;
     QList<qsizetype> m_findResults;

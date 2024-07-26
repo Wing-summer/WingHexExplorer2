@@ -2,6 +2,7 @@
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
+#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
@@ -46,6 +47,8 @@
 constexpr auto EMPTY_FUNC = [] {};
 
 MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
+    this->resize(900, 800);
+
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
@@ -148,11 +151,30 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     buildUpSettingDialog();
 
     // load saved docking layout
-    // m_dock->restoreState(set.dockLayout());
+    m_dock->restoreState(set.dockLayout());
+
+    m_lastusedpath = set.lastUsedPath();
 
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
-    QTimer::singleShot(0, this, [this] { this->show(WindowState::Maximized); });
+    QTimer::singleShot(0, this, [this] {
+        auto &set = SettingManager::instance();
+        WindowState s;
+        switch (set.defaultWinState()) {
+        case Qt::WindowNoState:
+        case Qt::WindowMinimized:
+            s = WindowState::Minimized;
+            break;
+        case Qt::WindowActive:
+        case Qt::WindowMaximized:
+            s = WindowState::Maximized;
+            break;
+        case Qt::WindowFullScreen:
+            s = WindowState::FullScreen;
+            break;
+        }
+        this->show(s);
+    });
 }
 
 MainWindow::~MainWindow() { Logger::instance()->disconnect(); }
@@ -229,20 +251,21 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         new CDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
-    m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
+    auto editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
     // build up basic docking widgets
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
 
     auto splitter =
-        ads::internal::findParent<ads::CDockSplitter *>(m_editorViewArea);
+        ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
     if (splitter) {
-        splitter->setSizes({1, 4});
+        constexpr auto bottomHeight = 300;
+        splitter->setSizes({height() - bottomHeight, bottomHeight});
     }
 
     auto rightArea =
-        buildUpLogDock(m_dock, ads::RightDockWidgetArea, m_editorViewArea);
+        buildUpLogDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
     m_rightViewArea = rightArea;
 
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
@@ -314,7 +337,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             editor->raise();
             editor->setFocus();
         }
-        editor->hexEditor()->document()->cursor()->moveTo(
+        editor->hexEditor()->cursor()->moveTo(
             item->data(Qt::UserRole).toLongLong());
     });
 
@@ -432,7 +455,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
         }
         auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
         hexeditor->renderer()->enableCursor(true);
-        hexeditor->document()->gotoBookMark(m_bookmarks->currentRow());
+        hexeditor->gotoBookMark(m_bookmarks->currentRow());
     });
     connect(m_bookmarks, &QListWidget::customContextMenuRequested, this,
             [=] { menu->popup(cursor().pos()); });
@@ -1021,12 +1044,12 @@ EditorView *MainWindow::newfileGUI() {
     if (!newOpenFileSafeCheck()) {
         return nullptr;
     }
-    auto editor = new EditorView(m_enablePlugin);
+    auto editor = new EditorView(m_enablePlugin, this);
     auto index = m_newIndex++;
     editor->newFile(index);
     m_openedFileNames << editor->fileName();
     registerEditorView(editor);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, m_editorViewArea);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
     return editor;
 }
 
@@ -1295,7 +1318,7 @@ void MainWindow::on_savesel() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
     QFile qfile(filename);
     if (qfile.open(QFile::WriteOnly)) {
-        auto buffer = hexeditor->document()->selectedBytes();
+        auto buffer = hexeditor->selectedBytes();
         qfile.write(buffer);
         qfile.close();
         Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
@@ -1327,7 +1350,7 @@ void MainWindow::on_cutfile() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    if (Q_LIKELY(hexeditor->document()->Cut())) {
+    if (Q_LIKELY(hexeditor->Cut())) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
                      tr("CutToClipBoard"));
     } else {
@@ -1341,7 +1364,7 @@ void MainWindow::on_copyfile() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    if (Q_LIKELY(hexeditor->document()->copy())) {
+    if (Q_LIKELY(hexeditor->copy())) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     } else {
@@ -1355,7 +1378,7 @@ void MainWindow::on_pastefile() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    hexeditor->document()->Paste();
+    hexeditor->Paste();
 }
 
 void MainWindow::on_delete() {
@@ -1363,10 +1386,20 @@ void MainWindow::on_delete() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    hexeditor->document()->RemoveSelection();
+    hexeditor->RemoveSelection();
 }
 
-void MainWindow::on_clone() {}
+void MainWindow::on_clone() {
+    if (m_curEditor == nullptr) {
+        return;
+    }
+
+    auto editor = m_curEditor.loadAcquire();
+    auto hexeditor = editor->clone();
+    registerEditorView(hexeditor);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, hexeditor,
+                          editorViewArea());
+}
 
 void MainWindow::on_findfile() {
     if (m_curEditor == nullptr) {
@@ -1441,7 +1474,7 @@ void MainWindow::on_cuthex() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    if (hexeditor->document()->Cut(true)) {
+    if (hexeditor->Cut(true)) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
                      tr("CutToClipBoard"));
     } else {
@@ -1455,7 +1488,7 @@ void MainWindow::on_copyhex() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    if (hexeditor->document()->copy(true)) {
+    if (hexeditor->copy(true)) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copyhex")),
                      tr("CopyToClipBoard"));
     } else {
@@ -1469,7 +1502,7 @@ void MainWindow::on_pastehex() {
         return;
     }
     auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    hexeditor->document()->Paste();
+    hexeditor->Paste();
 }
 
 void MainWindow::on_fill() {
@@ -1486,9 +1519,9 @@ void MainWindow::on_fill() {
             auto doc = hexeditor->document();
             if (doc->isEmpty() || hexeditor->selectlength() == 0)
                 return;
-            auto pos = doc->cursor()->selectionStart().offset();
-            doc->Replace(pos,
-                         QByteArray(int(hexeditor->selectlength()), char(ch)));
+            auto pos = hexeditor->cursor()->selectionStart().offset();
+            hexeditor->Replace(
+                pos, QByteArray(int(hexeditor->selectlength()), char(ch)));
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("fill")),
                          tr("FillInputError"));
@@ -1504,8 +1537,9 @@ void MainWindow::on_fillzero() {
     auto doc = hexeditor->document();
     if (doc->isEmpty() || hexeditor->selectlength() == 0)
         return;
-    auto pos = doc->cursor()->selectionStart().offset();
-    doc->Replace(pos, QByteArray(int(hexeditor->selectlength()), char(0)));
+    auto pos = hexeditor->cursor()->selectionStart().offset();
+    hexeditor->Replace(pos,
+                       QByteArray(int(hexeditor->selectlength()), char(0)));
 }
 
 void MainWindow::on_bookmark() {
@@ -1520,7 +1554,7 @@ void MainWindow::on_bookmark() {
         return;
     }
     qindextype index = -1;
-    if (doc->existBookMarkByIndex(index)) {
+    if (hexeditor->existBookMarkByIndex(index)) {
         auto b = doc->bookMarkByIndex(index);
         bool ok;
         hexeditor->renderer()->enableCursor();
@@ -1554,7 +1588,7 @@ void MainWindow::on_bookmarkdel() {
         return;
     }
     qindextype index = -1;
-    if (doc->existBookMarkByIndex(index)) {
+    if (hexeditor->existBookMarkByIndex(index)) {
         doc->removeBookMarkByIndex(index);
     }
 }
@@ -1586,7 +1620,7 @@ void MainWindow::on_metadata() {
     }
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m;
-        auto cur = doc->cursor();
+        auto cur = hexeditor->cursor();
         if (cur->selectionLength() > 0) {
             auto begin = cur->selectionStart().offset();
             auto end = cur->selectionEnd().offset() + 1;
@@ -1614,7 +1648,7 @@ void MainWindow::on_metadataedit() {
     }
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m;
-        auto cur = doc->cursor();
+        auto cur = hexeditor->cursor();
         if (cur->selectionLength() > 0) {
             auto mc = doc->metadata()->gets(cur->position().offset());
 
@@ -1658,7 +1692,7 @@ void MainWindow::on_metadatadel() {
         return;
     }
     auto meta = doc->metadata();
-    auto pos = doc->cursor()->position().offset();
+    auto pos = hexeditor->cursor()->position().offset();
     meta->RemoveMetadata(pos);
 }
 
@@ -1925,7 +1959,7 @@ void MainWindow::on_locChanged() {
                 hexeditor->renderer()->encoding().toUtf8());
             Q_ASSERT(enc.has_value());
             QStringDecoder dec(enc.value());
-            m_txtDecode->setText(dec.decode(d->selectedBytes()));
+            m_txtDecode->setText(dec.decode(hexeditor->selectedBytes()));
 #else
             auto enc = QTextCodec::codecForName(
                 hexeditor->renderer()->encoding().toUtf8());
@@ -2063,7 +2097,9 @@ void MainWindow::registerEditorView(EditorView *editor) {
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
     Q_ASSERT(menu);
-    menu->addAction(editor->toggleViewAction());
+    auto ta = editor->toggleViewAction();
+    // ta->setIcon(editor->tabWidget()->icon());
+    menu->addAction(ta);
     ev->setEnabled(true);
 }
 
@@ -2089,23 +2125,27 @@ void MainWindow::connectEditorView(EditorView *editor) {
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
 
-        auto hexeditor = editor->hexEditor();
-        if (!hexeditor->isSaved()) {
-            auto ret = m_isOnClosing ? QMessageBox::Yes : this->saveRequest();
-            if (ret == QMessageBox::Cancel) {
-                return;
-            } else if (ret == QMessageBox::Yes) {
-                this->on_save();
-                if (!hexeditor->isSaved()) {
+        if (!editor->isCloneFile()) {
+            auto hexeditor = editor->hexEditor();
+            if (!hexeditor->isSaved()) {
+                auto ret =
+                    m_isOnClosing ? QMessageBox::Yes : this->saveRequest();
+                if (ret == QMessageBox::Cancel) {
                     return;
+                } else if (ret == QMessageBox::Yes) {
+                    this->on_save();
+                    if (!hexeditor->isSaved()) {
+                        return;
+                    }
                 }
+            }
+
+            auto file = editor->fileName();
+            if (!file.isEmpty()) {
+                m_openedFileNames.removeOne(file);
             }
         }
 
-        auto file = editor->fileName();
-        if (!file.isEmpty()) {
-            m_openedFileNames.removeOne(file);
-        }
         m_views.remove(editor);
         if (m_curEditor == editor) {
             m_curEditor = nullptr;
@@ -2268,7 +2308,7 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
     m_openedFileNames << filename;
     m_views.insert(ev, QString());
     registerEditorView(ev);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, m_editorViewArea);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;
 }
 
@@ -2297,7 +2337,7 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
     m_openedFileNames << driver;
     m_views.insert(ev, QString());
     registerEditorView(ev);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, m_editorViewArea);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;
 }
 
@@ -2329,7 +2369,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     m_openedFileNames << ev->fileName();
     m_views.insert(ev, file);
     registerEditorView(ev);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, m_editorViewArea);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;
 }
 
@@ -2361,7 +2401,7 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
 
     m_openedFileNames << filename;
     registerEditorView(ev);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, m_editorViewArea);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;
 }
 
@@ -2440,6 +2480,10 @@ QMessageBox::StandardButton MainWindow::saveRequest() {
                                        QMessageBox::Yes | QMessageBox::No |
                                            QMessageBox::Cancel);
     return ret;
+}
+
+ads::CDockAreaWidget *MainWindow::editorViewArea() const {
+    return m_dock->centralWidget()->dockAreaWidget();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
