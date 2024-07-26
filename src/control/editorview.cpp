@@ -38,7 +38,7 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     m_goto = new GotoWidget(this);
     connect(m_goto, &GotoWidget::jumpToLine, this,
             [=](qsizetype pos, bool isline) {
-                auto cur = m_hex->document()->cursor();
+                auto cur = m_hex->cursor();
                 isline ? cur->moveTo(pos, 0) : cur->moveTo(pos);
             });
     hexLayout->addWidget(m_goto);
@@ -104,7 +104,7 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
 
 EditorView::~EditorView() {}
 
-void EditorView::registerView(QWidget *view) {
+void EditorView::registerView(WingEditorViewWidget *view) {
     Q_ASSERT(view);
     m_others << view;
 }
@@ -136,7 +136,7 @@ EditorView::FindError EditorView::find(const QByteArray &data,
             end = -1;
         } break;
         case SearchDirection::Selection: {
-            auto cur = m_hex->document()->cursor();
+            auto cur = m_hex->cursor();
             begin = cur->selectionStart().offset();
             end = cur->selectionEnd().offset();
         } break;
@@ -198,10 +198,10 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
 
         auto readonly = !Utilities::fileCanWrite(filename);
 
-        auto *p = info.size() > FILEMAXBUFFER
-                      ? QHexDocument::fromLargeFile(filename, readonly, this)
-                      : QHexDocument::fromFile<QMemoryBuffer>(filename,
-                                                              readonly, this);
+        auto *p =
+            info.size() > FILEMAXBUFFER
+                ? QHexDocument::fromLargeFile(filename, readonly)
+                : QHexDocument::fromFile<QMemoryBuffer>(filename, readonly);
 
         if (Q_UNLIKELY(p == nullptr)) {
             if (_enableplugin) {
@@ -311,8 +311,8 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
 
         auto readonly = !Utilities::fileCanWrite(filename);
 
-        auto *p = QHexDocument::fromRegionFile(filename, start, length,
-                                               readonly, this);
+        auto *p =
+            QHexDocument::fromRegionFile(filename, start, length, readonly);
         if (Q_UNLIKELY(p == nullptr)) {
             if (_enableplugin) {
                 params << ErrFile::Permission;
@@ -377,7 +377,7 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 
         auto readonly = !Utilities::fileCanWrite(driver);
 
-        auto *p = QHexDocument::fromLargeFile(driver, readonly, this);
+        auto *p = QHexDocument::fromLargeFile(driver, readonly);
 
         if (Q_UNLIKELY(p == nullptr)) {
             if (_enableplugin) {
@@ -520,20 +520,16 @@ QHexView *EditorView::hexEditor() const { return m_hex; }
 
 EditorView::DocumentType EditorView::documentType() const { return m_docType; }
 
-QWidget *EditorView::otherEditor(qindextype index) const {
+WingEditorViewWidget *EditorView::otherEditor(qindextype index) const {
     if (index < 0 || index >= m_others.size()) {
         return nullptr;
     }
     return m_others.at(index);
 }
 
-void EditorView::setCopyLimit(qsizetype sizeMB) {
-    m_hex->document()->setCopyLimit(sizeMB);
-}
+void EditorView::setCopyLimit(qsizetype sizeMB) { m_hex->setCopyLimit(sizeMB); }
 
-qsizetype EditorView::copyLimit() const {
-    return m_hex->document()->copyLimit();
-}
+qsizetype EditorView::copyLimit() const { return m_hex->copyLimit(); }
 
 void EditorView::connectDocSavedFlag() {
     connect(m_hex->document().get(), &QHexDocument::documentSaved, this,
@@ -560,8 +556,43 @@ void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
     m_hexMenu->popup(QCursor::pos());
 }
 
+bool EditorView::enablePlugin() const { return _enableplugin; }
+
+void EditorView::setEnablePlugin(bool newEnableplugin) {
+    _enableplugin = newEnableplugin;
+}
+
+EditorView *EditorView::cloneParent() const { return m_cloneParent; }
+
+bool EditorView::isCloned() const { return m_cloneParent != nullptr; }
+
 void EditorView::setIsWorkSpace(bool newIsWorkSpace) {
     m_isWorkSpace = newIsWorkSpace;
+}
+
+EditorView *EditorView::clone() {
+    auto ev = new EditorView(_enableplugin, this->parentWidget());
+    connect(ev, &EditorView::closed, this,
+            [=] { this->m_cloneChildren.removeOne(ev); });
+
+    auto doc = this->m_hex->document();
+
+    ev->m_cloneParent = this;
+    ev->m_hex->setDocument(doc, ev->m_hex->cursor());
+
+    // TODO
+    ev->m_rawName = this->m_rawName + "(Cloned)";
+    ev->setWindowTitle(ev->m_rawName);
+    ev->m_docType = DocumentType::Cloned;
+    ev->m_fileName = this->m_fileName;
+    ev->m_md5 = this->m_md5;
+    ev->m_isWorkSpace = this->m_isWorkSpace;
+
+    for (auto &evw : m_others) {
+        ev->m_others << evw->clone();
+    }
+    this->m_cloneChildren << ev;
+    return ev;
 }
 
 QByteArray EditorView::lastFindData() const { return m_lastFindData; }
@@ -573,6 +604,10 @@ bool EditorView::isNewFile() const {
 
 bool EditorView::isBigFile() const {
     return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
+}
+
+bool EditorView::isCloneFile() const {
+    return m_docType == EditorView::DocumentType::Cloned;
 }
 
 const QList<qsizetype> &EditorView::findResult() const { return m_findResults; }

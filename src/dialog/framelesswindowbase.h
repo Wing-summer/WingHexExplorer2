@@ -49,8 +49,9 @@ protected:
                              long *result) override {
 #endif
         MSG *msg = static_cast<MSG *>(message);
+        Q_UNUSED(msg);
 
-        // TODO: ADD Add Aero Snap Support ?
+        // TODO: Add Aero Snap Support ?
         // but I don't want to implement such thing...
         return QDialog::nativeEvent(eventType, message, result);
     }

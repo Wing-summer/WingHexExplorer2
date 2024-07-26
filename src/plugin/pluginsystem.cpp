@@ -343,7 +343,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
 
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto qpos = e->hexEditor()->document()->cursor()->position();
+                auto qpos = e->hexEditor()->cursor()->position();
                 pos.line = qpos.line;
                 pos.column = qpos.column;
                 pos.lineWidth = qpos.lineWidth;
@@ -360,7 +360,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
 
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto cur = e->hexEditor()->document()->cursor();
+                auto cur = e->hexEditor()->cursor();
                 pos.line = cur->selectionLine();
                 pos.column = cur->selectionColumn();
                 pos.nibbleindex = cur->selectionNibble();
@@ -394,11 +394,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         [=]() -> qsizetype {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                return e->hexEditor()
-                    ->document()
-                    ->cursor()
-                    ->position()
-                    .offset();
+                return e->hexEditor()->cursor()->position().offset();
             }
             return 0;
         },
@@ -408,7 +404,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         [=]() -> qsizetype {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                return e->hexEditor()->document()->cursor()->selectionLength();
+                return e->hexEditor()->cursor()->selectionLength();
             }
             return 0;
         },
@@ -418,7 +414,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         [=]() -> QByteArray {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                return e->hexEditor()->document()->selectedBytes();
+                return e->hexEditor()->selectedBytes();
             }
             return {};
         },
@@ -468,7 +464,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         [=]() -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                return e->hexEditor()->document()->atEnd();
+                return e->hexEditor()->atEnd();
             }
             return false;
         },
@@ -518,7 +514,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         [=](bool hex) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                return e->hexEditor()->document()->copy(hex);
+                return e->hexEditor()->copy(hex);
             }
             return false;
         },
@@ -893,7 +889,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](bool hex) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                e->hexEditor()->document()->cut(hex);
+                e->hexEditor()->cut(hex);
                 return true;
             }
             return false;
@@ -904,7 +900,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](bool hex) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                e->hexEditor()->document()->paste(hex);
+                e->hexEditor()->paste(hex);
                 return true;
             }
             return false;
@@ -1266,8 +1262,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 p.column = pos.column;
                 p.lineWidth = pos.lineWidth;
                 p.nibbleindex = pos.nibbleindex;
-                auto doc = e->hexEditor()->document();
-                doc->cursor()->moveTo(p);
+                e->hexEditor()->cursor()->moveTo(p);
                 return true;
             }
             return false;
@@ -1281,8 +1276,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto doc = e->hexEditor()->document();
-                doc->cursor()->moveTo(line, column, nibbleindex);
+                e->hexEditor()->cursor()->moveTo(line, column, nibbleindex);
                 return true;
             }
             return false;
@@ -1293,8 +1287,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](qsizetype offset) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto doc = e->hexEditor()->document();
-                doc->cursor()->moveTo(offset);
+                e->hexEditor()->cursor()->moveTo(offset);
                 return true;
             }
             return false;
@@ -1305,8 +1298,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](qsizetype offset, qsizetype length) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto doc = e->hexEditor()->document();
-                doc->cursor()->setSelection(offset, length);
+                e->hexEditor()->cursor()->setSelection(offset, length);
                 return true;
             }
             return false;
@@ -1317,8 +1309,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                auto doc = e->hexEditor()->document();
-                doc->cursor()->select(line, column, nibbleindex);
+                e->hexEditor()->cursor()->select(line, column, nibbleindex);
                 return true;
             }
             return false;
@@ -1340,7 +1331,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         [=](bool isinsert) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                e->hexEditor()->document()->cursor()->setInsertionMode(
+                e->hexEditor()->cursor()->setInsertionMode(
                     isinsert ? QHexCursor::InsertMode
                              : QHexCursor::OverwriteMode);
                 return true;

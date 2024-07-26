@@ -215,6 +215,8 @@ private:
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
 
+    inline ads::CDockAreaWidget *editorViewArea() const;
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -413,8 +415,6 @@ private:
     QTextBrowser *m_txtDecode = nullptr;
     QListWidget *m_bookmarks = nullptr;
     QListWidget *m_metadatas = nullptr;
-
-    ads::CDockAreaWidget *m_editorViewArea = nullptr;
 
     // data visualization widgets
     QListWidget *m_infolist = nullptr;

@@ -15,7 +15,6 @@
 #include <QBuffer>
 #include <QClipboard>
 #include <QFile>
-#include <QMimeData>
 
 /*======================*/
 // added by wingsummer
@@ -86,14 +85,6 @@ bool QHexDocument::metafgVisible() { return m_metafg; }
 
 bool QHexDocument::metaCommentVisible() { return m_metacomment; }
 
-void QHexDocument::setCopyLimit(qsizetype count) {
-    if (count > 0) {
-        m_copylimit = count;
-    }
-}
-
-qsizetype QHexDocument::copyLimit() { return m_copylimit; }
-
 bool QHexDocument::isDocSaved() {
     return m_undostack->isClean() && !m_pluginModed;
 }
@@ -113,7 +104,6 @@ bool QHexDocument::setLockedFile(bool b) {
     if (m_readonly)
         return false;
     m_islocked = b;
-    m_cursor->setInsertionMode(QHexCursor::OverwriteMode);
     setDocSaved(false);
     emit documentLockedFile(b);
     return true;
@@ -123,8 +113,6 @@ bool QHexDocument::setKeepSize(bool b) {
         return false;
 
     m_keepsize = b;
-    if (b)
-        m_cursor->setInsertionMode(QHexCursor::OverwriteMode);
     setDocSaved(false);
     emit documentKeepSize(b);
     return true;
@@ -279,13 +267,6 @@ bool QHexDocument::clearBookMark() {
     return false;
 }
 
-void QHexDocument::gotoBookMark(qindextype index) {
-    if (index >= 0 && index < bookmarks.count()) {
-        auto bookmark = bookmarks.at(index);
-        m_cursor->moveTo(bookmark.pos);
-    }
-}
-
 bool QHexDocument::existBookMark(qsizetype pos) {
     for (auto item : bookmarks) {
         if (item.pos == pos) {
@@ -295,24 +276,11 @@ bool QHexDocument::existBookMark(qsizetype pos) {
     return false;
 }
 
-bool QHexDocument::existBookMark() {
-    return existBookMark(m_cursor->position().offset());
+const QList<BookMarkStruct> &QHexDocument::getAllBookMarks() {
+    return bookmarks;
 }
 
-bool QHexDocument::existBookMarkByIndex(qindextype &index) {
-    auto curpos = m_cursor->position().offset();
-    int i = 0;
-    for (auto item : bookmarks) {
-        if (item.pos == curpos) {
-            index = i;
-            return true;
-        }
-        i++;
-    }
-    return false;
-}
-
-QList<BookMarkStruct> QHexDocument::getAllBookMarks() { return bookmarks; }
+qsizetype QHexDocument::bookMarksCount() const { return bookmarks.count(); }
 
 void QHexDocument::applyBookMarks(QList<BookMarkStruct> books) {
     bookmarks.append(books);
@@ -341,20 +309,8 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
     }
 }
 
-bool QHexDocument::removeSelection() {
-    if (!m_cursor->hasSelection())
-        return false;
-
-    auto res = this->remove(m_cursor->selectionStart().offset(),
-                            m_cursor->selectionLength());
-    if (res)
-        m_cursor->clearSelection();
-    return res;
-}
-
 QHexDocument *QHexDocument::fromRegionFile(QString filename, qsizetype start,
-                                           qsizetype length, bool readonly,
-                                           QObject *parent) {
+                                           qsizetype length, bool readonly) {
 
     QFile iodevice(filename);
     auto hexbuffer = new QFileRegionBuffer;
@@ -362,45 +318,12 @@ QHexDocument *QHexDocument::fromRegionFile(QString filename, qsizetype start,
     hexbuffer->setReadMaxBytes(length);
 
     if (hexbuffer->read(&iodevice)) {
-        return new QHexDocument(hexbuffer, readonly, parent);
+        return new QHexDocument(hexbuffer, readonly);
     } else {
         delete hexbuffer;
     }
 
     return nullptr;
-}
-
-bool QHexDocument::cut(bool hex) {
-    if (!m_cursor->hasSelection() || m_keepsize)
-        return false;
-
-    auto res = this->copy(hex);
-    if (res) {
-        return this->removeSelection();
-    } else {
-        emit copyLimitRaised();
-        return res;
-    }
-}
-
-void QHexDocument::paste(bool hex) {
-    QClipboard *c = qApp->clipboard();
-    QByteArray data = c->text().toUtf8();
-
-    if (data.isEmpty())
-        return;
-
-    this->removeSelection();
-
-    if (hex)
-        data = QByteArray::fromHex(data);
-
-    auto pos = m_cursor->position().offset();
-    if (!m_keepsize) {
-        this->insert(pos, data);
-        m_cursor->moveTo(pos + data.length()); // added by wingsummer
-    } else
-        this->replace(pos, data);
 }
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {
@@ -447,11 +370,11 @@ bool QHexDocument::remove(qsizetype offset, qsizetype len) {
 /*======================*/
 
 // modified by wingsummer
-QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly, QObject *parent)
-    : QObject(parent), m_baseaddress(0), m_readonly(false), m_keepsize(false),
+QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
+    : QObject(nullptr), m_baseaddress(0), m_readonly(false), m_keepsize(false),
       m_islocked(false) {
+
     m_buffer = buffer;
-    m_buffer->setParent(this); // Take Ownership
     m_areaindent = DEFAULT_AREA_IDENTATION;
     m_hexlinewidth = DEFAULT_HEX_LINE_LENGTH;
 
@@ -464,8 +387,6 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly, QObject *parent)
     }
     /*=======================*/
 
-    m_cursor = new QHexCursor(this);
-    m_cursor->setLineWidth(m_hexlinewidth);
     m_undostack = new QUndoStack(this);
     m_metadata = new QHexMetadata(m_undostack, this);
     m_metadata->setLineWidth(m_hexlinewidth);
@@ -488,46 +409,25 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly, QObject *parent)
 }
 
 bool QHexDocument::isEmpty() const { return m_buffer->isEmpty(); }
-bool QHexDocument::atEnd() const {
-    return m_cursor->position().offset() >= m_buffer->length();
-}
+
 bool QHexDocument::canUndo() const { return m_undostack->canUndo(); }
 bool QHexDocument::canRedo() const { return m_undostack->canRedo(); }
 qsizetype QHexDocument::length() const { return m_buffer->length(); }
 quintptr QHexDocument::baseAddress() const { return m_baseaddress; }
-QHexCursor *QHexDocument::cursor() const { return m_cursor; }
 
 int QHexDocument::areaIndent() const { return m_areaindent; }
 void QHexDocument::setAreaIndent(quint8 value) { m_areaindent = value; }
 int QHexDocument::hexLineWidth() const { return m_hexlinewidth; }
+
 void QHexDocument::setHexLineWidth(quint8 value) {
     m_hexlinewidth = value;
-    m_cursor->setLineWidth(value);
     m_metadata->setLineWidth(value);
+    emit hexLineWidthChanged();
 }
 
 QHexMetadata *QHexDocument::metadata() const { return m_metadata; }
 QByteArray QHexDocument::read(qsizetype offset, qsizetype len) {
     return m_buffer->read(offset, len);
-}
-
-bool QHexDocument::RemoveSelection(int nibbleindex) {
-    if (!m_cursor->hasSelection())
-        return false;
-
-    auto res = this->Remove(m_cursor->selectionStart().offset(),
-                            m_cursor->selectionLength(), nibbleindex);
-    if (res)
-        m_cursor->clearSelection();
-    return res;
-}
-
-QByteArray QHexDocument::selectedBytes() const {
-    if (!m_cursor->hasSelection())
-        return QByteArray();
-
-    return m_buffer->read(m_cursor->selectionStart().offset(),
-                          m_cursor->selectionLength());
 }
 
 char QHexDocument::at(qsizetype offset) const {
@@ -558,113 +458,48 @@ void QHexDocument::redo() {
     emit documentChanged();
 }
 
-bool QHexDocument::Cut(bool hex, int nibbleindex) {
-    if (!m_cursor->hasSelection())
-        return true;
-
-    if (m_keepsize)
-        return false;
-
-    auto res = this->copy(hex);
-    if (res) {
-        return this->RemoveSelection(nibbleindex);
-    } else {
-        emit copyLimitRaised();
-        return res;
-    }
-}
-
-bool QHexDocument::copy(bool hex) {
-    if (!m_cursor->hasSelection())
-        return true;
-
-    QClipboard *c = qApp->clipboard();
-
-    auto len = this->cursor()->selectionLength();
-
-    //如果拷贝字节超过 ? MB 阻止
-    if (len > 1024 * 1024 * m_copylimit) {
-        emit copyLimitRaised();
-        return false;
-    }
-
-    QByteArray bytes = this->selectedBytes();
-
-    if (hex)
-        bytes = bytes.toHex(' ').toUpper();
-
-    auto mime = new QMimeData;
-    mime->setData(QStringLiteral("application/octet-stream"),
-                  bytes); // don't use setText()
-    c->setMimeData(mime);
-
-    // fix the bug by wingsummer
-    return true;
-}
-
-// modified by wingsummer
-void QHexDocument::Paste(int nibbleindex, bool hex) {
-    Q_UNUSED(hex)
-
-    QClipboard *c = qApp->clipboard();
-    QByteArray data = c->mimeData()->data(
-        QStringLiteral("application/octet-stream")); // don't use getText()
-
-    if (data.isEmpty())
-        return;
-
-    this->RemoveSelection(nibbleindex);
-
-    if (hex)
-        data = QByteArray::fromHex(data);
-
-    auto pos = m_cursor->position().offset();
-    if (!m_keepsize) {
-        this->Insert(pos, data, nibbleindex);
-        m_cursor->moveTo(pos + data.length()); // added by wingsummer
-    } else
-        this->Replace(pos, data, nibbleindex);
-}
-
-void QHexDocument::Insert(qsizetype offset, uchar b, int nibbleindex) {
+void QHexDocument::Insert(QHexCursor *cursor, qindextype offset, uchar b,
+                          int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked)
         return;
-    this->Insert(offset, QByteArray(1, char(b)), nibbleindex);
+    this->Insert(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Replace(qsizetype offset, uchar b, int nibbleindex) {
+void QHexDocument::Replace(QHexCursor *cursor, qindextype offset, uchar b,
+                           int nibbleindex) {
     if (m_readonly || m_islocked)
         return;
-    this->Replace(offset, QByteArray(1, char(b)), nibbleindex);
+    this->Replace(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Insert(qsizetype offset, const QByteArray &data,
-                          int nibbleindex) {
+void QHexDocument::Insert(QHexCursor *cursor, qindextype offset,
+                          const QByteArray &data, int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked ||
         (offset < m_buffer->length() && m_metadata->hasMetadata()))
         return;
     if (!m_metadata->hasMetadata())
         m_undostack->push(
-            new InsertCommand(m_buffer, offset, data, m_cursor, nibbleindex));
+            new InsertCommand(m_buffer, offset, data, cursor, nibbleindex));
     else
         m_buffer->insert(offset, data);
     emit documentChanged();
 }
 
-void QHexDocument::Replace(qsizetype offset, const QByteArray &data,
-                           int nibbleindex) {
+void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
+                           const QByteArray &data, int nibbleindex) {
     if (m_readonly || m_islocked)
         return;
     m_undostack->push(
-        new ReplaceCommand(m_buffer, offset, data, m_cursor, nibbleindex));
+        new ReplaceCommand(m_buffer, offset, data, cursor, nibbleindex));
     emit documentChanged();
 }
 
-bool QHexDocument::Remove(qsizetype offset, qsizetype len, int nibbleindex) {
+bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
+                          int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
         return false;
     m_undostack->push(
-        new RemoveCommand(m_buffer, offset, len, m_cursor, nibbleindex));
+        new RemoveCommand(m_buffer, offset, len, cursor, nibbleindex));
     emit documentChanged();
     return true;
 }
@@ -686,43 +521,33 @@ bool QHexDocument::saveTo(QIODevice *device, bool cleanUndo) {
 }
 
 qsizetype QHexDocument::searchForward(qsizetype begin, const QByteArray &ba) {
-    qsizetype startPos;
     if (begin < 0) {
-        startPos = m_cursor->position().offset();
-    } else {
-        startPos = begin;
+        return -1;
     }
-    return m_buffer->indexOf(ba, startPos);
+    return m_buffer->indexOf(ba, begin);
 }
 
 qsizetype QHexDocument::searchBackward(qsizetype begin, const QByteArray &ba) {
-    qsizetype startPos;
     if (begin < 0) {
-        startPos = m_cursor->position().offset() - 1;
-        if (m_cursor->hasSelection()) {
-            startPos = m_cursor->selectionStart().offset() - 1;
-        }
-    } else {
-        startPos = begin;
+        return -1;
     }
-    return m_buffer->lastIndexOf(ba, startPos);
+    return m_buffer->lastIndexOf(ba, begin);
 }
 
-QHexDocument *QHexDocument::fromLargeFile(QString filename, bool readonly,
-                                          QObject *parent) {
+QHexDocument *QHexDocument::fromLargeFile(QString filename, bool readonly) {
 
     auto f = new QFile;
     if (!filename.isEmpty()) {
         f->setFileName(filename);
         QHexBuffer *hexbuffer = new QFileBuffer();
         if (hexbuffer->read(f)) {
-            return new QHexDocument(hexbuffer, readonly,
-                                    parent); // modified by wingsummer
+            return new QHexDocument(hexbuffer,
+                                    readonly); // modified by wingsummer
         } else {
             delete hexbuffer;
         }
     } else {
-        return new QHexDocument(new QFileBuffer(), readonly, parent);
+        return new QHexDocument(new QFileBuffer(), readonly);
     }
 
     return nullptr;

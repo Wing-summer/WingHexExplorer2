@@ -36,7 +36,8 @@ public:
     QSharedPointer<QHexDocument> document();
     QHexRenderer *renderer();
 
-    void setDocument(const QSharedPointer<QHexDocument> &document);
+    void setDocument(const QSharedPointer<QHexDocument> &document,
+                     QHexCursor *cursor = nullptr);
 
     /*=============================*/
     // added by wingsummer
@@ -92,6 +93,32 @@ public:
 
     void setScaleRate(qreal rate);
     qreal scaleRate() const;
+
+    qindextype searchForward(qsizetype begin, const QByteArray &ba);
+    qindextype searchBackward(qsizetype begin, const QByteArray &ba);
+
+    void gotoBookMark(qindextype index);
+    bool existBookMarkByIndex(qindextype &index);
+    bool RemoveSelection(int nibbleindex = 1);
+    bool removeSelection();
+    bool atEnd() const;
+
+    QByteArray selectedBytes() const;
+
+    bool cut(bool hex);
+    bool copy(bool hex = false);
+    void paste(bool hex = false);
+
+    bool Cut(bool hex = false, int nibbleindex = 0);
+    void Paste(int nibbleindex = 0, bool hex = false);
+    void Replace(qindextype offset, uchar b, int nibbleindex);
+    void Replace(qindextype offset, const QByteArray &data,
+                 int nibbleindex = 0);
+
+    qsizetype copyLimit() const;
+    void setCopyLimit(qsizetype newCopylimit);
+
+    QHexCursor *cursor() const;
 
 private:
     void establishSignal(QHexDocument *doc);
@@ -161,11 +188,14 @@ private:
 
 private:
     QSharedPointer<QHexDocument> m_document;
+    QHexCursor *m_cursor = nullptr;
     QHexRenderer *m_renderer;
     QTimer *m_blinktimer;
 
     qreal m_fontSize;
     qreal m_scaleRate = 1.0;
+
+    qsizetype m_copylimit = 1; // MB
 };
 
 #endif // QHEXVIEW_H

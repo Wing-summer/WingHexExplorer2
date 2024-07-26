@@ -3,9 +3,11 @@
 
 #include "src/class/skinmanager.h"
 #include "src/utilities.h"
+#include <QFileInfo>
 #include <QMetaEnum>
 
 const auto DOCK_LAYOUT = QStringLiteral("dock.layout");
+const auto APP_LASTUSED_PATH = QStringLiteral("app.lastusedpath");
 
 const auto SKIN_THEME = QStringLiteral("skin.theme");
 const auto APP_FONTFAMILY = QStringLiteral("app.fontfamily");
@@ -32,6 +34,12 @@ const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
 
 SettingManager::SettingManager() { _defaultFont = qApp->font(); }
 
+QString SettingManager::lastUsedPath() const { return m_lastUsedPath; }
+
+void SettingManager::setLastUsedPath(const QString &newLastUsedPath) {
+    m_lastUsedPath = newLastUsedPath;
+}
+
 void SettingManager::load() {
     auto defaultFontSize = _defaultFont.pointSize();
     Q_ASSERT(defaultFontSize > 0);
@@ -49,8 +57,9 @@ void SettingManager::load() {
         m_appFontFamily = _defaultFont.family();
     }
     READ_CONFIG_INT_POSITIVE(m_appfontSize, APP_FONTSIZE, defaultFontSize);
-    m_defaultWinState = READ_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized)
-                            .value<Qt::WindowState>();
+    this->setDefaultWinState(READ_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized)
+                                 .value<Qt::WindowState>());
+
     READ_CONFIG_BOOL(m_enablePlugin, PLUGIN_ENABLE, true);
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, EDITOR_FONTSIZE,
@@ -79,6 +88,15 @@ void SettingManager::load() {
         READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
     m_sysDisplayCats =
         READ_CONFIG(SCRIPT_SYSDISPLAYCATS, QStringList()).toStringList();
+
+    m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, QString()).toString();
+    if (!m_lastUsedPath.isEmpty()) {
+        QFileInfo info(m_lastUsedPath);
+        if (info.exists() && info.isDir()) {
+        } else {
+            m_lastUsedPath.clear();
+        }
+    }
 
     emit sigAppFontFamilyChanged(m_appFontFamily);
     emit sigAppfontSizeChanged(m_appfontSize);
@@ -135,7 +153,6 @@ Qt::WindowState SettingManager::defaultWinState() const {
 void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
     switch (newDefaultWinState) {
     case Qt::WindowNoState:
-    case Qt::WindowMinimized:
     case Qt::WindowMaximized:
     case Qt::WindowFullScreen:
         break;
@@ -151,6 +168,7 @@ void SettingManager::save(SETTINGS cat) {
     WRITE_CONFIG(DOCK_LAYOUT, m_dockLayout);
     WRITE_CONFIG(EDITOR_RECENTFILES, m_recentHexFiles);
     WRITE_CONFIG(SCRIPT_RECENTFILES, m_recentScriptFiles);
+    WRITE_CONFIG(APP_LASTUSED_PATH, m_lastUsedPath);
     if (cat.testFlag(SETTING::APP)) {
         WRITE_CONFIG(SKIN_THEME, m_themeID);
         WRITE_CONFIG(APP_LANGUAGE, m_defaultLang);

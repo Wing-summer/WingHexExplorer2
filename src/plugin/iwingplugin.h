@@ -549,12 +549,15 @@ struct WingRibbonToolBoxInfo {
 
 class WingEditorViewWidget : public QWidget {
     Q_OBJECT
+
 public slots:
     virtual void toggled(bool isVisible) = 0;
 
     virtual void loadState(QByteArray state) {}
 
     virtual QByteArray saveState() { return {}; }
+
+    virtual WingEditorViewWidget *clone() = 0;
 
 signals:
     void raise();

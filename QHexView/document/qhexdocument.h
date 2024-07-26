@@ -25,17 +25,16 @@ class QHexDocument : public QObject {
     Q_OBJECT
 
 private:
-    explicit QHexDocument(QHexBuffer *buffer, bool readonly = false,
-                          QObject *parent = nullptr); // modified by wingsummer
+    explicit QHexDocument(QHexBuffer *buffer,
+                          bool readonly = false); // modified by wingsummer
 
 public:
     bool isEmpty() const;
-    bool atEnd() const;
     bool canUndo() const;
     bool canRedo() const;
     qsizetype length() const;
     quintptr baseAddress() const;
-    QHexCursor *cursor() const;
+
     QHexMetadata *metadata() const;
     int areaIndent() const;
     void setAreaIndent(quint8 value);
@@ -70,15 +69,14 @@ public:
     BookMarkStruct bookMark(qsizetype pos);
 
     QString bookMarkComment(qsizetype pos);
-    QList<BookMarkStruct> getAllBookMarks();
+    const QList<BookMarkStruct> &getAllBookMarks();
+    qsizetype bookMarksCount() const;
     void applyBookMarks(QList<BookMarkStruct> books);
     bool removeBookMarkByIndex(qindextype index);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
     void getBookMarks(QList<BookMarkStruct> &bookmarks);
-    void gotoBookMark(qindextype index);
-    bool existBookMarkByIndex(qindextype &index);
-    bool existBookMark();
+
     bool existBookMark(qsizetype pos);
 
     void findAllBytes(
@@ -101,15 +99,11 @@ public:
     bool metabgVisible();
     bool metaCommentVisible();
 
-    void setCopyLimit(qsizetype count);
-    qsizetype copyLimit();
-
     /*======================*/
 
 public:
-    bool RemoveSelection(int nibbleindex = 1);
     QByteArray read(qsizetype offset, qsizetype len = -1);
-    QByteArray selectedBytes() const;
+
     char at(qsizetype offset) const;
     void SetBaseAddress(quintptr baseaddress);
     void setBaseAddress(quintptr baseaddress);
@@ -118,14 +112,18 @@ public:
 public slots:
     void undo();
     void redo();
-    bool Cut(bool hex = false, int nibbleindex = 0);
-    bool copy(bool hex = false);
-    void Paste(int nibbleindex = 0, bool hex = false);
-    void Insert(qint64 offset, uchar b, int nibbleindex);
-    void Insert(qint64 offset, const QByteArray &data, int nibbleindex);
-    void Replace(qint64 offset, uchar b, int nibbleindex);
-    void Replace(qint64 offset, const QByteArray &data, int nibbleindex = 0);
-    bool Remove(qint64 offset, qsizetype len, int nibbleindex = 0);
+
+    void Insert(QHexCursor *cursor, qindextype offset, uchar b,
+                int nibbleindex);
+    void Insert(QHexCursor *cursor, qindextype offset, const QByteArray &data,
+                int nibbleindex);
+    void Replace(QHexCursor *cursor, qindextype offset, uchar b,
+                 int nibbleindex);
+    void Replace(QHexCursor *cursor, qindextype offset, const QByteArray &data,
+                 int nibbleindex = 0);
+    bool Remove(QHexCursor *cursor, qindextype offset, qsizetype len,
+                int nibbleindex = 0);
+
     QByteArray read(qint64 offset, qsizetype len) const;
     bool saveTo(QIODevice *device, bool cleanUndo);
 
@@ -137,14 +135,12 @@ public slots:
 
     qint64 searchForward(qsizetype begin, const QByteArray &ba);
     qint64 searchBackward(qsizetype begin, const QByteArray &ba);
-    bool cut(bool hex = false);
-    void paste(bool hex = false);
+
     bool insert(qsizetype offset, uchar b);
     bool insert(qsizetype offset, const QByteArray &data);
     bool replace(qsizetype offset, uchar b);
     bool replace(qsizetype offset, const QByteArray &data);
     bool remove(qsizetype offset, qsizetype len);
-    bool removeSelection();
 
     /*================================*/
 
@@ -153,24 +149,20 @@ public slots:
 
 public:
     template <typename T>
-    static QHexDocument *fromDevice(QIODevice *iodevice, bool readonly = false,
-                                    QObject *parent = nullptr);
+    static QHexDocument *fromDevice(QIODevice *iodevice, bool readonly = false);
     template <typename T>
-    static QHexDocument *fromFile(QString filename, bool readonly = false,
-                                  QObject *parent = nullptr);
+    static QHexDocument *fromFile(QString filename, bool readonly = false);
 
     static QHexDocument *fromRegionFile(QString filename, qint64 start,
-                                        qint64 length, bool readonly = false,
-                                        QObject *parent = nullptr);
+                                        qint64 length, bool readonly = false);
 
     template <typename T>
-    static QHexDocument *fromMemory(char *data, int size, bool readonly = false,
-                                    QObject *parent = nullptr);
+    static QHexDocument *fromMemory(char *data, int size,
+                                    bool readonly = false);
     template <typename T>
-    static QHexDocument *fromMemory(const QByteArray &ba, bool readonly = false,
-                                    QObject *parent = nullptr);
-    static QHexDocument *fromLargeFile(QString filename, bool readonly = false,
-                                       QObject *parent = nullptr);
+    static QHexDocument *fromMemory(const QByteArray &ba,
+                                    bool readonly = false);
+    static QHexDocument *fromLargeFile(QString filename, bool readonly = false);
 
 signals:
 
@@ -189,7 +181,7 @@ signals:
     void documentLockedFile(bool locked);
     void documentKeepSize(bool keep);
 
-    void copyLimitRaised();
+    void hexLineWidthChanged();
 
     /*================================*/
 
@@ -202,7 +194,6 @@ private:
     QHexBuffer *m_buffer;
     QHexMetadata *m_metadata;
     QUndoStack *m_undostack;
-    QHexCursor *m_cursor;
     quintptr m_baseaddress;
     quint8 m_areaindent;
     quint8 m_hexlinewidth;
@@ -220,8 +211,6 @@ private:
     bool m_metabg = true;
     bool m_metacomment = true;
 
-    qsizetype m_copylimit = 1; // MB
-
     /*======================*/
 };
 
@@ -229,8 +218,7 @@ private:
 // modified by wingsummer
 
 template <typename T>
-QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly,
-                                       QObject *parent) {
+QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
     bool needsclose = false;
 
     if (!iodevice->isOpen()) {
@@ -243,7 +231,7 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly,
         if (needsclose)
             iodevice->close();
 
-        return new QHexDocument(hexbuffer, readonly, parent);
+        return new QHexDocument(hexbuffer, readonly);
     } else {
         delete hexbuffer;
     }
@@ -252,35 +240,32 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly,
 }
 
 template <typename T>
-QHexDocument *QHexDocument::fromFile(QString filename, bool readonly,
-                                     QObject *parent) {
+QHexDocument *QHexDocument::fromFile(QString filename, bool readonly) {
     QFile f;
     QHexDocument *doc;
     if (filename.length()) {
         f.setFileName(filename);
         f.open(QFile::ReadOnly);
-        doc = QHexDocument::fromDevice<T>(&f, readonly, parent);
+        doc = QHexDocument::fromDevice<T>(&f, readonly);
         f.close();
     } else {
-        doc = new QHexDocument(new T(), readonly, parent);
+        doc = new QHexDocument(new T(), readonly);
     }
     return doc;
 }
 
 template <typename T>
-QHexDocument *QHexDocument::fromMemory(char *data, int size, bool readonly,
-                                       QObject *parent) {
+QHexDocument *QHexDocument::fromMemory(char *data, int size, bool readonly) {
     QHexBuffer *hexbuffer = new T();
     hexbuffer->read(data, size);
-    return new QHexDocument(hexbuffer, readonly, parent);
+    return new QHexDocument(hexbuffer, readonly);
 }
 
 template <typename T>
-QHexDocument *QHexDocument::fromMemory(const QByteArray &ba, bool readonly,
-                                       QObject *parent) {
+QHexDocument *QHexDocument::fromMemory(const QByteArray &ba, bool readonly) {
     QHexBuffer *hexbuffer = new T();
     hexbuffer->read(ba);
-    return new QHexDocument(hexbuffer, readonly, parent);
+    return new QHexDocument(hexbuffer, readonly);
 }
 
 /*================================================*/
