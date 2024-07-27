@@ -55,7 +55,8 @@ enum ErrFile : uint {
     IsNewFile,
     IsDirver,
     WorkSpaceUnSaved,
-    SourceFileChanged
+    SourceFileChanged,
+    ClonedFile
 };
 
 struct FindResult {
@@ -549,6 +550,11 @@ struct WingRibbonToolBoxInfo {
 
 class WingEditorViewWidget : public QWidget {
     Q_OBJECT
+
+public:
+    virtual QIcon icon() const = 0;
+
+    virtual QString name() const = 0;
 
 public slots:
     virtual void toggled(bool isVisible) = 0;

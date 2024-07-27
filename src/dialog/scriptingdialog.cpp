@@ -12,8 +12,6 @@
 #include <QPicture>
 #include <QStatusBar>
 
-#include "Qsci/qscilexercpp.h"
-
 ScriptingDialog::ScriptingDialog(QWidget *parent)
     : FramelessMainWindow(parent) {
     auto &skin = SkinManager::instance();

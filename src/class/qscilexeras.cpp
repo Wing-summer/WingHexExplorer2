@@ -1,124 +1,72 @@
-// This module implements the QsciLexerCPP class.
-//
-// Copyright (c) 2023 Riverbank Computing Limited <info@riverbankcomputing.com>
-// 
-// This file is part of QScintilla.
-// 
-// This file may be used under the terms of the GNU General Public License
-// version 3.0 as published by the Free Software Foundation and appearing in
-// the file LICENSE included in the packaging of this file.  Please review the
-// following information to ensure the GNU General Public License version 3.0
-// requirements will be met: http://www.gnu.org/copyleft/gpl.html.
-// 
-// If you do not wish to use this file under the terms of the GPL version 3.0
-// then you may purchase a commercial license.  For more information contact
-// info@riverbankcomputing.com.
-// 
-// This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-// WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
-
-#include "Qsci/qscilexercpp.h"
+#include "qscilexeras.h"
 
 #include <qcolor.h>
 #include <qfont.h>
 #include <qsettings.h>
 
-
-// The ctor.
-QsciLexerCPP::QsciLexerCPP(QObject *parent, bool caseInsensitiveKeywords)
-    : QsciLexer(parent),
-      fold_atelse(false), fold_comments(false), fold_compact(true),
-      fold_preproc(true), style_preproc(false), dollars(true),
-      highlight_triple(false), highlight_hash(false), highlight_back(false),
-      highlight_escape(false), vs_escape(false),
-      nocase(caseInsensitiveKeywords)
-{
-}
-
+QsciLexerAs::QsciLexerAs(QObject *parent, bool caseInsensitiveKeywords)
+    : QsciLexer(parent), fold_atelse(false), fold_comments(false),
+      fold_compact(true), fold_preproc(true), style_preproc(false),
+      dollars(true), highlight_triple(false), highlight_hash(false),
+      highlight_back(false), highlight_escape(false), vs_escape(false),
+      nocase(caseInsensitiveKeywords) {}
 
 // The dtor.
-QsciLexerCPP::~QsciLexerCPP()
-{
-}
-
+QsciLexerAs::~QsciLexerAs() {}
 
 // Returns the language name.
-const char *QsciLexerCPP::language() const
-{
-    return "C++";
-}
-
+const char *QsciLexerAs::language() const { return "AngelScript"; }
 
 // Returns the lexer name.
-const char *QsciLexerCPP::lexer() const
-{
-    return (nocase ? "cppnocase" : "cpp");
-}
-
+const char *QsciLexerAs::lexer() const { return (nocase ? "asnocase" : "as"); }
 
 // Return the set of character sequences that can separate auto-completion
 // words.
-QStringList QsciLexerCPP::autoCompletionWordSeparators() const
-{
+QStringList QsciLexerAs::autoCompletionWordSeparators() const {
     QStringList wl;
 
-    wl << "::" << "->" << ".";
+    wl << "::"
+       << ".";
 
     return wl;
 }
 
-
 // Return the list of keywords that can start a block.
-const char *QsciLexerCPP::blockStartKeyword(int *style) const
-{
+const char *QsciLexerAs::blockStartKeyword(int *style) const {
     if (style)
         *style = Keyword;
 
-    return "case catch class default do else finally for if private "
-           "protected public struct try union while";
+    return "case catch class default do else for if private "
+           "protected public try while mixin";
 }
 
-
 // Return the list of characters that can start a block.
-const char *QsciLexerCPP::blockStart(int *style) const
-{
+const char *QsciLexerAs::blockStart(int *style) const {
     if (style)
         *style = Operator;
 
     return "{";
 }
 
-
 // Return the list of characters that can end a block.
-const char *QsciLexerCPP::blockEnd(int *style) const
-{
+const char *QsciLexerAs::blockEnd(int *style) const {
     if (style)
         *style = Operator;
 
     return "}";
 }
 
-
 // Return the style used for braces.
-int QsciLexerCPP::braceStyle() const
-{
-    return Operator;
-}
-
+int QsciLexerAs::braceStyle() const { return Operator; }
 
 // Return the string of characters that comprise a word.
-const char *QsciLexerCPP::wordCharacters() const
-{
+const char *QsciLexerAs::wordCharacters() const {
     return "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_#";
 }
 
-
 // Returns the foreground colour of the text for a style.
-QColor QsciLexerCPP::defaultColor(int style) const
-{
-    switch (style)
-    {
+QColor QsciLexerAs::defaultColor(int style) const {
+    switch (style) {
     case Default:
         return QColor(0x80, 0x80, 0x80);
 
@@ -227,12 +175,9 @@ QColor QsciLexerCPP::defaultColor(int style) const
     return QsciLexer::defaultColor(style);
 }
 
-
 // Returns the end-of-line fill for a style.
-bool QsciLexerCPP::defaultEolFill(int style) const
-{
-    switch (style)
-    {
+bool QsciLexerAs::defaultEolFill(int style) const {
+    switch (style) {
     case UnclosedString:
     case InactiveUnclosedString:
     case VerbatimString:
@@ -249,14 +194,11 @@ bool QsciLexerCPP::defaultEolFill(int style) const
     return QsciLexer::defaultEolFill(style);
 }
 
-
 // Returns the font of the text for a style.
-QFont QsciLexerCPP::defaultFont(int style) const
-{
+QFont QsciLexerAs::defaultFont(int style) const {
     QFont f;
 
-    switch (style)
-    {
+    switch (style) {
     case Comment:
     case InactiveComment:
     case CommentLine:
@@ -272,11 +214,11 @@ QFont QsciLexerCPP::defaultFont(int style) const
     case TaskMarker:
     case InactiveTaskMarker:
 #if defined(Q_OS_WIN)
-        f = QFont("Comic Sans MS",9);
+        f = QFont("Comic Sans MS", 9);
 #elif defined(Q_OS_MAC)
         f = QFont("Comic Sans MS", 12);
 #else
-        f = QFont("Bitstream Vera Serif",9);
+        f = QFont("Bitstream Vera Serif", 9);
 #endif
         break;
 
@@ -303,11 +245,11 @@ QFont QsciLexerCPP::defaultFont(int style) const
     case HashQuotedString:
     case InactiveHashQuotedString:
 #if defined(Q_OS_WIN)
-        f = QFont("Courier New",10);
+        f = QFont("Courier New", 10);
 #elif defined(Q_OS_MAC)
         f = QFont("Courier", 12);
 #else
-        f = QFont("Bitstream Vera Sans Mono",9);
+        f = QFont("Bitstream Vera Sans Mono", 9);
 #endif
         break;
 
@@ -318,48 +260,38 @@ QFont QsciLexerCPP::defaultFont(int style) const
     return f;
 }
 
-
 // Returns the set of keywords.
-const char *QsciLexerCPP::keywords(int set) const
-{
+const char *QsciLexerAs::keywords(int set) const {
     if (set == 1)
-        return
-            "and and_eq asm auto bitand bitor bool break case "
-            "catch char class compl const const_cast continue "
-            "default delete do double dynamic_cast else enum "
-            "explicit export extern false float for friend goto if "
-            "inline int long mutable namespace new not not_eq "
-            "operator or or_eq private protected public register "
-            "reinterpret_cast return short signed sizeof static "
-            "static_cast struct switch template this throw true "
-            "try typedef typeid typename union unsigned using "
-            "virtual void volatile wchar_t while xor xor_eq";
+        return "and abstract auto bool break case cast catch class const "
+               "continue default delete do double else enum explicit external "
+               "false final float for from funcdef function get if import in "
+               "inout int interface int8 int16 int32 int64 is mixin namespace "
+               "not null or out override private property protected return set "
+               "shared super switch this true try typedef uint uint8 uint16 "
+               "uint32 uint64 void while xor";
 
     if (set == 3)
-        return
-            "a addindex addtogroup anchor arg attention author b "
-            "brief bug c class code date def defgroup deprecated "
-            "dontinclude e em endcode endhtmlonly endif "
-            "endlatexonly endlink endverbatim enum example "
-            "exception f$ f[ f] file fn hideinitializer "
-            "htmlinclude htmlonly if image include ingroup "
-            "internal invariant interface latexonly li line link "
-            "mainpage name namespace nosubgrouping note overload "
-            "p page par param post pre ref relates remarks return "
-            "retval sa section see showinitializer since skip "
-            "skipline struct subsection test throw todo typedef "
-            "union until var verbatim verbinclude version warning "
-            "weakgroup $ @ \\ & < > # { }";
+        return "a addindex addtogroup anchor arg attention author b "
+               "brief bug c class code date def defgroup deprecated "
+               "dontinclude e em endcode endhtmlonly endif "
+               "endlatexonly endlink endverbatim enum example "
+               "exception f$ f[ f] file fn hideinitializer "
+               "htmlinclude htmlonly if image include ingroup "
+               "internal invariant interface latexonly li line link "
+               "mainpage name namespace nosubgrouping note overload "
+               "p page par param post pre ref relates remarks return "
+               "retval sa section see showinitializer since skip "
+               "skipline struct subsection test throw todo typedef "
+               "union until var verbatim verbinclude version warning "
+               "weakgroup $ @ \\ & < > # { }";
 
     return 0;
 }
 
-
 // Returns the user name of a style.
-QString QsciLexerCPP::description(int style) const
-{
-    switch (style)
-    {
+QString QsciLexerAs::description(int style) const {
+    switch (style) {
     case Default:
         return tr("Default");
 
@@ -367,22 +299,22 @@ QString QsciLexerCPP::description(int style) const
         return tr("Inactive default");
 
     case Comment:
-        return tr("C comment");
+        return tr("AngelScript comment");
 
     case InactiveComment:
-        return tr("Inactive C comment");
+        return tr("Inactive AngelScript comment");
 
     case CommentLine:
-        return tr("C++ comment");
+        return tr("AngelScript comment");
 
     case InactiveCommentLine:
-        return tr("Inactive C++ comment");
+        return tr("Inactive AngelScript comment");
 
     case CommentDoc:
-        return tr("JavaDoc style C comment");
+        return tr("JavaDoc style AngelScript comment");
 
     case InactiveCommentDoc:
-        return tr("Inactive JavaDoc style C comment");
+        return tr("Inactive JavaDoc style AngelScript comment");
 
     case Number:
         return tr("Number");
@@ -451,10 +383,10 @@ QString QsciLexerCPP::description(int style) const
         return tr("Inactive JavaScript regular expression");
 
     case CommentLineDoc:
-        return tr("JavaDoc style C++ comment");
+        return tr("JavaDoc style AngelScript comment");
 
     case InactiveCommentLineDoc:
-        return tr("Inactive JavaDoc style C++ comment");
+        return tr("Inactive JavaDoc style AngelScript comment");
 
     case KeywordSet2:
         return tr("Secondary keywords and identifiers");
@@ -481,10 +413,10 @@ QString QsciLexerCPP::description(int style) const
         return tr("Inactive global classes and typedefs");
 
     case RawString:
-        return tr("C++ raw string");
+        return tr("AngelScript raw string");
 
     case InactiveRawString:
-        return tr("Inactive C++ raw string");
+        return tr("Inactive AngelScript raw string");
 
     case TripleQuotedVerbatimString:
         return tr("Vala triple-quoted verbatim string");
@@ -499,10 +431,10 @@ QString QsciLexerCPP::description(int style) const
         return tr("Inactive Pike hash-quoted string");
 
     case PreProcessorComment:
-        return tr("Pre-processor C comment");
+        return tr("Pre-processor AngelScript comment");
 
     case InactivePreProcessorComment:
-        return tr("Inactive pre-processor C comment");
+        return tr("Inactive pre-processor AngelScript comment");
 
     case PreProcessorCommentLineDoc:
         return tr("JavaDoc style pre-processor comment");
@@ -532,42 +464,37 @@ QString QsciLexerCPP::description(int style) const
     return QString();
 }
 
-
 // Returns the background colour of the text for a style.
-QColor QsciLexerCPP::defaultPaper(int style) const
-{
-    switch (style)
-    {
+QColor QsciLexerAs::defaultPaper(int style) const {
+    switch (style) {
     case UnclosedString:
     case InactiveUnclosedString:
-        return QColor(0xe0,0xc0,0xe0);
+        return QColor(0xe0, 0xc0, 0xe0);
 
     case VerbatimString:
     case InactiveVerbatimString:
     case TripleQuotedVerbatimString:
     case InactiveTripleQuotedVerbatimString:
-        return QColor(0xe0,0xff,0xe0);
+        return QColor(0xe0, 0xff, 0xe0);
 
     case Regex:
     case InactiveRegex:
-        return QColor(0xe0,0xf0,0xe0);
+        return QColor(0xe0, 0xf0, 0xe0);
 
     case RawString:
     case InactiveRawString:
-        return QColor(0xff,0xf3,0xff);
+        return QColor(0xff, 0xf3, 0xff);
 
     case HashQuotedString:
     case InactiveHashQuotedString:
-        return QColor(0xe7,0xff,0xd7);
+        return QColor(0xe7, 0xff, 0xd7);
     }
 
     return QsciLexer::defaultPaper(style);
 }
 
-
 // Refresh all properties.
-void QsciLexerCPP::refreshProperties()
-{
+void QsciLexerAs::refreshProperties() {
     setAtElseProp();
     setCommentProp();
     setCompactProp();
@@ -581,10 +508,8 @@ void QsciLexerCPP::refreshProperties()
     setVerbatimStringEscapeProp();
 }
 
-
 // Read properties from the settings.
-bool QsciLexerCPP::readProperties(QSettings &qs,const QString &prefix)
-{
+bool QsciLexerAs::readProperties(QSettings &qs, const QString &prefix) {
     fold_atelse = qs.value(prefix + "foldatelse", false).toBool();
     fold_comments = qs.value(prefix + "foldcomments", false).toBool();
     fold_compact = qs.value(prefix + "foldcompact", true).toBool();
@@ -600,10 +525,8 @@ bool QsciLexerCPP::readProperties(QSettings &qs,const QString &prefix)
     return true;
 }
 
-
 // Write properties to the settings.
-bool QsciLexerCPP::writeProperties(QSettings &qs,const QString &prefix) const
-{
+bool QsciLexerAs::writeProperties(QSettings &qs, const QString &prefix) const {
     qs.setValue(prefix + "foldatelse", fold_atelse);
     qs.setValue(prefix + "foldcomments", fold_comments);
     qs.setValue(prefix + "foldcompact", fold_compact);
@@ -619,183 +542,140 @@ bool QsciLexerCPP::writeProperties(QSettings &qs,const QString &prefix) const
     return true;
 }
 
-
 // Set if else can be folded.
-void QsciLexerCPP::setFoldAtElse(bool fold)
-{
+void QsciLexerAs::setFoldAtElse(bool fold) {
     fold_atelse = fold;
 
     setAtElseProp();
 }
 
-
 // Set the "fold.at.else" property.
-void QsciLexerCPP::setAtElseProp()
-{
-    emit propertyChanged("fold.at.else",(fold_atelse ? "1" : "0"));
+void QsciLexerAs::setAtElseProp() {
+    emit propertyChanged("fold.at.else", (fold_atelse ? "1" : "0"));
 }
 
-
 // Set if comments can be folded.
-void QsciLexerCPP::setFoldComments(bool fold)
-{
+void QsciLexerAs::setFoldComments(bool fold) {
     fold_comments = fold;
 
     setCommentProp();
 }
 
-
 // Set the "fold.comment" property.
-void QsciLexerCPP::setCommentProp()
-{
-    emit propertyChanged("fold.comment",(fold_comments ? "1" : "0"));
+void QsciLexerAs::setCommentProp() {
+    emit propertyChanged("fold.comment", (fold_comments ? "1" : "0"));
 }
 
-
 // Set if folds are compact
-void QsciLexerCPP::setFoldCompact(bool fold)
-{
+void QsciLexerAs::setFoldCompact(bool fold) {
     fold_compact = fold;
 
     setCompactProp();
 }
 
-
 // Set the "fold.compact" property.
-void QsciLexerCPP::setCompactProp()
-{
-    emit propertyChanged("fold.compact",(fold_compact ? "1" : "0"));
+void QsciLexerAs::setCompactProp() {
+    emit propertyChanged("fold.compact", (fold_compact ? "1" : "0"));
 }
 
-
 // Set if preprocessor blocks can be folded.
-void QsciLexerCPP::setFoldPreprocessor(bool fold)
-{
+void QsciLexerAs::setFoldPreprocessor(bool fold) {
     fold_preproc = fold;
 
     setPreprocProp();
 }
 
-
 // Set the "fold.preprocessor" property.
-void QsciLexerCPP::setPreprocProp()
-{
-    emit propertyChanged("fold.preprocessor",(fold_preproc ? "1" : "0"));
+void QsciLexerAs::setPreprocProp() {
+    emit propertyChanged("fold.preprocessor", (fold_preproc ? "1" : "0"));
 }
 
-
 // Set if preprocessor lines are styled.
-void QsciLexerCPP::setStylePreprocessor(bool style)
-{
+void QsciLexerAs::setStylePreprocessor(bool style) {
     style_preproc = style;
 
     setStylePreprocProp();
 }
 
-
 // Set the "styling.within.preprocessor" property.
-void QsciLexerCPP::setStylePreprocProp()
-{
-    emit propertyChanged("styling.within.preprocessor",(style_preproc ? "1" : "0"));
+void QsciLexerAs::setStylePreprocProp() {
+    emit propertyChanged("styling.within.preprocessor",
+                         (style_preproc ? "1" : "0"));
 }
 
-
 // Set if '$' characters are allowed.
-void QsciLexerCPP::setDollarsAllowed(bool allowed)
-{
+void QsciLexerAs::setDollarsAllowed(bool allowed) {
     dollars = allowed;
 
     setDollarsProp();
 }
 
-
-// Set the "lexer.cpp.allow.dollars" property.
-void QsciLexerCPP::setDollarsProp()
-{
-    emit propertyChanged("lexer.cpp.allow.dollars",(dollars ? "1" : "0"));
+// Set the "lexer.as.allow.dollars" property.
+void QsciLexerAs::setDollarsProp() {
+    emit propertyChanged("lexer.as.allow.dollars", (dollars ? "1" : "0"));
 }
 
-
 // Set if triple quoted strings are highlighted.
-void QsciLexerCPP::setHighlightTripleQuotedStrings(bool enabled)
-{
+void QsciLexerAs::setHighlightTripleQuotedStrings(bool enabled) {
     highlight_triple = enabled;
 
     setHighlightTripleProp();
 }
 
-
-// Set the "lexer.cpp.triplequoted.strings" property.
-void QsciLexerCPP::setHighlightTripleProp()
-{
-    emit propertyChanged("lexer.cpp.triplequoted.strings",
-            (highlight_triple ? "1" : "0"));
+// Set the "lexer.as.triplequoted.strings" property.
+void QsciLexerAs::setHighlightTripleProp() {
+    emit propertyChanged("lexer.as.triplequoted.strings",
+                         (highlight_triple ? "1" : "0"));
 }
 
-
 // Set if hash quoted strings are highlighted.
-void QsciLexerCPP::setHighlightHashQuotedStrings(bool enabled)
-{
+void QsciLexerAs::setHighlightHashQuotedStrings(bool enabled) {
     highlight_hash = enabled;
 
     setHighlightHashProp();
 }
 
-
-// Set the "lexer.cpp.hashquoted.strings" property.
-void QsciLexerCPP::setHighlightHashProp()
-{
-    emit propertyChanged("lexer.cpp.hashquoted.strings",
-            (highlight_hash ? "1" : "0"));
+// Set the "lexer.as.hashquoted.strings" property.
+void QsciLexerAs::setHighlightHashProp() {
+    emit propertyChanged("lexer.as.hashquoted.strings",
+                         (highlight_hash ? "1" : "0"));
 }
 
-
 // Set if back-quoted strings are highlighted.
-void QsciLexerCPP::setHighlightBackQuotedStrings(bool enabled)
-{
+void QsciLexerAs::setHighlightBackQuotedStrings(bool enabled) {
     highlight_back = enabled;
 
     setHighlightBackProp();
 }
 
-
-// Set the "lexer.cpp.backquoted.strings" property.
-void QsciLexerCPP::setHighlightBackProp()
-{
-    emit propertyChanged("lexer.cpp.backquoted.strings",
-            (highlight_back ? "1" : "0"));
+// Set the "lexer.as.backquoted.strings" property.
+void QsciLexerAs::setHighlightBackProp() {
+    emit propertyChanged("lexer.as.backquoted.strings",
+                         (highlight_back ? "1" : "0"));
 }
 
-
 // Set if escape sequences in strings are highlighted.
-void QsciLexerCPP::setHighlightEscapeSequences(bool enabled)
-{
+void QsciLexerAs::setHighlightEscapeSequences(bool enabled) {
     highlight_escape = enabled;
 
     setHighlightEscapeProp();
 }
 
-
-// Set the "lexer.cpp.escape.sequence" property.
-void QsciLexerCPP::setHighlightEscapeProp()
-{
-    emit propertyChanged("lexer.cpp.escape.sequence",
-            (highlight_escape ? "1" : "0"));
+// Set the "lexer.as.escape.sequence" property.
+void QsciLexerAs::setHighlightEscapeProp() {
+    emit propertyChanged("lexer.as.escape.sequence",
+                         (highlight_escape ? "1" : "0"));
 }
 
-
 // Set if escape sequences in verbatim strings are allowed.
-void QsciLexerCPP::setVerbatimStringEscapeSequencesAllowed(bool allowed)
-{
+void QsciLexerAs::setVerbatimStringEscapeSequencesAllowed(bool allowed) {
     vs_escape = allowed;
 
     setVerbatimStringEscapeProp();
 }
 
-
-// Set the "lexer.cpp.verbatim.strings.allow.escapes" property.
-void QsciLexerCPP::setVerbatimStringEscapeProp()
-{
-    emit propertyChanged("lexer.cpp.verbatim.strings.allow.escapes",
-            (vs_escape ? "1" : "0"));
+// Set the "lexer.as.verbatim.strings.allow.escapes" property.
+void QsciLexerAs::setVerbatimStringEscapeProp() {
+    emit propertyChanged("lexer.as.verbatim.strings.allow.escapes",
+                         (vs_escape ? "1" : "0"));
 }

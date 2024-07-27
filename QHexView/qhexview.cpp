@@ -185,7 +185,6 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
 
     if (m_document) {
         m_document->disconnect();
-        m_cursor->disconnect();
         m_document.clear();
     }
 
@@ -194,10 +193,13 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
     if (m_renderer) {
         m_renderer->switchDoc(m_document.get());
         if (cursor) {
+            m_cursor->disconnect();
             m_renderer->setCursor(cursor);
+            m_cursor = cursor;
         }
     } else {
         if (cursor) {
+            m_cursor->disconnect();
             m_cursor = cursor;
         }
         m_renderer = new QHexRenderer(m_document.data(), m_cursor,

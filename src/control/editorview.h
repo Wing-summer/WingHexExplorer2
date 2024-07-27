@@ -34,6 +34,7 @@ public:
     bool isNewFile() const;
     bool isBigFile() const;
     bool isCloneFile() const;
+    bool isDriver() const;
 
     const QList<qsizetype> &findResult() const;
 
@@ -65,7 +66,7 @@ public slots:
 
     void triggerGoto();
 
-    void newFile(size_t index);
+    ErrFile newFile(size_t index);
     ErrFile openFile(const QString &filename,
                      const QString &encoding = QString());
     ErrFile openWorkSpace(const QString &filename,
@@ -94,6 +95,9 @@ public slots:
     void applySettings();
 
 private:
+    inline qindextype findAvailCloneIndex();
+
+private:
     template <typename Func>
     inline void newAction(QMenu *parent, const QString &icon,
                           const QString &title, Func &&slot,
@@ -107,7 +111,7 @@ private:
         parent->addAction(a);
     }
 
-    void connectDocSavedFlag();
+    void connectDocSavedFlag(EditorView *editor);
 
 private slots:
     void on_hexeditor_customContextMenuRequested(const QPoint &pos);
@@ -143,7 +147,7 @@ private:
     QString m_rawName;
     QByteArray m_md5;
 
-    QList<EditorView *> m_cloneChildren;
+    QVector<EditorView *> m_cloneChildren;
     EditorView *m_cloneParent = nullptr;
 
     QMutex m_findMutex;
