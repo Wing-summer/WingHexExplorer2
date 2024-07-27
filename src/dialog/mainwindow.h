@@ -84,6 +84,9 @@ private:
     buildUpNumberShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                           ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
+    buildUpHashResultDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                          ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
     buildUpHexBookMarkDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                            ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
@@ -139,6 +142,7 @@ private slots:
     void on_findfile();
     void on_gotoline();
     void on_encoding();
+    void on_checksum();
     void on_fileInfo();
 
     void on_cuthex();
@@ -207,8 +211,9 @@ private:
     ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
                            qsizetype length);
 
-    void setEditModeEnabled(bool b, bool isdriver = false);
+    void updateEditModeEnabled();
     void enableDirverLimit(bool isdriver);
+    void enableCloneFileLimit(bool isCloneFile);
 
     void setCurrentHexEditorScale(qreal rate);
 
@@ -411,6 +416,8 @@ private:
     QTableWidget *m_findresult = nullptr;
     QTableWidget *m_numshowtable = nullptr;
     QVector<QTableWidgetItem *> _numsitem;
+    QTableWidget *m_hashtable = nullptr;
+    QVector<QTableWidgetItem *> _hashitem;
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
     QListWidget *m_bookmarks = nullptr;
@@ -433,6 +440,7 @@ private:
 
     QList<QWidget *> m_editStateWidgets;
     QList<QWidget *> m_driverStateWidgets;
+    QList<QWidget *> m_cloneFileStateWidgets;
 
     qsizetype _findmax = 100;
     qsizetype _decstrlim = 10;

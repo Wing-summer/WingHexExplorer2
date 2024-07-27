@@ -88,7 +88,9 @@ set(DIALOG_SRC
     src/dialog/scriptingdialog.h
     src/dialog/scriptingdialog.cpp
     src/dialog/finddialog.cpp
-    src/dialog/finddialog.h)
+    src/dialog/finddialog.h
+    src/dialog/checksumdialog.h
+    src/dialog/checksumdialog.cpp)
 
 set(CONTROL_SRC
     src/control/titlebar.h
@@ -101,7 +103,9 @@ set(CONTROL_SRC
     src/control/scriptingconsole.h
     src/control/gotowidget.h
     src/control/gotowidget.cpp
-    src/control/gotowidget.ui)
+    src/control/gotowidget.ui
+    src/control/scripteditor.h
+    src/control/scripteditor.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -133,7 +137,9 @@ set(CLASS_SRC
     src/class/settingmanager.h
     src/class/settingmanager.cpp
     src/class/wingprogressdialog.h
-    src/class/wingprogressdialog.cpp)
+    src/class/wingprogressdialog.cpp
+    src/class/qscilexeras.h
+    src/class/qscilexeras.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h

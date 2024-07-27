@@ -173,7 +173,7 @@
 
 &emsp;&emsp;让 C++ 成为具有惊人功能的脚本语言！这个功能强大，且不需要外部依赖，直接编译进去就行，不像之前版本必须携带一个`Python`解释器和库，不太方便编译。
 
-&emsp;&emsp;我只找到了镜像库： <https://github.com/IngwiePhoenix/AngelScript> ，原协议为`zlib license`，还是比较宽松的开源协议。
+&emsp;&emsp;镜像库： <https://github.com/codecat/angelscript-mirror> ，原协议为`zlib license`，还是比较宽松的开源协议。
 
 #### 主题
 

@@ -16,6 +16,7 @@
 #include <QFileInfo>
 
 constexpr qsizetype FILEMAXBUFFER = 0x6400000; // 100MB
+constexpr auto CLONE_LIMIT = 5;
 
 EditorView::EditorView(bool enableplugin, QWidget *parent)
     : ads::CDockWidget(QString(), parent), _enableplugin(enableplugin) {
@@ -99,6 +100,8 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
 
     m_stack->setCurrentWidget(m_hexContainer);
 
+    m_cloneChildren.fill(nullptr, CLONE_LIMIT);
+
     applySettings();
 }
 
@@ -168,16 +171,23 @@ void EditorView::triggerGoto() {
                         int(m_hex->documentLines()));
 }
 
-void EditorView::newFile(size_t index) {
+ErrFile EditorView::newFile(size_t index) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
     auto istr = QString::number(index);
     m_rawName = tr("Untitled") + istr;
     this->setWindowTitle(m_rawName);
     m_docType = DocumentType::File;
     m_fileName = QStringLiteral(":") + istr;
-    connectDocSavedFlag();
+    connectDocSavedFlag(this);
+    return ErrFile::Success;
 }
 
 ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
     QList<QVariant> params;
     auto &plgsys = PluginSystem::instance();
 
@@ -225,7 +235,7 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         p->setDocSaved();
 
         this->setWindowTitle(m_rawName);
-        connectDocSavedFlag();
+        connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
@@ -247,6 +257,9 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
 
 ErrFile EditorView::openWorkSpace(const QString &filename,
                                   const QString &encoding) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
 
     Q_ASSERT(!filename.isEmpty());
     QFileInfo finfo(filename);
@@ -291,6 +304,9 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
 
 ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
                                    qsizetype length, const QString &encoding) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
     QList<QVariant> params;
     auto &plgsys = PluginSystem::instance();
 
@@ -336,7 +352,7 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         m_rawName = info.fileName();
 
         this->setWindowTitle(m_rawName);
-        connectDocSavedFlag();
+        connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
@@ -357,6 +373,9 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
 }
 
 ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
+    if (isCloneFile()) {
+        return ErrFile::ClonedFile;
+    }
     QList<QVariant> params;
     auto &plgsys = PluginSystem::instance();
 
@@ -402,7 +421,7 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
         m_rawName = info.fileName();
 
         this->setWindowTitle(m_rawName);
-        connectDocSavedFlag();
+        connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
         tab->setIcon(ICONRES(QStringLiteral("opendriver")));
@@ -424,6 +443,10 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 
 ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                          bool isExport, bool forceWorkSpace, bool ignoreMd5) {
+    if (isCloneFile()) {
+        return this->cloneParent()->save(workSpaceName, path, isExport,
+                                         forceWorkSpace, ignoreMd5);
+    }
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
 
@@ -453,7 +476,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
     if (doc->saveTo(&file, true)) {
         file.close();
-        if (forceWorkSpace || doc->metadata()->hasMetadata()) {
+        if (forceWorkSpace || m_isWorkSpace || doc->metadata()->hasMetadata()) {
             auto render = m_hex->renderer();
 
             WorkSpaceInfo infos;
@@ -492,7 +515,12 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
 ErrFile EditorView::reload() {
     Q_ASSERT(m_docType != DocumentType::InValid);
-    Q_ASSERT(!isNewFile());
+    if (isCloneFile()) {
+        return this->cloneParent()->reload();
+    }
+    if (isNewFile()) {
+        return ErrFile::IsNewFile;
+    }
 
     switch (documentType()) {
     case DocumentType::File:
@@ -531,13 +559,13 @@ void EditorView::setCopyLimit(qsizetype sizeMB) { m_hex->setCopyLimit(sizeMB); }
 
 qsizetype EditorView::copyLimit() const { return m_hex->copyLimit(); }
 
-void EditorView::connectDocSavedFlag() {
-    connect(m_hex->document().get(), &QHexDocument::documentSaved, this,
+void EditorView::connectDocSavedFlag(EditorView *editor) {
+    connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
                 if (b) {
-                    this->setWindowTitle(m_rawName);
+                    editor->setWindowTitle(m_rawName);
                 } else {
-                    this->setWindowTitle(QStringLiteral("* ") + m_rawName);
+                    editor->setWindowTitle(QStringLiteral("* ") + m_rawName);
                 }
             });
 }
@@ -549,6 +577,10 @@ void EditorView::applySettings() {
     m_hex->setAsciiVisible(set.editorShowtext());
     m_hex->setFontSize(set.editorfontSize());
     m_hex->renderer()->SetEncoding(set.editorEncoding());
+}
+
+qindextype EditorView::findAvailCloneIndex() {
+    return m_cloneChildren.indexOf(nullptr);
 }
 
 void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
@@ -571,27 +603,38 @@ void EditorView::setIsWorkSpace(bool newIsWorkSpace) {
 }
 
 EditorView *EditorView::clone() {
+    if (isCloneFile()) {
+        Q_ASSERT(this->cloneParent());
+        return this->cloneParent()->clone();
+    }
+
+    auto cloneIndex = findAvailCloneIndex();
+    if (cloneIndex < 0) {
+        return nullptr;
+    }
+
     auto ev = new EditorView(_enableplugin, this->parentWidget());
-    connect(ev, &EditorView::closed, this,
-            [=] { this->m_cloneChildren.removeOne(ev); });
+    connect(ev, &EditorView::destroyed, this, [=] {
+        this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
+    });
 
     auto doc = this->m_hex->document();
 
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
+    connectDocSavedFlag(ev);
 
-    // TODO
-    ev->m_rawName = this->m_rawName + "(Cloned)";
+    ev->m_rawName = this->m_rawName + QStringLiteral(" : ") +
+                    QString::number(cloneIndex + 1);
     ev->setWindowTitle(ev->m_rawName);
+    ev->setIcon(this->icon());
+
     ev->m_docType = DocumentType::Cloned;
-    ev->m_fileName = this->m_fileName;
-    ev->m_md5 = this->m_md5;
-    ev->m_isWorkSpace = this->m_isWorkSpace;
 
     for (auto &evw : m_others) {
         ev->m_others << evw->clone();
     }
-    this->m_cloneChildren << ev;
+    this->m_cloneChildren[cloneIndex] = ev;
     return ev;
 }
 
@@ -599,15 +642,28 @@ QByteArray EditorView::lastFindData() const { return m_lastFindData; }
 
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
+    if (isCloneFile()) {
+        return this->cloneParent()->isNewFile();
+    }
     return m_fileName.startsWith(':');
 }
 
 bool EditorView::isBigFile() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isBigFile();
+    }
     return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
 }
 
 bool EditorView::isCloneFile() const {
     return m_docType == EditorView::DocumentType::Cloned;
+}
+
+bool EditorView::isDriver() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isDriver();
+    }
+    return m_docType == EditorView::DocumentType::Driver;
 }
 
 const QList<qsizetype> &EditorView::findResult() const { return m_findResults; }
@@ -618,10 +674,16 @@ int EditorView::findResultCount() const { return m_findResults.size(); }
 
 bool EditorView::isWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
+    if (isCloneFile()) {
+        return this->cloneParent()->isWorkSpace();
+    }
     return m_isWorkSpace;
 }
 
 QString EditorView::fileName() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
+    if (isCloneFile()) {
+        return this->cloneParent()->fileName();
+    }
     return m_fileName;
 }

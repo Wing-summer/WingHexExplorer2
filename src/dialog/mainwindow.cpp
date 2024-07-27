@@ -96,7 +96,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     m_scriptDialog = new ScriptingDialog(this);
 
-    setEditModeEnabled(false);
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
     // ok, preparing for starting...
@@ -154,6 +153,9 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     m_dock->restoreState(set.dockLayout());
 
     m_lastusedpath = set.lastUsedPath();
+
+    // update status
+    updateEditModeEnabled();
 
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
@@ -226,10 +228,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 auto editview = qobject_cast<EditorView *>(now);
                 if (editview) {
                     swapEditor(m_curEditor, editview);
-                } else {
-                    setEditModeEnabled(false);
                 }
-                m_curEditor = editview;
+                updateEditModeEnabled();
             });
 
     // add empty area
@@ -273,6 +273,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     auto bottomRightArea = buildUpScriptConsoleDock(
         m_dock, ads::RightDockWidgetArea, bottomLeftArea);
+    buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea, bottomRightArea);
     buildUpVisualDataDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
     buildUpScriptVarShowDock(m_dock, ads::CenterDockWidgetArea,
                              bottomRightArea);
@@ -414,6 +415,57 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
 
     auto dw = buildDockWidget(dock, QStringLiteral("Number"), tr("Number"),
                               m_numshowtable);
+    return dock->addDockWidget(area, dw, areaw);
+}
+
+ads::CDockAreaWidget *
+MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
+                                  ads::DockWidgetArea area,
+                                  ads::CDockAreaWidget *areaw) {
+    QStringList hashNames;
+    auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
+    for (int var = 0; var < QCryptographicHash::Algorithm::NumAlgorithms;
+         ++var) {
+        hashNames << hashe.valueToKey(var);
+    }
+
+    m_hashtable = new QTableWidget(hashNames.size(), 1, this);
+    m_hashtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
+    m_hashtable->setSelectionBehavior(
+        QAbstractItemView::SelectionBehavior::SelectRows);
+    m_hashtable->setHorizontalHeaderLabels(QStringList({tr("CheckSum")}));
+    m_hashtable->setColumnWidth(0, 350);
+    m_hashtable->setFocusPolicy(Qt::StrongFocus);
+
+    m_hashtable->setVerticalHeaderLabels(hashNames);
+    m_hashtable->horizontalHeader()->setStretchLastSection(true);
+
+    auto hashtableMenu = new QMenu(m_hashtable);
+    auto a = new QAction(hashtableMenu);
+    a->setText(tr("Copy"));
+    connect(a, &QAction::triggered, this, [=] {
+        auto r = m_hashtable->currentRow();
+        qApp->clipboard()->setText(_numsitem[r]->text());
+        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                     tr("CopyToClipBoard"));
+    });
+    hashtableMenu->addAction(a);
+
+    m_hashtable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    connect(m_hashtable, &QTableWidget::customContextMenuRequested, this,
+            [=] { hashtableMenu->popup(cursor().pos()); });
+
+    _hashitem.fill(nullptr, QCryptographicHash::Algorithm::NumAlgorithms);
+    for (int i = 0; i < QCryptographicHash::Algorithm::NumAlgorithms; i++) {
+        auto item = new QTableWidgetItem;
+        item->setText(QStringLiteral("-"));
+        item->setTextAlignment(Qt::AlignCenter);
+        _hashitem[i] = item;
+        m_hashtable->setItem(i, 0, item);
+    }
+
+    auto dw = buildDockWidget(dock, QStringLiteral("CheckSum"), tr("CheckSum"),
+                              m_hashtable);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -561,9 +613,10 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
                         EMPTY_FUNC, {}, m_recentMenu);
 
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
-                                              tr("Reload"),
-                                              &MainWindow::on_reload);
+        auto a = addPannelAction(pannel, QStringLiteral("reload"), tr("Reload"),
+                                 &MainWindow::on_reload);
+        m_editStateWidgets << a;
+        m_cloneFileStateWidgets << a;
     }
 
     {
@@ -631,6 +684,8 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("encoding"), tr("Encoding"),
                         &MainWindow::on_encoding,
                         shortcuts.keySequence(QKeySequences::Key::ENCODING));
+        addPannelAction(pannel, QStringLiteral("sum"), tr("CheckSum"),
+                        &MainWindow::on_checksum);
         addPannelAction(pannel, QStringLiteral("info"), tr("FileInfo"),
                         &MainWindow::on_fileInfo,
                         shortcuts.keySequence(QKeySequences::Key::FILE_INFO));
@@ -1396,6 +1451,12 @@ void MainWindow::on_clone() {
 
     auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->clone();
+    if (hexeditor == nullptr) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("clone")),
+                     tr("NoMoreClone"));
+        return;
+    }
+
     registerEditorView(hexeditor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, hexeditor,
                           editorViewArea());
@@ -1456,6 +1517,8 @@ void MainWindow::on_encoding() {
         hexeditor->renderer()->SetEncoding(res);
     }
 }
+
+void MainWindow::on_checksum() {}
 
 void MainWindow::on_fileInfo() {
     if (m_curEditor == nullptr) {
@@ -2098,7 +2161,6 @@ void MainWindow::registerEditorView(EditorView *editor) {
     auto menu = ev->menu();
     Q_ASSERT(menu);
     auto ta = editor->toggleViewAction();
-    // ta->setIcon(editor->tabWidget()->icon());
     menu->addAction(ta);
     ev->setEnabled(true);
 }
@@ -2153,6 +2215,17 @@ void MainWindow::connectEditorView(EditorView *editor) {
         editor->deleteDockWidget();
         m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
             ->setEnabled(m_views.size() != 0);
+
+        if (m_dock->focusedDockWidget() == editor) {
+            if (!m_views.isEmpty()) {
+                for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
+                    auto ev = *p;
+                    if (ev != editor && ev->isCurrentTab()) {
+                        ev->setFocus();
+                    }
+                }
+            }
+        }
     });
 }
 
@@ -2216,14 +2289,14 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     connect(doc, &QHexDocument::metaCommentVisibleChanged, m_aShowMetaComment,
             &QAction::setChecked);
 
-    setEditModeEnabled(true,
-                       cur->documentType() == EditorView::DocumentType::Driver);
-    hexeditor->getStatus();
     m_iReadWrite->setIcon(hexeditor->isReadOnly() ? _infoReadonly
                                                   : _infoWriteable);
     m_iWorkSpace->setIcon(cur->isWorkSpace() ? _infow : _infouw);
 
     loadFindResult(cur);
+
+    m_curEditor = cur;
+    hexeditor->getStatus();
 }
 
 void MainWindow::loadFindResult(EditorView *view) {
@@ -2405,19 +2478,19 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
     return ErrFile::Success;
 }
 
-void MainWindow::setEditModeEnabled(bool b, bool isdriver) {
+void MainWindow::updateEditModeEnabled() {
+    auto b = (m_curEditor != nullptr);
+
     for (auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
 
     if (b) {
-        if (m_curEditor == nullptr) {
-            return;
-        }
-
         auto editor = m_curEditor.loadAcquire();
         auto hexeditor = editor->hexEditor();
-        enableDirverLimit(isdriver);
+
+        enableDirverLimit(editor->isDriver());
+        enableCloneFileLimit(editor->isCloneFile());
 
         auto dm = editor->isWorkSpace();
         m_iWorkSpace->setIcon(dm ? _infow : _infouw);
@@ -2426,9 +2499,6 @@ void MainWindow::setEditModeEnabled(bool b, bool isdriver) {
         emit doc->canUndoChanged(doc->canUndo());
     } else {
         m_iWorkSpace->setIcon(_infouw);
-    }
-
-    if (!b) {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         for (auto i = 0; i < NumTableIndexCount; i++) {
@@ -2438,9 +2508,16 @@ void MainWindow::setEditModeEnabled(bool b, bool isdriver) {
     }
 }
 
-void MainWindow::enableDirverLimit(bool isdriver) {
-    auto e = !isdriver;
+void MainWindow::enableDirverLimit(bool isDriver) {
+    auto e = !isDriver;
     for (auto &item : m_driverStateWidgets) {
+        item->setEnabled(e);
+    }
+}
+
+void MainWindow::enableCloneFileLimit(bool isCloneFile) {
+    auto e = !isCloneFile;
+    for (auto &item : m_cloneFileStateWidgets) {
         item->setEnabled(e);
     }
 }
