@@ -1252,9 +1252,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         },
         Qt::DirectConnection);
     connect(
-        pctl, QOverload<const HexPosition>::of(&WingPlugin::Controller::moveTo),
+        pctl,
+        QOverload<const HexPosition &>::of(&WingPlugin::Controller::moveTo),
         _win,
-        [=](const HexPosition pos) -> bool {
+        [=](const HexPosition &pos) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
                 QHexPosition p;

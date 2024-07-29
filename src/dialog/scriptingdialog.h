@@ -10,6 +10,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "src/class/recentfilemanager.h"
 #include "src/class/scriptmachine.h"
+#include "src/control/scripteditor.h"
 #include "src/utilities.h"
 
 #include <QListWidget>
@@ -68,6 +69,10 @@ private:
         pannel->addButton(a);
         return a;
     }
+
+private:
+    void registerEditorView(ScriptEditor *editor);
+    inline ads::CDockAreaWidget *editorViewArea() const;
 
 private slots:
     void on_newfile();

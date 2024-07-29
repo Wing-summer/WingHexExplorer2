@@ -2,7 +2,6 @@
 #include "ui_settingdialog.h"
 
 #include "src/class/wingmessagebox.h"
-#include "src/dbghelper.h"
 #include "src/utilities.h"
 
 #include <QApplication>
@@ -36,7 +35,6 @@ void SettingDialog::addPage(WingHex::SettingPage *page) {
 }
 
 void SettingDialog::build() {
-    ASSERT_SINGLETON;
     for (auto &page : m_pages) {
         auto name = page->name();
         auto icon = page->categoryIcon();

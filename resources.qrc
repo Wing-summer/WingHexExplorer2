@@ -73,6 +73,12 @@
         <file>images/scale.png</file>
         <file>images/scalereset.png</file>
         <file>images/script.png</file>
+        <file>images/scriptdbg/bp.png</file>
+        <file>images/scriptdbg/bpdis.png</file>
+        <file>images/scriptdbg/conbp.png</file>
+        <file>images/scriptdbg/delbp.png</file>
+        <file>images/scriptdbg/hitbp.png</file>
+        <file>images/scriptdbg/hitcur.png</file>
         <file>images/scriptfolder.png</file>
         <file>images/scriptfolderusr.png</file>
         <file>images/setting.png</file>

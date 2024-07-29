@@ -24,7 +24,7 @@ if(WIN32)
 endif()
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  if(Qt5Widgets_VERSION VERSION_LESS 5.10.0)
+  if(Qt5Widgets_VERSION VERSION_LESS 5.12.0)
     message(FATAL_ERROR "Minimum supported Qt5 version is 5.10!")
   endif()
 endif()
