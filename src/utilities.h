@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QList>
+#include <QMetaEnum>
 #include <QMimeDatabase>
 #include <QScreen>
 #include <QStyle>
@@ -43,8 +44,6 @@ struct HexFile {
     bool isdriver;
     QByteArray md5; // only for RegionFile
 };*/
-
-static QStringList encodingsBuffer;
 
 class Utilities {
 private:
@@ -89,32 +88,58 @@ public:
     }
 
     static QStringList getEncodings() {
-        if (encodingsBuffer.length() > 0)
-            return encodingsBuffer;
-        QStringList encodings;
+        static QStringList encodings;
 
+        if (encodings.isEmpty()) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        for (auto e = 0; e < int(QStringConverter::Encoding::LastEncoding);
-             ++e) {
-            auto ee = QStringConverter::nameForEncoding(
-                QStringConverter::Encoding(e));
-            if (ee == QStringLiteral("ISO-8859-1")) {
-                encodings << QStringLiteral("ASCII");
+            for (auto e = 0; e < int(QStringConverter::Encoding::LastEncoding);
+                 ++e) {
+                auto ee = QStringConverter::nameForEncoding(
+                    QStringConverter::Encoding(e));
+                if (ee == QStringLiteral("ISO-8859-1")) {
+                    encodings << QStringLiteral("ASCII");
+                }
+                encodings << ee;
             }
-            encodings << ee;
-        }
 #else
-        for (auto &e : QTextCodec::availableCodecs()) {
-            if (e == QStringLiteral("ISO-8859-1")) {
-                encodings << QStringLiteral("ASCII");
-            } else {
-                encodings << e;
+            for (auto &e : QTextCodec::availableCodecs()) {
+                if (e == QStringLiteral("ISO-8859-1")) {
+                    encodings << QStringLiteral("ASCII");
+                } else {
+                    encodings << e;
+                }
+            }
+#endif
+        }
+
+        return encodings;
+    }
+
+    static QList<QCryptographicHash::Algorithm> supportedHashAlgorithms() {
+        static QList<QCryptographicHash::Algorithm> algorithms;
+        if (algorithms.isEmpty()) {
+            auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
+            for (int i = 0; i < hashe.keyCount(); ++i) {
+                auto e = hashe.value(i);
+                if (e >= 0 && QCryptographicHash::hashLength(
+                                  QCryptographicHash::Algorithm(e))) {
+                    algorithms << QCryptographicHash::Algorithm(e);
+                }
             }
         }
-#endif
+        return algorithms;
+    }
 
-        encodingsBuffer = encodings;
-        return encodings;
+    static QStringList supportedHashAlgorithmStringList() {
+        static QStringList hashNames;
+        if (hashNames.isEmpty()) {
+            auto hashes = Utilities::supportedHashAlgorithms();
+            auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
+            for (auto &hash : hashes) {
+                hashNames << hashe.valueToKey(hash);
+            }
+        }
+        return hashNames;
     }
 
     static QByteArray getMd5(QString filename) {

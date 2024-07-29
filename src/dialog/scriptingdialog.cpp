@@ -261,19 +261,25 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
     // build up basic docking widgets
-
-    // only for test
-    auto dw = new ads::CDockWidget("Test");
-    auto ce = new QsciScintilla(this);
-    // ce->setLexer(new QsciLexerCPP(ce));
-    // ce->setSyntaxStyle(m_editorStyle);
-
-    dw->setWidget(ce);
-
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, dw, m_editorViewArea);
+    // TODO
 }
 
-void ScriptingDialog::on_newfile() {}
+void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
+    // TODO
+}
+
+ads::CDockAreaWidget *ScriptingDialog::editorViewArea() const {
+    return m_dock->centralWidget()->dockAreaWidget();
+}
+
+void ScriptingDialog::on_newfile() {
+    auto editor = new ScriptEditor(this);
+    // auto index = m_newIndex++;
+    // editor->newFile(index);
+    // m_openedFileNames << editor->fileName();
+    registerEditorView(editor);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+}
 
 void ScriptingDialog::on_savesel() {}
 

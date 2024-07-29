@@ -422,12 +422,7 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    QStringList hashNames;
-    auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
-    for (int var = 0; var < QCryptographicHash::Algorithm::NumAlgorithms;
-         ++var) {
-        hashNames << hashe.valueToKey(var);
-    }
+    QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
 
     m_hashtable = new QTableWidget(hashNames.size(), 1, this);
     m_hashtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
@@ -455,8 +450,8 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     connect(m_hashtable, &QTableWidget::customContextMenuRequested, this,
             [=] { hashtableMenu->popup(cursor().pos()); });
 
-    _hashitem.fill(nullptr, QCryptographicHash::Algorithm::NumAlgorithms);
-    for (int i = 0; i < QCryptographicHash::Algorithm::NumAlgorithms; i++) {
+    _hashitem.fill(nullptr, hashNames.size());
+    for (int i = 0; i < hashNames.size(); i++) {
         auto item = new QTableWidgetItem;
         item->setText(QStringLiteral("-"));
         item->setTextAlignment(Qt::AlignCenter);
@@ -2027,7 +2022,7 @@ void MainWindow::on_locChanged() {
             auto enc = QTextCodec::codecForName(
                 hexeditor->renderer()->encoding().toUtf8());
             auto dec = enc->makeDecoder();
-            m_txtDecode->setText(dec->toUnicode(d->selectedBytes()));
+            m_txtDecode->setText(dec->toUnicode(hexeditor->selectedBytes()));
 #endif
         } else {
             m_txtDecode->setHtml(QStringLiteral("<font color=\"red\">%1</font>")

@@ -32,15 +32,17 @@ if(MSVC)
   set(CMAKE_DEBUG_POSTFIX "d")
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  target_compile_options(QScintilla PRIVATE -Wall -Wextra -Wno-deprecated)
-endif()
-
 add_library(QScintilla STATIC ${SCINTILLA_H} ${SCINTILLA_SRC} ${QSCINTILLA_H}
                               ${QSCINTILLA_SRC})
 
-if(MSVC)
-  target_compile_options(QScintilla PRIVATE /W4)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(QScintilla PRIVATE -w)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  target_compile_options(QScintilla PRIVATE -w)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  string(REGEX REPLACE "(^| )([/-])W[0-9]( |$)" " " CMAKE_CXX_FLAGS
+                       "${CMAKE_CXX_FLAGS}")
+  target_compile_options(QScintilla PRIVATE /w)
 endif()
 
 target_include_directories(

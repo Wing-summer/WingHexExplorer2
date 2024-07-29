@@ -299,7 +299,7 @@ signals:
     bool removeAll(); // extension
 
     // cursor
-    bool moveTo(const HexPosition pos);
+    bool moveTo(const HexPosition &pos);
     bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
     bool moveTo(qsizetype offset);
     bool select(qsizetype line, qsizetype column, int nibbleindex = 1);
