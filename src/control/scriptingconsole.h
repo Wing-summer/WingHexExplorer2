@@ -4,6 +4,8 @@
 #include <QTextEdit>
 #include <QVariant>
 
+#include "src/class/scriptmachine.h"
+
 class QCompleter;
 
 //-------------------------------------------------------------------------------
@@ -82,6 +84,11 @@ protected:
 private:
     void executeCode(const QString &code);
 
+    std::string getInput();
+
+private:
+    ScriptMachine *_sp;
+
     QStringList _history;
     int _historyPosition;
 
@@ -97,6 +104,7 @@ private:
     QTextCharFormat _defaultTextCharacterFormat;
     QCompleter *_completer;
 
+    std::function<std::string(void)> _getInputFn;
     bool _hadError;
 };
 

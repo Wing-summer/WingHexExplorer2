@@ -139,7 +139,9 @@ set(CLASS_SRC
     src/class/wingprogressdialog.h
     src/class/wingprogressdialog.cpp
     src/class/qscilexeras.h
-    src/class/qscilexeras.cpp)
+    src/class/qscilexeras.cpp
+    src/class/asdebugger.h
+    src/class/asdebugger.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h

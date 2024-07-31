@@ -38,6 +38,9 @@ ScriptingConsole::ScriptingConsole(QWidget *parent, Qt::WindowFlags windowFlags)
     setUndoRedoEnabled(false);
     setAcceptRichText(false);
 
+    _getInputFn = std::bind(&ScriptingConsole::getInput, this);
+    _sp = new ScriptMachine(_getInputFn, this);
+
     // connect(PythonQt::self(), SIGNAL(pythonStdOut(const QString &)), this,
     //         SLOT(stdOut(const QString &)));
     // connect(PythonQt::self(), SIGNAL(pythonStdErr(const QString &)), this,
@@ -145,6 +148,11 @@ void ScriptingConsole::executeCode(const QString &code) {
     // if (messageInserted) {
     // append(QString());
     //}
+}
+
+std::string ScriptingConsole::getInput() {
+    // TODO
+    return "";
 }
 
 //-----------------------------------------------------------------------------
