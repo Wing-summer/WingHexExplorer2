@@ -1,11 +1,9 @@
 #include "scriptmachine.h"
 
-//#include "../AngelScript/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/add_on/datetime/datetime.h"
 #include "AngelScript/add_on/scriptany/scriptany.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/add_on/scriptdictionary/scriptdictionary.h"
-//#include "../AngelScript/add_on/scriptfile/scriptfile.h"
 #include "AngelScript/add_on/scriptfile/scriptfilesystem.h"
 #include "AngelScript/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/add_on/scripthandle/scripthandle.h"
@@ -13,9 +11,9 @@
 #include "AngelScript/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/add_on/scriptstdstring/scriptstdstring.h"
-//#include "../AngelScript/add_on/serializer/serializer.h"
-#include "../AngelScript/add_on/weakref/weakref.h"
+#include "AngelScript/add_on/weakref/weakref.h"
 
+#include <QProcess>
 #include <iostream>
 
 ScriptMachine::~ScriptMachine() {
@@ -30,9 +28,196 @@ ScriptMachine::~ScriptMachine() {
     _engine->ShutDownAndRelease();
 }
 
+bool ScriptMachine::inited() { return _engine != nullptr; }
+
 bool ScriptMachine::isRunning() const { return _ctxMgr != nullptr; }
 
-bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
+bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
+    if (engine == nullptr) {
+        return false;
+    }
+
+    // The script compiler will send any compiler messages to the callback
+    auto r = engine->SetMessageCallback(asFUNCTION(messageCallback), this,
+                                        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    RegisterScriptArray(engine, false);
+    RegisterStdString(engine);
+    RegisterScriptMath(engine);
+    RegisterScriptMathComplex(engine);
+    RegisterScriptWeakRef(engine);
+    RegisterScriptAny(engine);
+    RegisterScriptDictionary(engine);
+    RegisterScriptGrid(engine);
+    RegisterScriptDateTime(engine);
+    RegisterScriptFileSystem(engine);
+    RegisterScriptHandle(engine);
+    RegisterStdStringUtils(engine);
+    RegisterExceptionRoutines(engine);
+
+    // Register a couple of extra functions for the scripts
+    _printStringFn =
+        std::bind(&ScriptMachine::printString, this, std::placeholders::_1);
+    r = engine->RegisterGlobalFunction(
+        "void print(const string &in)",
+        asMETHOD(decltype(_printStringFn), operator()),
+        asCALL_THISCALL_ASGLOBAL, &_printStringFn);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = engine->RegisterGlobalFunction(
+        "string getInput()", asMETHOD(decltype(_getInputFn), operator()),
+        asCALL_THISCALL_ASGLOBAL);
+    assert(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    _getcmdLineArgsFn = std::bind(&ScriptMachine::getCommandLineArgs, this);
+    r = engine->RegisterGlobalFunction(
+        "array<string> @getCommandLineArgs()",
+        asMETHOD(decltype(_getcmdLineArgsFn), operator()),
+        asCALL_THISCALL_ASGLOBAL, &_getcmdLineArgsFn);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = engine->RegisterGlobalFunction(
+        "int exec(const string &in, const string &in)",
+        asFUNCTIONPR(execSystemCmd, (const std::string &, const std::string &),
+                     int),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = engine->RegisterGlobalFunction(
+        "int exec(const string &in, const string &in, string &out)",
+        asFUNCTIONPR(execSystemCmd,
+                     (const std::string &, const std::string &, std::string &),
+                     int),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    // Setup the context manager and register the support for co-routines
+    _ctxMgr = new CContextMgr();
+    _ctxMgr->RegisterCoRoutineSupport(engine);
+
+    // Tell the engine to use our context pool. This will also
+    // allow us to debug internal script calls made by the engine
+    r = engine->SetContextCallbacks(requestContextCallback,
+                                    returnContextCallback, this);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    return true;
+}
+
+bool ScriptMachine::compileScript(const QString &script) {
+
+    // We will only initialize the global variables once we're
+    // ready to execute, so disable the automatic initialization
+    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+    CScriptBuilder builder;
+
+    // Set the pragma callback so we can detect if the script needs debugging
+    builder.SetPragmaCallback(pragmaCallback, 0);
+
+    // Compile the script
+    auto r = builder.StartNewModule(_engine, "script");
+    if (r < 0) {
+        return false;
+    }
+
+    auto scriptFile = script.toUtf8();
+
+    r = builder.AddSectionFromFile(scriptFile);
+    if (r < 0) {
+        return false;
+    }
+
+    r = builder.BuildModule();
+    if (r < 0) {
+        _engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_ERROR,
+                              "Script failed to build");
+        return false;
+    }
+
+    return true;
+}
+
+CScriptArray *ScriptMachine::getCommandLineArgs() {
+    if (_commandLineArgs) {
+        _commandLineArgs->AddRef();
+        return _commandLineArgs;
+    }
+
+    // Obtain a pointer to the engine
+    asIScriptContext *ctx = asGetActiveContext();
+    asIScriptEngine *engine = ctx->GetEngine();
+
+    // Create the array object
+    asITypeInfo *arrayType =
+        engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+    _commandLineArgs = CScriptArray::Create(arrayType, (asUINT)0);
+
+    // Find the existence of the delimiter in the input string
+    for (int n = 0; n < _params.size(); n++) {
+        // Add the arg to the array
+        _commandLineArgs->Resize(_commandLineArgs->GetSize() + 1);
+        ((std::string *)_commandLineArgs->At(n))
+            ->assign(_params.at(n).toStdString());
+    }
+
+    // Return the array by handle
+    _commandLineArgs->AddRef();
+    return _commandLineArgs;
+}
+
+void ScriptMachine::printString(const std::string &str) {
+    emit onOutputString(MessageType::Info, {QString::fromStdString(str)});
+}
+
+std::string ScriptMachine::getInput() {
+    Q_ASSERT(_getInputFn);
+    return _getInputFn();
+}
+
+int ScriptMachine::execSystemCmd(const std::string &exe,
+                                 const std::string &params, std::string &out) {
+    QProcess ps;
+    ps.setProgram(QString::fromStdString(exe));
+    ps.setArguments(QProcess::splitCommand(QString::fromStdString(params)));
+    ps.start();
+    ps.waitForFinished(-1);
+    auto r = ps.readAllStandardOutput();
+    out = r.toStdString();
+    return ps.exitCode();
+}
+
+int ScriptMachine::execSystemCmd(const std::string &exe,
+                                 const std::string &params) {
+    return QProcess::execute(
+        QString::fromStdString(exe),
+        QProcess::splitCommand(QString::fromStdString(params)));
+}
+
+bool ScriptMachine::executeScript(const QString &script,
+                                  const QStringList &params, bool isInDebug) {
     asIScriptModule *mod = _engine->GetModule("script", asGM_ONLY_IF_EXISTS);
     if (!mod) {
         return false;
@@ -51,6 +236,12 @@ bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
         return false;
     }
 
+    if (_commandLineArgs) {
+        _commandLineArgs->Release();
+        _commandLineArgs = nullptr;
+    }
+    _params = params;
+
     _ctxMgr = new CContextMgr;
     _ctxMgr->RegisterCoRoutineSupport(_engine);
     Q_ASSERT(_engine->SetContextCallbacks(
@@ -58,7 +249,7 @@ bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
                  &ScriptMachine::returnContextCallback, this) >= 0);
 
     if (isInDebug) {
-        _debugger = new CDebugger;
+        _debugger = new asDebugger;
 
         // Let the debugger hold an engine pointer that can be used by the
         // callbacks
@@ -79,8 +270,10 @@ bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
             &ScriptMachine::dateTimeToString);
 
         // Allow the user to initialize the debugging before moving on
-        std::cout << "Debugging, waiting for commands. Type 'h' for help."
-                  << std::endl;
+        emit onOutputString(
+            MessageType::Info,
+            {QStringLiteral(
+                "Debugging, waiting for commands. Type 'h' for help.\n")});
         _debugger->TakeCommands(0);
     }
 
@@ -156,56 +349,39 @@ bool ScriptMachine::runScript(const QString &script, bool isInDebug) {
         _debugger = nullptr;
     }
 
+    _params.clear();
+
     return r >= 0;
 }
 
-bool ScriptMachine::compileScript(const QString &script) {
-    int r;
-
-    // We will only initialize the global variables once we're
-    // ready to execute, so disable the automatic initialization
-    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-
-    CScriptBuilder builder;
-
-    // Set the pragma callback so we can detect if the script needs debugging
-    builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, 0);
-
-    // Compile the script
-    r = builder.StartNewModule(_engine, "script");
-    if (r < 0)
-        return false;
-
-    r = builder.AddSectionFromFile(script.toUtf8());
-    if (r < 0)
-        return false;
-
-    r = builder.BuildModule();
-    if (r < 0) {
-        _engine->WriteMessage(script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-                              "Script failed to build");
-        return false;
+void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
+    MessageType t;
+    switch (msg->type) {
+    case asMSGTYPE_ERROR:
+        t = MessageType::Error;
+        break;
+    case asMSGTYPE_WARNING:
+        t = MessageType::Warn;
+        break;
+    case asMSGTYPE_INFORMATION:
+        t = MessageType::Info;
+        break;
     }
-
-    return true;
+    auto ins = static_cast<ScriptMachine *>(param);
+    emit ins->onOutputString(t, {msg->section, QString::number(msg->row),
+                                 QString::number(msg->col), msg->message});
 }
 
-ScriptMachine::ScriptMachine(QObject *parent) : QObject(parent) {
-    _engine = asCreateScriptEngine();
+ScriptMachine::ScriptMachine(std::function<std::string()> &getInputFn,
+                             QObject *parent)
+    : QObject(parent), _getInputFn(getInputFn) {
+    Q_ASSERT(getInputFn);
 
-    RegisterStdString(_engine);
-    RegisterStdStringUtils(_engine);
-    RegisterScriptMath(_engine);
-    RegisterScriptMathComplex(_engine);
-    RegisterScriptFileSystem(_engine);
-    RegisterScriptDateTime(_engine);
-    RegisterScriptWeakRef(_engine);
-    RegisterScriptAny(_engine);
-    RegisterScriptArray(_engine, false);
-    RegisterScriptDictionary(_engine);
-    RegisterScriptGrid(_engine);
-    RegisterScriptHandle(_engine);
-    RegisterExceptionRoutines(_engine);
+    _engine = asCreateScriptEngine();
+    if (!configureEngine(_engine)) {
+        _engine->ShutDownAndRelease();
+        _engine = nullptr;
+    }
 }
 
 asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,

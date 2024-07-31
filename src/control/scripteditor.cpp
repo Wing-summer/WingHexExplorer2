@@ -85,6 +85,8 @@ void ScriptEditor::setMarginsForegroundColor(
     if (m_marginsForegroundColor == newMarginsForegroundColor)
         return;
     m_editor->setMarginsForegroundColor(newMarginsForegroundColor);
+    m_editor->setFoldMarginColors(newMarginsForegroundColor,
+                                  m_marginsBackgroundColor);
     m_marginsForegroundColor = newMarginsForegroundColor;
     emit marginsForegroundColorChanged();
 }
@@ -98,6 +100,8 @@ void ScriptEditor::setMarginsBackgroundColor(
     if (m_marginsBackgroundColor == newMarginsBackgroundColor)
         return;
     m_editor->setMarginsBackgroundColor(newMarginsBackgroundColor);
+    m_editor->setFoldMarginColors(m_marginsForegroundColor,
+                                  newMarginsBackgroundColor);
     m_marginsBackgroundColor = newMarginsBackgroundColor;
     emit marginsBackgroundColorChanged();
 }
