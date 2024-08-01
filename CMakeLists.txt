@@ -17,7 +17,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED
              COMPONENTS Widgets Network Concurrent PrintSupport LinguistTools)
 
-add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}")
+add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}"
+                -DQT_USE_QSTRINGBUILDER)
 
 if(WIN32)
   add_definitions(-DNOMINMAX)
@@ -141,7 +142,11 @@ set(CLASS_SRC
     src/class/qscilexeras.h
     src/class/qscilexeras.cpp
     src/class/asdebugger.h
-    src/class/asdebugger.cpp)
+    src/class/asdebugger.cpp
+    src/class/scriptconsolemachine.h
+    src/class/scriptconsolemachine.cpp
+    src/class/wingangelapi.h
+    src/class/wingangelapi.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h

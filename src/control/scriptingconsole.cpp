@@ -13,8 +13,6 @@
 #include <QTextCursor>
 #include <QTextDocumentFragment>
 
-#include <iostream>
-
 // note: this class is modified from PythonQt
 
 //-----------------------------------------------------------------------------
@@ -39,12 +37,21 @@ ScriptingConsole::ScriptingConsole(QWidget *parent, Qt::WindowFlags windowFlags)
     setAcceptRichText(false);
 
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
-    _sp = new ScriptMachine(_getInputFn, this);
-
-    // connect(PythonQt::self(), SIGNAL(pythonStdOut(const QString &)), this,
-    //         SLOT(stdOut(const QString &)));
-    // connect(PythonQt::self(), SIGNAL(pythonStdErr(const QString &)), this,
-    //         SLOT(stdErr(const QString &)));
+    _sp = new ScriptConsoleMachine(_getInputFn, this);
+    connect(_sp, &ScriptConsoleMachine::onOutput, this,
+            [=](ScriptConsoleMachine::MessageType type,
+                const ScriptConsoleMachine::MessageInfo &message) {
+                switch (type) {
+                case ScriptMachine::MessageType::Info:
+                    stdOut(message.message);
+                    break;
+                case ScriptMachine::MessageType::Warn:
+                    break;
+                case ScriptMachine::MessageType::Error:
+                    stdErr(message.message);
+                    break;
+                }
+            });
 }
 
 //-----------------------------------------------------------------------------
@@ -56,7 +63,6 @@ void ScriptingConsole::stdOut(const QString &s) {
         auto msg = _stdOut.left(idx);
         consoleMessage(QString("<font color=\"green\">%1</font>")
                            .arg(msg)); // modified by wingsummer
-        std::cout << msg.toLatin1().data() << std::endl;
         _stdOut = _stdOut.mid(idx + 1);
     }
 }
@@ -69,7 +75,6 @@ void ScriptingConsole::stdErr(const QString &s) {
         auto msg = _stdErr.left(idx);
         consoleMessage(QStringLiteral("<font color=\"red\">%1</font>")
                            .arg(msg)); // modified by wingsummer
-        std::cerr << msg.toLatin1().data() << std::endl;
         _stdErr = _stdErr.mid(idx + 1);
     }
 }
@@ -132,22 +137,22 @@ void ScriptingConsole::executeCode(const QString &code) {
     cursor.movePosition(QTextCursor::End);
     setTextCursor(cursor);
 
-    // int cursorPosition = this->textCursor().position();
+    int cursorPosition = this->textCursor().position();
 
     // evaluate the code
     _stdOut.clear();
     _stdErr.clear();
 
-    // TODO execute the code
+    auto ret = _sp->executeScript(code);
 
     flushStdOut();
 
-    // bool messageInserted = (this->textCursor().position() != cursorPosition);
+    bool messageInserted = (this->textCursor().position() != cursorPosition);
     // If a message was inserted, then put another empty line before the command
     // prompt to improve readability.
-    // if (messageInserted) {
-    // append(QString());
-    //}
+    if (messageInserted) {
+        append(QString());
+    }
 }
 
 std::string ScriptingConsole::getInput() {
