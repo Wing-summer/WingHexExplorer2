@@ -14,6 +14,8 @@
 #include "AngelScript/add_on/weakref/weakref.h"
 
 #include <QProcess>
+#include <QVariant>
+
 #include <iostream>
 
 ScriptMachine::~ScriptMachine() {
@@ -59,13 +61,36 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterStdStringUtils(engine);
     RegisterExceptionRoutines(engine);
 
+    _rtypes.resize(RegisteredType::tMAXCOUNT);
+    _rtypes[RegisteredType::tString] =
+        q_check_ptr(_engine->GetTypeInfoByName("string"));
+    _rtypes[RegisteredType::tArray] =
+        q_check_ptr(_engine->GetTypeInfoByName("array"));
+    _rtypes[RegisteredType::tComplex] =
+        q_check_ptr(_engine->GetTypeInfoByName("complex"));
+    _rtypes[RegisteredType::tWeakref] =
+        q_check_ptr(_engine->GetTypeInfoByName("weakref"));
+    _rtypes[RegisteredType::tConstWeakref] =
+        q_check_ptr(_engine->GetTypeInfoByName("const_weakref"));
+    _rtypes[RegisteredType::tAny] =
+        q_check_ptr(_engine->GetTypeInfoByName("any"));
+    _rtypes[RegisteredType::tDictionary] =
+        q_check_ptr(_engine->GetTypeInfoByName("dictionary"));
+    _rtypes[RegisteredType::tDictionaryValue] =
+        q_check_ptr(_engine->GetTypeInfoByName("dictionaryValue"));
+    _rtypes[RegisteredType::tGrid] =
+        q_check_ptr(_engine->GetTypeInfoByName("grid"));
+    _rtypes[RegisteredType::tDateTime] =
+        q_check_ptr(_engine->GetTypeInfoByName("datetime"));
+    _rtypes[RegisteredType::tRef] =
+        q_check_ptr(_engine->GetTypeInfoByName("ref"));
+
     // Register a couple of extra functions for the scripts
-    _printStringFn =
-        std::bind(&ScriptMachine::printString, this, std::placeholders::_1);
-    r = engine->RegisterGlobalFunction(
-        "void print(const string &in)",
-        asMETHOD(decltype(_printStringFn), operator()),
-        asCALL_THISCALL_ASGLOBAL, &_printStringFn);
+    _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
+                         std::placeholders::_2);
+    r = engine->RegisterGlobalFunction("void print(? &in)",
+                                       asMETHOD(decltype(_printFn), operator()),
+                                       asCALL_THISCALL_ASGLOBAL, &_printFn);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
@@ -73,18 +98,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     r = engine->RegisterGlobalFunction(
         "string getInput()", asMETHOD(decltype(_getInputFn), operator()),
-        asCALL_THISCALL_ASGLOBAL);
+        asCALL_THISCALL_ASGLOBAL, &_getInputFn);
     assert(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    _getcmdLineArgsFn = std::bind(&ScriptMachine::getCommandLineArgs, this);
-    r = engine->RegisterGlobalFunction(
-        "array<string> @getCommandLineArgs()",
-        asMETHOD(decltype(_getcmdLineArgsFn), operator()),
-        asCALL_THISCALL_ASGLOBAL, &_getcmdLineArgsFn);
-    Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -160,41 +175,68 @@ bool ScriptMachine::compileScript(const QString &script) {
     return true;
 }
 
-CScriptArray *ScriptMachine::getCommandLineArgs() {
-    if (_commandLineArgs) {
-        _commandLineArgs->AddRef();
-        return _commandLineArgs;
+void ScriptMachine::print(void *ref, int typeId) {
+    MessageInfo info;
+    switch (asETypeIdFlags(typeId)) {
+    case asTYPEID_BOOL:
+        info.message = *static_cast<bool *>(ref) ? QStringLiteral("true")
+                                                 : QStringLiteral("false");
+        break;
+    case asTYPEID_INT8:
+        info.message = QString::number(*static_cast<asINT8 *>(ref));
+        break;
+    case asTYPEID_INT16:
+        info.message = QString::number(*static_cast<asINT16 *>(ref));
+        break;
+    case asTYPEID_INT32:
+        info.message = QString::number(*static_cast<asINT32 *>(ref));
+        break;
+    case asTYPEID_INT64:
+        info.message = QString::number(*static_cast<asINT64 *>(ref));
+        break;
+    case asTYPEID_UINT8:
+        info.message = QString::number(
+            *static_cast<QIntegerForSizeof<asINT8>::Unsigned *>(ref));
+        break;
+    case asTYPEID_UINT16:
+        info.message = QString::number(
+            *static_cast<QIntegerForSizeof<asINT16>::Unsigned *>(ref));
+        break;
+    case asTYPEID_UINT32:
+        info.message = QString::number(
+            *static_cast<QIntegerForSizeof<asINT32>::Unsigned *>(ref));
+        break;
+    case asTYPEID_UINT64:
+        info.message = QString::number(
+            *static_cast<QIntegerForSizeof<asINT64>::Unsigned *>(ref));
+        break;
+    case asTYPEID_FLOAT:
+        info.message = QString::number(*static_cast<float *>(ref));
+        break;
+    case asTYPEID_DOUBLE:
+        info.message = QString::number(*static_cast<double *>(ref));
+        break;
+    default: {
+        auto tinfo = _engine->GetTypeInfoById(typeId);
+        if (isType(tinfo, tString)) {
+            info.message =
+                QString::fromStdString(*static_cast<std::string *>(ref));
+        } else {
+        }
+    } break;
     }
 
-    // Obtain a pointer to the engine
-    asIScriptContext *ctx = asGetActiveContext();
-    asIScriptEngine *engine = ctx->GetEngine();
-
-    // Create the array object
-    asITypeInfo *arrayType =
-        engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
-    _commandLineArgs = CScriptArray::Create(arrayType, (asUINT)0);
-
-    // Find the existence of the delimiter in the input string
-    for (int n = 0; n < _params.size(); n++) {
-        // Add the arg to the array
-        _commandLineArgs->Resize(_commandLineArgs->GetSize() + 1);
-        ((std::string *)_commandLineArgs->At(n))
-            ->assign(_params.at(n).toStdString());
-    }
-
-    // Return the array by handle
-    _commandLineArgs->AddRef();
-    return _commandLineArgs;
-}
-
-void ScriptMachine::printString(const std::string &str) {
-    emit onOutputString(MessageType::Info, {QString::fromStdString(str)});
+    emit onOutput(MessageType::Info, info);
 }
 
 std::string ScriptMachine::getInput() {
     Q_ASSERT(_getInputFn);
     return _getInputFn();
+}
+
+bool ScriptMachine::isType(asITypeInfo *tinfo, RegisteredType type) {
+    auto t = _rtypes.at(tString);
+    return tinfo->DerivesFrom(t) || tinfo->Implements(t);
 }
 
 int ScriptMachine::execSystemCmd(const std::string &exe,
@@ -216,8 +258,7 @@ int ScriptMachine::execSystemCmd(const std::string &exe,
         QProcess::splitCommand(QString::fromStdString(params)));
 }
 
-bool ScriptMachine::executeScript(const QString &script,
-                                  const QStringList &params, bool isInDebug) {
+bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     asIScriptModule *mod = _engine->GetModule("script", asGM_ONLY_IF_EXISTS);
     if (!mod) {
         return false;
@@ -231,16 +272,11 @@ bool ScriptMachine::executeScript(const QString &script,
     }
 
     if (func == nullptr) {
-        _engine->WriteMessage(script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-                              "Cannot find 'int main()' or 'void main()'");
+        _engine->WriteMessage(
+            script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+            tr("Cannot find 'int main()' or 'void main()'").toUtf8());
         return false;
     }
-
-    if (_commandLineArgs) {
-        _commandLineArgs->Release();
-        _commandLineArgs = nullptr;
-    }
-    _params = params;
 
     _ctxMgr = new CContextMgr;
     _ctxMgr->RegisterCoRoutineSupport(_engine);
@@ -270,10 +306,10 @@ bool ScriptMachine::executeScript(const QString &script,
             &ScriptMachine::dateTimeToString);
 
         // Allow the user to initialize the debugging before moving on
-        emit onOutputString(
-            MessageType::Info,
-            {QStringLiteral(
-                "Debugging, waiting for commands. Type 'h' for help.\n")});
+        MessageInfo info;
+        info.message =
+            tr("Debugging, waiting for commands. Type 'h' for help.");
+        emit onOutput(MessageType::Info, info);
         _debugger->TakeCommands(0);
     }
 
@@ -282,8 +318,9 @@ bool ScriptMachine::executeScript(const QString &script,
     // to debug the initialization without passing in a pre-created context
     int r = mod->ResetGlobalVars(0);
     if (r < 0) {
-        _engine->WriteMessage(script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-                              "Failed while initializing global variables");
+        _engine->WriteMessage(
+            script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+            tr("Failed while initializing global variables").toUtf8());
         return false;
     }
 
@@ -349,8 +386,6 @@ bool ScriptMachine::executeScript(const QString &script,
         _debugger = nullptr;
     }
 
-    _params.clear();
-
     return r >= 0;
 }
 
@@ -368,14 +403,20 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
         break;
     }
     auto ins = static_cast<ScriptMachine *>(param);
-    emit ins->onOutputString(t, {msg->section, QString::number(msg->row),
-                                 QString::number(msg->col), msg->message});
+
+    MessageInfo info;
+    info.row = msg->row;
+    info.col = msg->col;
+    info.section = msg->section;
+    info.message = msg->message;
+    emit ins->onOutput(t, info);
 }
 
 ScriptMachine::ScriptMachine(std::function<std::string()> &getInputFn,
                              QObject *parent)
     : QObject(parent), _getInputFn(getInputFn) {
     Q_ASSERT(getInputFn);
+    qRegisterMetaType<MessageInfo>();
 
     _engine = asCreateScriptEngine();
     if (!configureEngine(_engine)) {

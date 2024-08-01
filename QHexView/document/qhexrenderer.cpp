@@ -254,7 +254,7 @@ QString QHexRenderer::hexString(qsizetype line, QByteArray *rawline) const {
     if (rawline)
         *rawline = lrawline;
 
-    return lrawline.toHex(' ').toUpper() + " ";
+    return lrawline.toHex(' ').toUpper() + QStringLiteral(" ");
 }
 
 // modified by wingsummer

@@ -4,7 +4,7 @@
 #include <QTextEdit>
 #include <QVariant>
 
-#include "src/class/scriptmachine.h"
+#include "src/class/scriptconsolemachine.h"
 
 class QCompleter;
 
@@ -87,7 +87,7 @@ private:
     std::string getInput();
 
 private:
-    ScriptMachine *_sp;
+    ScriptConsoleMachine *_sp;
 
     QStringList _history;
     int _historyPosition;

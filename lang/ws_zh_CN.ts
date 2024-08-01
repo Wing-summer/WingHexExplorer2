@@ -2730,6 +2730,43 @@
     </message>
 </context>
 <context>
+    <name>ScriptConsoleMachine</name>
+    <message>
+        <location filename="../src/class/scriptconsolemachine.cpp" line="44"/>
+        <source>- Exception</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptconsolemachine.cpp" line="46"/>
+        <source>in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptconsolemachine.cpp" line="59"/>
+        <source>AngelScript callstack:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ScriptMachine</name>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="277"/>
+        <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="311"/>
+        <source>Debugging, waiting for commands. Type &apos;h&apos; for help.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="323"/>
+        <source>Failed while initializing global variables</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ScriptSettingDialog</name>
     <message>
         <location filename="../src/settings/scriptsettingdialog.cpp" line="55"/>
@@ -3196,6 +3233,112 @@
         <location filename="../Qt-Advanced-Docking-System/src/DockWidgetTab.cpp" line="565"/>
         <source>Close Others</source>
         <translation>关闭其他组</translation>
+    </message>
+</context>
+<context>
+    <name>asDebugger</name>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="12"/>
+        <source> c - Continue
+ s - Step into
+ n - Next step
+ o - Step out
+ b - Set break point
+ l - List various things
+ r - Remove break point
+ p - Print value
+ w - Where am I?
+ a - Abort execution
+ h - Print this help text
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="40"/>
+        <source>Setting break point in file &apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="41"/>
+        <location filename="../src/class/asdebugger.cpp" line="138"/>
+        <source>&apos; at line </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="56"/>
+        <source>Adding deferred break point for function &apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="90"/>
+        <source>Entering function &apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="92"/>
+        <source>&apos;. Transforming it into break point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="110"/>
+        <source>Moving break point </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="111"/>
+        <location filename="../src/class/asdebugger.cpp" line="137"/>
+        <source> in file &apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="113"/>
+        <source>&apos; to next line with code at line </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="136"/>
+        <source>Reached break point </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="149"/>
+        <source>No script is running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="159"/>
+        <source>Garbage collector:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="159"/>
+        <source>
+ current size:          </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="160"/>
+        <source>
+ total destroyed:       </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="161"/>
+        <source>
+ total detected:        </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="162"/>
+        <source>
+ new objects:           </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="163"/>
+        <source>
+ new objects destroyed: </source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>
