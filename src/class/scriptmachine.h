@@ -76,18 +76,6 @@ private:
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 
-    static std::string stringToString(void *obj, int expandMembers,
-                                      CDebugger *dbg);
-
-    static std::string arrayToString(void *obj, int expandMembers,
-                                     CDebugger *dbg);
-
-    static std::string dictionaryToString(void *obj, int expandMembers,
-                                          CDebugger *dbg);
-
-    static std::string dateTimeToString(void *obj, int expandMembers,
-                                        CDebugger *dbg);
-
     static int pragmaCallback(const std::string &pragmaText,
                               CScriptBuilder &builder, void *userParam);
 

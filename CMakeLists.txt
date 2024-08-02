@@ -40,6 +40,7 @@ add_subdirectory(QHexView)
 add_subdirectory(QScintilla)
 add_subdirectory(Qt-Advanced-Docking-System)
 add_subdirectory(AngelScript/angelscript/projects/cmake)
+add_subdirectory(QConsoleWidget)
 
 set(QAPPLICATION_CLASS
     QApplication
@@ -146,7 +147,9 @@ set(CLASS_SRC
     src/class/scriptconsolemachine.h
     src/class/scriptconsolemachine.cpp
     src/class/wingangelapi.h
-    src/class/wingangelapi.cpp)
+    src/class/wingangelapi.cpp
+    src/class/angelobjstring.h
+    src/class/angelobjstring.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h
@@ -235,6 +238,7 @@ target_link_libraries(
           QLoggerLib
           QScintilla
           angelscript
+          QConsoleWidget
           qt${QT_VERSION_MAJOR}advanceddocking)
 
 target_include_directories(${CMAKE_PROJECT_NAME}

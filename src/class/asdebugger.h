@@ -24,11 +24,20 @@ public:
 
     virtual void ListStatistics(asIScriptContext *ctx) override;
 
+    virtual void PrintValue(const std::string &expr,
+                            asIScriptContext *ctx) override;
+
+    int getExpandMembers() const;
+    void setExpandMembers(int newExpandMembers);
+
 private:
     bool strcasecmp(const std::string &str1, const std::string &str2);
 
 signals:
     void onOutput(const QString &message);
+
+private:
+    int _expandMembers = 1;
 };
 
 #endif // ASDEBUGGER_H
