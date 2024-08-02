@@ -13,16 +13,12 @@
 #include "AngelScript/add_on/scriptstdstring/scriptstdstring.h"
 #include "AngelScript/add_on/weakref/weakref.h"
 
-#include <QProcess>
-#include <QVariant>
+#include "angelobjstring.h"
 
+#include <QProcess>
 #include <iostream>
 
 ScriptMachine::~ScriptMachine() {
-    if (_debugger) {
-        delete _debugger;
-    }
-
     if (_ctxMgr) {
         delete _ctxMgr;
     }
@@ -138,6 +134,19 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         return false;
     }
 
+    _debugger = new asDebugger(this);
+
+    // Register the to-string callbacks so the user can see the contents of
+    // strings
+    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tString],
+                                        &AngelObjString::stringToString);
+    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tArray],
+                                        &AngelObjString::arrayToString);
+    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tDictionary],
+                                        &AngelObjString::dictionaryToString);
+    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tDateTime],
+                                        &AngelObjString::dateTimeToString);
+
     return true;
 }
 
@@ -177,55 +186,8 @@ bool ScriptMachine::compileScript(const QString &script) {
 
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
-    switch (asETypeIdFlags(typeId)) {
-    case asTYPEID_BOOL:
-        info.message = *static_cast<bool *>(ref) ? QStringLiteral("true")
-                                                 : QStringLiteral("false");
-        break;
-    case asTYPEID_INT8:
-        info.message = QString::number(*static_cast<asINT8 *>(ref));
-        break;
-    case asTYPEID_INT16:
-        info.message = QString::number(*static_cast<asINT16 *>(ref));
-        break;
-    case asTYPEID_INT32:
-        info.message = QString::number(*static_cast<asINT32 *>(ref));
-        break;
-    case asTYPEID_INT64:
-        info.message = QString::number(*static_cast<asINT64 *>(ref));
-        break;
-    case asTYPEID_UINT8:
-        info.message = QString::number(
-            *static_cast<QIntegerForSizeof<asINT8>::Unsigned *>(ref));
-        break;
-    case asTYPEID_UINT16:
-        info.message = QString::number(
-            *static_cast<QIntegerForSizeof<asINT16>::Unsigned *>(ref));
-        break;
-    case asTYPEID_UINT32:
-        info.message = QString::number(
-            *static_cast<QIntegerForSizeof<asINT32>::Unsigned *>(ref));
-        break;
-    case asTYPEID_UINT64:
-        info.message = QString::number(
-            *static_cast<QIntegerForSizeof<asINT64>::Unsigned *>(ref));
-        break;
-    case asTYPEID_FLOAT:
-        info.message = QString::number(*static_cast<float *>(ref));
-        break;
-    case asTYPEID_DOUBLE:
-        info.message = QString::number(*static_cast<double *>(ref));
-        break;
-    default: {
-        auto tinfo = _engine->GetTypeInfoById(typeId);
-        if (isType(tinfo, tString)) {
-            info.message =
-                QString::fromStdString(*static_cast<std::string *>(ref));
-        } else {
-        }
-    } break;
-    }
-
+    auto str = _debugger->ToString(ref, typeId, 3, _engine);
+    info.message = QString::fromStdString(str);
     emit onOutput(MessageType::Info, info);
 }
 
@@ -235,7 +197,8 @@ std::string ScriptMachine::getInput() {
 }
 
 bool ScriptMachine::isType(asITypeInfo *tinfo, RegisteredType type) {
-    auto t = _rtypes.at(tString);
+    Q_ASSERT(type < RegisteredType::tMAXCOUNT);
+    auto t = _rtypes.at(type);
     return tinfo->DerivesFrom(t) || tinfo->Implements(t);
 }
 
@@ -285,25 +248,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
                  &ScriptMachine::returnContextCallback, this) >= 0);
 
     if (isInDebug) {
-        _debugger = new asDebugger;
-
         // Let the debugger hold an engine pointer that can be used by the
         // callbacks
         _debugger->SetEngine(_engine);
-
-        // Register the to-string callbacks so the user can see the contents of
-        // strings
-        _debugger->RegisterToStringCallback(
-            _engine->GetTypeInfoByName("string"),
-            &ScriptMachine::stringToString);
-        _debugger->RegisterToStringCallback(_engine->GetTypeInfoByName("array"),
-                                            &ScriptMachine::arrayToString);
-        _debugger->RegisterToStringCallback(
-            _engine->GetTypeInfoByName("dictionary"),
-            &ScriptMachine::dictionaryToString);
-        _debugger->RegisterToStringCallback(
-            _engine->GetTypeInfoByName("datetime"),
-            &ScriptMachine::dateTimeToString);
 
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
@@ -380,11 +327,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     _ctxPool.clear();
 
-    // Destroy debugger
-    if (_debugger) {
-        delete _debugger;
-        _debugger = nullptr;
-    }
+    // Detach debugger
+    Q_ASSERT(_debugger);
+    _debugger->SetEngine(nullptr);
 
     return r >= 0;
 }
@@ -465,94 +410,6 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
 
     // Place the context into the pool for when it will be needed again
     p->_ctxPool.push_back(ctx);
-}
-
-std::string ScriptMachine::stringToString(void *obj, int expandMembers,
-                                          CDebugger *dbg) {
-    // We know the received object is a string
-    std::string *val = reinterpret_cast<std::string *>(obj);
-
-    // Format the output string
-    // TODO: Should convert non-readable characters to escape sequences
-    std::stringstream s;
-    s << "(len=" << val->length() << ") \"";
-    if (val->length() < 20)
-        s << *val << "\"";
-    else
-        s << val->substr(0, 20) << "...";
-
-    return s.str();
-}
-
-std::string ScriptMachine::arrayToString(void *obj, int expandMembers,
-                                         CDebugger *dbg) {
-    CScriptArray *arr = reinterpret_cast<CScriptArray *>(obj);
-
-    std::stringstream s;
-    s << "(len=" << arr->GetSize() << ")";
-
-    if (expandMembers > 0) {
-        s << " [";
-        for (asUINT n = 0; n < arr->GetSize(); n++) {
-            s << dbg->ToString(arr->At(n), arr->GetElementTypeId(),
-                               expandMembers - 1,
-                               arr->GetArrayObjectType()->GetEngine());
-            if (n < arr->GetSize() - 1)
-                s << ", ";
-        }
-        s << "]";
-    }
-
-    return s.str();
-}
-
-std::string ScriptMachine::dictionaryToString(void *obj, int expandMembers,
-                                              CDebugger *dbg) {
-    CScriptDictionary *dic = reinterpret_cast<CScriptDictionary *>(obj);
-
-    std::stringstream s;
-    s << "(len=" << dic->GetSize() << ")";
-
-    if (expandMembers > 0) {
-        s << " [";
-        asUINT n = 0;
-        for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
-             it++, n++) {
-            s << "[" << it.GetKey() << "] = ";
-
-            // Get the type and address of the value
-            const void *val = it.GetAddressOfValue();
-            int typeId = it.GetTypeId();
-
-            // Use the engine from the currently active context (if none is
-            // active, the debugger will use the engine held inside it by
-            // default, but in an environment where there multiple engines this
-            // might not be the correct instance).
-            asIScriptContext *ctx = asGetActiveContext();
-
-            s << dbg->ToString(const_cast<void *>(val), typeId,
-                               expandMembers - 1, ctx ? ctx->GetEngine() : 0);
-
-            if (n < dic->GetSize() - 1)
-                s << ", ";
-        }
-        s << "]";
-    }
-
-    return s.str();
-}
-
-std::string ScriptMachine::dateTimeToString(void *obj, int expandMembers,
-                                            CDebugger *dbg) {
-    CDateTime *dt = reinterpret_cast<CDateTime *>(obj);
-
-    std::stringstream s;
-    s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay()
-      << " ";
-    s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond()
-      << "}";
-
-    return s.str();
 }
 
 int ScriptMachine::pragmaCallback(const std::string &pragmaText,

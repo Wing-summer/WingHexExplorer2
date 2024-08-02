@@ -10,6 +10,14 @@
     </message>
 </context>
 <context>
+    <name>AngelObjString</name>
+    <message>
+        <location filename="../src/class/angelobjstring.cpp" line="25"/>
+        <source>(len=</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CImageViewer</name>
     <message>
         <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="83"/>
@@ -2751,17 +2759,17 @@
 <context>
     <name>ScriptMachine</name>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="277"/>
+        <location filename="../src/class/scriptmachine.cpp" line="240"/>
         <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="311"/>
+        <location filename="../src/class/scriptmachine.cpp" line="258"/>
         <source>Debugging, waiting for commands. Type &apos;h&apos; for help.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="323"/>
+        <location filename="../src/class/scriptmachine.cpp" line="270"/>
         <source>Failed while initializing global variables</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3302,6 +3310,7 @@
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="149"/>
+        <location filename="../src/class/asdebugger.cpp" line="171"/>
         <source>No script is running</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3338,6 +3347,21 @@
         <location filename="../src/class/asdebugger.cpp" line="163"/>
         <source>
  new objects destroyed: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="286"/>
+        <source>Invalid expression. Expression doesn&apos;t end after symbol</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="293"/>
+        <source>Invalid expression. No matching symbol</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="296"/>
+        <source>Invalid expression. Expected identifier</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
