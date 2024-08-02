@@ -11,6 +11,9 @@
 
 class ScriptMachine : public QObject {
     Q_OBJECT
+private:
+    typedef QString (*TranslateFunc)(const QStringList &contents);
+
 public:
     enum class MessageType { Info, Warn, Error };
 
@@ -79,6 +82,10 @@ private:
     static int pragmaCallback(const std::string &pragmaText,
                               CScriptBuilder &builder, void *userParam);
 
+    static QString processTranslation(const char *content);
+
+    Q_DECL_UNUSED void translation();
+
 signals:
     void onOutput(MessageType type, const MessageInfo &message);
 
@@ -92,5 +99,7 @@ protected:
     std::function<void(void *ref, int typeId)> _printFn;
     std::function<std::string(void)> _getInputFn;
 };
+
+Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)
 
 #endif // SCRIPTMACHINE_H
