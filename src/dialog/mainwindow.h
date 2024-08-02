@@ -97,7 +97,7 @@ private:
     buildUpScriptConsoleDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                              ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
-    buildUpScriptVarShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+    buildUpScriptObjShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                              ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpVisualDataDock(ads::CDockManager *dock, ads::DockWidgetArea area,

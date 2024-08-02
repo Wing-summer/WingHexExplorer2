@@ -14,7 +14,7 @@
     <message>
         <location filename="../src/class/angelobjstring.cpp" line="25"/>
         <source>(len=</source>
-        <translation type="unfinished"></translation>
+        <translation>(长度=</translation>
     </message>
 </context>
 <context>
@@ -155,12 +155,12 @@
     <message>
         <location filename="../src/dialog/checksumdialog.cpp" line="13"/>
         <source>ChooseEncoding</source>
-        <translation type="unfinished">请选择文字编码：</translation>
+        <translation>请选择文字编码：</translation>
     </message>
     <message>
         <location filename="../src/dialog/checksumdialog.cpp" line="35"/>
         <source>CheckSum</source>
-        <translation type="unfinished">校验和</translation>
+        <translation>校验和</translation>
     </message>
 </context>
 <context>
@@ -846,11 +846,6 @@
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="551"/>
-        <source>ScriptVarShow</source>
-        <translation>脚本变量</translation>
-    </message>
-    <message>
         <location filename="../src/dialog/mainwindow.cpp" line="562"/>
         <source>DVList</source>
         <translation>可视化列表</translation>
@@ -1384,6 +1379,16 @@
         <location filename="../src/dialog/mainwindow.cpp" line="1340"/>
         <source>Warn</source>
         <translation>警告</translation>
+    </message>
+    <message>
+        <location filename="../src/dialog/mainwindow.cpp" line="547"/>
+        <source>Type</source>
+        <translation>类型</translation>
+    </message>
+    <message>
+        <location filename="../src/dialog/mainwindow.cpp" line="551"/>
+        <source>ScriptObjShow</source>
+        <translation>脚本对象</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="1239"/>
@@ -2759,18 +2764,1519 @@
 <context>
     <name>ScriptMachine</name>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="240"/>
+        <location filename="../src/class/scriptmachine.cpp" line="241"/>
         <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>无法找到程序入口点： &apos;int main()&apos; 或者 &apos;void main()&apos;</translation>
     </message>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="258"/>
+        <location filename="../src/class/scriptmachine.cpp" line="259"/>
         <source>Debugging, waiting for commands. Type &apos;h&apos; for help.</source>
+        <translation>调试中，请输入命令。输入“h”来查找帮助。</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="271"/>
+        <source>Failed while initializing global variables</source>
+        <translation>初始化全局变量失败</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="453"/>
+        <source>&apos;%1&apos; is already declared</source>
+        <translation>&apos;%1&apos; 已被声明</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="458"/>
+        <source>Abstract class &apos;%1&apos; cannot be instantiated</source>
+        <translation>无法实例化抽象类 &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="464"/>
+        <source>Accessing private property &apos;%1&apos; of parent class</source>
+        <translation>非法访问父类的私有属性 &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="470"/>
+        <source>Attribute &apos;%1&apos; informed multiple times</source>
+        <translation>属性 ‘%1’ 已被多次通知</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="476"/>
+        <source>Can&apos;t form arrays of subtype &apos;%1&apos;</source>
+        <translation>无法创建子类型 ‘%1’ 的数组</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="481"/>
+        <source>Can&apos;t inherit from class &apos;%1&apos; marked as final</source>
+        <translation>无法从标记为 final 的类 ‘%1’ 继承</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="487"/>
+        <source>Cannot access non-static member &apos;%1&apos; like this</source>
+        <translation>无法和像使用 this 一样访问非静态成员 &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="493"/>
+        <source>Can&apos;t construct handle &apos;%1&apos;. Use ref cast instead</source>
+        <translation>无法构造句柄 &apos;%1&apos; 。请改用引用强制转换</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="499"/>
+        <source>Can&apos;t implicitly convert from &apos;%1&apos; to &apos;%2&apos;.</source>
+        <translation>无法从 ‘%1’ 隐式转换为 ‘%2’。</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="504"/>
+        <source>Compiling %1</source>
+        <translation>正在编译 %1</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="508"/>
+        <source>Compiling auto generated %1</source>
+        <translation>编译自动生成的 %1</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="514"/>
+        <source>Implemented property accessor &apos;%1&apos; does not expect index argument</source>
+        <translation>已实现的属性访问器 &apos;%1&apos; 不需要索引参数</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="521"/>
+        <source>Implemented property accessor &apos;%1&apos; expects index argument</source>
+        <translation>已实现的属性访问器 &apos;%1&apos; 需要索引参数</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="527"/>
+        <source>Data type can&apos;t be &apos;%1&apos;</source>
+        <translation>数据类型不能为 &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="533"/>
+        <source>All subsequent parameters after the first default value must have default values in function &apos;%1&apos;</source>
+        <translation>在函数 &apos;%1&apos; 中，第一个默认值之后的所有后续参数都必须具有默认值</translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="541"/>
+        <source>The method in the derived class must have the same return type as in the base class: &apos;%1&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/scriptmachine.cpp" line="270"/>
-        <source>Failed while initializing global variables</source>
+        <location filename="../src/class/scriptmachine.cpp" line="549"/>
+        <source>^The name of the destructor &apos;%1::~%2&apos; must be the same as the class</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="555"/>
+        <source>Expected &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="559"/>
+        <source>Expected &apos;%1&apos; or &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="565"/>
+        <source>Expression must be of boolean type, instead found &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="571"/>
+        <source>Expression &apos;%1&apos; is a data type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="576"/>
+        <source>External shared entity &apos;%1&apos; not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="583"/>
+        <source>External shared entity &apos;%1&apos; cannot redefine the original entity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="591"/>
+        <source>Failed while compiling default arg for parameter %1 in function &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="597"/>
+        <source>Function &apos;%1&apos; not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="603"/>
+        <source>The property &apos;%1&apos; has mismatching types for the get and set accessors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="611"/>
+        <source>Variable &apos;%1&apos; hides another variable of same name in outer scope</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="618"/>
+        <source>Identifier &apos;%1&apos; is not a data type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="624"/>
+        <source>Identifier &apos;%1&apos; is not a data type in global namespace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="631"/>
+        <source>Identifier &apos;%1&apos; is not a data type in namespace &apos;%2&apos; or parent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="637"/>
+        <source>Illegal operation on &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="641"/>
+        <source>Illegal variable name &apos;%1&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="646"/>
+        <source>Illegal access to inherited private property &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="652"/>
+        <source>Initialization lists cannot be used with &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="658"/>
+        <source>Attempting to instantiate invalid template type &apos;%1&lt;%2&gt;&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="664"/>
+        <source>Instead found &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="669"/>
+        <source>Instead found identifier &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="674"/>
+        <source>Instead found reserved keyword &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="680"/>
+        <source>Interface &apos;%1&apos; cannot be instantiated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="686"/>
+        <source>Invalid unicode escape sequence, expected %1 hex digits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="693"/>
+        <source>Method &apos;%1&apos; declared as final and cannot be overridden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="700"/>
+        <source>Method &apos;%1&apos; marked as override but does not replace any base class or interface method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="708"/>
+        <source>Method &apos;%1::%2&apos; is missing the return type, nor is it the same name as object to be a constructor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="715"/>
+        <source>Method &apos;%1&apos; is not part of object &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="721"/>
+        <source>Missing implementation of &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="725"/>
+        <source>Missing definition of &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="730"/>
+        <source>Mixin class cannot be declared as &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="736"/>
+        <source>Multiple matching signatures to &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="742"/>
+        <source>Found multiple get accessors for property &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="748"/>
+        <source>Found multiple set accessors for property &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="754"/>
+        <source>Namespace &apos;%1&apos; doesn&apos;t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="759"/>
+        <location filename="../src/class/scriptmachine.cpp" line="765"/>
+        <location filename="../src/class/scriptmachine.cpp" line="771"/>
+        <location filename="../src/class/scriptmachine.cpp" line="777"/>
+        <location filename="../src/class/scriptmachine.cpp" line="783"/>
+        <location filename="../src/class/scriptmachine.cpp" line="789"/>
+        <location filename="../src/class/scriptmachine.cpp" line="795"/>
+        <location filename="../src/class/scriptmachine.cpp" line="801"/>
+        <location filename="../src/class/scriptmachine.cpp" line="807"/>
+        <location filename="../src/class/scriptmachine.cpp" line="813"/>
+        <location filename="../src/class/scriptmachine.cpp" line="819"/>
+        <location filename="../src/class/scriptmachine.cpp" line="825"/>
+        <source>Name conflict. </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="760"/>
+        <source>&apos;%1&apos; is an extended data type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="766"/>
+        <source>&apos;%1&apos; is a global property.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="772"/>
+        <source>&apos;%1&apos; is a named type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="778"/>
+        <source>&apos;%1&apos; is a funcdef.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="784"/>
+        <source>&apos;%1&apos; is a global function.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="790"/>
+        <source>&apos;%1&apos; is a mixin class.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="796"/>
+        <source>&apos;%1&apos; is a virtual property.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="802"/>
+        <source>&apos;%1&apos; is a class.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="808"/>
+        <source>&apos;%1&apos; is an interface.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="814"/>
+        <source>&apos;%1&apos; is an object property.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="820"/>
+        <source>&apos;%1&apos; is a class method.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="826"/>
+        <source>&apos;%1&apos; is already used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="832"/>
+        <source>No appropriate opHndlAssign method found in &apos;%1&apos; for handle assignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="839"/>
+        <source>No conversion from &apos;%1&apos; to &apos;%2&apos; available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="845"/>
+        <source>No conversion from &apos;%1&apos; to math type available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="851"/>
+        <source>No default constructor for object of type &apos;%1&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="858"/>
+        <source>No appropriate opAssign method found in &apos;%1&apos; for value assignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="865"/>
+        <source>No copy constructor for object of type &apos;%1&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="871"/>
+        <source>No matching signatures to &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="876"/>
+        <source>No matching operator that takes the type &apos;%1&apos; found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="883"/>
+        <source>No matching operator that takes the types &apos;(.*?)&apos; and &apos;%1&apos; found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="889"/>
+        <source>No matching symbol &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="895"/>
+        <source>Expression doesn&apos;t form a function call. &apos;%1&apos; evaluates to the non-function type &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="901"/>
+        <source>&apos;%1&apos; is not declared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="905"/>
+        <source>&apos;%1&apos; is not initialized.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="910"/>
+        <source>&apos;%1&apos; is not a member of &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="916"/>
+        <source>Type &apos;%1&apos; doesn&apos;t support the indexing operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="923"/>
+        <source>Parameter type can&apos;t be &apos;%1&apos;, because the type cannot be instantiated.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="931"/>
+        <source>Previous error occurred while attempting to compile initialization list for type &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="938"/>
+        <source>Illegal call to private method &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="944"/>
+        <source>Illegal access to private property &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="950"/>
+        <source>Illegal call to protected method &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="956"/>
+        <source>Illegal access to protected property &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="961"/>
+        <source>Return type can&apos;t be &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="966"/>
+        <source>Shared code cannot access non-shared global variable &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="973"/>
+        <source>Shared code cannot call non-shared function &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="979"/>
+        <source>Shared type cannot implement non-shared interface &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="985"/>
+        <source>Shared class cannot inherit from non-shared class &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="991"/>
+        <source>Shared code cannot use non-shared type &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="998"/>
+        <source>Shared type &apos;%1&apos; doesn&apos;t match the original declaration in other module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1005"/>
+        <source>Template &apos;%1&apos; expects %2 sub type(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1011"/>
+        <source>Type &apos;%1&apos; cannot be a reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1016"/>
+        <source>Type &apos;%1&apos; is not available for this module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1022"/>
+        <source>Type &apos;%1&apos; is not a template type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1026"/>
+        <source>Unexpected token &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1031"/>
+        <source>Use of uninitialized global variable &apos;%1&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1036"/>
+        <source>Unknown scope &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1040"/>
+        <source>Where &apos;%1&apos; is &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1046"/>
+        <source>Failed to initialize global variable &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1051"/>
+        <source>Exception &apos;%1&apos; in &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1057"/>
+        <source>Type &apos;%1&apos; is missing behaviours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1063"/>
+        <source>Can&apos;t pass type &apos;%1&apos; by value unless the application type is informed in the registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1071"/>
+        <source>Can&apos;t return type &apos;%1&apos; by value unless the application type is informed in the registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1079"/>
+        <source>Don&apos;t support passing type &apos;%1&apos; by value to application in native calling convention on this platform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1089"/>
+        <source>Don&apos;t support returning type &apos;%1&apos; by value from application in native calling convention on this platform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1099"/>
+        <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it doesn&apos;t know how many references to there are.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1108"/>
+        <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it can&apos;t see all references. Current ref count is %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1116"/>
+        <source>Object type &apos;%1&apos; doesn&apos;t exist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1122"/>
+        <source>Cannot register. The template type instance &apos;%1&apos; has already been generated.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1129"/>
+        <source>Template type &apos;%1&apos; doesn&apos;t exist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1134"/>
+        <source>Template subtype &apos;%1&apos; doesn&apos;t exist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1140"/>
+        <source>Failed to read subtype of template type &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1146"/>
+        <source>Failed in call to function &apos;%1&apos; (Code: %2, %3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1153"/>
+        <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; (Code: %3, %4)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1162"/>
+        <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; and &apos;%3&apos; (Code: %4, %5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1170"/>
+        <source>Type &apos;%1&apos; is still used by function &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1176"/>
+        <source>The builtin type in previous message is named &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1183"/>
+        <source>The function in previous message is named &apos;%1&apos;. The func type is %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1191"/>
+        <source>The script object of type &apos;%1&apos; is being resurrected illegally during destruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1199"/>
+        <source>LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1207"/>
+        <source>Function &apos;%1&apos; appears to have been compiled without JIT entry points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1215"/>
+        <source>There is an external reference to an object in module &apos;%1&apos;, preventing it from being deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1233"/>
+        <source>Output argument expression is not assignable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1234"/>
+        <source>Auto is not allowed here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1235"/>
+        <source>Can&apos;t find unambiguous implicit conversion to make both expressions have the same type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1237"/>
+        <source>Both conditions must call constructor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1238"/>
+        <source>Base class doesn&apos;t have default constructor. Make explicit call to base constructor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1240"/>
+        <source>Base class doesn&apos;t have copy constructor or default constructor and assign operator. Make explicit call to base constructor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1242"/>
+        <source>Candidates are:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1243"/>
+        <source>Can&apos;t call a constructor in loops</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1244"/>
+        <source>Can&apos;t call a constructor in switch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1245"/>
+        <source>Can&apos;t call a constructor multiple times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1246"/>
+        <source>Can&apos;t create delegate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1247"/>
+        <source>Can&apos;t create delegate for types that do not support handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1248"/>
+        <source>Cannot flag function that will not be auto generated as deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1249"/>
+        <source>Conflict with explicit declaration of function and deleted function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1250"/>
+        <source>Can&apos;t implement itself, or another interface that implements this interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1252"/>
+        <source>Can&apos;t inherit from multiple classes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1253"/>
+        <source>Can&apos;t inherit from itself, or another class that inherits from this class</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1255"/>
+        <source>Can&apos;t pass class method as arg directly. Use a delegate object instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1257"/>
+        <source>Unable to resolve auto type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1258"/>
+        <source>Can&apos;t return reference to local value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1259"/>
+        <source>Can&apos;t return value when return type is &apos;void&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1260"/>
+        <source>Implicit conversion changed sign of value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1261"/>
+        <source>A class cannot be both abstract and final</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1262"/>
+        <source>Compound assignments with property accessors on value types are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1264"/>
+        <source>Compound assignments with indexed property accessors are not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1266"/>
+        <source>Compound assignments with property accessors require both get and set accessors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1268"/>
+        <source>Variables cannot be declared in switch cases, except inside statement blocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1270"/>
+        <source>The default case must be the last one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1271"/>
+        <source>The type of the default argument expression doesn&apos;t match the function parameter type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1273"/>
+        <source>Deleted functions cannot have implementation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1274"/>
+        <source>The destructor must not have any parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1275"/>
+        <source>Value assignment on reference types is not allowed. Did you mean to do a handle assignment?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1277"/>
+        <source>Compound assignment on reference types is not allowed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1278"/>
+        <source>Duplicate named argument</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1279"/>
+        <source>Duplicate switch case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1280"/>
+        <source>Else with empty statement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1281"/>
+        <source>Empty list element is not allowed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1282"/>
+        <source>Empty switch statement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1283"/>
+        <source>Expected constant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1284"/>
+        <source>Expected data type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1285"/>
+        <source>Expected expression value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1286"/>
+        <source>Expected identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1287"/>
+        <source>Expected a list enclosed by { } to match pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1288"/>
+        <source>Expected method or property</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1289"/>
+        <source>Expected one of: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1290"/>
+        <source>Expected operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1291"/>
+        <source>Expected post operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1292"/>
+        <source>Expected pre operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1293"/>
+        <source>Expected string</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1294"/>
+        <source>Expression doesn&apos;t evaluate to a function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1295"/>
+        <source>Previous error occurred while attempting to create a temporary copy of object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1297"/>
+        <source>Float value truncated in implicit conversion to integer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1298"/>
+        <source>Found multiple matching enum values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1299"/>
+        <source>A function with the same name and parameters already exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1300"/>
+        <source>Global variables have been disabled by the application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1301"/>
+        <source>It is not allowed to perform a handle assignment on a non-handle property</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1303"/>
+        <source>The operand is implicitly converted to handle in order to compare them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1305"/>
+        <source>Handle to handle is not allowed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1306"/>
+        <source>If with empty statement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1307"/>
+        <source>Illegal member type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1308"/>
+        <source>Illegal operation on this datatype</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1309"/>
+        <source>Illegal target type for reference cast</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1310"/>
+        <source>Interfaces can only implement other interfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1311"/>
+        <source>Invalid &apos;break&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1312"/>
+        <source>Invalid character literal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1313"/>
+        <source>Invalid &apos;continue&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1314"/>
+        <source>Invalid escape sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1315"/>
+        <source>Invalid expression: ambiguous name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1316"/>
+        <source>Invalid expression: stand-alone anonymous function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1317"/>
+        <source>Invalid operation on method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1318"/>
+        <source>Invalid reference. Property accessors cannot be used in combined read/write operations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1320"/>
+        <source>Invalid scope resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1321"/>
+        <source>Invalid signature for virtual property</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1322"/>
+        <source>Invalid type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1323"/>
+        <source>Invalid unicode code point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1324"/>
+        <source>Invalid unicode sequence in source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1325"/>
+        <source>Invalid use of named arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1326"/>
+        <source>The method cannot be named with the class name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1327"/>
+        <source>Mixin classes cannot have constructors or destructors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1328"/>
+        <source>Mixin class cannot inherit from classes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1329"/>
+        <source>Mixin classes cannot have child types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1330"/>
+        <source>Found more than one matching operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1331"/>
+        <source>Multiline strings are not allowed in this application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1332"/>
+        <source>Only objects have constructors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1333"/>
+        <source>Must return a value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1334"/>
+        <source>Detected named argument with old syntax</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1335"/>
+        <source>No appropriate indexing operator found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1336"/>
+        <source>No appropriate opEquals method found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1337"/>
+        <source>The application doesn&apos;t support the default array type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1338"/>
+        <source>Non-const method call on read-only object reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1339"/>
+        <source>Non-terminated string literal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1340"/>
+        <source>Not all paths return a value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1341"/>
+        <source>Not enough values to match pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1342"/>
+        <source>Implicit conversion of value is not exact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1343"/>
+        <source>Expression is not an l-value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1344"/>
+        <source>Not a valid reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1345"/>
+        <source>Not a valid lvalue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1346"/>
+        <source>Nothing was built in the module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1347"/>
+        <source>Object handle is not supported for this type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1348"/>
+        <source>Only object types that support object handles can use &amp;inout. Use &amp;in or &amp;out instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1350"/>
+        <source>A cast operator has one argument</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1351"/>
+        <source>The code must contain one and only one function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1352"/>
+        <source>The code must contain one and only one global variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1353"/>
+        <source>Both operands must be handles when comparing identity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1354"/>
+        <source>The overloaded functions are identical on initial parameters without default arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1356"/>
+        <source>Parameter already declared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1357"/>
+        <source>Positional arguments cannot be passed after named arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1358"/>
+        <source>Potentially matching non-const method is hidden on read-only object reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1360"/>
+        <source>Property accessor with index must have 1 and only 1 index argument</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1361"/>
+        <source>Property accessors have been disabled by the application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1362"/>
+        <source>Property accessor must be implemented</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1363"/>
+        <source>Class properties cannot be declared as const</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1364"/>
+        <source>The property has no get accessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1365"/>
+        <source>The property has no set accessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1366"/>
+        <source>Virtual property must have at least one get or set accessor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1367"/>
+        <source>Resulting reference cannot be returned. Returned references must not refer to local variables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1369"/>
+        <source>Resulting reference cannot be returned. There are deferred arguments that may invalidate it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1371"/>
+        <source>Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1373"/>
+        <source>Reference is read-only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1374"/>
+        <source>Reference is temporary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1375"/>
+        <source>Reference types cannot be passed by value in function parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1376"/>
+        <source>Reference types cannot be returned by value from functions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1377"/>
+        <source>The script section is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1378"/>
+        <source>Signed/Unsigned mismatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1379"/>
+        <source>Strings are not recognized by the application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1380"/>
+        <source>Case expressions must be literal constants</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1381"/>
+        <source>Switch expressions must be integral numbers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1382"/>
+        <source>The function has too many jump labels to handle. Split the function into smaller ones.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1384"/>
+        <source>Too many values to match pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1385"/>
+        <source>Unexpected end of file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1386"/>
+        <source>Unexpected variable declaration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1387"/>
+        <source>Unreachable code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1388"/>
+        <source>Virtual property contains unrecognized aspect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1389"/>
+        <source>Unused script node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1390"/>
+        <source>Value is too large for data type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1391"/>
+        <source>Void cannot be an operand in expressions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1392"/>
+        <source>Warnings are treated as errors by the application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1393"/>
+        <source>While parsing argument list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1394"/>
+        <source>While parsing expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1395"/>
+        <source>While parsing initialization list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1396"/>
+        <source>While parsing namespace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1397"/>
+        <source>While parsing statement block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1398"/>
+        <source>Previous error occurred while including mixin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1399"/>
+        <source>Autohandles cannot be used with types that have been registered with NOCOUNT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1401"/>
+        <source>First parameter to template factory must be a reference. This will be used to pass the object type of the template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1403"/>
+        <source>Invalid configuration. Verify the registered application interface.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1404"/>
+        <source>A value type must be registered with a non-zero size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1405"/>
+        <source>The behaviour is not compatible with the type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1406"/>
+        <source>A garbage collected ref type must have the addref, release, and all gc behaviours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1408"/>
+        <source>A garbage collected value type must have the gc enum references behaviour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1410"/>
+        <source>A scoped reference type must have the release behaviour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1411"/>
+        <source>A reference type must have the addref and release behaviours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1412"/>
+        <source>A non-pod value type must have at least one constructor and the destructor behaviours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1414"/>
+        <source>Template list factory expects two reference parameters. The last is the pointer to the initialization buffer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1416"/>
+        <source>List factory expects only one reference parameter. The pointer to the initialization buffer will be passed in this parameter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1418"/>
+        <source>AddScriptObjectToGC called with null pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1419"/>
+        <source>An exception occurred in a nested call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1420"/>
+        <source>Uh oh! The engine&apos;s reference count is increasing while it is being destroyed. Make sure references needed for clean-up are immediately released</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1423"/>
+        <source>The module is still in use and cannot be rebuilt. Discard it and request another module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1425"/>
+        <source>Property</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1426"/>
+        <source>System function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1427"/>
+        <source>Variable declaration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1428"/>
+        <source>Stack overflow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1429"/>
+        <source>Null pointer access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1430"/>
+        <source>Divide by zero</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1431"/>
+        <source>Overflow in integer division</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1432"/>
+        <source>Overflow in exponent operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1433"/>
+        <source>Unrecognized byte code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1434"/>
+        <source>Invalid calling convention</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1435"/>
+        <source>Unbound function called</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1436"/>
+        <source>Out of range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1437"/>
+        <source>Caught an exception from the application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1438"/>
+        <source>Mismatching types in value assignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/scriptmachine.cpp" line="1439"/>
+        <source>Too many nested calls</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2800,6 +4306,19 @@
         <location filename="../src/settings/scriptsettingdialog.ui" line="59"/>
         <source>Refresh</source>
         <translation>刷新</translation>
+    </message>
+</context>
+<context>
+    <name>ScriptingConsole</name>
+    <message>
+        <location filename="../src/control/scriptingconsole.cpp" line="38"/>
+        <source>Scripting console for WingHexExplorer</source>
+        <translation>羽云十六进制编辑器脚本控制台</translation>
+    </message>
+    <message>
+        <location filename="../src/control/scriptingconsole.cpp" line="40"/>
+        <source>&gt;&gt;&gt;&gt; Powered by AngelScript &lt;&lt;&lt;&lt;</source>
+        <translation>&gt;&gt;&gt;&gt; 由 AngelScript 引擎提供支持 &lt;&lt;&lt;&lt;</translation>
     </message>
 </context>
 <context>

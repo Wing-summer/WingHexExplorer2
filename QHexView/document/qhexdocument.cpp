@@ -458,21 +458,21 @@ void QHexDocument::redo() {
     emit documentChanged();
 }
 
-void QHexDocument::Insert(QHexCursor *cursor, qindextype offset, uchar b,
+void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset, uchar b,
                           int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked)
         return;
     this->Insert(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Replace(QHexCursor *cursor, qindextype offset, uchar b,
+void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                            int nibbleindex) {
     if (m_readonly || m_islocked)
         return;
     this->Replace(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Insert(QHexCursor *cursor, qindextype offset,
+void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
                           const QByteArray &data, int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked ||
         (offset < m_buffer->length() && m_metadata->hasMetadata()))

@@ -275,7 +275,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         m_dock, ads::RightDockWidgetArea, bottomLeftArea);
     buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea, bottomRightArea);
     buildUpVisualDataDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
-    buildUpScriptVarShowDock(m_dock, ads::CenterDockWidgetArea,
+    buildUpScriptObjShowDock(m_dock, ads::CenterDockWidgetArea,
                              bottomRightArea);
     m_bottomViewArea = bottomRightArea;
 
@@ -536,19 +536,19 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
 }
 
 ads::CDockAreaWidget *
-MainWindow::buildUpScriptVarShowDock(ads::CDockManager *dock,
+MainWindow::buildUpScriptObjShowDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
-    m_varshowtable = new QTableWidget(0, 2, this);
+    m_varshowtable = new QTableWidget(0, 3, this);
     m_varshowtable->setEditTriggers(QTableWidget::EditTrigger::DoubleClicked);
     m_varshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
     m_varshowtable->setHorizontalHeaderLabels(
-        QStringList({tr("Name"), tr("Value")}));
+        QStringList({tr("Name"), tr("Type"), tr("Value")}));
     m_varshowtable->horizontalHeader()->setStretchLastSection(true);
 
-    auto dw = buildDockWidget(dock, QStringLiteral("ScriptVarShow"),
-                              tr("ScriptVarShow"), m_varshowtable);
+    auto dw = buildDockWidget(dock, QStringLiteral("ScriptObjShow"),
+                              tr("ScriptObjShow"), m_varshowtable);
     return dock->addDockWidget(area, dw, areaw);
 }
 

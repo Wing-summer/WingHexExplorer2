@@ -29,37 +29,34 @@ ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
                     stdErr(message.message);
                     break;
                 }
-                appendCommandPrompt();
             });
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::executeCode);
 
     _s.setDevice(this->device());
+    stdWarn(tr("Scripting console for WingHexExplorer"));
+    _s << Qt::endl;
+    stdWarn(tr(">>>> Powered by AngelScript <<<<"));
+    _s << Qt::endl;
     appendCommandPrompt();
     setMode(Input);
 }
 
 ScriptingConsole::~ScriptingConsole() {}
 
-void ScriptingConsole::stdOut(const QString &str) {
-    writeStdOut(str);
-    _s << Qt::endl;
-}
+void ScriptingConsole::stdOut(const QString &str) { writeStdOut(str); }
 
-void ScriptingConsole::stdErr(const QString &str) {
-    writeStdErr(str);
-    _s << Qt::endl;
-}
+void ScriptingConsole::stdErr(const QString &str) { writeStdErr(str); }
 
 void ScriptingConsole::stdWarn(const QString &str) {
     write(str, m_stdoutFmtWarn);
-    _s << Qt::endl;
 }
 
 void ScriptingConsole::executeCode(const QString &code) {
     setMode(Output);
     _sp->executeScript(code);
+    appendCommandPrompt();
     setMode(Input);
 }
 
@@ -71,9 +68,9 @@ std::string ScriptingConsole::getInput() {
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
     if (storeOnly) {
-        commandPrompt = QStringLiteral("... > ");
+        commandPrompt = QStringLiteral("\n... > ");
     } else {
-        commandPrompt = QStringLiteral("as > ");
+        commandPrompt = QStringLiteral("\nas > ");
     }
     write(commandPrompt, m_stdoutFmtTitle);
 }

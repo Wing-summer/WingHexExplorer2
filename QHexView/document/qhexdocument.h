@@ -113,15 +113,14 @@ public slots:
     void undo();
     void redo();
 
-    void Insert(QHexCursor *cursor, qindextype offset, uchar b,
+    void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
+    void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);
-    void Insert(QHexCursor *cursor, qindextype offset, const QByteArray &data,
-                int nibbleindex);
-    void Replace(QHexCursor *cursor, qindextype offset, uchar b,
+    void Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                  int nibbleindex);
-    void Replace(QHexCursor *cursor, qindextype offset, const QByteArray &data,
+    void Replace(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                  int nibbleindex = 0);
-    bool Remove(QHexCursor *cursor, qindextype offset, qsizetype len,
+    bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                 int nibbleindex = 0);
 
     QByteArray read(qint64 offset, qsizetype len) const;
