@@ -164,6 +164,14 @@
     </message>
 </context>
 <context>
+    <name>ColorPickerDialog</name>
+    <message>
+        <location filename="../src/dialog/colorpickerdialog.ui" line="14"/>
+        <source>ColorPicker</source>
+        <translation>颜色选择器</translation>
+    </message>
+</context>
+<context>
     <name>DriverSelectorDialog</name>
     <message>
         <location filename="../src/dialog/driverselectordialog.cpp" line="41"/>
@@ -595,6 +603,14 @@
     </message>
 </context>
 <context>
+    <name>HueColorPickerSlider</name>
+    <message>
+        <location filename="../src/control/huecolorpickerslider.cpp" line="28"/>
+        <source>ChooseColor</source>
+        <translation>选择颜色</translation>
+    </message>
+</context>
+<context>
     <name>LanguageManager</name>
     <message>
         <location filename="../src/class/languagemanager.cpp" line="79"/>
@@ -754,13 +770,23 @@
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>addr</source>
-        <translation>地址偏移</translation>
+        <source>value</source>
+        <translation>值</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>value</source>
-        <translation>值</translation>
+        <source>line</source>
+        <translation>行</translation>
+    </message>
+    <message>
+        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
+        <source>col</source>
+        <translation>列</translation>
+    </message>
+    <message>
+        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
+        <source>offset</source>
+        <translation>偏移</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="346"/>
@@ -1297,8 +1323,8 @@
         <location filename="../src/dialog/mainwindow.cpp" line="1192"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1196"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1235"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2145"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2345"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2146"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2347"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -1352,12 +1378,12 @@
         <translation>搜索数量已到达上限，结果可能不全，建议请按区段搜索。</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2551"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2553"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2584"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2586"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
@@ -1511,69 +1537,69 @@
         <translation>没有可导出的搜索结果！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1936"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1937"/>
         <source>SaveFindResult</source>
         <translation>导出搜索结果成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1940"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1941"/>
         <source>SaveFindResultError</source>
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2029"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2030"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2044"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2045"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2047"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2048"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2055"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2056"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2070"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2073"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2077"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2071"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2074"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2078"/>
         <source>ChoosePlugin</source>
         <translation>请选择插件文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2070"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2071"/>
         <source>PluginFile (*.dll)</source>
         <translation>插件文件 (*.dll)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2073"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2074"/>
         <source>PluginFile (*.so)</source>
         <translation>插件文件 (*.so)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2077"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2078"/>
         <source>PluginFile (*.wingplg)</source>
         <translation>插件文件 (*.wingplg)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2146"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2147"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2266"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2267"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2346"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2348"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -1596,18 +1622,12 @@
         <translation>批注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="61"/>
-        <location filename="../src/dialog/metadialog.cpp" line="68"/>
-        <source>SelectColor</source>
-        <translation>请选择颜色</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/metadialog.cpp" line="81"/>
+        <location filename="../src/dialog/metadialog.cpp" line="67"/>
         <source>Metadata</source>
         <translation>标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="91"/>
+        <location filename="../src/dialog/metadialog.cpp" line="77"/>
         <source>NoChoose</source>
         <translation>开启选项但未设置，如不想设置请关闭！</translation>
     </message>
@@ -2745,20 +2765,16 @@
 <context>
     <name>ScriptConsoleMachine</name>
     <message>
-        <location filename="../src/class/scriptconsolemachine.cpp" line="44"/>
-        <source>- Exception</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/scriptconsolemachine.cpp" line="46"/>
-        <source>in</source>
-        <translation type="unfinished"></translation>
+        <location filename="../src/class/scriptconsolemachine.cpp" line="45"/>
+        <source>- Exception &apos;%1&apos; in &apos;%2&apos;
+</source>
+        <translation>— 在 ‘%2’ 中发生异常 ‘%1’</translation>
     </message>
     <message>
         <location filename="../src/class/scriptconsolemachine.cpp" line="59"/>
         <source>AngelScript callstack:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>AngelScript 调用堆栈：</translation>
     </message>
 </context>
 <context>
@@ -2766,12 +2782,12 @@
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="241"/>
         <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
-        <translation>无法找到程序入口点： &apos;int main()&apos; 或者 &apos;void main()&apos;</translation>
+        <translation>无法找到程序入口点： &quot;int main()&quot; 或者 &quot;void main()&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="259"/>
         <source>Debugging, waiting for commands. Type &apos;h&apos; for help.</source>
-        <translation>调试中，请输入命令。输入“h”来查找帮助。</translation>
+        <translation>调试中，请输入命令。输入 &quot;h&quot; 来查找帮助。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="271"/>
@@ -2781,47 +2797,47 @@
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="453"/>
         <source>&apos;%1&apos; is already declared</source>
-        <translation>&apos;%1&apos; 已被声明</translation>
+        <translation>&quot;%1&quot; 已被声明</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="458"/>
         <source>Abstract class &apos;%1&apos; cannot be instantiated</source>
-        <translation>无法实例化抽象类 &apos;%1&apos;</translation>
+        <translation>无法实例化抽象类 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="464"/>
         <source>Accessing private property &apos;%1&apos; of parent class</source>
-        <translation>非法访问父类的私有属性 &apos;%1&apos;</translation>
+        <translation>非法访问父类的私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="470"/>
         <source>Attribute &apos;%1&apos; informed multiple times</source>
-        <translation>属性 ‘%1’ 已被多次通知</translation>
+        <translation>属性 &quot;%1&quot; 已被多次通知</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="476"/>
         <source>Can&apos;t form arrays of subtype &apos;%1&apos;</source>
-        <translation>无法创建子类型 ‘%1’ 的数组</translation>
+        <translation>无法创建子类型 &quot;%1&quot; 的数组</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="481"/>
         <source>Can&apos;t inherit from class &apos;%1&apos; marked as final</source>
-        <translation>无法从标记为 final 的类 ‘%1’ 继承</translation>
+        <translation>无法从标记为 final 的类 &quot;%1&quot; 继承</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="487"/>
         <source>Cannot access non-static member &apos;%1&apos; like this</source>
-        <translation>无法和像使用 this 一样访问非静态成员 &apos;%1&apos;</translation>
+        <translation>无法和像使用 this 一样访问非静态成员 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="493"/>
         <source>Can&apos;t construct handle &apos;%1&apos;. Use ref cast instead</source>
-        <translation>无法构造句柄 &apos;%1&apos; 。请改用引用强制转换</translation>
+        <translation>无法构造句柄 &quot;%1&quot; 。请改用引用强制转换</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="499"/>
         <source>Can&apos;t implicitly convert from &apos;%1&apos; to &apos;%2&apos;.</source>
-        <translation>无法从 ‘%1’ 隐式转换为 ‘%2’。</translation>
+        <translation>无法从 &quot;%1&apos; 隐式转换为 &quot;%2&quot;。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="504"/>
@@ -2836,202 +2852,202 @@
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="514"/>
         <source>Implemented property accessor &apos;%1&apos; does not expect index argument</source>
-        <translation>已实现的属性访问器 &apos;%1&apos; 不需要索引参数</translation>
+        <translation>已实现的属性访问器 &quot;%1&quot; 不需要索引参数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="521"/>
         <source>Implemented property accessor &apos;%1&apos; expects index argument</source>
-        <translation>已实现的属性访问器 &apos;%1&apos; 需要索引参数</translation>
+        <translation>已实现的属性访问器 &quot;%1&quot; 需要索引参数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="527"/>
         <source>Data type can&apos;t be &apos;%1&apos;</source>
-        <translation>数据类型不能为 &apos;%1&apos;</translation>
+        <translation>数据类型不能为 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="533"/>
         <source>All subsequent parameters after the first default value must have default values in function &apos;%1&apos;</source>
-        <translation>在函数 &apos;%1&apos; 中，第一个默认值之后的所有后续参数都必须具有默认值</translation>
+        <translation>在函数 &quot;%1&quot; 中，第一个默认值之后的所有后续参数都必须具有默认值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="541"/>
         <source>The method in the derived class must have the same return type as in the base class: &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>派生类中的方法必须具有与基类相同的返回类型：&quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="549"/>
-        <source>^The name of the destructor &apos;%1::~%2&apos; must be the same as the class</source>
-        <translation type="unfinished"></translation>
+        <source>The name of the destructor &apos;%1::~%2&apos; must be the same as the class</source>
+        <translation>析构函数 &quot;%1::~%2&quot; 的名称必须与类相同</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="555"/>
         <source>Expected &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>应为 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="559"/>
         <source>Expected &apos;%1&apos; or &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>应为 ”%1“ 或 ”%2“</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="565"/>
         <source>Expression must be of boolean type, instead found &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>表达式必须是布尔类型，但实际使用的是 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="571"/>
         <source>Expression &apos;%1&apos; is a data type</source>
-        <translation type="unfinished"></translation>
+        <translation>表达式 &quot;%1&quot; 是一种数据类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="576"/>
         <source>External shared entity &apos;%1&apos; not found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到外部共享实体 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="583"/>
         <source>External shared entity &apos;%1&apos; cannot redefine the original entity</source>
-        <translation type="unfinished"></translation>
+        <translation>外部共享实体 &quot;%1&quot; 无法重新定义原始实体</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="591"/>
         <source>Failed while compiling default arg for parameter %1 in function &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>为函数 &quot;%2&quot; 中的参数 %1 编译默认参数时失败</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="597"/>
         <source>Function &apos;%1&apos; not found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到函数 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="603"/>
         <source>The property &apos;%1&apos; has mismatching types for the get and set accessors</source>
-        <translation type="unfinished"></translation>
+        <translation>属性 &quot;%1&quot; 的 get 和 set 访问器类型不匹配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="611"/>
         <source>Variable &apos;%1&apos; hides another variable of same name in outer scope</source>
-        <translation type="unfinished"></translation>
+        <translation>变量 &quot;%1&quot; 隐藏了外部作用域中另一个同名变量</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="618"/>
         <source>Identifier &apos;%1&apos; is not a data type</source>
-        <translation type="unfinished"></translation>
+        <translation>标识符 &quot;%1&quot; 不是数据类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="624"/>
         <source>Identifier &apos;%1&apos; is not a data type in global namespace</source>
-        <translation type="unfinished"></translation>
+        <translation>标识符 &quot;%1&quot; 不是全局命名空间中的数据类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="631"/>
         <source>Identifier &apos;%1&apos; is not a data type in namespace &apos;%2&apos; or parent</source>
-        <translation type="unfinished"></translation>
+        <translation>标识符 &quot;%1&quot; 不是命名空间 &quot;%2&quot; 或其父级中的数据类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="637"/>
         <source>Illegal operation on &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>对 &quot;%1&quot; 的非法操作</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="641"/>
         <source>Illegal variable name &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>非法变量名 &quot;%1&quot;。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="646"/>
         <source>Illegal access to inherited private property &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>非法访问继承的私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="652"/>
         <source>Initialization lists cannot be used with &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>初始化列表不能与 &quot;%1&quot; 一起使用</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="658"/>
         <source>Attempting to instantiate invalid template type &apos;%1&lt;%2&gt;&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>尝试实例化无效的模板类型 &quot;%1&lt;%2&gt;&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="664"/>
         <source>Instead found &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>而是找到了 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="669"/>
         <source>Instead found identifier &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>而是找到标识符 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="674"/>
         <source>Instead found reserved keyword &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>而是找到了保留关键字 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="680"/>
         <source>Interface &apos;%1&apos; cannot be instantiated</source>
-        <translation type="unfinished"></translation>
+        <translation>无法实例化接口 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="686"/>
         <source>Invalid unicode escape sequence, expected %1 hex digits</source>
-        <translation type="unfinished"></translation>
+        <translation>无效的 Unicode 转义序列，预期为 %1 个十六进制数字</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="693"/>
         <source>Method &apos;%1&apos; declared as final and cannot be overridden</source>
-        <translation type="unfinished"></translation>
+        <translation>方法 &quot;%1&quot; 已声明为 final，因此无法被覆盖</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="700"/>
         <source>Method &apos;%1&apos; marked as override but does not replace any base class or interface method</source>
-        <translation type="unfinished"></translation>
+        <translation>方法 &quot;%1&quot; 标记为覆盖，但并未替换任何基类或接口方法</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="708"/>
         <source>Method &apos;%1::%2&apos; is missing the return type, nor is it the same name as object to be a constructor</source>
-        <translation type="unfinished"></translation>
+        <translation>方法 &quot;%1::%2&quot; 缺少返回类型，并且其名称与构造函数对象不同</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="715"/>
         <source>Method &apos;%1&apos; is not part of object &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>方法 &quot;%1&quot; 不是对象 &quot;%2&quot; 的一部分</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="721"/>
         <source>Missing implementation of &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>缺少 &quot;%1&quot; 的实现</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="725"/>
         <source>Missing definition of &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>缺少 &quot;%1&quot; 的定义</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="730"/>
         <source>Mixin class cannot be declared as &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>Mixin 类不能声明为 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="736"/>
         <source>Multiple matching signatures to &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 有多个匹配的签名</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="742"/>
         <source>Found multiple get accessors for property &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>发现属性 &quot;%1&quot; 的多个 get 访问器</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="748"/>
         <source>Found multiple set accessors for property &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>发现属性 &quot;%1&quot; 的多个集合访问器</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="754"/>
         <source>Namespace &apos;%1&apos; doesn&apos;t exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>命名空间 &quot;%1&quot; 不存在。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="759"/>
@@ -3047,582 +3063,582 @@
         <location filename="../src/class/scriptmachine.cpp" line="819"/>
         <location filename="../src/class/scriptmachine.cpp" line="825"/>
         <source>Name conflict. </source>
-        <translation type="unfinished"></translation>
+        <translation>名称冲突。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="760"/>
         <source>&apos;%1&apos; is an extended data type.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是扩展数据类型。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="766"/>
         <source>&apos;%1&apos; is a global property.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是全局属性。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="772"/>
         <source>&apos;%1&apos; is a named type.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是被命名的类型。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="778"/>
         <source>&apos;%1&apos; is a funcdef.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个函数签名定义。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="784"/>
         <source>&apos;%1&apos; is a global function.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个全局函数。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="790"/>
         <source>&apos;%1&apos; is a mixin class.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个 Mixin 类。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="796"/>
         <source>&apos;%1&apos; is a virtual property.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是虚拟属性。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="802"/>
         <source>&apos;%1&apos; is a class.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个类。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="808"/>
         <source>&apos;%1&apos; is an interface.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个接口。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="814"/>
         <source>&apos;%1&apos; is an object property.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个对象属性。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="820"/>
         <source>&apos;%1&apos; is a class method.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 是一个类方法。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="826"/>
         <source>&apos;%1&apos; is already used.</source>
-        <translation type="unfinished"></translation>
+        <translation>”%1“ 已被使用。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="832"/>
         <source>No appropriate opHndlAssign method found in &apos;%1&apos; for handle assignment</source>
-        <translation type="unfinished"></translation>
+        <translation>在 &quot;%1&quot; 中未找到适当的 opHndlAssign 方法用于句柄分配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="839"/>
         <source>No conversion from &apos;%1&apos; to &apos;%2&apos; available.</source>
-        <translation type="unfinished"></translation>
+        <translation>无法进行从 &quot;%1&quot; 到 &quot;%2&quot; 的转换。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="845"/>
         <source>No conversion from &apos;%1&apos; to math type available.</source>
-        <translation type="unfinished"></translation>
+        <translation>无法将 &quot;%1&quot; 转换为数学类型。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="851"/>
         <source>No default constructor for object of type &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 类型对象没有默认构造函数。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="858"/>
         <source>No appropriate opAssign method found in &apos;%1&apos; for value assignment</source>
-        <translation type="unfinished"></translation>
+        <translation>在 &quot;%1&quot; 中未找到适合赋值的 opAssign 方法</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="865"/>
         <source>No copy constructor for object of type &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>没有 &quot;%1&quot; 类型对象的复制构造函数。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="871"/>
         <source>No matching signatures to &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>没有与 &quot;%1&quot; 匹配的签名</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="876"/>
         <source>No matching operator that takes the type &apos;%1&apos; found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到采用类型 &quot;%1&quot; 的匹配运算符</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="883"/>
-        <source>No matching operator that takes the types &apos;(.*?)&apos; and &apos;%1&apos; found</source>
-        <translation type="unfinished"></translation>
+        <source>No matching operator that takes the types &apos;%1&apos; and &apos;%2&apos; found</source>
+        <translation>未找到采用类型 &quot;%1&quot; 和 &quot;%2&quot; 的匹配运算符</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="889"/>
         <source>No matching symbol &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>没有匹配的符号 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="895"/>
         <source>Expression doesn&apos;t form a function call. &apos;%1&apos; evaluates to the non-function type &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>表达式不构成函数调用。&quot;%1&quot; 计算结果为非函数类型 &quot;%2&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="901"/>
         <source>&apos;%1&apos; is not declared</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; 未被声明</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="905"/>
         <source>&apos;%1&apos; is not initialized.</source>
-        <translation type="unfinished"></translation>
+        <translation>”%1“ 未初始化。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="910"/>
         <source>&apos;%1&apos; is not a member of &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>”%1“ 不是 ”%2“ 的成员</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="916"/>
         <source>Type &apos;%1&apos; doesn&apos;t support the indexing operator</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 不支持索引运算符</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="923"/>
         <source>Parameter type can&apos;t be &apos;%1&apos;, because the type cannot be instantiated.</source>
-        <translation type="unfinished"></translation>
+        <translation>参数类型不能是 &quot;%1&quot;，因为该类型无法实例化。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="931"/>
         <source>Previous error occurred while attempting to compile initialization list for type &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>尝试编译类型 &quot;%1&quot; 的初始化列表时发生先前的错误</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="938"/>
         <source>Illegal call to private method &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>非法调用私有方法 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="944"/>
         <source>Illegal access to private property &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>非法访问私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="950"/>
         <source>Illegal call to protected method &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>非法调用受保护的方法 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="956"/>
         <source>Illegal access to protected property &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>非法访问受保护的属性 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="961"/>
         <source>Return type can&apos;t be &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>返回类型不能是 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="966"/>
         <source>Shared code cannot access non-shared global variable &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>共享代码无法访问非共享全局变量 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="973"/>
         <source>Shared code cannot call non-shared function &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>共享代码无法调用非共享函数 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="979"/>
         <source>Shared type cannot implement non-shared interface &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>共享类型无法实现非共享接口 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="985"/>
         <source>Shared class cannot inherit from non-shared class &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>共享类不能从非共享类 &quot;%1&quot; 继承</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="991"/>
         <source>Shared code cannot use non-shared type &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>共享代码不能使用非共享类型 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="998"/>
         <source>Shared type &apos;%1&apos; doesn&apos;t match the original declaration in other module</source>
-        <translation type="unfinished"></translation>
+        <translation>共享类型 &quot;%1&quot; 与其他模块中的原始声明不匹配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1005"/>
         <source>Template &apos;%1&apos; expects %2 sub type(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>模板 &quot;%1&quot; 需要 %2 个子类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1011"/>
         <source>Type &apos;%1&apos; cannot be a reference</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 不能是引用</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1016"/>
         <source>Type &apos;%1&apos; is not available for this module</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 不适用于此模块</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1022"/>
         <source>Type &apos;%1&apos; is not a template type</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 不是模板类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1026"/>
         <source>Unexpected token &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>意外标记 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1031"/>
         <source>Use of uninitialized global variable &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>使用未初始化的全局变量 &quot;%1&quot;。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1036"/>
         <source>Unknown scope &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>未知作用域 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1040"/>
         <source>Where &apos;%1&apos; is &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>其中 &quot;%1&quot; 是 &quot;%2&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1046"/>
         <source>Failed to initialize global variable &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>无法初始化全局变量 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1051"/>
         <source>Exception &apos;%1&apos; in &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%2&quot; 中的异常 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1057"/>
         <source>Type &apos;%1&apos; is missing behaviours</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 缺少的行为</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1063"/>
         <source>Can&apos;t pass type &apos;%1&apos; by value unless the application type is informed in the registration</source>
-        <translation type="unfinished"></translation>
+        <translation>除非在注册时告知应用程序类型，否则无法按值传递类型 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1071"/>
         <source>Can&apos;t return type &apos;%1&apos; by value unless the application type is informed in the registration</source>
-        <translation type="unfinished"></translation>
+        <translation>除非在注册时告知应用程序类型，否则无法按值返回类型 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1079"/>
         <source>Don&apos;t support passing type &apos;%1&apos; by value to application in native calling convention on this platform</source>
-        <translation type="unfinished"></translation>
+        <translation>不支持在此平台上按照本机调用约定将类型 &quot;%1&quot; 按值传递给应用程序</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1089"/>
         <source>Don&apos;t support returning type &apos;%1&apos; by value from application in native calling convention on this platform</source>
-        <translation type="unfinished"></translation>
+        <translation>不支持在此平台上按照本机调用约定从应用程序返回类型 &quot;%1&quot; 的值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1099"/>
         <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it doesn&apos;t know how many references to there are.</source>
-        <translation type="unfinished"></translation>
+        <translation>对象 {%1}。GC 无法销毁类型为 &quot;%2&quot; 的对象，因为它不知道有多少个引用。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1108"/>
         <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it can&apos;t see all references. Current ref count is %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>对象 {%1}。GC 无法销毁类型为 &quot;%2&quot; 的对象，因为它无法看到所有引用。当前引用计数为 %3。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1116"/>
         <source>Object type &apos;%1&apos; doesn&apos;t exist</source>
-        <translation type="unfinished"></translation>
+        <translation>对象类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1122"/>
         <source>Cannot register. The template type instance &apos;%1&apos; has already been generated.</source>
-        <translation type="unfinished"></translation>
+        <translation>无法注册。模板类型实例 &quot;%1&quot; 已生成。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1129"/>
         <source>Template type &apos;%1&apos; doesn&apos;t exist</source>
-        <translation type="unfinished"></translation>
+        <translation>模板类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1134"/>
         <source>Template subtype &apos;%1&apos; doesn&apos;t exist</source>
-        <translation type="unfinished"></translation>
+        <translation>模板子类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1140"/>
         <source>Failed to read subtype of template type &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>无法读取模板类型 &quot;%1&quot; 的子类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1146"/>
         <source>Failed in call to function &apos;%1&apos; (Code: %2, %3)</source>
-        <translation type="unfinished"></translation>
+        <translation>调用函数 &quot;%1&quot; 失败（代码：%2，%3）</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1153"/>
         <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; (Code: %3, %4)</source>
-        <translation type="unfinished"></translation>
+        <translation>使用 &quot;%2&quot; 调用函数 &quot;%1&quot; 失败（代码：%3，%4）</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1162"/>
         <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; and &apos;%3&apos; (Code: %4, %5)</source>
-        <translation type="unfinished"></translation>
+        <translation>使用 &quot;%2&quot; 和 &quot;%3&quot; 调用函数 &quot;%1&quot; 失败（代码：%4，%5）</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1170"/>
         <source>Type &apos;%1&apos; is still used by function &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>类型 &quot;%1&quot; 仍被函数 &quot;%2&quot; 使用</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1176"/>
         <source>The builtin type in previous message is named &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>上一条消息中的内置类型名为 &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1183"/>
         <source>The function in previous message is named &apos;%1&apos;. The func type is %2</source>
-        <translation type="unfinished"></translation>
+        <translation>上一条消息中的函数名为 &quot;%1&quot;。函数类型为 %2</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1191"/>
         <source>The script object of type &apos;%1&apos; is being resurrected illegally during destruction</source>
-        <translation type="unfinished"></translation>
+        <translation>类型为 &quot;%1&quot; 的脚本对象在销毁过程中被非法复活</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1199"/>
         <source>LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>LoadByteCode 失败。字节码无效。从流中读取的字节数：%1</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1207"/>
         <source>Function &apos;%1&apos; appears to have been compiled without JIT entry points</source>
-        <translation type="unfinished"></translation>
+        <translation>函数 &quot;%1&quot; 似乎已在无 JIT 入口点的情况下进行编译</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1215"/>
         <source>There is an external reference to an object in module &apos;%1&apos;, preventing it from being deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>存在对模块 &quot;%1&quot; 中对象的外部引用，导致无法删除该对象</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1233"/>
         <source>Output argument expression is not assignable</source>
-        <translation type="unfinished"></translation>
+        <translation>输出参数表达式不可分配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1234"/>
         <source>Auto is not allowed here</source>
-        <translation type="unfinished"></translation>
+        <translation>这里禁止使用 auto 关键字</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1235"/>
         <source>Can&apos;t find unambiguous implicit conversion to make both expressions have the same type</source>
-        <translation type="unfinished"></translation>
+        <translation>无法找到明确的隐式转换来使两个表达式具有相同的类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1237"/>
         <source>Both conditions must call constructor</source>
-        <translation type="unfinished"></translation>
+        <translation>两个条件都必须调用构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1238"/>
         <source>Base class doesn&apos;t have default constructor. Make explicit call to base constructor</source>
-        <translation type="unfinished"></translation>
+        <translation>基类没有默认构造函数。明确调用基类构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1240"/>
         <source>Base class doesn&apos;t have copy constructor or default constructor and assign operator. Make explicit call to base constructor</source>
-        <translation type="unfinished"></translation>
+        <translation>基类没有复制构造函数或默认构造函数和赋值运算符。明确调用基类构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1242"/>
         <source>Candidates are:</source>
-        <translation type="unfinished"></translation>
+        <translation>候选包括：</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1243"/>
         <source>Can&apos;t call a constructor in loops</source>
-        <translation type="unfinished"></translation>
+        <translation>无法在循环中调用构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1244"/>
         <source>Can&apos;t call a constructor in switch</source>
-        <translation type="unfinished"></translation>
+        <translation>无法在 switch 中调用构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1245"/>
         <source>Can&apos;t call a constructor multiple times</source>
-        <translation type="unfinished"></translation>
+        <translation>无法多次调用构造函数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1246"/>
         <source>Can&apos;t create delegate</source>
-        <translation type="unfinished"></translation>
+        <translation>无法创建委托</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1247"/>
         <source>Can&apos;t create delegate for types that do not support handles</source>
-        <translation type="unfinished"></translation>
+        <translation>无法为不支持句柄的类型创建委托</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1248"/>
         <source>Cannot flag function that will not be auto generated as deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>无法将不会自动生成的函数标记为已删除</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1249"/>
         <source>Conflict with explicit declaration of function and deleted function</source>
-        <translation type="unfinished"></translation>
+        <translation>与函数的显式声明和已删除函数冲突</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1250"/>
         <source>Can&apos;t implement itself, or another interface that implements this interface</source>
-        <translation type="unfinished"></translation>
+        <translation>无法实现自身，也无法实现此接口的其他接口</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1252"/>
         <source>Can&apos;t inherit from multiple classes</source>
-        <translation type="unfinished"></translation>
+        <translation>不能从多个类继承</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1253"/>
         <source>Can&apos;t inherit from itself, or another class that inherits from this class</source>
-        <translation type="unfinished"></translation>
+        <translation>不能从其自身或从该类继承的其他类继承</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1255"/>
         <source>Can&apos;t pass class method as arg directly. Use a delegate object instead</source>
-        <translation type="unfinished"></translation>
+        <translation>无法直接将类方法作为参数传递。请改用委托对象</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1257"/>
         <source>Unable to resolve auto type</source>
-        <translation type="unfinished"></translation>
+        <translation>无法解析自动类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1258"/>
         <source>Can&apos;t return reference to local value.</source>
-        <translation type="unfinished"></translation>
+        <translation>无法返回对本地值的引用。</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1259"/>
         <source>Can&apos;t return value when return type is &apos;void&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>返回类型为 &quot;void&quot; 时无法返回值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1260"/>
         <source>Implicit conversion changed sign of value</source>
-        <translation type="unfinished"></translation>
+        <translation>隐式转换改变了值的符号</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1261"/>
         <source>A class cannot be both abstract and final</source>
-        <translation type="unfinished"></translation>
+        <translation>一个类不能同时是 abstract 和 final</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1262"/>
         <source>Compound assignments with property accessors on value types are not supported</source>
-        <translation type="unfinished"></translation>
+        <translation>不支持对值类型使用属性访问器的复合赋值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1264"/>
         <source>Compound assignments with indexed property accessors are not supported</source>
-        <translation type="unfinished"></translation>
+        <translation>不支持使用索引属性访问器的复合赋值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1266"/>
         <source>Compound assignments with property accessors require both get and set accessors</source>
-        <translation type="unfinished"></translation>
+        <translation>具有属性访问器的复合赋值需要 get 和 set 访问器</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1268"/>
         <source>Variables cannot be declared in switch cases, except inside statement blocks</source>
-        <translation type="unfinished"></translation>
+        <translation>变量不能在 switch 语句中声明，除非在语句块内</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1270"/>
         <source>The default case must be the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>default 情况必须是最后一个</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1271"/>
         <source>The type of the default argument expression doesn&apos;t match the function parameter type</source>
-        <translation type="unfinished"></translation>
+        <translation>默认参数表达式的类型与函数参数类型不匹配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1273"/>
         <source>Deleted functions cannot have implementation</source>
-        <translation type="unfinished"></translation>
+        <translation>已删除的函数不能有实现</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1274"/>
         <source>The destructor must not have any parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>析构函数不能有任何参数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1275"/>
         <source>Value assignment on reference types is not allowed. Did you mean to do a handle assignment?</source>
-        <translation type="unfinished"></translation>
+        <translation>不允许对引用类型进行值分配。是要进行句柄分配吗？</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1277"/>
         <source>Compound assignment on reference types is not allowed</source>
-        <translation type="unfinished"></translation>
+        <translation>不允许对引用类型进行复合赋值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1278"/>
         <source>Duplicate named argument</source>
-        <translation type="unfinished"></translation>
+        <translation>重复命名参数</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1279"/>
         <source>Duplicate switch case</source>
-        <translation type="unfinished"></translation>
+        <translation>重复的 switch case</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1280"/>
         <source>Else with empty statement</source>
-        <translation type="unfinished"></translation>
+        <translation>else 中使用空语句</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1281"/>
         <source>Empty list element is not allowed</source>
-        <translation type="unfinished"></translation>
+        <translation>不允许空列表元素</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1282"/>
         <source>Empty switch statement</source>
-        <translation type="unfinished"></translation>
+        <translation>空的 switch 语句</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1283"/>
         <source>Expected constant</source>
-        <translation type="unfinished"></translation>
+        <translation>应为常量</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1284"/>
         <source>Expected data type</source>
-        <translation type="unfinished"></translation>
+        <translation>应为数据类型</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1285"/>
         <source>Expected expression value</source>
-        <translation type="unfinished"></translation>
+        <translation>应为表达值</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1286"/>
         <source>Expected identifier</source>
-        <translation type="unfinished"></translation>
+        <translation>应为标识符</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1287"/>
         <source>Expected a list enclosed by { } to match pattern</source>
-        <translation type="unfinished"></translation>
+        <translation>应为用 { } 括起来的列表与模式匹配</translation>
     </message>
     <message>
         <location filename="../src/class/scriptmachine.cpp" line="1288"/>
@@ -4782,104 +4798,82 @@
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="40"/>
-        <source>Setting break point in file &apos;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="41"/>
-        <location filename="../src/class/asdebugger.cpp" line="138"/>
-        <source>&apos; at line </source>
+        <source>Setting break point in file &apos;%1&apos; at line %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="56"/>
-        <source>Adding deferred break point for function &apos;</source>
+        <source>Adding deferred break point for function &apos;%1&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="90"/>
-        <source>Entering function &apos;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="92"/>
-        <source>&apos;. Transforming it into break point</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="110"/>
-        <source>Moving break point </source>
+        <location filename="../src/class/asdebugger.cpp" line="91"/>
+        <source>Entering function &apos;%1&apos;. Transforming it into break point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="111"/>
+        <source>Moving break point %1 in file &apos;%2&apos; to next line with code at line %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/class/asdebugger.cpp" line="137"/>
-        <source> in file &apos;</source>
+        <source>Reached break point %1 in file &apos;%2&apos; at line %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="113"/>
-        <source>&apos; to next line with code at line </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="136"/>
-        <source>Reached break point </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="149"/>
-        <location filename="../src/class/asdebugger.cpp" line="171"/>
+        <location filename="../src/class/asdebugger.cpp" line="151"/>
+        <location filename="../src/class/asdebugger.cpp" line="173"/>
         <source>No script is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="159"/>
+        <location filename="../src/class/asdebugger.cpp" line="161"/>
         <source>Garbage collector:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="159"/>
-        <source>
- current size:          </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/class/asdebugger.cpp" line="160"/>
-        <source>
- total destroyed:       </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="161"/>
         <source>
- total detected:        </source>
+ current size:          </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="162"/>
         <source>
- new objects:           </source>
+ total destroyed:       </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/class/asdebugger.cpp" line="163"/>
         <source>
+ total detected:        </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="164"/>
+        <source>
+ new objects:           </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/class/asdebugger.cpp" line="165"/>
+        <source>
  new objects destroyed: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="286"/>
+        <location filename="../src/class/asdebugger.cpp" line="288"/>
         <source>Invalid expression. Expression doesn&apos;t end after symbol</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="293"/>
+        <location filename="../src/class/asdebugger.cpp" line="295"/>
         <source>Invalid expression. No matching symbol</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/class/asdebugger.cpp" line="296"/>
+        <location filename="../src/class/asdebugger.cpp" line="298"/>
         <source>Invalid expression. Expected identifier</source>
         <translation type="unfinished"></translation>
     </message>

@@ -92,7 +92,10 @@ set(DIALOG_SRC
     src/dialog/finddialog.cpp
     src/dialog/finddialog.h
     src/dialog/checksumdialog.h
-    src/dialog/checksumdialog.cpp)
+    src/dialog/checksumdialog.cpp
+    src/dialog/colorpickerdialog.h
+    src/dialog/colorpickerdialog.cpp
+    src/dialog/colorpickerdialog.ui)
 
 set(CONTROL_SRC
     src/control/titlebar.h
@@ -107,7 +110,11 @@ set(CONTROL_SRC
     src/control/gotowidget.cpp
     src/control/gotowidget.ui
     src/control/scripteditor.h
-    src/control/scripteditor.cpp)
+    src/control/scripteditor.cpp
+    src/control/qcolorpicker_slider.hpp
+    src/control/qcolorpicker_slider.cpp
+    src/control/huecolorpickerslider.h
+    src/control/huecolorpickerslider.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -128,8 +135,6 @@ set(CLASS_SRC
     src/class/winginputdialog.cpp
     src/class/wingfiledialog.h
     src/class/wingfiledialog.cpp
-    src/class/wingcolordialog.h
-    src/class/wingcolordialog.cpp
     src/class/scriptmachine.h
     src/class/scriptmachine.cpp
     src/class/scriptmanager.h

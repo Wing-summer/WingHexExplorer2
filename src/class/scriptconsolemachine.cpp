@@ -37,15 +37,15 @@ bool ScriptConsoleMachine::execString(asIScriptEngine *engine,
                                       const QString &code) {
     return ExecuteString(_engine, preProcessCode(code).toUtf8(),
                          engine->GetModule("Console", asGM_ALWAYS_CREATE),
-                         _immediateContext);
+                         _immediateContext) >= 0;
 }
 
 void ScriptConsoleMachine::exceptionCallback(asIScriptContext *context) {
-    QString message = tr("- Exception") + QStringLiteral(" '") +
-                      context->GetExceptionString() + QStringLiteral("' ") +
-                      tr("in") + QStringLiteral(" '") +
-                      context->GetExceptionFunction()->GetDeclaration() +
-                      QStringLiteral("'\n") + getCallStack(context);
+    QString message =
+        tr("- Exception '%1' in '%2'\n")
+            .arg(context->GetExceptionString(),
+                 context->GetExceptionFunction()->GetDeclaration()) +
+        getCallStack(context);
 
     const char *section;
     MessageInfo msg;

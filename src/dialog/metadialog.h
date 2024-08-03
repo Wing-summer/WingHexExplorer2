@@ -10,7 +10,8 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QPalette>
-#include <QPushButton>
+
+#include "src/control/huecolorpickerslider.h"
 
 class MetaDialog : public FramelessDialog {
     Q_OBJECT
@@ -29,12 +30,9 @@ private:
     void on_reject();
 
 private:
-    void setPaintedColor(QPushButton *btn, const QColor &color);
-
-private:
     QCheckBox *cforeground, *cbackground, *ccomment;
     QLineEdit *m_comment;
-    QPushButton *iforeground, *ibackground;
+    HueColorPickerSlider *iforeground, *ibackground;
 
     QColor _foreground;
     QColor _background;

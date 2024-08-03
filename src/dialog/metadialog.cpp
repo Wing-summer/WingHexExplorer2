@@ -2,13 +2,13 @@
 #include "src/control/toast.h"
 #include "src/utilities.h"
 
-#include "src/class/wingcolordialog.h"
 #include <QDialogButtonBox>
 #include <QShortcut>
 
 MetaDialog::MetaDialog(QWidget *parent)
     : FramelessDialog(parent), _foreground(Qt::transparent),
       _background(Qt::transparent) {
+    Q_ASSERT(parent);
 
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
@@ -18,7 +18,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     layout->addWidget(cforeground);
     layout->addSpacing(2);
 
-    iforeground = new QPushButton(this);
+    iforeground = new HueColorPickerSlider(Qt::Horizontal, this);
     iforeground->setEnabled(false);
     layout->addWidget(iforeground);
 
@@ -30,7 +30,7 @@ MetaDialog::MetaDialog(QWidget *parent)
 
     layout->addSpacing(2);
 
-    ibackground = new QPushButton(this);
+    ibackground = new HueColorPickerSlider(Qt::Horizontal, this);
     ibackground->setEnabled(false);
     layout->addWidget(ibackground);
 
@@ -57,20 +57,6 @@ MetaDialog::MetaDialog(QWidget *parent)
     connect(cbackground, &QCheckBox::clicked, ibackground,
             &QPushButton::setEnabled);
     connect(ccomment, &QCheckBox::clicked, m_comment, &QPushButton::setEnabled);
-    connect(iforeground, &QPushButton::clicked, this, [this] {
-        auto color = WingColorDialog::getColor(tr("SelectColor"), this);
-        if (color.isValid()) {
-            this->setPaintedColor(iforeground, color);
-            _foreground = color;
-        }
-    });
-    connect(ibackground, &QPushButton::clicked, this, [=] {
-        auto color = WingColorDialog::getColor(tr("SelectColor"), this);
-        if (color.isValid()) {
-            this->setPaintedColor(ibackground, color);
-            _background = color;
-        }
-    });
     connect(dbbox, &QDialogButtonBox::accepted, this, &MetaDialog::on_accept);
     connect(dbbox, &QDialogButtonBox::rejected, this, &MetaDialog::on_reject);
     auto key = QKeySequence(Qt::Key_Return);
@@ -87,8 +73,8 @@ void MetaDialog::on_accept() {
         (cbackground->isChecked() &&
          (!_background.isValid() || _background.rgba() == 0)) ||
         (ccomment->isChecked() && m_comment->text().trimmed().length() == 0)) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                     tr("NoChoose"));
+        Toast::toast(this->parentWidget(),
+                     NAMEICONRES(QStringLiteral("metadata")), tr("NoChoose"));
         return;
     }
 
@@ -97,11 +83,6 @@ void MetaDialog::on_accept() {
 }
 
 void MetaDialog::on_reject() { done(0); }
-
-void MetaDialog::setPaintedColor(QPushButton *btn, const QColor &color) {
-    Q_ASSERT(btn);
-    btn->setStyleSheet(QStringLiteral("background-color: ") + color.name());
-}
 
 QString MetaDialog::comment() {
     if (ccomment->isChecked())
@@ -138,7 +119,7 @@ void MetaDialog::setBackGroundColor(QColor color) {
         cbackground->setChecked(true);
         emit cbackground->clicked(true);
         _background = color;
-        this->setPaintedColor(ibackground, color);
+        ibackground->setColor(color);
     }
 }
 
@@ -147,6 +128,6 @@ void MetaDialog::setForeGroundColor(QColor color) {
         cforeground->setChecked(true);
         emit cforeground->clicked(true);
         _foreground = color;
-        this->setPaintedColor(iforeground, color);
+        iforeground->setColor(color);
     }
 }

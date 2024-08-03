@@ -1,3 +1,5 @@
+> English version of README would be written by me after it is almost stable. You can use Google translator for reading temporarily. If you are interested in hexeditor developping, feel free to join me for code contribution, program localization or document writting, etc.
+
 - [代码贡献者](#代码贡献者)
 - [软件编译运行情况](#软件编译运行情况)
 - [WingHexExplorer2](#winghexexplorer2)
@@ -194,6 +196,8 @@
 </p>
 
 ## 捐助
+
+> If you are not Chinese, you can use [Afadian](https://afdian.com/a/wingsummer) to support me.
 
 **<p align="center">您的每一份支持都将是本项目推进的强大动力，十分感谢您的支持</p>**
 

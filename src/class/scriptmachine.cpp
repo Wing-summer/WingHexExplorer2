@@ -880,9 +880,9 @@ QString ScriptMachine::processTranslation(const char *content) {
              "^No matching operator that takes the types '(.*?)' "
              "and '(.*?)' found")),
          [](const QStringList &contents) -> QString {
-             return tr("No matching operator that takes the types '(.*?)' "
-                       "and '%1' found")
-                 .arg(contents.at(1));
+             return tr("No matching operator that takes the types '%1' "
+                       "and '%2' found")
+                 .arg(contents.at(1), contents.at(2));
          }},
         {QRegularExpression(QStringLiteral("^No matching symbol '(.*?)'")),
          [](const QStringList &contents) -> QString {
