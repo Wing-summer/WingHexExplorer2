@@ -37,9 +37,9 @@ void asDebugger::AddFileBreakPoint(const std::string &file, int lineNbr) {
     actual = actual.substr(b, e != std::string::npos ? e - b + 1
                                                      : std::string::npos);
 
-    auto s = tr("Setting break point in file '") +
-             QString::fromStdString(actual) + tr("' at line ") +
-             QString::number(lineNbr);
+    auto s = tr("Setting break point in file '%1' at line %2")
+                 .arg(QString::fromStdString(actual))
+                 .arg(lineNbr);
     Output(s);
 
     BreakPoint bp(actual, lineNbr, false);
@@ -53,8 +53,8 @@ void asDebugger::AddFuncBreakPoint(const std::string &func) {
     std::string actual =
         func.substr(b, e != std::string::npos ? e - b + 1 : std::string::npos);
 
-    auto s = tr("Adding deferred break point for function '") +
-             QString::fromStdString(actual) + QStringLiteral("'");
+    auto s = tr("Adding deferred break point for function '%1'")
+                 .arg(QString::fromStdString(actual));
     Output(s);
 
     BreakPoint bp(actual, 0, true);
@@ -87,9 +87,10 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
             // We need to check for a breakpoint at entering the function
             if (m_breakPoints[n].func) {
                 if (m_breakPoints[n].name == func->GetName()) {
-                    auto s = tr("Entering function '") +
-                             QString::fromStdString(m_breakPoints[n].name) +
-                             tr("'. Transforming it into break point");
+                    auto s =
+                        tr("Entering function '%1'. Transforming it into break "
+                           "point")
+                            .arg(QString::fromStdString(m_breakPoints[n].name));
                     Output(s);
 
                     // Transform the function breakpoint into a file breakpoint
@@ -107,11 +108,11 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
                 if (line >= 0) {
                     m_breakPoints[n].needsAdjusting = false;
                     if (line != m_breakPoints[n].lineNbr) {
-                        auto s = tr("Moving break point ") +
-                                 QString::number(n) + tr(" in file '") +
-                                 QString::fromStdString(file) +
-                                 tr("' to next line with code at line ") +
-                                 QString::number(line);
+                        auto s = tr("Moving break point %1 in file '%2' to "
+                                    "next line with code at line %3")
+                                     .arg(n)
+                                     .arg(QString::fromStdString(file))
+                                     .arg(line);
                         Output(s);
 
                         // Move the breakpoint to the next line
@@ -133,9 +134,10 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
 #else
             bpName == file) {
 #endif
-            auto s = tr("Reached break point ") + QString::number(n) +
-                     tr(" in file '") + QString::fromStdString(file) +
-                     tr("' at line ") + QString::number(lineNbr);
+            auto s = tr("Reached break point %1 in file '%2' at line %3")
+                         .arg(n)
+                         .arg(QString::fromStdString(file))
+                         .arg(lineNbr);
             Output(s);
             return true;
         }

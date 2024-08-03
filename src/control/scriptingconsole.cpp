@@ -55,7 +55,8 @@ void ScriptingConsole::stdWarn(const QString &str) {
 
 void ScriptingConsole::executeCode(const QString &code) {
     setMode(Output);
-    _sp->executeScript(code);
+    if (!_sp->executeScript(code)) {
+    }
     appendCommandPrompt();
     setMode(Input);
 }

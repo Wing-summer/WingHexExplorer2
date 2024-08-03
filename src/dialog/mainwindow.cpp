@@ -317,13 +317,13 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                         tr("ClearFindResult"),
                                         &MainWindow::on_clearfindresult));
 
-    m_findresult = new QTableWidget(0, 2, this);
+    m_findresult = new QTableWidget(0, 4, this);
     m_findresult->setProperty("EditorView", quintptr(0));
     m_findresult->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
     m_findresult->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
     m_findresult->setHorizontalHeaderLabels(
-        QStringList({tr("addr"), tr("value")}));
+        QStringList({tr("line"), tr("col"), tr("offset"), tr("value")}));
     m_findresult->horizontalHeader()->setStretchLastSection(true);
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::CustomContextMenu);
@@ -1677,7 +1677,7 @@ void MainWindow::on_metadata() {
         return;
     }
     if (hexeditor->documentBytes() > 0) {
-        MetaDialog m;
+        MetaDialog m(this);
         auto cur = hexeditor->cursor();
         if (cur->selectionLength() > 0) {
             auto begin = cur->selectionStart().offset();
@@ -1921,11 +1921,12 @@ void MainWindow::on_exportfindresult() {
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             QJsonObject jobj;
-            jobj.insert(QStringLiteral("offset"),
-                        m_findresult->item(i, 0)->text());
-            jobj.insert(QStringLiteral("value"),
-                        m_findresult->item(i, 1)->text());
-            arr.append(jobj);
+            // TODO
+            // jobj.insert(QStringLiteral("offset"),
+            //             m_findresult->item(i, 0)->text());
+            // jobj.insert(QStringLiteral("value"),
+            //             m_findresult->item(i, 1)->text());
+            // arr.append(jobj);
         }
         fobj.insert(QStringLiteral("data"), arr);
 
@@ -2310,17 +2311,18 @@ void MainWindow::loadFindResult(EditorView *view) {
         ExecAsync_VOID(
             [=] {
                 for (auto i = 0; i < len; i++) {
-                    auto tab0 = new QTableWidgetItem(
-                        QStringLiteral("0x") +
-                        QString::number(quintptr(result.at(i)) +
-                                            view->hexEditor()->addressBase(),
-                                        16)
-                            .toUpper());
-                    tab0->setData(Qt::UserRole, result.at(i));
-                    m_findresult->setItem(i, 0, tab0);
-                    m_findresult->setItem(i, 1,
-                                          new QTableWidgetItem(QString(
-                                              data.toHex(' ').toUpper())));
+                    // TODO
+                    // auto tab0 = new QTableWidgetItem(
+                    //     QStringLiteral("0x") +
+                    //     QString::number(quintptr(result.at(i)) +
+                    //                         view->hexEditor()->addressBase(),
+                    //                     16)
+                    //         .toUpper());
+                    // tab0->setData(Qt::UserRole, result.at(i));
+                    // m_findresult->setItem(i, 2, tab0);
+                    // m_findresult->setItem(i, 1,
+                    //                       new QTableWidgetItem(QString(
+                    //                           data.toHex(' ').toUpper())));
                 }
             },
             EMPTY_FUNC);
