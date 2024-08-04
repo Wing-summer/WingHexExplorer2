@@ -31,7 +31,9 @@ public:
     void setExpandMembers(int newExpandMembers);
 
 private:
+#ifdef Q_OS_WIN
     bool strcasecmp(const std::string &str1, const std::string &str2);
+#endif
 
 signals:
     void onOutput(const QString &message);

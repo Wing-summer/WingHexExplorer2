@@ -21,6 +21,8 @@ MetaDialog::MetaDialog(QWidget *parent)
     iforeground = new HueColorPickerSlider(Qt::Horizontal, this);
     iforeground->setEnabled(false);
     layout->addWidget(iforeground);
+    connect(iforeground, &HueColorPickerSlider::colorChanged, this,
+            [=](QColor color) { _foreground = color; });
 
     layout->addSpacing(2);
 
@@ -33,6 +35,8 @@ MetaDialog::MetaDialog(QWidget *parent)
     ibackground = new HueColorPickerSlider(Qt::Horizontal, this);
     ibackground->setEnabled(false);
     layout->addWidget(ibackground);
+    connect(ibackground, &HueColorPickerSlider::colorChanged, this,
+            [=](QColor color) { _background = color; });
 
     layout->addSpacing(2);
 

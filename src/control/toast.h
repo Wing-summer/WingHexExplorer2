@@ -45,8 +45,8 @@ public:
     void setTextColor(const QColor &textColor);
 
 protected:
-    virtual QSize calculateTextSize();
-    virtual void init();
+    QSize calculateTextSize();
+    void init();
     void paintEvent(QPaintEvent *event);
     void showEvent(QShowEvent *event);
     void timerEvent(QTimerEvent *event);

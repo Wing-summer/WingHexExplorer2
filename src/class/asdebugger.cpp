@@ -299,12 +299,14 @@ void asDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx) {
     }
 }
 
+#ifdef Q_OS_WIN
 bool asDebugger::strcasecmp(const std::string &str1, const std::string &str2) {
     if (str1.length() != str2.length()) {
         return false;
     }
     return _stricmp(str1.c_str(), str2.c_str()) == 0;
 }
+#endif
 
 int asDebugger::getExpandMembers() const { return _expandMembers; }
 
