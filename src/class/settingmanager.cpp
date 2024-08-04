@@ -300,7 +300,7 @@ SettingManager &SettingManager::instance() {
     return ins;
 }
 
-SettingManager::~SettingManager() { save(); }
+SettingManager::~SettingManager() {}
 
 QByteArray SettingManager::dockLayout() const { return m_dockLayout; }
 

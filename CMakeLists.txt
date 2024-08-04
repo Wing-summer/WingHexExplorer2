@@ -17,8 +17,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED
              COMPONENTS Widgets Network Concurrent PrintSupport LinguistTools)
 
-add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}"
-                -DQT_USE_QSTRINGBUILDER)
+add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}")
 
 if(WIN32)
   add_definitions(-DNOMINMAX)

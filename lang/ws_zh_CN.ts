@@ -18,44 +18,6 @@
     </message>
 </context>
 <context>
-    <name>CImageViewer</name>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="83"/>
-        <source>Cannot load %1: %2</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="144"/>
-        <source>Open File</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="155"/>
-        <source>&amp;Open...</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="161"/>
-        <source>Fit on Screen</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="166"/>
-        <source>Actual Pixels</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="175"/>
-        <source>Zoom In (25%)</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/ImageViewer.cpp" line="180"/>
-        <source>Zoom Out (25%)</source>
-        <translation></translation>
-    </message>
-</context>
-<context>
     <name>CMainWindow</name>
     <message>
         <location filename="../Qt-Advanced-Docking-System/examples/autohide/mainwindow.ui" line="14"/>
@@ -83,74 +45,6 @@
     </message>
 </context>
 <context>
-    <name>CStatusDialogClass</name>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="20"/>
-        <source>Dock Widget Status</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="35"/>
-        <source>Dock Widget:</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="58"/>
-        <source>Status</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="64"/>
-        <source>closed</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="71"/>
-        <source>floating</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="78"/>
-        <source>tabbed</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="85"/>
-        <source>is current tab</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="101"/>
-        <source>Feature Flags</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="107"/>
-        <source>DockWidgetClosable</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="114"/>
-        <source>DockWidgetMovable</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="121"/>
-        <source>DockWidgetFloatable</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="128"/>
-        <source>DockWidgetDeleteOnClose</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/StatusDialog.ui" line="135"/>
-        <source>CustomCloseHandling</source>
-        <translation></translation>
-    </message>
-</context>
-<context>
     <name>CheckSumDialog</name>
     <message>
         <location filename="../src/dialog/checksumdialog.cpp" line="13"/>
@@ -167,6 +61,7 @@
     <name>ColorPickerDialog</name>
     <message>
         <location filename="../src/dialog/colorpickerdialog.ui" line="14"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_colorpickerdialog.h" line="180"/>
         <source>ColorPicker</source>
         <translation>颜色选择器</translation>
     </message>
@@ -229,51 +124,61 @@
     <name>EditorSettingDialog</name>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="44"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="176"/>
         <source>Base</source>
         <translation>基础</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="68"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="177"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="85"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="178"/>
         <source>FindMax</source>
         <translation>查找数量限制</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="102"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="179"/>
         <source>CopyLimit</source>
         <translation>拷贝字节限制</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="122"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="180"/>
         <source>DecStrLimit</source>
         <translation>解码字符数量限制</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="142"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="181"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="161"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="182"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="182"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="183"/>
         <source>ShowAddr</source>
         <translation>显示/隐藏表头</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="192"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="184"/>
         <source>ShowCol</source>
         <translation>显示/隐藏地址栏</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="202"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="185"/>
         <source>ShowText</source>
         <translation>显示/隐藏解码文本</translation>
     </message>
@@ -499,62 +404,74 @@
     <name>GeneralSettingDialog</name>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="38"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="220"/>
         <location filename="../src/settings/generalsettingdialog.cpp" line="74"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="62"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="221"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="72"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="222"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="91"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="223"/>
         <source>Interface</source>
         <translation>界面</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="115"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="224"/>
         <source>Font</source>
         <translation>字体</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="125"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="225"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="142"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="226"/>
         <source>WinState</source>
         <translation>窗体状态</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="161"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="227"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="185"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="228"/>
         <source>Software Version</source>
         <translation>软件版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="205"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="229"/>
         <source>ScriptEngine Version</source>
         <translation>脚本引擎版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="225"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="230"/>
         <source>Qt Version</source>
         <translation>QT 版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="245"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="231"/>
         <source>OS</source>
         <translation>系统</translation>
     </message>
@@ -583,21 +500,25 @@
     <name>GotoWidget</name>
     <message>
         <location filename="../src/control/gotowidget.ui" line="60"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="104"/>
         <source>GoTo:</source>
         <translation>跳转：</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="86"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="105"/>
         <source>Offset</source>
         <translation>偏移</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="96"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="106"/>
         <source>Line</source>
         <translation>行</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="109"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="107"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
@@ -644,7 +565,6 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="14"/>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="14"/>
         <location filename="../Qt-Advanced-Docking-System/examples/sidebar/MainWindow.ui" line="14"/>
         <location filename="../Qt-Advanced-Docking-System/examples/simple/MainWindow.ui" line="14"/>
@@ -652,14 +572,12 @@
         <translation>主窗体</translation>
     </message>
     <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="32"/>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="33"/>
         <location filename="../src/dialog/mainwindow.cpp" line="192"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="39"/>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="28"/>
         <location filename="../Qt-Advanced-Docking-System/examples/sidebar/MainWindow.ui" line="75"/>
         <location filename="../Qt-Advanced-Docking-System/examples/simple/MainWindow.ui" line="28"/>
@@ -669,35 +587,9 @@
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="44"/>
         <location filename="../src/dialog/mainwindow.cpp" line="203"/>
         <source>About</source>
         <translation>关于</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="49"/>
-        <source>Tests</source>
-        <translation>测试</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="59"/>
-        <source>toolBar</source>
-        <translation>工具栏</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="70"/>
-        <source>Exit</source>
-        <translation>退出</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="75"/>
-        <source>Save State</source>
-        <translation>保存状态</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/mainwindow.ui" line="80"/>
-        <source>Restore State</source>
-        <translation>恢复状态</translation>
     </message>
     <message>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="44"/>
@@ -1612,22 +1504,22 @@
         <translation>前景色</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="28"/>
+        <location filename="../src/dialog/metadialog.cpp" line="30"/>
         <source>Background</source>
         <translation>背景色</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="40"/>
+        <location filename="../src/dialog/metadialog.cpp" line="44"/>
         <source>Comment</source>
         <translation>批注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="67"/>
+        <location filename="../src/dialog/metadialog.cpp" line="71"/>
         <source>Metadata</source>
         <translation>标注</translation>
     </message>
     <message>
-        <location filename="../src/dialog/metadialog.cpp" line="77"/>
+        <location filename="../src/dialog/metadialog.cpp" line="81"/>
         <source>NoChoose</source>
         <translation>开启选项但未设置，如不想设置请关闭！</translation>
     </message>
@@ -1669,26 +1561,31 @@
     <name>PluginSettingDialog</name>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="32"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="124"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="53"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="125"/>
         <source>EnablePlugin</source>
         <translation>启用插件</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="60"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="126"/>
         <source>EnablePluginRoot</source>
         <translation>在管理员权限启动插件</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="81"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="128"/>
         <source>PluginInfo</source>
         <translation>插件信息</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="112"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="127"/>
         <source>Plugins:</source>
         <translation>插件：</translation>
     </message>
@@ -1850,26 +1747,6 @@
 </context>
 <context>
     <name>QObject</name>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/MainWindow.cpp" line="152"/>
-        <source>Help</source>
-        <translation>帮助</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/MainWindow.cpp" line="331"/>
-        <source>Options</source>
-        <translation>选项</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/MainWindow.cpp" line="340"/>
-        <source>Clear Editor</source>
-        <translation>清空编辑器</translation>
-    </message>
-    <message>
-        <location filename="../Qt-Advanced-Docking-System/demo/MainWindow.cpp" line="507"/>
-        <source>Create Editor</source>
-        <translation>创建编辑器</translation>
-    </message>
     <message>
         <location filename="../Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="193"/>
         <source>List All Tabs</source>
@@ -2745,11 +2622,13 @@
     <name>RibbonButtonGroup</name>
     <message>
         <location filename="../QWingRibbon/ribbonbuttongroup.ui" line="14"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbonbuttongroup.h" line="89"/>
         <source>Form</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../QWingRibbon/ribbonbuttongroup.ui" line="81"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbonbuttongroup.h" line="90"/>
         <source>ToolBar</source>
         <translation>工具</translation>
     </message>
@@ -2758,6 +2637,7 @@
     <name>RibbonTabContent</name>
     <message>
         <location filename="../QWingRibbon/ribbontabcontent.ui" line="14"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbontabcontent.h" line="83"/>
         <source>Form</source>
         <translation></translation>
     </message>
@@ -4305,21 +4185,25 @@
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="26"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="106"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="32"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="107"/>
         <source>AllowRunUsrSciptInRoot</source>
         <translation>允许在管理员权限下执行用户仓库脚本</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="42"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="108"/>
         <source>DataBase</source>
         <translation>仓库</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="59"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="109"/>
         <source>Refresh</source>
         <translation>刷新</translation>
     </message>
@@ -4560,6 +4444,7 @@
     <name>SettingDialog</name>
     <message>
         <location filename="../src/dialog/settingdialog.ui" line="20"/>
+        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_settingdialog.h" line="76"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>

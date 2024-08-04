@@ -1110,7 +1110,7 @@ void MainWindow::on_openfile() {
         WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath);
     if (!filename.isEmpty()) {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
-        EditorView *editor;
+        EditorView *editor = nullptr;
         auto res = openFile(filename, &editor);
         if (res == ErrFile::NotExist) {
             WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
@@ -1134,7 +1134,7 @@ void MainWindow::on_openregion() {
     OpenRegionDialog d(m_lastusedpath);
     if (d.exec()) {
         auto res = d.getResult();
-        EditorView *editor;
+        EditorView *editor = nullptr;
         auto ret = openRegionFile(res.filename, &editor, res.start, res.length);
         if (ret == ErrFile::NotExist) {
             QMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
@@ -1159,7 +1159,7 @@ void MainWindow::on_openworkspace() {
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
-    EditorView *editor;
+    EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
     if (res == ErrFile::NotExist) {
         WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
@@ -1186,7 +1186,7 @@ void MainWindow::on_opendriver() {
 
     DriverSelectorDialog ds;
     if (ds.exec()) {
-        EditorView *editor;
+        EditorView *editor = nullptr;
         auto res = openDriver(ds.GetResult().device(), &editor);
         if (res == ErrFile::NotExist) {
             WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
@@ -2009,7 +2009,7 @@ void MainWindow::on_locChanged() {
         _numsitem[NumTableIndex::Char]->setText(UNKNOWN_NUM);
     }
 
-    //解码字符串
+    // 解码字符串
     if (sellen > 1) {
         // 如果不超过 10KB （默认）那么解码，防止太多卡死
         if (sellen <= 1024 * _decstrlim) {
@@ -2606,7 +2606,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         }
     }
 
-    SettingManager::instance().setDockLayout(m_dock->saveState());
+    auto &set = SettingManager::instance();
+    set.setDockLayout(m_dock->saveState());
+    set.save();
 
     FramelessMainWindow::closeEvent(event);
 }

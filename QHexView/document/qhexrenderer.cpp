@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <cctype>
 #include <cmath>
+#include <cwctype>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
@@ -357,7 +358,7 @@ void QHexRenderer::unprintableChars(QByteArray &ascii) const {
 // added by wingsummer
 void QHexRenderer::unprintableWChars(QString &unicode) const {
     for (QChar &ch : unicode) {
-        if (iswprint(ch.unicode()))
+        if (std::iswprint(ch.unicode()))
             continue;
         ch = HEX_UNPRINTABLE_CHAR;
     }
