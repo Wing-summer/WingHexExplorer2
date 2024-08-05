@@ -73,8 +73,6 @@ void SettingManager::load() {
     if (!encodings.contains(m_editorEncoding)) {
         m_editorEncoding = QStringLiteral("ASCII");
     }
-    READ_CONFIG_QSIZETYPE(m_findmaxcount, EDITOR_FIND_MAXCOUNT, 100);
-    m_findmaxcount = qBound(qsizetype(10), m_findmaxcount, qsizetype(10000));
     READ_CONFIG_QSIZETYPE(m_copylimit, EDITOR_COPY_LIMIT, 100);
     m_copylimit = qBound(qsizetype(100), m_copylimit, qsizetype(1024));
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 100);
@@ -103,7 +101,6 @@ void SettingManager::load() {
     emit sigEditorfontSizeChanged(m_editorfontSize);
     emit sigCopylimitChanged(m_copylimit);
     emit sigDecodeStrlimitChanged(m_decodeStrlimit);
-    emit sigFindmaxcountChanged(m_findmaxcount);
 }
 
 QStringList SettingManager::sysDisplayCats() const { return m_sysDisplayCats; }
@@ -186,7 +183,6 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_SHOW_COL, m_editorShowcol);
         WRITE_CONFIG(EDITOR_SHOW_TEXT, m_editorShowtext);
         WRITE_CONFIG(EDITOR_ENCODING, m_editorEncoding);
-        WRITE_CONFIG(EDITOR_FIND_MAXCOUNT, m_findmaxcount);
         WRITE_CONFIG(EDITOR_COPY_LIMIT, m_copylimit);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
     }
@@ -234,16 +230,6 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
     if (m_copylimit != newCopylimit) {
         m_copylimit = qBound(qsizetype(100), newCopylimit, qsizetype(1024));
         emit sigDecodeStrlimitChanged(m_copylimit);
-    }
-}
-
-qsizetype SettingManager::findmaxcount() const { return m_findmaxcount; }
-
-void SettingManager::setFindmaxcount(qsizetype newFindmaxcount) {
-    if (m_findmaxcount != newFindmaxcount) {
-        m_findmaxcount =
-            qBound(qsizetype(10), newFindmaxcount, qsizetype(10000));
-        emit sigFindmaxcountChanged(m_findmaxcount);
     }
 }
 

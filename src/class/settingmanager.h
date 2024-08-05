@@ -51,9 +51,6 @@ public:
     QString editorEncoding() const;
     void setEditorEncoding(const QString &newEditorEncoding);
 
-    qsizetype findmaxcount() const;
-    void setFindmaxcount(qsizetype newFindmaxcount);
-
     qsizetype copylimit() const;
     void setCopylimit(qsizetype newCopylimit);
 
@@ -92,7 +89,6 @@ public:
 
 signals:
     void sigEditorfontSizeChanged(int v);
-    void sigFindmaxcountChanged(int v);
     void sigDecodeStrlimitChanged(int v);
     void sigCopylimitChanged(int v);
 
@@ -118,7 +114,6 @@ private:
     bool m_editorShowtext = true;
     QString m_editorEncoding;
 
-    qsizetype m_findmaxcount = 100;
     qsizetype m_copylimit = 100;
     qsizetype m_decodeStrlimit = 10;
 

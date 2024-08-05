@@ -20,7 +20,6 @@ void EditorSettingDialog::reload() {
     ui->cbShowtext->setChecked(set.editorShowtext());
     ui->cbEncodingBox->setCurrentText(set.editorEncoding());
     ui->sbFontSize->setValue(set.appfontSize());
-    ui->sbFindMax->setValue(set.findmaxcount());
     ui->sbDecStrLimit->setValue(set.decodeStrlimit());
     ui->sbCopyLimit->setValue(set.copylimit());
 }
@@ -38,7 +37,6 @@ void EditorSettingDialog::apply() {
     set.setEditorShowtext(ui->cbShowtext->isChecked());
     set.setEditorEncoding(ui->cbEncodingBox->currentText());
     set.setEditorfontSize(ui->sbFontSize->value());
-    set.setFindmaxcount(ui->sbFindMax->value());
     set.setDecodeStrlimit(ui->sbDecStrLimit->value());
     set.setCopylimit(ui->sbCopyLimit->value());
     set.save(SettingManager::SETTING::EDITOR);

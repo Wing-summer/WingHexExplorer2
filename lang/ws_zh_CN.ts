@@ -18,6 +18,19 @@
     </message>
 </context>
 <context>
+    <name>BookMarksModel</name>
+    <message>
+        <location filename="../src/model/bookmarksmodel.cpp" line="51"/>
+        <source>offset</source>
+        <translation type="unfinished">偏移</translation>
+    </message>
+    <message>
+        <location filename="../src/model/bookmarksmodel.cpp" line="53"/>
+        <source>comment</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CMainWindow</name>
     <message>
         <location filename="../Qt-Advanced-Docking-System/examples/autohide/mainwindow.ui" line="14"/>
@@ -61,7 +74,6 @@
     <name>ColorPickerDialog</name>
     <message>
         <location filename="../src/dialog/colorpickerdialog.ui" line="14"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_colorpickerdialog.h" line="180"/>
         <source>ColorPicker</source>
         <translation>颜色选择器</translation>
     </message>
@@ -124,66 +136,51 @@
     <name>EditorSettingDialog</name>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="44"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="176"/>
         <source>Base</source>
         <translation>基础</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="68"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="177"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
         <location filename="../src/settings/editorsettingdialog.ui" line="85"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="178"/>
-        <source>FindMax</source>
-        <translation>查找数量限制</translation>
-    </message>
-    <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="102"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="179"/>
         <source>CopyLimit</source>
         <translation>拷贝字节限制</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="122"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="180"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="105"/>
         <source>DecStrLimit</source>
         <translation>解码字符数量限制</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="142"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="181"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="125"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="161"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="182"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="144"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="182"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="183"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="165"/>
         <source>ShowAddr</source>
         <translation>显示/隐藏表头</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="192"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="184"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="175"/>
         <source>ShowCol</source>
         <translation>显示/隐藏地址栏</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.ui" line="202"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_editorsettingdialog.h" line="185"/>
+        <location filename="../src/settings/editorsettingdialog.ui" line="185"/>
         <source>ShowText</source>
         <translation>显示/隐藏解码文本</translation>
     </message>
     <message>
-        <location filename="../src/settings/editorsettingdialog.cpp" line="30"/>
+        <location filename="../src/settings/editorsettingdialog.cpp" line="29"/>
         <source>Editor</source>
         <translation>编辑器</translation>
     </message>
@@ -191,72 +188,72 @@
 <context>
     <name>EditorView</name>
     <message>
-        <location filename="../src/control/editorview.cpp" line="69"/>
+        <location filename="../src/control/editorview.cpp" line="68"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="71"/>
+        <location filename="../src/control/editorview.cpp" line="70"/>
         <source>CutHex</source>
         <translation>剪切（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="73"/>
+        <location filename="../src/control/editorview.cpp" line="72"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="75"/>
+        <location filename="../src/control/editorview.cpp" line="74"/>
         <source>CopyHex</source>
         <translation>复制（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="77"/>
+        <location filename="../src/control/editorview.cpp" line="76"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="79"/>
+        <location filename="../src/control/editorview.cpp" line="78"/>
         <source>PasteHex</source>
         <translation>粘贴（十六进制）</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="81"/>
+        <location filename="../src/control/editorview.cpp" line="80"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="84"/>
+        <location filename="../src/control/editorview.cpp" line="85"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="86"/>
+        <location filename="../src/control/editorview.cpp" line="87"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="88"/>
+        <location filename="../src/control/editorview.cpp" line="89"/>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="90"/>
+        <location filename="../src/control/editorview.cpp" line="91"/>
         <source>MetaData</source>
         <translation>标注</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="92"/>
+        <location filename="../src/control/editorview.cpp" line="93"/>
         <source>BookMark</source>
         <translation>书签</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="94"/>
+        <location filename="../src/control/editorview.cpp" line="95"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../src/control/editorview.cpp" line="179"/>
+        <location filename="../src/control/editorview.cpp" line="190"/>
         <source>Untitled</source>
         <translation>未命名</translation>
     </message>
@@ -401,77 +398,88 @@
     </message>
 </context>
 <context>
+    <name>FindResultModel</name>
+    <message>
+        <location filename="../src/model/findresultmodel.cpp" line="41"/>
+        <source>line</source>
+        <translation>行</translation>
+    </message>
+    <message>
+        <location filename="../src/model/findresultmodel.cpp" line="43"/>
+        <source>col</source>
+        <translation>列</translation>
+    </message>
+    <message>
+        <location filename="../src/model/findresultmodel.cpp" line="45"/>
+        <source>offset</source>
+        <translation>偏移</translation>
+    </message>
+    <message>
+        <location filename="../src/model/findresultmodel.cpp" line="47"/>
+        <source>value</source>
+        <translation>值</translation>
+    </message>
+</context>
+<context>
     <name>GeneralSettingDialog</name>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="38"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="220"/>
         <location filename="../src/settings/generalsettingdialog.cpp" line="74"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="62"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="221"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="72"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="222"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="91"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="223"/>
         <source>Interface</source>
         <translation>界面</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="115"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="224"/>
         <source>Font</source>
         <translation>字体</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="125"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="225"/>
         <source>FontSize</source>
         <translation>字体大小</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="142"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="226"/>
         <source>WinState</source>
         <translation>窗体状态</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="161"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="227"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="185"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="228"/>
         <source>Software Version</source>
         <translation>软件版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="205"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="229"/>
         <source>ScriptEngine Version</source>
         <translation>脚本引擎版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="225"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="230"/>
         <source>Qt Version</source>
         <translation>QT 版本</translation>
     </message>
     <message>
         <location filename="../src/settings/generalsettingdialog.ui" line="245"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_generalsettingdialog.h" line="231"/>
         <source>OS</source>
         <translation>系统</translation>
     </message>
@@ -500,25 +508,21 @@
     <name>GotoWidget</name>
     <message>
         <location filename="../src/control/gotowidget.ui" line="60"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="104"/>
         <source>GoTo:</source>
         <translation>跳转：</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="86"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="105"/>
         <source>Offset</source>
         <translation>偏移</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="96"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="106"/>
         <source>Line</source>
         <translation>行</translation>
     </message>
     <message>
         <location filename="../src/control/gotowidget.ui" line="109"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_gotowidget.h" line="107"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
@@ -573,7 +577,7 @@
     </message>
     <message>
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="33"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="192"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="190"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
@@ -581,13 +585,13 @@
         <location filename="../Qt-Advanced-Docking-System/examples/hideshow/MainWindow.ui" line="28"/>
         <location filename="../Qt-Advanced-Docking-System/examples/sidebar/MainWindow.ui" line="75"/>
         <location filename="../Qt-Advanced-Docking-System/examples/simple/MainWindow.ui" line="28"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="195"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="193"/>
         <location filename="../src/dialog/mainwindow.cpp" line="888"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="203"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="201"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
@@ -623,24 +627,24 @@
         <translation>选长：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="194"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="192"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="197"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="195"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="199"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="197"/>
         <location filename="../src/dialog/mainwindow.cpp" line="897"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1021"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="201"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="199"/>
         <source>Setting</source>
         <translation>设置</translation>
     </message>
@@ -651,58 +655,37 @@
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="314"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="324"/>
         <source>ExportFindResult</source>
         <translation>导出搜索结果</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="317"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="327"/>
         <source>ClearFindResult</source>
         <translation>清空记录</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>value</source>
-        <translation>值</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>line</source>
-        <translation>行</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>col</source>
-        <translation>列</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="326"/>
-        <source>offset</source>
-        <translation>偏移</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="346"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="345"/>
         <source>FindResult</source>
         <translation>搜索结果</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="358"/>
         <location filename="../src/dialog/mainwindow.cpp" line="547"/>
         <source>Value</source>
         <translation>值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="368"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="440"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="364"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="430"/>
         <location filename="../src/dialog/mainwindow.cpp" line="660"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="373"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="445"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="370"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="436"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1419"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1551"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1549"/>
         <source>CopyToClipBoard</source>
         <translation>数据已拷贝到粘贴板</translation>
     </message>
@@ -717,25 +700,25 @@
         <translation>大端</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="416"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="406"/>
         <source>Number</source>
         <translation>数值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="431"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="462"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="421"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="453"/>
         <location filename="../src/dialog/mainwindow.cpp" line="682"/>
         <source>CheckSum</source>
         <translation>校验和</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="474"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="481"/>
         <location filename="../src/dialog/mainwindow.cpp" line="715"/>
         <source>DeleteBookMark</source>
         <translation>删除书签</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="490"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="500"/>
         <location filename="../src/dialog/mainwindow.cpp" line="719"/>
         <source>ClearBookMark</source>
         <translation>清空书签</translation>
@@ -743,8 +726,8 @@
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="510"/>
         <location filename="../src/dialog/mainwindow.cpp" line="711"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1620"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1628"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1618"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1626"/>
         <source>BookMark</source>
         <translation>书签</translation>
     </message>
@@ -931,7 +914,7 @@
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="701"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1572"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1570"/>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
@@ -946,12 +929,12 @@
         <location filename="../src/dialog/mainwindow.cpp" line="780"/>
         <location filename="../src/dialog/mainwindow.cpp" line="796"/>
         <source>MetaData</source>
-        <translation>标注</translation>
+        <translation>添加标注</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="726"/>
         <source>MetaDataEdit</source>
-        <translation>添加标注</translation>
+        <translation>编辑标注</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="730"/>
@@ -1215,8 +1198,8 @@
         <location filename="../src/dialog/mainwindow.cpp" line="1192"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1196"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1235"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2146"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2347"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2128"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2303"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -1250,7 +1233,7 @@
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="1265"/>
         <location filename="../src/dialog/mainwindow.cpp" line="1364"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1908"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1884"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
@@ -1270,12 +1253,12 @@
         <translation>搜索数量已到达上限，结果可能不全，建议请按区段搜索。</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2553"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2507"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2586"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2540"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
@@ -1358,19 +1341,19 @@
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="1405"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1537"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1535"/>
         <source>CutToClipBoard</source>
         <translation>数据已剪切到粘贴板！</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="1408"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1540"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1538"/>
         <source>UnCutToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到粘贴板失败！</translation>
     </message>
     <message>
         <location filename="../src/dialog/mainwindow.cpp" line="1422"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1554"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1552"/>
         <source>UnCopyToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到复制板失败！</translation>
     </message>
@@ -1380,118 +1363,112 @@
         <translation>查找结果完毕！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1572"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1570"/>
         <source>PleaseInputFill</source>
         <translation>请输入填充字节值</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1585"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1583"/>
         <source>FillInputError</source>
         <translation>填充字节输入错误</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1611"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1645"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1662"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1676"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1704"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1749"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1765"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1609"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1643"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1660"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1674"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1702"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1747"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1763"/>
         <source>CheckKeepSize</source>
         <translation>请检查锁定文件大小是否开启！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1620"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1628"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1618"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1626"/>
         <source>InputComment</source>
         <translation>请输入批注：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1691"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1736"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1689"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1734"/>
         <source>NoSelection</source>
         <translation>没有选区，无法继续的操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1732"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1730"/>
         <source>NoMetaData</source>
         <translation>无可编辑标记</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1784"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="1804"/>
-        <source>Addr : 0x%1</source>
-        <translation>地址：0x%1</translation>
-    </message>
-    <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1905"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1881"/>
         <source>EmptyFindResult</source>
         <translation>没有可导出的搜索结果！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1937"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1913"/>
         <source>SaveFindResult</source>
         <translation>导出搜索结果成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="1941"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="1917"/>
         <source>SaveFindResultError</source>
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2030"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2012"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2045"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2027"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2048"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2030"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2056"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2038"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2071"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2074"/>
-        <location filename="../src/dialog/mainwindow.cpp" line="2078"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2053"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2056"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2060"/>
         <source>ChoosePlugin</source>
         <translation>请选择插件文件</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2071"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2053"/>
         <source>PluginFile (*.dll)</source>
         <translation>插件文件 (*.dll)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2074"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2056"/>
         <source>PluginFile (*.so)</source>
         <translation>插件文件 (*.so)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2078"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2060"/>
         <source>PluginFile (*.wingplg)</source>
         <translation>插件文件 (*.wingplg)</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2147"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2129"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2267"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2249"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../src/dialog/mainwindow.cpp" line="2348"/>
+        <location filename="../src/dialog/mainwindow.cpp" line="2304"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -1522,6 +1499,14 @@
         <location filename="../src/dialog/metadialog.cpp" line="81"/>
         <source>NoChoose</source>
         <translation>开启选项但未设置，如不想设置请关闭！</translation>
+    </message>
+</context>
+<context>
+    <name>NumShowModel</name>
+    <message>
+        <location filename="../src/model/numshowmodel.cpp" line="65"/>
+        <source>Value</source>
+        <translation>值</translation>
     </message>
 </context>
 <context>
@@ -1561,31 +1546,26 @@
     <name>PluginSettingDialog</name>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="32"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="124"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="53"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="125"/>
         <source>EnablePlugin</source>
         <translation>启用插件</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="60"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="126"/>
         <source>EnablePluginRoot</source>
         <translation>在管理员权限启动插件</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="81"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="128"/>
         <source>PluginInfo</source>
         <translation>插件信息</translation>
     </message>
     <message>
         <location filename="../src/settings/pluginsettingdialog.ui" line="112"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_pluginsettingdialog.h" line="127"/>
         <source>Plugins:</source>
         <translation>插件：</translation>
     </message>
@@ -1673,17 +1653,17 @@
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../src/plugin/pluginsystem.cpp" line="1758"/>
+        <location filename="../src/plugin/pluginsystem.cpp" line="1757"/>
         <source>Received non-sender signal request</source>
         <translation>接收到未知发送者调用请求</translation>
     </message>
     <message>
-        <location filename="../src/plugin/pluginsystem.cpp" line="1789"/>
+        <location filename="../src/plugin/pluginsystem.cpp" line="1788"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../src/plugin/pluginsystem.cpp" line="1795"/>
+        <location filename="../src/plugin/pluginsystem.cpp" line="1794"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -2622,13 +2602,11 @@
     <name>RibbonButtonGroup</name>
     <message>
         <location filename="../QWingRibbon/ribbonbuttongroup.ui" line="14"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbonbuttongroup.h" line="89"/>
         <source>Form</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../QWingRibbon/ribbonbuttongroup.ui" line="81"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbonbuttongroup.h" line="90"/>
         <source>ToolBar</source>
         <translation>工具</translation>
     </message>
@@ -2637,7 +2615,6 @@
     <name>RibbonTabContent</name>
     <message>
         <location filename="../QWingRibbon/ribbontabcontent.ui" line="14"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_ribbontabcontent.h" line="83"/>
         <source>Form</source>
         <translation></translation>
     </message>
@@ -4185,25 +4162,21 @@
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="26"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="106"/>
         <source>Control</source>
         <translation>控制</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="32"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="107"/>
         <source>AllowRunUsrSciptInRoot</source>
         <translation>允许在管理员权限下执行用户仓库脚本</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="42"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="108"/>
         <source>DataBase</source>
         <translation>仓库</translation>
     </message>
     <message>
         <location filename="../src/settings/scriptsettingdialog.ui" line="59"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_scriptsettingdialog.h" line="109"/>
         <source>Refresh</source>
         <translation>刷新</translation>
     </message>
@@ -4444,7 +4417,6 @@
     <name>SettingDialog</name>
     <message>
         <location filename="../src/dialog/settingdialog.ui" line="20"/>
-        <location filename="../build/unknown-Debug/WingHexExplorer2_autogen/include/ui_settingdialog.h" line="76"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>

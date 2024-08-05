@@ -3,7 +3,7 @@
 
 #include "framelessmainwindow.h"
 
-#include <QListWidget>
+#include <QListView>
 #include <QMainWindow>
 #include <QMap>
 #include <QPixmap>
@@ -11,7 +11,7 @@
 #include <QTableWidget>
 #include <QTextBrowser>
 #include <QToolButton>
-#include <QTreeWidget>
+#include <QTreeView>
 #include <QtConcurrent/QtConcurrent>
 
 #include "QWingRibbon/ribbon.h"
@@ -19,15 +19,16 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "scriptingdialog.h"
+#include "settingdialog.h"
 #include "src/class/recentfilemanager.h"
 #include "src/class/wingprogressdialog.h"
 #include "src/control/editorview.h"
 #include "src/control/scriptingconsole.h"
+#include "src/model/bookmarksmodel.h"
+#include "src/model/numshowmodel.h"
 #include "src/plugin/iwingplugin.h"
 #include "src/utilities.h"
-
-#include "scriptingdialog.h"
-#include "settingdialog.h"
 
 class PluginSystem;
 
@@ -57,18 +58,6 @@ private:
         EDITOR_WINS,
         UNDO_ACTION,
         REDO_ACTION
-    };
-
-    enum NumTableIndex {
-        Byte,
-        Char,
-        Ushort,
-        Short,
-        Uint32,
-        Int32,
-        Uint64,
-        Int64,
-        NumTableIndexCount
     };
 
 private:
@@ -159,8 +148,7 @@ private slots:
     void on_metadataedit();
     void on_metadatadel();
     void on_metadatacls();
-    void on_bookmarkChanged(BookMarkModEnum flag, int index, qint64 pos,
-                            QString comment);
+    void on_bookmarkChanged(BookMarkModEnum flag, qsizetype section);
 
     void on_metadatafg(bool checked);
     void on_metadatabg(bool checked);
@@ -413,20 +401,26 @@ private:
     ScriptingConsole *m_scriptConsole = nullptr;
     QTableWidget *m_varshowtable = nullptr;
 
-    QTableWidget *m_findresult = nullptr;
-    QTableWidget *m_numshowtable = nullptr;
-    QVector<QTableWidgetItem *> _numsitem;
+    QTableView *m_findresult = nullptr;
+    FindResultModel *m_findEmptyResult = nullptr;
+
+    QTableView *m_numshowtable = nullptr;
+    NumShowModel *_numsitem = nullptr;
+
     QTableWidget *m_hashtable = nullptr;
     QVector<QTableWidgetItem *> _hashitem;
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
-    QListWidget *m_bookmarks = nullptr;
-    QListWidget *m_metadatas = nullptr;
+
+    QTableView *m_bookmarks = nullptr;
+    BookMarksModel *_bookMarkEmpty = nullptr;
+
+    QListView *m_metadatas = nullptr;
 
     // data visualization widgets
-    QListWidget *m_infolist = nullptr;
-    QTreeWidget *m_infotree = nullptr;
-    QTableWidget *m_infotable = nullptr;
+    QListView *m_infolist = nullptr;
+    QTreeView *m_infotree = nullptr;
+    QTableView *m_infotable = nullptr;
     QTextBrowser *m_infotxt = nullptr;
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
@@ -442,7 +436,6 @@ private:
     QList<QWidget *> m_driverStateWidgets;
     QList<QWidget *> m_cloneFileStateWidgets;
 
-    qsizetype _findmax = 100;
     qsizetype _decstrlim = 10;
 
     QByteArray _defaultLayout;

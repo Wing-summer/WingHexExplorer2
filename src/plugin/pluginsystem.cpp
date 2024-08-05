@@ -615,13 +615,12 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
 
     connect(
         preader, &WingPlugin::Reader::findAllBytes, _win,
-        [=](qsizetype begin, qsizetype end, QByteArray &b,
-            qsizetype maxCount) -> QList<qsizetype> {
+        [=](qsizetype begin, qsizetype end, QByteArray &b) -> QList<qsizetype> {
             QList<qsizetype> results;
             auto e = pluginCurrentEditor(sender());
             if (e) {
-                e->hexEditor()->document()->findAllBytes(begin, end, b, results,
-                                                         maxCount);
+                e->hexEditor()->document()->findAllBytes(begin, end, b,
+                                                         results);
             }
             return results;
         },
@@ -1599,7 +1598,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(
         pctl, &WingPlugin::Controller::applyBookMarks, _win,
-        [=](const QList<BookMark> books) -> bool {
+        [=](const QList<BookMark> &books) -> bool {
             auto e = pluginCurrentEditor(sender());
             if (e) {
                 QList<BookMarkStruct> bs;

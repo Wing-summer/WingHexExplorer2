@@ -9,10 +9,11 @@
 #include "gotowidget.h"
 #include "src/define.h"
 #include "src/dialog/finddialog.h"
+#include "src/model/bookmarksmodel.h"
 #include "src/plugin/iwingplugin.h"
 #include "src/utilities.h"
 
-#include <QTableWidgetItem>
+#include "src/model/findresultmodel.h"
 
 using namespace WingHex;
 
@@ -36,13 +37,13 @@ public:
     bool isCloneFile() const;
     bool isDriver() const;
 
-    const QList<qsizetype> &findResult() const;
+    FindResultModel *findResultModel() const;
+
+    BookMarksModel *bookmarksModel() const;
 
     void setFontSize(qreal size);
 
     int findResultCount() const;
-
-    QByteArray lastFindData() const;
 
     void setIsWorkSpace(bool newIsWorkSpace);
 
@@ -59,8 +60,7 @@ public slots:
     void registerView(WingEditorViewWidget *view);
     void switchView(qindextype index);
 
-    FindError find(const QByteArray &data, const FindDialog::Result &result,
-                   qsizetype findMaxCount);
+    FindError find(const QByteArray &data, const FindDialog::Result &result);
 
     void clearFindResult();
 
@@ -99,7 +99,7 @@ private:
 
 private:
     template <typename Func>
-    inline void newAction(QMenu *parent, const QString &icon,
+    inline void newAction(QWidget *parent, const QString &icon,
                           const QString &title, Func &&slot,
                           const QKeySequence &shortcut = QKeySequence()) {
         auto a = new QAction(parent);
@@ -112,9 +112,6 @@ private:
     }
 
     void connectDocSavedFlag(EditorView *editor);
-
-private slots:
-    void on_hexeditor_customContextMenuRequested(const QPoint &pos);
 
 signals:
     void viewChanged(int index);
@@ -151,10 +148,8 @@ private:
     EditorView *m_cloneParent = nullptr;
 
     QMutex m_findMutex;
-    QList<qsizetype> m_findResults;
-    QByteArray m_lastFindData;
-
-    QMenu *m_hexMenu = nullptr;
+    FindResultModel *m_findResults = nullptr;
+    BookMarksModel *m_bookmarks = nullptr;
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;

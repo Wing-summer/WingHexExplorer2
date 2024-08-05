@@ -118,9 +118,10 @@ bool QHexDocument::setKeepSize(bool b) {
     return true;
 }
 
-void QHexDocument::getBookMarks(QList<BookMarkStruct> &bookmarks) {
-    bookmarks.clear();
-    bookmarks.append(this->bookmarks);
+QList<BookMarkStruct> &QHexDocument::bookMarks() { return bookmarks; }
+
+const QList<BookMarkStruct> &QHexDocument::bookMarks() const {
+    return bookmarks;
 }
 
 bool QHexDocument::AddBookMark(qsizetype pos, QString comment) {
@@ -151,7 +152,7 @@ bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
         bookmarks.append(b);
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Insert, -1, pos, comment);
+        emit bookMarkChanged(BookMarkModEnum::Insert, bookmarks.size() - 1);
         return true;
     }
     return false;
@@ -192,12 +193,13 @@ BookMarkStruct QHexDocument::bookMarkByIndex(qindextype index) {
 bool QHexDocument::RemoveBookMarks(QList<qsizetype> &pos) {
     if (!m_keepsize)
         return false;
+    m_undostack->beginMacro("RemoveBookMarks");
     for (auto p : pos) {
         m_undostack->push(
             new BookMarkRemoveCommand(this, p, bookMarkComment(p)));
     }
+    m_undostack->endMacro();
     emit documentChanged();
-    emit bookMarkChanged(BookMarkModEnum::Apply, -1, -1, QString());
     return true;
 }
 
@@ -217,8 +219,7 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
                 bookmarks.removeAt(index);
                 setDocSaved(false);
                 emit documentChanged();
-                emit bookMarkChanged(BookMarkModEnum::Remove, index, -1,
-                                     QString());
+                emit bookMarkChanged(BookMarkModEnum::Remove, index);
                 break;
             }
             index++;
@@ -233,7 +234,7 @@ bool QHexDocument::removeBookMarkByIndex(qindextype index) {
         bookmarks.removeAt(index);
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Remove, index, -1, QString());
+        emit bookMarkChanged(BookMarkModEnum::Remove, index);
         return true;
     }
     return false;
@@ -246,8 +247,7 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
             if (item.pos == pos) {
                 item.comment = comment;
                 setDocSaved(false);
-                emit bookMarkChanged(BookMarkModEnum::Modify, index, -1,
-                                     comment);
+                emit bookMarkChanged(BookMarkModEnum::Modify, index);
                 return true;
             }
             index++;
@@ -258,10 +258,11 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
 
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
+        auto section = bookmarks.size();
         bookmarks.clear();
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Clear, -1, -1, QString());
+        emit bookMarkChanged(BookMarkModEnum::Clear, section);
         return true;
     }
     return false;
@@ -282,15 +283,14 @@ const QList<BookMarkStruct> &QHexDocument::getAllBookMarks() {
 
 qsizetype QHexDocument::bookMarksCount() const { return bookmarks.count(); }
 
-void QHexDocument::applyBookMarks(QList<BookMarkStruct> books) {
+void QHexDocument::applyBookMarks(const QList<BookMarkStruct> &books) {
     bookmarks.append(books);
     setDocSaved(false);
     emit documentChanged();
-    emit bookMarkChanged(BookMarkModEnum::Apply, -1, -1, QString());
 }
 
 void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
-                                QList<qsizetype> &results, qsizetype maxCount,
+                                QList<qsizetype> &results,
                                 const std::function<bool()> &pred) {
     results.clear();
     if (!b.length())
@@ -300,8 +300,12 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
     auto offset = b.size();
     while (pred()) {
         p = m_buffer->indexOf(b, p);
-        if (p < 0 || (e > 0 && p > e) ||
-            (maxCount > 0 && results.count() >= maxCount)) {
+        if (p < 0 || (e > 0 && p > e)) {
+            break;
+        }
+
+        if (results.size() ==
+            std::numeric_limits<QList<qsizetype>::size_type>::max()) {
             break;
         }
         results.append(p);
