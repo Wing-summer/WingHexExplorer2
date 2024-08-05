@@ -81,8 +81,11 @@ QSize Toast::calculateTextSize() {
 }
 
 void Toast::init() {
-    setWindowFlags(Qt::FramelessWindowHint | Qt::SubWindow);
+    setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
+                   Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint);
     setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+
     m_drawFont.setPointSize(20);
     setToastPos(TOAST_POS::BOTTOM);
 }
@@ -93,14 +96,16 @@ void Toast::setToastPos(TOAST_POS pos) {
     QSizeF windowSize((fontsize.width() + m_drawFont.pointSize() + 5) +
                           PADDING * 2,
                       fontsize.height() + PADDING * 2);
-    auto windowsX = (screenRect.width() - windowSize.width()) / 2;
+    auto windowsX =
+        screenRect.left() + (screenRect.width() - windowSize.width()) / 2;
     auto windowsY = 0.0;
     if (pos == TOAST_POS::TOP) {
-        windowsY = screenRect.height() / 6;
+        windowsY = screenRect.top() + screenRect.height() / 6;
     } else if (pos == TOAST_POS::BOTTOM) {
-        windowsY = screenRect.height() * 4 / 5;
+        windowsY = screenRect.top() + screenRect.height() * 4 / 5;
     } else {
-        windowsY = (screenRect.height() - windowSize.height()) / 2;
+        windowsY =
+            screenRect.top() + (screenRect.height() - windowSize.height()) / 2;
     }
 
     m_pos = pos;

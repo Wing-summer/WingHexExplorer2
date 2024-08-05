@@ -17,7 +17,7 @@ struct BookMarkStruct {
     QString comment;
 };
 
-enum class BookMarkModEnum { Insert, Modify, Remove, Apply, Clear };
+enum class BookMarkModEnum { Insert, Modify, Remove, Clear };
 
 /*=========================*/
 
@@ -71,17 +71,18 @@ public:
     QString bookMarkComment(qsizetype pos);
     const QList<BookMarkStruct> &getAllBookMarks();
     qsizetype bookMarksCount() const;
-    void applyBookMarks(QList<BookMarkStruct> books);
+    void applyBookMarks(const QList<BookMarkStruct> &books);
     bool removeBookMarkByIndex(qindextype index);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
-    void getBookMarks(QList<BookMarkStruct> &bookmarks);
+
+    QList<BookMarkStruct> &bookMarks();
+    const QList<BookMarkStruct> &bookMarks() const;
 
     bool existBookMark(qsizetype pos);
 
     void findAllBytes(
         qint64 begin, qint64 end, QByteArray b, QList<qsizetype> &results,
-        qsizetype maxCount = -1,
         const std::function<bool()> &pred = [] { return true; });
     bool isDocSaved();
     void setDocSaved(bool b = true);
@@ -171,8 +172,7 @@ signals:
     // added by wingsummer
 
     void documentSaved(bool saved);
-    void bookMarkChanged(BookMarkModEnum flag, qsizetype index, qint64 pos,
-                         QString comment);
+    void bookMarkChanged(BookMarkModEnum flag, qsizetype section);
     void metafgVisibleChanged(bool b);
     void metabgVisibleChanged(bool b);
     void metaCommentVisibleChanged(bool b);

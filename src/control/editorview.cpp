@@ -63,44 +63,45 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     auto tabWidget = this->tabWidget();
     tabWidget->installEventFilter(efilter);
 
-    m_hexMenu = new QMenu(m_hex);
     auto &shortcut = QKeySequences::instance();
 
-    newAction(m_hexMenu, "cut", tr("Cut"), &EditorView::sigOnCutFile,
+    newAction(m_hex, "cut", tr("Cut"), &EditorView::sigOnCutFile,
               QKeySequence::Cut);
-    newAction(m_hexMenu, "cuthex", tr("CutHex"), &EditorView::sigOnCutHex,
+    newAction(m_hex, "cuthex", tr("CutHex"), &EditorView::sigOnCutHex,
               shortcut.keySequence(QKeySequences::Key::CUT_HEX));
-    newAction(m_hexMenu, "copy", tr("Copy"), &EditorView::sigOnCopyFile,
+    newAction(m_hex, "copy", tr("Copy"), &EditorView::sigOnCopyFile,
               QKeySequence::Copy);
-    newAction(m_hexMenu, "copyhex", tr("CopyHex"), &EditorView::sigOnCopyHex,
+    newAction(m_hex, "copyhex", tr("CopyHex"), &EditorView::sigOnCopyHex,
               shortcut.keySequence(QKeySequences::Key::COPY_HEX));
-    newAction(m_hexMenu, "paste", tr("Paste"), &EditorView::sigOnPasteFile,
+    newAction(m_hex, "paste", tr("Paste"), &EditorView::sigOnPasteFile,
               QKeySequence::Paste);
-    newAction(m_hexMenu, "pastehex", tr("PasteHex"), &EditorView::sigOnPasteHex,
+    newAction(m_hex, "pastehex", tr("PasteHex"), &EditorView::sigOnPasteHex,
               shortcut.keySequence(QKeySequences::Key::PASTE_HEX));
-    newAction(m_hexMenu, "del", tr("Delete"), &EditorView::sigOnDelete,
+    newAction(m_hex, "del", tr("Delete"), &EditorView::sigOnDelete,
               QKeySequence::Delete);
-    m_hexMenu->addSeparator();
-    newAction(m_hexMenu, "find", tr("Find"), &EditorView::sigOnFindFile,
+    auto a = new QAction(m_hex);
+    a->setSeparator(true);
+    m_hex->addAction(a);
+    newAction(m_hex, "find", tr("Find"), &EditorView::sigOnFindFile,
               QKeySequence::Find);
-    newAction(m_hexMenu, "jmp", tr("Goto"), &EditorView::sigOnGoToLine,
+    newAction(m_hex, "jmp", tr("Goto"), &EditorView::sigOnGoToLine,
               shortcut.keySequence(QKeySequences::Key::GOTO));
-    newAction(m_hexMenu, "fill", tr("Fill"), &EditorView::sigOnFill,
+    newAction(m_hex, "fill", tr("Fill"), &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_hexMenu, "metadata", tr("MetaData"), &EditorView::sigOnMetadata,
+    newAction(m_hex, "metadata", tr("MetaData"), &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
-    newAction(m_hexMenu, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
+    newAction(m_hex, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
-    newAction(m_hexMenu, "encoding", tr("Encoding"), &EditorView::sigOnEncoding,
+    newAction(m_hex, "encoding", tr("Encoding"), &EditorView::sigOnEncoding,
               shortcut.keySequence(QKeySequences::Key::ENCODING));
-
-    m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_hex, &QHexView::customContextMenuRequested, this,
-            &EditorView::on_hexeditor_customContextMenuRequested);
+    m_hex->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     m_stack->setCurrentWidget(m_hexContainer);
 
     m_cloneChildren.fill(nullptr, CLONE_LIMIT);
+
+    m_findResults = new FindResultModel(this);
+    m_bookmarks = new BookMarksModel(m_hex->document()->bookMarks(), this);
 
     applySettings();
 }
@@ -122,8 +123,7 @@ void EditorView::switchView(qindextype index) {
 }
 
 EditorView::FindError EditorView::find(const QByteArray &data,
-                                       const FindDialog::Result &result,
-                                       qsizetype findMaxCount) {
+                                       const FindDialog::Result &result) {
     if (m_findMutex.tryLock(3000)) {
         std::unique_lock<QMutex> locker(m_findMutex, std::adopt_lock_t());
         auto d = m_hex->document();
@@ -148,12 +148,23 @@ EditorView::FindError EditorView::find(const QByteArray &data,
             end = -1;
         } break;
         }
-        d->findAllBytes(begin, end, data, results, findMaxCount);
+        d->findAllBytes(begin, end, data, results);
 
-        m_findResults.swap(results);
-        m_lastFindData = data;
+        m_findResults->beginUpdate();
+        m_findResults->clear();
+        for (auto &result : results) {
+            FindResult r;
+            r.offset = result;
+            r.line = r.offset / m_hex->lineWidth();
+            r.col = r.offset % m_hex->lineWidth();
+            m_findResults->results().append(r);
+        }
 
-        if (m_findResults.size() == findMaxCount) {
+        m_findResults->lastFindData() = data.toHex(' ').toUpper();
+        m_findResults->endUpdate();
+
+        if (m_findResults->size() ==
+            std::numeric_limits<QList<qsizetype>::size_type>::max()) {
             return FindError::MayOutOfRange;
         } else {
             return FindError::Success;
@@ -163,7 +174,7 @@ EditorView::FindError EditorView::find(const QByteArray &data,
     }
 }
 
-void EditorView::clearFindResult() { m_findResults.clear(); }
+void EditorView::clearFindResult() { m_findResults->clear(); }
 
 void EditorView::triggerGoto() {
     m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
@@ -570,6 +581,8 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
             });
 }
 
+BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
+
 void EditorView::applySettings() {
     auto &set = SettingManager::instance();
     m_hex->setHeaderVisible(set.editorShowHeader());
@@ -581,11 +594,6 @@ void EditorView::applySettings() {
 
 qindextype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
-}
-
-void EditorView::on_hexeditor_customContextMenuRequested(const QPoint &pos) {
-    Q_UNUSED(pos)
-    m_hexMenu->popup(QCursor::pos());
 }
 
 bool EditorView::enablePlugin() const { return _enableplugin; }
@@ -638,8 +646,6 @@ EditorView *EditorView::clone() {
     return ev;
 }
 
-QByteArray EditorView::lastFindData() const { return m_lastFindData; }
-
 bool EditorView::isNewFile() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     if (isCloneFile()) {
@@ -666,11 +672,11 @@ bool EditorView::isDriver() const {
     return m_docType == EditorView::DocumentType::Driver;
 }
 
-const QList<qsizetype> &EditorView::findResult() const { return m_findResults; }
+FindResultModel *EditorView::findResultModel() const { return m_findResults; }
 
 void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
 
-int EditorView::findResultCount() const { return m_findResults.size(); }
+int EditorView::findResultCount() const { return m_findResults->size(); }
 
 bool EditorView::isWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);

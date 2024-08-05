@@ -60,8 +60,9 @@ enum ErrFile : uint {
 };
 
 struct FindResult {
-    int fid;
-    QList<int> indices;
+    qsizetype offset = -1;
+    qsizetype line = -1;
+    qsizetype col = -1;
 };
 
 struct BookMark {
@@ -219,8 +220,8 @@ signals:
 
     qsizetype searchForward(qsizetype begin, const QByteArray &ba);
     qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
-    QList<qsizetype> findAllBytes(qsizetype begin, qsizetype end, QByteArray &b,
-                                  qsizetype maxCount = -1);
+    QList<qsizetype> findAllBytes(qsizetype begin, qsizetype end,
+                                  QByteArray &b);
 
     // render
     qsizetype documentLastLine();
@@ -356,7 +357,7 @@ signals:
     // bookmark
     bool addBookMark(qsizetype pos, const QString comment);
     bool modBookMark(qsizetype pos, const QString comment);
-    bool applyBookMarks(const QList<BookMark> books);
+    bool applyBookMarks(const QList<BookMark> &books);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 

@@ -16,7 +16,7 @@
 class MetaDialog : public FramelessDialog {
     Q_OBJECT
 public:
-    explicit MetaDialog(QWidget *parent = nullptr);
+    explicit MetaDialog(QWidget *parent);
     QColor foreGroundColor();
     QColor backGroundColor();
     QString comment();

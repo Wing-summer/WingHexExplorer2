@@ -142,8 +142,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     });
     connect(&set, &SettingManager::sigDecodeStrlimitChanged, this,
             [this](int v) { _decstrlim = v; });
-    connect(&set, &SettingManager::sigFindmaxcountChanged, this,
-            [this](int v) { _findmax = v; });
     set.load();
 
     // ok, build up the dialog of setting
@@ -228,6 +226,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 auto editview = qobject_cast<EditorView *>(now);
                 if (editview) {
                     swapEditor(m_curEditor, editview);
+                } else {
+                    m_findresult->setModel(m_findEmptyResult);
                 }
                 updateEditModeEnabled();
             });
@@ -309,38 +309,37 @@ ads::CDockAreaWidget *
 MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    auto findresultMenu = new QMenu(this);
-    findresultMenu->addAction(newAction(QStringLiteral("export"),
-                                        tr("ExportFindResult"),
-                                        &MainWindow::on_exportfindresult));
-    findresultMenu->addAction(newAction(QStringLiteral("del"),
-                                        tr("ClearFindResult"),
-                                        &MainWindow::on_clearfindresult));
-
-    m_findresult = new QTableWidget(0, 4, this);
+    m_findEmptyResult = new FindResultModel(this);
+    m_findresult = new QTableView(this);
     m_findresult->setProperty("EditorView", quintptr(0));
     m_findresult->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
     m_findresult->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
-    m_findresult->setHorizontalHeaderLabels(
-        QStringList({tr("line"), tr("col"), tr("offset"), tr("value")}));
+
+    m_findresult->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
     m_findresult->horizontalHeader()->setStretchLastSection(true);
     m_findresult->setContextMenuPolicy(
-        Qt::ContextMenuPolicy::CustomContextMenu);
-    connect(m_findresult, &QTableWidget::customContextMenuRequested, this,
-            [=]() { findresultMenu->popup(cursor().pos()); });
-    connect(m_findresult, &QTableWidget::itemDoubleClicked, this, [=] {
-        auto editor =
-            m_findresult->property("EditorView").value<EditorView *>();
-        auto item = m_findresult->item(m_findresult->currentRow(), 0);
-        auto hexeditor = m_curEditor.loadAcquire();
-        if (hexeditor != editor) {
-            editor->raise();
-            editor->setFocus();
-        }
-        editor->hexEditor()->cursor()->moveTo(
-            item->data(Qt::UserRole).toLongLong());
-    });
+        Qt::ContextMenuPolicy::ActionsContextMenu);
+    m_findresult->addAction(newAction(QStringLiteral("export"),
+                                      tr("ExportFindResult"),
+                                      &MainWindow::on_exportfindresult));
+    m_findresult->addAction(newAction(QStringLiteral("del"),
+                                      tr("ClearFindResult"),
+                                      &MainWindow::on_clearfindresult));
+    m_findresult->setModel(m_findEmptyResult);
+
+    connect(m_findresult, &QTableView::doubleClicked, this,
+            [=](const QModelIndex &index) {
+                auto editor =
+                    m_findresult->property("EditorView").value<EditorView *>();
+                auto hexeditor = m_curEditor.loadAcquire();
+                if (hexeditor != editor) {
+                    editor->raise();
+                    editor->setFocus();
+                }
+                editor->hexEditor()->cursor()->moveTo(
+                    editor->findResultModel()->resultAt(index.row()).offset);
+            });
 
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
                               tr("FindResult"), m_findresult);
@@ -351,29 +350,30 @@ ads::CDockAreaWidget *
 MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    m_numshowtable = new QTableWidget(8, 1, this);
+    _numsitem = new NumShowModel(this);
+    m_numshowtable = new QTableView(this);
     m_numshowtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
     m_numshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
-    m_numshowtable->setHorizontalHeaderLabels(QStringList(tr("Value")));
-    m_numshowtable->setColumnWidth(0, 350);
     m_numshowtable->setFocusPolicy(Qt::StrongFocus);
-    m_numshowtable->setVerticalHeaderLabels(
-        QStringList({"byte", "char", "ushort", "short", "uint32", "int32",
-                     "uint64", "int64"}));
+
+    m_findresult->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
     m_numshowtable->horizontalHeader()->setStretchLastSection(true);
 
-    auto numtableMenu = new QMenu(m_numshowtable);
-    auto a = new QAction(numtableMenu);
+    auto a = new QAction(this);
     a->setText(tr("Copy"));
     connect(a, &QAction::triggered, this, [=] {
-        auto r = m_numshowtable->currentRow();
-        qApp->clipboard()->setText(_numsitem[r]->text());
+        auto r = m_numshowtable->currentIndex().row();
+        qApp->clipboard()->setText(
+            _numsitem->numData(NumShowModel::NumTableIndex(r)));
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     });
-    numtableMenu->addAction(a);
-    numtableMenu->addSeparator();
+    m_numshowtable->addAction(a);
+
+    a = new QAction(this);
+    a->setSeparator(true);
+    m_numshowtable->addAction(a);
 
     auto actionGroup = new QActionGroup(this);
     actionGroup->setExclusive(true);
@@ -387,7 +387,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
         m_islittle = true;
         this->on_locChanged();
     });
-    numtableMenu->addAction(m_littleEndian);
+    m_numshowtable->addAction(m_littleEndian);
 
     m_bigEndian = new QAction(actionGroup);
     m_bigEndian->setText(tr("BigEndian"));
@@ -397,21 +397,11 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
         m_islittle = false;
         this->on_locChanged();
     });
-    numtableMenu->addAction(m_bigEndian);
-
+    m_numshowtable->addAction(m_bigEndian);
     m_numshowtable->setContextMenuPolicy(
-        Qt::ContextMenuPolicy::CustomContextMenu);
-    connect(m_numshowtable, &QTableWidget::customContextMenuRequested, this,
-            [=] { numtableMenu->popup(cursor().pos()); });
+        Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    _numsitem.fill(nullptr, NumTableIndexCount);
-    for (int i = 0; i < NumTableIndexCount; i++) {
-        auto item = new QTableWidgetItem;
-        item->setText(QStringLiteral("-"));
-        item->setTextAlignment(Qt::AlignCenter);
-        _numsitem[i] = item;
-        m_numshowtable->setItem(i, 0, item);
-    }
+    m_numshowtable->setModel(_numsitem);
 
     auto dw = buildDockWidget(dock, QStringLiteral("Number"), tr("Number"),
                               m_numshowtable);
@@ -440,7 +430,8 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     a->setText(tr("Copy"));
     connect(a, &QAction::triggered, this, [=] {
         auto r = m_hashtable->currentRow();
-        qApp->clipboard()->setText(_numsitem[r]->text());
+        qApp->clipboard()->setText(
+            _numsitem->numData(NumShowModel::NumTableIndex(r)));
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     });
@@ -468,44 +459,53 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
-    m_bookmarks = new QListWidget(this);
-    auto menu = new QMenu(m_bookmarks);
+    static QList<BookMarkStruct> _empty;
+    _bookMarkEmpty = new BookMarksModel(_empty, this);
+
+    m_bookmarks = new QTableView(this);
+    m_bookmarks->setFocusPolicy(Qt::StrongFocus);
+    m_bookmarks->setSelectionMode(
+        QAbstractItemView::SelectionMode::ExtendedSelection);
+
+    connect(m_bookmarks, &QTableView::doubleClicked, this,
+            [=](const QModelIndex &index) {
+                if (m_curEditor == nullptr) {
+                    return;
+                }
+                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
+                hexeditor->renderer()->enableCursor(true);
+                hexeditor->gotoBookMark(index.row());
+            });
+
     auto a = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
-                         tr("DeleteBookMark"), menu);
+                         tr("DeleteBookMark"), m_bookmarks);
     connect(a, &QAction::triggered, this, [=] {
         if (m_curEditor == nullptr) {
             return;
         }
 
-        auto s = m_bookmarks->selectedItems();
+        auto s = m_bookmarks->selectionModel()->selectedRows();
+        auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
+        auto doc = hexeditor->document();
+        const auto &bms = doc->bookMarks();
+
         QList<qsizetype> pos;
         for (auto &item : s) {
-            pos.push_back(item->data(Qt::UserRole).toLongLong());
+            pos.push_back(bms.at(item.row()).pos);
         }
 
-        auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-        hexeditor->document()->RemoveBookMarks(pos);
+        doc->RemoveBookMarks(pos);
     });
-    menu->addAction(a);
+    m_bookmarks->addAction(a);
     a = new QAction(ICONRES(QStringLiteral("bookmarkcls")), tr("ClearBookMark"),
-                    menu);
+                    m_bookmarks);
     connect(a, &QAction::triggered, this, &MainWindow::on_bookmarkcls);
-    menu->addAction(a);
+    m_bookmarks->addAction(a);
 
-    m_bookmarks->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    m_bookmarks->setSelectionMode(
-        QListWidget::SelectionMode::ExtendedSelection);
-    m_bookmarks->setFocusPolicy(Qt::StrongFocus);
-    connect(m_bookmarks, &QListWidget::itemDoubleClicked, this, [=]() {
-        if (m_curEditor == nullptr) {
-            return;
-        }
-        auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-        hexeditor->renderer()->enableCursor(true);
-        hexeditor->gotoBookMark(m_bookmarks->currentRow());
-    });
-    connect(m_bookmarks, &QListWidget::customContextMenuRequested, this,
-            [=] { menu->popup(cursor().pos()); });
+    m_bookmarks->setContextMenuPolicy(
+        Qt::ContextMenuPolicy::ActionsContextMenu);
+
+    m_bookmarks->setModel(_bookMarkEmpty);
 
     auto dw = buildDockWidget(dock, QStringLiteral("BookMark"), tr("BookMark"),
                               m_bookmarks);
@@ -563,8 +563,8 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
                               m_infolist);
     auto ar = dock->addDockWidget(area, dw, areaw);
 
-    auto m_infotree = new QTreeWidget(this);
-    m_infotree->setHeaderLabel(QString());
+    auto m_infotree = new QTreeView(this);
+
     dw = buildDockWidget(dock, QStringLiteral("DVTree"), tr("DVTree"),
                          m_infotree);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
@@ -1471,7 +1471,7 @@ void MainWindow::on_findfile() {
         auto res = fd.getResult(r);
         ExecAsync<EditorView::FindError>(
             [this, r, res]() -> EditorView::FindError {
-                return m_curEditor.loadAcquire()->find(res, r, this->_findmax);
+                return m_curEditor.loadAcquire()->find(res, r);
             },
             [this](EditorView::FindError err) {
                 switch (err) {
@@ -1488,8 +1488,6 @@ void MainWindow::on_findfile() {
                                  tr("MayTooMuchFindResult"));
                     break;
                 }
-
-                loadFindResult(m_curEditor.loadAcquire());
             });
     }
 }
@@ -1705,7 +1703,7 @@ void MainWindow::on_metadataedit() {
         return;
     }
     if (hexeditor->documentBytes() > 0) {
-        MetaDialog m;
+        MetaDialog m(this);
         auto cur = hexeditor->cursor();
         if (cur->selectionLength() > 0) {
             auto mc = doc->metadata()->gets(cur->position().offset());
@@ -1768,8 +1766,7 @@ void MainWindow::on_metadatacls() {
     doc->metadata()->Clear();
 }
 
-void MainWindow::on_bookmarkChanged(BookMarkModEnum flag, int index, qint64 pos,
-                                    QString comment) {
+void MainWindow::on_bookmarkChanged(BookMarkModEnum flag, qsizetype section) {
     if (m_curEditor == nullptr) {
         return;
     }
@@ -1777,36 +1774,16 @@ void MainWindow::on_bookmarkChanged(BookMarkModEnum flag, int index, qint64 pos,
     auto doc = hexeditor->document();
     switch (flag) {
     case BookMarkModEnum::Insert: {
-        QListWidgetItem *litem = new QListWidgetItem;
-        litem->setIcon(ICONRES(QStringLiteral("bookmark")));
-        litem->setData(Qt::UserRole, pos);
-        litem->setText(comment);
-        litem->setToolTip(QString(tr("Addr : 0x%1")).arg(pos, 0, 16));
-        m_bookmarks->addItem(litem);
+        m_bookmarks->model()->insertRow(section);
     } break;
     case BookMarkModEnum::Modify: {
-        m_bookmarks->item(index)->setText(comment);
+        // m_bookmarks->item(index)->setText(comment);
     } break;
     case BookMarkModEnum::Remove: {
-        auto item = m_bookmarks->item(index);
-        m_bookmarks->removeItemWidget(item);
-        delete item; // let item disappear
-    } break;
-    case BookMarkModEnum::Apply: {
-        QList<BookMarkStruct> bookmaps;
-        m_bookmarks->clear();
-        doc->getBookMarks(bookmaps);
-        for (auto &item : bookmaps) {
-            QListWidgetItem *litem = new QListWidgetItem;
-            litem->setIcon(ICONRES(QStringLiteral("bookmark")));
-            litem->setData(Qt::UserRole, item.pos);
-            litem->setText(item.comment);
-            litem->setToolTip(QString(tr("Addr : 0x%1")).arg(item.pos, 0, 16));
-            m_bookmarks->addItem(litem);
-        }
+        m_bookmarks->model()->removeRow(section);
     } break;
     case BookMarkModEnum::Clear: {
-        m_bookmarks->clear();
+        m_bookmarks->model()->removeRows(0, section);
     } break;
     }
 }
@@ -1891,7 +1868,6 @@ void MainWindow::on_clearfindresult() {
     }
     auto editor = m_curEditor.loadAcquire();
     editor->clearFindResult();
-    m_findresult->setRowCount(0);
 }
 
 void MainWindow::on_exportfindresult() {
@@ -1899,7 +1875,7 @@ void MainWindow::on_exportfindresult() {
         return;
     }
 
-    auto c = m_findresult->rowCount();
+    auto c = m_findresult->model()->rowCount();
     if (c == 0) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
                      tr("EmptyFindResult"));
@@ -1912,7 +1888,7 @@ void MainWindow::on_exportfindresult() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
     auto editor = m_curEditor.loadAcquire();
-    auto findresitem = editor->findResult();
+    auto findresitem = editor->findResultModel();
 
     QFile f(filename);
     if (f.open(QFile::WriteOnly)) {
@@ -1964,49 +1940,55 @@ void MainWindow::on_locChanged() {
 
     auto len = tmp.length();
 
-    static auto UNKNOWN_NUM = QStringLiteral("-");
-
     if (len == sizeof(quint64)) {
         auto s = processEndian(n);
-        _numsitem[NumTableIndex::Uint64]->setText(
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Uint64,
             QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
         auto s1 = processEndian(qint64(n));
-        _numsitem[NumTableIndex::Int64]->setText(QString::number(s1));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
+                              QString::number(s1));
     } else {
-        _numsitem[NumTableIndex::Uint64]->setText(UNKNOWN_NUM);
-        _numsitem[NumTableIndex::Int64]->setText(UNKNOWN_NUM);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
     }
 
     if (len > sizeof(quint32)) {
         auto s = processEndian(quint32(n));
-        _numsitem[NumTableIndex::Uint32]->setText(
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Uint32,
             QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
         auto s1 = processEndian(qint32(n));
-        _numsitem[NumTableIndex::Int32]->setText(QString::number(s1));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
+                              QString::number(s1));
     } else {
-        _numsitem[NumTableIndex::Uint32]->setText(UNKNOWN_NUM);
-        _numsitem[NumTableIndex::Int32]->setText(UNKNOWN_NUM);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
     }
 
     if (len > sizeof(quint16)) {
         auto s = processEndian(quint16(n));
-        _numsitem[NumTableIndex::Ushort]->setText(
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Ushort,
             QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
         auto s1 = processEndian(qint16(n));
-        _numsitem[NumTableIndex::Short]->setText(QString::number(s1));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Short,
+                              QString::number(s1));
     } else {
-        _numsitem[NumTableIndex::Ushort]->setText(UNKNOWN_NUM);
-        _numsitem[NumTableIndex::Short]->setText(UNKNOWN_NUM);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
     }
     if (len > sizeof(uchar)) {
         auto s1 = tmp.at(0);
         auto s = uchar(s1);
-        _numsitem[NumTableIndex::Byte]->setText(
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Byte,
             QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
-        _numsitem[NumTableIndex::Char]->setText(QString::number(s1));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Char,
+                              QString::number(s1));
     } else {
-        _numsitem[NumTableIndex::Byte]->setText(UNKNOWN_NUM);
-        _numsitem[NumTableIndex::Char]->setText(UNKNOWN_NUM);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
     }
 
     // 解码字符串
@@ -2291,42 +2273,16 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     loadFindResult(cur);
 
+    m_bookmarks->setModel(cur ? cur->bookmarksModel() : _bookMarkEmpty);
+
     m_curEditor = cur;
     hexeditor->getStatus();
 }
 
 void MainWindow::loadFindResult(EditorView *view) {
-
-    auto result = view->findResult();
-    auto data = view->lastFindData();
-    auto len = m_findresult->rowCount();
-    for (int i = 0; i < len; ++i) {
-        m_findresult->setItem(i, 0, nullptr);
-        m_findresult->setItem(i, 1, nullptr);
-    }
-    len = view->findResultCount();
-    m_findresult->setRowCount(len);
+    auto result = view->findResultModel();
+    m_findresult->setModel(result);
     m_findresult->setProperty("EditorView", QVariant::fromValue(view));
-    if (len > 0) {
-        ExecAsync_VOID(
-            [=] {
-                for (auto i = 0; i < len; i++) {
-                    // TODO
-                    // auto tab0 = new QTableWidgetItem(
-                    //     QStringLiteral("0x") +
-                    //     QString::number(quintptr(result.at(i)) +
-                    //                         view->hexEditor()->addressBase(),
-                    //                     16)
-                    //         .toUpper());
-                    // tab0->setData(Qt::UserRole, result.at(i));
-                    // m_findresult->setItem(i, 2, tab0);
-                    // m_findresult->setItem(i, 1,
-                    //                       new QTableWidgetItem(QString(
-                    //                           data.toHex(' ').toUpper())));
-                }
-            },
-            EMPTY_FUNC);
-    }
 }
 
 void MainWindow::openFiles(const QStringList &files) {
@@ -2498,10 +2454,8 @@ void MainWindow::updateEditModeEnabled() {
         m_iWorkSpace->setIcon(_infouw);
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
-        for (auto i = 0; i < NumTableIndexCount; i++) {
-            _numsitem[i]->setText(QStringLiteral("-"));
-        }
-        m_bookmarks->clear();
+        _numsitem->clear();
+        // m_bookmarks->clear();
     }
 }
 

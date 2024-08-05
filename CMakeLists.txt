@@ -40,6 +40,7 @@ add_subdirectory(QScintilla)
 add_subdirectory(Qt-Advanced-Docking-System)
 add_subdirectory(AngelScript/angelscript/projects/cmake)
 add_subdirectory(QConsoleWidget)
+add_subdirectory(QJsonModel)
 
 set(QAPPLICATION_CLASS
     QApplication
@@ -155,6 +156,16 @@ set(CLASS_SRC
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp)
 
+set(MODEL_SRC
+    src/model/findresultmodel.h
+    src/model/findresultmodel.cpp
+    src/model/numshowmodel.h
+    src/model/numshowmodel.cpp
+    src/model/bookmarksmodel.h
+    src/model/bookmarksmodel.cpp
+    src/model/metadatamodel.h
+    src/model/metadatamodel.cpp)
+
 set(SETTING_SRC
     src/settings/generalsettingdialog.h
     src/settings/generalsettingdialog.cpp
@@ -196,6 +207,7 @@ set(PROJECT_SOURCES
     ${QPATHEDIT_SRC}
     ${RIBBON_SRC}
     ${CLASS_SRC}
+    ${MODEL_SRC}
     ${DIALOG_SRC}
     ${PLUGIN_SRC}
     ${CONTROL_SRC}
@@ -241,6 +253,7 @@ target_link_libraries(
           QHexView
           QLoggerLib
           QScintilla
+          QJsonModel
           angelscript
           QConsoleWidget
           qt${QT_VERSION_MAJOR}advanceddocking)

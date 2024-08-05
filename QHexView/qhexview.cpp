@@ -91,7 +91,6 @@ void QHexView::getStatus() {
     emit canUndoChanged(m_document->canUndo());
     emit canRedoChanged(m_document->canRedo());
     emit cursorLocationChanged();
-    emit documentBookMarkChanged(BookMarkModEnum::Apply, -1, -1, QString());
     emit documentSaved(m_document->isDocSaved());
     emit documentKeepSize(m_document->isKeepSize());
     emit documentLockedFile(m_document->isLocked());
