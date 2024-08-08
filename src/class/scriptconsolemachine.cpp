@@ -1,9 +1,10 @@
 #include "scriptconsolemachine.h"
 
 #include "AngelScript/add_on/scripthelper/scripthelper.h"
+#include "src/plugin/pluginsystem.h"
 
 ScriptConsoleMachine::ScriptConsoleMachine(
-    std::function<std::string(void)> &getInputFn, QObject *parent)
+    std::function<QString(void)> &getInputFn, QObject *parent)
     : ScriptMachine(getInputFn, parent) {
     if (!configureEngine(_engine)) {
         _engine->ShutDownAndRelease();
@@ -30,6 +31,7 @@ bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
     _immediateContext->SetExceptionCallback(
         asMETHOD(ScriptConsoleMachine, exceptionCallback), this,
         asCALL_THISCALL);
+    PluginSystem::instance().angelApi()->installAPI(engine);
     return _immediateContext != nullptr;
 }
 

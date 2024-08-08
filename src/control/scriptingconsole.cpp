@@ -61,9 +61,9 @@ void ScriptingConsole::executeCode(const QString &code) {
     setMode(Input);
 }
 
-std::string ScriptingConsole::getInput() {
+QString ScriptingConsole::getInput() {
     _s.device()->waitForReadyRead(-1);
-    return _s.readAll().toStdString();
+    return _s.readAll();
 }
 
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {

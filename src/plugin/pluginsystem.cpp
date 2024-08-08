@@ -14,6 +14,9 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
     _plgThread = new QThread;
     moveToThread(_plgThread);
     _plgThread->start();
+
+    _angelplg = new WingAngelAPI;
+    Q_ASSERT(loadPlugin(_angelplg));
 }
 
 PluginSystem::~PluginSystem() {
@@ -49,174 +52,170 @@ void PluginSystem::loadPlugin(QFileInfo fileinfo) {
     if (fileinfo.exists()) {
         QPluginLoader loader(fileinfo.absoluteFilePath(), this);
         Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
-        QList<WingPluginInfo> loadedplginfos;
-        try {
-            auto p = qobject_cast<IWingPlugin *>(loader.instance());
-            if (p) {
-                if (p->signature() != WINGSUMMER) {
-                    throw tr("ErrLoadPluginSign");
-                }
-
-                if (p->sdkVersion() != SDKVERSION) {
-                    throw tr("ErrLoadPluginSDKVersion");
-                }
-
-                if (!p->pluginName().trimmed().length()) {
-                    throw tr("ErrLoadPluginNoName");
-                }
-
-                auto puid = IWingPlugin::GetPUID(p);
-                if (puid != p->puid()) {
-                    throw tr("ErrLoadPluginPUID");
-                }
-
-                if (loadedpuid.contains(puid)) {
-                    throw tr("ErrLoadLoadedPlugin");
-                }
-
-                p->plugin2MessagePipe(WingPluginMessage::PluginLoading,
-                                      emptyparam);
-
-                if (!p->init(loadedplginfos)) {
-                    throw tr("ErrLoadInitPlugin");
-                }
-
-                WingPluginInfo info;
-                info.puid = p->puid();
-                info.pluginName = p->pluginName();
-                info.pluginAuthor = p->pluginAuthor();
-                info.pluginComment = p->pluginComment();
-                info.pluginVersion = p->pluginVersion();
-
-                loadedplginfos.push_back(info);
-                loadedplgs.push_back(p);
-                loadedpuid << puid;
-
-                Logger::warning(tr("PluginName :") + info.pluginName);
-                Logger::warning(tr("PluginAuthor :") + info.pluginAuthor);
-                Logger::warning(tr("PluginWidgetRegister"));
-
-                auto ribbonToolboxInfos = p->registeredRibbonTools();
-                if (!ribbonToolboxInfos.isEmpty()) {
-                    for (auto &item : ribbonToolboxInfos) {
-                        if (_win->m_ribbonMaps.contains(item.catagory)) {
-                            if (!item.toolboxs.isEmpty()) {
-                                auto &cat = _win->m_ribbonMaps[item.catagory];
-                                for (auto &group : item.toolboxs) {
-                                    if (group.tools.isEmpty()) {
-                                        continue;
-                                    }
-                                    auto g = cat->addGroup(group.name);
-                                    for (auto &tool : group.tools) {
-                                        g->addButton(tool);
-                                    }
-                                }
-                            }
-                        } else {
-                            if (!item.toolboxs.isEmpty()) {
-                                auto cat =
-                                    _win->m_ribbon->addTab(item.displayName);
-                                bool hasAdded = false;
-                                for (auto &group : item.toolboxs) {
-                                    if (group.tools.isEmpty()) {
-                                        continue;
-                                    }
-                                    auto g = cat->addGroup(group.name);
-                                    for (auto &tool : group.tools) {
-                                        g->addButton(tool);
-                                    }
-                                    hasAdded = true;
-                                }
-                                if (hasAdded) {
-                                    _win->m_ribbonMaps[item.catagory] = cat;
-                                } else {
-                                    _win->m_ribbon->removeTab(cat);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                auto dockWidgets = p->registeredDockWidgets();
-                if (!dockWidgets.isEmpty()) {
-                    for (auto &info : dockWidgets) {
-                        auto dw = _win->buildDockWidget(
-                            _win->m_dock, info.widgetName, info.displayName,
-                            info.widget, MainWindow::PLUGIN_VIEWS);
-                        switch (info.area) {
-                        case Qt::LeftDockWidgetArea: {
-                            if (_win->m_leftViewArea == nullptr) {
-                                _win->m_leftViewArea =
-                                    _win->m_dock->addDockWidget(
-                                        ads::LeftDockWidgetArea, dw);
-                            } else {
-                                _win->m_leftViewArea =
-                                    _win->m_dock->addDockWidget(
-                                        ads::CenterDockWidgetArea, dw,
-                                        _win->m_leftViewArea);
-                            }
-                        } break;
-                        case Qt::RightDockWidgetArea:
-                            _win->m_dock->addDockWidget(
-                                ads::CenterDockWidgetArea, dw,
-                                _win->m_rightViewArea);
-                            break;
-                        case Qt::TopDockWidgetArea: {
-                            if (_win->m_topViewArea == nullptr) {
-                                _win->m_topViewArea =
-                                    _win->m_dock->addDockWidget(
-                                        ads::LeftDockWidgetArea, dw);
-                            } else {
-                                _win->m_topViewArea =
-                                    _win->m_dock->addDockWidget(
-                                        ads::CenterDockWidgetArea, dw,
-                                        _win->m_topViewArea);
-                            }
-                        } break;
-                        case Qt::BottomDockWidgetArea:
-                            _win->m_dock->addDockWidget(
-                                ads::CenterDockWidgetArea, dw,
-                                _win->m_bottomViewArea);
-                            break;
-                        case Qt::DockWidgetArea_Mask:
-                        case Qt::NoDockWidgetArea:
-                            _win->m_dock->addDockWidget(
-                                ads::CenterDockWidgetArea, dw,
-                                _win->m_rightViewArea);
-                            dw->hide();
-                            break;
-                        }
-                    }
-                }
-
-                _win->m_hexContextMenu.append(p->registeredHexContextMenu());
-                _win->m_editorViewWidgets.append(
-                    p->registeredEditorViewWidgets());
-                _win->m_settingPages.append(p->registeredSettingPages());
-
-                subscribeDispatcher(p, HookIndex::OpenFileBegin);
-                subscribeDispatcher(p, HookIndex::OpenFileEnd);
-                subscribeDispatcher(p, HookIndex::CloseFileBegin);
-                subscribeDispatcher(p, HookIndex::CloseFileEnd);
-                subscribeDispatcher(p, HookIndex::NewFileBegin);
-                subscribeDispatcher(p, HookIndex::NewFileEnd);
-                subscribeDispatcher(p, HookIndex::DocumentSwitched);
-
-                m_plgviewMap.insert(p, nullptr);
-
-                p->plugin2MessagePipe(WingPluginMessage::PluginLoaded,
-                                      emptyparam);
-
-            } else {
-                throw loader.errorString();
+        auto p = qobject_cast<IWingPlugin *>(loader.instance());
+        if (Q_UNLIKELY(p == nullptr)) {
+            Logger::critical(loader.errorString());
+        } else {
+            if (!loadPlugin(p)) {
+                loader.unload();
             }
-        } catch (const QString &error) {
-            Logger::critical(error);
-            loader.unload();
         }
-
         Logger::_log("");
     }
+}
+
+WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
+
+bool PluginSystem::loadPlugin(IWingPlugin *p) {
+    QList<WingPluginInfo> loadedplginfos;
+    try {
+
+        if (p->signature() != WINGSUMMER) {
+            throw tr("ErrLoadPluginSign");
+        }
+
+        if (p->sdkVersion() != SDKVERSION) {
+            throw tr("ErrLoadPluginSDKVersion");
+        }
+
+        if (!p->pluginName().trimmed().length()) {
+            throw tr("ErrLoadPluginNoName");
+        }
+
+        auto puid = IWingPlugin::GetPUID(p);
+        if (puid != p->puid()) {
+            throw tr("ErrLoadPluginPUID");
+        }
+
+        if (loadedpuid.contains(puid)) {
+            throw tr("ErrLoadLoadedPlugin");
+        }
+
+        p->plugin2MessagePipe(WingPluginMessage::PluginLoading, emptyparam);
+
+        if (!p->init(loadedplginfos)) {
+            throw tr("ErrLoadInitPlugin");
+        }
+
+        WingPluginInfo info;
+        info.puid = p->puid();
+        info.pluginName = p->pluginName();
+        info.pluginAuthor = p->pluginAuthor();
+        info.pluginComment = p->pluginComment();
+        info.pluginVersion = p->pluginVersion();
+
+        loadedplginfos.push_back(info);
+        loadedplgs.push_back(p);
+        loadedpuid << puid;
+
+        Logger::warning(tr("PluginName :") + info.pluginName);
+        Logger::warning(tr("PluginAuthor :") + info.pluginAuthor);
+        Logger::warning(tr("PluginWidgetRegister"));
+
+        auto ribbonToolboxInfos = p->registeredRibbonTools();
+        if (!ribbonToolboxInfos.isEmpty()) {
+            for (auto &item : ribbonToolboxInfos) {
+                if (_win->m_ribbonMaps.contains(item.catagory)) {
+                    if (!item.toolboxs.isEmpty()) {
+                        auto &cat = _win->m_ribbonMaps[item.catagory];
+                        for (auto &group : item.toolboxs) {
+                            if (group.tools.isEmpty()) {
+                                continue;
+                            }
+                            auto g = cat->addGroup(group.name);
+                            for (auto &tool : group.tools) {
+                                g->addButton(tool);
+                            }
+                        }
+                    }
+                } else {
+                    if (!item.toolboxs.isEmpty()) {
+                        auto cat = _win->m_ribbon->addTab(item.displayName);
+                        bool hasAdded = false;
+                        for (auto &group : item.toolboxs) {
+                            if (group.tools.isEmpty()) {
+                                continue;
+                            }
+                            auto g = cat->addGroup(group.name);
+                            for (auto &tool : group.tools) {
+                                g->addButton(tool);
+                            }
+                            hasAdded = true;
+                        }
+                        if (hasAdded) {
+                            _win->m_ribbonMaps[item.catagory] = cat;
+                        } else {
+                            _win->m_ribbon->removeTab(cat);
+                        }
+                    }
+                }
+            }
+        }
+
+        auto dockWidgets = p->registeredDockWidgets();
+        if (!dockWidgets.isEmpty()) {
+            for (auto &info : dockWidgets) {
+                auto dw = _win->buildDockWidget(_win->m_dock, info.widgetName,
+                                                info.displayName, info.widget,
+                                                MainWindow::PLUGIN_VIEWS);
+                switch (info.area) {
+                case Qt::LeftDockWidgetArea: {
+                    if (_win->m_leftViewArea == nullptr) {
+                        _win->m_leftViewArea = _win->m_dock->addDockWidget(
+                            ads::LeftDockWidgetArea, dw);
+                    } else {
+                        _win->m_leftViewArea = _win->m_dock->addDockWidget(
+                            ads::CenterDockWidgetArea, dw,
+                            _win->m_leftViewArea);
+                    }
+                } break;
+                case Qt::RightDockWidgetArea:
+                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                                _win->m_rightViewArea);
+                    break;
+                case Qt::TopDockWidgetArea: {
+                    if (_win->m_topViewArea == nullptr) {
+                        _win->m_topViewArea = _win->m_dock->addDockWidget(
+                            ads::LeftDockWidgetArea, dw);
+                    } else {
+                        _win->m_topViewArea = _win->m_dock->addDockWidget(
+                            ads::CenterDockWidgetArea, dw, _win->m_topViewArea);
+                    }
+                } break;
+                case Qt::BottomDockWidgetArea:
+                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                                _win->m_bottomViewArea);
+                    break;
+                case Qt::DockWidgetArea_Mask:
+                case Qt::NoDockWidgetArea:
+                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                                _win->m_rightViewArea);
+                    dw->hide();
+                    break;
+                }
+            }
+        }
+
+        _win->m_hexContextMenu.append(p->registeredHexContextMenu());
+        _win->m_editorViewWidgets.append(p->registeredEditorViewWidgets());
+        _win->m_settingPages.append(p->registeredSettingPages());
+
+        subscribeDispatcher(p, HookIndex::OpenFileBegin);
+        subscribeDispatcher(p, HookIndex::OpenFileEnd);
+        subscribeDispatcher(p, HookIndex::CloseFileBegin);
+        subscribeDispatcher(p, HookIndex::CloseFileEnd);
+        subscribeDispatcher(p, HookIndex::NewFileBegin);
+        subscribeDispatcher(p, HookIndex::NewFileEnd);
+        subscribeDispatcher(p, HookIndex::DocumentSwitched);
+
+        m_plgviewMap.insert(p, nullptr);
+
+        p->plugin2MessagePipe(WingPluginMessage::PluginLoaded, emptyparam);
+    } catch (const QString &error) {
+        Logger::critical(error);
+        return false;
+    }
+    return true;
 }
 
 void PluginSystem::subscribeDispatcher(IWingPlugin *plg, HookIndex hookIndex) {
@@ -1800,7 +1799,7 @@ EditorView *PluginSystem::pluginCurrentEditor(QObject *sender) const {
         if (editor) {
             return editor;
         } else {
-            return _win->m_curEditor.loadAcquire();
+            return _win->currentEditor();
         }
     }
     return nullptr;

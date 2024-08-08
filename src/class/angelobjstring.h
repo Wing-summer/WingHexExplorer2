@@ -1,7 +1,7 @@
 #ifndef ANGELOBJSTRING_H
 #define ANGELOBJSTRING_H
 
-#include "AngelScript/add_on/debugger/debugger.h"
+#include "src/class/asdebugger.h"
 
 #include <QObject>
 #include <QString>
@@ -12,17 +12,16 @@ class AngelObjString : public QObject {
 
 public:
     // for debugger use
-    static std::string stringToString(void *obj, int expandMembers,
-                                      CDebugger *dbg);
+    static QString stringToString(void *obj, int expandMembers,
+                                  asDebugger *dbg);
 
-    static std::string arrayToString(void *obj, int expandMembers,
-                                     CDebugger *dbg);
+    static QString arrayToString(void *obj, int expandMembers, asDebugger *dbg);
 
-    static std::string dictionaryToString(void *obj, int expandMembers,
-                                          CDebugger *dbg);
+    static QString dictionaryToString(void *obj, int expandMembers,
+                                      asDebugger *dbg);
 
-    static std::string dateTimeToString(void *obj, int expandMembers,
-                                        CDebugger *dbg);
+    static QString dateTimeToString(void *obj, int expandMembers,
+                                    asDebugger *dbg);
 
 public:
     // ==================================================

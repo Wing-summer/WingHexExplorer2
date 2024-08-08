@@ -244,6 +244,10 @@ signals:
     QStringList getOpenFiles();
     QStringList getSupportedEncodings();
     QString currentEncoding();
+
+    // not available for AngelScript
+    // only for plugin UI extenstion
+    QDialog *createDialog(QWidget *content);
 };
 
 class Controller : public QObject {

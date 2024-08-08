@@ -118,7 +118,7 @@ bool QHexDocument::setKeepSize(bool b) {
     return true;
 }
 
-QList<BookMarkStruct> &QHexDocument::bookMarks() { return bookmarks; }
+QList<BookMarkStruct> *QHexDocument::bookMarksPtr() { return &bookmarks; }
 
 const QList<BookMarkStruct> &QHexDocument::bookMarks() const {
     return bookmarks;
@@ -148,11 +148,13 @@ bool QHexDocument::ClearBookMark() {
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (m_keepsize && !existBookMark(pos)) {
+        auto section = bookmarks.size();
+        emit bookMarkChanging(BookMarkModEnum::Insert, section);
         BookMarkStruct b{pos, comment};
         bookmarks.append(b);
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Insert, bookmarks.size() - 1);
+        emit bookMarkChanged(BookMarkModEnum::Insert, section);
         return true;
     }
     return false;
@@ -216,6 +218,7 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
         int index = 0;
         for (auto item : bookmarks) {
             if (pos == item.pos) {
+                emit bookMarkChanging(BookMarkModEnum::Remove, index);
                 bookmarks.removeAt(index);
                 setDocSaved(false);
                 emit documentChanged();
@@ -231,6 +234,7 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
 
 bool QHexDocument::removeBookMarkByIndex(qindextype index) {
     if (m_keepsize && index >= 0 && index < bookmarks.count()) {
+        emit bookMarkChanging(BookMarkModEnum::Remove, index);
         bookmarks.removeAt(index);
         setDocSaved(false);
         emit documentChanged();
@@ -245,6 +249,7 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
         int index = 0;
         for (auto &item : bookmarks) {
             if (item.pos == pos) {
+                emit bookMarkChanging(BookMarkModEnum::Modify, index);
                 item.comment = comment;
                 setDocSaved(false);
                 emit bookMarkChanged(BookMarkModEnum::Modify, index);
@@ -259,6 +264,7 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
         auto section = bookmarks.size();
+        emit bookMarkChanging(BookMarkModEnum::Clear, section);
         bookmarks.clear();
         setDocSaved(false);
         emit documentChanged();

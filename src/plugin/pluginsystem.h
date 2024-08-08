@@ -14,6 +14,8 @@
 #include <QToolButton>
 #include <QVariant>
 
+#include "src/class/wingangelapi.h"
+
 using namespace WingHex;
 
 class MainWindow;
@@ -34,7 +36,10 @@ public:
 
     void loadPlugin(QFileInfo filename);
 
+    WingAngelAPI *angelApi() const;
+
 private:
+    bool loadPlugin(IWingPlugin *p);
     void subscribeDispatcher(IWingPlugin *plg, HookIndex hookIndex);
 
     void connectInterface(IWingPlugin *plg);
@@ -63,6 +68,8 @@ private:
     QMutex mutex;
 
     QMap<QObject *, EditorView *> m_plgviewMap;
+
+    WingAngelAPI *_angelplg = nullptr;
 };
 
 #endif // PLUGINSYSTEM_H

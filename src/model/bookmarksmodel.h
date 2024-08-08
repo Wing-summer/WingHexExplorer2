@@ -9,14 +9,16 @@
 class BookMarksModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    explicit BookMarksModel(QList<BookMarkStruct> &db,
-                            QObject *parent = nullptr);
+    explicit BookMarksModel(QHexDocument *doc, QObject *parent = nullptr);
 
-    void clear();
-    void remove(int index);
-    void insert(int index, const BookMarkStruct &bm);
+    void beginRemove(int index);
+    void endRemove();
 
-    void updateAll();
+    void beginReset();
+    void endReset();
+
+    void beginAdd(int index);
+    void endAdd();
 
     // QAbstractItemModel interface
 public:
@@ -26,8 +28,11 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation,
                                 int role) const override;
 
+public slots:
+    void setDocument(QHexDocument *newDoc);
+
 private:
-    QList<BookMarkStruct> &_bookmarks;
+    QHexDocument *_doc = nullptr;
 };
 
 #endif // BOOKMARKSMODEL_H

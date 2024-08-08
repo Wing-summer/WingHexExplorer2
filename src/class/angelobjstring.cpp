@@ -1,42 +1,47 @@
 #include "angelobjstring.h"
 #include "AngelScript/add_on/datetime/datetime.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
-#include "AngelScript/add_on/scriptdictionary/scriptdictionary.h"
+#include "src/scriptaddon/scriptqdictionary.h"
 
 #include <QString>
-#include <sstream>
+#include <QTextStream>
 
 AngelObjString::AngelObjString() {}
 
-std::string AngelObjString::stringToString(void *obj, int expandMembers,
-                                           CDebugger *dbg) {
+QString AngelObjString::stringToString(void *obj, int expandMembers,
+                                       asDebugger *dbg) {
     Q_UNUSED(expandMembers);
     Q_UNUSED(dbg);
 
     // We know the received object is a string
-    std::string *val = reinterpret_cast<std::string *>(obj);
+    QString *val = reinterpret_cast<QString *>(obj);
+
+    constexpr auto limit = 100;
 
     // Format the output string
-    if (val->length() < 20) {
-        QString s = QString::fromStdString(*val);
-        return "\"" + s.toStdString() + "\"";
+    if (val->length() < limit) {
+
+        return QStringLiteral("\"") + *val + QStringLiteral("\"");
     } else {
-        QString s = QString::fromStdString(val->substr(0, 20));
-        return QString(tr("(len=") + QString::number(val->length()) +
-                       QStringLiteral(") \"") + s + QStringLiteral("..."))
-            .toStdString();
+        QString str;
+        QTextStream s(&str);
+        s << tr("(len=") << val->length() << QStringLiteral(") \"") << *val
+          << QStringLiteral("...");
+
+        return str;
     }
 }
 
-std::string AngelObjString::arrayToString(void *obj, int expandMembers,
-                                          CDebugger *dbg) {
+QString AngelObjString::arrayToString(void *obj, int expandMembers,
+                                      asDebugger *dbg) {
     CScriptArray *arr = reinterpret_cast<CScriptArray *>(obj);
 
-    std::stringstream s;
-    s << "(len=" << arr->GetSize() << ")";
+    QString str;
+    QTextStream s(&str);
+    s << tr("(len=") << arr->GetSize() << QStringLiteral(")");
 
     if (expandMembers > 0) {
-        s << " [";
+        s << QStringLiteral(" [");
         for (asUINT n = 0; n < arr->GetSize(); n++) {
             s << dbg->ToString(arr->At(n), arr->GetElementTypeId(),
                                expandMembers - 1,
@@ -44,18 +49,19 @@ std::string AngelObjString::arrayToString(void *obj, int expandMembers,
             if (n < arr->GetSize() - 1)
                 s << ", ";
         }
-        s << "]";
+        s << QStringLiteral("]");
     }
 
-    return s.str();
+    return str;
 }
 
-std::string AngelObjString::dictionaryToString(void *obj, int expandMembers,
-                                               CDebugger *dbg) {
+QString AngelObjString::dictionaryToString(void *obj, int expandMembers,
+                                           asDebugger *dbg) {
     CScriptDictionary *dic = reinterpret_cast<CScriptDictionary *>(obj);
 
-    std::stringstream s;
-    s << "(len=" << dic->GetSize() << ")";
+    QString str;
+    QTextStream s(&str);
+    s << tr("(len=") << dic->GetSize() << ")";
 
     if (expandMembers > 0) {
         s << " [";
@@ -83,23 +89,24 @@ std::string AngelObjString::dictionaryToString(void *obj, int expandMembers,
         s << "]";
     }
 
-    return s.str();
+    return str;
 }
 
-std::string AngelObjString::dateTimeToString(void *obj, int expandMembers,
-                                             CDebugger *dbg) {
+QString AngelObjString::dateTimeToString(void *obj, int expandMembers,
+                                         asDebugger *dbg) {
     Q_UNUSED(expandMembers);
     Q_UNUSED(dbg);
 
     CDateTime *dt = reinterpret_cast<CDateTime *>(obj);
 
-    std::stringstream s;
+    QString str;
+    QTextStream s(&str);
     s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay()
       << " ";
     s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond()
       << "}";
 
-    return s.str();
+    return str;
 }
 
 QString AngelObjString::getEscapedString(const ushort *begin, int length,

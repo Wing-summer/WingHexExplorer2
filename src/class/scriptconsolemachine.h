@@ -6,7 +6,7 @@
 class ScriptConsoleMachine : public ScriptMachine {
     Q_OBJECT
 public:
-    explicit ScriptConsoleMachine(std::function<std::string(void)> &getInputFn,
+    explicit ScriptConsoleMachine(std::function<QString()> &getInputFn,
                                   QObject *parent = nullptr);
     virtual ~ScriptConsoleMachine();
 
