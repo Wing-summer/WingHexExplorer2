@@ -164,7 +164,9 @@ set(MODEL_SRC
     src/model/bookmarksmodel.h
     src/model/bookmarksmodel.cpp
     src/model/metadatamodel.h
-    src/model/metadatamodel.cpp)
+    src/model/metadatamodel.cpp
+    src/model/checksummodel.h
+    src/model/checksummodel.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h
@@ -179,6 +181,11 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.h
     src/settings/scriptsettingdialog.cpp
     src/settings/scriptsettingdialog.ui)
+
+set(SCRIPT_ADDON_SRC
+    src/scriptaddon/scriptqstring.h src/scriptaddon/scriptqstring.cpp
+    src/scriptaddon/scriptqdictionary.h src/scriptaddon/scriptqdictionary.cpp
+    src/scriptaddon/scriptregex.h src/scriptaddon/scriptregex.cpp)
 
 set(PLUGIN_SRC
     src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
@@ -212,6 +219,7 @@ set(PROJECT_SOURCES
     ${PLUGIN_SRC}
     ${CONTROL_SRC}
     ${SETTING_SRC}
+    ${SCRIPT_ADDON_SRC}
     ${QM_FILES}
     theme/breeze.qrc
     resources.qrc)

@@ -34,6 +34,7 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor->setMarginType(2, QsciScintilla::SymbolMargin); // folding
 
     m_editor->setFolding(QsciScintilla::BoxedTreeFoldStyle, 2);
+    m_editor->SendScintilla(QsciScintilla::SCI_SETMARGINMASKN, 2, long(0));
 
     connect(m_editor, &QsciScintilla::marginClicked, this,
             &ScriptEditor::on_marginClicked);

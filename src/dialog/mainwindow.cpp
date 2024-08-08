@@ -4,6 +4,7 @@
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
+#include "checksumdialog.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
 #include "fileinfodialog.h"
@@ -225,9 +226,13 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 Q_UNUSED(old);
                 auto editview = qobject_cast<EditorView *>(now);
                 if (editview) {
+                    _editorLock.lockForWrite();
                     swapEditor(m_curEditor, editview);
+                    _editorLock.unlock();
                 } else {
-                    m_findresult->setModel(m_findEmptyResult);
+                    m_findresult->setModel(_findEmptyResult);
+                    m_bookmarks->setModel(_bookMarkEmpty);
+                    m_aDelBookMark->setEnabled(false);
                 }
                 updateEditModeEnabled();
             });
@@ -309,7 +314,7 @@ ads::CDockAreaWidget *
 MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    m_findEmptyResult = new FindResultModel(this);
+    _findEmptyResult = new FindResultModel(this);
     m_findresult = new QTableView(this);
     m_findresult->setProperty("EditorView", quintptr(0));
     m_findresult->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
@@ -326,13 +331,13 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->addAction(newAction(QStringLiteral("del"),
                                       tr("ClearFindResult"),
                                       &MainWindow::on_clearfindresult));
-    m_findresult->setModel(m_findEmptyResult);
+    m_findresult->setModel(_findEmptyResult);
 
     connect(m_findresult, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
                 auto editor =
                     m_findresult->property("EditorView").value<EditorView *>();
-                auto hexeditor = m_curEditor.loadAcquire();
+                auto hexeditor = currentEditor();
                 if (hexeditor != editor) {
                     editor->raise();
                     editor->setFocus();
@@ -370,6 +375,11 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                      tr("CopyToClipBoard"));
     });
     m_numshowtable->addAction(a);
+    connect(m_numshowtable->selectionModel(),
+            &QItemSelectionModel::currentRowChanged, a,
+            [=](const QModelIndex &current, const QModelIndex &) {
+                a->setEnabled(current.isValid());
+            });
 
     a = new QAction(this);
     a->setSeparator(true);
@@ -414,41 +424,35 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
 
-    m_hashtable = new QTableWidget(hashNames.size(), 1, this);
+    m_hashtable = new QTableView(this);
     m_hashtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
     m_hashtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
-    m_hashtable->setHorizontalHeaderLabels(QStringList({tr("CheckSum")}));
     m_hashtable->setColumnWidth(0, 350);
     m_hashtable->setFocusPolicy(Qt::StrongFocus);
-
-    m_hashtable->setVerticalHeaderLabels(hashNames);
     m_hashtable->horizontalHeader()->setStretchLastSection(true);
 
-    auto hashtableMenu = new QMenu(m_hashtable);
-    auto a = new QAction(hashtableMenu);
+    _hashModel = new CheckSumModel(this);
+    m_hashtable->setModel(_hashModel);
+
+    m_hashtable->setContextMenuPolicy(
+        Qt::ContextMenuPolicy::ActionsContextMenu);
+
+    auto a = new QAction(m_hashtable);
     a->setText(tr("Copy"));
     connect(a, &QAction::triggered, this, [=] {
-        auto r = m_hashtable->currentRow();
+        auto r = m_hashtable->currentIndex();
         qApp->clipboard()->setText(
-            _numsitem->numData(NumShowModel::NumTableIndex(r)));
+            _hashModel->checkSumData(QCryptographicHash::Algorithm(r.row())));
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     });
-    hashtableMenu->addAction(a);
-
-    m_hashtable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    connect(m_hashtable, &QTableWidget::customContextMenuRequested, this,
-            [=] { hashtableMenu->popup(cursor().pos()); });
-
-    _hashitem.fill(nullptr, hashNames.size());
-    for (int i = 0; i < hashNames.size(); i++) {
-        auto item = new QTableWidgetItem;
-        item->setText(QStringLiteral("-"));
-        item->setTextAlignment(Qt::AlignCenter);
-        _hashitem[i] = item;
-        m_hashtable->setItem(i, 0, item);
-    }
+    m_hashtable->addAction(a);
+    connect(m_hashtable->selectionModel(),
+            &QItemSelectionModel::currentRowChanged, a,
+            [=](const QModelIndex &current, const QModelIndex &) {
+                a->setEnabled(current.isValid());
+            });
 
     auto dw = buildDockWidget(dock, QStringLiteral("CheckSum"), tr("CheckSum"),
                               m_hashtable);
@@ -459,33 +463,35 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
-    static QList<BookMarkStruct> _empty;
-    _bookMarkEmpty = new BookMarksModel(_empty, this);
+    _bookMarkEmpty = new BookMarksModel(nullptr);
 
     m_bookmarks = new QTableView(this);
     m_bookmarks->setFocusPolicy(Qt::StrongFocus);
     m_bookmarks->setSelectionMode(
         QAbstractItemView::SelectionMode::ExtendedSelection);
+    m_bookmarks->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_bookmarks->horizontalHeader()->setStretchLastSection(true);
+
+    m_bookmarks->setModel(_bookMarkEmpty);
 
     connect(m_bookmarks, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 hexeditor->renderer()->enableCursor(true);
                 hexeditor->gotoBookMark(index.row());
             });
 
-    auto a = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
-                         tr("DeleteBookMark"), m_bookmarks);
-    connect(a, &QAction::triggered, this, [=] {
-        if (m_curEditor == nullptr) {
+    m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
+                                 tr("DeleteBookMark"), m_bookmarks);
+    connect(m_aDelBookMark, &QAction::triggered, this, [=] {
+        auto hexeditor = currentHexView();
+        if (hexeditor == nullptr) {
             return;
         }
-
         auto s = m_bookmarks->selectionModel()->selectedRows();
-        auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
         auto doc = hexeditor->document();
         const auto &bms = doc->bookMarks();
 
@@ -496,16 +502,16 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
         doc->RemoveBookMarks(pos);
     });
-    m_bookmarks->addAction(a);
-    a = new QAction(ICONRES(QStringLiteral("bookmarkcls")), tr("ClearBookMark"),
-                    m_bookmarks);
+    m_aDelBookMark->setEnabled(false);
+    m_bookmarks->addAction(m_aDelBookMark);
+
+    auto a = new QAction(ICONRES(QStringLiteral("bookmarkcls")),
+                         tr("ClearBookMark"), m_bookmarks);
     connect(a, &QAction::triggered, this, &MainWindow::on_bookmarkcls);
     m_bookmarks->addAction(a);
 
     m_bookmarks->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
-
-    m_bookmarks->setModel(_bookMarkEmpty);
 
     auto dw = buildDockWidget(dock, QStringLiteral("BookMark"), tr("BookMark"),
                               m_bookmarks);
@@ -819,10 +825,11 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_iReadWrite->setStyleSheet(disableStyle);
         m_iWorkSpace =
             addPannelAction(pannel, _infouw, tr("IsWorkSpace"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto editor = currentEditor();
+                if (editor == nullptr) {
                     return;
                 }
-                auto editor = m_curEditor.loadAcquire();
+
                 if (editor->isWorkSpace()) {
                     WingMessageBox::information(
                         this, qAppName(),
@@ -838,21 +845,20 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             });
         m_iLocked =
             addPannelAction(pannel, _infoLock, tr("SetLocked"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 if (!hexeditor->setLockedFile(!hexeditor->isLocked())) {
                     Toast::toast(this, _pixLock, tr("ErrUnLock"));
                 }
             });
         m_iCanOver =
             addPannelAction(pannel, _infoCanOver, tr("SetOver"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto editor = currentEditor();
+                if (editor == nullptr) {
                     return;
                 }
-
-                auto editor = m_curEditor.loadAcquire();
                 auto hexeditor = editor->hexEditor();
 
                 auto b = !hexeditor->isKeepSize();
@@ -877,10 +883,10 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                                                 new QMenu(this)));
         auto edwins = new QMenu(this);
         edwins->addAction(newAction(QStringLiteral("file"), tr("Hex"), [this] {
-            if (m_curEditor == nullptr) {
+            auto editor = currentEditor();
+            if (editor == nullptr) {
                 return;
             }
-            auto editor = m_curEditor.loadAcquire();
             editor->switchView(-1);
         }));
         m_toolBtneditors.insert(ToolButtonIndex::EDITOR_WINS,
@@ -904,10 +910,10 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("HexEditorLayout"));
         addPannelAction(
             pannel, QStringLiteral("mAddr"), tr("SetBaseAddr"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 bool b;
                 auto num = WingInputDialog::getText(
                     this, tr("addressBase"), tr("inputAddressBase"),
@@ -931,26 +937,26 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             });
         addPannelAction(
             pannel, QStringLiteral("mColInfo"), tr("SetColInfo"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 hexeditor->setAddressVisible(!hexeditor->addressVisible());
             });
         addPannelAction(
             pannel, QStringLiteral("mLineInfo"), tr("SetHeaderInfo"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 hexeditor->setHeaderVisible(!hexeditor->headerVisible());
             });
         addPannelAction(
             pannel, QStringLiteral("mStr"), tr("SetAsciiString"), [this]() {
-                if (m_curEditor == nullptr) {
+                auto hexeditor = currentHexView();
+                if (hexeditor == nullptr) {
                     return;
                 }
-                auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
                 hexeditor->setAsciiVisible(!hexeditor->asciiVisible());
             });
         m_editStateWidgets << pannel;
@@ -1206,18 +1212,19 @@ void MainWindow::on_opendriver() {
 }
 
 void MainWindow::on_reload() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    m_curEditor.loadAcquire()->reload();
+    editor->reload();
 }
 
 void MainWindow::on_save() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
 
-    auto editor = m_curEditor.loadAcquire();
     auto isNewFile = editor->isNewFile();
     if (isNewFile) {
         on_saveas();
@@ -1258,7 +1265,8 @@ restart:
 }
 
 void MainWindow::on_saveas() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
 
@@ -1268,7 +1276,6 @@ void MainWindow::on_saveas() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto editor = m_curEditor.loadAcquire();
     auto oldFileName = editor->fileName();
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
@@ -1312,7 +1319,8 @@ restart:
 }
 
 void MainWindow::on_exportfile() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
 
@@ -1322,7 +1330,6 @@ void MainWindow::on_exportfile() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto editor = m_curEditor.loadAcquire();
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
@@ -1357,10 +1364,10 @@ restart:
 }
 
 void MainWindow::on_savesel() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
                                                     m_lastusedpath);
     if (filename.isEmpty())
@@ -1380,26 +1387,26 @@ void MainWindow::on_savesel() {
 }
 
 void MainWindow::on_undofile() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->document()->undo();
 }
 
 void MainWindow::on_redofile() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->document()->redo();
 }
 
 void MainWindow::on_cutfile() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     if (Q_LIKELY(hexeditor->Cut())) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
                      tr("CutToClipBoard"));
@@ -1410,10 +1417,10 @@ void MainWindow::on_cutfile() {
 }
 
 void MainWindow::on_copyfile() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     if (Q_LIKELY(hexeditor->copy())) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
@@ -1424,27 +1431,26 @@ void MainWindow::on_copyfile() {
 }
 
 void MainWindow::on_pastefile() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->Paste();
 }
 
 void MainWindow::on_delete() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->RemoveSelection();
 }
 
 void MainWindow::on_clone() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->clone();
     if (hexeditor == nullptr) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("clone")),
@@ -1458,11 +1464,10 @@ void MainWindow::on_clone() {
 }
 
 void MainWindow::on_findfile() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     FindDialog fd(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
                   hexeditor->selectlength() > 1, this);
@@ -1471,7 +1476,7 @@ void MainWindow::on_findfile() {
         auto res = fd.getResult(r);
         ExecAsync<EditorView::FindError>(
             [this, r, res]() -> EditorView::FindError {
-                return m_curEditor.loadAcquire()->find(res, r);
+                return currentEditor()->find(res, r);
             },
             [this](EditorView::FindError err) {
                 switch (err) {
@@ -1493,17 +1498,18 @@ void MainWindow::on_findfile() {
 }
 
 void MainWindow::on_gotoline() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    m_curEditor.loadAcquire()->triggerGoto();
+    editor->triggerGoto();
 }
 
 void MainWindow::on_encoding() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     EncodingDialog d;
     if (d.exec()) {
         auto res = d.getResult();
@@ -1511,14 +1517,24 @@ void MainWindow::on_encoding() {
     }
 }
 
-void MainWindow::on_checksum() {}
-
-void MainWindow::on_fileInfo() {
-    if (m_curEditor == nullptr) {
+void MainWindow::on_checksum() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
+    CheckSumDialog d;
+    if (d.exec()) {
+        auto cs = d.getResults();
+        for (auto &c : cs) {
+        }
+    }
+}
 
-    auto editor = m_curEditor.loadAcquire();
+void MainWindow::on_fileInfo() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
     FileInfoDialog d(editor->fileName(),
                      editor->documentType() ==
                          EditorView::DocumentType::RegionFile);
@@ -1526,10 +1542,10 @@ void MainWindow::on_fileInfo() {
 }
 
 void MainWindow::on_cuthex() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     if (hexeditor->Cut(true)) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("cut")),
                      tr("CutToClipBoard"));
@@ -1540,10 +1556,10 @@ void MainWindow::on_cuthex() {
 }
 
 void MainWindow::on_copyhex() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     if (hexeditor->copy(true)) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copyhex")),
                      tr("CopyToClipBoard"));
@@ -1554,18 +1570,18 @@ void MainWindow::on_copyhex() {
 }
 
 void MainWindow::on_pastehex() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->Paste();
 }
 
 void MainWindow::on_fill() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     bool b;
     auto in = WingInputDialog::getText(this, tr("Fill"), tr("PleaseInputFill"),
                                        QLineEdit::Normal, QString(), &b);
@@ -1586,10 +1602,10 @@ void MainWindow::on_fill() {
 }
 
 void MainWindow::on_fillzero() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (doc->isEmpty() || hexeditor->selectlength() == 0)
         return;
@@ -1599,10 +1615,10 @@ void MainWindow::on_fillzero() {
 }
 
 void MainWindow::on_bookmark() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("bookmark")),
@@ -1633,10 +1649,10 @@ void MainWindow::on_bookmark() {
 }
 
 void MainWindow::on_bookmarkdel() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("bookmarkdel")),
@@ -1650,10 +1666,10 @@ void MainWindow::on_bookmarkdel() {
 }
 
 void MainWindow::on_bookmarkcls() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("bookmarkcls")),
@@ -1664,10 +1680,10 @@ void MainWindow::on_bookmarkcls() {
 }
 
 void MainWindow::on_metadata() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
@@ -1692,10 +1708,10 @@ void MainWindow::on_metadata() {
 }
 
 void MainWindow::on_metadataedit() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("metadataedit")),
@@ -1737,10 +1753,10 @@ void MainWindow::on_metadataedit() {
 }
 
 void MainWindow::on_metadatadel() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("metadatadel")),
@@ -1753,10 +1769,10 @@ void MainWindow::on_metadatadel() {
 }
 
 void MainWindow::on_metadatacls() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     auto doc = hexeditor->document();
     if (!doc->isKeepSize()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("metadatacls")),
@@ -1766,33 +1782,58 @@ void MainWindow::on_metadatacls() {
     doc->metadata()->Clear();
 }
 
-void MainWindow::on_bookmarkChanged(BookMarkModEnum flag, qsizetype section) {
-    if (m_curEditor == nullptr) {
+void MainWindow::on_bookmarkChanging(BookMarkModEnum flag, qsizetype section) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
-    auto doc = hexeditor->document();
+
+    auto model = editor->bookmarksModel();
     switch (flag) {
     case BookMarkModEnum::Insert: {
-        m_bookmarks->model()->insertRow(section);
+        model->beginAdd(section);
     } break;
     case BookMarkModEnum::Modify: {
-        // m_bookmarks->item(index)->setText(comment);
+        // noting to begin
     } break;
     case BookMarkModEnum::Remove: {
-        m_bookmarks->model()->removeRow(section);
+        model->beginRemove(section);
     } break;
     case BookMarkModEnum::Clear: {
-        m_bookmarks->model()->removeRows(0, section);
+        model->beginReset();
+    } break;
+    }
+}
+
+void MainWindow::on_bookmarkChanged(BookMarkModEnum flag, qsizetype section) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
+
+    auto model = editor->bookmarksModel();
+    switch (flag) {
+    case BookMarkModEnum::Insert: {
+        model->endAdd();
+    } break;
+    case BookMarkModEnum::Modify: {
+        emit model->dataChanged(model->index(section, 0),
+                                model->index(section, 2), {Qt::DisplayRole});
+    } break;
+    case BookMarkModEnum::Remove: {
+        model->endRemove();
+    } break;
+    case BookMarkModEnum::Clear: {
+        model->endReset();
     } break;
     }
 }
 
 void MainWindow::on_metadatafg(bool checked) {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
     if (editor->isWorkSpace()) {
@@ -1803,10 +1844,10 @@ void MainWindow::on_metadatafg(bool checked) {
 }
 
 void MainWindow::on_metadatabg(bool checked) {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
     if (editor->isWorkSpace()) {
@@ -1817,10 +1858,10 @@ void MainWindow::on_metadatabg(bool checked) {
 }
 
 void MainWindow::on_metadatacomment(bool checked) {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
     if (editor->isWorkSpace()) {
@@ -1831,10 +1872,10 @@ void MainWindow::on_metadatacomment(bool checked) {
 }
 
 void MainWindow::on_metashowall() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
     if (editor->isWorkSpace()) {
@@ -1847,10 +1888,10 @@ void MainWindow::on_metashowall() {
 }
 
 void MainWindow::on_metahideall() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
     if (editor->isWorkSpace()) {
@@ -1863,15 +1904,16 @@ void MainWindow::on_metahideall() {
 }
 
 void MainWindow::on_clearfindresult() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto editor = m_curEditor.loadAcquire();
     editor->clearFindResult();
 }
 
 void MainWindow::on_exportfindresult() {
-    if (m_curEditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
 
@@ -1887,7 +1929,6 @@ void MainWindow::on_exportfindresult() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto editor = m_curEditor.loadAcquire();
     auto findresitem = editor->findResultModel();
 
     QFile f(filename);
@@ -1919,10 +1960,10 @@ void MainWindow::on_exportfindresult() {
 }
 
 void MainWindow::on_locChanged() {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     m_lblloc->setText(QStringLiteral("(%1,%2)")
                           .arg(hexeditor->currentRow())
                           .arg(hexeditor->currentColumn()));
@@ -2187,8 +2228,10 @@ void MainWindow::connectEditorView(EditorView *editor) {
         }
 
         m_views.remove(editor);
-        if (m_curEditor == editor) {
+        if (currentEditor() == editor) {
+            _editorLock.lockForWrite();
             m_curEditor = nullptr;
+            _editorLock.unlock();
         }
         editor->deleteDockWidget();
         m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
@@ -2227,6 +2270,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     auto hexeditor = cur->hexEditor();
     connect(hexeditor, &QHexView::cursorLocationChanged, this,
             &MainWindow::on_locChanged);
+    connect(hexeditor, &QHexView::documentBookMarkChanging, this,
+            &MainWindow::on_bookmarkChanging);
     connect(hexeditor, &QHexView::documentBookMarkChanged, this,
             &MainWindow::on_bookmarkChanged);
     connect(hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
@@ -2273,7 +2318,14 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     loadFindResult(cur);
 
-    m_bookmarks->setModel(cur ? cur->bookmarksModel() : _bookMarkEmpty);
+    auto bm = cur->bookmarksModel();
+    m_bookmarks->setModel(bm);
+    connect(m_bookmarks->selectionModel(),
+            &QItemSelectionModel::selectionChanged, m_aDelBookMark,
+            [=](const QItemSelection &, const QItemSelection &) {
+                m_aDelBookMark->setEnabled(
+                    m_bookmarks->selectionModel()->hasSelection());
+            });
 
     m_curEditor = cur;
     hexeditor->getStatus();
@@ -2432,19 +2484,17 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
 }
 
 void MainWindow::updateEditModeEnabled() {
-    auto b = (m_curEditor != nullptr);
+    auto editor = currentEditor();
+    auto b = (editor != nullptr);
 
     for (auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
 
     if (b) {
-        auto editor = m_curEditor.loadAcquire();
         auto hexeditor = editor->hexEditor();
-
         enableDirverLimit(editor->isDriver());
         enableCloneFileLimit(editor->isCloneFile());
-
         auto dm = editor->isWorkSpace();
         m_iWorkSpace->setIcon(dm ? _infow : _infouw);
         auto doc = hexeditor->document();
@@ -2474,11 +2524,29 @@ void MainWindow::enableCloneFileLimit(bool isCloneFile) {
 }
 
 void MainWindow::setCurrentHexEditorScale(qreal rate) {
-    if (m_curEditor == nullptr) {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
         return;
     }
-    auto hexeditor = m_curEditor.loadAcquire()->hexEditor();
     hexeditor->setScaleRate(rate);
+}
+
+EditorView *MainWindow::currentEditor() {
+    if (QThread::currentThread() != this->thread()) {
+        _editorLock.lockForRead();
+        auto ret = m_curEditor;
+        _editorLock.unlock();
+        return ret;
+    }
+    return m_curEditor;
+}
+
+QHexView *MainWindow::currentHexView() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return nullptr;
+    }
+    return editor->hexEditor();
 }
 
 void MainWindow::loadCacheIcon() {

@@ -1,36 +1,41 @@
 #include "bookmarksmodel.h"
 
-BookMarksModel::BookMarksModel(QList<BookMarkStruct> &db, QObject *parent)
-    : QAbstractTableModel(parent), _bookmarks(db) {}
+BookMarksModel::BookMarksModel(QHexDocument *doc, QObject *parent)
+    : QAbstractTableModel(parent), _doc(doc) {}
 
-void BookMarksModel::clear() {
-    beginResetModel();
-    _bookmarks.clear();
-    endResetModel();
+void BookMarksModel::beginRemove(int index) {
+    beginRemoveRows(QModelIndex(), index, index);
 }
 
-void BookMarksModel::updateAll() {
-    this->beginResetModel();
-    this->endResetModel();
+void BookMarksModel::endRemove() { endRemoveRows(); }
+
+void BookMarksModel::beginReset() { beginResetModel(); }
+
+void BookMarksModel::endReset() { endResetModel(); }
+
+void BookMarksModel::beginAdd(int index) {
+    beginInsertRows(QModelIndex(), index, index);
 }
+
+void BookMarksModel::endAdd() { endInsertRows(); }
 
 int BookMarksModel::rowCount(const QModelIndex &parent) const {
-    return _bookmarks.size();
+    return _doc ? _doc->bookMarksCount() : 0;
 }
 
-int BookMarksModel::columnCount(const QModelIndex &parent) const { return 3; }
+int BookMarksModel::columnCount(const QModelIndex &parent) const { return 2; }
 
 QVariant BookMarksModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
-        auto b = _bookmarks.at(index.row());
+        auto r = index.row();
+        auto b = _doc->bookMarkByIndex(r);
         switch (index.column()) {
         case 0: // offset
             return b.pos;
         case 1: // comment
             return b.comment;
         }
-        return QVariant();
     }
     case Qt::ToolTipPropertyRole:
         break;
@@ -47,9 +52,9 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
     if (role == Qt::DisplayRole) {
         if (orientation == Qt::Horizontal) {
             switch (section) {
-            case 1:
+            case 0:
                 return tr("offset");
-            case 2:
+            case 1:
                 return tr("comment");
             }
         } else {
@@ -58,3 +63,5 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
     }
     return QVariant();
 }
+
+void BookMarksModel::setDocument(QHexDocument *newDoc) { _doc = newDoc; }

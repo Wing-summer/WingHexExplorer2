@@ -76,7 +76,7 @@ public:
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
-    QList<BookMarkStruct> &bookMarks();
+    QList<BookMarkStruct> *bookMarksPtr();
     const QList<BookMarkStruct> &bookMarks() const;
 
     bool existBookMark(qsizetype pos);
@@ -172,7 +172,10 @@ signals:
     // added by wingsummer
 
     void documentSaved(bool saved);
+
+    void bookMarkChanging(BookMarkModEnum flag, qsizetype section);
     void bookMarkChanged(BookMarkModEnum flag, qsizetype section);
+
     void metafgVisibleChanged(bool b);
     void metabgVisibleChanged(bool b);
     void metaCommentVisibleChanged(bool b);

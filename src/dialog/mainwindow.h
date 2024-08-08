@@ -7,8 +7,9 @@
 #include <QMainWindow>
 #include <QMap>
 #include <QPixmap>
+#include <QReadWriteLock>
 #include <QShortcut>
-#include <QTableWidget>
+#include <QTableView>
 #include <QTextBrowser>
 #include <QToolButton>
 #include <QTreeView>
@@ -26,6 +27,7 @@
 #include "src/control/editorview.h"
 #include "src/control/scriptingconsole.h"
 #include "src/model/bookmarksmodel.h"
+#include "src/model/checksummodel.h"
 #include "src/model/numshowmodel.h"
 #include "src/plugin/iwingplugin.h"
 #include "src/utilities.h"
@@ -148,6 +150,7 @@ private slots:
     void on_metadataedit();
     void on_metadatadel();
     void on_metadatacls();
+    void on_bookmarkChanging(BookMarkModEnum flag, qsizetype section);
     void on_bookmarkChanged(BookMarkModEnum flag, qsizetype section);
 
     void on_metadatafg(bool checked);
@@ -204,6 +207,9 @@ private:
     void enableCloneFileLimit(bool isCloneFile);
 
     void setCurrentHexEditorScale(qreal rate);
+
+    EditorView *currentEditor();
+    QHexView *currentHexView();
 
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
@@ -402,12 +408,14 @@ private:
     QTableWidget *m_varshowtable = nullptr;
 
     QTableView *m_findresult = nullptr;
-    FindResultModel *m_findEmptyResult = nullptr;
+    FindResultModel *_findEmptyResult = nullptr;
 
     QTableView *m_numshowtable = nullptr;
     NumShowModel *_numsitem = nullptr;
 
-    QTableWidget *m_hashtable = nullptr;
+    QTableView *m_hashtable = nullptr;
+    CheckSumModel *_hashModel = nullptr;
+
     QVector<QTableWidgetItem *> _hashitem;
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
@@ -425,6 +433,8 @@ private:
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 
+    QAction *m_aDelBookMark = nullptr;
+
     //===================================================
 
     // file manager cache
@@ -440,7 +450,10 @@ private:
 
     QByteArray _defaultLayout;
     size_t m_newIndex = 1;
-    QAtomicPointer<EditorView> m_curEditor = nullptr;
+
+    QReadWriteLock _editorLock;
+    EditorView *m_curEditor = nullptr;
+
     SettingDialog *m_setdialog = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
     QMenu *m_recentMenu = nullptr;

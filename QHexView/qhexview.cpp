@@ -114,6 +114,8 @@ void QHexView::establishSignal(QHexDocument *doc) {
     connect(doc, &QHexDocument::canRedoChanged, this,
             &QHexView::canRedoChanged);
     connect(doc, &QHexDocument::documentSaved, this, &QHexView::documentSaved);
+    connect(doc, &QHexDocument::bookMarkChanging, this,
+            &QHexView::documentBookMarkChanging);
     connect(doc, &QHexDocument::bookMarkChanged, this,
             &QHexView::documentBookMarkChanged);
     connect(doc, &QHexDocument::metabgVisibleChanged, this, [=](bool b) {
@@ -206,6 +208,7 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
     }
 
     establishSignal(m_document.data());
+    emit documentChanged(document.data());
 
     this->adjustScrollBars();
     this->viewport()->update();

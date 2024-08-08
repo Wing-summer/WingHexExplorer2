@@ -10,8 +10,8 @@
 #include "AngelScript/add_on/scripthelper/scripthelper.h"
 #include "AngelScript/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/add_on/scriptmath/scriptmathcomplex.h"
-#include "AngelScript/add_on/scriptstdstring/scriptstdstring.h"
 #include "AngelScript/add_on/weakref/weakref.h"
+#include "src/scriptaddon/scriptqstring.h"
 
 #include "angelobjstring.h"
 
@@ -45,7 +45,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     }
 
     RegisterScriptArray(engine, false);
-    RegisterStdString(engine);
+    RegisterQString(engine);
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);
     RegisterScriptWeakRef(engine);
@@ -55,7 +55,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptDateTime(engine);
     RegisterScriptFileSystem(engine);
     RegisterScriptHandle(engine);
-    RegisterStdStringUtils(engine);
+    // RegisterQStringUtils(engine);
     RegisterExceptionRoutines(engine);
 
     _rtypes.resize(RegisteredType::tMAXCOUNT);
@@ -187,12 +187,11 @@ bool ScriptMachine::compileScript(const QString &script) {
 
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
-    auto str = _debugger->ToString(ref, typeId, 3, _engine);
-    info.message = QString::fromStdString(str);
+    info.message = _debugger->ToString(ref, typeId, 3, _engine);
     emit onOutput(MessageType::Info, info);
 }
 
-std::string ScriptMachine::getInput() {
+QString ScriptMachine::getInput() {
     Q_ASSERT(_getInputFn);
     return _getInputFn();
 }
@@ -358,7 +357,7 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     emit ins->onOutput(t, info);
 }
 
-ScriptMachine::ScriptMachine(std::function<std::string()> &getInputFn,
+ScriptMachine::ScriptMachine(std::function<QString()> &getInputFn,
                              QObject *parent)
     : QObject(parent), _getInputFn(getInputFn) {
     Q_ASSERT(getInputFn);
@@ -389,7 +388,7 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     // Attach the debugger if needed
     if (ctx && p->_debugger) {
         // Set the line callback for the debugging
-        ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), p->_debugger,
+        ctx->SetLineCallback(asMETHOD(asDebugger, LineCallback), p->_debugger,
                              asCALL_THISCALL);
     }
 

@@ -101,7 +101,9 @@ EditorView::EditorView(bool enableplugin, QWidget *parent)
     m_cloneChildren.fill(nullptr, CLONE_LIMIT);
 
     m_findResults = new FindResultModel(this);
-    m_bookmarks = new BookMarksModel(m_hex->document()->bookMarks(), this);
+    m_bookmarks = new BookMarksModel(m_hex->document().get(), this);
+    connect(m_hex, &QHexView::documentChanged, m_bookmarks,
+            &BookMarksModel::setDocument);
 
     applySettings();
 }

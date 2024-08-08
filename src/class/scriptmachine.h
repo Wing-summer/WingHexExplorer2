@@ -42,7 +42,7 @@ protected:
     };
 
 public:
-    explicit ScriptMachine(std::function<std::string(void)> &getInputFn,
+    explicit ScriptMachine(std::function<QString ()> &getInputFn,
                            QObject *parent = nullptr);
 
     virtual ~ScriptMachine();
@@ -62,7 +62,7 @@ protected:
 private:
     void print(void *ref, int typeId);
 
-    std::string getInput();
+    QString getInput();
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);
 
@@ -97,7 +97,7 @@ protected:
 
     QVector<asITypeInfo *> _rtypes;
     std::function<void(void *ref, int typeId)> _printFn;
-    std::function<std::string(void)> _getInputFn;
+    std::function<QString(void)> _getInputFn;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

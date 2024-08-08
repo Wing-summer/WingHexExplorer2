@@ -20,7 +20,7 @@ public slots:
 private:
     void executeCode(const QString &code);
 
-    std::string getInput();
+    QString getInput();
 
     //! Appends a newline and command prompt at the end of the document.
     void appendCommandPrompt(bool storeOnly = false);
@@ -33,7 +33,7 @@ private:
     QTextCharFormat m_stdoutFmtContent;
     QTextCharFormat m_stdoutFmtWarn;
 
-    std::function<std::string(void)> _getInputFn;
+    std::function<QString(void)> _getInputFn;
 };
 
 #endif
