@@ -3,7 +3,7 @@
 
 #include <QProgressDialog>
 
-#include "../dialog/framelessdialog.h"
+#include "../dialog/framelessdialogbase.h"
 
 class WingProgressDialog {
 public:
@@ -12,12 +12,12 @@ public:
                        int maximum, QWidget *parent = nullptr);
     ~WingProgressDialog();
 
-    FramelessDialog *pdialog() const;
+    FramelessDialogBase *pdialog() const;
     QProgressDialog *dialog() const;
 
 private:
     QProgressDialog *m_dialog;
-    FramelessDialog *m_d;
+    FramelessDialogBase *m_d;
 };
 
 #endif // WINGPROGRESSDIALOG_H

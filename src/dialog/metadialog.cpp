@@ -3,10 +3,12 @@
 #include "src/utilities.h"
 
 #include <QDialogButtonBox>
+#include <QPushButton>
 #include <QShortcut>
+#include <QVBoxLayout>
 
 MetaDialog::MetaDialog(QWidget *parent)
-    : FramelessDialog(parent), _foreground(Qt::transparent),
+    : FramelessDialogBase(parent), _foreground(Qt::transparent),
       _background(Qt::transparent) {
     Q_ASSERT(parent);
 

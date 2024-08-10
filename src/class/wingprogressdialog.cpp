@@ -8,12 +8,12 @@ WingProgressDialog::WingProgressDialog(const QString &labelText,
                                    maximum, parent);
     m_dialog->setWindowFlag(Qt::Widget);
 
-    m_d = new FramelessDialog(parent);
+    m_d = new FramelessDialogBase(parent);
     m_d->buildUpContent(m_dialog);
     m_d->setWindowTitle(labelText);
 
     QObject::connect(m_dialog, &QProgressDialog::finished, m_d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 }
 
 WingProgressDialog::~WingProgressDialog() {
@@ -21,6 +21,6 @@ WingProgressDialog::~WingProgressDialog() {
     delete m_d;
 }
 
-FramelessDialog *WingProgressDialog::pdialog() const { return m_d; }
+FramelessDialogBase *WingProgressDialog::pdialog() const { return m_d; }
 
 QProgressDialog *WingProgressDialog::dialog() const { return m_dialog; }

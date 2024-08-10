@@ -1,29 +1,19 @@
 #include "framelessmainwindow.h"
 
+#include <src/widgetframe/windowbutton.h>
+
 FramelessMainWindow::FramelessMainWindow(QWidget *parent)
-    : FramelessWindowBase(parent) {
-    this->setContentsMargins(0, 0, 0, 0);
-    setResizeable(true, this->contentsMargins());
+    : QMainWindow(parent) {
+    _helper = new FramelessHelper(this);
 }
 
 void FramelessMainWindow::buildUpContent(QWidget *content) {
-    FramelessWindowBase::buildUpContent(TitleBar::TITLE_ALL, content);
+    auto titlebar = _helper->windowBar();
+    auto iconBtn = qobject_cast<QWK::WindowButton *>(titlebar->iconButton());
+    Q_ASSERT(iconBtn);
+    iconBtn->setIconNormal(this->windowIcon());
+    connect(this, &FramelessMainWindow::windowIconChanged, iconBtn,
+            &QWK::WindowButton::setIconNormal);
+    setMenuWidget(titlebar);
+    setCentralWidget(content);
 }
-
-void FramelessMainWindow::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape) {
-        event->ignore();
-        return;
-    }
-    return FramelessWindowBase::keyPressEvent(event);
-}
-
-void FramelessMainWindow::done(int code) {
-    auto closeE = new QCloseEvent;
-    this->closeEvent(closeE);
-    if (closeE->isAccepted()) {
-        FramelessWindowBase::done(code);
-    }
-}
-
-void FramelessMainWindow::closeEvent(QCloseEvent *) {}

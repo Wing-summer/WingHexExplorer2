@@ -1,7 +1,7 @@
 #ifndef QPATHEDIT_H
 #define QPATHEDIT_H
 
-#include "../src/dialog/framelessdialog.h"
+#include "../src/dialog/framelessdialogbase.h"
 #include <QFileDialog>
 #include <QIcon>
 #include <QLineEdit>
@@ -180,7 +180,7 @@ private:
     PathValidator *pathValidator;
     QFileDialog *dialog;
 
-    FramelessDialog *wingdialog;
+    FramelessDialogBase *wingdialog;
 
     QString currentValidPath;
     bool wasPathValid;

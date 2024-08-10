@@ -1,7 +1,9 @@
 #ifndef COLORPICKERDIALOG_H
 #define COLORPICKERDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
+
+#include <QAbstractButton>
 
 namespace Ui {
 class ColorPickerDialog;
@@ -43,7 +45,7 @@ private:
 private:
     Ui::ColorPickerDialog *ui;
 
-    FramelessDialog *_dialog = nullptr;
+    FramelessDialogBase *_dialog = nullptr;
 
     QColor _color;
     QColor _oldColor;

@@ -4,7 +4,7 @@
 #include <QPixmap>
 #include <QVBoxLayout>
 
-SponsorDialog::SponsorDialog(QWidget *parent) : FramelessDialog(parent) {
+SponsorDialog::SponsorDialog(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
     layout->addSpacing(5);

@@ -2,7 +2,7 @@
 #define FINDDIALOG_H
 
 #include "QHexView/qhexview.h"
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 #include <QComboBox>
 #include <QLineEdit>
@@ -12,7 +12,7 @@
 
 enum class SearchDirection { None, Region, Foreword, Backword, Selection };
 
-class FindDialog : public FramelessDialog {
+class FindDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     struct Result {

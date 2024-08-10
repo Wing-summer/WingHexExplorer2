@@ -2823,96 +2823,74 @@ QAbstractButton#qt_dockwidget_floatbutton
  *  ---------------
  */
 
-FramelessWindowBase
+QWK--WindowBar
 {
-    qproperty-titlecolor: rgb(29, 32, 35)
+    background-color: rgb(29, 32, 35)
 }
 
-#WIN_TITLE_ICON
-{
+QWK--WindowBar>QLabel#win-title-label {
+    padding: 0;
     border: none;
+    background-color: transparent;
+    min-height: 28px;
+}
+
+QWK--WindowBar>QAbstractButton[system-button=true] {
+    qproperty-iconSize: 12px 12px;
+    min-width: 50px;
+    border: none;
+    padding: 0;
     background-color: transparent;
 }
 
-#WIN_WIDGET
-{
-    border-radius: 8px;
-    border: 1px solid rgb(79, 133, 233);
-}
-
-#WIN_WIDGET_CONTENT
-{
-     border-bottom-right-radius: 8px;
-     border-bottom-left-radius: 8px;
-}
-
-#WIN_BTN_MIN
-{
-    background: transparent;
+QWK--WindowBar>QAbstractButton#icon-button {
+    qproperty-iconSize: 18px 18px;
+    min-width: 40px;
     border: none;
+    padding: 0;
+    background-color: transparent;
+}
+
+QWK--WindowBar>QAbstractButton#min-button
+{
     qproperty-icon: url(:/dark/minimize.svg);
-    padding: 0px;
-    padding: 0px;
-    border-radius: 0px;
-    outline: none;
-    min-height: 0px;
+    qproperty-iconSize: 12px 12px;
 }
 
-#WIN_BTN_MIN:hover
-{
-    background: green;
+QWK--WindowBar>QAbstractButton#min-button:hover,
+QWK--WindowBar>QAbstractButton#min-button:pressed {
+    background-color: rgba(255, 255, 255, 15%);
     border: none;
 }
 
-#WIN_BTN_MAX
-{
-    background: transparent;
-    border: none;
-    qproperty-icon: url(:/dark/maximize.svg);
-    padding: 0px;
-    border-radius: 0px;
-    outline: none;
-    min-height: 0px;
+QWK--WindowBar>QAbstractButton#max-button {
+    qproperty-iconNormal: url(":/dark/maximize.svg");
+    qproperty-iconChecked: url(":/dark/restore.svg");
 }
 
-#WIN_BTN_MAX:hover
-{
-    background: blue;
+QWK--WindowBar>QAbstractButton#max-button:hover,
+QWK--WindowBar>QAbstractButton#max-button:pressed {
+    background-color: rgba(255, 255, 255, 15%);
     border: none;
 }
 
-#WIN_BTN_MAX[titlemax=false]
+QWK--WindowBar>QAbstractButton#close-button
 {
-    qproperty-icon: url(:/dark/maximize.svg);
+    qproperty-iconNormal: url(":/dark/dialog_close.svg");
 }
 
-#WIN_BTN_MAX[titlemax=true]
-{
-    qproperty-icon: url(:/dark/restore.svg);
-}
-
-#WIN_BTN_CLOSE
-{
-    background: transparent;
-    border: none;
-    qproperty-icon: url(:/dark/dialog_close.svg);
-    padding: 0px;
-    border-radius: 0px;
-    outline: none;
-    min-height: 0px;
-}
-
-#WIN_BTN_CLOSE:hover
-{
-    background: red;
+QWK--WindowBar>QAbstractButton#close-button:hover,
+QWK--WindowBar>QAbstractButton#close-button:pressed {
+    background-color: #e81123;
     border: none;
 }
 
-#WIN_BTN_CLOSE:pressed
-{
-    background: rgb(200,0,0);
-    border: none;
-}
+
+/**
+ *  Ribbon STYLESHEET
+ *  ---------------
+ */
+
 
 #RIBBON_HIDE_BTN
 {

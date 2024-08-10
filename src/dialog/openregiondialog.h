@@ -6,7 +6,7 @@
 #include <QSpinBox>
 
 #include "QPathEdit/qpathedit.h"
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 struct RegionFileResult {
     QString filename;
@@ -14,7 +14,7 @@ struct RegionFileResult {
     qsizetype length;
 };
 
-class OpenRegionDialog : public FramelessDialog {
+class OpenRegionDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     OpenRegionDialog(const QString &filename, int start = 0, int length = 1024,

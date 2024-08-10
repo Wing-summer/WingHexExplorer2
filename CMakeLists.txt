@@ -34,6 +34,9 @@ if(MSVC)
   string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
 
+set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL 1)
+add_subdirectory(qwindowkit EXCLUDE_FROM_ALL)
+
 add_subdirectory(QLogger)
 add_subdirectory(QHexView)
 add_subdirectory(QScintilla)
@@ -60,17 +63,15 @@ set(RIBBON_SRC
 set(QPATHEDIT_SRC QPathEdit/qpathedit.cpp QPathEdit/qpathedit.h)
 
 set(DIALOG_SRC
+    src/dialog/framelessmainwindow.h
+    src/dialog/framelessmainwindow.cpp
     src/dialog/mainwindow.cpp
     src/dialog/mainwindow.h
     src/dialog/settingdialog.cpp
     src/dialog/settingdialog.h
     src/dialog/settingdialog.ui
-    src/dialog/framelesswindowbase.h
-    src/dialog/framelesswindowbase.cpp
-    src/dialog/framelessmainwindow.h
-    src/dialog/framelessmainwindow.cpp
-    src/dialog/framelessdialog.h
-    src/dialog/framelessdialog.cpp
+    src/dialog/framelessdialogbase.h
+    src/dialog/framelessdialogbase.cpp
     src/dialog/sponsordialog.h
     src/dialog/sponsordialog.cpp
     src/dialog/aboutsoftwaredialog.cpp
@@ -98,8 +99,6 @@ set(DIALOG_SRC
     src/dialog/colorpickerdialog.ui)
 
 set(CONTROL_SRC
-    src/control/titlebar.h
-    src/control/titlebar.cpp
     src/control/editorview.h
     src/control/editorview.cpp
     src/control/toast.h
@@ -125,6 +124,8 @@ set(CLASS_SRC
     src/class/workspacemanager.h
     src/class/setting.h
     src/class/eventfilter.h
+    src/class/framelesshelper.h
+    src/class/framelesshelper.cpp
     src/class/qkeysequences.h
     src/class/qkeysequences.cpp
     src/class/wingmessagebox.h
@@ -155,6 +156,11 @@ set(CLASS_SRC
     src/class/wingangelapi.cpp
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp)
+
+set(WIDGET_FRAME_SRC
+    src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
+    src/widgetframe/windowbar_p.h src/widgetframe/windowbutton.cpp
+    src/widgetframe/windowbutton.h src/widgetframe/windowbutton_p.h)
 
 set(MODEL_SRC
     src/model/findresultmodel.h
@@ -195,11 +201,23 @@ set(PLUGIN_SRC
 set(TS_FILES lang/ws_zh_CN.ts)
 
 set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
+set(TRANSLATION_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/AngelScript
+    ${CMAKE_CURRENT_SOURCE_DIR}/QConsoleWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/QHexView
+    ${CMAKE_CURRENT_SOURCE_DIR}/QJsonModel
+    ${CMAKE_CURRENT_SOURCE_DIR}/QLogger
+    ${CMAKE_CURRENT_SOURCE_DIR}/QPathEdit
+    ${CMAKE_CURRENT_SOURCE_DIR}/QScintilla
+    ${CMAKE_CURRENT_SOURCE_DIR}/Qt-Advanced-Docking-System
+    ${CMAKE_CURRENT_SOURCE_DIR}/QWingRibbon
+    ${CMAKE_CURRENT_SOURCE_DIR}/SingleApplication
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES} OPTIONS
+  qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
                          -no-obsolete)
 elseif(${QT_VERSION_MAJOR} EQUAL 6)
-  qt6_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES} OPTIONS
+  qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
                          -no-obsolete)
 else()
   message(FATAL_ERROR "Unsupported QT version")
@@ -210,8 +228,8 @@ set(PROJECT_SOURCES
     src/define.h
     src/utilities.h
     src/dbghelper.h
-    src/framelesswindow.h
     ${QPATHEDIT_SRC}
+    ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
     ${CLASS_SRC}
     ${MODEL_SRC}
@@ -258,6 +276,8 @@ target_link_libraries(
           Qt${QT_VERSION_MAJOR}::Concurrent
           Qt${QT_VERSION_MAJOR}::PrintSupport
           SingleApplication::SingleApplication
+          QWKCore
+          QWKWidgets
           QHexView
           QLoggerLib
           QScintilla

@@ -1,13 +1,13 @@
 #ifndef ENCODINGDIALOG_H
 #define ENCODINGDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 #include <QDialogButtonBox>
 #include <QListWidget>
 #include <QMainWindow>
 
-class EncodingDialog : public FramelessDialog {
+class EncodingDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     EncodingDialog(QWidget *parent = nullptr);

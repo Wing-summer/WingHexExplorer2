@@ -2,10 +2,12 @@
 #include "src/utilities.h"
 
 #include <QDialogButtonBox>
+#include <QLabel>
 #include <QListWidgetItem>
 #include <QShortcut>
+#include <QVBoxLayout>
 
-CheckSumDialog::CheckSumDialog(QWidget *parent) : FramelessDialog(parent) {
+CheckSumDialog::CheckSumDialog(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 

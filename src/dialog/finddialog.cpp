@@ -3,8 +3,10 @@
 
 #include <QButtonGroup>
 #include <QDialogButtonBox>
+#include <QLabel>
 #include <QPushButton>
 #include <QShortcut>
+#include <QVBoxLayout>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
@@ -14,7 +16,7 @@
 
 FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
                        QWidget *parent)
-    : FramelessDialog(parent) {
+    : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 

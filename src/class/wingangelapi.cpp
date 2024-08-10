@@ -26,7 +26,53 @@ const QString WingAngelAPI::pluginComment() const {
               "ability to call the host API.");
 }
 
-void WingAngelAPI::installAPI(asIScriptEngine *engine) {}
+void WingAngelAPI::installAPI(asIScriptEngine *engine) {
+    // TODO: install void toast(const QPixmap &icon, const QString &message);
+    installLogAPI(engine);
+}
 
 void WingAngelAPI::plugin2MessagePipe(WingHex::WingPluginMessage type,
                                       const QVariantList &msg) {}
+
+void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("Log");
+    assert(r >= 0);
+
+    {
+        static std::function<void(const QString &)> fn =
+            std::bind(&WingAngelAPI::info, this, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("void info(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        assert(r >= 0);
+    }
+
+    {
+        static std::function<void(const QString &)> fn =
+            std::bind(&WingAngelAPI::debug, this, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("void debug(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        assert(r >= 0);
+    }
+
+    {
+        static std::function<void(const QString &)> fn =
+            std::bind(&WingAngelAPI::warn, this, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("void warn(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        assert(r >= 0);
+    }
+
+    {
+        static std::function<void(const QString &)> fn =
+            std::bind(&WingAngelAPI::error, this, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("void error(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        assert(r >= 0);
+    }
+
+    engine->SetDefaultNamespace("");
+}

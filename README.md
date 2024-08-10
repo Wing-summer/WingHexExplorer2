@@ -17,7 +17,7 @@
     - [QLogger](#qlogger)
     - [SingleApplication](#singleapplication)
     - [QPathEdit](#qpathedit)
-    - [Qt-FramelessWindow](#qt-framelesswindow)
+    - [QWindowKit](#qwindowkit)
     - [AngelScript](#angelscript)
     - [QConsoleWidget](#qconsolewidget)
     - [QColorPicker](#qcolorpicker)
@@ -64,11 +64,11 @@
 
 > 对于 QT5 版本只支持 5.12.0 及其以上的版本，其他低版本由于关键库的 API 缺失导致功能缺失，所以不提供支持。
 
-| 操作系统平台 |  QT5  |  QT6  |                         缺陷                         |
-| :----------: | :---: | :---: | :--------------------------------------------------: |
-|  Windows 11  |   ✔️   |   ✔️   |               缺乏对 Aero Snap 的支持                |
-|  Deepin 20   |   ✔️   |   ❔   | 缺乏标题栏最大化时，拖动恢复窗体之后鼠标不会继续跟随 |
-|    MacOS     |   ❌   |   ❌   |                 没有测试，未添加支持                 |
+| 操作系统平台 |  QT5  |  QT6  |         缺陷         |
+| :----------: | :---: | :---: | :------------------: |
+|  Windows 11  |   ✔️   |   ✔️   |          -           |
+|  Deepin 20   |   ✔️   |   ❔   |          -           |
+|    MacOS     |   ❌   |   ❌   | 没有测试，未添加支持 |
 
 ## WingHexExplorer2
 
@@ -179,11 +179,9 @@
 
 &emsp;&emsp;以优化和简单的方式获取本地文件和文件夹路径的一个 QT 组件。原仓库的链接： <https://github.com/Skycoder42/QPathEdit> ，原协议为`MIT`。
 
-#### Qt-FramelessWindow
+#### QWindowKit
 
-&emsp;&emsp;这个无边框窗体是本项目界面的基础。我对其进行了一些修改，修复了窗体使用缩放的问题以及增加了标题栏的系统响应，以及最大化后窗体大小的处理优化和`QT6`的代码进一步兼容。然后做了一些封装之后，成为本软件的所有界面组成。
-
-&emsp;&emsp;原仓库的链接： <https://github.com/winsoft666/Qt-FramelessWindow> ，原协议为`Apache v2.0`。
+&emsp;&emsp;该组件是用户界面的基础，用于在不同操作系统平台提供较为统一的用户界面体验。原仓库的链接： <https://github.com/stdware/qwindowkit> ，原协议为`Apache v2.0`。
 
 #### AngelScript
 

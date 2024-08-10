@@ -6,10 +6,11 @@
 #include <QFileInfo>
 #include <QLabel>
 #include <QShortcut>
+#include <QVBoxLayout>
 
 OpenRegionDialog::OpenRegionDialog(const QString &filename, int start,
                                    int length, QWidget *parent)
-    : FramelessDialog(parent) {
+    : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 

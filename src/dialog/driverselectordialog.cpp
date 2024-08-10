@@ -5,9 +5,10 @@
 #include <QLabel>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QVBoxLayout>
 
 DriverSelectorDialog::DriverSelectorDialog(QWidget *parent)
-    : FramelessDialog(parent) {
+    : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     widget->setMinimumWidth(400);
     auto layout = new QVBoxLayout(widget);

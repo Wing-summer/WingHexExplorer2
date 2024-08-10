@@ -1,7 +1,7 @@
 #ifndef DRIVERSELECTORDIALOG_H
 #define DRIVERSELECTORDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 #include <QDialog>
 #include <QList>
@@ -11,7 +11,7 @@
 #include <QStorageInfo>
 #include <QTextBrowser>
 
-class DriverSelectorDialog : public FramelessDialog {
+class DriverSelectorDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     DriverSelectorDialog(QWidget *parent = nullptr);

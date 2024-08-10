@@ -3,6 +3,8 @@
 
 #include "src/utilities.h"
 
+#include <QPushButton>
+
 ColorPickerDialog::ColorPickerDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::ColorPickerDialog) {
     ui->setupUi(this);
@@ -24,11 +26,9 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent)
     _oldColor.setHsv(180, 255, 255);
     updateColor(_oldColor);
 
-    _dialog = new FramelessDialog(parent);
+    _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());
-
-    _dialog->setResizeable(true, _dialog->contentsMargins());
 
     Utilities::moveToCenter(_dialog);
 }
@@ -75,7 +75,7 @@ void ColorPickerDialog::setColor(const QColor &newColor) {
     updateColor(newColor);
 }
 
-int ColorPickerDialog::exec() { return _dialog->exec(); }
+int ColorPickerDialog::exec() { return 0; }
 
 void ColorPickerDialog::on_leColor_editingFinished() {
     QColor color(ui->leColor->text());
@@ -86,9 +86,9 @@ void ColorPickerDialog::on_leColor_editingFinished() {
 
 void ColorPickerDialog::on_buttonBox_clicked(QAbstractButton *button) {
     if (button == ui->buttonBox->button(QDialogButtonBox::Ok)) {
-        _dialog->done(1);
+        // _dialog->done(1);
     } else if (button == ui->buttonBox->button(QDialogButtonBox::Cancel)) {
-        _dialog->done(0);
+        //_dialog->done(0);
     } else if (button == ui->buttonBox->button(QDialogButtonBox::Reset)) {
         _color = _oldColor;
         updateColor(_oldColor);

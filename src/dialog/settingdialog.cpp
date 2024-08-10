@@ -11,15 +11,14 @@ SettingDialog::SettingDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingDialog) {
     ui->setupUi(this);
 
-    _dialog = new FramelessDialog(parent);
+    _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());
-    connect(_dialog, &FramelessDialog::rejected, this, [=] {
+    connect(_dialog, &FramelessDialogBase::rejected, this, [=] {
         for (auto &page : m_pages) {
             page->cancel();
         }
     });
-    _dialog->setResizeable(true, _dialog->contentsMargins());
     _dialog->resize(800, 700);
     Utilities::moveToCenter(_dialog);
 }

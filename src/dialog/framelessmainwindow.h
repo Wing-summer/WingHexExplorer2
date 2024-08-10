@@ -1,19 +1,18 @@
 #ifndef FRAMELESSMAINWINDOW_H
 #define FRAMELESSMAINWINDOW_H
 
-#include "framelesswindowbase.h"
+#include "src/class/framelesshelper.h"
+#include <QMainWindow>
 
-class FramelessMainWindow : public FramelessWindowBase {
+class FramelessMainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    FramelessMainWindow(QWidget *parent = nullptr);
+    explicit FramelessMainWindow(QWidget *parent = nullptr);
 
     void buildUpContent(QWidget *content);
 
-protected:
-    void keyPressEvent(QKeyEvent *event) override;
-    void done(int code) override;
-    void closeEvent(QCloseEvent *) override;
+private:
+    FramelessHelper *_helper = nullptr;
 };
 
 #endif // FRAMELESSMAINWINDOW_H

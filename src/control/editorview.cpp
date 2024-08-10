@@ -14,6 +14,7 @@
 
 #include <QFile>
 #include <QFileInfo>
+#include <QVBoxLayout>
 
 constexpr qsizetype FILEMAXBUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
