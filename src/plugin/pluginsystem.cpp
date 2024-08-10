@@ -196,9 +196,19 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
             }
         }
 
-        _win->m_hexContextMenu.append(p->registeredHexContextMenu());
-        _win->m_editorViewWidgets.append(p->registeredEditorViewWidgets());
-        _win->m_settingPages.append(p->registeredSettingPages());
+        if (p->registeredHexContextMenu()) {
+            _win->m_hexContextMenu.append(p->registeredHexContextMenu());
+        }
+
+        if (!p->registeredEditorViewWidgets().isEmpty()) {
+            _win->m_editorViewWidgets.append(p->registeredEditorViewWidgets());
+        }
+
+        if (!p->registeredSettingPages().isEmpty()) {
+            _win->m_settingPages.append(p->registeredSettingPages());
+        }
+
+        connectInterface(p);
 
         subscribeDispatcher(p, HookIndex::OpenFileBegin);
         subscribeDispatcher(p, HookIndex::OpenFileEnd);

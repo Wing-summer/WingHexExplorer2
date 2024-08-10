@@ -1,7 +1,7 @@
 #ifndef METADIALOG_H
 #define METADIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 #include <QCheckBox>
 #include <QColor>
@@ -13,7 +13,7 @@
 
 #include "src/control/huecolorpickerslider.h"
 
-class MetaDialog : public FramelessDialog {
+class MetaDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     explicit MetaDialog(QWidget *parent);

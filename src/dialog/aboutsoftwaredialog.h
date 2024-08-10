@@ -1,9 +1,9 @@
 #ifndef ABOUTSOFTWAREDIALOG_H
 #define ABOUTSOFTWAREDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
-class AboutSoftwareDialog : public FramelessDialog {
+class AboutSoftwareDialog : public FramelessDialogBase {
 
     Q_OBJECT
 public:

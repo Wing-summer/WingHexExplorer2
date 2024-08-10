@@ -1,12 +1,13 @@
 #include "pluginwindow.h"
 #include "src/utilities.h"
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QPushButton>
 
 #define Bool2String(b) (b ? "true" : "false")
 
-PluginWindow::PluginWindow(QWidget *parent) : FramelessDialog(parent) {
+PluginWindow::PluginWindow(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QHBoxLayout(widget);
 

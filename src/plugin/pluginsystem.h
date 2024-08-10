@@ -2,7 +2,6 @@
 #define PLUGINSYSTEM_H
 
 #include "src/define.h"
-#include "src/plugin/iwingplugin.h"
 #include <QDockWidget>
 #include <QHash>
 #include <QList>

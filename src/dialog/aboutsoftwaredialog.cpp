@@ -3,9 +3,10 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QTextBrowser>
+#include <QVBoxLayout>
 
 AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
-    : FramelessDialog(parent) {
+    : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 

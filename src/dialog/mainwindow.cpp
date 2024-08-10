@@ -94,7 +94,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     layout->addWidget(m_status);
 
     buildUpContent(cw);
-
     m_scriptDialog = new ScriptingDialog(this);
 
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
@@ -159,22 +158,21 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     // Don't call show(WindowState::Maximized) diretly.
     // I don't know why it doesn't work.
     QTimer::singleShot(0, this, [this] {
-        auto &set = SettingManager::instance();
-        WindowState s;
-        switch (set.defaultWinState()) {
-        case Qt::WindowNoState:
-        case Qt::WindowMinimized:
-            s = WindowState::Minimized;
-            break;
-        case Qt::WindowActive:
-        case Qt::WindowMaximized:
-            s = WindowState::Maximized;
-            break;
-        case Qt::WindowFullScreen:
-            s = WindowState::FullScreen;
-            break;
-        }
-        this->show(s);
+        // auto &set = SettingManager::instance();
+        // switch (set.defaultWinState()) {
+        // case Qt::WindowNoState:
+        // case Qt::WindowMinimized:
+        //     s = WindowState::Minimized;
+        //     break;
+        // case Qt::WindowActive:
+        // case Qt::WindowMaximized:
+        //     s = WindowState::Maximized;
+        //     break;
+        // case Qt::WindowFullScreen:
+        //     s = WindowState::FullScreen;
+        //     break;
+        // }
+        // this->show(s);
     });
 }
 
@@ -2057,7 +2055,7 @@ void MainWindow::on_locChanged() {
     }
 }
 
-void MainWindow::on_fullScreen() { this->show(WindowState::FullScreen); }
+void MainWindow::on_fullScreen() { this->showFullScreen(); }
 
 void MainWindow::on_restoreLayout() { m_dock->restoreState(_defaultLayout); }
 

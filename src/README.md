@@ -97,9 +97,9 @@
 
 &emsp;&emsp;以优化和简单的方式获取本地文件和文件夹路径的一个 QT 组件。原仓库的链接： <https://github.com/Skycoder42/QPathEdit> ，原协议为`MIT`。
 
-#### Qt-FramelessWindow
+#### QWindowKit
 
-&emsp;&emsp;这个无边框窗体是本项目界面的基础。我对其进行了一些修改，修复了窗体使用缩放的问题以及增加了标题栏的系统响应，以及最大化后窗体大小的处理优化和`QT6`的代码进一步兼容。然后做了一些封装之后，成为本软件的所有界面组成。
+&emsp;&emsp;该组件是用户界面的基础，用于在不同操作系统平台提供较为统一的用户界面体验。原仓库的链接： <https://github.com/stdware/qwindowkit> ，原协议为`Apache v2.0`。
 
 &emsp;&emsp;原仓库的链接： <https://github.com/winsoft666/Qt-FramelessWindow> ，原协议为`Apache v2.0`。
 
@@ -108,6 +108,18 @@
 &emsp;&emsp;让 C++ 成为具有惊人功能的脚本语言！这个功能强大，且不需要外部依赖，直接编译进去就行，不像之前版本必须携带一个`Python`解释器和库，不太方便编译。
 
 &emsp;&emsp;我只找到了镜像库： <https://github.com/IngwiePhoenix/AngelScript> ，原协议为`zlib license`，还是比较宽松的开源协议。
+
+#### QConsoleWidget
+
+&emsp;&emsp;一个轻量的控制台组件，协议为`MIT`，仓库链接：<https://github.com/gapost/qconsolewidget> 。
+
+#### QColorPicker
+
+&emsp;&emsp;一个颜色选择组件，协议为`MIT`，仓库链接：<https://github.com/arsdever/qcolorpicker> 。
+
+#### QtJsonModel
+
+&emsp;&emsp;QJsonModel 是一个基于 QAbstractItemModel 的 Qt6/C++17 的 JSON 树模型类。在该项目用于插件和脚本给予宿主进行树形可视化的基础支持组件。我对其增加了 Qt5 的支持并且写了一个合适的 CMake 文件。原协议为`MIT`，修改不多遵守这个就行了。仓库链接：<https://github.com/dridk/QJsonmodel> 。
 
 #### 主题
 

@@ -1,7 +1,7 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
-#include "framelessmainwindow.h"
+#include "framelessdialogbase.h"
 
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
@@ -15,10 +15,11 @@
 
 #include <QListWidget>
 #include <QShortcut>
+#include <QStatusBar>
 #include <QTableWidget>
 #include <QTextBrowser>
 
-class ScriptingDialog : public FramelessMainWindow {
+class ScriptingDialog : public FramelessDialogBase {
     Q_OBJECT
 private:
     enum ToolButtonIndex : uint { UNDO_ACTION, REDO_ACTION };

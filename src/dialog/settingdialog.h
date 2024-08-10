@@ -1,7 +1,7 @@
 #ifndef SETTINGDIALOG_H
 #define SETTINGDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 #include "src/plugin/settingpage.h"
 #include <QAbstractButton>
 
@@ -28,7 +28,7 @@ private slots:
 private:
     Ui::SettingDialog *ui;
     QList<WingHex::SettingPage *> m_pages;
-    FramelessDialog *_dialog = nullptr;
+    FramelessDialogBase *_dialog = nullptr;
 };
 
 #endif // SETTINGDIALOG_H

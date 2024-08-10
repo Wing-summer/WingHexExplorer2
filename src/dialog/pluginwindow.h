@@ -1,13 +1,13 @@
 #ifndef PLUGINWINDOW_H
 #define PLUGINWINDOW_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 #include "src/plugin/pluginsystem.h"
 
 #include <QListWidget>
 #include <QTextBrowser>
 
-class PluginWindow : public FramelessDialog {
+class PluginWindow : public FramelessDialogBase {
     Q_OBJECT
 public:
     PluginWindow(QWidget *parent = nullptr);

@@ -1,5 +1,6 @@
 #include "wingmessagebox.h"
-#include "../dialog/framelessdialog.h"
+#include "src/dialog/framelessdialogbase.h"
+#include <QApplication>
 
 WingMessageBox::WingMessageBox() {}
 
@@ -49,12 +50,12 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
 
     msgbox->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(msgbox);
     d.setWindowTitle(title.isEmpty() ? QMessageBox::tr("About Qt") : title);
 
     QObject::connect(msgbox, &QMessageBox::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     d.exec();
 }
@@ -113,12 +114,12 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
 
     msgbox->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(msgbox);
     d.setWindowTitle(title.isEmpty() ? qAppName() : title);
 
     QObject::connect(msgbox, &QMessageBox::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
-    return static_cast<QMessageBox::StandardButton>(d.exec());
+    return static_cast<QMessageBox::StandardButton>(msgbox->exec());
 }

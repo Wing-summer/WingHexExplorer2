@@ -7,10 +7,11 @@
 #include <QMimeDatabase>
 #include <QPicture>
 #include <QTextBrowser>
+#include <QVBoxLayout>
 
 FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
                                QWidget *parent)
-    : FramelessDialog(parent) {
+    : FramelessDialogBase(parent) {
     static const QString dfmt("yyyy/MM/dd hh:mm:ss ddd");
 
     auto widget = new QWidget(this);

@@ -8,12 +8,13 @@
 #include "src/class/wingmessagebox.h"
 
 #include <QDesktopServices>
+#include <QLabel>
 #include <QPainter>
 #include <QPicture>
 #include <QStatusBar>
 
 ScriptingDialog::ScriptingDialog(QWidget *parent)
-    : FramelessMainWindow(parent) {
+    : FramelessDialogBase(parent) {
     auto &skin = SkinManager::instance();
     switch (skin.currentTheme()) {
     case SkinManager::Theme::Dark: {
@@ -33,22 +34,18 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     // build up UI
     buildUpRibbonBar();
 
-    auto cw = new QWidget(this);
-    cw->setSizePolicy(
-        QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    auto layout = new QVBoxLayout(cw);
+    auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(1, 0, 1, 0);
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
-    buildUpDockSystem(cw);
+    buildUpDockSystem(this);
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
     m_status->setContentsMargins(0, 1, 2, 2);
 
     layout->addWidget(m_status);
-    buildUpContent(cw);
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));

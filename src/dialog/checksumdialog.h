@@ -1,11 +1,11 @@
 #ifndef CHECKSUMDIALOG_H
 #define CHECKSUMDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
 #include <QListWidget>
 
-class CheckSumDialog : public FramelessDialog {
+class CheckSumDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     explicit CheckSumDialog(QWidget *parent = nullptr);

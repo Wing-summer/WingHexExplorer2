@@ -370,148 +370,156 @@ signals:
     bool setCurrentEncoding(const QString encoding);
 };
 
-class MessageBox : public QObject {
-    Q_OBJECT
-signals:
-    void aboutQt(QWidget *parent = nullptr, const QString &title = QString());
+// class MessageBox : public QObject {
+//     Q_OBJECT
+// signals:
+//     void aboutQt(QWidget *parent = nullptr, const QString &title =
+//     QString());
 
-    QMessageBox::StandardButton information(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+//     QMessageBox::StandardButton information(
+//         QWidget *parent, const QString &title, const QString &text,
+//         QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+//         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    QMessageBox::StandardButton question(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons =
-            QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+//     QMessageBox::StandardButton question(
+//         QWidget *parent, const QString &title, const QString &text,
+//         QMessageBox::StandardButtons buttons =
+//             QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
+//         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    QMessageBox::StandardButton
-    warning(QWidget *parent, const QString &title, const QString &text,
-            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+//     QMessageBox::StandardButton
+//     warning(QWidget *parent, const QString &title, const QString &text,
+//             QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+//             QMessageBox::StandardButton defaultButton =
+//             QMessageBox::NoButton);
 
-    QMessageBox::StandardButton
-    critical(QWidget *parent, const QString &title, const QString &text,
-             QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-             QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+//     QMessageBox::StandardButton
+//     critical(QWidget *parent, const QString &title, const QString &text,
+//              QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+//              QMessageBox::StandardButton defaultButton =
+//              QMessageBox::NoButton);
 
-    void about(QWidget *parent, const QString &title, const QString &text);
+//     void about(QWidget *parent, const QString &title, const QString &text);
 
-    QMessageBox::StandardButton
-    msgbox(QWidget *parent, QMessageBox::Icon icon, const QString &title,
-           const QString &text,
-           QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
-           QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-};
+//     QMessageBox::StandardButton
+//     msgbox(QWidget *parent, QMessageBox::Icon icon, const QString &title,
+//            const QString &text,
+//            QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
+//            QMessageBox::StandardButton defaultButton =
+//            QMessageBox::NoButton);
+// };
 
-class InputBox : public QObject {
-    Q_OBJECT
-signals:
-    QString getText(QWidget *parent, const QString &title, const QString &label,
-                    QLineEdit::EchoMode echo = QLineEdit::Normal,
-                    const QString &text = QString(), bool *ok = nullptr,
-                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
-    QString
-    getMultiLineText(QWidget *parent, const QString &title,
-                     const QString &label, const QString &text = QString(),
-                     bool *ok = nullptr,
-                     Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+// class InputBox : public QObject {
+//     Q_OBJECT
+// signals:
+//     QString getText(QWidget *parent, const QString &title, const QString
+//     &label,
+//                     QLineEdit::EchoMode echo = QLineEdit::Normal,
+//                     const QString &text = QString(), bool *ok = nullptr,
+//                     Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+//     QString
+//     getMultiLineText(QWidget *parent, const QString &title,
+//                      const QString &label, const QString &text = QString(),
+//                      bool *ok = nullptr,
+//                      Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
 
-    QString getItem(QWidget *parent, const QString &title, const QString &label,
-                    const QStringList &items, int current = 0,
-                    bool editable = true, bool *ok = nullptr,
-                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+//     QString getItem(QWidget *parent, const QString &title, const QString
+//     &label,
+//                     const QStringList &items, int current = 0,
+//                     bool editable = true, bool *ok = nullptr,
+//                     Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
 
-    int getInt(QWidget *parent, const QString &title, const QString &label,
-               int value = 0, int minValue = -2147483647,
-               int maxValue = 2147483647, int step = 1, bool *ok = nullptr);
+//     int getInt(QWidget *parent, const QString &title, const QString &label,
+//                int value = 0, int minValue = -2147483647,
+//                int maxValue = 2147483647, int step = 1, bool *ok = nullptr);
 
-    double getDouble(QWidget *parent, const QString &title,
-                     const QString &label, double value = 0,
-                     double minValue = -2147483647,
-                     double maxValue = 2147483647, int decimals = 1,
-                     bool *ok = nullptr, double step = 1);
-};
+//     double getDouble(QWidget *parent, const QString &title,
+//                      const QString &label, double value = 0,
+//                      double minValue = -2147483647,
+//                      double maxValue = 2147483647, int decimals = 1,
+//                      bool *ok = nullptr, double step = 1);
+// };
 
-class FileDialog : public QObject {
-    Q_OBJECT
-signals:
-    QString getExistingDirectory(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(),
-        QFileDialog::Options options = QFileDialog::ShowDirsOnly);
+// class FileDialog : public QObject {
+//     Q_OBJECT
+// signals:
+//     QString getExistingDirectory(
+//         QWidget *parent = nullptr, const QString &caption = QString(),
+//         const QString &dir = QString(),
+//         QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 
-    QUrl getExistingDirectoryUrl(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QUrl &dir = QUrl(),
-        QFileDialog::Options options = QFileDialog::ShowDirsOnly,
-        const QStringList &supportedSchemes = QStringList());
+//     QUrl getExistingDirectoryUrl(
+//         QWidget *parent = nullptr, const QString &caption = QString(),
+//         const QUrl &dir = QUrl(),
+//         QFileDialog::Options options = QFileDialog::ShowDirsOnly,
+//         const QStringList &supportedSchemes = QStringList());
 
-    QString getOpenFileName(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
+//     QString getOpenFileName(
+//         QWidget *parent = nullptr, const QString &caption = QString(),
+//         const QString &dir = QString(), const QString &filter = QString(),
+//         QString *selectedFilter = nullptr,
+//         QFileDialog::Options options = QFileDialog::Options());
 
-    QStringList getOpenFileNames(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
+//     QStringList getOpenFileNames(
+//         QWidget *parent = nullptr, const QString &caption = QString(),
+//         const QString &dir = QString(), const QString &filter = QString(),
+//         QString *selectedFilter = nullptr,
+//         QFileDialog::Options options = QFileDialog::Options());
 
-    QUrl getOpenFileUrl(QWidget *parent = nullptr,
-                        const QString &caption = QString(),
-                        const QUrl &dir = QUrl(),
-                        const QString &filter = QString(),
-                        QString *selectedFilter = nullptr,
-                        QFileDialog::Options options = QFileDialog::Options(),
-                        const QStringList &supportedSchemes = QStringList());
+//     QUrl getOpenFileUrl(QWidget *parent = nullptr,
+//                         const QString &caption = QString(),
+//                         const QUrl &dir = QUrl(),
+//                         const QString &filter = QString(),
+//                         QString *selectedFilter = nullptr,
+//                         QFileDialog::Options options =
+//                         QFileDialog::Options(), const QStringList
+//                         &supportedSchemes = QStringList());
 
-    QList<QUrl>
-    getOpenFileUrls(QWidget *parent = nullptr,
-                    const QString &caption = QString(),
-                    const QUrl &dir = QUrl(), const QString &filter = QString(),
-                    QString *selectedFilter = nullptr,
-                    QFileDialog::Options options = QFileDialog::Options(),
-                    const QStringList &supportedSchemes = QStringList());
+//     QList<QUrl>
+//     getOpenFileUrls(QWidget *parent = nullptr,
+//                     const QString &caption = QString(),
+//                     const QUrl &dir = QUrl(), const QString &filter =
+//                     QString(), QString *selectedFilter = nullptr,
+//                     QFileDialog::Options options = QFileDialog::Options(),
+//                     const QStringList &supportedSchemes = QStringList());
 
-    QString getSaveFileName(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
+//     QString getSaveFileName(
+//         QWidget *parent = nullptr, const QString &caption = QString(),
+//         const QString &dir = QString(), const QString &filter = QString(),
+//         QString *selectedFilter = nullptr,
+//         QFileDialog::Options options = QFileDialog::Options());
 
-    QUrl getSaveFileUrl(QWidget *parent = nullptr,
-                        const QString &caption = QString(),
-                        const QUrl &dir = QUrl(),
-                        const QString &filter = QString(),
-                        QString *selectedFilter = nullptr,
-                        QFileDialog::Options options = QFileDialog::Options(),
-                        const QStringList &supportedSchemes = QStringList());
+//     QUrl getSaveFileUrl(QWidget *parent = nullptr,
+//                         const QString &caption = QString(),
+//                         const QUrl &dir = QUrl(),
+//                         const QString &filter = QString(),
+//                         QString *selectedFilter = nullptr,
+//                         QFileDialog::Options options =
+//                         QFileDialog::Options(), const QStringList
+//                         &supportedSchemes = QStringList());
 
-    void saveFileContent(const QByteArray &fileContent,
-                         const QString &fileNameHint,
-                         const QString &caption = QString(),
-                         QWidget *parent = nullptr);
-};
+//     void saveFileContent(const QByteArray &fileContent,
+//                          const QString &fileNameHint,
+//                          const QString &caption = QString(),
+//                          QWidget *parent = nullptr);
+// };
 
-class ColorDialog : public QObject {
-    Q_OBJECT
-signals:
-    QColor getColor(const QString &caption, QWidget *parent = nullptr);
-};
+// class ColorDialog : public QObject {
+// Q_OBJECT
+// signals:
+// QColor getColor(const QString &caption, QWidget *parent = nullptr);
+// };
 
 /**
  * @brief The UI class
  */
-class UI {
-public:
-    MessageBox msgd;
-    InputBox inputd;
-    FileDialog filed;
-    ColorDialog colord;
-};
+// class UI {
+// public:
+//     // MessageBox msgd;
+//     InputBox inputd;
+//     FileDialog filed;
+//     ColorDialog colord;
+// };
 
 } // namespace WingPlugin
 
@@ -624,7 +632,7 @@ signals:
 public:
     WingPlugin::Reader reader;
     WingPlugin::Controller controller;
-    WingPlugin::UI ui;
+    // QPointer<WingPlugin::UI> ui;
 };
 
 } // namespace WingHex

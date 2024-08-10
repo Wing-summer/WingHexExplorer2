@@ -25,6 +25,9 @@ public:
 public slots:
     virtual void plugin2MessagePipe(WingHex::WingPluginMessage type,
                                     const QVariantList &msg) override;
+
+private:
+    void installLogAPI(asIScriptEngine *engine);
 };
 
 #endif // WINGANGELAPI_H

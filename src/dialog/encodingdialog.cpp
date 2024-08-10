@@ -6,8 +6,9 @@
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QShortcut>
+#include <QVBoxLayout>
 
-EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialog(parent) {
+EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 

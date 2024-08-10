@@ -1,5 +1,5 @@
 #include "winginputdialog.h"
-#include "../dialog/framelessdialog.h"
+#include "../dialog/framelessdialogbase.h"
 
 #include <QDialogButtonBox>
 #include <QPointer>
@@ -16,14 +16,15 @@ QString WingInputDialog::getText(QWidget *parent, const QString &title,
     dialog->setInputMethodHints(inputMethodHints);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(title);
 
     QObject::connect(dialog, &QInputDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     const int ret = d.exec();
+
     if (ok)
         *ok = !!ret;
     if (ret) {
@@ -43,14 +44,15 @@ QString WingInputDialog::getMultiLineText(
     dialog->setInputMethodHints(inputMethodHints);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(title);
 
     QObject::connect(dialog, &QInputDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     const int ret = dialog->exec();
+
     if (ok)
         *ok = !!ret;
     if (ret) {
@@ -73,14 +75,15 @@ QString WingInputDialog::getItem(QWidget *parent, const QString &title,
     dialog->setInputMethodHints(inputMethodHints);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(title);
 
     QObject::connect(dialog, &QInputDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     const int ret = dialog->exec();
+
     if (ok)
         *ok = !!ret;
     if (ret) {
@@ -100,14 +103,15 @@ int WingInputDialog::getInt(QWidget *parent, const QString &title,
     dialog->setIntStep(step);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(title);
 
     QObject::connect(dialog, &QInputDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     const int ret = dialog->exec();
+
     if (ok)
         *ok = !!ret;
     if (ret) {
@@ -129,14 +133,15 @@ double WingInputDialog::getDouble(QWidget *parent, const QString &title,
     dialog->setDoubleStep(step);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(title);
 
     QObject::connect(dialog, &QInputDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     const int ret = dialog->exec();
+
     if (ok)
         *ok = !!ret;
     if (ret) {

@@ -1,5 +1,5 @@
 #include "wingfiledialog.h"
-#include "../dialog/framelessdialog.h"
+#include "../dialog/framelessdialogbase.h"
 
 QString WingFileDialog::getExistingDirectory(QWidget *parent,
                                              const QString &caption,
@@ -26,14 +26,13 @@ QUrl WingFileDialog::getExistingDirectoryUrl(
 
     filedialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
-    d.setResizeable(false, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(filedialog);
     d.setWindowTitle(caption);
-    d.resize(filedialog->width(), filedialog->height() + d.titleHeight());
+    d.resize(filedialog->width(), filedialog->height());
 
     QObject::connect(filedialog, &QFileDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     if (d.exec() == QDialog::Accepted)
         return filedialog->selectedUrls().value(0);
@@ -52,11 +51,10 @@ void WingFileDialog::getOpenFileContent(
 
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
-    d.setResizeable(true, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
-    d.resize(dialog->width(), dialog->height() + d.titleHeight());
+    d.resize(dialog->width(), dialog->height());
 
     auto fileSelected = [=](const QString &fileName) {
         QByteArray fileContent;
@@ -125,14 +123,13 @@ QUrl WingFileDialog::getOpenFileUrl(QWidget *parent, const QString &caption,
     dialog->setOptions(options);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
-    d.setResizeable(true, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
-    d.resize(dialog->width(), dialog->height() + d.titleHeight());
+    d.resize(dialog->width(), dialog->height());
 
     QObject::connect(dialog, &QFileDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     if (selectedFilter && !selectedFilter->isEmpty())
         dialog->selectNameFilter(*selectedFilter);
@@ -155,14 +152,13 @@ QList<QUrl> WingFileDialog::getOpenFileUrls(
     dialog->setOptions(options);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
-    d.setResizeable(true, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
-    d.resize(dialog->width(), dialog->height() + d.titleHeight());
+    d.resize(dialog->width(), dialog->height());
 
     QObject::connect(dialog, &QFileDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     if (selectedFilter && !selectedFilter->isEmpty())
         dialog->selectNameFilter(*selectedFilter);
@@ -203,14 +199,13 @@ QUrl WingFileDialog::getSaveFileUrl(QWidget *parent, const QString &caption,
     dialog->setWindowFlag(Qt::Widget);
     dialog->setAcceptMode(QFileDialog::AcceptSave);
 
-    FramelessDialog d(parent);
-    d.setResizeable(true, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
-    d.resize(dialog->width(), dialog->height() + d.titleHeight());
+    d.resize(dialog->width(), dialog->height());
 
     QObject::connect(dialog, &QFileDialog::finished, &d,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     if (selectedFilter && !selectedFilter->isEmpty())
         dialog->selectNameFilter(*selectedFilter);
@@ -232,11 +227,10 @@ void WingFileDialog::saveFileContent(const QByteArray &fileContent,
     dialog->selectFile(fileNameHint);
     dialog->setWindowFlag(Qt::Widget);
 
-    FramelessDialog d(parent);
-    d.setResizeable(true, d.contentsMargins());
+    FramelessDialogBase d(parent);
     d.buildUpContent(dialog);
     d.setWindowTitle(caption);
-    d.resize(dialog->width(), dialog->height() + d.titleHeight());
+    d.resize(dialog->width(), dialog->height());
 
     auto fileSelected = [=](const QString &fileName) {
         if (!fileName.isNull()) {

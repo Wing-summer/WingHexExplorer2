@@ -1,6 +1,7 @@
 #include "qpathedit.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCompleter>
 #include <QDropEvent>
 #include <QEvent>
@@ -65,13 +66,13 @@ QPathEdit::QPathEdit(QPathEdit::PathMode pathMode, QWidget *parent,
             [this](const QString &) { pathCompleter->complete(); });
     pathCompleter->setModel(completerModel);
 
-    wingdialog = new FramelessDialog(this);
+    wingdialog = new FramelessDialogBase(this);
     dialog->setWindowFlag(Qt::Widget);
     wingdialog->buildUpContent(dialog);
     wingdialog->setWindowTitle(qAppName());
 
     QObject::connect(dialog, &QFileDialog::finished, wingdialog,
-                     &FramelessDialog::done);
+                     &FramelessDialogBase::done);
 
     // setup this
     QHBoxLayout *layout = new QHBoxLayout(this);

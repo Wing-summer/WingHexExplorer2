@@ -1,9 +1,9 @@
 #ifndef FILEINFODIALOG_H
 #define FILEINFODIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 
-class FileInfoDialog : public FramelessDialog {
+class FileInfoDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     FileInfoDialog(QString filename, bool isRegionFile,

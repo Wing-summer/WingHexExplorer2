@@ -1,10 +1,10 @@
 #ifndef SPONSORDIALOG_H
 #define SPONSORDIALOG_H
 
-#include "framelessdialog.h"
+#include "framelessdialogbase.h"
 #include <QObject>
 
-class SponsorDialog : public FramelessDialog {
+class SponsorDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
     explicit SponsorDialog(QWidget *parent = nullptr);
