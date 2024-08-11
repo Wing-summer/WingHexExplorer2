@@ -5,6 +5,8 @@
 #include "windowbar.h"
 #include "windowbar_p.h"
 
+#include <QApplication>
+#include <QStyle>
 #include <QtCore/QDebug>
 #include <QtCore/QLocale>
 #include <QtGui/QtEvents>
@@ -60,19 +62,22 @@ QWidget *WindowBarPrivate::takeWidgetAt(int index) {
 }
 
 WindowBar::WindowBar(QWidget *parent)
-    : WindowBar(*new WindowBarPrivate(), parent) {}
+    : WindowBar(*new WindowBarPrivate(), parent) {
+    setAlignment(Qt::AlignCenter);
+    setObjectName(QStringLiteral("win-title-label"));
+
+    Q_D(WindowBar);
+    auto w = new QWidget(this);
+    w->setStyleSheet(QStringLiteral("background:transparent;"));
+    w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    d->setWidgetAt(WindowBarPrivate::Holder, w);
+
+    // default
+    setFixedHeight(
+        QApplication::style()->pixelMetric(QStyle::PM_TitleBarHeight));
+}
 
 WindowBar::~WindowBar() = default;
-
-QMenuBar *WindowBar::menuBar() const {
-    Q_D(const WindowBar);
-    return static_cast<QMenuBar *>(d->widgetAt(WindowBarPrivate::MenuWidget));
-}
-
-QLabel *WindowBar::titleLabel() const {
-    Q_D(const WindowBar);
-    return static_cast<QLabel *>(d->widgetAt(WindowBarPrivate::TitleLabel));
-}
 
 QAbstractButton *WindowBar::iconButton() const {
     Q_D(const WindowBar);
@@ -98,28 +103,10 @@ QAbstractButton *WindowBar::closeButton() const {
         d->widgetAt(WindowBarPrivate::CloseButton));
 }
 
-void WindowBar::setMenuBar(QMenuBar *menuBar) {
-    Q_D(WindowBar);
-    auto org = takeMenuBar();
-    if (org)
-        org->deleteLater();
-    if (!menuBar)
-        return;
-    d->setWidgetAt(WindowBarPrivate::MenuWidget, menuBar);
-    menuBar->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Minimum);
-}
-
-void WindowBar::setTitleLabel(QLabel *label) {
-    Q_D(WindowBar);
-    auto org = takeTitleLabel();
-    if (org)
-        org->deleteLater();
-    if (!label)
-        return;
-    d->setWidgetAt(WindowBarPrivate::TitleLabel, label);
-    if (d->autoTitle && d->w)
-        label->setText(d->w->windowTitle());
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+QWidget *WindowBar::holder() const {
+    Q_D(const WindowBar);
+    return static_cast<QAbstractButton *>(
+        d->widgetAt(WindowBarPrivate::Holder));
 }
 
 void WindowBar::setIconButton(QAbstractButton *btn) {
@@ -168,17 +155,6 @@ void WindowBar::setCloseButton(QAbstractButton *btn) {
         return;
     d->setWidgetAt(WindowBarPrivate::CloseButton, btn);
     connect(btn, &QAbstractButton::clicked, this, &WindowBar::closeRequested);
-}
-
-QMenuBar *WindowBar::takeMenuBar() {
-    Q_D(WindowBar);
-    return static_cast<QMenuBar *>(
-        d->takeWidgetAt(WindowBarPrivate::MenuWidget));
-}
-
-QLabel *WindowBar::takeTitleLabel() {
-    Q_D(WindowBar);
-    return static_cast<QLabel *>(d->takeWidgetAt(WindowBarPrivate::TitleLabel));
 }
 
 QAbstractButton *WindowBar::takeIconButton() {
@@ -266,7 +242,7 @@ bool WindowBar::eventFilter(QObject *obj, QEvent *event) {
     auto w = d->w;
     if (obj == w) {
         QAbstractButton *iconBtn = iconButton();
-        QLabel *label = titleLabel();
+        QLabel *label = this;
         QAbstractButton *maxBtn = maxButton();
         switch (event->type()) {
         case QEvent::WindowIconChange: {
@@ -301,7 +277,7 @@ void WindowBar::titleChanged(const QString &text) { Q_UNUSED(text) }
 void WindowBar::iconChanged(const QIcon &icon) { Q_UNUSED(icon) }
 
 WindowBar::WindowBar(WindowBarPrivate &d, QWidget *parent)
-    : QFrame(parent), d_ptr(&d) {
+    : QLabel(parent), d_ptr(&d) {
     d.q_ptr = this;
 
     d.init();

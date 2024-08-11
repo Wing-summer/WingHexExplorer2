@@ -121,5 +121,5 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
     QObject::connect(msgbox, &QMessageBox::finished, &d,
                      &FramelessDialogBase::done);
 
-    return static_cast<QMessageBox::StandardButton>(msgbox->exec());
+    return static_cast<QMessageBox::StandardButton>(d.exec());
 }

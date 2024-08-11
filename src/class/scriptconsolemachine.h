@@ -13,6 +13,9 @@ public:
     virtual bool executeScript(const QString &script,
                                bool isInDebug = false) override;
 
+signals:
+    void onClearConsole();
+
 protected:
     virtual bool configureEngine(asIScriptEngine *engine) override;
 

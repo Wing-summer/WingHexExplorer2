@@ -8,7 +8,7 @@
 #include <QVBoxLayout>
 
 FramelessDialogBase::FramelessDialogBase(QWidget *parent) : QDialog(parent) {
-    _helper = new FramelessHelper(this);
+    _helper = new FramelessHelper(this, true);
 }
 
 FramelessDialogBase::~FramelessDialogBase() {}

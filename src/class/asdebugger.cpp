@@ -3,6 +3,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QTextStream>
 
 static QRegularExpression cmdRegExp("[^ \t]");
 

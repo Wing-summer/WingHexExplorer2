@@ -113,6 +113,8 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     auto &plg = PluginSystem::instance();
     plg.setMainWindow(this);
     plg.LoadPlugin();
+    // At this time, AngelScript service plugin has started
+    m_scriptConsole->init();
 
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
@@ -155,24 +157,24 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     // update status
     updateEditModeEnabled();
 
-    // Don't call show(WindowState::Maximized) diretly.
-    // I don't know why it doesn't work.
+    // Don't call without QTimer::singleShot.
+    // I don't know why it doesn't work with direct call.
     QTimer::singleShot(0, this, [this] {
-        // auto &set = SettingManager::instance();
-        // switch (set.defaultWinState()) {
-        // case Qt::WindowNoState:
-        // case Qt::WindowMinimized:
-        //     s = WindowState::Minimized;
-        //     break;
-        // case Qt::WindowActive:
-        // case Qt::WindowMaximized:
-        //     s = WindowState::Maximized;
-        //     break;
-        // case Qt::WindowFullScreen:
-        //     s = WindowState::FullScreen;
-        //     break;
-        // }
-        // this->show(s);
+        auto &set = SettingManager::instance();
+        switch (set.defaultWinState()) {
+        case Qt::WindowNoState:
+            break;
+        case Qt::WindowMinimized:
+            this->showMinimized();
+            break;
+        case Qt::WindowActive:
+        case Qt::WindowMaximized:
+            this->showMaximized();
+            break;
+        case Qt::WindowFullScreen:
+            this->showFullScreen();
+            break;
+        }
     });
 }
 

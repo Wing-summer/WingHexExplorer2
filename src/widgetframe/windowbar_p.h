@@ -27,8 +27,7 @@ public:
 
     enum WindowBarItem {
         IconButton,
-        MenuWidget,
-        TitleLabel,
+        Holder,
         MinimumButton,
         MaximumButton,
         CloseButton,

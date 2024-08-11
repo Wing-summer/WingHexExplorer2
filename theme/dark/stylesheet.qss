@@ -2891,6 +2891,14 @@ QWK--WindowBar>QAbstractButton#close-button:pressed {
  *  ---------------
  */
 
+QTabWidget#RIBBON>QTabBar::tab {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 1px;
+    min-width: 80px;
+}
 
 #RIBBON_HIDE_BTN
 {

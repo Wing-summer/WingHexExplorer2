@@ -17,6 +17,8 @@ public slots:
     void stdErr(const QString &str);
     void stdWarn(const QString &str);
 
+    void init();
+
 private:
     void executeCode(const QString &code);
 
