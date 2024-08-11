@@ -14,7 +14,7 @@ namespace QWK {
 
 class WindowBarPrivate;
 
-class WindowBar : public QFrame {
+class WindowBar : public QLabel {
     Q_OBJECT
     Q_DECLARE_PRIVATE(WindowBar)
 public:
@@ -22,22 +22,19 @@ public:
     ~WindowBar();
 
 public:
-    QMenuBar *menuBar() const;
-    QLabel *titleLabel() const;
     QAbstractButton *iconButton() const;
     QAbstractButton *minButton() const;
     QAbstractButton *maxButton() const;
     QAbstractButton *closeButton() const;
 
-    void setMenuBar(QMenuBar *menuBar);
+    QWidget *holder() const;
+
     void setTitleLabel(QLabel *label);
     void setIconButton(QAbstractButton *btn);
     void setMinButton(QAbstractButton *btn);
     void setMaxButton(QAbstractButton *btn);
     void setCloseButton(QAbstractButton *btn);
 
-    QMenuBar *takeMenuBar();
-    QLabel *takeTitleLabel();
     QAbstractButton *takeIconButton();
     QAbstractButton *takeMinButton();
     QAbstractButton *takeMaxButton();

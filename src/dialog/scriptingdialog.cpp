@@ -34,7 +34,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     // build up UI
     buildUpRibbonBar();
 
-    auto layout = new QVBoxLayout(this);
+    auto cw = new QWidget(this);
+    auto layout = new QVBoxLayout(cw);
     layout->setContentsMargins(1, 0, 1, 0);
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
@@ -46,6 +47,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_status->setContentsMargins(0, 1, 2, 2);
 
     layout->addWidget(m_status);
+    buildUpContent(cw);
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));

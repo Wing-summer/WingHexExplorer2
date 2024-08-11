@@ -1,6 +1,7 @@
 #ifndef WINGANGELAPI_H
 #define WINGANGELAPI_H
 
+#include "AngelScript/add_on/scriptarray/scriptarray.h"
 #include "src/plugin/iwingplugin.h"
 
 class asIScriptEngine;
@@ -28,6 +29,19 @@ public slots:
 
 private:
     void installLogAPI(asIScriptEngine *engine);
+    void installExtAPI(asIScriptEngine *engine);
+    void installMsgboxAPI(asIScriptEngine *engine);
+    void installInputboxAPI(asIScriptEngine *engine);
+    void installFileDialogAPI(asIScriptEngine *engine);
+    void installColorDialogAPI(asIScriptEngine *engine);
+    void installHexReaderAPI(asIScriptEngine *engine);
+    void installHexControllerAPI(asIScriptEngine *engine);
+
+private:
+    QString _InputBox_getItem(const QString &title, const QString &label,
+                              const CScriptArray &items, int current,
+                              bool editable, bool *ok,
+                              Qt::InputMethodHints inputMethodHints);
 };
 
 #endif // WINGANGELAPI_H

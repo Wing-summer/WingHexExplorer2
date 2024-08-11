@@ -53,7 +53,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptDictionary(engine);
     RegisterScriptGrid(engine);
     RegisterScriptDateTime(engine);
-    RegisterScriptFileSystem(engine);
+    // RegisterScriptFileSystem(engine);
     RegisterScriptHandle(engine);
     // RegisterQStringUtils(engine);
     RegisterExceptionRoutines(engine);
@@ -364,7 +364,7 @@ ScriptMachine::ScriptMachine(std::function<QString()> &getInputFn,
     qRegisterMetaType<MessageInfo>();
 
     _engine = asCreateScriptEngine();
-    if (!configureEngine(_engine)) {
+    if (!ScriptMachine::configureEngine(_engine)) {
         _engine->ShutDownAndRelease();
         _engine = nullptr;
     }

@@ -8,15 +8,12 @@
 #include <QVBoxLayout>
 #include <QWKWidgets/widgetwindowagent.h>
 
-FramelessHelper::FramelessHelper(QWidget *parent) : QObject(parent) {
+FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
+    : QObject(parent) {
     Q_ASSERT(parent);
 
     auto windowAgent = new QWK::WidgetWindowAgent(parent);
     windowAgent->setup(parent);
-
-    auto titleLabel = new QLabel();
-    titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setObjectName(QStringLiteral("win-title-label"));
 
 #ifndef Q_OS_MAC
     auto iconButton = new QWK::WindowButton();
@@ -41,7 +38,6 @@ FramelessHelper::FramelessHelper(QWidget *parent) : QObject(parent) {
 #endif
 
     m_windowBar = new QWK::WindowBar();
-    m_windowBar->setMenuBar(new QMenuBar(m_windowBar));
 
 #ifndef Q_OS_MAC
     m_windowBar->setIconButton(iconButton);
@@ -49,7 +45,6 @@ FramelessHelper::FramelessHelper(QWidget *parent) : QObject(parent) {
     m_windowBar->setMaxButton(maxButton);
     m_windowBar->setCloseButton(closeButton);
 #endif
-    m_windowBar->setTitleLabel(titleLabel);
     m_windowBar->setHostWidget(parent);
 
     windowAgent->setTitleBar(m_windowBar);
@@ -61,7 +56,12 @@ FramelessHelper::FramelessHelper(QWidget *parent) : QObject(parent) {
     windowAgent->setSystemButton(QWK::WindowAgentBase::Close, closeButton);
 #endif
 
-    windowAgent->setHitTestVisible(m_windowBar->menuBar(), true);
+    if (isDialog) {
+        minButton->hide();
+        maxButton->hide();
+    }
+
+    windowAgent->setHitTestVisible(m_windowBar, false);
 
 #ifndef Q_OS_MAC
     connect(m_windowBar, &QWK::WindowBar::minimizeRequested, parent,

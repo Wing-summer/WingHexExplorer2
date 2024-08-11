@@ -6,7 +6,7 @@
 ScriptConsoleMachine::ScriptConsoleMachine(
     std::function<QString(void)> &getInputFn, QObject *parent)
     : ScriptMachine(getInputFn, parent) {
-    if (!configureEngine(_engine)) {
+    if (!ScriptConsoleMachine::configureEngine(_engine)) {
         _engine->ShutDownAndRelease();
         _engine = nullptr;
     }
@@ -31,6 +31,14 @@ bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
     _immediateContext->SetExceptionCallback(
         asMETHOD(ScriptConsoleMachine, exceptionCallback), this,
         asCALL_THISCALL);
+
+    static std::function<void(void)> fn =
+        std::bind(&ScriptConsoleMachine::onClearConsole, this);
+    auto r = engine->RegisterGlobalFunction("void clear()",
+                                            asMETHOD(decltype(fn), operator()),
+                                            asCALL_THISCALL_ASGLOBAL, &fn);
+    Q_ASSERT(r >= 0);
+
     PluginSystem::instance().angelApi()->installAPI(engine);
     return _immediateContext != nullptr;
 }

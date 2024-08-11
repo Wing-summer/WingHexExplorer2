@@ -1,4 +1,5 @@
 #include "scriptqstring.h"
+#include "angelscript.h"
 
 #include <QHash>
 #include <QString>
@@ -449,9 +450,11 @@ void RegisterQString_Native(asIScriptEngine *engine) {
         "string", "int opCmp(const string &in) const", asFUNCTION(StringCmp),
         asCALL_CDECL_OBJFIRST);
     assert(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string opAdd(const string &in) const",
-        asFUNCTIONPR(operator+, (const QString &, const QString &), QString),
+        asFUNCTIONPR(operator+, (const QString &, const QString &),
+                     const QString),
         asCALL_CDECL_OBJFIRST);
     assert(r >= 0);
 
@@ -468,7 +471,7 @@ void RegisterQString_Native(asIScriptEngine *engine) {
                                      asFUNCTION(StringResize),
                                      asCALL_CDECL_OBJLAST);
     assert(r >= 0);
-#if AS_USE_STLNAMES != 1 && AS_USE_ACCESSORS == 1
+#if AS_USE_ACCESSORS == 1
     // Don't register these if STL names is used, as they conflict with the
     // method size()
     r = engine->RegisterObjectMethod(
@@ -829,7 +832,7 @@ static void StringCharAtGeneric(asIScriptGeneric *gen) {
 
         gen->SetReturnAddress(0);
     } else {
-        gen->SetReturnAddress(&(self->operator[](index)));
+        gen->SetReturnAddress(&self[index]);
     }
 }
 

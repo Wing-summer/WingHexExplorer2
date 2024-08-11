@@ -63,6 +63,8 @@ private:
     QColor m_backColor = Qt::black;
     QPixmap m_icon;
 
+    QWidget *_parent = nullptr;
+
     TOAST_POS m_pos = TOAST_POS::BOTTOM;
 
     Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,

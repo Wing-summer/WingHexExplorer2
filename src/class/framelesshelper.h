@@ -7,7 +7,7 @@
 class FramelessHelper : public QObject {
     Q_OBJECT
 public:
-    FramelessHelper(QWidget *parent);
+    FramelessHelper(QWidget *parent, bool isDialog);
 
     QWK::WindowBar *windowBar() const;
 

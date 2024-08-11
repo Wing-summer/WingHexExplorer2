@@ -48,6 +48,7 @@ private:
     void connectUIInterface(IWingPlugin *plg);
 
     static bool checkSender(QObject *sender);
+    static QString packLogMessage(const char *header, const QString &msg);
 
     EditorView *pluginCurrentEditor(QObject *sender) const;
 
@@ -60,7 +61,6 @@ private:
 
 private:
     MainWindow *_win = nullptr;
-    QThread *_plgThread = nullptr;
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
     QMap<HookIndex, QList<IWingPlugin *>> dispatcher;

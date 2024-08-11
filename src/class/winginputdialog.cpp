@@ -51,7 +51,7 @@ QString WingInputDialog::getMultiLineText(
     QObject::connect(dialog, &QInputDialog::finished, &d,
                      &FramelessDialogBase::done);
 
-    const int ret = dialog->exec();
+    const int ret = d.exec();
 
     if (ok)
         *ok = !!ret;
@@ -82,7 +82,7 @@ QString WingInputDialog::getItem(QWidget *parent, const QString &title,
     QObject::connect(dialog, &QInputDialog::finished, &d,
                      &FramelessDialogBase::done);
 
-    const int ret = dialog->exec();
+    const int ret = d.exec();
 
     if (ok)
         *ok = !!ret;
@@ -110,7 +110,7 @@ int WingInputDialog::getInt(QWidget *parent, const QString &title,
     QObject::connect(dialog, &QInputDialog::finished, &d,
                      &FramelessDialogBase::done);
 
-    const int ret = dialog->exec();
+    const int ret = d.exec();
 
     if (ok)
         *ok = !!ret;
@@ -140,7 +140,7 @@ double WingInputDialog::getDouble(QWidget *parent, const QString &title,
     QObject::connect(dialog, &QInputDialog::finished, &d,
                      &FramelessDialogBase::done);
 
-    const int ret = dialog->exec();
+    const int ret = d.exec();
 
     if (ok)
         *ok = !!ret;

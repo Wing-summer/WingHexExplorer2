@@ -20,6 +20,7 @@
 Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     auto w = new QWidget(this);
     auto layout = new QHBoxLayout(w);
+    setObjectName(QStringLiteral("RIBBON"));
 
     auto hideBtn = new QToolButton(this);
     hideBtn->setObjectName(QStringLiteral("RIBBON_HIDE_BTN"));

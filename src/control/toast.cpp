@@ -21,7 +21,7 @@ Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
              QWidget *parent)
     : QWidget(parent), m_strContent(strContent),
       m_nToastInterval(nToastInterval), m_nCurrentWindowOpacity(0),
-      m_nCurrentStayTime(0), m_nStatus(0), m_icon(icon) {
+      m_nCurrentStayTime(0), m_nStatus(0), m_icon(icon), _parent(parent) {
     Q_ASSERT(parent);
     init();
 }
@@ -91,7 +91,8 @@ void Toast::init() {
 }
 
 void Toast::setToastPos(TOAST_POS pos) {
-    QRect screenRect = this->parentWidget()->geometry();
+    Q_ASSERT(_parent);
+    QRect screenRect = _parent->geometry();
     QSize fontsize = calculateTextSize();
     QSizeF windowSize((fontsize.width() + m_drawFont.pointSize() + 5) +
                           PADDING * 2,
@@ -139,14 +140,20 @@ void Toast::paintEvent(QPaintEvent *) {
 
     auto ICON_SIZE = m_drawFont.pointSize();
     auto ICON_PADDING = ICON_SIZE + 5;
+    if (m_icon.isNull()) {
+        painter.setPen(textPen);
+        painter.drawText(PADDING + ICON_PADDING / 2,
+                         widgetSize.height() / 2 + PADDING, m_strContent);
+    } else {
+        painter.drawPixmap(QRect(PADDING,
+                                 int(widgetSize.height() - ICON_SIZE) / 2,
+                                 ICON_SIZE, ICON_SIZE),
+                           m_icon);
 
-    painter.drawPixmap(QRect(PADDING, int(widgetSize.height() - ICON_SIZE) / 2,
-                             ICON_SIZE, ICON_SIZE),
-                       m_icon);
-
-    painter.setPen(textPen);
-    painter.drawText(PADDING + ICON_PADDING, widgetSize.height() / 2 + PADDING,
-                     m_strContent);
+        painter.setPen(textPen);
+        painter.drawText(PADDING + ICON_PADDING,
+                         widgetSize.height() / 2 + PADDING, m_strContent);
+    }
 }
 
 void Toast::showEvent(QShowEvent *) {

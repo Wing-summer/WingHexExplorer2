@@ -4,7 +4,7 @@
 
 FramelessMainWindow::FramelessMainWindow(QWidget *parent)
     : QMainWindow(parent) {
-    _helper = new FramelessHelper(this);
+    _helper = new FramelessHelper(this, false);
 }
 
 void FramelessMainWindow::buildUpContent(QWidget *content) {
