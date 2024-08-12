@@ -4,13 +4,13 @@
 #include "QHexView/document/buffer/qfileregionbuffer.h"
 #include "QHexView/document/buffer/qmemorybuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
-#include "src/class/eventfilter.h"
-#include "src/class/qkeysequences.h"
-#include "src/class/settingmanager.h"
-#include "src/class/workspacemanager.h"
-#include "src/dialog/fileinfodialog.h"
-#include "src/plugin/pluginsystem.h"
-#include "src/utilities.h"
+#include "class/eventfilter.h"
+#include "class/qkeysequences.h"
+#include "class/settingmanager.h"
+#include "class/workspacemanager.h"
+#include "dialog/fileinfodialog.h"
+#include "plugin/pluginsystem.h"
+#include "utilities.h"
 
 #include <QFile>
 #include <QFileInfo>

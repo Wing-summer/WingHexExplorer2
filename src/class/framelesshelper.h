@@ -1,7 +1,7 @@
 #ifndef FRAMELESSHELPER_H
 #define FRAMELESSHELPER_H
 
-#include "src/widgetframe/windowbar.h"
+#include "widgetframe/windowbar.h"
 #include <QObject>
 
 class FramelessHelper : public QObject {

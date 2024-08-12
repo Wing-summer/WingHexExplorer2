@@ -1,7 +1,7 @@
 #ifndef EDITORSETTINGDIALOG_H
 #define EDITORSETTINGDIALOG_H
 
-#include "src/plugin/settingpage.h"
+#include "plugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

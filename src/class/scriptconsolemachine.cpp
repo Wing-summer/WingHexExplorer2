@@ -1,7 +1,7 @@
 #include "scriptconsolemachine.h"
 
 #include "AngelScript/add_on/scripthelper/scripthelper.h"
-#include "src/plugin/pluginsystem.h"
+#include "plugin/pluginsystem.h"
 
 ScriptConsoleMachine::ScriptConsoleMachine(
     std::function<QString(void)> &getInputFn, QObject *parent)
@@ -39,7 +39,8 @@ bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
                                             asCALL_THISCALL_ASGLOBAL, &fn);
     Q_ASSERT(r >= 0);
 
-    PluginSystem::instance().angelApi()->installAPI(engine);
+    PluginSystem::instance().angelApi()->installAPI(
+        engine, typeInfo(RegisteredType::tString));
     return _immediateContext != nullptr;
 }
 

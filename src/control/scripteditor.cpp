@@ -1,5 +1,5 @@
 #include "scripteditor.h"
-#include "src/class/qscilexeras.h"
+#include "class/qscilexeras.h"
 
 #include <QPixmap>
 

@@ -4,10 +4,10 @@
 #include <QMetaEnum>
 
 #include "AngelScript/angelscript/include/angelscript.h"
-#include "src/class/languagemanager.h"
-#include "src/class/settingmanager.h"
-#include "src/class/skinmanager.h"
-#include "src/utilities.h"
+#include "class/languagemanager.h"
+#include "class/settingmanager.h"
+#include "class/skinmanager.h"
+#include "utilities.h"
 
 #include <QLibraryInfo>
 #include <QSysInfo>

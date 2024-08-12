@@ -34,33 +34,32 @@ if(MSVC)
   string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
 
-set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL 1)
-add_subdirectory(qwindowkit EXCLUDE_FROM_ALL)
-
-add_subdirectory(QLogger)
-add_subdirectory(QHexView)
-add_subdirectory(QScintilla)
-add_subdirectory(Qt-Advanced-Docking-System)
-add_subdirectory(AngelScript/angelscript/projects/cmake)
-add_subdirectory(QConsoleWidget)
-add_subdirectory(QJsonModel)
+add_subdirectory(3rdparty/qwindowkit)
+add_subdirectory(3rdparty/QLogger)
+add_subdirectory(3rdparty/QHexView)
+add_subdirectory(3rdparty/QScintilla)
+add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
+add_subdirectory(3rdparty/AngelScript/angelscript/projects/cmake)
+add_subdirectory(3rdparty/QConsoleWidget)
+add_subdirectory(3rdparty/QJsonModel)
 
 set(QAPPLICATION_CLASS
     QApplication
     CACHE STRING "Inheritance class for SingleApplication")
-add_subdirectory(SingleApplication)
+add_subdirectory(3rdparty/SingleApplication)
 
 set(RIBBON_SRC
-    QWingRibbon/ribbon.cpp
-    QWingRibbon/ribbon.h
-    QWingRibbon/ribbonbuttongroup.cpp
-    QWingRibbon/ribbonbuttongroup.h
-    QWingRibbon/ribbonbuttongroup.ui
-    QWingRibbon/ribbontabcontent.cpp
-    QWingRibbon/ribbontabcontent.h
-    QWingRibbon/ribbontabcontent.ui)
+    3rdparty/QWingRibbon/ribbon.cpp
+    3rdparty/QWingRibbon/ribbon.h
+    3rdparty/QWingRibbon/ribbonbuttongroup.cpp
+    3rdparty/QWingRibbon/ribbonbuttongroup.h
+    3rdparty/QWingRibbon/ribbonbuttongroup.ui
+    3rdparty/QWingRibbon/ribbontabcontent.cpp
+    3rdparty/QWingRibbon/ribbontabcontent.h
+    3rdparty/QWingRibbon/ribbontabcontent.ui)
 
-set(QPATHEDIT_SRC QPathEdit/qpathedit.cpp QPathEdit/qpathedit.h)
+set(QPATHEDIT_SRC 3rdparty/QPathEdit/qpathedit.cpp
+                  3rdparty/QPathEdit/qpathedit.h)
 
 set(DIALOG_SRC
     src/dialog/framelessmainwindow.h
@@ -189,9 +188,14 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.ui)
 
 set(SCRIPT_ADDON_SRC
-    src/scriptaddon/scriptqstring.h src/scriptaddon/scriptqstring.cpp
-    src/scriptaddon/scriptqdictionary.h src/scriptaddon/scriptqdictionary.cpp
-    src/scriptaddon/scriptregex.h src/scriptaddon/scriptregex.cpp)
+    src/scriptaddon/scriptqstring.h
+    src/scriptaddon/scriptqstring.cpp
+    src/scriptaddon/scriptqdictionary.h
+    src/scriptaddon/scriptqdictionary.cpp
+    src/scriptaddon/scriptregex.h
+    src/scriptaddon/scriptregex.cpp
+    src/scriptaddon/scriptcolor.h
+    src/scriptaddon/scriptcolor.cpp)
 
 set(PLUGIN_SRC
     src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
@@ -202,16 +206,16 @@ set(TS_FILES lang/ws_zh_CN.ts)
 
 set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
 set(TRANSLATION_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/AngelScript
-    ${CMAKE_CURRENT_SOURCE_DIR}/QConsoleWidget
-    ${CMAKE_CURRENT_SOURCE_DIR}/QHexView
-    ${CMAKE_CURRENT_SOURCE_DIR}/QJsonModel
-    ${CMAKE_CURRENT_SOURCE_DIR}/QLogger
-    ${CMAKE_CURRENT_SOURCE_DIR}/QPathEdit
-    ${CMAKE_CURRENT_SOURCE_DIR}/QScintilla
-    ${CMAKE_CURRENT_SOURCE_DIR}/Qt-Advanced-Docking-System
-    ${CMAKE_CURRENT_SOURCE_DIR}/QWingRibbon
-    ${CMAKE_CURRENT_SOURCE_DIR}/SingleApplication
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QLogger
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QScintilla
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(${QT_VERSION_MAJOR} EQUAL 5)
   qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
@@ -286,8 +290,9 @@ target_link_libraries(
           QConsoleWidget
           qt${QT_VERSION_MAJOR}advanceddocking)
 
-target_include_directories(${CMAKE_PROJECT_NAME}
-                           PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(
+  ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1. If
 # you are developing for iOS or macOS you should consider setting an explicit,

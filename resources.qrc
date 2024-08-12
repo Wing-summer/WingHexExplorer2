@@ -100,6 +100,6 @@
         <file alias="README.md">src/README.md</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
-        <file alias="dialog.ico">QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>
+        <file alias="dialog.ico">3rdparty/QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>
     </qresource>
 </RCC>

@@ -1,7 +1,7 @@
 #include "colorpickerdialog.h"
 #include "ui_colorpickerdialog.h"
 
-#include "src/utilities.h"
+#include "utilities.h"
 
 #include <QPushButton>
 

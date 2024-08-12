@@ -2,7 +2,7 @@
 #define PLUGINWINDOW_H
 
 #include "framelessdialogbase.h"
-#include "src/plugin/pluginsystem.h"
+#include "plugin/pluginsystem.h"
 
 #include <QListWidget>
 #include <QTextBrowser>

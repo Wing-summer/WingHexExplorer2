@@ -1,6 +1,8 @@
 #include "framelessmainwindow.h"
+#include <QEvent>
+#include <QStyle>
 
-#include <src/widgetframe/windowbutton.h>
+#include <widgetframe/windowbutton.h>
 
 FramelessMainWindow::FramelessMainWindow(QWidget *parent)
     : QMainWindow(parent) {
@@ -16,4 +18,39 @@ void FramelessMainWindow::buildUpContent(QWidget *content) {
             &QWK::WindowButton::setIconNormal);
     setMenuWidget(titlebar);
     setCentralWidget(content);
+#ifdef QT_DEBUG
+    m_isBuilt = true;
+#endif
+}
+
+void FramelessMainWindow::showEvent(QShowEvent *event) {
+#ifdef QT_DEBUG
+    Q_ASSERT_X(m_isBuilt, __FUNCTION__,
+               "You must call it when you construct it!");
+#endif
+    QMainWindow::showEvent(event);
+}
+
+bool FramelessMainWindow::event(QEvent *event) {
+    switch (event->type()) {
+    case QEvent::WindowActivate: {
+        if (_helper->windowBar()) {
+            _helper->windowBar()->setProperty("bar-active", true);
+            style()->polish(_helper->windowBar());
+        }
+        break;
+    }
+
+    case QEvent::WindowDeactivate: {
+        if (_helper->windowBar()) {
+            _helper->windowBar()->setProperty("bar-active", false);
+            style()->polish(_helper->windowBar());
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+    return QMainWindow::event(event);
 }

@@ -1,5 +1,5 @@
 #include "checksummodel.h"
-#include "src/utilities.h"
+#include "utilities.h"
 
 CheckSumModel::CheckSumModel(QObject *parent) : QAbstractTableModel(parent) {
     for (auto &cs : Utilities::supportedHashAlgorithms()) {

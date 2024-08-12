@@ -1,5 +1,5 @@
 #include "huecolorpickerslider.h"
-#include "src/dialog/colorpickerdialog.h"
+#include "dialog/colorpickerdialog.h"
 
 #include <QAction>
 #include <QMessageBox>

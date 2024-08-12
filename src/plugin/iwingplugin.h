@@ -45,6 +45,7 @@ Q_DECL_UNUSED constexpr auto HOSTAUTHORPIMG =
 Q_DECL_UNUSED constexpr auto SPONSORQRCODE =
     ":/com.wingsummer.winghex/images/sponsorqr.png";
 
+Q_NAMESPACE
 enum ErrFile : uint {
     Success,
     Error,
@@ -58,6 +59,7 @@ enum ErrFile : uint {
     SourceFileChanged,
     ClonedFile
 };
+Q_ENUM_NS(ErrFile)
 
 struct FindResult {
     qsizetype offset = -1;
@@ -154,7 +156,6 @@ enum class WingPluginMessage {
     PluginUnLoading,
     PluginUnLoaded,
     ErrorMessage,
-    ConnectTimeout,
     MessageResponse,
     HookMessage
 };
@@ -591,7 +592,6 @@ constexpr auto IWINGPLUGIN_INTERFACE_IID = "com.wingsummer.iwingplugin";
 Q_DECLARE_METATYPE(WingHex::WingPluginMessage)
 Q_DECLARE_METATYPE(WingHex::ResponseMsg)
 Q_DECLARE_METATYPE(WingHex::HookIndex)
-Q_DECLARE_METATYPE(WingHex::ErrFile)
 Q_DECLARE_INTERFACE(WingHex::IWingPlugin, IWINGPLUGIN_INTERFACE_IID)
 
 #endif // IWINGPLUGIN_H

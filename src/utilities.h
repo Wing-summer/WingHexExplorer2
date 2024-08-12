@@ -20,6 +20,7 @@
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#undef MessageBox // because of IWingPlugin
 #else
 #include <unistd.h>
 #endif

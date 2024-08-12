@@ -1,5 +1,5 @@
 #include "finddialog.h"
-#include "src/utilities.h"
+#include "utilities.h"
 
 #include <QButtonGroup>
 #include <QDialogButtonBox>

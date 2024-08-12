@@ -1,5 +1,5 @@
 #include "wingmessagebox.h"
-#include "src/dialog/framelessdialogbase.h"
+#include "dialog/framelessdialogbase.h"
 #include <QApplication>
 
 WingMessageBox::WingMessageBox() {}

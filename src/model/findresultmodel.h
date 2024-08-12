@@ -3,8 +3,8 @@
 
 #include <QAbstractTableModel>
 
-#include "src/define.h"
-#include "src/plugin/iwingplugin.h"
+#include "define.h"
+#include "plugin/iwingplugin.h"
 
 class FindResultModel : public QAbstractTableModel {
     Q_OBJECT

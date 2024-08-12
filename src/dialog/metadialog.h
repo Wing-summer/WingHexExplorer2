@@ -11,7 +11,7 @@
 #include <QObject>
 #include <QPalette>
 
-#include "src/control/huecolorpickerslider.h"
+#include "control/huecolorpickerslider.h"
 
 class MetaDialog : public FramelessDialogBase {
     Q_OBJECT

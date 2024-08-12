@@ -2,7 +2,7 @@
 #define ScriptingConsole_H
 
 #include "QConsoleWidget/src/QConsoleWidget.h"
-#include "src/class/scriptconsolemachine.h"
+#include "class/scriptconsolemachine.h"
 
 class ScriptingConsole : public QConsoleWidget {
     Q_OBJECT

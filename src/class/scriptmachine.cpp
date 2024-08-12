@@ -11,7 +11,7 @@
 #include "AngelScript/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/add_on/weakref/weakref.h"
-#include "src/scriptaddon/scriptqstring.h"
+#include "scriptaddon/scriptqstring.h"
 
 #include "angelobjstring.h"
 
@@ -355,6 +355,13 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     info.section = msg->section;
     info.message = processTranslation(msg->message);
     emit ins->onOutput(t, info);
+}
+
+asITypeInfo *ScriptMachine::typeInfo(RegisteredType type) const {
+    if (type < RegisteredType::tMAXCOUNT && type >= 0) {
+        return _rtypes.at(type);
+    }
+    return nullptr;
 }
 
 ScriptMachine::ScriptMachine(std::function<QString()> &getInputFn,

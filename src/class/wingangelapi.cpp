@@ -1,7 +1,8 @@
 #include "wingangelapi.h"
 
 #include "AngelScript/angelscript/include/angelscript.h"
-#include "src/class/winginputdialog.h"
+#include "class/wingfiledialog.h"
+#include "class/winginputdialog.h"
 
 // a helper function to register Qt enums to AngelScript
 template <typename T>
@@ -40,12 +41,17 @@ const QString WingAngelAPI::pluginComment() const {
               "ability to call the host API.");
 }
 
-void WingAngelAPI::installAPI(asIScriptEngine *engine) {
+void WingAngelAPI::installAPI(asIScriptEngine *engine,
+                              asITypeInfo *stringType) {
     installExtAPI(engine);
     installLogAPI(engine);
     installMsgboxAPI(engine);
-    installInputboxAPI(engine);
+    installInputboxAPI(engine, stringType->GetTypeId());
     installFileDialogAPI(engine);
+
+    registerAngelType<WingHex::ErrFile>(engine, "ErrFile");
+    installHexReaderAPI(engine);
+    installHexControllerAPI(engine);
 }
 
 void WingAngelAPI::plugin2MessagePipe(WingHex::WingPluginMessage type,
@@ -111,7 +117,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("MsgBox");
     Q_ASSERT(r >= 0);
 
-    registerAngelType<QMessageBox::StandardButtons>(engine, "StandardButton");
+    registerAngelType<QMessageBox::StandardButtons>(engine, "StandardButtons");
     registerAngelType<QMessageBox::Icon>(engine, "Icon");
     auto msgbox = &this->msgbox;
 
@@ -135,8 +141,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                           std::placeholders::_3, std::placeholders::_4);
         r = engine->RegisterGlobalFunction(
             "void information(const string &in, const string &in, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::Ok, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton)",
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -151,9 +157,9 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                           std::placeholders::_3, std::placeholders::_4);
         r = engine->RegisterGlobalFunction(
             "void question(const string &in, const string &in, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::Yes | "
-            "MsgBox::StandardButton::No, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton)",
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::Yes | "
+            "MsgBox::StandardButtons::No, "
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -168,8 +174,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                           std::placeholders::_3, std::placeholders::_4);
         r = engine->RegisterGlobalFunction(
             "void warning(const string &in, const string &in, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::Ok, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton)",
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -184,8 +190,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                           std::placeholders::_3, std::placeholders::_4);
         r = engine->RegisterGlobalFunction(
             "void critical(const string &in, const string &in, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::Ok, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton)",
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -200,8 +206,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                            std::placeholders::_4, std::placeholders::_5);
         r = engine->RegisterGlobalFunction(
             "void msgbox(MsgBox::Icon, const string &in, const string &in, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton, "
-            "MsgBox::StandardButton = MsgBox::StandardButton::NoButton)",
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton, "
+            "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -219,7 +225,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
+void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
     int r = engine->SetDefaultNamespace("InputBox");
     Q_ASSERT(r >= 0);
 
@@ -302,7 +308,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
         static std::function<QString(const QString &, const QString &,
                                      const CScriptArray &, int, bool, bool *,
                                      Qt::InputMethodHints)>
-            fn = std::bind(&WingAngelAPI::_InputBox_getItem, this,
+            fn = std::bind(&WingAngelAPI::_InputBox_getItem, this, stringID,
                            std::placeholders::_1, std::placeholders::_2,
                            std::placeholders::_3, std::placeholders::_4,
                            std::placeholders::_5, std::placeholders::_6,
@@ -323,29 +329,143 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("FileDialog");
     Q_ASSERT(r >= 0);
 
+    registerAngelType<QFileDialog::Options>(engine, "Options");
+
+    auto filedlg = &this->filedlg;
+
+    {
+        static std::function<QString(const QString &, const QString &,
+                                     QFileDialog::Options)>
+            fn = std::bind(
+                &WingHex::WingPlugin::FileDialog::getExistingDirectory, filedlg,
+                nullptr, std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3);
+
+        r = engine->RegisterGlobalFunction(
+            "string getExistingDirectory(const string &in = \"\", "
+            "const string &in = \"\", "
+            "FileDialog::Options &in = FileDialog::Options::ShowDirsOnly)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<QString(const QString &, const QString &,
+                                     const QString &, QString *,
+                                     QFileDialog::Options)>
+            fn = std::bind(&WingHex::WingPlugin::FileDialog::getOpenFileName,
+                           filedlg, nullptr, std::placeholders::_1,
+                           std::placeholders::_2, std::placeholders::_3,
+                           std::placeholders::_4, std::placeholders::_5);
+
+        r = engine->RegisterGlobalFunction(
+            "string getOpenFileName(const string &in = \"\", "
+            "const string &in = \"\", const string &in = \"\", "
+            "string &out = \"\", FileDialog::Options &in = 0)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<QString(const QString &, const QString &,
+                                     const QString &, QString *,
+                                     QFileDialog::Options)>
+            fn = std::bind(&WingHex::WingPlugin::FileDialog::getSaveFileName,
+                           filedlg, nullptr, std::placeholders::_1,
+                           std::placeholders::_2, std::placeholders::_3,
+                           std::placeholders::_4, std::placeholders::_5);
+
+        r = engine->RegisterGlobalFunction(
+            "string getSaveFileName(const string &in = \"\", "
+            "const string &in = \"\", const string &in = \"\", "
+            "string &out = \"\", FileDialog::Options &in = 0)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        auto stringArrayType = engine->GetTypeInfoByName("array<string>");
+        static std::function<CScriptArray *(const QString &, const QString &,
+                                            const QString &, QString *,
+                                            QFileDialog::Options)>
+            fn = std::bind(&WingAngelAPI::_FileDialog_getOpenFileNames, this,
+                           stringArrayType, std::placeholders::_1,
+                           std::placeholders::_2, std::placeholders::_3,
+                           std::placeholders::_4, std::placeholders::_5);
+
+        r = engine->RegisterGlobalFunction(
+            "array<string>@ getOpenFileNames(const string &in = \"\", "
+            "const string &in = \"\", const string &in = \"\", "
+            "string &out = \"\", FileDialog::Options &in = 0)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
     engine->SetDefaultNamespace("");
 }
 
 void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {}
 
-void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {}
+void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("Reader");
+    Q_ASSERT(r >= 0);
+
+    engine->SetDefaultNamespace("");
+}
 
 void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {}
 
-QString WingAngelAPI::_InputBox_getItem(const QString &title,
+QStringList WingAngelAPI::cArray2QStringList(const CScriptArray &array,
+                                             int stringID, bool *ok) {
+    bool b = array.GetElementTypeId() == stringID;
+    if (ok) {
+        *ok = b;
+    }
+    if (!b) {
+        return {};
+    }
+
+    QStringList buffer;
+    array.AddRef();
+    for (asUINT i = 0; i < array.GetSize(); ++i) {
+        auto item = reinterpret_cast<const QString *>(array.At(i));
+        buffer.append(*item);
+    }
+    array.Release();
+    return buffer;
+}
+
+QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
                                         const QString &label,
                                         const CScriptArray &items, int current,
                                         bool editable, bool *ok,
                                         Qt::InputMethodHints inputMethodHints) {
-    QStringList buffer;
-
-    items.AddRef();
-    for (int i = 0; i < items.GetSize(); ++i) {
-        auto item = reinterpret_cast<const QString *>(items.At(i));
-        buffer.append(*item);
+    bool o = false;
+    auto ret = cArray2QStringList(items, stringID, &o);
+    if (o) {
+        return WingInputDialog::getItem(nullptr, title, label, ret, current,
+                                        editable, ok, inputMethodHints);
+    } else {
+        *ok = false;
+        return {};
     }
-    items.Release();
+}
 
-    return WingInputDialog::getItem(nullptr, title, label, buffer, current,
-                                    editable, ok, inputMethodHints);
+CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
+    asITypeInfo *stringArrayType, const QString &caption, const QString &dir,
+    const QString &filter, QString *selectedFilter,
+    QFileDialog::Options options) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto ret = WingFileDialog::getOpenFileNames(
+            nullptr, caption, dir, filter, selectedFilter, options);
+
+        auto array = CScriptArray::Create(stringArrayType, ret.size());
+        for (QStringList::size_type i = 0; i < ret.size(); ++i) {
+            array->SetValue(i, &ret[i]);
+        }
+    }
+    return nullptr;
 }

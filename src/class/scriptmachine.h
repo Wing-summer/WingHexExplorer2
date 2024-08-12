@@ -41,8 +41,10 @@ protected:
         tMAXCOUNT
     };
 
+    asITypeInfo *typeInfo(RegisteredType type) const;
+
 public:
-    explicit ScriptMachine(std::function<QString ()> &getInputFn,
+    explicit ScriptMachine(std::function<QString()> &getInputFn,
                            QObject *parent = nullptr);
 
     virtual ~ScriptMachine();

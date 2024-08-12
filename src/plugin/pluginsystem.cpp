@@ -1,10 +1,10 @@
 #include "pluginsystem.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
-#include "src/class/logger.h"
-#include "src/class/winginputdialog.h"
-#include "src/class/wingmessagebox.h"
-#include "src/control/toast.h"
-#include "src/dialog/mainwindow.h"
+#include "class/logger.h"
+#include "class/winginputdialog.h"
+#include "class/wingmessagebox.h"
+#include "control/toast.h"
+#include "dialog/mainwindow.h"
 
 #include <QDir>
 #include <QFileInfoList>

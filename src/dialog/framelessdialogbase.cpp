@@ -1,5 +1,5 @@
 #include "framelessdialogbase.h"
-#include "src/widgetframe/windowbutton.h"
+#include "widgetframe/windowbutton.h"
 
 #include <QWKWidgets/widgetwindowagent.h>
 
@@ -14,8 +14,10 @@ FramelessDialogBase::FramelessDialogBase(QWidget *parent) : QDialog(parent) {
 FramelessDialogBase::~FramelessDialogBase() {}
 
 void FramelessDialogBase::buildUpContent(QWidget *content) {
+#ifdef QT_DEBUG
     Q_ASSERT_X(!m_isBuilt, __FUNCTION__, "You can only can it once!");
     Q_ASSERT(content);
+#endif
 
     auto WIN_WIDGET = new QWidget(this);
     QVBoxLayout *vLayout = new QVBoxLayout(WIN_WIDGET);
@@ -34,13 +36,16 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(WIN_WIDGET);
-
+#ifdef QT_DEBUG
     m_isBuilt = true;
+#endif
 }
 
 void FramelessDialogBase::showEvent(QShowEvent *event) {
+#ifdef QT_DEBUG
     Q_ASSERT_X(m_isBuilt, __FUNCTION__,
                "You must call it when you construct it!");
+#endif
     QDialog::showEvent(event);
 }
 
@@ -67,5 +72,3 @@ bool FramelessDialogBase::event(QEvent *event) {
     }
     return QDialog::event(event);
 }
-
-void FramelessDialogBase::emulateLeaveEvent(QWidget *widget) {}

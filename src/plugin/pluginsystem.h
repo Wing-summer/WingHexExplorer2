@@ -1,7 +1,7 @@
 #ifndef PLUGINSYSTEM_H
 #define PLUGINSYSTEM_H
 
-#include "src/define.h"
+#include "define.h"
 #include <QDockWidget>
 #include <QHash>
 #include <QList>
@@ -13,7 +13,7 @@
 #include <QToolButton>
 #include <QVariant>
 
-#include "src/class/wingangelapi.h"
+#include "class/wingangelapi.h"
 
 using namespace WingHex;
 

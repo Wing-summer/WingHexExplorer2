@@ -1,5 +1,5 @@
 #include "checksumdialog.h"
-#include "src/utilities.h"
+#include "utilities.h"
 
 #include <QDialogButtonBox>
 #include <QLabel>
