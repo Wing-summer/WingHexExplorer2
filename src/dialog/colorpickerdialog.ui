@@ -190,7 +190,7 @@
   <customwidget>
    <class>QColorPickerSlider</class>
    <extends>QSlider</extends>
-   <header>src/control/qcolorpicker_slider.hpp</header>
+   <header>control/qcolorpicker_slider.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -1,6 +1,6 @@
 #include "framelesshelper.h"
 
-#include "src/widgetframe/windowbutton.h"
+#include "widgetframe/windowbutton.h"
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>

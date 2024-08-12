@@ -6,14 +6,14 @@
 
 #include "QHexView/qhexview.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "define.h"
+#include "dialog/finddialog.h"
 #include "gotowidget.h"
-#include "src/define.h"
-#include "src/dialog/finddialog.h"
-#include "src/model/bookmarksmodel.h"
-#include "src/plugin/iwingplugin.h"
-#include "src/utilities.h"
+#include "model/bookmarksmodel.h"
+#include "plugin/iwingplugin.h"
+#include "utilities.h"
 
-#include "src/model/findresultmodel.h"
+#include "model/findresultmodel.h"
 
 using namespace WingHex;
 

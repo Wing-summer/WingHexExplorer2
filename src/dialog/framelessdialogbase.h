@@ -1,7 +1,7 @@
 #ifndef FRAMELESSDIALOGBASE_H
 #define FRAMELESSDIALOGBASE_H
 
-#include "src/class/framelesshelper.h"
+#include "class/framelesshelper.h"
 #include <QDialog>
 
 class FramelessDialogBase : public QDialog {
@@ -17,9 +17,6 @@ public:
 protected:
     void showEvent(QShowEvent *event) override;
     bool event(QEvent *event) override;
-
-private:
-    static void emulateLeaveEvent(QWidget *widget);
 
 private:
     FramelessHelper *_helper = nullptr;

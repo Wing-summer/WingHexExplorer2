@@ -1,7 +1,7 @@
 #include "angelobjstring.h"
 #include "AngelScript/add_on/datetime/datetime.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
-#include "src/scriptaddon/scriptqdictionary.h"
+#include "scriptaddon/scriptqdictionary.h"
 
 #include <QString>
 #include <QTextStream>

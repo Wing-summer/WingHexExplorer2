@@ -1,6 +1,6 @@
 #include "metadialog.h"
-#include "src/control/toast.h"
-#include "src/utilities.h"
+#include "control/toast.h"
+#include "utilities.h"
 
 #include <QDialogButtonBox>
 #include <QPushButton>

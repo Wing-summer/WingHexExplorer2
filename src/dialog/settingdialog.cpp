@@ -1,8 +1,8 @@
 #include "settingdialog.h"
 #include "ui_settingdialog.h"
 
-#include "src/class/wingmessagebox.h"
-#include "src/utilities.h"
+#include "class/wingmessagebox.h"
+#include "utilities.h"
 
 #include <QApplication>
 #include <QPushButton>

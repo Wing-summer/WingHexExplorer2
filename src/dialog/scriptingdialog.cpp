@@ -1,11 +1,11 @@
 #include "scriptingdialog.h"
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "class/qkeysequences.h"
+#include "class/settingmanager.h"
+#include "class/skinmanager.h"
+#include "class/wingmessagebox.h"
 #include "sponsordialog.h"
-#include "src/class/qkeysequences.h"
-#include "src/class/settingmanager.h"
-#include "src/class/skinmanager.h"
-#include "src/class/wingmessagebox.h"
 
 #include <QDesktopServices>
 #include <QLabel>

@@ -1,7 +1,7 @@
 #ifndef FRAMELESSMAINWINDOW_H
 #define FRAMELESSMAINWINDOW_H
 
-#include "src/class/framelesshelper.h"
+#include "class/framelesshelper.h"
 #include <QMainWindow>
 
 class FramelessMainWindow : public QMainWindow {
@@ -11,8 +11,15 @@ public:
 
     void buildUpContent(QWidget *content);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+    bool event(QEvent *event) override;
+
 private:
     FramelessHelper *_helper = nullptr;
+#ifdef QT_DEBUG
+    bool m_isBuilt = false;
+#endif
 };
 
 #endif // FRAMELESSMAINWINDOW_H

@@ -2,7 +2,7 @@
 #define WINGANGELAPI_H
 
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
-#include "src/plugin/iwingplugin.h"
+#include "plugin/iwingplugin.h"
 
 class asIScriptEngine;
 
@@ -21,7 +21,7 @@ public:
     virtual uint pluginVersion() const override;
     virtual const QString pluginComment() const override;
 
-    void installAPI(asIScriptEngine *engine);
+    void installAPI(asIScriptEngine *engine, asITypeInfo *stringType);
 
 public slots:
     virtual void plugin2MessagePipe(WingHex::WingPluginMessage type,
@@ -31,17 +31,28 @@ private:
     void installLogAPI(asIScriptEngine *engine);
     void installExtAPI(asIScriptEngine *engine);
     void installMsgboxAPI(asIScriptEngine *engine);
-    void installInputboxAPI(asIScriptEngine *engine);
+    void installInputboxAPI(asIScriptEngine *engine, int stringID);
     void installFileDialogAPI(asIScriptEngine *engine);
     void installColorDialogAPI(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
 
 private:
-    QString _InputBox_getItem(const QString &title, const QString &label,
-                              const CScriptArray &items, int current,
-                              bool editable, bool *ok,
+    QStringList cArray2QStringList(const CScriptArray &array, int stringID,
+                                   bool *ok = nullptr);
+
+private:
+    QString _InputBox_getItem(int stringID, const QString &title,
+                              const QString &label, const CScriptArray &items,
+                              int current, bool editable, bool *ok,
                               Qt::InputMethodHints inputMethodHints);
+
+    CScriptArray *_FileDialog_getOpenFileNames(asITypeInfo *stringArrayType,
+                                               const QString &caption,
+                                               const QString &dir,
+                                               const QString &filter,
+                                               QString *selectedFilter,
+                                               QFileDialog::Options options);
 };
 
 #endif // WINGANGELAPI_H

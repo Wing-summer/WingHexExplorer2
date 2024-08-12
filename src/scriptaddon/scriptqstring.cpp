@@ -244,7 +244,7 @@ static QString AddBoolString(bool b, const QString &str) {
 #endif
 
 static char *StringCharAt(unsigned int i, QString &str) {
-    if (i >= str.size()) {
+    if (asDWORD(i) >= asDWORD(str.size())) {
         // Set a script exception
         asIScriptContext *ctx = asGetActiveContext();
         ctx->SetException("Out of range");
@@ -451,12 +451,20 @@ void RegisterQString_Native(asIScriptEngine *engine) {
         asCALL_CDECL_OBJFIRST);
     assert(r >= 0);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    r = engine->RegisterObjectMethod(
+        "string", "string opAdd(const string &in) const",
+        asFUNCTIONPR(operator+, (const QString &, const QString &), QString),
+        asCALL_CDECL_OBJFIRST);
+    assert(r >= 0);
+#else
     r = engine->RegisterObjectMethod(
         "string", "string opAdd(const string &in) const",
         asFUNCTIONPR(operator+, (const QString &, const QString &),
                      const QString),
         asCALL_CDECL_OBJFIRST);
     assert(r >= 0);
+#endif
 
     // The string length can be accessed through methods or through virtual
     // property
@@ -822,10 +830,10 @@ static void parseFloat_Generic(asIScriptGeneric *gen) {
 }
 
 static void StringCharAtGeneric(asIScriptGeneric *gen) {
-    unsigned int index = gen->GetArgDWord(0);
+    asDWORD index = gen->GetArgDWord(0);
     QString *self = static_cast<QString *>(gen->GetObject());
 
-    if (index >= self->size()) {
+    if (index >= asDWORD(self->size())) {
         // Set a script exception
         asIScriptContext *ctx = asGetActiveContext();
         ctx->SetException("Out of range");

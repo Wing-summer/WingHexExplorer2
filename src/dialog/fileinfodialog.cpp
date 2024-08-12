@@ -1,5 +1,5 @@
 #include "fileinfodialog.h"
-#include "src/utilities.h"
+#include "utilities.h"
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>

@@ -1,8 +1,8 @@
 #include "settingmanager.h"
 #include "setting.h"
 
-#include "src/class/skinmanager.h"
-#include "src/utilities.h"
+#include "class/skinmanager.h"
+#include "utilities.h"
 #include <QFileInfo>
 #include <QMetaEnum>
 

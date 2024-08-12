@@ -1,7 +1,7 @@
 #ifndef SCRIPTSETTINGDIALOG_H
 #define SCRIPTSETTINGDIALOG_H
 
-#include "src/plugin/settingpage.h"
+#include "plugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

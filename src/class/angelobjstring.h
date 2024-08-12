@@ -1,7 +1,7 @@
 #ifndef ANGELOBJSTRING_H
 #define ANGELOBJSTRING_H
 
-#include "src/class/asdebugger.h"
+#include "class/asdebugger.h"
 
 #include <QObject>
 #include <QString>
