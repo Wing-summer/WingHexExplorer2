@@ -49,6 +49,9 @@ public:
     /// \return The number of button groups
     int groupCount() const;
 
+protected:
+    QSize sizeHint() const override;
+
 private:
     Ui::RibbonTabContent *ui;
 };

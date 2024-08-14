@@ -46,18 +46,18 @@ Q_DECL_UNUSED constexpr auto SPONSORQRCODE =
     ":/com.wingsummer.winghex/images/sponsorqr.png";
 
 Q_NAMESPACE
-enum ErrFile : uint {
-    Success,
-    Error,
-    UnSaved,
-    Permission,
-    NotExist,
-    AlreadyOpened,
-    IsNewFile,
-    IsDirver,
-    WorkSpaceUnSaved,
-    SourceFileChanged,
-    ClonedFile
+enum ErrFile : int {
+    Success = 0,
+    Error = -1,
+    UnSaved = -2,
+    Permission = -3,
+    NotExist = -4,
+    AlreadyOpened = -5,
+    IsNewFile = -6,
+    IsDirver = -7,
+    WorkSpaceUnSaved = -8,
+    SourceFileChanged = -9,
+    ClonedFile = -10
 };
 Q_ENUM_NS(ErrFile)
 
@@ -75,17 +75,16 @@ struct BookMark {
 class IWingPlugin;
 
 struct HexPosition {
-    quint64 line;
+    qsizetype line;
     int column;
     quint8 lineWidth;
     int nibbleindex;
 
-    HexPosition() = default;
-    inline qint64 offset() const {
-        return static_cast<qint64>(line * lineWidth) + column;
+    inline qsizetype offset() const {
+        return static_cast<qsizetype>(line * lineWidth) + column;
     }
-    inline int operator-(const HexPosition &rhs) const {
-        return int(this->offset() - rhs.offset());
+    inline qsizetype operator-(const HexPosition &rhs) const {
+        return qsizetype(this->offset() - rhs.offset());
     }
     inline bool operator==(const HexPosition &rhs) const {
         return (line == rhs.line) && (column == rhs.column) &&
@@ -98,8 +97,8 @@ struct HexPosition {
 };
 
 struct HexMetadataAbsoluteItem {
-    qint64 begin;
-    qint64 end;
+    qsizetype begin;
+    qsizetype end;
     QColor foreground, background;
     QString comment;
 
@@ -112,7 +111,7 @@ struct HexMetadataAbsoluteItem {
 
     HexMetadataAbsoluteItem() = default;
 
-    HexMetadataAbsoluteItem(qint64 begin, qint64 end, QColor foreground,
+    HexMetadataAbsoluteItem(qsizetype begin, qsizetype end, QColor foreground,
                             QColor background, QString comment) {
         this->begin = begin;
         this->end = end;
@@ -123,7 +122,7 @@ struct HexMetadataAbsoluteItem {
 };
 
 struct HexMetadataItem {
-    quint64 line;
+    qsizetype line;
     int start, length;
     QColor foreground, background;
     QString comment;
@@ -137,7 +136,7 @@ struct HexMetadataItem {
                comment == item.comment;
     }
 
-    HexMetadataItem(quint64 line, int start, int length, QColor foreground,
+    HexMetadataItem(qsizetype line, int start, int length, QColor foreground,
                     QColor background, QString comment) {
         this->line = line;
         this->start = start;
@@ -209,8 +208,6 @@ signals:
 
     bool copy(bool hex = false);
 
-    QByteArray read(qsizetype offset, qsizetype len);
-
     // extension
     qint8 readInt8(qsizetype offset);
     qint16 readInt16(qsizetype offset);
@@ -219,10 +216,13 @@ signals:
     QString readString(qsizetype offset, const QString &encoding = QString());
     QByteArray readBytes(qsizetype offset, qsizetype count);
 
+    // an extension for AngelScript
+    // void read(? &in);    // this function can read bytes to input container
+
     qsizetype searchForward(qsizetype begin, const QByteArray &ba);
     qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
     QList<qsizetype> findAllBytes(qsizetype begin, qsizetype end,
-                                  QByteArray &b);
+                                  const QByteArray &b);
 
     // render
     qsizetype documentLastLine();
@@ -255,7 +255,8 @@ class Controller : public QObject {
     Q_OBJECT
 signals:
     // document
-    bool switchDocument(qsizetype index, bool gui = false);
+    bool switchDocument(int handle);
+    bool raiseDocument(int handle);
     bool setLockedFile(bool b);
     bool setKeepSize(bool b);
     bool setStringVisible(bool b);
@@ -337,16 +338,16 @@ signals:
 
     // mainwindow
     bool newFile();
-    ErrFile openFile(const QString filename);
-    ErrFile openRegionFile(const QString filename, qsizetype start = 0,
+    ErrFile openFile(const QString &filename);
+    ErrFile openRegionFile(const QString &filename, qsizetype start = 0,
                            qsizetype length = 1024);
-    ErrFile openDriver(const QString driver);
-    ErrFile closeFile(const QString filename, bool force = false);
-    ErrFile saveFile(const QString filename, bool ignoreMd5 = false);
-    ErrFile exportFile(const QString filename, const QString savename,
+    ErrFile openDriver(const QString &driver);
+    ErrFile closeFile(const QString &filename, bool force = false);
+    ErrFile saveFile(const QString &filename, bool ignoreMd5 = false);
+    ErrFile exportFile(const QString &filename, const QString &savename,
                        bool ignoreMd5 = false);
     bool exportFileGUI();
-    ErrFile saveasFile(const QString filename, const QString savename,
+    ErrFile saveasFile(const QString &filename, const QString &savename,
                        bool ignoreMd5 = false);
     bool saveasFileGUI();
     ErrFile closeCurrentFile(bool force = false);
@@ -360,15 +361,15 @@ signals:
     bool fillZeroGUI();
 
     // bookmark
-    bool addBookMark(qsizetype pos, const QString comment);
-    bool modBookMark(qsizetype pos, const QString comment);
+    bool addBookMark(qsizetype pos, const QString &comment);
+    bool modBookMark(qsizetype pos, const QString &comment);
     bool applyBookMarks(const QList<BookMark> &books);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
     // workspace
-    bool openWorkSpace(const QString filename);
-    bool setCurrentEncoding(const QString encoding);
+    bool openWorkSpace(const QString &filename);
+    bool setCurrentEncoding(const QString &encoding);
 };
 
 class MessageBox : public QObject {

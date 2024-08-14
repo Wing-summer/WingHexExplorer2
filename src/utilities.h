@@ -160,11 +160,6 @@ public:
         return l == 0x22;
     }
 
-    /*
-    static bool isRegionFile(QHexDocument *doc) {
-        return doc ? doc->documentType() == DocumentType::RegionFile : false;
-    }*/
-
     static QIcon getIconFromFile(QStyle *style, const QString &filename) {
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(filename);

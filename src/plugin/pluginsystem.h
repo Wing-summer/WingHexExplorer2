@@ -26,6 +26,7 @@ public:
     static PluginSystem &instance();
 
     void setMainWindow(MainWindow *win);
+    QWidget *mainWindow() const;
 
     void LoadPlugin();
     void UnloadPlugin();
@@ -47,10 +48,10 @@ private:
     void connectControllerInterface(IWingPlugin *plg);
     void connectUIInterface(IWingPlugin *plg);
 
-    static bool checkSender(QObject *sender);
+    bool checkThreadAff();
     static QString packLogMessage(const char *header, const QString &msg);
 
-    EditorView *pluginCurrentEditor(QObject *sender) const;
+    EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
 
 private:
     const QList<QVariant> emptyparam;
@@ -66,7 +67,7 @@ private:
     QMap<HookIndex, QList<IWingPlugin *>> dispatcher;
     QMutex mutex;
 
-    QMap<QObject *, EditorView *> m_plgviewMap;
+    QMap<IWingPlugin *, EditorView *> m_plgviewMap;
 
     WingAngelAPI *_angelplg = nullptr;
 };

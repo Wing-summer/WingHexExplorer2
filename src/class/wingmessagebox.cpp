@@ -1,5 +1,7 @@
 #include "wingmessagebox.h"
+#include "class/eventfilter.h"
 #include "dialog/framelessdialogbase.h"
+#include "utilities.h"
 #include <QApplication>
 
 WingMessageBox::WingMessageBox() {}
@@ -52,7 +54,13 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
 
     FramelessDialogBase d(parent);
     d.buildUpContent(msgbox);
+    d.setMaximumSize(0, 0);
     d.setWindowTitle(title.isEmpty() ? QMessageBox::tr("About Qt") : title);
+
+    auto e = new EventFilter(QEvent::Resize, &d);
+    QObject::connect(e, &EventFilter::eventTriggered, &d,
+                     [&d] { Utilities::moveToCenter(&d); });
+    d.installEventFilter(e);
 
     QObject::connect(msgbox, &QMessageBox::finished, &d,
                      &FramelessDialogBase::done);
@@ -116,7 +124,15 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
 
     FramelessDialogBase d(parent);
     d.buildUpContent(msgbox);
+    d.setMaximumSize(0, 0);
     d.setWindowTitle(title.isEmpty() ? qAppName() : title);
+
+    // when a new dialog is shown, the QEvent::Resize will be
+    // triggered before the window showing
+    auto e = new EventFilter(QEvent::Resize, &d);
+    QObject::connect(e, &EventFilter::eventTriggered, &d,
+                     [&d] { Utilities::moveToCenter(&d); });
+    d.installEventFilter(e);
 
     QObject::connect(msgbox, &QMessageBox::finished, &d,
                      &FramelessDialogBase::done);

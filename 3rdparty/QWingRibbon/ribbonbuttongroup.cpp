@@ -16,10 +16,6 @@
 RibbonButtonGroup::RibbonButtonGroup(QWidget *parent)
     : QWidget(parent), ui(new Ui::RibbonButtonGroup), m_title() {
     ui->setupUi(this);
-    auto font = qApp->font();
-    QFontMetrics fm(font);
-    auto height = fm.height() * 1.5;
-    ui->label->setMinimumHeight(int(height));
 }
 
 RibbonButtonGroup::~RibbonButtonGroup() {
@@ -51,11 +47,7 @@ void RibbonButtonGroup::addButton(QToolButton *button) {
 
     auto font = button->font();
     QFontMetrics fm(font);
-    auto txtw = fm.horizontalAdvance(button->text());
-    auto txth = fm.height();
     button->setIconSize(QSize(32, 32));
-    auto height = txth + 32 + 8;
-    button->setMinimumSize(std::max(txtw + 8, height), height);
     button->setAutoRaise(true);
     button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
