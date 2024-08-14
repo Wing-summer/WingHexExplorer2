@@ -21,13 +21,13 @@ Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     auto w = new QWidget(this);
     auto layout = new QHBoxLayout(w);
     setObjectName(QStringLiteral("RIBBON"));
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
     auto hideBtn = new QToolButton(this);
     hideBtn->setObjectName(QStringLiteral("RIBBON_HIDE_BTN"));
     hideBtn->setCheckable(true);
     hideBtn->setChecked(false);
 
-    layout->setContentsMargins(2, 2, 2, 2);
     layout->setSpacing(5);
     layout->addWidget(hideBtn);
 

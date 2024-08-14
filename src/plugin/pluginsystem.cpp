@@ -245,20 +245,18 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                 Toast::toast(_win, icon, message);
             });
     connect(plg, &IWingPlugin::debug, this, [=](const QString &message) {
-        Logger::debug(
-            packLogMessage(sender()->metaObject()->className(), message));
+        Logger::debug(packLogMessage(plg->metaObject()->className(), message));
     });
     connect(plg, &IWingPlugin::info, this, [=](const QString &message) {
-        Logger::info(
-            packLogMessage(sender()->metaObject()->className(), message));
+        Logger::info(packLogMessage(plg->metaObject()->className(), message));
     });
     connect(plg, &IWingPlugin::warn, this, [=](const QString &message) {
         Logger::warning(
-            packLogMessage(sender()->metaObject()->className(), message));
+            packLogMessage(plg->metaObject()->className(), message));
     });
     connect(plg, &IWingPlugin::error, this, [=](const QString &message) {
         Logger::critical(
-            packLogMessage(sender()->metaObject()->className(), message));
+            packLogMessage(plg->metaObject()->className(), message));
     });
 }
 
@@ -266,45 +264,45 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
     auto preader = &plg->reader;
 
     connect(preader, &WingPlugin::Reader::isCurrentDocEditing, _win,
-            [=]() -> bool { return pluginCurrentEditor(sender()); });
+            [=]() -> bool { return pluginCurrentEditor(plg); });
     connect(preader, &WingPlugin::Reader::currentDocFilename, _win,
             [=]() -> QString {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->fileName();
                 }
                 return QString();
             });
     connect(preader, &WingPlugin::Reader::isLocked, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->isLocked();
         }
         return true;
     });
     connect(preader, &WingPlugin::Reader::isEmpty, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->document()->isEmpty();
         }
         return true;
     });
     connect(preader, &WingPlugin::Reader::isKeepSize, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->isKeepSize();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::isModified, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->document()->isDocSaved();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::isReadOnly, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->isReadOnly();
         }
@@ -312,7 +310,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
     });
     connect(preader, &WingPlugin::Reader::documentLines, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->documentLines();
                 }
@@ -320,7 +318,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::documentBytes, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->documentBytes();
                 }
@@ -331,7 +329,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 HexPosition pos;
                 memset(&pos, 0, sizeof(HexPosition));
 
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto qpos = e->hexEditor()->cursor()->position();
                     pos.line = qpos.line;
@@ -346,7 +344,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 HexPosition pos;
                 memset(&pos, 0, sizeof(HexPosition));
 
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto cur = e->hexEditor()->cursor();
                     pos.line = cur->selectionLine();
@@ -357,7 +355,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 return pos;
             });
     connect(preader, &WingPlugin::Reader::currentRow, _win, [=]() -> qsizetype {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->currentRow();
         }
@@ -365,7 +363,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
     });
     connect(preader, &WingPlugin::Reader::currentColumn, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->currentColumn();
                 }
@@ -373,7 +371,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::currentOffset, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->cursor()->position().offset();
                 }
@@ -381,7 +379,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::selectedLength, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->cursor()->selectionLength();
                 }
@@ -389,56 +387,56 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::selectedBytes, _win,
             [=]() -> QByteArray {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->selectedBytes();
                 }
                 return {};
             });
     connect(preader, &WingPlugin::Reader::stringVisible, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->asciiVisible();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::headerVisible, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->headerVisible();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::addressVisible, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->addressVisible();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::addressBase, _win, [=]() -> quintptr {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->addressBase();
         }
         return 0;
     });
     connect(preader, &WingPlugin::Reader::atEnd, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->atEnd();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::canUndo, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->document()->canUndo();
         }
         return false;
     });
     connect(preader, &WingPlugin::Reader::canRedo, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->document()->canRedo();
         }
@@ -446,7 +444,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
     });
     connect(preader, &WingPlugin::Reader::documentLastLine, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->documentLastLine();
                 }
@@ -454,22 +452,22 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::documentLastColumn, _win,
             [=]() -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->documentLastColumn();
                 }
                 return 0;
             });
     connect(preader, &WingPlugin::Reader::copy, _win, [=](bool hex) -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             return e->hexEditor()->copy(hex);
         }
         return false;
     });
-    connect(preader, &WingPlugin::Reader::read, _win,
+    connect(preader, &WingPlugin::Reader::readBytes, _win,
             [=](qsizetype offset, qsizetype len) -> QByteArray {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->read(offset, len);
                 }
@@ -477,7 +475,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readInt8, _win,
             [=](qsizetype offset) -> qint8 {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto buffer =
                         e->hexEditor()->document()->read(offset, sizeof(qint8));
@@ -489,7 +487,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readInt16, _win,
             [=](qsizetype offset) -> qint16 {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto buffer = e->hexEditor()->document()->read(
                         offset, sizeof(qint16));
@@ -501,7 +499,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readInt32, _win,
             [=](qsizetype offset) -> qint32 {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto buffer = e->hexEditor()->document()->read(
                         offset, sizeof(qint32));
@@ -513,7 +511,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readInt64, _win,
             [=](qsizetype offset) -> qint64 {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto buffer = e->hexEditor()->document()->read(
                         offset, sizeof(qint64));
@@ -525,7 +523,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readString, _win,
             [=](qsizetype offset, const QString &encoding) -> QString {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto hexeditor = e->hexEditor();
                     auto doc = hexeditor->document();
@@ -555,20 +553,20 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 return QString();
             });
 
-    connect(
-        preader, &WingPlugin::Reader::findAllBytes, _win,
-        [=](qsizetype begin, qsizetype end, QByteArray &b) -> QList<qsizetype> {
-            QList<qsizetype> results;
-            auto e = pluginCurrentEditor(sender());
-            if (e) {
-                e->hexEditor()->document()->findAllBytes(begin, end, b,
-                                                         results);
-            }
-            return results;
-        });
+    connect(preader, &WingPlugin::Reader::findAllBytes, _win,
+            [=](qsizetype begin, qsizetype end,
+                const QByteArray &b) -> QList<qsizetype> {
+                QList<qsizetype> results;
+                auto e = pluginCurrentEditor(plg);
+                if (e) {
+                    e->hexEditor()->document()->findAllBytes(begin, end, b,
+                                                             results);
+                }
+                return results;
+            });
     connect(preader, &WingPlugin::Reader::searchForward, _win,
             [=](qsizetype begin, const QByteArray &ba) -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->searchForward(begin, ba);
                 }
@@ -576,7 +574,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::searchBackward, _win,
             [=](qsizetype begin, const QByteArray &ba) -> qsizetype {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->searchBackward(begin,
                                                                       ba);
@@ -585,7 +583,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::getMetaLine, _win,
             [=](qsizetype line) -> HexLineMetadata {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto ometas =
                         e->hexEditor()->document()->metadata()->get(line);
@@ -601,7 +599,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::getMetadatas, _win,
             [=](qsizetype offset) -> QList<HexMetadataAbsoluteItem> {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto ometaline =
                         e->hexEditor()->document()->metadata()->gets(offset);
@@ -618,7 +616,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
     connect(
         preader, &WingPlugin::Reader::lineHasMetadata, _win,
         [=](qsizetype line) -> bool {
-            auto e = pluginCurrentEditor(sender());
+            auto e = pluginCurrentEditor(plg);
             if (e) {
                 return e->hexEditor()->document()->metadata()->lineHasMetadata(
                     line);
@@ -627,7 +625,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
         });
     connect(preader, &WingPlugin::Reader::lineHasBookMark, _win,
             [=](qsizetype line) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->lineHasBookMark(line);
                 }
@@ -635,7 +633,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::getsBookmarkPos, _win,
             [=](qsizetype line) -> QList<qsizetype> {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->getsBookmarkPos(line);
                 }
@@ -643,7 +641,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::bookMark, _win,
             [=](qsizetype pos) -> BookMark {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto b = e->hexEditor()->document()->bookMark(pos);
                     BookMark book;
@@ -655,7 +653,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::bookMarkComment, _win,
             [=](qsizetype pos) -> QString {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->bookMarkComment(pos);
                 }
@@ -663,7 +661,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::getBookMarks, _win,
             [=]() -> QList<BookMark> {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto bs = e->hexEditor()->document()->getAllBookMarks();
                     QList<BookMark> bookmarks;
@@ -678,7 +676,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::existBookMark, _win,
             [=](qsizetype pos) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->existBookMark(pos);
                 }
@@ -690,7 +688,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=]() -> QStringList { return Utilities::getEncodings(); });
     connect(preader, &WingPlugin::Reader::currentEncoding, _win,
             [=]() -> QString {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->encoding();
                 }
@@ -703,17 +701,20 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     auto pctl = &plg->controller;
     connect(pctl, &WingPlugin::Controller::switchDocument, _win,
-            [=](int index, bool gui) -> bool {
+            [=](int handle) -> bool {
                 // TODO
-                if (gui) {
 
-                } else {
-                }
+                return false;
+            });
+    connect(pctl, &WingPlugin::Controller::raiseDocument, _win,
+            [=](int handle) -> bool {
+                // TODO
+
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::setLockedFile, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->setLockedFile(b);
                 }
@@ -721,7 +722,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setKeepSize, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->setKeepSize(b);
                 }
@@ -729,7 +730,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setStringVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAsciiVisible(b);
                     return true;
@@ -738,7 +739,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setHeaderVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setHeaderVisible(b);
                     return true;
@@ -747,7 +748,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setAddressVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAddressVisible(b);
                     return true;
@@ -756,7 +757,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setAddressBase, _win,
             [=](quintptr base) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAddressBase(base);
                     return true;
@@ -764,7 +765,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::undo, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             e->hexEditor()->document()->undo();
             return true;
@@ -772,7 +773,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
     connect(pctl, &WingPlugin::Controller::redo, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             e->hexEditor()->document()->redo();
             return true;
@@ -780,7 +781,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
     connect(pctl, &WingPlugin::Controller::cut, _win, [=](bool hex) -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             e->hexEditor()->cut(hex);
             return true;
@@ -788,7 +789,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
     connect(pctl, &WingPlugin::Controller::paste, _win, [=](bool hex) -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             e->hexEditor()->paste(hex);
             return true;
@@ -799,7 +800,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         pctl,
         QOverload<qsizetype, const uchar>::of(&WingPlugin::Controller::insert),
         _win, [=](qsizetype offset, uchar b) -> bool {
-            auto e = pluginCurrentEditor(sender());
+            auto e = pluginCurrentEditor(plg);
             if (e) {
                 return e->hexEditor()->document()->insert(offset, b);
             }
@@ -809,7 +810,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             QOverload<qsizetype, const QByteArray &>::of(
                 &WingPlugin::Controller::insert),
             _win, [=](qsizetype offset, const QByteArray &data) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->insert(offset, data);
                 }
@@ -819,7 +820,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         pctl,
         QOverload<qsizetype, const uchar>::of(&WingPlugin::Controller::write),
         _win, [=](qsizetype offset, uchar b) -> bool {
-            auto e = pluginCurrentEditor(sender());
+            auto e = pluginCurrentEditor(plg);
             if (e) {
                 return e->hexEditor()->document()->replace(offset, b);
             }
@@ -829,7 +830,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             QOverload<qsizetype, const QByteArray &>::of(
                 &WingPlugin::Controller::write),
             _win, [=](qsizetype offset, const QByteArray &data) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->replace(offset, data);
                 }
@@ -838,7 +839,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::insertInt8, _win,
             [=](qsizetype offset, qint8 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -850,7 +851,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::insertInt16, _win,
             [=](qsizetype offset, qint16 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -861,7 +862,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::insertInt32, _win,
             [=](qsizetype offset, qint32 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -872,7 +873,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::insertInt64, _win,
             [=](qsizetype offset, qint64 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -884,7 +885,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::insertString, _win,
             [=](qsizetype offset, const QString &value,
                 const QString &encoding) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto editor = e->hexEditor();
                     auto doc = editor->document();
@@ -914,7 +915,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::writeInt8, _win,
             [=](qsizetype offset, qint8 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -926,7 +927,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::writeInt16, _win,
             [=](qsizetype offset, qint16 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -937,7 +938,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::writeInt32, _win,
             [=](qsizetype offset, qint32 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -948,7 +949,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::writeInt64, _win,
             [=](qsizetype offset, qint64 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto buffer = reinterpret_cast<char *>(&value);
@@ -960,7 +961,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::writeString, _win,
             [=](qsizetype offset, const QString &value,
                 const QString &encoding) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto editor = e->hexEditor();
                     auto doc = editor->document();
@@ -990,7 +991,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, QOverload<uchar>::of(&WingPlugin::Controller::append), _win,
             [=](uchar b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1001,7 +1002,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl,
             QOverload<const QByteArray &>::of(&WingPlugin::Controller::append),
             _win, [=](const QByteArray &data) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1011,7 +1012,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::appendInt8, _win,
             [=](qint8 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1023,7 +1024,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::appendInt16, _win,
             [=](qint16 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1035,7 +1036,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::appendInt32, _win,
             [=](qint32 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1047,7 +1048,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::appendInt64, _win,
             [=](qint64 value) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1059,7 +1060,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::appendString, _win,
             [=](const QString &value, const QString &encoding) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     auto offset = doc->length();
@@ -1083,7 +1084,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::remove, _win,
             [=](qsizetype offset, qsizetype len) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     return doc->remove(offset, len);
@@ -1091,7 +1092,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::removeAll, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
             auto len = doc->length();
@@ -1102,7 +1103,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl,
             QOverload<const HexPosition &>::of(&WingPlugin::Controller::moveTo),
             _win, [=](const HexPosition &pos) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     QHexPosition p;
                     p.line = pos.line;
@@ -1119,7 +1120,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 &WingPlugin::Controller::moveTo),
             _win,
             [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->moveTo(line, column, nibbleindex);
                     return true;
@@ -1128,7 +1129,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, QOverload<qsizetype>::of(&WingPlugin::Controller::moveTo),
             _win, [=](qsizetype offset) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->moveTo(offset);
                     return true;
@@ -1137,7 +1138,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::selectOffset, _win,
             [=](qsizetype offset, qsizetype length) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->setSelection(offset, length);
                     return true;
@@ -1146,7 +1147,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::select, _win,
             [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->select(line, column, nibbleindex);
                     return true;
@@ -1155,7 +1156,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::enabledCursor, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->renderer()->enableCursor(b);
                     return true;
@@ -1164,7 +1165,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setInsertionMode, _win,
             [=](bool isinsert) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->setInsertionMode(
                         isinsert ? QHexCursor::InsertMode
@@ -1179,7 +1180,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             _win,
             [=](qsizetype begin, qsizetype end, const QColor &fgcolor,
                 const QColor &bgcolor, const QString &comment) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1199,7 +1200,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QColor &fgcolor, const QColor &bgcolor,
                 const QString &comment) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1212,7 +1213,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::removeMetadata, _win,
             [=](qsizetype offset) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->metadata()->removeMetadata(offset);
@@ -1222,7 +1223,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::clearMeta, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
             if (!doc->isKeepSize())
@@ -1235,7 +1236,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::color, _win,
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QColor &fgcolor, const QColor &bgcolor) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1250,7 +1251,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::comment, _win,
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QString &comment) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1263,7 +1264,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::foreground, _win,
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QColor &fgcolor) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1276,7 +1277,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::background, _win,
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QColor &bgcolor) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
@@ -1288,7 +1289,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::applyMetas, _win,
             [=](const QList<HexMetadataAbsoluteItem> &metas) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     QList<QHexMetadataAbsoluteItem> ms;
                     for (auto &item : metas) {
@@ -1308,7 +1309,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetaVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->setMetafgVisible(b);
@@ -1320,7 +1321,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetafgVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->setMetafgVisible(b);
@@ -1330,7 +1331,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetabgVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->setMetabgVisible(b);
@@ -1340,7 +1341,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetaCommentVisible, _win,
             [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->setMetaCommentVisible(b);
@@ -1349,8 +1350,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::setCurrentEncoding, _win,
-            [=](const QString encoding) -> bool {
-                auto e = pluginCurrentEditor(sender());
+            [=](const QString &encoding) -> bool {
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->setEncoding(encoding);
                 }
@@ -1358,8 +1359,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
 
     connect(pctl, &WingPlugin::Controller::addBookMark, _win,
-            [=](qsizetype pos, const QString comment) -> bool {
-                auto e = pluginCurrentEditor(sender());
+            [=](qsizetype pos, const QString &comment) -> bool {
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     return doc->addBookMark(pos, comment);
@@ -1367,8 +1368,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::modBookMark, _win,
-            [=](qsizetype pos, const QString comment) -> bool {
-                auto e = pluginCurrentEditor(sender());
+            [=](qsizetype pos, const QString &comment) -> bool {
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     return doc->modBookMark(pos, comment);
@@ -1377,7 +1378,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::removeBookMark, _win,
             [=](qsizetype pos) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     return doc->removeBookMark(pos);
@@ -1385,7 +1386,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::clearBookMark, _win, [=]() -> bool {
-        auto e = pluginCurrentEditor(sender());
+        auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
             return doc->clearBookMark();
@@ -1395,7 +1396,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::applyBookMarks, _win,
             [=](const QList<BookMark> &books) -> bool {
-                auto e = pluginCurrentEditor(sender());
+                auto e = pluginCurrentEditor(plg);
                 if (e) {
                     QList<BookMarkStruct> bs;
                     for (auto &item : books) {
@@ -1413,71 +1414,50 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     // mainwindow
     connect(pctl, &WingPlugin::Controller::newFile, _win, [=]() -> bool {
-        QObject *s = sender();
-        if (checkSender(s)) {
-            m_plgviewMap[s] = _win->newfileGUI();
-            return true;
-        }
-        return false;
+        m_plgviewMap[plg] = _win->newfileGUI();
+        return true;
     });
     connect(pctl, &WingPlugin::Controller::openWorkSpace, _win,
-            [=](const QString filename) -> bool {
-                QObject *s = sender();
-                if (checkSender(s)) {
-                    EditorView *view = nullptr;
-                    auto ret = _win->openWorkSpace(filename, &view);
-                    m_plgviewMap[s] = view;
-                    return ret == ErrFile::Success;
-                }
-                return false;
+            [=](const QString &filename) -> bool {
+                EditorView *view = nullptr;
+                auto ret = _win->openWorkSpace(filename, &view);
+                m_plgviewMap[plg] = view;
+                return ret == ErrFile::Success;
             });
     connect(pctl, &WingPlugin::Controller::openFile, _win,
-            [=](const QString filename) -> ErrFile {
-                QObject *s = sender();
-                if (checkSender(s)) {
-                    EditorView *view = nullptr;
-                    auto ret = _win->openFile(filename, &view);
-                    m_plgviewMap[s] = view;
-                    return ret;
-                }
-                return ErrFile::Error;
+            [=](const QString &filename) -> ErrFile {
+                EditorView *view = nullptr;
+                auto ret = _win->openFile(filename, &view);
+                m_plgviewMap[plg] = view;
+                return ret;
             });
     connect(pctl, &WingPlugin::Controller::openRegionFile, _win,
-            [=](const QString filename, qsizetype start,
+            [=](const QString &filename, qsizetype start,
                 qsizetype length) -> ErrFile {
-                QObject *s = sender();
-                if (checkSender(s)) {
-                    EditorView *view = nullptr;
-                    auto ret =
-                        _win->openRegionFile(filename, &view, start, length);
-                    m_plgviewMap[s] = view;
-                    return ret;
-                }
-                return ErrFile::Error;
+                EditorView *view = nullptr;
+                auto ret = _win->openRegionFile(filename, &view, start, length);
+                m_plgviewMap[plg] = view;
+                return ret;
             });
     connect(pctl, &WingPlugin::Controller::openDriver, _win,
-            [=](const QString driver) -> ErrFile {
-                QObject *s = sender();
-                if (checkSender(s)) {
-                    EditorView *view = nullptr;
-                    auto ret = _win->openDriver(driver, &view);
-                    m_plgviewMap[s] = view;
-                    return ret;
-                }
-                return ErrFile::Error;
+            [=](const QString &driver) -> ErrFile {
+                EditorView *view = nullptr;
+                auto ret = _win->openDriver(driver, &view);
+                m_plgviewMap[plg] = view;
+                return ret;
             });
     connect(pctl, &WingPlugin::Controller::closeFile, _win,
-            [=](const QString filename, bool force) -> ErrFile {
+            [=](const QString &filename, bool force) -> ErrFile {
                 // return closeFile(index, force);
                 return ErrFile::Success;
             });
     connect(pctl, &WingPlugin::Controller::saveFile, _win,
-            [=](const QString filename, bool ignoreMd5) -> ErrFile {
+            [=](const QString &filename, bool ignoreMd5) -> ErrFile {
                 // return save(index, ignoreMd5);
                 return ErrFile::Success;
             });
     connect(pctl, &WingPlugin::Controller::exportFile, _win,
-            [=](const QString filename, const QString savename,
+            [=](const QString &filename, const QString &savename,
                 bool ignoreMd5) -> ErrFile {
                 // return exportFile(filename, index, ignoreMd5);
                 return ErrFile::Success;
@@ -1487,7 +1467,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             &MainWindow::on_exportfile);
 
     connect(pctl, &WingPlugin::Controller::saveasFile, _win,
-            [=](const QString &filename, const QString savename,
+            [=](const QString &filename, const QString &savename,
                 bool ignoreMd5) -> ErrFile {
                 // return saveAs(filename, index, ignoreMd5);
                 return ErrFile::Success;
@@ -1526,7 +1506,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     auto msgbox = &plg->msgbox;
     connect(msgbox, &WingPlugin::MessageBox::aboutQt, _win,
             [this](QWidget *parent, const QString &title) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::aboutQt(parent, title);
                 }
             });
@@ -1534,7 +1514,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
                 QMessageBox::StandardButton defaultButton) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::information(parent, title, text, buttons,
                                                 defaultButton);
                 }
@@ -1543,7 +1523,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
                 QMessageBox::StandardButton defaultButton) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::question(parent, title, text, buttons,
                                              defaultButton);
                 }
@@ -1552,7 +1532,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
                 QMessageBox::StandardButton defaultButton) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::warning(parent, title, text, buttons,
                                             defaultButton);
                 }
@@ -1561,14 +1541,14 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
                 QMessageBox::StandardButton defaultButton) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::critical(parent, title, text, buttons,
                                              defaultButton);
                 }
             });
     connect(msgbox, &WingPlugin::MessageBox::about, _win,
             [=](QWidget *parent, const QString &title, const QString &text) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingMessageBox::about(parent, title, text);
                 }
             });
@@ -1578,7 +1558,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             const QString &text,
             QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
             QMessageBox::StandardButton defaultButton = QMessageBox::NoButton) {
-            if (checkSender(sender())) {
+            if (checkThreadAff()) {
                 WingMessageBox::msgbox(parent, icon, title, text, buttons,
                                        defaultButton);
             }
@@ -1589,7 +1569,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &label,
                 QLineEdit::EchoMode echo, const QString &text, bool *ok,
                 Qt::InputMethodHints inputMethodHints) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingInputDialog::getText(parent, title, label, echo, text,
                                              ok, inputMethodHints);
                 }
@@ -1598,7 +1578,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &label,
                 const QString &text, bool *ok,
                 Qt::InputMethodHints inputMethodHints) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingInputDialog::getMultiLineText(
                         parent, title, label, text, ok, inputMethodHints);
                 }
@@ -1607,7 +1587,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &label,
                 const QStringList &items, int current, bool editable, bool *ok,
                 Qt::InputMethodHints inputMethodHints) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingInputDialog::getItem(parent, title, label, items,
                                              current, editable, ok,
                                              inputMethodHints);
@@ -1616,7 +1596,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     connect(inputbox, &WingPlugin::InputBox::getInt, _win,
             [=](QWidget *parent, const QString &title, const QString &label,
                 int value, int minValue, int maxValue, int step, bool *ok) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingInputDialog::getInt(parent, title, label, value,
                                             minValue, maxValue, step, ok);
                 }
@@ -1625,7 +1605,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             [=](QWidget *parent, const QString &title, const QString &label,
                 double value, double minValue, double maxValue, int decimals,
                 bool *ok, double step) {
-                if (checkSender(sender())) {
+                if (checkThreadAff()) {
                     WingInputDialog::getDouble(parent, title, label, value,
                                                minValue, maxValue, decimals, ok,
                                                step);
@@ -1633,9 +1613,10 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             });
 }
 
-bool PluginSystem::checkSender(QObject *sender) {
-    if (sender == nullptr) {
-        Logger::warning(tr("Received non-sender signal request"));
+bool PluginSystem::checkThreadAff() {
+    if (QThread::currentThread() != qApp->thread()) {
+        Logger::warning(
+            tr("Creating UI widget is not allowed in non-UI thread"));
         return false;
     }
     return true;
@@ -1651,6 +1632,8 @@ PluginSystem &PluginSystem::instance() {
 }
 
 void PluginSystem::setMainWindow(MainWindow *win) { _win = win; }
+
+QWidget *PluginSystem::mainWindow() const { return _win; }
 
 void PluginSystem::LoadPlugin() {
     Q_ASSERT(_win);
@@ -1682,8 +1665,8 @@ void PluginSystem::LoadPlugin() {
     Logger::info(tr("PluginLoadingFinished"));
 }
 
-EditorView *PluginSystem::pluginCurrentEditor(QObject *sender) const {
-    if (checkSender(sender)) {
+EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *sender) const {
+    if (sender) {
         auto editor = m_plgviewMap.value(sender);
         if (editor) {
             return editor;

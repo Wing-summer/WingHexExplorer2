@@ -36,6 +36,7 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(WIN_WIDGET);
+
 #ifdef QT_DEBUG
     m_isBuilt = true;
 #endif

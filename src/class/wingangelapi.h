@@ -34,12 +34,49 @@ private:
     void installInputboxAPI(asIScriptEngine *engine, int stringID);
     void installFileDialogAPI(asIScriptEngine *engine);
     void installColorDialogAPI(asIScriptEngine *engine);
+    void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
 
 private:
     QStringList cArray2QStringList(const CScriptArray &array, int stringID,
                                    bool *ok = nullptr);
+    QByteArray cArray2ByteArray(const CScriptArray &array, int byteID,
+                                bool *ok = nullptr);
+
+private:
+    template <typename Func>
+    CScriptArray *retarrayWrapperFunction(Func &&getRet,
+                                          const char *angelType) {
+        // context, which can be used to obtain a pointer to the
+        // engine.
+        asIScriptContext *ctx = asGetActiveContext();
+        if (ctx) {
+            asIScriptEngine *engine = ctx->GetEngine();
+
+            auto ret = getRet();
+
+            // The script array needs to know its type to properly handle the
+            // elements. Note that the object type should be cached to avoid
+            // performance issues if the function is called frequently.
+            asITypeInfo *t = engine->GetTypeInfoByDecl(angelType);
+            Q_ASSERT(t);
+
+            auto array = CScriptArray::Create(t, ret.size());
+            for (typename decltype(ret)::size_type i = 0; i < ret.size(); ++i) {
+                auto v = ret.at(i);
+                array->SetValue(i, &v);
+            }
+            return array;
+        } else {
+            return nullptr;
+        }
+    }
+
+    template <typename Func>
+    CScriptArray *byteArrayWrapperFunction(Func &&fn) {
+        return retarrayWrapperFunction(fn, "array<byte>");
+    }
 
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
@@ -47,12 +84,37 @@ private:
                               int current, bool editable, bool *ok,
                               Qt::InputMethodHints inputMethodHints);
 
-    CScriptArray *_FileDialog_getOpenFileNames(asITypeInfo *stringArrayType,
-                                               const QString &caption,
+    CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
                                                const QString &dir,
                                                const QString &filter,
                                                QString *selectedFilter,
                                                QFileDialog::Options options);
+
+    CScriptArray *_HexReader_selectedBytes();
+
+    CScriptArray *_HexReader_readBytes(qsizetype offset, qsizetype len);
+
+    bool _HexReader_read(void *ref, int typeId);
+
+    qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
+
+    qsizetype _HexReader_searchBackward(qsizetype begin,
+                                        const CScriptArray &ba);
+
+    CScriptArray *_HexReader_findAllBytes(qsizetype begin, qsizetype end,
+                                          const CScriptArray &ba);
+
+    CScriptArray *_HexReader_getMetadatas(qsizetype offset);
+
+    CScriptArray *_HexReader_getMetaLine(qsizetype line);
+
+    CScriptArray *_HexReader_getsBookmarkPos(qsizetype line);
+
+    CScriptArray *_HexReader_getBookMarks();
+
+    CScriptArray *_HexReader_getOpenFiles();
+
+    CScriptArray *_HexReader_getSupportedEncodings();
 };
 
 #endif // WINGANGELAPI_H

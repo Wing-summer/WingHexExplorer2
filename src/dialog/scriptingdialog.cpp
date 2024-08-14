@@ -14,7 +14,7 @@
 #include <QStatusBar>
 
 ScriptingDialog::ScriptingDialog(QWidget *parent)
-    : FramelessDialogBase(parent) {
+    : FramelessMainWindow(parent) {
     auto &skin = SkinManager::instance();
     switch (skin.currentTheme()) {
     case SkinManager::Theme::Dark: {

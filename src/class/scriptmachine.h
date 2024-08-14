@@ -98,7 +98,6 @@ protected:
     QVector<asIScriptContext *> _ctxPool;
 
     QVector<asITypeInfo *> _rtypes;
-    std::function<void(void *ref, int typeId)> _printFn;
     std::function<QString(void)> _getInputFn;
 };
 

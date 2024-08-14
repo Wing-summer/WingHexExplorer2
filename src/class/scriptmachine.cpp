@@ -4,13 +4,13 @@
 #include "AngelScript/add_on/scriptany/scriptany.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/add_on/scriptdictionary/scriptdictionary.h"
-#include "AngelScript/add_on/scriptfile/scriptfilesystem.h"
 #include "AngelScript/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/add_on/scripthelper/scripthelper.h"
 #include "AngelScript/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/add_on/weakref/weakref.h"
+#include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptqstring.h"
 
 #include "angelobjstring.h"
@@ -55,6 +55,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptDateTime(engine);
     // RegisterScriptFileSystem(engine);
     RegisterScriptHandle(engine);
+    RegisterColor(engine);
     // RegisterQStringUtils(engine);
     RegisterExceptionRoutines(engine);
 
@@ -83,8 +84,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         q_check_ptr(_engine->GetTypeInfoByName("ref"));
 
     // Register a couple of extra functions for the scripts
-    _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
-                         std::placeholders::_2);
+    static std::function<void(void *ref, int typeId)> _printFn =
+        std::bind(&ScriptMachine::print, this, std::placeholders::_1,
+                  std::placeholders::_2);
     r = engine->RegisterGlobalFunction("void print(? &in)",
                                        asMETHOD(decltype(_printFn), operator()),
                                        asCALL_THISCALL_ASGLOBAL, &_printFn);

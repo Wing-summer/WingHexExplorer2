@@ -78,3 +78,7 @@ void RibbonTabContent::removeGroup(RibbonButtonGroup *group) {
 int RibbonTabContent::groupCount() const {
     return ui->ribbonHorizontalLayout->count();
 }
+
+QSize RibbonTabContent::sizeHint() const {
+    return ui->ribbonTabScrollAreaContent->sizeHint();
+}

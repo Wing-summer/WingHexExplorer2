@@ -11,7 +11,6 @@ PluginWindow::PluginWindow(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QHBoxLayout(widget);
 
-    this->setFixedSize(500, 750);
     this->setWindowTitle(tr("plugin"));
     txtc = new QTextBrowser(this);
     layout->addWidget(txtc);

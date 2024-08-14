@@ -19,8 +19,8 @@ SettingDialog::SettingDialog(QWidget *parent)
             page->cancel();
         }
     });
-    _dialog->resize(800, 700);
-    Utilities::moveToCenter(_dialog);
+
+    Utilities::moveToCenter(this);
 }
 
 SettingDialog::~SettingDialog() { delete ui; }
