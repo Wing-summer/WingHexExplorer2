@@ -26,7 +26,7 @@ public:
     enum class FindError { Success, Busy, MayOutOfRange };
 
 public:
-    explicit EditorView(bool enableplugin, QWidget *parent = nullptr);
+    explicit EditorView(QWidget *parent = nullptr);
     virtual ~EditorView() override;
 
     QString fileName() const;
@@ -50,9 +50,6 @@ public:
     EditorView *cloneParent() const;
 
     bool isCloned() const;
-
-    bool enablePlugin() const;
-    void setEnablePlugin(bool newEnableplugin);
 
 public slots:
     EditorView *clone();
@@ -103,10 +100,12 @@ private:
                           const QString &title, Func &&slot,
                           const QKeySequence &shortcut = QKeySequence()) {
         auto a = new QAction(parent);
-        a->setText(title);
+        if (shortcut.isEmpty()) {
+            a->setText(title);
+        } else {
+            a->setText(title + QStringLiteral("\t") + shortcut.toString());
+        }
         a->setIcon(ICONRES(icon));
-        a->setShortcut(shortcut);
-        a->setShortcutVisibleInContextMenu(true);
         connect(a, &QAction::triggered, this, slot);
         parent->addAction(a);
     }
@@ -153,8 +152,6 @@ private:
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;
-
-    bool _enableplugin = true;
 };
 
 #endif // EDITORVIEW_H

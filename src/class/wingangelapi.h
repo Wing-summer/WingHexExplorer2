@@ -23,10 +23,6 @@ public:
 
     void installAPI(asIScriptEngine *engine, asITypeInfo *stringType);
 
-public slots:
-    virtual void plugin2MessagePipe(WingHex::WingPluginMessage type,
-                                    const QVariantList &msg) override;
-
 private:
     void installLogAPI(asIScriptEngine *engine);
     void installExtAPI(asIScriptEngine *engine);
@@ -37,6 +33,7 @@ private:
     void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
+    void installDataVisualAPI(asIScriptEngine *engine, int stringID);
 
 private:
     QStringList cArray2QStringList(const CScriptArray &array, int stringID,
@@ -115,6 +112,18 @@ private:
     CScriptArray *_HexReader_getOpenFiles();
 
     CScriptArray *_HexReader_getSupportedEncodings();
+
+    bool _HexController_writeBytes(qsizetype offset, const CScriptArray &ba);
+
+    bool _HexController_insertBytes(qsizetype offset, const CScriptArray &ba);
+
+    bool _HexController_appendBytes(const CScriptArray &ba);
+
+    bool _DataVisual_updateTextList(int stringID, const CScriptArray &data);
+
+    bool _DataVisual_updateTextTable(int stringID, const QString &json,
+                                     const CScriptArray &headers,
+                                     const CScriptArray &headerNames);
 };
 
 #endif // WINGANGELAPI_H

@@ -4,13 +4,17 @@
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 
+#include <QJsonDocument>
+
 #if Q_PROCESSOR_WORDSIZE == 4
 #define QSIZETYPE_WRAP(decl) "int " decl
 #define QPTR_WRAP(decl) "uint " decl
+#define QPTR "uint"
 #define QSIZETYPE "int"
 #elif Q_PROCESSOR_WORDSIZE == 8
 #define QSIZETYPE_WRAP(decl) "int64 " decl
 #define QPTR_WRAP(decl) "uint64 " decl
+#define QPTR "uint64"
 #define QSIZETYPE "int64"
 #else
 #error "Processor with unexpected word size"
@@ -60,22 +64,19 @@ void WingAngelAPI::installAPI(asIScriptEngine *engine,
     installMsgboxAPI(engine);
     installInputboxAPI(engine, stringType->GetTypeId());
     installFileDialogAPI(engine);
+    installColorDialogAPI(engine);
 
     installHexBaseType(engine);
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
+    installDataVisualAPI(engine, stringType->GetTypeId());
 }
-
-void WingAngelAPI::plugin2MessagePipe(WingHex::WingPluginMessage type,
-                                      const QVariantList &msg) {}
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("Log");
     Q_ASSERT(r >= 0);
 
     {
-
-        Q_ASSERT(this);
         static std::function<void(const QString &)> fn =
             std::bind(&WingAngelAPI::info, this, std::placeholders::_1);
         r = engine->RegisterGlobalFunction("void info(const string &in)",
@@ -415,7 +416,25 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {}
+void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("ColorDialog");
+    Q_ASSERT(r >= 0);
+
+    auto colordlg = &this->colordlg;
+
+    {
+        static std::function<QColor(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::ColorDialog::getColor, colordlg,
+                      std::placeholders::_1, nullptr);
+
+        r = engine->RegisterGlobalFunction("Color getColor(const string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    engine->SetDefaultNamespace("");
+}
 
 void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     registerAngelType<WingHex::ErrFile>(engine, "ErrFile");
@@ -800,8 +819,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingAngelAPI::_HexReader_readBytes, this,
                       std::placeholders::_1, std::placeholders::_2);
         r = engine->RegisterGlobalFunction(
-            "array<byte>@ readBytes(" QSIZETYPE_WRAP(
-                "offset") "," QSIZETYPE_WRAP("len") ")",
+            "array<byte>@ readBytes(" QSIZETYPE "," QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -810,9 +828,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<qint8(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::readInt8, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "int8 readInt8(" QSIZETYPE_WRAP("offset") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("int8 readInt8(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
 
@@ -820,9 +838,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<qint16(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::readInt16, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "int16 readInt16(" QSIZETYPE_WRAP("offset") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("int16 readInt16(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
     engine->SetDefaultNamespace("");
@@ -831,9 +849,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<qint32(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::readInt32, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "int readInt32(" QSIZETYPE_WRAP("offset") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("int readInt32(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
 
@@ -841,9 +859,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<qint64(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::readInt64, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "int64 readInt64(" QSIZETYPE_WRAP("offset") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("int64 readInt64(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
 
@@ -852,7 +870,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingHex::WingPlugin::Reader::readString, reader,
                       std::placeholders::_1, std::placeholders::_2);
         r = engine->RegisterGlobalFunction(
-            "string readInt64(" QSIZETYPE_WRAP("offset") ", string &in = \"\")",
+            "string readInt64(" QSIZETYPE ", string &in = \"\")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -862,8 +880,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingAngelAPI::_HexReader_searchForward, this,
                       std::placeholders::_1, std::placeholders::_2);
         r = engine->RegisterGlobalFunction(
-            QSIZETYPE_WRAP(
-                "searchForward(" QSIZETYPE_WRAP("begin") ", array<byte> &in)"),
+            QSIZETYPE_WRAP("searchForward(" QSIZETYPE ", array<byte> &in)"),
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -873,8 +890,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingAngelAPI::_HexReader_searchBackward, this,
                       std::placeholders::_1, std::placeholders::_2);
         r = engine->RegisterGlobalFunction(
-            QSIZETYPE_WRAP(
-                "searchBackward(" QSIZETYPE_WRAP("begin") ", array<byte> &in)"),
+            QSIZETYPE_WRAP("searchBackward(" QSIZETYPE ", array<byte> &in)"),
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -886,8 +902,8 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                            std::placeholders::_1, std::placeholders::_2,
                            std::placeholders::_3);
         r = engine->RegisterGlobalFunction(
-            "array<" QSIZETYPE ">@ findAllBytes(" QSIZETYPE_WRAP(
-                "begin") ", " QSIZETYPE_WRAP("end") ", array<byte> &in)",
+            "array<" QSIZETYPE ">@ findAllBytes(" QSIZETYPE ", " QSIZETYPE
+            ", array<byte> &in)",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -915,7 +931,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingHex::WingPlugin::Reader::lineHasMetadata, reader,
                       std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "bool lineHasMetadata(" QSIZETYPE_WRAP("line") ")",
+            "bool lineHasMetadata(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -925,8 +941,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingAngelAPI::_HexReader_getMetadatas, this,
                       std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "array<HexMetadataAbsoluteItem>@ getMetadatas(" QSIZETYPE_WRAP(
-                "offset") ")",
+            "array<HexMetadataAbsoluteItem>@ getMetadatas(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -935,7 +950,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<CScriptArray *(qsizetype)> fn = std::bind(
             &WingAngelAPI::_HexReader_getMetaLine, this, std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "array<HexMetadataItem>@ getMetaLine(" QSIZETYPE_WRAP("offset") ")",
+            "array<HexMetadataItem>@ getMetaLine(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -945,7 +960,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingHex::WingPlugin::Reader::lineHasBookMark, reader,
                       std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "bool lineHasBookMark(" QSIZETYPE_WRAP("line") ")",
+            "bool lineHasBookMark(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -955,8 +970,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingAngelAPI::_HexReader_getsBookmarkPos, this,
                       std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "array<" QSIZETYPE
-            ">@ getsBookmarkPos(" QSIZETYPE_WRAP("offset") ")",
+            "array<" QSIZETYPE ">@ getsBookmarkPos(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -965,9 +979,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<WingHex::BookMark(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::bookMark, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "BookMark bookMark(" QSIZETYPE_WRAP("pos") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("BookMark bookMark(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
 
@@ -976,7 +990,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
             std::bind(&WingHex::WingPlugin::Reader::bookMarkComment, reader,
                       std::placeholders::_1);
         r = engine->RegisterGlobalFunction(
-            "string bookMarkComment(" QSIZETYPE_WRAP("pos") ")",
+            "string bookMarkComment(" QSIZETYPE ")",
             asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
@@ -994,9 +1008,9 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         static std::function<bool(qsizetype)> fn =
             std::bind(&WingHex::WingPlugin::Reader::existBookMark, reader,
                       std::placeholders::_1);
-        r = engine->RegisterGlobalFunction(
-            "bool existBookMark(" QSIZETYPE_WRAP("pos") ")",
-            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        r = engine->RegisterGlobalFunction("bool existBookMark(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
         Q_ASSERT(r >= 0);
     }
 
@@ -1032,6 +1046,801 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("Controller");
     Q_ASSERT(r >= 0);
 
+    auto ctl = &this->controller;
+
+    {
+        static std::function<bool(int)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::switchDocument, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool switchDocument(int)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setLockedFile, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setLockedFile(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setKeepSize, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setKeepSize(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setStringVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setStringVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setAddressVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setAddressVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setHeaderVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setHeaderVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(quintptr)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setAddressBase, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setAddressBase(" QPTR ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::undo, ctl);
+        r = engine->RegisterGlobalFunction("bool undo()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::redo, ctl);
+        r = engine->RegisterGlobalFunction("bool redo()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn = std::bind(
+            &WingHex::WingPlugin::Controller::cut, ctl, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool cut(bool = false)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::paste, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool paste(bool = false)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint8)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::writeInt8, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool writeInt8(" QSIZETYPE ", int8)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint16)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::writeInt16, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool writeInt16(" QSIZETYPE ", int16)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::writeInt32, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool writeInt32(" QSIZETYPE ", int)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::writeInt64, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool writeInt64(" QSIZETYPE ", int64)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const CScriptArray &)> fn =
+            std::bind(&WingAngelAPI::_HexController_writeBytes, this,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool writeBytes(" QSIZETYPE ", array<byte>&in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const QString &, const QString &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::writeString, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "bool writeString(" QSIZETYPE ", string &in, string &in = \"\")",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint8)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::insertInt8, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool insertInt8(" QSIZETYPE ", int8)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint16)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::insertInt16, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool insertInt16(" QSIZETYPE ", int16)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::insertInt32, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool insertInt32(" QSIZETYPE ", int)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::insertInt64, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool insertInt64(" QSIZETYPE ", int64)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const CScriptArray &)> fn =
+            std::bind(&WingAngelAPI::_HexController_insertBytes, this,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool insertBytes(" QSIZETYPE ", array<byte>&in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const QString &, const QString &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::insertString, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "bool insertString(" QSIZETYPE ", string &in, string &in = \"\")",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qint8)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::appendInt8, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool appendInt8(int8)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qint16)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::appendInt16, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool appendInt16(int16)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::appendInt32, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool appendInt32(int)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qint32)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::appendInt64, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool appendInt64(int64)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const CScriptArray &)> fn =
+            std::bind(&WingAngelAPI::_HexController_appendBytes, this,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool appendBytes(array<byte>&in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const QString &, const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::appendString, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool appendString(string &in, string &in = \"\")",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::remove, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool remove(" QSIZETYPE ", " QSIZETYPE ")",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::removeAll, ctl);
+        r = engine->RegisterGlobalFunction("bool removeAll()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, int)> fn =
+            std::bind(QOverload<qsizetype, qsizetype, int>::of(
+                          &WingHex::WingPlugin::Controller::moveTo),
+                      ctl, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "bool moveTo(" QSIZETYPE ", " QSIZETYPE ", int = -1)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype)> fn = std::bind(
+            QOverload<qsizetype>::of(&WingHex::WingPlugin::Controller::moveTo),
+            ctl, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool moveTo(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::select, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool select(" QSIZETYPE ", " QSIZETYPE ")",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setInsertionMode, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setInsertionMode(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, const QColor &,
+                                  const QColor &, const QString &)>
+            fn = std::bind(QOverload<qsizetype, qsizetype, const QColor &,
+                                     const QColor &, const QString &>::
+                               of(&WingHex::WingPlugin::Controller::metadata),
+                           ctl, std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3, std::placeholders::_4,
+                           std::placeholders::_5);
+        r = engine->RegisterGlobalFunction(
+            "bool metadata(" QSIZETYPE ", " QSIZETYPE
+            ", Color &in, Color &in, string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, qsizetype,
+                                  const QColor &, const QColor &,
+                                  const QString &)>
+            fn = std::bind(
+                QOverload<qsizetype, qsizetype, qsizetype, const QColor &,
+                          const QColor &, const QString &>::
+                    of(&WingHex::WingPlugin::Controller::metadata),
+                ctl, std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3, std::placeholders::_4,
+                std::placeholders::_5, std::placeholders::_6);
+        r = engine->RegisterGlobalFunction(
+            "bool metadata(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
+            ", Color &in, Color &in, string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::removeMetadata, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool removeMetadata(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::clearMetadata, ctl);
+        r = engine->RegisterGlobalFunction("bool clearMetadata()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, qsizetype,
+                                  const QColor &, const QColor &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::color, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3, std::placeholders::_4,
+                           std::placeholders::_5);
+        r = engine->RegisterGlobalFunction(
+            "bool metadata(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
+            ", Color &in, Color &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, qsizetype,
+                                  const QColor &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::foreground, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3, std::placeholders::_4);
+        r = engine->RegisterGlobalFunction(
+            "bool foreground(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
+            ", Color &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, qsizetype,
+                                  const QColor &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::background, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3, std::placeholders::_4);
+        r = engine->RegisterGlobalFunction(
+            "bool background(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
+            ", Color &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, qsizetype, qsizetype,
+                                  const QString &)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::comment, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3, std::placeholders::_4);
+        r = engine->RegisterGlobalFunction(
+            "bool comment(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
+            ", string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setMetaVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setMetaVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setMetafgVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setMetafgVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setMetabgVisible, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setMetabgVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setMetaCommentVisible,
+                      ctl, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool setMetaCommentVisible(bool)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::newFile, ctl);
+        r = engine->RegisterGlobalFunction("bool newFile()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openFile, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("ErrFile openFile(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &, qsizetype start,
+                                              qsizetype length)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::openRegionFile,
+                           ctl, std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "ErrFile openRegionFile(string &in, " QSIZETYPE " = 0, " QSIZETYPE
+            " = 1024)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openDriver, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("ErrFile openDriver(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &, bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::closeFile, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "ErrFile closeFile(string &in, bool = false)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &, bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::saveFile, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "ErrFile saveFile(string &in, bool = false)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &, const QString &,
+                                              bool)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::exportFile, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "ErrFile exportFile(string &in, string &in, bool = false)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(const QString &, const QString &,
+                                              bool)>
+            fn = std::bind(&WingHex::WingPlugin::Controller::saveAsFile, ctl,
+                           std::placeholders::_1, std::placeholders::_2,
+                           std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "ErrFile saveasFile(string &in, string &in, bool = false)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::closeCurrentFile, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction(
+            "bool closeCurrentFile(bool = false)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<WingHex::ErrFile(bool)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::saveCurrentFile, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool saveCurrentFile(bool = false)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::exportFileGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool exportFileGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::saveAsFileGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool saveAsFileGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openFileGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool openFileGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openRegionFileGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool openRegionFileGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openDriverGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool openDriverGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::findGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool findGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::gotoGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool gotoGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::fillGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool fillGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::fillZeroGUI, ctl);
+        r = engine->RegisterGlobalFunction("bool fillZeroGUI()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::addBookMark, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool addBookMark(" QSIZETYPE ", string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype, const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::modBookMark, ctl,
+                      std::placeholders::_1, std::placeholders::_2);
+        r = engine->RegisterGlobalFunction(
+            "bool modBookMark(" QSIZETYPE ", string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(qsizetype)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::removeBookMark, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool removeBookMark(" QSIZETYPE ")",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool()> fn =
+            std::bind(&WingHex::WingPlugin::Controller::clearBookMark, ctl);
+        r = engine->RegisterGlobalFunction("bool clearBookMark()",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::openWorkSpace, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool openWorkSpace(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::Controller::setCurrentEncoding, ctl,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction(
+            "bool setCurrentEncoding(string &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    engine->SetDefaultNamespace("");
+}
+
+void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
+    int r = engine->SetDefaultNamespace("DataVisual");
+    Q_ASSERT(r >= 0);
+
+    auto datavis = &this->visual;
+
+    {
+        static std::function<bool(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::DataVisual::updateText, datavis,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool updateText(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const CScriptArray &)> fn =
+            std::bind(&WingAngelAPI::_DataVisual_updateTextList, this, stringID,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction(
+            "bool updateTextList(array<string> &in)",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const QString &)> fn =
+            std::bind(&WingHex::WingPlugin::DataVisual::updateTextTree, datavis,
+                      std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("bool updateTextTree(string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<bool(const QString &, const CScriptArray &,
+                                  const CScriptArray &)>
+            fn = std::bind(&WingAngelAPI::_DataVisual_updateTextTable, this,
+                           stringID, std::placeholders::_1,
+                           std::placeholders::_2, std::placeholders::_3);
+        r = engine->RegisterGlobalFunction(
+            "bool updateTextTable(string &in, array<string> &in, "
+            "array<string> &in = array<string>())",
+            asMETHOD(decltype(fn), operator()), asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
     engine->SetDefaultNamespace("");
 }
 
@@ -1233,4 +2042,91 @@ CScriptArray *WingAngelAPI::_HexReader_getSupportedEncodings() {
     return retarrayWrapperFunction(
         [this]() -> QStringList { return emit reader.getSupportedEncodings(); },
         "array<string>");
+}
+
+bool WingAngelAPI::_HexController_writeBytes(qsizetype offset,
+                                             const CScriptArray &ba) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+        bool ok = false;
+        auto byteID = engine->GetTypeIdByDecl("byte");
+        Q_ASSERT(byteID);
+        auto bab = cArray2ByteArray(ba, byteID, &ok);
+        if (!ok) {
+            return false;
+        }
+        return emit controller.writeBytes(offset, bab);
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_HexController_insertBytes(qsizetype offset,
+                                              const CScriptArray &ba) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+        bool ok = false;
+        auto byteID = engine->GetTypeIdByDecl("byte");
+        Q_ASSERT(byteID);
+        auto bab = cArray2ByteArray(ba, byteID, &ok);
+        if (!ok) {
+            return false;
+        }
+        return emit controller.insertBytes(offset, bab);
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_HexController_appendBytes(const CScriptArray &ba) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+        bool ok = false;
+        auto byteID = engine->GetTypeIdByDecl("byte");
+        Q_ASSERT(byteID);
+        auto bab = cArray2ByteArray(ba, byteID, &ok);
+        if (!ok) {
+            return false;
+        }
+        return emit controller.appendBytes(bab);
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_DataVisual_updateTextList(int stringID,
+                                              const CScriptArray &data) {
+    bool o = false;
+    auto ret = cArray2QStringList(data, stringID, &o);
+    if (o) {
+        return visual.updateTextList(ret);
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_DataVisual_updateTextTable(
+    int stringID, const QString &json, const CScriptArray &headers,
+    const CScriptArray &headerNames) {
+    bool o = false;
+    auto h = cArray2QStringList(headers, stringID, &o);
+    if (o) {
+        auto hn = cArray2QStringList(headerNames, stringID, &o);
+        if (o) {
+            return visual.updateTextTable(json, h, hn);
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }

@@ -1,10 +1,14 @@
 #include "pluginsystem.h"
+#include "QJsonModel/include/QJsonModel.hpp"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "class/logger.h"
+#include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "dialog/colorpickerdialog.h"
 #include "dialog/mainwindow.h"
+#include "model/qjsontablemodel.h"
 
 #include <QDir>
 #include <QFileInfoList>
@@ -16,12 +20,9 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {}
 
 PluginSystem::~PluginSystem() {
     for (auto &item : loadedplgs) {
-        item->plugin2MessagePipe(WingPluginMessage::PluginUnLoading,
-                                 emptyparam);
         item->controller.disconnect();
         item->reader.disconnect();
         item->unload();
-        item->plugin2MessagePipe(WingPluginMessage::PluginUnLoaded, emptyparam);
         item->deleteLater();
     }
 }
@@ -30,14 +31,6 @@ const QList<IWingPlugin *> &PluginSystem::plugins() const { return loadedplgs; }
 
 const IWingPlugin *PluginSystem::plugin(qindextype index) const {
     return loadedplgs.at(index);
-}
-
-void PluginSystem::raiseDispatch(HookIndex hookindex, QList<QVariant> params) {
-    auto dispatch = dispatcher[hookindex];
-    params.push_front(hookindex);
-    for (auto item : dispatch) {
-        item->plugin2MessagePipe(WingPluginMessage::HookMessage, params);
-    }
 }
 
 void PluginSystem::loadPlugin(QFileInfo fileinfo) {
@@ -84,8 +77,6 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         if (loadedpuid.contains(puid)) {
             throw tr("ErrLoadLoadedPlugin");
         }
-
-        p->plugin2MessagePipe(WingPluginMessage::PluginLoading, emptyparam);
 
         if (!p->init(loadedplginfos)) {
             throw tr("ErrLoadInitPlugin");
@@ -203,30 +194,12 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         }
 
         connectInterface(p);
-
-        subscribeDispatcher(p, HookIndex::OpenFileBegin);
-        subscribeDispatcher(p, HookIndex::OpenFileEnd);
-        subscribeDispatcher(p, HookIndex::CloseFileBegin);
-        subscribeDispatcher(p, HookIndex::CloseFileEnd);
-        subscribeDispatcher(p, HookIndex::NewFileBegin);
-        subscribeDispatcher(p, HookIndex::NewFileEnd);
-        subscribeDispatcher(p, HookIndex::DocumentSwitched);
-
         m_plgviewMap.insert(p, nullptr);
-
-        p->plugin2MessagePipe(WingPluginMessage::PluginLoaded, emptyparam);
     } catch (const QString &error) {
         Logger::critical(error);
         return false;
     }
     return true;
-}
-
-void PluginSystem::subscribeDispatcher(IWingPlugin *plg, HookIndex hookIndex) {
-    Q_ASSERT(plg);
-    if (plg->getHookSubscribe().testFlag(hookIndex)) {
-        dispatcher[hookIndex].push_back(plg);
-    }
 }
 
 void PluginSystem::connectInterface(IWingPlugin *plg) {
@@ -796,40 +769,16 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         }
         return false;
     });
-    connect(
-        pctl,
-        QOverload<qsizetype, const uchar>::of(&WingPlugin::Controller::insert),
-        _win, [=](qsizetype offset, uchar b) -> bool {
-            auto e = pluginCurrentEditor(plg);
-            if (e) {
-                return e->hexEditor()->document()->insert(offset, b);
-            }
-            return false;
-        });
-    connect(pctl,
-            QOverload<qsizetype, const QByteArray &>::of(
-                &WingPlugin::Controller::insert),
-            _win, [=](qsizetype offset, const QByteArray &data) -> bool {
+    connect(pctl, &WingPlugin::Controller::insertBytes, _win,
+            [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->insert(offset, data);
                 }
                 return false;
             });
-    connect(
-        pctl,
-        QOverload<qsizetype, const uchar>::of(&WingPlugin::Controller::write),
-        _win, [=](qsizetype offset, uchar b) -> bool {
-            auto e = pluginCurrentEditor(plg);
-            if (e) {
-                return e->hexEditor()->document()->replace(offset, b);
-            }
-            return false;
-        });
-    connect(pctl,
-            QOverload<qsizetype, const QByteArray &>::of(
-                &WingPlugin::Controller::write),
-            _win, [=](qsizetype offset, const QByteArray &data) -> bool {
+    connect(pctl, &WingPlugin::Controller::writeBytes, _win,
+            [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->replace(offset, data);
@@ -989,27 +938,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
 
-    connect(pctl, QOverload<uchar>::of(&WingPlugin::Controller::append), _win,
-            [=](uchar b) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    return doc->insert(offset, b);
-                }
-                return false;
-            });
-    connect(pctl,
-            QOverload<const QByteArray &>::of(&WingPlugin::Controller::append),
-            _win, [=](const QByteArray &data) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    return doc->insert(offset, data);
-                }
-                return false;
-            });
     connect(pctl, &WingPlugin::Controller::appendInt8, _win,
             [=](qint8 value) -> bool {
                 auto e = pluginCurrentEditor(plg);
@@ -1101,21 +1029,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
     connect(pctl,
-            QOverload<const HexPosition &>::of(&WingPlugin::Controller::moveTo),
-            _win, [=](const HexPosition &pos) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    QHexPosition p;
-                    p.line = pos.line;
-                    p.column = pos.column;
-                    p.lineWidth = pos.lineWidth;
-                    p.nibbleindex = pos.nibbleindex;
-                    e->hexEditor()->cursor()->moveTo(p);
-                    return true;
-                }
-                return false;
-            });
-    connect(pctl,
             QOverload<qsizetype, qsizetype, int>::of(
                 &WingPlugin::Controller::moveTo),
             _win,
@@ -1136,29 +1049,11 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
                 return false;
             });
-    connect(pctl, &WingPlugin::Controller::selectOffset, _win,
+    connect(pctl, &WingPlugin::Controller::select, _win,
             [=](qsizetype offset, qsizetype length) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->setSelection(offset, length);
-                    return true;
-                }
-                return false;
-            });
-    connect(pctl, &WingPlugin::Controller::select, _win,
-            [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    e->hexEditor()->cursor()->select(line, column, nibbleindex);
-                    return true;
-                }
-                return false;
-            });
-    connect(pctl, &WingPlugin::Controller::enabledCursor, _win,
-            [=](bool b) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    e->hexEditor()->renderer()->enableCursor(b);
                     return true;
                 }
                 return false;
@@ -1222,7 +1117,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
                 return false;
             });
-    connect(pctl, &WingPlugin::Controller::clearMeta, _win, [=]() -> bool {
+    connect(pctl, &WingPlugin::Controller::clearMetadata, _win, [=]() -> bool {
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
@@ -1283,26 +1178,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     if (!doc->isKeepSize())
                         return false;
                     doc->metadata()->background(line, start, length, bgcolor);
-                    return true;
-                }
-                return false;
-            });
-    connect(pctl, &WingPlugin::Controller::applyMetas, _win,
-            [=](const QList<HexMetadataAbsoluteItem> &metas) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    QList<QHexMetadataAbsoluteItem> ms;
-                    for (auto &item : metas) {
-                        QHexMetadataAbsoluteItem i;
-                        i.begin = item.begin;
-                        i.end = item.end;
-                        i.comment = item.comment;
-                        i.background = item.background;
-                        i.foreground = item.foreground;
-                        ms.append(i);
-                    }
-                    auto doc = e->hexEditor()->document();
-                    doc->metadata()->applyMetas(ms);
                     return true;
                 }
                 return false;
@@ -1394,24 +1269,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
 
-    connect(pctl, &WingPlugin::Controller::applyBookMarks, _win,
-            [=](const QList<BookMark> &books) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    QList<BookMarkStruct> bs;
-                    for (auto &item : books) {
-                        BookMarkStruct b;
-                        b.pos = item.pos;
-                        b.comment = item.comment;
-                        bs.append(b);
-                    }
-                    auto doc = e->hexEditor()->document();
-                    doc->applyBookMarks(bs);
-                    return true;
-                }
-                return false;
-            });
-
     // mainwindow
     connect(pctl, &WingPlugin::Controller::newFile, _win, [=]() -> bool {
         m_plgviewMap[plg] = _win->newfileGUI();
@@ -1466,14 +1323,14 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::exportFileGUI, _win,
             &MainWindow::on_exportfile);
 
-    connect(pctl, &WingPlugin::Controller::saveasFile, _win,
+    connect(pctl, &WingPlugin::Controller::saveAsFile, _win,
             [=](const QString &filename, const QString &savename,
                 bool ignoreMd5) -> ErrFile {
                 // return saveAs(filename, index, ignoreMd5);
                 return ErrFile::Success;
             });
 
-    connect(pctl, &WingPlugin::Controller::saveasFileGUI, _win,
+    connect(pctl, &WingPlugin::Controller::saveAsFileGUI, _win,
             &MainWindow::on_saveas);
 
     connect(pctl, &WingPlugin::Controller::closeCurrentFile, _win,
@@ -1505,7 +1362,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     auto msgbox = &plg->msgbox;
     connect(msgbox, &WingPlugin::MessageBox::aboutQt, _win,
-            [this](QWidget *parent, const QString &title) {
+            [this](QWidget *parent, const QString &title) -> void {
                 if (checkThreadAff()) {
                     WingMessageBox::aboutQt(parent, title);
                 }
@@ -1513,103 +1370,205 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     connect(msgbox, &WingPlugin::MessageBox::information, _win,
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
-                QMessageBox::StandardButton defaultButton) {
+                QMessageBox::StandardButton defaultButton)
+                -> QMessageBox::StandardButton {
                 if (checkThreadAff()) {
-                    WingMessageBox::information(parent, title, text, buttons,
-                                                defaultButton);
+                    return WingMessageBox::information(parent, title, text,
+                                                       buttons, defaultButton);
                 }
+                return QMessageBox::StandardButton::NoButton;
             });
     connect(msgbox, &WingPlugin::MessageBox::question, _win,
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
-                QMessageBox::StandardButton defaultButton) {
+                QMessageBox::StandardButton defaultButton)
+                -> QMessageBox::StandardButton {
                 if (checkThreadAff()) {
-                    WingMessageBox::question(parent, title, text, buttons,
-                                             defaultButton);
+                    return WingMessageBox::question(parent, title, text,
+                                                    buttons, defaultButton);
                 }
+                return QMessageBox::StandardButton::NoButton;
             });
     connect(msgbox, &WingPlugin::MessageBox::warning, _win,
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
-                QMessageBox::StandardButton defaultButton) {
+                QMessageBox::StandardButton defaultButton)
+                -> QMessageBox::StandardButton {
                 if (checkThreadAff()) {
-                    WingMessageBox::warning(parent, title, text, buttons,
-                                            defaultButton);
+                    return WingMessageBox::warning(parent, title, text, buttons,
+                                                   defaultButton);
                 }
+                return QMessageBox::StandardButton::NoButton;
             });
     connect(msgbox, &WingPlugin::MessageBox::critical, _win,
             [=](QWidget *parent, const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
-                QMessageBox::StandardButton defaultButton) {
+                QMessageBox::StandardButton defaultButton)
+                -> QMessageBox::StandardButton {
                 if (checkThreadAff()) {
-                    WingMessageBox::critical(parent, title, text, buttons,
-                                             defaultButton);
+                    return WingMessageBox::critical(parent, title, text,
+                                                    buttons, defaultButton);
                 }
+                return QMessageBox::StandardButton::NoButton;
             });
     connect(msgbox, &WingPlugin::MessageBox::about, _win,
-            [=](QWidget *parent, const QString &title, const QString &text) {
+            [=](QWidget *parent, const QString &title,
+                const QString &text) -> void {
                 if (checkThreadAff()) {
                     WingMessageBox::about(parent, title, text);
                 }
             });
-    connect(
-        msgbox, &WingPlugin::MessageBox::msgbox, _win,
-        [=](QWidget *parent, QMessageBox::Icon icon, const QString &title,
-            const QString &text,
-            QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
-            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton) {
-            if (checkThreadAff()) {
-                WingMessageBox::msgbox(parent, icon, title, text, buttons,
-                                       defaultButton);
-            }
-        });
+    connect(msgbox, &WingPlugin::MessageBox::msgbox, _win,
+            [=](QWidget *parent, QMessageBox::Icon icon, const QString &title,
+                const QString &text, QMessageBox::StandardButtons buttons,
+                QMessageBox::StandardButton defaultButton)
+                -> QMessageBox::StandardButton {
+                if (checkThreadAff()) {
+                    return WingMessageBox::msgbox(parent, icon, title, text,
+                                                  buttons, defaultButton);
+                }
+                return QMessageBox::StandardButton::NoButton;
+            });
 
     auto inputbox = &plg->inputbox;
     connect(inputbox, &WingPlugin::InputBox::getText, _win,
             [=](QWidget *parent, const QString &title, const QString &label,
                 QLineEdit::EchoMode echo, const QString &text, bool *ok,
-                Qt::InputMethodHints inputMethodHints) {
+                Qt::InputMethodHints inputMethodHints) -> QString {
                 if (checkThreadAff()) {
-                    WingInputDialog::getText(parent, title, label, echo, text,
-                                             ok, inputMethodHints);
+                    return WingInputDialog::getText(parent, title, label, echo,
+                                                    text, ok, inputMethodHints);
                 }
+                return {};
             });
     connect(inputbox, &WingPlugin::InputBox::getMultiLineText, _win,
             [=](QWidget *parent, const QString &title, const QString &label,
                 const QString &text, bool *ok,
-                Qt::InputMethodHints inputMethodHints) {
+                Qt::InputMethodHints inputMethodHints) -> QString {
                 if (checkThreadAff()) {
-                    WingInputDialog::getMultiLineText(
+                    return WingInputDialog::getMultiLineText(
                         parent, title, label, text, ok, inputMethodHints);
                 }
+                return {};
             });
     connect(inputbox, &WingPlugin::InputBox::getItem, _win,
             [=](QWidget *parent, const QString &title, const QString &label,
                 const QStringList &items, int current, bool editable, bool *ok,
-                Qt::InputMethodHints inputMethodHints) {
+                Qt::InputMethodHints inputMethodHints) -> QString {
                 if (checkThreadAff()) {
-                    WingInputDialog::getItem(parent, title, label, items,
-                                             current, editable, ok,
-                                             inputMethodHints);
+                    return WingInputDialog::getItem(parent, title, label, items,
+                                                    current, editable, ok,
+                                                    inputMethodHints);
                 }
+                return {};
             });
-    connect(inputbox, &WingPlugin::InputBox::getInt, _win,
-            [=](QWidget *parent, const QString &title, const QString &label,
-                int value, int minValue, int maxValue, int step, bool *ok) {
-                if (checkThreadAff()) {
-                    WingInputDialog::getInt(parent, title, label, value,
-                                            minValue, maxValue, step, ok);
-                }
-            });
+    connect(
+        inputbox, &WingPlugin::InputBox::getInt, _win,
+        [=](QWidget *parent, const QString &title, const QString &label,
+            int value, int minValue, int maxValue, int step, bool *ok) -> int {
+            if (checkThreadAff()) {
+                return WingInputDialog::getInt(parent, title, label, value,
+                                               minValue, maxValue, step, ok);
+            }
+            return 0;
+        });
     connect(inputbox, &WingPlugin::InputBox::getDouble, _win,
             [=](QWidget *parent, const QString &title, const QString &label,
                 double value, double minValue, double maxValue, int decimals,
-                bool *ok, double step) {
+                bool *ok, double step) -> double {
                 if (checkThreadAff()) {
-                    WingInputDialog::getDouble(parent, title, label, value,
-                                               minValue, maxValue, decimals, ok,
-                                               step);
+                    return WingInputDialog::getDouble(parent, title, label,
+                                                      value, minValue, maxValue,
+                                                      decimals, ok, step);
                 }
+                return qQNaN();
+            });
+
+    auto filedlg = &plg->filedlg;
+    connect(filedlg, &WingPlugin::FileDialog::getExistingDirectory, _win,
+            [=](QWidget *parent, const QString &caption, const QString &dir,
+                QFileDialog::Options options) -> QString {
+                if (checkThreadAff()) {
+                    return WingFileDialog::getExistingDirectory(parent, caption,
+                                                                dir, options);
+                }
+                return {};
+            });
+    connect(filedlg, &WingPlugin::FileDialog::getOpenFileName, _win,
+            [=](QWidget *parent, const QString &caption, const QString &dir,
+                const QString &filter, QString *selectedFilter,
+                QFileDialog::Options options) -> QString {
+                if (checkThreadAff()) {
+                    return WingFileDialog::getOpenFileName(
+                        parent, caption, dir, filter, selectedFilter, options);
+                }
+                return {};
+            });
+    connect(filedlg, &WingPlugin::FileDialog::getOpenFileNames, _win,
+            [=](QWidget *parent, const QString &caption, const QString &dir,
+                const QString &filter, QString *selectedFilter,
+                QFileDialog::Options options) -> QStringList {
+                if (checkThreadAff()) {
+                    return WingFileDialog::getOpenFileNames(
+                        parent, caption, dir, filter, selectedFilter, options);
+                }
+                return {};
+            });
+    connect(filedlg, &WingPlugin::FileDialog::getSaveFileName, _win,
+            [=](QWidget *parent, const QString &caption, const QString &dir,
+                const QString &filter, QString *selectedFilter,
+                QFileDialog::Options options) -> QString {
+                if (checkThreadAff()) {
+                    return WingFileDialog::getSaveFileName(
+                        parent, caption, dir, filter, selectedFilter, options);
+                }
+                return {};
+            });
+
+    auto colordlg = &plg->colordlg;
+    connect(colordlg, &WingPlugin::ColorDialog::getColor, _win,
+            [=](const QString &caption, QWidget *parent) -> QColor {
+                if (checkThreadAff()) {
+                    ColorPickerDialog d;
+                    if (d.exec()) {
+                        return d.color();
+                    }
+                }
+                return {};
+            });
+
+    auto visual = &plg->visual;
+    connect(visual, &WingPlugin::DataVisual::updateText, _win->m_infotxt,
+            &QTextBrowser::setText);
+    connect(visual, &WingPlugin::DataVisual::updateTextList, _win,
+            [=](const QStringList &data) {
+                auto oldmodel = _win->m_infolist->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+                auto model = new QStringListModel(data);
+                _win->m_infolist->setModel(model);
+            });
+    connect(visual, &WingPlugin::DataVisual::updateTextTree, _win,
+            [=](const QString &json) {
+                auto oldmodel = _win->m_infotree->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+                auto model = new QJsonModel(json.toUtf8());
+                _win->m_infotree->setModel(model);
+            });
+    connect(visual, &WingPlugin::DataVisual::updateTextTable, _win,
+            [=](const QString &json, const QStringList &headers,
+                const QStringList &headerNames) {
+                auto oldmodel = _win->m_infotable->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+
+                auto model = new QJsonTableModel({});
+                model->setJson(QJsonDocument::fromJson(json.toUtf8()));
+                _win->m_infotable->setModel(model);
             });
 }
 

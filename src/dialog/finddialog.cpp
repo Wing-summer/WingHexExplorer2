@@ -164,7 +164,6 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setFixedSize(500, 600);
     this->setWindowTitle(tr("find"));
 }
 

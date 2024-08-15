@@ -9,7 +9,6 @@
 #include "class/settingmanager.h"
 #include "class/workspacemanager.h"
 #include "dialog/fileinfodialog.h"
-#include "plugin/pluginsystem.h"
 #include "utilities.h"
 
 #include <QFile>
@@ -19,8 +18,7 @@
 constexpr qsizetype FILEMAXBUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
-EditorView::EditorView(bool enableplugin, QWidget *parent)
-    : ads::CDockWidget(QString(), parent), _enableplugin(enableplugin) {
+EditorView::EditorView(QWidget *parent) : ads::CDockWidget(QString(), parent) {
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
         CDockWidget::DockWidgetClosable | CDockWidget::DockWidgetPinnable |
@@ -202,21 +200,10 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
-    QList<QVariant> params;
-    auto &plgsys = PluginSystem::instance();
-
-    if (_enableplugin) {
-        params << filename;
-        plgsys.raiseDispatch(HookIndex::OpenFileBegin, params);
-    }
 
     QFileInfo info(filename);
     if (info.exists()) {
         if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -228,10 +215,6 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
                 : QHexDocument::fromFile<QMemoryBuffer>(filename, readonly);
 
         if (Q_UNLIKELY(p == nullptr)) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -254,16 +237,6 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
         tab->setToolTip(filename);
-
-        if (_enableplugin) {
-            params << ErrFile::Success;
-            plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-        }
-    }
-
-    if (_enableplugin) {
-        params << ErrFile::NotExist;
-        plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
     }
 
     return ErrFile::Success;
@@ -321,21 +294,10 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
-    QList<QVariant> params;
-    auto &plgsys = PluginSystem::instance();
-
-    if (_enableplugin) {
-        params << filename;
-        plgsys.raiseDispatch(HookIndex::OpenFileBegin, params);
-    }
 
     QFileInfo info(filename);
     if (info.exists()) {
         if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -344,10 +306,6 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         auto *p =
             QHexDocument::fromRegionFile(filename, start, length, readonly);
         if (Q_UNLIKELY(p == nullptr)) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -371,16 +329,6 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), filename));
         tab->setToolTip(filename);
-
-        if (_enableplugin) {
-            params << ErrFile::Success;
-            plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-        }
-    }
-
-    if (_enableplugin) {
-        params << ErrFile::NotExist;
-        plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
     }
 
     return ErrFile::Success;
@@ -390,21 +338,10 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
-    QList<QVariant> params;
-    auto &plgsys = PluginSystem::instance();
-
-    if (_enableplugin) {
-        params << driver;
-        plgsys.raiseDispatch(HookIndex::OpenFileBegin, params);
-    }
 
     QFileInfo info(driver);
     if (info.exists()) {
         if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -413,10 +350,6 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
         auto *p = QHexDocument::fromLargeFile(driver, readonly);
 
         if (Q_UNLIKELY(p == nullptr)) {
-            if (_enableplugin) {
-                params << ErrFile::Permission;
-                plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-            }
             return ErrFile::Permission;
         }
 
@@ -440,16 +373,6 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
         auto tab = this->tabWidget();
         tab->setIcon(ICONRES(QStringLiteral("opendriver")));
         tab->setToolTip(driver);
-
-        if (_enableplugin) {
-            params << ErrFile::Success;
-            plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
-        }
-    }
-
-    if (_enableplugin) {
-        params << ErrFile::NotExist;
-        plgsys.raiseDispatch(HookIndex::OpenFileEnd, params);
     }
 
     return ErrFile::Success;
@@ -599,12 +522,6 @@ qindextype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
 }
 
-bool EditorView::enablePlugin() const { return _enableplugin; }
-
-void EditorView::setEnablePlugin(bool newEnableplugin) {
-    _enableplugin = newEnableplugin;
-}
-
 EditorView *EditorView::cloneParent() const { return m_cloneParent; }
 
 bool EditorView::isCloned() const { return m_cloneParent != nullptr; }
@@ -624,7 +541,7 @@ EditorView *EditorView::clone() {
         return nullptr;
     }
 
-    auto ev = new EditorView(_enableplugin, this->parentWidget());
+    auto ev = new EditorView(this->parentWidget());
     connect(ev, &EditorView::destroyed, this, [=] {
         this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
     });

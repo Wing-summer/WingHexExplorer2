@@ -243,7 +243,7 @@ private:
 
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, this);
-            shortCut->setContext(Qt::ApplicationShortcut);
+            shortCut->setContext(Qt::WindowShortcut);
             connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
         }
 
@@ -270,6 +270,7 @@ private:
 
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, this);
+            shortCut->setContext(Qt::WindowShortcut);
             connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
         }
 
@@ -285,12 +286,7 @@ private:
         auto a = new QAction(parent);
         a->setText(title);
         a->setShortcutVisibleInContextMenu(true);
-
-        if (!shortcut.isEmpty()) {
-            auto shortCut = new QShortcut(shortcut, this);
-            connect(shortCut, &QShortcut::activated, a, &QAction::trigger);
-        }
-
+        a->setShortcut(shortcut);
         a->setCheckable(true);
         connect(a, &QAction::triggered, this, slot);
         return a;
@@ -302,12 +298,7 @@ private:
         auto a = new QAction;
         a->setText(title);
         a->setShortcutVisibleInContextMenu(true);
-
-        if (!shortcut.isEmpty()) {
-            auto shortCut = new QShortcut(shortcut, this);
-            connect(shortCut, &QShortcut::activated, a, &QAction::trigger);
-        }
-
+        a->setShortcut(shortcut);
         connect(a, &QAction::triggered, this, slot);
         return a;
     }
