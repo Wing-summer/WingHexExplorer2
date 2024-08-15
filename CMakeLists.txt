@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.18)
 
 project(
   WingHexExplorer2
@@ -24,8 +24,8 @@ if(WIN32)
 endif()
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  if(Qt5Widgets_VERSION VERSION_LESS 5.12.0)
-    message(FATAL_ERROR "Minimum supported Qt5 version is 5.10!")
+  if(Qt5Widgets_VERSION VERSION_LESS 5.14.0)
+    message(FATAL_ERROR "Minimum supported Qt5 version is 5.14!")
   endif()
 endif()
 
@@ -71,8 +71,7 @@ set(DIALOG_SRC
     src/dialog/settingdialog.ui
     src/dialog/framelessdialogbase.h
     src/dialog/framelessdialogbase.cpp
-    src/dialog/sponsordialog.h
-    src/dialog/sponsordialog.cpp
+    src/dialog/aboutsoftwaredialog.ui
     src/dialog/aboutsoftwaredialog.cpp
     src/dialog/aboutsoftwaredialog.h
     src/dialog/fileinfodialog.cpp
@@ -204,9 +203,62 @@ set(PLUGIN_SRC
     src/plugin/pluginsystem.h src/plugin/settingpage.h
     src/plugin/settingpage.cpp)
 
-set(TS_FILES lang/ws_zh_CN.ts)
+# localization support
+file(
+  GLOB_RECURSE TS_FILES
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
 
-set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION "./lang")
+foreach(TS_FILE IN LISTS TS_FILES)
+  get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
+  set(QM_DIR "./.tmp/${TS_DIR}")
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${TS_DIR}")
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${QM_DIR}")
+  set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
+  set(TR_COPY_FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/about.md"
+      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/components.md"
+      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/credits.md"
+      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/devs.md"
+      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/trans.md")
+
+  set(DESTINATION_DIR ${CMAKE_BINARY_DIR}/${QM_DIR})
+  foreach(FILE ${TR_COPY_FILES})
+    get_filename_component(FILE_NAME ${FILE} NAME)
+    add_custom_command(
+      OUTPUT ${DESTINATION_DIR}/${FILE_NAME}
+      COMMAND ${CMAKE_COMMAND} -E copy ${FILE} ${DESTINATION_DIR}/${FILE_NAME}
+      DEPENDS ${FILE}
+      COMMENT "Copying ${FILE_NAME} to ${DESTINATION_DIR}")
+    list(APPEND TR_COPIED_FILES ${DESTINATION_DIR}/${FILE_NAME})
+  endforeach()
+
+  set(TR_COMP_FILES "winghex.qm" "about.md" "components.md" "credits.md"
+                    "devs.md" "trans.md")
+  set(LANG_PAK_NAME winghex_tr.pak)
+  add_definitions(-DLANG_PAK_NAME="${LANG_PAK_NAME}")
+  set(LANG_PAK "${DESTINATION_DIR}/${LANG_PAK_NAME}")
+
+  add_custom_command(
+    OUTPUT ${LANG_PAK}
+    COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
+            ${TR_COMP_FILES}
+    WORKING_DIRECTORY "${DESTINATION_DIR}"
+    COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
+    DEPENDS ${TR_COPIED_FILES}
+    VERBATIM)
+
+  set(LANG_PAK_OUT ${CMAKE_BINARY_DIR}/${TS_DIR}/${LANG_PAK_NAME})
+
+  add_custom_command(
+    OUTPUT ${LANG_PAK_OUT}
+    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK} "${CMAKE_BINARY_DIR}/${TS_DIR}"
+    DEPENDS ${LANG_PAK} # Ensure this runs after compression
+  )
+
+  add_custom_target(post_build_tasks ALL DEPENDS ${LANG_PAK_OUT})
+endforeach()
+
 set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
@@ -251,7 +303,7 @@ set(PROJECT_SOURCES
 add_custom_target(
   build-time-make-directory ALL
   COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lang"
-          "${CMAKE_BINARY_DIR}/scripts")
+          "${CMAKE_BINARY_DIR}/scripts" "${CMAKE_BINARY_DIR}/.tmp")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   if(WIN32)
@@ -281,6 +333,8 @@ target_link_libraries(
           Qt${QT_VERSION_MAJOR}::Network
           Qt${QT_VERSION_MAJOR}::Concurrent
           Qt${QT_VERSION_MAJOR}::PrintSupport
+          Qt${QT_VERSION_MAJOR}::GuiPrivate
+          Qt${QT_VERSION_MAJOR}::CorePrivate
           SingleApplication::SingleApplication
           QWKCore
           QWKWidgets

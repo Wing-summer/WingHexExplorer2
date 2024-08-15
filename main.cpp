@@ -1,4 +1,5 @@
 #include "SingleApplication/singleapplication.h"
+#include "define.h"
 #include "src/class/languagemanager.h"
 #include "src/class/skinmanager.h"
 #include "src/dialog/mainwindow.h"
@@ -25,6 +26,10 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
 
     SingleApplication a(argc, argv);
+    a.setApplicationName(APP_NAME);
+    a.setOrganizationName(APP_ORG);
+    a.setApplicationVersion(WINGHEX_VERSION);
+
     SkinManager::instance();
 
     LanguageManager::instance();

@@ -5,6 +5,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
+#include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
 #include "class/scriptmanager.h"
@@ -24,7 +25,6 @@
 #include "settings/generalsettingdialog.h"
 #include "settings/pluginsettingdialog.h"
 #include "settings/scriptsettingdialog.h"
-#include "sponsordialog.h"
 
 #include <QAction>
 #include <QActionGroup>
@@ -48,7 +48,7 @@
 constexpr auto EMPTY_FUNC = [] {};
 
 MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
-    this->resize(900, 800);
+    this->setMinimumSize(900, 800);
 
     // recent file manager init
     m_recentMenu = new QMenu(this);
@@ -72,7 +72,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
-    m_status->setContentsMargins(0, 1, 2, 2);
 
     // init statusbar
     {
@@ -2115,7 +2114,20 @@ void MainWindow::on_setting_plugin() { m_setdialog->showConfig(2); }
 
 void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 
-void MainWindow::on_sponsor() { SponsorDialog().exec(); }
+void MainWindow::on_sponsor() {
+    // Github is not easy to access for Chinese people,
+    // Gitee mirror instead
+    if (LanguageManager::instance().defaultLocale().country() ==
+        QLocale::China) {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://gitee.com/wing-cloud/"
+                                "WingHexExplorer2#%E6%8D%90%E5%8A%A9")));
+    } else {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://github.com/Wing-summer/"
+                                "WingHexExplorer2#%E6%8D%90%E5%8A%A9")));
+    }
+}
 
 void MainWindow::on_wiki() {
     QDesktopServices::openUrl(
