@@ -149,30 +149,6 @@ struct HexMetadataItem {
 
 typedef QList<HexMetadataItem> HexLineMetadata;
 
-enum class WingPluginMessage {
-    PluginLoading,
-    PluginLoaded,
-    PluginUnLoading,
-    PluginUnLoaded,
-    ErrorMessage,
-    MessageResponse,
-    HookMessage
-};
-
-enum class ResponseMsg { UnImplement, Success, ErrorParams, Permission };
-
-enum HookIndex {
-    None = 0,
-    OpenFileBegin = 1,
-    OpenFileEnd = 2,
-    CloseFileBegin = 4,
-    CloseFileEnd = 8,
-    NewFileBegin = 16,
-    NewFileEnd = 32,
-    DocumentSwitched = 64
-};
-Q_DECLARE_FLAGS(HookIndices, HookIndex)
-
 namespace WingPlugin {
 
 class Reader : public QObject {
@@ -208,7 +184,6 @@ signals:
 
     bool copy(bool hex = false);
 
-    // extension
     qint8 readInt8(qsizetype offset);
     qint16 readInt16(qsizetype offset);
     qint32 readInt32(qsizetype offset);
@@ -269,50 +244,38 @@ signals:
     bool cut(bool hex = false);
     bool paste(bool hex = false);
 
-    bool write(qsizetype offset, const uchar b);
-    bool write(qsizetype offset, const QByteArray &data);
-
-    // extesion
     bool writeInt8(qsizetype offset, qint8 value);
     bool writeInt16(qsizetype offset, qint16 value);
     bool writeInt32(qsizetype offset, qint32 value);
     bool writeInt64(qsizetype offset, qint64 value);
     bool writeString(qsizetype offset, const QString &value,
                      const QString &encoding = QString());
+    bool writeBytes(qsizetype offset, const QByteArray &data);
 
-    bool insert(qsizetype offset, const uchar b);
-    bool insert(qsizetype offset, const QByteArray &data);
-
-    // extesion
     bool insertInt8(qsizetype offset, qint8 value);
     bool insertInt16(qsizetype offset, qint16 value);
     bool insertInt32(qsizetype offset, qint32 value);
     bool insertInt64(qsizetype offset, qint64 value);
     bool insertString(qsizetype offset, const QString &value,
                       const QString &encoding = QString());
+    bool insertBytes(qsizetype offset, const QByteArray &data);
 
-    bool append(uchar b);
-    bool append(const QByteArray &data);
-
-    // extension
     bool appendInt8(qint8 value);
     bool appendInt16(qint16 value);
     bool appendInt32(qint32 value);
     bool appendInt64(qint64 value);
     bool appendString(const QString &value,
                       const QString &encoding = QString());
+    bool appendBytes(const QByteArray &data);
 
     bool remove(qsizetype offset, qsizetype len);
     bool removeAll(); // extension
 
     // cursor
-    bool moveTo(const HexPosition &pos);
     bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
     bool moveTo(qsizetype offset);
-    bool select(qsizetype line, qsizetype column, int nibbleindex = 1);
-    bool selectOffset(qsizetype offset, qsizetype length);
+    bool select(qsizetype offset, qsizetype length);
     bool setInsertionMode(bool isinsert);
-    bool enabledCursor(bool b);
 
     // metadata
     bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
@@ -321,7 +284,7 @@ signals:
                   const QColor &fgcolor, const QColor &bgcolor,
                   const QString &comment);
     bool removeMetadata(qsizetype offset);
-    bool clearMeta();
+    bool clearMetadata();
     bool color(qsizetype line, qsizetype start, qsizetype length,
                const QColor &fgcolor, const QColor &bgcolor);
     bool foreground(qsizetype line, qsizetype start, qsizetype length,
@@ -330,7 +293,6 @@ signals:
                     const QColor &bgcolor);
     bool comment(qsizetype line, qsizetype start, qsizetype length,
                  const QString &comment);
-    bool applyMetas(const QList<HexMetadataAbsoluteItem> &metas);
     bool setMetaVisible(bool b);
     bool setMetafgVisible(bool b);
     bool setMetabgVisible(bool b);
@@ -347,9 +309,9 @@ signals:
     ErrFile exportFile(const QString &filename, const QString &savename,
                        bool ignoreMd5 = false);
     bool exportFileGUI();
-    ErrFile saveasFile(const QString &filename, const QString &savename,
+    ErrFile saveAsFile(const QString &filename, const QString &savename,
                        bool ignoreMd5 = false);
-    bool saveasFileGUI();
+    bool saveAsFileGUI();
     ErrFile closeCurrentFile(bool force = false);
     ErrFile saveCurrentFile(bool ignoreMd5 = false);
     bool openFileGUI();
@@ -363,7 +325,6 @@ signals:
     // bookmark
     bool addBookMark(qsizetype pos, const QString &comment);
     bool modBookMark(qsizetype pos, const QString &comment);
-    bool applyBookMarks(const QList<BookMark> &books);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
@@ -469,6 +430,16 @@ signals:
     QColor getColor(const QString &caption, QWidget *parent = nullptr);
 };
 
+class DataVisual : public QObject {
+    Q_OBJECT
+signals:
+    bool updateText(const QString &data);
+    bool updateTextList(const QStringList &data);
+    bool updateTextTree(const QString &json);
+    bool updateTextTable(const QString &json, const QStringList &headers,
+                         const QStringList &headerNames = {});
+};
+
 } // namespace WingPlugin
 
 struct WingPluginInfo {
@@ -544,7 +515,6 @@ public:
     virtual const QString pluginAuthor() const = 0;
     virtual uint pluginVersion() const = 0;
     virtual const QString pluginComment() const = 0;
-    virtual HookIndices getHookSubscribe() const { return HookIndex::None; }
 
     virtual QList<WingDockWidgetInfo> registeredDockWidgets() const {
         return {};
@@ -565,10 +535,6 @@ public:
             .toHex();
     }
 
-public slots:
-    virtual void plugin2MessagePipe(WingPluginMessage type,
-                                    const QVariantList &msg) = 0;
-
 signals:
     // extension and exposed to WingHexAngelScript
     void toast(const QPixmap &icon, const QString &message);
@@ -584,15 +550,13 @@ public:
     WingPlugin::InputBox inputbox;
     WingPlugin::FileDialog filedlg;
     WingPlugin::ColorDialog colordlg;
+    WingPlugin::DataVisual visual;
 };
 
 } // namespace WingHex
 
 constexpr auto IWINGPLUGIN_INTERFACE_IID = "com.wingsummer.iwingplugin";
 
-Q_DECLARE_METATYPE(WingHex::WingPluginMessage)
-Q_DECLARE_METATYPE(WingHex::ResponseMsg)
-Q_DECLARE_METATYPE(WingHex::HookIndex)
 Q_DECLARE_INTERFACE(WingHex::IWingPlugin, IWINGPLUGIN_INTERFACE_IID)
 
 #endif // IWINGPLUGIN_H

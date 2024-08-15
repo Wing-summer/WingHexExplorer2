@@ -358,12 +358,14 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     _numsitem = new NumShowModel(this);
     m_numshowtable = new QTableView(this);
     m_numshowtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
+    m_numshowtable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_numshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
     m_numshowtable->setFocusPolicy(Qt::StrongFocus);
-
     m_findresult->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
     m_numshowtable->horizontalHeader()->setStretchLastSection(true);
+
+    m_numshowtable->setModel(_numsitem);
 
     auto a = new QAction(this);
     a->setText(tr("Copy"));
@@ -375,6 +377,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                      tr("CopyToClipBoard"));
     });
     m_numshowtable->addAction(a);
+
     connect(m_numshowtable->selectionModel(),
             &QItemSelectionModel::currentRowChanged, a,
             [=](const QModelIndex &current, const QModelIndex &) {
@@ -410,8 +413,6 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     m_numshowtable->addAction(m_bigEndian);
     m_numshowtable->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
-
-    m_numshowtable->setModel(_numsitem);
 
     auto dw = buildDockWidget(dock, QStringLiteral("Number"), tr("Number"),
                               m_numshowtable);
@@ -564,23 +565,23 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     using namespace ads;
 
-    m_infolist = new QListWidget(this);
+    m_infolist = new QListView(this);
     auto dw = buildDockWidget(dock, QStringLiteral("DVList"), tr("DVList"),
                               m_infolist);
     auto ar = dock->addDockWidget(area, dw, areaw);
 
-    auto m_infotree = new QTreeView(this);
+    m_infotree = new QTreeView(this);
 
     dw = buildDockWidget(dock, QStringLiteral("DVTree"), tr("DVTree"),
                          m_infotree);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
-    auto m_infotable = new QTableWidget(this);
+    m_infotable = new QTableView(this);
     dw = buildDockWidget(dock, QStringLiteral("DVTable"), tr("DVTable"),
                          m_infotable);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
-    auto m_infotxt = new QTextBrowser(this);
+    m_infotxt = new QTextBrowser(this);
     dw = buildDockWidget(dock, QStringLiteral("DVText"), tr("DVText"),
                          m_infotxt);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
@@ -1100,7 +1101,7 @@ EditorView *MainWindow::newfileGUI() {
     if (!newOpenFileSafeCheck()) {
         return nullptr;
     }
-    auto editor = new EditorView(m_enablePlugin, this);
+    auto editor = new EditorView(this);
     auto index = m_newIndex++;
     editor->newFile(index);
     m_openedFileNames << editor->fileName();
@@ -1270,8 +1271,8 @@ void MainWindow::on_saveas() {
         return;
     }
 
-    auto filename = QFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
-                                                 m_lastusedpath);
+    auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
+                                                    m_lastusedpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
@@ -1324,8 +1325,8 @@ void MainWindow::on_exportfile() {
         return;
     }
 
-    auto filename = QFileDialog::getSaveFileName(this, tr("ChooseExportFile"),
-                                                 m_lastusedpath);
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseExportFile"), m_lastusedpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
@@ -1923,8 +1924,8 @@ void MainWindow::on_exportfindresult() {
                      tr("EmptyFindResult"));
         return;
     }
-    auto filename = QFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
-                                                 m_lastusedpath);
+    auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
+                                                    m_lastusedpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
@@ -2375,7 +2376,7 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
     QFileInfo finfo(file);
     auto filename = finfo.absoluteFilePath();
 
-    auto ev = new EditorView(m_enablePlugin);
+    auto ev = new EditorView(this);
     auto res = ev->openFile(filename);
 
     if (res != ErrFile::Success) {
@@ -2404,7 +2405,7 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
         return ErrFile::Error;
     }
 
-    auto ev = new EditorView(m_enablePlugin);
+    auto ev = new EditorView(this);
     auto res = ev->openDriver(driver);
 
     if (res != ErrFile::Success) {
@@ -2436,7 +2437,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     QFileInfo finfo(file);
     auto filename = finfo.absoluteFilePath();
 
-    auto ev = new EditorView(m_enablePlugin);
+    auto ev = new EditorView(this);
     auto res = ev->openWorkSpace(filename);
 
     if (res != ErrFile::Success) {
@@ -2469,7 +2470,7 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
     QFileInfo finfo(file);
     auto filename = finfo.absoluteFilePath();
 
-    auto ev = new EditorView(m_enablePlugin);
+    auto ev = new EditorView(this);
     auto res = ev->openRegionFile(filename, start, length);
 
     if (res != ErrFile::Success) {

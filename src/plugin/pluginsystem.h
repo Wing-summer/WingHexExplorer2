@@ -32,7 +32,6 @@ public:
     void UnloadPlugin();
     const QList<IWingPlugin *> &plugins() const;
     const IWingPlugin *plugin(qindextype index) const;
-    void raiseDispatch(HookIndex hookindex, QList<QVariant> params);
 
     void loadPlugin(QFileInfo filename);
 
@@ -40,7 +39,6 @@ public:
 
 private:
     bool loadPlugin(IWingPlugin *p);
-    void subscribeDispatcher(IWingPlugin *plg, HookIndex hookIndex);
 
     void connectInterface(IWingPlugin *plg);
     void connectBaseInterface(IWingPlugin *plg);
@@ -54,9 +52,6 @@ private:
     EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
 
 private:
-    const QList<QVariant> emptyparam;
-
-private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();
 
@@ -64,7 +59,6 @@ private:
     MainWindow *_win = nullptr;
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
-    QMap<HookIndex, QList<IWingPlugin *>> dispatcher;
     QMutex mutex;
 
     QMap<IWingPlugin *, EditorView *> m_plgviewMap;

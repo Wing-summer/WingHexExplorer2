@@ -171,7 +171,9 @@ set(MODEL_SRC
     src/model/metadatamodel.h
     src/model/metadatamodel.cpp
     src/model/checksummodel.h
-    src/model/checksummodel.cpp)
+    src/model/checksummodel.cpp
+    src/model/qjsontablemodel.h
+    src/model/qjsontablemodel.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h

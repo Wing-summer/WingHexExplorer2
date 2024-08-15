@@ -60,6 +60,7 @@ private:
         a->setIcon(icon);
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, a);
+            shortCut->setContext(Qt::WindowShortcut);
             connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
         }
         a->setMenu(menu);
