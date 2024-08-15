@@ -85,7 +85,6 @@
         <file>images/settingplugin.png</file>
         <file>images/soft.png</file>
         <file>images/sponsor.png</file>
-        <file>images/sponsorqr.png</file>
         <file>images/sum.png</file>
         <file>images/undo.png</file>
         <file>images/unlock.png</file>
@@ -97,7 +96,7 @@
         <file>images/works.png</file>
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
-        <file alias="README.md">src/README.md</file>
+        <file>LICENSE</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">3rdparty/QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>

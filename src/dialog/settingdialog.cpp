@@ -23,7 +23,10 @@ SettingDialog::SettingDialog(QWidget *parent)
     Utilities::moveToCenter(this);
 }
 
-SettingDialog::~SettingDialog() { delete ui; }
+SettingDialog::~SettingDialog() {
+    delete ui;
+    _dialog->deleteLater();
+}
 
 void SettingDialog::addPage(WingHex::SettingPage *page) {
     if (page == nullptr) {

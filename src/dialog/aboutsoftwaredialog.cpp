@@ -1,33 +1,32 @@
 #include "aboutsoftwaredialog.h"
+#include "ui_aboutsoftwaredialog.h"
 
-#include <QLabel>
-#include <QPixmap>
-#include <QTextBrowser>
-#include <QVBoxLayout>
+#include "class/languagemanager.h"
+#include "utilities.h"
 
 AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
-    : FramelessDialogBase(parent) {
-    auto widget = new QWidget(this);
-    auto layout = new QVBoxLayout(widget);
+    : QWidget(parent), ui(new Ui::AboutSoftwareDialog) {
+    ui->setupUi(this);
 
-    QPixmap pic(":/com.wingsummer.winghex/images/author.jpg");
+    auto data = LanguageManager::instance().data();
+    ui->tbAbout->setMarkdown(data.about);
+    ui->tbBaseObj->setMarkdown(data.component);
+    ui->tbCredit->setMarkdown(data.credit);
+    ui->tbDev->setMarkdown(data.dev);
+    ui->tbTr->setMarkdown(data.trans);
+    ui->lblVersion->setText(qApp->applicationVersion());
 
-    auto l = new QLabel(this);
-    l->setFixedSize(100, 100);
-    l->setScaledContents(true);
-    l->setPixmap(pic);
-    layout->addWidget(l, 0, Qt::AlignHCenter);
-    layout->addSpacing(10);
-    auto b = new QTextBrowser(this);
-    b->setSearchPaths(QStringList(
-        {":/com.wingsummer.winghex", ":/com.wingsummer.winghex/images"}));
-    b->setSource(QUrl("README.md"), QTextDocument::MarkdownResource);
+    _dialog = new FramelessDialogBase(parent);
+    _dialog->buildUpContent(this);
+    _dialog->setWindowTitle(this->windowTitle());
+    _dialog->setMinimumSize(800, 600);
 
-    b->setFixedSize(800, 500);
-    b->setOpenExternalLinks(true);
-    layout->addWidget(b);
-
-    buildUpContent(widget);
-
-    setWindowTitle(tr("About"));
+    Utilities::moveToCenter(this);
 }
+
+AboutSoftwareDialog::~AboutSoftwareDialog() {
+    delete ui;
+    _dialog->deleteLater();
+}
+
+int AboutSoftwareDialog::exec() { return _dialog->exec(); }

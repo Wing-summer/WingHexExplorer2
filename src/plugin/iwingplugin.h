@@ -40,11 +40,6 @@ Q_DECL_UNUSED static QString HOSTRESPIMG(const QString &name) {
            QStringLiteral(".png");
 }
 
-Q_DECL_UNUSED constexpr auto HOSTAUTHORPIMG =
-    ":/com.wingsummer.winghex/images/author.jpg";
-Q_DECL_UNUSED constexpr auto SPONSORQRCODE =
-    ":/com.wingsummer.winghex/images/sponsorqr.png";
-
 Q_NAMESPACE
 enum ErrFile : int {
     Success = 0,

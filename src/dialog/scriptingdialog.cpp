@@ -1,11 +1,11 @@
 #include "scriptingdialog.h"
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
 #include "class/wingmessagebox.h"
-#include "sponsordialog.h"
 
 #include <QDesktopServices>
 #include <QLabel>
@@ -314,7 +314,20 @@ void ScriptingDialog::on_fileInfo() {}
 
 void ScriptingDialog::on_about() {}
 
-void ScriptingDialog::on_sponsor() { SponsorDialog().exec(); }
+void ScriptingDialog::on_sponsor() {
+    // Github is not easy to access for Chinese people,
+    // Gitee mirror instead
+    if (LanguageManager::instance().defaultLocale().country() ==
+        QLocale::China) {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://gitee.com/wing-cloud/"
+                                "WingHexExplorer2#%E6%8D%90%E5%8A%A9")));
+    } else {
+        QDesktopServices::openUrl(
+            QUrl(QStringLiteral("https://github.com/Wing-summer/"
+                                "WingHexExplorer2#%E6%8D%90%E5%8A%A9")));
+    }
+}
 
 void ScriptingDialog::on_wiki() {
     QDesktopServices::openUrl(QUrl(
