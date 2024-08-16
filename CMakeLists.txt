@@ -172,7 +172,9 @@ set(MODEL_SRC
     src/model/checksummodel.h
     src/model/checksummodel.cpp
     src/model/qjsontablemodel.h
-    src/model/qjsontablemodel.cpp)
+    src/model/qjsontablemodel.cpp
+    src/model/scriptobjmodel.h
+    src/model/scriptobjmodel.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h
@@ -209,55 +211,58 @@ file(
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
 
+set(LANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lang")
+set(LANG_DEST "${CMAKE_CURRENT_BINARY_DIR}/.tmp/lang")
+set(LANG_TARGETS "")
+
+set(LANG_PAK_NAME "winghex_tr.pak")
+add_definitions(-DLANG_PAK_NAME="${LANG_PAK_NAME}")
+
 foreach(TS_FILE IN LISTS TS_FILES)
   get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
-  set(QM_DIR "./.tmp/${TS_DIR}")
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${TS_DIR}")
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${QM_DIR}")
+  get_filename_component(LANG_NAME "${TS_DIR}" NAME)
+  set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
+  set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
+  file(MAKE_DIRECTORY "${QM_DIR}")
+  file(MAKE_DIRECTORY "${QM_OUT_DIR}")
   set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
-  set(TR_COPY_FILES
-      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/about.md"
-      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/components.md"
-      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/credits.md"
-      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/devs.md"
-      "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}/trans.md")
+  set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
+  set(LANG_NEED_COPY
+      "${LANG_NEED_COPY_PREFIX}/about.md"
+      "${LANG_NEED_COPY_PREFIX}/components.md"
+      "${LANG_NEED_COPY_PREFIX}/credits.md"
+      "${LANG_NEED_COPY_PREFIX}/devs.md"
+      "${LANG_NEED_COPY_PREFIX}/trans.md")
+  add_custom_target(
+    copy_lang_files
+    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
+    COMMENT "Copying files to ${LANG_DEST}")
 
-  set(DESTINATION_DIR ${CMAKE_BINARY_DIR}/${QM_DIR})
-  foreach(FILE ${TR_COPY_FILES})
-    get_filename_component(FILE_NAME ${FILE} NAME)
-    add_custom_command(
-      OUTPUT ${DESTINATION_DIR}/${FILE_NAME}
-      COMMAND ${CMAKE_COMMAND} -E copy ${FILE} ${DESTINATION_DIR}/${FILE_NAME}
-      DEPENDS ${FILE}
-      COMMENT "Copying ${FILE_NAME} to ${DESTINATION_DIR}")
-    list(APPEND TR_COPIED_FILES ${DESTINATION_DIR}/${FILE_NAME})
-  endforeach()
+  set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
-  set(TR_COMP_FILES "winghex.qm" "about.md" "components.md" "credits.md"
-                    "devs.md" "trans.md")
-  set(LANG_PAK_NAME winghex_tr.pak)
-  add_definitions(-DLANG_PAK_NAME="${LANG_PAK_NAME}")
-  set(LANG_PAK "${DESTINATION_DIR}/${LANG_PAK_NAME}")
+  set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "components.md"
+                            "credits.md" "devs.md" "trans.md")
 
-  add_custom_command(
-    OUTPUT ${LANG_PAK}
+  add_custom_target(
+    pak_lang_files
     COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
-            ${TR_COMP_FILES}
-    WORKING_DIRECTORY "${DESTINATION_DIR}"
+            ${LANG_COMPRESS_CONTENT}
+    WORKING_DIRECTORY "${QM_DIR}"
     COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
-    DEPENDS ${TR_COPIED_FILES}
-    VERBATIM)
+    DEPENDS copy_lang_files)
 
-  set(LANG_PAK_OUT ${CMAKE_BINARY_DIR}/${TS_DIR}/${LANG_PAK_NAME})
+  set(TARGET_NAME "langgen_${LANG_NAME}")
+  add_custom_target(
+    ${TARGET_NAME}
+    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK_NAME} ${QM_OUT_DIR}
+    WORKING_DIRECTORY "${QM_DIR}"
+    COMMENT "Copy ${TS_FILE} into ${LANG_PAK_NAME}"
+    DEPENDS pak_lang_files)
 
-  add_custom_command(
-    OUTPUT ${LANG_PAK_OUT}
-    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK} "${CMAKE_BINARY_DIR}/${TS_DIR}"
-    DEPENDS ${LANG_PAK} # Ensure this runs after compression
-  )
-
-  add_custom_target(post_build_tasks ALL DEPENDS ${LANG_PAK_OUT})
+  list(APPEND LANG_TARGETS ${TARGET_NAME})
 endforeach()
+
+add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
 
 set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
@@ -302,8 +307,9 @@ set(PROJECT_SOURCES
 
 add_custom_target(
   build-time-make-directory ALL
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lang"
-          "${CMAKE_BINARY_DIR}/scripts" "${CMAKE_BINARY_DIR}/.tmp")
+  COMMAND
+    ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/lang"
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   if(WIN32)

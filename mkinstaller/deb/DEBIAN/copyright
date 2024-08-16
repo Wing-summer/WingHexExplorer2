@@ -1,0 +1,24 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: WingHexExplorer2
+Upstream-Contact: wingsummer <wing-summer@qq.com>
+Source: https://github.com/Wing-summer/WingHexExplorer2
+
+Files: *
+Copyright: WingSummer <wing-summer@qq.com>
+License: APGL-3.0
+
+License: APGL-3.0
+ This program is non-free software; you can only redistribute it and/or modify
+ it under the terms of APGL-3.0.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ WingSummer OpenSource Lincense for more details.
+ .
+ You should have received a copy of APGL-3.0 along
+ with this program; if not, email to wing-summer@qq.com.
+ .
+ The license file is in your installation folder : /opt/WingHexExplorer.
+ Please READ CAREFULLY before you use this software.
+ .

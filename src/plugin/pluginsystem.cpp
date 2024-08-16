@@ -53,6 +53,23 @@ void PluginSystem::loadPlugin(QFileInfo fileinfo) {
 
 WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
 
+void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
+    if (m_viewBindings.contains(view)) {
+        auto v = m_viewBindings.value(view);
+
+        // clean up
+        for (auto &plg : v) {
+            auto handles = m_plgHandles.value(plg);
+            std::remove_if(handles.begin(), handles.end(),
+                           [view](const QPair<int, EditorView *> &v) {
+                               return v.second == view;
+                           });
+        }
+
+        m_viewBindings.remove(view);
+    }
+}
+
 bool PluginSystem::loadPlugin(IWingPlugin *p) {
     QList<WingPluginInfo> loadedplginfos;
     try {
@@ -69,11 +86,9 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
             throw tr("ErrLoadPluginNoName");
         }
 
-        auto puid = IWingPlugin::GetPUID(p);
-        if (puid != p->puid()) {
-            throw tr("ErrLoadPluginPUID");
-        }
-
+        auto prop = p->property("puid").toString().trimmed();
+        auto puid =
+            prop.isEmpty() ? QString(p->metaObject()->className()) : prop;
         if (loadedpuid.contains(puid)) {
             throw tr("ErrLoadLoadedPlugin");
         }
@@ -83,7 +98,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         }
 
         WingPluginInfo info;
-        info.puid = p->puid();
+        info.puid = puid;
         info.pluginName = p->pluginName();
         info.pluginAuthor = p->pluginAuthor();
         info.pluginComment = p->pluginComment();
@@ -675,15 +690,44 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     auto pctl = &plg->controller;
     connect(pctl, &WingPlugin::Controller::switchDocument, _win,
             [=](int handle) -> bool {
-                // TODO
-
-                return false;
+                if (handle < 0) {
+                    m_plgviewMap[plg] = nullptr;
+                } else {
+                    auto handles = m_plgHandles.value(plg);
+                    auto ret = std::find_if(
+                        handles.begin(), handles.end(),
+                        [handle](const QPair<int, EditorView *> &v) {
+                            return v.first == handle;
+                        });
+                    if (ret == handles.end()) {
+                        return false;
+                    }
+                    m_plgviewMap[plg] = ret->second;
+                }
+                return true;
             });
     connect(pctl, &WingPlugin::Controller::raiseDocument, _win,
             [=](int handle) -> bool {
-                // TODO
-
-                return false;
+                if (handle < 0) {
+                    auto cur = _win->m_curEditor;
+                    if (cur) {
+                        cur->raise();
+                    } else {
+                        return false;
+                    }
+                } else {
+                    auto handles = m_plgHandles.value(plg);
+                    auto ret = std::find_if(
+                        handles.begin(), handles.end(),
+                        [handle](const QPair<int, EditorView *> &v) {
+                            return v.first == handle;
+                        });
+                    if (ret == handles.end()) {
+                        return false;
+                    }
+                    ret->second->raise();
+                }
+                return true;
             });
     connect(pctl, &WingPlugin::Controller::setLockedFile, _win,
             [=](bool b) -> bool {

@@ -78,9 +78,7 @@ void QConsoleWidget::handleReturnKey() {
     if (!code.isEmpty())
         history_.add(code);
 
-    // append the newline char and
     // send signal / update iodevice
-    code += "\n";
     if (iodevice_->isOpen())
         iodevice_->consoleWidgetInput(code);
 

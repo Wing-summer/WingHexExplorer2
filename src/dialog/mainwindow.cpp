@@ -114,6 +114,9 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     plg.LoadPlugin();
     // At this time, AngelScript service plugin has started
     m_scriptConsole->init();
+    // load the model
+    Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
+    m_varshowtable->setModel(m_scriptConsole->machine()->model());
 
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
@@ -316,7 +319,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     _findEmptyResult = new FindResultModel(this);
     m_findresult = new QTableView(this);
     m_findresult->setProperty("EditorView", quintptr(0));
-    m_findresult->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
+    m_findresult->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_findresult->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
 
@@ -356,7 +359,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     _numsitem = new NumShowModel(this);
     m_numshowtable = new QTableView(this);
-    m_numshowtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
+    m_numshowtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_numshowtable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_numshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
@@ -425,7 +428,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
 
     m_hashtable = new QTableView(this);
-    m_hashtable->setEditTriggers(QTableWidget::EditTrigger::NoEditTriggers);
+    m_hashtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_hashtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
     m_hashtable->setColumnWidth(0, 350);
@@ -545,12 +548,10 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptObjShowDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
-    m_varshowtable = new QTableWidget(0, 3, this);
-    m_varshowtable->setEditTriggers(QTableWidget::EditTrigger::DoubleClicked);
+    m_varshowtable = new QTableView(this);
+    m_varshowtable->setEditTriggers(QTableView::EditTrigger::DoubleClicked);
     m_varshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
-    m_varshowtable->setHorizontalHeaderLabels(
-        QStringList({tr("Name"), tr("Type"), tr("Value")}));
     m_varshowtable->horizontalHeader()->setStretchLastSection(true);
 
     auto dw = buildDockWidget(dock, QStringLiteral("ScriptObjShow"),
@@ -823,26 +824,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_iReadWrite =
             addPannelAction(pannel, _infoReadonly, tr("ReadOnly"), EMPTY_FUNC);
         m_iReadWrite->setStyleSheet(disableStyle);
-        m_iWorkSpace =
-            addPannelAction(pannel, _infouw, tr("IsWorkSpace"), [this]() {
-                auto editor = currentEditor();
-                if (editor == nullptr) {
-                    return;
-                }
-
-                if (editor->isWorkSpace()) {
-                    WingMessageBox::information(
-                        this, qAppName(),
-                        tr("AlreadyWorkSpace") + QStringLiteral("\n") +
-                            tr("Path:") + m_views[editor]);
-                    return;
-                }
-                auto ret = WingMessageBox::question(this, qAppName(),
-                                                    tr("Convert2WorkSpace?"));
-                if (ret == QMessageBox::Yes) {
-                    editor->setIsWorkSpace(true);
-                }
-            });
         m_iLocked =
             addPannelAction(pannel, _infoLock, tr("SetLocked"), [this]() {
                 auto hexeditor = currentHexView();
@@ -860,6 +841,18 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                     return;
                 }
                 auto hexeditor = editor->hexEditor();
+                auto doc = hexeditor->document();
+
+                if (hexeditor->isKeepSize() &&
+                    (doc->metadata()->hasMetadata() ||
+                     doc->bookMarksCount() > 0)) {
+                    auto ret = WingMessageBox::warning(
+                        this, qAppName(), tr("MetaBrokingPos"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (ret == QMessageBox::No) {
+                        return;
+                    }
+                }
 
                 auto b = !hexeditor->isKeepSize();
                 if ((!b && editor->documentType() ==
@@ -2246,6 +2239,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
             m_curEditor = nullptr;
             _editorLock.unlock();
         }
+        PluginSystem::instance().cleanUpEditorViewHandle(editor);
         editor->deleteDockWidget();
         m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
             ->setEnabled(m_views.size() != 0);
@@ -2327,7 +2321,6 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     m_iReadWrite->setIcon(hexeditor->isReadOnly() ? _infoReadonly
                                                   : _infoWriteable);
-    m_iWorkSpace->setIcon(cur->isWorkSpace() ? _infow : _infouw);
 
     loadFindResult(cur);
 
@@ -2508,13 +2501,10 @@ void MainWindow::updateEditModeEnabled() {
         auto hexeditor = editor->hexEditor();
         enableDirverLimit(editor->isDriver());
         enableCloneFileLimit(editor->isCloneFile());
-        auto dm = editor->isWorkSpace();
-        m_iWorkSpace->setIcon(dm ? _infow : _infouw);
         auto doc = hexeditor->document();
         emit doc->canRedoChanged(doc->canRedo());
         emit doc->canUndoChanged(doc->canUndo());
     } else {
-        m_iWorkSpace->setIcon(_infouw);
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
@@ -2569,9 +2559,6 @@ void MainWindow::loadCacheIcon() {
 
     _infoWriteable = ICONRES(QStringLiteral("writable"));
     _infoReadonly = ICONRES(QStringLiteral("readonly"));
-
-    _infow = ICONRES(QStringLiteral("works"));
-    _infouw = ICONRES(QStringLiteral("unworks"));
 
     _infoUnLock = ICONRES(QStringLiteral("unlock"));
     _infoLock = ICONRES(QStringLiteral("lock"));

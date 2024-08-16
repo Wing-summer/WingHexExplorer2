@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=WingHexExplorer2
+Name[zh_CN]=羽云十六进制编辑器
+Categories=Utility;
+Exec="/opt/WingHexExplorer2/WingHexExplorer2" %F
+Encoding=UTF-8
+Type=Application
+StartupNotify=false
+Terminal=false
+Icon=/opt/WingHexExplorer/images/icon.png
+StartupWMClass=WingHexExplorer
+Comment=a powerful opensource hexeditor based on QT and DTK for non-commerical use
+Comment[zh_CN]=一个基于 QT 和 DTK 开发的强大的开源免费非商用的十六进制编辑器
+MimeType=application/x-winghex

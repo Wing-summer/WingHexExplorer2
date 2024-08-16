@@ -23,6 +23,8 @@ if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+add_definitions(-DSCI_LEXER)
+
 file(GLOB_RECURSE SCINTILLA_H "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/*.h")
 file(GLOB_RECURSE SCINTILLA_SRC "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/*.cpp")
 file(GLOB_RECURSE QSCINTILLA_H "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
@@ -49,6 +51,7 @@ target_include_directories(
   QScintilla
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src"
          "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/include"
+         "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/lexers"
          "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/lexlib"
          "${CMAKE_CURRENT_SOURCE_DIR}/scintilla/src")
 

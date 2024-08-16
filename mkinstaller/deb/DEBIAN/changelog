@@ -1,0 +1,9 @@
+WingHexExplorer (1.5.5) UNRELEASED ; urgency=low
+
+  * 修复在添加停靠窗体时造成的内存泄漏
+  * 优化跳转行中切换文档时的相应
+  * 日志系统切换为 QLogger
+  * 修复跳转行工具条在所有文档关闭时不隐藏的问题
+  * 更新优化插件系统接口，原有老版本的插件完全不兼容，请开发者注意
+
+ -- 寂静的羽夏(wingsummer) <wing-summer@qq.com>  2023/07/07

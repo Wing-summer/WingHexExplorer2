@@ -4,7 +4,6 @@
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
-#include "class/skinmanager.h"
 #include "class/wingmessagebox.h"
 
 #include <QDesktopServices>
@@ -13,18 +12,10 @@
 #include <QPicture>
 #include <QStatusBar>
 
+constexpr auto EMPTY_FUNC = [] {};
+
 ScriptingDialog::ScriptingDialog(QWidget *parent)
     : FramelessMainWindow(parent) {
-    auto &skin = SkinManager::instance();
-    switch (skin.currentTheme()) {
-    case SkinManager::Theme::Dark: {
-
-    } break;
-    case SkinManager::Theme::Light:
-
-        break;
-    }
-
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
@@ -44,21 +35,20 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
-    m_status->setContentsMargins(0, 1, 2, 2);
-
     layout->addWidget(m_status);
     buildUpContent(cw);
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
-    this->setMinimumSize(400, 450);
+    this->setMinimumSize(800, 600);
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
     buildFilePage(m_ribbon->addTab(tr("File")));
     m_editStateWidgets << buildEditPage(m_ribbon->addTab(tr("Edit")));
+    buildViewPage(m_ribbon->addTab(tr("View")));
     m_editStateWidgets << buildDebugPage(m_ribbon->addTab(tr("Debugger")));
     buildScriptPage(m_ribbon->addTab(tr("Script")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
@@ -74,9 +64,8 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("open"), tr("OpenF"),
                         &ScriptingDialog::on_openfile, QKeySequence::Open);
 
-        addPannelAction(
-            pannel, QStringLiteral("recent"), tr("RecentFiles"), [] {}, {},
-            m_recentMenu);
+        addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
+                        EMPTY_FUNC, {}, m_recentMenu);
 
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
                                               tr("Reload"),
@@ -100,10 +89,6 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
                             &ScriptingDialog::on_exportfile,
                             shortcuts.keySequence(QKeySequences::Key::EXPORT));
 
-        m_editStateWidgets << a;
-
-        a = addPannelAction(pannel, QStringLiteral("savesel"), tr("SaveSel"),
-                            &ScriptingDialog::on_savesel);
         m_editStateWidgets << a;
     }
     return tab;
@@ -139,13 +124,52 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
                         &ScriptingDialog::on_gotoline,
                         shortcuts.keySequence(QKeySequences::Key::GOTO));
+    }
 
-        addPannelAction(pannel, QStringLiteral("encoding"), tr("Encoding"),
-                        &ScriptingDialog::on_encoding,
-                        shortcuts.keySequence(QKeySequences::Key::ENCODING));
-        addPannelAction(pannel, QStringLiteral("info"), tr("FileInfo"),
-                        &ScriptingDialog::on_fileInfo,
-                        shortcuts.keySequence(QKeySequences::Key::FILE_INFO));
+    return tab;
+}
+
+RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
+    auto shortcuts = QKeySequences::instance();
+    {
+        auto pannel = tab->addGroup(tr("Display"));
+        auto menu = new QMenu(this);
+        menu->addAction(newAction(QStringLiteral("80%"), [this] {
+            // this->setCurrentHexEditorScale(0.8);
+        }));
+        menu->addAction(newAction(QStringLiteral("90%"), [this] {
+            // this->setCurrentHexEditorScale(0.9);
+        }));
+        menu->addAction(newAction(QStringLiteral("100%"), [this] {
+            //  this->setCurrentHexEditorScale(1.0);
+        }));
+        menu->addSeparator();
+        menu->addAction(newAction(QStringLiteral("120%"), [this] {
+            // this->setCurrentHexEditorScale(1.2);
+        }));
+        menu->addAction(newAction(QStringLiteral("150%"), [this] {
+            //  this->setCurrentHexEditorScale(1.5);
+        }));
+        menu->addAction(newAction(QStringLiteral("200%"), [this] {
+            //   this->setCurrentHexEditorScale(2.0);
+        }));
+        menu->addAction(newAction(QStringLiteral("250%"), [this] {
+            //  this->setCurrentHexEditorScale(2.5);
+        }));
+        menu->addAction(newAction(QStringLiteral("300%"), [this] {
+            //  this->setCurrentHexEditorScale(3.0);
+        }));
+        addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
+                        EMPTY_FUNC, {}, menu);
+        addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
+                        [this] { /*this->setCurrentHexEditorScale(1.0); */ });
+        m_editStateWidgets << pannel;
+    }
+
+    {
+        auto pannel = tab->addGroup(tr("Window"));
+        auto plg = addPannelAction(pannel, QStringLiteral("win"), tr("View"),
+                                   EMPTY_FUNC, {});
     }
 
     return tab;
@@ -208,6 +232,31 @@ RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
                     [this] { WingMessageBox::aboutQt(this); });
     return tab;
 }
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
+                                    ads::DockWidgetArea area,
+                                    ads::CDockAreaWidget *areaw) {}
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpBreakpointShowDock(ads::CDockManager *dock,
+                                           ads::DockWidgetArea area,
+                                           ads::CDockAreaWidget *areaw) {}
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
+                                       ads::DockWidgetArea area,
+                                       ads::CDockAreaWidget *areaw) {}
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
+                                      ads::DockWidgetArea area,
+                                      ads::CDockAreaWidget *areaw) {}
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpErrorShowDock(ads::CDockManager *dock,
+                                      ads::DockWidgetArea area,
+                                      ads::CDockAreaWidget *areaw) {}
 
 void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     Q_ASSERT(container);
@@ -280,8 +329,6 @@ void ScriptingDialog::on_newfile() {
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
 }
 
-void ScriptingDialog::on_savesel() {}
-
 void ScriptingDialog::on_openfile() {}
 
 void ScriptingDialog::on_reload() {}
@@ -307,10 +354,6 @@ void ScriptingDialog::on_delete() {}
 void ScriptingDialog::on_findfile() {}
 
 void ScriptingDialog::on_gotoline() {}
-
-void ScriptingDialog::on_encoding() {}
-
-void ScriptingDialog::on_fileInfo() {}
 
 void ScriptingDialog::on_about() {}
 

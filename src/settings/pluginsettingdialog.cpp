@@ -74,5 +74,4 @@ void PluginSettingDialog::on_plglist_itemSelectionChanged() {
     ui->txtc->append(tr("pluginVersion") + " : " +
                      QString::number(plg->pluginVersion()));
     ui->txtc->append(tr("pluginComment") + " : " + plg->pluginComment());
-    ui->txtc->append(tr("PUID") + " : " + plg->puid());
 }
