@@ -501,7 +501,6 @@ class IWingPlugin : public QObject {
 public:
     virtual int sdkVersion() const = 0;
     virtual const QString signature() const = 0;
-    QString const puid() const { return GetPUID(this); }
     virtual ~IWingPlugin() = default;
 
     virtual bool init(const QList<WingPluginInfo> &loadedplugin) = 0;
@@ -521,13 +520,6 @@ public:
     virtual QList<SettingPage *> registeredSettingPages() const { return {}; }
     virtual QList<WingEditorViewWidget *> registeredEditorViewWidgets() const {
         return {};
-    }
-
-    static QString GetPUID(const IWingPlugin *plugin) {
-        auto str = WINGSUMMER + plugin->pluginName() + plugin->pluginAuthor() +
-                   QString::number(plugin->pluginVersion());
-        return QCryptographicHash::hash(str.toLatin1(), QCryptographicHash::Md5)
-            .toHex();
     }
 
 signals:

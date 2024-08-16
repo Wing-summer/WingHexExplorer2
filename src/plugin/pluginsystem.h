@@ -37,6 +37,8 @@ public:
 
     WingAngelAPI *angelApi() const;
 
+    void cleanUpEditorViewHandle(EditorView *view);
+
 private:
     bool loadPlugin(IWingPlugin *p);
 
@@ -59,9 +61,11 @@ private:
     MainWindow *_win = nullptr;
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
-    QMutex mutex;
 
     QMap<IWingPlugin *, EditorView *> m_plgviewMap;
+
+    QMap<IWingPlugin *, QList<QPair<int, EditorView *>>> m_plgHandles;
+    QMap<EditorView *, QList<IWingPlugin *>> m_viewBindings;
 
     WingAngelAPI *_angelplg = nullptr;
 };

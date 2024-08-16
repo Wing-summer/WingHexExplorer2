@@ -12,6 +12,8 @@ public:
 
     virtual ~ScriptingConsole();
 
+    ScriptConsoleMachine *machine() const;
+
 public slots:
     void stdOut(const QString &str);
     void stdErr(const QString &str);

@@ -52,6 +52,5 @@ void PluginWindow::on_list_selchanged() {
     Info(tr("pluginAuthor"), plg->pluginAuthor());
     Info(tr("pluginVersion"), QString::number(plg->pluginVersion()));
     Info(tr("pluginComment"), plg->pluginComment());
-    Info(tr("PUID"), plg->puid());
     txtb->append(QString(10, '-'));
 }

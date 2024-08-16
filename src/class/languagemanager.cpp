@@ -25,11 +25,9 @@ LanguageManager::LanguageManager() {
     QDir langDir(langPath);
     Q_ASSERT(langDir.exists());
 
-    auto langFiles =
-        langDir.entryInfoList({"ws_*.qm"}, QDir::Files | QDir::NoDotAndDotDot);
+    auto langFiles = langDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (auto &langinfo : langFiles) {
-        auto langName = langinfo.fileName();
-        auto lang = langName.mid(3, langName.length() - 3 - 3);
+        auto lang = langinfo.fileName();
         QLocale locale(lang);
         if (locale == QLocale::C) {
             continue;

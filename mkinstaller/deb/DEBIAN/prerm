@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sudo xdg-mime uninstall /opt/WingHexExplorer/images/x-winghex.xml
+sudo xdg-icon-resource uninstall --context mimetypes --size 32 application-x-winghex
+sudo xdg-icon-resource uninstall --context mimetypes --size 64 application-x-winghex
+sudo xdg-icon-resource uninstall --context mimetypes --size 128 application-x-winghex
+sudo update-mime-database /usr/share/mime                                                               
+sudo update-icon-caches /usr/share/icons/hicolor
+sudo update-desktop-database /usr/share/applications

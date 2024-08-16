@@ -84,3 +84,5 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     }
     write(commandPrompt, m_stdoutFmtTitle);
 }
+
+ScriptConsoleMachine *ScriptingConsole::machine() const { return _sp; }

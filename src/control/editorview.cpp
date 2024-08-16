@@ -156,8 +156,8 @@ EditorView::FindError EditorView::find(const QByteArray &data,
         for (auto &result : results) {
             FindResult r;
             r.offset = result;
-            r.line = r.offset / m_hex->lineWidth();
-            r.col = r.offset % m_hex->lineWidth();
+            r.line = r.offset / m_hex->renderer()->hexLineWidth();
+            r.col = r.offset % m_hex->renderer()->hexLineWidth();
             m_findResults->results().append(r);
         }
 
@@ -192,6 +192,9 @@ ErrFile EditorView::newFile(size_t index) {
     this->setWindowTitle(m_rawName);
     m_docType = DocumentType::File;
     m_fileName = QStringLiteral(":") + istr;
+    auto p = QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false);
+    p->setDocSaved();
+    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     connectDocSavedFlag(this);
     return ErrFile::Success;
 }

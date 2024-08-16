@@ -13,10 +13,10 @@
 #include "control/scripteditor.h"
 #include "utilities.h"
 
-#include <QListWidget>
+#include <QListView>
 #include <QShortcut>
 #include <QStatusBar>
-#include <QTableWidget>
+#include <QTableView>
 #include <QTextBrowser>
 
 class ScriptingDialog : public FramelessMainWindow {
@@ -31,9 +31,26 @@ private:
     void buildUpRibbonBar();
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
+    RibbonTabContent *buildViewPage(RibbonTabContent *tab);
     RibbonTabContent *buildScriptPage(RibbonTabContent *tab);
     RibbonTabContent *buildDebugPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
+
+    ads::CDockAreaWidget *
+    buildUpVarShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                       ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpBreakpointShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                              ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpOutputShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                          ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpStackShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                         ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpErrorShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                         ads::CDockAreaWidget *areaw = nullptr);
 
     void buildUpDockSystem(QWidget *container);
 
@@ -72,13 +89,23 @@ private:
         return a;
     }
 
+    template <typename Func>
+    inline QAction *newAction(const QString &title, Func &&slot,
+                              const QKeySequence &shortcut = QKeySequence()) {
+        auto a = new QAction;
+        a->setText(title);
+        a->setShortcutVisibleInContextMenu(true);
+        a->setShortcut(shortcut);
+        connect(a, &QAction::triggered, this, slot);
+        return a;
+    }
+
 private:
     void registerEditorView(ScriptEditor *editor);
     inline ads::CDockAreaWidget *editorViewArea() const;
 
 private slots:
     void on_newfile();
-    void on_savesel();
     void on_openfile();
     void on_reload();
 
@@ -95,8 +122,6 @@ private slots:
 
     void on_findfile();
     void on_gotoline();
-    void on_encoding();
-    void on_fileInfo();
 
     void on_about();
     void on_sponsor();
@@ -127,10 +152,10 @@ private:
     ScriptMachine *m_runner = nullptr;
     // widgets for debugging
     QTextBrowser *m_consoleout = nullptr;
-    QTableWidget *m_varshowtable = nullptr;
-    QTableWidget *m_breakpointstable = nullptr;
-    QTableWidget *m_watchtable = nullptr;
-    QListWidget *m_callstack = nullptr;
+    QTableView *m_varshowtable = nullptr;
+    QTableView *m_breakpointstable = nullptr;
+    QTableView *m_watchtable = nullptr;
+    QListView *m_callstack = nullptr;
 
     QStatusBar *m_status = nullptr;
 };

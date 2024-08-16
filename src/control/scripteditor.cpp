@@ -21,7 +21,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor->setIndentationsUseTabs(false);
     m_editor->setIndentationGuides(true);
     m_editor->setAutoIndent(true);
-    m_editor->setLexer(new QsciLexerAs(this));
+
+    auto lexer = new QsciLexerAs(this);
+    m_editor->setLexer(lexer);
 
     m_editor->markerDefine(QPixmap(RESNAME("bp")), BreakPoint);
     m_editor->markerDefine(QPixmap(RESNAME("conbp")), ConditionBreakPoint);

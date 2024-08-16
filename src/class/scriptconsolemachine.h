@@ -1,6 +1,7 @@
 #ifndef SCRIPTCONSOLEMACHINE_H
 #define SCRIPTCONSOLEMACHINE_H
 
+#include "model/scriptobjmodel.h"
 #include "scriptmachine.h"
 
 class ScriptConsoleMachine : public ScriptMachine {
@@ -12,6 +13,8 @@ public:
 
     virtual bool executeScript(const QString &script,
                                bool isInDebug = false) override;
+
+    ScriptObjModel *model() const;
 
 signals:
     void onClearConsole();
@@ -26,10 +29,9 @@ private:
 
     QString getCallStack(asIScriptContext *context);
 
-    QString preProcessCode(const QString &code);
-
 private:
     asIScriptContext *_immediateContext = nullptr;
+    ScriptObjModel *_model = nullptr;
 };
 
 #endif // SCRIPTCONSOLEMACHINE_H

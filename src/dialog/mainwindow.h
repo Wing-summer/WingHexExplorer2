@@ -396,7 +396,7 @@ private:
 
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
-    QTableWidget *m_varshowtable = nullptr;
+    QTableView *m_varshowtable = nullptr;
 
     QTableView *m_findresult = nullptr;
     FindResultModel *_findEmptyResult = nullptr;
@@ -407,7 +407,6 @@ private:
     QTableView *m_hashtable = nullptr;
     CheckSumModel *_hashModel = nullptr;
 
-    QVector<QTableWidgetItem *> _hashitem;
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
 
@@ -466,14 +465,12 @@ private:
 
     QToolButton *m_iSaved = nullptr;
     QToolButton *m_iReadWrite = nullptr;
-    QToolButton *m_iWorkSpace = nullptr;
     QToolButton *m_iLocked = nullptr;
     QToolButton *m_iCanOver = nullptr;
 
     // cache icon
     QIcon _infoSaved, _infoUnsaved;
     QIcon _infoWriteable, _infoReadonly;
-    QIcon _infow, _infouw;
     QIcon _infoLock, _infoUnLock;
     QIcon _infoCanOver, _infoCannotOver;
 
