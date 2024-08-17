@@ -38,6 +38,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_status);
     buildUpContent(cw);
 
+    // m_runner = new ScriptMachine([=]{},this);
+
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
@@ -212,6 +214,8 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
                         &ScriptingDialog::on_stepoutscript,
                         QKeySequence(Qt::SHIFT | Qt::Key_F11));
+
+        m_editStateWidgets << pannel;
     }
     return tab;
 }
@@ -280,11 +284,11 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     connect(m_dock, &CDockManager::focusedDockWidgetChanged, this,
             [this](CDockWidget *old, CDockWidget *now) {
                 Q_UNUSED(old);
-                // auto editview = qobject_cast<EditorView *>(now);
-                // if (editview) {
-                //     swapEditorConnection(m_curEditor, editview);
-                // }
-                // m_curEditor = editview;
+                auto editview = qobject_cast<ScriptEditor *>(now);
+                if (editview) {
+                    swapEditor(m_curEditor, editview);
+                }
+                m_curEditor = editview;
             });
 
     // add empty area
@@ -319,6 +323,19 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
 ads::CDockAreaWidget *ScriptingDialog::editorViewArea() const {
     return m_dock->centralWidget()->dockAreaWidget();
 }
+
+void ScriptingDialog::updateEditModeEnabled() {
+    auto editor = currentEditor();
+    auto b = (editor != nullptr);
+
+    for (auto &item : m_editStateWidgets) {
+        item->setEnabled(b);
+    }
+}
+
+ScriptEditor *ScriptingDialog::currentEditor() { return m_curEditor; }
+
+void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {}
 
 void ScriptingDialog::on_newfile() {
     auto editor = new ScriptEditor(this);

@@ -5,7 +5,7 @@
 #include <QListWidgetItem>
 #include <QPushButton>
 
-#define Bool2String(b) (b ? "true" : "false")
+#define Bool2String(b) (b ? QStringLiteral("true") : QStringLiteral("false"))
 
 PluginWindow::PluginWindow(QWidget *parent) : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
@@ -52,5 +52,4 @@ void PluginWindow::on_list_selchanged() {
     Info(tr("pluginAuthor"), plg->pluginAuthor());
     Info(tr("pluginVersion"), QString::number(plg->pluginVersion()));
     Info(tr("pluginComment"), plg->pluginComment());
-    txtb->append(QString(10, '-'));
 }

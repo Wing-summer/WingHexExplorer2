@@ -14,7 +14,7 @@ class QsciLexerAs : public QsciLexer {
 public:
     //! This enum defines the meanings of the different styles used by the
     //! AngelScript lexer.
-    enum {
+    enum Styles {
         //! The default.
         Default = 0,
         InactiveDefault = Default + 64,
@@ -130,6 +130,7 @@ public:
         EscapeSequence = 27,
         InactiveEscapeSequence = EscapeSequence + 64,
     };
+    Q_ENUMS(Styles)
 
     //! Construct a QsciLexerAs with parent \a parent.  \a parent is typically
     //! the QsciScintilla instance.  \a caseInsensitiveKeywords is true if the

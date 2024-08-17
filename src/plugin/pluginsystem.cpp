@@ -201,7 +201,8 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         }
 
         if (!p->registeredEditorViewWidgets().isEmpty()) {
-            _win->m_editorViewWidgets.append(p->registeredEditorViewWidgets());
+            _win->m_editorViewWidgets.insert(p,
+                                             p->registeredEditorViewWidgets());
         }
 
         if (!p->registeredSettingPages().isEmpty()) {

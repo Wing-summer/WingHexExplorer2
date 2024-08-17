@@ -30,7 +30,6 @@ SettingDialog::~SettingDialog() {
 
 void SettingDialog::addPage(WingHex::SettingPage *page) {
     if (page == nullptr) {
-        qWarning("SettingDialog::addPage: Invaild Page");
         return;
     }
     m_pages << page;

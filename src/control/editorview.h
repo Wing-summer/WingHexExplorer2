@@ -25,13 +25,19 @@ public:
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
+    enum class SaveWorkSpaceAttr {
+        ForceNoWorkSpace,
+        AutoWorkSpace,
+        ForceWorkSpace
+    };
+
 public:
     explicit EditorView(QWidget *parent = nullptr);
     virtual ~EditorView() override;
 
     QString fileName() const;
 
-    bool isWorkSpace() const;
+    bool isOriginWorkSpace() const;
     bool isNewFile() const;
     bool isBigFile() const;
     bool isCloneFile() const;
@@ -45,17 +51,26 @@ public:
 
     int findResultCount() const;
 
-    void setIsWorkSpace(bool newIsWorkSpace);
-
     EditorView *cloneParent() const;
 
     bool isCloned() const;
+
+    bool change2WorkSpace() const;
+
+    QHexView *hexEditor() const;
+
+    DocumentType documentType() const;
+
+    WingEditorViewWidget *otherEditor(qindextype index) const;
+
+    qsizetype copyLimit() const;
 
 public slots:
     EditorView *clone();
 
     void registerView(WingEditorViewWidget *view);
     void switchView(qindextype index);
+    void registerQMenu(QMenu *menu);
 
     FindError find(const QByteArray &data, const FindDialog::Result &result);
 
@@ -72,27 +87,24 @@ public slots:
                            const QString &encoding = QString());
     ErrFile openDriver(const QString &driver,
                        const QString &encoding = QString());
-    ErrFile save(const QString &workSpaceName, const QString &path = QString(),
-                 bool isExport = false, bool forceWorkSpace = false,
-                 bool ignoreMd5 = false);
+    ErrFile
+    save(const QString &workSpaceName, const QString &path = QString(),
+         bool isExport = false,
+         SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace,
+         bool ignoreMd5 = false);
     ErrFile reload();
 
-    bool change2WorkSpace() const;
-
-    QHexView *hexEditor() const;
-
-    DocumentType documentType() const;
-
-    WingEditorViewWidget *otherEditor(qindextype index) const;
-
     void setCopyLimit(qsizetype sizeMB);
-
-    qsizetype copyLimit() const;
 
     void applySettings();
 
 private:
     inline qindextype findAvailCloneIndex();
+
+    bool hasMeta() const;
+
+    void applyPluginData(const QHash<QString, QByteArray> &data);
+    QHash<QString, QByteArray> savePluginData();
 
 private:
     template <typename Func>
@@ -137,6 +149,7 @@ private:
     QWidget *m_hexContainer = nullptr;
 
     QHexView *m_hex = nullptr;
+    QMenu *m_menu = nullptr;
 
     QList<WingEditorViewWidget *> m_others;
     QString m_fileName;

@@ -25,6 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <filesystem>
+
 #define PROEXT ".wingpro"
 
 Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
@@ -47,7 +49,6 @@ struct HexFile {
 };*/
 
 class Utilities {
-private:
 public:
     static inline bool isRoot() {
 #ifdef Q_OS_WIN
@@ -186,6 +187,20 @@ public:
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(info);
         return t.inherits(QStringLiteral("text/plain"));
+    }
+
+    enum class FileType { File, Driver, Others };
+
+    static FileType getFileType(const QString &path) {
+        namespace fs = std::filesystem;
+        auto p = fs::path(path.toStdString());
+        if (fs::is_regular_file(p)) {
+            return FileType::File;
+        } else if (fs::is_block_file(p)) {
+            return FileType::Driver;
+        } else {
+            return FileType::Others;
+        }
     }
 };
 

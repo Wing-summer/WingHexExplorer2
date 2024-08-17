@@ -118,9 +118,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
     m_varshowtable->setModel(m_scriptConsole->machine()->model());
 
-    auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
-    plgview->setEnabled(!plgview->menu()->isEmpty());
-
     // connect settings signals
     auto &set = SettingManager::instance();
     connect(&set, &SettingManager::sigAppFontFamilyChanged, this,
@@ -150,6 +147,11 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     // ok, build up the dialog of setting
     buildUpSettingDialog();
+
+    // we start to installing plugin widgets
+    installPluginEditorWidgets();
+    auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
+    plgview->setEnabled(!plgview->menu()->isEmpty());
 
     // load saved docking layout
     m_dock->restoreState(set.dockLayout());
@@ -993,10 +995,13 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
+    auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
-        addPannelAction(pannel, QStringLiteral("loadplg"), tr("LoadPlugin"),
-                        &MainWindow::on_loadplg);
+        addPannelAction(
+            pannel, QStringLiteral("settingplugin"), tr("Plugin"),
+            &MainWindow::on_setting_plugin,
+            shortcuts.keySequence(QKeySequences::Key::SETTING_PLUGIN));
     }
 
     {
@@ -1016,10 +1021,6 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
             pannel, QStringLiteral("general"), tr("General"),
             &MainWindow::on_setting_general,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
-        addPannelAction(
-            pannel, QStringLiteral("settingplugin"), tr("Plugin"),
-            &MainWindow::on_setting_plugin,
-            shortcuts.keySequence(QKeySequences::Key::SETTING_PLUGIN));
     }
 
     {
@@ -1067,6 +1068,7 @@ void MainWindow::buildUpSettingDialog() {
     auto editorPage = new EditorSettingDialog(m_setdialog);
     m_setdialog->addPage(editorPage);
     auto plgPage = new PluginSettingDialog(m_setdialog);
+    plgPage->buildUp(m_settingPages);
     m_setdialog->addPage(plgPage);
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
@@ -1086,7 +1088,46 @@ void MainWindow::buildUpSettingDialog() {
     }
     m_setdialog->addPage(scriptPage);
 
+    for (auto &page : m_settingPages) {
+        if (!page->isInPluginPage()) {
+            m_setdialog->addPage(page);
+        }
+    }
+
     m_setdialog->build();
+}
+
+void MainWindow::installPluginEditorWidgets() {
+    QHash<QString, IWingPlugin *> names;
+    auto log = Logger::instance();
+
+    auto menu = m_toolBtneditors.value(EDITOR_WINS);
+    for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
+         ++p) {
+        for (auto &w : p.value()) {
+            if (names.contains(w->id())) {
+                log->critical(tr("Plugin %1 contains a duplicate ID (%2) that "
+                                 "is already registered by plugin %3")
+                                  .arg(p.key()->pluginName(), w->id(),
+                                       names.value(w->id())->pluginName()));
+                continue;
+            }
+
+            menu->addAction(newAction(w->icon(), w->name(), [this] {
+                auto editor = currentEditor();
+                if (editor == nullptr) {
+                    return;
+                }
+                editor->switchView(m_editorViewWidgets.size());
+            }));
+
+            names.insert(w->id(), p.key());
+            m_editorViewWidgetsBuffer.append(w);
+        }
+    }
+
+    // clear for no using
+    m_editorViewWidgets.clear();
 }
 
 EditorView *MainWindow::newfileGUI() {
@@ -1178,13 +1219,12 @@ void MainWindow::on_openworkspace() {
 }
 
 void MainWindow::on_opendriver() {
-    if (!Utilities::isRoot()) {
-        WingMessageBox::critical(this, tr("Error"), tr("Root Required!"));
-        return;
-    }
-
     DriverSelectorDialog ds;
     if (ds.exec()) {
+        if (!Utilities::isRoot()) {
+            WingMessageBox::critical(this, tr("Error"), tr("Root Required!"));
+            return;
+        }
         EditorView *editor = nullptr;
         auto res = openDriver(ds.GetResult().device(), &editor);
         if (res == ErrFile::NotExist) {
@@ -1829,7 +1869,7 @@ void MainWindow::on_metadatafg(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isWorkSpace()) {
+    if (editor->isOriginWorkSpace()) {
         doc->SetMetafgVisible(checked);
     } else {
         doc->setMetafgVisible(checked);
@@ -1843,7 +1883,7 @@ void MainWindow::on_metadatabg(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isWorkSpace()) {
+    if (editor->isOriginWorkSpace()) {
         doc->SetMetabgVisible(checked);
     } else {
         doc->setMetabgVisible(checked);
@@ -1857,7 +1897,7 @@ void MainWindow::on_metadatacomment(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isWorkSpace()) {
+    if (editor->isOriginWorkSpace()) {
         doc->SetMetaCommentVisible(checked);
     } else {
         doc->setMetaCommentVisible(checked);
@@ -1871,7 +1911,7 @@ void MainWindow::on_metashowall() {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isWorkSpace()) {
+    if (editor->isOriginWorkSpace()) {
         doc->SetMetaVisible(true);
     } else {
         doc->setMetafgVisible(true);
@@ -1887,7 +1927,7 @@ void MainWindow::on_metahideall() {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isWorkSpace()) {
+    if (editor->isOriginWorkSpace()) {
         doc->SetMetaVisible(false);
     } else {
         doc->setMetafgVisible(false);
@@ -2078,29 +2118,6 @@ void MainWindow::on_scriptwindow() {
     m_scriptDialog->raise();
 }
 
-void MainWindow::on_loadplg() {
-    if (!m_enablePlugin)
-        return;
-#ifdef QT_DEBUG
-#ifdef Q_OS_WIN
-    auto filename = WingFileDialog::getOpenFileName(
-        this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.dll)"));
-#else
-    auto filename = WingFileDialog::getOpenFileName(
-        this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.so)"));
-#endif
-#else
-    auto filename = WingFileDialog::getOpenFileName(
-        this, tr("ChoosePlugin"), m_lastusedpath, tr("PluginFile (*.wingplg)"));
-#endif
-
-    if (!filename.isEmpty()) {
-        auto info = QFileInfo(filename);
-        m_lastusedpath = info.absoluteDir().absolutePath();
-        PluginSystem::instance().loadPlugin(info);
-    }
-}
-
 void MainWindow::on_setting_general() { m_setdialog->showConfig(); }
 
 void MainWindow::on_setting_plugin() { m_setdialog->showConfig(2); }
@@ -2180,6 +2197,13 @@ bool MainWindow::newOpenFileSafeCheck() {
 }
 
 void MainWindow::registerEditorView(EditorView *editor) {
+    for (auto &w : m_editorViewWidgetsBuffer) {
+        editor->registerView(w);
+    }
+    for (auto &m : m_hexContextMenu) {
+        editor->registerQMenu(m);
+    }
+
     connectEditorView(editor);
     m_views.insert(editor, {});
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);

@@ -188,7 +188,13 @@ set(SETTING_SRC
     src/settings/editorsettingdialog.ui
     src/settings/scriptsettingdialog.h
     src/settings/scriptsettingdialog.cpp
-    src/settings/scriptsettingdialog.ui)
+    src/settings/scriptsettingdialog.ui
+    src/settings/scriptuisettingdialog.h
+    src/settings/scriptuisettingdialog.cpp
+    src/settings/scriptuisettingdialog.ui
+    src/settings/scriptbehaviorsettingdialog.h
+    src/settings/scriptbehaviorsettingdialog.cpp
+    src/settings/scriptbehaviorsettingdialog.ui)
 
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptqstring.h
@@ -211,6 +217,37 @@ file(
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
 
+foreach(TS_FILE IN LISTS TS_FILES)
+  get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
+  set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
+  set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
+  file(MAKE_DIRECTORY "${QM_DIR}")
+  file(MAKE_DIRECTORY "${QM_OUT_DIR}")
+  set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
+endforeach()
+
+set(TRANSLATION_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QLogger
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QScintilla
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(${QT_VERSION_MAJOR} EQUAL 5)
+  qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
+                         -no-obsolete)
+elseif(${QT_VERSION_MAJOR} EQUAL 6)
+  qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
+                         -no-obsolete)
+else()
+  message(FATAL_ERROR "Unsupported QT version")
+endif()
+
 set(LANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lang")
 set(LANG_DEST "${CMAKE_CURRENT_BINARY_DIR}/.tmp/lang")
 set(LANG_TARGETS "")
@@ -223,9 +260,6 @@ foreach(TS_FILE IN LISTS TS_FILES)
   get_filename_component(LANG_NAME "${TS_DIR}" NAME)
   set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
   set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
-  file(MAKE_DIRECTORY "${QM_DIR}")
-  file(MAKE_DIRECTORY "${QM_OUT_DIR}")
-  set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
   set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
   set(LANG_NEED_COPY
       "${LANG_NEED_COPY_PREFIX}/about.md"
@@ -249,7 +283,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
             ${LANG_COMPRESS_CONTENT}
     WORKING_DIRECTORY "${QM_DIR}"
     COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
-    DEPENDS copy_lang_files)
+    DEPENDS ${QM_FILES} copy_lang_files)
 
   set(TARGET_NAME "langgen_${LANG_NAME}")
   add_custom_target(
@@ -263,28 +297,6 @@ foreach(TS_FILE IN LISTS TS_FILES)
 endforeach()
 
 add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
-
-set(TRANSLATION_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QLogger
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QScintilla
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
-if(${QT_VERSION_MAJOR} EQUAL 5)
-  qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                         -no-obsolete)
-elseif(${QT_VERSION_MAJOR} EQUAL 6)
-  qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                         -no-obsolete)
-else()
-  message(FATAL_ERROR "Unsupported QT version")
-endif()
 
 set(PROJECT_SOURCES
     main.cpp

@@ -104,6 +104,10 @@ private:
     void registerEditorView(ScriptEditor *editor);
     inline ads::CDockAreaWidget *editorViewArea() const;
 
+    void updateEditModeEnabled();
+    ScriptEditor *currentEditor();
+    void swapEditor(ScriptEditor *old, ScriptEditor *cur);
+
 private slots:
     void on_newfile();
     void on_openfile();
@@ -141,7 +145,8 @@ private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
 
-    QMap<QsciScintilla *, QString> m_files;
+    ScriptEditor *m_curEditor = nullptr;
+    QMap<ScriptEditor *, QString> m_editors;
     QList<QWidget *> m_editStateWidgets;
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
 
@@ -149,7 +154,9 @@ private:
     RecentFileManager *m_recentmanager = nullptr;
     Ribbon *m_ribbon = nullptr;
 
+    size_t m_newIndex = 1;
     ScriptMachine *m_runner = nullptr;
+
     // widgets for debugging
     QTextBrowser *m_consoleout = nullptr;
     QTableView *m_varshowtable = nullptr;

@@ -483,10 +483,15 @@ public:
 
     virtual QString name() const = 0;
 
+    virtual QString id() const = 0;
+
+signals:
+    void docSaved(bool saved);
+
 public slots:
     virtual void toggled(bool isVisible) = 0;
 
-    virtual void loadState(QByteArray state) {}
+    virtual void loadState(const QByteArray &state) { Q_UNUSED(state); }
 
     virtual QByteArray saveState() { return {}; }
 
