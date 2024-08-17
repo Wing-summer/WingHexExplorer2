@@ -25,25 +25,14 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                 auto type = t.toString();
                 if (!QString::compare(type, "workspace", Qt::CaseInsensitive)) {
                     auto ff = jobj.value("file");
-                    if (!ff.isUndefined() && t.isString()) {
+                    if (!ff.isUndefined() && ff.isString()) {
                         auto fi = ff.toString();
-                        QFileInfo finfo(f);
-                        file = fi[0] != '/'
-                                   ? finfo.absoluteDir().path() + "/" + fi
-                                   : fi;
-                        auto values = jobj.value("showaddr");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showaddr = values.toBool();
-                        }
-                        values = jobj.value("showheader");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showheader = values.toBool();
-                        }
-                        values = jobj.value("showstr");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showstr = values.toBool();
-                        }
-                        values = jobj.value("encoding");
+                        QFileInfo finfo(fi);
+                        file = finfo.isAbsolute()
+                                   ? fi
+                                   : QFileInfo(filename).absolutePath() +
+                                         QDir::separator() + fi;
+                        auto values = jobj.value("encoding");
                         if (!values.isUndefined() && values.isString()) {
                             infos.encoding = values.toString();
                         }
@@ -54,29 +43,9 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                             if (b)
                                 infos.base = nbase;
                         }
-                        values = jobj.value("locked");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.locked = values.toBool();
-                        }
-                        values = jobj.value("keepsize");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.keepsize = values.toBool();
-                        }
-                        values = jobj.value("showmetafg");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showmetafg = values.toBool();
-                        }
-                        values = jobj.value("showmetabg");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showmetabg = values.toBool();
-                        }
-                        values = jobj.value("showmetacomment");
-                        if (!values.isUndefined() && values.isBool()) {
-                            infos.showmetacomment = values.toBool();
-                        }
 
                         auto maxbytes =
-                            QFileInfo(file).size(); //简单排除非法标记
+                            QFileInfo(file).size(); // 简单排除非法标记
 
                         values = jobj.value("metas");
                         if (!values.isUndefined() && values.isArray()) {
@@ -145,6 +114,30 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                                 }
                             }
                         }
+
+                        values = jobj.value("plugindata");
+                        if (!values.isUndefined() && values.isArray()) {
+                            for (auto item : values.toArray()) {
+                                if (!item.isUndefined() && item.isObject()) {
+                                    auto sitem = item.toObject();
+                                    auto plgobj = sitem.value("key");
+                                    auto valueobj = sitem.value("value");
+                                    if (!plgobj.isUndefined() &&
+                                        plgobj.isString() &&
+                                        !valueobj.isUndefined() &&
+                                        valueobj.isString()) {
+                                        auto plg = plgobj.toString();
+                                        auto value = QByteArray::fromBase64(
+                                            valueobj.toString().toLatin1());
+                                        if (plg.isEmpty() || value.isEmpty()) {
+                                            continue;
+                                        }
+                                        infos.pluginData.insert(plg, value);
+                                    }
+                                }
+                            }
+                        }
+
                         return true;
                     }
                 }
@@ -171,16 +164,8 @@ bool WorkSpaceManager::saveWorkSpace(QString filename, QString file,
         }
 
         jobj.insert("file", file);
-        jobj.insert("showaddr", infos.showaddr);
-        jobj.insert("showheader", infos.showheader);
-        jobj.insert("showstr", infos.showstr);
         jobj.insert("encoding", infos.encoding);
         jobj.insert("base", QString::number(infos.base));
-        jobj.insert("locked", infos.locked);
-        jobj.insert("keepsize", infos.keepsize);
-        jobj.insert("showmetafg", infos.showmetafg);
-        jobj.insert("showmetabg", infos.showmetabg);
-        jobj.insert("showmetacomment", infos.showmetacomment);
 
         QJsonArray metas;
         for (auto meta : metalist) {
@@ -202,6 +187,18 @@ bool WorkSpaceManager::saveWorkSpace(QString filename, QString file,
             bookmarks.append(i);
         }
         jobj.insert("bookmarks", bookmarks);
+
+        // plugin data
+        QJsonArray plugindata;
+        for (auto p = infos.pluginData.begin(); p != infos.pluginData.end();
+             p++) {
+            QJsonObject i;
+            i.insert("key", p.key());
+            i.insert("value", QString::fromLatin1(p.value().toBase64()));
+            plugindata.append(i);
+        }
+
+        jobj.insert("plugindata", plugindata);
 
         QJsonDocument jdoc(jobj);
         if (f.write(jdoc.toJson(QJsonDocument::JsonFormat::Indented)) >= 0) {

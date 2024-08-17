@@ -105,6 +105,7 @@ private:
     QMenu *buildUpScriptDirMenu(const QStringList &files);
 
     void buildUpSettingDialog();
+    void installPluginEditorWidgets();
 
 private:
     EditorView *newfileGUI();
@@ -169,7 +170,6 @@ private slots:
     void on_clslog();
 
     void on_scriptwindow();
-    void on_loadplg();
     void on_setting_general();
     void on_setting_plugin();
 
@@ -304,12 +304,19 @@ private:
     }
 
     template <typename Func>
-    inline QAction *newAction(const QString &iconName, const QString &title,
+    inline QAction *newAction(const QIcon &icon, const QString &title,
                               Func &&slot,
                               const QKeySequence &shortcut = QKeySequence()) {
         QAction *a = newAction(title, slot, shortcut);
-        a->setIcon(ICONRES(iconName));
+        a->setIcon(icon);
         return a;
+    }
+
+    template <typename Func>
+    inline QAction *newAction(const QString &iconName, const QString &title,
+                              Func &&slot,
+                              const QKeySequence &shortcut = QKeySequence()) {
+        return newAction(ICONRES(iconName), title, slot, shortcut);
     }
 
     template <typename T>
@@ -482,8 +489,9 @@ private:
     // for plugin system use
     QHash<QString, RibbonTabContent *> m_ribbonMaps;
     QList<QMenu *> m_hexContextMenu;
-    QList<WingEditorViewWidget *> m_editorViewWidgets;
+    QMap<IWingPlugin *, QList<WingEditorViewWidget *>> m_editorViewWidgets;
     QList<SettingPage *> m_settingPages;
+    QList<WingEditorViewWidget *> m_editorViewWidgetsBuffer;
 
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空

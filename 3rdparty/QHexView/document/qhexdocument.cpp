@@ -104,7 +104,6 @@ bool QHexDocument::setLockedFile(bool b) {
     if (m_readonly)
         return false;
     m_islocked = b;
-    setDocSaved(false);
     emit documentLockedFile(b);
     return true;
 }
@@ -113,7 +112,6 @@ bool QHexDocument::setKeepSize(bool b) {
         return false;
 
     m_keepsize = b;
-    setDocSaved(false);
     emit documentKeepSize(b);
     return true;
 }

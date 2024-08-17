@@ -14,16 +14,9 @@
 #include <QStringList>
 
 struct WorkSpaceInfo {
-    bool showaddr = true;
-    bool showheader = true;
-    bool showstr = true;
-    bool locked = true;
-    bool keepsize = true;
-    QString encoding = "ASCII";
+    QString encoding = QStringLiteral("ASCII");
     qulonglong base = 0;
-    bool showmetafg = true;
-    bool showmetabg = true;
-    bool showmetacomment = true;
+    QHash<QString, QByteArray> pluginData;
 };
 
 class WorkSpaceManager {

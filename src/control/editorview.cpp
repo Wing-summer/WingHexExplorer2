@@ -34,7 +34,7 @@ EditorView::EditorView(QWidget *parent) : ads::CDockWidget(QString(), parent) {
     hexLayout->setSpacing(0);
     hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView;
-    hexLayout->addWidget(m_hex);
+    hexLayout->addWidget(m_hex, 1);
     m_goto = new GotoWidget(this);
     connect(m_goto, &GotoWidget::jumpToLine, this,
             [=](qsizetype pos, bool isline) {
@@ -62,38 +62,39 @@ EditorView::EditorView(QWidget *parent) : ads::CDockWidget(QString(), parent) {
     auto tabWidget = this->tabWidget();
     tabWidget->installEventFilter(efilter);
 
+    m_menu = new QMenu(m_hex);
     auto &shortcut = QKeySequences::instance();
 
-    newAction(m_hex, "cut", tr("Cut"), &EditorView::sigOnCutFile,
+    newAction(m_menu, "cut", tr("Cut"), &EditorView::sigOnCutFile,
               QKeySequence::Cut);
-    newAction(m_hex, "cuthex", tr("CutHex"), &EditorView::sigOnCutHex,
+    newAction(m_menu, "cuthex", tr("CutHex"), &EditorView::sigOnCutHex,
               shortcut.keySequence(QKeySequences::Key::CUT_HEX));
-    newAction(m_hex, "copy", tr("Copy"), &EditorView::sigOnCopyFile,
+    newAction(m_menu, "copy", tr("Copy"), &EditorView::sigOnCopyFile,
               QKeySequence::Copy);
-    newAction(m_hex, "copyhex", tr("CopyHex"), &EditorView::sigOnCopyHex,
+    newAction(m_menu, "copyhex", tr("CopyHex"), &EditorView::sigOnCopyHex,
               shortcut.keySequence(QKeySequences::Key::COPY_HEX));
-    newAction(m_hex, "paste", tr("Paste"), &EditorView::sigOnPasteFile,
+    newAction(m_menu, "paste", tr("Paste"), &EditorView::sigOnPasteFile,
               QKeySequence::Paste);
-    newAction(m_hex, "pastehex", tr("PasteHex"), &EditorView::sigOnPasteHex,
+    newAction(m_menu, "pastehex", tr("PasteHex"), &EditorView::sigOnPasteHex,
               shortcut.keySequence(QKeySequences::Key::PASTE_HEX));
-    newAction(m_hex, "del", tr("Delete"), &EditorView::sigOnDelete,
+    newAction(m_menu, "del", tr("Delete"), &EditorView::sigOnDelete,
               QKeySequence::Delete);
-    auto a = new QAction(m_hex);
-    a->setSeparator(true);
-    m_hex->addAction(a);
-    newAction(m_hex, "find", tr("Find"), &EditorView::sigOnFindFile,
+    m_menu->addSeparator();
+    newAction(m_menu, "find", tr("Find"), &EditorView::sigOnFindFile,
               QKeySequence::Find);
-    newAction(m_hex, "jmp", tr("Goto"), &EditorView::sigOnGoToLine,
+    newAction(m_menu, "jmp", tr("Goto"), &EditorView::sigOnGoToLine,
               shortcut.keySequence(QKeySequences::Key::GOTO));
-    newAction(m_hex, "fill", tr("Fill"), &EditorView::sigOnFill,
+    newAction(m_menu, "fill", tr("Fill"), &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_hex, "metadata", tr("MetaData"), &EditorView::sigOnMetadata,
+    newAction(m_menu, "metadata", tr("MetaData"), &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
-    newAction(m_hex, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
+    newAction(m_menu, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
-    newAction(m_hex, "encoding", tr("Encoding"), &EditorView::sigOnEncoding,
+    newAction(m_menu, "encoding", tr("Encoding"), &EditorView::sigOnEncoding,
               shortcut.keySequence(QKeySequences::Key::ENCODING));
-    m_hex->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_hex, &QHexView::customContextMenuRequested, this,
+            [=](const QPoint &pos) { m_menu->popup(mapToGlobal(pos)); });
 
     m_stack->setCurrentWidget(m_hexContainer);
 
@@ -121,6 +122,18 @@ void EditorView::switchView(qindextype index) {
         m_stack->setCurrentWidget(m_others.at(index));
     }
     emit viewChanged(index);
+}
+
+void EditorView::registerQMenu(QMenu *menu) {
+    if (menu == nullptr) {
+        return;
+    }
+    static bool hasRegistered = false;
+    if (!hasRegistered) {
+        m_menu->addSeparator();
+        hasRegistered = true;
+    }
+    m_menu->addMenu(menu);
 }
 
 EditorView::FindError EditorView::find(const QByteArray &data,
@@ -191,6 +204,7 @@ ErrFile EditorView::newFile(size_t index) {
     m_rawName = tr("Untitled") + istr;
     this->setWindowTitle(m_rawName);
     m_docType = DocumentType::File;
+    m_isWorkSpace = false;
     m_fileName = QStringLiteral(":") + istr;
     auto p = QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false);
     p->setDocSaved();
@@ -272,18 +286,12 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
         auto render = m_hex->renderer();
         doc->applyBookMarks(bookmarks);
         doc->setBaseAddress(infos.base);
-        m_hex->setLockedFile(infos.locked);
-        m_hex->setKeepSize(infos.keepsize);
-        doc->setMetabgVisible(infos.showmetabg);
-        doc->setMetafgVisible(infos.showmetafg);
-        doc->setMetaCommentVisible(infos.showmetacomment);
-        render->setStringVisible(infos.showstr);
-        render->setHeaderVisible(infos.showheader);
-        render->setAddressVisible(infos.showaddr);
         render->setEncoding(infos.encoding);
         doc->metadata()->applyMetas(metas);
+        applyPluginData(infos.pluginData);
         doc->setDocSaved();
 
+        m_docType = DocumentType::File;
         m_isWorkSpace = true;
         this->tabWidget()->setIcon(ICONRES(QStringLiteral("pro")));
 
@@ -382,10 +390,11 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 }
 
 ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
-                         bool isExport, bool forceWorkSpace, bool ignoreMd5) {
+                         bool isExport, SaveWorkSpaceAttr workSpaceAttr,
+                         bool ignoreMd5) {
     if (isCloneFile()) {
         return this->cloneParent()->save(workSpaceName, path, isExport,
-                                         forceWorkSpace, ignoreMd5);
+                                         workSpaceAttr, ignoreMd5);
     }
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
@@ -414,32 +423,24 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     } break;
     }
 
+    if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace ||
+        (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
+         (m_isWorkSpace || hasMeta()))) {
+        WorkSpaceInfo infos;
+        infos.base = doc->baseAddress();
+
+        auto b = WorkSpaceManager::saveWorkSpace(
+            workSpaceName, m_fileName, doc->getAllBookMarks(),
+            doc->metadata()->getallMetas(), infos);
+        if (!b)
+            return ErrFile::WorkSpaceUnSaved;
+        if (!isExport) {
+            m_isWorkSpace = true;
+        }
+    }
+
     if (doc->saveTo(&file, true)) {
         file.close();
-        if (forceWorkSpace || m_isWorkSpace || doc->metadata()->hasMetadata()) {
-            auto render = m_hex->renderer();
-
-            WorkSpaceInfo infos;
-            infos.base = doc->baseAddress();
-            infos.locked = doc->isLocked();
-            infos.keepsize = doc->isKeepSize();
-            infos.showstr = render->stringVisible();
-            infos.showaddr = render->addressVisible();
-            infos.showheader = render->headerVisible();
-            infos.encoding = render->encoding();
-            infos.showmetabg = doc->metabgVisible();
-            infos.showmetafg = doc->metafgVisible();
-            infos.showmetacomment = doc->metaCommentVisible();
-
-            auto b = WorkSpaceManager::saveWorkSpace(
-                workSpaceName, m_fileName, doc->getAllBookMarks(),
-                doc->metadata()->getallMetas(), infos);
-            if (!b)
-                return ErrFile::WorkSpaceUnSaved;
-            if (!isExport) {
-                m_isWorkSpace = true;
-            }
-        }
 
         if (!isExport) {
             m_fileName = fileName;
@@ -481,7 +482,7 @@ ErrFile EditorView::reload() {
 }
 
 bool EditorView::change2WorkSpace() const {
-    return !m_isWorkSpace && m_hex->document()->metadata()->hasMetadata();
+    return !m_isWorkSpace && hasMeta();
 }
 
 QHexView *EditorView::hexEditor() const { return m_hex; }
@@ -525,13 +526,34 @@ qindextype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
 }
 
+bool EditorView::hasMeta() const {
+    auto doc = m_hex->document();
+    return doc->metadata()->hasMetadata() || doc->bookMarksPtr()->size() > 0;
+}
+
+void EditorView::applyPluginData(const QHash<QString, QByteArray> &data) {
+    for (auto p = data.begin(); p != data.end(); p++) {
+        auto plgw = std::find_if(m_others.begin(), m_others.end(),
+                                 [=](const WingEditorViewWidget *editor) {
+                                     return editor->id() == p.key();
+                                 });
+        if (plgw != m_others.end()) {
+            (*plgw)->loadState(p.value());
+        }
+    }
+}
+
+QHash<QString, QByteArray> EditorView::savePluginData() {
+    QHash<QString, QByteArray> ret;
+    for (auto &item : m_others) {
+        ret.insert(item->id(), item->saveState());
+    }
+    return ret;
+}
+
 EditorView *EditorView::cloneParent() const { return m_cloneParent; }
 
 bool EditorView::isCloned() const { return m_cloneParent != nullptr; }
-
-void EditorView::setIsWorkSpace(bool newIsWorkSpace) {
-    m_isWorkSpace = newIsWorkSpace;
-}
 
 EditorView *EditorView::clone() {
     if (isCloneFile()) {
@@ -595,16 +617,26 @@ bool EditorView::isDriver() const {
     return m_docType == EditorView::DocumentType::Driver;
 }
 
-FindResultModel *EditorView::findResultModel() const { return m_findResults; }
+FindResultModel *EditorView::findResultModel() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->findResultModel();
+    }
+    return m_findResults;
+}
 
 void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
 
-int EditorView::findResultCount() const { return m_findResults->size(); }
+int EditorView::findResultCount() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->findResultCount();
+    }
+    return m_findResults->size();
+}
 
-bool EditorView::isWorkSpace() const {
+bool EditorView::isOriginWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     if (isCloneFile()) {
-        return this->cloneParent()->isWorkSpace();
+        return this->cloneParent()->isOriginWorkSpace();
     }
     return m_isWorkSpace;
 }

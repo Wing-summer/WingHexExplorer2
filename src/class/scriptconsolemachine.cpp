@@ -42,8 +42,6 @@ bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
                                             asCALL_THISCALL_ASGLOBAL, &fn);
     Q_ASSERT(r >= 0);
 
-    PluginSystem::instance().angelApi()->installAPI(
-        engine, typeInfo(RegisteredType::tString));
     return _immediateContext != nullptr;
 }
 

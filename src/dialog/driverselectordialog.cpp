@@ -21,9 +21,10 @@ DriverSelectorDialog::DriverSelectorDialog(QWidget *parent)
     layout->addWidget(new QLabel("PleaseChooseDriver", this));
     layout->addSpacing(5);
     for (auto &item : infos) {
+        auto device = item.device();
         if (item.isValid()
 #ifdef Q_OS_LINUX
-            && item.device().at(0) == '/'
+            && Utilities::getFileType(device) == Utilities::FileType::Driver
 #endif
         ) {
 #ifdef Q_OS_WINDOWS

@@ -10,6 +10,7 @@
 #include "AngelScript/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/add_on/weakref/weakref.h"
+#include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptqstring.h"
 
@@ -149,6 +150,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
                                         &AngelObjString::dictionaryToString);
     _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tDateTime],
                                         &AngelObjString::dateTimeToString);
+
+    PluginSystem::instance().angelApi()->installAPI(
+        engine, typeInfo(RegisteredType::tString));
 
     return true;
 }
