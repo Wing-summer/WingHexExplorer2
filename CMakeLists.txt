@@ -37,7 +37,7 @@ endif()
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QLogger)
 add_subdirectory(3rdparty/QHexView)
-add_subdirectory(3rdparty/QScintilla)
+add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QConsoleWidget)
@@ -144,8 +144,6 @@ set(CLASS_SRC
     src/class/settingmanager.cpp
     src/class/wingprogressdialog.h
     src/class/wingprogressdialog.cpp
-    src/class/qscilexeras.h
-    src/class/qscilexeras.cpp
     src/class/asdebugger.h
     src/class/asdebugger.cpp
     src/class/scriptconsolemachine.h
@@ -153,7 +151,9 @@ set(CLASS_SRC
     src/class/wingangelapi.h
     src/class/wingangelapi.cpp
     src/class/angelobjstring.h
-    src/class/angelobjstring.cpp)
+    src/class/angelobjstring.cpp
+    src/class/scripteditortheme.h
+    src/class/scripteditortheme.cpp)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
@@ -233,7 +233,7 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QLogger
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QScintilla
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
@@ -358,7 +358,7 @@ target_link_libraries(
           QWKWidgets
           QHexView
           QLoggerLib
-          QScintilla
+          QCodeEditor2
           QJsonModel
           angelscript
           QConsoleWidget

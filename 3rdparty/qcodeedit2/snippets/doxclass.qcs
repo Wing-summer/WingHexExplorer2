@@ -1,0 +1,7 @@
+# name:doxclass context:all
+/*!
+	\class ${0:name}
+	\brief ${1:brief description}
+	
+	${2:detailed description}
+*/
