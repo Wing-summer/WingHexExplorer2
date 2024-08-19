@@ -5,7 +5,6 @@
 
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
-#include "Qsci/qsciscintilla.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/recentfilemanager.h"

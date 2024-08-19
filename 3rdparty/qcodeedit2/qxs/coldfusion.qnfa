@@ -1,0 +1,75 @@
+<!DOCTYPE QNFA>
+<QNFA language="ColdFusion" extensions="cfm;cfc;cfml;dbm" >
+	<context id="cfcomment" format="cfcomment" >
+		<start parenthesis="cfcomment:open" indent="1" fold="1">&lt;!---</start>
+		<stop parenthesis="cfcomment:close" indent="1" fold="1">---&gt;</stop>
+	</context>
+	
+	<context id="cftagscontent">
+		
+		<context id="cfexpression" >
+			<sequence parenthesis="round:open">(</sequence>
+			<sequence parenthesis="round:close">)</sequence>
+			<sequence parenthesis="square:open">\[</sequence>
+			<sequence parenthesis="square:close">\]</sequence>
+			<word id="cfdecimal" format="cfnumber">-?[0-9]+</word>
+			
+			<context format="cfstring" >
+				<start>"</start>
+				<stop>"</stop>
+				<embed target="ColdFusion:cfweakstring" />
+			</context>
+			
+			<embed target="ColdFusion:cfstrongstring" />
+			<context format="cfstring" >
+				<start>'</start>
+				<stop>'</stop>
+				<embed target="ColdFusion:cfstrongstring" />
+			</context>
+		</context>
+		
+		<context id="cfweakstring" format="cfstring" >
+			<context format="cfexpression" >
+				<start>#</start>
+				<stop>#</stop>
+				<embed target="ColdFusion:cfexpression" />
+			</context>
+		</context>
+		
+		<context id="cfstrongstring" format="cfstring" >
+			<context format="cfexpression" >
+				<start>#</start>
+				<stop>#</stop>
+				<embed target="ColdFusion:cfexpression" />
+			</context>
+		</context>
+		
+		<embed target="ColdFusion:cfexpression" />
+	</context>
+	
+	<context id="cfquery" format="cftags">
+		<start>&lt;cfquery</start>
+		<stop>&lt;/cfquery&gt;</stop>
+		
+		<context format="normal" >
+			<start format="cftags">&gt;</start>
+			<stop exclusive="false" format="cftags">&lt;/cfquery&gt;</stop>
+			
+			<context format="cfexpression" >
+				<start>#</start>
+				<stop>#</stop>
+				<embed target="ColdFusion:cfexpression" />
+			</context>
+		</context>
+		
+		<embed target="ColdFusion:cftagscontent" />
+	</context>
+	
+	<context id="cftags" format="cftags">
+		<start parenthesis="cftags:open" indent="1" fold="1" >&lt;cf</start>
+		<start parenthesis="cftags:open" indent="1" fold="1" >&lt;/cf</start>
+		<stop parenthesis="cftags:close" indent="1" fold="1" >&gt;</stop>
+		
+		<embed target="ColdFusion:cftagscontent" />
+	</context>
+</QNFA>

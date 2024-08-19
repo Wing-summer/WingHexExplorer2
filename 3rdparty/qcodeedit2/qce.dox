@@ -1,0 +1,416 @@
+/*!
+	\mainpage QCodeEdit manual
+	
+	<h2>Sumarry :</h2>
+	<ol>
+		<li>\subpage intro "Introduction"</li>
+		<li>\subpage license "License"</li>
+		<li>\subpage tutorial "Tutorial"</li>
+		<li>\subpage qce_examples "Examples"</li>
+	</ol>
+*/
+
+/*!
+	\page intro Introduction 
+	
+	%QCodeEdit is a library offering an advanced text editing framework ready to use in other Qt apps.
+	
+	The goals of QCodeEdit are :
+	<ul>
+		<li>Flexibility</li>
+		<li>Performance</li>
+		<li>Usability</li>
+	</ul>
+	
+	Flexibility is achieved by splitting the library in logical components that can be used (almost)
+	independently. The document-related classes for instances don't need an editor to be around (it
+	is a bit similar to a model/view approach in that way). Two other important features of %QCodeEdit
+	have been designed to maximize flexibility : the syntax engine and the panel system.
+	
+	<ul>
+		<li>the \ref QDocument "document" contains the data to be edited. It is made of \ref QDocumentLine "lines"
+		and can be manipulated using \ref QDocumentCursor "cursors".</li>
+		<li>the \ref QEditor "editor" is a simple widget which allows edition of the document through mouse and
+		keyboard interaction.</li>
+		<li>the syntax engine add new functionalities to both the \ref QDocument "document" and \ref QEditor "editor", such
+		as syntax highlighting, brace matching, code folding, auto indenting, (un)commenting... The builtin
+		implementation generates language definitions on-the-fly from XML files specifying the structure of
+		the language in a hierarchical and very intuitive way.</li>
+		<li>the \ref QPanel "panels" are simple widgets which can be attached to the \ref QEditor "editor" using a
+		\ref QCodeEdit "manager". Builtin panels include : line numbers, fold indicators, line marks, line changes,
+		editor status and search/replace. It is of course possible to create new panels very easily.</li>
+	</ul>
+	
+	
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left"></td>
+	<td align="right">\ref license "[Next:License]"</td>
+	</tr></table>
+*/
+
+/*!
+	\page license License
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left">\ref intro "[Previous:Introduction]"</td>
+	<td align="right">\ref tutorial "[Next:Tutorial]"</td>
+	</tr></table>
+	
+	\verbinclude GPL.txt
+	
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left">\ref intro "[Previous:Introduction]"</td>
+	<td align="right">\ref tutorial "[Next:Tutorial]"</td>
+	</tr></table>
+*/
+
+/*!
+	\page tutorial Tutorial
+	
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left">\ref license "[Previous:License]"</td>
+	<td align="right">\ref qce_examples "[Next:Examples]"</td>
+	</tr></table>
+	
+	Sumarry :
+	<ol>
+		<li>\ref install "Installation"</li>
+		<li>\ref start "Getting started"</li>
+		<li>\ref qce_examples "Examples"</li>
+	</ol>
+	
+	\section install Installation
+	Installing %QCodeEdit is really simple.
+	
+	\subsection install-source Building from sources
+	
+		-# Make sure you have Qt4 installed and a supported compiler
+		-# Get %QCodeEdit sources : http://sourceforge.net/projects/edyuk/files
+		-# Uncompress the archive into the directory of your choice
+		-# Step into that directory and open a shell and type :\verbatim $ qmake && make \endverbatim
+		-# Once the compilation is finished type : \verbatim $ su -c "make install" \endverbatim
+	
+	\subsection install-win Windows : Using the binary installer
+	
+		-# Make sure you have Qt4 installed
+		-# Get %QCodeEdit windows installer : http://sourceforge.net/projects/edyuk/files
+		-# Run it
+	
+	\section start Getting started
+	
+	%QCodeEdit API has been modelled after that of QTextEdit/QTextDocument so porting should be relatively easy.
+	\n\n
+	The demo application gives a quick overview of what comes "for free" with %QCodeEdit and how to set it up
+	quickly. Some explanations are given below.
+	\n\n
+	For those interested in using some more advanced features of %QCodeEdit, the \ref qce_examples "examples" section awaits you.
+	\n\n
+	Above all, you need to configure your project to use %QCodeEdit. There are several possible ways of doing that :
+	<ul>
+		<li>Embedding %QCodeEdit code into your application : simply copy the lib directory where you want and add
+		a proper include directive inside your project (probably something like : include(lib/lib.pri) )</li>
+		<li>Using the installed %QCodeEdit library : simply add CONFIG += qcodeedit to your project and qmake will
+		take care of everything, provided %QCodeEdit has been installed properly beforehand</li>
+		<li>Tweaking your project files by hand : if you choose this way you probably don't need any advice on the
+		topic. Just inspect the qcodeedit.prf file to figure out what "tweaks" are required.</li>
+	</ul>
+	
+	Here is the code, taken from the demo application, used to setup QCodeEdit :
+	
+	\code
+	m_formats = new QFormatScheme("qxs/formats.qxf", this);
+	QDocument::setDefaultFormatScheme(m_formats);
+	
+	QLineMarksInfoCenter::instance()->loadMarkTypes("qxs/marks.qxm");
+	
+	m_languages = new QLanguageFactory(m_formats, this);
+	m_languages->addDefinitionPath("qxs");
+	\endcode
+	
+	It is quite simple really. First we load a format scheme from a file and set
+	it as the default format scheme used by documents to draw themselves when no
+	other is provided.
+	\n\n
+	It used to be necessary when the format scheme was common to all languages.
+	However, in newer version of QCodeEdit (starting with 2.2) this is only
+	a recommended operation to prevent highlighting from being useless when some
+	languages do not come with their own format scheme.
+	\n\n
+	Then we load the line marks definition. Lines marks can be customized in any
+	way you like through the use of such a file or even directly using the various
+	methods provided by QLineMarksInfoCenter. Again, this is not required but
+	highly recommended, if you want to take advantage of %QCodeEdit features.
+	\n\n
+	Finally we create a language factory and feed it with a path to search for
+	language definitions. This language factory can later be used to easily
+	adjust the language definition of a \ref QDocument "document" / \ref QEditor "editor".
+	All the files recognized as language definitions within the given path will
+	be loaded and support for a set of languages will be added automagically :)
+	
+	
+	Now, lets create a neat widget with which the user will be able to actually edit some text :
+	
+	\code
+	m_editControl = new QCodeEdit(this);
+	
+	m_editControl
+		->addPanel("Line Mark Panel", QCodeEdit::West, true)
+		->setShortcut(QKeySequence("F6"));
+	
+	m_editControl
+		->addPanel("Line Number Panel", QCodeEdit::West, true)
+		->setShortcut(QKeySequence("F11"));
+	
+	m_editControl
+		->addPanel("Fold Panel", QCodeEdit::West, true)
+		->setShortcut(QKeySequence("F9"));
+	
+	m_editControl
+		->addPanel("Line Change Panel", QCodeEdit::West, true)
+	
+	m_editControl
+		->addPanel("Status Panel", QCodeEdit::South, true);
+	
+	m_editControl
+		->addPanel("Search Replace Panel", QCodeEdit::South);
+	
+	\endcode
+	
+	So creating a managed editor only takes one line. All the rest is just about adding fancy
+	\ref QPanel "panels" to make the editor more user/friendly.
+	
+	As you can see the QCodeEdit::addPanel() method returns a QAction object which behaves in
+	the exact same way the toggle view action of a QDockWidget do : un/check it to hide/show
+	the panel.
+	\n\n
+	Some of these toggle view actions are given shortcuts to make it easier to show them.
+	The boolean argument passed to addPanel() specifies whether the toggle view action should
+	be added to the context menu of the \ref QEditor "editor".
+	\n\n
+	If you think it takes too much space you can also specify the panel layout in its
+	serialized form. The code below has the exact same effect as the one above except that it
+	does not bother creating actions, let alone setting shortcuts.
+	
+	\code
+	m_editControl = new QCodeEdit(
+							"0{Line Mark Panel, Line Number Panel, Fold Panel, Line Change Panel}"
+							"2{Status Panel, Search Replace Panel}",
+							this
+						);
+	\endcode
+	
+	Ok, real good, but we still haven't loaded a file... Here's how to proceed :
+	
+	\code 
+	m_languages->setLanguage(m_editControl->editor(), filename);
+	m_editControl->editor()->load(filename);
+	\endcode
+	
+	The first step is to set the proper \ref QLanguageDefinition "language definition" for the
+	\ref QEditor "editor". This is achieved by a single call to the \ref QLanguageFactory "language factory"
+	we created earlier. We pass it the filename but a simple suffix or even a language name
+	would work just as well.
+	\n\n
+	At last, we load the content of the file into the editor. The user can now edit it (once the
+	widget will be displayed of course...)
+	
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left">\ref license "[Previous:License]"</td>
+	<td align="right">\ref qce_examples "[Next:Examples]"</td>
+	</tr></table>
+*/
+
+/*!
+	\page qce_examples Examples
+	
+	<table width="100%" border="0" frame="void"><tr width="100%">
+	<td align="left">\ref tutorial "[Previous:Tutorial]"</td>
+	<td align="right"></td>
+	</tr></table>
+	
+	<h2>Sumarry :</h2>
+	<ol>
+		<li>\ref exSyntax "Creating a custom syntax file"</li>
+	</ol>
+	
+	\section exSyntax Syntax files
+	
+	Syntax file creation is rather straightforward once you know how they are structured.
+	The purpose of this small example is to cover that topic as extensively as possible.
+	
+	
+	<h3>Core concepts</h3>
+	There are two fundamental notions in QCE syntax files : contexts and "regular" matches.
+	
+	The concept of context is extremely powerful while remaining extremely simple. The syntax
+	engine enters a context when a given start token is matched and it leaves it when a stop
+	token is matched. Within a context there can be any number of contexts and "regular" matches.
+	contexts are typically used to match comments, strings or other special blocks of code.
+	
+	
+	"Regular" matches are what one would expect them to be : simple tokens. They can be matched
+	from either regular expressions or plain strings. Start and stop tokens of context are
+	"regular" matches in a way, except that they also trigger the context enter/leave event.
+	
+	
+	<h3>Syntax file structure</h3>
+	Now, on to the analysis of the structure of a syntax file.
+	
+	The root element of the document is a &lt;QNFA&gt; tag. It provides various informations
+	in its attributes.
+	
+	<ul>
+		<li><b>language</b> : this attribute specifies the name of the language supported by
+		the syntax file.</li>
+		<li><b>extensions</b> : this attribute specifies the file extensions matched by this
+		language.</li>
+		<li><b>defaultLineMark</b> : this (optional) attribute specifies the name of the default
+		line mark to be set on a line when clicking on the line mark panel (if any). If none
+		is provided, "bookmark" is used.</li>
+	</ul>
+	
+	The QNFA tag represents the root context of the language. It can contain any number of the
+	following tags :
+	
+	<ul>
+		<li><b>context</b> : defines a context. To be valid, requires children tags of type
+		<b>start</b> and <b>stop</b>.</li>
+		
+		<li><b>sequence</b> : defines a "regular" match. The value of this element is always
+		assumed to be a regexp (no internal optimizations attempt for plain strings).</li>
+		
+		<li><b>word</b> : defines a "regular" match. The value of this element is checked to
+		determine whether it can be matched as a plain string (internal optimizations).
+		Additionally, this element will ONLY be matched at word boundaries. For instance,
+		if the value of a word element is for, it will not be matched in "foreach" while
+		it would have been, if declared using a <b>sequence</b> tag.</li>
+		
+		<li><b>list</b> : this is a "meta-element" used to group regular matches and give
+		them the same attributes as they are propagated from the this element to its children.
+		Subrouping (nesting <b>list</b> elements) is NOT supported.</li>
+		
+		<li><b>embed</b> : this is a "meta-element" which allows embedding of other languages
+		or contexts to help reducing duplication of content and make maintenance of syntax
+		files easier. The embedding target is specified through the <i>target</i> attribute.</li>
+	</ul>
+	
+	Additionally, the following tags are valid inside a <b>context</b> block (and, again, their
+	number isn't limited). Also note that, while ordering of all tags above within a context DO
+	matter, ordering of the tags below DO NOT matter.
+	
+	<ul>
+		<li><b>start</b> : defines a context start token as a "regular" match (remarks made about
+		the <b>word</b> tag apply to this one as well).</li>
+		
+		<li><b>stop</b> : defines a context stop token as a "regular" match (remarks made about
+		the <b>word</b> tag apply to this one as well).</li>
+		
+		<li><b>escape</b> : defines a special token as a "regular" match (remarks made about
+		the <b>sequence</b> tag apply to this one as well). This element is used for the
+		very common case of escape sequences which may prevent a stop token from being one.
+		In most case it is however recommended to favor explicit escape match through a
+		<b>sequence</b>, for instance in C-like strings the following construct is used :
+		\code <sequence id="escape" format="escapeseq" >\\[nrtvf\\"'\n\n]</sequence> \endcode
+		</li>
+	</ul>
+	
+	All these tags, except <b>embed</b>, support the following attributes :
+	
+	<ul>
+		<li><b>format</b> : specifies the format to be applied to the matches (highlighting).
+		This property is propagated.</li>
+		
+		<li><b>id</b> : assign an identifer to the element. This is only used for contexts
+		at the moment however and the only "external" use of it occurs in the <b>embed</b>
+		tag.</li>
+	</ul>
+	
+	Additionally all tags, except <b>context</b> and <b>list</b>, support the following
+	extra attributes :
+	
+	<ul>
+		<li><b>exclusive</b> : Indicate that the token may be matched multiple times.
+		For instance some contexts have the same end token (a newline in many cases)
+		and the innermost context must not prevent its parenth from matching the newline
+		and exiting. This attribute is reserved to <b>start</b> and <b>stop</b> tag
+		of a context. Valid values are "true", "false", "1" or "0".</li>
+		
+		<li><b>parenthesis</b> : specifies that the element is a parenthesis. The concept
+		of parenthesis actually extends way beyond simple parentheses. Parentheses are
+		tokens that may be matched (brace matching), delimit foldable block or trigger
+		indentation.
+		
+		The value of this attribute is a string formatted as follows :
+		"$id:$type[@nomatch]". Where $id is the identifier for the parenthesis
+		and type is its type, which can be either "open", "close" or "boundary".
+		Finally the "@nomatch", if present, indicate that the parenthesis should
+		not be taken into account for brace matching. The square brackets indicate
+		that it is optional and should not be used in a syntax file.
+		
+		While the "open" and "close" type of parenthesis are quite easy to understand,
+		the "boundary" require more details. It indicates a parenthesis that acts as both
+		"open" and "close". Typical use of such parentheses happen in C++ for visibility
+		keywords (public, protected, private) or in Latex for chapter tags, section tags
+		and so on. There are of course many more cases where this type of parenthesis is
+		the right choice but there is no point in listing them all.</li>
+		
+		<li><b>fold</b> : element will delimit foldable block(s).
+		Valid values are "true", "false", "1" or "0".</li>
+		
+		<li><b>indent</b> : element will trigger indentation.
+		Valid values are "true", "false", "1" or "0".</li>
+	</ul>
+	
+	The <b>context</b> tag however supports the following extra attributes :
+	<ul>
+		<li><b>transparency</b> : specifies whether the contexts and matches declared
+		before this context should also be matched inside that context (with no need
+		to declare them again). Valid values are "true", "false", "1" or "0".</li>
+		
+		<li><b>stayOnLine</b> : this attribute is provided to handle special cases
+		of context nesting where the innermost context may span over several lines
+		whereas the outer contexts cannot, e.g in C, comments are accepted inside
+		preprocessor directives. This attribute indicates that no matter what happens
+		to subcontexts, this context will not span beyond the line it started in.</li>
+	</ul>
+	
+	<h3>Regexp format</h3>
+	The regexp format used by QCE is near to that used by QRegExp but with some slight
+	variations.
+	
+	First of all, a list of QRegExp features not supported in syntax files :
+	<ul>
+		<li>grouping and alternation (ban parentheses and | from your mind).</li>
+		<li>Assertions (such as word boundaries)</li>
+		<li>lookahead operators</li>
+		<li>'.' to match any character</li>
+	</ul>
+	
+	
+	Then, character classes (word, space, digit and their negation) use the same
+	"specific character" (respectively w, s, d and uppercase) but a different
+	prefix character ($ instead of \).
+	
+	C-style escaping is used. Simple C escapes (for newlines and tab) are converted
+	properly and C-style escaping is used to escape control characters.
+	
+	Sets and negated sets are supported, using the same syntax as QRegExp.
+	
+	Regular regexp operator '?', '*' and '+' are supported.
+	
+	
+	A revision of the syntax format may bring grouping and alternation support (and
+	possibly other niceties) in a future version but as this would break backward
+	compat (due to escaping issues among other things) and require a rewrite of the
+	syntax engine a new (but very similar) syntax file format would be used.
+	
+	<h3>Getting your hands dirty (coming soon)</h3>
+	Now that the fundamentals have been covered, let's use them to create a small
+	syntax file for an imaginary language.
+	
+	More examples availables in the qxs/ directory where all syntax files reside.
+	
+	<!--
+	\section ex2 Completion (coming ?soon?)
+	More on this topic in a future version.
+	-->
+*/

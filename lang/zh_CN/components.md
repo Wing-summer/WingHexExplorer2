@@ -17,9 +17,9 @@ QT Advanced Docking System 允许你使用完整的特色窗户对接系统创�
 
 原仓库的链接： <https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System> ，原协议为`LGPL`。
 
-#### QScintilla
+#### QCodeEditor2
 
-一个文本编辑器，功能强大。该项目用来开发以及调试针对羽云编辑器的`AngelScript`脚本。我添加了`CMake`编译方式并且只保留核心部分，移除了自带的词法分析器，因为对我这个项目来说重点不是这个。官方链接： <https://riverbankcomputing.com/software/qscintilla/intro> ，协议细节请看官方文档。
+一个文本编辑器，功能强大。该项目用来开发以及调试针对羽云编辑器的`AngelScript`脚本。该组件来源于`edyuk`开源项目，采用`GPL`协议，不过这玩意在`Github`上也没有，只有在 [SourceForge](https://sourceforge.net/projects/edyuk) 有它的身影。我对其进行了一些定制和小`Bug`的修复。
 
 #### QWingRibbon
 

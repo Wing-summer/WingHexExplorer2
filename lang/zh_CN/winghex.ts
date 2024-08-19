@@ -184,6 +184,94 @@
     </message>
 </context>
 <context>
+    <name>EditorConfig</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="22"/>
+        <source>Font</source>
+        <translation type="unfinished">字体</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="78"/>
+        <source>text which &lt;i&gt;should&lt;/i&gt; be a &lt;b&gt;fair&lt;/b&gt; test of the font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="113"/>
+        <source>Tabulators &amp;&amp; Whitespaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="130"/>
+        <source>Tab width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="162"/>
+        <source>Show leading whitespaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="172"/>
+        <source>Show tabs which are neither leading nor trailing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="182"/>
+        <source>Show trailing whitespaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="192"/>
+        <source>Replace tabs by blanks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="202"/>
+        <source>Load &amp;&amp; Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="208"/>
+        <source>Default encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="218"/>
+        <source>Preserve line endings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="232"/>
+        <source>Local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="237"/>
+        <source>Unix/Linux</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="242"/>
+        <source>DOS/Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="247"/>
+        <source>Old Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="255"/>
+        <source>Remove trailing spaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/editconfig.ui" line="265"/>
+        <source>Preserve trailing indent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditorSettingDialog</name>
     <message>
         <location filename="../../src/settings/editorsettingdialog.ui" line="44"/>
@@ -472,6 +560,34 @@
     </message>
 </context>
 <context>
+    <name>FormatConfig</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/formatconfig.ui" line="19"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/formatconfig.ui" line="34"/>
+        <source>Scheme :</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/formatconfig.ui" line="60"/>
+        <source>Identifier</source>
+        <translation type="unfinished">标识符</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/formatconfig.ui" line="80"/>
+        <source>O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/formatconfig.ui" line="90"/>
+        <source>W</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GeneralSettingDialog</name>
     <message>
         <location filename="../../src/settings/generalsettingdialog.ui" line="38"/>
@@ -553,6 +669,42 @@
         <location filename="../../src/settings/generalsettingdialog.cpp" line="26"/>
         <source>FullScreen</source>
         <translation>全屏</translation>
+    </message>
+</context>
+<context>
+    <name>GotoDialog</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotolinedialog.ui" line="19"/>
+        <source>Goto line ...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotolinedialog.ui" line="31"/>
+        <source>Select the line you want to go to :</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotolinedialog.ui" line="57"/>
+        <source>line </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GotoLine</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotoline.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotoline.ui" line="27"/>
+        <source>&amp;Go to line :</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/gotoline.ui" line="53"/>
+        <source>G&amp;o</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1690,6 +1842,334 @@
     </message>
 </context>
 <context>
+    <name>QCodeCompletionEngine</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qcodecompletionengine.cpp" line="38"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qcodecompletionengine.cpp" line="57"/>
+        <source>&amp;Trigger completion</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QDocumentSearch</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="309"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="560"/>
+        <source>Failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="310"/>
+        <source>End of matches reached.
+Restart from the begining ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="467"/>
+        <source>Replacement prompt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="468"/>
+        <source>Shall it be replaced?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="561"/>
+        <source>End of scope reached with no match.
+Restart from the begining ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QEditor</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qcodeedit.cpp" line="240"/>
+        <source>Panels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qcodeedit.cpp" line="243"/>
+        <source>&amp;View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="210"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="699"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1160"/>
+        <source>Default</source>
+        <translation type="unfinished">默认</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="544"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1133"/>
+        <source>&amp;Undo</source>
+        <translation type="unfinished">撤销（&amp;U）</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="553"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1134"/>
+        <source>&amp;Redo</source>
+        <translation type="unfinished">恢复（&amp;R）</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="566"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1136"/>
+        <source>Cu&amp;t</source>
+        <translation type="unfinished">剪切（&amp;T）</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="575"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1137"/>
+        <source>&amp;Copy</source>
+        <translation type="unfinished">复制（&amp;C）</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="584"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1138"/>
+        <source>&amp;Paste</source>
+        <translation type="unfinished">粘贴（&amp;P）</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="599"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1140"/>
+        <source>&amp;Indent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="606"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1141"/>
+        <source>&amp;Unindent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="617"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1142"/>
+        <source>Co&amp;mment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="624"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1143"/>
+        <source>Unc&amp;omment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="635"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1145"/>
+        <source>&amp;Select all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="646"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1147"/>
+        <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="653"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1148"/>
+        <source>Fin&amp;d next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="660"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1149"/>
+        <source>&amp;Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="671"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1151"/>
+        <source>&amp;Goto line...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="682"/>
+        <source>Dynamic line wrapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="692"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1157"/>
+        <source>Input binding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="717"/>
+        <source>Line endings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="724"/>
+        <source>Conservative</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="726"/>
+        <source>Local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="727"/>
+        <source>Unix/Linux</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="728"/>
+        <source>Dos/Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="729"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1326"/>
+        <source>Old Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="868"/>
+        <source>Conflict!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="869"/>
+        <source>%1
+has been modified by another application.
+Press &quot;Save&quot; to overwrite the file on disk
+Press &quot;Reset&quot;to be reload the file from disk.
+Press &quot;Discard&quot; to ignore this warning.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1004"/>
+        <source>File changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1005"/>
+        <source>%1
+has been modified by another application.
+
+Undo/Redo stack would be discarded by the auto-reload.
+Do you wish to keep up to date by reloading the file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1163"/>
+        <source>&amp;Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1164"/>
+        <source>&amp;Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1166"/>
+        <source>Edit</source>
+        <translation type="unfinished">编辑</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1167"/>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1324"/>
+        <source>Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1328"/>
+        <source>Unix</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QEditorFactory</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditorfactory.cpp" line="175"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditorfactory.cpp" line="216"/>
+        <source>untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QFormatConfig</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="257"/>
+        <source>Bold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="263"/>
+        <source>Italic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="269"/>
+        <source>Underline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="275"/>
+        <source>Overline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="281"/>
+        <source>Strikeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="288"/>
+        <source>Wave underline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="294"/>
+        <source>Text color (aka foreground)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="299"/>
+        <source>Background color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="305"/>
+        <source>Lines color (used by all lines formatting : underline, overline, ...)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="414"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="434"/>
+        <source>Unsaved changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="415"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qformatconfig.cpp" line="435"/>
+        <source>There are unsaved changes in this format scheme.
+Do you want them to be saved?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QLanguageFactory</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qlanguagefactory.cpp" line="94"/>
+        <source>%1 files (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/qlanguagefactory.cpp" line="98"/>
+        <source>All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QMessageBox</name>
     <message>
         <location filename="../../src/class/wingmessagebox.cpp" line="12"/>
@@ -1745,801 +2225,71 @@
     </message>
 </context>
 <context>
-    <name>QsciCommand</name>
+    <name>QSnippetEdit</name>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="59"/>
-        <source>Move down one line</source>
-        <translation>下移一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="132"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="148"/>
+        <source>Unsaved changes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="69"/>
-        <source>Extend selection down one line</source>
-        <translation>将选区向下扩展一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="133"/>
+        <source>Do you want to save pattern changes to snippet %1 ?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="79"/>
-        <source>Extend rectangular selection down one line</source>
-        <translation>将矩形选区向下扩展一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="149"/>
+        <source>The current snippet data will be discarded. Do you want to continue?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="86"/>
-        <source>Scroll view down one line</source>
-        <translation>向下滚动视图一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="226"/>
+        <source>Missing data</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="96"/>
-        <source>Move up one line</source>
-        <translation>上移一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="226"/>
+        <source>Please provide a name and a content to create a new snippet</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="106"/>
-        <source>Extend selection up one line</source>
-        <translation>将选区向上扩展一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="235"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="258"/>
+        <source>Error</source>
+        <translation type="unfinished">错误</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="116"/>
-        <source>Extend rectangular selection up one line</source>
-        <translation>将矩形选区向上扩展一行</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="235"/>
+        <source>Invalid snippet pattern.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="123"/>
-        <source>Scroll view up one line</source>
-        <translation>将矩形选区向上扩展一行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="133"/>
-        <source>Scroll to start of document</source>
-        <translation>滚动到文档顶部</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="143"/>
-        <source>Scroll to end of document</source>
-        <translation>滚动到文档底部</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="153"/>
-        <source>Scroll vertically to centre current line</source>
-        <translation>垂直滚动至当前行的中心</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="160"/>
-        <source>Move down one paragraph</source>
-        <translation>下移一个段落</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="166"/>
-        <source>Extend selection down one paragraph</source>
-        <translation>将选区向下扩展一个段落</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="173"/>
-        <source>Move up one paragraph</source>
-        <translation>上移一个段落</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="179"/>
-        <source>Extend selection up one paragraph</source>
-        <translation>将选区向上扩展一个段落</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="190"/>
-        <source>Move left one character</source>
-        <translation>左移一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="200"/>
-        <source>Extend selection left one character</source>
-        <translation>将选区向左扩展一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="211"/>
-        <source>Extend rectangular selection left one character</source>
-        <translation>将矩形选区向左扩展一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="222"/>
-        <source>Move right one character</source>
-        <translation>右移一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="232"/>
-        <source>Extend selection right one character</source>
-        <translation>将选区向右扩展一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="243"/>
-        <source>Extend rectangular selection right one character</source>
-        <translation>将矩形选区向右扩展一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="254"/>
-        <source>Move left one word</source>
-        <translation>左移一个词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="264"/>
-        <source>Extend selection left one word</source>
-        <translation>将选区向左扩展一个词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="274"/>
-        <source>Move right one word</source>
-        <translation>右移一个词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="280"/>
-        <source>Extend selection right one word</source>
-        <translation>将选区向右扩展一个词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="286"/>
-        <source>Move to end of previous word</source>
-        <translation>移动到词末</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="292"/>
-        <source>Extend selection to end of previous word</source>
-        <translation>将选区扩展到前一个词末</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="303"/>
-        <source>Move to end of next word</source>
-        <translation>移动到下一个词末</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="313"/>
-        <source>Extend selection to end of next word</source>
-        <translation>将选区向右扩展一个词末</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="320"/>
-        <source>Move left one word part</source>
-        <translation>左移一个字段</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="326"/>
-        <source>Extend selection left one word part</source>
-        <translation>将选区向左扩展一个字段</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="333"/>
-        <source>Move right one word part</source>
-        <translation>右移一个字段</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="339"/>
-        <source>Extend selection right one word part</source>
-        <translation>将选区向右扩展一个字段</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="350"/>
-        <source>Move to start of document line</source>
-        <translation>移动到文档顶部</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="360"/>
-        <source>Extend selection to start of document line</source>
-        <translation>将选区扩展到当前行开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="371"/>
-        <source>Extend rectangular selection to start of document line</source>
-        <translation>将矩形选区扩展到当前行开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="382"/>
-        <source>Move to start of display line</source>
-        <translation>移动到当前显示行开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="392"/>
-        <source>Extend selection to start of display line</source>
-        <translation>将选区扩展到显示行的开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="399"/>
-        <source>Move to start of display or document line</source>
-        <translation>移动到显示或文档行的开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="406"/>
-        <source>Extend selection to start of display or document line</source>
-        <translation>将选区扩展到显示或文档行的开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="417"/>
-        <source>Move to first visible character in document line</source>
-        <translation>移动到文档行中第一个可见字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="428"/>
-        <source>Extend selection to first visible character in document line</source>
-        <translation>将选区扩展到文档行中第一个可见字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="439"/>
-        <source>Extend rectangular selection to first visible character in document line</source>
-        <translation>将矩形选区扩展到文档行中第一个可见字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="446"/>
-        <source>Move to first visible character of display in document line</source>
-        <translation>移动到文档行中显示的第一个可见字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="453"/>
-        <source>Extend selection to first visible character in display or document line</source>
-        <translation>将选区扩展到显示或文档行中的第一个可见字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="464"/>
-        <source>Move to end of document line</source>
-        <translation>移动到文档底部</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="474"/>
-        <source>Extend selection to end of document line</source>
-        <translation>将选区扩展到文档行尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="485"/>
-        <source>Extend rectangular selection to end of document line</source>
-        <translation>将矩形选区扩展到文档行尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="496"/>
-        <source>Move to end of display line</source>
-        <translation>移至显示行末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="506"/>
-        <source>Extend selection to end of display line</source>
-        <translation>将选区扩展到显示行的末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="513"/>
-        <source>Move to end of display or document line</source>
-        <translation>移至显示或文档行的末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="520"/>
-        <source>Extend selection to end of display or document line</source>
-        <translation>将选区扩展到显示或文档行的末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="531"/>
-        <source>Move to start of document</source>
-        <translation>移至文档开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="541"/>
-        <source>Extend selection to start of document</source>
-        <translation>将选区扩展到文档开头</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="552"/>
-        <source>Move to end of document</source>
-        <translation>移至文档末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="562"/>
-        <source>Extend selection to end of document</source>
-        <translation>将选区扩展至文档末尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="569"/>
-        <source>Move up one page</source>
-        <translation>上移一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="575"/>
-        <source>Extend selection up one page</source>
-        <translation>将选区向上扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="581"/>
-        <source>Extend rectangular selection up one page</source>
-        <translation>将矩形选区向上扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="592"/>
-        <source>Move down one page</source>
-        <translation>下移一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="602"/>
-        <source>Extend selection down one page</source>
-        <translation>将选区向下扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="612"/>
-        <source>Extend rectangular selection down one page</source>
-        <translation>将矩形选区向下扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="619"/>
-        <source>Stuttered move up one page</source>
-        <translation>停滞向上移动一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="625"/>
-        <source>Stuttered extend selection up one page</source>
-        <translation>停滞选区向上扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="632"/>
-        <source>Stuttered move down one page</source>
-        <translation>停滞下移一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="638"/>
-        <source>Stuttered extend selection down one page</source>
-        <translation>停滞选区向下扩展一页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="649"/>
-        <source>Delete current character</source>
-        <translation>删除当前字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="659"/>
-        <source>Delete previous character</source>
-        <translation>删除上一个字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="665"/>
-        <source>Delete previous character if not at start of line</source>
-        <translation>删除前一个不在行首的字符</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="672"/>
-        <source>Delete word to left</source>
-        <translation>删除左词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="678"/>
-        <source>Delete word to right</source>
-        <translation>删除右词</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="688"/>
-        <source>Delete right to end of next word</source>
-        <translation>删除至下一个词尾</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="695"/>
-        <source>Delete line to left</source>
-        <translation>删除左侧行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="705"/>
-        <source>Delete line to right</source>
-        <translation>删除右侧行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="711"/>
-        <source>Delete current line</source>
-        <translation>删除当前行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="717"/>
-        <source>Cut current line</source>
-        <translation>剪切当前行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="723"/>
-        <source>Copy current line</source>
-        <translation>复制当前行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="729"/>
-        <source>Transpose current and previous lines</source>
-        <translation>转置当前行和前一行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="736"/>
-        <source>Duplicate the current line</source>
-        <translation>创建当前行副本</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="742"/>
-        <source>Select all</source>
-        <translation>全选</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="748"/>
-        <source>Move selected lines up one line</source>
-        <translation>将选择行上移一行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="754"/>
-        <source>Move selected lines down one line</source>
-        <translation>将选择行下移一行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="761"/>
-        <source>Duplicate selection</source>
-        <translation>创建选区副本</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="767"/>
-        <source>Convert selection to lower case</source>
-        <translation>将选区转为小写</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="773"/>
-        <source>Convert selection to upper case</source>
-        <translation>将选区转为大写</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="779"/>
-        <source>Cut selection</source>
-        <translation>剪切选区</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="785"/>
-        <source>Copy selection</source>
-        <translation>复制选区</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="791"/>
-        <source>Paste</source>
-        <translation>粘贴</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="797"/>
-        <source>Toggle insert/overtype</source>
-        <translation>切换插入/改写模式</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="803"/>
-        <source>Insert newline</source>
-        <translation>插入新行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="809"/>
-        <source>Formfeed</source>
-        <translation>换页</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="815"/>
-        <source>Indent one level</source>
-        <translation>缩进一级</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="821"/>
-        <source>De-indent one level</source>
-        <translation>取消缩进一级</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="827"/>
-        <source>Cancel</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="833"/>
-        <source>Undo last command</source>
-        <translation>撤销最后一个操作</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="843"/>
-        <source>Redo last command</source>
-        <translation>恢复最后一个操作</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="849"/>
-        <source>Zoom in</source>
-        <translation>放大</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qscicommandset.cpp" line="855"/>
-        <source>Zoom out</source>
-        <translation>缩小</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="258"/>
+        <source>Please select a valid snippet to erase</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>QsciLexerAs</name>
+    <name>QStatusPanel</name>
     <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="296"/>
-        <source>Default</source>
-        <translation>默认</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qstatuspanel.cpp" line="100"/>
+        <source>Line : %1 Visual column : %2 Text column : %3</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="299"/>
-        <source>Inactive default</source>
-        <translation>非活动默认值</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qstatuspanel.cpp" line="124"/>
+        <source>OVERWRITE</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="302"/>
-        <location filename="../../src/class/qscilexeras.cpp" line="308"/>
-        <source>AngelScript comment</source>
-        <translation>AngelScript 注释</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qstatuspanel.cpp" line="124"/>
+        <source>INSERT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="305"/>
-        <location filename="../../src/class/qscilexeras.cpp" line="311"/>
-        <source>Inactive AngelScript comment</source>
-        <translation>非活动 AngelScript 注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="314"/>
-        <location filename="../../src/class/qscilexeras.cpp" line="386"/>
-        <source>JavaDoc style AngelScript comment</source>
-        <translation>JavaDoc 样式 AngelScript 注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="317"/>
-        <location filename="../../src/class/qscilexeras.cpp" line="389"/>
-        <source>Inactive JavaDoc style AngelScript comment</source>
-        <translation>非活动 JavaDoc 样式 AngelScript 注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="320"/>
-        <source>Number</source>
-        <translation>数字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="323"/>
-        <source>Inactive number</source>
-        <translation>非活动数字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="326"/>
-        <source>Keyword</source>
-        <translation>关键字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="329"/>
-        <source>Inactive keyword</source>
-        <translation>非活动关键字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="332"/>
-        <source>Double-quoted string</source>
-        <translation>双引号字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="335"/>
-        <source>Inactive double-quoted string</source>
-        <translation>非活动双引号字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="338"/>
-        <source>Single-quoted string</source>
-        <translation>单引号字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="341"/>
-        <source>Inactive single-quoted string</source>
-        <translation>非活动单引号字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="344"/>
-        <source>IDL UUID</source>
-        <translation>IDL 唯一标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="347"/>
-        <source>Inactive IDL UUID</source>
-        <translation>非活动 IDL 唯一标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="350"/>
-        <source>Pre-processor block</source>
-        <translation>预处理块</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="353"/>
-        <source>Inactive pre-processor block</source>
-        <translation>非活动预处理块</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="356"/>
-        <source>Operator</source>
-        <translation>操作符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="359"/>
-        <source>Inactive operator</source>
-        <translation>非活动操作符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="362"/>
-        <source>Identifier</source>
-        <translation>标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="365"/>
-        <source>Inactive identifier</source>
-        <translation>非活动标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="368"/>
-        <source>Unclosed string</source>
-        <translation>未闭合字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="371"/>
-        <source>Inactive unclosed string</source>
-        <translation>非活动未闭合字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="374"/>
-        <source>C# verbatim string</source>
-        <translation>C# 逐字字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="377"/>
-        <source>Inactive C# verbatim string</source>
-        <translation>非活动 C# 逐字字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="380"/>
-        <source>JavaScript regular expression</source>
-        <translation>JavaScript 正则表达式</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="383"/>
-        <source>Inactive JavaScript regular expression</source>
-        <translation>非活动 JavaScript 正则表达式</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="392"/>
-        <source>Secondary keywords and identifiers</source>
-        <translation>次要关键字和标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="395"/>
-        <source>Inactive secondary keywords and identifiers</source>
-        <translation>非活动次要关键字和标识符</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="398"/>
-        <source>JavaDoc keyword</source>
-        <translation>JavaDoc 关键字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="401"/>
-        <source>Inactive JavaDoc keyword</source>
-        <translation>非活动 JavaDoc 关键字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="404"/>
-        <source>JavaDoc keyword error</source>
-        <translation>JavaDoc 关键字错误</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="407"/>
-        <source>Inactive JavaDoc keyword error</source>
-        <translation>非活动 JavaDoc 关键字错误</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="410"/>
-        <source>Global classes and typedefs</source>
-        <translation>全局类和 typedef</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="413"/>
-        <source>Inactive global classes and typedefs</source>
-        <translation>非活动全局类和 typedef</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="416"/>
-        <source>AngelScript raw string</source>
-        <translation>AngelScript 原始字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="419"/>
-        <source>Inactive AngelScript raw string</source>
-        <translation>非活动 AngelScript 原始字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="422"/>
-        <source>Vala triple-quoted verbatim string</source>
-        <translation>Vala 三重引用逐字字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="425"/>
-        <source>Inactive Vala triple-quoted verbatim string</source>
-        <translation>非活动 Vala 三重引用逐字字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="428"/>
-        <source>Pike hash-quoted string</source>
-        <translation>Pike 哈希引用字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="431"/>
-        <source>Inactive Pike hash-quoted string</source>
-        <translation>非活动 Pike 哈希引用字符串</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="434"/>
-        <source>Pre-processor AngelScript comment</source>
-        <translation>预处理器 AngelScript 注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="437"/>
-        <source>Inactive pre-processor AngelScript comment</source>
-        <translation>非活动预处理器 AngelScript 注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="440"/>
-        <source>JavaDoc style pre-processor comment</source>
-        <translation>JavaDoc 样式预处理器注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="443"/>
-        <source>Inactive JavaDoc style pre-processor comment</source>
-        <translation>非活动 JavaDoc 样式预处理器注释</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="446"/>
-        <source>User-defined literal</source>
-        <translation>用户定义文字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="449"/>
-        <source>Inactive user-defined literal</source>
-        <translation>非活动用户定义文字</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="452"/>
-        <source>Task marker</source>
-        <translation>任务标记</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="455"/>
-        <source>Inactive task marker</source>
-        <translation>非活动任务标记</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="458"/>
-        <source>Escape sequence</source>
-        <translation>转义序列</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/qscilexeras.cpp" line="461"/>
-        <source>Inactive escape sequence</source>
-        <translation>非活动转义序列</translation>
-    </message>
-</context>
-<context>
-    <name>QsciScintilla</name>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4478"/>
-        <source>&amp;Undo</source>
-        <translation>撤销（&amp;U）</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4482"/>
-        <source>&amp;Redo</source>
-        <translation>恢复（&amp;R）</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4488"/>
-        <source>Cu&amp;t</source>
-        <translation>剪切（&amp;T）</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4493"/>
-        <source>&amp;Copy</source>
-        <translation>复制（&amp;C）</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4499"/>
-        <source>&amp;Paste</source>
-        <translation>粘贴（&amp;P）</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4503"/>
-        <source>Delete</source>
-        <translation>删除</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/QScintilla/src/qsciscintilla.cpp" line="4510"/>
-        <source>Select All</source>
-        <translation>全选</translation>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qstatuspanel.cpp" line="131"/>
+        <source>Conflict</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4316,231 +4066,324 @@
 <context>
     <name>ScriptingDialog</name>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="41"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="44"/>
         <source>ScriptEditor</source>
         <translation>脚本编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="48"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="51"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="49"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="52"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="51"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="54"/>
         <source>Debugger</source>
         <translation>调试器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="52"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="55"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="53"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="56"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="59"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="62"/>
         <source>Basic</source>
         <translation>基础</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="60"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="63"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="63"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="66"/>
         <source>OpenF</source>
         <translation>打开文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="66"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="69"/>
         <source>RecentFiles</source>
         <translation>最近打开</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="70"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="73"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="75"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="77"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="78"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="80"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="81"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="84"/>
         <source>SaveAs</source>
         <translation>另存为</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="87"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="90"/>
         <source>Export</source>
         <translation>导出</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="99"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="102"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="102"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="105"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="106"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="109"/>
         <source>Redo</source>
         <translation>恢复</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="108"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="111"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="110"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="113"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="112"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="115"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="114"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="117"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="119"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="122"/>
         <source>Lookup</source>
         <translation>查询</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="120"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="123"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="123"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="126"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="134"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="137"/>
         <source>Display</source>
         <translation>显示</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="161"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="164"/>
         <source>Scale</source>
         <translation>缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="163"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="166"/>
         <source>ResetScale</source>
         <translation>重置缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="169"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="172"/>
         <source>Window</source>
         <translation>窗体</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="50"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="170"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="53"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="173"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="180"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="183"/>
         <source>Scripts</source>
         <translation>脚本仓库</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="190"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="193"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="191"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="194"/>
         <source>Run</source>
         <translation>运行</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="194"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="197"/>
         <source>RunWithDbg</source>
         <translation>调试运行</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="197"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="200"/>
         <source>Pause</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="199"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="202"/>
         <source>Continue</source>
         <translation>继续</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="201"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="204"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="203"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="206"/>
         <source>Restart</source>
         <translation>重启</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="205"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="208"/>
         <source>StepInto</source>
         <translation>单步步入</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="208"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="211"/>
         <source>StepOver</source>
         <translation>单步步过</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="211"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="214"/>
         <source>StepOut</source>
         <translation>单步跳出</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="221"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="224"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="223"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="226"/>
         <source>Software</source>
         <translation>软件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="226"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="229"/>
         <source>Sponsor</source>
         <translation>赞助</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="229"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="232"/>
         <source>Wiki</source>
         <translation>网页 Wiki</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="232"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="235"/>
         <source>AboutQT</source>
         <translation>关于 QT</translation>
+    </message>
+</context>
+<context>
+    <name>SearchReplace</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="86"/>
+        <source>Close search/replace panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="118"/>
+        <source>Refresh search underlying context (as an attempt to correct search behavior)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="138"/>
+        <source> Find :</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="166"/>
+        <source>Text or pattern to search for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="191"/>
+        <source>Find next occurence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="223"/>
+        <source>Find previous occurence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="259"/>
+        <source>Words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="272"/>
+        <source>Cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="288"/>
+        <source>Selection</source>
+        <translation type="unfinished">选区搜索</translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="301"/>
+        <source>Highlight all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="314"/>
+        <source>Regexp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="327"/>
+        <source>Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="379"/>
+        <source>Replace :</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="410"/>
+        <source>Replacement text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="439"/>
+        <source>Prompt on replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="455"/>
+        <source>Replace all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/searchreplace.ui" line="468"/>
+        <source>Escape sequences</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4567,6 +4410,54 @@
         <location filename="../../src/class/skinmanager.cpp" line="58"/>
         <source>Light</source>
         <translation>浅色</translation>
+    </message>
+</context>
+<context>
+    <name>SnippetEdit</name>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="33"/>
+        <source>empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="51"/>
+        <source>Edit snippet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="80"/>
+        <source>Name/trigger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="96"/>
+        <source>Enter the name of the code snippet, which will also be its full-text trigger, if enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="103"/>
+        <source>Scope(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="113"/>
+        <source>Enter a coma-separated list of languages in which the snippet can be used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="136"/>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="159"/>
+        <source>-</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/snippetedit.ui" line="166"/>
+        <source>+</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
