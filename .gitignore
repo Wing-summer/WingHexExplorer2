@@ -29,6 +29,8 @@ qrc_*.cpp
 Thumbs.db
 *.res
 *.rc
+*.deb
+*.rpm
 !app.rc
 !favicon.rc
 

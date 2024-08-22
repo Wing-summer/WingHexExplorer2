@@ -114,10 +114,6 @@ void QHexView::establishSignal(QHexDocument *doc) {
     connect(doc, &QHexDocument::canRedoChanged, this,
             &QHexView::canRedoChanged);
     connect(doc, &QHexDocument::documentSaved, this, &QHexView::documentSaved);
-    connect(doc, &QHexDocument::bookMarkChanging, this,
-            &QHexView::documentBookMarkChanging);
-    connect(doc, &QHexDocument::bookMarkChanged, this,
-            &QHexView::documentBookMarkChanged);
     connect(doc, &QHexDocument::metabgVisibleChanged, this, [=](bool b) {
         QHexView::metabgVisibleChanged(b);
         emit this->metaStatusChanged();
@@ -130,7 +126,7 @@ void QHexView::establishSignal(QHexDocument *doc) {
         QHexView::metaCommentVisibleChanged(b);
         emit this->metaStatusChanged();
     });
-    connect(doc, &QHexDocument::metaLineChanged, this,
+    connect(doc, &QHexDocument::metaDataChanged, this,
             [=] { this->viewport()->update(); });
     connect(doc, &QHexDocument::documentKeepSize, this,
             &QHexView::documentKeepSize);
@@ -400,7 +396,7 @@ void QHexView::Paste(int nibbleindex, bool hex) {
         data = QByteArray::fromHex(data);
 
     auto pos = m_cursor->position().offset();
-    if (!m_document) {
+    if (m_cursor->insertionMode() == QHexCursor::InsertionMode::InsertMode) {
         m_document->Insert(m_cursor, pos, data, nibbleindex);
         m_cursor->moveTo(pos + data.length()); // added by wingsummer
     } else {
@@ -438,7 +434,7 @@ bool QHexView::copy(bool hex) {
 
     auto len = m_cursor->selectionLength();
 
-    //如果拷贝字节超过 ? MB 阻止
+    // 如果拷贝字节超过 ? MB 阻止
     if (len > 1024 * 1024 * m_copylimit) {
         emit copyLimitRaised();
         return false;

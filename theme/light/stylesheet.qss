@@ -2721,6 +2721,15 @@ ads--CDockWidgetTab
     border-bottom-right-radius: 0em;
 }
 
+ads--CDockWidgetTab[activeTab="true"][focused="true"]
+{
+    background-color: #eff0f1;
+    border-top: 0.09em solid #3de9e3;
+    border-left: 0.04em solid #bab9b8;
+    border-right: 0.04em solid #3de9e3;
+    border-bottom: 0.04em tansparent #bab9b8;
+}
+
 ads--CDockWidgetTab[activeTab="true"]
 {
     background-color: #eff0f1;
@@ -2808,3 +2817,154 @@ QAbstractButton#qt_dockwidget_floatbutton
     qproperty-toolTip: "Detach";
 }
 
+
+/**
+ *  TITLE_BAR STYLESHEET
+ *  ---------------
+ */
+
+QWK--WindowBar[bar-active=true] {
+    background-color: #195ABE;
+}
+
+QWK--WindowBar[bar-active=false] {
+    background-color: #195ABE;
+}
+
+QWK--WindowBar>QLabel#win-title-label {
+    padding: 0;
+    border: none;
+    color: #ECECEC;
+    background-color: transparent;
+    min-height: 28px;
+}
+
+QWK--WindowBar>QAbstractButton[system-button=true] {
+    qproperty-iconSize: 12px 12px;
+    min-width: 50px;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+}
+
+QWK--WindowBar>QAbstractButton#icon-button {
+    qproperty-iconSize: 18px 18px;
+    min-width: 40px;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+}
+
+QWK--WindowBar>QAbstractButton#min-button
+{
+    qproperty-icon: url(:/light/minimize.svg);
+    qproperty-iconSize: 12px 12px;
+}
+
+QWK--WindowBar>QAbstractButton#min-button:hover,
+QWK--WindowBar>QAbstractButton#min-button:pressed {
+    background-color: rgba(0, 0, 0, 15%);
+    border: none;
+}
+
+QWK--WindowBar>QAbstractButton#max-button {
+    qproperty-iconNormal: url(":/light/maximize.svg");
+    qproperty-iconChecked: url(":/light/restore.svg");
+}
+
+QWK--WindowBar>QAbstractButton#max-button:hover,
+QWK--WindowBar>QAbstractButton#max-button:pressed {
+    background-color: rgba(0, 0, 0, 15%);
+    border: none;
+}
+
+QWK--WindowBar>QAbstractButton#close-button
+{
+    qproperty-iconNormal: url(":/light/dialog_close.svg");
+}
+
+QWK--WindowBar>QAbstractButton#close-button:hover,
+QWK--WindowBar>QAbstractButton#close-button:pressed {
+    background-color: #e81123;
+    border: none;
+}
+
+
+/**
+ *  Ribbon STYLESHEET
+ *  ---------------
+ */
+
+QTabWidget#RIBBON>QTabBar::tab {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 1px;
+    min-width: 80px;
+}
+
+#RIBBON_HIDE_BTN
+{
+    image: url(:/dark/ads_menu_button.svg);
+}
+
+#RIBBON_HIDE_BTN
+{
+    border: none;
+    background-color: transparent;
+}
+
+#RIBBON_HIDE_BTN:checked
+{
+    image: url(:/dark/ads_maximize.svg);
+}
+
+RibbonButtonGroup QToolButton
+{
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+}
+
+RibbonButtonGroup QToolButton:hover
+{
+    border: 0.04em solid #3daee9;
+    border-radius: 4px;
+}
+
+RibbonButtonGroup QToolButton:pressed
+{
+    border: 0.04em solid #3daee9;
+    border-radius: 4px;
+    background-color: #3daee9;
+}
+
+RibbonButtonGroup QFrame[frameShape="4"]:hover,
+RibbonButtonGroup QFrame[frameShape="5"]:hover
+{
+    border-width: 0.04em;
+    padding: 0.09em;
+    border-style: solid;
+    border-color: #31363b;
+    background-color: #bab9b8;
+    border-radius: 0.23em;
+}
+
+QHexView
+{
+    qproperty-bytesColor: #31363b;
+    qproperty-bytesBackground: #272727;
+    qproperty-bytesAlterBackground: #2C3136;
+    qproperty-selectionColor: #31363b;
+    qproperty-selBackgroundColor: rgba(51, 164, 223, 0.5);
+    qproperty-headerColor: #07DBD7;
+    qproperty-addressColor: #07DBD7;
+}
+
+Toast
+{
+    qproperty-textcolor: white;
+    qproperty-backcolor: black;
+    qproperty-fontPointSize: 18;
+}

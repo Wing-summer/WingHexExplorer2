@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-winghex">
+    <glob pattern="*.wingpro"/>
+    <icon name="application-x-winghex"/>
+    <comment>WingHexExplorer WorkSpace</comment>
+    <comment xml:lang="zh_CN">羽云十六进制编辑器项目文件</comment>
+  </mime-type>
+</mime-info>

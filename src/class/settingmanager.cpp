@@ -32,7 +32,10 @@ const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 const auto SCRIPT_USRDISPLAYCATS = QStringLiteral("script.usrDisplayCats");
 const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
 
-SettingManager::SettingManager() { _defaultFont = qApp->font(); }
+SettingManager::SettingManager() {
+    _defaultFont = qApp->font();
+    load();
+}
 
 QString SettingManager::lastUsedPath() const { return m_lastUsedPath; }
 

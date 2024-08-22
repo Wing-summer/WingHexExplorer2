@@ -1,11 +1,14 @@
 #include "SingleApplication/singleapplication.h"
 #include "define.h"
 #include "src/class/languagemanager.h"
+#include "src/class/settingmanager.h"
 #include "src/class/skinmanager.h"
 #include "src/dialog/mainwindow.h"
 #include "src/utilities.h"
 
 #include <QApplication>
+#include <QByteArray>
+#include <QDataStream>
 
 int main(int argc, char *argv[]) {
     /* 有关对在 QT5 的 Win 平台禁用高 dpi 支持
@@ -30,6 +33,34 @@ int main(int argc, char *argv[]) {
     a.setOrganizationName(APP_ORG);
     a.setApplicationVersion(WINGHEX_VERSION);
 
+    auto args = a.arguments();
+    if (a.isSecondary()) {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::WriteOnly);
+        if (args.size() > 1) {
+            for (auto var = args.begin() + 1; var != args.end(); ++var) {
+                out << *var;
+            }
+        }
+        a.sendMessage(buffer);
+    }
+
+    auto &set = SettingManager::instance();
+    QFont font(set.appFontFamily(), set.appfontSize());
+    qApp->setFont(font);
+
+    QObject::connect(&set, &SettingManager::sigAppFontFamilyChanged, &a,
+                     [](const QString &fontfam) {
+                         QFont font(fontfam);
+                         qApp->setFont(font);
+                     });
+    QObject::connect(&set, &SettingManager::sigAppfontSizeChanged, &a,
+                     [](int v) {
+                         auto font = qApp->font();
+                         font.setPointSize(v);
+                         qApp->setFont(font);
+                     });
+
     SkinManager::instance();
 
     LanguageManager::instance();
@@ -44,6 +75,26 @@ int main(int argc, char *argv[]) {
         w.raise();
         w.activateWindow();
     });
+
+    QObject::connect(&a, &SingleApplication::receivedMessage, &a,
+                     [&w](quint32 instanceId, QByteArray message) {
+                         Q_UNUSED(instanceId);
+                         QDataStream out(&message, QIODevice::WriteOnly);
+                         while (!out.atEnd()) {
+                             QString param;
+                             out >> param;
+                             if (QFile::exists(param)) {
+                                 w.openFile(param, nullptr);
+                             }
+                         }
+                     });
+
+    if (args.size() > 1) {
+        for (auto var = args.begin() + 1; var != args.end(); ++var) {
+            // TODO more functions support
+            w.openFile(*var, nullptr);
+        }
+    }
 
     w.show();
     Utilities::moveToCenter(&w);

@@ -72,7 +72,6 @@ set(SOURCE_FILES
     lib/qcodecompletionengine.h
     lib/qcodeedit.h
     lib/qeditor.h
-    lib/qeditorfactory.h
     lib/qeditorinputbinding.h
     lib/qeditorinputbindinginterface.h
     lib/qeditsession.h
@@ -87,7 +86,6 @@ set(SOURCE_FILES
     lib/qcodecompletionengine.cpp
     lib/qcodeedit.cpp
     lib/qeditor.cpp
-    lib/qeditorfactory.cpp
     lib/qeditorinputbinding.cpp
     lib/qeditsession.cpp
     lib/qformatscheme.cpp

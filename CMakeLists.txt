@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(
-  WingHexExplorer2
-  VERSION 1.0
-  LANGUAGES CXX)
+project(WingHexExplorer2 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -11,13 +8,15 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(PROJECT_VERSION 1.0.0~beta)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
                                                   PrintSupport LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED
              COMPONENTS Widgets Network Concurrent PrintSupport LinguistTools)
 
-add_definitions(-DWINGHEX_VERSION="${CMAKE_PROJECT_VERSION}")
+add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 
 if(WIN32)
   add_definitions(-DNOMINMAX)
