@@ -52,6 +52,8 @@ public:
     QString comments(qsizetype line, qsizetype column) const;
     bool lineHasMetadata(qsizetype line) const; // modified by wingsummer
 
+    qsizetype size() const;
+
     /*============================*/
     // added by wingsummer
 
@@ -80,9 +82,6 @@ public:
 
     /*============================*/
 
-    // this is transient till next call to setLineWidth()
-    void clear(qsizetype line);
-
     void clear();
     void setLineWidth(quint8 width);
 
@@ -104,13 +103,15 @@ public:
     QList<QHexMetadataAbsoluteItem>
     getallMetas(); // added by wingsummer to support workspace
 
+    const QList<QHexMetadataAbsoluteItem> &
+    getallMetasPtr(); // added by wingsummer to support workspace
+
 private:
     void setMetadata(const QHexMetadataItem &mi);
     void setAbsoluteMetadata(const QHexMetadataAbsoluteItem &mi);
 
 signals:
-    void metadataChanged(qsizetype line);
-    void metadataCleared();
+    void metadataChanged();
 
 private:
     quint8 m_lineWidth;

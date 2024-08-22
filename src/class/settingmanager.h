@@ -82,8 +82,6 @@ public:
 
     QStringList sysDisplayCats() const;
 
-    void load();
-
     QString lastUsedPath() const;
     void setLastUsedPath(const QString &newLastUsedPath);
 
@@ -97,6 +95,8 @@ signals:
 
 private:
     SettingManager();
+
+    void load();
 
     Q_DISABLE_COPY(SettingManager)
 private:

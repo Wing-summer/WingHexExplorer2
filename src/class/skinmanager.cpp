@@ -1,6 +1,7 @@
 #include "skinmanager.h"
 
-#include "../dbghelper.h"
+#include "dbghelper.h"
+#include "settingmanager.h"
 
 #include <QApplication>
 #include <QFile>
@@ -11,19 +12,7 @@
 SkinManager::SkinManager(QObject *parent) : QObject(parent) {
     ASSERT_SINGLETON;
 
-    // scale the font
-    // auto font = qApp->font();
-    // auto scale = qApp->primaryScreen()->devicePixelRatio();
-    // font.setPointSizeF(font.pointSizeF() * scale);
-    // qApp->setFont(font);
-
-    int theme;
-    theme = 0;
-
-    // TODO
-    // READ_CONFIG_INT(theme, SKIN_THEME, int(Theme::Dark));
-
-    theme = qBound(0, theme, 1);
+    int theme = SettingManager::instance().themeID();
 
     QFile qss;
     switch (Theme(theme)) {

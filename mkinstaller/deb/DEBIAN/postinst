@@ -1,10 +1,10 @@
 #!/bin/bash
 
-sudo xdg-mime install /opt/WingHexExplorer/images/x-winghex.xml
-sudo xdg-mime default /usr/share/applications/com.wingsummer.winghexexplorer.desktop application/x-winghex
-sudo xdg-icon-resource install --context mimetypes --size 32 /opt/WingHexExplorer/images/winghexpro32.png application-x-winghex
-sudo xdg-icon-resource install --context mimetypes --size 64 /opt/WingHexExplorer/images/winghexpro64.png application-x-winghex
-sudo xdg-icon-resource install --context mimetypes --size 128 /opt/WingHexExplorer/images/winghexpro128.png application-x-winghex
+sudo xdg-mime install /opt/WingHexExplorer2/share/x-winghex.xml
+sudo xdg-mime default /usr/share/applications/com.wingsummer.winghexexplorer2.desktop application/x-winghex
+sudo xdg-icon-resource install --context mimetypes --size 32 /opt/WingHexExplorer2/share/winghexpro32.png application-x-winghex
+sudo xdg-icon-resource install --context mimetypes --size 64 /opt/WingHexExplorer2/share/winghexpro64.png application-x-winghex
+sudo xdg-icon-resource install --context mimetypes --size 128 /opt/WingHexExplorer2/share/winghexpro128.png application-x-winghex
 sudo update-mime-database /usr/share/mime                                                               
 sudo xdg-icon-resource forceupdate
 

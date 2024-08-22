@@ -3,22 +3,6 @@
 BookMarksModel::BookMarksModel(QHexDocument *doc, QObject *parent)
     : QAbstractTableModel(parent), _doc(doc) {}
 
-void BookMarksModel::beginRemove(int index) {
-    beginRemoveRows(QModelIndex(), index, index);
-}
-
-void BookMarksModel::endRemove() { endRemoveRows(); }
-
-void BookMarksModel::beginReset() { beginResetModel(); }
-
-void BookMarksModel::endReset() { endResetModel(); }
-
-void BookMarksModel::beginAdd(int index) {
-    beginInsertRows(QModelIndex(), index, index);
-}
-
-void BookMarksModel::endAdd() { endInsertRows(); }
-
 int BookMarksModel::rowCount(const QModelIndex &parent) const {
     return _doc ? _doc->bookMarksCount() : 0;
 }
@@ -64,4 +48,8 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-void BookMarksModel::setDocument(QHexDocument *newDoc) { _doc = newDoc; }
+void BookMarksModel::setDocument(QHexDocument *newDoc) {
+    _doc = newDoc;
+    connect(newDoc, &QHexDocument::bookMarkChanged, this,
+            [=] { emit this->layoutChanged(); });
+}

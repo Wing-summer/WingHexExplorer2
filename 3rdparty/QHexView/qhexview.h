@@ -132,9 +132,6 @@ signals:
     void documentLockedFile(bool locked);
     void documentKeepSize(bool keep);
 
-    void documentBookMarkChanging(BookMarkModEnum flag, qsizetype section);
-    void documentBookMarkChanged(BookMarkModEnum flag, qsizetype section);
-
     void metafgVisibleChanged(bool b);
     void metabgVisibleChanged(bool b);
     void metaCommentVisibleChanged(bool b);

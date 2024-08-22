@@ -17,8 +17,6 @@ struct BookMarkStruct {
     QString comment;
 };
 
-enum class BookMarkModEnum { Insert, Modify, Remove, Clear };
-
 /*=========================*/
 
 class QHexDocument : public QObject {
@@ -167,14 +165,11 @@ public:
 signals:
 
     /*================================*/
-
-    /*================================*/
     // added by wingsummer
 
     void documentSaved(bool saved);
 
-    void bookMarkChanging(BookMarkModEnum flag, qsizetype section);
-    void bookMarkChanged(BookMarkModEnum flag, qsizetype section);
+    void bookMarkChanged();
 
     void metafgVisibleChanged(bool b);
     void metabgVisibleChanged(bool b);
@@ -190,7 +185,7 @@ signals:
     void canUndoChanged(bool canUndo);
     void canRedoChanged(bool canRedo);
     void documentChanged();
-    void metaLineChanged(qsizetype line);
+    void metaDataChanged();
 
 private:
     QHexBuffer *m_buffer;
@@ -207,7 +202,6 @@ private:
     bool m_keepsize;
     bool m_islocked;
     QList<BookMarkStruct> bookmarks;
-    bool m_pluginModed = false;
 
     bool m_metafg = true;
     bool m_metabg = true;

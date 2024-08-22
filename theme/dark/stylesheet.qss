@@ -2947,11 +2947,6 @@ RibbonButtonGroup QFrame[frameShape="5"]:hover
     border-radius: 0.23em;
 }
 
-QStatusBar
-{
-    border-radius: 8px;
-}
-
 QHexView
 {
     qproperty-bytesColor: #eff0f1;
@@ -2968,12 +2963,4 @@ Toast
     qproperty-textcolor: white;
     qproperty-backcolor: black;
     qproperty-fontPointSize: 18;
-}
-
-ScriptEditor
-{
-    qproperty-caretColor: #f8f8f2;
-    qproperty-marginsForegroundColor: #6272a4;
-    qproperty-marginsBackgroundColor: #282a36;
-    qproperty-paperColor: #282a36;
 }

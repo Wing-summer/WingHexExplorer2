@@ -10,6 +10,7 @@
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/bookmarksmodel.h"
+#include "model/metadatamodel.h"
 #include "plugin/iwingplugin.h"
 #include "utilities.h"
 
@@ -46,6 +47,8 @@ public:
     FindResultModel *findResultModel() const;
 
     BookMarksModel *bookmarksModel() const;
+
+    MetaDataModel *metadataModel() const;
 
     void setFontSize(qreal size);
 
@@ -162,6 +165,7 @@ private:
     QMutex m_findMutex;
     FindResultModel *m_findResults = nullptr;
     BookMarksModel *m_bookmarks = nullptr;
+    MetaDataModel *m_metadata = nullptr;
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;

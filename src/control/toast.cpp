@@ -82,7 +82,8 @@ QSize Toast::calculateTextSize() {
 
 void Toast::init() {
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
-                   Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint);
+                   Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint |
+                   Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
 

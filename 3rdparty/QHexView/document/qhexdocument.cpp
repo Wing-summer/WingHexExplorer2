@@ -85,14 +85,11 @@ bool QHexDocument::metafgVisible() { return m_metafg; }
 
 bool QHexDocument::metaCommentVisible() { return m_metacomment; }
 
-bool QHexDocument::isDocSaved() {
-    return m_undostack->isClean() && !m_pluginModed;
-}
+bool QHexDocument::isDocSaved() { return m_undostack->isClean(); }
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();
     }
-    m_pluginModed = !b;
     emit documentSaved(b);
 }
 
@@ -147,12 +144,11 @@ bool QHexDocument::ClearBookMark() {
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (m_keepsize && !existBookMark(pos)) {
         auto section = bookmarks.size();
-        emit bookMarkChanging(BookMarkModEnum::Insert, section);
         BookMarkStruct b{pos, comment};
         bookmarks.append(b);
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Insert, section);
+        emit bookMarkChanged();
         return true;
     }
     return false;
@@ -216,11 +212,10 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
         int index = 0;
         for (auto item : bookmarks) {
             if (pos == item.pos) {
-                emit bookMarkChanging(BookMarkModEnum::Remove, index);
                 bookmarks.removeAt(index);
                 setDocSaved(false);
                 emit documentChanged();
-                emit bookMarkChanged(BookMarkModEnum::Remove, index);
+                emit bookMarkChanged();
                 break;
             }
             index++;
@@ -232,11 +227,10 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
 
 bool QHexDocument::removeBookMarkByIndex(qindextype index) {
     if (m_keepsize && index >= 0 && index < bookmarks.count()) {
-        emit bookMarkChanging(BookMarkModEnum::Remove, index);
         bookmarks.removeAt(index);
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Remove, index);
+        emit bookMarkChanged();
         return true;
     }
     return false;
@@ -247,10 +241,9 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
         int index = 0;
         for (auto &item : bookmarks) {
             if (item.pos == pos) {
-                emit bookMarkChanging(BookMarkModEnum::Modify, index);
                 item.comment = comment;
                 setDocSaved(false);
-                emit bookMarkChanged(BookMarkModEnum::Modify, index);
+                emit bookMarkChanged();
                 return true;
             }
             index++;
@@ -262,11 +255,10 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
         auto section = bookmarks.size();
-        emit bookMarkChanging(BookMarkModEnum::Clear, section);
         bookmarks.clear();
         setDocSaved(false);
         emit documentChanged();
-        emit bookMarkChanged(BookMarkModEnum::Clear, section);
+        emit bookMarkChanged();
         return true;
     }
     return false;
@@ -400,9 +392,7 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
     m_metadata->setLineWidth(m_hexlinewidth);
 
     connect(m_metadata, &QHexMetadata::metadataChanged, this,
-            [=](qsizetype line) { emit QHexDocument::metaLineChanged(line); });
-    connect(m_metadata, &QHexMetadata::metadataCleared, this,
-            [=] { emit QHexDocument::documentChanged(); });
+            &QHexDocument::metaDataChanged);
 
     /*=======================*/
     // added by wingsummer
@@ -410,9 +400,9 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
             &QHexDocument::canUndoChanged);
     connect(m_undostack, &QUndoStack::canRedoChanged, this,
             &QHexDocument::canRedoChanged);
-    connect(m_undostack, &QUndoStack::cleanChanged, this, [=](bool b) {
-        emit QHexDocument::documentSaved(b && !m_pluginModed);
-    });
+    connect(m_undostack, &QUndoStack::cleanChanged, this,
+            &QHexDocument::documentSaved);
+
     /*=======================*/
 }
 
@@ -524,7 +514,6 @@ bool QHexDocument::saveTo(QIODevice *device, bool cleanUndo) {
     if (cleanUndo)
         m_undostack->setClean(); // added by wingsummer
 
-    m_pluginModed = false;
     return true;
 }
 

@@ -240,27 +240,37 @@ RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
                                     ads::DockWidgetArea area,
-                                    ads::CDockAreaWidget *areaw) {}
+                                    ads::CDockAreaWidget *areaw) {
+    return nullptr;
+}
 
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpBreakpointShowDock(ads::CDockManager *dock,
                                            ads::DockWidgetArea area,
-                                           ads::CDockAreaWidget *areaw) {}
+                                           ads::CDockAreaWidget *areaw) {
+    return nullptr;
+}
 
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
-                                       ads::CDockAreaWidget *areaw) {}
+                                       ads::CDockAreaWidget *areaw) {
+    return nullptr;
+}
 
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
-                                      ads::CDockAreaWidget *areaw) {}
+                                      ads::CDockAreaWidget *areaw) {
+    return nullptr;
+}
 
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpErrorShowDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
-                                      ads::CDockAreaWidget *areaw) {}
+                                      ads::CDockAreaWidget *areaw) {
+    return nullptr;
+}
 
 void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     Q_ASSERT(container);

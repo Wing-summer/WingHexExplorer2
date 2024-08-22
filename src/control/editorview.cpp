@@ -101,9 +101,13 @@ EditorView::EditorView(QWidget *parent) : ads::CDockWidget(QString(), parent) {
     m_cloneChildren.fill(nullptr, CLONE_LIMIT);
 
     m_findResults = new FindResultModel(this);
-    m_bookmarks = new BookMarksModel(m_hex->document().get(), this);
-    connect(m_hex, &QHexView::documentChanged, m_bookmarks,
-            &BookMarksModel::setDocument);
+    auto doc = m_hex->document().get();
+    m_bookmarks = new BookMarksModel(doc, this);
+    m_metadata = new MetaDataModel(doc, this);
+    connect(m_hex, &QHexView::documentChanged, this, [=](QHexDocument *doc) {
+        m_bookmarks->setDocument(doc);
+        m_metadata->setDocument(doc);
+    });
 
     applySettings();
 }
@@ -513,6 +517,8 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
 
 BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
 
+MetaDataModel *EditorView::metadataModel() const { return m_metadata; }
+
 void EditorView::applySettings() {
     auto &set = SettingManager::instance();
     m_hex->setHeaderVisible(set.editorShowHeader());
@@ -575,11 +581,16 @@ EditorView *EditorView::clone() {
 
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
-    connectDocSavedFlag(ev);
 
     ev->m_rawName = this->m_rawName + QStringLiteral(" : ") +
                     QString::number(cloneIndex + 1);
-    ev->setWindowTitle(ev->m_rawName);
+
+    if (doc->isDocSaved()) {
+        ev->setWindowTitle(ev->m_rawName);
+    } else {
+        ev->setWindowTitle(QStringLiteral("* ") + m_rawName);
+    }
+
     ev->setIcon(this->icon());
 
     ev->m_docType = DocumentType::Cloned;
@@ -588,6 +599,9 @@ EditorView *EditorView::clone() {
         ev->m_others << evw->clone();
     }
     this->m_cloneChildren[cloneIndex] = ev;
+
+    connectDocSavedFlag(ev);
+
     return ev;
 }
 

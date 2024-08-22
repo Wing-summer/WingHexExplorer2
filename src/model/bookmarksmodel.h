@@ -11,15 +11,6 @@ class BookMarksModel : public QAbstractTableModel {
 public:
     explicit BookMarksModel(QHexDocument *doc, QObject *parent = nullptr);
 
-    void beginRemove(int index);
-    void endRemove();
-
-    void beginReset();
-    void endReset();
-
-    void beginAdd(int index);
-    void endAdd();
-
     // QAbstractItemModel interface
 public:
     virtual int rowCount(const QModelIndex &parent) const override;

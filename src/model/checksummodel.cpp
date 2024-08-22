@@ -11,6 +11,9 @@ void CheckSumModel::setCheckSumData(QCryptographicHash::Algorithm algorithm,
                                     const QString &data) {
     if (_checkSumData.contains(algorithm)) {
         _checkSumData[algorithm] = data;
+        auto index = this->index(
+            Utilities::supportedHashAlgorithms().indexOf(algorithm), 0);
+        emit dataChanged(index, index);
     }
 }
 
@@ -23,6 +26,9 @@ void CheckSumModel::clearData() {
     for (auto p = _checkSumData.begin(); p != _checkSumData.end(); ++p) {
         p->clear();
     }
+    emit dataChanged(
+        this->index(0, 0),
+        this->index(Utilities::supportedHashAlgorithms().size() - 1, 0));
 }
 
 int CheckSumModel::rowCount(const QModelIndex &parent) const {
@@ -33,7 +39,8 @@ int CheckSumModel::columnCount(const QModelIndex &parent) const { return 1; }
 
 QVariant CheckSumModel::data(const QModelIndex &index, int role) const {
     switch (role) {
-    case Qt::DisplayRole: {
+    case Qt::DisplayRole:
+    case Qt::ToolTipRole: {
         auto r =
             _checkSumData.value(QCryptographicHash::Algorithm(index.row()));
         if (index.column() == 0) {

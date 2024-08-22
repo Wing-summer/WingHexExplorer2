@@ -26,6 +26,7 @@
 #include "control/scriptingconsole.h"
 #include "model/bookmarksmodel.h"
 #include "model/checksummodel.h"
+#include "model/metadatamodel.h"
 #include "model/numshowmodel.h"
 #include "plugin/iwingplugin.h"
 #include "scriptingdialog.h"
@@ -79,6 +80,9 @@ private:
                           ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpHexBookMarkDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                           ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpHexMetaDataDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                            ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpDecodingStrShowDock(ads::CDockManager *dock,
@@ -151,8 +155,6 @@ private slots:
     void on_metadataedit();
     void on_metadatadel();
     void on_metadatacls();
-    void on_bookmarkChanging(BookMarkModEnum flag, qsizetype section);
-    void on_bookmarkChanged(BookMarkModEnum flag, qsizetype section);
 
     void on_metadatafg(bool checked);
     void on_metadatabg(bool checked);
@@ -177,6 +179,13 @@ private slots:
     void on_sponsor();
     void on_wiki();
 
+public:
+    ErrFile openFile(const QString &file, EditorView **editor);
+    ErrFile openDriver(const QString &driver, EditorView **editor);
+    ErrFile openWorkSpace(const QString &file, EditorView **editor);
+    ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
+                           qsizetype length);
+
 private:
     QString saveLog();
 
@@ -196,11 +205,6 @@ private:
     void loadFindResult(EditorView *view);
 
     void openFiles(const QStringList &files);
-    ErrFile openFile(const QString &file, EditorView **editor);
-    ErrFile openDriver(const QString &driver, EditorView **editor);
-    ErrFile openWorkSpace(const QString &file, EditorView **editor);
-    ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
-                           qsizetype length);
 
     void updateEditModeEnabled();
     void enableDirverLimit(bool isdriver);
@@ -420,7 +424,8 @@ private:
     QTableView *m_bookmarks = nullptr;
     BookMarksModel *_bookMarkEmpty = nullptr;
 
-    QListView *m_metadatas = nullptr;
+    QTableView *m_metadatas = nullptr;
+    MetaDataModel *_metadataEmpty = nullptr;
 
     // data visualization widgets
     QListView *m_infolist = nullptr;
@@ -431,6 +436,7 @@ private:
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 
     QAction *m_aDelBookMark = nullptr;
+    QAction *m_aDelMetaData = nullptr;
 
     //===================================================
 

@@ -85,8 +85,12 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                                     metaitem.begin = nbegin;
                                     metaitem.end = nend;
                                     metaitem.comment = comment.toString();
-                                    metaitem.foreground = fcolor;
-                                    metaitem.background = bcolor;
+                                    metaitem.foreground = fcolor.alpha() > 0
+                                                              ? fcolor.toHsv()
+                                                              : fcolor;
+                                    metaitem.background = bcolor.alpha() > 0
+                                                              ? fcolor.toHsv()
+                                                              : bcolor;
                                     metas.append(metaitem);
                                 }
                             }
