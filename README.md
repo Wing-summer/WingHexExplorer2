@@ -1,4 +1,4 @@
-> English version of README would be written by me after it is almost stable. You can use Google translator for reading temporarily. If you are interested in hexeditor developping, feel free to join me for code contribution, program localization or document writting, etc.
+> If you are not Chinese user, please click [this](README_en.md)
 
 - [代码贡献者](#代码贡献者)
 - [赞助鸣谢](#赞助鸣谢)
@@ -98,7 +98,7 @@
 
 ### 协议
 
-&emsp;&emsp;本软件如果是开源版本将遵循`AGPL-3.0`协议，请勿用于该协议之外的用途。我的初衷是让 Linux 的生态更加完整，早日让祖国推动操作系统国产化，软件跨平台只是顺带。我不希望“吸血鬼”们利益归自己，脏活累活给开源，都那么理所当然，开源就是这么被败坏的。我不希望因为版权的事情牵扯了大量的精力。
+&emsp;&emsp;本软件遵循`AGPL-3.0`协议，请勿用于该协议之外的用途。我的初衷是让 Linux 的生态更加完整，早日让祖国推动操作系统国产化，软件跨平台只是顺带。我不希望“吸血鬼”们利益归自己，脏活累活给开源，都那么理所当然，开源就是这么被败坏的。我不希望因为版权的事情牵扯了大量的精力。
 
 &emsp;&emsp;如果你想将本软件的代码用于闭源的商业代码，想要解除`GPL`系列的必须开源的限制，请必须亲自咨询我，商讨商业授权相关事宜。
 
