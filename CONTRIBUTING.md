@@ -12,7 +12,7 @@ If you are contributing for a short period of time or do not want to contact the
 
 If you want to develop the project with the author (me) for a long time, and you and I are familiar with each other in the real world, you can ask me for repository permissions and I can give them to you.
 
-## 项目结构
+## 项目结构 / Project Structure
 
 该仓库之后将会保持`main`和`release`两个分支，第一个分支是不稳定分支，我会根据我的空余时间会持续更新软件。后者是稳定发行版分支，到了我预定冻结功能和发行的时候，我会将`main`的修改合并到`release`分支。
 
@@ -37,7 +37,7 @@ The project directory structure is classified in detail as follows:
   - `widgetframe`: 和无边框界面标题栏相关的代码。/ Code related to the borderless dialog title bar.
 - `theme`: 软件主题文件，里面每个文件夹以主题名命名（必须英文）。/ Software theme files, each folder in it is named with the theme name (must be in English).
 
-## 注意事项
+## 注意事项 / Cautions
 
 您提供的代码将会遵守`AGPL-3.0`协议，第三方库将会遵守作者的开源协议。开源虽无国界，但您提供的代码来源请一定确保可靠性，不违反法律法规，不包含政治相关内容，不包含侵犯其他人或公司权益的代码。否则开源就是个笑话。
 
