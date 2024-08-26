@@ -92,7 +92,35 @@ int main(int argc, char *argv[]) {
     if (args.size() > 1) {
         for (auto var = args.begin() + 1; var != args.end(); ++var) {
             // TODO more functions support
-            w.openFile(*var, nullptr);
+            auto param = *var;
+            EditorView *editor = nullptr;
+            switch (Utilities::getFileType(param)) {
+            case Utilities::FileType::File: {
+                auto ret = w.openWorkSpace(param, &editor);
+                if (ret == ErrFile::Error) {
+                    ret = w.openFile(param, &editor);
+                    if (ret == ErrFile::AlreadyOpened) {
+                        Q_ASSERT(editor);
+                        editor->raise();
+                        editor->setFocus();
+                    }
+                } else if (ret == ErrFile::AlreadyOpened) {
+                    Q_ASSERT(editor);
+                    editor->raise();
+                    editor->setFocus();
+                }
+            } break;
+            case Utilities::FileType::Driver: {
+                auto ret = w.openDriver(param, &editor);
+                if (ret == ErrFile::AlreadyOpened) {
+                    Q_ASSERT(editor);
+                    editor->raise();
+                    editor->setFocus();
+                }
+            } break;
+            case Utilities::FileType::Others:
+                break;
+            }
         }
     }
 
