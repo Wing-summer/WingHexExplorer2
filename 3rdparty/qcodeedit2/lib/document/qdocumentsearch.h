@@ -25,7 +25,7 @@
 
 #include <QCoreApplication>
 #include <QPointer>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QString>
 
 #include "qdocumentcursor.h"

@@ -1387,7 +1387,7 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="1286"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1326"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2229"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2477"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2476"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -1446,12 +1446,12 @@
         <translation>本版本该功能未上架，敬请期待。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2691"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2690"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2724"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2723"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
@@ -1631,12 +1631,12 @@
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2409"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2408"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2478"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2477"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -1900,7 +1900,7 @@
     <name>QDocumentSearch</name>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="309"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="560"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="574"/>
         <source>Failure</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1911,17 +1911,17 @@ Restart from the begining ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="467"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="480"/>
         <source>Replacement prompt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="468"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="481"/>
         <source>Shall it be replaced?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="561"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/document/qdocumentsearch.cpp" line="575"/>
         <source>End of scope reached with no match.
 Restart from the begining ?</source>
         <translation type="unfinished"></translation>
@@ -1941,144 +1941,144 @@ Restart from the begining ?</source>
     </message>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="210"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="699"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1160"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="672"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1131"/>
         <source>Default</source>
         <translation type="unfinished">默认</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="544"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1133"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="517"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1104"/>
         <source>&amp;Undo</source>
         <translation type="unfinished">撤销（&amp;U）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="553"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1134"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="526"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1105"/>
         <source>&amp;Redo</source>
         <translation type="unfinished">恢复（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="566"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1136"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="539"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1107"/>
         <source>Cu&amp;t</source>
         <translation type="unfinished">剪切（&amp;T）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="575"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1137"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="548"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1108"/>
         <source>&amp;Copy</source>
         <translation type="unfinished">复制（&amp;C）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="584"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1138"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="557"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1109"/>
         <source>&amp;Paste</source>
         <translation type="unfinished">粘贴（&amp;P）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="599"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1140"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="572"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1111"/>
         <source>&amp;Indent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="606"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1141"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="579"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1112"/>
         <source>&amp;Unindent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="617"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1142"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="590"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1113"/>
         <source>Co&amp;mment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="624"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1143"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="597"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1114"/>
         <source>Unc&amp;omment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="635"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1145"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="608"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1116"/>
         <source>&amp;Select all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="646"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1147"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="619"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1118"/>
         <source>&amp;Find</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="653"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1148"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="626"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1119"/>
         <source>Fin&amp;d next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="660"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1149"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="633"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1120"/>
         <source>&amp;Replace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="671"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1151"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="644"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1122"/>
         <source>&amp;Goto line...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="682"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="655"/>
         <source>Dynamic line wrapping</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="692"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1157"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="665"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1128"/>
         <source>Input binding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="717"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="690"/>
         <source>Line endings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="724"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="697"/>
         <source>Conservative</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="726"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="699"/>
         <source>Local</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="727"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="700"/>
         <source>Unix/Linux</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="728"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="701"/>
         <source>Dos/Windows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="729"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1326"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="702"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1297"/>
         <source>Old Mac</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="868"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="841"/>
         <source>Conflict!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="869"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="842"/>
         <source>%1
 has been modified by another application.
 Press &quot;Save&quot; to overwrite the file on disk
@@ -2088,12 +2088,12 @@ Press &quot;Discard&quot; to ignore this warning.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1004"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="977"/>
         <source>File changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1005"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="978"/>
         <source>%1
 has been modified by another application.
 
@@ -2102,32 +2102,32 @@ Do you wish to keep up to date by reloading the file?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1163"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1134"/>
         <source>&amp;Edit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1164"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1135"/>
         <source>&amp;Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1166"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1137"/>
         <source>Edit</source>
         <translation type="unfinished">编辑</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1167"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1138"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1324"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1295"/>
         <source>Windows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1328"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1299"/>
         <source>Unix</source>
         <translation type="unfinished"></translation>
     </message>

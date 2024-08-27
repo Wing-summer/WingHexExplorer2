@@ -24,11 +24,11 @@
 #include <QColor>
 #include <QFont>
 #include <QTextCharFormat>
-
-template <typename T>
-class QVector;
+#include <QVector>
 
 struct QFormat {
+    typedef decltype(QFont().weight()) Weight;
+
     inline QFormat()
         : weight(QFont::Normal), italic(false), overline(false),
           underline(false), strikeout(false), waveUnderline(false) {}
@@ -38,15 +38,15 @@ struct QFormat {
           underline(false), strikeout(false), waveUnderline(false),
           foreground(c) {}
 
-    inline QFormat(int w, const QColor &c)
+    inline QFormat(Weight w, const QColor &c)
         : weight(w), italic(false), overline(false), underline(false),
           strikeout(false), waveUnderline(false), foreground(c) {}
 
-    inline QFormat(int w, bool i, bool u, bool s, const QColor &c)
+    inline QFormat(Weight w, bool i, bool u, bool s, const QColor &c)
         : weight(w), italic(i), overline(false), underline(u), strikeout(s),
           waveUnderline(false), foreground(c) {}
 
-    inline QFormat(int w, bool i, bool o, bool u, bool s, bool wu,
+    inline QFormat(Weight w, bool i, bool o, bool u, bool s, bool wu,
                    const QColor &c)
         : weight(w), italic(i), overline(o), underline(u), strikeout(s),
           waveUnderline(wu), foreground(c) {}
@@ -109,7 +109,7 @@ struct QFormat {
         return f;
     }
 
-    int weight;
+    Weight weight;
     bool italic;
     bool overline;
     bool underline;
@@ -128,12 +128,12 @@ struct QFormatRange {
     inline QFormatRange(int o, int l, int f)
         : offset(o), length(l), format(f) {}
 
-    inline bool operator==(const QFormatRange &o) {
+    inline bool operator==(const QFormatRange &o) const {
         return (offset == o.offset) && (length == o.length) &&
                (format == o.format);
     }
 
-    inline bool operator!=(const QFormatRange &o) {
+    inline bool operator!=(const QFormatRange &o) const {
         return (offset != o.offset) || (length != o.length) ||
                (format != o.format);
     }

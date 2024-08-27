@@ -72,13 +72,13 @@ int action(QDomElement c, QFormatScheme *f, QHash<QString, int> &pids,
 
     sfid = c.attribute("format");
 
-    if (sfid.count()) {
+    if (sfid.length()) {
         fid |= QNFAAction::Highlight | QNFAAction::format(f->id(sfid));
     }
 
     paren = c.attribute("parenthesis");
 
-    if (paren.count()) {
+    if (paren.length()) {
         spid = paren.section(':', 0, -2);
         spt = paren.section(':', -1, -1);
 
@@ -88,7 +88,7 @@ int action(QDomElement c, QFormatScheme *f, QHash<QString, int> &pids,
             fid |= QNFAAction::MatchParen;
         }
 
-        if (spid.count()) {
+        if (spid.length()) {
             /*qDebug("paren : [%s|%s] => 0x%x",
                             qPrintable(spid), qPrintable(spt),
                             (spt == "open" ? QNFAAction::ParenOpen :
@@ -140,15 +140,15 @@ void copy(const QCharTreeLevel &src, QCharTreeLevel &dest) {
     }
 }
 
-void embed(QNFA *src, QNFA *dest, int idx = 0) {
+void embed(QNFA *src, QNFA *dest, qsizetype idx = 0) {
     QNFA *nfa;
-    const int n = src->out.branch->count();
+    const auto n = src->out.branch->count();
 
     // dest->out.branch->alloc(idx, n);
 
     // qDebug("\tembedding %i children", n);
 
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         nfa = src->out.branch->at(i);
 
         if (nfa->type & Reserved)
@@ -377,8 +377,8 @@ void addToContext(QNFA *cxt, QDomElement c, int fid, QFormatScheme *f,
 
         if (trans) {
             QNFADefinition::shareEmbedRequests(cxt, cstart,
-                                               cstart->out.branch->count());
-            embed(cxt, cstart, cstart->out.branch->count());
+                                               cstart->out.branch->length());
+            embed(cxt, cstart, cstart->out.branch->length());
         }
 
         if (hstart) {

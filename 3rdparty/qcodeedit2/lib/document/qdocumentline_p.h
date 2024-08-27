@@ -62,7 +62,6 @@ public:
     QDocumentLineHandle(QDocument *d);
     QDocumentLineHandle(const QString &s, QDocument *d);
 
-    int count() const;
     int length() const;
 
     int position() const;

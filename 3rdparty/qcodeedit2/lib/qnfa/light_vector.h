@@ -42,9 +42,9 @@ public:
         return *this;
     }
 
-    inline quint16 length() const { return size; }
+    inline size_t length() const { return size; }
 
-    inline quint16 count() const { return size; }
+    inline size_t count() const { return size; }
 
     inline T *data() { return m_data; }
 
@@ -53,7 +53,7 @@ public:
         m_data = !m_data ? (T *)malloc(size * sizeof(T))
                          : (T *)realloc(m_data, size * sizeof(T));
 
-        for (int i = size - 1; (i > pos) && (i >= (int)n); --i)
+        for (auto i = size - 1; (i > pos) && (i >= n); --i)
             m_data[i] = m_data[i - n];
 
         // for ( int i = pos; (i < (pos + n)) && ((i + n) < size); ++i )
@@ -76,9 +76,9 @@ public:
         m_data[size - 1] = v;
     }
 
-    inline const T &at(quint16 i) { return *(m_data + i); }
+    inline const T &at(size_t i) { return *(m_data + i); }
 
-    inline T &operator[](quint16 i) { return *(m_data + i); }
+    inline T &operator[](size_t i) { return *(m_data + i); }
 
     bool contains(const T &v) const {
         for (int i = 0; i < size; i++)
@@ -90,7 +90,7 @@ public:
 
 private:
     T *m_data;
-    quint16 size;
+    size_t size;
 };
 
 #endif // _LIGHT_VECTOR_H_

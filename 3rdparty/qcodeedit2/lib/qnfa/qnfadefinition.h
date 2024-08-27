@@ -92,7 +92,7 @@ public:
 
     static void addContext(const QString &id, QNFA *nfa);
     static void addEmbedRequest(const QString &lang, QNFA *dest);
-    static void shareEmbedRequests(QNFA *src, QNFA *dest, int offset);
+    static void shareEmbedRequests(QNFA *src, QNFA *dest, qsizetype offset);
 
 private:
     bool m_indentFold;
@@ -136,9 +136,10 @@ private:
     static void flushEmbedRequests(const QString &lang);
 
     struct EmbedRequest {
-        inline EmbedRequest(QNFA *nfa, int idx) : index(idx), target(nfa) {}
+        inline EmbedRequest(QNFA *nfa, qsizetype idx)
+            : index(idx), target(nfa) {}
 
-        int index;
+        qsizetype index;
         QNFA *target;
     };
 

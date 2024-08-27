@@ -38,20 +38,20 @@ static QString escapeCpp(const QString &s, bool rep) {
 
     QString es;
 
-    for (int i = 0; i < s.count(); ++i) {
-        if ((s.at(i) == '\\') && ((i + 1) < s.count())) {
+    for (int i = 0; i < s.size(); ++i) {
+        if ((s.at(i) == '\\') && ((i + 1) < s.size())) {
             QChar c = s.at(++i);
 
             if (c == '\\')
-                es += '\\';
+                es += QChar('\\');
             else if (c == 't')
-                es += '\t';
+                es += QChar('\t');
             else if (c == 'n')
-                es += '\n';
+                es += QChar('\n');
             else if (c == 'r')
-                es += '\r';
+                es += QChar('\r');
             else if (c == '0')
-                es += '\0';
+                es += QChar('\0');
 
         } else {
             es += s.at(i);

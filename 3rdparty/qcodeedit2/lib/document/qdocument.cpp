@@ -91,6 +91,7 @@
 #include <QPen>
 #include <QPrinter>
 #include <QRect>
+#include <QRegularExpression>
 #include <QTextLayout>
 #include <QTextStream>
 #include <QTime>
@@ -454,7 +455,7 @@ void QDocument::startChunkLoading() {
         \see startChunkLoading()
 */
 void QDocument::stopChunkLoading() {
-    if (m_leftOver.count()) {
+    if (m_leftOver.length()) {
         m_impl->m_lines << new QDocumentLineHandle(m_leftOver, this);
 
         m_leftOver.clear();
@@ -1426,8 +1427,6 @@ QDocumentLineHandle::~QDocumentLineHandle() {
     if (m_doc && m_doc->impl())
         m_doc->impl()->emitLineDeleted(this);
 }
-
-int QDocumentLineHandle::count() const { return m_text.count(); }
 
 int QDocumentLineHandle::length() const { return m_text.length(); }
 
@@ -2442,7 +2441,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
     } else if (true) {
 
         QVector<quint16> merged;
-        merged.fill(0, m_text.count());
+        merged.fill(0, m_text.length());
 
         QList<RenderRange> ranges;
 
@@ -2460,7 +2459,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         {
             // int max = qMin(m_text.count(), m_composited.count());
 
-            for (int i = 0; i < m_text.count(); ++i) {
+            for (qsizetype i = 0; i < m_text.length(); ++i) {
                 if (m_composited.count() > i)
                     merged[i] = m_composited.at(i);
 
@@ -2481,10 +2480,10 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         }
 
         // generate render ranges
-        if (merged.count()) {
-            int i = 0, wrap = 0, max = m_text.count(),
-                frontier =
-                    m_frontiers.count() ? m_frontiers.first().first : max;
+        if (merged.size()) {
+            qsizetype i = 0, wrap = 0, max = m_text.size(),
+                      frontier =
+                          m_frontiers.count() ? m_frontiers.first().first : max;
 
             while (i < max) {
                 RenderRange r;
@@ -2510,9 +2509,9 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
             }
         } else if (m_frontiers.count()) {
             // no formatting (nor selection) : simpler
-            int i = 0, wrap = 0, max = m_text.count(),
-                frontier =
-                    m_frontiers.count() ? m_frontiers.first().first : max;
+            qsizetype i = 0, wrap = 0, max = m_text.size(),
+                      frontier =
+                          m_frontiers.count() ? m_frontiers.first().first : max;
 
             while (i < max) {
                 RenderRange r;
@@ -3433,7 +3432,7 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
 
     int &line = m_begLine;
     int &offset = m_begOffset;
-    static QRegExp wordStart("\\b\\w+$"), wordEnd("^\\w+\\b");
+    static QRegularExpression wordStart("\\b\\w+$"), wordEnd("^\\w+\\b");
 
     if (!(m & QDocumentCursor::KeepAnchor)) {
         m_endLine = -1;
@@ -3849,14 +3848,12 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
     }
 
     case QDocumentCursor::StartOfWord: {
-        int x = wordStart.indexIn(m_doc->line(line).text().left(offset));
+        int x = m_doc->line(line).text().left(offset).indexOf(wordStart);
 
         if (x != -1) {
             offset = x;
         } else {
-            qDebug("failed to find SOW : %i + %i != %i", x,
-                   wordStart.matchedLength(), offset);
-
+            qDebug("failed to find SOW");
             return false;
         }
 
@@ -3866,11 +3863,15 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
     }
 
     case QDocumentCursor::EndOfWord: {
-        int x = wordEnd.indexIn(m_doc->line(line).text(), offset,
-                                QRegExp::CaretAtOffset);
+        auto match = wordEnd.match(m_doc->line(line).text());
+
+        auto x = match.capturedEnd();
+
+        // int x = wordEnd.indexIn(m_doc->line(line).text(), offset,
+        //                         QRegExp::CaretAtOffset);
 
         if (x == offset) {
-            offset += wordEnd.matchedLength();
+            offset += wordEnd.captureCount();
         } else {
             qDebug("failed to find EOW");
             return false;
@@ -4727,8 +4728,7 @@ void QDocumentPrivate::draw(QPainter *p, QDocument::PaintContext &cxt) {
     QDocumentLineHandle *h;
     bool inSel = false, fullSel;
     QList<QDocumentCursorHandle *>::iterator cit;
-    int i, realln, pos = 0, xOffset,
-                   firstLine = qMax(0, cxt.yoffset / m_lineSpacing),
+    int i, realln, pos = 0, firstLine = qMax(0, cxt.yoffset / m_lineSpacing),
                    lastLine = qMax(0, firstLine + (cxt.height / m_lineSpacing));
 
     if (cxt.height % m_lineSpacing)
@@ -5446,9 +5446,7 @@ void QDocumentPrivate::clearMatches(int groupId) {
 
     MatchList &matches = *mit;
 
-    foreach (const Match &m, matches) {
-        m.h->removeOverlay(m.range);
-    }
+    foreach (const Match &m, matches) { m.h->removeOverlay(m.range); }
 
     matches.index = matches.count();
 }
@@ -5496,19 +5494,19 @@ void QDocumentPrivate::flushMatches(int groupId) {
         it = areas.insert(m.line, n);
 
         if (it != areas.begin()) { // fix the bug by wingsummer
-            if (it != areas.end() && (it - 1) != areas.end()) {
-                tmp = it - 1;
+            if (it != areas.end() && std::prev(it) != areas.end()) {
+                tmp = std::prev(it);
                 int off = tmp.key() + *tmp - l;
 
                 if (off >= 0 && (off < n)) {
                     *tmp += n - off;
-                    it = areas.erase(it) - 1;
+                    it = std::prev(areas.erase(it));
                 }
             }
         }
 
-        if (it != areas.end() && (it + 1) != areas.end()) {
-            tmp = it + 1;
+        if (it != areas.end() && std::next(it) != areas.end()) {
+            tmp = std::next(it);
             int off = it.key() + *it - tmp.key();
 
             if (off >= 0 && (off < *tmp)) {
@@ -5808,7 +5806,7 @@ void QDocumentPrivate::showEvent(int line, int count) {
 }
 
 void QDocumentPrivate::updateHidden(int line, int count) {
-    if (m_hidden.isEmpty() || (line > (m_hidden.constEnd() - 1).key()))
+    if (m_hidden.isEmpty() || (line > std::prev(m_hidden.constEnd()).key()))
         return;
 
     QMap<int, int> prev = m_hidden;
@@ -5830,7 +5828,7 @@ void QDocumentPrivate::updateHidden(int line, int count) {
 }
 
 void QDocumentPrivate::updateWrapped(int line, int count) {
-    if (m_wrapped.isEmpty() || (line > (m_wrapped.constEnd() - 1).key()))
+    if (m_wrapped.isEmpty() || (line > std::prev(m_wrapped.constEnd()).key()))
         return;
 
     QMap<int, int> prev = m_wrapped;

@@ -113,7 +113,7 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
     // with Unicode...
     static const QChar wrappingArrow(0xC4);
     QFont specialFont(font());
-    specialFont.setRawName("Wingdings");
+    specialFont.setFamily("Wingdings");
     const QFontMetrics specialSfm(specialFont);
 #endif
 

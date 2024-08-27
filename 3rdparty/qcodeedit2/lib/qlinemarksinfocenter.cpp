@@ -74,7 +74,7 @@ QLineMarksInfoCenter::~QLineMarksInfoCenter() {}
 */
 QLineMarkList QLineMarksInfoCenter::marks(const QString &file) {
     QLineMarkList l;
-    bool check = file.count();
+    bool check = !file.isEmpty();
 
     foreach (QLineMarkHandle m, m_lineMarks) {
         if (!check || (m.file == file))
@@ -88,9 +88,7 @@ QLineMarkList QLineMarksInfoCenter::marks(const QString &file) {
         \brief Remove all line marks on all files
 */
 void QLineMarksInfoCenter::clear() {
-    foreach (QLineMarkHandle m, m_lineMarks) {
-        removeLineMark(m);
-    }
+    foreach (QLineMarkHandle m, m_lineMarks) { removeLineMark(m); }
 }
 
 /*!
@@ -431,7 +429,7 @@ QStringList QLineMarksInfoCenter::availableMarkTypes(const QString &context) {
     QStringList l;
 
     foreach (QLineMarkType t, m_lineMarkTypes) {
-        if (context.count() &&
+        if (context.size() &&
             (!t.user ||
              (t.rules.contains("#out") && !t.rules.contains(context)) ||
              (t.rules.contains("#in") && t.rules.contains("!" + context)))) {
@@ -475,7 +473,7 @@ QString QLineMarksInfoCenter::priority(const QStringList &marks) {
         }
     }
 
-    return (mark.count() || !marks.count()) ? mark : marks.at(0);
+    return (mark.size() || !marks.count()) ? mark : marks.at(0);
 }
 
 /*!
@@ -484,9 +482,7 @@ QString QLineMarksInfoCenter::priority(const QStringList &marks) {
 QList<QStringList> QLineMarksInfoCenter::marksLayout(const QString &context) {
     QList<QStringList> l;
 
-    foreach (QString id, availableMarkTypes(context)) {
-        l << QStringList(id);
-    }
+    foreach (QString id, availableMarkTypes(context)) { l << QStringList(id); }
 
     /*
     foreach ( QLineMarkType t, availableMarks(context) )
@@ -545,9 +541,9 @@ void QLineMarksInfoCenter::lineDeleted(QDocumentLineHandle *h) {
 void QLineMarksInfoCenter::markChanged(const QString &f,
                                        QDocumentLineHandle *line, int mark,
                                        bool on) {
-    QLineMarkHandle m(f, line, mark);
+    const QLineMarkHandle m(f, line, mark);
     bool in = m_lineMarks.contains(m);
-    QLineMark mrk(f, line->line() + 1, mark);
+    const QLineMark mrk(f, line->line() + 1, mark);
 
     if (!on && in) {
         m_lineMarks.removeAll(m);

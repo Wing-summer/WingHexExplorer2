@@ -57,8 +57,14 @@ void RegisterColor(asIScriptEngine *engine) {
                                      asMETHOD(QColor, value), asCALL_THISCALL);
     Q_ASSERT(r >= 0);
 
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    r = engine->RegisterObjectMethod("Color", "string name()",
+                                     asMETHOD(QColor, name), asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+#else
     r = engine->RegisterObjectMethod(
         "Color", "string name()", asMETHODPR(QColor, name, () const, QString),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+#endif
 }

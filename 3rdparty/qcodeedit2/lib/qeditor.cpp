@@ -30,6 +30,7 @@
 #include "qcodecompletionengine.h"
 #include "qlanguagedefinition.h"
 
+#include "QMetaMethod"
 #include "qcodeedit.h"
 #include "qgotolinedialog.h"
 #include "qlinemarksinfocenter.h"
@@ -56,7 +57,6 @@
 #include <QPrinter>
 #include <QScrollBar>
 #include <QStyle>
-#include <QTextCodec>
 #include <QTextStream>
 #include <QTimer>
 
@@ -274,7 +274,7 @@ QReliableFileWatch *QEditor::watcher() {
 ////////////////////////////////////////////////////////////////////////
 
 int QEditor::m_defaultFlags = QEditor::AutoIndent | QEditor::AdjustIndent;
-QTextCodec *QEditor::m_defaultCodec = 0;
+QString QEditor::m_defaultCodecName = 0;
 
 /*!
         \return The default flags set to every QEditor upon construction
@@ -320,61 +320,34 @@ void QEditor::setDefaultFlags(int flags) {
 
         \note a null pointer indicates that local 8 bit encoding is used.
 */
-QTextCodec *QEditor::defaultCodec() { return m_defaultCodec; }
+QString QEditor::defaultCodecName() { return m_defaultCodecName; }
 
 /*!
-        \overload
-        \param mib codec identifier
-        \param update Update policy
-*/
-void QEditor::setDefaultCodec(int mib, int update) {
-    setDefaultCodec(QTextCodec::codecForMib(mib), update);
-}
-
-/*!
-        \overload
-        \param name name of the codec to use
-        \param update Update policy
-*/
-void QEditor::setDefaultCodec(const char *name, int update) {
-    setDefaultCodec(QTextCodec::codecForName(name), update);
-}
-
-/*!
-        \overload
-        \param name name of the codec to use
-        \param update Update policy
-*/
-void QEditor::setDefaultCodec(const QByteArray &name, int update) {
-    setDefaultCodec(QTextCodec::codecForName(name), update);
-}
-
-/*!
-        \brief Set the default text codec
-        \param c codec to use
+        \brief Set the default text codecName
+        \param c codecName to use
         \param update Update policy
 
         The update policy determines whether existing editors are
-        affected by the change of the default codec.
+        affected by the change of the default codecName.
 */
-void QEditor::setDefaultCodec(QTextCodec *c, int update) {
+void QEditor::setDefaultCodec(const QString &name, int update) {
     foreach (QEditor *e, m_editors) {
-        if (e->codec() == m_defaultCodec) {
+        if (e->codecName() == m_defaultCodecName) {
             if (update & UpdateOld)
-                e->setCodec(c);
-        } else if (e->codec()) {
+                e->setCodec(name);
+        } else if (!e->codecName().isEmpty()) {
             if (update & UpdateCustom)
-                e->setCodec(c);
+                e->setCodec(name);
         } else {
             if (update & UpdateDefault)
-                e->setCodec(c);
+                e->setCodec(name);
         }
     }
 
     // qDebug("new codec is : 0x%x (%s)", c, c ? c->name().constData() :
     // "System");
 
-    m_defaultCodec = c;
+    m_defaultCodecName = name;
 }
 
 /*!
@@ -385,8 +358,8 @@ void QEditor::setDefaultCodec(QTextCodec *c, int update) {
 QEditor::QEditor(QWidget *p)
     : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
       m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodec), m_definition(0),
-      m_curPlaceHolder(-1), m_state(defaultFlags()) {
+      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
+      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
@@ -401,8 +374,8 @@ QEditor::QEditor(QWidget *p)
 QEditor::QEditor(bool actions, QWidget *p)
     : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
       m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodec), m_definition(0),
-      m_curPlaceHolder(-1), m_state(defaultFlags()) {
+      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
+      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
@@ -419,8 +392,8 @@ QEditor::QEditor(bool actions, QWidget *p)
 QEditor::QEditor(const QString &s, QWidget *p)
     : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
       m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodec), m_definition(0),
-      m_curPlaceHolder(-1), m_state(defaultFlags()) {
+      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
+      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
@@ -439,8 +412,8 @@ QEditor::QEditor(const QString &s, QWidget *p)
 QEditor::QEditor(const QString &s, bool actions, QWidget *p)
     : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
       m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodec), m_definition(0),
-      m_curPlaceHolder(-1), m_state(defaultFlags()) {
+      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
+      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
@@ -889,7 +862,7 @@ void QEditor::save() {
 
     m_saveState = Saving;
 
-    if (oldFileName.count()) {
+    if (oldFileName.size()) {
         watcher()->removeWatch(oldFileName, this);
     }
 
@@ -907,8 +880,8 @@ void QEditor::save() {
     QString txt =
         m_doc->text(flag(RemoveTrailing), flag(PreserveTrailingIndent));
 
-    if (m_codec)
-        f.write(m_codec->fromUnicode(txt));
+    if (m_codec.size())
+        f.write(QCE::convertByteArray(m_codec, txt));
     else
         f.write(txt.toLocal8Bit());
 
@@ -929,7 +902,7 @@ void QEditor::save() {
         file and monitor the new one
 */
 void QEditor::save(const QString &fn) {
-    if (fileName().count()) {
+    if (fileName().size()) {
         watcher()->removeWatch(fileName(), this);
     }
 
@@ -945,8 +918,8 @@ void QEditor::save(const QString &fn) {
     QString txt =
         m_doc->text(flag(RemoveTrailing), flag(PreserveTrailingIndent));
 
-    if (m_codec)
-        f.write(m_codec->fromUnicode(txt));
+    if (m_codec.size())
+        f.write(QCE::convertByteArray(m_codec, txt));
     else
         f.write(txt.toLocal8Bit());
 
@@ -1047,8 +1020,7 @@ void QEditor::print() {
     // TODO : create a custom print dialog, page range sucks, lines range would
     // be better
     QPrintDialog dialog(&printer, this);
-    dialog.setEnabledOptions(QPrintDialog::PrintToFile |
-                             QPrintDialog::PrintPageRange);
+    dialog.setOptions(QPrintDialog::PrintToFile | QPrintDialog::PrintPageRange);
 
     if (dialog.exec() == QDialog::Accepted) {
         m_doc->print(&printer);
@@ -1067,7 +1039,6 @@ void QEditor::find() {
 
         m->sendPanelCommand("Search", "display",
                             Q_COMMAND << Q_ARG(int, 1) << Q_ARG(bool, false));
-
     } else {
         qDebug("Unmanaged QEditor");
     }
@@ -1196,7 +1167,7 @@ void QEditor::addAction(QAction *a, const QString &menu,
 
     m_actions[a->objectName()] = a;
 
-    if (pMenu && menu.count()) {
+    if (pMenu && menu.size()) {
         pMenu->addAction(a);
 
 #ifdef _QMDI_
@@ -1204,7 +1175,7 @@ void QEditor::addAction(QAction *a, const QString &menu,
 #endif
     }
 
-    if (toolbar.count()) {
+    if (toolbar.size()) {
 #ifdef _QMDI_
         toolbars[toolbar]->addAction(a);
 #endif
@@ -1270,8 +1241,8 @@ void QEditor::load(const QString &file) {
         // instant load for files smaller than 500kb
         QByteArray d = f.readAll();
         // m_lastFileState.checksum = qChecksum(d.constData(), d.size());
-        if (m_codec)
-            setText(m_codec->toUnicode(d));
+        if (m_codec.size())
+            setText(QCE::convertString(m_codec, d));
         else
             setText(QString::fromLocal8Bit(d));
     } else {
@@ -1286,16 +1257,16 @@ void QEditor::load(const QString &file) {
 
         do {
             ba = f.read(100000);
-            count += ba.count();
+            count += ba.size();
 
             // m_lastFileState.checksum ^= qChecksum(ba.constData(), ba.size());
 
-            if (m_codec)
-                m_doc->addChunk(m_codec->toUnicode(ba));
+            if (m_codec.size())
+                m_doc->addChunk(QCE::convertString(m_codec, ba));
             else
                 m_doc->addChunk(QString::fromLocal8Bit(ba));
 
-        } while ((count < size) && ba.count());
+        } while ((count < size) && ba.size());
 
         m_doc->stopChunkLoading();
 
@@ -1311,7 +1282,7 @@ void QEditor::load(const QString &file) {
 
     if (m_lineEndingsActions) {
         // TODO : update Conservative to report original line endings
-        static const QRegExp rx(" \\[\\w+\\]");
+        static const QRegularExpression rx(" \\[\\w+\\]");
         QAction *a = m_lineEndingsActions->actions().at(0);
 
         if (a) {
@@ -1327,7 +1298,7 @@ void QEditor::load(const QString &file) {
             else if (le == QDocument::Unix)
                 det = tr("Unix");
 
-            if (det.count()) {
+            if (det.size()) {
                 txt += " [";
                 txt += det;
                 txt += ']';
@@ -1357,40 +1328,21 @@ void QEditor::setDocument(QDocument *d) {
 }
 
 /*!
-        \return The text codec to use for load/save operations
+        \return The text codecName to use for load/save operations
 */
-QTextCodec *QEditor::codec() const { return m_codec; }
-
-/*!
-        \overload
-*/
-void QEditor::setCodec(int mib) { setCodec(QTextCodec::codecForMib(mib)); }
-
-/*!
-        \overload
-*/
-void QEditor::setCodec(const char *name) {
-    setCodec(QTextCodec::codecForName(name));
-}
-
-/*!
-        \overload
-*/
-void QEditor::setCodec(const QByteArray &name) {
-    setCodec(QTextCodec::codecForName(name));
-}
+QString QEditor::codecName() const { return m_codec; }
 
 /*!
         \brief Set the text codec to use for load/save operations
 */
-void QEditor::setCodec(QTextCodec *c) {
-    if (c == m_codec)
+void QEditor::setCodec(const QString &c) {
+    if (c == m_codec || !QCE::getEncodings().contains(c))
         return;
 
     m_codec = c;
 
     // TODO : reload file?
-    if (fileName().count() && QFile::exists(fileName())) {
+    if (fileName().size() && QFile::exists(fileName())) {
         if (!isContentModified()) {
             load(fileName());
         }
@@ -1862,7 +1814,7 @@ void QEditor::setLanguageDefinition(QLanguageDefinition *d) {
         m_doc->setLanguageDefinition(d);
 
     if (m_definition) {
-        bool cuc = d->singleLineComment().count();
+        bool cuc = d->singleLineComment().size();
 
         QCE_ENABLE_ACTION("comment", cuc)
         QCE_ENABLE_ACTION("uncomment", cuc)
@@ -2012,7 +1964,7 @@ static bool unindent(const QDocumentCursor &cur) {
     int r = 0, n = 0, t = QDocument::tabStop();
     QString txt = beg.text().left(beg.firstChar());
 
-    while (txt.count() && (n < t)) {
+    while (txt.size() && (n < t)) {
         if (txt.at(txt.length() - 1) == '\t')
             n += t - (n % t);
         else
@@ -2628,7 +2580,7 @@ void QEditor::inputMethodEvent(QInputMethodEvent *e) {
 
     m_cursor.beginEditBlock();
 
-    if (e->commitString().count())
+    if (!e->commitString().isEmpty())
         m_cursor.insertText(e->commitString());
 
     m_cursor.endEditBlock();
@@ -2655,8 +2607,13 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
         if (flag(MaybeDrag)) {
             m_drag.stop();
 
-            if ((e->globalPos() - m_dragPoint).manhattanLength() >
-                QApplication::startDragDistance())
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            if ((e->globalPosition().toPoint()
+#else
+            if ((e->globalPos()
+#endif
+                 - m_dragPoint)
+                    .manhattanLength() > QApplication::startDragDistance())
                 startDrag();
 
             // emit clearAutoCloseStack();
@@ -2748,8 +2705,14 @@ void QEditor::mousePressEvent(QMouseEvent *e) {
         selectionChange();
 
         if (m_click.isActive() &&
-            ((e->globalPos() - m_clickPoint).manhattanLength() <
-             QApplication::startDragDistance())) {
+            ((
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                 e->globalPosition().toPoint()
+#else
+                 e->globalPos()
+#endif
+                 - m_clickPoint)
+                 .manhattanLength() < QApplication::startDragDistance())) {
 #if defined(Q_WS_MAC)
             m_cursor.select(QDocumentCursor::LineUnderCursor);
             m_doubleClick = m_cursor;
@@ -2822,8 +2785,11 @@ void QEditor::mousePressEvent(QMouseEvent *e) {
 
                     if (inSel) {
                         setFlag(MaybeDrag, true);
-
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                        m_dragPoint = e->globalPosition().toPoint();
+#else
                         m_dragPoint = e->globalPos();
+#endif
                         m_drag.start(QApplication::startDragTime(), this);
 
                         break;
@@ -2872,7 +2838,7 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
         setFlag(MousePressed, false);
 
         setClipboardSelection();
-    } else if (e->button() == Qt::MidButton &&
+    } else if (e->button() == Qt::MiddleButton &&
                QApplication::clipboard()->supportsSelection()) {
         setCursorPosition(mapToContents(e->pos()));
         // setCursorPosition(viewport()->mapFromGlobal(e->globalPos()));
@@ -2933,7 +2899,12 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
 
         m_doubleClick = m_cursor;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        m_clickPoint = e->globalPosition().toPoint();
+#else
         m_clickPoint = e->globalPos();
+#endif
+
         m_click.start(qApp->doubleClickInterval(), this);
         break;
     }
@@ -2980,8 +2951,12 @@ void QEditor::dragMoveEvent(QDragMoveEvent *e) {
     else
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDocumentCursor c =
+        cursorForPosition(mapToContents(e->position().toPoint()));
+#else
     QDocumentCursor c = cursorForPosition(mapToContents(e->pos()));
-
+#endif
     if (c.isValid()) {
         QRect crect = cursorRect(m_dragAndDrop);
 
@@ -3003,8 +2978,12 @@ void QEditor::dragMoveEvent(QDragMoveEvent *e) {
 void QEditor::dropEvent(QDropEvent *e) {
     m_dragAndDrop = QDocumentCursor();
 
-    QDocumentCursor c(cursorForPosition(mapToContents(e->pos())));
-
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDocumentCursor c =
+        cursorForPosition(mapToContents(e->position().toPoint()));
+#else
+    QDocumentCursor c = cursorForPosition(mapToContents(e->pos()));
+#endif
     if ((e->source() == this) && (m_cursor.isWithinSelection(c)))
         return;
 
@@ -3035,7 +3014,12 @@ void QEditor::dropEvent(QDropEvent *e) {
     }
 
     clearCursorMirrors();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    m_cursor.moveTo(cursorForPosition(mapToContents(e->position().toPoint())));
+#else
     m_cursor.moveTo(cursorForPosition(mapToContents(e->pos())));
+#endif
+
     insertFromMimeData(e->mimeData());
     // m_cursor.endEditBlock();
 
@@ -3263,10 +3247,10 @@ void QEditor::setFileName(const QString &f) {
     // if ( fileName().count() )
     //	m_watcher->addPath(fileName());
 
-    if (fileName().count())
+    if (fileName().size())
         watcher()->addWatch(fileName(), this);
 
-    setTitle(name().count() ? name() : "untitled");
+    setTitle(name().size() ? name() : "untitled");
 }
 
 /*!
@@ -3709,7 +3693,7 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
             }
         }
 
-        if (indent.count()) {
+        if (indent.size()) {
             indent.prepend("\n");
             c.insertText(indent);
         } else {
@@ -3833,7 +3817,7 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text) {
         foreach (QString l, lines) {
             int n = 0;
 
-            while (n < l.count() && l.at(n).isSpace())
+            while (n < l.size() && l.at(n).isSpace())
                 ++n;
 
             l.remove(0, n);

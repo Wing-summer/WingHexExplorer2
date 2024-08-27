@@ -323,7 +323,12 @@ QAction *QCodeEdit::toggleViewAction(QPanel *p) const {
    false)); \endcode
 */
 void QCodeEdit::sendPanelCommand(const QString &type, const char *signature,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                                 const QList<QMetaMethodArgument> &args) {
+#else
                                  const QList<QGenericArgument> &args) {
+#endif
+
     QList<QPanel *> lp = panels();
 
     // qDebug("looking for panel of type %s", qPrintable(type));

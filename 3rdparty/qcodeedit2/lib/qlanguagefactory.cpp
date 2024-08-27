@@ -129,7 +129,7 @@ void QLanguageFactory::setLanguage(QEditor *e, const QString &file) {
 
     QLanguageDefinition *oldLang = e->languageDefinition();
 
-    if (file.count()) {
+    if (file.length()) {
         QList<Qt::CaseSensitivity> lcs;
         lcs << Qt::CaseSensitive << Qt::CaseInsensitive;
 
@@ -173,7 +173,7 @@ void QLanguageFactory::setLanguage(QEditor *e, const QString &file) {
                 lang = m_languages.at(idx);
             }
 
-            if (lang.count())
+            if (lang.length())
                 break;
         }
     }

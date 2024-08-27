@@ -40,7 +40,7 @@ LanguageManager::LanguageManager() {
     bool found = false;
     for (auto p = m_localeMap.begin(); p != m_localeMap.end(); ++p) {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-        if (p->territory() == defaultLocale.territory() &&
+        if (p->territory() == _defaultLocale.territory() &&
 #else
         if (p->country() == _defaultLocale.country() &&
 #endif

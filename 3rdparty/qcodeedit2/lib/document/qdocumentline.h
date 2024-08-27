@@ -33,7 +33,8 @@ class QDocumentLineHandle;
 
 struct QNFAMatchContext;
 
-struct QParenthesis {
+class QParenthesis {
+public:
     enum Role { Open = 1, Close = 2, Indent = 4, Fold = 8, Match = 16 };
 
     inline QParenthesis() : id(0), role(0), offset(0), length(0) {}

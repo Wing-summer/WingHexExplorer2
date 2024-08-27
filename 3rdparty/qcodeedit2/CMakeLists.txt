@@ -11,7 +11,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Gui PrintSupport Xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Gui PrintSupport
                                                        Xml)
 
-add_definitions(-DQNFA_BUILD -D_QCODE_EDIT_EMBED_)
+add_definitions(-DQNFA_BUILD -D_QCODE_EDIT_BUILD_ -D_QCODE_EDIT_EMBED_)
 
 set(DOCUMENT_SRC
     lib/document/qdocumentsearch.h
