@@ -30,12 +30,12 @@
 #include "qce-config.h"
 
 #include <QObject>
+#include <QStringList>
 #include <QVector>
 
 struct QFormat;
 class QString;
 class QSettings;
-class QStringList;
 class QDomElement;
 
 class QCE_EXPORT QFormatScheme : public QObject {

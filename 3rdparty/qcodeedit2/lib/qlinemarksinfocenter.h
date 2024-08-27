@@ -67,14 +67,16 @@ Q_DECLARE_TYPEINFO(QLineMark, Q_MOVABLE_TYPE);
 struct QLineMarkHandle {
     inline QLineMarkHandle() : line(0) {}
 
+    inline QLineMarkHandle(QLineMarkHandle const &) = default;
+
     inline QLineMarkHandle(const QString &f, QDocumentLineHandle *l, int m)
         : mark(m), line(l), file(f) {}
 
-    inline bool operator==(const QLineMarkHandle &m) {
+    inline bool operator==(const QLineMarkHandle &m) const {
         return (line == m.line) && (file == m.file) && (mark == m.mark);
     }
 
-    inline bool operator!=(const QLineMarkHandle &m) {
+    inline bool operator!=(const QLineMarkHandle &m) const {
         return (line != m.line) || (file != m.file) || (mark != m.mark);
     }
 

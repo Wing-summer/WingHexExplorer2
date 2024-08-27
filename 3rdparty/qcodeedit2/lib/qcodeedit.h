@@ -23,7 +23,6 @@
         \brief Definition of the QCodeEdit class
 */
 
-#include <QGenericArgument>
 #include <QList>
 #include <QPointer>
 
@@ -36,7 +35,13 @@ class QAction;
 class QPanelLayout;
 class QPanelWatcher;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QMetaMethodArgument>
+#define Q_COMMAND QList<QMetaMethodArgument>()
+#else
+#include <QGenericArgument>
 #define Q_COMMAND QList<QGenericArgument>()
+#endif
 
 class QCE_EXPORT QCodeEdit {
     friend class QPanelWatcher;
@@ -62,7 +67,11 @@ public:
     QAction *toggleViewAction(QPanel *p) const;
 
     void sendPanelCommand(const QString &type, const char *signature,
-                          const QList<QGenericArgument> &args = Q_COMMAND);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                          const QList<QMetaMethodArgument> &args = Q_COMMAND);
+#else
+                          const QList<QGenericArgument> &args);
+#endif
 
     static QCodeEdit *manager(QEditor *e);
     static QEditor *managed(const QString &f);

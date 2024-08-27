@@ -25,7 +25,6 @@
         \defgroup document Document related classes
 */
 
-#include <QLinkedList>
 #include <QList>
 #include <QVector>
 

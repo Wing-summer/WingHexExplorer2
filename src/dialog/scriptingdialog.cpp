@@ -387,7 +387,11 @@ void ScriptingDialog::on_about() {}
 void ScriptingDialog::on_sponsor() {
     // Github is not easy to access for Chinese people,
     // Gitee mirror instead
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    if (LanguageManager::instance().defaultLocale().territory() ==
+#else
     if (LanguageManager::instance().defaultLocale().country() ==
+#endif
         QLocale::China) {
         QDesktopServices::openUrl(
             QUrl(QStringLiteral("https://gitee.com/wing-cloud/"

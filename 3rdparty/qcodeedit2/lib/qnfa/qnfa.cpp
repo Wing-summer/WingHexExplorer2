@@ -224,9 +224,9 @@ void match(QNFAMatchContext *lexer, const QChar *d, int length,
         if (children) {
             // qDebug("trying %i sub nfas on %c", children->count(),
             // d[index].toLatin1());
-            int max = children->count();
+            auto max = children->count();
 
-            for (quint16 i = 0; i < max; ++i) {
+            for (decltype(max) i = 0; i < max; ++i) {
                 len = 0;
                 idx = index;
                 start = chain = children->at(i);
@@ -379,7 +379,7 @@ void match(QNFAMatchContext *lexer, const QChar *d, int length,
                             !(chain->assertion & ZeroOrMore) && !found) {
                             // if ( cc.toLatin1() == ')' )
                             //	qDebug("mismatch : %c != %c", cc.toLatin1(),
-                            //chain->c.at(0));
+                            // chain->c.at(0));
 
                             break;
                         }
@@ -662,7 +662,7 @@ QNFA *sequence(const QChar *d, int length, QNFA **end, bool cs) {
             if (set) {
                 set->c << c.unicode();
                 //	qWarning("Nested sets are not supported (and useless
-                //BTW)...");
+                // BTW)...");
                 continue;
             }
 
@@ -834,7 +834,7 @@ void addWord(QCharTree &tree, const QString &w, int action, bool cs) {
         if (it == tree.end())
             it = tree.insert(u, QCharTreeNode(u));
 
-        for (int i = 1; i < w.count(); i++) {
+        for (int i = 1; i < w.length(); i++) {
             u = w.at(i).unicode();
 
             // qDebug("char %c", w.at(i).toLatin1());
@@ -884,7 +884,7 @@ void addWord(QCharTree &tree, const QString &w, int action, bool cs) {
             l << tmp;
         }
 
-        for (int i = 1; i < w.count(); ++i) {
+        for (int i = 1; i < w.length(); ++i) {
             c = w.at(i);
             QList<QChar> lc;
 

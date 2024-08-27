@@ -363,17 +363,28 @@ void QDocumentSearch::next(bool backward, bool all) {
     */
 
     m_index = 0;
-    QRegExp m_regexp;
-    Qt::CaseSensitivity cs =
-        hasOption(CaseSensitive) ? Qt::CaseSensitive : Qt::CaseInsensitive;
+    QRegularExpression m_regexp;
 
     if (hasOption(RegExp)) {
-        m_regexp = QRegExp(m_string, cs, QRegExp::RegExp);
+        m_regexp = QRegularExpression(m_string);
+        if (hasOption(CaseSensitive)) {
+            m_regexp.setPatternOptions(
+                QRegularExpression::CaseInsensitiveOption);
+        }
     } else if (hasOption(WholeWords)) {
-        m_regexp = QRegExp(QString("\\b%1\\b").arg(QRegExp::escape(m_string)),
-                           cs, QRegExp::RegExp);
+        m_regexp =
+            QRegularExpression(QStringLiteral("\\b%1\\b")
+                                   .arg(QRegularExpression::escape(m_string)));
+        if (hasOption(CaseSensitive)) {
+            m_regexp.setPatternOptions(
+                QRegularExpression::CaseInsensitiveOption);
+        }
     } else {
-        m_regexp = QRegExp(m_string, cs, QRegExp::FixedString);
+        m_regexp = QRegularExpression(QRegularExpression::escape(m_string));
+        if (hasOption(CaseSensitive)) {
+            m_regexp.setPatternOptions(
+                QRegularExpression::CaseInsensitiveOption);
+        }
     }
 
     bool found = false;
@@ -422,8 +433,10 @@ void QDocumentSearch::next(bool backward, bool all) {
         }
 
         int column = backward
-                         ? m_regexp.lastIndexIn(s, m_cursor.columnNumber() - 1)
-                         : m_regexp.indexIn(s, m_cursor.columnNumber());
+                         ? s.lastIndexOf(m_regexp, m_cursor.columnNumber() - 1)
+                         : s.indexOf(m_regexp, m_cursor.columnNumber());
+
+        auto match = m_regexp.match(s);
 
         /*
         qDebug("searching %s in %s => %i",
@@ -436,7 +449,7 @@ void QDocumentSearch::next(bool backward, bool all) {
             column += coloffset;
 
             if (backward) {
-                m_cursor.setColumnNumber(column + m_regexp.matchedLength());
+                m_cursor.setColumnNumber(column + match.capturedLength());
                 m_cursor.setColumnNumber(column, QDocumentCursor::KeepAnchor);
 
                 /*
@@ -446,7 +459,7 @@ void QDocumentSearch::next(bool backward, bool all) {
                 */
             } else {
                 m_cursor.setColumnNumber(column);
-                m_cursor.setColumnNumber(column + m_regexp.matchedLength(),
+                m_cursor.setColumnNumber(column + match.capturedLength(),
                                          QDocumentCursor::KeepAnchor);
 
                 /*
@@ -485,8 +498,9 @@ void QDocumentSearch::next(bool backward, bool all) {
                     QString replacement = m_replace;
 
                     for (int i = m_regexp.captureCount(); i >= 0; --i)
-                        replacement.replace(QString("\\") + QString::number(i),
-                                            m_regexp.cap(i));
+                        replacement.replace(QStringLiteral("\\") +
+                                                QString::number(i),
+                                            match.captured(i));
 
                     m_cursor.beginEditBlock();
                     m_cursor.removeSelectedText();

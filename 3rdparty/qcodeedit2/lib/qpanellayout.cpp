@@ -107,7 +107,7 @@ QString QPanelLayout::serialized() const {
         } else {
             QString &ref = posMap[position];
 
-            ref.insert(ref.count() - 2, QString(",") + panel->id());
+            ref.insert(ref.size() - 2, QString(",") + panel->id());
         }
     }
 

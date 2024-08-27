@@ -153,7 +153,11 @@ bool QStatusPanel::paint(QPainter *p, QEditor *e) {
 */
 void QStatusPanel::mousePressEvent(QMouseEvent *e) {
     if (!editor() || (e->button() != Qt::LeftButton) || !m_conflictSpot ||
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        e->position().x() < m_conflictSpot) {
+#else
         e->x() < m_conflictSpot) {
+#endif
         editor()->setFocus();
         return;
     }

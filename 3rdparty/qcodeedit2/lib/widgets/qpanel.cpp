@@ -152,7 +152,13 @@ void QPanel::setDefaultVisibility(bool on) { m_defaultVisibility = on; }
 void QPanel::editorChange(QEditor *) {}
 
 bool QPanel::forward(QMouseEvent *e) {
-    QPoint pos, globalPos = e->globalPos(), ref = editor()->viewport()->pos();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QPoint pos, globalPos = e->globalPosition().toPoint()
+#else
+    QPoint pos, globalPos = e->globalPos()
+#endif
+                    ,
+                ref = editor()->viewport()->pos();
 
     if (editor()->viewport()->parentWidget())
         ref = editor()->viewport()->parentWidget()->mapToGlobal(ref);

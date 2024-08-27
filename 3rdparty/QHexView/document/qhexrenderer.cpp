@@ -275,7 +275,7 @@ QString QHexRenderer::decodeString(qsizetype line, QString encoding,
             auto unicode = decoder.decode(lrawline);
             QString data = unicode.data;
             this->unprintableWChars(data);
-            return unicode;
+            return data;
         } else {
             // Handle the case where the encoding is not recognized
             auto unicode = QString::fromUtf8(lrawline); // Fallback to UTF-8

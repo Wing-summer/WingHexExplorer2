@@ -78,7 +78,7 @@ protected:
     virtual void complete(const QDocumentCursor &c, const QString &trigger);
 
 private:
-    int m_max;
+    qsizetype m_max;
     QString m_trig;
     QDocumentCursor m_cur;
     QAction *pForcedTrigger;

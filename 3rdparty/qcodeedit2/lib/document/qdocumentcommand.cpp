@@ -369,7 +369,8 @@ void QDocumentCommand::updateTarget(int l, int offset) {
     if (m_cursor) {
         //		qDebug("moving cursor [0x%x:beg] from (%i, %i) to line
         //(%i, %i) as updating", m_cursor,
-        //m_cursor->m_begLine, 					m_cursor->m_begOffset, 					l, 					offset
+        // m_cursor->m_begLine,
+        // m_cursor->m_begOffset, l, 					offset
         //					);
         //
         while (l && (offset < 0)) {
@@ -537,7 +538,7 @@ void QDocumentInsertCommand::redo() {
     QDocumentLineHandle *hl = m_doc->impl()->at(m_data.lineNumber);
 
     if (m_data.handles.count()) {
-        removeText(m_data.lineNumber, m_data.startOffset, m_data.end.count());
+        removeText(m_data.lineNumber, m_data.startOffset, m_data.end.length());
     }
 
     insertText(m_data.lineNumber, m_data.startOffset, m_data.begin);
@@ -580,7 +581,7 @@ void QDocumentInsertCommand::undo() {
     QDocumentLineHandle *hl = m_doc->impl()->at(m_data.lineNumber);
 
     removeLines(m_data.lineNumber, m_data.handles.count());
-    removeText(m_data.lineNumber, m_data.startOffset, m_data.begin.count());
+    removeText(m_data.lineNumber, m_data.startOffset, m_data.begin.size());
 
     if (m_data.handles.count()) {
         insertText(m_data.lineNumber, m_data.startOffset, m_data.end);
@@ -672,12 +673,14 @@ void QDocumentEraseCommand::redo() {
     QDocumentLineHandle *hl = m_doc->impl()->at(m_data.lineNumber);
 
     if (m_data.handles.isEmpty()) {
-        removeText(m_data.lineNumber, m_data.startOffset, m_data.begin.count());
+        removeText(m_data.lineNumber, m_data.startOffset,
+                   m_data.begin.length());
 
         m_doc->impl()->emitContentsChange(m_data.lineNumber, 1);
 
     } else {
-        removeText(m_data.lineNumber, m_data.startOffset, m_data.begin.count());
+        removeText(m_data.lineNumber, m_data.startOffset,
+                   m_data.begin.length());
 
         if (m_data.endOffset != -1)
             insertText(m_data.lineNumber, m_data.startOffset, m_data.end);
@@ -716,7 +719,7 @@ void QDocumentEraseCommand::undo() {
 
         if (m_data.endOffset != -1)
             removeText(m_data.lineNumber, m_data.startOffset,
-                       m_data.end.count());
+                       m_data.end.size());
 
         insertText(m_data.lineNumber, m_data.startOffset, m_data.begin);
 

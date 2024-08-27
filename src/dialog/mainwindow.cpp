@@ -2381,7 +2381,6 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         hexeditor->disconnect(SLOT(documentLockedFile(bool)));
         hexeditor->disconnect(SLOT(copyLimitRaised()));
         hexeditor->disconnect(SLOT(scaleRateChanged()));
-        hexeditor->disconnect(SLOT());
         hexeditor->document()->disconnect();
     }
 

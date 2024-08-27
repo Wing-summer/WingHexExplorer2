@@ -69,8 +69,8 @@ void QCodeCompletionEngine::addTrigger(const QString &s) {
     if (m_triggers.contains(s))
         return;
 
-    if (s.count() > m_max)
-        m_max = s.count();
+    if (s.length() > m_max)
+        m_max = s.length();
 
     m_triggers << s;
 }
@@ -148,7 +148,7 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
     QString s, txt = s = k->text();
     QDocumentCursor cur = editor()->cursor();
 
-    int count = txt.count();
+    auto count = txt.length();
 
     if (txt.isEmpty() || m_triggers.isEmpty())
         return;
@@ -174,7 +174,7 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
     foreach (QString trig, m_triggers) {
         if (txt.endsWith(trig)) {
             cur = editor()->cursor();
-            cur.movePosition(trig.count(), QDocumentCursor::PreviousCharacter);
+            cur.movePosition(trig.size(), QDocumentCursor::PreviousCharacter);
 
             // notify completion trigger
             emit completionTriggered(trig);
@@ -202,7 +202,7 @@ bool QCodeCompletionEngine::eventFilter(QObject *o, QEvent *e) {
 
     QString s, txt = s = k->text();
 
-    int count = txt.count();
+    auto count = txt.length();
 
     if (txt.isEmpty() || m_triggers.isEmpty())
         return false; // QThread::eventFilter(o, e);
@@ -230,7 +230,7 @@ bool QCodeCompletionEngine::eventFilter(QObject *o, QEvent *e) {
             editor()->write(s);
 
             cur = editor()->cursor();
-            cur.movePosition(trig.count(), QDocumentCursor::PreviousCharacter);
+            cur.movePosition(trig.length(), QDocumentCursor::PreviousCharacter);
 
             // notify completion trigger
             emit completionTriggered(trig);
@@ -257,7 +257,7 @@ void QCodeCompletionEngine::complete(const QDocumentCursor &c,
     // TODO :
     //	* use a more efficient design by avoiding deep copy of the data
     //	* only lex the requested part (stop at cursor or topmost frame required
-    //for proper class hierarchy)
+    // for proper class hierarchy)
 
     QDocumentCursor cc = c;
     cc.movePosition(1, QDocumentCursor::Start, QDocumentCursor::KeepAnchor);

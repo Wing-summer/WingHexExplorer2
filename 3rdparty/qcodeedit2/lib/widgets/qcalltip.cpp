@@ -186,7 +186,7 @@ void QCallTip::keyPressEvent(QKeyEvent *e) {
 
     default:
 
-        if (text.count() && text.at(0).isPrint()) {
+        if (text.size() && text.at(0).isPrint()) {
 
         } else {
             close();

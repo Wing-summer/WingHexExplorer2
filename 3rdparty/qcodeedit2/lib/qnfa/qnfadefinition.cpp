@@ -36,7 +36,7 @@
 #include <QDomElement>
 #include <QDomText>
 
-uint qHash(const QPointer<QDocument> &p) { return qHash((QDocument *)(p)); }
+size_t qHash(const QPointer<QDocument> &p) { return qHash((QDocument *)(p)); }
 
 class QNFANotifier : public QNFAMatchHandler {
 public:
@@ -109,7 +109,7 @@ private:
 };
 
 extern QString *_singleLineCommentTarget;
-void embed(QNFA *src, QNFA *dest, int index);
+void embed(QNFA *src, QNFA *dest, qsizetype index);
 void fillContext(QNFA *cxt, QDomElement e, QFormatScheme *f,
                  QHash<QString, int> &pids, bool cs);
 
@@ -1609,7 +1609,7 @@ void QNFADefinition::flushEmbedRequests(const QString &lang) {
         QString r = it.key();
 
         if (r.startsWith(lang) &&
-            ((r.count() == lang.count()) || (r.at(lang.count()) == ':'))) {
+            ((r.size() == lang.size()) || (r.at(lang.size()) == ':'))) {
             QNFA *src = m_contexts.value(r);
 
             if (!src) {
@@ -1642,7 +1642,8 @@ void QNFADefinition::addEmbedRequest(const QString &cxt, QNFA *dest) {
     }
 }
 
-void QNFADefinition::shareEmbedRequests(QNFA *src, QNFA *dest, int offset) {
+void QNFADefinition::shareEmbedRequests(QNFA *src, QNFA *dest,
+                                        qsizetype offset) {
     QHash<QString, EmbedRequestList>::iterator it = m_pendingEmbeds.begin();
 
     while (it != m_pendingEmbeds.end()) {

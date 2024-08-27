@@ -114,7 +114,7 @@ void QFormatScheme::load(const QString &f) {
         The default implementation saves data in QXF format (XML-based)
 */
 void QFormatScheme::save(const QString &f) const {
-    QFile settings(f.count() ? f : m_settings);
+    QFile settings(f.length() ? f : m_settings);
 
     if (settings.open(QFile::WriteOnly | QFile::Text)) {
         QDomDocument doc("QXF");
@@ -283,7 +283,7 @@ void QFormatScheme::load(QSettings &s, bool ignoreNewIds) {
 
     QStringList l = s.childGroups();
 
-    foreach (QString id, l) {
+    for (auto &id : l) {
         if (ignoreNewIds && !m_formatKeys.contains(id))
             continue;
 

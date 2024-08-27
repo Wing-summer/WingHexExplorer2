@@ -27,7 +27,6 @@
 #include "qeditor.h"
 
 #include <QDebug>
-#include <QTextCodec>
 
 /*!
         \ingroup dialogs
@@ -41,14 +40,8 @@
 QEditConfig::QEditConfig(QWidget *w) : QWidget(w), m_direct(false) {
     setupUi(this);
 
-    QStringList l;
-    QList<QByteArray> ens = QTextCodec::availableCodecs();
-
-    foreach (QByteArray b, ens)
-        l << QString::fromLatin1(b);
-
     cbEncoding->clear();
-    cbEncoding->addItems(l);
+    cbEncoding->addItems(QCE::getEncodings());
 
     restore();
 }
@@ -111,15 +104,15 @@ bool QEditConfig::hasUnsavedChanges() const {
         return true;
     }
 
-    QTextCodec *c = QEditor::defaultCodec();
+    auto c = QEditor::defaultCodecName();
 
     if (cbEncoding->currentText() == "System") {
-        if (c && c->name() != "System") {
+        if (c != "System") {
             // qDebug("system codec!");
             return true;
         }
     } else {
-        if (!c || c->name() != cbEncoding->currentText().toLatin1()) {
+        if (c != cbEncoding->currentText().toLatin1()) {
             // qDebug("codec!");
             return true;
         }
@@ -189,11 +182,8 @@ void QEditConfig::apply() {
 
     QDocument::setShowSpaces(ws);
 
-    if (cbEncoding->currentText() == "System")
-        QEditor::setDefaultCodec(0, QEditor::UpdateAll);
-    else
-        QEditor::setDefaultCodec(cbEncoding->currentText().toLatin1(),
-                                 QEditor::UpdateAll);
+    QEditor::setDefaultCodec(cbEncoding->currentText().toUtf8(),
+                             QEditor::UpdateAll);
 
     int flags = QEditor::defaultFlags();
 
@@ -250,9 +240,8 @@ void QEditConfig::cancel() {
     chkPreserveTrailingIndent->setChecked(flags &
                                           QEditor::PreserveTrailingIndent);
 
-    QTextCodec *c = QEditor::defaultCodec();
-    cbEncoding->setCurrentIndex(cbEncoding->findText(
-        c ? c->name() : QTextCodec::codecForLocale()->name()));
+    auto c = QEditor::defaultCodecName();
+    cbEncoding->setCurrentIndex(qMax(cbEncoding->findText(c), 0));
 
     m_direct = oldDir;
 }
@@ -288,8 +277,7 @@ void QEditConfig::restore() {
     chkAutoRemoveTrailingWhitespace->setChecked(false);
     chkPreserveTrailingIndent->setChecked(true);
 
-    cbEncoding->setCurrentIndex(
-        cbEncoding->findText(QTextCodec::codecForLocale()->name()));
+    cbEncoding->setCurrentIndex(0);
 
     m_direct = oldDir;
 }
