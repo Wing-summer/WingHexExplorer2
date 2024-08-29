@@ -36,6 +36,7 @@
 #include <QPicture>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QScrollBar>
 #include <QStatusBar>
 #include <QTimer>
 
@@ -311,7 +312,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
     _findEmptyResult = new FindResultModel(this);
-    m_findresult = new QTableView(this);
+    m_findresult = new QTableViewExt(this);
     m_findresult->setProperty("EditorView", quintptr(0));
     m_findresult->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_findresult->setSelectionBehavior(
@@ -352,7 +353,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
     _numsitem = new NumShowModel(this);
-    m_numshowtable = new QTableView(this);
+    m_numshowtable = new QTableViewExt(this);
     m_numshowtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_numshowtable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_numshowtable->setSelectionBehavior(
@@ -421,7 +422,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
 
-    m_hashtable = new QTableView(this);
+    m_hashtable = new QTableViewExt(this);
     m_hashtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
     m_hashtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
@@ -462,7 +463,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::CDockAreaWidget *areaw) {
     _bookMarkEmpty = new BookMarksModel(nullptr);
 
-    m_bookmarks = new QTableView(this);
+    m_bookmarks = new QTableViewExt(this);
     m_bookmarks->setFocusPolicy(Qt::StrongFocus);
     m_bookmarks->setSelectionMode(
         QAbstractItemView::SelectionMode::ExtendedSelection);
@@ -521,7 +522,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                                    ads::CDockAreaWidget *areaw) {
     _metadataEmpty = new MetaDataModel(nullptr);
 
-    m_metadatas = new QTableView(this);
+    m_metadatas = new QTableViewExt(this);
     m_metadatas->setFocusPolicy(Qt::StrongFocus);
     m_metadatas->setSelectionMode(
         QAbstractItemView::SelectionMode::ExtendedSelection);
@@ -601,7 +602,7 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptObjShowDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
-    m_varshowtable = new QTableView(this);
+    m_varshowtable = new QTableViewExt(this);
     m_varshowtable->setEditTriggers(QTableView::EditTrigger::DoubleClicked);
     m_varshowtable->setSelectionBehavior(
         QAbstractItemView::SelectionBehavior::SelectRows);
@@ -2164,7 +2165,11 @@ void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 void MainWindow::on_sponsor() {
     // Github is not easy to access for Chinese people,
     // Gitee mirror instead
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    if (LanguageManager::instance().defaultLocale().territory() ==
+#else
     if (LanguageManager::instance().defaultLocale().country() ==
+#endif
         QLocale::China) {
         QDesktopServices::openUrl(
             QUrl(QStringLiteral("https://gitee.com/wing-cloud/"

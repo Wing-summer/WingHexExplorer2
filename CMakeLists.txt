@@ -17,6 +17,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED
 
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
 if(WIN32)
   add_definitions(-DNOMINMAX)
@@ -110,7 +111,11 @@ set(CONTROL_SRC
     src/control/qcolorpicker_slider.hpp
     src/control/qcolorpicker_slider.cpp
     src/control/huecolorpickerslider.h
-    src/control/huecolorpickerslider.cpp)
+    src/control/huecolorpickerslider.cpp
+    src/control/qtableviewext.h
+    src/control/qtableviewext.cpp
+    src/control/qlistviewext.h
+    src/control/qlistviewext.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp

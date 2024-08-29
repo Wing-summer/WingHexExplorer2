@@ -70,7 +70,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
                           const QList<QMetaMethodArgument> &args = Q_COMMAND);
 #else
-                          const QList<QGenericArgument> &args);
+                          const QList<QGenericArgument> &args = Q_COMMAND);
 #endif
 
     static QCodeEdit *manager(QEditor *e);

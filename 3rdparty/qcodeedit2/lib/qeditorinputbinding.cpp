@@ -157,11 +157,15 @@ bool QEditorInputBinding::keyPressEvent(QKeyEvent *event, QEditor *editor) {
         int idx = m_index.at(i);
         const QKeySequence &ks = m_keys.at(i);
 
-        if (idx < (int)ks.count()) {
+        if (idx < ks.count()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            if (ks[idx].key() == event->key()) {
+#else
             if (ks[idx] == event->key()) {
+#endif
                 ++idx;
 
-                if (idx == (int)ks.count()) {
+                if (idx == ks.count()) {
                     // qDebug("match");
 
                     // key sequence matched
