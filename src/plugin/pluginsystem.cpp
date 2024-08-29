@@ -60,10 +60,11 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
         // clean up
         for (auto &plg : v) {
             auto handles = m_plgHandles.value(plg);
-            std::remove_if(handles.begin(), handles.end(),
-                           [view](const QPair<int, EditorView *> &v) {
-                               return v.second == view;
-                           });
+            auto r = std::remove_if(handles.begin(), handles.end(),
+                                    [view](const QPair<int, EditorView *> &v) {
+                                        return v.second == view;
+                                    });
+            Q_UNUSED(r);
         }
 
         m_viewBindings.remove(view);

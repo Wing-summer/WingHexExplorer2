@@ -13,6 +13,30 @@ import subprocess
 
 from colorama import Fore, Style
 
+def run_command_interactive(command):
+    """
+    Run a command interactively, printing its stdout in real-time.
+
+    :param command: List of command arguments (e.g., ["your_command", "arg1", "arg2"])
+    :return: The return code of the command
+    """
+    process = subprocess.Popen(
+        command, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT,  # Capture both stdout and stderr
+        text=True  # Ensure the output is in text mode
+    )
+
+    while True:
+        output = process.stdout.readline()
+        if output == "" and process.poll() is not None:
+            break
+        if output:
+            print(Fore.GREEN + output.strip() + Style.RESET_ALL) 
+
+    return_code = process.wait()
+    return return_code
+
 def check_command_exists(command):
     try:
         # Try to run the command with --version to check if it exists
@@ -78,14 +102,23 @@ def main():
             Fore.RED + "[Error] This is not a CMake build directory!" + Style.RESET_ALL)
         exit(-1)
 
-    version_fle_src = os.path.join(projectdeb, "WINGHEX_VERSION")
-    if (os.path.exists(version_fle_src) == False):
+    version_file_src = os.path.join(projectdeb, "WINGHEX_VERSION")
+    if (os.path.exists(version_file_src) == False):
         print(
             Fore.RED + "[Error] WINGHEX_VERSION file not found, maybe not a CMake build directory!" + Style.RESET_ALL)
         exit(-1)
 
-    with open(version_fle_src, 'r') as version_fle:
-        version = version_fle.read()
+    version_qt_src = os.path.join(projectdeb, "QT_VERSION")
+    if (os.path.exists(version_qt_src) == False):
+        print(
+            Fore.RED + "[Error] QT_VERSION file not found, maybe not a CMake build directory!" + Style.RESET_ALL)
+        exit(-1)
+
+    with open(version_file_src, 'r') as version_file:
+        version = version_file.read()
+
+    with open(version_qt_src, 'r') as version_qt:
+        qt_version = version_qt.read()
 
     debPath = os.path.join(projectdeb, "package")
     if (os.path.exists(debPath) == True):
@@ -169,12 +202,12 @@ Homepage: https://www.cnblogs.com/wingsummer/
     print(Fore.GREEN + ">> Copying dependencies..." + Style.RESET_ALL)
 
     ads_lib = os.path.join(projectdeb, "3rdparty",
-                           "Qt-Advanced-Docking-System", "src", "libqt5advanceddocking.so")
+                           "Qt-Advanced-Docking-System", "src", f"libqt{qt_version}advanceddocking.so")
     if (os.path.exists(ads_lib) == False):
-        print(Fore.RED + "[Error] libqt5advanceddocking.so is not found! Maybe you are building it in debug mode which is not allowed!" + Style.RESET_ALL)
+        print(Fore.RED + f"[Error] libqt{qt_version}advanceddocking.so is not found! Maybe you are building it in debug mode which is not allowed!" + Style.RESET_ALL)
         exit(-4)
     shutil.copy2(ads_lib, os.path.join(
-        exeBasePath, "libqt5advanceddocking.so"))
+        exeBasePath, f"libqt{qt_version}advanceddocking.so"))
 
     print(Fore.GREEN + ">> Creating program starting entry..." + Style.RESET_ALL)
     shutil.copy2(os.path.join(buildinstaller, f"{package_name}.sh"),
@@ -200,17 +233,9 @@ Homepage: https://www.cnblogs.com/wingsummer/
     else:
         output_deb_dir =  f"com.wingsummer.winghexexplorer2_{version}_{architecture}.deb" 
 
-    try:
-        # Try to run the command with --version to check if it exists
-        dpkg_out = subprocess.run(["fakeroot", "dpkg", "-b", exeDebPath, output_deb_dir], check=True,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(Fore.GREEN + ">> dpkg: " + dpkg_out.stdout.decode("utf-8") + Style.RESET_ALL)
-    except subprocess.CalledProcessError as e:
-        print(Fore.RED + f"[Error] Build deb package error: \n{e.stderr.decode("utf-8")}" 
-               + Style.RESET_ALL)
-        exit(-6)
-
-    exit(0)
+    ret = run_command_interactive(["fakeroot", "dpkg", "-b", exeDebPath, output_deb_dir])
+    
+    exit(ret)
 
 
 if __name__ == "__main__":

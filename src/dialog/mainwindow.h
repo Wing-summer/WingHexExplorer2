@@ -23,6 +23,8 @@
 #include "class/recentfilemanager.h"
 #include "class/wingprogressdialog.h"
 #include "control/editorview.h"
+#include "control/qlistviewext.h"
+#include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
 #include "model/bookmarksmodel.h"
 #include "model/checksummodel.h"
@@ -407,24 +409,24 @@ private:
 
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
-    QTableView *m_varshowtable = nullptr;
+    QTableViewExt *m_varshowtable = nullptr;
 
-    QTableView *m_findresult = nullptr;
+    QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findEmptyResult = nullptr;
 
-    QTableView *m_numshowtable = nullptr;
+    QTableViewExt *m_numshowtable = nullptr;
     NumShowModel *_numsitem = nullptr;
 
-    QTableView *m_hashtable = nullptr;
+    QTableViewExt *m_hashtable = nullptr;
     CheckSumModel *_hashModel = nullptr;
 
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
 
-    QTableView *m_bookmarks = nullptr;
+    QTableViewExt *m_bookmarks = nullptr;
     BookMarksModel *_bookMarkEmpty = nullptr;
 
-    QTableView *m_metadatas = nullptr;
+    QTableViewExt *m_metadatas = nullptr;
     MetaDataModel *_metadataEmpty = nullptr;
 
     // data visualization widgets

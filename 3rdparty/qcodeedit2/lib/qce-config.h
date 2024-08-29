@@ -128,7 +128,7 @@ public:
 #else
     auto enc = QTextCodec::codecForName(encoding.toUtf8());
     auto d = enc->makeEncoder();
-    auto unicode = d->toUnicode(data);
+    auto unicode = d->fromUnicode(data);
     return unicode;
 #endif
 }
