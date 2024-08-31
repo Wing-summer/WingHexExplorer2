@@ -546,6 +546,7 @@ QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
             delete hexbuffer;
         }
     } else {
+        delete f;
         return new QHexDocument(new QFileBuffer(), readonly);
     }
 
@@ -565,6 +566,6 @@ QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
     }
     return nullptr;
 #else
-    return fromLargeFile(filename, readonly);
+    return fromLargeFile(storage.device(), readonly);
 #endif
 }

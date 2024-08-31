@@ -1,6 +1,10 @@
 #ifndef QWINDRIVERBUFFER_H
 #define QWINDRIVERBUFFER_H
 
+#include <qnamespace.h>
+
+#ifdef Q_OS_WIN
+
 #include "QHexEdit2/chunks_win.h"
 #include "qhexbuffer.h"
 #include <QFile>
@@ -25,5 +29,7 @@ private:
     Chunks_win *_chunks;
     uchar *m_memory;
 };
+
+#endif
 
 #endif // QWINDRIVERBUFFER_H
