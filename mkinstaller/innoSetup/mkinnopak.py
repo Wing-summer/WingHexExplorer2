@@ -195,6 +195,7 @@ def main():
 #define MyAppExeName "{exe_name}"
 #define MyAppLicenseFile "{os.path.join(exeDebPath, "LICENSE")}"
 #define MyAppExePath "{os.path.join(exeDebPath, exe_name)}"
+#define MyOutputBaseFilename "WingHexExplorer2Setup"
 
 """
     iss_content += r"""
@@ -214,7 +215,7 @@ DefaultDirName={commonpf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile={#MyAppLicenseFile}
-OutputBaseFilename=WingHexExplorer2Setup
+OutputBaseFilename={#MyOutputBaseFilename}
 Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -225,8 +226,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [CustomMessages]                                
-english.OpenWithWingHexExplorer="Open with WingHexExplorer2"
-chinesesimplified.OpenWithWingHexExplorer="使用羽云十六进制打开" 
+english.OpenWithWingHexExplorer=Open with WingHexExplorer2
+chinesesimplified.OpenWithWingHexExplorer=使用羽云十六进制打开
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -237,7 +238,7 @@ Source: {#MyAppExePath}; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 """
-    iss_content += fr'Source: "{exeDebPath}\*"; ' + r'DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.iss,README.md"' + '\n'
+    iss_content += fr'Source: "{exeDebPath}\*"; ' + r'DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.iss,{#MyOutputBaseFilename}.exe,README.md"' + '\n'
     iss_content += fr'Source: "{exeDebPath}\README.md"; ' + r'DestDir: "{app}"; Flags: isreadme'
 
     iss_content += """
@@ -246,8 +247,9 @@ Source: {#MyAppExePath}; DestDir: "{app}"; Flags: ignoreversion
 
 """
 
-    iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: string; ValueName: ""; ValueData: "{cm:OpenWithWingHexExplorer}"; Flags: uninsdeletekey' + '\n'
-    iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey' + '\n'
+    # iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: expandsz; ValueName: ""; ValueData: {cm:OpenWithWingHexExplorer}; Flags: uninsdeletekey' + '\n'
+    # iss_content += r'Root: HKCR; Subkey: "*\shell\WingHexExplorer"; ValueType: expandsz; ValueName: "Icon"; ValueData: {app}\{#MyAppExeName}; Flags: uninsdeletekey' + '\n'
+    # iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer\command"; ValueType: expandsz; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey' + '\n'
 
     iss_content += """
 [Icons]

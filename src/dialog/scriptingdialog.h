@@ -140,6 +140,9 @@ private slots:
     void on_stepoutscript();
     void on_stepoverscript();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;

@@ -1,6 +1,6 @@
 #include "bookmarkremovecommand.h"
 
-BookMarkRemoveCommand::BookMarkRemoveCommand(QHexDocument *doc, qint64 pos,
+BookMarkRemoveCommand::BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
                                              QString comment,
                                              QUndoCommand *parent)
     : BookMarkCommand(doc, pos, comment, parent) {}

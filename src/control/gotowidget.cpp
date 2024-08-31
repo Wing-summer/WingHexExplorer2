@@ -162,8 +162,8 @@ qsizetype GotoWidget::convert2Pos(QString value, SEEKPOS &ps, bool isline) {
         }
     } else {
         ps = SEEKPOS::Relative;
-        res = isline ? qint64(m_rowBeforeJump)
-                     : qint64(m_oldFileOffsetBeforeJump);
+        res = isline ? qsizetype(m_rowBeforeJump)
+                     : qsizetype(m_oldFileOffsetBeforeJump);
     }
     return res;
 }

@@ -15,25 +15,18 @@ DriverSelectorDialog::DriverSelectorDialog(QWidget *parent)
 
     drivers = new QListWidget(this);
     drivers->setSortingEnabled(false);
-    QStorageInfo si;
     auto ico = ICONRES("opendriver");
-    auto infos = si.mountedVolumes();
+    auto infos = QStorageInfo::mountedVolumes();
     layout->addWidget(new QLabel("PleaseChooseDriver", this));
     layout->addSpacing(5);
-    for (auto &item : infos) {
+    for (auto &item : Utilities::getStorageDevices()) {
         auto device = item.device();
-        if (item.isValid()
-#ifdef Q_OS_LINUX
-            && Utilities::getFileType(device) == Utilities::FileType::Driver
-#endif
-        ) {
 #ifdef Q_OS_WINDOWS
-            drivers->addItem(new QListWidgetItem(ico, item.rootPath()));
+        drivers->addItem(new QListWidgetItem(ico, item.rootPath()));
 #else
-            drivers->addItem(new QListWidgetItem(ico, item.device()));
+        drivers->addItem(new QListWidgetItem(ico, item.device()));
 #endif
-            m_infos.push_back(item);
-        }
+        m_infos.push_back(item);
     }
     layout->addWidget(drivers);
     layout->addSpacing(5);

@@ -9,23 +9,75 @@
 class RecentFileManager : public QObject {
     Q_OBJECT
 public:
+    struct RecentInfo {
+        QString fileName;
+        bool isWorkSpace = false;
+        qsizetype start = -1;
+        qsizetype stop = -1;
+
+        bool operator==(const RecentInfo &info) const {
+            return
+#ifdef Q_OS_WIN
+                this->fileName.compare(info.fileName, Qt::CaseInsensitive) == 0
+#else
+                this->fileName == info.fileName
+#endif
+                && this->isWorkSpace == info.isWorkSpace &&
+                this->start == info.start && this->stop == info.stop;
+        }
+        bool operator!=(const RecentInfo &info) const {
+            return
+#ifdef Q_OS_WIN
+                this->fileName.compare(info.fileName, Qt::CaseInsensitive)
+#else
+                this->fileName != info.fileName
+#endif
+                || this->isWorkSpace != info.isWorkSpace ||
+                this->start != info.start || this->stop != info.stop;
+        }
+
+        friend QDataStream &operator<<(QDataStream &arch,
+                                       const RecentInfo &object) {
+            arch << object.fileName;
+            arch << object.isWorkSpace;
+            arch << object.start;
+            arch << object.stop;
+            return arch;
+        }
+
+        friend QDataStream &operator>>(QDataStream &arch, RecentInfo &object) {
+            arch >> object.fileName;
+            arch >> object.isWorkSpace;
+            arch >> object.start;
+            arch >> object.stop;
+            return arch;
+        }
+    };
+
+public:
     explicit RecentFileManager(QMenu *menu);
     ~RecentFileManager();
-    void addRecentFile(QString filename);
+    void addRecentFile(const RecentInfo &info);
     void clearFile();
-    void apply(QWidget *parent, const QStringList &files);
+    void apply(QWidget *parent, const QList<RecentInfo> &files);
 
-signals:
-    void onSaveRecent(const QStringList &content);
+    const QList<RecentInfo> &saveRecent() const;
+
+private:
+    bool existsPath(const RecentInfo &info);
+    QString getDisplayFileName(const RecentInfo &info);
+    QString getDisplayTooltip(const RecentInfo &info);
 
 private:
     QMenu *m_menu;
     QWidget *m_parent;
-    QStringList m_recents;
+    QList<RecentInfo> m_recents;
     QList<QAction *> hitems;
 
 private slots:
     void trigger();
 };
+
+Q_DECLARE_METATYPE(RecentFileManager::RecentInfo)
 
 #endif // RECENTFILEMANAGER_H

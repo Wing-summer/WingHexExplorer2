@@ -7,13 +7,14 @@
 #include "qhexmetadata.h"
 #include <QFile>
 #include <QMap>
+#include <QStorageInfo>
 #include <QUndoStack>
 
 /*=========================*/
 // added by wingsummer
 
 struct BookMarkStruct {
-    qlonglong pos;
+    qsizetype pos;
     QString comment;
 };
 
@@ -80,7 +81,8 @@ public:
     bool existBookMark(qsizetype pos);
 
     void findAllBytes(
-        qint64 begin, qint64 end, QByteArray b, QList<qsizetype> &results,
+        qsizetype begin, qsizetype end, QByteArray b,
+        QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
     bool isDocSaved();
     void setDocSaved(bool b = true);
@@ -112,7 +114,8 @@ public slots:
     void undo();
     void redo();
 
-    void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
+    void Insert(QHexCursor *cursor, qsizetype offset, uchar b,
+                int nibbleindex);
     void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);
     void Replace(QHexCursor *cursor, qsizetype offset, uchar b,
@@ -122,17 +125,17 @@ public slots:
     bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                 int nibbleindex = 0);
 
-    QByteArray read(qint64 offset, qsizetype len) const;
+    QByteArray read(qsizetype offset, qsizetype len) const;
     bool saveTo(QIODevice *device, bool cleanUndo);
 
-    // qint64 searchForward(const QByteArray &ba);
-    // qint64 searchBackward(const QByteArray &ba);
+    // qsizetype searchForward(const QByteArray &ba);
+    // qsizetype searchBackward(const QByteArray &ba);
 
     /*================================*/
     // added by wingsummer
 
-    qint64 searchForward(qsizetype begin, const QByteArray &ba);
-    qint64 searchBackward(qsizetype begin, const QByteArray &ba);
+    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
+    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
 
     bool insert(qsizetype offset, uchar b);
     bool insert(qsizetype offset, const QByteArray &data);
@@ -151,8 +154,9 @@ public:
     template <typename T>
     static QHexDocument *fromFile(QString filename, bool readonly = false);
 
-    static QHexDocument *fromRegionFile(QString filename, qint64 start,
-                                        qint64 length, bool readonly = false);
+    static QHexDocument *fromRegionFile(QString filename, qsizetype start,
+                                        qsizetype length,
+                                        bool readonly = false);
 
     template <typename T>
     static QHexDocument *fromMemory(char *data, int size,
@@ -160,7 +164,10 @@ public:
     template <typename T>
     static QHexDocument *fromMemory(const QByteArray &ba,
                                     bool readonly = false);
-    static QHexDocument *fromLargeFile(QString filename, bool readonly = false);
+    static QHexDocument *fromLargeFile(const QString &filename,
+                                       bool readonly = false);
+    static QHexDocument *fromStorageDriver(const QStorageInfo &storage,
+                                           bool readonly = false);
 
 signals:
 

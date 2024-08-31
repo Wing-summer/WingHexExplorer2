@@ -655,7 +655,8 @@ void QHexView::paintEvent(QPaintEvent *e) {
     // compute document lines, adding firstVisible and removing the header
     // the max is necessary if the rect covers the header
     const qsizetype begin = firstVisible + std::max(first - headerCount, 0);
-    const qsizetype end = firstVisible + std::max(lastPlusOne - headerCount, 0);
+    const qsizetype end =
+        firstVisible + std::max(lastPlusOne - headerCount, 0);
 
     painter.save();
     painter.translate(-this->horizontalScrollBar()->value(), 0);
@@ -1047,7 +1048,8 @@ void QHexView::renderLine(qsizetype line) {
 }
 
 qsizetype QHexView::firstVisibleLine() const {
-    return this->verticalScrollBar()->value() * documentSizeFactor();
+    return qsizetype(this->verticalScrollBar()->value()) *
+           documentSizeFactor();
 }
 qsizetype QHexView::lastVisibleLine() const {
     return this->firstVisibleLine() + this->visibleLines() - 1;
@@ -1056,7 +1058,7 @@ qsizetype QHexView::lastVisibleLine() const {
 qsizetype QHexView::visibleLines() const {
     auto visLines =
         qsizetype(std::ceil(this->height() / m_renderer->lineHeight() -
-                            m_renderer->headerLineCount()));
+                             m_renderer->headerLineCount()));
     return std::min(visLines, m_renderer->documentLines());
 }
 

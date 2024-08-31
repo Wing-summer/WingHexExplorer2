@@ -6,6 +6,7 @@
 #include <QSpinBox>
 
 #include "QPathEdit/qpathedit.h"
+#include "define.h"
 #include "framelessdialogbase.h"
 
 struct RegionFileResult {

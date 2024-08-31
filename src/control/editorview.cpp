@@ -354,41 +354,37 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
         return ErrFile::ClonedFile;
     }
 
-    QFileInfo info(driver);
-    if (info.exists()) {
-        if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
-            return ErrFile::Permission;
-        }
-
-        auto readonly = !Utilities::fileCanWrite(driver);
-
-        auto *p = QHexDocument::fromLargeFile(driver, readonly);
-
-        if (Q_UNLIKELY(p == nullptr)) {
-            return ErrFile::Permission;
-        }
-
-        m_docType = DocumentType::Driver;
-
-        m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-        m_hex->setLockedFile(readonly);
-        m_hex->setKeepSize(true);
-
-        if (!encoding.isEmpty()) {
-            m_hex->renderer()->setEncoding(encoding);
-        }
-
-        p->setDocSaved();
-        m_fileName = driver;
-        m_rawName = info.fileName();
-
-        this->setWindowTitle(m_rawName);
-        connectDocSavedFlag(this);
-
-        auto tab = this->tabWidget();
-        tab->setIcon(ICONRES(QStringLiteral("opendriver")));
-        tab->setToolTip(driver);
+    auto sdriver = Utilities::getStorageDevice(driver);
+    if (!sdriver.isValid()) {
+        return ErrFile::NotExist;
     }
+
+    auto *p = QHexDocument::fromStorageDriver(sdriver);
+
+    if (Q_UNLIKELY(p == nullptr)) {
+        return ErrFile::Permission;
+    }
+
+    m_docType = DocumentType::Driver;
+
+    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
+    m_hex->setLockedFile(true);
+    m_hex->setKeepSize(true);
+
+    if (!encoding.isEmpty()) {
+        m_hex->renderer()->setEncoding(encoding);
+    }
+
+    p->setDocSaved();
+    m_fileName = driver;
+    m_rawName = driver;
+
+    this->setWindowTitle(m_rawName);
+    connectDocSavedFlag(this);
+
+    auto tab = this->tabWidget();
+    tab->setIcon(ICONRES(QStringLiteral("opendriver")));
+    tab->setToolTip(driver);
 
     return ErrFile::Success;
 }

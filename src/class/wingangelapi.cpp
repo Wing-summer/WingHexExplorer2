@@ -1186,7 +1186,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     }
 
     {
-        static std::function<bool(qsizetype, qint32)> fn =
+        static std::function<bool(qsizetype, qint64)> fn =
             std::bind(&WingHex::WingPlugin::Controller::writeInt64, ctl,
                       std::placeholders::_1, std::placeholders::_2);
         r = engine->RegisterGlobalFunction(
@@ -1564,8 +1564,8 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     }
 
     {
-        static std::function<WingHex::ErrFile(const QString &, qsizetype start,
-                                              qsizetype length)>
+        static std::function<WingHex::ErrFile(const QString &, qsizetype,
+                                              qsizetype)>
             fn = std::bind(&WingHex::WingPlugin::Controller::openRegionFile,
                            ctl, std::placeholders::_1, std::placeholders::_2,
                            std::placeholders::_3);

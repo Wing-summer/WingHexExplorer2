@@ -1,6 +1,6 @@
 #include "metaremoveposcommand.h"
 
-MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qint64 pos,
+MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
     : QUndoCommand(parent), m_hexmeta(hexmeta), m_pos(pos) {
   olditems = m_hexmeta->gets(pos);

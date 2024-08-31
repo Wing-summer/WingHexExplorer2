@@ -9,6 +9,7 @@
 #include <QMetaEnum>
 #include <QMimeDatabase>
 #include <QScreen>
+#include <QStorageInfo>
 #include <QStyle>
 #include <QWidget>
 
@@ -22,10 +23,9 @@
 #include <windows.h>
 #undef MessageBox // because of IWingPlugin
 #else
+#include <filesystem>
 #include <unistd.h>
 #endif
-
-#include <filesystem>
 
 #define PROEXT ".wingpro"
 
@@ -36,17 +36,6 @@ Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
 Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {
     return QIcon(NAMEICONRES(name));
 }
-
-/*
-struct HexFile {
-    QJsonDocument *doc;
-    QHexRenderer *render;
-    QString filename;
-    QString workspace;
-    int vBarValue;
-    bool isdriver;
-    QByteArray md5; // only for RegionFile
-};*/
 
 class Utilities {
 public:
@@ -189,18 +178,42 @@ public:
         return t.inherits(QStringLiteral("text/plain"));
     }
 
-    enum class FileType { File, Driver, Others };
-
-    static FileType getFileType(const QString &path) {
-        namespace fs = std::filesystem;
-        auto p = fs::path(path.toStdString());
-        if (fs::is_regular_file(p)) {
-            return FileType::File;
-        } else if (fs::is_block_file(p)) {
-            return FileType::Driver;
-        } else {
-            return FileType::Others;
+    static QList<QStorageInfo> getStorageDevices() {
+        static QList<QStorageInfo> sdns;
+        if (sdns.isEmpty()) {
+            auto infos = QStorageInfo::mountedVolumes();
+            for (auto &item : infos) {
+                auto device = item.device();
+                if (item.isValid()
+#ifdef Q_OS_LINUX
+                    && std::filesystem::is_regular_file(
+                           std::filesystem::path(device.toStdString()))
+#endif
+                ) {
+                    sdns.append(item);
+                }
+            }
         }
+        return sdns;
+    }
+
+    static bool isStorageDevice(const QString &path) {
+        auto sdns = getStorageDevices();
+        return std::find_if(sdns.begin(), sdns.end(),
+                            [path](const QStorageInfo &info) {
+                                return info.device() == path;
+                            }) != sdns.end();
+    }
+
+    static QStorageInfo getStorageDevice(const QString &path) {
+        auto sdns = getStorageDevices();
+        auto r = std::find_if(
+            sdns.begin(), sdns.end(),
+            [path](const QStorageInfo &info) { return info.device() == path; });
+        if (r != sdns.end()) {
+            return *r;
+        }
+        return QStorageInfo();
     }
 };
 

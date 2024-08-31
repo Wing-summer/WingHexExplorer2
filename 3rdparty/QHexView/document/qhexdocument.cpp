@@ -16,6 +16,11 @@
 #include <QClipboard>
 #include <QFile>
 
+#ifdef Q_OS_WIN
+#include "buffer/qwindriverbuffer.h"
+#include "qstoragedevice.h"
+#endif
+
 /*======================*/
 // added by wingsummer
 
@@ -143,7 +148,6 @@ bool QHexDocument::ClearBookMark() {
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (m_keepsize && !existBookMark(pos)) {
-        auto section = bookmarks.size();
         BookMarkStruct b{pos, comment};
         bookmarks.append(b);
         setDocSaved(false);
@@ -238,7 +242,6 @@ bool QHexDocument::removeBookMarkByIndex(qindextype index) {
 
 bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
     if (m_keepsize && pos > 0 && pos < m_buffer->length()) {
-        int index = 0;
         for (auto &item : bookmarks) {
             if (item.pos == pos) {
                 item.comment = comment;
@@ -246,7 +249,6 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
                 emit bookMarkChanged();
                 return true;
             }
-            index++;
         }
     }
     return false;
@@ -254,7 +256,6 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
 
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
-        auto section = bookmarks.size();
         bookmarks.clear();
         setDocSaved(false);
         emit documentChanged();
@@ -531,7 +532,8 @@ qsizetype QHexDocument::searchBackward(qsizetype begin, const QByteArray &ba) {
     return m_buffer->lastIndexOf(ba, begin);
 }
 
-QHexDocument *QHexDocument::fromLargeFile(QString filename, bool readonly) {
+QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
+                                          bool readonly) {
 
     auto f = new QFile;
     if (!filename.isEmpty()) {
@@ -548,4 +550,21 @@ QHexDocument *QHexDocument::fromLargeFile(QString filename, bool readonly) {
     }
 
     return nullptr;
+}
+
+QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
+                                              bool readonly) {
+#ifdef Q_OS_WIN
+    auto f = new QStorageDevice;
+    f->setStorage(storage);
+    auto hexbuffer = new QWinDriverBuffer();
+    if (hexbuffer->read(f)) {
+        return new QHexDocument(hexbuffer, readonly);
+    } else {
+        delete hexbuffer;
+    }
+    return nullptr;
+#else
+    return fromLargeFile(filename, readonly);
+#endif
 }

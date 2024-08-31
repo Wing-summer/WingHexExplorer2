@@ -1116,7 +1116,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl,
-            QOverload<qint64, qint64, const QColor &, const QColor &,
+            QOverload<qsizetype, qsizetype, const QColor &, const QColor &,
                       const QString &>::of(&WingPlugin::Controller::metadata),
             _win,
             [=](qsizetype begin, qsizetype end, const QColor &fgcolor,

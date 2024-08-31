@@ -1,14 +1,17 @@
 #include "recentfilemanager.h"
-#include "../class/winginputdialog.h"
-#include "../control/toast.h"
-#include "../utilities.h"
+#include "appmanager.h"
+#include "control/toast.h"
+#include "utilities.h"
 
 #include <QFile>
 #include <QMenu>
 
-RecentFileManager::RecentFileManager(QMenu *menu) : QObject(), m_menu(menu) {}
+RecentFileManager::RecentFileManager(QMenu *menu) : QObject(), m_menu(menu) {
+    Q_ASSERT(menu);
+    menu->setToolTipsVisible(true);
+}
 
-void RecentFileManager::apply(QWidget *parent, const QStringList &files) {
+void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
     Q_ASSERT(parent);
     this->setParent(parent);
     m_parent = parent;
@@ -29,72 +32,103 @@ void RecentFileManager::apply(QWidget *parent, const QStringList &files) {
                          tr("NoHistoryDel"));
             return;
         }
-        bool ok;
-        auto d = WingInputDialog::getInt(nullptr, tr("Input"), tr("InputIndex"),
-                                         0, 0, m_recents.count(), 1, &ok);
-        if (ok) {
-            m_menu->removeAction(hitems.at(d));
-            m_recents.removeAt(d);
-            for (auto it = hitems.begin() + d; it != hitems.end(); it++) {
-                (*it)->setIconText(QString::number(d++));
-            }
-        }
+        // TODO
     });
     m_menu->addAction(a);
 
     m_menu->addSeparator();
 
-    int i = 0;
     for (auto &item : files) {
-        if (QFile::exists(item)) {
-            if (m_recents.count() > 10)
-                break;
-            m_recents << item;
-            a = new QAction(m_menu);
-            a->setText(QStringLiteral("%1 : %2").arg(i++).arg(item));
-            a->setData(item);
-            connect(a, &QAction::triggered, this, &RecentFileManager::trigger);
-            hitems.push_back(a);
-            m_menu->addAction(a);
-        }
+        addRecentFile(item);
     }
 }
 
-RecentFileManager::~RecentFileManager() { emit onSaveRecent(m_recents); }
+const QList<RecentFileManager::RecentInfo> &
+RecentFileManager::saveRecent() const {
+    return m_recents;
+}
 
-void RecentFileManager::addRecentFile(QString filename) {
+bool RecentFileManager::existsPath(const RecentInfo &info) {
+    if (Utilities::isStorageDevice(info.fileName)) {
+        return true;
+    } else {
+        return QFile::exists(info.fileName);
+    }
+}
+
+QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
+    auto fileName = info.fileName;
+    QString displayName;
+
+    auto drivers = Utilities::getStorageDevices();
+    auto r = std::find_if(drivers.begin(), drivers.end(),
+                          [fileName](const QStorageInfo &info) {
+                              return info.device() == fileName;
+                          });
+    if (r != drivers.end()) {
+        displayName = r->displayName();
+        if (displayName.isEmpty()) {
+            displayName = r->device();
+        }
+    } else {
+        QFileInfo finfo(fileName);
+        displayName = finfo.fileName();
+    }
+
+    if (info.start >= 0 && info.stop > 0) {
+        displayName +=
+            QStringLiteral(" [%1, %2]").arg(info.start).arg(info.stop);
+    }
+
+    return displayName;
+}
+
+QString RecentFileManager::getDisplayTooltip(const RecentInfo &info) {
+    auto tt = QStringLiteral("<p>") + tr("[file]") + info.fileName +
+              QStringLiteral("</p>");
+
+    tt += QStringLiteral("<p>") + tr("[isWorkSpace]") +
+          (info.isWorkSpace ? tr("True") : tr("False")) +
+          QStringLiteral("</p>");
+
+    if (info.start >= 0 && info.stop > 0) {
+        tt += QStringLiteral("<p>") + tr("[start]") +
+              QString::number(info.start) + QStringLiteral("</p>");
+        tt += QStringLiteral("<p>") + tr("[stop]") +
+              QString::number(info.stop) + QStringLiteral("</p>");
+    }
+
+    return tt;
+}
+
+RecentFileManager::~RecentFileManager() {}
+
+void RecentFileManager::addRecentFile(const RecentInfo &info) {
     int o = 0;
-    if (QFile::exists(filename) && (o = m_recents.indexOf(filename)) < 0) {
-
+    if (existsPath(info) && (o = m_recents.indexOf(info)) < 0) {
         while (m_recents.count() >= 10) {
             m_recents.pop_back();
         }
-
         auto a = new QAction(m_menu);
-        a->setData(filename);
+        a->setData(QVariant::fromValue(info));
+        a->setText(getDisplayFileName(info));
+        a->setToolTip(getDisplayTooltip(info));
+        if (info.isWorkSpace) {
+            a->setIcon(ICONRES(QStringLiteral("pro")));
+        }
         connect(a, &QAction::triggered, this, &RecentFileManager::trigger);
-        m_recents.push_front(filename);
+        m_recents.push_front(info);
         if (hitems.count())
             m_menu->insertAction(hitems.first(), a);
         else
             m_menu->addAction(a);
         hitems.push_front(a);
-        auto i = 0;
-        for (auto &item : hitems) {
-            item->setText(QStringLiteral("%1 : %2").arg(i++).arg(
-                item->data().toString()));
-        }
     } else {
         if (hitems.count() > 1) {
             auto a = hitems.at(o);
             m_menu->removeAction(a);
             m_menu->insertAction(hitems.first(), a);
             hitems.move(o, 0);
-            auto i = 0;
-            for (auto &item : hitems) {
-                item->setText(QStringLiteral("%1 : %2").arg(i++).arg(
-                    item->data().toString()));
-            }
         }
     }
 }
@@ -102,19 +136,20 @@ void RecentFileManager::addRecentFile(QString filename) {
 void RecentFileManager::trigger() {
     auto send = qobject_cast<QAction *>(sender());
     if (send) {
-        auto f = send->data().toString();
-        if (QFile::exists(f)) {
-            // AppManager::openFile(f);
-            return;
+        auto f = send->data().value<RecentInfo>();
+        if (existsPath(f)) {
+            AppManager::instance()->openFile(f.fileName, f.isWorkSpace, f.start,
+                                             f.stop);
+        } else {
+            auto index = hitems.indexOf(send);
+            if (index < 0) {
+                m_menu->removeAction(send);
+                hitems.removeAt(index);
+                m_recents.removeAt(index);
+                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                             tr("FileNotExistClean"));
+            }
         }
-    }
-    auto index = hitems.indexOf(send);
-    if (index >= 0) {
-        m_menu->removeAction(send);
-        hitems.removeAt(index);
-        m_recents.removeAt(index);
-        Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                     tr("FileNotExistClean"));
     }
 }
 
@@ -129,7 +164,6 @@ void RecentFileManager::clearFile() {
     }
     m_recents.clear();
     hitems.clear();
-    emit onSaveRecent({});
     Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
                  tr("HistoryClearFinished"));
 }

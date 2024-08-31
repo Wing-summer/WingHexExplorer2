@@ -2,6 +2,7 @@
 #define WINGANGELAPI_H
 
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "define.h"
 #include "plugin/iwingplugin.h"
 
 class asIScriptEngine;
@@ -93,7 +94,8 @@ private:
 
     bool _HexReader_read(void *ref, int typeId);
 
-    qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
+    qsizetype _HexReader_searchForward(qsizetype begin,
+                                       const CScriptArray &ba);
 
     qsizetype _HexReader_searchBackward(qsizetype begin,
                                         const CScriptArray &ba);

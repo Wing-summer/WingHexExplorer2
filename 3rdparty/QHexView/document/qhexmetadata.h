@@ -3,19 +3,21 @@
 
 #include <QObject>
 #include <QtGlobal>
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 #include <QLinkedList>
 #else
 #include <list>
 #endif
+
 #include <QColor>
 #include <QHash>
 #include <QUndoStack>
 #include <QVector>
 
 struct QHexMetadataAbsoluteItem {
-    qint64 begin;
-    qint64 end;
+    qsizetype begin;
+    qsizetype end;
     QColor foreground, background;
     QString comment;
 
@@ -60,8 +62,8 @@ public:
     void ModifyMetadata(QHexMetadataAbsoluteItem newmeta,
                         QHexMetadataAbsoluteItem oldmeta);
     void RemoveMetadata(QHexMetadataAbsoluteItem item);
-    void RemoveMetadata(qint64 offset);
-    void Metadata(qint64 begin, qint64 end, const QColor &fgcolor,
+    void RemoveMetadata(qsizetype offset);
+    void Metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
     void Clear();
 
@@ -70,8 +72,8 @@ public:
     void modifyMetadata(QHexMetadataAbsoluteItem newmeta,
                         QHexMetadataAbsoluteItem oldmeta);
     void removeMetadata(QHexMetadataAbsoluteItem item);
-    void removeMetadata(qint64 offset);
-    QList<QHexMetadataAbsoluteItem> gets(qint64 offset);
+    void removeMetadata(qsizetype offset);
+    QList<QHexMetadataAbsoluteItem> gets(qsizetype offset);
     void applyMetas(QList<QHexMetadataAbsoluteItem> metas);
 
     void redo();
@@ -87,18 +89,22 @@ public:
 
 public:
     // new interface with begin, end
-    void metadata(qint64 begin, qint64 end, const QColor &fgcolor,
+    void metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
 
     // old interface with line, start, length
-    void metadata(quint64 line, int start, int length, const QColor &fgcolor,
-                  const QColor &bgcolor, const QString &comment);
+    void metadata(qsizetype line, qsizetype start, qsizetype length,
+                  const QColor &fgcolor, const QColor &bgcolor,
+                  const QString &comment);
 
-    void color(quint64 line, int start, int length, const QColor &fgcolor,
-               const QColor &bgcolor);
-    void foreground(quint64 line, int start, int length, const QColor &fgcolor);
-    void background(quint64 line, int start, int length, const QColor &bgcolor);
-    void comment(quint64 line, int start, int length, const QString &comment);
+    void color(qsizetype line, qsizetype start, qsizetype length,
+               const QColor &fgcolor, const QColor &bgcolor);
+    void foreground(qsizetype line, qsizetype start, qsizetype length,
+                    const QColor &fgcolor);
+    void background(qsizetype line, qsizetype start, qsizetype length,
+                    const QColor &bgcolor);
+    void comment(qsizetype line, qsizetype start, qsizetype length,
+                 const QString &comment);
 
     QList<QHexMetadataAbsoluteItem>
     getallMetas(); // added by wingsummer to support workspace

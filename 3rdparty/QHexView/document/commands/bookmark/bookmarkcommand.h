@@ -7,13 +7,13 @@
 
 class BookMarkCommand : public QUndoCommand {
 public:
-  BookMarkCommand(QHexDocument *doc, qint64 pos, QString comment,
+  BookMarkCommand(QHexDocument *doc, qsizetype pos, QString comment,
                   QUndoCommand *parent = nullptr);
 
 protected:
   QHexDocument *m_doc;
   QString m_comment;
-  qint64 m_pos;
+  qsizetype m_pos;
 };
 
 #endif // BOOKMARKCOMMAND_H

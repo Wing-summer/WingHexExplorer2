@@ -16,13 +16,13 @@ public:
     bool read(QIODevice *iodevice) override;
     void write(QIODevice *iodevice) override;
 
-    qint64 indexOf(const QByteArray &ba, qsizetype from) override;
-    qint64 lastIndexOf(const QByteArray &ba, qsizetype from) override;
+    qsizetype indexOf(const QByteArray &ba, qsizetype from) override;
+    qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) override;
 
     void setReadOffset(qsizetype offset);
-    qint64 readOffset();
+    qsizetype readOffset();
 
-    qint64 readMaxBytes();
+    qsizetype readMaxBytes();
     void setReadMaxBytes(qsizetype maxlength);
 
 private:
