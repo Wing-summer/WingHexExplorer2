@@ -218,11 +218,12 @@ bool QHexRenderer::editableArea(int area) const {
 qsizetype QHexRenderer::documentLastLine() const {
     return this->documentLines() - 1;
 }
-int QHexRenderer::documentLastColumn() const {
+qsizetype QHexRenderer::documentLastColumn() const {
     return this->getLine(this->documentLastLine()).length();
 }
 qsizetype QHexRenderer::documentLines() const {
-    return qsizetype(std::ceil(this->rendererLength() / float(hexLineWidth())));
+    auto r = std::lldiv(this->rendererLength(), hexLineWidth());
+    return r.quot + (r.rem > 0 ? 1 : 0);
 }
 int QHexRenderer::documentWidth() const { return this->getEndColumnX(); }
 int QHexRenderer::lineHeight() const { return qRound(m_fontmetrics.height()); }
@@ -298,7 +299,9 @@ QByteArray QHexRenderer::getLine(qsizetype line) const {
 
 void QHexRenderer::blinkCursor() { m_cursorenabled = !m_cursorenabled; }
 
-qint64 QHexRenderer::rendererLength() const { return m_document->length() + 1; }
+qsizetype QHexRenderer::rendererLength() const {
+    return m_document->length() + 1;
+}
 
 // modified by wingsummer
 int QHexRenderer::getAddressWidth() const {

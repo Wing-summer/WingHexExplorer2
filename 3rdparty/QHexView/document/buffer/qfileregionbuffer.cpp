@@ -57,7 +57,8 @@ qsizetype QFileRegionBuffer::indexOf(const QByteArray &ba, qsizetype from) {
     return buffer.indexOf(ba, int(from));
 }
 
-qsizetype QFileRegionBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) {
+qsizetype QFileRegionBuffer::lastIndexOf(const QByteArray &ba,
+                                         qsizetype from) {
     return buffer.lastIndexOf(ba, int(from));
 }
 

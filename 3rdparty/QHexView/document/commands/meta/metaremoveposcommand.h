@@ -9,7 +9,7 @@
 
 class MetaRemovePosCommand : public QUndoCommand {
 public:
-  MetaRemovePosCommand(QHexMetadata *hexmeta, qint64 pos,
+  MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                        QUndoCommand *parent = nullptr);
 
   void undo() override;
@@ -17,7 +17,7 @@ public:
 
 protected:
   QHexMetadata *m_hexmeta;
-  qint64 m_pos;
+  qsizetype m_pos;
   QList<QHexMetadataAbsoluteItem> olditems;
 };
 

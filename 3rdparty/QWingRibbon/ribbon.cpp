@@ -17,11 +17,17 @@
 #include <QStyleOption>
 #include <QToolButton>
 
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
+#include <QMimeData>
+
 Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     auto w = new QWidget(this);
     auto layout = new QHBoxLayout(w);
     setObjectName(QStringLiteral("RIBBON"));
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    setAcceptDrops(true);
 
     auto hideBtn = new QToolButton(this);
     hideBtn->setObjectName(QStringLiteral("RIBBON_HIDE_BTN"));
@@ -87,3 +93,33 @@ void Ribbon::removeTab(RibbonTabContent *tabContent) {
 }
 
 QHBoxLayout *Ribbon::conerLayout() const { return m_conerLayout; }
+
+void Ribbon::dragEnterEvent(QDragEnterEvent *event) {
+    // if some actions should not be usable, like move, this code must be
+    // adopted
+    event->acceptProposedAction();
+}
+
+void Ribbon::dragMoveEvent(QDragMoveEvent *event) {
+    // if some actions should not be usable, like move, this code must be
+    // adopted
+    event->acceptProposedAction();
+}
+
+void Ribbon::dragLeaveEvent(QDragLeaveEvent *event) { event->accept(); }
+
+void Ribbon::dropEvent(QDropEvent *event) {
+    const QMimeData *mimeData = event->mimeData();
+
+    if (mimeData->hasUrls()) {
+        QStringList pathList;
+        QList<QUrl> urlList = mimeData->urls();
+
+        for (int i = 0; i < urlList.size() && i < 32; ++i) {
+            pathList.append(urlList.at(i).toLocalFile());
+        }
+
+        emit onDragDropFiles(pathList);
+        event->acceptProposedAction();
+    }
+}

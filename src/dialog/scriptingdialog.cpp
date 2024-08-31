@@ -54,6 +54,11 @@ void ScriptingDialog::buildUpRibbonBar() {
     m_editStateWidgets << buildDebugPage(m_ribbon->addTab(tr("Debugger")));
     buildScriptPage(m_ribbon->addTab(tr("Script")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
+
+    connect(m_ribbon, &Ribbon::onDragDropFiles, this,
+            [=](const QStringList &files) {
+                // TODO
+            });
 }
 
 RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
@@ -426,3 +431,13 @@ void ScriptingDialog::on_stepinscript() {}
 void ScriptingDialog::on_stepoutscript() {}
 
 void ScriptingDialog::on_stepoverscript() {}
+
+void ScriptingDialog::closeEvent(QCloseEvent *event) {
+    auto &set = SettingManager::instance();
+
+    set.setScriptDockLayout(m_dock->saveState());
+    set.setRecentScriptFiles(m_recentmanager->saveRecent());
+    set.save();
+
+    FramelessMainWindow::closeEvent(event);
+}

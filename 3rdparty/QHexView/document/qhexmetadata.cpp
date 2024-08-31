@@ -27,12 +27,13 @@ void QHexMetadata::RemoveMetadata(QHexMetadataAbsoluteItem item) {
     m_undo->push(new MetaRemoveCommand(this, item));
 }
 
-void QHexMetadata::RemoveMetadata(qint64 offset) {
+void QHexMetadata::RemoveMetadata(qsizetype offset) {
     m_undo->push(new MetaRemovePosCommand(this, offset));
 }
 
-void QHexMetadata::Metadata(qint64 begin, qint64 end, const QColor &fgcolor,
-                            const QColor &bgcolor, const QString &comment) {
+void QHexMetadata::Metadata(qsizetype begin, qsizetype end,
+                            const QColor &fgcolor, const QColor &bgcolor,
+                            const QString &comment) {
     QHexMetadataAbsoluteItem absi{begin, end, fgcolor, bgcolor, comment};
     m_undo->push(new MetaAddCommand(this, absi));
 }
@@ -87,7 +88,7 @@ void QHexMetadata::removeMetadata(QHexMetadataAbsoluteItem item) {
     emit metadataChanged();
 }
 
-void QHexMetadata::removeMetadata(qint64 offset) {
+void QHexMetadata::removeMetadata(qsizetype offset) {
     QList<QHexMetadataAbsoluteItem> delneeded;
     for (auto item : m_absoluteMetadata) {
         if (offset >= item.begin && offset <= item.end) {
@@ -96,7 +97,7 @@ void QHexMetadata::removeMetadata(qint64 offset) {
     }
 }
 
-QList<QHexMetadataAbsoluteItem> QHexMetadata::gets(qint64 offset) {
+QList<QHexMetadataAbsoluteItem> QHexMetadata::gets(qsizetype offset) {
     return m_absoluteMetadata;
 }
 
@@ -146,8 +147,9 @@ void QHexMetadata::clear() {
     emit metadataChanged();
 }
 
-void QHexMetadata::metadata(qint64 begin, qint64 end, const QColor &fgcolor,
-                            const QColor &bgcolor, const QString &comment) {
+void QHexMetadata::metadata(qsizetype begin, qsizetype end,
+                            const QColor &fgcolor, const QColor &bgcolor,
+                            const QString &comment) {
     QHexMetadataAbsoluteItem absi{begin, end, fgcolor, bgcolor, comment};
     m_absoluteMetadata.append(absi);
     setAbsoluteMetadata(absi);
@@ -161,7 +163,7 @@ void QHexMetadata::setAbsoluteMetadata(const QHexMetadataAbsoluteItem &mai) {
     const auto lastRow = mai.end / m_lineWidth;
 
     for (auto row = firstRow; row <= lastRow; ++row) {
-        int start, length;
+        qsizetype start, length;
         if (row == firstRow) {
             start = mai.begin % m_lineWidth;
         } else {
@@ -197,32 +199,32 @@ void QHexMetadata::setLineWidth(quint8 width) {
     }
 }
 
-void QHexMetadata::metadata(quint64 line, int start, int length,
+void QHexMetadata::metadata(qsizetype line, qsizetype start, qsizetype length,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    const qint64 begin = qint64(line * m_lineWidth + uint(start));
-    const qint64 end = begin + length;
+    const qsizetype begin = qsizetype(line * m_lineWidth + uint(start));
+    const qsizetype end = begin + length;
     // delegate to the new interface
     this->metadata(begin, end, fgcolor, bgcolor, comment);
     emit metadataChanged();
 }
 
-void QHexMetadata::color(quint64 line, int start, int length,
+void QHexMetadata::color(qsizetype line, qsizetype start, qsizetype length,
                          const QColor &fgcolor, const QColor &bgcolor) {
     this->metadata(line, start, length, fgcolor, bgcolor, QString());
 }
 
-void QHexMetadata::foreground(quint64 line, int start, int length,
+void QHexMetadata::foreground(qsizetype line, qsizetype start, qsizetype length,
                               const QColor &fgcolor) {
     this->color(line, start, length, fgcolor, QColor());
 }
 
-void QHexMetadata::background(quint64 line, int start, int length,
+void QHexMetadata::background(qsizetype line, qsizetype start, qsizetype length,
                               const QColor &bgcolor) {
     this->color(line, start, length, QColor(), bgcolor);
 }
 
-void QHexMetadata::comment(quint64 line, int start, int length,
+void QHexMetadata::comment(qsizetype line, qsizetype start, qsizetype length,
                            const QString &comment) {
     this->metadata(line, start, length, QColor(), QColor(), comment);
 }

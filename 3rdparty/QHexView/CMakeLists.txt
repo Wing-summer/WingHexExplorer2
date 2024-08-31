@@ -57,6 +57,10 @@ add_library(
   document/commands/baseaddrcommand.h
   document/commands/encodingchangecommand.cpp
   document/commands/encodingchangecommand.h
+  document/buffer/qwindriverbuffer.h
+  document/buffer/qwindriverbuffer.cpp
+  document/qstoragedevice.h
+  document/qstoragedevice.cpp
   document/qhexcursor.cpp
   document/qhexcursor.h
   document/qhexdocument.cpp
@@ -67,6 +71,8 @@ add_library(
   document/qhexrenderer.h
   QHexEdit2/chunks.cpp
   QHexEdit2/chunks.h
+  QHexEdit2/chunks_win.cpp
+  QHexEdit2/chunks_win.h
   qhexview.h
   qhexview.cpp
   define.h)

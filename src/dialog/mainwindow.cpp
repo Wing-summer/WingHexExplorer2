@@ -5,6 +5,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
+#include "class/appmanager.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
@@ -194,6 +195,14 @@ void MainWindow::buildUpRibbonBar() {
         buildSettingPage(m_ribbon->addTab(tr("Setting")));
     m_ribbonMaps[catagories.ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
+
+    connect(m_ribbon, &Ribbon::onDragDropFiles, this,
+            [=](const QStringList &files) {
+                auto app = AppManager::instance();
+                for (auto &f : files) {
+                    app->openFile(f);
+                }
+            });
 }
 
 void MainWindow::buildUpDockSystem(QWidget *container) {
@@ -1219,7 +1228,10 @@ void MainWindow::on_openfile() {
             return;
         }
     }
-    m_recentmanager->addRecentFile(filename);
+
+    RecentFileManager::RecentInfo info;
+    info.fileName = filename;
+    m_recentmanager->addRecentFile(info);
 }
 
 void MainWindow::on_openregion() {
@@ -1267,7 +1279,11 @@ void MainWindow::on_openworkspace() {
         editor->setFocus();
         return;
     }
-    m_recentmanager->addRecentFile(filename);
+
+    RecentFileManager::RecentInfo info;
+    info.fileName = filename;
+    info.isWorkSpace = true;
+    m_recentmanager->addRecentFile(info);
 }
 
 void MainWindow::on_opendriver() {
@@ -2007,9 +2023,9 @@ void MainWindow::on_exportfindresult() {
         for (int i = 0; i < c; i++) {
             auto data = findresitem->resultAt(i);
             QJsonObject jobj;
-            jobj.insert(QStringLiteral("line"), data.line);
-            jobj.insert(QStringLiteral("col"), data.col);
-            jobj.insert(QStringLiteral("offset"), data.offset);
+            jobj.insert(QStringLiteral("line"), QString::number(data.line));
+            jobj.insert(QStringLiteral("col"), QString::number(data.col));
+            jobj.insert(QStringLiteral("offset"), QString::number(data.offset));
             arr.append(jobj);
         }
         fobj.insert(QStringLiteral("data"), arr);
@@ -2040,7 +2056,7 @@ void MainWindow::on_locChanged() {
                              .arg(QString::number(sellen, 16).toUpper()));
 
     // number analyse
-    auto off = qint64(hexeditor->currentOffset());
+    auto off = hexeditor->currentOffset();
     auto d = hexeditor->document();
 
     auto tmp = d->read(off, sizeof(quint64));
@@ -2053,7 +2069,7 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint64,
             QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
-        auto s1 = processEndian(qint64(n));
+        auto s1 = processEndian(qsizetype(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
                               QString::number(s1));
     } else {
@@ -2628,7 +2644,6 @@ void MainWindow::updateEditModeEnabled() {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
-        // m_bookmarks->clear();
     }
 }
 
@@ -2750,6 +2765,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
+    set.setRecentFiles(m_recentmanager->saveRecent());
     set.save();
 
     FramelessMainWindow::closeEvent(event);

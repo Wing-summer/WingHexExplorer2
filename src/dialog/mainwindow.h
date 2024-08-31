@@ -23,7 +23,6 @@
 #include "class/recentfilemanager.h"
 #include "class/wingprogressdialog.h"
 #include "control/editorview.h"
-#include "control/qlistviewext.h"
 #include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
 #include "model/bookmarksmodel.h"

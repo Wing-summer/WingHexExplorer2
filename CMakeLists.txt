@@ -15,7 +15,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED
              COMPONENTS Widgets Network Concurrent PrintSupport LinguistTools)
 
-add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}")
+add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
+                -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
@@ -157,7 +158,9 @@ set(CLASS_SRC
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp
     src/class/scripteditortheme.h
-    src/class/scripteditortheme.cpp)
+    src/class/scripteditortheme.cpp
+    src/class/appmanager.h
+    src/class/appmanager.cpp)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h

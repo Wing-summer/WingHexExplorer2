@@ -7,6 +7,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "recentfilemanager.h"
+
 class SettingManager : public QObject {
     Q_OBJECT
 
@@ -63,8 +65,9 @@ public:
     void save(SETTINGS cat = SETTING::ALL);
     void reset(SETTINGS cat);
 
-    QStringList recentHexFiles() const;
-    void setRecentFiles(const QStringList &newRecentFiles);
+    QList<RecentFileManager::RecentInfo> recentHexFiles() const;
+    void
+    setRecentFiles(const QList<RecentFileManager::RecentInfo> &newRecentFiles);
 
     bool enablePlugin() const;
     void setEnablePlugin(bool newEnablePlugin);
@@ -75,8 +78,9 @@ public:
     QString appFontFamily() const;
     void setAppFontFamily(const QString &newAppFontFamily);
 
-    QStringList recentScriptFiles() const;
-    void setRecentScriptFiles(const QStringList &newRecentScriptFiles);
+    QList<RecentFileManager::RecentInfo> recentScriptFiles() const;
+    void setRecentScriptFiles(
+        const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles);
 
     QStringList usrDisplayCats() const;
 
@@ -84,6 +88,9 @@ public:
 
     QString lastUsedPath() const;
     void setLastUsedPath(const QString &newLastUsedPath);
+
+    QByteArray scriptDockLayout() const;
+    void setScriptDockLayout(const QByteArray &newScriptDockLayout);
 
 signals:
     void sigEditorfontSizeChanged(int v);
@@ -107,6 +114,7 @@ private:
     bool m_enablePlgInRoot = false;
     QString m_defaultLang;
     QByteArray m_dockLayout;
+    QByteArray m_scriptDockLayout;
     QString m_appFontFamily;
 
     bool m_editorShowHeader = true;
@@ -117,8 +125,8 @@ private:
     qsizetype m_copylimit = 100;
     qsizetype m_decodeStrlimit = 10;
 
-    QStringList m_recentHexFiles;
-    QStringList m_recentScriptFiles;
+    QList<RecentFileManager::RecentInfo> m_recentHexFiles;
+    QList<RecentFileManager::RecentInfo> m_recentScriptFiles;
     Qt::WindowState m_defaultWinState = Qt::WindowMaximized;
 
     QStringList m_usrDisplayCats;

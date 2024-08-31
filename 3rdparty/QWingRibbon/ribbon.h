@@ -47,6 +47,34 @@ public:
 
     QHBoxLayout *conerLayout() const;
 
+signals:
+    void onDragDropFiles(const QStringList &filenames);
+
+protected:
+    // —— events ———————————————————————————
+    /*
+     * this event is called when the mouse enters the widgets area during a
+     * drag/drop operation
+     */
+    void dragEnterEvent(QDragEnterEvent *event);
+
+    /**
+     * this event is called when the mouse moves inside the widgets area during
+     * a drag/drop operation
+     */
+    void dragMoveEvent(QDragMoveEvent *event);
+
+    /**
+     * this event is called when the mouse leaves the widgets area during a
+     * drag/drop operation
+     */
+    void dragLeaveEvent(QDragLeaveEvent *event);
+
+    /**
+     * this event is called when the drop operation is initiated at the widget
+     */
+    void dropEvent(QDropEvent *event);
+
 private:
     QHBoxLayout *m_conerLayout;
 };

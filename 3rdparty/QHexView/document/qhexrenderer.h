@@ -55,7 +55,7 @@ public:
     int selectedArea() const;
     bool editableArea(int area) const;
     qsizetype documentLastLine() const;
-    int documentLastColumn() const;
+    qsizetype documentLastColumn() const;
     qsizetype documentLines() const;
     int documentWidth() const;
     int lineHeight() const;
@@ -101,7 +101,7 @@ private:
     /*======================================*/
 
     QByteArray getLine(qsizetype line) const;
-    qint64 rendererLength() const;
+    qsizetype rendererLength() const;
     int getAddressWidth() const;
     int getHexColumnX() const;
     int getAsciiColumnX() const;

@@ -1,6 +1,7 @@
 #ifndef GOTOWIDGET_H
 #define GOTOWIDGET_H
 
+#include "define.h"
 #include <QWidget>
 
 namespace Ui {
@@ -17,8 +18,9 @@ public:
     ~GotoWidget();
 
 public slots:
-    void activeInput(qsizetype oldrow, qsizetype oldcolumn, qsizetype oldoffset,
-                     qsizetype maxfilebytes, qsizetype maxfilelines);
+    void activeInput(qsizetype oldrow, qsizetype oldcolumn,
+                     qsizetype oldoffset, qsizetype maxfilebytes,
+                     qsizetype maxfilelines);
 
     void handleLineChanged();
 

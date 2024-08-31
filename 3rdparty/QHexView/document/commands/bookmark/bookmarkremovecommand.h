@@ -5,7 +5,7 @@
 
 class BookMarkRemoveCommand : public BookMarkCommand {
 public:
-  BookMarkRemoveCommand(QHexDocument *doc, qint64 pos, QString comment,
+  BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos, QString comment,
                         QUndoCommand *parent = nullptr);
 
   void undo() override;

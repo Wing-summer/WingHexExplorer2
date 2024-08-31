@@ -7,6 +7,7 @@
 #include <QMetaEnum>
 
 const auto DOCK_LAYOUT = QStringLiteral("dock.layout");
+const auto SCRIPT_DOCK_LAYOUT = QStringLiteral("script.layout");
 const auto APP_LASTUSED_PATH = QStringLiteral("app.lastusedpath");
 
 const auto SKIN_THEME = QStringLiteral("skin.theme");
@@ -52,6 +53,8 @@ void SettingManager::load() {
                        QMetaEnum::fromType<SkinManager::Theme>().keyCount());
     m_defaultLang = READ_CONFIG(APP_LANGUAGE, QString()).toString();
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
+    m_scriptDockLayout =
+        READ_CONFIG(SCRIPT_DOCK_LAYOUT, QByteArray()).toByteArray();
     m_appFontFamily =
         READ_CONFIG(APP_FONTFAMILY, _defaultFont.family()).toString();
     // check font
@@ -82,9 +85,13 @@ void SettingManager::load() {
     m_decodeStrlimit =
         qBound(qsizetype(100), m_decodeStrlimit, qsizetype(1024));
     m_recentHexFiles =
-        READ_CONFIG(EDITOR_RECENTFILES, QStringList()).toStringList();
+        READ_CONFIG(EDITOR_RECENTFILES,
+                    QVariant::fromValue(QList<RecentFileManager::RecentInfo>()))
+            .value<QList<RecentFileManager::RecentInfo>>();
     m_recentScriptFiles =
-        READ_CONFIG(SCRIPT_RECENTFILES, QStringList()).toStringList();
+        READ_CONFIG(SCRIPT_RECENTFILES,
+                    QVariant::fromValue(QList<RecentFileManager::RecentInfo>()))
+            .value<QList<RecentFileManager::RecentInfo>>();
     m_usrDisplayCats =
         READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
     m_sysDisplayCats =
@@ -106,16 +113,25 @@ void SettingManager::load() {
     emit sigDecodeStrlimitChanged(m_decodeStrlimit);
 }
 
+QByteArray SettingManager::scriptDockLayout() const {
+    return m_scriptDockLayout;
+}
+
+void SettingManager::setScriptDockLayout(
+    const QByteArray &newScriptDockLayout) {
+    m_scriptDockLayout = newScriptDockLayout;
+}
+
 QStringList SettingManager::sysDisplayCats() const { return m_sysDisplayCats; }
 
 QStringList SettingManager::usrDisplayCats() const { return m_usrDisplayCats; }
 
-QStringList SettingManager::recentScriptFiles() const {
+QList<RecentFileManager::RecentInfo> SettingManager::recentScriptFiles() const {
     return m_recentScriptFiles;
 }
 
 void SettingManager::setRecentScriptFiles(
-    const QStringList &newRecentScriptFiles) {
+    const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles) {
     m_recentScriptFiles = newRecentScriptFiles;
 }
 
@@ -140,9 +156,12 @@ void SettingManager::setEnablePlugin(bool newEnablePlugin) {
     m_enablePlugin = newEnablePlugin;
 }
 
-QStringList SettingManager::recentHexFiles() const { return m_recentHexFiles; }
+QList<RecentFileManager::RecentInfo> SettingManager::recentHexFiles() const {
+    return m_recentHexFiles;
+}
 
-void SettingManager::setRecentFiles(const QStringList &newRecentFiles) {
+void SettingManager::setRecentFiles(
+    const QList<RecentFileManager::RecentInfo> &newRecentFiles) {
     m_recentHexFiles = newRecentFiles;
 }
 
@@ -166,8 +185,9 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
 void SettingManager::save(SETTINGS cat) {
     HANDLE_CONFIG;
     WRITE_CONFIG(DOCK_LAYOUT, m_dockLayout);
-    WRITE_CONFIG(EDITOR_RECENTFILES, m_recentHexFiles);
-    WRITE_CONFIG(SCRIPT_RECENTFILES, m_recentScriptFiles);
+    WRITE_CONFIG(SCRIPT_DOCK_LAYOUT, m_scriptDockLayout);
+    WRITE_CONFIG(EDITOR_RECENTFILES, QVariant::fromValue(m_recentHexFiles));
+    WRITE_CONFIG(SCRIPT_RECENTFILES, QVariant::fromValue(m_recentScriptFiles));
     WRITE_CONFIG(APP_LASTUSED_PATH, m_lastUsedPath);
     if (cat.testFlag(SETTING::APP)) {
         WRITE_CONFIG(SKIN_THEME, m_themeID);
