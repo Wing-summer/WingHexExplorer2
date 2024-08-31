@@ -1,4 +1,7 @@
 #include "qwindriverbuffer.h"
+
+#ifdef Q_OS_WIN
+
 #include "document/qstoragedevice.h"
 
 /*
@@ -62,3 +65,5 @@ qsizetype QWinDriverBuffer::indexOf(const QByteArray &ba, qsizetype from) {
 qsizetype QWinDriverBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) {
     return _chunks->lastIndexOf(ba, from);
 }
+
+#endif
