@@ -52,6 +52,26 @@
 &emsp;&emsp;维护一个好用的工具并不是一个人能做到了，更重要的是大家共同维护，如下是对本仓库代码有贡献的同志，特此感谢：
 
 <!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/Wing-summer">
+                    <img src="https://avatars.githubusercontent.com/u/59953528?v=4" width="100;" alt="Wing-summer"/>
+                    <br />
+                    <sub><b>wingsummer</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/oPengLuo">
+                    <img src="https://avatars.githubusercontent.com/u/41234604?v=4" width="100;" alt="oPengLuo"/>
+                    <br />
+                    <sub><b>大大的力量</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: collaborators,contributors -end -->
 
 ## 赞助鸣谢
