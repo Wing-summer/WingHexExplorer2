@@ -14,7 +14,9 @@ public:
         Uint32,
         Int32,
         Uint64,
-        Int64
+        Int64,
+        Float32,
+        Double64
     };
 
 public:
