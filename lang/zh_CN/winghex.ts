@@ -1386,8 +1386,8 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="1299"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1303"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1343"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2251"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2498"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2261"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2508"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -1441,17 +1441,17 @@
         <translation>搜索数量已到达上限，结果可能不全，建议请按区段搜索。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2167"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2177"/>
         <source>NotAvaliInThisVersion</source>
         <translation>本版本该功能未上架，敬请期待。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2711"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2721"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2744"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2754"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
@@ -1568,7 +1568,7 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="1848"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1893"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1909"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2300"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2310"/>
         <source>CheckKeepSize</source>
         <translation>请检查锁定文件大小是否开启！</translation>
     </message>
@@ -1581,7 +1581,7 @@
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="1835"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1880"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2337"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2347"/>
         <source>NoSelection</source>
         <translation>没有选区，无法继续的操作！</translation>
     </message>
@@ -1606,37 +1606,37 @@
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2136"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2146"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2151"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2161"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2154"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2164"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2162"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2172"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2252"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2262"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2430"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2440"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2499"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2509"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -1700,7 +1700,7 @@
 <context>
     <name>NumShowModel</name>
     <message>
-        <location filename="../../src/model/numshowmodel.cpp" line="65"/>
+        <location filename="../../src/model/numshowmodel.cpp" line="66"/>
         <source>Value</source>
         <translation>值</translation>
     </message>

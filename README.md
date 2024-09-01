@@ -1,10 +1,11 @@
-> If you are not Chinese user, please click [this](README_en.md)
+> If you are not a Chinese user, please click [this](README_en.md)
 
 - [代码贡献者](#代码贡献者)
 - [赞助鸣谢](#赞助鸣谢)
+- [参与贡献](#参与贡献)
 - [软件编译运行情况](#软件编译运行情况)
 - [WingHexExplorer2](#winghexexplorer2)
-  - [参与贡献](#参与贡献)
+  - [参与贡献](#参与贡献-1)
   - [协议](#协议)
   - [使用声明](#使用声明)
   - [issue 前必读](#issue-前必读)
@@ -50,7 +51,8 @@
 
 &emsp;&emsp;维护一个好用的工具并不是一个人能做到了，更重要的是大家共同维护，如下是对本仓库代码有贡献的同志，特此感谢：
 
-> 吉位招租
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
 
 ## 赞助鸣谢
 
@@ -59,6 +61,12 @@
 | 赞助者 |          备注          |
 | :----: | :--------------------: |
 |  *欢   | 来自 Deepin 的一位道友 |
+
+## 参与贡献
+
+&emsp;&emsp;在参与贡献前，请仔细阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+&emsp;&emsp;确保在贡献和参与讨论时遵循 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
 
 ## 软件编译运行情况
 
