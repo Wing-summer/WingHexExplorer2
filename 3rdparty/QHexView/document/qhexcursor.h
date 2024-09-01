@@ -1,7 +1,6 @@
 #ifndef QHEXCURSOR_H
 #define QHEXCURSOR_H
 
-#include "define.h"
 #include <QObject>
 
 #define DEFAULT_HEX_LINE_LENGTH 0x10

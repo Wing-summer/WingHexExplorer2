@@ -7,7 +7,6 @@
 #include "skinmanager.h"
 
 #include "dbghelper.h"
-#include "define.h"
 #include "dialog/mainwindow.h"
 #include "utilities.h"
 

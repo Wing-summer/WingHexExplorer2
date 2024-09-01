@@ -1,7 +1,6 @@
 #ifndef PLUGINSYSTEM_H
 #define PLUGINSYSTEM_H
 
-#include "define.h"
 #include <QDockWidget>
 #include <QHash>
 #include <QList>
@@ -31,7 +30,7 @@ public:
     void LoadPlugin();
     void UnloadPlugin();
     const QList<IWingPlugin *> &plugins() const;
-    const IWingPlugin *plugin(qindextype index) const;
+    const IWingPlugin *plugin(qsizetype index) const;
 
     void loadPlugin(QFileInfo filename);
 

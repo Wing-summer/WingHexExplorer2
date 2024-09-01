@@ -44,8 +44,11 @@ public slots:
 protected:
     virtual void editorChange(QEditor *e);
     virtual bool paint(QPainter *p, QEditor *e);
+    virtual QSize sizeHint() const;
+    virtual QSize minimumSizeHint() const;
 
     bool m_verbose;
+    int mutable m_minWidth = 0;
 };
 
 #endif // _QLINE_NUMBER_PANEL_H_

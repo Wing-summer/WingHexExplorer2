@@ -160,7 +160,8 @@ set(CLASS_SRC
     src/class/scripteditortheme.h
     src/class/scripteditortheme.cpp
     src/class/appmanager.h
-    src/class/appmanager.cpp)
+    src/class/appmanager.cpp
+    src/class/angelscripthelper.h)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
@@ -196,9 +197,6 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.h
     src/settings/scriptsettingdialog.cpp
     src/settings/scriptsettingdialog.ui
-    src/settings/scriptuisettingdialog.h
-    src/settings/scriptuisettingdialog.cpp
-    src/settings/scriptuisettingdialog.ui
     src/settings/scriptbehaviorsettingdialog.h
     src/settings/scriptbehaviorsettingdialog.cpp
     src/settings/scriptbehaviorsettingdialog.ui)
@@ -307,7 +305,6 @@ add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
 
 set(PROJECT_SOURCES
     main.cpp
-    src/define.h
     src/utilities.h
     src/dbghelper.h
     ${QPATHEDIT_SRC}

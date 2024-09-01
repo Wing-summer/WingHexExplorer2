@@ -119,7 +119,7 @@ void EditorView::registerView(WingEditorViewWidget *view) {
     m_others << view;
 }
 
-void EditorView::switchView(qindextype index) {
+void EditorView::switchView(qsizetype index) {
     if (index < 0) {
         m_stack->setCurrentWidget(m_hex);
     } else {
@@ -489,8 +489,10 @@ QHexView *EditorView::hexEditor() const { return m_hex; }
 
 EditorView::DocumentType EditorView::documentType() const { return m_docType; }
 
-WingEditorViewWidget *EditorView::otherEditor(qindextype index) const {
-    if (index < 0 || index >= m_others.size()) {
+WingEditorViewWidget *EditorView::otherEditor(qsizetype index) const {
+    if (index < 0 ||
+        index >= std::numeric_limits<decltype(m_others)::size_type>::max() ||
+        index >= m_others.size()) {
         return nullptr;
     }
     return m_others.at(index);
@@ -524,7 +526,7 @@ void EditorView::applySettings() {
     m_hex->renderer()->SetEncoding(set.editorEncoding());
 }
 
-qindextype EditorView::findAvailCloneIndex() {
+qsizetype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
 }
 

@@ -2,6 +2,7 @@
 #include "QJsonModel/include/QJsonModel.hpp"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "class/logger.h"
+#include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
@@ -29,7 +30,7 @@ PluginSystem::~PluginSystem() {
 
 const QList<IWingPlugin *> &PluginSystem::plugins() const { return loadedplgs; }
 
-const IWingPlugin *PluginSystem::plugin(qindextype index) const {
+const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
     return loadedplgs.at(index);
 }
 
@@ -1645,6 +1646,14 @@ void PluginSystem::LoadPlugin() {
 
     _angelplg = new WingAngelAPI;
     Q_ASSERT(loadPlugin(_angelplg));
+
+    auto &set = SettingManager::instance();
+    if (!set.enablePlugin()) {
+        return;
+    }
+    if (Utilities::isRoot() && !set.enablePlgInRoot()) {
+        return;
+    }
 
 #ifdef QT_DEBUG
     QDir plugindir(QCoreApplication::applicationDirPath() +

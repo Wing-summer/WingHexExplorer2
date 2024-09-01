@@ -2964,3 +2964,11 @@ Toast
     qproperty-backcolor: black;
     qproperty-fontPointSize: 18;
 }
+
+/* style sheet for ScriptEditor */
+QEditor
+{
+    color: #f8f8f2;
+    background-color: #282a36;
+    selection-background-color: #44475a;
+}

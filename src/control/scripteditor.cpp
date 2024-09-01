@@ -5,6 +5,11 @@
 #include <QPixmap>
 #include <cmath>
 
+#include "qfoldpanel.h"
+#include "qlinemarkpanel.h"
+#include "qlinenumberpanel.h"
+#include "qpanellayout.h"
+
 ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(QString(), parent) {
     this->setFeatures(
@@ -14,22 +19,26 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
-    m_session = new QEditSession("session", this);
     m_editor = new QCodeEdit(this);
+    auto l = m_editor->panelLayout();
+    l->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto editor = m_editor->editor();
-    m_session->addEditor(editor);
 
     this->setWidget(editor);
 
-    m_editor->addPanel("Line Mark Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F6"));
+    // auto lineMark = new QLineMarkPanel(editor);
+    // m_editor->addPanel(lineMark, QCodeEdit::West, true)
+    //     ->setShortcut(QKeySequence("F6"));
 
-    m_editor->addPanel("Line Number Panel", QCodeEdit::West, true)
+    auto lineNum = new QLineNumberPanel(editor);
+    lineNum->setVerboseMode(true);
+    m_editor->addPanel(lineNum, QCodeEdit::West, true)
         ->setShortcut(QKeySequence("F11"));
 
-    m_editor->addPanel("Fold Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F9"));
+    // auto fold = new QFoldPanel(editor);
+    // m_editor->addPanel(fold, QCodeEdit::West, true)
+    //     ->setShortcut(QKeySequence("F9"));
 
     // m_editor->markerDefine(QPixmap(RESNAME("bp")), BreakPoint);
     // m_editor->markerDefine(QPixmap(RESNAME("conbp")), ConditionBreakPoint);

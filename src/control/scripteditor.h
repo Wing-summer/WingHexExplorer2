@@ -25,7 +25,6 @@ private:
 
 private:
     QCodeEdit *m_editor = nullptr;
-    QEditSession *m_session = nullptr;
 };
 
 #endif // SCRIPTEDITOR_H

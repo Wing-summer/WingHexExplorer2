@@ -61,7 +61,7 @@ void FindResultModel::beginUpdate() { this->beginResetModel(); }
 
 void FindResultModel::endUpdate() { this->endResetModel(); }
 
-WingHex::FindResult FindResultModel::resultAt(qindextype index) const {
+WingHex::FindResult FindResultModel::resultAt(qsizetype index) const {
     return m_results.at(index);
 }
 

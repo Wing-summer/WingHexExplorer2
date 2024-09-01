@@ -20,6 +20,7 @@
         \brief Implementation of the QPanelLayout class.
 */
 
+#include "qdebug.h"
 #include "qeditor.h"
 #include "qpanel.h"
 
@@ -76,7 +77,7 @@ QPanelLayout::QPanelLayout(const QString &layout, QEditor *p)
 QPanelLayout::~QPanelLayout() {
     QLayoutItem *l;
 
-    while ((l = takeAt(0)))
+    while ((l = QPanelLayout::takeAt(0)))
         delete l;
 }
 
@@ -319,6 +320,8 @@ void QPanelLayout::setGeometry(const QRect &r) {
     */
     // qDebug("{%i, %i, %i, %i}", westWidth, northHeight, eastWidth,
     // southHeight);
+
+    // qDebug() << westWidth;
     m_parent->setPanelMargins(westWidth, northHeight, eastWidth, southHeight);
 }
 

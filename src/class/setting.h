@@ -4,8 +4,6 @@
 #include <QApplication>
 #include <QSettings>
 
-#include "../define.h"
-
 #define HANDLE_CONFIG                                                          \
     QSettings set(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME))
 
