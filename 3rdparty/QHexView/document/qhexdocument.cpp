@@ -180,7 +180,7 @@ BookMarkStruct QHexDocument::bookMark(qsizetype pos) {
     return BookMarkStruct{-1, ""};
 }
 
-BookMarkStruct QHexDocument::bookMarkByIndex(qindextype index) {
+BookMarkStruct QHexDocument::bookMarkByIndex(qsizetype index) {
     if (index >= 0 && index < bookmarks.count()) {
         return bookmarks.at(index);
     } else {
@@ -203,7 +203,7 @@ bool QHexDocument::RemoveBookMarks(QList<qsizetype> &pos) {
     return true;
 }
 
-bool QHexDocument::RemoveBookMark(qindextype index) {
+bool QHexDocument::RemoveBookMark(qsizetype index) {
     if (!m_keepsize)
         return false;
     auto b = bookmarks.at(index);
@@ -229,7 +229,7 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
     return false;
 }
 
-bool QHexDocument::removeBookMarkByIndex(qindextype index) {
+bool QHexDocument::removeBookMarkByIndex(qsizetype index) {
     if (m_keepsize && index >= 0 && index < bookmarks.count()) {
         bookmarks.removeAt(index);
         setDocSaved(false);

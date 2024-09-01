@@ -1755,7 +1755,7 @@ void MainWindow::on_bookmark() {
                      tr("CheckKeepSize"));
         return;
     }
-    qindextype index = -1;
+    qsizetype index = -1;
     if (hexeditor->existBookMarkByIndex(index)) {
         auto b = doc->bookMarkByIndex(index);
         bool ok;
@@ -1789,7 +1789,7 @@ void MainWindow::on_bookmarkdel() {
                      tr("CheckKeepSize"));
         return;
     }
-    qindextype index = -1;
+    qsizetype index = -1;
     if (hexeditor->existBookMarkByIndex(index)) {
         doc->removeBookMarkByIndex(index);
     }
@@ -2163,7 +2163,7 @@ void MainWindow::on_clslog() {
 }
 
 void MainWindow::on_scriptwindow() {
-#if true
+#ifndef QT_DEBUG
     WingMessageBox::information(this, qAppName(), tr("NotAvaliInThisVersion"));
     return;
 #endif
@@ -2246,7 +2246,8 @@ EditorView *MainWindow::findEditorView(const QString &filename) {
 }
 
 bool MainWindow::newOpenFileSafeCheck() {
-    if (m_views.size() >= std::numeric_limits<qindextype>::max() - 1) {
+    if (m_views.size() >=
+        std::numeric_limits<decltype(m_views)::size_type>::max() - 1) {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Too much opened files"));
         return false;

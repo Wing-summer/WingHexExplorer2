@@ -94,11 +94,11 @@ public:
     void setScaleRate(qreal rate);
     qreal scaleRate() const;
 
-    qindextype searchForward(qsizetype begin, const QByteArray &ba);
-    qindextype searchBackward(qsizetype begin, const QByteArray &ba);
+    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
+    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
 
-    void gotoBookMark(qindextype index);
-    bool existBookMarkByIndex(qindextype &index);
+    void gotoBookMark(qsizetype index);
+    bool existBookMarkByIndex(qsizetype &index);
     bool RemoveSelection(int nibbleindex = 1);
     bool removeSelection();
     bool atEnd() const;
@@ -111,9 +111,8 @@ public:
 
     bool Cut(bool hex = false, int nibbleindex = 0);
     void Paste(int nibbleindex = 0, bool hex = false);
-    void Replace(qindextype offset, uchar b, int nibbleindex);
-    void Replace(qindextype offset, const QByteArray &data,
-                 int nibbleindex = 0);
+    void Replace(qsizetype offset, uchar b, int nibbleindex);
+    void Replace(qsizetype offset, const QByteArray &data, int nibbleindex = 0);
 
     qsizetype copyLimit() const;
     void setCopyLimit(qsizetype newCopylimit);

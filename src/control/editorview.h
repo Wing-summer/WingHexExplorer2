@@ -6,7 +6,6 @@
 
 #include "QHexView/qhexview.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "define.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/bookmarksmodel.h"
@@ -64,7 +63,7 @@ public:
 
     DocumentType documentType() const;
 
-    WingEditorViewWidget *otherEditor(qindextype index) const;
+    WingEditorViewWidget *otherEditor(qsizetype index) const;
 
     qsizetype copyLimit() const;
 
@@ -72,7 +71,7 @@ public slots:
     EditorView *clone();
 
     void registerView(WingEditorViewWidget *view);
-    void switchView(qindextype index);
+    void switchView(qsizetype index);
     void registerQMenu(QMenu *menu);
 
     FindError find(const QByteArray &data, const FindDialog::Result &result);
@@ -102,7 +101,7 @@ public slots:
     void applySettings();
 
 private:
-    inline qindextype findAvailCloneIndex();
+    inline qsizetype findAvailCloneIndex();
 
     bool hasMeta() const;
 

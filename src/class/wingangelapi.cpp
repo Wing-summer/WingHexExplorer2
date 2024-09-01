@@ -1,37 +1,11 @@
 #include "wingangelapi.h"
 
 #include "AngelScript/angelscript/include/angelscript.h"
+#include "class/angelscripthelper.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 
 #include <QJsonDocument>
-
-#if Q_PROCESSOR_WORDSIZE == 4
-#define QSIZETYPE_WRAP(decl) "int " decl
-#define QPTR_WRAP(decl) "uint " decl
-#define QPTR "uint"
-#define QSIZETYPE "int"
-#elif Q_PROCESSOR_WORDSIZE == 8
-#define QSIZETYPE_WRAP(decl) "int64 " decl
-#define QPTR_WRAP(decl) "uint64 " decl
-#define QPTR "uint64"
-#define QSIZETYPE "int64"
-#else
-#error "Processor with unexpected word size"
-#endif
-
-// a helper function to register Qt enums to AngelScript
-template <typename T>
-void registerAngelType(asIScriptEngine *engine, const char *enumName) {
-    auto e = QMetaEnum::fromType<T>();
-    auto r = engine->RegisterEnum(enumName);
-    Q_ASSERT(r >= 0);
-
-    for (int i = 0; i < e.keyCount(); ++i) {
-        r = engine->RegisterEnumValue(enumName, e.key(i), e.value(i));
-        Q_ASSERT(r >= 0);
-    }
-}
 
 int WingAngelAPI::sdkVersion() const { return WingHex::SDKVERSION; }
 
@@ -1906,7 +1880,7 @@ CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
     const QString &caption, const QString &dir, const QString &filter,
     QString *selectedFilter, QFileDialog::Options options) {
     return retarrayWrapperFunction(
-        [=]() -> QStringList {
+        [&]() -> QStringList {
             return WingFileDialog::getOpenFileNames(
                 nullptr, caption, dir, filter, selectedFilter, options);
         },

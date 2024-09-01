@@ -3,8 +3,9 @@
 
 void RegisterColor(asIScriptEngine *engine) {
     // Register the QColor type
-    int r = engine->RegisterObjectType(
-        "Color", sizeof(QColor), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDA);
+    int r = engine->RegisterObjectType("Color", sizeof(QColor),
+                                       asOBJ_VALUE | asOBJ_POD |
+                                           asGetTypeTraits<QColor>());
     Q_ASSERT(r >= 0);
 
     // Register the constructors

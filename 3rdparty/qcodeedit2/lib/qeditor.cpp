@@ -3880,6 +3880,7 @@ void QEditor::zoom(int n) {
     QFont f = m_doc->font();
     f.setPointSize(qMax(1, f.pointSize() + n));
     m_doc->setFont(f);
+    emit zoomed();
     update();
 }
 

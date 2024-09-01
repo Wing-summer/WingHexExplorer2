@@ -25,6 +25,7 @@ BEGIN_AS_NAMESPACE
 
 void RegisterQString(asIScriptEngine *engine);
 void RegisterQStringUtils(asIScriptEngine *engine);
+void RegisterQStringRegExSupport(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 

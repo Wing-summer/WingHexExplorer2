@@ -312,6 +312,8 @@ signals:
     void markChanged(const QString &f, QDocumentLineHandle *l, int mark,
                      bool on);
 
+    void zoomed();
+
 public slots:
     void checkClipboard();
     void reconnectWatcher();

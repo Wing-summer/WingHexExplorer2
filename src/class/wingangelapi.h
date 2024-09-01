@@ -2,7 +2,6 @@
 #define WINGANGELAPI_H
 
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
-#include "define.h"
 #include "plugin/iwingplugin.h"
 
 class asIScriptEngine;
@@ -43,40 +42,6 @@ private:
                                 bool *ok = nullptr);
 
 private:
-    template <typename Func>
-    CScriptArray *retarrayWrapperFunction(Func &&getRet,
-                                          const char *angelType) {
-        // context, which can be used to obtain a pointer to the
-        // engine.
-        asIScriptContext *ctx = asGetActiveContext();
-        if (ctx) {
-            asIScriptEngine *engine = ctx->GetEngine();
-
-            auto ret = getRet();
-
-            // The script array needs to know its type to properly handle the
-            // elements. Note that the object type should be cached to avoid
-            // performance issues if the function is called frequently.
-            asITypeInfo *t = engine->GetTypeInfoByDecl(angelType);
-            Q_ASSERT(t);
-
-            auto array = CScriptArray::Create(t, ret.size());
-            for (typename decltype(ret)::size_type i = 0; i < ret.size(); ++i) {
-                auto v = ret.at(i);
-                array->SetValue(i, &v);
-            }
-            return array;
-        } else {
-            return nullptr;
-        }
-    }
-
-    template <typename Func>
-    CScriptArray *byteArrayWrapperFunction(Func &&fn) {
-        return retarrayWrapperFunction(fn, "array<byte>");
-    }
-
-private:
     QString _InputBox_getItem(int stringID, const QString &title,
                               const QString &label, const CScriptArray &items,
                               int current, bool editable, bool *ok,
@@ -94,8 +59,7 @@ private:
 
     bool _HexReader_read(void *ref, int typeId);
 
-    qsizetype _HexReader_searchForward(qsizetype begin,
-                                       const CScriptArray &ba);
+    qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
 
     qsizetype _HexReader_searchBackward(qsizetype begin,
                                         const CScriptArray &ba);

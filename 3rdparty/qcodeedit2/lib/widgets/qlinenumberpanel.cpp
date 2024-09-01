@@ -82,11 +82,18 @@ void QLineNumberPanel::editorChange(QEditor *e) {
     }
 
     if (e) {
-        setFixedWidth(fontMetrics().horizontalAdvance(
-                          QString::number(e->document()->lines())) +
-                      5);
+        setFixedWidth(
+            QFontMetrics(e->document()->font())
+                .horizontalAdvance(QString::number(e->document()->lines())) +
+            5);
 
         connect(e, SIGNAL(cursorPositionChanged()), this, SLOT(update()));
+        connect(e, &QEditor::zoomed, this, [=] {
+            setFixedWidth(QFontMetrics(e->document()->font())
+                              .horizontalAdvance(
+                                  QString::number(e->document()->lines())) +
+                          5);
+        });
     }
 }
 
@@ -137,6 +144,12 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
     // qDebug("first = %i; last = %i", first, last);
     // qDebug("beg pos : %i", posY);
 
+    p->save();
+    f = p->font();
+    f.setPointSize(d->font().pointSize());
+
+    p->setFont(f);
+
     for (;; ++n) {
         // qDebug("n = %i; pos = %i", n, posY);
         QDocumentLine line = d->line(n);
@@ -157,11 +170,9 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
 
         if (n == cursorLine) {
             draw = true;
-
             p->save();
-            QFont f = p->font();
-            f.setWeight(QFont::Bold);
-
+            auto f = p->font();
+            f.setBold(true);
             p->setFont(f);
         }
 
@@ -183,6 +194,7 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
             specialFont.setBold(
                 n ==
                 cursorLine); // todo: only get bold on the current wrapped line
+            specialFont.setPointSize(d->font().pointSize());
             p->setFont(specialFont);
 #endif
 
@@ -206,6 +218,8 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
 
         posY += ls * line.lineSpan();
     }
+
+    p->restore();
 
     // p->setPen(Qt::DotLine);
     // p->drawLine(width()-1, 0, width()-1, pageBottom);

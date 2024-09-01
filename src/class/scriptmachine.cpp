@@ -4,6 +4,7 @@
 #include "AngelScript/add_on/scriptany/scriptany.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/add_on/scriptdictionary/scriptdictionary.h"
+#include "AngelScript/add_on/scriptfile/scriptfilesystem.h"
 #include "AngelScript/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/add_on/scripthelper/scripthelper.h"
@@ -13,11 +14,11 @@
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptqstring.h"
+#include "scriptaddon/scriptregex.h"
 
 #include "angelobjstring.h"
 
 #include <QProcess>
-#include <QRegularExpression>
 #include <iostream>
 
 ScriptMachine::~ScriptMachine() {
@@ -47,6 +48,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     RegisterScriptArray(engine, false);
     RegisterQString(engine);
+    RegisterScriptRegex(engine);
+    RegisterQStringUtils(engine);
+    RegisterQStringRegExSupport(engine);
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);
     RegisterScriptWeakRef(engine);
@@ -54,10 +58,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptDictionary(engine);
     RegisterScriptGrid(engine);
     RegisterScriptDateTime(engine);
-    // RegisterScriptFileSystem(engine);
+    RegisterScriptFileSystem(engine);
     RegisterScriptHandle(engine);
     RegisterColor(engine);
-    // RegisterQStringUtils(engine);
     RegisterExceptionRoutines(engine);
 
     _rtypes.resize(RegisteredType::tMAXCOUNT);

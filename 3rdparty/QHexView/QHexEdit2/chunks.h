@@ -19,8 +19,8 @@
  *
  */
 
-#include "define.h"
 #include <QtCore>
+#include <QtGlobal>
 
 struct Chunk {
     QByteArray data;

@@ -75,7 +75,7 @@ add_library(
   QHexEdit2/chunks_win.h
   qhexview.h
   qhexview.cpp
-  define.h)
+)
 
 set_target_properties(
   QHexView

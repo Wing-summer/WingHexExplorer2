@@ -1,10 +1,8 @@
 #ifndef FINDRESULTMODEL_H
 #define FINDRESULTMODEL_H
 
-#include <QAbstractTableModel>
-
-#include "define.h"
 #include "plugin/iwingplugin.h"
+#include <QAbstractTableModel>
 
 class FindResultModel : public QAbstractTableModel {
     Q_OBJECT
@@ -17,7 +15,7 @@ public:
     void beginUpdate();
     void endUpdate();
 
-    WingHex::FindResult resultAt(qindextype index) const;
+    WingHex::FindResult resultAt(qsizetype index) const;
     void clear();
     QList<WingHex::FindResult>::size_type size() const;
 

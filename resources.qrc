@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/com.wingsummer.winghex">
+        <file>LICENSE</file>
         <file>images/author.jpg</file>
         <file>images/author.png</file>
         <file>images/bookmark.png</file>
@@ -56,6 +57,7 @@
         <file>images/open.png</file>
         <file>images/opendriver.png</file>
         <file>images/openr.png</file>
+        <file>images/other.png</file>
         <file>images/paste.png</file>
         <file>images/pastehex.png</file>
         <file>images/plugin.png</file>
@@ -93,7 +95,6 @@
         <file>images/win.png</file>
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
-        <file>LICENSE</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">3rdparty/QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>

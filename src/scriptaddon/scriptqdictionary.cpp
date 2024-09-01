@@ -1,7 +1,6 @@
 #include "scriptqdictionary.h"
 #include "AngelScript/add_on/scriptarray/scriptarray.h"
 #include <assert.h>
-#include <string.h>
 
 BEGIN_AS_NAMESPACE
 
@@ -53,7 +52,7 @@ CScriptDictionary *CScriptDictionary::Create(asIScriptEngine *engine) {
     // Use the custom memory routine from AngelScript to allow application to
     // better control how much memory is used
     CScriptDictionary *obj =
-            (CScriptDictionary *)asAllocMem(sizeof(CScriptDictionary));
+        (CScriptDictionary *)asAllocMem(sizeof(CScriptDictionary));
     new (obj) CScriptDictionary(engine);
     return obj;
 }
@@ -62,7 +61,7 @@ CScriptDictionary *CScriptDictionary::Create(asBYTE *buffer) {
     // Use the custom memory routine from AngelScript to allow application to
     // better control how much memory is used
     CScriptDictionary *obj =
-            (CScriptDictionary *)asAllocMem(sizeof(CScriptDictionary));
+        (CScriptDictionary *)asAllocMem(sizeof(CScriptDictionary));
     new (obj) CScriptDictionary(buffer);
     return obj;
 }
@@ -418,13 +417,13 @@ CScriptArray *CScriptDictionary::GetKeys() const {
 
 void ScriptDictionaryFactory_Generic(asIScriptGeneric *gen) {
     *(CScriptDictionary **)gen->GetAddressOfReturnLocation() =
-            CScriptDictionary::Create(gen->GetEngine());
+        CScriptDictionary::Create(gen->GetEngine());
 }
 
 void ScriptDictionaryListFactory_Generic(asIScriptGeneric *gen) {
     asBYTE *buffer = (asBYTE *)gen->GetArgAddress(0);
     *(CScriptDictionary **)gen->GetAddressOfReturnLocation() =
-            CScriptDictionary::Create(buffer);
+        CScriptDictionary::Create(buffer);
 }
 
 void ScriptDictionaryAddRef_Generic(asIScriptGeneric *gen) {
@@ -1098,62 +1097,62 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine) {
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_ADDREF, "void f()",
-                asMETHOD(CScriptDictionary, AddRef), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, AddRef), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_RELEASE, "void f()",
-                asMETHOD(CScriptDictionary, Release), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, Release), asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "dictionary &opAssign(const dictionary &in)",
-                asMETHODPR(CScriptDictionary, operator=, (const CScriptDictionary &),
-                           CScriptDictionary &),
+        asMETHODPR(CScriptDictionary, operator=, (const CScriptDictionary &),
+                   CScriptDictionary &),
         asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "void set(const string &in, const ?&in)",
-                asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, void *, int),
+        asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, void *, int),
                    void),
         asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod(
         "dictionary", "bool get(const string &in, ?&out) const",
-                asMETHODPR(CScriptDictionary, Get,
+        asMETHODPR(CScriptDictionary, Get,
                    (const dictKey_t &, void *, int) const, bool),
         asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "void set(const string &in, const int64&in)",
-                asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, const asINT64 &),
+        asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, const asINT64 &),
                    void),
         asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod(
         "dictionary", "bool get(const string &in, int64&out) const",
-                asMETHODPR(CScriptDictionary, Get, (const dictKey_t &, asINT64 &) const,
+        asMETHODPR(CScriptDictionary, Get, (const dictKey_t &, asINT64 &) const,
                    bool),
         asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "void set(const string &in, const double&in)",
-                asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, const double &),
+        asMETHODPR(CScriptDictionary, Set, (const dictKey_t &, const double &),
                    void),
         asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod(
         "dictionary", "bool get(const string &in, double&out) const",
-                asMETHODPR(CScriptDictionary, Get, (const dictKey_t &, double &) const,
+        asMETHODPR(CScriptDictionary, Get, (const dictKey_t &, double &) const,
                    bool),
         asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "bool exists(const string &in) const",
-                asMETHOD(CScriptDictionary, Exists), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, Exists), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod("dictionary", "bool isEmpty() const",
                                      asMETHOD(CScriptDictionary, IsEmpty),
@@ -1165,7 +1164,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine) {
     assert(r >= 0);
     r = engine->RegisterObjectMethod(
         "dictionary", "bool delete(const string &in)",
-                asMETHOD(CScriptDictionary, Delete), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, Delete), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod("dictionary", "void deleteAll()",
                                      asMETHOD(CScriptDictionary, DeleteAll),
@@ -1174,18 +1173,18 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine) {
 
     r = engine->RegisterObjectMethod(
         "dictionary", "array<string> @getKeys() const",
-                asMETHOD(CScriptDictionary, GetKeys), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, GetKeys), asCALL_THISCALL);
     assert(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "dictionary", "dictionaryValue &opIndex(const string &in)",
-                asMETHODPR(CScriptDictionary, operator[], (const dictKey_t &),
+        asMETHODPR(CScriptDictionary, operator[], (const dictKey_t &),
                    CScriptDictValue *),
         asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectMethod(
         "dictionary", "const dictionaryValue &opIndex(const string &in) const",
-                asMETHODPR(CScriptDictionary, operator[], (const dictKey_t &) const,
+        asMETHODPR(CScriptDictionary, operator[], (const dictKey_t &) const,
                    const CScriptDictValue *),
         asCALL_THISCALL);
     assert(r >= 0);
@@ -1193,23 +1192,23 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine) {
     // Register GC behaviours
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_GETREFCOUNT, "int f()",
-                asMETHOD(CScriptDictionary, GetRefCount), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, GetRefCount), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_SETGCFLAG, "void f()",
-                asMETHOD(CScriptDictionary, SetGCFlag), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, SetGCFlag), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_GETGCFLAG, "bool f()",
-                asMETHOD(CScriptDictionary, GetGCFlag), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, GetGCFlag), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_ENUMREFS, "void f(int&in)",
-                asMETHOD(CScriptDictionary, EnumReferences), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, EnumReferences), asCALL_THISCALL);
     assert(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)",
-                asMETHOD(CScriptDictionary, ReleaseAllReferences), asCALL_THISCALL);
+        asMETHOD(CScriptDictionary, ReleaseAllReferences), asCALL_THISCALL);
     assert(r >= 0);
 
 #if AS_USE_STLNAMES == 1

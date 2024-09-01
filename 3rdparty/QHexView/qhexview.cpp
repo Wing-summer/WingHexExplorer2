@@ -272,14 +272,14 @@ void QHexView::setCopyLimit(qsizetype newCopylimit) {
 
 qreal QHexView::scaleRate() const { return m_scaleRate; }
 
-qindextype QHexView::searchForward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexView::searchForward(qsizetype begin, const QByteArray &ba) {
     if (begin < 0) {
         begin = m_cursor->position().offset();
     }
     return m_document->searchForward(begin, ba);
 }
 
-qindextype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
     qsizetype startPos;
     if (begin < 0) {
         startPos = m_cursor->position().offset() - 1;
@@ -292,14 +292,14 @@ qindextype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
     return m_document->searchBackward(startPos, ba);
 }
 
-void QHexView::gotoBookMark(qindextype index) {
+void QHexView::gotoBookMark(qsizetype index) {
     if (index >= 0 && index < m_document->bookMarksCount()) {
         auto bookmark = m_document->bookMarkByIndex(index);
         m_cursor->moveTo(bookmark.pos);
     }
 }
 
-bool QHexView::existBookMarkByIndex(qindextype &index) {
+bool QHexView::existBookMarkByIndex(qsizetype &index) {
     auto curpos = m_cursor->position().offset();
     int i = 0;
     for (auto &item : m_document->getAllBookMarks()) {
@@ -404,11 +404,11 @@ void QHexView::Paste(int nibbleindex, bool hex) {
     }
 }
 
-void QHexView::Replace(qindextype offset, uchar b, int nibbleindex) {
+void QHexView::Replace(qsizetype offset, uchar b, int nibbleindex) {
     m_document->Replace(m_cursor, offset, b, nibbleindex);
 }
 
-void QHexView::Replace(qindextype offset, const QByteArray &data,
+void QHexView::Replace(qsizetype offset, const QByteArray &data,
                        int nibbleindex) {
     m_document->Replace(m_cursor, offset, data, nibbleindex);
 }
@@ -655,8 +655,7 @@ void QHexView::paintEvent(QPaintEvent *e) {
     // compute document lines, adding firstVisible and removing the header
     // the max is necessary if the rect covers the header
     const qsizetype begin = firstVisible + std::max(first - headerCount, 0);
-    const qsizetype end =
-        firstVisible + std::max(lastPlusOne - headerCount, 0);
+    const qsizetype end = firstVisible + std::max(lastPlusOne - headerCount, 0);
 
     painter.save();
     painter.translate(-this->horizontalScrollBar()->value(), 0);
@@ -1048,8 +1047,7 @@ void QHexView::renderLine(qsizetype line) {
 }
 
 qsizetype QHexView::firstVisibleLine() const {
-    return qsizetype(this->verticalScrollBar()->value()) *
-           documentSizeFactor();
+    return qsizetype(this->verticalScrollBar()->value()) * documentSizeFactor();
 }
 qsizetype QHexView::lastVisibleLine() const {
     return this->firstVisibleLine() + this->visibleLines() - 1;
@@ -1058,7 +1056,7 @@ qsizetype QHexView::lastVisibleLine() const {
 qsizetype QHexView::visibleLines() const {
     auto visLines =
         qsizetype(std::ceil(this->height() / m_renderer->lineHeight() -
-                             m_renderer->headerLineCount()));
+                            m_renderer->headerLineCount()));
     return std::min(visLines, m_renderer->documentLines());
 }
 

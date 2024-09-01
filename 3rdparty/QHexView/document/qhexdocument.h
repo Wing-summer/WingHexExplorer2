@@ -1,7 +1,6 @@
 #ifndef QHEXDOCUMENT_H
 #define QHEXDOCUMENT_H
 
-#include "../define.h"
 #include "buffer/qhexbuffer.h"
 #include "qhexcursor.h"
 #include "qhexmetadata.h"
@@ -55,7 +54,7 @@ public:
 
     //----------------------------------
     bool AddBookMark(qsizetype pos, QString comment);
-    bool RemoveBookMark(qindextype index);
+    bool RemoveBookMark(qsizetype index);
     bool RemoveBookMarks(QList<qsizetype> &pos);
     bool ModBookMark(qsizetype pos, QString comment);
     bool ClearBookMark();
@@ -64,14 +63,14 @@ public:
     bool addBookMark(qsizetype pos, QString comment);
     bool modBookMark(qsizetype pos, QString comment);
 
-    BookMarkStruct bookMarkByIndex(qindextype index);
+    BookMarkStruct bookMarkByIndex(qsizetype index);
     BookMarkStruct bookMark(qsizetype pos);
 
     QString bookMarkComment(qsizetype pos);
     const QList<BookMarkStruct> &getAllBookMarks();
     qsizetype bookMarksCount() const;
     void applyBookMarks(const QList<BookMarkStruct> &books);
-    bool removeBookMarkByIndex(qindextype index);
+    bool removeBookMarkByIndex(qsizetype index);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
@@ -81,8 +80,7 @@ public:
     bool existBookMark(qsizetype pos);
 
     void findAllBytes(
-        qsizetype begin, qsizetype end, QByteArray b,
-        QList<qsizetype> &results,
+        qsizetype begin, qsizetype end, QByteArray b, QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
     bool isDocSaved();
     void setDocSaved(bool b = true);
@@ -114,8 +112,7 @@ public slots:
     void undo();
     void redo();
 
-    void Insert(QHexCursor *cursor, qsizetype offset, uchar b,
-                int nibbleindex);
+    void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
     void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);
     void Replace(QHexCursor *cursor, qsizetype offset, uchar b,
