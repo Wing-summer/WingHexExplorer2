@@ -3,7 +3,8 @@
 static auto UNKNOWN_NUM = QStringLiteral("-");
 
 static QStringList _numHeader{"byte",   "char",  "ushort", "short",
-                              "uint32", "int32", "uint64", "int64"};
+                              "uint32", "int32", "uint64", "int64",
+                              "float32", "double64"};
 
 NumShowModel::NumShowModel(QObject *parent) : QAbstractTableModel(parent) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
