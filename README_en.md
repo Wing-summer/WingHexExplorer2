@@ -2,6 +2,7 @@
 
 - [Contributors](#contributors)
 - [Credit](#credit)
+- [Contributing](#contributing)
 - [Status](#status)
 - [WingHexExplorer2](#winghexexplorer2)
   - [Contribution](#contribution)
@@ -50,7 +51,8 @@
 
 Maintaining a useful tool is not something that can be done by one person. What is more important is that everyone maintains it together. The following are the people who have contributed to the code of this repository. Special thanks:
 
-> Wanted
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
 
 ## Credit
 
@@ -59,6 +61,12 @@ Thanks to the sponsorship of the following people, I will try my best to continu
 | Sponsor |       Comment        |
 | :-----: | :------------------: |
 |   *欢   | a fellow from Deepin |
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for getting started with the contribution.
+
+Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contributing and engaging in the discussions.
 
 ## Status
 
@@ -241,7 +249,7 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 
 ## WIKI
 
-&emsp;&emsp;If you want to learn how to use WingHexEditor and how to develop plug-ins for the software, please go to this link: `It has not been ported yet`. At the same time, you are also welcome to point out errors in the Wiki and contribute high-quality content.
+&emsp;&emsp;If you want to learn how to use WingHexEditor and how to develop plug-ins for the software, please go to this link: `Not available yet`. At the same time, you are also welcome to point out errors in the Wiki and contribute high-quality content.
 
 ## Plugins
 
