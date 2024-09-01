@@ -2072,9 +2072,14 @@ void MainWindow::on_locChanged() {
         auto s1 = processEndian(qsizetype(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
                               QString::number(s1));
+        double s2 = *(double *)(&n);
+        auto s3 = processEndian(s2);  // 大小端字节序转换函数
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
+                              QString::number(s3));
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64, QString());
     }
 
     if (len > sizeof(quint32)) {
@@ -2085,9 +2090,14 @@ void MainWindow::on_locChanged() {
         auto s1 = processEndian(qint32(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
                               QString::number(s1));
+        float s2 = *(float *)(&n);
+        auto s3 = processEndian(s2);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
+                              QString::number(s3));
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
     }
 
     if (len > sizeof(quint16)) {
