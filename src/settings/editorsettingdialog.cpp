@@ -44,6 +44,7 @@ void EditorSettingDialog::apply() {
 
 void EditorSettingDialog::reset() {
     SettingManager::instance().reset(SettingManager::SETTING::EDITOR);
+    reload();
 }
 
 void EditorSettingDialog::cancel() { reload(); }

@@ -9,6 +9,15 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::PluginSettingDialog) {
     ui->setupUi(this);
     reload();
+
+    auto &plgsys = PluginSystem::instance();
+    auto pico = ICONRES("plugin");
+    ui->plglist->clear();
+    for (auto &p : plgsys.plugins()) {
+        ui->plglist->addItem(new QListWidgetItem(pico, p->pluginName()));
+    }
+
+    ui->txtc->clear();
 }
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }
@@ -27,15 +36,6 @@ void PluginSettingDialog::reload() {
     auto &set = SettingManager::instance();
     ui->cbEnablePlugin->setChecked(set.enablePlugin());
     ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
-
-    auto &plgsys = PluginSystem::instance();
-    auto pico = ICONRES("plugin");
-    ui->plglist->clear();
-    for (auto &p : plgsys.plugins()) {
-        ui->plglist->addItem(new QListWidgetItem(pico, p->pluginName()));
-    }
-
-    ui->txtc->clear();
 }
 
 QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }
@@ -60,6 +60,7 @@ void PluginSettingDialog::reset() {
     for (auto &page : _pages) {
         page->reset();
     }
+    reload();
 }
 
 void PluginSettingDialog::cancel() { reload(); }

@@ -294,7 +294,7 @@ qsizetype Chunks_win::getChunkIndex(qsizetype absPos) {
         Q_ASSERT(SetFilePointerEx(_handle, sectorOffset, NULL, FILE_BEGIN));
 
         newChunk.data.fill(0, CHUNK_SIZE);
-        DWORD bytesRead;
+        DWORD bytesRead = 0;
         Q_ASSERT(ReadFile(_handle, newChunk.data.data(), CHUNK_SIZE, &bytesRead,
                           NULL));
         newChunk.data.resize(bytesRead);

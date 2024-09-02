@@ -99,6 +99,7 @@ void GeneralSettingDialog::apply() {
 
 void GeneralSettingDialog::reset() {
     SettingManager::instance().reset(SettingManager::SETTING::APP);
+    reload();
 }
 
 void GeneralSettingDialog::cancel() { reload(); }

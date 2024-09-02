@@ -252,9 +252,11 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     _ctxMgr = new CContextMgr;
     _ctxMgr->RegisterCoRoutineSupport(_engine);
-    Q_ASSERT(_engine->SetContextCallbacks(
-                 &ScriptMachine::requestContextCallback,
-                 &ScriptMachine::returnContextCallback, this) >= 0);
+
+    auto ret = _engine->SetContextCallbacks(
+        &ScriptMachine::requestContextCallback,
+        &ScriptMachine::returnContextCallback, this);
+    Q_ASSERT(ret >= 0);
 
     if (isInDebug) {
         // Let the debugger hold an engine pointer that can be used by the

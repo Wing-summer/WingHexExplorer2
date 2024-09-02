@@ -18,7 +18,8 @@ public:
         PLUGIN = 2,
         EDITOR = 4,
         SCRIPT = 8,
-        ALL = APP | PLUGIN | EDITOR | SCRIPT
+        OTHER = 16,
+        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER
     };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)
 public:
@@ -92,6 +93,12 @@ public:
     QByteArray scriptDockLayout() const;
     void setScriptDockLayout(const QByteArray &newScriptDockLayout);
 
+    bool useNativeFileDialog() const;
+    void setUseNativeFileDialog(bool newUseNativeFileDialog);
+
+    bool useNativeTitleBar() const;
+    void setUseNativeTitleBar(bool newUseNativeTitleBar);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
@@ -104,6 +111,11 @@ private:
     SettingManager();
 
     void load();
+
+    QList<RecentFileManager::RecentInfo>
+    getDataFromVarList(const QVariantList &varlist) const;
+    QVariantList
+    getVarList(const QList<RecentFileManager::RecentInfo> &infos) const;
 
     Q_DISABLE_COPY(SettingManager)
 private:
@@ -133,6 +145,9 @@ private:
     QStringList m_sysDisplayCats;
 
     QString m_lastUsedPath;
+
+    bool m_useNativeFileDialog = true;
+    bool m_useNativeTitleBar = false;
 
 private:
     QFont _defaultFont;

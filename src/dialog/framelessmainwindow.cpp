@@ -2,21 +2,28 @@
 #include <QEvent>
 #include <QStyle>
 
+#include "class/settingmanager.h"
 #include <widgetframe/windowbutton.h>
 
 FramelessMainWindow::FramelessMainWindow(QWidget *parent)
     : QMainWindow(parent) {
-    _helper = new FramelessHelper(this, false);
+    _useFrameLess = !SettingManager::instance().useNativeTitleBar();
+    if (_useFrameLess) {
+        _helper = new FramelessHelper(this, false);
+    }
 }
 
 void FramelessMainWindow::buildUpContent(QWidget *content) {
-    auto titlebar = _helper->windowBar();
-    auto iconBtn = qobject_cast<QWK::WindowButton *>(titlebar->iconButton());
-    Q_ASSERT(iconBtn);
-    iconBtn->setIconNormal(this->windowIcon());
-    connect(this, &FramelessMainWindow::windowIconChanged, iconBtn,
-            &QWK::WindowButton::setIconNormal);
-    setMenuWidget(titlebar);
+    if (_useFrameLess) {
+        auto titlebar = _helper->windowBar();
+        auto iconBtn =
+            qobject_cast<QWK::WindowButton *>(titlebar->iconButton());
+        Q_ASSERT(iconBtn);
+        iconBtn->setIconNormal(this->windowIcon());
+        connect(this, &FramelessMainWindow::windowIconChanged, iconBtn,
+                &QWK::WindowButton::setIconNormal);
+        setMenuWidget(titlebar);
+    }
     setCentralWidget(content);
 #ifdef QT_DEBUG
     m_isBuilt = true;
@@ -32,25 +39,27 @@ void FramelessMainWindow::showEvent(QShowEvent *event) {
 }
 
 bool FramelessMainWindow::event(QEvent *event) {
-    switch (event->type()) {
-    case QEvent::WindowActivate: {
-        if (_helper->windowBar()) {
-            _helper->windowBar()->setProperty("bar-active", true);
-            style()->polish(_helper->windowBar());
+    if (_useFrameLess) {
+        switch (event->type()) {
+        case QEvent::WindowActivate: {
+            if (_helper->windowBar()) {
+                _helper->windowBar()->setProperty("bar-active", true);
+                style()->polish(_helper->windowBar());
+            }
+            break;
         }
-        break;
-    }
 
-    case QEvent::WindowDeactivate: {
-        if (_helper->windowBar()) {
-            _helper->windowBar()->setProperty("bar-active", false);
-            style()->polish(_helper->windowBar());
+        case QEvent::WindowDeactivate: {
+            if (_helper->windowBar()) {
+                _helper->windowBar()->setProperty("bar-active", false);
+                style()->polish(_helper->windowBar());
+            }
+            break;
         }
-        break;
-    }
 
-    default:
-        break;
+        default:
+            break;
+        }
     }
     return QMainWindow::event(event);
 }

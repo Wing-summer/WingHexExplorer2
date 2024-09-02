@@ -16,7 +16,6 @@ int main(int argc, char *argv[]) {
 #endif
 
     QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
-    QGuiApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
 
     AppManager a(argc, argv);
     auto w = a.mainWindow();

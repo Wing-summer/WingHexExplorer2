@@ -199,7 +199,10 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.ui
     src/settings/scriptbehaviorsettingdialog.h
     src/settings/scriptbehaviorsettingdialog.cpp
-    src/settings/scriptbehaviorsettingdialog.ui)
+    src/settings/scriptbehaviorsettingdialog.ui
+    src/settings/othersettingsdialog.h
+    src/settings/othersettingsdialog.cpp
+    src/settings/othersettingsdialog.ui)
 
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptqstring.h

@@ -25,7 +25,6 @@
 
 #ifdef Q_OS_WIN
 
-#include "define.h"
 #include <QStorageInfo>
 #include <Windows.h>
 

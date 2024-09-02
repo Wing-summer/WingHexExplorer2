@@ -33,8 +33,12 @@ const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 const auto SCRIPT_USRDISPLAYCATS = QStringLiteral("script.usrDisplayCats");
 const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
 
+const auto OTHER_USESYS_FILEDIALOG = QStringLiteral("sys.nativeDialog");
+const auto OTHER_USE_NATIVE_TITLEBAR = QStringLiteral("sys.nativeTitleBar");
+
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
+    qRegisterMetaType<RecentFileManager::RecentInfo>();
     load();
 }
 
@@ -73,6 +77,8 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_editorShowHeader, EDITOR_SHOW_ADDR, true);
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
+    READ_CONFIG_BOOL(m_useNativeFileDialog, OTHER_USESYS_FILEDIALOG, true);
+    READ_CONFIG_BOOL(m_useNativeTitleBar, OTHER_USE_NATIVE_TITLEBAR, false);
     m_editorEncoding =
         READ_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII")).toString();
     auto encodings = Utilities::getEncodings();
@@ -84,14 +90,10 @@ void SettingManager::load() {
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 100);
     m_decodeStrlimit =
         qBound(qsizetype(100), m_decodeStrlimit, qsizetype(1024));
-    m_recentHexFiles =
-        READ_CONFIG(EDITOR_RECENTFILES,
-                    QVariant::fromValue(QList<RecentFileManager::RecentInfo>()))
-            .value<QList<RecentFileManager::RecentInfo>>();
-    m_recentScriptFiles =
-        READ_CONFIG(SCRIPT_RECENTFILES,
-                    QVariant::fromValue(QList<RecentFileManager::RecentInfo>()))
-            .value<QList<RecentFileManager::RecentInfo>>();
+    m_recentHexFiles = getDataFromVarList(
+        READ_CONFIG(EDITOR_RECENTFILES, QVariantList()).toList());
+    m_recentScriptFiles = getDataFromVarList(
+        READ_CONFIG(SCRIPT_RECENTFILES, QVariantList()).toList());
     m_usrDisplayCats =
         READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
     m_sysDisplayCats =
@@ -111,6 +113,40 @@ void SettingManager::load() {
     emit sigEditorfontSizeChanged(m_editorfontSize);
     emit sigCopylimitChanged(m_copylimit);
     emit sigDecodeStrlimitChanged(m_decodeStrlimit);
+}
+
+QList<RecentFileManager::RecentInfo>
+SettingManager::getDataFromVarList(const QVariantList &varlist) const {
+    QList<RecentFileManager::RecentInfo> infos;
+    for (auto &var : varlist) {
+        if (var.canConvert<RecentFileManager::RecentInfo>()) {
+            infos.append(var.value<RecentFileManager::RecentInfo>());
+        }
+    }
+    return infos;
+}
+
+QVariantList SettingManager::getVarList(
+    const QList<RecentFileManager::RecentInfo> &infos) const {
+    QVariantList varlist;
+    for (auto &info : infos) {
+        varlist.append(QVariant::fromValue(info));
+    }
+    return varlist;
+}
+
+bool SettingManager::useNativeTitleBar() const { return m_useNativeTitleBar; }
+
+void SettingManager::setUseNativeTitleBar(bool newUseNativeTitleBar) {
+    m_useNativeTitleBar = newUseNativeTitleBar;
+}
+
+bool SettingManager::useNativeFileDialog() const {
+    return m_useNativeFileDialog;
+}
+
+void SettingManager::setUseNativeFileDialog(bool newUseNativeFileDialog) {
+    m_useNativeFileDialog = newUseNativeFileDialog;
 }
 
 QByteArray SettingManager::scriptDockLayout() const {
@@ -186,8 +222,8 @@ void SettingManager::save(SETTINGS cat) {
     HANDLE_CONFIG;
     WRITE_CONFIG(DOCK_LAYOUT, m_dockLayout);
     WRITE_CONFIG(SCRIPT_DOCK_LAYOUT, m_scriptDockLayout);
-    WRITE_CONFIG(EDITOR_RECENTFILES, QVariant::fromValue(m_recentHexFiles));
-    WRITE_CONFIG(SCRIPT_RECENTFILES, QVariant::fromValue(m_recentScriptFiles));
+    WRITE_CONFIG(EDITOR_RECENTFILES, getVarList(m_recentHexFiles));
+    WRITE_CONFIG(SCRIPT_RECENTFILES, getVarList(m_recentScriptFiles));
     WRITE_CONFIG(APP_LASTUSED_PATH, m_lastUsedPath);
     if (cat.testFlag(SETTING::APP)) {
         WRITE_CONFIG(SKIN_THEME, m_themeID);
@@ -208,6 +244,10 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_ENCODING, m_editorEncoding);
         WRITE_CONFIG(EDITOR_COPY_LIMIT, m_copylimit);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
+    }
+    if (cat.testFlag(SETTING::OTHER)) {
+        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
+        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
     }
 }
 
@@ -233,6 +273,10 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_FIND_MAXCOUNT, 100);
         WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
+    }
+    if (cat.testFlag(SETTING::OTHER)) {
+        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
+        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
     }
     load();
 }

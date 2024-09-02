@@ -17,6 +17,7 @@ protected:
 
 private:
     FramelessHelper *_helper = nullptr;
+    bool _useFrameLess = true;
 #ifdef QT_DEBUG
     bool m_isBuilt = false;
 #endif

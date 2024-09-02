@@ -2,6 +2,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 name: Generate a list of contributors
 
@@ -12,5 +15,14 @@ jobs:
     steps:
       - name: Contribute List
         uses: akhilmhdh/contributors-readme-action@v2.3.10
+        with:
+          readme_path: "README.md"
         env:
           GITHUB_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
+      - name: Contribute List English
+        uses: akhilmhdh/contributors-readme-action@v2.3.10
+        with:
+          readme_path: "README_en.md"
+        env:
+          GITHUB_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
+  

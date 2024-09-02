@@ -7,8 +7,7 @@ namespace Ui {
 class ScriptBehaviorSettingDialog;
 }
 
-class ScriptBehaviorSettingDialog : public QWidget
-{
+class ScriptBehaviorSettingDialog : public QWidget {
     Q_OBJECT
 
 public:
