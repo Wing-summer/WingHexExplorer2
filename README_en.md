@@ -52,6 +52,26 @@
 Maintaining a useful tool is not something that can be done by one person. What is more important is that everyone maintains it together. The following are the people who have contributed to the code of this repository. Special thanks:
 
 <!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/Wing-summer">
+                    <img src="https://avatars.githubusercontent.com/u/59953528?v=4" width="100;" alt="Wing-summer"/>
+                    <br />
+                    <sub><b>wingsummer</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/oPengLuo">
+                    <img src="https://avatars.githubusercontent.com/u/41234604?v=4" width="100;" alt="oPengLuo"/>
+                    <br />
+                    <sub><b>大大的力量</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: collaborators,contributors -end -->
 
 ## Credit
