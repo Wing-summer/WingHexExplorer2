@@ -1,4 +1,4 @@
-## 如何参与该项目 / How to CONTRIBUTING
+## 如何参与该项目 / How to CONTRIBUTE
 
 目前该项目由寂静的羽夏主导且是唯一开发者，我首先表达对你想要参与开源贡献的行为表示感谢。
 
@@ -39,9 +39,9 @@ The project directory structure is classified in detail as follows:
 
 ## 注意事项 / Cautions
 
-您提供的代码将会遵守`AGPL-3.0`协议，第三方库将会遵守作者的开源协议。开源虽无国界，但您提供的代码来源请一定确保可靠性，不违反法律法规，不包含政治相关内容，不包含侵犯其他人或公司权益的代码。否则开源就是个笑话。
+您提供的代码将会遵守`AGPL-3.0`协议，第三方库将会遵守作者的开源协议。开源虽无国界，但您提供的代码来源请一定确保可靠性，不违反法律法规，不包含政治相关内容，不包含侵犯其他人或公司合法权益的代码。否则开源就是个笑话。
 
-The code you provide will comply with the `AGPL-3.0` agreement, and the third-party library will comply with the author's open source agreement. Although open source has no borders, please ensure that the source of the code you provide is reliable, does not violate laws and regulations, does not contain political content, and does not contain code that infringes on the rights of other people or companies. Otherwise, open source is a joke.
+The code you provide will comply with the `AGPL-3.0` agreement, and the third-party library will comply with the author's open source agreement. Although open source has no borders, please ensure that the source of the code you provide is reliable, does not violate laws and regulations, does not contain political content, and does not contain code that infringes on the legal rights of other people or companies. Otherwise, open source is a joke.
 
 最后，再次感谢您对开源的支持和帮助。
 

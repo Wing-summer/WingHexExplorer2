@@ -24,6 +24,7 @@
 #include "plugin/pluginsystem.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
+#include "settings/othersettingsdialog.h"
 #include "settings/pluginsettingdialog.h"
 #include "settings/scriptsettingdialog.h"
 
@@ -104,7 +105,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     this->setWindowIcon(Utilities::isRoot()
                             ? ICONRES(QStringLiteral("iconroot"))
                             : ICONRES(QStringLiteral("icon")));
-    this->setMinimumSize(800, 600);
 
     // launch logging system
     connect(Logger::instance(), &Logger::log, m_logbrowser,
@@ -1155,6 +1155,9 @@ void MainWindow::buildUpSettingDialog() {
         }
     }
 
+    auto otherPage = new OtherSettingsDialog(m_setdialog);
+    m_setdialog->addPage(otherPage);
+
     m_setdialog->build();
 }
 
@@ -2073,7 +2076,7 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
                               QString::number(s1));
         double s2 = *(double *)(&n);
-        auto s3 = processEndian(s2);  // 大小端字节序转换函数
+        auto s3 = processEndian(s2); // 大小端字节序转换函数
         _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
                               QString::number(s3));
     } else {

@@ -97,6 +97,44 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                    QString),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedStart(int nth = 0) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedStart, (int) const,
+                   qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedLength(int nth = 0) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedLength, (int) const,
+                   qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedEnd(int nth = 0) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedEnd, (int) const,
+                   qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedStart(string &in) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedStart,
+                   (const QString &) const, qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedLength(string &in) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedLength,
+                   (const QString &) const, qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectMethod(
+        "match", QSIZETYPE_WRAP("capturedEnd(string &in) const"),
+        asMETHODPR(QRegularExpressionMatch, capturedEnd,
+                   (const QString &) const, qsizetype),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+#else
     r = engine->RegisterObjectMethod(
         "match", "int capturedStart(int nth = 0) const",
         asMETHODPR(QRegularExpressionMatch, capturedStart, (int) const, int),
@@ -130,6 +168,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                    (const QString &) const, int),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+#endif
 
     // QRegularExpression...
     r = engine->RegisterObjectMethod(

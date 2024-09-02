@@ -1645,7 +1645,9 @@ void PluginSystem::LoadPlugin() {
     Q_ASSERT(_win);
 
     _angelplg = new WingAngelAPI;
-    Q_ASSERT(loadPlugin(_angelplg));
+
+    auto ret = loadPlugin(_angelplg);
+    Q_ASSERT(ret);
 
     auto &set = SettingManager::instance();
     if (!set.enablePlugin()) {

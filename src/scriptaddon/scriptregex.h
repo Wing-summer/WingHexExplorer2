@@ -30,7 +30,11 @@ Q_ENUM_NS(PatternOptions)
 
 enum MatchOptions {
     NoMatchOption = QRegularExpression::NoMatchOption,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    AnchoredMatchOption = QRegularExpression::AnchorAtOffsetMatchOption,
+#else
     AnchoredMatchOption = QRegularExpression::AnchoredMatchOption,
+#endif
     DontCheckSubjectStringMatchOption =
         QRegularExpression::DontCheckSubjectStringMatchOption
 };
