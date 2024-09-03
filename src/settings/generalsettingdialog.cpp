@@ -3,7 +3,7 @@
 
 #include <QMetaEnum>
 
-#include "AngelScript/angelscript/include/angelscript.h"
+#include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/languagemanager.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"

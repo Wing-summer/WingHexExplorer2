@@ -1,7 +1,7 @@
 #ifndef ANGELSCRIPTHELPER_H
 #define ANGELSCRIPTHELPER_H
 
-#include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include <QMetaEnum>
 #include <QtGlobal>
 

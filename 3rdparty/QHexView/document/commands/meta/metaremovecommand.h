@@ -9,11 +9,11 @@
 
 class MetaRemoveCommand : public MetaCommand {
 public:
-  MetaRemoveCommand(QHexMetadata *hexmeta, QHexMetadataAbsoluteItem &meta,
-                    QUndoCommand *parent = nullptr);
+    MetaRemoveCommand(QHexMetadata *hexmeta, QHexMetadataAbsoluteItem &meta,
+                      QUndoCommand *parent = nullptr);
 
-  void undo() override;
-  void redo() override;
+    void undo() override;
+    void redo() override;
 };
 
 #endif // METAREMOVECOMMAND_H

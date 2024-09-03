@@ -5,11 +5,11 @@
 
 class BookMarkAddCommand : public BookMarkCommand {
 public:
-  BookMarkAddCommand(QHexDocument *doc, qsizetype pos, QString comment,
-                     QUndoCommand *parent = nullptr);
+    BookMarkAddCommand(QHexDocument *doc, qsizetype pos, QString comment,
+                       QUndoCommand *parent = nullptr);
 
-  void undo() override;
-  void redo() override;
+    void undo() override;
+    void redo() override;
 };
 
 #endif // BOOKMARKADDCOMMAND_H

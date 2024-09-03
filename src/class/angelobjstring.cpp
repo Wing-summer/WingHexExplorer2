@@ -1,6 +1,6 @@
 #include "angelobjstring.h"
-#include "AngelScript/add_on/datetime/datetime.h"
-#include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "AngelScript/sdk/add_on/datetime/datetime.h"
+#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "scriptaddon/scriptqdictionary.h"
 
 #include <QString>

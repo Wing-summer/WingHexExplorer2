@@ -1,7 +1,7 @@
 #ifndef WINGANGELAPI_H
 #define WINGANGELAPI_H
 
-#include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "plugin/iwingplugin.h"
 
 class asIScriptEngine;

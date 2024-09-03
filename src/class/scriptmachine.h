@@ -1,9 +1,9 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "AngelScript/add_on/contextmgr/contextmgr.h"
-#include "AngelScript/add_on/scriptbuilder/scriptbuilder.h"
-#include "AngelScript/angelscript/include/angelscript.h"
+#include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
+#include "AngelScript/sdk/add_on/scriptbuilder/scriptbuilder.h"
+#include "AngelScript/sdk/angelscript/include/angelscript.h"
 
 #include "asdebugger.h"
 

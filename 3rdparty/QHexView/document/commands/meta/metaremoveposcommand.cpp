@@ -3,13 +3,13 @@
 MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
     : QUndoCommand(parent), m_hexmeta(hexmeta), m_pos(pos) {
-  olditems = m_hexmeta->gets(pos);
+    olditems = m_hexmeta->gets(pos);
 }
 
 void MetaRemovePosCommand::redo() { m_hexmeta->removeMetadata(m_pos); }
 
 void MetaRemovePosCommand::undo() {
-  for (auto item : olditems)
-    m_hexmeta->metadata(item.begin, item.end, item.foreground, item.background,
-                        item.comment);
+    for (auto item : olditems)
+        m_hexmeta->metadata(item.begin, item.end, item.foreground,
+                            item.background, item.comment);
 }

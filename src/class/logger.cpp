@@ -1,6 +1,6 @@
 #include "logger.h"
 
-#include "../../QLogger/qlogger.h"
+#include "QLogger/qloggerlib/qlogger.h"
 
 #define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"
 #define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"

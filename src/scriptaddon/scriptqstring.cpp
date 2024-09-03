@@ -1,5 +1,5 @@
 #include "scriptqstring.h"
-#include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "angelscript.h"
 #include "class/angelscripthelper.h"
 

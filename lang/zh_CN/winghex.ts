@@ -2287,44 +2287,44 @@ Do you want them to be saved?</source>
 <context>
     <name>QSnippetEdit</name>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="132"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="148"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="113"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="127"/>
         <source>Unsaved changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="133"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="114"/>
         <source>Do you want to save pattern changes to snippet %1 ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="149"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="128"/>
         <source>The current snippet data will be discarded. Do you want to continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="226"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="197"/>
         <source>Missing data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="226"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="198"/>
         <source>Please provide a name and a content to create a new snippet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="235"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="258"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="206"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="225"/>
         <source>Error</source>
         <translation type="unfinished">错误</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="235"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="206"/>
         <source>Invalid snippet pattern.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="258"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/snippets/qsnippetedit.cpp" line="226"/>
         <source>Please select a valid snippet to erase</source>
         <translation type="unfinished"></translation>
     </message>

@@ -7,15 +7,15 @@
 
 class BookMarkClearCommand : public QUndoCommand {
 public:
-  BookMarkClearCommand(QHexDocument *doc, QList<BookMarkStruct> bookmarks,
-                       QUndoCommand *parent = nullptr);
+    BookMarkClearCommand(QHexDocument *doc, QList<BookMarkStruct> bookmarks,
+                         QUndoCommand *parent = nullptr);
 
-  void undo() override;
-  void redo() override;
+    void undo() override;
+    void redo() override;
 
 protected:
-  QHexDocument *m_doc;
-  QList<BookMarkStruct> m_bookmarks;
+    QHexDocument *m_doc;
+    QList<BookMarkStruct> m_bookmarks;
 };
 
 #endif // BOOKMARKCLEARCOMMAND_H

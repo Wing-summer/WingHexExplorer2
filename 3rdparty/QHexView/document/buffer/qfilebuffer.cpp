@@ -13,9 +13,7 @@ QFileBuffer::QFileBuffer(QObject *parent) : QHexBuffer(parent) {
 
 QFileBuffer::~QFileBuffer() {}
 
-uchar QFileBuffer::at(qsizetype idx) {
-    return uchar(_chunks->data(idx, 1)[0]);
-}
+uchar QFileBuffer::at(qsizetype idx) { return uchar(_chunks->data(idx, 1)[0]); }
 
 qsizetype QFileBuffer::length() const { return _chunks->size(); }
 

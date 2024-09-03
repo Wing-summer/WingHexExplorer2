@@ -36,11 +36,11 @@ if(MSVC)
 endif()
 
 add_subdirectory(3rdparty/qwindowkit)
-add_subdirectory(3rdparty/QLogger)
+add_subdirectory(3rdparty/QLogger/qlogger)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
-add_subdirectory(3rdparty/AngelScript/angelscript/projects/cmake)
+add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QConsoleWidget)
 add_subdirectory(3rdparty/QJsonModel)
 
@@ -235,11 +235,9 @@ foreach(TS_FILE IN LISTS TS_FILES)
 endforeach()
 
 set(TRANSLATION_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QLogger
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System

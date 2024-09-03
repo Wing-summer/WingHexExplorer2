@@ -6,15 +6,15 @@
 
 class BaseAddrCommand : public QUndoCommand {
 public:
-  BaseAddrCommand(QHexDocument *doc, quint64 oldaddr, quint64 newaddr,
-                  QUndoCommand *parent = nullptr);
+    BaseAddrCommand(QHexDocument *doc, quint64 oldaddr, quint64 newaddr,
+                    QUndoCommand *parent = nullptr);
 
-  void redo() override;
-  void undo() override;
+    void redo() override;
+    void undo() override;
 
 private:
-  QHexDocument *m_doc;
-  quint64 m_old, m_new;
+    QHexDocument *m_doc;
+    quint64 m_old, m_new;
 };
 
 #endif // BASEADDRCOMMAND_H

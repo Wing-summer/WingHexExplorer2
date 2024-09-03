@@ -1,5 +1,5 @@
 #include "scriptqdictionary.h"
-#include "AngelScript/add_on/scriptarray/scriptarray.h"
+#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include <assert.h>
 
 BEGIN_AS_NAMESPACE

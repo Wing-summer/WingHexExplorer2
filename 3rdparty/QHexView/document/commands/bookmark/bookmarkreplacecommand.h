@@ -5,14 +5,14 @@
 
 class BookMarkReplaceCommand : public BookMarkCommand {
 public:
-  BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos, QString comment,
-                         QString oldcomment, QUndoCommand *parent = nullptr);
+    BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos, QString comment,
+                           QString oldcomment, QUndoCommand *parent = nullptr);
 
-  void undo() override;
-  void redo() override;
+    void undo() override;
+    void redo() override;
 
 protected:
-  QString m_oldcomment;
+    QString m_oldcomment;
 };
 
 #endif // BOOKMARKREPLACECOMMAND_H

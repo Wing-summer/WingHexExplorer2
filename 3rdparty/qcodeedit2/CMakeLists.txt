@@ -67,6 +67,19 @@ set(QNFA_SRC
     lib/qnfa/light_vector.h lib/qnfa/qnfadefinition.h lib/qnfa/qnfa.h
     lib/qnfa/xml2qnfa.cpp lib/qnfa/qnfa.cpp lib/qnfa/qnfadefinition.cpp)
 
+set(SNIPPET_SRC
+    lib/snippets/qsnippet.cpp
+    lib/snippets/qsnippet.h
+    lib/snippets/qsnippet_p.h
+    lib/snippets/qsnippetbinding.cpp
+    lib/snippets/qsnippetbinding.h
+    lib/snippets/qsnippetedit.cpp
+    lib/snippets/qsnippetedit.h
+    lib/snippets/qsnippetmanager.cpp
+    lib/snippets/qsnippetmanager.h
+    lib/snippets/qsnippetpatternloader.h
+    lib/snippets/snippetedit.ui)
+
 set(SOURCE_FILES
     lib/qce-config.h
     lib/qcodecompletionengine.h
@@ -96,14 +109,16 @@ set(SOURCE_FILES
     lib/qreliablefilewatch.cpp)
 
 add_library(QCodeEditor2 STATIC ${SOURCE_FILES} ${DOCUMENT_SRC} ${WIDGETS_SRC}
-                                ${QNFA_SRC})
+                                ${QNFA_SRC} ${SNIPPET_SRC})
 
 target_include_directories(
   QCodeEditor2
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/lib"
          "${CMAKE_CURRENT_SOURCE_DIR}/lib/document"
          "${CMAKE_CURRENT_SOURCE_DIR}/lib/widgets"
-         "${CMAKE_CURRENT_SOURCE_DIR}/lib/qnfa")
+         "${CMAKE_CURRENT_SOURCE_DIR}/lib/qnfa"
+         "${CMAKE_CURRENT_SOURCE_DIR}/lib/snippets")
+
 target_link_libraries(
   QCodeEditor2
   PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui

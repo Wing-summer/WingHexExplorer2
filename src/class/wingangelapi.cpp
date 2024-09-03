@@ -1,6 +1,6 @@
 #include "wingangelapi.h"
 
-#include "AngelScript/angelscript/include/angelscript.h"
+#include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/angelscripthelper.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"

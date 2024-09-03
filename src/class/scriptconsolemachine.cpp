@@ -1,6 +1,6 @@
 #include "scriptconsolemachine.h"
 
-#include "AngelScript/add_on/scripthelper/scripthelper.h"
+#include "AngelScript/sdk/add_on/scripthelper/scripthelper.h"
 #include "plugin/pluginsystem.h"
 
 ScriptConsoleMachine::ScriptConsoleMachine(
