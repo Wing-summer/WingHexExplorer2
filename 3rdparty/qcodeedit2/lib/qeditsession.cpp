@@ -439,9 +439,7 @@ void QEditSession::update(QEditor *e, Document *d) {
 
     QLineMarkList marks = QLineMarksInfoCenter::instance()->marks(d->fileName);
 
-    foreach (const QLineMark &mark, marks) {
-        d->marks[mark.line] << mark.mark;
-    }
+    foreach (const QLineMark &mark, marks) { d->marks[mark.line] << mark.mark; }
 
     d->scrollX = e->verticalScrollBar()->value();
     d->scrollY = e->horizontalScrollBar()->value();

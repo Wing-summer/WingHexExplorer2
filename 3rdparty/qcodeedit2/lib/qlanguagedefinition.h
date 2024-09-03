@@ -34,9 +34,9 @@ class QDocumentCursor;
 #define QCE_FOLD_FLAGS(flags, open, close)                                     \
     ((flags) | (open & QLanguageDefinition::OpenMask) |                        \
      ((close << 12) & QLanguageDefinition::CloseMask))
-#define QCE_FOLD_OPEN_COUNT(flags) ((flags) & QLanguageDefinition::OpenMask)
+#define QCE_FOLD_OPEN_COUNT(flags) ((flags)&QLanguageDefinition::OpenMask)
 #define QCE_FOLD_CLOSE_COUNT(flags)                                            \
-    (((flags) & QLanguageDefinition::CloseMask) >> 12)
+    (((flags)&QLanguageDefinition::CloseMask) >> 12)
 
 class QCE_EXPORT QLanguageDefinition {
 public:
