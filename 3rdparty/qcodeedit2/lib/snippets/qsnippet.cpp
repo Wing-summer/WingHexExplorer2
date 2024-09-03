@@ -245,7 +245,7 @@ bool QCE::Snippets::Simple::loadSnippet(QSnippet *snip,
         ++index;
     }
 
-    if (tmp.count())
+    if (tmp.length())
         base << tmp;
 
     QHash<int, QList<int>> relocationTable;
