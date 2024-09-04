@@ -5,7 +5,6 @@
 - [Contributing](#contributing)
 - [Status](#status)
 - [WingHexExplorer2](#winghexexplorer2)
-  - [Contribution](#contribution)
   - [License](#license)
   - [Usage Statement](#usage-statement)
   - [Issue](#issue)
@@ -84,6 +83,18 @@ Thanks to the sponsorship of the following people, I will try my best to continu
 
 ## Contributing
 
+- If you want to participate in the development of this software code, please contact me in the pull request.
+- This project supports donations. If you are willing, please go to this repository through WeChat or Alipay. If you don't have any of these, you can use Afadian that supports Paypal. The price of a bottle of water is enough to increase my enthusiasm for maintaining the project. Thank you for your support.
+- If you want to submit code to fix or improve the program, please submit it in the pull request.
+- Any comrades and sponsors who successfully participate in code bug fixes and improve program functions will be reflected in the ReadMe and attached documentation of this repository. If you are one of them, I can explain it according to your reasonable wishes.
+
+\> **Joining us does not mean code maintenance, you can choose one or more of the following to participate**
+
+- Code maintenance: implement new features or fix bugs, maintain and upgrade the code.
+- Document editing: mainly interface documents and tutorials need to be written and edited, which is very important.
+- Participate in discussions: mainly discuss the future development and direction of this project.
+- Write plug-ins: work together to enhance the functionality of the software.
+
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for getting started with the contribution.
 
 Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contributing and engaging in the discussions.
@@ -107,20 +118,6 @@ Why developping this project? What is the difference between `WingHexExplorer2` 
 The ultimate goal of this project is to create a powerful, lightweight, and cross-platform (only for PC) hex editor. Of course, I cannot achieve this goal by myself, which is one of the purposes of my open source. I only maintain the operating system platform I use, and only respond to the bugs that I can fix on the platform I use in my free time.
 
 If you find that the functions of this project do not meet your needs. Please check if there is any description in `TODO.txt`. If not, you can raise it through `issue`. I will evaluate whether the requirements raised are common. If it is a particularly private requirement, I will not implement it. If you really want to join, please implement the plug-in yourself, and you are also welcome to open source. Don't be fanciful when making suggestions. Please note that this software only provides the most basic hexadecimal editing and browsing services, such as templates and scripts in 010 Editor, which still need everyone to work together through plugins to achieve! I hope that everyone will not only raise requirements, but also put forward constructive suggestions and solutions to jointly maintain the open source community. Specific details will be introduced later.
-
-### Contribution
-
-- If you want to participate in the development of this software code, please contact me in the pull request.
-- This project supports donations. If you are willing, please go to this repository through WeChat or Alipay. If you don't have any of these, you can use Afadian that supports Paypal. The price of a bottle of water is enough to increase my enthusiasm for maintaining the project. Thank you for your support.
-- If you want to submit code to fix or improve the program, please submit it in the pull request.
-- Any comrades and sponsors who successfully participate in code bug fixes and improve program functions will be reflected in the ReadMe and attached documentation of this repository. If you are one of them, I can explain it according to your reasonable wishes.
-
-\> **Joining us does not mean code maintenance, you can choose one or more of the following to participate**
-
-- Code maintenance: implement new features or fix bugs, maintain and upgrade the code.
-- Document editing: mainly interface documents and tutorials need to be written and edited, which is very important.
-- Participate in discussions: mainly discuss the future development and direction of this project.
-- Write plug-ins: work together to enhance the functionality of the software.
 
 ### License
 
