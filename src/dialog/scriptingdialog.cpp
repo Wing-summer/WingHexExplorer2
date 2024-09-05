@@ -331,8 +331,35 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     // TODO
 }
 
+bool ScriptingDialog::newOpenFileSafeCheck() { return true; }
+
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     // TODO
+    connect(editor, &ScriptEditor::closeRequested, this, [this] {
+        auto editor = qobject_cast<ScriptEditor *>(sender());
+        Q_ASSERT(editor);
+        Q_ASSERT(m_views.contains(editor));
+
+        m_views.removeOne(editor);
+        if (currentEditor() == editor) {
+            m_curEditor = nullptr;
+        }
+
+        editor->deleteDockWidget();
+        // m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
+        //     ->setEnabled(m_views.size() != 0);
+
+        if (m_dock->focusedDockWidget() == editor) {
+            if (!m_views.isEmpty()) {
+                for (auto p = m_views.begin(); p != m_views.end(); ++p) {
+                    auto ev = *p;
+                    if (ev != editor && ev->isCurrentTab()) {
+                        ev->setFocus();
+                    }
+                }
+            }
+        }
+    });
 }
 
 ads::CDockAreaWidget *ScriptingDialog::editorViewArea() const {
@@ -353,9 +380,12 @@ ScriptEditor *ScriptingDialog::currentEditor() { return m_curEditor; }
 void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {}
 
 void ScriptingDialog::on_newfile() {
+    if (!newOpenFileSafeCheck()) {
+        return;
+    }
     auto editor = new ScriptEditor(this);
-    // auto index = m_newIndex++;
-    // editor->newFile(index);
+    auto index = m_newIndex++;
+    editor->newFile(index);
     // m_openedFileNames << editor->fileName();
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());

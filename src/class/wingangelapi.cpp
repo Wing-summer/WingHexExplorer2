@@ -61,6 +61,15 @@ void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
 
     {
         static std::function<void(const QString &)> fn =
+            std::bind(&WingAngelAPI::trace, this, std::placeholders::_1);
+        r = engine->RegisterGlobalFunction("void trace(const string &in)",
+                                           asMETHOD(decltype(fn), operator()),
+                                           asCALL_THISCALL_ASGLOBAL, &fn);
+        Q_ASSERT(r >= 0);
+    }
+
+    {
+        static std::function<void(const QString &)> fn =
             std::bind(&WingAngelAPI::debug, this, std::placeholders::_1);
         r = engine->RegisterGlobalFunction("void debug(const string &in)",
                                            asMETHOD(decltype(fn), operator()),

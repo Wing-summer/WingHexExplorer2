@@ -1,4 +1,5 @@
 #include "othersettingsdialog.h"
+#include "class/logger.h"
 #include "class/settingmanager.h"
 #include "ui_othersettingsdialog.h"
 #include "utilities.h"
@@ -6,6 +7,15 @@
 OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::OtherSettingsDialog) {
     ui->setupUi(this);
+
+    QStringList levels;
+    for (auto i = Logger::LEVEL_BEGIN; i != Logger::LEVEL_END;
+         i = Logger::Level(i + 1)) {
+        levels << Logger::getString(i);
+    }
+
+    ui->cbLogLevel->addItems(levels);
+    ui->cbLogLevel->setCurrentIndex(Logger::instance()->logLevel());
     reload();
 }
 
@@ -27,6 +37,7 @@ void OtherSettingsDialog::apply() {
     auto &set = SettingManager::instance();
     set.setUseNativeFileDialog(ui->cbNativeFileDialog->isChecked());
     set.setUseNativeTitleBar(ui->cbNativeTitile->isChecked());
+    set.setLogLevel(ui->cbLogLevel->currentIndex());
     set.save(SettingManager::OTHER);
 }
 

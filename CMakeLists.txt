@@ -36,7 +36,6 @@ if(MSVC)
 endif()
 
 add_subdirectory(3rdparty/qwindowkit)
-add_subdirectory(3rdparty/QLogger/qlogger)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
@@ -362,7 +361,6 @@ target_link_libraries(
           QWKCore
           QWKWidgets
           QHexView
-          QLoggerLib
           QCodeEditor2
           QJsonModel
           angelscript

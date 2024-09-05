@@ -658,5 +658,5 @@ QString EditorView::fileName() const {
     if (isCloneFile()) {
         return this->cloneParent()->fileName();
     }
-    return m_fileName;
+    return m_rawName;
 }

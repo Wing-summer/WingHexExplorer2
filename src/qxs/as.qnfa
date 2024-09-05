@@ -1,5 +1,5 @@
 <!DOCTYPE QNFA>
-<QNFA language="C++" extensions="c;cc;cxx;cpp;h;hxx;hpp" defaultLineMark="breakpoint">
+<QNFA language="AngelScript" extensions="as;angelscript" defaultLineMark="breakpoint">
 	<embed target="Doxygen"/>
 	
 	<context id="comment/multi" format="comment">
@@ -73,7 +73,6 @@
 		<word>double</word>
 		<word>enum</word>
 		<word>union</word>
-		<word>wchar_t</word>
 		<word>void</word>
 	</list>
 	
@@ -126,21 +125,6 @@
 		<word>typedef</word>
 	</list>
 	
-	<list id="keywords/Qt" format="extra-keyword">
-		<word>foreach</word>
-		<word>forever</word>
-		<word>emit</word>
-		<word>signals</word>
-		<word>slots</word>
-		<word>connect</word>
-		<word>SIGNAL</word>
-		<word>SLOT</word>
-		<word>Q_OBJECT</word>
-		<word>Q_ENUM</word>
-		<word>Q_PROPERTY</word>
-		<word>Q_SIGNALS</word>
-		<word>Q_SLOTS</word>
-	</list>
 	
 	<list id="ansi/trigraph" format="extra-keyword">
 		<prefix>\?\?</prefix>
@@ -154,8 +138,6 @@
 		<word>!</word>
 		<word>-</word>
 	</list>
-	
-	<word id="QtCasts" format="extra-keyword">q$w+_cast</word>
 	
 	<word id="data/float" format="numbers">-?[0-9]*.[0-9]+f?</word>
 	<word id="data/hexadecimal" format="numbers">0[xX][0-9a-fA-F]+[ulUL]*</word>

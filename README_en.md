@@ -14,7 +14,6 @@
     - [Qt-Advanced-Docking-System](#qt-advanced-docking-system)
     - [QCodeEditor2](#qcodeeditor2)
     - [QWingRibbon](#qwingribbon)
-    - [QLogger](#qlogger)
     - [SingleApplication](#singleapplication)
     - [QPathEdit](#qpathedit)
     - [QWindowKit](#qwindowkit)
@@ -189,10 +188,6 @@ A text editor with powerful functions. This project is used to develop and debug
 Although it contains the `Wing` string, it is not entirely written by me. It is based on the `Qt-Ribbon-Widget`. The reason for the name change is that there are too many changes, and I plan to maintain my own one for use with this editor.
 
 The link to the original repository: <https://github.com/martijnkoopman/Qt-Ribbon-Widget>, the original agreement is `LGPL`.
-
-#### QLogger
-
-A logging framework, the link of the original repository: <https://github.com/sfadiga/QLogger>, the original license is `MIT`.
 
 #### SingleApplication
 

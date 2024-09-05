@@ -99,6 +99,9 @@ public:
     bool useNativeTitleBar() const;
     void setUseNativeTitleBar(bool newUseNativeTitleBar);
 
+    int logLevel() const;
+    void setLogLevel(int newLogLevel);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
@@ -106,6 +109,8 @@ signals:
 
     void sigAppfontSizeChanged(int v);
     void sigAppFontFamilyChanged(const QString &font);
+
+    void logLevelChanged();
 
 private:
     SettingManager();
@@ -148,6 +153,7 @@ private:
 
     bool m_useNativeFileDialog = true;
     bool m_useNativeTitleBar = false;
+    int m_logLevel = 0;
 
 private:
     QFont _defaultFont;

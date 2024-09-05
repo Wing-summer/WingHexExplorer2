@@ -1,9 +1,12 @@
 #include "scripteditor.h"
 #include "qeditor.h"
 
+#include "class/skinmanager.h"
+#include "utilities.h"
+
 #include <QAction>
+#include <QFile>
 #include <QPixmap>
-#include <cmath>
 
 #include "qfoldpanel.h"
 #include "qlinemarkpanel.h"
@@ -19,6 +22,22 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
+    switch (SkinManager::instance().currentTheme()) {
+    case SkinManager::Theme::Dark:
+        m_formats =
+            new QFormatScheme(QStringLiteral(":/qcodeedit/as_dark.qxf"), this);
+        break;
+    case SkinManager::Theme::Light:
+        m_formats =
+            new QFormatScheme(QStringLiteral(":/qcodeedit/as_light.qxf"), this);
+        break;
+    }
+
+    QDocument::setDefaultFormatScheme(m_formats);
+
+    m_languages = new QLanguageFactory(m_formats, this);
+    m_languages->addDefinitionPath(QStringLiteral(":/qcodeedit"));
+
     m_editor = new QCodeEdit(this);
     auto l = m_editor->panelLayout();
     l->setSizeConstraint(QLayout::SetMinimumSize);
@@ -27,18 +46,20 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 
     this->setWidget(editor);
 
-    // auto lineMark = new QLineMarkPanel(editor);
-    // m_editor->addPanel(lineMark, QCodeEdit::West, true)
-    //     ->setShortcut(QKeySequence("F6"));
+    auto lineMark = new QLineMarkPanel(editor);
+    m_editor->addPanel(lineMark, QCodeEdit::West, true)
+        ->setShortcut(QKeySequence(Qt::Key_F6));
 
     auto lineNum = new QLineNumberPanel(editor);
     lineNum->setVerboseMode(true);
     m_editor->addPanel(lineNum, QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F11"));
+        ->setShortcut(QKeySequence(Qt::Key_F11));
 
-    // auto fold = new QFoldPanel(editor);
-    // m_editor->addPanel(fold, QCodeEdit::West, true)
-    //     ->setShortcut(QKeySequence("F9"));
+    auto fold = new QFoldPanel(editor);
+    m_editor->addPanel(fold, QCodeEdit::West, true)
+        ->setShortcut(QKeySequence(Qt::Key_F9));
+
+    m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
 
     // m_editor->markerDefine(QPixmap(RESNAME("bp")), BreakPoint);
     // m_editor->markerDefine(QPixmap(RESNAME("conbp")), ConditionBreakPoint);
@@ -46,6 +67,38 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     // m_editor->markerDefine(QPixmap(RESNAME("hitbp")), DbgRunHitBreakPoint);
     // m_editor->markerDefine(QPixmap(RESNAME("hitcur")), DbgRunCurrentLine);
 }
+
+QString ScriptEditor::fileName() const { return m_rawName; }
+
+void ScriptEditor::newFile(size_t index) {
+    auto istr = QString::number(index);
+    m_rawName = tr("Untitled") + istr;
+    this->setWindowTitle(m_rawName);
+    m_fileName = QStringLiteral(":") + istr;
+}
+
+bool ScriptEditor::openFile(const QString &filename) {
+    QFileInfo finfo(filename);
+
+    if (!finfo.exists() || !finfo.isFile()) {
+        return false;
+    }
+    if (!Utilities::isTextFile(finfo)) {
+        return false;
+    }
+
+    QFile file(finfo.absolutePath());
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        return false;
+    }
+    m_editor->editor()->setText(QString::fromUtf8(file.readAll()));
+    file.close();
+    return true;
+}
+
+bool ScriptEditor::save(const QString &path, bool isExport) { return true; }
+
+bool ScriptEditor::reload() { return true; }
 
 QString ScriptEditor::RESNAME(const QString &name) {
     return QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +

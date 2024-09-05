@@ -1,6 +1,7 @@
 #include "settingmanager.h"
 #include "setting.h"
 
+#include "class/logger.h"
 #include "class/skinmanager.h"
 #include "utilities.h"
 #include <QFileInfo>
@@ -35,6 +36,7 @@ const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
 
 const auto OTHER_USESYS_FILEDIALOG = QStringLiteral("sys.nativeDialog");
 const auto OTHER_USE_NATIVE_TITLEBAR = QStringLiteral("sys.nativeTitleBar");
+const auto OTHER_LOG_LEVEL = QStringLiteral("sys.loglevel");
 
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
@@ -79,6 +81,11 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
     READ_CONFIG_BOOL(m_useNativeFileDialog, OTHER_USESYS_FILEDIALOG, true);
     READ_CONFIG_BOOL(m_useNativeTitleBar, OTHER_USE_NATIVE_TITLEBAR, false);
+    READ_CONFIG_INT_POSITIVE(m_logLevel, OTHER_LOG_LEVEL,
+                             Logger::defaultLevel());
+    m_logLevel =
+        qBound(int(Logger::LEVEL_BEGIN), m_logLevel, int(Logger::LEVEL_LAST));
+
     m_editorEncoding =
         READ_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII")).toString();
     auto encodings = Utilities::getEncodings();
@@ -134,6 +141,10 @@ QVariantList SettingManager::getVarList(
     }
     return varlist;
 }
+
+int SettingManager::logLevel() const { return m_logLevel; }
+
+void SettingManager::setLogLevel(int newLogLevel) { m_logLevel = newLogLevel; }
 
 bool SettingManager::useNativeTitleBar() const { return m_useNativeTitleBar; }
 
@@ -248,6 +259,7 @@ void SettingManager::save(SETTINGS cat) {
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
+        WRITE_CONFIG(OTHER_LOG_LEVEL, m_logLevel);
     }
 }
 
@@ -277,6 +289,7 @@ void SettingManager::reset(SETTINGS cat) {
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
+        WRITE_CONFIG(OTHER_LOG_LEVEL, Logger::defaultLevel());
     }
     load();
 }

@@ -99,4 +99,9 @@
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">3rdparty/QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>
     </qresource>
+    <qresource prefix="/qcodeedit">
+        <file alias="as.qnfa">src/qxs/as.qnfa</file>
+        <file alias="as_dark.qxf">src/qxs/as_dark.qxf</file>
+        <file alias="as_light.qxf">src/qxs/as_light.qxf</file>
+    </qresource>
 </RCC>

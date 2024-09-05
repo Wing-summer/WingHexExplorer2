@@ -235,6 +235,9 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                 }
                 Toast::toast(_win, icon, message);
             });
+    connect(plg, &IWingPlugin::trace, this, [=](const QString &message) {
+        Logger::trace(packLogMessage(plg->metaObject()->className(), message));
+    });
     connect(plg, &IWingPlugin::debug, this, [=](const QString &message) {
         Logger::debug(packLogMessage(plg->metaObject()->className(), message));
     });

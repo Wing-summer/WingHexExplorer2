@@ -27,10 +27,6 @@ QT Advanced Docking System 允许你使用完整的特色窗户对接系统创�
 
 原仓库的链接： <https://github.com/martijnkoopman/Qt-Ribbon-Widget> ，原协议为`LGPL`。
 
-#### QLogger
-
-一个日志框架，原仓库的链接： <https://github.com/sfadiga/QLogger> ，原协议为`MIT`。
-
 #### SingleApplication
 
 保留应用程序的主实例并终止每个后续实例。它可以（如果启用）生成第二（与主实例无关）实例，并且可以从第二实例向主实例发送数据。简而言之就是实现程序单例的库。原仓库的链接： <https://github.com/itay-grudev/SingleApplication> ，它的协议为`MIT`，多了一个额外限制，具体看其协议。

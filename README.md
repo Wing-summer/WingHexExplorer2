@@ -14,7 +14,6 @@
     - [Qt-Advanced-Docking-System](#qt-advanced-docking-system)
     - [QCodeEditor2](#qcodeeditor2)
     - [QWingRibbon](#qwingribbon)
-    - [QLogger](#qlogger)
     - [SingleApplication](#singleapplication)
     - [QPathEdit](#qpathedit)
     - [QWindowKit](#qwindowkit)
@@ -191,10 +190,6 @@
 &emsp;&emsp;虽然这个带`Wing`这个玩意，但并不是完全是我写的，这个是基于`Qt-Ribbon-Widget`魔改来的。之所以换名字是改动的有点多，打算自己维护一个自己的用来给该编辑器使用的。
 
 &emsp;&emsp;原仓库的链接： <https://github.com/martijnkoopman/Qt-Ribbon-Widget> ，原协议为`LGPL`。
-
-#### QLogger
-
-&emsp;&emsp;一个日志框架，原仓库的链接： <https://github.com/sfadiga/QLogger> ，原协议为`MIT`。
 
 #### SingleApplication
 

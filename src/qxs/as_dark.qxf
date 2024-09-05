@@ -15,7 +15,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#008000</foreground>
+        <foreground>#ff79c6</foreground>
     </format>
     <format id="doxygen/keyword" >
         <bold>true</bold>
@@ -24,7 +24,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#ff00ff</foreground>
+        <foreground>#ff79c6</foreground>
     </format>
     <format id="doxygen" >
         <bold>false</bold>
@@ -36,13 +36,13 @@
         <foreground>#a0a0a4</foreground>
     </format>
     <format id="comment" >
-        <bold>false</bold>
+        <bold>true</bold>
         <italic>true</italic>
         <overline>false</overline>
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#000080</foreground>
+        <foreground>#6272a4</foreground>
     </format>
     <format id="keyword" >
         <bold>true</bold>
@@ -51,9 +51,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#000000</foreground>
-        <background>#55aa00</background>
-        <linescolor>#ff0000</linescolor>
+        <foreground>#ff79c6</foreground>
     </format>
     <format id="extra-keyword" >
         <bold>true</bold>
@@ -62,7 +60,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#0095ff</foreground>
+        <foreground>#ff79c6</foreground>
     </format>
     <format id="match" >
         <bold>true</bold>
@@ -121,7 +119,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#800080</foreground>
+        <foreground>#bd93f9</foreground>
     </format>
     <format id="text" >
         <bold>false</bold>
@@ -130,7 +128,7 @@
         <underline>false</underline>
         <strikeout>false</strikeout>
         <waveUnderline>false</waveUnderline>
-        <foreground>#ff0000</foreground>
+        <foreground>#f8f8f2</foreground>
     </format>
     <format id="escapeseq" >
         <bold>false</bold>

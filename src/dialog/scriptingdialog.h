@@ -53,6 +53,8 @@ private:
 
     void buildUpDockSystem(QWidget *container);
 
+    bool newOpenFileSafeCheck();
+
 private:
     template <typename Func>
     inline QToolButton *
@@ -158,6 +160,8 @@ private:
 
     size_t m_newIndex = 1;
     ScriptMachine *m_runner = nullptr;
+
+    QList<ScriptEditor *> m_views;
 
     // widgets for debugging
     QTextBrowser *m_consoleout = nullptr;

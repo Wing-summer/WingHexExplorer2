@@ -530,6 +530,7 @@ public:
 signals:
     // extension and exposed to WingHexAngelScript
     void toast(const QPixmap &icon, const QString &message);
+    void trace(const QString &message);
     void debug(const QString &message);
     void warn(const QString &message);
     void error(const QString &message);

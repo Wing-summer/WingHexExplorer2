@@ -106,9 +106,12 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
                             ? ICONRES(QStringLiteral("iconroot"))
                             : ICONRES(QStringLiteral("icon")));
 
+    auto &set = SettingManager::instance();
+
     // launch logging system
-    connect(Logger::instance(), &Logger::log, m_logbrowser,
-            &QTextBrowser::append);
+    auto log = Logger::instance();
+    log->setLogLevel(Logger::Level(set.logLevel()));
+    connect(log, &Logger::log, m_logbrowser, &QTextBrowser::append);
 
     // launch plugin system
     auto &plg = PluginSystem::instance();
@@ -121,7 +124,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     m_varshowtable->setModel(m_scriptConsole->machine()->model());
 
     // connect settings signals
-    auto &set = SettingManager::instance();
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
             [this](int v) {
                 for (auto &p : m_views.keys()) {
@@ -2176,10 +2178,6 @@ void MainWindow::on_clslog() {
 }
 
 void MainWindow::on_scriptwindow() {
-#ifndef QT_DEBUG
-    WingMessageBox::information(this, qAppName(), tr("NotAvaliInThisVersion"));
-    return;
-#endif
     Q_ASSERT(m_scriptDialog);
     m_scriptDialog->show();
     m_scriptDialog->raise();

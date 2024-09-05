@@ -9,6 +9,7 @@ import shutil
 import hashlib
 import codecs
 import subprocess
+import platform
 
 from colorama import Fore, Style
 
@@ -195,7 +196,7 @@ def main():
 #define MyAppExeName "{exe_name}"
 #define MyAppLicenseFile "{os.path.join(exeDebPath, "LICENSE")}"
 #define MyAppExePath "{os.path.join(exeDebPath, exe_name)}"
-#define MyOutputBaseFilename "WingHexExplorer2Setup"
+#define MyOutputBaseFilename "{package_name}_Setup_{version}_{platform.machine()}"
 
 """
     iss_content += r"""
