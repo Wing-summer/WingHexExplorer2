@@ -5,6 +5,7 @@
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/wingmessagebox.h"
+#include "qeditor.h"
 
 #include <QDesktopServices>
 #include <QLabel>
@@ -26,24 +27,31 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     buildUpRibbonBar();
 
     auto cw = new QWidget(this);
+    cw->setSizePolicy(
+        QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     auto layout = new QVBoxLayout(cw);
     layout->setContentsMargins(1, 0, 1, 0);
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
-    buildUpDockSystem(this);
+    buildUpDockSystem(cw);
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
     layout->addWidget(m_status);
     buildUpContent(cw);
 
-    // m_runner = new ScriptMachine([=]{},this);
+    updateEditModeEnabled();
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
     this->setMinimumSize(800, 600);
+}
+
+void ScriptingDialog::initConsole() {
+    Q_ASSERT(m_consoleout);
+    m_consoleout->init(false);
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
@@ -175,8 +183,14 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Window"));
-        auto plg = addPannelAction(pannel, QStringLiteral("win"), tr("View"),
-                                   EMPTY_FUNC, {});
+        m_Tbtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
+                             addPannelAction(pannel, QStringLiteral("file"),
+                                             tr("Editor"), EMPTY_FUNC, {},
+                                             new QMenu(this)));
+        m_Tbtneditors.insert(ToolButtonIndex::TOOL_VIEWS,
+                             addPannelAction(pannel, QStringLiteral("general"),
+                                             tr("Tools"), EMPTY_FUNC, {},
+                                             new QMenu(this)));
     }
 
     return tab;
@@ -196,29 +210,35 @@ RibbonTabContent *ScriptingDialog::buildScriptPage(RibbonTabContent *tab) {
 RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Debug"));
-        addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
-                        &ScriptingDialog::on_runscript,
-                        QKeySequence(Qt::CTRL | Qt::Key_F5));
-        addPannelAction(pannel, QStringLiteral("dbgdebug"), tr("RunWithDbg"),
-                        &ScriptingDialog::on_rundbgscript,
-                        QKeySequence(Qt::Key_F5));
-        addPannelAction(pannel, QStringLiteral("dbgpause"), tr("Pause"),
-                        &ScriptingDialog::on_pausescript);
-        addPannelAction(pannel, QStringLiteral("dbgcontinue"), tr("Continue"),
-                        &ScriptingDialog::on_continuescript);
-        addPannelAction(pannel, QStringLiteral("dbgstop"), tr("Stop"),
-                        &ScriptingDialog::on_stopscript);
-        addPannelAction(pannel, QStringLiteral("dbgrestart"), tr("Restart"),
-                        &ScriptingDialog::on_restartscript);
-        addPannelAction(pannel, QStringLiteral("dbgstepinto"), tr("StepInto"),
-                        &ScriptingDialog::on_stepinscript,
-                        QKeySequence(Qt::Key_F11));
-        addPannelAction(pannel, QStringLiteral("dbgstepover"), tr("StepOver"),
-                        &ScriptingDialog::on_stepoverscript,
-                        QKeySequence(Qt::Key_F10));
-        addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
-                        &ScriptingDialog::on_stepoutscript,
-                        QKeySequence(Qt::SHIFT | Qt::Key_F11));
+        m_Tbtneditors[ToolButtonIndex::DBG_RUN] =
+            addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
+                            &ScriptingDialog::on_runscript,
+                            QKeySequence(Qt::CTRL | Qt::Key_F5));
+        m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG] = addPannelAction(
+            pannel, QStringLiteral("dbgdebug"), tr("RunWithDbg"),
+            &ScriptingDialog::on_rundbgscript, QKeySequence(Qt::Key_F5));
+        m_dbgStateWidgets << addPannelAction(pannel, QStringLiteral("dbgpause"),
+                                             tr("Pause"),
+                                             &ScriptingDialog::on_pausescript);
+        m_dbgStateWidgets << addPannelAction(
+            pannel, QStringLiteral("dbgcontinue"), tr("Continue"),
+            &ScriptingDialog::on_continuescript);
+        m_dbgStateWidgets << addPannelAction(pannel, QStringLiteral("dbgstop"),
+                                             tr("Stop"),
+                                             &ScriptingDialog::on_stopscript);
+        m_dbgStateWidgets << addPannelAction(
+            pannel, QStringLiteral("dbgrestart"), tr("Restart"),
+            &ScriptingDialog::on_restartscript);
+        m_dbgStateWidgets << addPannelAction(
+            pannel, QStringLiteral("dbgstepinto"), tr("StepInto"),
+            &ScriptingDialog::on_stepinscript, QKeySequence(Qt::Key_F11));
+        m_dbgStateWidgets << addPannelAction(
+            pannel, QStringLiteral("dbgstepover"), tr("StepOver"),
+            &ScriptingDialog::on_stepoverscript, QKeySequence(Qt::Key_F10));
+        m_dbgStateWidgets << addPannelAction(
+            pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
+            &ScriptingDialog::on_stepoutscript,
+            QKeySequence(Qt::SHIFT | Qt::Key_F11));
 
         m_editStateWidgets << pannel;
     }
@@ -260,7 +280,12 @@ ads::CDockAreaWidget *
 ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
                                        ads::CDockAreaWidget *areaw) {
-    return nullptr;
+    m_consoleout = new ScriptingConsole(this);
+    m_consoleout->clear();
+    m_consoleout->setMode(ScriptingConsole::Output);
+    auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
+                              tr("ConsoleOutput"), m_consoleout);
+    return dock->addDockWidget(area, dw, areaw);
 }
 
 ads::CDockAreaWidget *
@@ -304,6 +329,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
                     swapEditor(m_curEditor, editview);
                 }
                 m_curEditor = editview;
+                updateEditModeEnabled();
             });
 
     // add empty area
@@ -329,9 +355,36 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
 
     // build up basic docking widgets
     // TODO
+    auto bottomRightArea =
+        buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
 }
 
-bool ScriptingDialog::newOpenFileSafeCheck() { return true; }
+bool ScriptingDialog::newOpenFileSafeCheck() {
+    if (m_views.size() >=
+        std::numeric_limits<decltype(m_views)::size_type>::max() - 1) {
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("Too much opened files"));
+        return false;
+    }
+    return true;
+}
+
+ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
+                                                   const QString &widgetName,
+                                                   const QString &displayName,
+                                                   QWidget *content,
+                                                   ToolButtonIndex index) {
+    using namespace ads;
+    auto dw = new CDockWidget(displayName, dock);
+    dw->setObjectName(widgetName);
+    dw->setFeatures(CDockWidget::DockWidgetMovable |
+                    CDockWidget::DockWidgetClosable |
+                    CDockWidget::DockWidgetPinnable);
+
+    dw->setWidget(content);
+    m_Tbtneditors.value(index)->menu()->addAction(dw->toggleViewAction());
+    return dw;
+}
 
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     // TODO
@@ -346,8 +399,8 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         }
 
         editor->deleteDockWidget();
-        // m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-        //     ->setEnabled(m_views.size() != 0);
+        m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
+            ->setEnabled(m_views.size() != 0);
 
         if (m_dock->focusedDockWidget() == editor) {
             if (!m_views.isEmpty()) {
@@ -360,6 +413,15 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             }
         }
     });
+
+    m_views.append(editor);
+
+    auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto menu = ev->menu();
+    Q_ASSERT(menu);
+    auto ta = editor->toggleViewAction();
+    menu->addAction(ta);
+    ev->setEnabled(true);
 }
 
 ads::CDockAreaWidget *ScriptingDialog::editorViewArea() const {
@@ -373,11 +435,28 @@ void ScriptingDialog::updateEditModeEnabled() {
     for (auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
+
+    auto runner = m_consoleout->machine();
+    if (runner) {
+        setRunDebugMode(runner->isRunning(), runner->isInDebugMode());
+    } else {
+        setRunDebugMode(false);
+    }
 }
 
 ScriptEditor *ScriptingDialog::currentEditor() { return m_curEditor; }
 
 void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {}
+
+void ScriptingDialog::setRunDebugMode(bool isRun, bool isDebug) {
+    m_Tbtneditors.value(ToolButtonIndex::DBG_RUN)->setEnabled(!isRun);
+    m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_DBG)->setEnabled(!isRun);
+    for (auto &w : m_dbgStateWidgets) {
+        w->setEnabled(isRun && isDebug);
+    }
+}
+
+QString ScriptingDialog::getInput() { return {}; }
 
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
@@ -386,7 +465,6 @@ void ScriptingDialog::on_newfile() {
     auto editor = new ScriptEditor(this);
     auto index = m_newIndex++;
     editor->newFile(index);
-    // m_openedFileNames << editor->fileName();
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
 }
@@ -444,7 +522,16 @@ void ScriptingDialog::on_wiki() {
                        "doc_script.html")));
 }
 
-void ScriptingDialog::on_runscript() {}
+void ScriptingDialog::on_runscript() {
+    auto editor = currentEditor();
+    if (editor) {
+        auto e = editor->editor();
+        m_consoleout->clear();
+        setRunDebugMode(true, false);
+        m_consoleout->machine()->executeScript(e->text());
+        setRunDebugMode(false);
+    }
+}
 
 void ScriptingDialog::on_rundbgscript() {}
 
@@ -463,6 +550,17 @@ void ScriptingDialog::on_stepoutscript() {}
 void ScriptingDialog::on_stepoverscript() {}
 
 void ScriptingDialog::closeEvent(QCloseEvent *event) {
+    auto runner = m_consoleout->machine();
+    if (runner->isRunning()) {
+        if (WingMessageBox::warning(
+                this, this->windowTitle(), tr("ScriptStillRunning"),
+                QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+            event->ignore();
+            return;
+        }
+        // TODO stop the script
+    }
+
     auto &set = SettingManager::instance();
 
     set.setScriptDockLayout(m_dock->saveState());

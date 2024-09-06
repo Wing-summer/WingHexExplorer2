@@ -155,7 +155,7 @@ private:
 
     QList<WingEditorViewWidget *> m_others;
     QString m_fileName;
-    QString m_rawName;
+    bool m_isNewFile = true;
     QByteArray m_md5;
 
     QVector<EditorView *> m_cloneChildren;

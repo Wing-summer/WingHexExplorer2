@@ -9,6 +9,7 @@
 #include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
+#include "class/scriptconsolemachine.h"
 #include "class/scriptmanager.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
@@ -118,10 +119,12 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     plg.setMainWindow(this);
     plg.LoadPlugin();
     // At this time, AngelScript service plugin has started
-    m_scriptConsole->init();
+    m_scriptConsole->init(true);
+    m_scriptDialog->initConsole();
+
     // load the model
     Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
-    m_varshowtable->setModel(m_scriptConsole->machine()->model());
+    m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
 
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
@@ -1203,7 +1206,6 @@ EditorView *MainWindow::newfileGUI() {
     auto editor = new EditorView(this);
     auto index = m_newIndex++;
     editor->newFile(index);
-    m_openedFileNames << editor->fileName();
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
     return editor;

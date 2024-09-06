@@ -21,10 +21,8 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {}
 
 PluginSystem::~PluginSystem() {
     for (auto &item : loadedplgs) {
-        item->controller.disconnect();
-        item->reader.disconnect();
         item->unload();
-        item->deleteLater();
+        delete item;
     }
 }
 

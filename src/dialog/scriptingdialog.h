@@ -1,6 +1,7 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
+#include "control/scriptingconsole.h"
 #include "framelessmainwindow.h"
 
 #include "QWingRibbon/ribbon.h"
@@ -8,7 +9,6 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/recentfilemanager.h"
-#include "class/scriptmachine.h"
 #include "control/scripteditor.h"
 #include "utilities.h"
 
@@ -21,10 +21,19 @@
 class ScriptingDialog : public FramelessMainWindow {
     Q_OBJECT
 private:
-    enum ToolButtonIndex : uint { UNDO_ACTION, REDO_ACTION };
+    enum ToolButtonIndex : uint {
+        UNDO_ACTION,
+        REDO_ACTION,
+        DBG_RUN,
+        DBG_RUN_DBG,
+        EDITOR_VIEWS,
+        TOOL_VIEWS
+    };
 
 public:
     explicit ScriptingDialog(QWidget *parent = nullptr);
+
+    void initConsole();
 
 private:
     void buildUpRibbonBar();
@@ -54,6 +63,12 @@ private:
     void buildUpDockSystem(QWidget *container);
 
     bool newOpenFileSafeCheck();
+
+    ads::CDockWidget *buildDockWidget(ads::CDockManager *dock,
+                                      const QString &widgetName,
+                                      const QString &displayName,
+                                      QWidget *content,
+                                      ToolButtonIndex index = TOOL_VIEWS);
 
 private:
     template <typename Func>
@@ -109,6 +124,10 @@ private:
     ScriptEditor *currentEditor();
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
 
+    void setRunDebugMode(bool isRun, bool isDebug = false);
+
+    QString getInput();
+
 private slots:
     void on_newfile();
     void on_openfile();
@@ -150,8 +169,9 @@ private:
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
 
     ScriptEditor *m_curEditor = nullptr;
-    QMap<ScriptEditor *, QString> m_editors;
     QList<QWidget *> m_editStateWidgets;
+    QList<QWidget *> m_dbgStateWidgets;
+
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
 
     QMenu *m_recentMenu = nullptr;
@@ -159,12 +179,13 @@ private:
     Ribbon *m_ribbon = nullptr;
 
     size_t m_newIndex = 1;
-    ScriptMachine *m_runner = nullptr;
 
+    // file manager cache
+    QStringList m_openedFileNames;
     QList<ScriptEditor *> m_views;
 
     // widgets for debugging
-    QTextBrowser *m_consoleout = nullptr;
+    ScriptingConsole *m_consoleout = nullptr;
     QTableView *m_varshowtable = nullptr;
     QTableView *m_breakpointstable = nullptr;
     QTableView *m_watchtable = nullptr;

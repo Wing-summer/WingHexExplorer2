@@ -24,6 +24,8 @@ public:
     QString fileName() const;
     bool isNewFile() const;
 
+    QEditor *editor() const;
+
 public slots:
     void newFile(size_t index);
     bool openFile(const QString &filename);
@@ -40,7 +42,7 @@ private:
     QLanguageFactory *m_languages = nullptr;
 
     QString m_fileName;
-    QString m_rawName;
+    bool m_isNewFile = true;
 };
 
 #endif // SCRIPTEDITOR_H

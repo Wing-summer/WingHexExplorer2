@@ -68,13 +68,15 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     // m_editor->markerDefine(QPixmap(RESNAME("hitcur")), DbgRunCurrentLine);
 }
 
-QString ScriptEditor::fileName() const { return m_rawName; }
+QString ScriptEditor::fileName() const { return m_fileName; }
+
+bool ScriptEditor::isNewFile() const { return m_isNewFile; }
 
 void ScriptEditor::newFile(size_t index) {
     auto istr = QString::number(index);
-    m_rawName = tr("Untitled") + istr;
-    this->setWindowTitle(m_rawName);
-    m_fileName = QStringLiteral(":") + istr;
+    m_fileName = tr("Untitled") + istr;
+    this->setWindowTitle(m_fileName);
+    m_isNewFile = true;
 }
 
 bool ScriptEditor::openFile(const QString &filename) {
@@ -93,14 +95,31 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
     m_editor->editor()->setText(QString::fromUtf8(file.readAll()));
     file.close();
+    m_isNewFile = false;
     return true;
 }
 
-bool ScriptEditor::save(const QString &path, bool isExport) { return true; }
+bool ScriptEditor::save(const QString &path, bool isExport) {
+    QFile file(path);
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        return false;
+    }
+    file.write(m_editor->editor()->text().toUtf8());
+    file.close();
 
-bool ScriptEditor::reload() { return true; }
+    if (!isExport) {
+        m_fileName = path;
+        m_isNewFile = false;
+    }
+
+    return true;
+}
+
+bool ScriptEditor::reload() { return openFile(m_fileName); }
 
 QString ScriptEditor::RESNAME(const QString &name) {
     return QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +
            QStringLiteral(".png");
 }
+
+QEditor *ScriptEditor::editor() const { return m_editor->editor(); }

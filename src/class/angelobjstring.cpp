@@ -20,8 +20,7 @@ QString AngelObjString::stringToString(void *obj, int expandMembers,
 
     // Format the output string
     if (val->length() < limit) {
-
-        return QStringLiteral("\"") + *val + QStringLiteral("\"");
+        return *val;
     } else {
         QString str;
         QTextStream s(&str);

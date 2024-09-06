@@ -1,7 +1,7 @@
 #include "scriptconsolemachine.h"
 
 #include "AngelScript/sdk/add_on/scripthelper/scripthelper.h"
-#include "plugin/pluginsystem.h"
+#include <QRegularExpression>
 
 ScriptConsoleMachine::ScriptConsoleMachine(
     std::function<QString(void)> &getInputFn, QObject *parent)
@@ -35,7 +35,7 @@ bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
         asMETHOD(ScriptConsoleMachine, exceptionCallback), this,
         asCALL_THISCALL);
 
-    static std::function<void(void)> fn =
+    std::function<void(void)> fn =
         std::bind(&ScriptConsoleMachine::onClearConsole, this);
     auto r = engine->RegisterGlobalFunction("void clear()",
                                             asMETHOD(decltype(fn), operator()),

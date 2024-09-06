@@ -2,7 +2,9 @@
 #define ScriptingConsole_H
 
 #include "QConsoleWidget/src/QConsoleWidget.h"
-#include "class/scriptconsolemachine.h"
+#include "class/scriptmachine.h"
+
+class ScriptConsoleMachine;
 
 class ScriptingConsole : public QConsoleWidget {
     Q_OBJECT
@@ -12,14 +14,15 @@ public:
 
     virtual ~ScriptingConsole();
 
-    ScriptConsoleMachine *machine() const;
+    ScriptMachine *machine() const;
+    ScriptConsoleMachine *consoleMachine() const;
 
 public slots:
     void stdOut(const QString &str);
     void stdErr(const QString &str);
     void stdWarn(const QString &str);
 
-    void init();
+    void init(bool consoleMode);
 
 private:
     void executeCode(const QString &code);
@@ -30,7 +33,7 @@ private:
     void appendCommandPrompt(bool storeOnly = false);
 
 private:
-    ScriptConsoleMachine *_sp;
+    ScriptMachine *_sp = nullptr;
     QTextStream _s;
 
     QTextCharFormat m_stdoutFmtTitle;

@@ -31,7 +31,11 @@ ScriptMachine::~ScriptMachine() {
 
 bool ScriptMachine::inited() { return _engine != nullptr; }
 
-bool ScriptMachine::isRunning() const { return _ctxMgr != nullptr; }
+bool ScriptMachine::isRunning() const { return !_ctxPool.isEmpty(); }
+
+bool ScriptMachine::isInDebugMode() const {
+    return _debugger->GetEngine() != nullptr;
+}
 
 bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     if (engine == nullptr) {
@@ -88,9 +92,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         q_check_ptr(_engine->GetTypeInfoByName("ref"));
 
     // Register a couple of extra functions for the scripts
-    static std::function<void(void *ref, int typeId)> _printFn =
-        std::bind(&ScriptMachine::print, this, std::placeholders::_1,
-                  std::placeholders::_2);
+    _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
+                         std::placeholders::_2);
     r = engine->RegisterGlobalFunction("void print(? &in)",
                                        asMETHOD(decltype(_printFn), operator()),
                                        asCALL_THISCALL_ASGLOBAL, &_printFn);
@@ -160,40 +163,6 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     return true;
 }
 
-bool ScriptMachine::compileScript(const QString &script) {
-
-    // We will only initialize the global variables once we're
-    // ready to execute, so disable the automatic initialization
-    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-
-    CScriptBuilder builder;
-
-    // Set the pragma callback so we can detect if the script needs debugging
-    builder.SetPragmaCallback(pragmaCallback, 0);
-
-    // Compile the script
-    auto r = builder.StartNewModule(_engine, "script");
-    if (r < 0) {
-        return false;
-    }
-
-    auto scriptFile = script.toUtf8();
-
-    r = builder.AddSectionFromFile(scriptFile);
-    if (r < 0) {
-        return false;
-    }
-
-    r = builder.BuildModule();
-    if (r < 0) {
-        _engine->WriteMessage(scriptFile, 0, 0, asMSGTYPE_ERROR,
-                              "Script failed to build");
-        return false;
-    }
-
-    return true;
-}
-
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
     info.message = _debugger->ToString(ref, typeId, 3, _engine);
@@ -231,6 +200,35 @@ int ScriptMachine::execSystemCmd(const std::string &exe,
 }
 
 bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
+    // We will only initialize the global variables once we're
+    // ready to execute, so disable the automatic initialization
+    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+    CScriptBuilder builder;
+
+    // Set the pragma callback so we can detect
+    builder.SetPragmaCallback(pragmaCallback, 0);
+
+    // Compile the script
+    auto r = builder.StartNewModule(_engine, "script");
+    if (r < 0) {
+        return false;
+    }
+
+    auto code = script.toUtf8();
+
+    r = builder.AddSectionFromMemory("__main__", code.data(), code.length());
+    if (r < 0) {
+        return false;
+    }
+
+    r = builder.BuildModule();
+    if (r < 0) {
+        _engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR,
+                              "Script failed to build");
+        return false;
+    }
+
     asIScriptModule *mod = _engine->GetModule("script", asGM_ONLY_IF_EXISTS);
     if (!mod) {
         return false;
@@ -250,14 +248,6 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    _ctxMgr = new CContextMgr;
-    _ctxMgr->RegisterCoRoutineSupport(_engine);
-
-    auto ret = _engine->SetContextCallbacks(
-        &ScriptMachine::requestContextCallback,
-        &ScriptMachine::returnContextCallback, this);
-    Q_ASSERT(ret >= 0);
-
     if (isInDebug) {
         // Let the debugger hold an engine pointer that can be used by the
         // callbacks
@@ -274,7 +264,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // Once we have the main function, we first need to initialize the global
     // variables Since we've set up the request context callback we will be able
     // to debug the initialization without passing in a pre-created context
-    int r = mod->ResetGlobalVars(0);
+    r = mod->ResetGlobalVars(0);
     if (r < 0) {
         _engine->WriteMessage(
             script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
@@ -318,12 +308,6 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
-
-    // Destroy the context manager
-    if (_ctxMgr) {
-        delete _ctxMgr;
-        _ctxMgr = nullptr;
-    }
 
     // Before leaving, allow the engine to clean up remaining objects by
     // discarding the module and doing a full garbage collection so that

@@ -53,13 +53,13 @@ public:
 
     bool isRunning() const;
 
+    bool isInDebugMode() const;
+
 public slots:
     virtual bool executeScript(const QString &script, bool isInDebug = false);
 
 protected:
     virtual bool configureEngine(asIScriptEngine *engine);
-
-    virtual bool compileScript(const QString &script);
 
 private:
     void print(void *ref, int typeId);
@@ -96,6 +96,7 @@ protected:
     asDebugger *_debugger = nullptr;
     CContextMgr *_ctxMgr = nullptr;
     QVector<asIScriptContext *> _ctxPool;
+    std::function<void(void *ref, int typeId)> _printFn;
 
     QVector<asITypeInfo *> _rtypes;
     std::function<QString(void)> _getInputFn;

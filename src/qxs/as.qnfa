@@ -53,27 +53,27 @@
 	
 	<list id="keywords/storage" format="keyword">
 		<word>const</word>
-		<word>volatile</word>
-		<word>extern</word>
-		<word>static</word>
-		<word>mutable</word>
+		<word>in</word>
+		<word>inout</word>
+		<word>out</word>
 		<word>auto</word>
-		<word>register</word>
-		<word>inline</word>
 	</list>
 	
 	<list id="keywords/data" format="keyword">
-		<word>signed</word>
-		<word>unsigned</word>
-		<word>bool</word>
-		<word>char</word>
+		<word>void</word>
+		<word>int8</word>
+		<word>int16</word>
 		<word>int</word>
-		<word>long</word>
+		<word>int64</word>
+		<word>uint8</word>
+		<word>uint16</word>
+		<word>uint</word>
+		<word>uint64</word>
 		<word>float</word>
 		<word>double</word>
+		<word>bool</word>
 		<word>enum</word>
-		<word>union</word>
-		<word>void</word>
+		<word>string</word>
 	</list>
 	
 	<list id="keywords/blocks" format="keyword">
@@ -90,41 +90,44 @@
 		<word>try</word>
 		<word>catch</word>
 		<word>throw</word>
-		<word>goto</word>
-		<word>foreach</word>
-		<word>forever</word>
 	</list>
 	
 	<list id="keywords/oop" format="keyword">
-		<word>new</word>
+		<word>abstract</word>
 		<word>delete</word>
+		<word>cast</word>
 		<word>class</word>
-		<word>struct</word>
-		<word>const_cast</word>
-		<word>dynamic_cast</word>
-		<word>static_cast</word>
-		<word>reinterpret_cast</word>
-		<word>operator</word>
-		<word>virtual</word>
+		<word>final</word>
+		<word>property</word>
+		<word>external</word>
+		<word>function</word>
+		<word>interface</word>
+		<word>shared</word>
 		<word>this</word>
 		<word>explicit</word>
-		<word>friend</word>
+		<word>override</word>
 		<word>namespace</word>
-		<word>using</word>
+		<word>get</word>
+		<word>set</word>
+		<word>super</word>
+		<word>mixin</word>
 	</list>
 	
 	<list id="keywords/others" format="keyword">
-		<word>asm</word>
 		<word>false</word>
 		<word>true</word>
-		<word>template</word>
+		<word>null</word>
 		<word>typename</word>
 		<word>return</word>
-		<word>sizeof</word>
-		<word>typeid</word>
 		<word>typedef</word>
+		<word>funcdef</word>
+		<word>from</word>
+		<word>import</word>
+		<word>not</word>
+		<word>xor</word>
+		<word>or</word>
+		<word>is</word>
 	</list>
-	
 	
 	<list id="ansi/trigraph" format="extra-keyword">
 		<prefix>\?\?</prefix>

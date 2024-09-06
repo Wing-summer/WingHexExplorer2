@@ -4,10 +4,16 @@
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "plugin/iwingplugin.h"
 
+#include <functional>
+
 class asIScriptEngine;
 
 class WingAngelAPI : public WingHex::IWingPlugin {
     Q_OBJECT
+
+public:
+    WingAngelAPI();
+    virtual ~WingAngelAPI();
 
     // IWingPlugin interface
 public:
@@ -34,6 +40,18 @@ private:
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
     void installDataVisualAPI(asIScriptEngine *engine, int stringID);
+
+private:
+    template <class T>
+    void registerAPI(asIScriptEngine *engine, const std::function<T> &fn,
+                     const char *sig) {
+        auto *f = new std::function<T>(fn);
+        auto r = engine->RegisterGlobalFunction(
+            sig, asMETHOD(std::function<T>, operator()),
+            asCALL_THISCALL_ASGLOBAL, f);
+        _fnbuffer << f;
+        Q_ASSERT(r >= 0);
+    }
 
 private:
     QStringList cArray2QStringList(const CScriptArray &array, int stringID,
@@ -90,6 +108,9 @@ private:
     bool _DataVisual_updateTextTable(int stringID, const QString &json,
                                      const CScriptArray &headers,
                                      const CScriptArray &headerNames);
+
+private:
+    QVector<void *> _fnbuffer;
 };
 
 #endif // WINGANGELAPI_H

@@ -1,4 +1,5 @@
 ﻿#include "scriptingconsole.h"
+#include "class/scriptconsolemachine.h"
 
 #include <QColor>
 #include <QShortcut>
@@ -18,7 +19,7 @@ ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
     stdWarn(tr("Scripting console for WingHexExplorer"));
     _s << Qt::endl;
     stdWarn(tr(">>>> Powered by AngelScript <<<<"));
-    _s << Qt::endl;
+    _s << Qt::endl << Qt::endl;
     appendCommandPrompt();
     setMode(Input);
 
@@ -37,9 +38,18 @@ void ScriptingConsole::stdWarn(const QString &str) {
     write(str, m_stdoutFmtWarn);
 }
 
-void ScriptingConsole::init() {
+void ScriptingConsole::init(bool consoleMode) {
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
-    _sp = new ScriptConsoleMachine(_getInputFn, this);
+
+    if (consoleMode) {
+        auto sp = new ScriptConsoleMachine(_getInputFn, this);
+        connect(sp, &ScriptConsoleMachine::onClearConsole, this,
+                &ScriptingConsole::clear);
+        _sp = sp;
+    } else {
+        _sp = new ScriptMachine(_getInputFn, this);
+    }
+
     connect(_sp, &ScriptConsoleMachine::onOutput, this,
             [=](ScriptConsoleMachine::MessageType type,
                 const ScriptConsoleMachine::MessageInfo &message) {
@@ -55,8 +65,6 @@ void ScriptingConsole::init() {
                     break;
                 }
             });
-    connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
-            &ScriptingConsole::clear);
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::executeCode);
@@ -77,12 +85,22 @@ QString ScriptingConsole::getInput() {
 
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
+
     if (storeOnly) {
-        commandPrompt = QStringLiteral("\n... > ");
+        commandPrompt += QStringLiteral("... > ");
     } else {
-        commandPrompt = QStringLiteral("\nas > ");
+        auto cursor = this->textCursor();
+        if (!cursor.atBlockStart()) {
+            commandPrompt = QStringLiteral("\n");
+        }
+        commandPrompt += QStringLiteral("as > ");
     }
+
     write(commandPrompt, m_stdoutFmtTitle);
 }
 
-ScriptConsoleMachine *ScriptingConsole::machine() const { return _sp; }
+ScriptMachine *ScriptingConsole::machine() const { return _sp; }
+
+ScriptConsoleMachine *ScriptingConsole::consoleMachine() const {
+    return qobject_cast<ScriptConsoleMachine *>(_sp);
+}

@@ -205,11 +205,11 @@ ErrFile EditorView::newFile(size_t index) {
         return ErrFile::ClonedFile;
     }
     auto istr = QString::number(index);
-    m_rawName = tr("Untitled") + istr;
-    this->setWindowTitle(m_rawName);
+    m_fileName = tr("Untitled") + istr;
+    this->setWindowTitle(m_fileName);
     m_docType = DocumentType::File;
     m_isWorkSpace = false;
-    m_fileName = QStringLiteral(":") + istr;
+    m_isNewFile = true;
     auto p = QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false);
     p->setDocSaved();
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
@@ -249,10 +249,11 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
 
         m_docType = DocumentType::File;
         m_fileName = filename;
-        m_rawName = info.fileName();
+        m_fileName = info.fileName();
+        m_isNewFile = false;
         p->setDocSaved();
 
-        this->setWindowTitle(m_rawName);
+        this->setWindowTitle(m_fileName);
         connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
@@ -336,9 +337,10 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
 
         p->setDocSaved();
         m_fileName = filename;
-        m_rawName = info.fileName();
+        m_fileName = info.fileName();
+        m_isNewFile = false;
 
-        this->setWindowTitle(m_rawName);
+        this->setWindowTitle(m_fileName);
         connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
@@ -377,9 +379,9 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 
     p->setDocSaved();
     m_fileName = driver;
-    m_rawName = driver;
+    m_isNewFile = false;
 
-    this->setWindowTitle(m_rawName);
+    this->setWindowTitle(m_fileName);
     connectDocSavedFlag(this);
 
     auto tab = this->tabWidget();
@@ -444,7 +446,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
         if (!isExport) {
             m_fileName = fileName;
-            m_rawName = QFileInfo(fileName).fileName();
+            m_fileName = QFileInfo(fileName).fileName();
             doc->setDocSaved();
         }
 
@@ -506,9 +508,9 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
                 if (b) {
-                    editor->setWindowTitle(m_rawName);
+                    editor->setWindowTitle(m_fileName);
                 } else {
-                    editor->setWindowTitle(QStringLiteral("* ") + m_rawName);
+                    editor->setWindowTitle(QStringLiteral("* ") + m_fileName);
                 }
             });
 }
@@ -580,13 +582,13 @@ EditorView *EditorView::clone() {
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
 
-    ev->m_rawName = this->m_rawName + QStringLiteral(" : ") +
-                    QString::number(cloneIndex + 1);
+    ev->m_fileName = this->m_fileName + QStringLiteral(" : ") +
+                     QString::number(cloneIndex + 1);
 
     if (doc->isDocSaved()) {
-        ev->setWindowTitle(ev->m_rawName);
+        ev->setWindowTitle(ev->m_fileName);
     } else {
-        ev->setWindowTitle(QStringLiteral("* ") + m_rawName);
+        ev->setWindowTitle(QStringLiteral("* ") + m_fileName);
     }
 
     ev->setIcon(this->icon());
@@ -608,7 +610,7 @@ bool EditorView::isNewFile() const {
     if (isCloneFile()) {
         return this->cloneParent()->isNewFile();
     }
-    return m_fileName.startsWith(':');
+    return m_isNewFile;
 }
 
 bool EditorView::isBigFile() const {
@@ -658,5 +660,5 @@ QString EditorView::fileName() const {
     if (isCloneFile()) {
         return this->cloneParent()->fileName();
     }
-    return m_rawName;
+    return m_fileName;
 }
