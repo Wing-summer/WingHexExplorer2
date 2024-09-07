@@ -248,7 +248,6 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         }
 
         m_docType = DocumentType::File;
-        m_fileName = filename;
         m_fileName = info.fileName();
         m_isNewFile = false;
         p->setDocSaved();
@@ -336,7 +335,6 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         }
 
         p->setDocSaved();
-        m_fileName = filename;
         m_fileName = info.fileName();
         m_isNewFile = false;
 
@@ -445,7 +443,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         file.close();
 
         if (!isExport) {
-            m_fileName = fileName;
             m_fileName = QFileInfo(fileName).fileName();
             doc->setDocSaved();
         }

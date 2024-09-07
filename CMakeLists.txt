@@ -38,6 +38,7 @@ endif()
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
+add_subdirectory(3rdparty/qcodemodel2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QConsoleWidget)
@@ -115,7 +116,10 @@ set(CONTROL_SRC
     src/control/qtableviewext.h
     src/control/qtableviewext.cpp
     src/control/qlistviewext.h
-    src/control/qlistviewext.cpp)
+    src/control/qlistviewext.cpp
+    src/control/qcodecompletionwidget.h
+    src/control/qcodecompletionwidget_p.h
+    src/control/qcodecompletionwidget.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -160,7 +164,13 @@ set(CLASS_SRC
     src/class/scripteditortheme.cpp
     src/class/appmanager.h
     src/class/appmanager.cpp
-    src/class/angelscripthelper.h)
+    src/class/angelscripthelper.h
+    src/class/ascompletion.cpp
+    src/class/ascompletion.h
+    src/class/qaslexer.cpp
+    src/class/qaslexer.h
+    src/class/qasparser.cpp
+    src/class/qasparser.h)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
@@ -362,6 +372,7 @@ target_link_libraries(
           QWKWidgets
           QHexView
           QCodeEditor2
+          QCodeModel2
           QJsonModel
           angelscript
           QConsoleWidget

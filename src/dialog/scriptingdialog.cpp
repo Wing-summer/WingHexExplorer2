@@ -6,6 +6,7 @@
 #include "class/settingmanager.h"
 #include "class/wingmessagebox.h"
 #include "qeditor.h"
+#include "qlinemarksinfocenter.h"
 
 #include <QDesktopServices>
 #include <QLabel>
@@ -17,6 +18,8 @@ constexpr auto EMPTY_FUNC = [] {};
 
 ScriptingDialog::ScriptingDialog(QWidget *parent)
     : FramelessMainWindow(parent) {
+    this->setUpdatesEnabled(false);
+
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
@@ -41,12 +44,17 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_status);
     buildUpContent(cw);
 
+    QLineMarksInfoCenter::instance()->loadMarkTypes(
+        QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
+
     updateEditModeEnabled();
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
     this->setMinimumSize(800, 600);
+
+    this->setUpdatesEnabled(true);
 }
 
 void ScriptingDialog::initConsole() {

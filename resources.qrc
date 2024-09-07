@@ -78,8 +78,10 @@
         <file>images/scriptdbg/bpdis.png</file>
         <file>images/scriptdbg/conbp.png</file>
         <file>images/scriptdbg/delbp.png</file>
+        <file>images/scriptdbg/error.png</file>
         <file>images/scriptdbg/hitbp.png</file>
         <file>images/scriptdbg/hitcur.png</file>
+        <file>images/scriptdbg/warn.png</file>
         <file>images/scriptfolder.png</file>
         <file>images/scriptfolderusr.png</file>
         <file>images/setting.png</file>
@@ -103,5 +105,6 @@
         <file alias="as.qnfa">src/qxs/as.qnfa</file>
         <file alias="as_dark.qxf">src/qxs/as_dark.qxf</file>
         <file alias="as_light.qxf">src/qxs/as_light.qxf</file>
+        <file alias="marks.qxm">src/qxs/marks.qxm</file>
     </qresource>
 </RCC>

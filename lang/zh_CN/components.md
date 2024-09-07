@@ -21,6 +21,10 @@ QT Advanced Docking System 允许你使用完整的特色窗户对接系统创�
 
 一个文本编辑器，功能强大。该项目用来开发以及调试针对羽云编辑器的`AngelScript`脚本。该组件来源于`edyuk`开源项目，采用`GPL`协议，不过这玩意在`Github`上也没有，只有在 [SourceForge](https://sourceforge.net/projects/edyuk) 有它的身影。我对其进行了一些定制和小`Bug`的修复。
 
+#### QCodeModel2
+
+该组件来源于`edyuk`这一个项目，用于代码解析。本项目的代码分析和代码智能提示也是基于该项目中的`C++`分析器相关代码修改而来，来源同`QCodeEditor2`。
+
 #### QWingRibbon
 
 虽然这个带`Wing`这个玩意，但并不是完全是我写的，这个是基于`Qt-Ribbon-Widget`魔改来的。之所以换名字是改动的有点多，打算自己维护一个自己的用来给该编辑器使用的。

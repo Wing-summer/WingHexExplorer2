@@ -60,12 +60,6 @@ ScriptEditor::ScriptEditor(QWidget *parent)
         ->setShortcut(QKeySequence(Qt::Key_F9));
 
     m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
-
-    // m_editor->markerDefine(QPixmap(RESNAME("bp")), BreakPoint);
-    // m_editor->markerDefine(QPixmap(RESNAME("conbp")), ConditionBreakPoint);
-    // m_editor->markerDefine(QPixmap(RESNAME("bpdis")), DisabledBreakPoint);
-    // m_editor->markerDefine(QPixmap(RESNAME("hitbp")), DbgRunHitBreakPoint);
-    // m_editor->markerDefine(QPixmap(RESNAME("hitcur")), DbgRunCurrentLine);
 }
 
 QString ScriptEditor::fileName() const { return m_fileName; }

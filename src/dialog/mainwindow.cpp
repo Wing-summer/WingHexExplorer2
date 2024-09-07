@@ -52,6 +52,7 @@
 constexpr auto EMPTY_FUNC = [] {};
 
 MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
+    this->setUpdatesEnabled(false);
     this->setMinimumSize(900, 800);
 
     // recent file manager init
@@ -156,6 +157,8 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     // update status
     updateEditModeEnabled();
+
+    this->setUpdatesEnabled(true);
 
     // Don't call without QTimer::singleShot.
     // I don't know why it doesn't work with direct call.
