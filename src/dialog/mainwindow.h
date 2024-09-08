@@ -441,8 +441,6 @@ private:
 
     //===================================================
 
-    // file manager cache
-    QStringList m_openedFileNames;
     // QMap<EditorView* , Workspace>
     QMap<EditorView *, QString> m_views;
 

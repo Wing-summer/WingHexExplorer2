@@ -674,8 +674,6 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 }
                 return false;
             });
-    connect(preader, &WingPlugin::Reader::getOpenFiles, _win,
-            [=]() -> QStringList { return _win->m_openedFileNames; });
     connect(preader, &WingPlugin::Reader::getSupportedEncodings, _win,
             [=]() -> QStringList { return Utilities::getEncodings(); });
     connect(preader, &WingPlugin::Reader::currentEncoding, _win,

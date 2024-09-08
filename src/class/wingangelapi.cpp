@@ -710,10 +710,6 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         "bool existBookMark(" QSIZETYPE ")");
 
     registerAPI<CScriptArray *()>(
-        engine, std::bind(&WingAngelAPI::_HexReader_getOpenFiles, this),
-        "array<string>@ getOpenFiles()");
-
-    registerAPI<CScriptArray *()>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_getSupportedEncodings, this),
         "array<string>@ getSupportedEncodings()");
@@ -1389,12 +1385,6 @@ CScriptArray *WingAngelAPI::_HexReader_getBookMarks() {
             return emit reader.getBookMarks();
         },
         "array<BookMark>");
-}
-
-CScriptArray *WingAngelAPI::_HexReader_getOpenFiles() {
-    return retarrayWrapperFunction(
-        [this]() -> QStringList { return emit reader.getOpenFiles(); },
-        "array<string>");
 }
 
 CScriptArray *WingAngelAPI::_HexReader_getSupportedEncodings() {

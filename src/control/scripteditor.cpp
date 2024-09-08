@@ -1,4 +1,5 @@
 #include "scripteditor.h"
+#include "plugin/iwingplugin.h"
 #include "qeditor.h"
 
 #include "class/skinmanager.h"
@@ -73,24 +74,24 @@ void ScriptEditor::newFile(size_t index) {
     m_isNewFile = true;
 }
 
-bool ScriptEditor::openFile(const QString &filename) {
+WingHex::ErrFile ScriptEditor::openFile(const QString &filename) {
     QFileInfo finfo(filename);
 
     if (!finfo.exists() || !finfo.isFile()) {
-        return false;
+        return WingHex::ErrFile::NotExist;
     }
     if (!Utilities::isTextFile(finfo)) {
-        return false;
+        return WingHex::ErrFile::InvalidFormat;
     }
 
     QFile file(finfo.absolutePath());
     if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        return false;
+        return WingHex::ErrFile::Permission;
     }
     m_editor->editor()->setText(QString::fromUtf8(file.readAll()));
     file.close();
     m_isNewFile = false;
-    return true;
+    return WingHex::ErrFile::Success;
 }
 
 bool ScriptEditor::save(const QString &path, bool isExport) {

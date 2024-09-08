@@ -1327,7 +1327,18 @@ void MainWindow::on_reload() {
     if (editor == nullptr) {
         return;
     }
-    editor->reload();
+    auto res = editor->reload();
+    switch (res) {
+    case ErrFile::Success: {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
+                     tr("ReloadSuccessfully"));
+        break;
+    }
+    default: {
+        WingMessageBox::critical(this, tr("Error"), tr("ReloadUnSuccessfully"));
+        break;
+    }
+    }
 }
 
 void MainWindow::on_save() {
@@ -1400,8 +1411,6 @@ restart:
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
         m_views[editor] = workspace;
-        auto namep = m_openedFileNames.indexOf(oldFileName);
-        m_openedFileNames.replace(namep, filename);
         break;
     }
     case ErrFile::WorkSpaceUnSaved: {
@@ -1422,8 +1431,7 @@ restart:
         break;
     }
     default: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
-                     tr("SaveUnSuccessfully"));
+        WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
         break;
     }
     }
@@ -1467,8 +1475,7 @@ restart:
         break;
     }
     default: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
-                     tr("ExportUnSuccessfully"));
+        WingMessageBox::critical(this, tr("Error"), tr("ExportUnSuccessfully"));
         break;
     }
     }
@@ -2254,7 +2261,11 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 
 EditorView *MainWindow::findEditorView(const QString &filename) {
     for (auto &p : m_views.keys()) {
+#ifdef Q_OS_WIN
+        if (p->fileName().compare(filename, Qt::CaseInsensitive) == 0) {
+#else
         if (p->fileName() == filename) {
+#endif
             return p;
         }
     }
@@ -2376,11 +2387,6 @@ void MainWindow::connectEditorView(EditorView *editor) {
                         return;
                     }
                 }
-            }
-
-            auto file = editor->fileName();
-            if (!file.isEmpty()) {
-                m_openedFileNames.removeOne(file);
             }
         }
 
@@ -2518,11 +2524,11 @@ void MainWindow::openFiles(const QStringList &files) {
 }
 
 ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
-    if (m_openedFileNames.contains(file)) {
-        // find the result
-        if (editor) {
-            *editor = findEditorView(file);
-        }
+    auto e = findEditorView(file);
+    if (editor) {
+        *editor = e;
+    }
+    if (e) {
         return ErrFile::AlreadyOpened;
     }
 
@@ -2542,7 +2548,6 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
         return res;
     }
 
-    m_openedFileNames << filename;
     m_views.insert(ev, QString());
     registerEditorView(ev);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
@@ -2550,11 +2555,11 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
 }
 
 ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
-    if (m_openedFileNames.contains(driver)) {
-        // find the result
-        if (editor) {
-            *editor = findEditorView(driver);
-        }
+    auto e = findEditorView(driver);
+    if (editor) {
+        *editor = e;
+    }
+    if (e) {
         return ErrFile::AlreadyOpened;
     }
 
@@ -2571,7 +2576,6 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
         return res;
     }
 
-    m_openedFileNames << driver;
     m_views.insert(ev, QString());
     registerEditorView(ev);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
@@ -2579,11 +2583,11 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
 }
 
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
-    if (m_openedFileNames.contains(file)) {
-        // find the result
-        if (editor) {
-            *editor = findEditorView(file);
-        }
+    auto e = findEditorView(file);
+    if (editor) {
+        *editor = e;
+    }
+    if (e) {
         return ErrFile::AlreadyOpened;
     }
 
@@ -2603,7 +2607,6 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
         return res;
     }
 
-    m_openedFileNames << ev->fileName();
     m_views.insert(ev, file);
     registerEditorView(ev);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
@@ -2612,11 +2615,11 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
 
 ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
                                    qsizetype start, qsizetype length) {
-    if (m_openedFileNames.contains(file)) {
-        // find the result
-        if (editor) {
-            *editor = findEditorView(file);
-        }
+    auto e = findEditorView(file);
+    if (editor) {
+        *editor = e;
+    }
+    if (e) {
         return ErrFile::AlreadyOpened;
     }
 
@@ -2636,7 +2639,6 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
         return res;
     }
 
-    m_openedFileNames << filename;
     registerEditorView(ev);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;

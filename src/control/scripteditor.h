@@ -2,6 +2,7 @@
 #define SCRIPTEDITOR_H
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "plugin/iwingplugin.h"
 #include "qcodeedit.h"
 #include "qformatscheme.h"
 #include "qlanguagefactory.h"
@@ -28,7 +29,7 @@ public:
 
 public slots:
     void newFile(size_t index);
-    bool openFile(const QString &filename);
+    WingHex::ErrFile openFile(const QString &filename);
 
     bool save(const QString &path = QString(), bool isExport = false);
     bool reload();

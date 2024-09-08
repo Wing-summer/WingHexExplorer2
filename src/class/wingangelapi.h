@@ -93,8 +93,6 @@ private:
 
     CScriptArray *_HexReader_getBookMarks();
 
-    CScriptArray *_HexReader_getOpenFiles();
-
     CScriptArray *_HexReader_getSupportedEncodings();
 
     bool _HexController_writeBytes(qsizetype offset, const CScriptArray &ba);

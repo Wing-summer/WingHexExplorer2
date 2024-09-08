@@ -52,7 +52,8 @@ enum ErrFile : int {
     IsDirver = -7,
     WorkSpaceUnSaved = -8,
     SourceFileChanged = -9,
-    ClonedFile = -10
+    ClonedFile = -10,
+    InvalidFormat = -11
 };
 Q_ENUM_NS(ErrFile)
 
@@ -212,7 +213,6 @@ signals:
     bool existBookMark(qsizetype pos);
 
     // extension
-    QStringList getOpenFiles();
     QStringList getSupportedEncodings();
     QString currentEncoding();
 

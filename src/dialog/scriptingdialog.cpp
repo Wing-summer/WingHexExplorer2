@@ -4,7 +4,9 @@
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
+#include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
+#include "control/toast.h"
 #include "qeditor.h"
 #include "qlinemarksinfocenter.h"
 
@@ -464,7 +466,18 @@ void ScriptingDialog::setRunDebugMode(bool isRun, bool isDebug) {
     }
 }
 
-QString ScriptingDialog::getInput() { return {}; }
+ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
+    for (auto &p : m_views) {
+#ifdef Q_OS_WIN
+        if (p->fileName().compare(filename, Qt::CaseInsensitive) == 0) {
+#else
+        if (p->fileName() == filename) {
+#endif
+            return p;
+        }
+    }
+    return nullptr;
+}
 
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
@@ -477,27 +490,163 @@ void ScriptingDialog::on_newfile() {
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
 }
 
-void ScriptingDialog::on_openfile() {}
+void ScriptingDialog::on_openfile() {
+    if (!newOpenFileSafeCheck()) {
+        return;
+    }
+    auto filename = WingFileDialog::getOpenFileName(
+        this, tr("ChooseFile"), m_lastusedpath,
+        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    if (!filename.isEmpty()) {
+        m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-void ScriptingDialog::on_reload() {}
+        auto e = findEditorView(filename);
+        if (e) {
+            e->raise();
+            e->setFocus();
+            return;
+        }
 
-void ScriptingDialog::on_save() {}
+        auto editor = new ScriptEditor(this);
+        auto res = editor->openFile(filename);
+        if (res == WingHex::ErrFile::NotExist) {
+            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
+            return;
+        }
+        if (res == WingHex::ErrFile::Permission) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+            return;
+        }
+    }
 
-void ScriptingDialog::on_saveas() {}
+    RecentFileManager::RecentInfo info;
+    info.fileName = filename;
+    m_recentmanager->addRecentFile(info);
+}
 
-void ScriptingDialog::on_exportfile() {}
+void ScriptingDialog::on_reload() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
+    if (editor->reload()) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
+                     tr("ReloadSuccessfully"));
+    } else {
+        WingMessageBox::critical(this, tr("Error"), tr("ReloadUnSuccessfully"));
+    }
+}
 
-void ScriptingDialog::on_undofile() {}
+void ScriptingDialog::on_save() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
 
-void ScriptingDialog::on_redofile() {}
+    auto isNewFile = editor->isNewFile();
+    if (isNewFile) {
+        on_saveas();
+        return;
+    }
 
-void ScriptingDialog::on_cutfile() {}
+    auto res = editor->save();
+    if (res) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                     tr("SaveError"));
+    } else {
+        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        return;
+    }
+}
 
-void ScriptingDialog::on_copyfile() {}
+void ScriptingDialog::on_saveas() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
 
-void ScriptingDialog::on_pastefile() {}
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseSaveFile"), m_lastusedpath,
+        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    if (filename.isEmpty())
+        return;
+    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-void ScriptingDialog::on_delete() {}
+    auto oldFileName = editor->fileName();
+
+    auto res = editor->save(filename);
+    if (res) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
+                     tr("SaveSuccessfully"));
+    } else {
+        WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
+    }
+}
+
+void ScriptingDialog::on_exportfile() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
+
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseExportFile"), m_lastusedpath,
+        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    if (filename.isEmpty())
+        return;
+    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+
+    auto res = editor->save(filename, true);
+
+    if (res) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
+                     tr("ExportSuccessfully"));
+    } else {
+        WingMessageBox::critical(this, tr("Error"), tr("ExportUnSuccessfully"));
+    }
+}
+
+void ScriptingDialog::on_undofile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->undo();
+    }
+}
+
+void ScriptingDialog::on_redofile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->redo();
+    }
+}
+
+void ScriptingDialog::on_cutfile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->cut();
+    }
+}
+
+void ScriptingDialog::on_copyfile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->copy();
+    }
+}
+
+void ScriptingDialog::on_pastefile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->paste();
+    }
+}
+
+void ScriptingDialog::on_delete() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->cursor().removeSelectedText();
+    }
+}
 
 void ScriptingDialog::on_findfile() {}
 

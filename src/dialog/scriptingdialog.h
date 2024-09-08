@@ -126,7 +126,7 @@ private:
 
     void setRunDebugMode(bool isRun, bool isDebug = false);
 
-    QString getInput();
+    ScriptEditor *findEditorView(const QString &filename);
 
 private slots:
     void on_newfile();
@@ -180,9 +180,8 @@ private:
 
     size_t m_newIndex = 1;
 
-    // file manager cache
-    QStringList m_openedFileNames;
     QList<ScriptEditor *> m_views;
+    QString m_lastusedpath;
 
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;

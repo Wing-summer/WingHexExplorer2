@@ -17,7 +17,7 @@ DriverSelectorDialog::DriverSelectorDialog(QWidget *parent)
     drivers->setSortingEnabled(false);
     auto ico = ICONRES("opendriver");
     auto infos = QStorageInfo::mountedVolumes();
-    layout->addWidget(new QLabel("PleaseChooseDriver", this));
+    layout->addWidget(new QLabel(tr("PleaseChooseDriver"), this));
     layout->addSpacing(5);
     for (auto &item : Utilities::getStorageDevices()) {
         auto device = item.device();
