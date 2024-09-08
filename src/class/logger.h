@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QObject>
 #include <QSharedPointer>
+#include <QTextStream>
 
 class Logger : public QObject {
     Q_OBJECT

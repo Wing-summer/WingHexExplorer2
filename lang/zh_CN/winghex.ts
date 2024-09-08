@@ -2509,33 +2509,33 @@ Do you want them to be saved?</source>
 <context>
     <name>ScriptConsoleMachine</name>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="126"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="127"/>
         <source>Application functions:</source>
         <translation>程序函数：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="139"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="140"/>
         <source>User functions:</source>
         <translation>用户函数：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="160"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="161"/>
         <source>Application variables:</source>
         <translation>程序变量：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="177"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="178"/>
         <source>User variables:</source>
         <translation>用户变量：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="196"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="197"/>
         <source>- Exception &apos;%1&apos; in &apos;%2&apos;
 </source>
         <translation>— 在 ‘%2’ 中发生异常 ‘%1’</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="210"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="211"/>
         <source>AngelScript callstack:
 </source>
         <translation>AngelScript 调用堆栈：</translation>

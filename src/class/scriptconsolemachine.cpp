@@ -2,6 +2,7 @@
 
 #include "AngelScript/sdk/add_on/scripthelper/scripthelper.h"
 #include <QRegularExpression>
+#include <QTextStream>
 
 ScriptConsoleMachine::ScriptConsoleMachine(
     std::function<QString(void)> &getInputFn, QObject *parent)
