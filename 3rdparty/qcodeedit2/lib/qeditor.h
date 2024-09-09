@@ -241,8 +241,8 @@ public slots:
 
     void setLineWrapping(bool on);
 
-    virtual void save();
-    void save(const QString &filename);
+    virtual bool save();
+    bool save(const QString &filename);
 
     virtual void print();
 
@@ -255,7 +255,7 @@ public slots:
     void removeAction(QAction *a, const QString &menu,
                       const QString &toolbar = QString());
 
-    void load(const QString &file);
+    bool load(const QString &file);
     void setText(const QString &s);
 
     void setCodec(const QString &name);

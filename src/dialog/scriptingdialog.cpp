@@ -1,12 +1,15 @@
 #include "scriptingdialog.h"
+#include "DockSplitter.h"
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "aboutsoftwaredialog.h"
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "qdocumentline.h"
 #include "qeditor.h"
 #include "qlinemarksinfocenter.h"
 
@@ -48,6 +51,9 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     QLineMarksInfoCenter::instance()->loadMarkTypes(
         QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
+    // get symbol ID
+    m_symID.insert(Symbols::BreakPoint,
+                   QLineMarksInfoCenter::instance()->markTypeId("breakpoint"));
 
     updateEditModeEnabled();
 
@@ -109,12 +115,6 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
 
         m_editStateWidgets << a;
-
-        a = addPannelAction(pannel, QStringLiteral("export"), tr("Export"),
-                            &ScriptingDialog::on_exportfile,
-                            shortcuts.keySequence(QKeySequences::Key::EXPORT));
-
-        m_editStateWidgets << a;
     }
     return tab;
 }
@@ -160,34 +160,34 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("Display"));
         auto menu = new QMenu(this);
         menu->addAction(newAction(QStringLiteral("80%"), [this] {
-            // this->setCurrentHexEditorScale(0.8);
+            this->setCurrentHexEditorScale(0.8);
         }));
         menu->addAction(newAction(QStringLiteral("90%"), [this] {
-            // this->setCurrentHexEditorScale(0.9);
+            this->setCurrentHexEditorScale(0.9);
         }));
         menu->addAction(newAction(QStringLiteral("100%"), [this] {
-            //  this->setCurrentHexEditorScale(1.0);
+            this->setCurrentHexEditorScale(1.0);
         }));
         menu->addSeparator();
         menu->addAction(newAction(QStringLiteral("120%"), [this] {
-            // this->setCurrentHexEditorScale(1.2);
+            this->setCurrentHexEditorScale(1.2);
         }));
         menu->addAction(newAction(QStringLiteral("150%"), [this] {
-            //  this->setCurrentHexEditorScale(1.5);
+            this->setCurrentHexEditorScale(1.5);
         }));
         menu->addAction(newAction(QStringLiteral("200%"), [this] {
-            //   this->setCurrentHexEditorScale(2.0);
+            this->setCurrentHexEditorScale(2.0);
         }));
         menu->addAction(newAction(QStringLiteral("250%"), [this] {
-            //  this->setCurrentHexEditorScale(2.5);
+            this->setCurrentHexEditorScale(2.5);
         }));
         menu->addAction(newAction(QStringLiteral("300%"), [this] {
-            //  this->setCurrentHexEditorScale(3.0);
+            this->setCurrentHexEditorScale(3.0);
         }));
         addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
                         EMPTY_FUNC, {}, menu);
         addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
-                        [this] { /*this->setCurrentHexEditorScale(1.0); */ });
+                        [this] { this->setCurrentHexEditorScale(1.0); });
         m_editStateWidgets << pannel;
     }
 
@@ -251,6 +251,19 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
             QKeySequence(Qt::SHIFT | Qt::Key_F11));
 
         m_editStateWidgets << pannel;
+    }
+
+    {
+        auto pannel = tab->addGroup(tr("BreakPoint"));
+        addPannelAction(
+            pannel, QStringLiteral("scriptdbg/tbp"), tr("ToggleBreakPoint"),
+            &ScriptingDialog::on_togglebreakpoint, QKeySequence(Qt::Key_F9));
+        addPannelAction(pannel, QStringLiteral("scriptdbg/bp"),
+                        tr("AddBreakPoint"),
+                        &ScriptingDialog::on_addbreakpoint);
+        addPannelAction(pannel, QStringLiteral("scriptdbg/delbp"),
+                        tr("RemoveCondBreakPoint"),
+                        &ScriptingDialog::on_removebreakpoint);
     }
     return tab;
 }
@@ -367,6 +380,12 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     // TODO
     auto bottomRightArea =
         buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
+    auto splitter =
+        ads::internal::findParent<ads::CDockSplitter *>(m_editorViewArea);
+    if (splitter) {
+        constexpr auto bottomHeight = 200;
+        splitter->setSizes({height() - bottomHeight, bottomHeight});
+    }
 }
 
 bool ScriptingDialog::newOpenFileSafeCheck() {
@@ -414,10 +433,9 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
 
         if (m_dock->focusedDockWidget() == editor) {
             if (!m_views.isEmpty()) {
-                for (auto p = m_views.begin(); p != m_views.end(); ++p) {
-                    auto ev = *p;
-                    if (ev != editor && ev->isCurrentTab()) {
-                        ev->setFocus();
+                for (auto p : m_views) {
+                    if (p != editor && p->isCurrentTab()) {
+                        p->setFocus();
                     }
                 }
             }
@@ -454,7 +472,7 @@ void ScriptingDialog::updateEditModeEnabled() {
     }
 }
 
-ScriptEditor *ScriptingDialog::currentEditor() { return m_curEditor; }
+ScriptEditor *ScriptingDialog::currentEditor() const { return m_curEditor; }
 
 void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {}
 
@@ -479,15 +497,47 @@ ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
     return nullptr;
 }
 
+void ScriptingDialog::setCurrentHexEditorScale(qreal rate) {}
+
+bool ScriptingDialog::isCurrentDebugging() const {
+    auto m = m_consoleout->machine();
+    return m && m->isInDebugMode();
+}
+
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
         return;
     }
-    auto editor = new ScriptEditor(this);
-    auto index = m_newIndex++;
-    editor->newFile(index);
-    registerEditorView(editor);
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseFile"), m_lastusedpath,
+        QStringLiteral("AngelScript (*.as *.angelscript)"));
+    if (!filename.isEmpty()) {
+        m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+
+        auto e = findEditorView(filename);
+        if (e) {
+            e->raise();
+            e->setFocus();
+            // TODO
+            return;
+        }
+
+        // create an empty file
+        QFile f(filename);
+        f.open(QFile::WriteOnly | QFile::Text);
+        f.close();
+
+        auto editor = new ScriptEditor(this);
+        auto res = editor->openFile(filename);
+        if (!res) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+            return;
+        }
+
+        registerEditorView(editor);
+        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
+                              editorViewArea());
+    }
 }
 
 void ScriptingDialog::on_openfile() {
@@ -509,14 +559,14 @@ void ScriptingDialog::on_openfile() {
 
         auto editor = new ScriptEditor(this);
         auto res = editor->openFile(filename);
-        if (res == WingHex::ErrFile::NotExist) {
-            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-            return;
-        }
-        if (res == WingHex::ErrFile::Permission) {
+        if (!res) {
             WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
             return;
         }
+
+        registerEditorView(editor);
+        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
+                              editorViewArea());
     }
 
     RecentFileManager::RecentInfo info;
@@ -543,16 +593,10 @@ void ScriptingDialog::on_save() {
         return;
     }
 
-    auto isNewFile = editor->isNewFile();
-    if (isNewFile) {
-        on_saveas();
-        return;
-    }
-
     auto res = editor->save();
     if (res) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                     tr("SaveError"));
+                     tr("SaveSuccessfully"));
     } else {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
         return;
@@ -580,29 +624,6 @@ void ScriptingDialog::on_saveas() {
                      tr("SaveSuccessfully"));
     } else {
         WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
-    }
-}
-
-void ScriptingDialog::on_exportfile() {
-    auto editor = currentEditor();
-    if (editor == nullptr) {
-        return;
-    }
-
-    auto filename = WingFileDialog::getSaveFileName(
-        this, tr("ChooseExportFile"), m_lastusedpath,
-        QStringLiteral("AngelScript (*.as *.angelscript)"));
-    if (filename.isEmpty())
-        return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
-
-    auto res = editor->save(filename, true);
-
-    if (res) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
-                     tr("ExportSuccessfully"));
-    } else {
-        WingMessageBox::critical(this, tr("Error"), tr("ExportUnSuccessfully"));
     }
 }
 
@@ -652,7 +673,7 @@ void ScriptingDialog::on_findfile() {}
 
 void ScriptingDialog::on_gotoline() {}
 
-void ScriptingDialog::on_about() {}
+void ScriptingDialog::on_about() { AboutSoftwareDialog().exec(); }
 
 void ScriptingDialog::on_sponsor() {
     // Github is not easy to access for Chinese people,
@@ -685,12 +706,20 @@ void ScriptingDialog::on_runscript() {
         auto e = editor->editor();
         m_consoleout->clear();
         setRunDebugMode(true, false);
-        m_consoleout->machine()->executeScript(e->text());
+        m_consoleout->machine()->executeScript(e->fileName());
         setRunDebugMode(false);
     }
 }
 
-void ScriptingDialog::on_rundbgscript() {}
+void ScriptingDialog::on_rundbgscript() {
+    auto editor = currentEditor();
+    if (editor) {
+        auto e = editor->editor();
+        m_consoleout->clear();
+        setRunDebugMode(true, true);
+        m_consoleout->machine()->executeScript(e->fileName(), true);
+    }
+}
 
 void ScriptingDialog::on_pausescript() {}
 
@@ -705,6 +734,40 @@ void ScriptingDialog::on_stepinscript() {}
 void ScriptingDialog::on_stepoutscript() {}
 
 void ScriptingDialog::on_stepoverscript() {}
+
+void ScriptingDialog::on_togglebreakpoint() {
+    auto editor = currentEditor();
+    if (editor) {
+        QLineMark mrk(editor->fileName(),
+                      editor->editor()->cursor().lineNumber() + 1,
+                      m_symID.value(Symbols::BreakPoint));
+        QLineMarksInfoCenter::instance()->toggleLineMark(mrk);
+    }
+}
+
+void ScriptingDialog::on_addbreakpoint() {
+    auto editor = currentEditor();
+    if (editor) {
+        auto line = editor->editor()->document()->line(
+            editor->editor()->cursor().lineNumber());
+        auto id = m_symID.value(Symbols::BreakPoint);
+        if (!line.hasMark(id)) {
+            line.addMark(id);
+        }
+    }
+}
+
+void ScriptingDialog::on_removebreakpoint() {
+    auto editor = currentEditor();
+    if (editor) {
+        auto line = editor->editor()->document()->line(
+            editor->editor()->cursor().lineNumber());
+        auto id = m_symID.value(Symbols::BreakPoint);
+        if (line.hasMark(id)) {
+            line.removeMark(id);
+        }
+    }
+}
 
 void ScriptingDialog::closeEvent(QCloseEvent *event) {
     auto runner = m_consoleout->machine();

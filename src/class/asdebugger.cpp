@@ -13,27 +13,27 @@ asDebugger::asDebugger(QObject *parent) : QObject(parent) {
     m_engine = nullptr;
 }
 
-asDebugger::~asDebugger() { SetEngine(nullptr); }
+asDebugger::~asDebugger() { setEngine(nullptr); }
 
-void asDebugger::RegisterToStringCallback(const asITypeInfo *ti,
+void asDebugger::registerToStringCallback(const asITypeInfo *ti,
                                           ToStringCallback callback) {
     if (!m_toStringCallbacks.contains(ti))
         m_toStringCallbacks.insert(ti, callback);
 }
 
-void asDebugger::TakeCommands(asIScriptContext *ctx) {
+void asDebugger::takeCommands(asIScriptContext *ctx) {
     while (true) {
-        Output(QStringLiteral("[dbg]> "));
+        outputString(QStringLiteral("[dbg]> "));
         QString buf;
 
-        if (InterpretCommand(buf, ctx))
+        if (interpretCommand(buf, ctx))
             break;
     }
 }
 
-void asDebugger::Output(const QString &str) { emit onOutput(str); }
+void asDebugger::outputString(const QString &str) { emit onOutput(str); }
 
-void asDebugger::LineCallback(asIScriptContext *ctx) {
+void asDebugger::lineCallback(asIScriptContext *ctx) {
     assert(ctx);
 
     // This should never happen, but it doesn't hurt to validate it
@@ -47,20 +47,20 @@ void asDebugger::LineCallback(asIScriptContext *ctx) {
         return;
 
     if (m_action == CONTINUE) {
-        if (!CheckBreakPoint(ctx))
+        if (!checkBreakPoint(ctx))
             return;
     } else if (m_action == STEP_OVER) {
         if (ctx->GetCallstackSize() > m_lastCommandAtStackLevel) {
-            if (!CheckBreakPoint(ctx))
+            if (!checkBreakPoint(ctx))
                 return;
         }
     } else if (m_action == STEP_OUT) {
         if (ctx->GetCallstackSize() >= m_lastCommandAtStackLevel) {
-            if (!CheckBreakPoint(ctx))
+            if (!checkBreakPoint(ctx))
                 return;
         }
     } else if (m_action == STEP_INTO) {
-        CheckBreakPoint(ctx);
+        checkBreakPoint(ctx);
 
         // Always break, but we call the check break point anyway
         // to tell user when break point has been reached
@@ -73,11 +73,11 @@ void asDebugger::LineCallback(asIScriptContext *ctx) {
     //   << ctx->GetFunction()->GetDeclaration() << endl;
     // Output(s.str());
 
-    TakeCommands(ctx);
+    takeCommands(ctx);
 }
 
 // Commands
-void asDebugger::PrintHelp() {
+void asDebugger::printHelp() {
     emit onOutput(tr(" c - Continue\n"
                      " s - Step into\n"
                      " n - Next step\n"
@@ -91,7 +91,7 @@ void asDebugger::PrintHelp() {
                      " h - Print this help text\n"));
 }
 
-void asDebugger::AddFileBreakPoint(const QString &file, int lineNbr) {
+void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
     // Store just file name, not entire path
     QFileInfo info(file);
     // Trim the file name
@@ -100,24 +100,41 @@ void asDebugger::AddFileBreakPoint(const QString &file, int lineNbr) {
     auto s = tr("Setting break point in file '%1' at line %2")
                  .arg(actual)
                  .arg(lineNbr);
-    Output(s);
+    outputString(s);
 
     BreakPoint bp(actual, lineNbr, false);
     m_breakPoints.push_back(bp);
 }
 
-void asDebugger::AddFuncBreakPoint(const QString &func) {
+void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
+    QFileInfo info(file);
+    QString actual = info.fileName().trimmed();
+    m_breakPoints.removeIf([=](const BreakPoint &bp) {
+        return bp.name == actual && bp.lineNbr == lineNbr && bp.func == false;
+    });
+}
+
+void asDebugger::addFuncBreakPoint(const QString &func) {
     // Trim the function name
     QString actual = func.trimmed();
 
     auto s = tr("Adding deferred break point for function '%1'").arg(actual);
-    Output(s);
+    outputString(s);
 
     BreakPoint bp(actual, 0, true);
     m_breakPoints.push_back(bp);
 }
 
-void asDebugger::ListBreakPoints() {
+void asDebugger::removeFuncBreakPoint(const QString &func) {
+    QString actual = func.trimmed();
+    m_breakPoints.removeIf([=](const BreakPoint &bp) {
+        return bp.name == actual && bp.func == true;
+    });
+}
+
+void asDebugger::clearBreakPoint() { m_breakPoints.clear(); }
+
+void asDebugger::listBreakPoints() {
     // List all break points
     QString str;
     QTextStream s(&str);
@@ -128,12 +145,12 @@ void asDebugger::ListBreakPoints() {
         else
             s << b << QStringLiteral(" - ") << m_breakPoints[b].name
               << QStringLiteral(":") << m_breakPoints[b].lineNbr << Qt::endl;
-    Output(str);
+    outputString(str);
 }
 
-void asDebugger::ListLocalVariables(asIScriptContext *ctx) {
+void asDebugger::listLocalVariables(asIScriptContext *ctx) {
     if (ctx == 0) {
-        Output(tr("No script is running"));
+        outputString(tr("No script is running"));
         return;
     }
 
@@ -157,16 +174,17 @@ void asDebugger::ListLocalVariables(asIScriptContext *ctx) {
             int typeId;
             ctx->GetVar(n, 0, 0, &typeId);
             s << func->GetVarDecl(n) << " = "
-              << ToString(ctx->GetAddressOfVar(n), typeId, 3, ctx->GetEngine())
+              << toString(ctx->GetAddressOfVar(n), typeId, _expandMembers,
+                          ctx->GetEngine())
               << Qt::endl;
         }
     }
-    Output(str);
+    outputString(str);
 }
 
-void asDebugger::ListGlobalVariables(asIScriptContext *ctx) {
+void asDebugger::listGlobalVariables(asIScriptContext *ctx) {
     if (ctx == nullptr) {
-        Output(tr("No script is running"));
+        outputString(tr("No script is running"));
         return;
     }
 
@@ -185,16 +203,16 @@ void asDebugger::ListGlobalVariables(asIScriptContext *ctx) {
         int typeId = 0;
         mod->GetGlobalVar(n, 0, 0, &typeId);
         s << mod->GetGlobalVarDeclaration(n) << QStringLiteral(" = ")
-          << ToString(mod->GetAddressOfGlobalVar(n), typeId, _expandMembers,
+          << toString(mod->GetAddressOfGlobalVar(n), typeId, _expandMembers,
                       ctx->GetEngine())
           << Qt::endl;
     }
-    Output(str);
+    outputString(str);
 }
 
-void asDebugger::ListMemberProperties(asIScriptContext *ctx) {
+void asDebugger::listMemberProperties(asIScriptContext *ctx) {
     if (ctx == 0) {
-        Output(tr("No script is running"));
+        outputString(tr("No script is running"));
         return;
     }
 
@@ -204,14 +222,14 @@ void asDebugger::ListMemberProperties(asIScriptContext *ctx) {
         QTextStream s(&str);
 
         s << QStringLiteral("this = ")
-          << ToString(ptr, ctx->GetThisTypeId(), _expandMembers,
+          << toString(ptr, ctx->GetThisTypeId(), _expandMembers,
                       ctx->GetEngine())
           << Qt::endl;
-        Output(str);
+        outputString(str);
     }
 }
 
-bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
+bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
     if (ctx == 0)
         return false;
 
@@ -233,7 +251,7 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
                         tr("Entering function '%1'. Transforming it into break "
                            "point")
                             .arg(m_breakPoints[n].name);
-                    Output(s);
+                    outputString(s);
 
                     // Transform the function breakpoint into a file breakpoint
                     m_breakPoints[n].name = file;
@@ -255,7 +273,7 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
                                      .arg(n)
                                      .arg(file)
                                      .arg(line);
-                        Output(s);
+                        outputString(s);
 
                         // Move the breakpoint to the next line
                         m_breakPoints[n].lineNbr = line;
@@ -280,7 +298,7 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
                          .arg(n)
                          .arg(file)
                          .arg(lineNbr);
-            Output(s);
+            outputString(s);
             return true;
         }
     }
@@ -288,7 +306,7 @@ bool asDebugger::CheckBreakPoint(asIScriptContext *ctx) {
     return false;
 }
 
-QString asDebugger::ToString(void *value, asUINT typeId, int expandMembersLevel,
+QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
                              asIScriptEngine *engine) {
     if (value == nullptr)
         return QStringLiteral("<null>");
@@ -360,7 +378,7 @@ QString asDebugger::ToString(void *value, asUINT typeId, int expandMembersLevel,
                     s << QStringLiteral(", ");
 
                 s << type->GetPropertyDeclaration(n) << QStringLiteral(" = ")
-                  << ToString(obj->GetAddressOfProperty(n),
+                  << toString(obj->GetAddressOfProperty(n),
                               obj->GetPropertyTypeId(n), _expandMembers - 1,
                               type->GetEngine());
             }
@@ -406,21 +424,22 @@ QString asDebugger::ToString(void *value, asUINT typeId, int expandMembersLevel,
     return str;
 }
 
-void asDebugger::SetEngine(asIScriptEngine *engine) {
+void asDebugger::setEngine(asIScriptEngine *engine) {
     if (m_engine != engine) {
         if (m_engine)
             m_engine->Release();
         m_engine = engine;
         if (m_engine)
             m_engine->AddRef();
+        m_breakPoints.clear();
     }
 }
 
-asIScriptEngine *asDebugger::GetEngine() { return m_engine; }
+asIScriptEngine *asDebugger::getEngine() { return m_engine; }
 
-void asDebugger::ListStatistics(asIScriptContext *ctx) {
+void asDebugger::listStatistics(asIScriptContext *ctx) {
     if (ctx == nullptr) {
-        Output("No script is running\n");
+        outputString("No script is running\n");
         return;
     }
 
@@ -445,12 +464,12 @@ void asDebugger::ListStatistics(asIScriptContext *ctx) {
     s << qSetFieldWidth(25) << Qt::left << tr(" new objects destroyed:")
       << gcTotalNewDestr << Qt::endl;
 
-    Output(str);
+    outputString(str);
 }
 
-void asDebugger::PrintCallstack(asIScriptContext *ctx) {
+void asDebugger::printCallstack(asIScriptContext *ctx) {
     if (ctx == nullptr) {
-        Output(tr("No script is running"));
+        outputString(tr("No script is running"));
         return;
     }
 
@@ -464,12 +483,12 @@ void asDebugger::PrintCallstack(asIScriptContext *ctx) {
           << lineNbr << QStringLiteral("; ")
           << ctx->GetFunction(n)->GetDeclaration() << Qt::endl;
     }
-    Output(str);
+    outputString(str);
 }
 
-void asDebugger::PrintValue(const QString &expr, asIScriptContext *ctx) {
+void asDebugger::printValue(const QString &expr, asIScriptContext *ctx) {
     if (ctx == 0) {
-        Output(tr("No script is running"));
+        outputString(tr("No script is running"));
         return;
     }
 
@@ -584,20 +603,21 @@ void asDebugger::PrintValue(const QString &expr, asIScriptContext *ctx) {
             // TODO: If there is a [ after the identifier try to call the
             // 'opIndex(expr) const' method
             if (!str.isEmpty()) {
-                Output(tr("Invalid expression. Expression doesn't end after "
-                          "symbol"));
+                outputString(
+                    tr("Invalid expression. Expression doesn't end after "
+                       "symbol"));
             } else {
-                Output(ToString(ptr, typeId, _expandMembers, engine));
+                outputString(toString(ptr, typeId, _expandMembers, engine));
             }
         } else {
-            Output(tr("Invalid expression. No matching symbol"));
+            outputString(tr("Invalid expression. No matching symbol"));
         }
     } else {
-        Output(tr("Invalid expression. Expected identifier"));
+        outputString(tr("Invalid expression. Expected identifier"));
     }
 }
 
-bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
+bool asDebugger::interpretCommand(const QString &cmd, asIScriptContext *ctx) {
     if (cmd.length() == 0)
         return true;
 
@@ -630,12 +650,12 @@ bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
 
             int nbr = line.toInt();
 
-            AddFileBreakPoint(file, nbr);
+            addFileBreakPoint(file, nbr);
         } else if (div < 0 && p > 1) {
             auto func = cmd.mid(p);
-            AddFuncBreakPoint(func);
+            addFuncBreakPoint(func);
         } else {
-            Output(tr(
+            outputString(tr(
                 "Incorrect format for setting break point, expected one of:\n"
                 " b <file name>:<line number>\n"
                 " b <function name>"));
@@ -651,16 +671,17 @@ bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
             auto br = cmd.mid(2);
             if (br == QStringLiteral("all")) {
                 m_breakPoints.clear();
-                Output(tr("All break points have been removed"));
+                outputString(tr("All break points have been removed"));
             } else {
                 int nbr = br.toInt();
                 if (nbr >= 0 && nbr < m_breakPoints.size())
                     m_breakPoints.erase(m_breakPoints.begin() + nbr);
-                ListBreakPoints();
+                listBreakPoints();
             }
         } else {
-            Output("Incorrect format for removing break points, expected:\n"
-                   " r <all|number of break point>\n");
+            outputString(
+                "Incorrect format for removing break points, expected:\n"
+                " r <all|number of break point>\n");
         }
     }
         // take more commands
@@ -673,40 +694,40 @@ bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
         if (p > 1) {
             auto c = cmd.at(2);
             if (c == 'b') {
-                ListBreakPoints();
+                listBreakPoints();
             } else if (c == 'v') {
-                ListLocalVariables(ctx);
+                listLocalVariables(ctx);
             } else if (c == 'g') {
-                ListGlobalVariables(ctx);
+                listGlobalVariables(ctx);
             } else if (c == 'm') {
-                ListMemberProperties(ctx);
+                listMemberProperties(ctx);
             } else if (c == 's') {
-                ListStatistics(ctx);
+                listStatistics(ctx);
             } else {
-                Output(tr("Unknown list option."));
+                outputString(tr("Unknown list option."));
                 printHelp = true;
             }
         } else {
-            Output(tr("Incorrect format for list command."));
+            outputString(tr("Incorrect format for list command."));
             printHelp = true;
         }
 
         if (printHelp) {
-            Output(tr("Expected format: \n"
-                      " l <list option>\n"
-                      "Available options: \n"
-                      " b - breakpoints\n"
-                      " v - local variables\n"
-                      " m - member properties\n"
-                      " g - global variables\n"
-                      " s - statistics"));
+            outputString(tr("Expected format: \n"
+                            " l <list option>\n"
+                            "Available options: \n"
+                            " b - breakpoints\n"
+                            " v - local variables\n"
+                            " m - member properties\n"
+                            " g - global variables\n"
+                            " s - statistics"));
         }
     }
         // take more commands
         return false;
 
     case 'h':
-        PrintHelp();
+        printHelp();
         // take more commands
         return false;
 
@@ -714,10 +735,10 @@ bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
         // Print a value
         auto p = cmd.indexOf(cmdRegExp, 1);
         if (p > 1) {
-            PrintValue(cmd.mid(p), ctx);
+            printValue(cmd.mid(p), ctx);
         } else {
-            Output(tr("Incorrect format for print, expected:\n"
-                      " p <expression>"));
+            outputString(tr("Incorrect format for print, expected:\n"
+                            " p <expression>"));
         }
     }
         // take more commands
@@ -725,21 +746,21 @@ bool asDebugger::InterpretCommand(const QString &cmd, asIScriptContext *ctx) {
 
     case 'w':
         // Where am I?
-        PrintCallstack(ctx);
+        printCallstack(ctx);
         // take more commands
         return false;
 
     case 'a':
         // abort the execution
         if (ctx == nullptr) {
-            Output(tr("No script is running"));
+            outputString(tr("No script is running"));
             return false;
         }
         ctx->Abort();
         break;
 
     default:
-        Output(tr("Unknown command"));
+        outputString(tr("Unknown command"));
         // take more commands
         return false;
     }

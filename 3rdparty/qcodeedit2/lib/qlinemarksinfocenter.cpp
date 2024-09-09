@@ -140,7 +140,7 @@ void QLineMarksInfoCenter::toggleLineMark(const QLineMark &mark) {
     if (!l.isValid())
         return;
 
-    e->setCursor(QDocumentCursor(e->document(), mark.line - 1));
+    // e->setCursor(QDocumentCursor(e->document(), mark.line - 1));
     l.toggleMark(mark.mark);
 }
 

@@ -10,6 +10,27 @@
 class asDebugger : public QObject {
     Q_OBJECT
 public:
+    struct BreakPoint {
+        BreakPoint(QString f, int n, bool _func)
+            : name(f), lineNbr(n), func(_func), needsAdjusting(true) {}
+        QString name;
+        int lineNbr;
+        bool func;
+        bool needsAdjusting;
+    };
+
+    struct VariablesInfo {
+        QString name;
+        QString value;
+    };
+
+    struct StackTraceInfo {
+        QString file;
+        int lineNr;
+        QString fndecl;
+    };
+
+public:
     asDebugger(QObject *parent = nullptr);
     virtual ~asDebugger();
 
@@ -21,41 +42,50 @@ public:
     typedef QString (*ToStringCallback)(void *obj, int expandMembersLevel,
                                         asDebugger *dbg);
 
-    void RegisterToStringCallback(const asITypeInfo *ti,
+    void registerToStringCallback(const asITypeInfo *ti,
                                   ToStringCallback callback);
 
     // User interaction
-    void TakeCommands(asIScriptContext *ctx);
-    void Output(const QString &str);
-
-    // Line callback invoked by context
-    void LineCallback(asIScriptContext *ctx);
+    void takeCommands(asIScriptContext *ctx);
+    void outputString(const QString &str);
 
     // Commands
-    void PrintHelp();
-    void AddFileBreakPoint(const QString &file, int lineNbr);
-    void AddFuncBreakPoint(const QString &func);
-    void ListBreakPoints();
-    void ListLocalVariables(asIScriptContext *ctx);
-    void ListGlobalVariables(asIScriptContext *ctx);
-    void ListMemberProperties(asIScriptContext *ctx);
-    void ListStatistics(asIScriptContext *ctx);
-    void PrintCallstack(asIScriptContext *ctx);
-    void PrintValue(const QString &expr, asIScriptContext *ctx);
-
-    // Helpers
-    bool InterpretCommand(const QString &cmd, asIScriptContext *ctx);
-    bool CheckBreakPoint(asIScriptContext *ctx);
-    QString ToString(void *value, asUINT typeId, int expandMembersLevel,
-                     asIScriptEngine *engine);
+    void printHelp();
+    void addFileBreakPoint(const QString &file, int lineNbr);
+    void removeFileBreakPoint(const QString &file, int lineNbr);
+    void addFuncBreakPoint(const QString &func);
+    void removeFuncBreakPoint(const QString &func);
+    void clearBreakPoint();
+    void listBreakPoints();
+    const QVector<BreakPoint> &breakPoints();
 
     // Optionally set the engine pointer in the debugger so it can be retrieved
     // by callbacks that need it. This will hold a reference to the engine.
-    void SetEngine(asIScriptEngine *engine);
-    asIScriptEngine *GetEngine();
+    void setEngine(asIScriptEngine *engine);
+    asIScriptEngine *getEngine();
 
     int expandMembers() const;
     void setExpandMembers(int newExpandMembers);
+
+    // Line callback invoked by context
+    void lineCallback(asIScriptContext *ctx);
+
+    QString toString(void *value, asUINT typeId, int expandMembersLevel,
+                     asIScriptEngine *engine = nullptr);
+
+private:
+    bool checkBreakPoint(asIScriptContext *ctx);
+
+    void listLocalVariables(asIScriptContext *ctx);
+    QVector<VariablesInfo> localVariables(asIScriptContext *ctx);
+    void listGlobalVariables(asIScriptContext *ctx);
+    void listMemberProperties(asIScriptContext *ctx);
+    void listStatistics(asIScriptContext *ctx);
+    void printCallstack(asIScriptContext *ctx);
+    void printValue(const QString &expr, asIScriptContext *ctx);
+
+    // Helpers
+    bool interpretCommand(const QString &cmd, asIScriptContext *ctx);
 
 signals:
     void onOutput(const QString &message);
@@ -71,14 +101,6 @@ private:
     asUINT m_lastCommandAtStackLevel;
     asIScriptFunction *m_lastFunction;
 
-    struct BreakPoint {
-        BreakPoint(QString f, int n, bool _func)
-            : name(f), lineNbr(n), func(_func), needsAdjusting(true) {}
-        QString name;
-        int lineNbr;
-        bool func;
-        bool needsAdjusting;
-    };
     QVector<BreakPoint> m_breakPoints;
 
     asIScriptEngine *m_engine;

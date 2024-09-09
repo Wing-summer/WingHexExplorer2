@@ -27,7 +27,7 @@ void ScriptObjModel::updateData() {
         d.name = name;
         d.type = (isConst ? QStringLiteral(" const ") : QStringLiteral(" ")) +
                  _engine->GetTypeDeclaration(typeId);
-        d.value = _debugger->ToString(v, typeId, 3, _engine);
+        d.value = _debugger->toString(v, typeId, 3, _engine);
 
         _datas.append(d);
     }
@@ -45,7 +45,7 @@ void ScriptObjModel::updateData() {
         d.name = name;
         d.type = (isConst ? QStringLiteral(" const ") : QStringLiteral(" ")) +
                  _engine->GetTypeDeclaration(typeId);
-        d.value = _debugger->ToString(v, typeId, 3, _engine);
+        d.value = _debugger->toString(v, typeId, 3, _engine);
         _datas.append(d);
     }
     this->endResetModel();

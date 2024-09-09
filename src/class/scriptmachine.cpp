@@ -34,7 +34,7 @@ bool ScriptMachine::inited() { return _engine != nullptr; }
 bool ScriptMachine::isRunning() const { return !_ctxPool.isEmpty(); }
 
 bool ScriptMachine::isInDebugMode() const {
-    return _debugger->GetEngine() != nullptr;
+    return _debugger->getEngine() != nullptr;
 }
 
 bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
@@ -148,13 +148,13 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     // Register the to-string callbacks so the user can see the contents of
     // strings
-    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tString],
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tString],
                                         &AngelObjString::stringToString);
-    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tArray],
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tArray],
                                         &AngelObjString::arrayToString);
-    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tDictionary],
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tDictionary],
                                         &AngelObjString::dictionaryToString);
-    _debugger->RegisterToStringCallback(_rtypes[RegisteredType::tDateTime],
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tDateTime],
                                         &AngelObjString::dateTimeToString);
 
     PluginSystem::instance().angelApi()->installAPI(
@@ -165,7 +165,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
-    info.message = _debugger->ToString(ref, typeId, 3, _engine);
+    info.message = _debugger->toString(ref, typeId, 3, _engine);
     emit onOutput(MessageType::Info, info);
 }
 
@@ -207,7 +207,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     CScriptBuilder builder;
 
     // Set the pragma callback so we can detect
-    builder.SetPragmaCallback(pragmaCallback, 0);
+    builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, this);
+    builder.SetIncludeCallback(&ScriptMachine::includeCallback, this);
 
     // Compile the script
     auto r = builder.StartNewModule(_engine, "script");
@@ -215,9 +216,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    auto code = script.toUtf8();
-
-    r = builder.AddSectionFromMemory("__main__", code.data(), code.length());
+    r = builder.AddSectionFromFile(script.toUtf8());
     if (r < 0) {
         return false;
     }
@@ -251,14 +250,14 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     if (isInDebug) {
         // Let the debugger hold an engine pointer that can be used by the
         // callbacks
-        _debugger->SetEngine(_engine);
+        _debugger->setEngine(_engine);
 
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.message =
             tr("Debugging, waiting for commands. Type 'h' for help.");
         emit onOutput(MessageType::Info, info);
-        _debugger->TakeCommands(0);
+        _debugger->takeCommands(0);
     }
 
     // Once we have the main function, we first need to initialize the global
@@ -324,7 +323,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     // Detach debugger
     Q_ASSERT(_debugger);
-    _debugger->SetEngine(nullptr);
+    _debugger->setEngine(nullptr);
 
     return r >= 0;
 }
@@ -390,7 +389,7 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     // Attach the debugger if needed
     if (ctx && p->_debugger) {
         // Set the line callback for the debugging
-        ctx->SetLineCallback(asMETHOD(asDebugger, LineCallback), p->_debugger,
+        ctx->SetLineCallback(asMETHOD(asDebugger, lineCallback), p->_debugger,
                              asCALL_THISCALL);
     }
 
@@ -445,6 +444,13 @@ int ScriptMachine::pragmaCallback(const std::string &pragmaText,
 
     // The #pragma directive was not accepted
     return -1;
+}
+
+int ScriptMachine::includeCallback(const char *include, const char *from,
+                                   CScriptBuilder *builder, void *userParam) {
+    asIScriptEngine *engine = builder->GetEngine();
+
+    return 0;
 }
 
 QString ScriptMachine::processTranslation(const char *content) {
@@ -1439,3 +1445,5 @@ void ScriptMachine::translation() {
     tr("Mismatching types in value assignment");
     tr("Too many nested calls");
 }
+
+asDebugger *ScriptMachine::debugger() const { return _debugger; }

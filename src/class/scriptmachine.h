@@ -55,6 +55,8 @@ public:
 
     bool isInDebugMode() const;
 
+    asDebugger *debugger() const;
+
 public slots:
     virtual bool executeScript(const QString &script, bool isInDebug = false);
 
@@ -83,6 +85,9 @@ private:
 
     static int pragmaCallback(const std::string &pragmaText,
                               CScriptBuilder &builder, void *userParam);
+
+    static int includeCallback(const char *include, const char *from,
+                               CScriptBuilder *builder, void *userParam);
 
     static QString processTranslation(const char *content);
 

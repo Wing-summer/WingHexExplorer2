@@ -44,73 +44,45 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     l->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto editor = m_editor->editor();
+    connect(editor, &QEditor::titleChanged, this,
+            &ads::CDockWidget::setWindowTitle);
 
     this->setWidget(editor);
 
     auto lineMark = new QLineMarkPanel(editor);
-    m_editor->addPanel(lineMark, QCodeEdit::West, true)
-        ->setShortcut(QKeySequence(Qt::Key_F6));
+    m_editor->addPanel(lineMark, QCodeEdit::West, true);
 
     auto lineNum = new QLineNumberPanel(editor);
     lineNum->setVerboseMode(true);
-    m_editor->addPanel(lineNum, QCodeEdit::West, true)
-        ->setShortcut(QKeySequence(Qt::Key_F11));
+    m_editor->addPanel(lineNum, QCodeEdit::West, true);
 
     auto fold = new QFoldPanel(editor);
-    m_editor->addPanel(fold, QCodeEdit::West, true)
-        ->setShortcut(QKeySequence(Qt::Key_F9));
+    m_editor->addPanel(fold, QCodeEdit::West, true);
 
     m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
 }
 
-QString ScriptEditor::fileName() const { return m_fileName; }
-
-bool ScriptEditor::isNewFile() const { return m_isNewFile; }
-
-void ScriptEditor::newFile(size_t index) {
-    auto istr = QString::number(index);
-    m_fileName = tr("Untitled") + istr;
-    this->setWindowTitle(m_fileName);
-    m_isNewFile = true;
+QString ScriptEditor::fileName() const {
+    return m_editor->editor()->fileName();
 }
 
-WingHex::ErrFile ScriptEditor::openFile(const QString &filename) {
-    QFileInfo finfo(filename);
-
-    if (!finfo.exists() || !finfo.isFile()) {
-        return WingHex::ErrFile::NotExist;
-    }
-    if (!Utilities::isTextFile(finfo)) {
-        return WingHex::ErrFile::InvalidFormat;
-    }
-
-    QFile file(finfo.absolutePath());
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        return WingHex::ErrFile::Permission;
-    }
-    m_editor->editor()->setText(QString::fromUtf8(file.readAll()));
-    file.close();
-    m_isNewFile = false;
-    return WingHex::ErrFile::Success;
+bool ScriptEditor::openFile(const QString &filename) {
+    auto e = m_editor->editor();
+    return e->load(filename);
 }
 
-bool ScriptEditor::save(const QString &path, bool isExport) {
-    QFile file(path);
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        return false;
+bool ScriptEditor::save(const QString &path) {
+    auto e = m_editor->editor();
+    if (path.isEmpty()) {
+        return e->save();
     }
-    file.write(m_editor->editor()->text().toUtf8());
-    file.close();
-
-    if (!isExport) {
-        m_fileName = path;
-        m_isNewFile = false;
-    }
-
-    return true;
+    return e->save(path);
 }
 
-bool ScriptEditor::reload() { return openFile(m_fileName); }
+bool ScriptEditor::reload() {
+    auto e = m_editor->editor();
+    return e->load(e->fileName());
+}
 
 QString ScriptEditor::RESNAME(const QString &name) {
     return QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +

@@ -30,6 +30,14 @@ private:
         TOOL_VIEWS
     };
 
+    enum Symbols {
+        BreakPoint,
+        ConditionBreakPoint,
+        DisabledBreakPoint,
+        DbgRunCurrentLine,
+        DbgRunHitBreakPoint,
+    };
+
 public:
     explicit ScriptingDialog(QWidget *parent = nullptr);
 
@@ -91,11 +99,13 @@ private:
         auto a = new QToolButton(pannel);
         a->setText(title);
         a->setIcon(icon);
+
         if (!shortcut.isEmpty()) {
-            auto shortCut = new QShortcut(shortcut, a);
+            auto shortCut = new QShortcut(shortcut, this);
             shortCut->setContext(Qt::WindowShortcut);
             connect(shortCut, &QShortcut::activated, a, &QToolButton::click);
         }
+
         a->setMenu(menu);
         if (menu) {
             a->setPopupMode(QToolButton::InstantPopup);
@@ -121,12 +131,16 @@ private:
     inline ads::CDockAreaWidget *editorViewArea() const;
 
     void updateEditModeEnabled();
-    ScriptEditor *currentEditor();
+    ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
 
     void setRunDebugMode(bool isRun, bool isDebug = false);
 
     ScriptEditor *findEditorView(const QString &filename);
+
+    void setCurrentHexEditorScale(qreal rate);
+
+    bool isCurrentDebugging() const;
 
 private slots:
     void on_newfile();
@@ -135,7 +149,6 @@ private slots:
 
     void on_save();
     void on_saveas();
-    void on_exportfile();
 
     void on_undofile();
     void on_redofile();
@@ -161,6 +174,10 @@ private slots:
     void on_stepoutscript();
     void on_stepoverscript();
 
+    void on_togglebreakpoint();
+    void on_addbreakpoint();
+    void on_removebreakpoint();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -181,6 +198,7 @@ private:
     size_t m_newIndex = 1;
 
     QList<ScriptEditor *> m_views;
+    QMap<Symbols, int> m_symID;
     QString m_lastusedpath;
 
     // widgets for debugging

@@ -42,7 +42,7 @@ QString AngelObjString::arrayToString(void *obj, int expandMembers,
     if (expandMembers > 0) {
         s << QStringLiteral(" [");
         for (asUINT n = 0; n < arr->GetSize(); n++) {
-            s << dbg->ToString(arr->At(n), arr->GetElementTypeId(),
+            s << dbg->toString(arr->At(n), arr->GetElementTypeId(),
                                expandMembers - 1,
                                arr->GetArrayObjectType()->GetEngine());
             if (n < arr->GetSize() - 1)
@@ -79,7 +79,7 @@ QString AngelObjString::dictionaryToString(void *obj, int expandMembers,
             // might not be the correct instance).
             asIScriptContext *ctx = asGetActiveContext();
 
-            s << dbg->ToString(const_cast<void *>(val), typeId,
+            s << dbg->toString(const_cast<void *>(val), typeId,
                                expandMembers - 1, ctx ? ctx->GetEngine() : 0);
 
             if (n < dic->GetSize() - 1)

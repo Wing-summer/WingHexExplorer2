@@ -284,6 +284,13 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     auto rightArea =
         buildUpLogDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
+
+    splitter = ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
+    if (splitter) {
+        constexpr auto rightHeight = 450;
+        splitter->setSizes({width() - rightHeight, rightHeight});
+    }
+
     m_rightViewArea = rightArea;
 
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);

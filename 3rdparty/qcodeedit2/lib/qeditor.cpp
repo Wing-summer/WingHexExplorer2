@@ -823,9 +823,9 @@ void QEditor::setText(const QString &s) {
 
         \see fileName()
 */
-void QEditor::save() {
+bool QEditor::save() {
     if (!m_doc)
-        return;
+        return false;
 
     QString oldFileName = fileName();
 
@@ -833,7 +833,7 @@ void QEditor::save() {
         QString fn = QFileDialog::getSaveFileName();
 
         if (fn.isEmpty())
-            return;
+            return false;
 
         setFileName(fn);
     } else if (isInConflict()) {
@@ -851,12 +851,12 @@ void QEditor::save() {
         } else if (ret == QMessageBox::Reset) {
             load(fileName());
             m_saveState = Undefined;
-            return;
+            return false;
         } else if (ret == QMessageBox::Discard) {
             m_saveState = Undefined;
-            return;
+            return false;
         } else {
-            return;
+            return false;
         }
     }
 
@@ -872,7 +872,7 @@ void QEditor::save() {
         m_saveState = Undefined;
         reconnectWatcher();
 
-        return;
+        return false;
     }
 
     // QTextStream s(&f);
@@ -893,6 +893,7 @@ void QEditor::save() {
     QTimer::singleShot(100, this, SLOT(reconnectWatcher()));
 
     update();
+    return true;
 }
 
 /*!
@@ -901,7 +902,7 @@ void QEditor::save() {
         \note This method renames the editor, stop monitoring the old
         file and monitor the new one
 */
-void QEditor::save(const QString &fn) {
+bool QEditor::save(const QString &fn) {
     if (fileName().size()) {
         watcher()->removeWatch(fileName(), this);
     }
@@ -912,7 +913,7 @@ void QEditor::save(const QString &fn) {
         m_saveState = Undefined;
         reconnectWatcher();
 
-        return;
+        return false;
     }
 
     QString txt =
@@ -930,6 +931,7 @@ void QEditor::save(const QString &fn) {
     m_saveState = Saved;
 
     QTimer::singleShot(100, this, SLOT(reconnectWatcher()));
+    return true;
 }
 
 /*!
@@ -1223,7 +1225,7 @@ void QEditor::removeAction(QAction *a, const QString &menu,
 
         If the file cannot be loaded, previous content is cleared.
 */
-void QEditor::load(const QString &file) {
+bool QEditor::load(const QString &file) {
     QFile f(file);
 
     // gotta handle line endings ourselves if we want to detect current line
@@ -1231,7 +1233,7 @@ void QEditor::load(const QString &file) {
     // if ( !f.open(QFile::Text | QFile::ReadOnly) )
     if (!f.open(QFile::ReadOnly)) {
         setText(QString());
-        return;
+        return false;
     }
 
     const int size = f.size();
@@ -1311,6 +1313,7 @@ void QEditor::load(const QString &file) {
     setFileName(file);
 
     emit loaded(this, file);
+    return true;
 }
 
 /*!
@@ -3250,7 +3253,7 @@ void QEditor::setFileName(const QString &f) {
     if (fileName().size())
         watcher()->addWatch(fileName(), this);
 
-    setTitle(name().size() ? name() : "untitled");
+    setTitle(name().size() ? name() : tr("untitled"));
 }
 
 /*!

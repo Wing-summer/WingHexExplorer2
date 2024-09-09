@@ -33,7 +33,7 @@
    account
 */
 
-static void remove(QByteArray &b, char c, int i = 0) {
+Q_DECL_UNUSED static void remove(QByteArray &b, char c, int i = 0) {
     i = qMax(i, 0);
     while (i < b.length()) {
         int len = 0;
@@ -117,9 +117,9 @@ static void blockRemove(QByteArray &b, char in, char out) {
 
 static QList<QByteArray> split(const QByteArray &b, const char *str, char in,
                                char out) {
-    int i = 0, last = 0;
+    qsizetype i = 0, last = 0;
     QList<QByteArray> l;
-    const int length = qstrlen(str);
+    const auto length = qsizetype(qstrlen(str));
 
     while (i < b.length()) {
         if (b.at(i) == in) {
@@ -153,10 +153,11 @@ static QList<QByteArray> split(const QByteArray &b, const char *str, char in,
     return l;
 }
 
-static QList<QByteArray> split(const QByteArray &b, const char *str) {
-    int i = 0, last = 0;
+Q_DECL_UNUSED static QList<QByteArray> split(const QByteArray &b,
+                                             const char *str) {
     QList<QByteArray> l;
-    const int length = qstrlen(str);
+    auto length = qsizetype(qstrlen(str));
+    qsizetype i = 0, last = 0;
 
     while (i < b.length()) {
         if (!qstrncmp(b.constData() + i, str, length)) {
@@ -2091,8 +2092,8 @@ void AsCompletion::complete(QCodeStream *s, const QString &trig) {
 #endif
 }
 
-static void fetchFiles(const QDir &dir, QStringList &fl,
-                       const QStringList &exts, bool suffixless) {
+Q_DECL_UNUSED static void fetchFiles(const QDir &dir, QStringList &fl,
+                                     const QStringList &exts, bool suffixless) {
     QFileInfoList il = dir.entryInfoList(QDir::Files | QDir::Dirs |
                                          QDir::NoDotAndDotDot | QDir::Readable);
 
