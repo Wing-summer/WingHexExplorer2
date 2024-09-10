@@ -262,7 +262,7 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
                         tr("AddBreakPoint"),
                         &ScriptingDialog::on_addbreakpoint);
         addPannelAction(pannel, QStringLiteral("scriptdbg/delbp"),
-                        tr("RemoveCondBreakPoint"),
+                        tr("RemoveBreakPoint"),
                         &ScriptingDialog::on_removebreakpoint);
     }
     return tab;
@@ -718,6 +718,7 @@ void ScriptingDialog::on_rundbgscript() {
         m_consoleout->clear();
         setRunDebugMode(true, true);
         m_consoleout->machine()->executeScript(e->fileName(), true);
+        m_consoleout->appendCommandPrompt();
     }
 }
 

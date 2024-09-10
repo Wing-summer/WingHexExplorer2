@@ -13,6 +13,7 @@ public:
 
     virtual bool executeScript(const QString &script,
                                bool isInDebug = false) override;
+    virtual bool executeCode(const QString &code) override;
 
     ScriptObjModel *model() const;
 
@@ -25,13 +26,10 @@ protected:
 private:
     bool execString(asIScriptEngine *engine, const QString &code);
 
-    void exceptionCallback(asIScriptContext *context);
-
-    QString getCallStack(asIScriptContext *context);
-
 private:
-    asIScriptContext *_immediateContext = nullptr;
     ScriptObjModel *_model = nullptr;
+
+    std::function<void(void)> _clsfn;
 };
 
 #endif // SCRIPTCONSOLEMACHINE_H

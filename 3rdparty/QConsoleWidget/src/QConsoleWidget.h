@@ -80,6 +80,8 @@ protected:
     // replace the command line
     void replaceCommandLine(const QString &str);
 
+    static QString getHistoryPath() ;
+
 protected slots:
 
     // insert the completion from completer

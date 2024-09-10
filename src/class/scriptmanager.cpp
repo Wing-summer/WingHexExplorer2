@@ -30,6 +30,8 @@ std::streamsize callback_streambuf::xsputn(const char_type *s,
 #include <QDir>
 #include <QStandardPaths>
 
+#include "utilities.h"
+
 ScriptManager &ScriptManager::instance() {
     static ScriptManager ins;
     return ins;
@@ -45,9 +47,8 @@ ScriptManager::ScriptManager() : QObject() {
     // init script directory
     m_sysScriptsPath = qApp->applicationDirPath() + QDir::separator() +
                        QStringLiteral("scripts");
-    m_usrScriptsPath =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-        QDir::separator() + QStringLiteral("scripts");
+    m_usrScriptsPath = Utilities::getAppDataPath() + QDir::separator() +
+                       QStringLiteral("scripts");
 
     m_watcher = new QFileSystemWatcher(this);
     connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,

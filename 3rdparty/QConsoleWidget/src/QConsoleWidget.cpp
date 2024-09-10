@@ -5,12 +5,14 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QScrollBar>
+#include <QStandardPaths>
 #include <QStringListModel>
 #include <QTextBlock>
 #include <QTextCursor>
@@ -413,6 +415,12 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
     setTextCursor(textCursor);
 }
 
+QString QConsoleWidget::getHistoryPath() {
+    QDir dir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
+             QDir::separator() + APP_NAME);
+    return dir.absoluteFilePath(QStringLiteral(".command_history.lst"));
+}
+
 void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
     QTextCharFormat currfmt = currentCharFormat();
     QTextCursor tc = textCursor();
@@ -472,13 +480,11 @@ void QConsoleWidget::writeStdErr(const QString &s) {
 
 /////////////////// QConsoleWidget::History /////////////////////
 
-#define HISTORY_FILE ".command_history.lst"
-
 QConsoleWidget::History QConsoleWidget::history_;
 
 QConsoleWidget::History::History(void)
     : pos_(0), active_(false), maxsize_(10000) {
-    QFile f(HISTORY_FILE);
+    QFile f(QConsoleWidget::getHistoryPath());
     if (f.open(QFile::ReadOnly)) {
         QTextStream is(&f);
         while (!is.atEnd())
@@ -486,7 +492,7 @@ QConsoleWidget::History::History(void)
     }
 }
 QConsoleWidget::History::~History(void) {
-    QFile f(HISTORY_FILE);
+    QFile f(QConsoleWidget::getHistoryPath());
     if (f.open(QFile::WriteOnly | QFile::Truncate)) {
         QTextStream os(&f);
         int n = strings_.size();

@@ -3,7 +3,8 @@
 #include <QDateTime>
 #include <QDir>
 #include <QRegularExpression>
-#include <QStandardPaths>
+
+#include "utilities.h"
 
 #define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"
 #define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"
@@ -20,9 +21,7 @@ Logger::Logger(QObject *parent)
                                    QDateTime::currentDateTime().toString(
                                        QStringLiteral("yyyyMMdd_hhmmsss")));
     auto logPath =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-        QDir::separator() + APP_NAME + QDir::separator() +
-        QStringLiteral("log");
+        Utilities::getAppDataPath() + QDir::separator() + QStringLiteral("log");
 
     QDir logDir;
     logDir.mkpath(logPath);

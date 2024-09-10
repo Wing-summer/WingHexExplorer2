@@ -31,7 +31,7 @@ public:
     };
 
 public:
-    asDebugger(QObject *parent = nullptr);
+    asDebugger(std::function<QString()> &getInputFn, QObject *parent = nullptr);
     virtual ~asDebugger();
 
     // Register callbacks to handle to-string conversions of application types
@@ -44,6 +44,10 @@ public:
 
     void registerToStringCallback(const asITypeInfo *ti,
                                   ToStringCallback callback);
+
+    typedef void (*BreakPointHitCallback)(const BreakPoint &bp,
+                                          asDebugger *dbg);
+    void registerBreakPointHitCallback(BreakPointHitCallback callback);
 
     // User interaction
     void takeCommands(asIScriptContext *ctx);
@@ -89,6 +93,7 @@ private:
 
 signals:
     void onOutput(const QString &message);
+    void onAdjustBreakPointLine(const BreakPoint &old, int newLineNr);
 
 private:
     enum DebugAction {
@@ -102,11 +107,13 @@ private:
     asIScriptFunction *m_lastFunction;
 
     QVector<BreakPoint> m_breakPoints;
+    std::function<QString()> _getInputFn;
 
     asIScriptEngine *m_engine;
 
     // Registered callbacks for converting types to strings
     QMap<const asITypeInfo *, ToStringCallback> m_toStringCallbacks;
+    BreakPointHitCallback m_bphitCallback;
 
     int _expandMembers = 1;
 };

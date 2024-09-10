@@ -7,7 +7,8 @@
 
 static QRegularExpression cmdRegExp("[^ \t]");
 
-asDebugger::asDebugger(QObject *parent) : QObject(parent) {
+asDebugger::asDebugger(std::function<QString()> &getInputFn, QObject *parent)
+    : QObject(parent), _getInputFn(getInputFn) {
     m_action = CONTINUE;
     m_lastFunction = nullptr;
     m_engine = nullptr;
@@ -21,11 +22,13 @@ void asDebugger::registerToStringCallback(const asITypeInfo *ti,
         m_toStringCallbacks.insert(ti, callback);
 }
 
+void asDebugger::registerBreakPointHitCallback(BreakPointHitCallback callback) {
+    m_bphitCallback = callback;
+}
+
 void asDebugger::takeCommands(asIScriptContext *ctx) {
     while (true) {
-        outputString(QStringLiteral("[dbg]> "));
-        QString buf;
-
+        auto buf = _getInputFn();
         if (interpretCommand(buf, ctx))
             break;
     }
@@ -247,11 +250,7 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
             // We need to check for a breakpoint at entering the function
             if (m_breakPoints[n].func) {
                 if (m_breakPoints[n].name == func->GetName()) {
-                    auto s =
-                        tr("Entering function '%1'. Transforming it into break "
-                           "point")
-                            .arg(m_breakPoints[n].name);
-                    outputString(s);
+                    // Entering function. Transforming it into break point.
 
                     // Transform the function breakpoint into a file breakpoint
                     m_breakPoints[n].name = file;
@@ -268,15 +267,12 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
                 if (line >= 0) {
                     m_breakPoints[n].needsAdjusting = false;
                     if (line != m_breakPoints[n].lineNbr) {
-                        auto s = tr("Moving break point %1 in file '%2' to "
-                                    "next line with code at line %3")
-                                     .arg(n)
-                                     .arg(file)
-                                     .arg(line);
-                        outputString(s);
+                        // Moving break point to next line with code
 
+                        auto old = m_breakPoints[n];
                         // Move the breakpoint to the next line
                         m_breakPoints[n].lineNbr = line;
+                        emit onAdjustBreakPointLine(old, line);
                     }
                 }
             }
@@ -299,6 +295,7 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
                          .arg(file)
                          .arg(lineNbr);
             outputString(s);
+            m_bphitCallback(m_breakPoints[n], this);
             return true;
         }
     }

@@ -248,9 +248,9 @@ Source: {#MyAppExePath}; DestDir: "{app}"; Flags: ignoreversion
 
 """
 
-    # iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: expandsz; ValueName: ""; ValueData: {cm:OpenWithWingHexExplorer}; Flags: uninsdeletekey' + '\n'
-    # iss_content += r'Root: HKCR; Subkey: "*\shell\WingHexExplorer"; ValueType: expandsz; ValueName: "Icon"; ValueData: {app}\{#MyAppExeName}; Flags: uninsdeletekey' + '\n'
-    # iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer\command"; ValueType: expandsz; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey' + '\n'
+    iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: expandsz; ValueName: ""; ValueData: {cm:OpenWithWingHexExplorer}; Flags: uninsdeletekey' + '\n'
+    iss_content += r'Root: HKCR; Subkey: "*\shell\WingHexExplorer"; ValueType: expandsz; ValueName: "Icon"; ValueData: {app}\{#MyAppExeName}; Flags: uninsdeletekey' + '\n'
+    iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer\command"; ValueType: expandsz; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey' + '\n'
 
     iss_content += """
 [Icons]

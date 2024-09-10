@@ -15,7 +15,7 @@ private:
     typedef QString (*TranslateFunc)(const QStringList &contents);
 
 public:
-    enum class MessageType { Info, Warn, Error };
+    enum class MessageType { Info, Warn, Error, Print };
 
     struct MessageInfo {
         QString section;
@@ -57,11 +57,20 @@ public:
 
     asDebugger *debugger() const;
 
+    asIScriptContext *immediateContext() const;
+
+    asIScriptEngine *engine() const;
+
 public slots:
+    virtual bool executeCode(const QString &code);
     virtual bool executeScript(const QString &script, bool isInDebug = false);
 
 protected:
     virtual bool configureEngine(asIScriptEngine *engine);
+
+    QString getCallStack(asIScriptContext *context);
+
+    void destoryMachine();
 
 private:
     void print(void *ref, int typeId);
@@ -91,12 +100,14 @@ private:
 
     static QString processTranslation(const char *content);
 
+    void exceptionCallback(asIScriptContext *context);
+
     Q_DECL_UNUSED void translation();
 
 signals:
     void onOutput(MessageType type, const MessageInfo &message);
 
-protected:
+private:
     asIScriptEngine *_engine = nullptr;
     asDebugger *_debugger = nullptr;
     CContextMgr *_ctxMgr = nullptr;
@@ -105,6 +116,8 @@ protected:
 
     QVector<asITypeInfo *> _rtypes;
     std::function<QString(void)> _getInputFn;
+
+    asIScriptContext *_immediateContext = nullptr;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

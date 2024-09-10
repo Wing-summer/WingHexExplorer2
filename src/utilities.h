@@ -9,6 +9,7 @@
 #include <QMetaEnum>
 #include <QMimeDatabase>
 #include <QScreen>
+#include <QStandardPaths>
 #include <QStorageInfo>
 #include <QStyle>
 #include <QWidget>
@@ -214,6 +215,12 @@ public:
             return *r;
         }
         return QStorageInfo();
+    }
+
+    static QString getAppDataPath() {
+        return QStandardPaths::writableLocation(
+                   QStandardPaths::AppDataLocation) +
+               QDir::separator() + APP_NAME;
     }
 };
 

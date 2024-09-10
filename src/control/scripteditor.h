@@ -23,9 +23,6 @@ public slots:
     bool reload();
 
 private:
-    QString RESNAME(const QString &name);
-
-private:
     QCodeEdit *m_editor = nullptr;
     QFormatScheme *m_formats = nullptr;
     QLanguageFactory *m_languages = nullptr;

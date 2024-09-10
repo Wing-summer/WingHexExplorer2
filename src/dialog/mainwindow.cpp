@@ -2233,11 +2233,11 @@ void MainWindow::on_wiki() {
 }
 
 QString MainWindow::saveLog() {
-    QDir ndir(
-        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    QDir ndir(Utilities::getAppDataPath());
     ndir.mkpath(QStringLiteral("log")); // 确保日志存放目录存在
 
-    QFile lfile(ndir.absolutePath() + QStringLiteral("/log/") +
+    QFile lfile(ndir.absolutePath() + QDir::separator() +
+                QStringLiteral("log") + QDir::separator() +
                 QDateTime::currentDateTime().toString(
                     QStringLiteral("yyyyMMddhhmmsszzz")) +
                 ".log");

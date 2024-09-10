@@ -22,11 +22,16 @@
 #include <iostream>
 
 ScriptMachine::~ScriptMachine() {
+    if (_immediateContext) {
+        _immediateContext->Release();
+        _immediateContext = nullptr;
+    }
+
     if (_ctxMgr) {
         delete _ctxMgr;
     }
 
-    _engine->ShutDownAndRelease();
+    destoryMachine();
 }
 
 bool ScriptMachine::inited() { return _engine != nullptr; }
@@ -144,7 +149,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         return false;
     }
 
-    _debugger = new asDebugger(this);
+    _debugger = new asDebugger(_getInputFn, this);
 
     // Register the to-string callbacks so the user can see the contents of
     // strings
@@ -160,13 +165,56 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     PluginSystem::instance().angelApi()->installAPI(
         engine, typeInfo(RegisteredType::tString));
 
+    _immediateContext = engine->CreateContext();
+    _immediateContext->SetExceptionCallback(
+        asMETHOD(ScriptMachine, exceptionCallback), this, asCALL_THISCALL);
+
     return true;
+}
+
+QString ScriptMachine::getCallStack(asIScriptContext *context) {
+    QString str = tr("AngelScript callstack:\n");
+
+    // Append the call stack
+    for (asUINT i = 0; i < context->GetCallstackSize(); i++) {
+        asIScriptFunction *func;
+        const char *scriptSection;
+        int line, column;
+        func = context->GetFunction(i);
+        line = context->GetLineNumber(i, &column, &scriptSection);
+        str += (QStringLiteral("\t") + scriptSection + QStringLiteral(":") +
+                func->GetDeclaration() + QStringLiteral(":") +
+                QString::number(line) + QStringLiteral(",") +
+                QString::number(column) + QStringLiteral("\n"));
+    }
+
+    return str;
+}
+
+void ScriptMachine::destoryMachine() {
+    _engine->ShutDownAndRelease();
+    _engine = nullptr;
+}
+
+void ScriptMachine::exceptionCallback(asIScriptContext *context) {
+    QString message =
+        tr("- Exception '%1' in '%2'\n")
+            .arg(context->GetExceptionString(),
+                 context->GetExceptionFunction()->GetDeclaration()) +
+        getCallStack(context);
+
+    const char *section;
+    MessageInfo msg;
+    msg.row = context->GetExceptionLineNumber(&msg.col, &section);
+    msg.type = asMSGTYPE_ERROR;
+    msg.message = message;
+    emit onOutput(MessageType::Error, msg);
 }
 
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
     info.message = _debugger->toString(ref, typeId, 3, _engine);
-    emit onOutput(MessageType::Info, info);
+    emit onOutput(MessageType::Print, info);
 }
 
 QString ScriptMachine::getInput() {
@@ -1446,4 +1494,17 @@ void ScriptMachine::translation() {
     tr("Too many nested calls");
 }
 
+asIScriptEngine *ScriptMachine::engine() const { return _engine; }
+
+asIScriptContext *ScriptMachine::immediateContext() const {
+    return _immediateContext;
+}
+
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
+
+bool ScriptMachine::executeCode(const QString &code) {
+    return ExecuteString(
+               _engine, code.toUtf8(),
+               _engine->GetModule("Console", asGM_CREATE_IF_NOT_EXISTS),
+               _immediateContext) >= 0;
+}

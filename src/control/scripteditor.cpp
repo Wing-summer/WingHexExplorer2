@@ -1,15 +1,12 @@
 #include "scripteditor.h"
-#include "plugin/iwingplugin.h"
 #include "qeditor.h"
 
 #include "class/skinmanager.h"
-#include "utilities.h"
 
 #include <QAction>
 #include <QFile>
 #include <QPixmap>
 
-#include "qfoldpanel.h"
 #include "qlinemarkpanel.h"
 #include "qlinenumberpanel.h"
 #include "qpanellayout.h"
@@ -56,8 +53,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     lineNum->setVerboseMode(true);
     m_editor->addPanel(lineNum, QCodeEdit::West, true);
 
-    auto fold = new QFoldPanel(editor);
-    m_editor->addPanel(fold, QCodeEdit::West, true);
+    m_editor->addPanel(QStringLiteral("Fold Panel"), QCodeEdit::West, true);
+    m_editor->addPanel(QStringLiteral("Goto Line Panel"), QCodeEdit::South,
+                       true);
 
     m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
 }
@@ -82,11 +80,6 @@ bool ScriptEditor::save(const QString &path) {
 bool ScriptEditor::reload() {
     auto e = m_editor->editor();
     return e->load(e->fileName());
-}
-
-QString ScriptEditor::RESNAME(const QString &name) {
-    return QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +
-           QStringLiteral(".png");
 }
 
 QEditor *ScriptEditor::editor() const { return m_editor->editor(); }

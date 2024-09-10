@@ -7,43 +7,33 @@
 ScriptConsoleMachine::ScriptConsoleMachine(
     std::function<QString(void)> &getInputFn, QObject *parent)
     : ScriptMachine(getInputFn, parent) {
-    if (!ScriptConsoleMachine::configureEngine(_engine)) {
-        _engine->ShutDownAndRelease();
-        _engine = nullptr;
+    if (!ScriptConsoleMachine::configureEngine(engine())) {
+        destoryMachine();
     }
-    if (_engine) {
-        _model = new ScriptObjModel(_engine, _debugger, this);
+    if (engine()) {
+        _model = new ScriptObjModel(engine(), debugger(), this);
     }
 }
 
-ScriptConsoleMachine::~ScriptConsoleMachine() {
-    if (_immediateContext) {
-        _immediateContext->Release();
-        _immediateContext = nullptr;
-    }
-}
+ScriptConsoleMachine::~ScriptConsoleMachine() {}
 
 bool ScriptConsoleMachine::executeScript(const QString &script,
                                          bool isInDebug) {
     Q_UNUSED(isInDebug);
-    return execString(_engine, script);
+    return execString(engine(), script);
+}
+
+bool ScriptConsoleMachine::executeCode(const QString &code) {
+    return execString(engine(), code);
 }
 
 bool ScriptConsoleMachine::configureEngine(asIScriptEngine *engine) {
-    // Immediate execution script context for console
-    _immediateContext = engine->CreateContext();
-    _immediateContext->SetExceptionCallback(
-        asMETHOD(ScriptConsoleMachine, exceptionCallback), this,
-        asCALL_THISCALL);
-
-    std::function<void(void)> fn =
-        std::bind(&ScriptConsoleMachine::onClearConsole, this);
-    auto r = engine->RegisterGlobalFunction("void clear()",
-                                            asMETHOD(decltype(fn), operator()),
-                                            asCALL_THISCALL_ASGLOBAL, &fn);
+    _clsfn = std::bind(&ScriptConsoleMachine::onClearConsole, this);
+    auto r = engine->RegisterGlobalFunction(
+        "void clear()", asMETHOD(decltype(_clsfn), operator()),
+        asCALL_THISCALL_ASGLOBAL, &_clsfn);
     Q_ASSERT(r >= 0);
-
-    return _immediateContext != nullptr;
+    return r >= 0;
 }
 
 bool ScriptConsoleMachine::execString(asIScriptEngine *engine,
@@ -187,43 +177,9 @@ bool ScriptConsoleMachine::execString(asIScriptEngine *engine,
         emit onOutput(MessageType::Info, info);
         return true;
     } else {
-        return ExecuteString(_engine, code.toUtf8(), mod, _immediateContext) >=
+        return ExecuteString(engine, code.toUtf8(), mod, immediateContext()) >=
                0;
     }
-}
-
-void ScriptConsoleMachine::exceptionCallback(asIScriptContext *context) {
-    QString message =
-        tr("- Exception '%1' in '%2'\n")
-            .arg(context->GetExceptionString(),
-                 context->GetExceptionFunction()->GetDeclaration()) +
-        getCallStack(context);
-
-    const char *section;
-    MessageInfo msg;
-    msg.row = context->GetExceptionLineNumber(&msg.col, &section);
-    msg.type = asMSGTYPE_ERROR;
-    msg.message = message;
-    emit onOutput(MessageType::Error, msg);
-}
-
-QString ScriptConsoleMachine::getCallStack(asIScriptContext *context) {
-    QString str = tr("AngelScript callstack:\n");
-
-    // Append the call stack
-    for (asUINT i = 0; i < context->GetCallstackSize(); i++) {
-        asIScriptFunction *func;
-        const char *scriptSection;
-        int line, column;
-        func = context->GetFunction(i);
-        line = context->GetLineNumber(i, &column, &scriptSection);
-        str += (QStringLiteral("\t") + scriptSection + QStringLiteral(":") +
-                func->GetDeclaration() + QStringLiteral(":") +
-                QString::number(line) + QStringLiteral(",") +
-                QString::number(column) + QStringLiteral("\n"));
-    }
-
-    return str;
 }
 
 ScriptObjModel *ScriptConsoleMachine::model() const { return _model; }

@@ -1,6 +1,7 @@
 ﻿#include "scriptingconsole.h"
 #include "class/scriptconsolemachine.h"
 
+#include <QApplication>
 #include <QColor>
 #include <QShortcut>
 
@@ -25,7 +26,7 @@ ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
 
     auto shortCut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), this);
     connect(shortCut, &QShortcut::activated, this,
-            [=]() { executeCode(QStringLiteral("clear()")); });
+            &ScriptingConsole::clearConsole);
 }
 
 ScriptingConsole::~ScriptingConsole() {}
@@ -55,32 +56,80 @@ void ScriptingConsole::init(bool consoleMode) {
                 const ScriptConsoleMachine::MessageInfo &message) {
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
-                    stdOut(message.message);
+                    stdOut(tr("[Info]") + message.message);
+                    _s << Qt::endl;
                     break;
                 case ScriptMachine::MessageType::Warn:
-                    stdWarn(message.message);
+                    stdWarn(tr("[Warn]") + message.message);
+                    _s << Qt::endl;
                     break;
                 case ScriptMachine::MessageType::Error:
-                    stdErr(message.message);
+                    stdErr(tr("[Error]") + message.message);
+                    _s << Qt::endl;
+                    break;
+                case ScriptMachine::MessageType::Print:
+                    stdOut(message.message);
                     break;
                 }
             });
 
     connect(this, &QConsoleWidget::consoleCommand, this,
-            &ScriptingConsole::executeCode);
+            &ScriptingConsole::consoleCommand);
 }
 
-void ScriptingConsole::executeCode(const QString &code) {
+void ScriptingConsole::clearConsole() {
     setMode(Output);
-    if (!_sp->executeScript(code)) {
+    clear();
+    appendCommandPrompt(_lastCommandPrompt);
+    setMode(Input);
+}
+
+void ScriptingConsole::pushInputCmd(const QString &cmd) {
+    QMutexLocker<QMutex> locker(&_queueLocker);
+    _cmdQueue.append(cmd);
+}
+
+void ScriptingConsole::consoleCommand(const QString &code) {
+    if (_waitforRead) {
+        _waitforRead = false;
+        return;
+    }
+
+    setMode(Output);
+    if (!_sp->executeCode(code)) {
     }
     appendCommandPrompt();
     setMode(Input);
 }
 
 QString ScriptingConsole::getInput() {
-    _s.device()->waitForReadyRead(-1);
-    return _s.readAll();
+    appendCommandPrompt(true);
+    setMode(Input);
+    _waitforRead = true;
+    QString instr;
+
+    auto d = _s.device();
+    d->skip(d->bytesAvailable());
+
+    do {
+        {
+            QMutexLocker<QMutex> locker(&_queueLocker);
+            if (!_cmdQueue.isEmpty()) {
+                instr = _cmdQueue.takeFirst();
+                setMode(Output);
+                write(instr, QTextCharFormat());
+                setMode(Input);
+                break;
+            }
+        }
+        qApp->processEvents();
+    } while (!d->waitForReadyRead(100));
+
+    instr = _s.readAll();
+
+    setMode(Output);
+
+    return instr;
 }
 
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
@@ -93,8 +142,14 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
         if (!cursor.atBlockStart()) {
             commandPrompt = QStringLiteral("\n");
         }
-        commandPrompt += QStringLiteral("as > ");
+        if (_sp && _sp->isInDebugMode()) {
+            commandPrompt += QStringLiteral("[dbg] > ");
+        } else {
+            commandPrompt += QStringLiteral("as > ");
+        }
     }
+
+    _lastCommandPrompt = storeOnly;
 
     write(commandPrompt, m_stdoutFmtTitle);
 }

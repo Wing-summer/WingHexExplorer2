@@ -4,6 +4,8 @@
 #include "QConsoleWidget/src/QConsoleWidget.h"
 #include "class/scriptmachine.h"
 
+#include <QMutex>
+
 class ScriptConsoleMachine;
 
 class ScriptingConsole : public QConsoleWidget {
@@ -17,6 +19,9 @@ public:
     ScriptMachine *machine() const;
     ScriptConsoleMachine *consoleMachine() const;
 
+    //! Appends a newline and command prompt at the end of the document.
+    void appendCommandPrompt(bool storeOnly = false);
+
 public slots:
     void stdOut(const QString &str);
     void stdErr(const QString &str);
@@ -24,17 +29,24 @@ public slots:
 
     void init(bool consoleMode);
 
+    void clearConsole();
+
+    void pushInputCmd(const QString &cmd);
+
 private:
-    void executeCode(const QString &code);
+    void consoleCommand(const QString &code);
 
     QString getInput();
-
-    //! Appends a newline and command prompt at the end of the document.
-    void appendCommandPrompt(bool storeOnly = false);
 
 private:
     ScriptMachine *_sp = nullptr;
     QTextStream _s;
+
+    bool _lastCommandPrompt = false;
+
+    QStringList _cmdQueue;
+    QMutex _queueLocker;
+    bool _waitforRead = false;
 
     QTextCharFormat m_stdoutFmtTitle;
     QTextCharFormat m_stdoutFmtContent;
