@@ -107,7 +107,7 @@ private:
     RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
 
-    QMenu *buildUpScriptDirMenu(const QStringList &files);
+    QMenu *buildUpScriptDirMenu(const QStringList &files, bool isSys);
 
     void buildUpSettingDialog();
     void installPluginEditorWidgets();

@@ -56,6 +56,8 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor->addPanel(QStringLiteral("Fold Panel"), QCodeEdit::West, true);
     m_editor->addPanel(QStringLiteral("Goto Line Panel"), QCodeEdit::South,
                        true);
+    m_editor->addPanel(QStringLiteral("Search Replace Panel"), QCodeEdit::South,
+                       true);
 
     m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
 }

@@ -1,7 +1,6 @@
 #include "scriptsettingdialog.h"
 #include "ui_scriptsettingdialog.h"
 
-#include "class/scriptmanager.h"
 #include "class/settingmanager.h"
 #include "utilities.h"
 
@@ -15,40 +14,38 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 
 ScriptSettingDialog::~ScriptSettingDialog() { delete ui; }
 
-QStringList ScriptSettingDialog::sysDisplayCats() const {
-    return m_sysDisplayCats;
-}
-
-QStringList ScriptSettingDialog::usrDisplayCats() const {
-    return m_usrDisplayCats;
-}
-
 void ScriptSettingDialog::loadData() {
     auto &sm = ScriptManager::instance();
     auto &set = SettingManager::instance();
 
+    ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
+
     auto usrCats = sm.usrScriptsDbCats();
-    auto checked = set.usrDisplayCats();
+    auto hidden = set.usrHideCats();
     for (auto &cat : usrCats) {
-        addCatagory(cat, true, checked.contains(cat));
-        m_usrDisplayCats << cat;
+        if (addCatagory(sm.usrDirMeta(cat), true, hidden.contains(cat))) {
+            m_usrHideCats << cat;
+        }
     }
 
     auto sysCats = sm.sysScriptsDbCats();
-    checked = set.sysDisplayCats();
+    hidden = set.sysHideCats();
     for (auto &cat : sysCats) {
-        addCatagory(cat, false, checked.contains(cat));
-        m_sysDisplayCats << cat;
+        if (addCatagory(sm.sysDirMeta(cat), false, hidden.contains(cat))) {
+            m_sysHideCats << cat;
+        }
     }
 }
 
-void ScriptSettingDialog::addCatagory(const QString &cat, bool isUser,
-                                      bool checked) {
+bool ScriptSettingDialog::addCatagory(const ScriptManager::ScriptDirMeta &meta,
+                                      bool isUser, bool hidden) {
     auto lw =
         new QListWidgetItem(isUser ? ICONRES(QStringLiteral("scriptfolderusr"))
                                    : ICONRES(QStringLiteral("scriptfolder")),
-                            cat, ui->listWidget);
-    lw->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
+                            meta.name, ui->listWidget);
+    lw->setData(Qt::UserRole, QVariant::fromValue(meta));
+    lw->setCheckState(hidden ? Qt::Unchecked : Qt::Checked);
+    return !hidden;
 }
 
 QIcon ScriptSettingDialog::categoryIcon() const { return ICONRES("script"); }
@@ -57,14 +54,70 @@ QString ScriptSettingDialog::name() const { return tr("Script"); }
 
 bool ScriptSettingDialog::isInPluginPage() const { return false; }
 
-void ScriptSettingDialog::apply() {}
+void ScriptSettingDialog::apply() {
+    QStringList usrHideCats;
+    QStringList sysHideCats;
 
-void ScriptSettingDialog::reset() {}
+    auto total = ui->listWidget->count();
+    for (int i = 0; i < total; ++i) {
+        auto lw = ui->listWidget->item(i);
+        auto var = lw->data(Qt::UserRole);
+        if (var.isValid()) {
+            auto meta = var.value<ScriptManager::ScriptDirMeta>();
+            if (lw->checkState() == Qt::Unchecked) {
+                if (meta.isSys) {
+                    sysHideCats << meta.rawName;
+                } else {
+                    usrHideCats << meta.rawName;
+                }
+            }
+        }
+    }
 
-void ScriptSettingDialog::cancel() {}
+    auto &set = SettingManager::instance();
+    set.setAllowUsrScriptInRoot(ui->cbAllowUsrScript->isChecked());
+    set.setUsrHideCats(usrHideCats);
+    set.setSysHideCats(sysHideCats);
+    set.save(SettingManager::SCRIPT);
+
+    m_usrHideCats = usrHideCats;
+    m_sysHideCats = sysHideCats;
+}
+
+void ScriptSettingDialog::reset() {
+    auto &set = SettingManager::instance();
+    set.reset(SettingManager::SCRIPT);
+    loadData();
+}
+
+void ScriptSettingDialog::cancel() { loadData(); }
 
 void ScriptSettingDialog::on_btnRefresh_clicked() {
     ui->listWidget->clear();
     ScriptManager::instance().refresh();
     loadData();
+}
+
+void ScriptSettingDialog::on_listWidget_currentRowChanged(int currentRow) {
+    if (currentRow < 0) {
+        ui->textBrowser->clear();
+        return;
+    }
+    auto lw = ui->listWidget->item(currentRow);
+    auto var = lw->data(Qt::UserRole);
+    if (var.isValid()) {
+        auto meta = var.value<ScriptManager::ScriptDirMeta>();
+        auto info = ui->textBrowser;
+        info->clear();
+        info->append(tr("RawName:") + meta.rawName);
+        info->append(tr("Name:") + meta.name);
+        info->append(tr("Author:") + meta.author);
+        info->append(tr("License:") + meta.license);
+        info->append(tr("HomePage:") + meta.homepage);
+        info->append(tr("Comment:"));
+        auto cur = info->textCursor();
+        cur.movePosition(QTextCursor::End);
+        info->setTextCursor(cur);
+        info->insertHtml(meta.comment);
+    }
 }

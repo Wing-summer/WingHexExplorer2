@@ -2,6 +2,7 @@
 #define ASDEBUGGER_H
 
 #include "angelscript.h"
+#include <QList>
 #include <QMap>
 #include <QObject>
 
@@ -30,8 +31,30 @@ public:
         QString fndecl;
     };
 
+    struct GCStatistic {
+        asUINT currentSize = 0;
+        asUINT totalDestroyed = 0;
+        asUINT totalDetected = 0;
+        asUINT newObjects = 0;
+        asUINT totalNewDestroyed = 0;
+    };
+
+    struct CallStackItem {
+        QString file;
+        int lineNbr;
+        QString decl;
+    };
+
+    enum class WatchExpError {
+        NoError,
+        Error,
+        NotEndAfterSymbol,
+        NoMatchingSymbol,
+        ExpectedIdentifier
+    };
+
 public:
-    asDebugger(std::function<QString()> &getInputFn, QObject *parent = nullptr);
+    asDebugger();
     virtual ~asDebugger();
 
     // Register callbacks to handle to-string conversions of application types
@@ -49,18 +72,12 @@ public:
                                           asDebugger *dbg);
     void registerBreakPointHitCallback(BreakPointHitCallback callback);
 
-    // User interaction
-    void takeCommands(asIScriptContext *ctx);
-    void outputString(const QString &str);
-
     // Commands
-    void printHelp();
     void addFileBreakPoint(const QString &file, int lineNbr);
     void removeFileBreakPoint(const QString &file, int lineNbr);
     void addFuncBreakPoint(const QString &func);
     void removeFuncBreakPoint(const QString &func);
     void clearBreakPoint();
-    void listBreakPoints();
     const QVector<BreakPoint> &breakPoints();
 
     // Optionally set the engine pointer in the debugger so it can be retrieved
@@ -77,23 +94,29 @@ public:
     QString toString(void *value, asUINT typeId, int expandMembersLevel,
                      asIScriptEngine *engine = nullptr);
 
-private:
-    bool checkBreakPoint(asIScriptContext *ctx);
+    GCStatistic gcStatistics();
 
-    void listLocalVariables(asIScriptContext *ctx);
+private:
+    QVector<VariablesInfo> globalVariables(asIScriptContext *ctx);
     QVector<VariablesInfo> localVariables(asIScriptContext *ctx);
-    void listGlobalVariables(asIScriptContext *ctx);
+    QList<CallStackItem> retriveCallstack(asIScriptContext *ctx);
+
+    QString printValue(const QString &expr, asIScriptContext *ctx,
+                       WatchExpError &error);
+
+    void takeCommands(asIScriptContext *ctx);
+
+    bool checkBreakPoint(asIScriptContext *ctx);
     void listMemberProperties(asIScriptContext *ctx);
-    void listStatistics(asIScriptContext *ctx);
-    void printCallstack(asIScriptContext *ctx);
-    void printValue(const QString &expr, asIScriptContext *ctx);
 
     // Helpers
     bool interpretCommand(const QString &cmd, asIScriptContext *ctx);
 
 signals:
-    void onOutput(const QString &message);
     void onAdjustBreakPointLine(const BreakPoint &old, int newLineNr);
+    void onPullVariables(const QVector<VariablesInfo> &globalvars,
+                         const QVector<VariablesInfo> &localvars);
+    void onPullCallStack(const QList<CallStackItem> &callstacks);
 
 private:
     enum DebugAction {
@@ -102,20 +125,24 @@ private:
         STEP_OVER, // stop at next instruction, skipping called functions
         STEP_OUT   // run until returning from current function
     };
+
+private:
     DebugAction m_action;
     asUINT m_lastCommandAtStackLevel;
     asIScriptFunction *m_lastFunction;
 
     QVector<BreakPoint> m_breakPoints;
-    std::function<QString()> _getInputFn;
 
-    asIScriptEngine *m_engine;
+    asIScriptEngine *m_engine = nullptr;
+    QThread *_thread = nullptr;
 
     // Registered callbacks for converting types to strings
     QMap<const asITypeInfo *, ToStringCallback> m_toStringCallbacks;
     BreakPointHitCallback m_bphitCallback;
 
-    int _expandMembers = 1;
+    QStringList m_watchVars;
+
+    int _expandMembers = 3;
 };
 
 #endif // ASDEBUGGER_H

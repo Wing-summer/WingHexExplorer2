@@ -2,11 +2,9 @@
 #define ScriptingConsole_H
 
 #include "QConsoleWidget/src/QConsoleWidget.h"
-#include "class/scriptmachine.h"
+#include "class/scriptconsolemachine.h"
 
 #include <QMutex>
-
-class ScriptConsoleMachine;
 
 class ScriptingConsole : public QConsoleWidget {
     Q_OBJECT
@@ -26,8 +24,9 @@ public slots:
     void stdOut(const QString &str);
     void stdErr(const QString &str);
     void stdWarn(const QString &str);
+    void newLine();
 
-    void init(bool consoleMode);
+    void init();
 
     void clearConsole();
 
@@ -39,7 +38,7 @@ private:
     QString getInput();
 
 private:
-    ScriptMachine *_sp = nullptr;
+    ScriptConsoleMachine *_sp = nullptr;
     QTextStream _s;
 
     bool _lastCommandPrompt = false;

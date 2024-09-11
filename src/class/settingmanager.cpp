@@ -31,8 +31,10 @@ const auto EDITOR_DECSTRLIMIT = QStringLiteral("editor.decstrlimit");
 const auto EDITOR_RECENTFILES = QStringLiteral("editor.recentfiles");
 const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
 
-const auto SCRIPT_USRDISPLAYCATS = QStringLiteral("script.usrDisplayCats");
-const auto SCRIPT_SYSDISPLAYCATS = QStringLiteral("script.sysDisplayCats");
+const auto SCRIPT_ALLOW_USRSCRIPT_INROOT =
+    QStringLiteral("script.allowUsrScriptRoot");
+const auto SCRIPT_USRHIDECATS = QStringLiteral("script.usrHideCats");
+const auto SCRIPT_SYSHIDECATS = QStringLiteral("script.sysHideCats");
 
 const auto OTHER_USESYS_FILEDIALOG = QStringLiteral("sys.nativeDialog");
 const auto OTHER_USE_NATIVE_TITLEBAR = QStringLiteral("sys.nativeTitleBar");
@@ -101,10 +103,13 @@ void SettingManager::load() {
         READ_CONFIG(EDITOR_RECENTFILES, QVariantList()).toList());
     m_recentScriptFiles = getDataFromVarList(
         READ_CONFIG(SCRIPT_RECENTFILES, QVariantList()).toList());
-    m_usrDisplayCats =
-        READ_CONFIG(SCRIPT_USRDISPLAYCATS, QStringList()).toStringList();
-    m_sysDisplayCats =
-        READ_CONFIG(SCRIPT_SYSDISPLAYCATS, QStringList()).toStringList();
+
+    READ_CONFIG_BOOL(m_allowUsrScriptInRoot, SCRIPT_ALLOW_USRSCRIPT_INROOT,
+                     false);
+    m_usrHideCats =
+        READ_CONFIG(SCRIPT_USRHIDECATS, QStringList()).toStringList();
+    m_sysHideCats =
+        READ_CONFIG(SCRIPT_SYSHIDECATS, QStringList()).toStringList();
 
     m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, QString()).toString();
     if (!m_lastUsedPath.isEmpty()) {
@@ -142,6 +147,22 @@ QVariantList SettingManager::getVarList(
     return varlist;
 }
 
+bool SettingManager::allowUsrScriptInRoot() const {
+    return m_allowUsrScriptInRoot;
+}
+
+void SettingManager::setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot) {
+    m_allowUsrScriptInRoot = newAllowUsrScriptInRoot;
+}
+
+void SettingManager::setUsrHideCats(const QStringList &newUsrHideCats) {
+    m_usrHideCats = newUsrHideCats;
+}
+
+void SettingManager::setSysHideCats(const QStringList &newSysHideCats) {
+    m_sysHideCats = newSysHideCats;
+}
+
 int SettingManager::logLevel() const { return m_logLevel; }
 
 void SettingManager::setLogLevel(int newLogLevel) { m_logLevel = newLogLevel; }
@@ -169,9 +190,9 @@ void SettingManager::setScriptDockLayout(
     m_scriptDockLayout = newScriptDockLayout;
 }
 
-QStringList SettingManager::sysDisplayCats() const { return m_sysDisplayCats; }
+QStringList SettingManager::sysHideCats() const { return m_sysHideCats; }
 
-QStringList SettingManager::usrDisplayCats() const { return m_usrDisplayCats; }
+QStringList SettingManager::usrHideCats() const { return m_usrHideCats; }
 
 QList<RecentFileManager::RecentInfo> SettingManager::recentScriptFiles() const {
     return m_recentScriptFiles;
@@ -256,6 +277,11 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_COPY_LIMIT, m_copylimit);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
     }
+    if (cat.testFlag(SETTING::SCRIPT)) {
+        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
+        WRITE_CONFIG(SCRIPT_USRHIDECATS, m_usrHideCats);
+        WRITE_CONFIG(SCRIPT_SYSHIDECATS, m_sysHideCats);
+    }
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
@@ -285,6 +311,11 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_FIND_MAXCOUNT, 100);
         WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
+    }
+    if (cat.testAnyFlag(SETTING::SCRIPT)) {
+        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
+        WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
+        WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());
     }
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);

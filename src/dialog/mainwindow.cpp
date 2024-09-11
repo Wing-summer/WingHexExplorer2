@@ -120,8 +120,9 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     plg.setMainWindow(this);
     plg.LoadPlugin();
     // At this time, AngelScript service plugin has started
-    m_scriptConsole->init(true);
+    m_scriptConsole->init();
     m_scriptDialog->initConsole();
+    ScriptManager::instance().attach(m_scriptConsole);
 
     // load the model
     Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
@@ -1127,12 +1128,19 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     return tab;
 }
 
-QMenu *MainWindow::buildUpScriptDirMenu(const QStringList &files) {
+QMenu *MainWindow::buildUpScriptDirMenu(const QStringList &files, bool isSys) {
     auto menu = new QMenu(this);
     for (auto &file : files) {
-        menu->addAction(ICONRES(QStringLiteral("script")),
-                        QFileInfo(file).fileName(),
-                        [=] { ScriptManager::instance().runScript(file); });
+        menu->addAction(
+            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(), [=] {
+                if (Utilities::isRoot() && !isSys &&
+                    !SettingManager::instance().allowUsrScriptInRoot()) {
+                    WingMessageBox::critical(this, tr("RunScript"),
+                                             tr("CanNotRunUsrScriptForPolicy"));
+                    return;
+                }
+                ScriptManager::instance().runScript(file);
+            });
     }
     return menu;
 }
@@ -1149,18 +1157,28 @@ void MainWindow::buildUpSettingDialog() {
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
     auto &sm = ScriptManager::instance();
+    auto &stm = SettingManager::instance();
 
-    for (auto &cat : scriptPage->sysDisplayCats()) {
-        addPannelAction(m_scriptDBGroup,
-                        ICONRES(QStringLiteral("scriptfolder")), cat,
-                        EMPTY_FUNC, {},
-                        buildUpScriptDirMenu(sm.getSysScriptFileNames(cat)));
+    auto hideCats = stm.sysHideCats();
+    for (auto &cat : sm.sysScriptsDbCats()) {
+        if (hideCats.contains(cat)) {
+            continue;
+        }
+        addPannelAction(
+            m_scriptDBGroup, ICONRES(QStringLiteral("scriptfolder")), cat,
+            EMPTY_FUNC, {},
+            buildUpScriptDirMenu(sm.getSysScriptFileNames(cat), true));
     }
-    for (auto &cat : scriptPage->usrDisplayCats()) {
-        addPannelAction(m_scriptDBGroup,
-                        ICONRES(QStringLiteral("scriptfolderusr")), cat,
-                        EMPTY_FUNC, {},
-                        buildUpScriptDirMenu(sm.getUsrScriptFileNames(cat)));
+
+    hideCats = stm.usrHideCats();
+    for (auto &cat : sm.usrScriptsDbCats()) {
+        if (hideCats.contains(cat)) {
+            continue;
+        }
+        addPannelAction(
+            m_scriptDBGroup, ICONRES(QStringLiteral("scriptfolderusr")), cat,
+            EMPTY_FUNC, {},
+            buildUpScriptDirMenu(sm.getUsrScriptFileNames(cat), false));
     }
     m_setdialog->addPage(scriptPage);
 

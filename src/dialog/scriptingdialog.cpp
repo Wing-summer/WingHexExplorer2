@@ -67,7 +67,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
-    m_consoleout->init(false);
+    m_consoleout->init();
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
@@ -669,9 +669,19 @@ void ScriptingDialog::on_delete() {
     }
 }
 
-void ScriptingDialog::on_findfile() {}
+void ScriptingDialog::on_findfile() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->find();
+    }
+}
 
-void ScriptingDialog::on_gotoline() {}
+void ScriptingDialog::on_gotoline() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->gotoLine();
+    }
+}
 
 void ScriptingDialog::on_about() { AboutSoftwareDialog().exec(); }
 

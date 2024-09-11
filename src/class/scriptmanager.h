@@ -3,13 +3,24 @@
 
 #include <QDir>
 #include <QFileSystemWatcher>
+#include <QHash>
 #include <QObject>
-#include <iostream>
 
-class callback_streambuf;
+#include "control/scriptingconsole.h"
 
 class ScriptManager : public QObject {
     Q_OBJECT
+
+public:
+    struct ScriptDirMeta {
+        QString rawName; // a flag
+        QString name;
+        QString author;
+        QString license;
+        QString homepage;
+        QString comment;
+        bool isSys; // a flag
+    };
 
 public:
     static ScriptManager &instance();
@@ -27,16 +38,17 @@ public:
     QStringList getSysScriptFileNames(const QString &cat) const;
 
     void refresh();
+    void refreshUsrScriptsDbCats();
+    void refreshSysScriptsDbCats();
+
+    void attach(ScriptingConsole *console);
+    void detach();
+
+    ScriptDirMeta usrDirMeta(const QString &cat) const;
+    ScriptDirMeta sysDirMeta(const QString &cat) const;
 
 public slots:
     void runScript(const QString &filename);
-
-public:
-    enum class STD_OUTPUT { STD_OUT, STD_ERROR };
-    Q_ENUM(STD_OUTPUT)
-
-signals:
-    void messageOut(STD_OUTPUT io, QString message);
 
 private:
     explicit ScriptManager();
@@ -44,23 +56,24 @@ private:
 
     Q_DISABLE_COPY(ScriptManager)
 
-    void messageCallBack(ScriptManager::STD_OUTPUT io, char const *str,
-                         std::streamsize size);
+    ScriptDirMeta ensureDirMeta(const QFileInfo &info);
 
     QStringList getScriptFileNames(const QDir &dir) const;
 
+    QString readJsonObjString(const QJsonObject &jobj, const QString &key);
+
 private:
-    callback_streambuf *sout = nullptr;
-    callback_streambuf *serr = nullptr;
-
-    std::streambuf *std_out = nullptr;
-    std::streambuf *std_err = nullptr;
-
-    QFileSystemWatcher *m_watcher;
     QString m_sysScriptsPath;
     QString m_usrScriptsPath;
     QStringList m_usrScriptsDbCats;
     QStringList m_sysScriptsDbCats;
+
+    QHash<QString, ScriptDirMeta> _usrDirMetas;
+    QHash<QString, ScriptDirMeta> _sysDirMetas;
+
+    ScriptingConsole *_console = nullptr;
 };
+
+Q_DECLARE_METATYPE(ScriptManager::ScriptDirMeta)
 
 #endif // SCRIPTMANAGER_H

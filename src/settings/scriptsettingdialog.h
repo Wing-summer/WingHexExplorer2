@@ -1,6 +1,7 @@
 #ifndef SCRIPTSETTINGDIALOG_H
 #define SCRIPTSETTINGDIALOG_H
 
+#include "class/scriptmanager.h"
 #include "plugin/settingpage.h"
 #include <QWidget>
 
@@ -18,12 +19,13 @@ public:
 private:
     Ui::ScriptSettingDialog *ui;
 
-    QStringList m_usrDisplayCats;
-    QStringList m_sysDisplayCats;
+    QStringList m_usrHideCats;
+    QStringList m_sysHideCats;
 
 private:
     void loadData();
-    void addCatagory(const QString &cat, bool isUser, bool checked);
+    bool addCatagory(const ScriptManager::ScriptDirMeta &meta, bool isUser,
+                     bool hidden);
 
     // SettingPage interface
 public:
@@ -34,12 +36,9 @@ public:
     virtual void reset() override;
     virtual void cancel() override;
 
-    QStringList usrDisplayCats() const;
-
-    QStringList sysDisplayCats() const;
-
 private slots:
     void on_btnRefresh_clicked();
+    void on_listWidget_currentRowChanged(int currentRow);
 };
 
 #endif // SCRIPTSETTINGDIALOG_H

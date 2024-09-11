@@ -294,7 +294,7 @@ QCodeNode *QCodeModel::findNode(const QByteArray &language,
                                 const QByteArray &name) {
     QByteArray id = name;
 
-    if (language.count())
+    if (language.length())
         id.prepend("::").prepend(language);
 
     QHash<QByteArray, QCodeNode *>::const_iterator i = m_cache.constFind(id);
@@ -336,7 +336,7 @@ bool QCodeModel::isCachable(QCodeNode *n, QByteArray &cxt) const {
     int t = n->type();
     QByteArray qn = n->role(QCodeNode::Name);
 
-    if (cxt.count())
+    if (cxt.length())
         qn.prepend("::");
 
     if (cxt.isEmpty() && (t != QCodeNode::Group)) {

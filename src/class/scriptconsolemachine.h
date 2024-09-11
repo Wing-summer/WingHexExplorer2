@@ -11,8 +11,6 @@ public:
                                   QObject *parent = nullptr);
     virtual ~ScriptConsoleMachine();
 
-    virtual bool executeScript(const QString &script,
-                               bool isInDebug = false) override;
     virtual bool executeCode(const QString &code) override;
 
     ScriptObjModel *model() const;

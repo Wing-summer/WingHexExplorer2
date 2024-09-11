@@ -21,7 +21,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
 if(WIN32)
-  add_definitions(-DNOMINMAX)
+  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
@@ -34,6 +34,13 @@ if(MSVC)
   string(APPEND CMAKE_CXX_FLAGS " /utf-8")
   string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
+
+set(QWINDOWKIT_BUILD_STATIC
+    TRUE
+    CACHE BOOL "Build static libraries")
+set(QWINDOWKIT_INSTALL
+    OFF
+    CACHE BOOL "Install library")
 
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)

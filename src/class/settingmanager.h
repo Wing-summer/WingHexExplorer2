@@ -83,9 +83,11 @@ public:
     void setRecentScriptFiles(
         const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles);
 
-    QStringList usrDisplayCats() const;
+    QStringList usrHideCats() const;
+    QStringList sysHideCats() const;
 
-    QStringList sysDisplayCats() const;
+    void setSysHideCats(const QStringList &newSysHideCats);
+    void setUsrHideCats(const QStringList &newUsrHideCats);
 
     QString lastUsedPath() const;
     void setLastUsedPath(const QString &newLastUsedPath);
@@ -101,6 +103,9 @@ public:
 
     int logLevel() const;
     void setLogLevel(int newLogLevel);
+
+    bool allowUsrScriptInRoot() const;
+    void setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot);
 
 signals:
     void sigEditorfontSizeChanged(int v);
@@ -146,8 +151,9 @@ private:
     QList<RecentFileManager::RecentInfo> m_recentScriptFiles;
     Qt::WindowState m_defaultWinState = Qt::WindowMaximized;
 
-    QStringList m_usrDisplayCats;
-    QStringList m_sysDisplayCats;
+    bool m_allowUsrScriptInRoot = false;
+    QStringList m_usrHideCats;
+    QStringList m_sysHideCats;
 
     QString m_lastUsedPath;
 

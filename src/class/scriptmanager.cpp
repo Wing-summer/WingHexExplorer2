@@ -1,34 +1,11 @@
 #include "scriptmanager.h"
 
-#include "../dbghelper.h"
-
-class callback_streambuf : public std::streambuf {
-public:
-    callback_streambuf(
-        std::function<void(char const *, std::streamsize)> callback);
-
-protected:
-    std::streamsize xsputn(char_type const *s, std::streamsize count) override;
-
-private:
-    std::function<void(char const *, std::streamsize)> callback;
-};
-
-callback_streambuf::callback_streambuf(
-    std::function<void(const char *, std::streamsize)> callback)
-    : callback(callback) {}
-
-std::streamsize callback_streambuf::xsputn(const char_type *s,
-                                           std::streamsize count) {
-    callback(s, count);
-    return count;
-}
-
-//==================================================================
+#include "dbghelper.h"
 
 #include <QApplication>
 #include <QDir>
-#include <QStandardPaths>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include "utilities.h"
 
@@ -50,65 +27,10 @@ ScriptManager::ScriptManager() : QObject() {
     m_usrScriptsPath = Utilities::getAppDataPath() + QDir::separator() +
                        QStringLiteral("scripts");
 
-    m_watcher = new QFileSystemWatcher(this);
-    connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
-            [=](const QString &path) {
-
-            });
-
-    QDir sysScriptDir(m_sysScriptsPath);
-    if (sysScriptDir.exists()) {
-        for (auto &info :
-             sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-            m_sysScriptsDbCats << info.fileName();
-        }
-        m_watcher->addPath(m_sysScriptsPath);
-    }
-
-    QDir scriptDir(m_usrScriptsPath);
-    if (!scriptDir.exists()) {
-        QDir().mkpath(m_usrScriptsPath);
-    } else {
-        for (auto &info :
-             scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-            m_usrScriptsDbCats << info.fileName();
-        }
-    }
-
-    m_watcher->addPath(m_usrScriptsPath);
-
-    // redirect output
-    sout = new callback_streambuf(
-        std::bind(&ScriptManager::messageCallBack, this, STD_OUTPUT::STD_OUT,
-                  std::placeholders::_1, std::placeholders::_2));
-    serr = new callback_streambuf(
-        std::bind(&ScriptManager::messageCallBack, this, STD_OUTPUT::STD_ERROR,
-                  std::placeholders::_1, std::placeholders::_2));
-
-    std_out = std::cout.rdbuf(sout);
-    std_err = std::cerr.rdbuf(serr);
+    refresh();
 }
 
-ScriptManager::~ScriptManager() {
-    std::cout.rdbuf(std_out);
-    std::cerr.rdbuf(std_err);
-    delete sout;
-    delete serr;
-}
-
-void ScriptManager::messageCallBack(STD_OUTPUT io, const char *str,
-                                    std::streamsize size) {
-    switch (io) {
-    case STD_OUTPUT::STD_OUT:
-        std_out->sputn(str, size);
-        break;
-    case STD_OUTPUT::STD_ERROR:
-        std_err->sputn(str, size);
-        break;
-    }
-    emit messageOut(io, QString::fromStdString(
-                            std::string(str, std::string::size_type(size))));
-}
+ScriptManager::~ScriptManager() { detach(); }
 
 QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
     if (!dir.exists()) {
@@ -119,6 +41,15 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
         ret << info.absoluteFilePath();
     }
     return ret;
+}
+
+QString ScriptManager::readJsonObjString(const QJsonObject &jobj,
+                                         const QString &key) {
+    auto t = jobj.value(key);
+    if (!t.isUndefined() && t.isString()) {
+        return t.toString();
+    }
+    return {};
 }
 
 QStringList ScriptManager::sysScriptsDbCats() const {
@@ -143,9 +74,125 @@ QStringList ScriptManager::getSysScriptFileNames(const QString &cat) const {
     return getScriptFileNames(scriptDir);
 }
 
-void ScriptManager::refresh() {}
+void ScriptManager::refresh() {
+    refreshSysScriptsDbCats();
+    refreshUsrScriptsDbCats();
+}
 
-void ScriptManager::runScript(const QString &filename) {}
+void ScriptManager::refreshUsrScriptsDbCats() {
+    m_usrScriptsDbCats.clear();
+
+    QDir scriptDir(m_usrScriptsPath);
+    if (!scriptDir.exists()) {
+        QDir().mkpath(m_usrScriptsPath);
+    } else {
+        for (auto &info :
+             scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            m_usrScriptsDbCats << info.fileName();
+            auto meta = ensureDirMeta(info);
+            meta.isSys = false;
+            _usrDirMetas.insert(info.fileName(), meta);
+        }
+    }
+}
+
+void ScriptManager::refreshSysScriptsDbCats() {
+    m_sysScriptsDbCats.clear();
+
+    QDir sysScriptDir(m_sysScriptsPath);
+    if (sysScriptDir.exists()) {
+        for (auto &info :
+             sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            m_sysScriptsDbCats << info.fileName();
+            auto meta = ensureDirMeta(info);
+            meta.isSys = true;
+            _sysDirMetas.insert(info.fileName(), meta);
+        }
+    }
+}
+
+ScriptManager::ScriptDirMeta
+ScriptManager::ensureDirMeta(const QFileInfo &info) {
+    ScriptDirMeta meta;
+
+    if (!info.isDir()) {
+        return meta;
+    }
+    QDir base(info.absoluteFilePath());
+    if (!base.exists(QStringLiteral(".wingasmeta"))) {
+        QJsonObject jobj;
+        jobj.insert(QStringLiteral("name"), info.fileName());
+        jobj.insert(QStringLiteral("author"), QLatin1String());
+        jobj.insert(QStringLiteral("license"), QLatin1String());
+        jobj.insert(QStringLiteral("homepage"), QLatin1String());
+        jobj.insert(QStringLiteral("comment"), QLatin1String());
+        QFile f(base.absoluteFilePath(QStringLiteral(".wingasmeta")));
+        if (f.open(QFile::WriteOnly | QFile::Text)) {
+            QJsonDocument jdoc(jobj);
+            if (f.write(jdoc.toJson(QJsonDocument::JsonFormat::Indented)) >=
+                0) {
+                f.close();
+            }
+        }
+        meta.name = info.fileName();
+    } else {
+        QFile f(base.absoluteFilePath(QStringLiteral(".wingasmeta")));
+        if (f.open(QFile::ReadOnly | QFile::Text)) {
+            QJsonParseError err;
+            QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
+            if (err.error == QJsonParseError::NoError) {
+                auto jobj = doc.object();
+                auto name = readJsonObjString(jobj, QStringLiteral("name"));
+                if (name.trimmed().isEmpty()) {
+                    name = info.fileName();
+                }
+                meta.name = name;
+                meta.author = readJsonObjString(jobj, QStringLiteral("author"));
+                meta.license =
+                    readJsonObjString(jobj, QStringLiteral("license"));
+                meta.homepage =
+                    readJsonObjString(jobj, QStringLiteral("homepage"));
+                meta.comment =
+                    readJsonObjString(jobj, QStringLiteral("comment"));
+            } else {
+                meta.name = info.fileName();
+            }
+        } else {
+            meta.name = info.fileName();
+        }
+    }
+
+    meta.rawName = info.fileName();
+    return meta;
+}
+
+void ScriptManager::attach(ScriptingConsole *console) {
+    if (console) {
+        _console = console;
+    }
+}
+
+void ScriptManager::detach() { _console = nullptr; }
+
+ScriptManager::ScriptDirMeta
+ScriptManager::usrDirMeta(const QString &cat) const {
+    return _usrDirMetas.value(cat);
+}
+
+ScriptManager::ScriptDirMeta
+ScriptManager::sysDirMeta(const QString &cat) const {
+    return _sysDirMetas.value(cat);
+}
+
+void ScriptManager::runScript(const QString &filename) {
+    Q_ASSERT(_console);
+    _console->setMode(ScriptingConsole::Output);
+    _console->stdWarn(tr("Excuting:") + filename);
+    _console->newLine();
+    _console->machine()->executeScript(filename);
+    _console->appendCommandPrompt();
+    _console->setMode(ScriptingConsole::Input);
+}
 
 QStringList ScriptManager::usrScriptsDbCats() const {
     return m_usrScriptsDbCats;

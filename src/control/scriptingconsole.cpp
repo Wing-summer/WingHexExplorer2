@@ -39,17 +39,14 @@ void ScriptingConsole::stdWarn(const QString &str) {
     write(str, m_stdoutFmtWarn);
 }
 
-void ScriptingConsole::init(bool consoleMode) {
+void ScriptingConsole::newLine() { _s << Qt::endl; }
+
+void ScriptingConsole::init() {
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
 
-    if (consoleMode) {
-        auto sp = new ScriptConsoleMachine(_getInputFn, this);
-        connect(sp, &ScriptConsoleMachine::onClearConsole, this,
-                &ScriptingConsole::clear);
-        _sp = sp;
-    } else {
-        _sp = new ScriptMachine(_getInputFn, this);
-    }
+    _sp = new ScriptConsoleMachine(_getInputFn, this);
+    connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
+            &ScriptingConsole::clear);
 
     connect(_sp, &ScriptConsoleMachine::onOutput, this,
             [=](ScriptConsoleMachine::MessageType type,
@@ -57,15 +54,15 @@ void ScriptingConsole::init(bool consoleMode) {
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
                     stdOut(tr("[Info]") + message.message);
-                    _s << Qt::endl;
+                    newLine();
                     break;
                 case ScriptMachine::MessageType::Warn:
                     stdWarn(tr("[Warn]") + message.message);
-                    _s << Qt::endl;
+                    newLine();
                     break;
                 case ScriptMachine::MessageType::Error:
                     stdErr(tr("[Error]") + message.message);
-                    _s << Qt::endl;
+                    newLine();
                     break;
                 case ScriptMachine::MessageType::Print:
                     stdOut(message.message);
@@ -156,6 +153,4 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
 
 ScriptMachine *ScriptingConsole::machine() const { return _sp; }
 
-ScriptConsoleMachine *ScriptingConsole::consoleMachine() const {
-    return qobject_cast<ScriptConsoleMachine *>(_sp);
-}
+ScriptConsoleMachine *ScriptingConsole::consoleMachine() const { return _sp; }

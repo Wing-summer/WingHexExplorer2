@@ -52,7 +52,7 @@ QCodeBuffer::QCodeBuffer(const QByteArray &s)
    pointer
 */
 char QCodeBuffer::getChar() {
-    if (iPos < sBuffer.count())
+    if (iPos < sBuffer.length())
         return sBuffer.at(iPos++);
     else
         return '\0';

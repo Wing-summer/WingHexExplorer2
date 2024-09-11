@@ -149,7 +149,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         return false;
     }
 
-    _debugger = new asDebugger(_getInputFn, this);
+    _debugger = new asDebugger;
 
     // Register the to-string callbacks so the user can see the contents of
     // strings
@@ -302,10 +302,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
-        info.message =
-            tr("Debugging, waiting for commands. Type 'h' for help.");
+        info.message = tr("Debugging, waiting for commands.");
         emit onOutput(MessageType::Info, info);
-        _debugger->takeCommands(0);
     }
 
     // Once we have the main function, we first need to initialize the global

@@ -17,12 +17,6 @@ ScriptConsoleMachine::ScriptConsoleMachine(
 
 ScriptConsoleMachine::~ScriptConsoleMachine() {}
 
-bool ScriptConsoleMachine::executeScript(const QString &script,
-                                         bool isInDebug) {
-    Q_UNUSED(isInDebug);
-    return execString(engine(), script);
-}
-
 bool ScriptConsoleMachine::executeCode(const QString &code) {
     return execString(engine(), code);
 }
