@@ -1,7 +1,7 @@
 #include "recentfilemanager.h"
-#include "appmanager.h"
 #include "control/toast.h"
 #include "utilities.h"
+#include "winginputdialog.h"
 
 #include <QFile>
 #include <QMenu>
@@ -32,7 +32,22 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                          tr("NoHistoryDel"));
             return;
         }
-        // TODO
+        QStringList binfos;
+        for (auto &info : m_recents) {
+            binfos.append(getDisplayFileName(info));
+        }
+        bool ok;
+        auto ret = WingInputDialog::getItem(m_parent, tr("PleaseChoose"),
+                                            tr("Select to remove:"), binfos, 0,
+                                            false, &ok);
+        if (ok) {
+            auto ind = binfos.indexOf(ret);
+            Q_ASSERT(ind >= 0);
+            m_recents.removeAt(ind);
+            auto action = hitems.takeAt(ind);
+            m_menu->removeAction(action);
+            action->deleteLater();
+        }
     });
     m_menu->addAction(a);
 
@@ -116,7 +131,25 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         if (info.isWorkSpace) {
             a->setIcon(ICONRES(QStringLiteral("pro")));
         }
-        connect(a, &QAction::triggered, this, &RecentFileManager::trigger);
+        connect(a, &QAction::triggered, this, [=] {
+            auto send = qobject_cast<QAction *>(sender());
+            if (send) {
+                auto f = send->data().value<RecentInfo>();
+                if (existsPath(f)) {
+                    emit triggered(f);
+                } else {
+                    auto index = hitems.indexOf(send);
+                    if (index < 0) {
+                        m_menu->removeAction(send);
+                        hitems.removeAt(index);
+                        m_recents.removeAt(index);
+                        Toast::toast(m_parent,
+                                     NAMEICONRES(QStringLiteral("clearhis")),
+                                     tr("FileNotExistClean"));
+                    }
+                }
+            }
+        });
         m_recents.push_front(info);
         if (hitems.count())
             m_menu->insertAction(hitems.first(), a);
@@ -133,26 +166,6 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
     }
 }
 
-void RecentFileManager::trigger() {
-    auto send = qobject_cast<QAction *>(sender());
-    if (send) {
-        auto f = send->data().value<RecentInfo>();
-        if (existsPath(f)) {
-            AppManager::instance()->openFile(f.fileName, f.isWorkSpace, f.start,
-                                             f.stop);
-        } else {
-            auto index = hitems.indexOf(send);
-            if (index < 0) {
-                m_menu->removeAction(send);
-                hitems.removeAt(index);
-                m_recents.removeAt(index);
-                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
-                             tr("FileNotExistClean"));
-            }
-        }
-    }
-}
-
 void RecentFileManager::clearFile() {
     if (hitems.count() == 0) {
         Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
@@ -161,6 +174,7 @@ void RecentFileManager::clearFile() {
     }
     for (auto &item : hitems) {
         m_menu->removeAction(item);
+        item->deleteLater();
     }
     m_recents.clear();
     hitems.clear();

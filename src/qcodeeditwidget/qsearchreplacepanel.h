@@ -1,43 +1,23 @@
-/****************************************************************************
-**
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
-**
-** This file is part of the Edyuk project <http://edyuk.org>
-**
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
-
-#ifndef _QSEARCH_REPLACE_PANEL_H_
-#define _QSEARCH_REPLACE_PANEL_H_
+#ifndef QSEARCHREPLACEPANEL_H
+#define QSEARCHREPLACEPANEL_H
 
 #include "qpanel.h"
-
-/*!
-        \file qsearchreplacepanel.h
-        \brief Definition of the QSearchReplacePanel class.
-
-        \see QSearchReplacePanel
-*/
-
-#include "ui_searchreplace.h"
+#include <QWidget>
 
 class QDocumentLine;
 class QDocumentSearch;
 
-class QCE_EXPORT QSearchReplacePanel : public QPanel,
-                                       private Ui::SearchReplace {
+namespace Ui {
+class QSearchReplacePanel;
+}
+
+class QSearchReplacePanel : public QPanel {
     Q_OBJECT
 
 public:
     Q_PANEL(QSearchReplacePanel, "Search Replace Panel")
 
-    QSearchReplacePanel(QWidget *p = nullptr);
+    explicit QSearchReplacePanel(QWidget *parent = nullptr);
     virtual ~QSearchReplacePanel();
 
     virtual QString type() const;
@@ -77,12 +57,17 @@ private slots:
 
     void cursorPositionChanged();
 
+    void on_bClose_clicked();
+
 private:
     void init();
     void on_leFind_returnPressed(bool backward);
+
+private:
+    Ui::QSearchReplacePanel *ui;
 
     int lastDirection;
     QDocumentSearch *m_search;
 };
 
-#endif // _QSEARCH_REPLACE_PANEL_H_
+#endif // QSEARCHREPLACEPANEL_H

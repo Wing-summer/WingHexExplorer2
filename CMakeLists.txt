@@ -210,7 +210,9 @@ set(CLASS_SRC
     src/class/qaslexer.cpp
     src/class/qaslexer.h
     src/class/qasparser.cpp
-    src/class/qasparser.h)
+    src/class/qasparser.h
+    src/class/qdocumentsearch.cpp
+    src/class/qdocumentsearch.h)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
@@ -262,6 +264,22 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptregex.cpp
     src/scriptaddon/scriptcolor.h
     src/scriptaddon/scriptcolor.cpp)
+
+set(CODEEDIT_WIDGET
+    src/qcodeeditwidget/qgotolinepanel.h
+    src/qcodeeditwidget/qgotolinepanel.cpp
+    src/qcodeeditwidget/qgotolinepanel.ui
+    src/qcodeeditwidget/qsearchreplacepanel.h
+    src/qcodeeditwidget/qsearchreplacepanel.cpp
+    src/qcodeeditwidget/qsearchreplacepanel.ui
+    src/qcodeeditwidget/qeditconfig.h
+    src/qcodeeditwidget/qeditconfig.cpp
+    src/qcodeeditwidget/qeditconfig.ui
+    src/qcodeeditwidget/qstatuspanel.cpp
+    src/qcodeeditwidget/qstatuspanel.h
+    src/qcodeeditwidget/qformatconfig.h
+    src/qcodeeditwidget/qformatconfig.cpp
+    src/qcodeeditwidget/qformatconfig.ui)
 
 set(PLUGIN_SRC
     src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
@@ -368,6 +386,7 @@ set(PROJECT_SOURCES
     ${SETTING_SRC}
     ${SCRIPT_ADDON_SRC}
     ${ANGEL_SCRIPT_ADDON}
+    ${CODEEDIT_WIDGET}
     ${QM_FILES}
     theme/breeze.qrc
     resources.qrc)

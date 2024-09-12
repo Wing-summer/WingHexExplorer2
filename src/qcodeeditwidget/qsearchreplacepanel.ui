@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SearchReplace</class>
- <widget class="QWidget" name="SearchReplace">
+ <class>QSearchReplacePanel</class>
+ <widget class="QWidget" name="QSearchReplacePanel">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,23 +11,23 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true"/>
   </property>
   <layout class="QVBoxLayout">
    <property name="spacing">
-    <number>0</number>
+    <number>2</number>
    </property>
    <property name="leftMargin">
-    <number>2</number>
+    <number>3</number>
    </property>
    <property name="topMargin">
-    <number>2</number>
+    <number>3</number>
    </property>
    <property name="rightMargin">
-    <number>2</number>
+    <number>3</number>
    </property>
    <property name="bottomMargin">
-    <number>1</number>
+    <number>2</number>
    </property>
    <item>
     <widget class="QFrame" name="frameSearch">
@@ -57,9 +57,9 @@
      </property>
      <layout class="QHBoxLayout">
       <property name="spacing">
-       <number>2</number>
+       <number>5</number>
       </property>
-      <property name="margin">
+      <property name="margin" stdset="0">
        <number>0</number>
       </property>
       <item>
@@ -85,12 +85,15 @@
         <property name="toolTip">
          <string>Close search/replace panel</string>
         </property>
+        <property name="styleSheet">
+         <string notr="true">border:none;background:transparent;</string>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../../../src/lib/images/Edyuk.qrc">
-          <normaloff>:/closeall.png</normaloff>:/closeall.png</iconset>
+         <iconset resource="../../resources.qrc">
+          <normaloff>:/com.wingsummer.winghex/images/closefile.png</normaloff>:/com.wingsummer.winghex/images/closefile.png</iconset>
         </property>
        </widget>
       </item>
@@ -117,12 +120,15 @@
         <property name="toolTip">
          <string>Refresh search underlying context (as an attempt to correct search behavior)</string>
         </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../../../src/lib/images/Edyuk.qrc">
-          <normaloff>:/reload.png</normaloff>:/reload.png</iconset>
+         <iconset resource="../../resources.qrc">
+          <normaloff>:/com.wingsummer.winghex/images/refresh.png</normaloff>:/com.wingsummer.winghex/images/refresh.png</iconset>
         </property>
        </widget>
       </item>
@@ -168,38 +174,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="bNext">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Find next occurence</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../../../../src/lib/images/Edyuk.qrc">
-          <normaloff>:/down.png</normaloff>:/down.png</iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QToolButton" name="bPrevious">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -226,8 +200,40 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../../../src/lib/images/Edyuk.qrc">
-          <normaloff>:/up.png</normaloff>:/up.png</iconset>
+         <iconset resource="../../resources.qrc">
+          <normaloff>:/com.wingsummer.winghex/images/dbgstepout.png</normaloff>:/com.wingsummer.winghex/images/dbgstepout.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="bNext">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Find next occurence</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../../resources.qrc">
+          <normaloff>:/com.wingsummer.winghex/images/dbgstepinto.png</normaloff>:/com.wingsummer.winghex/images/dbgstepinto.png</iconset>
         </property>
        </widget>
       </item>
@@ -255,6 +261,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Words</string>
         </property>
@@ -267,6 +276,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
         </property>
         <property name="text">
          <string>Cursor</string>
@@ -284,6 +296,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Selection</string>
         </property>
@@ -296,6 +311,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
         </property>
         <property name="text">
          <string>Highlight all</string>
@@ -310,6 +328,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Regexp</string>
         </property>
@@ -322,6 +343,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
         </property>
         <property name="text">
          <string>Case</string>
@@ -362,9 +386,9 @@
      </property>
      <layout class="QHBoxLayout">
       <property name="spacing">
-       <number>2</number>
+       <number>5</number>
       </property>
-      <property name="margin">
+      <property name="margin" stdset="0">
        <number>0</number>
       </property>
       <item>
@@ -374,6 +398,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
         </property>
         <property name="text">
          <string>Replace :</string>
@@ -435,6 +462,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Prompt on replace</string>
         </property>
@@ -451,6 +481,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Replace all</string>
         </property>
@@ -464,6 +497,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true">background:transparent;</string>
+        </property>
         <property name="text">
          <string>Escape sequences</string>
         </property>
@@ -475,7 +511,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../../../src/lib/images/Edyuk.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -491,22 +527,6 @@
     <hint type="destinationlabel">
      <x>249</x>
      <y>49</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bClose</sender>
-   <signal>clicked()</signal>
-   <receiver>SearchReplace</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>11</x>
-     <y>15</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>202</x>
-     <y>-27</y>
     </hint>
    </hints>
   </connection>

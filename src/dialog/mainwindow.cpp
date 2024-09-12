@@ -10,7 +10,6 @@
 #include "class/logger.h"
 #include "class/qkeysequences.h"
 #include "class/scriptconsolemachine.h"
-#include "class/scriptmanager.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
@@ -58,6 +57,11 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
+    connect(m_recentmanager, &RecentFileManager::triggered, this,
+            [=](const RecentFileManager::RecentInfo &rinfo) {
+                AppManager::instance()->openFile(
+                    rinfo.fileName, rinfo.isWorkSpace, rinfo.start, rinfo.stop);
+            });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
     // build up UI
@@ -1065,6 +1069,7 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
         pannel->setVisible(false);
         connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
+        _scriptMaps = ScriptManager::buildUpRibbonScriptRunner(pannel);
         m_scriptDBGroup = pannel;
     }
 
@@ -1128,23 +1133,6 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     return tab;
 }
 
-QMenu *MainWindow::buildUpScriptDirMenu(const QStringList &files, bool isSys) {
-    auto menu = new QMenu(this);
-    for (auto &file : files) {
-        menu->addAction(
-            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(), [=] {
-                if (Utilities::isRoot() && !isSys &&
-                    !SettingManager::instance().allowUsrScriptInRoot()) {
-                    WingMessageBox::critical(this, tr("RunScript"),
-                                             tr("CanNotRunUsrScriptForPolicy"));
-                    return;
-                }
-                ScriptManager::instance().runScript(file);
-            });
-    }
-    return menu;
-}
-
 void MainWindow::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
@@ -1156,30 +1144,7 @@ void MainWindow::buildUpSettingDialog() {
     m_setdialog->addPage(plgPage);
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
-    auto &sm = ScriptManager::instance();
-    auto &stm = SettingManager::instance();
 
-    auto hideCats = stm.sysHideCats();
-    for (auto &cat : sm.sysScriptsDbCats()) {
-        if (hideCats.contains(cat)) {
-            continue;
-        }
-        addPannelAction(
-            m_scriptDBGroup, ICONRES(QStringLiteral("scriptfolder")), cat,
-            EMPTY_FUNC, {},
-            buildUpScriptDirMenu(sm.getSysScriptFileNames(cat), true));
-    }
-
-    hideCats = stm.usrHideCats();
-    for (auto &cat : sm.usrScriptsDbCats()) {
-        if (hideCats.contains(cat)) {
-            continue;
-        }
-        addPannelAction(
-            m_scriptDBGroup, ICONRES(QStringLiteral("scriptfolderusr")), cat,
-            EMPTY_FUNC, {},
-            buildUpScriptDirMenu(sm.getUsrScriptFileNames(cat), false));
-    }
     m_setdialog->addPage(scriptPage);
 
     for (auto &page : m_settingPages) {

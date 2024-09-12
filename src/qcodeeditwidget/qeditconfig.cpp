@@ -25,6 +25,7 @@
 #include "qdocument.h"
 #include "qdocument_p.h"
 #include "qeditor.h"
+#include "ui_qeditconfig.h"
 
 #include <QDebug>
 
@@ -37,19 +38,22 @@
 
 */
 
-QEditConfig::QEditConfig(QWidget *w) : QWidget(w), m_direct(false) {
-    setupUi(this);
+QEditConfig::QEditConfig(QWidget *w)
+    : QWidget(w), ui(new Ui::QEditConfig()), m_direct(false) {
+    ui->setupUi(this);
 
-    cbEncoding->clear();
-    cbEncoding->addItems(QCE::getEncodings());
+    ui->cbEncoding->clear();
+    ui->cbEncoding->addItems(QCE::getEncodings());
 
     restore();
 }
 
+QEditConfig::~QEditConfig() { delete ui; }
+
 /*!
         \brief run-time translation entry point
 */
-void QEditConfig::retranslate() { retranslateUi(this); }
+void QEditConfig::retranslate() { ui->retranslateUi(this); }
 
 /*!
         \brief
@@ -58,31 +62,32 @@ bool QEditConfig::hasUnsavedChanges() const {
     if (m_direct)
         return false;
 
-    QFont font = cbFont->currentFont();
+    QFont font = ui->cbFont->currentFont();
     // font.setPointSize(spnFontSize->value());
 
     const QFont &docFont = QDocument::font();
 
     if (font.family() != docFont.family() ||
-        spnFontSize->value() != docFont.pointSize()) {
+        ui->spnFontSize->value() != docFont.pointSize()) {
         // qDebug("font!");
         return true;
     }
 
-    if (spnTabWidth->value() != QDocument::tabStop()) {
+    if (ui->spnTabWidth->value() != QDocument::tabStop()) {
         // qDebug("tab stop!");
         return true;
     }
 
     QDocument::LineEnding le = QDocument::defaultLineEnding();
 
-    if (chkDetectLE->isChecked()) {
+    if (ui->chkDetectLE->isChecked()) {
         if (le != QDocument::Conservative) {
             // qDebug("conservative line endings! : %i", le);
             return true;
         }
     } else {
-        if (le != QDocument::LineEnding(cbLineEndings->currentIndex() + 1)) {
+        if (le !=
+            QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1)) {
             // qDebug("line endings!");
             return true;
         }
@@ -90,13 +95,13 @@ bool QEditConfig::hasUnsavedChanges() const {
 
     QDocument::WhiteSpaceMode ws = QDocument::ShowNone;
 
-    if (chkShowLeadingWhitespace->isChecked())
+    if (ui->chkShowLeadingWhitespace->isChecked())
         ws |= QDocument::ShowLeading;
 
-    if (chkShowTrailingWhitespace->isChecked())
+    if (ui->chkShowTrailingWhitespace->isChecked())
         ws |= QDocument::ShowTrailing;
 
-    if (chkShowTabsInText->isChecked())
+    if (ui->chkShowTabsInText->isChecked())
         ws |= QDocument::ShowTabs;
 
     if (ws != QDocument::showSpaces()) {
@@ -106,13 +111,13 @@ bool QEditConfig::hasUnsavedChanges() const {
 
     auto c = QEditor::defaultCodecName();
 
-    if (cbEncoding->currentText() == "System") {
+    if (ui->cbEncoding->currentText() == "System") {
         if (c != "System") {
             // qDebug("system codec!");
             return true;
         }
     } else {
-        if (c != cbEncoding->currentText().toLatin1()) {
+        if (c != ui->cbEncoding->currentText().toLatin1()) {
             // qDebug("codec!");
             return true;
         }
@@ -120,17 +125,17 @@ bool QEditConfig::hasUnsavedChanges() const {
 
     int flags = QEditor::defaultFlags();
 
-    if (chkReplaceTabs->isChecked())
+    if (ui->chkReplaceTabs->isChecked())
         flags |= QEditor::ReplaceTabs;
     else
         flags &= ~QEditor::ReplaceTabs;
 
-    if (chkAutoRemoveTrailingWhitespace->isChecked())
+    if (ui->chkAutoRemoveTrailingWhitespace->isChecked())
         flags |= QEditor::RemoveTrailing;
     else
         flags &= ~QEditor::RemoveTrailing;
 
-    if (chkPreserveTrailingIndent->isChecked())
+    if (ui->chkPreserveTrailingIndent->isChecked())
         flags |= QEditor::PreserveTrailingIndent;
     else
         flags &= ~QEditor::PreserveTrailingIndent;
@@ -157,47 +162,47 @@ void QEditConfig::setApplyImmediately(bool y) { m_direct = y; }
         \brief Apply changes
 */
 void QEditConfig::apply() {
-    QFont font = cbFont->currentFont();
-    font.setPointSize(spnFontSize->value());
+    QFont font = ui->cbFont->currentFont();
+    font.setPointSize(ui->spnFontSize->value());
 
     QDocument::setFont(font);
-    QDocument::setTabStop(spnTabWidth->value());
+    QDocument::setTabStop(ui->spnTabWidth->value());
 
-    if (chkDetectLE->isChecked())
+    if (ui->chkDetectLE->isChecked())
         QDocument::setDefaultLineEnding(QDocument::Conservative);
     else
         QDocument::setDefaultLineEnding(
-            QDocument::LineEnding(cbLineEndings->currentIndex() + 1));
+            QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1));
 
     QDocument::WhiteSpaceMode ws = QDocument::ShowNone;
 
-    if (chkShowLeadingWhitespace->isChecked())
+    if (ui->chkShowLeadingWhitespace->isChecked())
         ws |= QDocument::ShowLeading;
 
-    if (chkShowTrailingWhitespace->isChecked())
+    if (ui->chkShowTrailingWhitespace->isChecked())
         ws |= QDocument::ShowTrailing;
 
-    if (chkShowTabsInText->isChecked())
+    if (ui->chkShowTabsInText->isChecked())
         ws |= QDocument::ShowTabs;
 
     QDocument::setShowSpaces(ws);
 
-    QEditor::setDefaultCodec(cbEncoding->currentText().toUtf8(),
+    QEditor::setDefaultCodec(ui->cbEncoding->currentText().toUtf8(),
                              QEditor::UpdateAll);
 
     int flags = QEditor::defaultFlags();
 
-    if (chkReplaceTabs->isChecked())
+    if (ui->chkReplaceTabs->isChecked())
         flags |= QEditor::ReplaceTabs;
     else
         flags &= ~QEditor::ReplaceTabs;
 
-    if (chkAutoRemoveTrailingWhitespace->isChecked())
+    if (ui->chkAutoRemoveTrailingWhitespace->isChecked())
         flags |= QEditor::RemoveTrailing;
     else
         flags &= ~QEditor::RemoveTrailing;
 
-    if (chkPreserveTrailingIndent->isChecked())
+    if (ui->chkPreserveTrailingIndent->isChecked())
         flags |= QEditor::PreserveTrailingIndent;
     else
         flags &= ~QEditor::PreserveTrailingIndent;
@@ -219,29 +224,29 @@ void QEditConfig::cancel() {
 
     m_direct = false;
 
-    cbFont->setFont(QDocument::font());
-    spnFontSize->setValue(QDocument::font().pointSize());
+    ui->cbFont->setFont(QDocument::font());
+    ui->spnFontSize->setValue(QDocument::font().pointSize());
 
-    spnTabWidth->setValue(QDocument::tabStop());
+    ui->spnTabWidth->setValue(QDocument::tabStop());
 
     QDocument::WhiteSpaceMode ws = QDocument::showSpaces();
-    chkShowTabsInText->setChecked(ws & QDocument::ShowTabs);
-    chkShowLeadingWhitespace->setChecked(ws & QDocument::ShowLeading);
-    chkShowTrailingWhitespace->setChecked(ws & QDocument::ShowTrailing);
+    ui->chkShowTabsInText->setChecked(ws & QDocument::ShowTabs);
+    ui->chkShowLeadingWhitespace->setChecked(ws & QDocument::ShowLeading);
+    ui->chkShowTrailingWhitespace->setChecked(ws & QDocument::ShowTrailing);
 
     QDocument::LineEnding le = QDocument::defaultLineEnding();
-    chkDetectLE->setChecked(le == QDocument::Conservative);
-    cbLineEndings->setCurrentIndex(le ? le - 1 : 0);
+    ui->chkDetectLE->setChecked(le == QDocument::Conservative);
+    ui->cbLineEndings->setCurrentIndex(le ? le - 1 : 0);
 
     int flags = QEditor::defaultFlags();
-    chkReplaceTabs->setChecked(flags & QEditor::ReplaceTabs);
-    chkAutoRemoveTrailingWhitespace->setChecked(flags &
-                                                QEditor::RemoveTrailing);
-    chkPreserveTrailingIndent->setChecked(flags &
-                                          QEditor::PreserveTrailingIndent);
+    ui->chkReplaceTabs->setChecked(flags & QEditor::ReplaceTabs);
+    ui->chkAutoRemoveTrailingWhitespace->setChecked(flags &
+                                                    QEditor::RemoveTrailing);
+    ui->chkPreserveTrailingIndent->setChecked(flags &
+                                              QEditor::PreserveTrailingIndent);
 
     auto c = QEditor::defaultCodecName();
-    cbEncoding->setCurrentIndex(qMax(cbEncoding->findText(c), 0));
+    ui->cbEncoding->setCurrentIndex(qMax(ui->cbEncoding->findText(c), 0));
 
     m_direct = oldDir;
 }
@@ -261,23 +266,23 @@ void QEditConfig::restore() {
     QFont font("Monospace", 10);
     font.setStyleHint(QFont::Courier);
 
-    cbFont->setFont(font);
-    spnFontSize->setValue(10);
+    ui->cbFont->setFont(font);
+    ui->spnFontSize->setValue(10);
 
-    spnTabWidth->setValue(4);
+    ui->spnTabWidth->setValue(4);
 
-    chkShowTabsInText->setChecked(true);
-    chkShowLeadingWhitespace->setChecked(true);
-    chkShowTrailingWhitespace->setChecked(true);
+    ui->chkShowTabsInText->setChecked(true);
+    ui->chkShowLeadingWhitespace->setChecked(true);
+    ui->chkShowTrailingWhitespace->setChecked(true);
 
-    chkDetectLE->setChecked(true);
-    cbLineEndings->setCurrentIndex(0);
+    ui->chkDetectLE->setChecked(true);
+    ui->cbLineEndings->setCurrentIndex(0);
 
-    chkReplaceTabs->setChecked(false);
-    chkAutoRemoveTrailingWhitespace->setChecked(false);
-    chkPreserveTrailingIndent->setChecked(true);
+    ui->chkReplaceTabs->setChecked(false);
+    ui->chkAutoRemoveTrailingWhitespace->setChecked(false);
+    ui->chkPreserveTrailingIndent->setChecked(true);
 
-    cbEncoding->setCurrentIndex(0);
+    ui->cbEncoding->setCurrentIndex(0);
 
     m_direct = oldDir;
 }
@@ -288,28 +293,30 @@ void QEditConfig::restore() {
 QMap<QString, QVariant> QEditConfig::dumpKeys() const {
     QMap<QString, QVariant> m;
 
-    QFont font = cbFont->currentFont();
-    font.setPointSize(spnFontSize->value());
+    QFont font = ui->cbFont->currentFont();
+    font.setPointSize(ui->spnFontSize->value());
 
     m.insert("font", font);
-    m.insert("tab_width", spnTabWidth->value());
+    m.insert("tab_width", ui->spnTabWidth->value());
 
-    m.insert("show_leading_whitespace", chkShowLeadingWhitespace->isChecked());
+    m.insert("show_leading_whitespace",
+             ui->chkShowLeadingWhitespace->isChecked());
     m.insert("show_trailing_whitespace",
-             chkShowTrailingWhitespace->isChecked());
-    m.insert("show_tabs_in_text", chkShowTabsInText->isChecked());
+             ui->chkShowTrailingWhitespace->isChecked());
+    m.insert("show_tabs_in_text", ui->chkShowTabsInText->isChecked());
 
-    m.insert("replace_tabs", chkReplaceTabs->isChecked());
-    m.insert("remove_trailing", chkAutoRemoveTrailingWhitespace->isChecked());
+    m.insert("replace_tabs", ui->chkReplaceTabs->isChecked());
+    m.insert("remove_trailing",
+             ui->chkAutoRemoveTrailingWhitespace->isChecked());
     m.insert("preserve_trailing_indent",
-             chkPreserveTrailingIndent->isChecked());
+             ui->chkPreserveTrailingIndent->isChecked());
 
-    m.insert("encoding", cbEncoding->currentText());
+    m.insert("encoding", ui->cbEncoding->currentText());
 
-    if (chkDetectLE->isChecked())
-        m.insert("line_endings", (int)QDocument::Conservative);
+    if (ui->chkDetectLE->isChecked())
+        m.insert("line_endings", QDocument::Conservative);
     else
-        m.insert("line_endings", cbLineEndings->currentIndex() + 1);
+        m.insert("line_endings", ui->cbLineEndings->currentIndex() + 1);
 
     return m;
 }
@@ -329,56 +336,57 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant> &keys) {
         if (it.key() == "font") {
             QFont f = qvariant_cast<QFont>(*it);
 
-            cbFont->setCurrentFont(f);
-            spnFontSize->setValue(f.pointSize());
+            ui->cbFont->setCurrentFont(f);
+            ui->spnFontSize->setValue(f.pointSize());
 
             if (m_direct)
                 QDocument::setFont(f);
 
-            lblSampleText->setFont(f);
+            ui->lblSampleText->setFont(f);
 
         } else if (it.key() == "tab_width") {
-            spnTabWidth->setValue(it->toInt());
+            ui->spnTabWidth->setValue(it->toInt());
 
             if (m_direct)
                 on_spnTabWidth_valueChanged(it->toInt());
         } else if (it.key() == "replace_tabs") {
-            chkReplaceTabs->setChecked(it->toBool());
+            ui->chkReplaceTabs->setChecked(it->toBool());
             if (m_direct)
                 on_chkReplaceTabs_toggled(it->toBool());
         } else if (it.key() == "remove_trailing") {
-            chkAutoRemoveTrailingWhitespace->setChecked(it->toBool());
+            ui->chkAutoRemoveTrailingWhitespace->setChecked(it->toBool());
             if (m_direct)
                 on_chkAutoRemoveTrailingWhitespace_toggled(it->toBool());
         } else if (it.key() == "preserve_trailing_indent") {
-            chkPreserveTrailingIndent->setChecked(it->toBool());
+            ui->chkPreserveTrailingIndent->setChecked(it->toBool());
             if (m_direct)
                 on_chkPreserveTrailingIndent_toggled(it->toBool());
         } else if (it.key() == "show_tabs_in_text") {
-            chkShowTabsInText->setChecked(it->toBool());
+            ui->chkShowTabsInText->setChecked(it->toBool());
             if (m_direct)
                 on_chkShowTabsInText_toggled(it->toBool());
         } else if (it.key() == "show_leading_whitespace") {
-            chkShowLeadingWhitespace->setChecked(it->toBool());
+            ui->chkShowLeadingWhitespace->setChecked(it->toBool());
             if (m_direct)
                 on_chkShowLeadingWhitespace_toggled(it->toBool());
         } else if (it.key() == "show_trailing_whitespace") {
-            chkShowTrailingWhitespace->setChecked(it->toBool());
+            ui->chkShowTrailingWhitespace->setChecked(it->toBool());
             if (m_direct)
                 on_chkShowTrailingWhitespace_toggled(it->toBool());
         } else if (it.key() == "encoding") {
-            cbEncoding->setCurrentIndex(cbEncoding->findText(it->toString()));
+            ui->cbEncoding->setCurrentIndex(
+                ui->cbEncoding->findText(it->toString()));
             if (m_direct)
                 on_cbEncoding_currentIndexChanged(it->toString());
         } else if (it.key() == "line_endings") {
             int le = it->toInt();
 
             if (le) {
-                chkDetectLE->setChecked(false);
-                cbLineEndings->setCurrentIndex(le - 1);
+                ui->chkDetectLE->setChecked(false);
+                ui->cbLineEndings->setCurrentIndex(le - 1);
             } else {
-                cbLineEndings->setCurrentIndex(0);
-                chkDetectLE->setChecked(true);
+                ui->cbLineEndings->setCurrentIndex(0);
+                ui->chkDetectLE->setChecked(true);
             }
         } else {
             /*
@@ -396,10 +404,10 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant> &keys) {
         \brief Slot used to apply font size settings
 */
 void QEditConfig::on_spnFontSize_valueChanged(int size) {
-    QFont font = cbFont->currentFont();
+    QFont font = ui->cbFont->currentFont();
     font.setPointSize(size);
 
-    lblSampleText->setFont(font);
+    ui->lblSampleText->setFont(font);
 
     if (m_direct) {
         QDocument::setFont(font);
@@ -411,8 +419,8 @@ void QEditConfig::on_spnFontSize_valueChanged(int size) {
         \brief Slot used to apply font family settings
 */
 void QEditConfig::on_cbFont_currentFontChanged(QFont font) {
-    font.setPointSize(spnFontSize->value());
-    lblSampleText->setFont(font);
+    font.setPointSize(ui->spnFontSize->value());
+    ui->lblSampleText->setFont(font);
 
     if (m_direct) {
         QDocument::setFont(font);
@@ -520,7 +528,7 @@ void QEditConfig::on_chkDetectLE_toggled(bool y) {
     QDocument::LineEnding le = QDocument::Conservative;
 
     if (!y) {
-        le = QDocument::LineEnding(cbLineEndings->currentIndex() + 1);
+        le = QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1);
     }
 
     if (m_direct) {

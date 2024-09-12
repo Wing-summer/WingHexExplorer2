@@ -21,6 +21,7 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/recentfilemanager.h"
+#include "class/scriptmanager.h"
 #include "class/wingprogressdialog.h"
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
@@ -106,8 +107,6 @@ private:
     RibbonTabContent *buildPluginPage(RibbonTabContent *tab);
     RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
-
-    QMenu *buildUpScriptDirMenu(const QStringList &files, bool isSys);
 
     void buildUpSettingDialog();
     void installPluginEditorWidgets();
@@ -461,6 +460,7 @@ private:
     QMenu *m_recentMenu = nullptr;
 
     RibbonButtonGroup *m_scriptDBGroup = nullptr;
+    ScriptManager::ScriptActionMaps _scriptMaps;
 
     //===================================================
 

@@ -29,11 +29,14 @@
 #include "qeditor.h"
 
 #include "qsimplecolorpicker.h"
+#include "ui_qformatconfig.h"
 
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QVBoxLayout>
+
+#include "class/wingmessagebox.h"
 
 /*!
         \ingroup dialogs
@@ -45,31 +48,34 @@
 */
 
 QFormatConfig::QFormatConfig(QWidget *w)
-    : QWidget(w), m_autonomous(false), m_currentScheme(0) {
-    setupUi(this);
+    : QWidget(w), ui(new Ui::QFormatConfig()), m_autonomous(false),
+      m_currentScheme(0) {
+    ui->setupUi(this);
 
-    m_frame->hide();
+    ui->m_frame->hide();
 
-    m_table->verticalHeader()->hide();
+    ui->m_table->verticalHeader()->hide();
 
-    m_table->horizontalHeaderItem(1)->setIcon(QIcon(":/bold.png"));
-    m_table->horizontalHeaderItem(2)->setIcon(QIcon(":/italic.png"));
-    m_table->horizontalHeaderItem(3)->setIcon(QIcon(":/underline.png"));
-    // m_table->horizontalHeaderItem(4)->setIcon(QIcon(":/overline.png"));
-    m_table->horizontalHeaderItem(5)->setIcon(QIcon(":/strikeout.png"));
-    // m_table->horizontalHeaderItem(6)->setIcon(QIcon(":/waveUnderline.png"));
-    m_table->horizontalHeaderItem(7)->setIcon(QIcon(":/textcolor.png"));
-    m_table->horizontalHeaderItem(8)->setIcon(QIcon(":/fillcolor.png"));
-    m_table->horizontalHeaderItem(9)->setIcon(QIcon(":/strokecolor.png"));
+    ui->m_table->horizontalHeaderItem(1)->setIcon(QIcon(":/bold.png"));
+    ui->m_table->horizontalHeaderItem(2)->setIcon(QIcon(":/italic.png"));
+    ui->m_table->horizontalHeaderItem(3)->setIcon(QIcon(":/underline.png"));
+    // ui->m_table->horizontalHeaderItem(4)->setIcon(QIcon(":/overline.png"));
+    ui->m_table->horizontalHeaderItem(5)->setIcon(QIcon(":/strikeout.png"));
+    // ui->m_table->horizontalHeaderItem(6)->setIcon(QIcon(":/waveUnderline.png"));
+    ui->m_table->horizontalHeaderItem(7)->setIcon(QIcon(":/textcolor.png"));
+    ui->m_table->horizontalHeaderItem(8)->setIcon(QIcon(":/fillcolor.png"));
+    ui->m_table->horizontalHeaderItem(9)->setIcon(QIcon(":/strokecolor.png"));
 
-    connect(m_table, SIGNAL(itemSelectionChanged()), m_table,
+    connect(ui->m_table, SIGNAL(itemSelectionChanged()), ui->m_table,
             SLOT(clearSelection()));
 }
+
+QFormatConfig::~QFormatConfig() { delete ui; }
 
 /*!
         \brief run-time translation entry point
 */
-void QFormatConfig::retranslate() { retranslateUi(this); }
+void QFormatConfig::retranslate() { ui->retranslateUi(this); }
 
 /*!
         \return Whether the format config widget is in "autonomous" mode
@@ -106,11 +112,11 @@ QList<QFormatScheme *> QFormatConfig::schemes() const { return m_schemes; }
 void QFormatConfig::addScheme(const QString &name, QFormatScheme *scheme) {
     m_schemes << scheme;
 
-    m_selector->addItem(name);
+    ui->m_selector->addItem(name);
 
     if (m_schemes.count() > 1 && m_schemes.contains(m_currentScheme)) {
         // show the scheme selector
-        m_frame->show();
+        ui->m_frame->show();
     }
 
     if (!m_currentScheme)
@@ -129,14 +135,14 @@ void QFormatConfig::removeScheme(QFormatScheme *s) {
 
     for (int i = 0; i < m_schemes.count(); ++i) {
         if (m_schemes.at(i) == s) {
-            m_selector->removeItem(i);
+            ui->m_selector->removeItem(i);
             m_schemes.removeAt(i);
         }
     }
 
     if (m_schemes.count() <= 1) {
         // hide the scheme selector
-        m_frame->hide();
+        ui->m_frame->hide();
     }
 }
 
@@ -155,7 +161,7 @@ void QFormatConfig::setCurrentScheme(QFormatScheme *s) {
         // update table widget
         cancel();
     } else {
-        m_selector->setCurrentIndex(idx);
+        ui->m_selector->setCurrentIndex(idx);
     }
 }
 
@@ -166,7 +172,7 @@ void QFormatConfig::apply() {
     if (m_currentScheme) {
         const int n = m_currentScheme->formatCount();
 
-        m_table->setRowCount(n);
+        ui->m_table->setRowCount(n);
 
         for (int i = 0; i < n; ++i) {
             QString fid = m_currentScheme->id(i);
@@ -174,36 +180,39 @@ void QFormatConfig::apply() {
 
             QTableWidgetItem *item;
 
-            item = m_table->item(i, 1);
+            item = ui->m_table->item(i, 1);
             fmt.weight =
                 item->checkState() == Qt::Checked ? QFont::Bold : QFont::Normal;
 
-            item = m_table->item(i, 2);
+            item = ui->m_table->item(i, 2);
             fmt.italic = item->checkState() == Qt::Checked;
 
-            item = m_table->item(i, 3);
+            item = ui->m_table->item(i, 3);
             fmt.underline = item->checkState() == Qt::Checked;
 
-            item = m_table->item(i, 4);
+            item = ui->m_table->item(i, 4);
             fmt.overline = item->checkState() == Qt::Checked;
 
-            item = m_table->item(i, 5);
+            item = ui->m_table->item(i, 5);
             fmt.strikeout = item->checkState() == Qt::Checked;
 
-            item = m_table->item(i, 6);
+            item = ui->m_table->item(i, 6);
             fmt.waveUnderline = item->checkState() == Qt::Checked;
 
             QSimpleColorPicker *cp;
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 7));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 7));
             if (cp)
                 fmt.foreground = cp->color();
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 8));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 8));
             if (cp)
                 fmt.background = cp->color();
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 9));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 9));
             if (cp)
                 fmt.linescolor = cp->color();
         }
@@ -233,12 +242,12 @@ void QFormatConfig::apply() {
         have on the widget
 */
 void QFormatConfig::cancel() {
-    m_table->clearContents();
+    ui->m_table->clearContents();
 
     if (m_currentScheme) {
         const int n = m_currentScheme->formatCount();
 
-        m_table->setRowCount(n);
+        ui->m_table->setRowCount(n);
 
         for (int i = 0; i < n; ++i) {
             QString fid = m_currentScheme->id(i);
@@ -248,67 +257,67 @@ void QFormatConfig::cancel() {
 
             item = new QTableWidgetItem(fid);
             item->setFlags(Qt::ItemIsEnabled);
-            m_table->setItem(i, 0, item);
+            ui->m_table->setItem(i, 0, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.weight == QFont::Bold ? Qt::Checked
                                                           : Qt::Unchecked);
             item->setToolTip(tr("Bold"));
-            m_table->setItem(i, 1, item);
+            ui->m_table->setItem(i, 1, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.italic ? Qt::Checked : Qt::Unchecked);
             item->setToolTip(tr("Italic"));
-            m_table->setItem(i, 2, item);
+            ui->m_table->setItem(i, 2, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.underline ? Qt::Checked : Qt::Unchecked);
             item->setToolTip(tr("Underline"));
-            m_table->setItem(i, 3, item);
+            ui->m_table->setItem(i, 3, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.overline ? Qt::Checked : Qt::Unchecked);
             item->setToolTip(tr("Overline"));
-            m_table->setItem(i, 4, item);
+            ui->m_table->setItem(i, 4, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.strikeout ? Qt::Checked : Qt::Unchecked);
             item->setToolTip(tr("Strikeout"));
-            m_table->setItem(i, 5, item);
+            ui->m_table->setItem(i, 5, item);
 
             item = new QTableWidgetItem;
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
             item->setCheckState(fmt.waveUnderline ? Qt::Checked
                                                   : Qt::Unchecked);
             item->setToolTip(tr("Wave underline"));
-            m_table->setItem(i, 6, item);
+            ui->m_table->setItem(i, 6, item);
 
-            m_table->setCellWidget(i, 7,
-                                   new QSimpleColorPicker(fmt.foreground));
-            m_table->cellWidget(i, 7)->setToolTip(
+            ui->m_table->setCellWidget(i, 7,
+                                       new QSimpleColorPicker(fmt.foreground));
+            ui->m_table->cellWidget(i, 7)->setToolTip(
                 tr("Text color (aka foreground)"));
             // m_table->cellWidget(i, 7)->setMaximumSize(22, 22);
 
-            m_table->setCellWidget(i, 8,
-                                   new QSimpleColorPicker(fmt.background));
-            m_table->cellWidget(i, 8)->setToolTip(tr("Background color"));
+            ui->m_table->setCellWidget(i, 8,
+                                       new QSimpleColorPicker(fmt.background));
+            ui->m_table->cellWidget(i, 8)->setToolTip(tr("Background color"));
             // m_table->cellWidget(i, 8)->setMaximumSize(22, 22);
 
-            m_table->setCellWidget(i, 9,
-                                   new QSimpleColorPicker(fmt.linescolor));
-            m_table->cellWidget(i, 9)->setToolTip(
+            ui->m_table->setCellWidget(i, 9,
+                                       new QSimpleColorPicker(fmt.linescolor));
+            ui->m_table->cellWidget(i, 9)->setToolTip(
                 tr("Lines color (used by all lines formatting : underline, "
                    "overline, ...)"));
             // m_table->cellWidget(i, 9)->setMaximumSize(22, 22);
         }
     }
 
-    m_table->resizeColumnsToContents();
+    ui->m_table->resizeColumnsToContents();
 }
 
 /*!
@@ -328,7 +337,7 @@ QList<int> QFormatConfig::modifiedFormats() const {
     if (m_currentScheme) {
         const int n = m_currentScheme->formatCount();
 
-        m_table->setRowCount(n);
+        ui->m_table->setRowCount(n);
 
         for (int i = 0; i < n; ++i) {
             QString fid = m_currentScheme->id(i);
@@ -336,7 +345,7 @@ QList<int> QFormatConfig::modifiedFormats() const {
 
             QTableWidgetItem *item;
 
-            item = m_table->item(i, 1);
+            item = ui->m_table->item(i, 1);
             if (fmt.weight != (item->checkState() == Qt::Checked
                                    ? QFont::Bold
                                    : QFont::Normal)) {
@@ -344,31 +353,31 @@ QList<int> QFormatConfig::modifiedFormats() const {
                 continue;
             }
 
-            item = m_table->item(i, 2);
+            item = ui->m_table->item(i, 2);
             if (fmt.italic != (item->checkState() == Qt::Checked)) {
                 hasModif << i;
                 continue;
             }
 
-            item = m_table->item(i, 3);
+            item = ui->m_table->item(i, 3);
             if (fmt.underline != (item->checkState() == Qt::Checked)) {
                 hasModif << i;
                 continue;
             }
 
-            item = m_table->item(i, 4);
+            item = ui->m_table->item(i, 4);
             if (fmt.overline != (item->checkState() == Qt::Checked)) {
                 hasModif << i;
                 continue;
             }
 
-            item = m_table->item(i, 5);
+            item = ui->m_table->item(i, 5);
             if (fmt.strikeout != (item->checkState() == Qt::Checked)) {
                 hasModif << i;
                 continue;
             }
 
-            item = m_table->item(i, 6);
+            item = ui->m_table->item(i, 6);
             if (fmt.waveUnderline != (item->checkState() == Qt::Checked)) {
                 hasModif << i;
                 continue;
@@ -376,19 +385,22 @@ QList<int> QFormatConfig::modifiedFormats() const {
 
             QSimpleColorPicker *cp;
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 7));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 7));
             if (cp && fmt.foreground != cp->color()) {
                 hasModif << i;
                 continue;
             }
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 8));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 8));
             if (cp && fmt.background != cp->color()) {
                 hasModif << i;
                 continue;
             }
 
-            cp = qobject_cast<QSimpleColorPicker *>(m_table->cellWidget(i, 9));
+            cp = qobject_cast<QSimpleColorPicker *>(
+                ui->m_table->cellWidget(i, 9));
             if (cp && fmt.linescolor != cp->color()) {
                 hasModif << i;
                 continue;
@@ -410,11 +422,11 @@ void QFormatConfig::hideEvent(QHideEvent *e) {
     if (hasModif.count()) {
         // TODO : provide custom widget to allow user to select which items
         // should be saved?
-        int ret =
-            QMessageBox::warning(0, tr("Unsaved changes"),
-                                 tr("There are unsaved changes in this format "
-                                    "scheme.\nDo you want them to be saved?"),
-                                 QMessageBox::Save | QMessageBox::Discard);
+        int ret = WingMessageBox::warning(
+            0, tr("Unsaved changes"),
+            tr("There are unsaved changes in this format "
+               "scheme.\nDo you want them to be saved?"),
+            QMessageBox::Save | QMessageBox::Discard);
 
         if (ret == QMessageBox::Save) {
             apply();
@@ -430,11 +442,11 @@ void QFormatConfig::on_m_selector_currentIndexChanged(int idx) {
     if (hasModif.count()) {
         // TODO : provide custom widget to allow user to select which items
         // should be saved?
-        int ret =
-            QMessageBox::warning(0, tr("Unsaved changes"),
-                                 tr("There are unsaved changes in this format "
-                                    "scheme.\nDo you want them to be saved?"),
-                                 QMessageBox::Save | QMessageBox::Discard);
+        int ret = WingMessageBox::warning(
+            0, tr("Unsaved changes"),
+            tr("There are unsaved changes in this format "
+               "scheme.\nDo you want them to be saved?"),
+            QMessageBox::Save | QMessageBox::Discard);
 
         if (ret == QMessageBox::Save) {
             apply();

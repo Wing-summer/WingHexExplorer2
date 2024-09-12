@@ -6,8 +6,11 @@
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMenu>
 
+#include "settingmanager.h"
 #include "utilities.h"
+#include "wingmessagebox.h"
 
 ScriptManager &ScriptManager::instance() {
     static ScriptManager ins;
@@ -50,6 +53,25 @@ QString ScriptManager::readJsonObjString(const QJsonObject &jobj,
         return t.toString();
     }
     return {};
+}
+
+QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
+                                           const QStringList &files,
+                                           bool isSys) {
+    auto menu = new QMenu(parent);
+    for (auto &file : files) {
+        menu->addAction(
+            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(), [=] {
+                if (Utilities::isRoot() && !isSys &&
+                    !SettingManager::instance().allowUsrScriptInRoot()) {
+                    WingMessageBox::critical(nullptr, tr("RunScript"),
+                                             tr("CanNotRunUsrScriptForPolicy"));
+                    return;
+                }
+                ScriptManager::instance().runScript(file);
+            });
+    }
+    return menu;
 }
 
 QStringList ScriptManager::sysScriptsDbCats() const {
@@ -182,6 +204,36 @@ ScriptManager::usrDirMeta(const QString &cat) const {
 ScriptManager::ScriptDirMeta
 ScriptManager::sysDirMeta(const QString &cat) const {
     return _sysDirMetas.value(cat);
+}
+
+ScriptManager::ScriptActionMaps
+ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
+    ScriptActionMaps maps;
+
+    auto &sm = ScriptManager::instance();
+    auto &stm = SettingManager::instance();
+
+    auto hideCats = stm.sysHideCats();
+    for (auto &cat : sm.sysScriptsDbCats()) {
+        if (hideCats.contains(cat)) {
+            continue;
+        }
+        maps.sysList << addPannelAction(
+            group, ICONRES(QStringLiteral("scriptfolder")), cat,
+            buildUpScriptDirMenu(group, sm.getSysScriptFileNames(cat), true));
+    }
+
+    hideCats = stm.usrHideCats();
+    for (auto &cat : sm.usrScriptsDbCats()) {
+        if (hideCats.contains(cat)) {
+            continue;
+        }
+        maps.usrList << addPannelAction(
+            group, ICONRES(QStringLiteral("scriptfolderusr")), cat,
+            buildUpScriptDirMenu(group, sm.getUsrScriptFileNames(cat), false));
+    }
+
+    return maps;
 }
 
 void ScriptManager::runScript(const QString &filename) {

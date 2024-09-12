@@ -1,39 +1,18 @@
-/****************************************************************************
-**
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
-**
-** This file is part of the Edyuk project <http://edyuk.org>
-**
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
-
-#ifndef _QEDIT_CONFIG_H_
-#define _QEDIT_CONFIG_H_
-
-#include "../qce-config.h"
-
-/*!
-        \file qeditconfig.h
-        \brief Definition of the QEditConfig widget
-
-        \see QEditConfig
-*/
-
-#include "ui_editconfig.h"
+#ifndef QEDITCONFIG_H
+#define QEDITCONFIG_H
 
 #include <QWidget>
 
-class QCE_EXPORT QEditConfig : public QWidget, private Ui::EditorConfig {
+namespace Ui {
+class QEditConfig;
+}
+
+class QEditConfig : public QWidget {
     Q_OBJECT
 
 public:
-    QEditConfig(QWidget *w = 0);
+    explicit QEditConfig(QWidget *parent = nullptr);
+    virtual ~QEditConfig();
 
     bool hasUnsavedChanges() const;
 
@@ -74,7 +53,9 @@ private slots:
     void on_chkPreserveTrailingIndent_toggled(bool y);
 
 private:
+    Ui::QEditConfig *ui;
+
     bool m_direct;
 };
 
-#endif // _QEDIT_CONFIG_H_
+#endif // QEDITCONFIG_H

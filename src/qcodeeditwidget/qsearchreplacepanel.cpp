@@ -1,36 +1,16 @@
-/****************************************************************************
-**
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
-**
-** This file is part of the Edyuk project <http://edyuk.org>
-**
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
-
 #include "qsearchreplacepanel.h"
-
-/*!
-        \file qsearchreplacepanel.cpp
-        \brief Implementation of the QSearchReplacePanel class.
-
-        \see QSearchReplacePanel
-*/
 
 #include "qeditor.h"
 
+#include "class/qdocumentsearch.h"
 #include "qdocument.h"
 #include "qdocumentcursor.h"
 #include "qdocumentline.h"
-#include "qdocumentsearch.h"
 
 #include <QPaintEvent>
 #include <QScrollBar>
+
+#include "ui_qsearchreplacepanel.h"
 
 static QString escapeCpp(const QString &s, bool rep) {
     if (!rep)
@@ -79,12 +59,18 @@ QCE_AUTO_REGISTER(QSearchReplacePanel)
         \brief Constructor
 */
 QSearchReplacePanel::QSearchReplacePanel(QWidget *p)
-    : QPanel(p), lastDirection(0), m_search(0) {
-    setupUi(this);
+    : QPanel(p), ui(new Ui::QSearchReplacePanel()), lastDirection(0),
+      m_search(0) {
+    ui->setupUi(this);
     setDefaultVisibility(false);
 
-    leFind->installEventFilter(this);
-    leReplace->installEventFilter(this);
+    ui->frameReplace->setAttribute(Qt::WA_TranslucentBackground);
+    ui->frameSearch->setAttribute(Qt::WA_TranslucentBackground);
+
+    ui->label->setAttribute(Qt::WA_TranslucentBackground);
+
+    ui->leFind->installEventFilter(this);
+    ui->leReplace->installEventFilter(this);
 }
 
 /*!
@@ -93,12 +79,13 @@ QSearchReplacePanel::QSearchReplacePanel(QWidget *p)
 QSearchReplacePanel::~QSearchReplacePanel() {
     if (m_search)
         delete m_search;
+    delete ui;
 }
 
 /*!
 
 */
-QString QSearchReplacePanel::type() const { return "Search"; }
+QString QSearchReplacePanel::type() const { return QStringLiteral("Search"); }
 
 /*!
         \brief
@@ -133,15 +120,15 @@ void QSearchReplacePanel::display(int mode, bool replace) {
     bool visible = true;
 
     if (mode < 0)
-        visible = (replace != cbReplace->isChecked()) || isHidden();
+        visible = (replace != ui->cbReplace->isChecked()) || isHidden();
     else
         visible = mode;
 
     if (visible) {
-        cbReplace->setChecked(replace);
+        ui->cbReplace->setChecked(replace);
         // frameReplace->setVisible(replace);
-        leFind->setFocus();
-        leFind->selectAll();
+        ui->leFind->setFocus();
+        ui->leFind->selectAll();
         // show();
     }
 
@@ -167,7 +154,8 @@ void QSearchReplacePanel::find(int backward) {
             lastDirection = backward;
     }
 
-    bool replaceAll = cbReplace->isChecked() && cbReplaceAll->isChecked();
+    bool replaceAll =
+        ui->cbReplace->isChecked() && ui->cbReplaceAll->isChecked();
 
     if (backward == -1) {
         backward = lastDirection;
@@ -182,8 +170,8 @@ void QSearchReplacePanel::find(int backward) {
 
     m_search->next(backward, replaceAll);
 
-    if (!leFind->hasFocus() && !leReplace->hasFocus())
-        leFind->setFocus();
+    if (!ui->leFind->hasFocus() && !ui->leReplace->hasFocus())
+        ui->leFind->setFocus();
 }
 
 /*!
@@ -201,7 +189,7 @@ void QSearchReplacePanel::hideEvent(QHideEvent *) {
 bool QSearchReplacePanel::eventFilter(QObject *o, QEvent *e) {
     int kc;
 
-    if (o == leFind || o == leReplace) {
+    if (o == ui->leFind || o == ui->leReplace) {
         switch (e->type()) {
             /*
             case QEvent::FocusIn :
@@ -224,17 +212,17 @@ bool QSearchReplacePanel::eventFilter(QObject *o, QEvent *e) {
                     static_cast<QKeyEvent *>(e)->modifiers());
                 return true;
             } else if (kc == Qt::Key_Escape) {
-                if (cbReplace->isChecked())
+                if (ui->cbReplace->isChecked())
                     display(1, false);
                 else
                     display(0, false);
                 return true;
             } else if (kc == Qt::Key_Tab || kc == Qt::Key_Backtab) {
-                if (cbReplace->isChecked()) {
-                    if (leFind->hasFocus())
-                        leReplace->setFocus();
+                if (ui->cbReplace->isChecked()) {
+                    if (ui->leFind->hasFocus())
+                        ui->leReplace->setFocus();
                     else
-                        leFind->setFocus();
+                        ui->leFind->setFocus();
                 }
                 return true;
             }
@@ -249,13 +237,13 @@ bool QSearchReplacePanel::eventFilter(QObject *o, QEvent *e) {
 }
 
 void QSearchReplacePanel::on_leFind_textEdited(const QString &text) {
-    if (cbReplace->isChecked()) {
+    if (ui->cbReplace->isChecked()) {
         // do not perfrom incremental search when replacing
 
         if (m_search)
             m_search->setSearchText(text);
 
-        leFind->setStyleSheet(QString());
+        ui->leFind->setStyleSheet(QString());
         return;
     }
 
@@ -267,7 +255,7 @@ void QSearchReplacePanel::on_leFind_textEdited(const QString &text) {
 
         m_search->setSearchText(text);
 
-        if (cbCursor->isChecked()) {
+        if (ui->cbCursor->isChecked()) {
             QDocumentCursor c = cur;
             c.setColumnNumber(qMin(c.anchorColumnNumber(), c.columnNumber()));
 
@@ -279,7 +267,7 @@ void QSearchReplacePanel::on_leFind_textEdited(const QString &text) {
     }
 
     if (text.isEmpty()) {
-        leFind->setStyleSheet(QString());
+        ui->leFind->setStyleSheet(QString());
         return;
     }
 
@@ -290,7 +278,8 @@ void QSearchReplacePanel::on_leFind_textEdited(const QString &text) {
     m_search->setOption(QDocumentSearch::Silent, false);
 
     if (m_search->cursor().isNull()) {
-        leFind->setStyleSheet("QLineEdit { background: red; color : white; }");
+        ui->leFind->setStyleSheet(
+            "QLineEdit { background: red; color : white; }");
 
         if (hadSearch) {
             m_search->setCursor(cur);
@@ -307,20 +296,20 @@ void QSearchReplacePanel::on_leFind_textEdited(const QString &text) {
 
             if (temp.cursor().isValid()) {
                 // other match found from doc start
-                leFind->setStyleSheet(
+                ui->leFind->setStyleSheet(
                     "QLineEdit { background: yellow; color : black; }");
                 m_search->setCursor(cur.document()->cursor(0, 0));
                 find(0);
             }
         }
     } else {
-        leFind->setStyleSheet(QString());
+        ui->leFind->setStyleSheet(QString());
         editor()->setCursor(m_search->cursor());
     }
 }
 
 void QSearchReplacePanel::on_leFind_returnPressed(bool backward) {
-    leFind->setStyleSheet(QString());
+    ui->leFind->setStyleSheet(QString());
 
     if (backward)
         find(1);
@@ -337,40 +326,40 @@ void QSearchReplacePanel::on_cbReplace_toggled(bool on) {
     if (m_search)
         m_search->setOption(QDocumentSearch::Replace, on);
 
-    if (leFind->isVisible())
-        leFind->setFocus();
+    if (ui->leFind->isVisible())
+        ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbWords_toggled(bool on) {
     if (m_search)
         m_search->setOption(QDocumentSearch::WholeWords, on);
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbRegExp_toggled(bool on) {
     if (m_search)
         m_search->setOption(QDocumentSearch::RegExp, on);
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbCase_toggled(bool on) {
     if (m_search)
         m_search->setOption(QDocumentSearch::CaseSensitive, on);
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbCursor_toggled(bool on) {
     if (m_search) {
         m_search->setOrigin(on ? editor()->cursor() : QDocumentCursor());
 
-        if (cbHighlight->isChecked())
+        if (ui->cbHighlight->isChecked())
             m_search->next(false);
     }
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbHighlight_toggled(bool on) {
@@ -384,33 +373,33 @@ void QSearchReplacePanel::on_cbHighlight_toggled(bool on) {
             m_search->next(false);
     }
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbSelection_toggled(bool on) {
     if (m_search)
         m_search->setScope(on ? editor()->cursor() : QDocumentCursor());
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbPrompt_toggled(bool on) {
     if (m_search)
         m_search->setOption(QDocumentSearch::Prompt, on);
 
-    leFind->setFocus();
+    ui->leFind->setFocus();
 }
 
 void QSearchReplacePanel::on_cbEscapeSeq_toggled(bool on) {
     if (m_search)
-        m_search->setReplaceText(escapeCpp(leReplace->text(), on));
+        m_search->setReplaceText(escapeCpp(ui->leReplace->text(), on));
 }
 
 void QSearchReplacePanel::on_bNext_clicked() {
     if (!m_search)
         init();
 
-    leFind->setStyleSheet(QString());
+    ui->leFind->setStyleSheet(QString());
     find(0);
 }
 
@@ -418,7 +407,7 @@ void QSearchReplacePanel::on_bPrevious_clicked() {
     if (!m_search)
         init();
 
-    leFind->setStyleSheet(QString());
+    ui->leFind->setStyleSheet(QString());
     find(1);
 }
 
@@ -432,48 +421,51 @@ void QSearchReplacePanel::init() {
 
     QDocumentSearch::Options opt;
 
-    if (cbRegExp->isChecked())
+    if (ui->cbRegExp->isChecked())
         opt |= QDocumentSearch::RegExp;
 
-    if (cbCase->isChecked())
+    if (ui->cbCase->isChecked())
         opt |= QDocumentSearch::CaseSensitive;
 
-    if (cbWords->isChecked())
+    if (ui->cbWords->isChecked())
         opt |= QDocumentSearch::WholeWords;
 
-    if (cbHighlight->isChecked() && !cbReplace->isVisible())
+    if (ui->cbHighlight->isChecked() && !ui->cbReplace->isVisible())
         opt |= QDocumentSearch::HighlightAll;
 
-    if (cbReplace->isChecked() && cbReplace->isVisible())
+    if (ui->cbReplace->isChecked() && ui->cbReplace->isVisible())
         opt |= QDocumentSearch::Replace;
 
-    if (cbPrompt->isChecked())
+    if (ui->cbPrompt->isChecked())
         opt |= QDocumentSearch::Prompt;
 
     m_search = new QDocumentSearch(
-        editor(), leFind->text(), opt,
-        cbReplace->isChecked()
-            ? escapeCpp(leReplace->text(), cbEscapeSeq->isChecked())
+        editor(), ui->leFind->text(), opt,
+        ui->cbReplace->isChecked()
+            ? escapeCpp(ui->leReplace->text(), ui->cbEscapeSeq->isChecked())
             : QString());
 
-    if (cbCursor->isChecked())
+    if (ui->cbCursor->isChecked())
         m_search->setCursor(editor()->cursor());
 
-    if (cbSelection->isChecked())
+    if (ui->cbSelection->isChecked())
         m_search->setScope(editor()->cursor());
 }
 
 void QSearchReplacePanel::cursorPositionChanged() {
     if (m_search) {
         if (editor()->cursor() == m_search->cursor() ||
-            cbHighlight->isChecked())
+            ui->cbHighlight->isChecked())
             return;
 
-        if (cbCursor->isChecked())
+        if (ui->cbCursor->isChecked())
             m_search->setOrigin(editor()->cursor());
 
         m_search->setCursor(editor()->cursor());
     }
 }
 
-/*! @} */
+void QSearchReplacePanel::on_bClose_clicked() {
+    hide();
+    editor()->setFocus();
+}

@@ -6,7 +6,9 @@
 #include <QHash>
 #include <QObject>
 
+#include "QWingRibbon/ribbonbuttongroup.h"
 #include "control/scriptingconsole.h"
+#include "utilities.h"
 
 class ScriptManager : public QObject {
     Q_OBJECT
@@ -20,6 +22,11 @@ public:
         QString homepage;
         QString comment;
         bool isSys; // a flag
+    };
+
+    struct ScriptActionMaps {
+        QList<QToolButton *> sysList;
+        QList<QToolButton *> usrList;
     };
 
 public:
@@ -47,6 +54,31 @@ public:
     ScriptDirMeta usrDirMeta(const QString &cat) const;
     ScriptDirMeta sysDirMeta(const QString &cat) const;
 
+    static ScriptActionMaps buildUpRibbonScriptRunner(RibbonButtonGroup *group);
+
+private:
+    static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
+                                        const QString &iconName,
+                                        const QString &title,
+                                        QMenu *menu = nullptr) {
+        return addPannelAction(pannel, ICONRES(iconName), title, menu);
+    }
+
+    static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
+                                        const QIcon &icon, const QString &title,
+                                        QMenu *menu = nullptr) {
+        Q_ASSERT(pannel);
+        auto a = new QToolButton(pannel);
+        a->setText(title);
+        a->setIcon(icon);
+        a->setMenu(menu);
+        if (menu) {
+            a->setPopupMode(QToolButton::InstantPopup);
+        }
+        pannel->addButton(a);
+        return a;
+    }
+
 public slots:
     void runScript(const QString &filename);
 
@@ -61,6 +93,9 @@ private:
     QStringList getScriptFileNames(const QDir &dir) const;
 
     QString readJsonObjString(const QJsonObject &jobj, const QString &key);
+
+    static QMenu *buildUpScriptDirMenu(QWidget *parent,
+                                       const QStringList &files, bool isSys);
 
 private:
     QString m_sysScriptsPath;

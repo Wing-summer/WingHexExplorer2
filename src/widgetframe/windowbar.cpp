@@ -68,7 +68,7 @@ WindowBar::WindowBar(QWidget *parent)
 
     Q_D(WindowBar);
     auto w = new QWidget(this);
-    w->setStyleSheet(QStringLiteral("background:transparent;"));
+    w->setAttribute(Qt::WA_TranslucentBackground);
     w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     d->setWidgetAt(WindowBarPrivate::Holder, w);
 

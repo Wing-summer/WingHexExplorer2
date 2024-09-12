@@ -32,7 +32,6 @@
 
 #include "QMetaMethod"
 #include "qcodeedit.h"
-#include "qgotolinedialog.h"
 #include "qlinemarksinfocenter.h"
 #include "qpanellayout.h"
 
@@ -55,6 +54,7 @@
 #include <QPointer>
 #include <QPrintDialog>
 #include <QPrinter>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QStyle>
 #include <QTextStream>
@@ -1093,9 +1093,7 @@ void QEditor::gotoLine() {
 
         m->sendPanelCommand("Goto", "show");
     } else {
-        QGotoLineDialog dlg(this);
-
-        dlg.exec(this);
+        qDebug("Unmanaged QEditor");
     }
 }
 

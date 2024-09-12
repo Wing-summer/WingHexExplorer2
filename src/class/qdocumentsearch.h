@@ -32,7 +32,7 @@
 
 class QEditor;
 
-class QCE_EXPORT QDocumentSearch {
+class QDocumentSearch {
     Q_DECLARE_TR_FUNCTIONS(QDocumentSearch)
 
 public:

@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>EditorConfig</class>
- <widget class="QWidget" name="EditorConfig" >
+ <class>QEditConfig</class>
+ <widget class="QWidget" name="QEditConfig" >
   <property name="geometry" >
    <rect>
     <x>0</x>

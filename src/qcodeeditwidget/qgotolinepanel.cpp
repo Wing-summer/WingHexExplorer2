@@ -1,26 +1,4 @@
-/****************************************************************************
-**
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
-**
-** This file is part of the Edyuk project <http://edyuk.org>
-**
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
-
 #include "qgotolinepanel.h"
-
-/*!
-        \file qgotolinepanel.cpp
-        \brief Implementation of the QGotoLinePanel class.
-
-        \see QGotoLinePanel
-*/
 
 #include "qeditor.h"
 
@@ -29,6 +7,10 @@
 #include "qdocumentline.h"
 
 #include <QKeyEvent>
+
+#include "utilities.h"
+
+#include "ui_qgotolinepanel.h"
 
 /*!
         \ingroup widgets
@@ -45,22 +27,28 @@ QCE_AUTO_REGISTER(QGotoLinePanel)
 /*!
         \brief Constructor
 */
-QGotoLinePanel::QGotoLinePanel(QWidget *p) : QPanel(p) {
-    setupUi(this);
+QGotoLinePanel::QGotoLinePanel(QWidget *p)
+    : QPanel(p), ui(new Ui::QGotoLinePanel()) {
+    ui->setupUi(this);
     setDefaultVisibility(false);
 
-    bClose->setIcon(QPixmap(":/closeall.png"));
+    ui->label->setAttribute(Qt::WA_TranslucentBackground);
+    ui->slLine->setAttribute(Qt::WA_TranslucentBackground);
+
+    ui->bClose->setStyleSheet(
+        QStringLiteral("border:none;background:transparent;"));
+    ui->bClose->setIcon(ICONRES("closefile"));
 }
 
 /*!
         \brief Empty destructor
 */
-QGotoLinePanel::~QGotoLinePanel() {}
+QGotoLinePanel::~QGotoLinePanel() { delete ui; }
 
 /*!
 
 */
-QString QGotoLinePanel::type() const { return "Goto"; }
+QString QGotoLinePanel::type() const { return QStringLiteral("Goto"); }
 
 /*!
         \brief
@@ -82,8 +70,8 @@ void QGotoLinePanel::editorChange(QEditor *e) {
                 SLOT(lineCountChanged(int)));
 
         lineCountChanged(e->document()->lineCount());
-        spLine->setValue(e->cursor().lineNumber() + 1);
-        slLine->setValue(e->cursor().lineNumber() + 1);
+        ui->spLine->setValue(e->cursor().lineNumber() + 1);
+        ui->slLine->setValue(e->cursor().lineNumber() + 1);
     }
 }
 
@@ -100,8 +88,8 @@ bool QGotoLinePanel::forward(QMouseEvent *e) {
 void QGotoLinePanel::showEvent(QShowEvent *e) {
     Q_UNUSED(e)
 
-    spLine->setFocus();
-    spLine->selectAll();
+    ui->spLine->setFocus();
+    ui->spLine->selectAll();
 }
 
 void QGotoLinePanel::keyPressEvent(QKeyEvent *e) {
@@ -121,27 +109,25 @@ void QGotoLinePanel::on_bClose_clicked() {
 
 void QGotoLinePanel::on_bGo_clicked() {
     editor()->setCursor(
-        QDocumentCursor(editor()->document(), spLine->value() - 1));
+        QDocumentCursor(editor()->document(), ui->spLine->value() - 1));
 }
 
 void QGotoLinePanel::on_spLine_valueChanged(int v) {
-    if (slLine->value() != v)
-        slLine->setValue(v);
+    if (ui->slLine->value() != v)
+        ui->slLine->setValue(v);
 }
 
 void QGotoLinePanel::on_slLine_valueChanged(int v) {
-    if (spLine->value() != v)
-        spLine->setValue(v);
+    if (ui->spLine->value() != v)
+        ui->spLine->setValue(v);
 }
 
 void QGotoLinePanel::lineCountChanged(int n) {
-    spLine->setMaximum(n);
-    slLine->setMaximum(n);
+    ui->spLine->setMaximum(n);
+    ui->slLine->setMaximum(n);
 }
 
 void QGotoLinePanel::cursorPositionChanged() {
-    spLine->setValue(editor()->cursor().lineNumber() + 1);
-    slLine->setValue(editor()->cursor().lineNumber() + 1);
+    ui->spLine->setValue(editor()->cursor().lineNumber() + 1);
+    ui->slLine->setValue(editor()->cursor().lineNumber() + 1);
 }
-
-/*! @} */

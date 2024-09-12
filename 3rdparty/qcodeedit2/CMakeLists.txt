@@ -11,10 +11,9 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Gui PrintSupport Xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Gui PrintSupport
                                                        Xml)
 
-add_definitions(-DQNFA_BUILD -D_QCODE_EDIT_BUILD_ -D_QCODE_EDIT_EMBED_)
+add_definitions(-DQNFA_BUILD)
 
 set(DOCUMENT_SRC
-    lib/document/qdocumentsearch.h
     lib/document/qdocumentline_p.h
     lib/document/qdocumentbuffer.h
     lib/document/qdocumentcommand.h
@@ -25,43 +24,25 @@ set(DOCUMENT_SRC
     lib/document/qdocument.h
     lib/document/qdocumentbuffer.cpp
     lib/document/qdocumentline.cpp
-    lib/document/qdocumentsearch.cpp
     lib/document/qdocumentcursor.cpp
     lib/document/qdocumentcommand.cpp
     lib/document/qdocument.cpp)
 
 set(WIDGETS_SRC
-    lib/widgets/qgotolinedialog.h
-    lib/widgets/qlinechangepanel.h
-    lib/widgets/qfoldpanel.h
-    lib/widgets/qlinenumberpanel.h
-    lib/widgets/qstatuspanel.h
-    lib/widgets/qcalltip.h
-    lib/widgets/qsimplecolorpicker.h
-    lib/widgets/qlinemarkpanel.h
-    lib/widgets/qgotolinepanel.h
-    lib/widgets/qgotolinedialog.cpp
-    lib/widgets/qformatconfig.h
-    lib/widgets/gotoline.ui
-    lib/widgets/qeditconfig.h
-    lib/widgets/qsimplecolorpicker.cpp
-    lib/widgets/qsearchreplacepanel.h
-    lib/widgets/qlinechangepanel.cpp
-    lib/widgets/formatconfig.ui
-    lib/widgets/qpanel.h
-    lib/widgets/qgotolinepanel.cpp
-    lib/widgets/gotolinedialog.ui
-    lib/widgets/qstatuspanel.cpp
-    lib/widgets/qlinemarkpanel.cpp
-    lib/widgets/qlinenumberpanel.cpp
     lib/widgets/qcalltip.cpp
-    lib/widgets/qpanel.cpp
+    lib/widgets/qcalltip.h
     lib/widgets/qfoldpanel.cpp
-    lib/widgets/editconfig.ui
-    lib/widgets/qsearchreplacepanel.cpp
-    lib/widgets/qformatconfig.cpp
-    lib/widgets/qeditconfig.cpp
-    lib/widgets/searchreplace.ui)
+    lib/widgets/qfoldpanel.h
+    lib/widgets/qlinechangepanel.cpp
+    lib/widgets/qlinechangepanel.h
+    lib/widgets/qlinemarkpanel.cpp
+    lib/widgets/qlinemarkpanel.h
+    lib/widgets/qlinenumberpanel.cpp
+    lib/widgets/qlinenumberpanel.h
+    lib/widgets/qpanel.cpp
+    lib/widgets/qpanel.h
+    lib/widgets/qsimplecolorpicker.cpp
+    lib/widgets/qsimplecolorpicker.h)
 
 set(QNFA_SRC
     lib/qnfa/light_vector.h lib/qnfa/qnfadefinition.h lib/qnfa/qnfa.h
@@ -110,6 +91,9 @@ set(SOURCE_FILES
 
 add_library(QCodeEditor2 STATIC ${SOURCE_FILES} ${DOCUMENT_SRC} ${WIDGETS_SRC}
                                 ${QNFA_SRC} ${SNIPPET_SRC})
+
+target_compile_definitions(QCodeEditor2 PUBLIC _QCODE_EDIT_BUILD_
+                                               _QCODE_EDIT_EMBED_)
 
 target_include_directories(
   QCodeEditor2

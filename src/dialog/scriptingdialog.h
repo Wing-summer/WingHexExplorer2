@@ -142,6 +142,8 @@ private:
 
     bool isCurrentDebugging() const;
 
+    void openFile(const QString &filename);
+
 private slots:
     void on_newfile();
     void on_openfile();
@@ -158,6 +160,7 @@ private slots:
     void on_delete();
 
     void on_findfile();
+    void on_replace();
     void on_gotoline();
 
     void on_about();

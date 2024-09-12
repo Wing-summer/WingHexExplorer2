@@ -63,6 +63,9 @@ public:
 
     const QList<RecentInfo> &saveRecent() const;
 
+signals:
+    void triggered(const RecentInfo &rinfo);
+
 private:
     bool existsPath(const RecentInfo &info);
     QString getDisplayFileName(const RecentInfo &info);
@@ -73,9 +76,6 @@ private:
     QWidget *m_parent;
     QList<RecentInfo> m_recents;
     QList<QAction *> hitems;
-
-private slots:
-    void trigger();
 };
 
 Q_DECLARE_METATYPE(RecentFileManager::RecentInfo)

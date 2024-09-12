@@ -28,6 +28,10 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     // recent file manager init
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu);
+    connect(m_recentmanager, &RecentFileManager::triggered, this,
+            [=](const RecentFileManager::RecentInfo &rinfo) {
+                openFile(rinfo.fileName);
+            });
     m_recentmanager->apply(this,
                            SettingManager::instance().recentScriptFiles());
 
@@ -81,7 +85,9 @@ void ScriptingDialog::buildUpRibbonBar() {
 
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
             [=](const QStringList &files) {
-                // TODO
+                for (auto &file : files) {
+                    openFile(file);
+                }
             });
 }
 
@@ -145,7 +151,8 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("Lookup"));
         addPannelAction(pannel, QStringLiteral("find"), tr("Find"),
                         &ScriptingDialog::on_findfile, QKeySequence::Find);
-
+        addPannelAction(pannel, QStringLiteral("replace"), tr("Replace"),
+                        &ScriptingDialog::on_replace, QKeySequence::Replace);
         addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
                         &ScriptingDialog::on_gotoline,
                         shortcuts.keySequence(QKeySequences::Key::GOTO));
@@ -504,6 +511,25 @@ bool ScriptingDialog::isCurrentDebugging() const {
     return m && m->isInDebugMode();
 }
 
+void ScriptingDialog::openFile(const QString &filename) {
+    auto e = findEditorView(filename);
+    if (e) {
+        e->raise();
+        e->setFocus();
+        return;
+    }
+
+    auto editor = new ScriptEditor(this);
+    auto res = editor->openFile(filename);
+    if (!res) {
+        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        return;
+    }
+
+    registerEditorView(editor);
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+}
+
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
         return;
@@ -549,24 +575,7 @@ void ScriptingDialog::on_openfile() {
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
-
-        auto e = findEditorView(filename);
-        if (e) {
-            e->raise();
-            e->setFocus();
-            return;
-        }
-
-        auto editor = new ScriptEditor(this);
-        auto res = editor->openFile(filename);
-        if (!res) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-            return;
-        }
-
-        registerEditorView(editor);
-        m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
-                              editorViewArea());
+        openFile(filename);
     }
 
     RecentFileManager::RecentInfo info;
@@ -673,6 +682,13 @@ void ScriptingDialog::on_findfile() {
     auto e = currentEditor();
     if (e) {
         e->editor()->find();
+    }
+}
+
+void ScriptingDialog::on_replace() {
+    auto e = currentEditor();
+    if (e) {
+        e->editor()->replace();
     }
 }
 

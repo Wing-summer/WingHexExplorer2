@@ -31,7 +31,7 @@
 #include "qeditor.h"
 #include "qformatscheme.h"
 
-#include <QMessageBox>
+#include "wingmessagebox.h"
 
 /*!
         \class QDocumentSearch
@@ -306,11 +306,11 @@ void QDocumentSearch::next(bool backward, bool all) {
                 return;
             }
 
-            int ret = QMessageBox::question(m_editor, tr("Failure"),
-                                            tr("End of matches reached.\n"
-                                               "Restart from the begining ?"),
-                                            QMessageBox::Yes | QMessageBox::No,
-                                            QMessageBox::Yes);
+            int ret = WingMessageBox::question(
+                m_editor, tr("Failure"),
+                tr("End of matches reached.\n"
+                   "Restart from the begining ?"),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
 
             if (ret == QMessageBox::Yes) {
                 m_index = backward ? m_highlight.count() : 0;
@@ -349,7 +349,8 @@ void QDocumentSearch::next(bool backward, bool all) {
                 m_cursor.movePosition(1, QDocumentCursor::End);
 
         } else {
-            QMessageBox::warning(0, 0, "Unable to perform search operation");
+            WingMessageBox::warning(nullptr, qAppName(),
+                                    tr("Unable to perform search operation"));
         }
     }
 
@@ -476,7 +477,7 @@ void QDocumentSearch::next(bool backward, bool all) {
                 bool rep = true;
 
                 if (hasOption(Prompt)) {
-                    int ret = QMessageBox::question(
+                    int ret = WingMessageBox::question(
                         m_editor, tr("Replacement prompt"),
                         tr("Shall it be replaced?"),
                         QMessageBox::Yes | QMessageBox::No |
@@ -570,7 +571,7 @@ void QDocumentSearch::next(bool backward, bool all) {
         if (hasOption(Silent))
             return;
 
-        int ret = QMessageBox::question(
+        int ret = WingMessageBox::question(
             m_editor, tr("Failure"),
             tr("End of scope reached with no match.\n"
                "Restart from the begining ?"),

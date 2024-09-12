@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>FormatConfig</class>
- <widget class="QWidget" name="FormatConfig" >
+ <class>QFormatConfig</class>
+ <widget class="QWidget" name="QFormatConfig" >
   <property name="geometry" >
    <rect>
     <x>0</x>
