@@ -2122,12 +2122,12 @@ Restart from the begining ?</source>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="700"/>
         <source>Local</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">本地</translation>
     </message>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="701"/>
         <source>Unix/Linux</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Unix/Linux</translation>
     </message>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="702"/>
@@ -2138,7 +2138,7 @@ Restart from the begining ?</source>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="703"/>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1298"/>
         <source>Old Mac</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">老版 Mac</translation>
     </message>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="842"/>
@@ -4505,7 +4505,7 @@ Do you want them to be saved?</source>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="306"/>
         <source>Local</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">本地</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="312"/>
@@ -4955,7 +4955,7 @@ Do you want them to be saved?</source>
 <context>
     <name>asDebugger</name>
     <message>
-        <location filename="../../src/class/asdebugger.cpp" line="385"/>
+        <location filename="../../src/class/asdebugger.cpp" line="388"/>
         <source>{no engine}</source>
         <translation type="unfinished"></translation>
     </message>

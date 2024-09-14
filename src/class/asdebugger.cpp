@@ -96,9 +96,11 @@ void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
 void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
     QFileInfo info(file);
     QString actual = info.fileName().trimmed();
-    m_breakPoints.removeIf([=](const BreakPoint &bp) {
-        return bp.name == actual && bp.lineNbr == lineNbr && bp.func == false;
-    });
+    m_breakPoints.erase(std::remove_if(
+        m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
+            return bp.name == actual && bp.lineNbr == lineNbr &&
+                   bp.func == false;
+        }));
 }
 
 void asDebugger::addFuncBreakPoint(const QString &func) {
@@ -111,9 +113,10 @@ void asDebugger::addFuncBreakPoint(const QString &func) {
 
 void asDebugger::removeFuncBreakPoint(const QString &func) {
     QString actual = func.trimmed();
-    m_breakPoints.removeIf([=](const BreakPoint &bp) {
-        return bp.name == actual && bp.func == true;
-    });
+    m_breakPoints.erase(std::remove_if(
+        m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
+            return bp.name == actual && bp.func == true;
+        }));
 }
 
 void asDebugger::clearBreakPoint() { m_breakPoints.clear(); }

@@ -312,7 +312,7 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
     }
-    if (cat.testAnyFlag(SETTING::SCRIPT)) {
+    if (cat.testFlag(SETTING::SCRIPT)) {
         WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
         WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
         WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());

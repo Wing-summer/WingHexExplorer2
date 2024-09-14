@@ -82,7 +82,7 @@ void ScriptingConsole::clearConsole() {
 }
 
 void ScriptingConsole::pushInputCmd(const QString &cmd) {
-    QMutexLocker<QMutex> locker(&_queueLocker);
+    QMutexLocker locker(&_queueLocker);
     _cmdQueue.append(cmd);
 }
 
@@ -110,7 +110,7 @@ QString ScriptingConsole::getInput() {
 
     do {
         {
-            QMutexLocker<QMutex> locker(&_queueLocker);
+            QMutexLocker locker(&_queueLocker);
             if (!_cmdQueue.isEmpty()) {
                 instr = _cmdQueue.takeFirst();
                 setMode(Output);
