@@ -1,0 +1,50 @@
+name: CMake build check
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix: 
+        os: [windows-latest, ubuntu-latest]
+        qt_version: [5.15.2, 6.6.2]
+        arch: [win64_msvc2019_64, gcc_64]
+        exclude:
+          - os: windows-latest
+            arch: gcc_64
+          - os: ubuntu-latest
+            arch: win64_msvc2019_64
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        token: ${{ secrets.CONTRIBUTORS_TOKEN }}
+    - name: Install Qt
+      # Installs the Qt SDK
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ matrix.qt_version }}
+        host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
+        target: 'desktop'
+        arch: ${{ matrix.arch }}
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}      
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: WingHexExplorer2-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}-${{ matrix.qt_version }}-build-cache
+        path: ${{github.workspace}}/build
+    
