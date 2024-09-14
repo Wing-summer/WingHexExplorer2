@@ -272,7 +272,9 @@ public slots:
 
     void setCompletionEngine(QCodeCompletionEngine *e);
 
-    void zoom(int n);
+    void setScaleRate(qreal rate);
+
+    qreal scaleRate() const;
 
     void setPanelMargins(int l, int t, int r, int b);
     void getPanelMargins(int *l, int *t, int *r, int *b) const;
@@ -453,6 +455,9 @@ protected:
     QRect m_crect, m_margins;
     QPoint m_clickPoint, m_dragPoint;
     QBasicTimer m_blink, m_scroll, m_click, m_drag;
+
+    QFont _docfont;
+    qreal _scaleRate = 1.0;
 
     static QReliableFileWatch *watcher();
 

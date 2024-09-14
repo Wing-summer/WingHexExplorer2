@@ -41,8 +41,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     l->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto editor = m_editor->editor();
-    connect(editor, &QEditor::titleChanged, this,
-            &ads::CDockWidget::setWindowTitle);
+    connect(editor, &QEditor::titleChanged, this, &ScriptEditor::processTitle);
+    connect(editor, &QEditor::contentModified, this,
+            &ScriptEditor::processTitle);
 
     this->setWidget(editor);
 
@@ -82,6 +83,15 @@ bool ScriptEditor::save(const QString &path) {
 bool ScriptEditor::reload() {
     auto e = m_editor->editor();
     return e->load(e->fileName());
+}
+
+void ScriptEditor::processTitle() {
+    auto e = m_editor->editor();
+    if (e->isContentModified()) {
+        setWindowTitle(e->windowTitle());
+    } else {
+        setWindowTitle(e->name());
+    }
 }
 
 QEditor *ScriptEditor::editor() const { return m_editor->editor(); }

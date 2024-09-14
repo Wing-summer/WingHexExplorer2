@@ -42,9 +42,6 @@ QEditConfig::QEditConfig(QWidget *w)
     : QWidget(w), ui(new Ui::QEditConfig()), m_direct(false) {
     ui->setupUi(this);
 
-    ui->cbEncoding->clear();
-    ui->cbEncoding->addItems(QCE::getEncodings());
-
     restore();
 }
 
@@ -107,20 +104,6 @@ bool QEditConfig::hasUnsavedChanges() const {
     if (ws != QDocument::showSpaces()) {
         // qDebug("spaces!");
         return true;
-    }
-
-    auto c = QEditor::defaultCodecName();
-
-    if (ui->cbEncoding->currentText() == "System") {
-        if (c != "System") {
-            // qDebug("system codec!");
-            return true;
-        }
-    } else {
-        if (c != ui->cbEncoding->currentText().toLatin1()) {
-            // qDebug("codec!");
-            return true;
-        }
     }
 
     int flags = QEditor::defaultFlags();
@@ -187,9 +170,6 @@ void QEditConfig::apply() {
 
     QDocument::setShowSpaces(ws);
 
-    QEditor::setDefaultCodec(ui->cbEncoding->currentText().toUtf8(),
-                             QEditor::UpdateAll);
-
     int flags = QEditor::defaultFlags();
 
     if (ui->chkReplaceTabs->isChecked())
@@ -246,7 +226,6 @@ void QEditConfig::cancel() {
                                               QEditor::PreserveTrailingIndent);
 
     auto c = QEditor::defaultCodecName();
-    ui->cbEncoding->setCurrentIndex(qMax(ui->cbEncoding->findText(c), 0));
 
     m_direct = oldDir;
 }
@@ -282,8 +261,6 @@ void QEditConfig::restore() {
     ui->chkAutoRemoveTrailingWhitespace->setChecked(false);
     ui->chkPreserveTrailingIndent->setChecked(true);
 
-    ui->cbEncoding->setCurrentIndex(0);
-
     m_direct = oldDir;
 }
 
@@ -310,8 +287,6 @@ QMap<QString, QVariant> QEditConfig::dumpKeys() const {
              ui->chkAutoRemoveTrailingWhitespace->isChecked());
     m.insert("preserve_trailing_indent",
              ui->chkPreserveTrailingIndent->isChecked());
-
-    m.insert("encoding", ui->cbEncoding->currentText());
 
     if (ui->chkDetectLE->isChecked())
         m.insert("line_endings", QDocument::Conservative);
@@ -373,11 +348,6 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant> &keys) {
             ui->chkShowTrailingWhitespace->setChecked(it->toBool());
             if (m_direct)
                 on_chkShowTrailingWhitespace_toggled(it->toBool());
-        } else if (it.key() == "encoding") {
-            ui->cbEncoding->setCurrentIndex(
-                ui->cbEncoding->findText(it->toString()));
-            if (m_direct)
-                on_cbEncoding_currentIndexChanged(it->toString());
         } else if (it.key() == "line_endings") {
             int le = it->toInt();
 
@@ -499,19 +469,6 @@ void QEditConfig::on_chkShowTrailingWhitespace_toggled(bool y) {
     }
 }
 
-/*!
-        \brief Slot used to apply encodings settings
-*/
-void QEditConfig::on_cbEncoding_currentIndexChanged(const QString &name) {
-    if (m_direct) {
-        QEditor::setDefaultCodec(name.toLatin1(), QEditor::UpdateAll);
-        emit keyChanged("encoding", name);
-    }
-}
-
-/*!
-        \brief Slot used to apply line endings settings
-*/
 void QEditConfig::on_cbLineEndings_currentIndexChanged(int idx) {
     QDocument::LineEnding le = QDocument::LineEnding(idx + 1);
 

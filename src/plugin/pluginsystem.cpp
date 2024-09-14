@@ -1174,21 +1174,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         }
         return false;
     });
-    connect(pctl, &WingPlugin::Controller::color, _win,
-            [=](qsizetype line, qsizetype start, qsizetype length,
-                const QColor &fgcolor, const QColor &bgcolor) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->color(line, start, length, fgcolor,
-                                           bgcolor);
-                    return true;
-                }
-                return false;
-            });
-
     connect(pctl, &WingPlugin::Controller::comment, _win,
             [=](qsizetype line, qsizetype start, qsizetype length,
                 const QString &comment) -> bool {

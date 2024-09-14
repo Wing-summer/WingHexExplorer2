@@ -280,8 +280,6 @@ signals:
                   const QString &comment);
     bool removeMetadata(qsizetype offset);
     bool clearMetadata();
-    bool color(qsizetype line, qsizetype start, qsizetype length,
-               const QColor &fgcolor, const QColor &bgcolor);
     bool foreground(qsizetype line, qsizetype start, qsizetype length,
                     const QColor &fgcolor);
     bool background(qsizetype line, qsizetype start, qsizetype length,

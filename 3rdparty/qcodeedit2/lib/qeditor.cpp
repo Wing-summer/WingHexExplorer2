@@ -472,6 +472,7 @@ void QEditor::init(bool actions) {
             SLOT(markChanged(QString, QDocumentLineHandle *, int, bool)));
 
     m_doc = new QDocument(this);
+    _docfont = m_doc->font();
 
     connect(m_doc, SIGNAL(formatsChange(int, int)), this,
             SLOT(repaintContent(int, int)));
@@ -1787,7 +1788,7 @@ QCodeCompletionEngine *QEditor::completionEngine() const {
 */
 void QEditor::setCompletionEngine(QCodeCompletionEngine *e) {
     if (m_completionEngine) {
-        m_completionEngine->setEditor(0);
+        m_completionEngine->setEditor(nullptr);
         m_completionEngine->deleteLater();
     }
 
@@ -1797,6 +1798,20 @@ void QEditor::setCompletionEngine(QCodeCompletionEngine *e) {
         m_completionEngine->setEditor(this);
     }
 }
+
+void QEditor::setScaleRate(qreal rate) {
+    _scaleRate = rate;
+    if (!m_doc)
+        return;
+
+    auto f = _docfont;
+    f.setPointSizeF(f.pointSizeF() * _scaleRate);
+    m_doc->setFont(f);
+    emit zoomed();
+    update();
+}
+
+qreal QEditor::scaleRate() const { return _scaleRate; }
 
 /*!
         \return the language definition set to this editor, if any
@@ -3074,12 +3089,8 @@ void QEditor::showEvent(QShowEvent *e) {
 */
 void QEditor::wheelEvent(QWheelEvent *e) {
     if (e->modifiers() & Qt::ControlModifier) {
-        const int delta = e->angleDelta().y();
-
-        if (delta > 0)
-            zoom(-1);
-        else if (delta < 0)
-            zoom(1);
+        auto dela = e->angleDelta().y() / 1200.0 / 2;
+        setScaleRate(scaleRate() + dela);
 
         // viewport()->update();
 
@@ -3864,25 +3875,6 @@ void QEditor::write(const QString &s) {
     ensureCursorVisible();
     repaintCursor();
     selectionChange();
-}
-
-/*!
-        \brief Zoom
-        \param n relative zoom factor
-
-        Zooming is achieved by changing the point size of the font as follow :
-
-        fontPointSize += \a n
-*/
-void QEditor::zoom(int n) {
-    if (!m_doc)
-        return;
-
-    QFont f = m_doc->font();
-    f.setPointSize(qMax(1, f.pointSize() + n));
-    m_doc->setFont(f);
-    emit zoomed();
-    update();
 }
 
 /*!

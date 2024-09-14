@@ -11,7 +11,8 @@ int BookMarksModel::columnCount(const QModelIndex &parent) const { return 2; }
 
 QVariant BookMarksModel::data(const QModelIndex &index, int role) const {
     switch (role) {
-    case Qt::DisplayRole: {
+    case Qt::DisplayRole:
+    case Qt::ToolTipRole: {
         auto r = index.row();
         auto b = _doc->bookMarkByIndex(r);
         switch (index.column()) {
@@ -21,10 +22,6 @@ QVariant BookMarksModel::data(const QModelIndex &index, int role) const {
             return b.comment;
         }
     }
-    case Qt::ToolTipPropertyRole:
-        break;
-    case Qt::BackgroundRole:
-        break;
     case Qt::TextAlignmentRole:
         return int(Qt::AlignCenter);
     }

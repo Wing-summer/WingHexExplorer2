@@ -21,18 +21,18 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
 if(WIN32)
-  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  if(Qt5Widgets_VERSION VERSION_LESS 5.14.0)
-    message(FATAL_ERROR "Minimum supported Qt5 version is 5.14!")
-  endif()
+    if(Qt5Widgets_VERSION VERSION_LESS 5.14.0)
+        message(FATAL_ERROR "Minimum supported Qt5 version is 5.14!")
+    endif()
 endif()
 
 if(MSVC)
-  string(APPEND CMAKE_CXX_FLAGS " /utf-8")
-  string(APPEND CMAKE_C_FLAGS " /utf-8")
+    string(APPEND CMAKE_CXX_FLAGS " /utf-8")
+    string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
 
 set(QWINDOWKIT_BUILD_STATIC
@@ -233,7 +233,13 @@ set(MODEL_SRC
     src/model/qjsontablemodel.h
     src/model/qjsontablemodel.cpp
     src/model/scriptobjmodel.h
-    src/model/scriptobjmodel.cpp)
+    src/model/scriptobjmodel.cpp
+    src/model/dbgcallstackmodel.h
+    src/model/dbgcallstackmodel.cpp
+    src/model/dbgvarshowmodel.h
+    src/model/dbgvarshowmodel.cpp
+    src/model/dbgbreakpointmodel.h
+    src/model/dbgbreakpointmodel.cpp)
 
 set(SETTING_SRC
     src/settings/generalsettingdialog.h
@@ -288,17 +294,17 @@ set(PLUGIN_SRC
 
 # localization support
 file(
-  GLOB_RECURSE TS_FILES
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
+    GLOB_RECURSE TS_FILES
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
 
 foreach(TS_FILE IN LISTS TS_FILES)
-  get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
-  set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
-  set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
-  file(MAKE_DIRECTORY "${QM_DIR}")
-  file(MAKE_DIRECTORY "${QM_OUT_DIR}")
-  set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
+    get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
+    set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
+    set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
+    file(MAKE_DIRECTORY "${QM_DIR}")
+    file(MAKE_DIRECTORY "${QM_OUT_DIR}")
+    set_source_files_properties(${TS_FILE} PROPERTIES OUTPUT_LOCATION ${QM_DIR})
 endforeach()
 
 set(TRANSLATION_PATH
@@ -312,13 +318,13 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(${QT_VERSION_MAJOR} EQUAL 5)
-  qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                         -no-obsolete)
+    qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
+                           -no-obsolete)
 elseif(${QT_VERSION_MAJOR} EQUAL 6)
-  qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                         -no-obsolete)
+    qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
+                           -no-obsolete)
 else()
-  message(FATAL_ERROR "Unsupported QT version")
+    message(FATAL_ERROR "Unsupported QT version")
 endif()
 
 set(LANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lang")
@@ -329,44 +335,44 @@ set(LANG_PAK_NAME "winghex_tr.pak")
 add_definitions(-DLANG_PAK_NAME="${LANG_PAK_NAME}")
 
 foreach(TS_FILE IN LISTS TS_FILES)
-  get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
-  get_filename_component(LANG_NAME "${TS_DIR}" NAME)
-  set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
-  set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
-  set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
-  set(LANG_NEED_COPY
-      "${LANG_NEED_COPY_PREFIX}/about.md"
-      "${LANG_NEED_COPY_PREFIX}/components.md"
-      "${LANG_NEED_COPY_PREFIX}/credits.md"
-      "${LANG_NEED_COPY_PREFIX}/devs.md"
-      "${LANG_NEED_COPY_PREFIX}/trans.md")
-  add_custom_target(
-    copy_lang_files
-    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
-    COMMENT "Copying files to ${LANG_DEST}")
+    get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
+    get_filename_component(LANG_NAME "${TS_DIR}" NAME)
+    set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
+    set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
+    set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
+    set(LANG_NEED_COPY
+        "${LANG_NEED_COPY_PREFIX}/about.md"
+        "${LANG_NEED_COPY_PREFIX}/components.md"
+        "${LANG_NEED_COPY_PREFIX}/credits.md"
+        "${LANG_NEED_COPY_PREFIX}/devs.md"
+        "${LANG_NEED_COPY_PREFIX}/trans.md")
+    add_custom_target(
+        copy_lang_files
+        COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
+        COMMENT "Copying files to ${LANG_DEST}")
 
-  set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
+    set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
-  set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "components.md"
-                            "credits.md" "devs.md" "trans.md")
+    set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "components.md"
+                              "credits.md" "devs.md" "trans.md")
 
-  add_custom_target(
-    pak_lang_files
-    COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
-            ${LANG_COMPRESS_CONTENT}
-    WORKING_DIRECTORY "${QM_DIR}"
-    COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
-    DEPENDS ${QM_FILES} copy_lang_files)
+    add_custom_target(
+        pak_lang_files
+        COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
+                ${LANG_COMPRESS_CONTENT}
+        WORKING_DIRECTORY "${QM_DIR}"
+        COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
+        DEPENDS ${QM_FILES} copy_lang_files)
 
-  set(TARGET_NAME "langgen_${LANG_NAME}")
-  add_custom_target(
-    ${TARGET_NAME}
-    COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK_NAME} ${QM_OUT_DIR}
-    WORKING_DIRECTORY "${QM_DIR}"
-    COMMENT "Copy ${TS_FILE} into ${LANG_PAK_NAME}"
-    DEPENDS pak_lang_files)
+    set(TARGET_NAME "langgen_${LANG_NAME}")
+    add_custom_target(
+        ${TARGET_NAME}
+        COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK_NAME} ${QM_OUT_DIR}
+        WORKING_DIRECTORY "${QM_DIR}"
+        COMMENT "Copy ${TS_FILE} into ${LANG_PAK_NAME}"
+        DEPENDS pak_lang_files)
 
-  list(APPEND LANG_TARGETS ${TARGET_NAME})
+    list(APPEND LANG_TARGETS ${TARGET_NAME})
 endforeach()
 
 add_custom_target(post_build_tasks ALL DEPENDS ${LANG_TARGETS})
@@ -392,71 +398,74 @@ set(PROJECT_SOURCES
     resources.qrc)
 
 add_custom_target(
-  build-time-make-directory ALL
-  COMMAND
-    ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/lang"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
+    build-time-make-directory ALL
+    COMMAND
+        ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/lang"
+        "${CMAKE_CURRENT_BINARY_DIR}/scripts"
+        "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-  if(WIN32)
-    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
-    qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES}
-                      ${app_icon_resource_windows})
-  else()
-    qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES})
-  endif()
-else()
-  if(ANDROID)
-    message(FATAL_ERROR "Android is not supported!")
-  else()
     if(WIN32)
-      set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
-      add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES}
-                                           ${app_icon_resource_windows})
+        set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
+        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
+                          ${PROJECT_SOURCES} ${app_icon_resource_windows})
     else()
-      add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES})
+        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
+                          ${PROJECT_SOURCES})
     endif()
-  endif()
+else()
+    if(ANDROID)
+        message(FATAL_ERROR "Android is not supported!")
+    else()
+        if(WIN32)
+            set(app_icon_resource_windows
+                "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
+            add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES}
+                                                 ${app_icon_resource_windows})
+        else()
+            add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES})
+        endif()
+    endif()
 endif()
 
 target_link_libraries(
-  ${CMAKE_PROJECT_NAME}
-  PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-          Qt${QT_VERSION_MAJOR}::Network
-          Qt${QT_VERSION_MAJOR}::Concurrent
-          Qt${QT_VERSION_MAJOR}::PrintSupport
-          Qt${QT_VERSION_MAJOR}::GuiPrivate
-          Qt${QT_VERSION_MAJOR}::CorePrivate
-          SingleApplication::SingleApplication
-          QWKCore
-          QWKWidgets
-          QHexView
-          QCodeEditor2
-          QCodeModel2
-          QJsonModel
-          angelscript
-          QConsoleWidget
-          qt${QT_VERSION_MAJOR}advanceddocking)
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Network
+            Qt${QT_VERSION_MAJOR}::Concurrent
+            Qt${QT_VERSION_MAJOR}::PrintSupport
+            Qt${QT_VERSION_MAJOR}::GuiPrivate
+            Qt${QT_VERSION_MAJOR}::CorePrivate
+            SingleApplication::SingleApplication
+            QWKCore
+            QWKWidgets
+            QHexView
+            QCodeEditor2
+            QCodeModel2
+            QJsonModel
+            angelscript
+            QConsoleWidget
+            qt${QT_VERSION_MAJOR}advanceddocking)
 
 target_include_directories(
-  ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
-                                "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
+                                  "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1. If
 # you are developing for iOS or macOS you should consider setting an explicit,
 # fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER
-                       com.wingsummer.WingHexExplorer2)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER
+                         com.wingsummer.WingHexExplorer2)
 endif()
 set_target_properties(
-  WingHexExplorer2
-  PROPERTIES ${BUNDLE_ID_OPTION} MACOSX_BUNDLE_BUNDLE_VERSION
-             ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING
-             ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} MACOSX_BUNDLE
-             TRUE WIN32_EXECUTABLE
-             TRUE)
+    WingHexExplorer2
+    PROPERTIES ${BUNDLE_ID_OPTION} MACOSX_BUNDLE_BUNDLE_VERSION
+               ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING
+               ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} MACOSX_BUNDLE
+               TRUE WIN32_EXECUTABLE
+               TRUE)
 
 if(QT_VERSION_MAJOR EQUAL 6)
-  qt_finalize_executable(WingHexExplorer2)
+    qt_finalize_executable(WingHexExplorer2)
 endif()

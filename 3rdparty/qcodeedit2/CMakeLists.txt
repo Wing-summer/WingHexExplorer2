@@ -96,14 +96,14 @@ target_compile_definitions(QCodeEditor2 PUBLIC _QCODE_EDIT_BUILD_
                                                _QCODE_EDIT_EMBED_)
 
 target_include_directories(
-  QCodeEditor2
-  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/lib"
-         "${CMAKE_CURRENT_SOURCE_DIR}/lib/document"
-         "${CMAKE_CURRENT_SOURCE_DIR}/lib/widgets"
-         "${CMAKE_CURRENT_SOURCE_DIR}/lib/qnfa"
-         "${CMAKE_CURRENT_SOURCE_DIR}/lib/snippets")
+    QCodeEditor2
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/lib"
+           "${CMAKE_CURRENT_SOURCE_DIR}/lib/document"
+           "${CMAKE_CURRENT_SOURCE_DIR}/lib/widgets"
+           "${CMAKE_CURRENT_SOURCE_DIR}/lib/qnfa"
+           "${CMAKE_CURRENT_SOURCE_DIR}/lib/snippets")
 
 target_link_libraries(
-  QCodeEditor2
-  PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui
-          Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::PrintSupport)
+    QCodeEditor2
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui
+            Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::PrintSupport)

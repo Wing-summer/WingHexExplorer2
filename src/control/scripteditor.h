@@ -23,6 +23,9 @@ public slots:
     bool reload();
 
 private:
+    void processTitle();
+
+private:
     QCodeEdit *m_editor = nullptr;
     QFormatScheme *m_formats = nullptr;
     QLanguageFactory *m_languages = nullptr;

@@ -46,7 +46,6 @@ private slots:
     void on_chkShowLeadingWhitespace_toggled(bool y);
     void on_chkShowTrailingWhitespace_toggled(bool y);
 
-    void on_cbEncoding_currentIndexChanged(const QString &name);
     void on_cbLineEndings_currentIndexChanged(int idx);
     void on_chkDetectLE_toggled(bool y);
     void on_chkAutoRemoveTrailingWhitespace_toggled(bool y);

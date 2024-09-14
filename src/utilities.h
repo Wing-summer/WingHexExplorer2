@@ -5,6 +5,7 @@
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
+#include <QHeaderView>
 #include <QList>
 #include <QMetaEnum>
 #include <QMimeDatabase>
@@ -12,6 +13,7 @@
 #include <QStandardPaths>
 #include <QStorageInfo>
 #include <QStyle>
+#include <QTableView>
 #include <QWidget>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -221,6 +223,16 @@ public:
         return QStandardPaths::writableLocation(
                    QStandardPaths::AppDataLocation) +
                QDir::separator() + APP_NAME;
+    }
+
+    static void applyTableViewProperty(QTableView *view) {
+        view->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
+        view->setSelectionMode(QAbstractItemView::SingleSelection);
+        view->setSelectionBehavior(
+            QAbstractItemView::SelectionBehavior::SelectRows);
+        view->setFocusPolicy(Qt::StrongFocus);
+        view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
+        view->horizontalHeader()->setStretchLastSection(true);
     }
 };
 

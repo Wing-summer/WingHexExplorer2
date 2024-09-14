@@ -170,6 +170,9 @@ bool ScriptConsoleMachine::execString(asIScriptEngine *engine,
         info.message = str;
         emit onOutput(MessageType::Info, info);
         return true;
+    } else if (code.startsWith(QStringLiteral("import "))) {
+        // TODO
+        return true;
     } else {
         return ExecuteString(engine, code.toUtf8(), mod, immediateContext()) >=
                0;

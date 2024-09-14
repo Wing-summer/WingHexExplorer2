@@ -9,11 +9,13 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "qcodeeditwidget/qeditconfig.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
 #include "qlinemarksinfocenter.h"
 
 #include <QDesktopServices>
+#include <QHeaderView>
 #include <QLabel>
 #include <QPainter>
 #include <QPicture>
@@ -80,7 +82,7 @@ void ScriptingDialog::buildUpRibbonBar() {
     m_editStateWidgets << buildEditPage(m_ribbon->addTab(tr("Edit")));
     buildViewPage(m_ribbon->addTab(tr("View")));
     m_editStateWidgets << buildDebugPage(m_ribbon->addTab(tr("Debugger")));
-    buildScriptPage(m_ribbon->addTab(tr("Script")));
+    buildSettingPage(m_ribbon->addTab(tr("Setting")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
 
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
@@ -167,34 +169,34 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("Display"));
         auto menu = new QMenu(this);
         menu->addAction(newAction(QStringLiteral("80%"), [this] {
-            this->setCurrentHexEditorScale(0.8);
+            this->setCurrentEditorScale(0.8);
         }));
         menu->addAction(newAction(QStringLiteral("90%"), [this] {
-            this->setCurrentHexEditorScale(0.9);
+            this->setCurrentEditorScale(0.9);
         }));
         menu->addAction(newAction(QStringLiteral("100%"), [this] {
-            this->setCurrentHexEditorScale(1.0);
+            this->setCurrentEditorScale(1.0);
         }));
         menu->addSeparator();
         menu->addAction(newAction(QStringLiteral("120%"), [this] {
-            this->setCurrentHexEditorScale(1.2);
+            this->setCurrentEditorScale(1.2);
         }));
         menu->addAction(newAction(QStringLiteral("150%"), [this] {
-            this->setCurrentHexEditorScale(1.5);
+            this->setCurrentEditorScale(1.5);
         }));
         menu->addAction(newAction(QStringLiteral("200%"), [this] {
-            this->setCurrentHexEditorScale(2.0);
+            this->setCurrentEditorScale(2.0);
         }));
         menu->addAction(newAction(QStringLiteral("250%"), [this] {
-            this->setCurrentHexEditorScale(2.5);
+            this->setCurrentEditorScale(2.5);
         }));
         menu->addAction(newAction(QStringLiteral("300%"), [this] {
-            this->setCurrentHexEditorScale(3.0);
+            this->setCurrentEditorScale(3.0);
         }));
         addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
                         EMPTY_FUNC, {}, menu);
         addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
-                        [this] { this->setCurrentHexEditorScale(1.0); });
+                        [this] { this->setCurrentEditorScale(1.0); });
         m_editStateWidgets << pannel;
     }
 
@@ -210,17 +212,6 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
                                              new QMenu(this)));
     }
 
-    return tab;
-}
-
-RibbonTabContent *ScriptingDialog::buildScriptPage(RibbonTabContent *tab) {
-
-    {
-        auto pannel = tab->addGroup(tr("Scripts"));
-        connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
-                [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
-        // TODO
-    }
     return tab;
 }
 
@@ -275,6 +266,15 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
     return tab;
 }
 
+RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
+    auto pannel = tab->addGroup(tr("Settings"));
+
+    addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
+                    &ScriptingDialog::on_setting);
+
+    return tab;
+}
+
 RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
     auto pannel = tab->addGroup(tr("Info"));
 
@@ -296,14 +296,37 @@ ads::CDockAreaWidget *
 ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
                                     ads::DockWidgetArea area,
                                     ads::CDockAreaWidget *areaw) {
-    return nullptr;
+    auto vars = new QTabWidget(this);
+    vars->setTabPosition(QTabWidget::South);
+
+    auto varview = new QTableView(this);
+    Utilities::applyTableViewProperty(varview);
+    m_varshow = new DbgVarShowModel(varview);
+    varview->setModel(m_varshow);
+    vars->addTab(varview, tr("Local"));
+
+    varview = new QTableView(this);
+    Utilities::applyTableViewProperty(varview);
+    m_gvarshow = new DbgVarShowModel(varview);
+    varview->setModel(m_gvarshow);
+    vars->addTab(varview, tr("Global"));
+
+    auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
+                              tr("Variables"), vars);
+    return dock->addDockWidget(area, dw, areaw);
 }
 
 ads::CDockAreaWidget *
 ScriptingDialog::buildUpBreakpointShowDock(ads::CDockManager *dock,
                                            ads::DockWidgetArea area,
                                            ads::CDockAreaWidget *areaw) {
-    return nullptr;
+    auto bpview = new QTableView(this);
+    Utilities::applyTableViewProperty(bpview);
+    m_breakpoints = new DbgBreakpointModel(bpview);
+    bpview->setModel(m_breakpoints);
+    auto dw = buildDockWidget(dock, QStringLiteral("BreakPoints"),
+                              tr("BreakPoints"), bpview);
+    return dock->addDockWidget(area, dw, areaw);
 }
 
 ads::CDockAreaWidget *
@@ -322,14 +345,28 @@ ads::CDockAreaWidget *
 ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
                                       ads::CDockAreaWidget *areaw) {
-    return nullptr;
+    auto callstack = new QTableView(this);
+    Utilities::applyTableViewProperty(callstack);
+    m_callstack = new DbgCallStackModel(callstack);
+    callstack->setModel(m_callstack);
+
+    auto dw = buildDockWidget(dock, QStringLiteral("StackTrace"),
+                              tr("StackTrace"), callstack);
+    return dock->addDockWidget(area, dw, areaw);
 }
 
 ads::CDockAreaWidget *
-ScriptingDialog::buildUpErrorShowDock(ads::CDockManager *dock,
-                                      ads::DockWidgetArea area,
-                                      ads::CDockAreaWidget *areaw) {
-    return nullptr;
+ScriptingDialog::buildUpWatchDock(ads::CDockManager *dock,
+                                  ads::DockWidgetArea area,
+                                  ads::CDockAreaWidget *areaw) {
+    auto watch = new QTableView(this);
+    Utilities::applyTableViewProperty(watch);
+    m_watch = new DbgVarShowModel(watch);
+    watch->setModel(m_watch);
+
+    auto dw =
+        buildDockWidget(dock, QStringLiteral("Watch"), tr("Watch"), watch);
+    return dock->addDockWidget(area, dw, areaw);
 }
 
 void ScriptingDialog::buildUpDockSystem(QWidget *container) {
@@ -385,14 +422,16 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
 
     // build up basic docking widgets
     // TODO
-    auto bottomRightArea =
-        buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
+    auto bottomArea = buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
+
     auto splitter =
         ads::internal::findParent<ads::CDockSplitter *>(m_editorViewArea);
     if (splitter) {
         constexpr auto bottomHeight = 200;
         splitter->setSizes({height() - bottomHeight, bottomHeight});
     }
+
+    buildUpStackShowDock(m_dock, ads::CenterDockWidgetArea, bottomArea);
 }
 
 bool ScriptingDialog::newOpenFileSafeCheck() {
@@ -504,7 +543,13 @@ ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
     return nullptr;
 }
 
-void ScriptingDialog::setCurrentHexEditorScale(qreal rate) {}
+void ScriptingDialog::setCurrentEditorScale(qreal rate) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
+    editor->editor()->setScaleRate(rate);
+}
 
 bool ScriptingDialog::isCurrentDebugging() const {
     auto m = m_consoleout->machine();
@@ -697,6 +742,12 @@ void ScriptingDialog::on_gotoline() {
     if (e) {
         e->editor()->gotoLine();
     }
+}
+
+void ScriptingDialog::on_setting() {
+    // TODO
+    QEditConfig cfg;
+    cfg.show();
 }
 
 void ScriptingDialog::on_about() { AboutSoftwareDialog().exec(); }

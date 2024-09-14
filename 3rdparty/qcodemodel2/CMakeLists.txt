@@ -13,34 +13,34 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Gui)
 add_definitions(-D_QCODE_MODEL_BUILD_STATIC_)
 
 add_library(
-  QCodeModel2 STATIC
-  qcm-config.h
-  qcodemodel.h
-  qcodeproxymodel.h
-  qcodenode.h
-  qcodenodepool.h
-  qsourcecodewatcher.h
-  qcodeview.h
-  qcodeserializer.h
-  qcodestream.h
-  qcodedevice.h
-  qcodebuffer.h
-  qcodelexer.h
-  qcodeparser.h
-  qcodeloader.h
-  qcodemodel.cpp
-  qcodeproxymodel.cpp
-  qcodenode.cpp
-  qcodenodepool.cpp
-  qsourcecodewatcher.cpp
-  qcodeview.cpp
-  qcodeserializer.cpp
-  qcodestream.cpp
-  qcodedevice.cpp
-  qcodebuffer.cpp
-  qcodelexer.cpp
-  qcodeparser.cpp
-  qcodeloader.cpp)
+    QCodeModel2 STATIC
+    qcm-config.h
+    qcodemodel.h
+    qcodeproxymodel.h
+    qcodenode.h
+    qcodenodepool.h
+    qsourcecodewatcher.h
+    qcodeview.h
+    qcodeserializer.h
+    qcodestream.h
+    qcodedevice.h
+    qcodebuffer.h
+    qcodelexer.h
+    qcodeparser.h
+    qcodeloader.h
+    qcodemodel.cpp
+    qcodeproxymodel.cpp
+    qcodenode.cpp
+    qcodenodepool.cpp
+    qsourcecodewatcher.cpp
+    qcodeview.cpp
+    qcodeserializer.cpp
+    qcodestream.cpp
+    qcodedevice.cpp
+    qcodebuffer.cpp
+    qcodelexer.cpp
+    qcodeparser.cpp
+    qcodeloader.cpp)
 
 target_include_directories(QCodeModel2 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 

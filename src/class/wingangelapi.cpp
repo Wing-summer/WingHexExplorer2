@@ -76,7 +76,7 @@ void WingAngelAPI::installAPI(asIScriptEngine *engine,
 }
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("Log");
+    int r = engine->SetDefaultNamespace("log");
     Q_ASSERT(r >= 0);
 
     registerAPI<void(const QString &)>(
@@ -112,11 +112,11 @@ void WingAngelAPI::installExtAPI(asIScriptEngine *engine) {
 }
 
 void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("MsgBox");
+    int r = engine->SetDefaultNamespace("msgbox");
     Q_ASSERT(r >= 0);
 
-    registerAngelType<QMessageBox::StandardButtons>(engine, "StandardButtons");
-    registerAngelType<QMessageBox::Icon>(engine, "Icon");
+    registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
+    registerAngelType<QMessageBox::Icon>(engine, "icon");
     auto msgbox = &this->msgbox;
 
     registerAPI<void(const QString &)>(
@@ -133,8 +133,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                   nullptr, std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void information(const string &in, const string &in, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)");
+        "msgbox::buttons = msgbox::buttons::Ok, "
+        "msgbox::buttons = msgbox::buttons::NoButton)");
 
     registerAPI<QMessageBox::StandardButton(const QString &, const QString &,
                                             QMessageBox::StandardButtons,
@@ -144,9 +144,9 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void question(const string &in, const string &in, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::Yes | "
-        "MsgBox::StandardButtons::No, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)");
+        "msgbox::buttons = msgbox::buttons::Yes | "
+        "msgbox::buttons::No, "
+        "msgbox::buttons = msgbox::buttons::NoButton)");
 
     registerAPI<QMessageBox::StandardButton(const QString &, const QString &,
                                             QMessageBox::StandardButtons,
@@ -156,8 +156,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void warning(const string &in, const string &in, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)");
+        "msgbox::buttons = msgbox::buttons::Ok, "
+        "msgbox::buttons = msgbox::buttons::NoButton)");
 
     registerAPI<QMessageBox::StandardButton(const QString &, const QString &,
                                             QMessageBox::StandardButtons,
@@ -167,8 +167,8 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void critical(const string &in, const string &in, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::Ok, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)");
+        "msgbox::buttons = msgbox::buttons::Ok, "
+        "msgbox::buttons = msgbox::buttons::NoButton)");
 
     registerAPI<QMessageBox::StandardButton(
         QMessageBox::Icon, const QString &, const QString &,
@@ -178,9 +178,9 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
-        "void msgbox(MsgBox::Icon, const string &in, const string &in, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton, "
-        "MsgBox::StandardButtons = MsgBox::StandardButtons::NoButton)");
+        "void msgbox(msgbox::icon, const string &in, const string &in, "
+        "msgbox::buttons = msgbox::buttons::NoButton, "
+        "msgbox::buttons = msgbox::buttons::NoButton)");
 
     registerAPI<void(const QString &, const QString &)>(
         engine,
@@ -192,7 +192,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
 }
 
 void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
-    int r = engine->SetDefaultNamespace("InputBox");
+    int r = engine->SetDefaultNamespace("inputbox");
     Q_ASSERT(r >= 0);
 
     registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
@@ -209,9 +209,9 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5, std::placeholders::_6),
         "string getText(const string &in, const string &in, "
-        "InputBox::EchoMode = InputBox::Normal, const string &in = \"\", "
+        "inputbox::EchoMode = inputbox::Normal, const string &in = \"\", "
         "bool &out = false, "
-        "InputBox::InputMethodHints = InputBox::ImhNone)");
+        "inputbox::InputMethodHints = inputbox::ImhNone)");
 
     registerAPI<QString(const QString &, const QString &, const QString &,
                         bool *, Qt::InputMethodHints inputMethodHints)>(
@@ -222,7 +222,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
                   std::placeholders::_5),
         "string getMultiLineText(const string &in, const string &in, "
         "const string &in = \"\", bool &out = false, "
-        "InputBox::InputMethodHints = InputBox::ImhNone)");
+        "inputbox::InputMethodHints = inputbox::ImhNone)");
 
     registerAPI<int(const QString &, const QString &, int, int, int, int,
                     bool *)>(
@@ -259,16 +259,16 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
                   std::placeholders::_7),
         "string getItem(const string &in, const string &in, "
         "const array<string> &in, int = 0, bool = true, bool &out = false, "
-        "InputBox::InputMethodHints = InputBox::ImhNone)");
+        "inputbox::InputMethodHints = inputbox::ImhNone)");
 
     engine->SetDefaultNamespace("");
 }
 
 void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("FileDialog");
+    int r = engine->SetDefaultNamespace("filedlg");
     Q_ASSERT(r >= 0);
 
-    registerAngelType<QFileDialog::Options>(engine, "Options");
+    registerAngelType<QFileDialog::Options>(engine, "options");
 
     auto filedlg = &this->filedlg;
 
@@ -280,7 +280,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                   std::placeholders::_2, std::placeholders::_3),
         "string getExistingDirectory(const string &in = \"\", "
         "const string &in = \"\", "
-        "FileDialog::Options &in = FileDialog::Options::ShowDirsOnly)");
+        "filedlg::options &in = filedlg::options::ShowDirsOnly)");
 
     registerAPI<QString(const QString &, const QString &, const QString &,
                         QString *, QFileDialog::Options)>(
@@ -291,7 +291,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                   std::placeholders::_5),
         "string getOpenFileName(const string &in = \"\", "
         "const string &in = \"\", const string &in = \"\", "
-        "string &out = \"\", FileDialog::Options &in = 0)");
+        "string &out = \"\", filedlg::options &in = 0)");
 
     registerAPI<QString(const QString &, const QString &, const QString &,
                         QString *, QFileDialog::Options)>(
@@ -302,7 +302,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                   std::placeholders::_5),
         "string getSaveFileName(const string &in = \"\", "
         "const string &in = \"\", const string &in = \"\", "
-        "string &out = \"\", FileDialog::Options &in = 0)");
+        "string &out = \"\", filedlg::options &in = 0)");
 
     registerAPI<CScriptArray *(const QString &, const QString &,
                                const QString &, QString *,
@@ -314,13 +314,13 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                   std::placeholders::_5),
         "array<string>@ getOpenFileNames(const string &in = \"\", "
         "const string &in = \"\", const string &in = \"\", "
-        "string &out = \"\", FileDialog::Options &in = 0)");
+        "string &out = \"\", filedlg::options &in = 0)");
 
     engine->SetDefaultNamespace("");
 }
 
 void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("ColorDialog");
+    int r = engine->SetDefaultNamespace("colordlg");
     Q_ASSERT(r >= 0);
 
     auto colordlg = &this->colordlg;
@@ -329,7 +329,7 @@ void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingHex::WingPlugin::ColorDialog::getColor, colordlg,
                   std::placeholders::_1, nullptr),
-        "Color getColor(const string &in)");
+        "color getColor(const string &in)");
 
     engine->SetDefaultNamespace("");
 }
@@ -430,12 +430,12 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", "Color foreground",
+        "HexMetadataAbsoluteItem", "color foreground",
         asOFFSET(WingHex::HexMetadataAbsoluteItem, foreground));
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", "Color background",
+        "HexMetadataAbsoluteItem", "color background",
         asOFFSET(WingHex::HexMetadataAbsoluteItem, background));
     Q_ASSERT(r >= 0);
 
@@ -466,12 +466,12 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "Color foreground",
+        "HexMetadataItem", "color foreground",
         asOFFSET(WingHex::HexMetadataItem, foreground));
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "Color background",
+        "HexMetadataItem", "color background",
         asOFFSET(WingHex::HexMetadataItem, background));
     Q_ASSERT(r >= 0);
 
@@ -482,7 +482,7 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
 }
 
 void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("Reader");
+    int r = engine->SetDefaultNamespace("reader");
     Q_ASSERT(r >= 0);
     auto reader = &this->reader;
 
@@ -723,7 +723,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
 }
 
 void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
-    int r = engine->SetDefaultNamespace("Controller");
+    int r = engine->SetDefaultNamespace("ctl");
     Q_ASSERT(r >= 0);
 
     auto ctl = &this->controller;
@@ -945,7 +945,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
         "bool metadata(" QSIZETYPE ", " QSIZETYPE
-        ", Color &in, Color &in, string &in)");
+        ", color &in, color &in, string &in)");
 
     registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &,
                      const QColor &, const QString &)>(
@@ -957,7 +957,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5, std::placeholders::_6),
         "bool metadata(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", Color &in, Color &in, string &in)");
+        ", color &in, color &in, string &in)");
 
     registerAPI<bool(qsizetype)>(
         engine,
@@ -969,23 +969,13 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Controller::clearMetadata, ctl),
         "bool clearMetadata()");
 
-    registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &,
-                     const QColor &)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::color, ctl,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4,
-                  std::placeholders::_5),
-        "bool metadata(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", Color &in, Color &in)");
-
     registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::foreground, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "bool foreground(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", Color &in)");
+        ", color &in)");
 
     registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &)>(
         engine,
@@ -993,7 +983,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "bool background(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", Color &in)");
+        ", color &in)");
 
     registerAPI<bool(qsizetype, qsizetype, qsizetype, const QString &)>(
         engine,
@@ -1164,7 +1154,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
 }
 
 void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
-    int r = engine->SetDefaultNamespace("DataVisual");
+    int r = engine->SetDefaultNamespace("visual");
     Q_ASSERT(r >= 0);
 
     auto datavis = &this->visual;

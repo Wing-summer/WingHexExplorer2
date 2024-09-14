@@ -10,9 +10,11 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
+#include "model/dbgbreakpointmodel.h"
+#include "model/dbgcallstackmodel.h"
+#include "model/dbgvarshowmodel.h"
 #include "utilities.h"
 
-#include <QListView>
 #include <QShortcut>
 #include <QStatusBar>
 #include <QTableView>
@@ -48,8 +50,8 @@ private:
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
     RibbonTabContent *buildViewPage(RibbonTabContent *tab);
-    RibbonTabContent *buildScriptPage(RibbonTabContent *tab);
     RibbonTabContent *buildDebugPage(RibbonTabContent *tab);
+    RibbonTabContent *buildSettingPage(RibbonTabContent *tab);
     RibbonTabContent *buildAboutPage(RibbonTabContent *tab);
 
     ads::CDockAreaWidget *
@@ -65,8 +67,8 @@ private:
     buildUpStackShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                          ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
-    buildUpErrorShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
-                         ads::CDockAreaWidget *areaw = nullptr);
+    buildUpWatchDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                     ads::CDockAreaWidget *areaw = nullptr);
 
     void buildUpDockSystem(QWidget *container);
 
@@ -138,7 +140,7 @@ private:
 
     ScriptEditor *findEditorView(const QString &filename);
 
-    void setCurrentHexEditorScale(qreal rate);
+    void setCurrentEditorScale(qreal rate);
 
     bool isCurrentDebugging() const;
 
@@ -163,6 +165,7 @@ private slots:
     void on_replace();
     void on_gotoline();
 
+    void on_setting();
     void on_about();
     void on_sponsor();
     void on_wiki();
@@ -206,10 +209,11 @@ private:
 
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;
-    QTableView *m_varshowtable = nullptr;
-    QTableView *m_breakpointstable = nullptr;
-    QTableView *m_watchtable = nullptr;
-    QListView *m_callstack = nullptr;
+    DbgVarShowModel *m_varshow = nullptr;
+    DbgVarShowModel *m_gvarshow = nullptr;
+    DbgBreakpointModel *m_breakpoints = nullptr;
+    DbgVarShowModel *m_watch = nullptr;
+    DbgCallStackModel *m_callstack = nullptr;
 
     QStatusBar *m_status = nullptr;
 };

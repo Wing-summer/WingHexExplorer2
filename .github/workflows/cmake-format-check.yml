@@ -1,0 +1,14 @@
+name: Check CMake Formatting
+
+on: [push, pull_request]
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: cmake-format lint
+      uses: Wing-summer/cmake-format-action@main
+      with:
+        inplace: true

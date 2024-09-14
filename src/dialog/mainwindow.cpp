@@ -343,12 +343,9 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     _findEmptyResult = new FindResultModel(this);
     m_findresult = new QTableViewExt(this);
     m_findresult->setProperty("EditorView", quintptr(0));
-    m_findresult->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
-    m_findresult->setSelectionBehavior(
-        QAbstractItemView::SelectionBehavior::SelectRows);
 
-    m_findresult->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
-    m_findresult->horizontalHeader()->setStretchLastSection(true);
+    Utilities::applyTableViewProperty(m_findresult);
+
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
     m_findresult->addAction(newAction(QStringLiteral("export"),
@@ -383,13 +380,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     _numsitem = new NumShowModel(this);
     m_numshowtable = new QTableViewExt(this);
-    m_numshowtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
-    m_numshowtable->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_numshowtable->setSelectionBehavior(
-        QAbstractItemView::SelectionBehavior::SelectRows);
-    m_numshowtable->setFocusPolicy(Qt::StrongFocus);
-    m_findresult->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
-    m_numshowtable->horizontalHeader()->setStretchLastSection(true);
+    Utilities::applyTableViewProperty(m_numshowtable);
 
     m_numshowtable->setModel(_numsitem);
 
@@ -452,12 +443,8 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
 
     m_hashtable = new QTableViewExt(this);
-    m_hashtable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
-    m_hashtable->setSelectionBehavior(
-        QAbstractItemView::SelectionBehavior::SelectRows);
+    Utilities::applyTableViewProperty(m_hashtable);
     m_hashtable->setColumnWidth(0, 350);
-    m_hashtable->setFocusPolicy(Qt::StrongFocus);
-    m_hashtable->horizontalHeader()->setStretchLastSection(true);
 
     _hashModel = new CheckSumModel(this);
     m_hashtable->setModel(_hashModel);
@@ -493,11 +480,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     _bookMarkEmpty = new BookMarksModel(nullptr);
 
     m_bookmarks = new QTableViewExt(this);
-    m_bookmarks->setFocusPolicy(Qt::StrongFocus);
-    m_bookmarks->setSelectionMode(
-        QAbstractItemView::SelectionMode::ExtendedSelection);
-    m_bookmarks->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_bookmarks->horizontalHeader()->setStretchLastSection(true);
+    Utilities::applyTableViewProperty(m_bookmarks);
 
     m_bookmarks->setModel(_bookMarkEmpty);
 
@@ -552,11 +535,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     _metadataEmpty = new MetaDataModel(nullptr);
 
     m_metadatas = new QTableViewExt(this);
-    m_metadatas->setFocusPolicy(Qt::StrongFocus);
-    m_metadatas->setSelectionMode(
-        QAbstractItemView::SelectionMode::ExtendedSelection);
-    m_metadatas->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_metadatas->horizontalHeader()->setStretchLastSection(true);
+    Utilities::applyTableViewProperty(m_metadatas);
 
     m_metadatas->setModel(_metadataEmpty);
 
