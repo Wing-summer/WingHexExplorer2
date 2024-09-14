@@ -20,13 +20,20 @@
 <h1 align="center"> WingSummer.WingHexExplorer2</h1>
 
 <p align="center">
-<img alt="PEHexExplorer" src="images/icon.png">
+<img alt="WingHexExplorer2" src="images/icon.png" />
 <p align="center">羽云十六进制浏览器</p>
 </p>
 
 <p align="center">
-<img alt="作者" src="authorband.svg">
-<img alt="协议" src="licenseband.svg">
+<img alt="作者" src="authorband.svg" />
+<img alt="协议" src="licenseband.svg" />
+</p>
+
+<p align="center">
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
 </p>
 
 - 开源不易，给个 Star 或者 [捐助](#捐助) 吧
@@ -86,13 +93,9 @@
 
 ## 软件编译运行情况
 
-> 对于 QT5 版本只支持 5.14.0 及其以上的版本，其他低版本由于关键库的 API 缺失导致功能缺失，所以不提供支持。
+> 对于 Qt 5 版本，仅支持 5.15.2 或更高版本，Qt 6 的话 6.6.2 或更高的版本，其他低版本由于关键库的 API 缺失和自身的一些 Bug，所以不提供支持。
 
-| 操作系统平台 |  QT5  |  QT6  |         缺陷         |
-| :----------: | :---: | :---: | :------------------: |
-|  Windows 11  |   ✔️   |   ✔️   |          -           |
-|  Deepin 20   |   ✔️   |   ❔   |          -           |
-|    MacOS     |   ❌   |   ❌   | 没有测试，未添加支持 |
+&emsp;&emsp;该仓库代码使用 Qt 5.15.2 和 6.6.2 在最新版 Windows 和 Ubuntu 编译情况： ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
 

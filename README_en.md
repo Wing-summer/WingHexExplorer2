@@ -20,13 +20,20 @@
 <h1 align="center"> WingSummer.WingHexExplorer2</h1>
 
 <p align="center">
-<img alt="PEHexExplorer" src="images/icon.png">
+<img alt="WingHexExplorer2" src="images/icon.png" /> 
 <p align="center">WingHexExplorer2</p>
 </p>
 
 <p align="center">
-<img alt="Author" src="authorband.svg">
-<img alt="License" src="licenseband.svg">
+<img alt="Author" src="authorband.svg" />
+<img alt="License" src="licenseband.svg" />
+</p>
+
+<p align="center">
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
+<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
 </p>
 
 - Not easy to open source, please Star or [Donate](#donate)
@@ -86,13 +93,9 @@ Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contrib
 
 ## Status
 
-> For QT5 version, only version 5.14.0 and above are supported. Other lower versions are not supported because of missing APIs of key libraries.
+> For Qt 5, only version 5.15.2 or higher is supported, and for Qt 6, only version 6.6.2 or higher is supported. Other lower versions are not supported due to missing APIs of key libraries and some bugs of their own.
 
-|     OS     |  QT5  |  QT6  |   faults   |
-| :--------: | :---: | :---: | :--------: |
-| Windows 11 |   ✔️   |   ✔️   |     -      |
-| Deepin 20  |   ✔️   |   ❔   |     -      |
-|   MacOS    |   ❌   |   ❌   | Not tested |
+&emsp;&emsp;The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of Windows and Ubuntu: ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
 

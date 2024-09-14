@@ -1,3 +1,4 @@
+name: Conventional commit check
 on: [push]
 
 jobs:

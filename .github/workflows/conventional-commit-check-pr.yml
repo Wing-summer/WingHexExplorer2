@@ -1,3 +1,4 @@
+name: Conventional commit check
 on: [pull_request]
 
 jobs:
