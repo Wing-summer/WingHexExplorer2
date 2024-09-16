@@ -124,7 +124,7 @@ public:
     static QLineMarksInfoCenter *instance();
     static void destroy();
 
-    QLineMarkList marks(const QString &file = QString());
+    QLineMarkList marks(const QString &file = QString(), int filterID = -1);
 
     QString markTypeId(int id);
     int markTypeId(const QString &id);

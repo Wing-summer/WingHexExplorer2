@@ -149,7 +149,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         return false;
     }
 
-    _debugger = new asDebugger;
+    _debugger = new asDebugger(this);
 
     // Register the to-string callbacks so the user can see the contents of
     // strings
@@ -252,7 +252,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // ready to execute, so disable the automatic initialization
     _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
-    CScriptBuilder builder;
+    asBuilder builder;
 
     // Set the pragma callback so we can detect
     builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, this);
@@ -271,8 +271,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     r = builder.BuildModule();
     if (r < 0) {
-        _engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR,
-                              "Script failed to build");
+        MessageInfo info;
+        info.message = tr("Script failed to build");
+        emit onOutput(MessageType::Error, info);
         return false;
     }
 
@@ -368,8 +369,12 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     _ctxPool.clear();
 
     // Detach debugger
-    Q_ASSERT(_debugger);
-    _debugger->setEngine(nullptr);
+    if (isInDebug) {
+        Q_ASSERT(_debugger);
+        _debugger->setEngine(nullptr);
+        _debugger->clearBreakPoint();
+        emit onDebugFinished();
+    }
 
     return r >= 0;
 }
@@ -433,7 +438,7 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     }
 
     // Attach the debugger if needed
-    if (ctx && p->_debugger) {
+    if (ctx && p->_debugger->getEngine()) {
         // Set the line callback for the debugging
         ctx->SetLineCallback(asMETHOD(asDebugger, lineCallback), p->_debugger,
                              asCALL_THISCALL);
@@ -459,22 +464,22 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
     p->_ctxPool.push_back(ctx);
 }
 
-int ScriptMachine::pragmaCallback(const std::string &pragmaText,
-                                  CScriptBuilder &builder, void *userParam) {
-    asIScriptEngine *engine = builder.GetEngine();
+int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
+                                  asBuilder *builder, void *userParam) {
+    asIScriptEngine *engine = builder->GetEngine();
 
     // Filter the pragmaText so only what is of interest remains
     // With this the user can add comments and use different whitespaces
     // without affecting the result
     asUINT pos = 0;
     asUINT length = 0;
-    QList<std::string> tokens;
+    QStringList tokens;
     while (pos < pragmaText.size()) {
         asETokenClass tokenClass =
-            engine->ParseToken(pragmaText.c_str() + pos, 0, &length);
+            engine->ParseToken(pragmaText.data() + pos, 0, &length);
         if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
             tokenClass == asTC_VALUE) {
-            std::string token = pragmaText.substr(pos, length);
+            auto token = pragmaText.mid(pos, length);
             tokens << token;
         }
         if (tokenClass == asTC_UNKNOWN)
@@ -492,8 +497,8 @@ int ScriptMachine::pragmaCallback(const std::string &pragmaText,
     return -1;
 }
 
-int ScriptMachine::includeCallback(const char *include, const char *from,
-                                   CScriptBuilder *builder, void *userParam) {
+int ScriptMachine::includeCallback(const QString &include, const QString &from,
+                                   asBuilder *builder, void *userParam) {
     asIScriptEngine *engine = builder->GetEngine();
 
     return 0;

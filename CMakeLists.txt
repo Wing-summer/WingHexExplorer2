@@ -35,12 +35,10 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
 
-set(QWINDOWKIT_BUILD_STATIC
-    TRUE
-    CACHE BOOL "Build static libraries")
-set(QWINDOWKIT_INSTALL
-    OFF
-    CACHE BOOL "Install library")
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
+option(QWINDOWKIT_INSTALL "Install library" OFF)
+set(ADS_VERSION 4.3.1)
 
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)
@@ -63,8 +61,6 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptbuilder/scriptbuilder.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptbuilder/scriptbuilder.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.cpp
@@ -207,6 +203,8 @@ set(CLASS_SRC
     src/class/angelscripthelper.h
     src/class/ascompletion.cpp
     src/class/ascompletion.h
+    src/class/asbuilder.h
+    src/class/asbuilder.cpp
     src/class/qaslexer.cpp
     src/class/qaslexer.h
     src/class/qasparser.cpp
@@ -313,7 +311,7 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
     ${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -146,6 +146,8 @@ private:
 
     void openFile(const QString &filename);
 
+    void runDbgCommand(asDebugger::DebugAction action);
+
 private slots:
     void on_newfile();
     void on_openfile();
@@ -202,6 +204,7 @@ private:
     Ribbon *m_ribbon = nullptr;
 
     size_t m_newIndex = 1;
+    QPair<QString, int> _lastCurLine = {QString(), -1};
 
     QList<ScriptEditor *> m_views;
     QMap<Symbols, int> m_symID;

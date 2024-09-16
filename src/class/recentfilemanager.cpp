@@ -75,15 +75,11 @@ QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
     auto fileName = info.fileName;
     QString displayName;
 
-    auto drivers = Utilities::getStorageDevices();
-    auto r = std::find_if(drivers.begin(), drivers.end(),
-                          [fileName](const QStorageInfo &info) {
-                              return info.device() == fileName;
-                          });
-    if (r != drivers.end()) {
-        displayName = r->displayName();
+    auto driver = Utilities::getStorageDevice(fileName);
+    if (driver.isValid()) {
+        displayName = driver.displayName();
         if (displayName.isEmpty()) {
-            displayName = r->device();
+            displayName = driver.device();
         }
     } else {
         QFileInfo finfo(fileName);

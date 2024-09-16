@@ -7,20 +7,13 @@
 #include <QTextStream>
 #include <QThread>
 
-asDebugger::asDebugger() : QObject() {
-    _thread = new QThread;
-    moveToThread(_thread);
-    _thread->start();
-
+asDebugger::asDebugger(QObject *parent) : QObject(parent) {
     m_action = CONTINUE;
     m_lastFunction = nullptr;
     m_engine = nullptr;
 }
 
-asDebugger::~asDebugger() {
-    setEngine(nullptr);
-    _thread->deleteLater();
-}
+asDebugger::~asDebugger() { setEngine(nullptr); }
 
 void asDebugger::registerToStringCallback(const asITypeInfo *ti,
                                           ToStringCallback callback) {
@@ -33,9 +26,24 @@ void asDebugger::registerBreakPointHitCallback(BreakPointHitCallback callback) {
 }
 
 void asDebugger::takeCommands(asIScriptContext *ctx) {
-    while (true) {
-        emit onPullVariables(globalVariables(ctx), localVariables(ctx));
-        emit onPullCallStack(retriveCallstack(ctx));
+    emit onPullVariables(globalVariables(ctx), localVariables(ctx));
+    emit onPullCallStack(retriveCallstack(ctx));
+
+    while (m_action == DebugAction::PAUSE) {
+        switch (m_action) {
+        case ABORT:
+            ctx->Abort();
+            return;
+        case PAUSE:
+        case CONTINUE:
+        case STEP_INTO:
+            break;
+        case STEP_OVER:
+        case STEP_OUT:
+            m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 1;
+            break;
+        }
+
         qApp->processEvents();
     }
 }
@@ -50,56 +58,55 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     // By default we ignore callbacks when the context is not active.
     // An application might override this to for example disconnect the
     // debugger as the execution finished.
+    if (m_action == CONTINUE && ctx->GetState() == asEXECUTION_SUSPENDED) {
+        ctx->Execute();
+        m_action = PAUSE;
+        return;
+    }
+
     if (ctx->GetState() != asEXECUTION_ACTIVE)
         return;
 
-    if (m_action == CONTINUE) {
+    switch (m_action) {
+    case ABORT:
+        ctx->Abort();
+        return;
+    case PAUSE:
+        return;
+    case CONTINUE:
         if (!checkBreakPoint(ctx))
             return;
-    } else if (m_action == STEP_OVER) {
+        break;
+    case STEP_INTO:
+        // Always break, but we call the check break point anyway
+        // to tell user when break point has been reached
+        checkBreakPoint(ctx);
+        break;
+    case STEP_OVER:
+    case STEP_OUT:
         if (ctx->GetCallstackSize() > m_lastCommandAtStackLevel) {
             if (!checkBreakPoint(ctx))
                 return;
         }
-    } else if (m_action == STEP_OUT) {
-        if (ctx->GetCallstackSize() >= m_lastCommandAtStackLevel) {
-            if (!checkBreakPoint(ctx))
-                return;
-        }
-    } else if (m_action == STEP_INTO) {
-        checkBreakPoint(ctx);
-
-        // Always break, but we call the check break point anyway
-        // to tell user when break point has been reached
+        break;
     }
 
-    // stringstream s;
-    // const char *file = 0;
-    // int lineNbr = ctx->GetLineNumber(0, 0, &file);
-    // s << (file ? file : "{unnamed}") << ":" << lineNbr << "; "
-    //   << ctx->GetFunction()->GetDeclaration() << endl;
-    // Output(s.str());
+    const char *file = 0;
+    int lineNbr = ctx->GetLineNumber(0, nullptr, &file);
+    emit onRunCurrentLine(file, lineNbr);
 
     takeCommands(ctx);
 }
 
 void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
-    // Store just file name, not entire path
-    QFileInfo info(file);
-    // Trim the file name
-    QString actual = info.fileName().trimmed();
-
-    BreakPoint bp(actual, lineNbr, false);
+    BreakPoint bp(file, lineNbr, false);
     m_breakPoints.push_back(bp);
 }
 
 void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
-    QFileInfo info(file);
-    QString actual = info.fileName().trimmed();
     m_breakPoints.erase(std::remove_if(
         m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
-            return bp.name == actual && bp.lineNbr == lineNbr &&
-                   bp.func == false;
+            return bp.name == file && bp.lineNbr == lineNbr && bp.func == false;
         }));
 }
 
@@ -212,7 +219,9 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
         return false;
 
     const char *tmp = 0;
-    int lineNbr = ctx->GetLineNumber(0, 0, &tmp);
+
+    int column = 0;
+    int lineNbr = ctx->GetLineNumber(0, &column, &tmp);
 
     QString file = tmp ? QString(tmp) : QString();
 
@@ -265,7 +274,9 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
 #else
             bpName == file) {
 #endif
+            ctx->Suspend();
             m_bphitCallback(m_breakPoints[n], this);
+            m_action = PAUSE; // hit and pause script
             return true;
         }
     }
@@ -403,6 +414,8 @@ asDebugger::GCStatistic asDebugger::gcStatistics() {
     return sta;
 }
 
+void asDebugger::runDebugAction(DebugAction action) { m_action = action; }
+
 void asDebugger::setEngine(asIScriptEngine *engine) {
     if (m_engine != engine) {
         if (m_engine)
@@ -410,7 +423,7 @@ void asDebugger::setEngine(asIScriptEngine *engine) {
         m_engine = engine;
         if (m_engine)
             m_engine->AddRef();
-        m_breakPoints.clear();
+        m_action = CONTINUE;
     }
 }
 

@@ -181,27 +181,8 @@ public:
         return t.inherits(QStringLiteral("text/plain"));
     }
 
-    static QList<QStorageInfo> getStorageDevices() {
-        static QList<QStorageInfo> sdns;
-        if (sdns.isEmpty()) {
-            auto infos = QStorageInfo::mountedVolumes();
-            for (auto &item : infos) {
-                auto device = item.device();
-                if (item.isValid()
-#ifdef Q_OS_LINUX
-                    && std::filesystem::is_regular_file(
-                           std::filesystem::path(device.toStdString()))
-#endif
-                ) {
-                    sdns.append(item);
-                }
-            }
-        }
-        return sdns;
-    }
-
     static bool isStorageDevice(const QString &path) {
-        auto sdns = getStorageDevices();
+        auto sdns = QStorageInfo::mountedVolumes();
         return std::find_if(sdns.begin(), sdns.end(),
                             [path](const QStorageInfo &info) {
                                 return info.device() == path;
@@ -209,7 +190,7 @@ public:
     }
 
     static QStorageInfo getStorageDevice(const QString &path) {
-        auto sdns = getStorageDevices();
+        auto sdns = QStorageInfo::mountedVolumes();
         auto r = std::find_if(
             sdns.begin(), sdns.end(),
             [path](const QStorageInfo &info) { return info.device() == path; });

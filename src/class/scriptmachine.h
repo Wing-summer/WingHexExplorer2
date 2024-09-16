@@ -2,8 +2,8 @@
 #define SCRIPTMACHINE_H
 
 #include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
-#include "AngelScript/sdk/add_on/scriptbuilder/scriptbuilder.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
+#include "class/asbuilder.h"
 
 #include "asdebugger.h"
 
@@ -92,11 +92,11 @@ private:
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 
-    static int pragmaCallback(const std::string &pragmaText,
-                              CScriptBuilder &builder, void *userParam);
+    static int pragmaCallback(const QByteArray &pragmaText, asBuilder *builder,
+                              void *userParam);
 
-    static int includeCallback(const char *include, const char *from,
-                               CScriptBuilder *builder, void *userParam);
+    static int includeCallback(const QString &include, const QString &from,
+                               asBuilder *builder, void *userParam);
 
     static QString processTranslation(const char *content);
 
@@ -106,6 +106,8 @@ private:
 
 signals:
     void onOutput(MessageType type, const MessageInfo &message);
+
+    void onDebugFinished();
 
 private:
     asIScriptEngine *_engine = nullptr;

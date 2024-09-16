@@ -5,6 +5,7 @@
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <atomic>
 
 // from AngelScript CDebugger, I modify it for Qt intergration and
 // and add some TODO features that easy to implement
@@ -53,8 +54,17 @@ public:
         ExpectedIdentifier
     };
 
+    enum DebugAction {
+        ABORT,     // try to abort the script
+        PAUSE,     // try to pause
+        CONTINUE,  // continue until next break point
+        STEP_INTO, // stop at next instruction
+        STEP_OVER, // stop at next instruction, skipping called functions
+        STEP_OUT   // run until returning from current function
+    };
+
 public:
-    asDebugger();
+    explicit asDebugger(QObject *parent = nullptr);
     virtual ~asDebugger();
 
     // Register callbacks to handle to-string conversions of application types
@@ -96,6 +106,8 @@ public:
 
     GCStatistic gcStatistics();
 
+    void runDebugAction(DebugAction action);
+
 private:
     QVector<VariablesInfo> globalVariables(asIScriptContext *ctx);
     QVector<VariablesInfo> localVariables(asIScriptContext *ctx);
@@ -117,24 +129,17 @@ signals:
     void onPullVariables(const QVector<VariablesInfo> &globalvars,
                          const QVector<VariablesInfo> &localvars);
     void onPullCallStack(const QList<CallStackItem> &callstacks);
+    void onRunCurrentLine(const QString &file, int lineNr);
 
 private:
-    enum DebugAction {
-        CONTINUE,  // continue until next break point
-        STEP_INTO, // stop at next instruction
-        STEP_OVER, // stop at next instruction, skipping called functions
-        STEP_OUT   // run until returning from current function
-    };
+    std::atomic<DebugAction> m_action;
 
-private:
-    DebugAction m_action;
     asUINT m_lastCommandAtStackLevel;
     asIScriptFunction *m_lastFunction;
 
     QVector<BreakPoint> m_breakPoints;
 
     asIScriptEngine *m_engine = nullptr;
-    QThread *_thread = nullptr;
 
     // Registered callbacks for converting types to strings
     QMap<const asITypeInfo *, ToStringCallback> m_toStringCallbacks;

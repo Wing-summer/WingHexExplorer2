@@ -9,6 +9,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: cmake-format lint
-      uses: Wing-summer/cmake-format-action@main
+      uses: neg-c/cmake-format-action@v0.1.1
       with:
         inplace: true

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "Qt-Advanced-Docking-System/src/DockFocusController.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
@@ -273,6 +274,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CDockWidget *CentralDockWidget =
         new CDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
+    CentralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
     auto editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
@@ -2384,6 +2386,10 @@ void MainWindow::connectEditorView(EditorView *editor) {
 }
 
 void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
+    if (old == cur) {
+        return;
+    }
+
     if (old != nullptr) {
         auto hexeditor = old->hexEditor();
         hexeditor->disconnect(SLOT(cursorLocationChanged()));

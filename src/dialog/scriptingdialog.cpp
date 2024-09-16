@@ -55,11 +55,13 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_status);
     buildUpContent(cw);
 
-    QLineMarksInfoCenter::instance()->loadMarkTypes(
-        QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
+    auto lmic = QLineMarksInfoCenter::instance();
+    lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
     // get symbol ID
-    m_symID.insert(Symbols::BreakPoint,
-                   QLineMarksInfoCenter::instance()->markTypeId("breakpoint"));
+    m_symID.insert(Symbols::BreakPoint, lmic->markTypeId("breakpoint"));
+    m_symID.insert(Symbols::DbgRunCurrentLine, lmic->markTypeId("current"));
+    m_symID.insert(Symbols::DbgRunHitBreakPoint,
+                   lmic->markTypeId("breakpoint-current"));
 
     updateEditModeEnabled();
 
@@ -74,6 +76,65 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
     m_consoleout->init();
+    auto machine = m_consoleout->machine();
+    connect(machine, &ScriptMachine::onDebugFinished, this, [=] {
+        this->setRunDebugMode(false);
+        // clean up
+        auto e = findEditorView(_lastCurLine.first);
+        Q_ASSERT(e);
+        auto line = e->editor()->document()->line(_lastCurLine.second - 1);
+        line.removeMark(m_symID.value(Symbols::DbgRunCurrentLine));
+        line.removeMark(m_symID.value(Symbols::DbgRunHitBreakPoint));
+    });
+    auto dbg = machine->debugger();
+    Q_ASSERT(dbg);
+    dbg->setProperty("scriptdlg", QVariant::fromValue(this));
+    dbg->registerBreakPointHitCallback(
+        [](const asDebugger::BreakPoint &bp, asDebugger *dbg) {
+            auto p = dbg->property("scriptdlg");
+            if (p.isValid()) {
+                auto dlg = p.value<ScriptingDialog *>();
+                QMessageBox::information(dlg, "", "Hint");
+            }
+        });
+    connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
+            [=](const asDebugger::BreakPoint &old, int newLineNr) {
+
+            });
+    connect(dbg, &asDebugger::onPullVariables, this,
+            [=](const QVector<asDebugger::VariablesInfo> &globalvars,
+                const QVector<asDebugger::VariablesInfo> &localvars) {
+
+            });
+    connect(dbg, &asDebugger::onPullCallStack, m_callstack,
+            &DbgCallStackModel::updateData);
+    connect(
+        dbg, &asDebugger::onRunCurrentLine, this,
+        [=](const QString &file, int lineNr) {
+            ScriptEditor *e = m_curEditor;
+#ifdef Q_OS_WIN
+            if (file.compare(m_curEditor->fileName(), Qt::CaseInsensitive)) {
+#else
+            if (file != e->fileName()) {
+#endif
+                e = findEditorView(file);
+                Q_ASSERT(e);
+                e->setFocus();
+                e->raise();
+            }
+
+            auto doc = e->editor()->document();
+
+            auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
+            Q_ASSERT(curMark >= 0);
+            if (_lastCurLine.second >= 0) {
+                auto line = doc->line(_lastCurLine.second - 1);
+                line.removeMark(curMark);
+            }
+            auto line = doc->line(lineNr - 1);
+            line.addMark(curMark);
+            _lastCurLine = {file, lineNr};
+        });
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
@@ -417,6 +478,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     CDockWidget *CentralDockWidget =
         new CDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
+    CentralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
     m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
@@ -467,6 +529,11 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         auto editor = qobject_cast<ScriptEditor *>(sender());
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
+
+        auto m = m_consoleout->machine();
+        if (m->isInDebugMode()) {
+            auto dbg = m->debugger();
+        }
 
         m_views.removeOne(editor);
         if (currentEditor() == editor) {
@@ -573,6 +640,14 @@ void ScriptingDialog::openFile(const QString &filename) {
 
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+}
+
+void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
+    auto machine = m_consoleout->machine();
+    if (machine->isInDebugMode()) {
+        auto dbg = machine->debugger();
+        dbg->runDebugAction(action);
+    }
 }
 
 void ScriptingDialog::on_newfile() {
@@ -783,7 +858,9 @@ void ScriptingDialog::on_runscript() {
         auto e = editor->editor();
         m_consoleout->clear();
         setRunDebugMode(true, false);
-        m_consoleout->machine()->executeScript(e->fileName());
+        if (!m_consoleout->machine()->executeScript(e->fileName())) {
+            setRunDebugMode(false);
+        }
         setRunDebugMode(false);
     }
 }
@@ -794,24 +871,42 @@ void ScriptingDialog::on_rundbgscript() {
         auto e = editor->editor();
         m_consoleout->clear();
         setRunDebugMode(true, true);
-        m_consoleout->machine()->executeScript(e->fileName(), true);
-        m_consoleout->appendCommandPrompt();
+
+        // add breakpoints
+        auto marks = QLineMarksInfoCenter::instance()->marks(
+            e->fileName(), m_symID.value(Symbols::BreakPoint));
+        auto dbg = m_consoleout->machine()->debugger();
+        for (auto &bp : marks) {
+            dbg->addFileBreakPoint(bp.file, bp.line);
+        }
+
+        if (!m_consoleout->machine()->executeScript(e->fileName(), true)) {
+            setRunDebugMode(false);
+        }
     }
 }
 
-void ScriptingDialog::on_pausescript() {}
+void ScriptingDialog::on_pausescript() { runDbgCommand(asDebugger::PAUSE); }
 
-void ScriptingDialog::on_continuescript() {}
+void ScriptingDialog::on_continuescript() {
+    runDbgCommand(asDebugger::CONTINUE);
+}
 
-void ScriptingDialog::on_stopscript() {}
+void ScriptingDialog::on_stopscript() { runDbgCommand(asDebugger::ABORT); }
 
 void ScriptingDialog::on_restartscript() {}
 
-void ScriptingDialog::on_stepinscript() {}
+void ScriptingDialog::on_stepinscript() {
+    runDbgCommand(asDebugger::STEP_INTO);
+}
 
-void ScriptingDialog::on_stepoutscript() {}
+void ScriptingDialog::on_stepoutscript() {
+    runDbgCommand(asDebugger::STEP_OUT);
+}
 
-void ScriptingDialog::on_stepoverscript() {}
+void ScriptingDialog::on_stepoverscript() {
+    runDbgCommand(asDebugger::STEP_OVER);
+}
 
 void ScriptingDialog::on_togglebreakpoint() {
     auto editor = currentEditor();

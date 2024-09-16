@@ -3,7 +3,7 @@
     <mark>
         <id>current</id>
         <icon>:/com.wingsummer.winghex/images/scriptdbg/hitcur.png</icon>
-        <color>#F4FFA7</color>
+        <color>#10F4FFA7</color>
         <focus>false</focus>
         <priority>2</priority>
         <persistency>2</persistency>
@@ -12,7 +12,7 @@
     <mark>
         <id>breakpoint-current</id>
         <icon>:/com.wingsummer.winghex/images/scriptdbg/hitbp.png</icon>
-        <color>#F4FFA7</color>
+        <color>#10F4FFA7</color>
         <focus>false</focus>
         <priority>2</priority>
         <persistency>2</persistency>

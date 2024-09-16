@@ -43,6 +43,9 @@ const auto OTHER_LOG_LEVEL = QStringLiteral("sys.loglevel");
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
     qRegisterMetaType<RecentFileManager::RecentInfo>();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    qRegisterMetaTypeStreamOperators<RecentFileManager::RecentInfo>();
+#endif
     load();
 }
 

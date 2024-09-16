@@ -72,13 +72,16 @@ QLineMarksInfoCenter::~QLineMarksInfoCenter() {}
 /*!
         \return the list of line marks set on a given file
 */
-QLineMarkList QLineMarksInfoCenter::marks(const QString &file) {
+QLineMarkList QLineMarksInfoCenter::marks(const QString &file, int filterID) {
     QLineMarkList l;
     bool check = !file.isEmpty();
 
-    foreach (QLineMarkHandle m, m_lineMarks) {
-        if (!check || (m.file == file))
-            l << QLineMark(file, m.line->line() + 1, m.mark);
+    for (auto &m : m_lineMarks) {
+        if (!check || (m.file == file)) {
+            if (filterID < 0 || (filterID >= 0 && m.mark == filterID)) {
+                l << QLineMark(file, m.line->line() + 1, m.mark);
+            }
+        }
     }
 
     return l;
@@ -88,14 +91,16 @@ QLineMarkList QLineMarksInfoCenter::marks(const QString &file) {
         \brief Remove all line marks on all files
 */
 void QLineMarksInfoCenter::clear() {
-    foreach (QLineMarkHandle m, m_lineMarks) { removeLineMark(m); }
+    for (auto &m : m_lineMarks) {
+        removeLineMark(m);
+    }
 }
 
 /*!
         \brief Remove all line marks on a given file
 */
 void QLineMarksInfoCenter::removeMarks(const QString &file) {
-    foreach (QLineMarkHandle m, m_lineMarks)
+    for (auto &m : m_lineMarks)
         if (m.file == file)
             removeLineMark(m);
 }
@@ -481,15 +486,9 @@ QString QLineMarksInfoCenter::priority(const QStringList &marks) {
 */
 QList<QStringList> QLineMarksInfoCenter::marksLayout(const QString &context) {
     QList<QStringList> l;
-
-    foreach (QString id, availableMarkTypes(context)) { l << QStringList(id); }
-
-    /*
-    foreach ( QLineMarkType t, availableMarks(context) )
-    {
-
+    for (auto &id : availableMarkTypes(context)) {
+        l << QStringList(id);
     }
-    */
 
     return l;
 }
