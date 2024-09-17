@@ -19,7 +19,6 @@
 #include "angelobjstring.h"
 
 #include <QProcess>
-#include <iostream>
 
 ScriptMachine::~ScriptMachine() {
     if (_immediateContext) {
@@ -36,7 +35,7 @@ ScriptMachine::~ScriptMachine() {
 
 bool ScriptMachine::inited() { return _engine != nullptr; }
 
-bool ScriptMachine::isRunning() const { return !_ctxPool.isEmpty(); }
+bool ScriptMachine::isRunning() const { return _ctxMgr->isRunning(); }
 
 bool ScriptMachine::isInDebugMode() const {
     return _debugger->getEngine() != nullptr;
@@ -137,7 +136,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     }
 
     // Setup the context manager and register the support for co-routines
-    _ctxMgr = new CContextMgr();
+    _ctxMgr = new asContextMgr();
     _ctxMgr->RegisterCoRoutineSupport(engine);
 
     // Tell the engine to use our context pool. This will also
@@ -290,9 +289,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     }
 
     if (func == nullptr) {
-        _engine->WriteMessage(
-            script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-            tr("Cannot find 'int main()' or 'void main()'").toUtf8());
+        MessageInfo info;
+        info.message = tr("Cannot find 'int main()' or 'void main()'");
+        emit onOutput(MessageType::Error, info);
         return false;
     }
 
@@ -312,9 +311,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // to debug the initialization without passing in a pre-created context
     r = mod->ResetGlobalVars(0);
     if (r < 0) {
-        _engine->WriteMessage(
-            script.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-            tr("Failed while initializing global variables").toUtf8());
+        MessageInfo info;
+        info.message = tr("Failed while initializing global variables");
+        emit onOutput(MessageType::Error, info);
         return false;
     }
 
@@ -333,15 +332,24 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     r = ctx->GetState();
     if (r != asEXECUTION_FINISHED) {
         if (r == asEXECUTION_EXCEPTION) {
-            std::cout << "The script failed with an exception" << std::endl;
-            std::cout << GetExceptionInfo(ctx, true);
+            MessageInfo info;
+            info.message = tr("The script failed with an exception") +
+                           QStringLiteral("\n") +
+                           QString::fromStdString(GetExceptionInfo(ctx, true));
+            emit onOutput(MessageType::Error, info);
             r = -1;
         } else if (r == asEXECUTION_ABORTED) {
-            std::cout << "The script was aborted" << std::endl;
+            MessageInfo info;
+            info.message = tr("The script was aborted");
+            emit onOutput(MessageType::Error, info);
             r = -1;
         } else {
-            std::cout << "The script terminated unexpectedly (" << r << ")"
-                      << std::endl;
+            auto e = QMetaEnum::fromType<asEContextState>();
+            MessageInfo info;
+            info.message = tr("The script terminated unexpectedly") +
+                           QStringLiteral(" (") + e.valueToKey(r) +
+                           QStringLiteral(")");
+            emit onOutput(MessageType::Error, info);
             r = -1;
         }
     } else {
@@ -466,26 +474,26 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
 
 int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
                                   asBuilder *builder, void *userParam) {
-    asIScriptEngine *engine = builder->GetEngine();
+    // asIScriptEngine *engine = builder->GetEngine();
 
     // Filter the pragmaText so only what is of interest remains
     // With this the user can add comments and use different whitespaces
     // without affecting the result
-    asUINT pos = 0;
-    asUINT length = 0;
-    QStringList tokens;
-    while (pos < pragmaText.size()) {
-        asETokenClass tokenClass =
-            engine->ParseToken(pragmaText.data() + pos, 0, &length);
-        if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
-            tokenClass == asTC_VALUE) {
-            auto token = pragmaText.mid(pos, length);
-            tokens << token;
-        }
-        if (tokenClass == asTC_UNKNOWN)
-            return -1;
-        pos += length;
-    }
+    // asUINT pos = 0;
+    // asUINT length = 0;
+    // QStringList tokens;
+    // while (pos < pragmaText.size()) {
+    //     asETokenClass tokenClass =
+    //         engine->ParseToken(pragmaText.data() + pos, 0, &length);
+    //     if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
+    //         tokenClass == asTC_VALUE) {
+    //         auto token = pragmaText.mid(pos, length);
+    //         tokens << token;
+    //     }
+    //     if (tokenClass == asTC_UNKNOWN)
+    //         return -1;
+    //     pos += length;
+    // }
 
     // Interpret the result
     // if (cleanText == " debug") {
@@ -497,11 +505,39 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
     return -1;
 }
 
-int ScriptMachine::includeCallback(const QString &include, const QString &from,
-                                   asBuilder *builder, void *userParam) {
-    asIScriptEngine *engine = builder->GetEngine();
+int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
+                                   const QString &from, asBuilder *builder,
+                                   void *userParam) {
+    QFileInfo info(include);
+    bool isAbsolute = info.isAbsolute();
+    bool hasNoExt = info.suffix().isEmpty();
+    QString inc;
+    if (quotedInclude) {
+        if (isAbsolute) {
+            inc = include;
+        } else {
+            auto pwd = QDir(QFileInfo(from).filePath());
+            inc = pwd.absoluteFilePath(include);
+        }
+    } else {
+        // absolute include is not allowed in #include<>
+        if (isAbsolute) {
+            return asERROR;
+        }
 
-    return 0;
+        QDir dir(qApp->applicationDirPath());
+        if (!dir.cd(QStringLiteral("aslib"))) {
+            // someone crash the software
+            return asERROR;
+        }
+        inc = dir.absoluteFilePath(include);
+    }
+
+    if (hasNoExt) {
+        inc += QStringLiteral(".as");
+    }
+
+    return builder->AddSectionFromFile(inc);
 }
 
 QString ScriptMachine::processTranslation(const char *content) {

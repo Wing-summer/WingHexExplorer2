@@ -43,8 +43,9 @@ class asBuilder;
 // AddSectionFromMemory to add the included section to the script. If the
 // include cannot be resolved then the function should return a negative value
 // to abort the compilation.
-typedef int (*INCLUDECALLBACK_t)(const QString &include, const QString &from,
-                                 asBuilder *builder, void *userParam);
+typedef int (*INCLUDECALLBACK_t)(const QString &include, bool quotedInclude,
+                                 const QString &from, asBuilder *builder,
+                                 void *userParam);
 
 // This callback will be called for each #pragma directive encountered by the
 // builder. The application can interpret the pragmaText and decide what do to

@@ -13,6 +13,7 @@
 #include "model/dbgbreakpointmodel.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
+#include "qlanguagefactory.h"
 #include "utilities.h"
 
 #include <QShortcut>
@@ -26,6 +27,8 @@ private:
     enum ToolButtonIndex : uint {
         UNDO_ACTION,
         REDO_ACTION,
+        SAVE_ACTION,
+        COPY_ACTION,
         DBG_RUN,
         DBG_RUN_DBG,
         EDITOR_VIEWS,
@@ -101,6 +104,7 @@ private:
         auto a = new QToolButton(pannel);
         a->setText(title);
         a->setIcon(icon);
+        setPannelActionToolTip(a, shortcut);
 
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, this);
@@ -128,6 +132,19 @@ private:
         return a;
     }
 
+    inline void
+    setPannelActionToolTip(QToolButton *action,
+                           const QKeySequence &shortcut = QKeySequence()) {
+        Q_ASSERT(action);
+        auto title = action->text();
+        action->setToolTip(
+            shortcut.isEmpty()
+                ? QStringLiteral("<p align=\"center\">%1</p>").arg(title)
+                : QStringLiteral(
+                      "<p align=\"center\">%1</p><p align=\"center\">%2</p>")
+                      .arg(title, shortcut.toString()));
+    }
+
 private:
     void registerEditorView(ScriptEditor *editor);
     inline ads::CDockAreaWidget *editorViewArea() const;
@@ -144,7 +161,7 @@ private:
 
     bool isCurrentDebugging() const;
 
-    void openFile(const QString &filename);
+    ScriptEditor *openFile(const QString &filename);
 
     void runDbgCommand(asDebugger::DebugAction action);
 
@@ -192,6 +209,7 @@ protected:
 private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
+    QLanguageFactory *m_language = nullptr;
 
     ScriptEditor *m_curEditor = nullptr;
     QList<QWidget *> m_editStateWidgets;

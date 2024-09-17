@@ -30,21 +30,22 @@ void asDebugger::takeCommands(asIScriptContext *ctx) {
     emit onPullCallStack(retriveCallstack(ctx));
 
     while (m_action == DebugAction::PAUSE) {
-        switch (m_action) {
-        case ABORT:
-            ctx->Abort();
-            return;
-        case PAUSE:
-        case CONTINUE:
-        case STEP_INTO:
-            break;
-        case STEP_OVER:
-        case STEP_OUT:
-            m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 1;
-            break;
-        }
-
         qApp->processEvents();
+    }
+
+    switch (m_action) {
+    case ABORT:
+        ctx->Abort();
+        return;
+    case PAUSE:
+        break;
+    case STEP_OVER:
+    case STEP_OUT:
+        m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 1;
+        break;
+    case CONTINUE:
+    case STEP_INTO:
+        break;
     }
 }
 
@@ -58,12 +59,6 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     // By default we ignore callbacks when the context is not active.
     // An application might override this to for example disconnect the
     // debugger as the execution finished.
-    if (m_action == CONTINUE && ctx->GetState() == asEXECUTION_SUSPENDED) {
-        ctx->Execute();
-        m_action = PAUSE;
-        return;
-    }
-
     if (ctx->GetState() != asEXECUTION_ACTIVE)
         return;
 
@@ -72,7 +67,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         ctx->Abort();
         return;
     case PAUSE:
-        return;
+        break;
     case CONTINUE:
         if (!checkBreakPoint(ctx))
             return;
@@ -81,13 +76,16 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         // Always break, but we call the check break point anyway
         // to tell user when break point has been reached
         checkBreakPoint(ctx);
+        m_action = PAUSE;
         break;
     case STEP_OVER:
     case STEP_OUT:
-        if (ctx->GetCallstackSize() > m_lastCommandAtStackLevel) {
+        auto s = ctx->GetCallstackSize();
+        if (s > m_lastCommandAtStackLevel) {
             if (!checkBreakPoint(ctx))
                 return;
         }
+        m_action = PAUSE;
         break;
     }
 

@@ -9,9 +9,11 @@ public:
     enum class Key {
         OPEN_REGION_FILE,
         OPEN_WORKSPACE,
+        REDO,
         SAVE_AS,
         EXPORT,
         GOTO,
+        REPLACE,
         ENCODING,
         COPY_HEX,
         CUT_HEX,

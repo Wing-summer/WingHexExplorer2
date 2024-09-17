@@ -171,7 +171,7 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
 
     // qDebug("text : %s", qPrintable(txt));
 
-    foreach (QString trig, m_triggers) {
+    for (auto &trig : m_triggers) {
         if (txt.endsWith(trig)) {
             cur = editor()->cursor();
             cur.movePosition(trig.size(), QDocumentCursor::PreviousCharacter);
@@ -225,7 +225,7 @@ bool QCodeCompletionEngine::eventFilter(QObject *o, QEvent *e) {
 
     // qDebug("text : %s", qPrintable(txt));
 
-    foreach (QString trig, m_triggers) {
+    for (auto &trig : m_triggers) {
         if (txt.endsWith(trig)) {
             editor()->write(s);
 

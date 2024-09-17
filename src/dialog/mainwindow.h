@@ -244,6 +244,12 @@ private:
         auto a = new QToolButton(pannel);
         a->setText(title);
         a->setIcon(icon);
+        a->setToolTip(
+            shortcut.isEmpty()
+                ? QStringLiteral("<p align=\"center\">%1</p>").arg(title)
+                : QStringLiteral(
+                      "<p align=\"center\">%1</p><p align=\"center\">%2</p>")
+                      .arg(title, shortcut.toString()));
 
         if (!shortcut.isEmpty()) {
             auto shortCut = new QShortcut(shortcut, this);

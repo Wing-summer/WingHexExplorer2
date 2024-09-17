@@ -127,8 +127,8 @@ def main():
 
     print(Fore.GREEN + ">> Constructing packages..." + Style.RESET_ALL)
     os.mkdir(os.path.join(exeDebPath, "plugin"))
-    os.mkdir(os.path.join(exeDebPath, "scriptdb"))
-    os.mkdir(os.path.join(exeDebPath, "scriptlib"))
+    os.mkdir(os.path.join(exeDebPath, "scripts"))
+    os.mkdir(os.path.join(exeDebPath, "aslib"))
 
     shutil.copy2(exemain_src, os.path.join(exeDebPath, exe_name))
 

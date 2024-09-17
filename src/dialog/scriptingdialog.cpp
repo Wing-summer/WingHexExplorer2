@@ -6,12 +6,14 @@
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
+#include "class/skinmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
 #include "qcodeeditwidget/qeditconfig.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
+#include "qformatscheme.h"
 #include "qlinemarksinfocenter.h"
 
 #include <QDesktopServices>
@@ -55,6 +57,22 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_status);
     buildUpContent(cw);
 
+    QFormatScheme *format = nullptr;
+
+    switch (SkinManager::instance().currentTheme()) {
+    case SkinManager::Theme::Dark:
+        format =
+            new QFormatScheme(QStringLiteral(":/qcodeedit/as_dark.qxf"), this);
+        break;
+    case SkinManager::Theme::Light:
+        format =
+            new QFormatScheme(QStringLiteral(":/qcodeedit/as_light.qxf"), this);
+        break;
+    }
+    QDocument::setDefaultFormatScheme(format);
+    m_language = new QLanguageFactory(format, this);
+    m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
+
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
     // get symbol ID
@@ -64,6 +82,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
                    lmic->markTypeId("breakpoint-current"));
 
     updateEditModeEnabled();
+
+    m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
     // ok, preparing for starting...
     this->setWindowTitle(tr("ScriptEditor"));
@@ -79,12 +99,18 @@ void ScriptingDialog::initConsole() {
     auto machine = m_consoleout->machine();
     connect(machine, &ScriptMachine::onDebugFinished, this, [=] {
         this->setRunDebugMode(false);
+        m_callstack->updateData({});
+
         // clean up
-        auto e = findEditorView(_lastCurLine.first);
-        Q_ASSERT(e);
-        auto line = e->editor()->document()->line(_lastCurLine.second - 1);
-        line.removeMark(m_symID.value(Symbols::DbgRunCurrentLine));
-        line.removeMark(m_symID.value(Symbols::DbgRunHitBreakPoint));
+        if (_lastCurLine.first.isEmpty() || _lastCurLine.second < 0) {
+            // no need
+            return;
+        }
+        QLineMark mrk(_lastCurLine.first, _lastCurLine.second,
+                      m_symID.value(Symbols::DbgRunCurrentLine));
+        QLineMarksInfoCenter::instance()->removeLineMark(mrk);
+        _lastCurLine.first.clear();
+        _lastCurLine.second = -1;
     });
     auto dbg = machine->debugger();
     Q_ASSERT(dbg);
@@ -117,20 +143,22 @@ void ScriptingDialog::initConsole() {
 #else
             if (file != e->fileName()) {
 #endif
-                e = findEditorView(file);
-                Q_ASSERT(e);
-                e->setFocus();
-                e->raise();
+                e = openFile(file);
+                if (e) {
+                    e->setFocus();
+                    e->raise();
+                } else {
+                    // error permission
+                }
             }
+
+            // remove the last mark
+            QLineMark mrk(_lastCurLine.first, _lastCurLine.second,
+                          m_symID.value(Symbols::DbgRunCurrentLine));
+            QLineMarksInfoCenter::instance()->removeLineMark(mrk);
 
             auto doc = e->editor()->document();
-
             auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
-            Q_ASSERT(curMark >= 0);
-            if (_lastCurLine.second >= 0) {
-                auto line = doc->line(_lastCurLine.second - 1);
-                line.removeMark(curMark);
-            }
             auto line = doc->line(lineNr - 1);
             line.addMark(curMark);
             _lastCurLine = {file, lineNr};
@@ -159,7 +187,7 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("Basic"));
         addPannelAction(pannel, QStringLiteral("new"), tr("New"),
-                        &ScriptingDialog::on_newfile, QKeySequence::Open);
+                        &ScriptingDialog::on_newfile, QKeySequence::New);
 
         addPannelAction(pannel, QStringLiteral("open"), tr("OpenF"),
                         &ScriptingDialog::on_openfile, QKeySequence::Open);
@@ -177,6 +205,7 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
                                  &ScriptingDialog::on_save, QKeySequence::Save);
+        m_Tbtneditors.insert(ToolButtonIndex::SAVE_ACTION, a);
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
@@ -192,33 +221,51 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::UNDO_ACTION,
-            addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
-                            &ScriptingDialog::on_undofile, QKeySequence::Undo));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::REDO_ACTION,
-            addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
-                            &ScriptingDialog::on_redofile, QKeySequence::Redo));
-        addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
-                        &ScriptingDialog::on_cutfile, QKeySequence::Cut);
-        addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
-                        &ScriptingDialog::on_copyfile, QKeySequence::Copy);
-        addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
-                        &ScriptingDialog::on_pastefile, QKeySequence::Paste);
-        addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
-                        &ScriptingDialog::on_delete, QKeySequence::Delete);
+
+        auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
+                                 &ScriptingDialog::on_undofile);
+        m_Tbtneditors.insert(ToolButtonIndex::UNDO_ACTION, a);
+        setPannelActionToolTip(a, QKeySequence::Undo);
+
+        a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
+                            &ScriptingDialog::on_redofile);
+        m_Tbtneditors.insert(ToolButtonIndex::REDO_ACTION, a);
+        setPannelActionToolTip(a,
+                               shortcuts.keySequence(QKeySequences::Key::REDO));
+
+        a = addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
+                            &ScriptingDialog::on_cutfile);
+        setPannelActionToolTip(a, QKeySequence::Cut);
+
+        a = addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
+                            &ScriptingDialog::on_copyfile);
+        m_Tbtneditors.insert(ToolButtonIndex::COPY_ACTION, a);
+        setPannelActionToolTip(a, QKeySequence::Copy);
+
+        a = addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
+                            &ScriptingDialog::on_pastefile);
+        setPannelActionToolTip(a, QKeySequence::Paste);
+
+        a = addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
+                            &ScriptingDialog::on_delete);
+        setPannelActionToolTip(a, QKeySequence::Delete);
     }
 
     {
         auto pannel = tab->addGroup(tr("Lookup"));
-        addPannelAction(pannel, QStringLiteral("find"), tr("Find"),
-                        &ScriptingDialog::on_findfile, QKeySequence::Find);
-        addPannelAction(pannel, QStringLiteral("replace"), tr("Replace"),
-                        &ScriptingDialog::on_replace, QKeySequence::Replace);
-        addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
-                        &ScriptingDialog::on_gotoline,
-                        shortcuts.keySequence(QKeySequences::Key::GOTO));
+        auto a = addPannelAction(pannel, QStringLiteral("find"), tr("Find"),
+                                 &ScriptingDialog::on_findfile);
+        setPannelActionToolTip(a, QKeySequence::Find);
+
+        a = addPannelAction(pannel, QStringLiteral("replace"), tr("Replace"),
+                            &ScriptingDialog::on_replace);
+        setPannelActionToolTip(
+            a, shortcuts.keySequence(QKeySequences::Key::REPLACE));
+
+        a = addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
+                            &ScriptingDialog::on_gotoline);
+        setPannelActionToolTip(a,
+                               shortcuts.keySequence(QKeySequences::Key::GOTO));
     }
 
     return tab;
@@ -456,7 +503,6 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
                 if (editview) {
                     swapEditor(m_curEditor, editview);
                 }
-                m_curEditor = editview;
                 updateEditModeEnabled();
             });
 
@@ -494,6 +540,18 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     }
 
     buildUpStackShowDock(m_dock, ads::CenterDockWidgetArea, bottomArea);
+
+    // set the first tab visible
+    for (auto &item : m_dock->openedDockAreas()) {
+        for (int i = 0; i < item->dockWidgetsCount(); ++i) {
+            auto d = item->dockWidget(i);
+            if (d->features().testFlag(ads::CDockWidget::NoTab)) {
+                continue;
+            }
+            item->setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 bool ScriptingDialog::newOpenFileSafeCheck() {
@@ -539,8 +597,6 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         if (currentEditor() == editor) {
             m_curEditor = nullptr;
         }
-
-        editor->deleteDockWidget();
         m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
             ->setEnabled(m_views.size() != 0);
 
@@ -553,7 +609,11 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
                 }
             }
         }
+
+        editor->deleteDockWidget();
     });
+
+    m_language->setLanguage(editor->editor(), QStringLiteral("AngelScript"));
 
     m_views.append(editor);
 
@@ -587,7 +647,53 @@ void ScriptingDialog::updateEditModeEnabled() {
 
 ScriptEditor *ScriptingDialog::currentEditor() const { return m_curEditor; }
 
-void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {}
+void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
+    if (old == cur) {
+        return;
+    }
+
+    if (old != nullptr) {
+        auto editor = old->editor();
+        editor->disconnect(SLOT(copyAvailable(bool)));
+        editor->disconnect(SLOT(contentModified(bool)));
+        editor->disconnect(SLOT(undoAvailable(bool)));
+        editor->disconnect(SLOT(redoAvailable(bool)));
+        editor->disconnect(SLOT(zoomed()));
+    }
+
+    auto editor = cur->editor();
+    m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
+        ->setEnabled(editor->canUndo());
+    m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
+        ->setEnabled(editor->canRedo());
+    m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+        ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
+                     editor->isContentModified());
+    m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
+        ->setEnabled(editor->cursor().hasSelection());
+
+    connect(editor, &QEditor::copyAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
+            &QToolButton::setEnabled);
+    connect(editor, &QEditor::contentModified, this, [=] {
+        m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+            ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
+                         editor->isContentModified());
+    });
+    connect(editor, &QEditor::undoAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
+            &QToolButton::setEnabled);
+    connect(editor, &QEditor::redoAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
+            &QToolButton::setEnabled);
+    connect(editor, &QEditor::zoomed, this, [=] {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
+                     QString::number(editor->scaleRate() * 100) +
+                         QStringLiteral("%"));
+    });
+
+    m_curEditor = cur;
+}
 
 void ScriptingDialog::setRunDebugMode(bool isRun, bool isDebug) {
     m_Tbtneditors.value(ToolButtonIndex::DBG_RUN)->setEnabled(!isRun);
@@ -623,23 +729,25 @@ bool ScriptingDialog::isCurrentDebugging() const {
     return m && m->isInDebugMode();
 }
 
-void ScriptingDialog::openFile(const QString &filename) {
+ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
     auto e = findEditorView(filename);
     if (e) {
         e->raise();
         e->setFocus();
-        return;
+        return e;
     }
 
     auto editor = new ScriptEditor(this);
     auto res = editor->openFile(filename);
     if (!res) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-        return;
+        return nullptr;
     }
 
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+
+    return editor;
 }
 
 void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {

@@ -7,6 +7,8 @@ QKeySequences::QKeySequences() {
                       Qt::KeyboardModifier::ShiftModifier | Qt::Key_O)},
         {Key::OPEN_WORKSPACE,
          QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_W)},
+        {Key::REDO,
+         QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_Y)},
         {Key::SAVE_AS,
          QKeySequence(Qt::KeyboardModifier::ControlModifier |
                       Qt::KeyboardModifier::ShiftModifier | Qt::Key_S)},
@@ -15,6 +17,8 @@ QKeySequences::QKeySequences() {
                       Qt::KeyboardModifier::ShiftModifier | Qt::Key_E)},
         {Key::GOTO,
          QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_G)},
+        {Key::REPLACE,
+         QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_R)},
         {Key::ENCODING,
          QKeySequence(Qt::KeyboardModifier::ControlModifier |
                       Qt::KeyboardModifier::AltModifier | Qt::Key_E)},

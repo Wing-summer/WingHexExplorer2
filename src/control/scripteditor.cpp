@@ -1,8 +1,6 @@
 #include "scripteditor.h"
 #include "qeditor.h"
 
-#include "class/skinmanager.h"
-
 #include <QAction>
 #include <QFile>
 #include <QPixmap>
@@ -19,22 +17,6 @@ ScriptEditor::ScriptEditor(QWidget *parent)
         CDockWidget::CustomCloseHandling);
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
-
-    switch (SkinManager::instance().currentTheme()) {
-    case SkinManager::Theme::Dark:
-        m_formats =
-            new QFormatScheme(QStringLiteral(":/qcodeedit/as_dark.qxf"), this);
-        break;
-    case SkinManager::Theme::Light:
-        m_formats =
-            new QFormatScheme(QStringLiteral(":/qcodeedit/as_light.qxf"), this);
-        break;
-    }
-
-    QDocument::setDefaultFormatScheme(m_formats);
-
-    m_languages = new QLanguageFactory(m_formats, this);
-    m_languages->addDefinitionPath(QStringLiteral(":/qcodeedit"));
 
     m_editor = new QCodeEdit(this);
     auto l = m_editor->panelLayout();
@@ -59,9 +41,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
                        true);
     m_editor->addPanel(QStringLiteral("Search Replace Panel"), QCodeEdit::South,
                        true);
-
-    m_languages->setLanguage(editor, QStringLiteral("AngelScript"));
 }
+
+ScriptEditor::~ScriptEditor() { m_editor->editor()->document(); }
 
 QString ScriptEditor::fileName() const {
     return m_editor->editor()->fileName();

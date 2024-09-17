@@ -12,7 +12,7 @@ CheckSumDialog::CheckSumDialog(QWidget *parent) : FramelessDialogBase(parent) {
     auto layout = new QVBoxLayout(widget);
 
     this->setFixedSize(500, 600);
-    auto l = new QLabel(tr("ChooseEncoding"), this);
+    auto l = new QLabel(tr("ChooseCheckSum"), this);
     layout->addWidget(l);
     layout->addSpacing(5);
     hashlist = new QListWidget(this);

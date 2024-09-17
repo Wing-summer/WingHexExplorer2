@@ -28,6 +28,12 @@ if(${QT_VERSION_MAJOR} EQUAL 5)
     if(Qt5Widgets_VERSION VERSION_LESS 5.14.0)
         message(FATAL_ERROR "Minimum supported Qt5 version is 5.14!")
     endif()
+elseif(${QT_VERSION_MAJOR} EQUAL 6)
+    if(Qt6Widgets_VERSION VERSION_LESS 6.6.2)
+        message(FATAL_ERROR "Minimum supported Qt6 version is 6.6.2!")
+    endif()
+else()
+    message(FATAL_ERROR "Unsupported Qt version!")
 endif()
 
 if(MSVC)
@@ -210,7 +216,9 @@ set(CLASS_SRC
     src/class/qasparser.cpp
     src/class/qasparser.h
     src/class/qdocumentsearch.cpp
-    src/class/qdocumentsearch.h)
+    src/class/qdocumentsearch.h
+    src/class/ascontextmgr.h
+    src/class/ascontextmgr.cpp)
 
 set(WIDGET_FRAME_SRC
     src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h

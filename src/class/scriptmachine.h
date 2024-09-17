@@ -1,11 +1,11 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/asbuilder.h"
 
 #include "asdebugger.h"
+#include "class/ascontextmgr.h"
 
 #include <QObject>
 
@@ -42,6 +42,23 @@ protected:
     };
 
     asITypeInfo *typeInfo(RegisteredType type) const;
+
+public:
+    // only for refection
+    enum class asEContextState {
+        asEXECUTION_FINISHED = ::asEContextState::asEXECUTION_FINISHED,
+        asEXECUTION_SUSPENDED = ::asEContextState::asEXECUTION_SUSPENDED,
+        asEXECUTION_ABORTED = ::asEContextState::asEXECUTION_ABORTED,
+        asEXECUTION_EXCEPTION = ::asEContextState::asEXECUTION_EXCEPTION,
+        asEXECUTION_PREPARED = ::asEContextState::asEXECUTION_PREPARED,
+        asEXECUTION_UNINITIALIZED =
+            ::asEContextState::asEXECUTION_UNINITIALIZED,
+        asEXECUTION_ACTIVE = ::asEContextState::asEXECUTION_ACTIVE,
+        asEXECUTION_ERROR = ::asEContextState::asEXECUTION_ERROR,
+        asEXECUTION_DESERIALIZATION =
+            ::asEContextState::asEXECUTION_DESERIALIZATION
+    };
+    Q_ENUM(asEContextState)
 
 public:
     explicit ScriptMachine(std::function<QString()> &getInputFn,
@@ -95,8 +112,9 @@ private:
     static int pragmaCallback(const QByteArray &pragmaText, asBuilder *builder,
                               void *userParam);
 
-    static int includeCallback(const QString &include, const QString &from,
-                               asBuilder *builder, void *userParam);
+    static int includeCallback(const QString &include, bool quotedInclude,
+                               const QString &from, asBuilder *builder,
+                               void *userParam);
 
     static QString processTranslation(const char *content);
 
@@ -112,7 +130,7 @@ signals:
 private:
     asIScriptEngine *_engine = nullptr;
     asDebugger *_debugger = nullptr;
-    CContextMgr *_ctxMgr = nullptr;
+    asContextMgr *_ctxMgr = nullptr;
     QVector<asIScriptContext *> _ctxPool;
     std::function<void(void *ref, int typeId)> _printFn;
 

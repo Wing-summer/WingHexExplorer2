@@ -158,7 +158,7 @@ int asBuilder::LoadScriptSection(const QString &filename) {
 int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                                     const QString &sectionname,
                                     int lineOffset) {
-    QVector<QString> includes;
+    QVector<QPair<QString, bool>> includes;
 
     // Perform a superficial parsing of the script first to store the metadata
     if (length)
@@ -412,11 +412,69 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                                                      str.toUtf8());
                             } else {
                                 // Store it for later processing
-                                includes.push_back(includefile);
+                                includes.append({includefile, true});
 
                                 // Overwrite the include directive with space
                                 // characters to avoid compiler error
                                 OverwriteCode(start, pos - start);
+                            }
+                        }
+
+                        if (t == asTC_KEYWORD && modifiedScript[pos] == '<') {
+                            pos += len;
+
+                            // find the next '>'
+                            auto rpos = pos;
+                            bool found = false;
+                            for (; rpos < modifiedScript.size(); ++rpos) {
+                                if (modifiedScript[rpos] == '>') {
+                                    found = true;
+                                    break;
+                                }
+                                if (modifiedScript[rpos] == '\n') {
+                                    break;
+                                }
+                            }
+
+                            if (found) {
+                                QString includefile =
+                                    modifiedScript.mid(pos, rpos - pos)
+                                        .trimmed();
+
+                                pos = rpos + 1;
+
+                                // Make sure the includeFile doesn't contain any
+                                // line breaks
+                                auto p = includefile.indexOf('\n');
+                                auto ws = includefile.indexOf(' ');
+                                if (!includefile.isEmpty() && p >= 0 &&
+                                    ws >= 0) {
+                                    // TODO: Show the correct line number for
+                                    // the error
+                                    auto str =
+                                        tr("Invalid file name for #include; "
+                                           "it contains a line-break: ") +
+                                        QStringLiteral("'") +
+                                        includefile.left(p) +
+                                        QStringLiteral("'");
+                                    engine->WriteMessage(sectionname.toUtf8(),
+                                                         0, 0, asMSGTYPE_ERROR,
+                                                         str.toUtf8());
+                                } else {
+                                    // Store it for later processing
+                                    includes.append({includefile, false});
+
+                                    // Overwrite the include directive with
+                                    // space characters to avoid compiler error
+                                    OverwriteCode(start, pos - start);
+                                }
+                            } else {
+                                auto str = tr("Invalid file name for #include; "
+                                              "it contains a line-break or "
+                                              "unpaired symbol");
+                                engine->WriteMessage(sectionname.toUtf8(), 0, 0,
+                                                     asMSGTYPE_ERROR,
+                                                     str.toUtf8());
                             }
                         }
                     } else if (token == "pragma") {
@@ -480,8 +538,9 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
         // If the callback has been set, then call it for each included file
         if (includeCallback) {
             for (QVector<QString>::size_type n = 0; n < includes.size(); n++) {
-                int r = includeCallback(includes[n], sectionname, this,
-                                        includeParam);
+                auto inc = includes[n];
+                int r = includeCallback(inc.first, inc.second, sectionname,
+                                        this, includeParam);
                 if (r < 0)
                     return r;
             }
@@ -499,12 +558,12 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                 // the originating script
 
                 auto inc = includes.at(n);
-                if (!QFileInfo(inc).isAbsolute()) {
-                    includes[n] = path + QDir::separator() + inc;
+                if (!QFileInfo(inc.first).isAbsolute()) {
+                    includes[n].first = path + QDir::separator() + inc.first;
                 }
 
                 // Include the script section
-                int r = AddSectionFromFile(includes[n]);
+                int r = AddSectionFromFile(includes[n].first);
                 if (r < 0)
                     return r;
             }

@@ -183,8 +183,8 @@ Homepage: https://www.cnblogs.com/wingsummer/
     exeBasePath = os.path.join(exeDebPath, "opt", package_name)
     os.makedirs(exeBasePath)
     os.mkdir(os.path.join(exeBasePath, "plugin"))
-    os.mkdir(os.path.join(exeBasePath, "scriptdb"))
-    os.mkdir(os.path.join(exeBasePath, "scriptlib"))
+    os.mkdir(os.path.join(exeBasePath, "scripts"))
+    os.mkdir(os.path.join(exeBasePath, "aslib"))
 
     shutil.copy2(exemain_src, os.path.join(exeBasePath, package_name))
 

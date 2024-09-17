@@ -7,6 +7,7 @@
 - [WingHexExplorer2](#winghexexplorer2)
   - [License](#license)
   - [Usage Statement](#usage-statement)
+  - [For Packagers](#for-packagers)
   - [Issue](#issue)
 - [Screenshot](#screenshot)
 - [Donate](#donate)
@@ -95,7 +96,7 @@ Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contrib
 
 > For Qt 5, only version 5.15.2 or higher is supported, and for Qt 6, only version 6.6.2 or higher is supported. Other lower versions are not supported due to missing APIs of key libraries and some bugs of their own.
 
-&emsp;&emsp;The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of Windows and Ubuntu: ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
+The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of Windows and Ubuntu: ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
 
@@ -119,6 +120,18 @@ If you want to use the code of this software for closed-source commercial code a
 2. This software was written in my spare time. Please forgive me for not being able to fix bugs or provide technical support in time.
 3. I am not a computer major, and there are inevitably bugs in the program I write. Welcome to submit PR.
 4. Whenever you have questions, please read the Wiki in detail.
+
+### For Packagers
+
+First of all, I would like to express my sincere tanks for your enthusiastic help. As a free software, you can package and distribute it through legal channels without informing me under the condition of complying with the open source license and spirit. You can include your own information in the packaging information, but you must abide by the following agreements with me as the author of the software:
+
+1. The software package must contain the files `LICENSE`, `authorband.svg`, `licenseband.svg`, `screenshot.png` and `README.md`, and they must be placed in the same directory as the main program. These files are in the root directory of the project, just copy them.
+2. Unless it is stated in advance that the software is modified, the package must not contain the main program compiled from the modified source code.
+3. The package must not contain content that infringes on the legitimate rights and interests of others, such as adding unauthorized paid content or computer viruses to it.
+4. It is best to contain the checksum of the main program in the package, but it is not mandatory.
+5. Regardless of the packaging format, its open source agreement and free attributes must be stated, and it is not allowed to hide and charge for it. Although I don't mind charging, the download server still needs money to maintain, but I hate charging by taking advantage of the information gap.
+6. Regardless of the purpose, if you do not obtain the authorization of me, you may not modify any network links pointed to in the program, such as sponsorship and content about the software.
+7. You may not insert any plug-in containing commercial promotion in the installation program, and strictly abide by the content of the second article.
 
 ### Issue
 

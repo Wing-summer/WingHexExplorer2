@@ -725,7 +725,8 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
         m_toolBtneditors.insert(
             ToolButtonIndex::REDO_ACTION,
             addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
-                            &MainWindow::on_redofile, QKeySequence::Redo));
+                            &MainWindow::on_redofile,
+                            shortcuts.keySequence(QKeySequences::Key::REDO)));
         addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
                         &MainWindow::on_cutfile, QKeySequence::Cut);
         addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),

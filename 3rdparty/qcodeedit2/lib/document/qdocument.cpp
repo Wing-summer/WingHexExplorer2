@@ -5446,7 +5446,9 @@ void QDocumentPrivate::clearMatches(int groupId) {
 
     MatchList &matches = *mit;
 
-    foreach (const Match &m, matches) { m.h->removeOverlay(m.range); }
+    for (const Match &m : matches) {
+        m.h->removeOverlay(m.range);
+    }
 
     matches.index = matches.count();
 }

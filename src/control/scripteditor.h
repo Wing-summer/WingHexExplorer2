@@ -3,14 +3,13 @@
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "qcodeedit.h"
-#include "qformatscheme.h"
-#include "qlanguagefactory.h"
 
 class ScriptEditor : public ads::CDockWidget {
     Q_OBJECT
 
 public:
     explicit ScriptEditor(QWidget *parent = nullptr);
+    virtual ~ScriptEditor();
 
     QString fileName() const;
 
@@ -27,8 +26,6 @@ private:
 
 private:
     QCodeEdit *m_editor = nullptr;
-    QFormatScheme *m_formats = nullptr;
-    QLanguageFactory *m_languages = nullptr;
 };
 
 #endif // SCRIPTEDITOR_H
