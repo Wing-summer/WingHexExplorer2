@@ -31,12 +31,16 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 
     auto lineMark = new QLineMarkPanel(editor);
     m_editor->addPanel(lineMark, QCodeEdit::West, true);
+    connect(lineMark, &QLineMarkPanel::onToggleMark, this,
+            &ScriptEditor::onToggleMark);
 
     auto lineNum = new QLineNumberPanel(editor);
     lineNum->setVerboseMode(true);
     m_editor->addPanel(lineNum, QCodeEdit::West, true);
 
     m_editor->addPanel(QStringLiteral("Fold Panel"), QCodeEdit::West, true);
+    m_editor->addPanel(QStringLiteral("Line Change Panel"), QCodeEdit::West,
+                       true);
     m_editor->addPanel(QStringLiteral("Goto Line Panel"), QCodeEdit::South,
                        true);
     m_editor->addPanel(QStringLiteral("Search Replace Panel"), QCodeEdit::South,

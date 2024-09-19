@@ -37,6 +37,7 @@
 #include <QVBoxLayout>
 
 #include "class/wingmessagebox.h"
+#include "utilities.h"
 
 /*!
         \ingroup dialogs
@@ -48,7 +49,7 @@
 */
 
 QFormatConfig::QFormatConfig(QWidget *w)
-    : QWidget(w), ui(new Ui::QFormatConfig()), m_autonomous(false),
+    : WingHex::SettingPage(w), ui(new Ui::QFormatConfig()), m_autonomous(false),
       m_currentScheme(0) {
     ui->setupUi(this);
 
@@ -71,11 +72,6 @@ QFormatConfig::QFormatConfig(QWidget *w)
 }
 
 QFormatConfig::~QFormatConfig() { delete ui; }
-
-/*!
-        \brief run-time translation entry point
-*/
-void QFormatConfig::retranslate() { ui->retranslateUi(this); }
 
 /*!
         \return Whether the format config widget is in "autonomous" mode
@@ -102,6 +98,12 @@ bool QFormatConfig::hasUnsavedChanges() const {
         \return the list of format schemes this config widget "manages"
 */
 QList<QFormatScheme *> QFormatConfig::schemes() const { return m_schemes; }
+
+QIcon QFormatConfig::categoryIcon() const { return ICONRES(""); }
+
+QString QFormatConfig::name() const { return tr("Format"); }
+
+bool QFormatConfig::isInPluginPage() const { return false; }
 
 /*!
         \brief Add a format scheme to the config widget
@@ -325,7 +327,7 @@ void QFormatConfig::cancel() {
 
         \note The widgets are changed but these changes are NOT applied.
 */
-void QFormatConfig::restore() {
+void QFormatConfig::reset() {
     // restoring what? this is only provided for API consistency and in case
     // (very unlikely to ever happen) design changes make restore() a sensible
     // thing to do on format schemes

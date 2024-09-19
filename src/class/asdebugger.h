@@ -78,10 +78,6 @@ public:
     void registerToStringCallback(const asITypeInfo *ti,
                                   ToStringCallback callback);
 
-    typedef void (*BreakPointHitCallback)(const BreakPoint &bp,
-                                          asDebugger *dbg);
-    void registerBreakPointHitCallback(BreakPointHitCallback callback);
-
     // Commands
     void addFileBreakPoint(const QString &file, int lineNbr);
     void removeFileBreakPoint(const QString &file, int lineNbr);
@@ -108,6 +104,8 @@ public:
 
     void runDebugAction(DebugAction action);
 
+    DebugAction currentState() const;
+
 private:
     QVector<VariablesInfo> globalVariables(asIScriptContext *ctx);
     QVector<VariablesInfo> localVariables(asIScriptContext *ctx);
@@ -132,6 +130,13 @@ signals:
     void onRunCurrentLine(const QString &file, int lineNr);
 
 private:
+    struct ContextDbgInfo {
+        QString file;
+        int line = -1;
+        int stackCount = -1;
+    };
+
+private:
     std::atomic<DebugAction> m_action;
 
     asUINT m_lastCommandAtStackLevel;
@@ -143,7 +148,6 @@ private:
 
     // Registered callbacks for converting types to strings
     QMap<const asITypeInfo *, ToStringCallback> m_toStringCallbacks;
-    BreakPointHitCallback m_bphitCallback;
 
     QStringList m_watchVars;
 

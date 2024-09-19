@@ -156,23 +156,12 @@ void QLineMarkPanel::mouseReleaseEvent(QMouseEvent *e) {
     }
 
     // QMessageBox::warning(0, 0, "clik.");
-
-    QDocumentLine l;
-    QLanguageDefinition *d = editor()->languageDefinition();
-    const int id =
-        QLineMarksInfoCenter::instance()->markTypeId(d->defaultLineMark());
-
-    if (id < 0)
-        return;
-
     e->accept();
 
     for (int i = 0; i < m_rects.count(); ++i) {
         if (m_rects.at(i).contains(e->pos())) {
-            l = editor()->document()->line(m_lines.at(i));
-            l.toggleMark(id);
-            // m->toggleDefaultMark(l, -1);
-
+            auto l = editor()->document()->line(m_lines.at(i));
+            emit onToggleMark(i);
             break;
         }
     }

@@ -2,6 +2,7 @@
 #define SCRIPTINGDIALOG_H
 
 #include "control/scriptingconsole.h"
+#include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
 
 #include "QWingRibbon/ribbon.h"
@@ -29,8 +30,15 @@ private:
         REDO_ACTION,
         SAVE_ACTION,
         COPY_ACTION,
-        DBG_RUN,
-        DBG_RUN_DBG,
+        DBG_RUN_ACTION,
+        DBG_RUN_DBG_ACTION,
+        DBG_PAUSE_ACTION,
+        DBG_CONTINUE_ACTION,
+        DBG_STOP_ACTION,
+        DBG_RESTART_ACTION,
+        DBG_STEPINTO_ACTION,
+        DBG_STEPOVER_ACTION,
+        DBG_STEPOUT_ACTION,
         EDITOR_VIEWS,
         TOOL_VIEWS
     };
@@ -153,7 +161,7 @@ private:
     ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
 
-    void setRunDebugMode(bool isRun, bool isDebug = false);
+    void updateRunDebugMode();
 
     ScriptEditor *findEditorView(const QString &filename);
 
@@ -164,6 +172,12 @@ private:
     ScriptEditor *openFile(const QString &filename);
 
     void runDbgCommand(asDebugger::DebugAction action);
+
+    void buildUpSettingDialog();
+
+    void startDebugScript(const QString &fileName);
+
+    void toggleBreakPoint(ScriptEditor *editor, int lineIndex);
 
 private slots:
     void on_newfile();
@@ -213,13 +227,13 @@ private:
 
     ScriptEditor *m_curEditor = nullptr;
     QList<QWidget *> m_editStateWidgets;
-    QList<QWidget *> m_dbgStateWidgets;
 
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
 
     QMenu *m_recentMenu = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
     Ribbon *m_ribbon = nullptr;
+    SettingDialog *m_setdialog = nullptr;
 
     size_t m_newIndex = 1;
     QPair<QString, int> _lastCurLine = {QString(), -1};
@@ -235,6 +249,8 @@ private:
     DbgBreakpointModel *m_breakpoints = nullptr;
     DbgVarShowModel *m_watch = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
+
+    QString _DebugingScript;
 
     QStatusBar *m_status = nullptr;
 };

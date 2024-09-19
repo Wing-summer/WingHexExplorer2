@@ -110,4 +110,15 @@
         <file alias="as_light.qxf">src/qxs/as_light.qxf</file>
         <file alias="marks.qxm">src/qxs/marks.qxm</file>
     </qresource>
+    <qresource prefix="/qeditor">
+        <file alias="copy.png">images/copy.png</file>
+        <file alias="cut.png">images/cut.png</file>
+        <file alias="find.png">images/find.png</file>
+        <file alias="paste.png">images/paste.png</file>
+        <file alias="redo.png">images/redo.png</file>
+        <file alias="replace.png">images/replace.png</file>
+        <file alias="undo.png">images/undo.png</file>
+        <file alias="goto.png">images/goto.png</file>
+
+    </qresource>
 </RCC>

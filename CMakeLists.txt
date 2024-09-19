@@ -45,6 +45,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
 option(QWINDOWKIT_INSTALL "Install library" OFF)
 set(ADS_VERSION 4.3.1)
+option(BUILD_EXAMPLES "Build the examples" FALSE)
 
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)
@@ -287,8 +288,6 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qeditconfig.h
     src/qcodeeditwidget/qeditconfig.cpp
     src/qcodeeditwidget/qeditconfig.ui
-    src/qcodeeditwidget/qstatuspanel.cpp
-    src/qcodeeditwidget/qstatuspanel.h
     src/qcodeeditwidget/qformatconfig.h
     src/qcodeeditwidget/qformatconfig.cpp
     src/qcodeeditwidget/qformatconfig.ui)

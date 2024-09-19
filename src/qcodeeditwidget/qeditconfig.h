@@ -1,35 +1,33 @@
 #ifndef QEDITCONFIG_H
 #define QEDITCONFIG_H
 
+#include "plugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {
 class QEditConfig;
 }
 
-class QEditConfig : public QWidget {
+class QEditConfig : public WingHex::SettingPage {
     Q_OBJECT
 
 public:
     explicit QEditConfig(QWidget *parent = nullptr);
     virtual ~QEditConfig();
 
-    bool hasUnsavedChanges() const;
-
-    bool applyImmediately() const;
-
     QMap<QString, QVariant> dumpKeys() const;
 
+public:
+    virtual QIcon categoryIcon() const override;
+    virtual QString name() const override;
+    virtual bool isInPluginPage() const override;
+
+    virtual void apply() override;
+    virtual void cancel() override;
+    virtual void reset() override;
+
 public slots:
-    void retranslate();
-
-    void apply();
-    void cancel();
-    void restore();
-
     void loadKeys(const QMap<QString, QVariant> &keys);
-
-    void setApplyImmediately(bool y);
 
 signals:
     void keyChanged(const QString &key, const QVariant &value);
@@ -53,8 +51,6 @@ private slots:
 
 private:
     Ui::QEditConfig *ui;
-
-    bool m_direct;
 };
 
 #endif // QEDITCONFIG_H

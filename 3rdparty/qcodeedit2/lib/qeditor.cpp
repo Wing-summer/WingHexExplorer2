@@ -76,7 +76,7 @@
 #endif
 
 #ifdef Q_GL_EDITOR
-#include <QGLWidget>
+#include <QtOpenGLWidgets/QOpenGLWidget>
 #endif
 
 #define QCE_ACTION(name, action)                                               \
@@ -444,7 +444,7 @@ QEditor::~QEditor() {
 */
 void QEditor::init(bool actions) {
 #ifdef Q_GL_EDITOR
-    setViewport(new QGLWidget);
+    setViewport(new QOpenGLWidget);
 #endif
 
     viewport()->setCursor(Qt::IBeamCursor);
@@ -512,7 +512,7 @@ void QEditor::init(bool actions) {
 
         QAction *a, *sep;
 
-        a = new QAction(QIcon(":/undo.png"), tr("&Undo"), this);
+        a = new QAction(QIcon(":/qeditor/undo.png"), tr("&Undo"), this);
         a->setObjectName("undo");
         Q_SHORTCUT(a, "Ctrl+Z", "Edit");
         a->setEnabled(false);
@@ -521,7 +521,7 @@ void QEditor::init(bool actions) {
 
         addAction(a, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/redo.png"), tr("&Redo"), this);
+        a = new QAction(QIcon(":/qeditor/redo.png"), tr("&Redo"), this);
         a->setObjectName("redo");
         Q_SHORTCUT(a, "Ctrl+Y", "Edit");
         a->setEnabled(false);
@@ -534,7 +534,7 @@ void QEditor::init(bool actions) {
         sep->setSeparator(true);
         addAction(sep, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/cut.png"), tr("Cu&t"), this);
+        a = new QAction(QIcon(":/qeditor/cut.png"), tr("Cu&t"), this);
         a->setObjectName("cut");
         Q_SHORTCUT(a, "Ctrl+X", "Edit");
         a->setEnabled(false);
@@ -543,7 +543,7 @@ void QEditor::init(bool actions) {
 
         addAction(a, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/copy.png"), tr("&Copy"), this);
+        a = new QAction(QIcon(":/qeditor/copy.png"), tr("&Copy"), this);
         a->setObjectName("copy");
         Q_SHORTCUT(a, "Ctrl+C", "Edit");
         a->setEnabled(false);
@@ -552,7 +552,7 @@ void QEditor::init(bool actions) {
 
         addAction(a, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/paste.png"), tr("&Paste"), this);
+        a = new QAction(QIcon(":/qeditor/paste.png"), tr("&Paste"), this);
         a->setObjectName("paste");
         // aPaste->setEnabled(QApplication::clipboard()->text().count());
         Q_SHORTCUT(a, "Ctrl+V", "Edit");
@@ -567,14 +567,14 @@ void QEditor::init(bool actions) {
         sep->setSeparator(true);
         addAction(sep, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/indent.png"), tr("&Indent"), this);
+        a = new QAction(tr("&Indent"), this);
         a->setObjectName("indent");
         Q_SHORTCUT(a, "Ctrl+I", "Edit");
         connect(a, SIGNAL(triggered()), this, SLOT(indentSelection()));
 
         addAction(a, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/unindent.png"), tr("&Unindent"), this);
+        a = new QAction(tr("&Unindent"), this);
         a->setObjectName("unindent");
         Q_SHORTCUT(a, "Ctrl+Shift+I", "Edit");
         connect(a, SIGNAL(triggered()), this, SLOT(unindentSelection()));
@@ -585,14 +585,14 @@ void QEditor::init(bool actions) {
         sep->setSeparator(true);
         addAction(sep, "&Edit", "");
 
-        a = new QAction(QIcon(":/comment.png"), tr("Co&mment"), this);
+        a = new QAction(tr("Co&mment"), this);
         a->setObjectName("comment");
         Q_SHORTCUT(a, "Ctrl+D", "Edit");
         connect(a, SIGNAL(triggered()), this, SLOT(commentSelection()));
 
         addAction(a, "&Edit", "Edit");
 
-        a = new QAction(QIcon(":/uncomment.png"), tr("Unc&omment"), this);
+        a = new QAction(tr("Unc&omment"), this);
         a->setObjectName("uncomment");
         Q_SHORTCUT(a, "Ctrl+Shift+D", "Edit");
         connect(a, SIGNAL(triggered()), this, SLOT(uncommentSelection()));
@@ -614,21 +614,21 @@ void QEditor::init(bool actions) {
         sep->setSeparator(true);
         addAction(sep, QString());
 
-        a = new QAction(QIcon(":/find.png"), tr("&Find"), this);
+        a = new QAction(QIcon(":/qeditor/find.png"), tr("&Find"), this);
         a->setObjectName("find");
         Q_SHORTCUT(a, "Ctrl+F", "Search");
         connect(a, SIGNAL(triggered()), this, SLOT(find()));
 
         addAction(a, "&Search", "Search");
 
-        a = new QAction(QIcon(":/next.png"), tr("Fin&d next"), pMenu);
+        a = new QAction(tr("Fin&d next"), pMenu);
         a->setObjectName("findNext");
         Q_SHORTCUT(a, "F3", "Search");
         connect(a, SIGNAL(triggered()), this, SLOT(findNext()));
 
         addAction(a, "&Search", "Search");
 
-        a = new QAction(QIcon(":/replace.png"), tr("&Replace"), this);
+        a = new QAction(QIcon(":/qeditor/replace.png"), tr("&Replace"), this);
         a->setObjectName("replace");
         Q_SHORTCUT(a, "Ctrl+R", "Search");
         connect(a, SIGNAL(triggered()), this, SLOT(replace()));
@@ -639,7 +639,7 @@ void QEditor::init(bool actions) {
         sep->setSeparator(true);
         addAction(sep, "&Search", "Search");
 
-        a = new QAction(QIcon(":/goto.png"), tr("&Goto line..."), this);
+        a = new QAction(QIcon(":/qeditor/goto.png"), tr("&Goto line..."), this);
         a->setObjectName("goto");
         Q_SHORTCUT(a, "Ctrl+G", "Search");
         connect(a, SIGNAL(triggered()), this, SLOT(gotoLine()));

@@ -21,10 +21,6 @@ void asDebugger::registerToStringCallback(const asITypeInfo *ti,
         m_toStringCallbacks.insert(ti, callback);
 }
 
-void asDebugger::registerBreakPointHitCallback(BreakPointHitCallback callback) {
-    m_bphitCallback = callback;
-}
-
 void asDebugger::takeCommands(asIScriptContext *ctx) {
     emit onPullVariables(globalVariables(ctx), localVariables(ctx));
     emit onPullCallStack(retriveCallstack(ctx));
@@ -38,10 +34,13 @@ void asDebugger::takeCommands(asIScriptContext *ctx) {
         ctx->Abort();
         return;
     case PAUSE:
+        Q_ASSERT(false);
         break;
     case STEP_OVER:
-    case STEP_OUT:
         m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 1;
+        break;
+    case STEP_OUT:
+        m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 0;
         break;
     case CONTINUE:
     case STEP_INTO:
@@ -56,6 +55,25 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     if (ctx == nullptr)
         return;
 
+    const char *file = 0;
+    int lineNbr = ctx->GetLineNumber(0, nullptr, &file);
+
+    // why?
+    // LineCallBack will be called each only a sentence,
+    // just like a bytecode level debugger
+    // for(auto i = 0; i < 5 ; i++) this line will break twice at first
+    if (ctx->GetUserData() == nullptr) {
+        auto dbgContext = new ContextDbgInfo;
+        ctx->SetUserData(dbgContext);
+    } else {
+        auto dbgContext =
+            reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
+        if (dbgContext->line == lineNbr && dbgContext->file == file &&
+            dbgContext->stackCount == ctx->GetCallstackSize()) {
+            return;
+        }
+    }
+
     // By default we ignore callbacks when the context is not active.
     // An application might override this to for example disconnect the
     // debugger as the execution finished.
@@ -64,18 +82,14 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
 
     switch (m_action) {
     case ABORT:
-        ctx->Abort();
         return;
     case PAUSE:
-        break;
+        return;
     case CONTINUE:
         if (!checkBreakPoint(ctx))
             return;
         break;
     case STEP_INTO:
-        // Always break, but we call the check break point anyway
-        // to tell user when break point has been reached
-        checkBreakPoint(ctx);
         m_action = PAUSE;
         break;
     case STEP_OVER:
@@ -89,8 +103,12 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         break;
     }
 
-    const char *file = 0;
-    int lineNbr = ctx->GetLineNumber(0, nullptr, &file);
+    auto dbgContext = reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
+    Q_ASSERT(dbgContext);
+    dbgContext->file = file;
+    dbgContext->line = lineNbr;
+    dbgContext->stackCount = ctx->GetCallstackSize();
+
     emit onRunCurrentLine(file, lineNbr);
 
     takeCommands(ctx);
@@ -213,7 +231,7 @@ void asDebugger::listMemberProperties(asIScriptContext *ctx) {
 }
 
 bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
-    if (ctx == 0)
+    if (ctx == nullptr)
         return false;
 
     const char *tmp = 0;
@@ -272,8 +290,6 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
 #else
             bpName == file) {
 #endif
-            ctx->Suspend();
-            m_bphitCallback(m_breakPoints[n], this);
             m_action = PAUSE; // hit and pause script
             return true;
         }
@@ -413,6 +429,8 @@ asDebugger::GCStatistic asDebugger::gcStatistics() {
 }
 
 void asDebugger::runDebugAction(DebugAction action) { m_action = action; }
+
+asDebugger::DebugAction asDebugger::currentState() const { return m_action; }
 
 void asDebugger::setEngine(asIScriptEngine *engine) {
     if (m_engine != engine) {

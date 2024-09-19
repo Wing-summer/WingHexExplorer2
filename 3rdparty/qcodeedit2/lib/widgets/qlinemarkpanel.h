@@ -41,6 +41,9 @@ public:
 
     virtual QString type() const;
 
+signals:
+    void onToggleMark(int lineIndex);
+
 protected:
     virtual bool paint(QPainter *p, QEditor *e);
     virtual void mousePressEvent(QMouseEvent *e);

@@ -26,6 +26,7 @@
 #include "qdocument_p.h"
 #include "qeditor.h"
 #include "ui_qeditconfig.h"
+#include "utilities.h"
 
 #include <QDebug>
 
@@ -39,107 +40,13 @@
 */
 
 QEditConfig::QEditConfig(QWidget *w)
-    : QWidget(w), ui(new Ui::QEditConfig()), m_direct(false) {
+    : WingHex::SettingPage(w), ui(new Ui::QEditConfig()) {
     ui->setupUi(this);
 
-    restore();
+    reset();
 }
 
 QEditConfig::~QEditConfig() { delete ui; }
-
-/*!
-        \brief run-time translation entry point
-*/
-void QEditConfig::retranslate() { ui->retranslateUi(this); }
-
-/*!
-        \brief
-*/
-bool QEditConfig::hasUnsavedChanges() const {
-    if (m_direct)
-        return false;
-
-    QFont font = ui->cbFont->currentFont();
-    // font.setPointSize(spnFontSize->value());
-
-    const QFont &docFont = QDocument::font();
-
-    if (font.family() != docFont.family() ||
-        ui->spnFontSize->value() != docFont.pointSize()) {
-        // qDebug("font!");
-        return true;
-    }
-
-    if (ui->spnTabWidth->value() != QDocument::tabStop()) {
-        // qDebug("tab stop!");
-        return true;
-    }
-
-    QDocument::LineEnding le = QDocument::defaultLineEnding();
-
-    if (ui->chkDetectLE->isChecked()) {
-        if (le != QDocument::Conservative) {
-            // qDebug("conservative line endings! : %i", le);
-            return true;
-        }
-    } else {
-        if (le !=
-            QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1)) {
-            // qDebug("line endings!");
-            return true;
-        }
-    }
-
-    QDocument::WhiteSpaceMode ws = QDocument::ShowNone;
-
-    if (ui->chkShowLeadingWhitespace->isChecked())
-        ws |= QDocument::ShowLeading;
-
-    if (ui->chkShowTrailingWhitespace->isChecked())
-        ws |= QDocument::ShowTrailing;
-
-    if (ui->chkShowTabsInText->isChecked())
-        ws |= QDocument::ShowTabs;
-
-    if (ws != QDocument::showSpaces()) {
-        // qDebug("spaces!");
-        return true;
-    }
-
-    int flags = QEditor::defaultFlags();
-
-    if (ui->chkReplaceTabs->isChecked())
-        flags |= QEditor::ReplaceTabs;
-    else
-        flags &= ~QEditor::ReplaceTabs;
-
-    if (ui->chkAutoRemoveTrailingWhitespace->isChecked())
-        flags |= QEditor::RemoveTrailing;
-    else
-        flags &= ~QEditor::RemoveTrailing;
-
-    if (ui->chkPreserveTrailingIndent->isChecked())
-        flags |= QEditor::PreserveTrailingIndent;
-    else
-        flags &= ~QEditor::PreserveTrailingIndent;
-
-    if (flags != QEditor::defaultFlags()) {
-        // qDebug("flags!");
-        return true;
-    }
-
-    return false;
-}
-
-/*!
-        \return whether user changes are immediately applied
-*/
-bool QEditConfig::applyImmediately() const { return m_direct; }
-
-/*!
-        \brief Set whether user changes are immediately applied
-*/
-void QEditConfig::setApplyImmediately(bool y) { m_direct = y; }
 
 /*!
         \brief Apply changes
@@ -199,11 +106,6 @@ void QEditConfig::apply() {
 */
 void QEditConfig::cancel() {
     // reload the current config
-
-    bool oldDir = m_direct;
-
-    m_direct = false;
-
     ui->cbFont->setFont(QDocument::font());
     ui->spnFontSize->setValue(QDocument::font().pointSize());
 
@@ -224,10 +126,6 @@ void QEditConfig::cancel() {
                                                     QEditor::RemoveTrailing);
     ui->chkPreserveTrailingIndent->setChecked(flags &
                                               QEditor::PreserveTrailingIndent);
-
-    auto c = QEditor::defaultCodecName();
-
-    m_direct = oldDir;
 }
 
 /*!
@@ -235,12 +133,8 @@ void QEditConfig::cancel() {
 
         \note The widgets are changed but these changes are NOT applied.
 */
-void QEditConfig::restore() {
+void QEditConfig::reset() {
     // restore default configuration
-
-    bool oldDir = m_direct;
-
-    m_direct = false;
 
     QFont font("Monospace", 10);
     font.setStyleHint(QFont::Courier);
@@ -260,8 +154,6 @@ void QEditConfig::restore() {
     ui->chkReplaceTabs->setChecked(false);
     ui->chkAutoRemoveTrailingWhitespace->setChecked(false);
     ui->chkPreserveTrailingIndent->setChecked(true);
-
-    m_direct = oldDir;
 }
 
 /*!
@@ -296,6 +188,12 @@ QMap<QString, QVariant> QEditConfig::dumpKeys() const {
     return m;
 }
 
+QIcon QEditConfig::categoryIcon() const { return ICONRES("file"); }
+
+QString QEditConfig::name() const { return tr("Edit"); }
+
+bool QEditConfig::isInPluginPage() const { return false; }
+
 /*!
         \brief Fills the widget subcontrols from a settings map
 
@@ -314,40 +212,31 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant> &keys) {
             ui->cbFont->setCurrentFont(f);
             ui->spnFontSize->setValue(f.pointSize());
 
-            if (m_direct)
-                QDocument::setFont(f);
+            QDocument::setFont(f);
 
             ui->lblSampleText->setFont(f);
 
         } else if (it.key() == "tab_width") {
             ui->spnTabWidth->setValue(it->toInt());
-
-            if (m_direct)
-                on_spnTabWidth_valueChanged(it->toInt());
+            on_spnTabWidth_valueChanged(it->toInt());
         } else if (it.key() == "replace_tabs") {
             ui->chkReplaceTabs->setChecked(it->toBool());
-            if (m_direct)
-                on_chkReplaceTabs_toggled(it->toBool());
+            on_chkReplaceTabs_toggled(it->toBool());
         } else if (it.key() == "remove_trailing") {
             ui->chkAutoRemoveTrailingWhitespace->setChecked(it->toBool());
-            if (m_direct)
-                on_chkAutoRemoveTrailingWhitespace_toggled(it->toBool());
+            on_chkAutoRemoveTrailingWhitespace_toggled(it->toBool());
         } else if (it.key() == "preserve_trailing_indent") {
             ui->chkPreserveTrailingIndent->setChecked(it->toBool());
-            if (m_direct)
-                on_chkPreserveTrailingIndent_toggled(it->toBool());
+            on_chkPreserveTrailingIndent_toggled(it->toBool());
         } else if (it.key() == "show_tabs_in_text") {
             ui->chkShowTabsInText->setChecked(it->toBool());
-            if (m_direct)
-                on_chkShowTabsInText_toggled(it->toBool());
+            on_chkShowTabsInText_toggled(it->toBool());
         } else if (it.key() == "show_leading_whitespace") {
             ui->chkShowLeadingWhitespace->setChecked(it->toBool());
-            if (m_direct)
-                on_chkShowLeadingWhitespace_toggled(it->toBool());
+            on_chkShowLeadingWhitespace_toggled(it->toBool());
         } else if (it.key() == "show_trailing_whitespace") {
             ui->chkShowTrailingWhitespace->setChecked(it->toBool());
-            if (m_direct)
-                on_chkShowTrailingWhitespace_toggled(it->toBool());
+            on_chkShowTrailingWhitespace_toggled(it->toBool());
         } else if (it.key() == "line_endings") {
             int le = it->toInt();
 
@@ -379,10 +268,8 @@ void QEditConfig::on_spnFontSize_valueChanged(int size) {
 
     ui->lblSampleText->setFont(font);
 
-    if (m_direct) {
-        QDocument::setFont(font);
-        emit keyChanged("font", font);
-    }
+    QDocument::setFont(font);
+    emit keyChanged("font", font);
 }
 
 /*!
@@ -392,90 +279,76 @@ void QEditConfig::on_cbFont_currentFontChanged(QFont font) {
     font.setPointSize(ui->spnFontSize->value());
     ui->lblSampleText->setFont(font);
 
-    if (m_direct) {
-        QDocument::setFont(font);
-        emit keyChanged("font", font);
-    }
+    QDocument::setFont(font);
+    emit keyChanged("font", font);
 }
 
 /*!
         \brief Slot used to apply tab width settings
 */
 void QEditConfig::on_spnTabWidth_valueChanged(int n) {
-    if (m_direct) {
-        QDocument::setTabStop(n);
-        emit keyChanged("tab_width", n);
-    }
+
+    QDocument::setTabStop(n);
+    emit keyChanged("tab_width", n);
 }
 
 /*!
         \brief Slot used to apply tabs replacement settings
 */
 void QEditConfig::on_chkReplaceTabs_toggled(bool y) {
-    if (m_direct) {
-        // FIXME
-        foreach (QEditor *e, QEditor::m_editors) {
-            e->setFlag(QEditor::ReplaceTabs, y);
-        }
-        emit keyChanged("replace_tabs", y);
+    // FIXME
+    foreach (QEditor *e, QEditor::m_editors) {
+        e->setFlag(QEditor::ReplaceTabs, y);
     }
+    emit keyChanged("replace_tabs", y);
 }
 
 /*!
         \brief Slot used to apply tabs display settings
 */
 void QEditConfig::on_chkShowTabsInText_toggled(bool y) {
-    if (m_direct) {
-        if (y)
-            QDocument::setShowSpaces(QDocument::showSpaces() |
-                                     QDocument::ShowTabs);
-        else
-            QDocument::setShowSpaces(QDocument::showSpaces() &
-                                     ~QDocument::ShowTabs);
+    if (y)
+        QDocument::setShowSpaces(QDocument::showSpaces() | QDocument::ShowTabs);
+    else
+        QDocument::setShowSpaces(QDocument::showSpaces() &
+                                 ~QDocument::ShowTabs);
 
-        emit keyChanged("show_tabs_in_text", y);
-    }
+    emit keyChanged("show_tabs_in_text", y);
 }
 
 /*!
         \brief Slot used to apply trailing whitespace display settings
 */
 void QEditConfig::on_chkShowLeadingWhitespace_toggled(bool y) {
-    if (m_direct) {
-        if (y)
-            QDocument::setShowSpaces(QDocument::showSpaces() |
-                                     QDocument::ShowLeading);
-        else
-            QDocument::setShowSpaces(QDocument::showSpaces() &
-                                     ~QDocument::ShowLeading);
+    if (y)
+        QDocument::setShowSpaces(QDocument::showSpaces() |
+                                 QDocument::ShowLeading);
+    else
+        QDocument::setShowSpaces(QDocument::showSpaces() &
+                                 ~QDocument::ShowLeading);
 
-        emit keyChanged("show_leading_whitespace", y);
-    }
+    emit keyChanged("show_leading_whitespace", y);
 }
 
 /*!
         \brief Slot used to apply leading whitespace display settings
 */
 void QEditConfig::on_chkShowTrailingWhitespace_toggled(bool y) {
-    if (m_direct) {
-        if (y)
-            QDocument::setShowSpaces(QDocument::showSpaces() |
-                                     QDocument::ShowTrailing);
-        else
-            QDocument::setShowSpaces(QDocument::showSpaces() &
-                                     ~QDocument::ShowTrailing);
+    if (y)
+        QDocument::setShowSpaces(QDocument::showSpaces() |
+                                 QDocument::ShowTrailing);
+    else
+        QDocument::setShowSpaces(QDocument::showSpaces() &
+                                 ~QDocument::ShowTrailing);
 
-        emit keyChanged("show_trailing_whitespace", y);
-    }
+    emit keyChanged("show_trailing_whitespace", y);
 }
 
 void QEditConfig::on_cbLineEndings_currentIndexChanged(int idx) {
     QDocument::LineEnding le = QDocument::LineEnding(idx + 1);
 
-    if (m_direct) {
-        QDocument::setDefaultLineEnding(le);
-        emit keyChanged("line_endings", (int)le);
-    }
+    QDocument::setDefaultLineEnding(le);
+    emit keyChanged("line_endings", (int)le);
 }
 
 /*!
@@ -488,36 +361,30 @@ void QEditConfig::on_chkDetectLE_toggled(bool y) {
         le = QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1);
     }
 
-    if (m_direct) {
-        QDocument::setDefaultLineEnding(le);
-        emit keyChanged("line_endings", (int)le);
-    }
+    QDocument::setDefaultLineEnding(le);
+    emit keyChanged("line_endings", (int)le);
 }
 
 /*!
         \brief Slot used to apply trailing space removal settings
 */
 void QEditConfig::on_chkAutoRemoveTrailingWhitespace_toggled(bool y) {
-    if (m_direct) {
-        // FIXME
-        foreach (QEditor *e, QEditor::m_editors) {
-            e->setFlag(QEditor::RemoveTrailing, y);
-        }
-        emit keyChanged("remove_trailing", y);
+    // FIXME
+    foreach (QEditor *e, QEditor::m_editors) {
+        e->setFlag(QEditor::RemoveTrailing, y);
     }
+    emit keyChanged("remove_trailing", y);
 }
 
 /*!
         \brief Slot used to indent preservation settings
 */
 void QEditConfig::on_chkPreserveTrailingIndent_toggled(bool y) {
-    if (m_direct) {
-        // FIXME
-        foreach (QEditor *e, QEditor::m_editors) {
-            e->setFlag(QEditor::PreserveTrailingIndent, y);
-        }
-        emit keyChanged("preserve_trailing_indent", y);
+    // FIXME
+    foreach (QEditor *e, QEditor::m_editors) {
+        e->setFlag(QEditor::PreserveTrailingIndent, y);
     }
+    emit keyChanged("preserve_trailing_indent", y);
 }
 
 /*! @} */

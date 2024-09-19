@@ -15,6 +15,9 @@ public:
 
     QEditor *editor() const;
 
+signals:
+    void onToggleMark(int lineIndex);
+
 public slots:
     bool openFile(const QString &filename);
 
