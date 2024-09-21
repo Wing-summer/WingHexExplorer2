@@ -89,7 +89,7 @@ def main():
 
     package_name = "WingHexExplorer2"
     architecture = detect_architecture()
-    depends = ""
+    depends = r"${shlibs:Depends}, ${misc:Depends}"
 
     # start parsing build directory
     projectdeb = os.path.abspath(args.folder)

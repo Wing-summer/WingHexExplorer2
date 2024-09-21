@@ -45,6 +45,8 @@ def main():
         "folder", help="A folder that has contained the binary build")
     parser.add_argument("-c", "--cc", help="where ISCC.exe locates", default="C:\Program Files (x86)\Inno Setup 6\ISCC.exe")
     parser.add_argument("-o", "--output", help="where to put the installer")
+    parser.add_argument("--build", action='store_false')
+    
     args = parser.parse_args()
 
     # checking build toolkits
@@ -267,17 +269,19 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
     with codecs.open(script_src,'w', "utf-8-sig") as iss:
         iss.write(iss_content)
 
-    print(Fore.GREEN + ">> Copying finished, running ISCC building..." + Style.RESET_ALL)
-    
-    pak_out = ""
-    if args.output is None:
-        pak_out = exeDebPath
-    else:
-        pak_out = args.output
-    
-    ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
-    exit(ret)
-
+    if(args.build):
+        print(Fore.GREEN + ">> Copying finished, running ISCC building..." + Style.RESET_ALL)
+        
+        pak_out = ""
+        if args.output is None:
+            pak_out = exeDebPath
+        else:
+            pak_out = args.output
+        
+        ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
+        exit(ret)
+            
+    exit(0)    
 
 if __name__ == "__main__":
     main()

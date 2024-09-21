@@ -2761,6 +2761,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
+    m_scriptDialog->saveDockLayout();
     set.setRecentFiles(m_recentmanager->saveRecent());
     set.save();
 

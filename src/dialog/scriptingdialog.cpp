@@ -51,6 +51,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(q_check_ptr(m_ribbon));
 
     buildUpDockSystem(cw);
+    _defaultLayout = m_dock->saveState();
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
@@ -92,6 +93,10 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
     this->setMinimumSize(800, 600);
 
+    // load saved docking layout
+    auto &set = SettingManager::instance();
+    m_dock->restoreState(set.scriptDockLayout());
+
     this->setUpdatesEnabled(true);
 }
 
@@ -104,6 +109,8 @@ void ScriptingDialog::initConsole() {
 
         this->updateRunDebugMode();
         m_callstack->updateData({});
+        m_varshow->updateData({});
+        m_gvarshow->updateData({});
 
         // clean up
         if (_lastCurLine.first.isEmpty() || _lastCurLine.second < 0) {
@@ -134,7 +141,11 @@ void ScriptingDialog::initConsole() {
     Q_ASSERT(dbg);
     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
             [=](const asDebugger::BreakPoint &old, int newLineNr) {
-
+                auto editor = QCodeEdit::managed(old.name);
+                if (editor) {
+                    removeBreakPoint(editor, old.lineNbr - 1);
+                    addBreakPoint(editor, newLineNr - 1);
+                }
             });
     connect(dbg, &asDebugger::onPullVariables, this,
             [=](const QVector<asDebugger::VariablesInfo> &globalvars,
@@ -158,7 +169,9 @@ void ScriptingDialog::initConsole() {
                     e->setFocus();
                     e->raise();
                 } else {
-                    // TODO error permission
+                    WingMessageBox::critical(this, this->windowTitle(),
+                                             tr("ScriptPermissionDenied"));
+                    return;
                 }
             }
 
@@ -356,6 +369,14 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
                              addPannelAction(pannel, QStringLiteral("general"),
                                              tr("Tools"), EMPTY_FUNC, {},
                                              new QMenu(this)));
+    }
+
+    {
+        auto pannel = tab->addGroup(tr("Layout"));
+        addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Fullscreen"),
+                        &ScriptingDialog::on_fullScreen);
+        addPannelAction(pannel, QStringLiteral("layout"), tr("RestoreLayout"),
+                        &ScriptingDialog::on_restoreLayout);
     }
 
     return tab;
@@ -591,12 +612,13 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
         splitter->setSizes({height() - bottomHeight, bottomHeight});
     }
 
-    buildUpStackShowDock(m_dock, ads::CenterDockWidgetArea, bottomArea);
+    buildUpStackShowDock(m_dock, ads::RightDockWidgetArea, bottomArea);
+    auto rightArea = buildUpBreakpointShowDock(m_dock, ads::RightDockWidgetArea,
+                                               m_editorViewArea);
+    buildUpVarShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
-    // TODO
-    buildUpBreakpointShowDock(m_dock, ads::RightDockWidgetArea);
-    buildUpVarShowDock(m_dock, ads::RightDockWidgetArea);
-    buildUpWatchDock(m_dock, ads::CenterDockWidgetArea);
+    // not avaliable for v1.0.0
+    // buildUpWatchDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
@@ -732,7 +754,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     connect(cur, &ScriptEditor::onToggleMark, this, [=](int lineIndex) {
         auto editor = qobject_cast<ScriptEditor *>(sender());
         Q_ASSERT(editor);
-        toggleBreakPoint(editor, lineIndex);
+        toggleBreakPoint(editor->editor(), lineIndex);
     });
     connect(editor, &QEditor::copyAvailable,
             m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
@@ -865,18 +887,70 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     updateRunDebugMode();
 }
 
-void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int lineIndex) {
+void ScriptingDialog::addBreakPoint(QEditor *editor, int lineIndex) {
+    Q_ASSERT(editor);
+    auto bpMark = m_symID.value(Symbols::BreakPoint);
+    auto curLine = lineIndex + 1;
+
+    if (m_consoleout->machine()->isInDebugMode()) {
+        auto line = editor->document()->line(lineIndex);
+        auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
+        auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
+
+        auto dbg = m_consoleout->machine()->debugger();
+        if (line.hasMark(curSym)) {
+            line.removeMark(curSym);
+            line.addMark(hitCur);
+            dbg->addFileBreakPoint(editor->fileName(), curLine);
+        } else {
+            if (!line.hasMark(bpMark)) {
+                line.addMark(bpMark);
+                dbg->addFileBreakPoint(editor->fileName(), curLine);
+            }
+        }
+    } else {
+        auto line = editor->document()->line(lineIndex);
+        if (!line.hasMark(bpMark)) {
+            line.addMark(bpMark);
+        }
+    }
+}
+
+void ScriptingDialog::removeBreakPoint(QEditor *editor, int lineIndex) {
+    Q_ASSERT(editor);
+    auto bpMark = m_symID.value(Symbols::BreakPoint);
+    auto curLine = lineIndex + 1;
+
+    if (m_consoleout->machine()->isInDebugMode()) {
+        auto line = editor->document()->line(lineIndex);
+        auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
+        auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
+
+        auto dbg = m_consoleout->machine()->debugger();
+        if (line.hasMark(hitCur)) {
+            line.removeMark(hitCur);
+            line.addMark(curSym);
+            dbg->removeFileBreakPoint(editor->fileName(), curLine);
+        } else {
+            if (line.hasMark(bpMark)) {
+                line.removeMark(bpMark);
+                dbg->removeFileBreakPoint(editor->fileName(), curLine);
+            }
+        }
+    } else {
+        auto line = editor->document()->line(lineIndex);
+        if (line.hasMark(bpMark)) {
+            line.removeMark(bpMark);
+        }
+    }
+}
+
+void ScriptingDialog::toggleBreakPoint(QEditor *editor, int lineIndex) {
     Q_ASSERT(editor);
     auto curLine = lineIndex + 1;
 
-#ifdef Q_OS_WIN
-    if (m_consoleout->machine()->isInDebugMode() &&
-        editor->fileName().compare(_lastCurLine.first, Qt::CaseInsensitive) == 0
-#else
-    if (editor->fileName() == _lastCurLine.first
-#endif
-        && _lastCurLine.second == curLine) {
-        auto line = editor->editor()->document()->line(lineIndex);
+    if (m_consoleout->machine()->isInDebugMode()) {
+        auto line = editor->document()->line(lineIndex);
         auto bpMark = m_symID.value(Symbols::BreakPoint);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
@@ -1108,6 +1182,12 @@ void ScriptingDialog::on_wiki() {
                        "doc_script.html")));
 }
 
+void ScriptingDialog::on_fullScreen() { this->showFullScreen(); }
+
+void ScriptingDialog::on_restoreLayout() {
+    m_dock->restoreState(_defaultLayout);
+}
+
 void ScriptingDialog::on_runscript() {
     auto editor = currentEditor();
     if (editor) {
@@ -1164,84 +1244,24 @@ void ScriptingDialog::on_stepoverscript() {
 void ScriptingDialog::on_togglebreakpoint() {
     auto editor = currentEditor();
     if (editor) {
-        toggleBreakPoint(editor, editor->editor()->cursor().lineNumber());
+        auto e = editor->editor();
+        toggleBreakPoint(e, e->cursor().lineNumber());
     }
 }
 
 void ScriptingDialog::on_addbreakpoint() {
     auto editor = currentEditor();
     if (editor) {
-        auto curLineInd = editor->editor()->cursor().lineNumber();
-        auto bpMark = m_symID.value(Symbols::BreakPoint);
-
-#ifdef Q_OS_WIN
-        if (m_consoleout->machine()->isInDebugMode() &&
-            editor->fileName().compare(_lastCurLine.first,
-                                       Qt::CaseInsensitive) == 0
-#else
-        if (editor->fileName() == _lastCurLine.first
-#endif
-            && _lastCurLine.second == curLineInd + 1) {
-            auto line = editor->editor()->document()->line(curLineInd);
-            auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
-            auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
-
-            auto dbg = m_consoleout->machine()->debugger();
-            if (line.hasMark(curSym)) {
-                line.removeMark(curSym);
-                line.addMark(hitCur);
-                dbg->addFileBreakPoint(editor->fileName(), curLineInd + 1);
-            } else {
-                if (!line.hasMark(bpMark)) {
-                    line.addMark(bpMark);
-                    dbg->addFileBreakPoint(editor->fileName(), curLineInd + 1);
-                }
-            }
-        } else {
-            auto line = editor->editor()->document()->line(curLineInd);
-            if (!line.hasMark(bpMark)) {
-                line.addMark(bpMark);
-            }
-        }
+        auto e = editor->editor();
+        addBreakPoint(e, e->cursor().lineNumber());
     }
 }
 
 void ScriptingDialog::on_removebreakpoint() {
     auto editor = currentEditor();
     if (editor) {
-        auto curLineInd = editor->editor()->cursor().lineNumber();
-        auto bpMark = m_symID.value(Symbols::BreakPoint);
-
-#ifdef Q_OS_WIN
-        if (m_consoleout->machine()->isInDebugMode() &&
-            editor->fileName().compare(_lastCurLine.first,
-                                       Qt::CaseInsensitive) == 0
-#else
-        if (editor->fileName() == _lastCurLine.first
-#endif
-            && _lastCurLine.second == curLineInd + 1) {
-            auto line = editor->editor()->document()->line(curLineInd);
-            auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
-            auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
-
-            auto dbg = m_consoleout->machine()->debugger();
-            if (line.hasMark(hitCur)) {
-                line.removeMark(hitCur);
-                line.addMark(curSym);
-                dbg->removeFileBreakPoint(editor->fileName(), curLineInd + 1);
-            } else {
-                if (line.hasMark(bpMark)) {
-                    line.removeMark(bpMark);
-                    dbg->removeFileBreakPoint(editor->fileName(),
-                                              curLineInd + 1);
-                }
-            }
-        } else {
-            auto line = editor->editor()->document()->line(curLineInd);
-            if (line.hasMark(bpMark)) {
-                line.removeMark(bpMark);
-            }
-        }
+        auto e = editor->editor();
+        removeBreakPoint(e, e->cursor().lineNumber());
     }
 }
 

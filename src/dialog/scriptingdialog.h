@@ -179,7 +179,11 @@ private:
 
     void startDebugScript(const QString &fileName);
 
-    void toggleBreakPoint(ScriptEditor *editor, int lineIndex);
+    void addBreakPoint(QEditor *editor, int lineIndex);
+
+    void removeBreakPoint(QEditor *editor, int lineIndex);
+
+    void toggleBreakPoint(QEditor *editor, int lineIndex);
 
 private slots:
     void on_newfile();
@@ -205,6 +209,9 @@ private slots:
     void on_sponsor();
     void on_wiki();
 
+    void on_fullScreen();
+    void on_restoreLayout();
+
     void on_runscript();
     void on_rundbgscript();
     void on_pausescript();
@@ -226,6 +233,7 @@ private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
     QLanguageFactory *m_language = nullptr;
+    QByteArray _defaultLayout;
 
     ScriptEditor *m_curEditor = nullptr;
     QList<QWidget *> m_editStateWidgets;
