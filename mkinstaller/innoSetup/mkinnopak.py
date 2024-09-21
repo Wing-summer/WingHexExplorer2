@@ -140,21 +140,6 @@ def main():
     shutil.copytree(os.path.join(projectdeb, "lang"),
                     os.path.join(exeDebPath, "lang"))
 
-    print(Fore.GREEN + ">> Copying dependencies..." + Style.RESET_ALL)
-
-    ads_lib = os.path.join(projectdeb, "3rdparty",
-                           "Qt-Advanced-Docking-System", "src", f"qt{qt_version}advanceddocking.dll")
-    if (os.path.exists(ads_lib) == False):
-        print(Fore.RED + f"[Error] qt{qt_version}advanceddocking.dll is not found! Maybe you are building it in debug mode which is not allowed!" + Style.RESET_ALL)
-        exit(-4)
-    shutil.copy2(ads_lib, os.path.join(
-        exeDebPath, f"qt{qt_version}advanceddocking.dll"))
-    
-    # install "qt{qt_version}advanceddocking.dll" to deploy path, otherwise it will fail
-    ads_lib_deploy =  os.path.join(
-        os.path.dirname(deploy_exec), f"qt{qt_version}advanceddocking.dll")
-    shutil.copy2(ads_lib, ads_lib_deploy)
-
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 
     material_files = ["LICENSE", "authorband.svg",

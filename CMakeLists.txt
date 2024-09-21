@@ -46,6 +46,7 @@ option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
 option(QWINDOWKIT_INSTALL "Install library" OFF)
 set(ADS_VERSION 4.3.1)
 option(BUILD_EXAMPLES "Build the examples" FALSE)
+option(BUILD_STATIC "Build the static library" TRUE)
 
 add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)

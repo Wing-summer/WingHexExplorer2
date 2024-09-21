@@ -89,7 +89,7 @@ def main():
 
     package_name = "WingHexExplorer2"
     architecture = detect_architecture()
-    depends = r"${shlibs:Depends}, ${misc:Depends}"
+    depends = ""
 
     # start parsing build directory
     projectdeb = os.path.abspath(args.folder)
@@ -198,20 +198,6 @@ Homepage: https://www.cnblogs.com/wingsummer/
 
     shutil.copytree(os.path.join(projectdeb, "lang"),
                     os.path.join(exeBasePath, "lang"))
-
-    print(Fore.GREEN + ">> Copying dependencies..." + Style.RESET_ALL)
-
-    ads_lib = os.path.join(projectdeb, "3rdparty",
-                           "Qt-Advanced-Docking-System", "src", f"libqt{qt_version}advanceddocking.so")
-    if (os.path.exists(ads_lib) == False):
-        print(Fore.RED + f"[Error] libqt{qt_version}advanceddocking.so is not found! Maybe you are building it in debug mode which is not allowed!" + Style.RESET_ALL)
-        exit(-4)
-    shutil.copy2(ads_lib, os.path.join(
-        exeBasePath, f"libqt{qt_version}advanceddocking.so"))
-
-    print(Fore.GREEN + ">> Creating program starting entry..." + Style.RESET_ALL)
-    shutil.copy2(os.path.join(buildinstaller, f"{package_name}.sh"),
-                 os.path.join(exeBasePath, f"{package_name}.sh"))
 
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 

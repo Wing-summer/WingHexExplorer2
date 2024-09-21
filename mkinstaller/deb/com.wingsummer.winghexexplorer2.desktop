@@ -2,7 +2,7 @@
 Name=WingHexExplorer2
 Name[zh_CN]=羽云十六进制编辑器
 Categories=Utility;
-Exec="/opt/WingHexExplorer2/WingHexExplorer2.sh" %F
+Exec=/opt/WingHexExplorer2/WingHexExplorer2 %F
 Encoding=UTF-8
 Type=Application
 StartupNotify=false
