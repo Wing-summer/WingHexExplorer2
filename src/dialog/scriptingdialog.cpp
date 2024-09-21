@@ -139,7 +139,8 @@ void ScriptingDialog::initConsole() {
     connect(dbg, &asDebugger::onPullVariables, this,
             [=](const QVector<asDebugger::VariablesInfo> &globalvars,
                 const QVector<asDebugger::VariablesInfo> &localvars) {
-
+                m_varshow->updateData(localvars);
+                m_gvarshow->updateData(globalvars);
             });
     connect(dbg, &asDebugger::onPullCallStack, m_callstack,
             &DbgCallStackModel::updateData);
@@ -157,7 +158,7 @@ void ScriptingDialog::initConsole() {
                     e->setFocus();
                     e->raise();
                 } else {
-                    // error permission
+                    // TODO error permission
                 }
             }
 
@@ -192,6 +193,12 @@ void ScriptingDialog::initConsole() {
 
             updateRunDebugMode();
         });
+}
+
+void ScriptingDialog::saveDockLayout() {
+    auto &set = SettingManager::instance();
+    set.setScriptDockLayout(m_dock->saveState());
+    set.save(SettingManager::NONE);
 }
 
 void ScriptingDialog::buildUpRibbonBar() {
@@ -575,7 +582,6 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
     // build up basic docking widgets
-    // TODO
     auto bottomArea = buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
 
     auto splitter =
@@ -586,6 +592,11 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     }
 
     buildUpStackShowDock(m_dock, ads::CenterDockWidgetArea, bottomArea);
+
+    // TODO
+    buildUpBreakpointShowDock(m_dock, ads::RightDockWidgetArea);
+    buildUpVarShowDock(m_dock, ads::RightDockWidgetArea);
+    buildUpWatchDock(m_dock, ads::CenterDockWidgetArea);
 
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
@@ -628,15 +639,19 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
 }
 
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
-    // TODO
     connect(editor, &ScriptEditor::closeRequested, this, [this] {
         auto editor = qobject_cast<ScriptEditor *>(sender());
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
 
         auto m = m_consoleout->machine();
-        if (m->isInDebugMode()) {
-            // TODO
+        if (m->isInDebugMode() && _DebugingScript == editor->fileName()) {
+            if (WingMessageBox::warning(
+                    this, this->windowTitle(), tr("ScriptStillRunning"),
+                    QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+                return;
+            }
+            on_stopscript();
         }
 
         m_views.removeOne(editor);
@@ -902,17 +917,21 @@ void ScriptingDialog::on_newfile() {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
         auto e = findEditorView(filename);
-        if (e) {
-            e->raise();
-            e->setFocus();
-            // TODO
-            return;
-        }
 
         // create an empty file
         QFile f(filename);
         f.open(QFile::WriteOnly | QFile::Text);
         f.close();
+
+        if (e) {
+            if (_DebugingScript == e->fileName()) {
+                on_stopscript();
+            }
+            e->reload();
+            e->raise();
+            e->setFocus();
+            return;
+        }
 
         auto editor = new ScriptEditor(this);
         auto res = editor->openFile(filename);
@@ -1239,10 +1258,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     }
 
     auto &set = SettingManager::instance();
-
-    set.setScriptDockLayout(m_dock->saveState());
     set.setRecentScriptFiles(m_recentmanager->saveRecent());
-    set.save();
+    set.save(SettingManager::NONE);
 
     FramelessMainWindow::closeEvent(event);
 }

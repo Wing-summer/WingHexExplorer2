@@ -56,6 +56,8 @@ public:
 
     void initConsole();
 
+    void saveDockLayout();
+
 private:
     void buildUpRibbonBar();
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);

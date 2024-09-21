@@ -14,6 +14,7 @@ class SettingManager : public QObject {
 
 public:
     enum SETTING {
+        NONE = 0,
         APP = 1,
         PLUGIN = 2,
         EDITOR = 4,

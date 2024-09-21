@@ -59,6 +59,10 @@ private:
     QByteArray cArray2ByteArray(const CScriptArray &array, int byteID,
                                 bool *ok = nullptr);
 
+    bool read2Ref(qsizetype offset, void *ref, int typeId);
+
+    qsizetype getAsTypeSize(int typeId, void *data);
+
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
                               const QString &label, const CScriptArray &items,
@@ -75,7 +79,13 @@ private:
 
     CScriptArray *_HexReader_readBytes(qsizetype offset, qsizetype len);
 
-    bool _HexReader_read(void *ref, int typeId);
+    bool _HexReader_read(qsizetype offset, void *ref, int typeId);
+
+    bool _HexReader_write(qsizetype offset, void *ref, int typeId);
+
+    bool _HexReader_insert(qsizetype offset, void *ref, int typeId);
+
+    bool _HexReader_append(qsizetype offset, void *ref, int typeId);
 
     qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
 

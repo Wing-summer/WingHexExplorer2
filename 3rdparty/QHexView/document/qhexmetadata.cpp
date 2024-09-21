@@ -23,6 +23,15 @@ void QHexMetadata::ModifyMetadata(QHexMetadataAbsoluteItem newmeta,
     m_undo->push(new MetaReplaceCommand(this, newmeta, oldmeta));
 }
 
+void QHexMetadata::RemoveMetadatas(
+    const QList<QHexMetadataAbsoluteItem> &items) {
+    m_undo->beginMacro("RemoveMetadatas");
+    for (auto &item : items) {
+        RemoveMetadata(item);
+    }
+    m_undo->endMacro();
+}
+
 void QHexMetadata::RemoveMetadata(QHexMetadataAbsoluteItem item) {
     m_undo->push(new MetaRemoveCommand(this, item));
 }

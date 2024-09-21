@@ -130,7 +130,7 @@ First of all, I would like to express my sincere tanks for your enthusiastic hel
 3. The package must not contain content that infringes on the legitimate rights and interests of others, such as adding unauthorized paid content or computer viruses to it.
 4. It is best to contain the checksum of the main program in the package, but it is not mandatory.
 5. Regardless of the packaging format, its open source agreement and free attributes must be stated, and it is not allowed to hide and charge for it. Although I don't mind charging, the download server still needs money to maintain, but I hate charging by taking advantage of the information gap.
-6. Regardless of the purpose, if you do not obtain the authorization of me, you may not modify any network links pointed to in the program, such as sponsorship and content about the software.
+6. Regardless of the purpose, if you do not obtain the authorization of me, you may not modify any network links pointed to and the ABOUT contents in the program, such as sponsorship and content about the software.
 7. You may not insert any plug-in containing commercial promotion in the installation program, and strictly abide by the content of the second article.
 
 ### Issue

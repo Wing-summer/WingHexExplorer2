@@ -338,6 +338,10 @@ bool QHexView::atEnd() const {
     return m_cursor->position().offset() >= m_document->length();
 }
 
+void QHexView::gotoMetaData(qsizetype index) {
+    m_cursor->moveTo(m_document->metadata()->getallMetasPtr().at(index).begin);
+}
+
 QByteArray QHexView::selectedBytes() const {
     if (!m_cursor->hasSelection())
         return QByteArray();

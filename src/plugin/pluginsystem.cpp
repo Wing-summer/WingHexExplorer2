@@ -467,52 +467,29 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             });
     connect(preader, &WingPlugin::Reader::readInt8, _win,
             [=](qsizetype offset) -> qint8 {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto buffer =
-                        e->hexEditor()->document()->read(offset, sizeof(qint8));
-                    auto pb =
-                        reinterpret_cast<const qint8 *>(buffer.constData());
-                    return *pb;
-                }
-                return qint8(-1);
+                return readBasicTypeContent<qint8>(plg, offset);
             });
     connect(preader, &WingPlugin::Reader::readInt16, _win,
             [=](qsizetype offset) -> qint16 {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto buffer = e->hexEditor()->document()->read(
-                        offset, sizeof(qint16));
-                    auto pb =
-                        reinterpret_cast<const qint16 *>(buffer.constData());
-                    return *pb;
-                }
-                return qint16(-1);
+                return readBasicTypeContent<qint16>(plg, offset);
             });
     connect(preader, &WingPlugin::Reader::readInt32, _win,
             [=](qsizetype offset) -> qint32 {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto buffer = e->hexEditor()->document()->read(
-                        offset, sizeof(qint32));
-                    auto pb =
-                        reinterpret_cast<const qint32 *>(buffer.constData());
-                    return *pb;
-                }
-                return qint32(-1);
+                return readBasicTypeContent<qint32>(plg, offset);
             });
     connect(preader, &WingPlugin::Reader::readInt64, _win,
             [=](qsizetype offset) -> qint64 {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto buffer = e->hexEditor()->document()->read(
-                        offset, sizeof(qint64));
-                    auto pb =
-                        reinterpret_cast<const qint64 *>(buffer.constData());
-                    return *pb;
-                }
-                return qint64(-1);
+                return readBasicTypeContent<qint64>(plg, offset);
             });
+    connect(preader, &WingPlugin::Reader::readFloat, _win,
+            [=](qsizetype offset) -> float {
+                return readBasicTypeContent<float>(plg, offset);
+            });
+    connect(preader, &WingPlugin::Reader::readDouble, _win,
+            [=](qsizetype offset) -> double {
+                return readBasicTypeContent<double>(plg, offset);
+            });
+
     connect(preader, &WingPlugin::Reader::readString, _win,
             [=](qsizetype offset, const QString &encoding) -> QString {
                 auto e = pluginCurrentEditor(plg);
@@ -834,48 +811,28 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::insertInt8, _win,
             [=](qsizetype offset, qint8 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->insert(offset,
-                                       QByteArray(buffer, sizeof(qint8)));
-                }
-                return false;
+                return insertBasicTypeContent(plg, offset, value);
             });
 
     connect(pctl, &WingPlugin::Controller::insertInt16, _win,
             [=](qsizetype offset, qint16 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->insert(offset,
-                                       QByteArray(buffer, sizeof(qint16)));
-                }
-                return false;
+                return insertBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::insertInt32, _win,
             [=](qsizetype offset, qint32 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->insert(offset,
-                                       QByteArray(buffer, sizeof(qint32)));
-                }
-                return false;
+                return insertBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::insertInt64, _win,
             [=](qsizetype offset, qint64 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->insert(offset,
-                                       QByteArray(buffer, sizeof(qint64)));
-                }
-                return false;
+                return insertBasicTypeContent(plg, offset, value);
+            });
+    connect(pctl, &WingPlugin::Controller::insertFloat, _win,
+            [=](qsizetype offset, float value) -> bool {
+                return insertBasicTypeContent(plg, offset, value);
+            });
+    connect(pctl, &WingPlugin::Controller::insertDouble, _win,
+            [=](qsizetype offset, double value) -> bool {
+                return insertBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::insertString, _win,
             [=](qsizetype offset, const QString &value,
@@ -910,48 +867,28 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::writeInt8, _win,
             [=](qsizetype offset, qint8 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->replace(offset,
-                                        QByteArray(buffer, sizeof(qint8)));
-                }
-                return false;
+                return writeBasicTypeContent(plg, offset, value);
             });
 
     connect(pctl, &WingPlugin::Controller::writeInt16, _win,
             [=](qsizetype offset, qint16 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->replace(offset,
-                                        QByteArray(buffer, sizeof(qint16)));
-                }
-                return false;
+                return writeBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::writeInt32, _win,
             [=](qsizetype offset, qint32 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->replace(offset,
-                                        QByteArray(buffer, sizeof(qint32)));
-                }
-                return false;
+                return writeBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::writeInt64, _win,
             [=](qsizetype offset, qint64 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    return doc->replace(offset,
-                                        QByteArray(buffer, sizeof(qint64)));
-                }
-                return false;
+                return writeBasicTypeContent(plg, offset, value);
+            });
+    connect(pctl, &WingPlugin::Controller::writeFloat, _win,
+            [=](qsizetype offset, float value) -> bool {
+                return writeBasicTypeContent(plg, offset, value);
+            });
+    connect(pctl, &WingPlugin::Controller::writeDouble, _win,
+            [=](qsizetype offset, double value) -> bool {
+                return writeBasicTypeContent(plg, offset, value);
             });
     connect(pctl, &WingPlugin::Controller::writeString, _win,
             [=](qsizetype offset, const QString &value,
@@ -986,51 +923,27 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::appendInt8, _win,
             [=](qint8 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    QByteArray data(buffer, sizeof(qint8));
-                    return doc->insert(offset, data);
-                }
-                return false;
+                return appendBasicTypeContent(plg, value);
             });
     connect(pctl, &WingPlugin::Controller::appendInt16, _win,
             [=](qint16 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    QByteArray data(buffer, sizeof(qint16));
-                    return doc->insert(offset, data);
-                }
-                return false;
+                return appendBasicTypeContent(plg, value);
             });
     connect(pctl, &WingPlugin::Controller::appendInt32, _win,
             [=](qint32 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    QByteArray data(buffer, sizeof(qint32));
-                    return doc->insert(offset, data);
-                }
-                return false;
+                return appendBasicTypeContent(plg, value);
             });
     connect(pctl, &WingPlugin::Controller::appendInt64, _win,
             [=](qint64 value) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    auto offset = doc->length();
-                    auto buffer = reinterpret_cast<char *>(&value);
-                    QByteArray data(buffer, sizeof(qint64));
-                    return doc->insert(offset, data);
-                }
-                return false;
+                return appendBasicTypeContent(plg, value);
+            });
+    connect(pctl, &WingPlugin::Controller::appendFloat, _win,
+            [=](qint64 value) -> bool {
+                return appendBasicTypeContent(plg, value);
+            });
+    connect(pctl, &WingPlugin::Controller::appendDouble, _win,
+            [=](qint64 value) -> bool {
+                return appendBasicTypeContent(plg, value);
             });
     connect(pctl, &WingPlugin::Controller::appendString, _win,
             [=](const QString &value, const QString &encoding) -> bool {

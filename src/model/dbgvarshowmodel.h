@@ -18,8 +18,11 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation,
                                 int role) const override;
 
+public slots:
+    void updateData(const QVector<asDebugger::VariablesInfo> &varinfos);
+
 private:
-    QList<asDebugger::VariablesInfo> _vars;
+    QVector<asDebugger::VariablesInfo> _vars;
 };
 
 #endif // DBGVARSHOWMODEL_H

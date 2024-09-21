@@ -585,11 +585,11 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Reader::addressBase, reader),
         QPTR_WRAP("addressBase()"));
 
-    registerAPI<bool(void *ref, int typeId)>(
+    registerAPI<bool(qsizetype, void *, int)>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_read, this, std::placeholders::_1,
-                  std::placeholders::_2),
-        "bool read(? &in)");
+                  std::placeholders::_2, std::placeholders::_3),
+        "bool read(" QSIZETYPE ", ? &out)");
 
     registerAPI<CScriptArray *(qsizetype, qsizetype)>(
         engine,
@@ -620,6 +620,18 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::WingPlugin::Reader::readInt64, reader,
                   std::placeholders::_1),
         "int64 readInt64(" QSIZETYPE ")");
+
+    registerAPI<float(qsizetype)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::readFloat, reader,
+                  std::placeholders::_1),
+        "float readFloat(" QSIZETYPE ")");
+
+    registerAPI<double(qsizetype)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::readDouble, reader,
+                  std::placeholders::_1),
+        "double readDouble(" QSIZETYPE ")");
 
     registerAPI<QString(qsizetype, QString)>(
         engine,
@@ -770,6 +782,24 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "bool setAddressBase(" QPTR ")");
 
+    registerAPI<bool(qsizetype, void *, int)>(
+        engine,
+        std::bind(&WingAngelAPI::_HexReader_write, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3),
+        "bool write(" QSIZETYPE ", ? &out)");
+
+    registerAPI<bool(qsizetype, void *, int)>(
+        engine,
+        std::bind(&WingAngelAPI::_HexReader_insert, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3),
+        "bool insert(" QSIZETYPE ", ? &out)");
+
+    registerAPI<bool(qsizetype, void *, int)>(
+        engine,
+        std::bind(&WingAngelAPI::_HexReader_append, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3),
+        "bool append(" QSIZETYPE ", ? &out)");
+
     registerAPI<bool()>(engine,
                         std::bind(&WingHex::WingPlugin::Controller::undo, ctl),
                         "bool undo()");
@@ -812,6 +842,18 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool writeInt64(" QSIZETYPE ", int64)");
 
+    registerAPI<bool(qsizetype, float)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::writeFloat, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeFloat(" QSIZETYPE ", float)");
+
+    registerAPI<bool(qsizetype, double)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::writeDouble, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeDouble(" QSIZETYPE ", double)");
+
     registerAPI<bool(qsizetype, const CScriptArray &)>(
         engine,
         std::bind(&WingAngelAPI::_HexController_writeBytes, this,
@@ -849,6 +891,18 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool insertInt64(" QSIZETYPE ", int64)");
 
+    registerAPI<bool(qsizetype, float)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::insertFloat, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertFloat(" QSIZETYPE ", float)");
+
+    registerAPI<bool(qsizetype, double)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::insertDouble, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertDouble(" QSIZETYPE ", double)");
+
     registerAPI<bool(qsizetype, const CScriptArray &)>(
         engine,
         std::bind(&WingAngelAPI::_HexController_insertBytes, this,
@@ -885,6 +939,18 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::WingPlugin::Controller::appendInt64, ctl,
                   std::placeholders::_1),
         "bool appendInt64(int64)");
+
+    registerAPI<bool(float)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::appendFloat, ctl,
+                  std::placeholders::_1),
+        "bool appendFloat(float)");
+
+    registerAPI<bool(double)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::appendDouble, ctl,
+                  std::placeholders::_1),
+        "bool appendDouble(double)");
 
     registerAPI<bool(const CScriptArray &)>(
         engine,
@@ -1231,6 +1297,139 @@ QByteArray WingAngelAPI::cArray2ByteArray(const CScriptArray &array, int byteID,
     return buffer;
 }
 
+bool WingAngelAPI::read2Ref(qsizetype offset, void *ref, int typeId) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+
+        if (typeId == asTYPEID_VOID)
+            return false;
+        else if (typeId == asTYPEID_BOOL)
+            *reinterpret_cast<bool *>(ref) = (reader.readInt8(offset) != 0);
+        else if (typeId == asTYPEID_INT8)
+            *reinterpret_cast<qint8 *>(ref) = reader.readInt8(offset);
+        else if (typeId == asTYPEID_INT16)
+            *reinterpret_cast<qint16 *>(ref) = reader.readInt16(offset);
+        else if (typeId == asTYPEID_INT32)
+            *reinterpret_cast<qint32 *>(ref) = reader.readInt32(offset);
+        else if (typeId == asTYPEID_INT64)
+            *reinterpret_cast<qint64 *>(ref) = reader.readInt64(offset);
+        else if (typeId == asTYPEID_UINT8)
+            *reinterpret_cast<quint8 *>(ref) = quint8(reader.readInt8(offset));
+        else if (typeId == asTYPEID_UINT16)
+            *reinterpret_cast<quint16 *>(ref) =
+                quint16(reader.readInt16(offset));
+        else if (typeId == asTYPEID_UINT32)
+            *reinterpret_cast<quint32 *>(ref) =
+                quint32(reader.readInt32(offset));
+        else if (typeId == asTYPEID_UINT64)
+            *reinterpret_cast<quint64 *>(ref) =
+                quint64(reader.readInt64(offset));
+        else if (typeId == asTYPEID_FLOAT)
+            *reinterpret_cast<float *>(ref) = reader.readFloat(offset);
+        else if (typeId == asTYPEID_DOUBLE)
+            *reinterpret_cast<double *>(ref) = reader.readDouble(offset);
+        else if ((typeId & asTYPEID_MASK_OBJECT) == 0) {
+            bool ok = false;
+            // Check if the value matches one of the defined enums
+            if (engine) {
+                asITypeInfo *t = engine->GetTypeInfoById(typeId);
+                for (int n = t->GetEnumValueCount(); n-- > 0;) {
+                    int enumVal;
+                    t->GetEnumValueByIndex(n, &enumVal);
+                    if (enumVal == *(int *)ref) {
+                        *reinterpret_cast<int *>(ref) = enumVal;
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+            if (!ok) {
+                return false;
+            }
+        } else if (typeId & asTYPEID_SCRIPTOBJECT) {
+            void *value = ref;
+
+            // Dereference handles, so we can see what it points to
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            asIScriptObject *obj = (asIScriptObject *)value;
+
+            if (obj) {
+                for (asUINT n = 0; n < obj->GetPropertyCount(); n++) {
+                    auto id = obj->GetPropertyTypeId(n);
+                    auto data = obj->GetAddressOfProperty(n);
+                    auto size = getAsTypeSize(id, data);
+                    read2Ref(offset, data, id);
+                    if (size > 0) {
+                        offset += size;
+                    }
+                }
+            }
+        } else {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *type = engine->GetTypeInfoByName("string");
+                if (value) {
+                    // TODO support other type, now only string
+                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+                        *reinterpret_cast<QString *>(value) =
+                            reader.readString(offset);
+                    }
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
+    if (typeId == asTYPEID_VOID)
+        return false;
+    else if (typeId == asTYPEID_BOOL)
+        return 1;
+    else if (typeId == asTYPEID_INT8)
+        return sizeof(qint8);
+    else if (typeId == asTYPEID_INT16)
+        return sizeof(qint16);
+    else if (typeId == asTYPEID_INT32)
+        return sizeof(qint32);
+    else if (typeId == asTYPEID_INT64)
+        return sizeof(qint64);
+    else if (typeId == asTYPEID_UINT8)
+        return sizeof(quint8);
+    else if (typeId == asTYPEID_UINT16)
+        return sizeof(quint16);
+    else if (typeId == asTYPEID_UINT32)
+        return sizeof(quint32);
+    else if (typeId == asTYPEID_UINT64)
+        return sizeof(quint64);
+    else if (typeId == asTYPEID_FLOAT)
+        return sizeof(float);
+    else if (typeId == asTYPEID_DOUBLE)
+        return sizeof(double);
+    else {
+        typeId &= ~asTYPEID_OBJHANDLE;
+        asIScriptContext *ctx = asGetActiveContext();
+        auto engine = ctx->GetEngine();
+        asITypeInfo *type = engine->GetTypeInfoByName("string");
+
+        // TODO support other type, now only string
+        if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+            return reinterpret_cast<QString *>(data)->length() + 1;
+        }
+    }
+    return -1;
+}
+
 QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
                                         const QString &label,
                                         const CScriptArray &items, int current,
@@ -1270,7 +1469,203 @@ CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
     });
 }
 
-bool WingAngelAPI::_HexReader_read(void *ref, int typeId) { return false; }
+bool WingAngelAPI::_HexReader_read(qsizetype offset, void *ref, int typeId) {
+    return read2Ref(offset, ref, typeId);
+}
+
+bool WingAngelAPI::_HexReader_write(qsizetype offset, void *ref, int typeId) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+
+        if (typeId == asTYPEID_VOID)
+            return false;
+        else if (typeId == asTYPEID_BOOL)
+            controller.writeInt8(offset,
+                                 *reinterpret_cast<bool *>(ref) ? 1 : 0);
+        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
+            controller.writeInt8(offset, *reinterpret_cast<qint8 *>(ref));
+        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
+            controller.writeInt16(offset, *reinterpret_cast<qint16 *>(ref));
+        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
+            controller.writeInt32(offset, *reinterpret_cast<qint32 *>(ref));
+        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
+            controller.writeInt64(offset, *reinterpret_cast<qint64 *>(ref));
+        else if (typeId == asTYPEID_FLOAT)
+            controller.writeFloat(offset, *reinterpret_cast<float *>(ref));
+        else if (typeId == asTYPEID_DOUBLE)
+            controller.writeDouble(offset, *reinterpret_cast<double *>(ref));
+        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
+            controller.writeInt32(offset, *reinterpret_cast<int *>(ref));
+        else if (typeId & asTYPEID_SCRIPTOBJECT) {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *t = engine->GetTypeInfoById(typeId);
+                for (int n = t->GetEnumValueCount(); n-- > 0;) {
+                    int enumVal;
+                    t->GetEnumValueByIndex(n, &enumVal);
+                    if (enumVal == *(int *)value) {
+                        controller.writeInt32(offset, enumVal);
+                        break;
+                    }
+                }
+            }
+        } else {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *type = engine->GetTypeInfoById(typeId);
+                if (value) {
+                    // TODO support other type, now only string
+                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+                        controller.writeString(
+                            offset, *reinterpret_cast<QString *>(value));
+                    }
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+
+        if (typeId == asTYPEID_VOID)
+            return false;
+        else if (typeId == asTYPEID_BOOL)
+            controller.insertInt8(offset,
+                                  *reinterpret_cast<bool *>(ref) ? 1 : 0);
+        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
+            controller.insertInt8(offset, *reinterpret_cast<qint8 *>(ref));
+        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
+            controller.insertInt16(offset, *reinterpret_cast<qint16 *>(ref));
+        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
+            controller.insertInt32(offset, *reinterpret_cast<qint32 *>(ref));
+        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
+            controller.insertInt64(offset, *reinterpret_cast<qint64 *>(ref));
+        else if (typeId == asTYPEID_FLOAT)
+            controller.insertFloat(offset, *reinterpret_cast<float *>(ref));
+        else if (typeId == asTYPEID_DOUBLE)
+            controller.insertDouble(offset, *reinterpret_cast<double *>(ref));
+        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
+            controller.insertInt32(offset, *reinterpret_cast<int *>(ref));
+        else if (typeId & asTYPEID_SCRIPTOBJECT) {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *t = engine->GetTypeInfoById(typeId);
+                for (int n = t->GetEnumValueCount(); n-- > 0;) {
+                    int enumVal;
+                    t->GetEnumValueByIndex(n, &enumVal);
+                    if (enumVal == *(int *)value) {
+                        controller.insertInt32(offset, enumVal);
+                        break;
+                    }
+                }
+            }
+        } else {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *type = engine->GetTypeInfoById(typeId);
+                if (value) {
+                    // TODO support other type, now only string
+                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+                        controller.insertString(
+                            offset, *reinterpret_cast<QString *>(value));
+                    }
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool WingAngelAPI::_HexReader_append(qsizetype offset, void *ref, int typeId) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+
+        if (typeId == asTYPEID_VOID)
+            return false;
+        else if (typeId == asTYPEID_BOOL)
+            controller.appendInt8(*reinterpret_cast<bool *>(ref) ? 1 : 0);
+        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
+            controller.appendInt8(*reinterpret_cast<qint8 *>(ref));
+        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
+            controller.appendInt16(*reinterpret_cast<qint16 *>(ref));
+        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
+            controller.appendInt32(*reinterpret_cast<qint32 *>(ref));
+        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
+            controller.appendInt64(*reinterpret_cast<qint64 *>(ref));
+        else if (typeId == asTYPEID_FLOAT)
+            controller.appendFloat(*reinterpret_cast<float *>(ref));
+        else if (typeId == asTYPEID_DOUBLE)
+            controller.appendDouble(*reinterpret_cast<double *>(ref));
+        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
+            controller.appendInt32(*reinterpret_cast<int *>(ref));
+        else if (typeId & asTYPEID_SCRIPTOBJECT) {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *t = engine->GetTypeInfoById(typeId);
+                for (int n = t->GetEnumValueCount(); n-- > 0;) {
+                    int enumVal;
+                    t->GetEnumValueByIndex(n, &enumVal);
+                    if (enumVal == *(int *)value) {
+                        controller.appendInt32(enumVal);
+                        break;
+                    }
+                }
+            }
+        } else {
+            // Dereference handles, so we can see what it points to
+            void *value = ref;
+
+            if (typeId & asTYPEID_OBJHANDLE)
+                value = *(void **)value;
+
+            if (engine) {
+                asITypeInfo *type = engine->GetTypeInfoById(typeId);
+                if (value) {
+                    // TODO support other type, now only string
+                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+                        controller.appendString(
+                            *reinterpret_cast<QString *>(value));
+                    }
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
 
 qsizetype WingAngelAPI::_HexReader_searchForward(qsizetype begin,
                                                  const CScriptArray &ba) {

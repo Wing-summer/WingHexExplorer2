@@ -61,6 +61,7 @@ public:
 
     void ModifyMetadata(QHexMetadataAbsoluteItem newmeta,
                         QHexMetadataAbsoluteItem oldmeta);
+    void RemoveMetadatas(const QList<QHexMetadataAbsoluteItem> &items);
     void RemoveMetadata(QHexMetadataAbsoluteItem item);
     void RemoveMetadata(qsizetype offset);
     void Metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,

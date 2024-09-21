@@ -548,7 +548,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                     return;
                 }
                 hexeditor->renderer()->enableCursor(true);
-                // hexeditor->gotoBookMark(index.row());
+                hexeditor->gotoBookMark(index.row());
             });
 
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
@@ -558,16 +558,17 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
         if (hexeditor == nullptr) {
             return;
         }
-        auto s = m_bookmarks->selectionModel()->selectedRows();
+        auto s = m_metadatas->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
-        // const auto &bms = doc->bookMarks();
 
-        // QList<qsizetype> pos;
-        // for (auto &item : s) {
-        //     pos.push_back(bms.at(item.row()).pos);
-        // }
+        const auto &mds = doc->metadata()->getallMetasPtr();
 
-        // doc->RemoveBookMarks(pos);
+        QList<QHexMetadataAbsoluteItem> pmetas;
+        for (auto &item : s) {
+            pmetas.push_back(mds.at(item.row()));
+        }
+
+        hexeditor->document()->metadata()->RemoveMetadatas(pmetas);
     });
     m_aDelMetaData->setEnabled(false);
     m_metadatas->addAction(m_aDelMetaData);

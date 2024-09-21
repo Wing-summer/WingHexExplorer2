@@ -103,6 +103,8 @@ public:
     bool removeSelection();
     bool atEnd() const;
 
+    void gotoMetaData(qsizetype index);
+
     QByteArray selectedBytes() const;
 
     bool cut(bool hex);

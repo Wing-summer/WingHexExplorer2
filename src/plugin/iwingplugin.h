@@ -184,6 +184,8 @@ signals:
     qint16 readInt16(qsizetype offset);
     qint32 readInt32(qsizetype offset);
     qint64 readInt64(qsizetype offset);
+    float readFloat(qsizetype offset);
+    double readDouble(qsizetype offset);
     QString readString(qsizetype offset, const QString &encoding = QString());
     QByteArray readBytes(qsizetype offset, qsizetype count);
 
@@ -243,6 +245,8 @@ signals:
     bool writeInt16(qsizetype offset, qint16 value);
     bool writeInt32(qsizetype offset, qint32 value);
     bool writeInt64(qsizetype offset, qint64 value);
+    bool writeFloat(qsizetype offset, float value);
+    bool writeDouble(qsizetype offset, double value);
     bool writeString(qsizetype offset, const QString &value,
                      const QString &encoding = QString());
     bool writeBytes(qsizetype offset, const QByteArray &data);
@@ -251,6 +255,8 @@ signals:
     bool insertInt16(qsizetype offset, qint16 value);
     bool insertInt32(qsizetype offset, qint32 value);
     bool insertInt64(qsizetype offset, qint64 value);
+    bool insertFloat(qsizetype offset, float value);
+    bool insertDouble(qsizetype offset, double value);
     bool insertString(qsizetype offset, const QString &value,
                       const QString &encoding = QString());
     bool insertBytes(qsizetype offset, const QByteArray &data);
@@ -259,6 +265,8 @@ signals:
     bool appendInt16(qint16 value);
     bool appendInt32(qint32 value);
     bool appendInt64(qint64 value);
+    bool appendFloat(float value);
+    bool appendDouble(double value);
     bool appendString(const QString &value,
                       const QString &encoding = QString());
     bool appendBytes(const QByteArray &data);
