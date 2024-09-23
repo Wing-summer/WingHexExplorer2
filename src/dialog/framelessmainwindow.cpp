@@ -2,18 +2,23 @@
 #include <QEvent>
 #include <QStyle>
 
+#ifdef WINGHEX_USE_FRAMELESS
 #include "class/settingmanager.h"
 #include <widgetframe/windowbutton.h>
+#endif
 
 FramelessMainWindow::FramelessMainWindow(QWidget *parent)
     : QMainWindow(parent) {
+#ifdef WINGHEX_USE_FRAMELESS
     _useFrameLess = !SettingManager::instance().useNativeTitleBar();
     if (_useFrameLess) {
         _helper = new FramelessHelper(this, false);
     }
+#endif
 }
 
 void FramelessMainWindow::buildUpContent(QWidget *content) {
+#ifdef WINGHEX_USE_FRAMELESS
     if (_useFrameLess) {
         auto titlebar = _helper->windowBar();
         auto iconBtn =
@@ -22,8 +27,10 @@ void FramelessMainWindow::buildUpContent(QWidget *content) {
         iconBtn->setIconNormal(this->windowIcon());
         connect(this, &FramelessMainWindow::windowIconChanged, iconBtn,
                 &QWK::WindowButton::setIconNormal);
+
         setMenuWidget(titlebar);
     }
+#endif
     setCentralWidget(content);
 #ifdef QT_DEBUG
     m_isBuilt = true;
@@ -39,6 +46,7 @@ void FramelessMainWindow::showEvent(QShowEvent *event) {
 }
 
 bool FramelessMainWindow::event(QEvent *event) {
+#ifdef WINGHEX_USE_FRAMELESS
     if (_useFrameLess) {
         switch (event->type()) {
         case QEvent::WindowActivate: {
@@ -61,5 +69,6 @@ bool FramelessMainWindow::event(QEvent *event) {
             break;
         }
     }
+#endif
     return QMainWindow::event(event);
 }

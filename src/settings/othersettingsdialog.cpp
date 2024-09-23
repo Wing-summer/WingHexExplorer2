@@ -16,6 +16,12 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 
     ui->cbLogLevel->addItems(levels);
     ui->cbLogLevel->setCurrentIndex(Logger::instance()->logLevel());
+
+#ifndef WINGHEX_USE_FRAMELESS
+    ui->cbNativeTitile->setEnabled(false);
+    ui->cbNativeTitile->setChecked(false);
+#endif
+
     reload();
 }
 
@@ -24,7 +30,9 @@ OtherSettingsDialog::~OtherSettingsDialog() { delete ui; }
 void OtherSettingsDialog::reload() {
     auto &set = SettingManager::instance();
     ui->cbNativeFileDialog->setChecked(set.useNativeFileDialog());
+#ifdef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setChecked(set.useNativeTitleBar());
+#endif
 }
 
 QIcon OtherSettingsDialog::categoryIcon() const { return ICONRES("other"); }
@@ -36,7 +44,9 @@ bool OtherSettingsDialog::isInPluginPage() const { return false; }
 void OtherSettingsDialog::apply() {
     auto &set = SettingManager::instance();
     set.setUseNativeFileDialog(ui->cbNativeFileDialog->isChecked());
+#ifdef WINGHEX_USE_FRAMELESS
     set.setUseNativeTitleBar(ui->cbNativeTitile->isChecked());
+#endif
     set.setLogLevel(ui->cbLogLevel->currentIndex());
     set.save(SettingManager::OTHER);
 }

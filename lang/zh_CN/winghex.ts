@@ -1658,7 +1658,7 @@
         <translation>级别</translation>
     </message>
     <message>
-        <location filename="../../src/settings/othersettingsdialog.cpp" line="32"/>
+        <location filename="../../src/settings/othersettingsdialog.cpp" line="40"/>
         <source>Others</source>
         <translation>杂项</translation>
     </message>

@@ -85,7 +85,11 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
     READ_CONFIG_BOOL(m_useNativeFileDialog, OTHER_USESYS_FILEDIALOG, true);
+#ifdef WINGHEX_USE_FRAMELESS
     READ_CONFIG_BOOL(m_useNativeTitleBar, OTHER_USE_NATIVE_TITLEBAR, false);
+#else
+    m_useNativeTitleBar = true;
+#endif
     READ_CONFIG_INT_POSITIVE(m_logLevel, OTHER_LOG_LEVEL,
                              Logger::defaultLevel());
     m_logLevel =
@@ -287,7 +291,9 @@ void SettingManager::save(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
+#ifdef WINGHEX_USE_FRAMELESS
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
+#endif
         WRITE_CONFIG(OTHER_LOG_LEVEL, m_logLevel);
     }
 }
@@ -322,7 +328,9 @@ void SettingManager::reset(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::OTHER)) {
         WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
+#ifdef WINGHEX_USE_FRAMELESS
         WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
+#endif
         WRITE_CONFIG(OTHER_LOG_LEVEL, Logger::defaultLevel());
     }
     load();

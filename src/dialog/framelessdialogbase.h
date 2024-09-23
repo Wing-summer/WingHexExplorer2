@@ -1,7 +1,10 @@
 #ifndef FRAMELESSDIALOGBASE_H
 #define FRAMELESSDIALOGBASE_H
 
+#ifdef WINGHEX_USE_FRAMELESS
 #include "class/framelesshelper.h"
+#endif
+
 #include <QDialog>
 
 class FramelessDialogBase : public QDialog {
@@ -19,8 +22,10 @@ protected:
     bool event(QEvent *event) override;
 
 private:
+#ifdef WINGHEX_USE_FRAMELESS
     FramelessHelper *_helper = nullptr;
     bool _useFrameLess = true;
+#endif
 #ifdef QT_DEBUG
     bool m_isBuilt = false;
 #endif

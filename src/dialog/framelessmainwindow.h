@@ -1,7 +1,10 @@
 #ifndef FRAMELESSMAINWINDOW_H
 #define FRAMELESSMAINWINDOW_H
 
+#ifdef WINGHEX_USE_FRAMELESS
 #include "class/framelesshelper.h"
+#endif
+
 #include <QMainWindow>
 
 class FramelessMainWindow : public QMainWindow {
@@ -16,8 +19,10 @@ protected:
     bool event(QEvent *event) override;
 
 private:
+#ifdef WINGHEX_USE_FRAMELESS
     FramelessHelper *_helper = nullptr;
     bool _useFrameLess = true;
+#endif
 #ifdef QT_DEBUG
     bool m_isBuilt = false;
 #endif

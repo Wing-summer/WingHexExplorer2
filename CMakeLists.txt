@@ -20,6 +20,9 @@ add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
+option(WINGHEX_USE_FRAMELESS "Use borderless windows to ensure UI uniformity"
+       TRUE)
+
 if(WIN32)
     add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -41,14 +44,18 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /utf-8")
 endif()
 
+if(WINGHEX_USE_FRAMELESS)
+    option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
+    option(QWINDOWKIT_INSTALL "Install library" OFF)
+    add_subdirectory(3rdparty/qwindowkit)
+    add_definitions(-DWINGHEX_USE_FRAMELESS)
+endif()
+
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
-option(QWINDOWKIT_INSTALL "Install library" OFF)
 set(ADS_VERSION 4.3.1)
 option(BUILD_EXAMPLES "Build the examples" FALSE)
 option(BUILD_STATIC "Build the static library" TRUE)
 
-add_subdirectory(3rdparty/qwindowkit)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/qcodemodel2)
@@ -174,8 +181,6 @@ set(CLASS_SRC
     src/class/workspacemanager.h
     src/class/setting.h
     src/class/eventfilter.h
-    src/class/framelesshelper.h
-    src/class/framelesshelper.cpp
     src/class/qkeysequences.h
     src/class/qkeysequences.cpp
     src/class/wingmessagebox.h
@@ -222,10 +227,16 @@ set(CLASS_SRC
     src/class/ascontextmgr.h
     src/class/ascontextmgr.cpp)
 
-set(WIDGET_FRAME_SRC
-    src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
-    src/widgetframe/windowbar_p.h src/widgetframe/windowbutton.cpp
-    src/widgetframe/windowbutton.h src/widgetframe/windowbutton_p.h)
+if(WINGHEX_USE_FRAMELESS)
+    set(WIDGET_FRAME_SRC
+        src/widgetframe/windowbar.cpp src/widgetframe/windowbar.h
+        src/widgetframe/windowbar_p.h src/widgetframe/windowbutton.cpp
+        src/widgetframe/windowbutton.h src/widgetframe/windowbutton_p.h)
+    list(APPEND CLASS_SRC src/class/framelesshelper.h
+         src/class/framelesshelper.cpp)
+else()
+    set(WIDGET_FRAME_SRC)
+endif()
 
 set(MODEL_SRC
     src/model/findresultmodel.h
@@ -434,24 +445,43 @@ else()
     endif()
 endif()
 
-target_link_libraries(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-            Qt${QT_VERSION_MAJOR}::Network
-            Qt${QT_VERSION_MAJOR}::Concurrent
-            Qt${QT_VERSION_MAJOR}::PrintSupport
-            Qt${QT_VERSION_MAJOR}::GuiPrivate
-            Qt${QT_VERSION_MAJOR}::CorePrivate
-            SingleApplication::SingleApplication
-            QWKCore
-            QWKWidgets
-            QHexView
-            QCodeEditor2
-            QCodeModel2
-            QJsonModel
-            angelscript
-            QConsoleWidget
-            qt${QT_VERSION_MAJOR}advanceddocking)
+if(WINGHEX_USE_FRAMELESS)
+    target_link_libraries(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+                Qt${QT_VERSION_MAJOR}::Network
+                Qt${QT_VERSION_MAJOR}::Concurrent
+                Qt${QT_VERSION_MAJOR}::PrintSupport
+                Qt${QT_VERSION_MAJOR}::GuiPrivate
+                Qt${QT_VERSION_MAJOR}::CorePrivate
+                SingleApplication::SingleApplication
+                QWKCore
+                QWKWidgets
+                QHexView
+                QCodeEditor2
+                QCodeModel2
+                QJsonModel
+                angelscript
+                QConsoleWidget
+                qt${QT_VERSION_MAJOR}advanceddocking)
+else()
+    target_link_libraries(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+                Qt${QT_VERSION_MAJOR}::Network
+                Qt${QT_VERSION_MAJOR}::Concurrent
+                Qt${QT_VERSION_MAJOR}::PrintSupport
+                Qt${QT_VERSION_MAJOR}::GuiPrivate
+                Qt${QT_VERSION_MAJOR}::CorePrivate
+                SingleApplication::SingleApplication
+                QHexView
+                QCodeEditor2
+                QCodeModel2
+                QJsonModel
+                angelscript
+                QConsoleWidget
+                qt${QT_VERSION_MAJOR}advanceddocking)
+endif()
 
 target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"

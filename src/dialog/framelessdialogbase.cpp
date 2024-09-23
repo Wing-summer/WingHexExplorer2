@@ -1,18 +1,22 @@
 #include "framelessdialogbase.h"
-#include "widgetframe/windowbutton.h"
 
+#ifdef WINGHEX_USE_FRAMELESS
 #include "class/settingmanager.h"
+#include "widgetframe/windowbutton.h"
 #include <QWKWidgets/widgetwindowagent.h>
+#endif
 
 #include <QStyle>
 #include <QTimer>
 #include <QVBoxLayout>
 
 FramelessDialogBase::FramelessDialogBase(QWidget *parent) : QDialog(parent) {
+#ifdef WINGHEX_USE_FRAMELESS
     _useFrameLess = !SettingManager::instance().useNativeTitleBar();
     if (_useFrameLess) {
         _helper = new FramelessHelper(this, true);
     }
+#endif
 }
 
 FramelessDialogBase::~FramelessDialogBase() {}
@@ -27,6 +31,7 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
     QVBoxLayout *vLayout = new QVBoxLayout(WIN_WIDGET);
     vLayout->setContentsMargins(1, 1, 1, 1);
 
+#ifdef WINGHEX_USE_FRAMELESS
     if (_useFrameLess) {
         auto titlebar = _helper->windowBar();
         auto iconBtn =
@@ -38,6 +43,7 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
 
         vLayout->addWidget(titlebar);
     }
+#endif
 
     vLayout->addWidget(content, 1);
 
@@ -59,6 +65,7 @@ void FramelessDialogBase::showEvent(QShowEvent *event) {
 }
 
 bool FramelessDialogBase::event(QEvent *event) {
+#ifdef WINGHEX_USE_FRAMELESS
     if (_useFrameLess) {
         switch (event->type()) {
         case QEvent::WindowActivate: {
@@ -81,5 +88,6 @@ bool FramelessDialogBase::event(QEvent *event) {
             break;
         }
     }
+#endif
     return QDialog::event(event);
 }
