@@ -19,9 +19,10 @@ static const int PADDING = 10;
 
 Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
              QWidget *parent)
-    : QWidget(parent), m_strContent(strContent),
-      m_nToastInterval(nToastInterval), m_nCurrentWindowOpacity(0),
-      m_nCurrentStayTime(0), m_nStatus(0), m_icon(icon), _parent(parent) {
+    : QDialog(parent), m_strContent(strContent),
+      m_nToastInterval(nToastInterval * TIMER_INTERVAL / 1000),
+      m_nCurrentWindowOpacity(0), m_nCurrentStayTime(0), m_nStatus(0),
+      m_icon(icon), _parent(parent) {
     Q_ASSERT(parent);
     init();
 }
@@ -32,6 +33,8 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
     static Toast *toast = nullptr;
 
     if (toast) {
+        toast->hide();
+        toast->destroy();
         toast->deleteLater();
     }
 
@@ -40,11 +43,13 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
 
     connect(toast, &Toast::destroyed, [&] { toast = nullptr; });
 
-    auto e0 = new EventFilter(QEvent::Move, parent);
-    auto e1 = new EventFilter(QEvent::Resize, parent);
+    auto e0 = new EventFilter(QEvent::Move, toast);
+    auto e1 = new EventFilter(QEvent::Resize, toast);
 
-    auto callback = [&](QObject *, QEvent *) {
-        toast->setToastPos(toast->lastToastPos());
+    auto callback = [](QObject *, QEvent *) {
+        if (toast) {
+            toast->setToastPos(toast->lastToastPos());
+        }
     };
     connect(e0, &EventFilter::eventTriggered, toast, callback);
     connect(e1, &EventFilter::eventTriggered, toast, callback);
@@ -82,8 +87,7 @@ QSize Toast::calculateTextSize() {
 
 void Toast::init() {
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
-                   Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint |
-                   Qt::BypassWindowManagerHint);
+                   Qt::WindowSystemMenuHint | Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
 

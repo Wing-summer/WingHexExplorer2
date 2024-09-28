@@ -1,13 +1,13 @@
 #ifndef TOAST_H
 #define TOAST_H
 
+#include <QDialog>
 #include <QFont>
 #include <QIcon>
 #include <QSize>
 #include <QString>
-#include <QWidget>
 
-class Toast : public QWidget {
+class Toast : public QDialog {
     Q_OBJECT
 
     Q_PROPERTY(int fontPointSize READ fontPointSize WRITE setFontPointSize)
@@ -22,7 +22,7 @@ public:
 
     static void toast(QWidget *parent, const QPixmap &icon,
                       const QString &strContent, int fontPointSize = 20,
-                      int nToastInterval = 3000);
+                      int nToastInterval = 1500);
 
     virtual ~Toast();
 
