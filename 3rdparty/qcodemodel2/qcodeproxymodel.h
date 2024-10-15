@@ -29,7 +29,7 @@ class QCM_EXPORT QCodeProxyModel : public QSortFilterProxyModel {
     Q_OBJECT
 
 public:
-    QCodeProxyModel(QObject *p = 0);
+    QCodeProxyModel(QObject *p = nullptr);
     virtual ~QCodeProxyModel();
 
 protected:

@@ -26,9 +26,7 @@
 enum CacheIndex {
     ICON_ENUM,
     ICON_ENUMERATOR,
-    ICON_UNION,
     ICON_CLASS,
-    ICON_STRUCT,
     ICON_TYPEDEF,
     ICON_NAMESPACE,
     ICON_FUNCTION = ICON_NAMESPACE + 2,
@@ -41,14 +39,10 @@ static QIcon icon(int cacheIndex) {
     static bool setup = false;
 
     if (!setup) {
-        q_icon_cache[ICON_UNION] = QIcon(":/completion/CVunion.png");
-
         q_icon_cache[ICON_ENUM] = QIcon(":/completion/CVenum.png");
         q_icon_cache[ICON_ENUMERATOR] = QIcon(":/completion/CVenumerator.png");
 
         q_icon_cache[ICON_CLASS] = QIcon(":/completion/CVclass.png");
-
-        q_icon_cache[ICON_STRUCT] = QIcon(":/completion/CVstruct.png");
 
         q_icon_cache[ICON_TYPEDEF] = QIcon(":/completion/CVtypedef.png");
 
@@ -65,9 +59,6 @@ static QIcon icon(int cacheIndex) {
 
         q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_PRIVATE] =
             QIcon(":/completion/CVprivate_meth.png");
-
-        q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_SIGNAL] =
-            QIcon(":/completion/CVprotected_signal.png");
 
         q_icon_cache[ICON_VARIABLE + QCodeNode::VISIBILITY_DEFAULT] =
             QIcon(":/completion/CVglobal_var.png");
@@ -358,26 +349,11 @@ QVariant QCodeNode::data(int r) const {
             return d;
         }
 
-        case Struct: {
-            QByteArray d("struct ");
-            d += role(Name);
-
-            QByteArray a = role(Ancestors);
-
-            if (a.length())
-                d += " : " + a;
-
-            return d;
-        }
-
         case Enum:
             return QByteArray("enum ") + role(Name);
 
         case Enumerator:
             return role(Name) + " = " + role(Value);
-
-        case Union:
-            return QByteArray("union ") + role(Name);
 
         case Namespace:
             return QByteArray("namespace ") + role(Name);
@@ -406,20 +382,12 @@ QVariant QCodeNode::data(int r) const {
             // storage class
             if (m_specifiers & QCodeNode::SPECIFIER_AUTO)
                 specifier += " auto ";
-            else if (m_specifiers & QCodeNode::SPECIFIER_REGISTER)
-                specifier += " register ";
-            else if (m_specifiers & QCodeNode::SPECIFIER_STATIC)
-                specifier += " static ";
             else if (m_specifiers & QCodeNode::SPECIFIER_EXTERN)
                 specifier += " extern ";
-            else if (m_specifiers & QCodeNode::SPECIFIER_MUTABLE)
-                specifier += " mutable ";
 
             // cv qualifier (for class members)
             if (m_specifiers & QCodeNode::SPECIFIER_CONST)
                 specifier += " const ";
-            else if (m_specifiers & QCodeNode::SPECIFIER_VOLATILE)
-                specifier += " volatile ";
 
             if (specifier.length())
                 signature += " [" + specifier.simplified() + "]";
@@ -444,17 +412,6 @@ QVariant QCodeNode::data(int r) const {
 
             if (m_qualifiers & QCodeNode::QUALIFIER_CONST)
                 qualifier += " const ";
-            else if (m_qualifiers & QCodeNode::QUALIFIER_VOLATILE)
-                qualifier += " volatile ";
-            else if (m_qualifiers & QCodeNode::QUALIFIER_STATIC)
-                qualifier += " static ";
-
-            if (m_qualifiers & QCodeNode::QUALIFIER_PURE_VIRTUAL)
-                qualifier.prepend(" pure virtual ");
-            else if (m_qualifiers & QCodeNode::QUALIFIER_INLINE)
-                qualifier.prepend(" inline ");
-            else if (m_qualifiers & QCodeNode::QUALIFIER_VIRTUAL)
-                qualifier.prepend(" virtual ");
 
             int m_visibility = role(Visibility).toInt();
 
@@ -462,8 +419,6 @@ QVariant QCodeNode::data(int r) const {
                 qualifier.prepend(" public ");
             else if (m_visibility == QCodeNode::VISIBILITY_PROTECTED)
                 qualifier.prepend(" protected ");
-            else if (m_visibility == QCodeNode::VISIBILITY_SIGNAL)
-                qualifier.prepend(" signal ");
             else if (m_visibility == QCodeNode::VISIBILITY_PRIVATE)
                 qualifier.prepend(" private ");
             else
@@ -495,17 +450,11 @@ QVariant QCodeNode::data(int r) const {
         case Class:
             return icon(ICON_CLASS);
 
-        case Struct:
-            return icon(ICON_STRUCT);
-
         case Enum:
             return icon(ICON_ENUM);
 
         case Enumerator:
             return icon(ICON_ENUMERATOR);
-
-        case Union:
-            return icon(ICON_UNION);
 
         case Namespace:
             return icon(ICON_NAMESPACE);

@@ -513,8 +513,7 @@ bool QCodeCompletionModel::match(QCodeNode *n,
                     );
     */
 
-    if ((((type == QCodeNode::Class) || (type == QCodeNode::Struct) ||
-          (type == QCodeNode::Union) || (type == QCodeNode::Typedef)) &&
+    if ((((type == QCodeNode::Class) || (type == QCodeNode::Typedef)) &&
          !(filter & QCodeCompletionWidget::KeepSubTypes)) ||
         ((type == QCodeNode::Enum) &&
          !(filter & QCodeCompletionWidget::KeepEnums)) ||
@@ -525,23 +524,19 @@ bool QCodeCompletionModel::match(QCodeNode *n,
         ((visibility == QCodeNode::VISIBILITY_PUBLIC) &&
          !(filter & QCodeCompletionWidget::Public)) ||
         ((type == QCodeNode::Variable) &&
-         (((specifiers & QCodeNode::SPECIFIER_STATIC) &&
-           !(filter & QCodeCompletionWidget::KeepStatic)) ||
+         ((!(filter & QCodeCompletionWidget::KeepStatic)) ||
           ((specifiers & QCodeNode::SPECIFIER_CONST) &&
            !(filter & QCodeCompletionWidget::KeepConst)) ||
-          (!(specifiers & QCodeNode::SPECIFIER_STATIC) &&
-           (filter & QCodeCompletionWidget::IsStatic))
+          ((filter & QCodeCompletionWidget::IsStatic))
           //		||
           //			(!(specifiers & QCodeNode::SPECIFIER_CONST) &&
           //(filter & QCodeCompletionWidget::IsConst))
           )) ||
         ((type == QCodeNode::Function) &&
-         (((qualifiers & QCodeNode::QUALIFIER_STATIC) &&
-           !(filter & QCodeCompletionWidget::KeepStatic)) ||
+         ((!(filter & QCodeCompletionWidget::KeepStatic)) ||
           ((qualifiers & QCodeNode::QUALIFIER_CONST) &&
            !(filter & QCodeCompletionWidget::KeepConst)) ||
-          (!(qualifiers & QCodeNode::QUALIFIER_STATIC) &&
-           (filter & QCodeCompletionWidget::IsStatic) &&
+          ((filter & QCodeCompletionWidget::IsStatic) &&
            (n->parent->type() != QCodeNode::Namespace)) ||
           (!(qualifiers & QCodeNode::QUALIFIER_CONST) &&
            (filter & QCodeCompletionWidget::IsConst)) ||

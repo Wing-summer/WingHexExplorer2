@@ -93,7 +93,7 @@ add_library(QCodeEditor2 STATIC ${SOURCE_FILES} ${DOCUMENT_SRC} ${WIDGETS_SRC}
                                 ${QNFA_SRC} ${SNIPPET_SRC})
 
 target_compile_definitions(QCodeEditor2 PUBLIC _QCODE_EDIT_BUILD_
-                                               _QCODE_EDIT_EMBED_)
+                                               _QCODE_EDIT_EMBED_ _QCODE_MODEL_)
 
 target_include_directories(
     QCodeEditor2
@@ -106,4 +106,5 @@ target_include_directories(
 target_link_libraries(
     QCodeEditor2
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui
-            Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::PrintSupport)
+            Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::PrintSupport
+            QCodeModel2)

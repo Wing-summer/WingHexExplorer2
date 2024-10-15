@@ -205,11 +205,11 @@ static int contextBound(const QToken& unscoped, const QTokenList& context)
 extern QByteArray join(const QList<QByteArray> &l, QByteArray glue,
                        int max = -1);
 
-QCodeCompletionBackend *AsCompletion::pBackend = 0;
+QCodeCompletionBackend *AsCompletion::pBackend = nullptr;
 unsigned long AsCompletion::instances = 0;
 
 AsCompletion::AsCompletion(QObject *p)
-    : QCodeCompletionEngine(p), pPopup(0), pModel(0) {
+    : QCodeCompletionEngine(p), pPopup(nullptr), pModel(nullptr) {
     if (!pBackend)
         pBackend = new QCodeCompletionBackend;
 
@@ -226,7 +226,7 @@ AsCompletion::AsCompletion(QObject *p)
 }
 
 AsCompletion::AsCompletion(QCodeModel *m, QObject *p)
-    : QCodeCompletionEngine(p), pPopup(0), pModel(m) {
+    : QCodeCompletionEngine(p), pPopup(nullptr), pModel(m) {
     if (!pBackend)
         pBackend = new QCodeCompletionBackend;
 
@@ -248,14 +248,14 @@ AsCompletion::~AsCompletion() {
 
     if (!instances && pBackend) {
         delete pBackend;
-        pBackend = 0;
+        pBackend = nullptr;
     }
 }
 
 QCodeCompletionEngine *AsCompletion::clone() {
     AsCompletion *e = new AsCompletion(pModel);
 
-    foreach (QString t, triggers())
+    for (auto &t : triggers())
         e->addTrigger(t);
 
     emit cloned(e);
@@ -263,18 +263,13 @@ QCodeCompletionEngine *AsCompletion::clone() {
     return e;
 }
 
-QString AsCompletion::language() const { return "C++"; }
+QString AsCompletion::language() const { return "AngelScript"; }
 
 QStringList AsCompletion::extensions() const {
     QStringList l;
 
-    l << "c"
-      << "cc"
-      << "cpp"
-      << "cxx"
-      << "h"
-      << "hpp"
-      << "hxx";
+    l << "as"
+      << "angelscript";
 
     return l;
 }
@@ -383,12 +378,12 @@ static void flush(QTokenList::const_iterator beg,
             ++i;
             --tpl_nest;
             stillType =
-                stillType && (tpl_nest || *i == "*" || *i == "&" || *i == "::");
+                stillType && (tpl_nest || *i == "*" || *i == "@" || *i == "::");
             continue;
         }
 
         if (stillType) {
-            if (tpl_nest || *i == "const" || *i == "static" || *i == "::") {
+            if (tpl_nest || *i == "const" || *i == "::") {
                 ++i;
                 continue;
             }
@@ -396,7 +391,7 @@ static void flush(QTokenList::const_iterator beg,
             if (++i == end)
                 break;
 
-            stillType = *i == "*" || *i == "&" || *i == "<" || *i == "::";
+            stillType = *i == "*" || *i == "@" || *i == "<" || *i == "::";
             continue;
         }
 
@@ -457,9 +452,6 @@ static QByteArray trimmedType(const QByteArray &t, bool &ptr) {
 
     QByteArray s = t;
 
-    if (s.startsWith("static "))
-        s.remove(0, 7);
-
     if (s.startsWith("const "))
         s.remove(0, 6);
 
@@ -470,7 +462,7 @@ static QByteArray trimmedType(const QByteArray &t, bool &ptr) {
             ptr = true;
             s.remove(i, 1);
             --i;
-        } else if (s.at(i) == '&') {
+        } else if (s.at(i) == '@') {
             s.remove(i, 1);
             --i;
         } else if ((s.at(i) == ' ') &&
@@ -627,7 +619,7 @@ QByteArray AsCompletion::functionLookup(QCodeNode *n, const QByteArray &s) {
         QByteArray cn = c->role(QCodeNode::Name), tpl;
 
         if (ctype == QCodeNode::Group ||
-            (ctype == QCodeNode::Language && cn == "C++") ||
+            (ctype == QCodeNode::Language && cn == "AngelScript") ||
             (ctype == QCodeNode::Namespace && m_namespaces.contains(cn))) {
             foreach (QCodeNode *child, c->children)
                 stack.push(child);
@@ -716,7 +708,7 @@ QCodeNode *AsCompletion::lookup(const QByteArray &t) {
     TRACE_IF(n, "found in locals")
 
     if (!n && scope_local && pModel) {
-        n = pModel->findNode("C++", t);
+        n = pModel->findNode("AngelScript", t);
 
         TRACE_IF(n, "found in projects")
     }
@@ -912,8 +904,6 @@ void AsCompletion::hierarchy(QCodeNode *n, QList<QCodeNode *> &l,
 
         // bool bPriv = a.contains("private");
 
-        remove(a, "virtual");
-
         remove(a, "public");
         remove(a, "private");
         remove(a, "protected");
@@ -998,7 +988,7 @@ void AsCompletion::getMembers(QTokenList::const_iterator beg,
         n = nsAwareLookup(ts);
         int ntype = n ? n->type() : 0;
 
-        if (n && (ntype == QCodeNode::Class || ntype == QCodeNode::Struct)) {
+        if (n && (ntype == QCodeNode::Class)) {
             // ctors
             type = symbol;
             matchForward(i, "(", ")", end);
@@ -1289,9 +1279,7 @@ void AsCompletion::getMembers(QTokenList::const_iterator beg,
                         break;
                     } else if (op == "::") {
                         if ((nt == QCodeNode::Enum) ||
-                            (nt == QCodeNode::Union) ||
                             (nt == QCodeNode::Class) ||
-                            (nt == QCodeNode::Struct) ||
                             (nt == QCodeNode::Namespace)) {
                             ++i;
                             type = symbol;
@@ -1300,8 +1288,7 @@ void AsCompletion::getMembers(QTokenList::const_iterator beg,
                         }
                     } else if (op == "(") {
 
-                        if ((nt == QCodeNode::Class) ||
-                            (nt == QCodeNode::Struct)) {
+                        if (nt == QCodeNode::Class) {
                             type = symbol;
                             updateContext(child, &cxt, &scxt);
                             i += 2;
@@ -1376,7 +1363,7 @@ void AsCompletion::complete(QCodeStream *s, const QString &trig) {
 
     if (pPopup && pPopup->editor() != editor()) {
         delete pPopup;
-        pPopup = 0;
+        pPopup = nullptr;
     }
 
     if (!pPopup) {

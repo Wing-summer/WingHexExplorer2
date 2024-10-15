@@ -40,7 +40,8 @@ add_library(
     qcodebuffer.cpp
     qcodelexer.cpp
     qcodeparser.cpp
-    qcodeloader.cpp)
+    qcodeloader.cpp
+    resources.qrc)
 
 target_include_directories(QCodeModel2 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 

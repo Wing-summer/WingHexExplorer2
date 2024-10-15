@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QPixmap>
 
+#include "qlanguagefactory.h"
 #include "qlinemarkpanel.h"
 #include "qlinenumberpanel.h"
 #include "qpanellayout.h"

@@ -27,24 +27,25 @@ private:
 };
 
 class AsCompletion : public QCodeCompletionEngine {
+    Q_OBJECT
 public:
-    AsCompletion(QObject *p = 0);
-    AsCompletion(QCodeModel *m, QObject *p = 0);
+    AsCompletion(QObject *p = nullptr);
+    AsCompletion(QCodeModel *m, QObject *p = nullptr);
 
     virtual ~AsCompletion();
 
-    virtual QCodeCompletionEngine *clone();
+    virtual QCodeCompletionEngine *clone() override;
 
-    virtual QString language() const;
-    virtual QStringList extensions() const;
+    virtual QString language() const override;
+    virtual QStringList extensions() const override;
 
     void init();
 
     QCodeCompletionBackend *backend() const;
 
 protected:
-    virtual void setCodeModel(QCodeModel *m);
-    virtual void complete(QCodeStream *s, const QString &trigger);
+    virtual void setCodeModel(QCodeModel *m) override;
+    virtual void complete(QCodeStream *s, const QString &trigger) override;
 
 public:
     void hierarchy(QCodeNode *n, QList<QCodeNode *> &l,

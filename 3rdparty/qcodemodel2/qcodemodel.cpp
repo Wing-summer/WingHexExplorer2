@@ -343,8 +343,7 @@ bool QCodeModel::isCachable(QCodeNode *n, QByteArray &cxt) const {
         cxt += qn;
 
         return true;
-    } else if ((t == QCodeNode::Enum) || (t == QCodeNode::Union) ||
-               (t == QCodeNode::Class) || (t == QCodeNode::Struct) ||
+    } else if ((t == QCodeNode::Enum) || (t == QCodeNode::Class) ||
                (t == QCodeNode::Typedef)) {
         cxt += qn;
 

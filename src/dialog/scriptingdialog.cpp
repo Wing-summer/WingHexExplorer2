@@ -3,6 +3,7 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "aboutsoftwaredialog.h"
+#include "class/ascompletion.h"
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
@@ -11,6 +12,8 @@
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
 #include "qcodeeditwidget/qeditconfig.h"
+#include "qcodeloader.h"
+#include "qcodemodel.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
 #include "qformatscheme.h"
@@ -73,8 +76,22 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
         break;
     }
     QDocument::setDefaultFormatScheme(format);
+
+    m_codeModel = new QCodeModel(this);
+    m_codeModel->setCodeLoader(new QCodeLoader(this));
+
+    // m_codeProxy = new QCodeProxyModel(this);
+    // m_codeProxy->setSourceModel(m_codeModel);
+    // m_codeProxy->setDynamicSortFilter(true);
+
+    // m_codeView = new QCodeView(this);
+    // m_codeView->setModel(m_codeProxy);
+    // m_codeView->setSortingEnabled(true);
+    // m_codeView->header()->hide();
+
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
+    m_language->addCompletionEngine(new AsCompletion(m_codeModel, this));
 
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));

@@ -10,7 +10,7 @@
 #include <QTimerEvent>
 #include <QWindow>
 
-#include "../class/eventfilter.h"
+#include "class/eventfilter.h"
 
 int Toast::LENGTH_LONG = 4000;
 int Toast::LENGTH_SHORT = 1500;

@@ -36,7 +36,7 @@ class QCM_EXPORT QCodeLoader : public QThread {
     Q_OBJECT
 
 public:
-    QCodeLoader(QObject *p = 0);
+    QCodeLoader(QObject *p = nullptr);
     virtual ~QCodeLoader();
 
 public slots:

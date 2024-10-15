@@ -14,6 +14,8 @@
 #include "model/dbgbreakpointmodel.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
+#include "qcodeproxymodel.h"
+#include "qcodeview.h"
 #include "qlanguagefactory.h"
 #include "utilities.h"
 
@@ -233,6 +235,9 @@ private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
     QLanguageFactory *m_language = nullptr;
+    QCodeView *m_codeView = nullptr;
+    QCodeModel *m_codeModel = nullptr;
+    QCodeProxyModel *m_codeProxy = nullptr;
     QByteArray _defaultLayout;
 
     ScriptEditor *m_curEditor = nullptr;

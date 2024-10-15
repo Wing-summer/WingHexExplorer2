@@ -303,10 +303,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
 
     if (type == QCodeNode::Class) {
         visibility = QCodeNode::VISIBILITY_PRIVATE;
-    } else if (type == QCodeNode::Struct) {
-        visibility = QCodeNode::VISIBILITY_PUBLIC;
-    } else if ((type == QCodeNode::Union) || (type == QCodeNode::Enum) ||
-               (type == QCodeNode::Namespace)) {
+    } else if ((type == QCodeNode::Enum) || (type == QCodeNode::Namespace)) {
         visibility = QCodeNode::VISIBILITY_PUBLIC;
     }
 
@@ -323,8 +320,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
         // qDebug("\"%s\"", token.constData());
 
         switch (k) {
-        case KEYWORD_CLASS:
-        case KEYWORD_STRUCT: {
+        case KEYWORD_CLASS: {
             if (ltemplates.count() == 1 && ltemplates.at(0).isEmpty()) {
                 // specialization : discard
                 buffer_unused.clear();
@@ -394,7 +390,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                 name = "<anonymous>";
             }
 
-            QByteArray roles = (k == KEYWORD_STRUCT) ? "s@" : "c@";
+            QByteArray roles = "c@";
 
 #ifdef _TRACE_PARSING_
             qDebug("%s %s", (k == KEYWORD_STRUCT) ? "struct" : "class",
@@ -405,8 +401,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
             roles += "@";
 
             // QList<QByteArray> ancestors;
-            QByteArray rule,
-                drule = (k == KEYWORD_CLASS) ? "private" : "public";
+            QByteArray rule, drule = "private";
 
             if (tokens.at(id) == ":") {
                 while (filter(++id, end)) {
@@ -677,73 +672,6 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
             break;
         }
 
-        case KEYWORD_UNION: {
-            ltemplates.clear();
-
-            QByteArray name;
-
-            if (((id + 1) < end && tokens.at(id + 1) != "{") &&
-                ((id + 2) < end && tokens.at(id + 2) != "{")) {
-                // twisted variable declaration...
-                ++id;
-                break;
-            }
-
-            if (tokens.at(id + 1) == "{") {
-                // anonymous enum
-                name = "<anonymous>";
-            } else if (tokens.at(id + 2) == "{") {
-                // named enum
-                name = tokens.at(++id);
-            } else {
-                qWarning("Syntax error : expected \'{\' after \"union\" in %s",
-                         sContext.constData());
-                buffer_unused.clear();
-                ++id;
-                break;
-            }
-
-            ++id;
-            first = id + 1;
-
-            match(tokens, id, end, '{', '}');
-
-            if (buffer_unused.count()) {
-                qWarning(
-                    "Syntax error : expecting \';\' before \"union\" in %s",
-                    sContext.constData());
-                dump(buffer_unused);
-                ++id;
-                break;
-            }
-
-#ifdef _TRACE_PARSING_
-            qDebug("union %s", name.constData());
-#endif
-
-            QCodeNode *un = getNode();
-            un->line = line;
-            un->roles =
-                QByteArray("u@") + name + "@@" + QByteArray::number(visibility);
-
-            // if ( l ) qDebug("union at line %i", line);
-
-            if (bNeedCxt)
-                n->roles += "@" + sContext;
-
-            un->attach(pScope);
-
-            update(un, l, tokens, first, id, false);
-
-            while ((id < end) && (tokens.at(id) != ";"))
-                ++id;
-
-            if (id < end)
-                ++id;
-
-            break;
-        }
-
         case KEYWORD_NAMESPACE: {
             ltemplates.clear();
 
@@ -848,9 +776,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
             ++id;
 
             switch (keyword(tokens.at(id))) {
-            case KEYWORD_STRUCT:
-            case KEYWORD_ENUM:
-            case KEYWORD_UNION: {
+            case KEYWORD_ENUM: {
                 ++id;
 
                 QByteArray name;
@@ -1197,47 +1123,19 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                         int nodeType = pScope->type();
 
                         bool cont = false,
-                             inClass = ((nodeType == QCodeNode::Class) ||
-                                        (nodeType == QCodeNode::Struct));
+                             inClass = (nodeType == QCodeNode::Class);
 
                         if (!inClass) {
-
-                            if (*ba == "static") {
-                                ts |= QCodeNode::SPECIFIER_STATIC;
-
-                                if (((ba + 1) < buffer_end) &&
-                                    (*(ba + 1) == "const")) {
-                                    ++ba;
-                                    ts |= QCodeNode::SPECIFIER_CONST;
-                                }
-
-                            } else if (*ba == "extern")
+                            if (*ba == "extern")
                                 ts |= QCodeNode::SPECIFIER_EXTERN;
                             else if (*ba == "auto")
                                 ts |= QCodeNode::SPECIFIER_AUTO;
-                            else if (*ba == "register")
-                                ts |= QCodeNode::SPECIFIER_REGISTER;
                             else if (*ba == "const")
                                 ts |= QCodeNode::SPECIFIER_CONST;
-                            else if (*ba == "volatile")
-                                ts |= QCodeNode::SPECIFIER_VOLATILE;
-                            else if (*ba == "mutable")
-                                ts |= QCodeNode::SPECIFIER_MUTABLE;
                             else
                                 --ba;
                         } else {
-                            if (*ba == "static") {
-                                ts |= QCodeNode::SPECIFIER_STATIC;
-
-                                if ((ba + 1) < buffer_end &&
-                                    *(ba + 1) == "const") {
-                                    ++ba;
-                                    ts |= QCodeNode::SPECIFIER_CONST;
-                                }
-
-                            } else if (*ba == "mutable")
-                                ts |= QCodeNode::SPECIFIER_MUTABLE;
-                            else if (*ba == "const")
+                            if (*ba == "const")
                                 ts |= QCodeNode::SPECIFIER_CONST;
                             else
                                 --ba;
@@ -1414,9 +1312,6 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                     } else if (buffer_unused.last() == "private") {
                         visa = true;
                         visibility = QCodeNode::VISIBILITY_PRIVATE;
-                    } else if (buffer_unused.last() == "signals") {
-                        visa = true;
-                        visibility = QCodeNode::VISIBILITY_SIGNAL;
                     } else {
                         // qWarning("weird syntactic construct in %s",
                         // sContext.constData());
@@ -1469,14 +1364,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
 
                     QCodeNode::FunctionQualifier fq = QCodeNode::QUALIFIER_NONE;
 
-                    int pref_idx = buffer_unused.indexOf("inline");
-
-                    if (pref_idx != -1) {
-                        fq |= QCodeNode::QUALIFIER_INLINE;
-                        buffer_unused.removeAt(pref_idx);
-                    }
-
-                    pref_idx = buffer_unused.indexOf("explicit");
+                    int pref_idx = buffer_unused.indexOf("explicit");
 
                     if (pref_idx != -1)
                         buffer_unused.removeAt(pref_idx);
@@ -1539,8 +1427,7 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
 
                     // maybe ctor or dtor
 
-                    if (((pScope->type() == QCodeNode::Class) ||
-                         (pScope->type() == QCodeNode::Struct)) &&
+                    if ((pScope->type() == QCodeNode::Class) &&
                         (name == pScope->role(QCodeNode::Name))) {
                         isCtorDtor = true;
 
@@ -1551,8 +1438,8 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                         }
 
                         if (buffer_unused.count() &&
-                            buffer_unused.at(0) == "virtual") {
-                            fq |= QCodeNode::QUALIFIER_VIRTUAL;
+                            buffer_unused.at(0) == "abstract") {
+                            fq |= QCodeNode::QUALIFIER_ABSTRACT;
                             buffer_unused.removeAt(0);
                         }
 
@@ -1572,10 +1459,6 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                         // anything else
                         if (buffer_unused.at(0) == "extern")
                             fq |= QCodeNode::QUALIFIER_EXTERN;
-                        else if (buffer_unused.at(0) == "static")
-                            fq |= QCodeNode::QUALIFIER_STATIC;
-                        else if (buffer_unused.at(0) == "virtual")
-                            fq |= QCodeNode::QUALIFIER_VIRTUAL;
                         else
                             goto skip_qualifiers;
 
@@ -1640,12 +1523,6 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                             break;
                         } else if (tokens.at(id) == "const")
                             fq |= QCodeNode::QUALIFIER_CONST;
-                        else if (tokens.at(id) == "volatile")
-                            fq |= QCodeNode::QUALIFIER_VOLATILE;
-                        else if (tokens.at(id) == "=") {
-                            if (((id + 1) < end) && (tokens.at(id + 1) == "0"))
-                                fq |= QCodeNode::QUALIFIER_PURE_VIRTUAL;
-                        }
 
                         ++id;
                     }
@@ -1653,10 +1530,6 @@ void QAsParser::update(QCodeNode *n, QCodeLexer *l, QTokenList &tokens, int id,
                     if (!retval.endsWith("::") &&
                         !retval.endsWith(":: ~") // small quirk handling...
                     ) {
-                        if (retval.startsWith("inline ")) {
-                            retval.remove(0, 7);
-                            fq |= QCodeNode::QUALIFIER_INLINE;
-                        }
 
                         prettify(name);
                         prettify(retval);
@@ -1876,10 +1749,8 @@ static const QAsParser::KeywordId IdTable[] = {
     QCppParser::KEYWORD_RETURN,
     QCppParser::KEYWORD_SHORT,
     QCppParser::KEYWORD_SIGNED,
-    QCppParser::KEYWORD_STATIC,
-    */
-
     QAsParser::KEYWORD_STRUCT,
+    */
 
     /*
     QCppParser::KEYWORD_SWITCH,
@@ -1897,8 +1768,6 @@ static const QAsParser::KeywordId IdTable[] = {
     QAsParser::KEYWORD_TYPEDEF,
 
     // QCppParser::KEYWORD_TYPENAME,
-
-    QAsParser::KEYWORD_UNION,
 
     // QCppParser::KEYWORD_UNSIGNED,
 

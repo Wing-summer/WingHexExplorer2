@@ -272,7 +272,7 @@ void QCodeCompletionEngine::complete(const QDocumentCursor &c,
     Q_UNUSED(trigger)
     qWarning("From complete(QDocumentCursor, QString)");
     qWarning("QCodeCompletionEngine is not self-sufficient : subclasses should "
-             "reimplement at least on of the complete() method...");
+             "reimplement at least one of the complete() method...");
 #endif
 }
 

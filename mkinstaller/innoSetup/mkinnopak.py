@@ -45,7 +45,7 @@ def main():
         "folder", help="A folder that has contained the binary build")
     parser.add_argument("-c", "--cc", help="where ISCC.exe locates", default="C:\Program Files (x86)\Inno Setup 6\ISCC.exe")
     parser.add_argument("-o", "--output", help="where to put the installer")
-    parser.add_argument("--build", action='store_false')
+    parser.add_argument("--no-build", action='store_false')
     
     args = parser.parse_args()
 
@@ -157,8 +157,6 @@ def main():
     print(Fore.GREEN + ">> Copying finished, deploying the software..." + Style.RESET_ALL)
 
     try:
-        subprocess.run([deploy_exec, os.path.join(exeDebPath, f"qt{qt_version}advanceddocking.dll")], check=True,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subprocess.run([deploy_exec, os.path.join(exeDebPath, exe_name) ], check=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
@@ -166,9 +164,6 @@ def main():
         exit(-4)
     except FileNotFoundError:
         exit(-4)        
-
-    # ok, remove the ads_lib_deploy
-    os.remove(ads_lib_deploy)
 
     # generate iss file
     print(Fore.GREEN + ">> Copying finished, generate ISCC script..." + Style.RESET_ALL)
