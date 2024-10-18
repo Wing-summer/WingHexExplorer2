@@ -2,6 +2,7 @@
 #include "ui_settingdialog.h"
 
 #include "class/wingmessagebox.h"
+#include "control/toast.h"
 #include "utilities.h"
 
 #include <QApplication>
@@ -55,6 +56,17 @@ void SettingDialog::showConfig(int index) {
     }
     Utilities::moveToCenter(this);
     _dialog->exec();
+}
+
+void SettingDialog::toastTakeEffectReboot() {
+    auto page = qobject_cast<WingHex::SettingPage *>(sender());
+    if (page) {
+        auto icon = page->categoryIcon();
+        auto avsize = icon.availableSizes();
+        Q_ASSERT(!avsize.isEmpty());
+        Toast::toast(_dialog, icon.pixmap(avsize.first()),
+                     tr("TakeEffectRestart"));
+    }
 }
 
 void SettingDialog::on_buttonBox_clicked(QAbstractButton *button) {

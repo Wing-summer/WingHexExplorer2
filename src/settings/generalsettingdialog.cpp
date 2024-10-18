@@ -30,12 +30,31 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     ui->lblSoftVersion->setText(WINGHEX_VERSION);
     ui->lblScriptVersion->setText(ANGELSCRIPT_VERSION_STRING);
 
+    Utilities::addSpecialMark(ui->lblLanguage);
+    Utilities::addSpecialMark(ui->lblTheme);
+    Utilities::addSpecialMark(ui->lblFont);
+    Utilities::addSpecialMark(ui->lblFontSize);
+    Utilities::addSpecialMark(ui->lblWinState);
+
+    connect(ui->cbLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &GeneralSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &GeneralSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbFont, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &GeneralSettingDialog::optionNeedRestartChanged);
+    connect(ui->sbFontSize, &QSpinBox::editingFinished, this,
+            &GeneralSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbWinState, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &GeneralSettingDialog::optionNeedRestartChanged);
+
     reload();
 }
 
 GeneralSettingDialog::~GeneralSettingDialog() { delete ui; }
 
 void GeneralSettingDialog::reload() {
+    this->blockSignals(true);
+
     auto &set = SettingManager::instance();
 
     auto langs = LanguageManager::instance().langsDisplay();
@@ -67,6 +86,8 @@ void GeneralSettingDialog::reload() {
     }
 
     ui->cbWinState->setCurrentIndex(s);
+
+    this->blockSignals(false);
 }
 
 QIcon GeneralSettingDialog::categoryIcon() const { return ICONRES("general"); }

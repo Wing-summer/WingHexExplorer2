@@ -37,6 +37,28 @@ LanguageManager::LanguageManager() {
     }
 
     _defaultLocale = QLocale::system();
+
+    if (m_langs.isEmpty()) {
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+        if (QLocale::China == _defaultLocale.territory()
+#else
+        if (QLocale::China == _defaultLocale.country()
+#endif
+        ) {
+            QMessageBox::critical(
+                nullptr, QStringLiteral("程序损坏"),
+                QStringLiteral(
+                    "语言文件已损坏，请尝试重装软件以解决这个问题。"));
+        } else {
+            QMessageBox::critical(
+                nullptr, QStringLiteral("Corruption"),
+                QStringLiteral("The language file has been damaged. "
+                               "Please try reinstalling the software to "
+                               "solve the problem."));
+        }
+        qApp->exit(-1);
+    }
+
     bool found = false;
     for (auto p = m_localeMap.begin(); p != m_localeMap.end(); ++p) {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)

@@ -13,32 +13,41 @@
 **
 ****************************************************************************/
 
-#ifndef _QCODE_DEVICE_H_
-#define _QCODE_DEVICE_H_
+#ifndef _QCODE_VIEW_H_
+#define _QCODE_VIEW_H_
 
-#include "qcodestream.h"
+#include "qcm-config.h"
 
 /*!
-        \file qcodedevice.h
-        \brief Definition of the QCodeDevice class.
+        \file qcodeview.h
+        \brief Definition of the QCodeView class.
 */
 
-class QIODevice;
+#include <QTreeView>
 
-class QCM_EXPORT QCodeDevice : public QCodeStream {
+class QCodeModel;
+
+class QCM_EXPORT QCodeView : public QTreeView {
+    Q_OBJECT
+
 public:
-    QCodeDevice(const QString &f);
+    QCodeView(QWidget *p = nullptr);
+    QCodeView(QCodeModel *m, QWidget *p = nullptr);
+    virtual ~QCodeView();
 
-    virtual char getChar();
-    virtual void ungetChar(char c);
+    virtual void setModel(QAbstractItemModel *model);
 
-    virtual QByteArray readLine();
+signals:
+    void actionRequested(const QString &action, const QStringList &params);
 
-    virtual bool tryFetchOtherContext(const QString &f);
+protected:
+    virtual void contextMenuEvent(QContextMenuEvent *e);
+
+protected slots:
+    void indexActivated(const QModelIndex &idx);
 
 private:
-    int m_pos, m_beg;
-    QByteArray buffer;
+    QCodeModel *m_model;
 };
 
-#endif // _QCODE_DEVICE_H_
+#endif // !_QCODE_VIEW_H_

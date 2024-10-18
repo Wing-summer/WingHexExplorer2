@@ -133,6 +133,7 @@ private:
     struct ContextDbgInfo {
         QString file;
         int line = -1;
+        int col = -1;
         int stackCount = -1;
     };
 

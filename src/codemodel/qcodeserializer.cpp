@@ -98,7 +98,9 @@ void QCodeSerializer::deserialize(QIODevice *device, bool *ok, QString *source,
     QCodeNode *n, *previous = 0, *parent = 0;
 
     line = device->readLine();
+
     auto match = header_matcher.match(line);
+
     if (!match.hasMatch()) {
         qWarning("Header mismatch : %s", line.constData());
 

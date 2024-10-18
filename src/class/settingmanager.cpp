@@ -1,11 +1,60 @@
 #include "settingmanager.h"
-#include "setting.h"
 
 #include "class/logger.h"
 #include "class/skinmanager.h"
 #include "utilities.h"
 #include <QFileInfo>
 #include <QMetaEnum>
+#include <QSettings>
+
+#define HANDLE_CONFIG                                                          \
+    QSettings set(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME))
+
+#define CONFIG set
+
+#define WRITE_CONFIG(config, dvalue)                                           \
+    if (this->_setUnsaved.testFlag(SETTING_ITEM::config)) {                    \
+        set.setValue(config, dvalue);                                          \
+        _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
+    }
+
+#define READ_CONFIG(config, dvalue) set.value(config, dvalue)
+
+#define READ_CONFIG_SAFE(var, config, dvalue, func)                            \
+    {                                                                          \
+        auto b = false;                                                        \
+        var = READ_CONFIG(config, dvalue).func(&b);                            \
+        if (!b) {                                                              \
+            var = dvalue;                                                      \
+        }                                                                      \
+    }
+
+#define READ_CONFIG_INT(var, config, dvalue)                                   \
+    READ_CONFIG_SAFE(var, config, dvalue, toInt)
+
+#define READ_CONFIG_BOOL(var, config, dvalue)                                  \
+    var = READ_CONFIG(config, dvalue).toBool()
+
+#define READ_CONFIG_QSIZETYPE(var, config, dvalue)                             \
+    READ_CONFIG_SAFE(var, config, dvalue, toLongLong)
+
+#define READ_CONFIG_INT_POSITIVE(var, config, dvalue)                          \
+    {                                                                          \
+        Q_ASSERT(dvalue > 0);                                                  \
+        READ_CONFIG_SAFE(var, config, dvalue, toInt);                          \
+        if (var <= 0) {                                                        \
+            var = dvalue;                                                      \
+        }                                                                      \
+    }
+
+#define READ_CONFIG_DOUBLE_POSITIVE(var, config, dvalue)                       \
+    {                                                                          \
+        Q_ASSERT(dvalue > 0);                                                  \
+        READ_CONFIG_SAFE(var, config, dvalue, toDouble);                       \
+        if (var <= 0) {                                                        \
+            var = dvalue;                                                      \
+        }                                                                      \
+    }
 
 const auto DOCK_LAYOUT = QStringLiteral("dock.layout");
 const auto SCRIPT_DOCK_LAYOUT = QStringLiteral("script.layout");
@@ -127,8 +176,6 @@ void SettingManager::load() {
         }
     }
 
-    emit sigAppFontFamilyChanged(m_appFontFamily);
-    emit sigAppfontSizeChanged(m_appfontSize);
     emit sigEditorfontSizeChanged(m_editorfontSize);
     emit sigCopylimitChanged(m_copylimit);
     emit sigDecodeStrlimitChanged(m_decodeStrlimit);
@@ -159,25 +206,42 @@ bool SettingManager::allowUsrScriptInRoot() const {
 }
 
 void SettingManager::setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot) {
-    m_allowUsrScriptInRoot = newAllowUsrScriptInRoot;
+    if (m_allowUsrScriptInRoot != newAllowUsrScriptInRoot) {
+        m_allowUsrScriptInRoot = newAllowUsrScriptInRoot;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_ALLOW_USRSCRIPT_INROOT);
+    }
 }
 
 void SettingManager::setUsrHideCats(const QStringList &newUsrHideCats) {
-    m_usrHideCats = newUsrHideCats;
+    if (m_usrHideCats != newUsrHideCats) {
+        m_usrHideCats = newUsrHideCats;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_USRHIDECATS);
+    }
 }
 
 void SettingManager::setSysHideCats(const QStringList &newSysHideCats) {
-    m_sysHideCats = newSysHideCats;
+    if (m_sysHideCats != newSysHideCats) {
+        m_sysHideCats = newSysHideCats;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_SYSHIDECATS);
+    }
 }
 
 int SettingManager::logLevel() const { return m_logLevel; }
 
-void SettingManager::setLogLevel(int newLogLevel) { m_logLevel = newLogLevel; }
+void SettingManager::setLogLevel(int newLogLevel) {
+    if (m_logLevel != newLogLevel) {
+        m_logLevel = newLogLevel;
+        _setUnsaved.setFlag(SETTING_ITEM::OTHER_LOG_LEVEL);
+    }
+}
 
 bool SettingManager::useNativeTitleBar() const { return m_useNativeTitleBar; }
 
 void SettingManager::setUseNativeTitleBar(bool newUseNativeTitleBar) {
-    m_useNativeTitleBar = newUseNativeTitleBar;
+    if (m_useNativeTitleBar != newUseNativeTitleBar) {
+        m_useNativeTitleBar = newUseNativeTitleBar;
+        _setUnsaved.setFlag(SETTING_ITEM::OTHER_USE_NATIVE_TITLEBAR);
+    }
 }
 
 bool SettingManager::useNativeFileDialog() const {
@@ -185,7 +249,10 @@ bool SettingManager::useNativeFileDialog() const {
 }
 
 void SettingManager::setUseNativeFileDialog(bool newUseNativeFileDialog) {
-    m_useNativeFileDialog = newUseNativeFileDialog;
+    if (m_useNativeFileDialog != newUseNativeFileDialog) {
+        m_useNativeFileDialog = newUseNativeFileDialog;
+        _setUnsaved.setFlag(SETTING_ITEM::OTHER_USESYS_FILEDIALOG);
+    }
 }
 
 QByteArray SettingManager::scriptDockLayout() const {
@@ -194,7 +261,10 @@ QByteArray SettingManager::scriptDockLayout() const {
 
 void SettingManager::setScriptDockLayout(
     const QByteArray &newScriptDockLayout) {
-    m_scriptDockLayout = newScriptDockLayout;
+    if (m_scriptDockLayout != newScriptDockLayout) {
+        m_scriptDockLayout = newScriptDockLayout;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_DOCK_LAYOUT);
+    }
 }
 
 QStringList SettingManager::sysHideCats() const { return m_sysHideCats; }
@@ -207,7 +277,10 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentScriptFiles() const {
 
 void SettingManager::setRecentScriptFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles) {
-    m_recentScriptFiles = newRecentScriptFiles;
+    if (m_recentScriptFiles != newRecentScriptFiles) {
+        m_recentScriptFiles = newRecentScriptFiles;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_RECENTFILES);
+    }
 }
 
 QString SettingManager::appFontFamily() const { return m_appFontFamily; }
@@ -215,20 +288,26 @@ QString SettingManager::appFontFamily() const { return m_appFontFamily; }
 void SettingManager::setAppFontFamily(const QString &newAppFontFamily) {
     if (m_appFontFamily != newAppFontFamily) {
         m_appFontFamily = newAppFontFamily;
-        emit sigAppFontFamilyChanged(newAppFontFamily);
+        _setUnsaved.setFlag(SETTING_ITEM::APP_FONTFAMILY);
     }
 }
 
 bool SettingManager::editorShowHeader() const { return m_editorShowHeader; }
 
 void SettingManager::setEditorShowHeader(bool newEditorShowAddr) {
-    m_editorShowHeader = newEditorShowAddr;
+    if (m_editorShowHeader != newEditorShowAddr) {
+        m_editorShowHeader = newEditorShowAddr;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_ADDR);
+    }
 }
 
 bool SettingManager::enablePlugin() const { return m_enablePlugin; }
 
 void SettingManager::setEnablePlugin(bool newEnablePlugin) {
-    m_enablePlugin = newEnablePlugin;
+    if (m_enablePlugin != newEnablePlugin) {
+        m_enablePlugin = newEnablePlugin;
+        _setUnsaved.setFlag(SETTING_ITEM::PLUGIN_ENABLE);
+    }
 }
 
 QList<RecentFileManager::RecentInfo> SettingManager::recentHexFiles() const {
@@ -237,7 +316,10 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentHexFiles() const {
 
 void SettingManager::setRecentFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentFiles) {
-    m_recentHexFiles = newRecentFiles;
+    if (m_recentHexFiles != newRecentFiles) {
+        m_recentHexFiles = newRecentFiles;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_RECENTFILES);
+    }
 }
 
 Qt::WindowState SettingManager::defaultWinState() const {
@@ -254,7 +336,10 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
         newDefaultWinState = Qt::WindowMaximized;
         break;
     }
-    m_defaultWinState = newDefaultWinState;
+    if (m_defaultWinState != newDefaultWinState) {
+        m_defaultWinState = newDefaultWinState;
+        _setUnsaved.setFlag(SETTING_ITEM::APP_WINDOWSIZE);
+    }
 }
 
 void SettingManager::save(SETTINGS cat) {
@@ -339,9 +424,11 @@ void SettingManager::reset(SETTINGS cat) {
 qsizetype SettingManager::decodeStrlimit() const { return m_decodeStrlimit; }
 
 void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
+    newDecodeStrlimit =
+        qBound(qsizetype(100), newDecodeStrlimit, qsizetype(1024));
     if (m_decodeStrlimit != newDecodeStrlimit) {
-        m_decodeStrlimit =
-            qBound(qsizetype(100), newDecodeStrlimit, qsizetype(1024));
+        m_decodeStrlimit = newDecodeStrlimit;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_DECSTRLIMIT);
         emit sigDecodeStrlimitChanged(m_decodeStrlimit);
     }
 }
@@ -349,8 +436,10 @@ void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
 qsizetype SettingManager::copylimit() const { return m_copylimit; }
 
 void SettingManager::setCopylimit(qsizetype newCopylimit) {
+    newCopylimit = qBound(qsizetype(100), newCopylimit, qsizetype(1024));
     if (m_copylimit != newCopylimit) {
-        m_copylimit = qBound(qsizetype(100), newCopylimit, qsizetype(1024));
+        m_copylimit = newCopylimit;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_COPY_LIMIT);
         emit sigDecodeStrlimitChanged(m_copylimit);
     }
 }
@@ -358,19 +447,28 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
 QString SettingManager::editorEncoding() const { return m_editorEncoding; }
 
 void SettingManager::setEditorEncoding(const QString &newEditorEncoding) {
-    m_editorEncoding = newEditorEncoding;
+    if (m_editorEncoding != newEditorEncoding) {
+        m_editorEncoding = newEditorEncoding;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_ENCODING);
+    }
 }
 
 bool SettingManager::editorShowtext() const { return m_editorShowtext; }
 
 void SettingManager::setEditorShowtext(bool newEditorShowtext) {
-    m_editorShowtext = newEditorShowtext;
+    if (m_editorShowtext != newEditorShowtext) {
+        m_editorShowtext = newEditorShowtext;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_TEXT);
+    }
 }
 
 bool SettingManager::editorShowcol() const { return m_editorShowcol; }
 
 void SettingManager::setEditorShowcol(bool newEditorShowcol) {
-    m_editorShowcol = newEditorShowcol;
+    if (m_editorShowcol != newEditorShowcol) {
+        m_editorShowcol = newEditorShowcol;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_COL);
+    }
 }
 
 int SettingManager::editorfontSize() const { return m_editorfontSize; }
@@ -378,6 +476,7 @@ int SettingManager::editorfontSize() const { return m_editorfontSize; }
 void SettingManager::setEditorfontSize(int newEditorfontSize) {
     if (m_editorfontSize != newEditorfontSize) {
         m_editorfontSize = newEditorfontSize;
+        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_FONTSIZE);
         emit sigEditorfontSizeChanged(newEditorfontSize);
     }
 }
@@ -387,20 +486,26 @@ int SettingManager::appfontSize() const { return m_appfontSize; }
 void SettingManager::setAppfontSize(int newAppfontSize) {
     if (m_appfontSize != newAppfontSize) {
         m_appfontSize = newAppfontSize;
-        emit sigAppfontSizeChanged(newAppfontSize);
+        _setUnsaved.setFlag(SETTING_ITEM::APP_FONTSIZE);
     }
 }
 
 bool SettingManager::enablePlgInRoot() const { return m_enablePlgInRoot; }
 
 void SettingManager::setEnablePlgInRoot(bool newEnablePlgInRoot) {
-    m_enablePlgInRoot = newEnablePlgInRoot;
+    if (m_enablePlgInRoot != newEnablePlgInRoot) {
+        m_enablePlgInRoot = newEnablePlgInRoot;
+        _setUnsaved.setFlag(SETTING_ITEM::PLUGIN_ENABLE_ROOT);
+    }
 }
 
 QString SettingManager::defaultLang() const { return m_defaultLang; }
 
 void SettingManager::setDefaultLang(const QString &newDefaultLang) {
-    m_defaultLang = newDefaultLang;
+    if (m_defaultLang != newDefaultLang) {
+        m_defaultLang = newDefaultLang;
+        _setUnsaved.setFlag(SETTING_ITEM::APP_LANGUAGE);
+    }
 }
 
 SettingManager &SettingManager::instance() {
@@ -413,9 +518,17 @@ SettingManager::~SettingManager() {}
 QByteArray SettingManager::dockLayout() const { return m_dockLayout; }
 
 void SettingManager::setDockLayout(const QByteArray &newDockLayout) {
-    m_dockLayout = newDockLayout;
+    if (m_dockLayout != newDockLayout) {
+        m_dockLayout = newDockLayout;
+        _setUnsaved.setFlag(SETTING_ITEM::DOCK_LAYOUT);
+    }
 }
 
 int SettingManager::themeID() const { return m_themeID; }
 
-void SettingManager::setThemeID(int newThemeID) { m_themeID = newThemeID; }
+void SettingManager::setThemeID(int newThemeID) {
+    if (m_themeID != newThemeID) {
+        m_themeID = newThemeID;
+        _setUnsaved.setFlag(SETTING_ITEM::SKIN_THEME);
+    }
+}

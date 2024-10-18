@@ -24,7 +24,7 @@
 
 namespace WingHex {
 
-Q_DECL_UNUSED constexpr auto SDKVERSION = 12;
+Q_DECL_UNUSED constexpr auto SDKVERSION = 13;
 
 Q_DECL_UNUSED static QString GETPLUGINQM(const QString &name) {
     return QCoreApplication::applicationDirPath() +

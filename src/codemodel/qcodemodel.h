@@ -23,8 +23,6 @@
 #include <QStack>
 
 struct QCodeNode;
-class QCodeParser;
-class QCodeLoader;
 
 class QCM_EXPORT QCodeModel : public QAbstractItemModel {
     Q_OBJECT
@@ -64,14 +62,6 @@ public:
 
     virtual bool isCachable(QCodeNode *n, QByteArray &cxt) const;
 
-    QCodeLoader *codeLoader() const;
-    void setCodeLoader(QCodeLoader *p);
-
-public slots:
-    void updateGroup(const QString &group, const QString &file);
-    void addGroup(const QString &group, const QStringList &files);
-    void removeGroup(const QString &group);
-
 protected:
     void beginInsertRows(const QModelIndex idx, int beg, int end);
     void beginRemoveRows(const QModelIndex idx, int beg, int end);
@@ -93,8 +83,6 @@ private:
     void q_uncache(QCodeNode *n, QByteArray cxt);
 
     QList<QCodeNode *> m_topLevel;
-
-    QCodeLoader *m_loader;
 
     QStack<CacheOp> m_cache_ops;
     QHash<QByteArray, QCodeNode *> m_cache;

@@ -1119,24 +1119,35 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 void MainWindow::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
+    connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(generalPage);
     auto editorPage = new EditorSettingDialog(m_setdialog);
+    connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(editorPage);
     auto plgPage = new PluginSettingDialog(m_setdialog);
+    connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            &SettingDialog::toastTakeEffectReboot);
     plgPage->buildUp(m_settingPages);
     m_setdialog->addPage(plgPage);
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
-
+    connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(scriptPage);
 
     for (auto &page : m_settingPages) {
         if (!page->isInPluginPage()) {
+            connect(page, &SettingPage::optionNeedRestartChanged, m_setdialog,
+                    &SettingDialog::toastTakeEffectReboot);
             m_setdialog->addPage(page);
         }
     }
 
     auto otherPage = new OtherSettingsDialog(m_setdialog);
+    connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
+            &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(otherPage);
 
     m_setdialog->build();

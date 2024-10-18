@@ -36,17 +36,6 @@ AppManager::AppManager(int &argc, char *argv[])
     QFont font(set.appFontFamily(), set.appfontSize());
     setFont(font);
 
-    connect(&set, &SettingManager::sigAppFontFamilyChanged, this,
-            [](const QString &fontfam) {
-                QFont font(fontfam);
-                setFont(font);
-            });
-    connect(&set, &SettingManager::sigAppfontSizeChanged, this, [](int v) {
-        auto font = qApp->font();
-        font.setPointSize(v);
-        qApp->setFont(font);
-    });
-
     SkinManager::instance();
     LanguageManager::instance();
 

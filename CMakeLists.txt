@@ -58,7 +58,6 @@ option(BUILD_STATIC "Build the static library" TRUE)
 
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
-add_subdirectory(3rdparty/qcodemodel2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QConsoleWidget)
@@ -179,7 +178,6 @@ set(CLASS_SRC
     src/class/skinmanager.h
     src/class/workspacemanager.cpp
     src/class/workspacemanager.h
-    src/class/setting.h
     src/class/eventfilter.h
     src/class/qkeysequences.h
     src/class/qkeysequences.cpp
@@ -218,8 +216,6 @@ set(CLASS_SRC
     src/class/ascompletion.h
     src/class/asbuilder.h
     src/class/asbuilder.cpp
-    src/class/qaslexer.cpp
-    src/class/qaslexer.h
     src/class/qasparser.cpp
     src/class/qasparser.h
     src/class/qdocumentsearch.cpp
@@ -304,10 +300,25 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qformatconfig.cpp
     src/qcodeeditwidget/qformatconfig.ui)
 
-set(PLUGIN_SRC
-    src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
-    src/plugin/pluginsystem.h src/plugin/settingpage.h
-    src/plugin/settingpage.cpp)
+set(CODE_MODEL
+    src/codemodel/qcm-config.h
+    src/codemodel/qcodemodel.cpp
+    src/codemodel/qcodemodel.h
+    src/codemodel/qcodenode.cpp
+    src/codemodel/qcodenode.h
+    src/codemodel/qcodenodepool.cpp
+    src/codemodel/qcodenodepool.h
+    src/codemodel/qcodeproxymodel.cpp
+    src/codemodel/qcodeproxymodel.h
+    src/codemodel/qcodeserializer.cpp
+    src/codemodel/qcodeserializer.h
+    src/codemodel/qcodeview.cpp
+    src/codemodel/qcodeview.h
+    src/codemodel/qsourcecodewatcher.cpp
+    src/codemodel/qsourcecodewatcher.h)
+
+set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
+               src/plugin/pluginsystem.h src/plugin/settingpage.h)
 
 # localization support
 file(
@@ -400,6 +411,7 @@ set(PROJECT_SOURCES
     src/dbghelper.h
     ${QPATHEDIT_SRC}
     ${WIDGET_FRAME_SRC}
+    ${CODE_MODEL}
     ${RIBBON_SRC}
     ${CLASS_SRC}
     ${MODEL_SRC}
@@ -459,7 +471,6 @@ if(WINGHEX_USE_FRAMELESS)
                 QWKWidgets
                 QHexView
                 QCodeEditor2
-                QCodeModel2
                 QJsonModel
                 angelscript
                 QConsoleWidget
@@ -476,7 +487,6 @@ else()
                 SingleApplication::SingleApplication
                 QHexView
                 QCodeEditor2
-                QCodeModel2
                 QJsonModel
                 angelscript
                 QConsoleWidget

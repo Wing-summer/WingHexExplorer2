@@ -59,7 +59,7 @@
        <widget class="QComboBox" name="cbLogLevel"/>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="lblLevel">
         <property name="text">
          <string>Level</string>
         </property>

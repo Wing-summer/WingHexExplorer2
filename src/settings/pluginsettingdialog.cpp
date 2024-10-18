@@ -1,13 +1,21 @@
 #include "pluginsettingdialog.h"
 #include "../class/settingmanager.h"
-#include "../dbghelper.h"
-#include "../plugin/pluginsystem.h"
-#include "../utilities.h"
+#include "dbghelper.h"
+#include "plugin/pluginsystem.h"
 #include "ui_pluginsettingdialog.h"
+#include "utilities.h"
 
 PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::PluginSettingDialog) {
     ui->setupUi(this);
+
+    Utilities::addSpecialMark(ui->cbEnablePlugin);
+    Utilities::addSpecialMark(ui->cbEnablePluginRoot);
+    connect(ui->cbEnablePlugin, &QCheckBox::stateChanged, this,
+            &PluginSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbEnablePluginRoot, &QCheckBox::stateChanged, this,
+            &PluginSettingDialog::optionNeedRestartChanged);
+
     reload();
 
     auto &plgsys = PluginSystem::instance();
@@ -33,9 +41,11 @@ void PluginSettingDialog::buildUp(const QList<SettingPage *> &pages) {
 }
 
 void PluginSettingDialog::reload() {
+    this->blockSignals(true);
     auto &set = SettingManager::instance();
     ui->cbEnablePlugin->setChecked(set.enablePlugin());
     ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
+    this->blockSignals(false);
 }
 
 QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }

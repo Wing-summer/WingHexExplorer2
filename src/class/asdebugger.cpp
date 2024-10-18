@@ -56,7 +56,8 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         return;
 
     const char *file = 0;
-    int lineNbr = ctx->GetLineNumber(0, nullptr, &file);
+    int col = 0;
+    int lineNbr = ctx->GetLineNumber(0, &col, &file);
 
     // why?
     // LineCallBack will be called each only a sentence,
@@ -69,7 +70,8 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         auto dbgContext =
             reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
         if (dbgContext->line == lineNbr && dbgContext->file == file &&
-            dbgContext->stackCount == ctx->GetCallstackSize()) {
+            dbgContext->stackCount == ctx->GetCallstackSize() &&
+            dbgContext->col < col) {
             return;
         }
     }
@@ -107,6 +109,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     Q_ASSERT(dbgContext);
     dbgContext->file = file;
     dbgContext->line = lineNbr;
+    dbgContext->col = col;
     dbgContext->stackCount = ctx->GetCallstackSize();
 
     emit onRunCurrentLine(file, lineNbr);

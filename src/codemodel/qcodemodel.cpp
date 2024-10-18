@@ -20,9 +20,7 @@
         \brief Implementation of the QCodeModel class.
 */
 
-#include "qcodeloader.h"
 #include "qcodenode.h"
-#include "qcodeparser.h"
 
 #define Q_EXTRACT_INDEX(i, d)                                                  \
     QCodeNode *d = static_cast<QCodeNode *>(i.internalPointer());
@@ -60,7 +58,7 @@ void QCodeModel::q_uncache(QCodeNode *n, QByteArray cxt = QByteArray()) {
 /*!
         \brief ctor
 */
-QCodeModel::QCodeModel(QObject *p) : QAbstractItemModel(p), m_loader(0) {}
+QCodeModel::QCodeModel(QObject *p) : QAbstractItemModel(p) {}
 
 /*!
         \brief dtor
@@ -72,67 +70,6 @@ QCodeModel::~QCodeModel() { clearTopLevelNodes(); }
    (unparented ones)
 */
 QList<QCodeNode *> QCodeModel::topLevelNodes() const { return m_topLevel; }
-
-/*!
-        \return The current code loader used by this model
-*/
-QCodeLoader *QCodeModel::codeLoader() const { return m_loader; }
-
-/*!
-        \brief Set the code loader used by this model
-*/
-void QCodeModel::setCodeLoader(QCodeLoader *p) { m_loader = p; }
-
-/*!
-        \brief Update a file within a group
-        \param group group of files to remove (as passed to addGroup())
-        \param file file to update
-*/
-void QCodeModel::updateGroup(const QString &group, const QString &file) {
-    QByteArray grp = group.toLocal8Bit();
-
-    foreach (QCodeNode *n, m_topLevel) {
-        // qDebug("group %s ?", n->context().constData());
-
-        if (n->role(QCodeNode::Context) == grp) {
-            m_loader->update(n, file);
-            return;
-        }
-    }
-
-    // qDebug("group %s not found", qPrintable(group));
-}
-
-/*!
-        \brief Add a group of files of whathever type (typically from a project)
-        \param group group of files to add
-        \param files list of files to load to populate the tree
-*/
-void QCodeModel::addGroup(const QString &group, const QStringList &files) {
-    if (!m_loader)
-        return;
-
-    foreach (QCodeNode *n, m_topLevel)
-        if (n->context() == group)
-            return;
-
-    // qDebug("loading %i files into group %s", files.count(),
-    // qPrintable(group));
-    m_loader->load(group, files, this);
-}
-
-/*!
-        \brief Remove a group of files from the model
-        \param group group of files to remove (as passed to addGroup())
-*/
-void QCodeModel::removeGroup(const QString &group) {
-    foreach (QCodeNode *n, m_topLevel) {
-        if (n->role(QCodeNode::Context) == group) {
-            removeTopLevelNode(n);
-            delete n;
-        }
-    }
-}
 
 /*!
         \brief Please read Qt docs on Model/View framework for more informations
@@ -343,7 +280,8 @@ bool QCodeModel::isCachable(QCodeNode *n, QByteArray &cxt) const {
         cxt += qn;
 
         return true;
-    } else if ((t == QCodeNode::Enum) || (t == QCodeNode::Class) ||
+    } else if ((t == QCodeNode::Enum) || (t == QCodeNode::Union) ||
+               (t == QCodeNode::Class) || (t == QCodeNode::Struct) ||
                (t == QCodeNode::Typedef)) {
         cxt += qn;
 

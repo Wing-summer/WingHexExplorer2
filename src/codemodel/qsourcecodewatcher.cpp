@@ -17,7 +17,6 @@
 
 #include "qcodemodel.h"
 #include "qcodenode.h"
-#include "qcodeparser.h"
 
 #include <QTimerEvent>
 
@@ -68,7 +67,8 @@ void QSourceCodeWatcher::timerEvent(QTimerEvent *e) {
             ++it;
         } else {
             // process
-            m_parser->update(m_target, it.key());
+            // m_parser->update(m_target, it.key());
+            // TODO
             it = m_state.erase(it);
         }
     }

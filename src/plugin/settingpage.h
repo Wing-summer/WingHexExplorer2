@@ -8,7 +8,10 @@ namespace WingHex {
 class SettingPage : public QWidget {
     Q_OBJECT
 public:
-    explicit SettingPage(QWidget *parent = nullptr);
+    explicit SettingPage(QWidget *parent = nullptr) : QWidget(parent) {}
+
+signals:
+    void optionNeedRestartChanged();
 
 public:
     virtual QIcon categoryIcon() const = 0;

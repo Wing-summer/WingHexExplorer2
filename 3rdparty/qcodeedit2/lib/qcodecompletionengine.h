@@ -57,8 +57,6 @@ public:
     void addTrigger(const QString &s);
     void removeTrigger(const QString &s);
 
-    virtual void setCodeModel(QCodeModel *m);
-
     virtual void retranslate();
 
 signals:
@@ -74,7 +72,6 @@ protected:
     virtual void run();
     virtual bool eventFilter(QObject *o, QEvent *e);
 
-    virtual void complete(QCodeStream *s, const QString &trigger);
     virtual void complete(const QDocumentCursor &c, const QString &trigger);
 
 private:

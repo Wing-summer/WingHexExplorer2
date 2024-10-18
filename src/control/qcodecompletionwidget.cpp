@@ -22,8 +22,8 @@
 #include "qdocumentline.h"
 #include "qeditor.h"
 
-#include "qcodemodel.h"
-#include "qcodenode.h"
+#include "codemodel/qcodemodel.h"
+#include "codemodel/qcodenode.h"
 
 #include <QApplication>
 #include <QFocusEvent>
@@ -32,7 +32,7 @@
 #include <QScrollBar>
 
 QCodeCompletionWidget::QCodeCompletionWidget(QEditor *p)
-    : QListView(0), offset(0) {
+    : QListView(nullptr), offset(0) {
     // setWindowFlags(Qt::FramelessWindowHint | Qt::SubWindow);
     setBatchSize(10);
     setMovement(Static);

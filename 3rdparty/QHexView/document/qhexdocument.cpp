@@ -17,7 +17,6 @@
 #include <QFile>
 
 #ifdef Q_OS_WIN
-#include "buffer/qwindriverbuffer.h"
 #include "qstoragedevice.h"
 #endif
 
@@ -558,7 +557,7 @@ QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
 #ifdef Q_OS_WIN
     auto f = new QStorageDevice;
     f->setStorage(storage);
-    auto hexbuffer = new QWinDriverBuffer();
+    auto hexbuffer = new QFileBuffer();
     if (hexbuffer->read(f)) {
         return new QHexDocument(hexbuffer, readonly);
     } else {

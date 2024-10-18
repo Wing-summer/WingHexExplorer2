@@ -26,10 +26,6 @@
 #include <QKeyEvent>
 #include <QTextCursor>
 
-#ifdef _QCODE_MODEL_
-#include "qcodebuffer.h"
-#endif
-
 /*!
 
 */
@@ -81,11 +77,6 @@ void QCodeCompletionEngine::addTrigger(const QString &s) {
 void QCodeCompletionEngine::removeTrigger(const QString &s) {
     m_triggers.removeAll(s);
 }
-
-/*!
-
-*/
-void QCodeCompletionEngine::setCodeModel(QCodeModel *m) { Q_UNUSED(m) }
 
 /*!
 
@@ -253,38 +244,9 @@ bool QCodeCompletionEngine::eventFilter(QObject *o, QEvent *e) {
 */
 void QCodeCompletionEngine::complete(const QDocumentCursor &c,
                                      const QString &trigger) {
-#ifdef _QCODE_MODEL_
-    // TODO :
-    //	* use a more efficient design by avoiding deep copy of the data
-    //	* only lex the requested part (stop at cursor or topmost frame required
-    // for proper class hierarchy)
-
-    QDocumentCursor cc = c;
-    cc.movePosition(1, QDocumentCursor::Start, QDocumentCursor::KeepAnchor);
-
-    // qDebug("%s", qPrintable(cc.selectedText()));
-
-    QCodeBuffer buffer(cc.selectedText());
-    // QCodeBuffer buffer(c.document()->text());
-    complete(&buffer, trigger);
-#else
     Q_UNUSED(c)
     Q_UNUSED(trigger)
     qWarning("From complete(QDocumentCursor, QString)");
     qWarning("QCodeCompletionEngine is not self-sufficient : subclasses should "
              "reimplement at least one of the complete() method...");
-#endif
-}
-
-/*!
-        \overload
-        \brief Overloaded completion callback
-*/
-void QCodeCompletionEngine::complete(QCodeStream *s, const QString &trigger) {
-    Q_UNUSED(s)
-    Q_UNUSED(trigger)
-
-    qWarning("From complete(QCodeStream*, QString)");
-    qWarning("QCodeCompletionEngine is not self-sufficient : subclasses should"
-             "reimplement at least on of the complete() method...");
 }

@@ -13,26 +13,21 @@
 **
 ****************************************************************************/
 
-#include "qcodestream.h"
+#ifndef _QCM_CONFIG_H_
+#define _QCM_CONFIG_H_
 
-/*!
-        \file qcodestream.cpp
-        \brief Implementation of the QCodeStream class.
-*/
+#include <qglobal.h>
 
-/*!
-        \class QCodeStream
-        \brief Base class for code input streams
-*/
+#ifndef QCM_EXPORT
+#define QCM_EXPORT
+#endif
 
-QString QCodeStream::contextFile() const {
-    // qDebug("    <= context query : %s", qPrintable(sContext));
-    return sContext;
-}
+class QByteArray;
 
-void QCodeStream::setContextFile(const QString &f) {
-    // qDebug("    => context switch : %s", qPrintable(f));
-    sContext = f;
-}
+template <typename T>
+class QList;
 
-bool QCodeStream::tryFetchOtherContext(const QString &) { return false; }
+typedef QByteArray QToken;
+typedef QList<QToken> QTokenList;
+
+#endif // _QCM_CONFIG_H_

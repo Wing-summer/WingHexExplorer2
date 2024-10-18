@@ -1,11 +1,13 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <QAbstractButton>
 #include <QApplication>
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
+#include <QLabel>
 #include <QList>
 #include <QMetaEnum>
 #include <QMimeDatabase>
@@ -214,6 +216,21 @@ public:
         view->setFocusPolicy(Qt::StrongFocus);
         view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
         view->horizontalHeader()->setStretchLastSection(true);
+    }
+
+    template <typename T>
+    static void addSpecialMark(T *w) {
+        if (w) {
+            if constexpr (std::is_same_v<T, QLabel> ||
+                          std::is_base_of_v<QLabel, T>) {
+                w->setText(w->text() + QStringLiteral(" (*)"));
+            } else if constexpr (std::is_same_v<T, QAbstractButton> ||
+                                 std::is_base_of_v<QAbstractButton, T>) {
+                if (w) {
+                    w->setText(w->text() + QStringLiteral(" (*)"));
+                }
+            }
+        }
     }
 };
 

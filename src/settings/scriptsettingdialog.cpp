@@ -9,6 +9,11 @@
 ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::ScriptSettingDialog) {
     ui->setupUi(this);
+
+    Utilities::addSpecialMark(ui->cbAllowUsrScript);
+    connect(ui->cbAllowUsrScript, &QCheckBox::stateChanged, this,
+            &ScriptSettingDialog::optionNeedRestartChanged);
+
     loadData();
 }
 
@@ -18,7 +23,9 @@ void ScriptSettingDialog::loadData() {
     auto &sm = ScriptManager::instance();
     auto &set = SettingManager::instance();
 
+    this->blockSignals(true);
     ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
+    this->blockSignals(false);
 
     auto usrCats = sm.usrScriptsDbCats();
     auto hidden = set.usrHideCats();

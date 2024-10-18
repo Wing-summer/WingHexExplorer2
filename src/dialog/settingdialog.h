@@ -20,6 +20,9 @@ public:
     void build(); // you can only call once
     void showConfig(int index = -1);
 
+public slots:
+    void toastTakeEffectReboot();
+
 private slots:
     void on_buttonBox_clicked(QAbstractButton *button);
 

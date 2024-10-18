@@ -57,7 +57,7 @@
        <number>8</number>
       </property>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="lblLanguage">
         <property name="text">
          <string>Language</string>
         </property>
@@ -67,7 +67,7 @@
        <widget class="QComboBox" name="cbLanguage"/>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="lblTheme">
         <property name="text">
          <string>Theme</string>
         </property>
@@ -110,7 +110,7 @@
        <number>8</number>
       </property>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
+       <widget class="QLabel" name="lblFont">
         <property name="text">
          <string>Font</string>
         </property>
@@ -120,7 +120,7 @@
        <widget class="QFontComboBox" name="cbFont"/>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_4">
+       <widget class="QLabel" name="lblFontSize">
         <property name="text">
          <string>FontSize</string>
         </property>
@@ -137,7 +137,7 @@
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QLabel" name="label_5">
+       <widget class="QLabel" name="lblWinState">
         <property name="text">
          <string>WinState</string>
         </property>

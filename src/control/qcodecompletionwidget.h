@@ -19,7 +19,7 @@
 #include <QListView>
 #include <QPointer>
 
-#include "qcodenode.h"
+#include "codemodel/qcodenode.h"
 #include "qdocumentcursor.h"
 #include "qeditor.h"
 
@@ -60,7 +60,7 @@ public:
 
     typedef QFlags<FilterFlag> Filter;
 
-    QCodeCompletionWidget(QEditor *p = 0);
+    QCodeCompletionWidget(QEditor *p = nullptr);
 
     QEditor *editor() const;
     void setEditor(QEditor *e);

@@ -19,8 +19,14 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 
 #ifndef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setEnabled(false);
-    ui->cbNativeTitile->setChecked(false);
 #endif
+
+    Utilities::addSpecialMark(ui->cbNativeTitile);
+    Utilities::addSpecialMark(ui->lblLevel);
+    connect(ui->cbNativeTitile, &QCheckBox::stateChanged, this,
+            &OtherSettingsDialog::optionNeedRestartChanged);
+    connect(ui->cbLogLevel, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &OtherSettingsDialog::optionNeedRestartChanged);
 
     reload();
 }
@@ -28,11 +34,13 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 OtherSettingsDialog::~OtherSettingsDialog() { delete ui; }
 
 void OtherSettingsDialog::reload() {
+    this->blockSignals(true);
     auto &set = SettingManager::instance();
     ui->cbNativeFileDialog->setChecked(set.useNativeFileDialog());
 #ifdef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setChecked(set.useNativeTitleBar());
 #endif
+    this->blockSignals(false);
 }
 
 QIcon OtherSettingsDialog::categoryIcon() const { return ICONRES("other"); }
