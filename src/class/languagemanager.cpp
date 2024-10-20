@@ -66,7 +66,7 @@ LanguageManager::LanguageManager() {
 #else
         if (p->country() == _defaultLocale.country() &&
 #endif
-            p->language() == p->language() &&
+            p->language() == _defaultLocale.language() &&
             p->script() == _defaultLocale.script()) {
             found = true;
             break;

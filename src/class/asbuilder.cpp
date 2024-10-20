@@ -3,10 +3,11 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QObject>
 
 BEGIN_AS_NAMESPACE
 
-asBuilder::asBuilder(QObject *parent) : QObject(parent) {
+asBuilder::asBuilder() {
     engine = nullptr;
     module = nullptr;
 
@@ -136,7 +137,8 @@ int asBuilder::LoadScriptSection(const QString &filename) {
 
     if (!f.open(QFile::ReadOnly)) {
         // Write a message to the engine's message callback
-        auto msg = tr("Failed to open script file ") + QStringLiteral("'") +
+        auto msg = QObject::tr("Failed to open script file ") +
+                   QStringLiteral("'") +
                    QFileInfo(filename).absoluteFilePath() + QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
@@ -402,11 +404,12 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                             if (p >= 0) {
                                 // TODO: Show the correct line number for the
                                 // error
-                                auto str = tr("Invalid file name for #include; "
-                                              "it contains a line-break: ") +
-                                           QStringLiteral("'") +
-                                           includefile.left(p) +
-                                           QStringLiteral("'");
+                                auto str =
+                                    QObject::tr(
+                                        "Invalid file name for #include; "
+                                        "it contains a line-break: ") +
+                                    QStringLiteral("'") + includefile.left(p) +
+                                    QStringLiteral("'");
                                 engine->WriteMessage(sectionname.toUtf8(), 0, 0,
                                                      asMSGTYPE_ERROR,
                                                      str.toUtf8());
@@ -452,8 +455,9 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                                     // TODO: Show the correct line number for
                                     // the error
                                     auto str =
-                                        tr("Invalid file name for #include; "
-                                           "it contains a line-break: ") +
+                                        QObject::tr(
+                                            "Invalid file name for #include; "
+                                            "it contains a line-break: ") +
                                         QStringLiteral("'") +
                                         includefile.left(p) +
                                         QStringLiteral("'");
@@ -469,9 +473,10 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                                     OverwriteCode(start, pos - start);
                                 }
                             } else {
-                                auto str = tr("Invalid file name for #include; "
-                                              "it contains a line-break or "
-                                              "unpaired symbol");
+                                auto str = QObject::tr(
+                                    "Invalid file name for #include; "
+                                    "it contains a line-break or "
+                                    "unpaired symbol");
                                 engine->WriteMessage(sectionname.toUtf8(), 0, 0,
                                                      asMSGTYPE_ERROR,
                                                      str.toUtf8());
@@ -496,7 +501,8 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                             // TODO: Report the correct line number
                             engine->WriteMessage(
                                 sectionname.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-                                tr("Invalid #pragma directive").toUtf8());
+                                QObject::tr("Invalid #pragma directive")
+                                    .toUtf8());
                             return r;
                         }
 

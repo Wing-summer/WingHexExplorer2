@@ -5,6 +5,7 @@ void RegisterColor(asIScriptEngine *engine) {
     // Register the QColor type
     int r = engine->RegisterObjectType("color", sizeof(QColor),
                                        asOBJ_VALUE | asOBJ_POD |
+                                           asOBJ_APP_CLASS_ALLINTS |
                                            asGetTypeTraits<QColor>());
     Q_ASSERT(r >= 0);
 

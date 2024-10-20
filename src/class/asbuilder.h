@@ -30,7 +30,6 @@
 #endif
 
 #include <QMap>
-#include <QObject>
 #include <QSet>
 #include <QVector>
 
@@ -57,10 +56,9 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
 // Helper class for loading and pre-processing script files to
 // support include directives and metadata declarations
 
-class asBuilder : public QObject {
-    Q_OBJECT
+class asBuilder {
 public:
-    explicit asBuilder(QObject *parent = nullptr);
+    explicit asBuilder();
 
     // Start a new module
     int StartNewModule(asIScriptEngine *engine, const char *moduleName);

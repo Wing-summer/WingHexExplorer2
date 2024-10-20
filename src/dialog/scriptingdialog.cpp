@@ -5,6 +5,7 @@
 #include "aboutsoftwaredialog.h"
 #include "class/ascompletion.h"
 #include "class/languagemanager.h"
+#include "class/qasparser.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
@@ -1033,6 +1034,10 @@ void ScriptingDialog::on_openfile() {
     if (!filename.isEmpty()) {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
         openFile(filename);
+
+        // TODO test
+        // QAsParser parser(m_consoleout->machine()->engine());
+        // parser.parse(filename);
     }
 
     RecentFileManager::RecentInfo info;

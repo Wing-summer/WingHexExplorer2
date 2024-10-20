@@ -1,13 +1,24 @@
 #ifndef _QAS_PARSER_H_
 #define _QAS_PARSER_H_
 
-#include <QObject>
+#include "class/asbuilder.h"
 
-class QAsParser : public QObject {
-    Q_OBJECT
+#include <QScopedPointer>
+
+class asCScriptCode;
+
+class QAsParser : protected asBuilder {
 public:
-    explicit QAsParser(QObject *parent = nullptr);
+    explicit QAsParser(asIScriptEngine *engine);
     virtual ~QAsParser();
+
+public:
+    bool parse(const QString &filename);
+
+private:
+    asIScriptEngine *_engine;
+
+    QScopedPointer<asCScriptCode> m_code;
 };
 
 #endif // !_QCPP_PARSER_H_

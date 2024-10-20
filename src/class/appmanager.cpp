@@ -13,7 +13,7 @@
 AppManager *AppManager::_instance = nullptr;
 
 AppManager::AppManager(int &argc, char *argv[])
-    : SingleApplication(argc, argv) {
+    : SingleApplication(argc, argv, true) {
     ASSERT_SINGLETON;
 
     setApplicationName(APP_NAME);

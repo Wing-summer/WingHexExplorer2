@@ -32,7 +32,7 @@ class QCM_EXPORT QCodeModel : public QAbstractItemModel {
 public:
     enum ExtraRoles { TypeRole = Qt::UserRole, VisibilityRole };
 
-    QCodeModel(QObject *p = 0);
+    QCodeModel(QObject *p = nullptr);
     virtual ~QCodeModel();
 
     QVariant data(const QModelIndex &index, int role) const;
