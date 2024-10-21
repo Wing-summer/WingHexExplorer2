@@ -2,7 +2,7 @@
 
 #include "AngelScript/sdk/angelscript/source/as_builder.h"
 #include "AngelScript/sdk/angelscript/source/as_parser.h"
-#include "codemodel/qcodemodel.h"
+#include "codemodel/qcodenode.h"
 
 QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {}
 
@@ -21,6 +21,7 @@ bool QAsParser::parse(const QString &filename) {
     ClearAll();
 
     auto mod = dynamic_cast<asCModule *>(GetModule());
+    Q_ASSERT(mod);
     asCParser parser(mod->m_builder);
 
     m_code.reset(new asCScriptCode);
@@ -28,9 +29,19 @@ bool QAsParser::parse(const QString &filename) {
 
     parser.ParseScript(m_code.get());
 
-    auto nodes = parser.GetScriptNode();
+    auto pnodes = parser.GetScriptNode();
 
-    QCodeModel model;
+    QList<QCodeNode *> qnodes;
+
+    do {
+        auto node = new QCodeNode;
+        node->line = pnodes->tokenPos;
+
+        auto &cs = node->children;
+        for (auto p = pnodes->firstChild; p != pnodes->lastChild; p++) {
+        }
+
+    } while (pnodes->next != nullptr);
 
     return true;
 }

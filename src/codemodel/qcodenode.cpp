@@ -19,15 +19,8 @@
 #include <QVariant>
 
 #include "qcodemodel.h"
-#include "qcodenodepool.h"
-
 #include "qsourcecodewatcher.h"
 
-/*
-
-
-
-*/
 enum CacheIndex {
     ICON_ENUM,
     ICON_ENUMERATOR,
@@ -159,23 +152,17 @@ void QCodeNode::operator delete(void *p) {
 
     if (!n)
         return;
-    else if (n->m_pool)
-        n->m_pool->free(n);
     else
         ::operator delete(p);
 }
 
-QCodeNode::QCodeNode() : line(-1), parent(0), model(0), m_pool(0) {}
-
-QCodeNode::QCodeNode(QCodeNodePool *p)
-    : line(-1), parent(0), model(0), m_pool(p) {}
+QCodeNode::QCodeNode() : line(-1), parent(0), model(0) {}
 
 QCodeNode::~QCodeNode() {
     detach();
 
     model = 0;
     parent = 0;
-    m_pool = 0;
 
     clear();
 

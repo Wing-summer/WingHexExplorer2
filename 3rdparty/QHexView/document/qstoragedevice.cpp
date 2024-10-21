@@ -3,12 +3,10 @@
 #ifdef Q_OS_WIN
 
 #include <QDebug>
-#include <memory>
 
 QStorageDevice::QStorageDevice(QObject *parent)
-    : QIODevice(parent), CHUNK_SIZE(0), _size(0) {
-    _buffer.setTextModeEnabled(false);
-}
+    : QIODevice(parent), hDevice(INVALID_HANDLE_VALUE), CHUNK_SIZE(0),
+      _size(0) {}
 
 void QStorageDevice::setStorage(const QStorageInfo &storage) {
     _storage = storage;
@@ -16,10 +14,12 @@ void QStorageDevice::setStorage(const QStorageInfo &storage) {
 
 QStorageInfo QStorageDevice::storage() const { return _storage; }
 
+DWORD QStorageDevice::cacheSize() const { return 20 * 1024 * CHUNK_SIZE; }
+
 bool QStorageDevice::isSequential() const { return false; }
 
 bool QStorageDevice::open(OpenMode mode) {
-    if (_buffer.isOpen()) {
+    if (hDevice != INVALID_HANDLE_VALUE) {
         setErrorString(QStringLiteral("A Storage file is still opened"));
         return false;
     }
@@ -32,11 +32,15 @@ bool QStorageDevice::open(OpenMode mode) {
                      device.mid(devicePrefix.length(),
                                 device.length() - devicePrefix.length() - 1);
 
+        DWORD flag =
+            (mode.testFlag(OpenModeFlag::ReadOnly) ? GENERIC_READ : 0) |
+            (mode.testFlag(OpenModeFlag::WriteOnly) ? GENERIC_WRITE : 0);
+
         // Open the physical drive using WinAPI
-        auto hDevice =
-            CreateFileW(reinterpret_cast<LPCWSTR>(dd.utf16()), GENERIC_READ,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                        OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, nullptr);
+        hDevice = CreateFileW(
+            reinterpret_cast<LPCWSTR>(dd.utf16()), flag,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+            FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr);
 
         if (hDevice == INVALID_HANDLE_VALUE) {
             qWarning() << "Failed to open device:" << device;
@@ -45,16 +49,17 @@ bool QStorageDevice::open(OpenMode mode) {
 
         DISK_GEOMETRY diskGeometry;
         DWORD bytesReturned;
-        if (!DeviceIoControl(hDevice, IOCTL_DISK_GET_DRIVE_GEOMETRY, NULL, 0,
+        if (!DeviceIoControl(hDevice, IOCTL_DISK_GET_DRIVE_GEOMETRY, nullptr, 0,
                              &diskGeometry, sizeof(diskGeometry),
                              &bytesReturned, NULL)) {
             CloseHandle(hDevice);
             return false;
         }
 
-        CloseHandle(hDevice);
-
         this->CHUNK_SIZE = diskGeometry.BytesPerSector;
+
+        _cache.buffer = std::make_unique<char[]>(cacheSize());
+        _cache.length = 0;
 
         // dont use ioDevice.bytesTotal(),
         // because it's use GetDiskFreeSpaceEx API to get.
@@ -63,12 +68,7 @@ bool QStorageDevice::open(OpenMode mode) {
                 diskGeometry.TracksPerCylinder * diskGeometry.SectorsPerTrack *
                 diskGeometry.BytesPerSector;
 
-        if (!_buffer.open(mode)) {
-            // _buffer.setFileName({});
-            return false;
-        }
-
-        return QIODevice::open(QIODevice::ReadOnly);
+        return QIODevice::open(mode);
     } else {
         qWarning() << "Only OpenModeFlag::ReadOnly and OpenModeFlag::WriteOnly "
                       "are supported";
@@ -77,8 +77,10 @@ bool QStorageDevice::open(OpenMode mode) {
 }
 
 void QStorageDevice::close() {
-    if (_buffer.isOpen()) {
-        _buffer.close();
+    if (hDevice != INVALID_HANDLE_VALUE) {
+        CloseHandle(hDevice);
+        hDevice = INVALID_HANDLE_VALUE;
+        _cache.clear();
     }
     QIODevice::close();
 }
@@ -86,7 +88,7 @@ void QStorageDevice::close() {
 qint64 QStorageDevice::size() const { return _size; }
 
 bool QStorageDevice::seek(qint64 pos) {
-    if (!_buffer.isOpen()) {
+    if (hDevice == INVALID_HANDLE_VALUE) {
         return false;
     }
 
@@ -96,7 +98,7 @@ bool QStorageDevice::seek(qint64 pos) {
 bool QStorageDevice::canReadLine() const { return false; }
 
 qint64 QStorageDevice::readData(char *data, qint64 maxlen) {
-    if (!isOpen() || !maxlen) {
+    if (hDevice == INVALID_HANDLE_VALUE || !maxlen) {
         return -1;
     }
 
@@ -111,17 +113,34 @@ qint64 QStorageDevice::readData(char *data, qint64 maxlen) {
     }
 
     auto rp = std::div(this->pos(), CHUNK_SIZE);
-    _buffer.seek(rp.quot * CHUNK_SIZE);
+    auto off = rp.quot * CHUNK_SIZE;
 
-    DWORD bytesRead = 0;
+    if (_cache.offset < 0 || this->pos() < _cache.offset ||
+        this->pos() + maxlen >= _cache.offset + _cache.length) {
+        OVERLAPPED overlapped{0};
+        LARGE_INTEGER offset;
+        offset.QuadPart = off;
+        overlapped.Offset = offset.LowPart;
+        overlapped.OffsetHigh = offset.HighPart;
 
-    if (rp.rem) {
-        auto buf = std::make_unique<char[]>(maxlen);
-        _buffer.read(buf.get(), maxlen);
-        std::memcpy(data, buf.get() + rp.rem, maxlen);
-    } else {
-        _buffer.read(data, maxlen);
+        if (!ReadFile(hDevice, _cache.buffer.get(), cacheSize(), nullptr,
+                      &overlapped)) {
+            auto lastError = GetLastError();
+            if (lastError == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(hDevice, &overlapped, &_cache.length,
+                                         TRUE)) {
+                    return -1;
+                }
+            } else {
+                return -1;
+            }
+        }
+
+        _cache.offset = off;
     }
+
+    std::memcpy(data, _cache.buffer.get() + this->pos() - _cache.offset,
+                maxlen);
 
     return maxlen;
 }
@@ -133,26 +152,94 @@ qint64 QStorageDevice::writeData(const char *data, qint64 len) {
     }
 
     // Ensure maxSize is a multiple of the sector size
-    auto r = std::div(len, CHUNK_SIZE);
+    auto rp = std::div(this->pos(), CHUNK_SIZE);
+    auto header = CHUNK_SIZE - rp.rem;
+    auto r = std::div(len - header, CHUNK_SIZE);
     auto alignLen = r.quot * CHUNK_SIZE;
 
-    auto rp = std::div(this->pos(), CHUNK_SIZE);
-    _buffer.seek(rp.quot * CHUNK_SIZE);
+    OVERLAPPED overlapped{0};
+    LARGE_INTEGER offset;
+    DWORD length = 0;
+
+    // _buffer.seek(rp.quot * CHUNK_SIZE);
     if (rp.rem) {
+        // read some and write back
+        offset.QuadPart = rp.quot * CHUNK_SIZE;
+
+        auto buffer = std::make_unique<char[]>(CHUNK_SIZE);
+
+        if (!ReadFile(hDevice, buffer.get(), CHUNK_SIZE, nullptr,
+                      &overlapped)) {
+            auto lastError = GetLastError();
+            if (lastError == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(hDevice, &overlapped, &length, TRUE)) {
+                    return -1;
+                }
+            } else {
+                return -1;
+            }
+        }
+
+        std::memcpy(buffer.get(), data, CHUNK_SIZE - rp.rem);
+
+        if (!WriteFile(hDevice, buffer.get(), CHUNK_SIZE, nullptr,
+                       &overlapped)) {
+            auto lastError = GetLastError();
+            if (lastError == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(hDevice, &overlapped, &length, TRUE)) {
+                    return -1;
+                }
+            } else {
+                return -1;
+            }
+        }
     }
 
-    _buffer.write(data, alignLen);
+    offset.QuadPart += CHUNK_SIZE;
+    overlapped.Offset = offset.LowPart;
+    overlapped.OffsetHigh = offset.HighPart;
+
+    // write aligned
+    if (!WriteFile(hDevice, data - header, alignLen, nullptr, &overlapped)) {
+        auto lastError = GetLastError();
+        if (lastError == ERROR_IO_PENDING) {
+            if (!GetOverlappedResult(hDevice, &overlapped, &length, TRUE)) {
+                return header;
+            }
+        } else {
+            return header;
+        }
+    }
 
     if (r.rem) {
-        _buffer.seek(this->pos() + alignLen);
-        auto buf = std::make_unique<char[]>(CHUNK_SIZE);
-        _buffer.read(buf.get(), CHUNK_SIZE);
-        DWORD byteWritten_A = 0;
-        std::memcpy(buf.get(), data + alignLen, r.rem);
+        offset.QuadPart += alignLen;
+        overlapped.Offset = offset.LowPart;
+        overlapped.OffsetHigh = offset.HighPart;
 
-        if (_buffer.write(buf.get(), CHUNK_SIZE)) {
-            qWarning() << "Failed to write data to device";
-            return -1;
+        auto buffer = std::make_unique<char[]>(CHUNK_SIZE);
+        if (!ReadFile(hDevice, buffer.get(), CHUNK_SIZE, nullptr,
+                      &overlapped)) {
+            auto lastError = GetLastError();
+            if (lastError == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(hDevice, &overlapped, &length, TRUE)) {
+                    return header + alignLen;
+                }
+            } else {
+                return header + alignLen;
+            }
+        }
+        std::memcpy(buffer.get(), data + len - r.rem, r.rem);
+
+        if (!WriteFile(hDevice, buffer.get(), CHUNK_SIZE, nullptr,
+                       &overlapped)) {
+            auto lastError = GetLastError();
+            if (lastError == ERROR_IO_PENDING) {
+                if (!GetOverlappedResult(hDevice, &overlapped, &length, TRUE)) {
+                    return header + alignLen;
+                }
+            } else {
+                return header + alignLen;
+            }
         }
     }
 

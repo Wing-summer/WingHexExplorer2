@@ -118,8 +118,8 @@ struct QCM_EXPORT QCodeNode {
 
     typedef QFlags<Qualifier> FunctionQualifier;
 
+public:
     QCodeNode();
-    QCodeNode(QCodeNodePool *p);
     virtual ~QCodeNode();
 
     void operator delete(void *p);
@@ -144,7 +144,6 @@ struct QCM_EXPORT QCodeNode {
     QByteArray roles;
     QCodeNode *parent;
     QCodeModel *model;
-    QCodeNodePool *m_pool;
     QList<QCodeNode *> children;
 };
 

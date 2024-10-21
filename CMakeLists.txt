@@ -308,8 +308,6 @@ set(CODE_MODEL
     src/codemodel/qcodemodel.h
     src/codemodel/qcodenode.cpp
     src/codemodel/qcodenode.h
-    src/codemodel/qcodenodepool.cpp
-    src/codemodel/qcodenodepool.h
     src/codemodel/qcodeproxymodel.cpp
     src/codemodel/qcodeproxymodel.h
     src/codemodel/qcodeserializer.cpp

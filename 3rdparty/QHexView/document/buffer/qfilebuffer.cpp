@@ -34,8 +34,7 @@ QByteArray QFileBuffer::read(qsizetype offset, qsizetype length) {
 }
 
 bool QFileBuffer::read(QIODevice *device) {
-    _chunks->setIODevice(device);
-    return true;
+    return _chunks->setIODevice(device);
 }
 
 void QFileBuffer::write(QIODevice *device) { _chunks->write(device); }

@@ -28,7 +28,6 @@
 
 struct QCodeNode;
 class QCodeModel;
-class QCodeNodePool;
 
 class QIODevice;
 class QTextStream;
@@ -41,9 +40,6 @@ public:
     QCodeModel *targetModel() const;
     void setTargetModel(QCodeModel *m);
 
-    QCodeNodePool *nodePool() const;
-    void setNodePool(QCodeNodePool *p);
-
     void serialize(QCodeNode *n, QTextStream &out, int indent = 0);
 
     void deserialize(const QString &file, bool *ok = 0, QString *source = 0,
@@ -54,7 +50,6 @@ public:
 
 private:
     QCodeModel *m_model;
-    QCodeNodePool *m_pool;
 };
 
 #endif // !_QCODE_SERIALIZER_H_

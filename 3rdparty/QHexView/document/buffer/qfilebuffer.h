@@ -24,8 +24,8 @@ public:
     qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) override;
 
 private:
-    Chunks *_chunks;
-    uchar *m_memory;
+    Chunks *_chunks = nullptr;
+    uchar *m_memory = nullptr;
 };
 
 #endif // QFILEBUFFER_H

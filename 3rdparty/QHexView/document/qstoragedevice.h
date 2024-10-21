@@ -7,6 +7,7 @@
 
 #include <QIODevice>
 #include <QStorageInfo>
+#include <memory>
 
 #include <Windows.h>
 
@@ -20,8 +21,23 @@ public:
     QStorageInfo storage() const;
 
 private:
+    struct Buffer {
+        qint64 offset = -1;
+        // length is usually 20 * 1024 * CHUNK_SIZE = 10 MB
+        std::unique_ptr<char[]> buffer;
+        DWORD length = 0;
+
+        void clear() {
+            offset = -1;
+            length = 0;
+        }
+    } _cache;
+
+    DWORD cacheSize() const;
+
+private:
     QStorageInfo _storage;
-    QFile _buffer;
+    HANDLE hDevice;
     DWORD CHUNK_SIZE;
     qint64 _size;
 

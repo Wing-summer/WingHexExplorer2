@@ -12,25 +12,17 @@ Chunks::Chunks(QObject *parent) : QObject(parent) {}
 
 Chunks::Chunks(QIODevice *ioDevice, QObject *parent) : QObject(parent) {
     setIODevice(ioDevice);
-    if (ioDevice)
-        ioDevice->setParent(this);
 }
 
 Chunks::~Chunks() {}
 
 bool Chunks::setIODevice(QIODevice *ioDevice) {
-    _ioDevice = ioDevice;
-    if (_ioDevice &&
-        (_ioDevice->isOpen() ||
-         _ioDevice->open(QIODevice::ReadOnly))) // Try to open IODevice
-    {
-        _size = _ioDevice->size();
-        _ioDevice->close();
-    } else // Fallback is an empty buffer
-    {
-        QBuffer *buf = new QBuffer(this);
-        _ioDevice = buf;
-        _size = 0;
+    if (ioDevice && ioDevice->isOpen()) {
+        ioDevice->setParent(this);
+        _size = ioDevice->size();
+        _ioDevice = ioDevice;
+    } else {
+        return false;
     }
     _chunks.clear();
     _pos = 0;
@@ -55,8 +47,6 @@ QByteArray Chunks::data(qsizetype pos, qsizetype maxSize) {
         maxSize = _size;
     else if ((pos + maxSize) > _size)
         maxSize = _size - pos;
-
-    _ioDevice->open(QIODevice::ReadOnly);
 
     while (maxSize > 0) {
         chunk.absPos = std::numeric_limits<qsizetype>::max();
@@ -105,7 +95,7 @@ QByteArray Chunks::data(qsizetype pos, qsizetype maxSize) {
             pos += quint64(readBuffer.size());
         }
     }
-    _ioDevice->close();
+
     return buffer;
 }
 
@@ -113,15 +103,12 @@ bool Chunks::write(QIODevice *iODevice, qsizetype pos, qsizetype count) {
     if (count == -1)
         count = _size;
 
-    // fix the bug
-    bool ok = (iODevice->isOpen() && iODevice->isWritable()) ||
-              iODevice->open(QIODevice::WriteOnly);
+    bool ok = iODevice->isOpen() && iODevice->isWritable();
     if (ok) {
         for (auto idx = pos; idx < qsizetype(count); idx += BUFFER_SIZE) {
             QByteArray ba = data(idx, BUFFER_SIZE);
             iODevice->write(ba);
         }
-        iODevice->close();
     }
     return ok;
 }
@@ -253,10 +240,8 @@ qsizetype Chunks::getChunkIndex(qsizetype absPos) {
         Chunk newChunk;
         qsizetype readAbsPos = absPos - ioDelta;
         qsizetype readPos = (readAbsPos & READ_CHUNK_MASK);
-        _ioDevice->open(QIODevice::ReadOnly);
         _ioDevice->seek(qint64(readPos));
         newChunk.data = _ioDevice->read(CHUNK_SIZE);
-        _ioDevice->close();
         newChunk.absPos = absPos - (readAbsPos - readPos);
         newChunk.dataChanged = QByteArray(newChunk.data.size(), char(0));
         _chunks.insert(insertIdx, newChunk);

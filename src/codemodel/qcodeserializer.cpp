@@ -22,7 +22,6 @@
 
 #include "qcodemodel.h"
 #include "qcodenode.h"
-#include "qcodenodepool.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -51,17 +50,13 @@ static QRegularExpression
         \brief Serializer/deserializer for code trees
 */
 
-QCodeSerializer::QCodeSerializer() : m_model(0), m_pool(0) {}
+QCodeSerializer::QCodeSerializer() : m_model(0) {}
 
 QCodeSerializer::~QCodeSerializer() {}
 
 QCodeModel *QCodeSerializer::targetModel() const { return m_model; }
 
 void QCodeSerializer::setTargetModel(QCodeModel *m) { m_model = m; }
-
-QCodeNodePool *QCodeSerializer::nodePool() const { return m_pool; }
-
-void QCodeSerializer::setNodePool(QCodeNodePool *p) { m_pool = p; }
 
 void QCodeSerializer::serialize(QCodeNode *n, QTextStream &out, int indent) {
     if (!n)
@@ -170,7 +165,7 @@ void QCodeSerializer::deserialize(QIODevice *device, bool *ok, QString *source,
             // qDebug("adding child %s", line.constData());
         }
 
-        n = m_pool ? m_pool->alloc() : new QCodeNode;
+        n = new QCodeNode;
 
         while (ok && c != '\n') {
             n->roles += c;

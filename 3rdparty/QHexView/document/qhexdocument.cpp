@@ -538,7 +538,8 @@ QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
     if (!filename.isEmpty()) {
         f->setFileName(filename);
         QHexBuffer *hexbuffer = new QFileBuffer();
-        if (hexbuffer->read(f)) {
+        if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite) &&
+            hexbuffer->read(f)) {
             return new QHexDocument(hexbuffer,
                                     readonly); // modified by wingsummer
         } else {
@@ -558,7 +559,9 @@ QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
     auto f = new QStorageDevice;
     f->setStorage(storage);
     auto hexbuffer = new QFileBuffer();
-    if (hexbuffer->read(f)) {
+    if (f->open(readonly ? QStorageDevice::ReadOnly
+                         : QStorageDevice::ReadWrite) &&
+        hexbuffer->read(f)) {
         return new QHexDocument(hexbuffer, readonly);
     } else {
         delete hexbuffer;
