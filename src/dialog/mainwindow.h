@@ -215,6 +215,8 @@ private:
     EditorView *currentEditor();
     QHexView *currentHexView();
 
+    bool writeSafeCheck(bool isNewFile, const QString &savePath);
+
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
 

@@ -42,7 +42,7 @@ public:
     virtual QString type() const;
 
 protected:
-    virtual bool paint(QPainter *p, QEditor *e);
+    virtual void paint(QPainter *p, QEditor *e);
 
 private:
 };

@@ -100,7 +100,7 @@ void QLineNumberPanel::editorChange(QEditor *e) {
 /*!
 
 */
-bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
+void QLineNumberPanel::paint(QPainter *p, QEditor *e) {
     /*
             possible Unicode caracter for wrapping arrow :
                     0x21B3
@@ -225,7 +225,6 @@ bool QLineNumberPanel::paint(QPainter *p, QEditor *e) {
     // p->drawLine(width()-1, 0, width()-1, pageBottom);
 
     // setFixedWidth(sfm.width(txt) + 5);
-    return true;
 }
 
 /*! @} */

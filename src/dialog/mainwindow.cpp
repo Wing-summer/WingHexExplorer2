@@ -1337,6 +1337,14 @@ void MainWindow::on_save() {
         return;
     }
 
+    if (!writeSafeCheck(false, {})) {
+        if (WingMessageBox::warning(this, qAppName(), tr("RootSaveWarning"),
+                                    QMessageBox::Yes | QMessageBox::No) ==
+            QMessageBox::No) {
+            return;
+        }
+    }
+
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
@@ -1381,6 +1389,14 @@ void MainWindow::on_saveas() {
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+
+    if (!writeSafeCheck(true, filename)) {
+        if (WingMessageBox::warning(this, qAppName(), tr("RootSaveWarning"),
+                                    QMessageBox::Yes | QMessageBox::No) ==
+            QMessageBox::No) {
+            return;
+        }
+    }
 
     auto oldFileName = editor->fileName();
     QString workspace = m_views.value(editor);
@@ -2692,6 +2708,24 @@ QHexView *MainWindow::currentHexView() {
         return nullptr;
     }
     return editor->hexEditor();
+}
+
+bool MainWindow::writeSafeCheck(bool isNewFile, const QString &savePath) {
+    if (Utilities::isRoot()) {
+        if (isNewFile || savePath.isEmpty()) {
+            return false;
+        }
+
+        if (Utilities::isStorageDevice(savePath)) {
+            return false;
+        }
+
+        QFileInfo finfo(savePath);
+        if (!finfo.exists()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void MainWindow::loadCacheIcon() {

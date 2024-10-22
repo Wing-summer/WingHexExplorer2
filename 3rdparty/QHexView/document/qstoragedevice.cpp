@@ -51,8 +51,9 @@ bool QStorageDevice::open(OpenMode mode) {
         DWORD bytesReturned;
         if (!DeviceIoControl(hDevice, IOCTL_DISK_GET_DRIVE_GEOMETRY, nullptr, 0,
                              &diskGeometry, sizeof(diskGeometry),
-                             &bytesReturned, NULL)) {
+                             &bytesReturned, nullptr)) {
             CloseHandle(hDevice);
+            hDevice = INVALID_HANDLE_VALUE;
             return false;
         }
 
@@ -161,7 +162,6 @@ qint64 QStorageDevice::writeData(const char *data, qint64 len) {
     LARGE_INTEGER offset;
     DWORD length = 0;
 
-    // _buffer.seek(rp.quot * CHUNK_SIZE);
     if (rp.rem) {
         // read some and write back
         offset.QuadPart = rp.quot * CHUNK_SIZE;

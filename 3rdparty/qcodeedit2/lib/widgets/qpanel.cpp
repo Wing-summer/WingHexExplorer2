@@ -243,6 +243,8 @@ void QPanel::hideEvent(QHideEvent *e) {
         \internal
 */
 void QPanel::paintEvent(QPaintEvent *e) {
+    QWidget::paintEvent(e);
+
     if (!m_editor || !m_editor->document()) {
         e->ignore();
         return;
@@ -251,22 +253,12 @@ void QPanel::paintEvent(QPaintEvent *e) {
     e->accept();
 
     QPainter p(this);
-
-    if (!paint(&p, m_editor))
-        QWidget::paintEvent(e);
+    paint(&p, m_editor);
 }
 
 /*!
         \internal
 */
-bool QPanel::paint(QPainter *, QEditor *) {
-    /*
-    qWarning("Bad panel implementation : "
-                    "QPanel::paint(QPainter*, QEditor*)"
-                    " is a stub that should not get called."
-                    "\nCheck out the code of %s", qPrintable(type()));
-    */
-    return false;
-}
+void QPanel::paint(QPainter *, QEditor *) {}
 
 /* @} */

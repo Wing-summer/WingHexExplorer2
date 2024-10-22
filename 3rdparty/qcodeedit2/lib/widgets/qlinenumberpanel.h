@@ -43,7 +43,7 @@ public slots:
 
 protected:
     virtual void editorChange(QEditor *e);
-    virtual bool paint(QPainter *p, QEditor *e);
+    virtual void paint(QPainter *p, QEditor *e);
 
     bool m_verbose;
     int mutable m_minWidth = 0;

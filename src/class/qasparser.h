@@ -6,11 +6,16 @@
 #include <QScopedPointer>
 
 class asCScriptCode;
+class asCScriptNode;
+class QCodeNode;
 
 class QAsParser : protected asBuilder {
 public:
     explicit QAsParser(asIScriptEngine *engine);
     virtual ~QAsParser();
+
+private:
+    QCodeNode *asNode2CodeNode(asCScriptNode *node);
 
 public:
     bool parse(const QString &filename);

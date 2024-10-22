@@ -102,12 +102,12 @@ void QFoldPanel::mousePressEvent(QMouseEvent *e) {
 /*!
 
 */
-bool QFoldPanel::paint(QPainter *p, QEditor *e) {
+void QFoldPanel::paint(QPainter *p, QEditor *e) {
     QDocument *doc = editor()->document();
     QLanguageDefinition *def = e->languageDefinition();
 
     if (!def || !doc) {
-        return true;
+        return;
     }
 
     m_rects.clear();
@@ -249,8 +249,6 @@ bool QFoldPanel::paint(QPainter *p, QEditor *e) {
 
         pos += len;
     }
-
-    return true;
 }
 
 QRect QFoldPanel::drawIcon(QPainter *p, QEditor *, int x, int y,

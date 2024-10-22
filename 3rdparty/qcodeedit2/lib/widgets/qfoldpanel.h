@@ -40,7 +40,7 @@ public:
 
 protected:
     virtual void mousePressEvent(QMouseEvent *e);
-    virtual bool paint(QPainter *p, QEditor *e);
+    virtual void paint(QPainter *p, QEditor *e);
 
     QRect drawIcon(QPainter *p, QEditor *e, int x, int y, bool expand);
 

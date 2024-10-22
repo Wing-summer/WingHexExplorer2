@@ -65,9 +65,9 @@ QString QLineMarkPanel::type() const { return "Line marks"; }
 /*!
         \internal
 */
-bool QLineMarkPanel::paint(QPainter *p, QEditor *e) {
+void QLineMarkPanel::paint(QPainter *p, QEditor *e) {
     if (!e || !e->document())
-        return true;
+        return;
 
     m_rects.clear();
     m_lines.clear();
@@ -130,7 +130,6 @@ bool QLineMarkPanel::paint(QPainter *p, QEditor *e) {
     // qDebug("</session>");
 
     // setFixedWidth(sfm.width(txt) + 5);
-    return true;
 }
 
 /*!

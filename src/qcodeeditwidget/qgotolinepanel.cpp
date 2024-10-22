@@ -29,11 +29,10 @@ QCE_AUTO_REGISTER(QGotoLinePanel)
 */
 QGotoLinePanel::QGotoLinePanel(QWidget *p)
     : QPanel(p), ui(new Ui::QGotoLinePanel()) {
+    setAttribute(Qt::WA_StyledBackground);
+
     ui->setupUi(this);
     setDefaultVisibility(false);
-
-    ui->label->setAttribute(Qt::WA_TranslucentBackground);
-    ui->slLine->setAttribute(Qt::WA_TranslucentBackground);
 
     ui->bClose->setStyleSheet(
         QStringLiteral("border:none;background:transparent;"));
