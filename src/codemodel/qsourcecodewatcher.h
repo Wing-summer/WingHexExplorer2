@@ -31,10 +31,10 @@ class QCM_EXPORT QSourceCodeWatcher : public QFileSystemWatcher {
     Q_OBJECT
 
 public:
-    static QSourceCodeWatcher *watcher(QCodeNode *t, QCodeParser *c = 0);
+    static QSourceCodeWatcher *watcher(QCodeNode *t, QCodeParser *c = nullptr);
 
 protected:
-    QSourceCodeWatcher(QCodeNode *n, QCodeParser *c, QObject *p = 0);
+    QSourceCodeWatcher(QCodeNode *n, QCodeParser *c, QObject *p = nullptr);
     virtual ~QSourceCodeWatcher();
 
     virtual void timerEvent(QTimerEvent *e);

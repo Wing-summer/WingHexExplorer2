@@ -24,7 +24,7 @@ QList<QSourceCodeWatcher *> QSourceCodeWatcher::m_instances;
 
 QSourceCodeWatcher *QSourceCodeWatcher::watcher(QCodeNode *t, QCodeParser *c) {
     if (!t)
-        return 0;
+        return nullptr;
 
     for (int i = 0; i < m_instances.count(); ++i) {
         if (m_instances.at(i)->m_target == t) {

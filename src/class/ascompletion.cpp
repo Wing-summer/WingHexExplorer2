@@ -1,5 +1,6 @@
 #include "ascompletion.h"
 
+#include "qasparser.h"
 #include "qcalltip.h"
 #include "qdocumentcursor.h"
 #include "qdocumentline.h"
@@ -14,117 +15,21 @@
 #include <QTimer>
 #include <QtDebug>
 
-//#define TRACE_COMPLETION
-
-/*
-        TODO :
-                - better support for template methods based upon parameters ?
-                - add support for some more operators ?
-                - improve visibility guesses by taking friendship into account
-                - improve visibility guesses by taking inheritance visibility
-   into account
-                - improve visibility guesses by taking context hierarchy into
-   account
-*/
-
-Q_DECL_UNUSED static void remove(QByteArray &b, char c, int i = 0) {
-    i = qMax(i, 0);
-    while (i < b.length()) {
-        int len = 0;
-
-        while (((i + len) < b.length()) && (b.at(i + len) == c))
-            ++len;
-
-        if (!len)
-            ++i;
-        else
-            b.remove(i, len);
-    }
-}
-
-static void remove(QByteArray &b, const char *str, int i = 0) {
-    i = qMax(i, 0);
-    auto length = qstrlen(str);
-
-    while (i < b.length()) {
-        if (!qstrncmp(b.constData() + i, str, length))
-            b.remove(i, length);
-        else
-            ++i;
-    }
-}
-
-static bool isWord(char c) { return isalnum(c) || (c == '_'); }
-
-static void substitute(QByteArray &b, const QByteArray &tpl,
-                       const QByteArray &crt) {
-    // qDebug() << "substituting " << tpl << " with " << crt << " in " << b;
-    if (b.isEmpty() || tpl.isEmpty())
-        return;
-
-    int i = 0;
-    bool _word = false;
-
-    while (i < b.length()) {
-        int j = i + tpl.length();
-        if (!_word &&
-            !qstrncmp(b.constData() + i, tpl.constData(), tpl.length()) &&
-            ((j >= b.length()) || !isWord(b.at(j)))) {
-            b.replace(i, tpl.length(), crt);
-            i += crt.length();
-        } else {
-            ++i;
-        }
-
-        _word = i ? isWord(b.at(i - 1)) : false;
-    }
-
-    // qDebug() << b;
-}
-
-static void blockRemove(QByteArray &b, char in, char out) {
-    int i = 0, s;
-
-    while (i < b.length()) {
-        if (b.at(i) == in) {
-            s = i;
-
-            int count = 0;
-
-            do {
-                if (b.at(i) == in)
-                    ++count;
-                else if (b.at(i) == out)
-                    --count;
-
-                ++i;
-
-            } while (count && (i < b.length()));
-
-            b.remove(s, i - s + 1);
-            i = s;
-        } else {
-            ++i;
-        }
-    }
-}
-
-AsCompletion::AsCompletion(QObject *p) : QCodeCompletionEngine(p) {
+AsCompletion::AsCompletion(asIScriptEngine *engine, QObject *p)
+    : QCodeCompletionEngine(p), _engine(engine) {
+    Q_ASSERT(engine);
 
     addTrigger(".");
-    addTrigger("->");
     addTrigger("::");
 
     // unleash the power of call tips
     addTrigger("(");
-
-    // EDYUK_SHORTCUT(triggerAction(), "C++ completion", tr("Ctrl+Space"));
 }
 
 AsCompletion::~AsCompletion() {}
 
 QCodeCompletionEngine *AsCompletion::clone() {
-    AsCompletion *e = new AsCompletion();
+    AsCompletion *e = new AsCompletion(_engine);
 
     for (auto &t : triggers())
         e->addTrigger(t);
@@ -145,4 +50,73 @@ QStringList AsCompletion::extensions() const {
     return l;
 }
 
-void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {}
+void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
+    auto codes = c.document()->text(true, false);
+    QAsParser parser(_engine);
+    parser.parse(codes, this->editor()->fileName());
+
+    QList<QCodeNode *> nodes = parser.codeNodes();
+
+    // TODO
+    QByteArray fn;
+    QList<QCodeNode *> temp; // internal CodeNodes
+    int filter = QCodeCompletionWidget::FilterFlag::KeepAll;
+
+    if (nodes.count()) {
+        if (trigger == "(") {
+            QStringList tips;
+
+            // qDebug("fn %s", fn.constData());
+
+            for (auto &n : nodes) {
+                for (auto &f : n->children) {
+                    if (f->type() != QCodeNode::Function ||
+                        f->role(QCodeNode::Name) != fn)
+                        continue;
+
+                    auto tip = QString::fromUtf8(f->role(QCodeNode::Arguments))
+                                   .prepend('(')
+                                   .append(')');
+
+                    if (!tips.contains(tip))
+                        tips << tip;
+                }
+            }
+
+            if (!tips.isEmpty()) {
+                QRect r = editor()->cursorRect();
+                QDocumentCursor cursor = editor()->cursor();
+                QDocumentLine line = cursor.line();
+
+                int hx = editor()->horizontalOffset(),
+                    cx = line.cursorToX(cursor.columnNumber());
+
+                auto ct = new QCallTip(editor()->viewport());
+                ct->move(cx - hx, r.y() + r.height());
+                ct->setTips(tips);
+                ct->show();
+                ct->setFocus();
+
+#ifdef TRACE_COMPLETION
+                qDebug(
+                    "parsing + scoping + search + pre-display : elapsed %i ms",
+                    time.elapsed());
+#endif
+            }
+        } else {
+            pPopup->setTemporaryNodes(temp);
+            pPopup->setFilter(QCodeCompletionWidget::Filter(filter));
+            pPopup->setCompletions(nodes);
+
+#ifdef TRACE_COMPLETION
+            qDebug("parsing + scoping + search + pre-display : elapsed %i ms",
+                   time.elapsed());
+#endif
+
+            pPopup->popup();
+        }
+    } else {
+        qDeleteAll(temp);
+        qDebug("completion failed");
+    }
+}

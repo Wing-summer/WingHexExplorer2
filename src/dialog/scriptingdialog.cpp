@@ -5,7 +5,6 @@
 #include "aboutsoftwaredialog.h"
 #include "class/ascompletion.h"
 #include "class/languagemanager.h"
-#include "class/qasparser.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
@@ -78,7 +77,6 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
-    m_language->addCompletionEngine(new AsCompletion(this));
 
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
@@ -210,6 +208,8 @@ void ScriptingDialog::initConsole() {
 
             updateRunDebugMode();
         });
+
+    m_language->addCompletionEngine(new AsCompletion(machine->engine(), this));
 }
 
 void ScriptingDialog::saveDockLayout() {

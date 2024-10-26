@@ -1,6 +1,8 @@
 #ifndef _AS_COMPLETION_H_
 #define _AS_COMPLETION_H_
 
+#include "angelscript.h"
+#include "control/qcodecompletionwidget.h"
 #include "qcodecompletionengine.h"
 
 #include <QHash>
@@ -10,7 +12,7 @@ class QByteArray;
 class AsCompletion : public QCodeCompletionEngine {
     Q_OBJECT
 public:
-    AsCompletion(QObject *p = nullptr);
+    explicit AsCompletion(asIScriptEngine *engine, QObject *p = nullptr);
 
     virtual ~AsCompletion();
 
@@ -24,8 +26,9 @@ protected:
                           const QString &trigger) override;
 
 private:
-    // QCodeCompletionWidget *pPopup;
-    // QPointer<QCodeModel> pModel;
+    asIScriptEngine *_engine;
+    QCodeCompletionWidget *pPopup;
+    QPointer<QCodeModel> pModel;
 };
 
 #endif // _CPP_COMPLETION_H_

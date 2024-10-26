@@ -119,6 +119,32 @@
         <file alias="replace.png">images/replace.png</file>
         <file alias="undo.png">images/undo.png</file>
         <file alias="goto.png">images/goto.png</file>
-
+    </qresource>
+    <qresource prefix="/completion">
+        <file>images/completion/classnew.png</file>
+        <file>images/completion/CTvirtuals.png</file>
+        <file>images/completion/CVclass.png</file>
+        <file>images/completion/CVenum.png</file>
+        <file>images/completion/CVenumerator.png</file>
+        <file>images/completion/CVglobal_meth.png</file>
+        <file>images/completion/CVglobal_var.png</file>
+        <file>images/completion/CVnamespace.png</file>
+        <file>images/completion/CVpackage_meth.png</file>
+        <file>images/completion/CVpackage_var.png</file>
+        <file>images/completion/CVprivate_meth.png</file>
+        <file>images/completion/CVprivate_signal.png</file>
+        <file>images/completion/CVprivate_slot.png</file>
+        <file>images/completion/CVprivate_var.png</file>
+        <file>images/completion/CVprotected_meth.png</file>
+        <file>images/completion/CVprotected_signal.png</file>
+        <file>images/completion/CVprotected_slot.png</file>
+        <file>images/completion/CVprotected_var.png</file>
+        <file>images/completion/CVpublic_meth.png</file>
+        <file>images/completion/CVpublic_signal.png</file>
+        <file>images/completion/CVpublic_slot.png</file>
+        <file>images/completion/CVpublic_var.png</file>
+        <file>images/completion/CVstruct.png</file>
+        <file>images/completion/CVtypedef.png</file>
+        <file>images/completion/CVunion.png</file>
     </qresource>
 </RCC>

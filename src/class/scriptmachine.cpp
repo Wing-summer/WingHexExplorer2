@@ -11,6 +11,7 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
+#include "class/qasparser.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptqstring.h"
@@ -163,6 +164,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     PluginSystem::instance().angelApi()->installAPI(
         engine, typeInfo(RegisteredType::tString));
+
+    // TODO TEST
+    QAsParser varname(engine);
 
     _immediateContext = engine->CreateContext();
     _immediateContext->SetExceptionCallback(

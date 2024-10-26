@@ -5,73 +5,97 @@
 #include "codemodel/qcodemodel.h"
 #include "codemodel/qcodenode.h"
 
-QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {}
+#include <QDebug>
+
+QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
+    constexpr const char *_HEADER_ =
+        "namespace reader { bool copy(bool hex = false); }";
+    constexpr size_t _HEADER_LEN_ = std::char_traits<char>::length(_HEADER_);
+
+    // module->AddScriptSection("header", _HEADER_, _HEADER_LEN_, 0);
+
+    ClearAll();
+
+    if (StartNewModule(_engine, "_HEADER_PARSER_") != 0) {
+        Q_ASSERT(false);
+    }
+
+    auto mod = dynamic_cast<asCModule *>(GetModule());
+    auto en = dynamic_cast<asCScriptEngine *>(engine);
+    Q_ASSERT(en && mod);
+    asCParser parser(new asCBuilder(en, mod));
+
+    m_code.reset(new asCScriptCode);
+    m_code->SetCode("_HEADER_", _HEADER_, true);
+
+    parser.ParseScript(m_code.get());
+
+    auto pnodes = parser.GetScriptNode();
+
+    QList<QCodeNode *> qnodes;
+
+    auto node = new QCodeNode;
+    processNode(nullptr, pnodes, node);
+
+    do {
+        auto p = qnodes.first();
+    } while (false);
+}
 
 QAsParser::~QAsParser() {}
 
-QCodeNode *QAsParser::asNode2CodeNode(asCScriptNode *node) {
-    if (node == nullptr) {
-        return nullptr;
+void QAsParser::processNode(asCScriptCode *code, asCScriptNode *raw,
+                            QCodeNode *node) {
+    Q_ASSERT(raw && node);
+
+    node->model = nullptr;
+    int row = -1;
+    if (code) {
+        code->ConvertPosToRowCol(raw->tokenPos, &row, nullptr);
     }
+    node->line = row;
 
-    auto n = new QCodeNode;
-    n->model = nullptr;
+    QByteArray ns; // namespace
 
-    switch (node->nodeType) {
-    case snUndefined:
+    switch (raw->nodeType) {
     case snScript:
-    case snFunction:
-    case snConstant:
-    case snDataType:
-    case snIdentifier:
-    case snParameterList:
-    case snStatementBlock:
+        break;
+    case snNamespace:
+        break;
+    case snIdentifier: {
+        auto name = QByteArray(m_code->code + raw->tokenPos, raw->tokenLength);
+        node->setRole(QCodeNode::Name, name);
+
+#ifdef QT_DEBUG
+        qDebug() << name;
+#endif
+    } break;
     case snDeclaration:
-    case snExpressionStatement:
-    case snIf:
-    case snFor:
-    case snWhile:
-    case snReturn:
-    case snExpression:
-    case snExprTerm:
-    case snFunctionCall:
-    case snConstructCall:
-    case snArgList:
-    case snExprPreOp:
-    case snExprPostOp:
-    case snExprOperator:
-    case snExprValue:
-    case snBreak:
-    case snContinue:
-    case snDoWhile:
-    case snAssignment:
-    case snCondition:
-    case snSwitch:
-    case snCase:
+        qDebug() << QByteArray(m_code->code + raw->tokenPos, raw->tokenLength);
+        break;
     case snImport:
-    case snClass:
-    case snInitList:
-    case snInterface:
     case snEnum:
     case snTypedef:
-    case snCast:
-    case snVariableAccess:
+    case snClass:
+    case snMixin:
+    case snInterface:
     case snFuncDef:
     case snVirtualProperty:
-    case snNamespace:
-    case snMixin:
-    case snListPattern:
-    case snNamedArgument:
-    case snScope:
-    case snTryCatch:
+    case snVariableAccess:
+    case snFunction:
+    default:
         break;
     }
 
-    int row = -1, col = -1;
-    m_code->ConvertPosToRowCol(node->tokenPos, &row, &col);
-    n->line = row;
-
-    return n;
+    auto p = raw->firstChild;
+    while (p) {
+        auto cnode = new QCodeNode;
+        // cnode->parent = node;
+        processNode(code, p, cnode);
+        node->children.append(cnode);
+        p = p->next;
+    }
+    node->children.append(node);
 }
 
 bool QAsParser::parse(const QString &filename) {
@@ -99,21 +123,25 @@ bool QAsParser::parse(const QString &filename) {
 
     QList<QCodeNode *> qnodes;
 
-    do {
-        auto node = asNode2CodeNode(pnodes);
+    // do {
+    //     auto node = asNode2CodeNode(pnodes);
 
-        auto p = pnodes->firstChild;
-        while (p) {
-            auto cnode = asNode2CodeNode(pnodes);
-            cnode->parent = node;
-            node->children.append(cnode);
+    //     auto p = pnodes->firstChild;
+    //     while (p) {
+    //         auto cnode = asNode2CodeNode(pnodes);
+    //         cnode->parent = node;
+    //         node->children.append(cnode);
 
-            p = pnodes->next;
-        }
+    //         p = pnodes->next;
+    //     }
 
-        qnodes.append(node);
-        pnodes = pnodes->next;
-    } while (pnodes != nullptr);
+    //     qnodes.append(node);
+    //     pnodes = pnodes->next;
+    // } while (pnodes != nullptr);
 
     return true;
+}
+
+bool QAsParser::parse(const QString &code, const QString &section) {
+    return ProcessScriptSection(code.toUtf8(), code.length(), section, 0);
 }

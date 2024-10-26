@@ -34,8 +34,9 @@ void QCodeModel::q_cache(QCodeNode *n, QByteArray cxt = QByteArray()) {
         // qDebug("Caching %s [0x%x] in 0x%x", cxt.constData(), n, this);
     }
 
-    foreach (QCodeNode *child, n->children)
+    for (auto &child : n->children) {
         q_cache(child, cxt);
+    }
 }
 
 void QCodeModel::q_uncache(QCodeNode *n, QByteArray cxt = QByteArray()) {
@@ -45,8 +46,9 @@ void QCodeModel::q_uncache(QCodeNode *n, QByteArray cxt = QByteArray()) {
         // qDebug("De-Caching %s", cxt.constData());
     }
 
-    foreach (QCodeNode *child, n->children)
+    for (auto &child : n->children) {
         q_uncache(child, cxt);
+    }
 }
 
 /*!
@@ -121,7 +123,7 @@ void QCodeModel::endInsertRows() {
         for (int i = op.begin; i <= op.end; ++i)
             q_cache(l.at(i), cxt);
     } else {
-        // qDebug("Odd things happenning over there...");
+        qDebug("Odd things happenning over there...");
     }
 
     QAbstractItemModel::endInsertRows();
@@ -177,10 +179,11 @@ void QCodeModel::removeTopLevelNode(QCodeNode *n) {
 
     while (nodes.count()) {
         n = nodes.pop();
-        n->model = 0;
+        n->model = nullptr;
 
-        foreach (QCodeNode *c, n->children)
+        for (auto &c : n->children) {
             nodes.push(c);
+        }
     }
 
     endRemoveRows();
@@ -256,10 +259,12 @@ QCodeNode *QCodeModel::findNode(const QByteArray &language,
 QList<QCodeNode *> QCodeModel::findRootNodes(const QByteArray &name) {
     QList<QCodeNode *> l;
 
-    foreach (QCodeNode *g, m_topLevel)
-        foreach (QCodeNode *r, g->children)
+    for (auto &g : m_topLevel) {
+        for (auto &r : g->children) {
             if (r->role(QCodeNode::Name) == name)
                 l << r;
+        }
+    }
 
     return l;
 }
@@ -280,8 +285,8 @@ bool QCodeModel::isCachable(QCodeNode *n, QByteArray &cxt) const {
         cxt += qn;
 
         return true;
-    } else if ((t == QCodeNode::Enum) || (t == QCodeNode::Union) ||
-               (t == QCodeNode::Class) || (t == QCodeNode::Struct) ||
+    } else if ((t == QCodeNode::Enum) ||  /*(t == QCodeNode::Union) ||*/
+               (t == QCodeNode::Class) || /*(t == QCodeNode::Struct) ||*/
                (t == QCodeNode::Typedef)) {
         cxt += qn;
 

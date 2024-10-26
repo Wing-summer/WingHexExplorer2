@@ -214,12 +214,12 @@ set(CLASS_SRC
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
+    src/class/qasparser.cpp
+    src/class/qasparser.h
     src/class/ascompletion.cpp
     src/class/ascompletion.h
     src/class/asbuilder.h
     src/class/asbuilder.cpp
-    src/class/qasparser.cpp
-    src/class/qasparser.h
     src/class/qdocumentsearch.cpp
     src/class/qdocumentsearch.h
     src/class/ascontextmgr.h

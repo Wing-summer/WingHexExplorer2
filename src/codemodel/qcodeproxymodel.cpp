@@ -25,8 +25,9 @@
 
 static QList<int> priority = QList<int>()
                              << QCodeNode::Group << QCodeNode::Language
-                             << QCodeNode::Namespace << QCodeNode::Class
-                             << QCodeNode::Struct << QCodeNode::Union
+                             << QCodeNode::Namespace
+                             << QCodeNode::Class
+                             // << QCodeNode::Struct << QCodeNode::Union
                              << QCodeNode::Enum << QCodeNode::Typedef
                              << QCodeNode::Function << QCodeNode::Variable;
 

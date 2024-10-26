@@ -20,11 +20,9 @@
 
 #include <QByteArray>
 #include <QList>
-
-class QVariant;
+#include <QVariant>
 
 class QCodeModel;
-class QCodeNodePool;
 
 struct QCM_EXPORT QCodeNode {
     enum RoleIndex {
@@ -62,7 +60,7 @@ struct QCM_EXPORT QCodeNode {
         Language = 'l',
 
         Class = 'c',
-        Struct = 's',
+        // Struct = 's',
 
         Function = 'f',
 
@@ -71,7 +69,7 @@ struct QCM_EXPORT QCodeNode {
         Enum = 'e',
         Enumerator = 'r',
 
-        Union = 'u',
+        // Union = 'u',
 
         Namespace = 'n',
 
@@ -87,7 +85,6 @@ struct QCM_EXPORT QCodeNode {
     enum NodeVisibility {
         VISIBILITY_DEFAULT = -1,
         VISIBILITY_PUBLIC,
-        VISIBILITY_SIGNAL,
         VISIBILITY_PROTECTED,
         VISIBILITY_PRIVATE
     };
@@ -95,12 +92,9 @@ struct QCM_EXPORT QCodeNode {
     enum Specifier {
         SPECIFIER_NONE = 0,
         SPECIFIER_CONST = 1,
-        SPECIFIER_VOLATILE = 2,
-        SPECIFIER_MUTABLE = 4,
-        SPECIFIER_AUTO = 8,
-        SPECIFIER_STATIC = 16,
-        SPECIFIER_REGISTER = 32,
-        SPECIFIER_EXTERN = 64
+        SPECIFIER_AUTO = 2,
+        SPECIFIER_STATIC = 4,
+        SPECIFIER_EXTERN = 8
     };
 
     typedef QFlags<Specifier> TypeSpecifier;
@@ -108,12 +102,9 @@ struct QCM_EXPORT QCodeNode {
     enum Qualifier {
         QUALIFIER_NONE = 0,
         QUALIFIER_CONST = 1,
-        QUALIFIER_VOLATILE = 2,
-        QUALIFIER_STATIC = 4,
-        QUALIFIER_EXTERN = 8,
-        QUALIFIER_VIRTUAL = 16,
-        QUALIFIER_PURE_VIRTUAL = 32,
-        QUALIFIER_INLINE = 64
+        QUALIFIER_EXTERN = 2,
+        QUALIFIER_VIRTUAL = 4,
+        QUALIFIER_INLINE = 8
     };
 
     typedef QFlags<Qualifier> FunctionQualifier;
