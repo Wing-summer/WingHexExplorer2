@@ -10,8 +10,6 @@
 #define ERRLOG(msg) "<font color=\"red\">" + msg + "</font>"
 #define WARNLOG(msg) "<font color=\"gold\">" + msg + "</font>"
 
-Logger *Logger::ins = new Logger;
-
 Logger::Logger(QObject *parent)
     : QObject(parent), _stream(new QTextStream(stdout)) {
     _stream->device()->setTextModeEnabled(true);
@@ -53,44 +51,50 @@ Logger::~Logger() {
     _file->close();
 }
 
-Logger *Logger::instance() { return ins; }
+Logger &Logger::instance() {
+    static Logger ins;
+    return ins;
+}
 
 Logger::Level Logger::logLevel() const { return _level; }
 
-void Logger::_log(const QString &message) { emit ins->log(message); }
+void Logger::_log(const QString &message) { emit instance().log(message); }
 
 void Logger::trace(const QString &message) {
-    if (instance()->_level >= q5TRACE) {
+    if (instance()._level >= q5TRACE) {
         QString str = message;
-        emit ins->log(tr("[Trace]") + str.replace("\n", "<br />"));
+        emit instance().log(tr("[Trace]") + str.replace("\n", "<br />"));
     }
 }
 
 void Logger::warning(const QString &message) {
-    if (instance()->_level >= q2WARN) {
+    if (instance()._level >= q2WARN) {
         QString str = message;
-        emit ins->log(WARNLOG(tr("[Warn]") + str.replace("\n", "<br />")));
+        emit instance().log(
+            WARNLOG(tr("[Warn]") + str.replace("\n", "<br />")));
     }
 }
 
 void Logger::info(const QString &message) {
-    if (instance()->_level >= q3INFO) {
+    if (instance()._level >= q3INFO) {
         QString str = message;
-        emit ins->log(INFOLOG(tr("[Info]") + str.replace("\n", "<br />")));
+        emit instance().log(
+            INFOLOG(tr("[Info]") + str.replace("\n", "<br />")));
     }
 }
 
 void Logger::debug(const QString &message) {
-    if (instance()->_level >= q4DEBUG) {
+    if (instance()._level >= q4DEBUG) {
         QString str = message;
-        emit ins->log(tr("[Debug]") + str.replace("\n", "<br />"));
+        emit instance().log(tr("[Debug]") + str.replace("\n", "<br />"));
     }
 }
 
 void Logger::critical(const QString &message) {
-    if (instance()->_level >= q0FATAL) {
+    if (instance()._level >= q0FATAL) {
         QString str = message;
-        emit ins->log(ERRLOG(tr("[Error]") + str.replace("\n", "<br />")));
+        emit instance().log(
+            ERRLOG(tr("[Error]") + str.replace("\n", "<br />")));
     }
 }
 

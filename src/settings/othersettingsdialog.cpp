@@ -15,7 +15,7 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     }
 
     ui->cbLogLevel->addItems(levels);
-    ui->cbLogLevel->setCurrentIndex(Logger::instance()->logLevel());
+    ui->cbLogLevel->setCurrentIndex(Logger::instance().logLevel());
 
 #ifndef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setEnabled(false);

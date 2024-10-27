@@ -28,7 +28,6 @@
 #include <windows.h>
 #undef MessageBox // because of IWingPlugin
 #else
-#include <filesystem>
 #include <unistd.h>
 #endif
 
@@ -204,8 +203,7 @@ public:
 
     static QString getAppDataPath() {
         return QStandardPaths::writableLocation(
-                   QStandardPaths::AppDataLocation) +
-               QDir::separator() + APP_NAME;
+            QStandardPaths::AppDataLocation);
     }
 
     static void applyTableViewProperty(QTableView *view) {

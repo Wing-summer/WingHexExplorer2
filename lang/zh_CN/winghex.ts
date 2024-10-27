@@ -624,57 +624,57 @@
 <context>
     <name>Logger</name>
     <message>
-        <location filename="../../src/class/logger.cpp" line="65"/>
+        <location filename="../../src/class/logger.cpp" line="66"/>
         <source>[Trace]</source>
         <translation>【跟踪】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="72"/>
+        <location filename="../../src/class/logger.cpp" line="74"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="79"/>
+        <location filename="../../src/class/logger.cpp" line="82"/>
         <source>[Info]</source>
         <translation>【信息】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="86"/>
+        <location filename="../../src/class/logger.cpp" line="89"/>
         <source>[Debug]</source>
         <translation>【调试】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="93"/>
+        <location filename="../../src/class/logger.cpp" line="97"/>
         <source>[Error]</source>
         <translation>【错误】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="102"/>
+        <location filename="../../src/class/logger.cpp" line="106"/>
         <source>Critial</source>
         <translation>崩溃</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="104"/>
+        <location filename="../../src/class/logger.cpp" line="108"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="106"/>
+        <location filename="../../src/class/logger.cpp" line="110"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="108"/>
+        <location filename="../../src/class/logger.cpp" line="112"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="110"/>
+        <location filename="../../src/class/logger.cpp" line="114"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="112"/>
+        <location filename="../../src/class/logger.cpp" line="116"/>
         <source>Trace</source>
         <translation>跟踪</translation>
     </message>
@@ -1821,8 +1821,8 @@
 <context>
     <name>QApplication</name>
     <message>
-        <location filename="../../src/utilities.h" line="227"/>
-        <location filename="../../src/utilities.h" line="232"/>
+        <location filename="../../src/utilities.h" line="225"/>
+        <location filename="../../src/utilities.h" line="230"/>
         <source>OptionNeedRestart</source>
         <translation>该设置需要程序重启后生效</translation>
     </message>

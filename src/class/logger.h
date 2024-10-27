@@ -25,7 +25,7 @@ public:
     };
 
 public:
-    static Logger *instance();
+    static Logger &instance();
 
     Level logLevel() const;
 
@@ -57,7 +57,6 @@ private:
     Q_DISABLE_COPY_MOVE(Logger)
 
 private:
-    static Logger *ins;
     Level _level = Level::q4DEBUG;
     QSharedPointer<QFile> _file = nullptr;
     QSharedPointer<QTextStream> _stream = nullptr;

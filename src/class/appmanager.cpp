@@ -2,6 +2,7 @@
 
 #include <QFont>
 
+#include "class/logger.h"
 #include "languagemanager.h"
 #include "settingmanager.h"
 #include "skinmanager.h"
@@ -31,6 +32,8 @@ AppManager::AppManager(int &argc, char *argv[])
         }
         sendMessage(buffer);
     }
+
+    Logger::instance();
 
     auto &set = SettingManager::instance();
     QFont font(set.appFontFamily(), set.appfontSize());

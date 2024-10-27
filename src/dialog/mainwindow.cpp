@@ -116,9 +116,9 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     auto &set = SettingManager::instance();
 
     // launch logging system
-    auto log = Logger::instance();
-    log->setLogLevel(Logger::Level(set.logLevel()));
-    connect(log, &Logger::log, m_logbrowser, &QTextBrowser::append);
+    auto &log = Logger::instance();
+    log.setLogLevel(Logger::Level(set.logLevel()));
+    connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
 
     // launch plugin system
     auto &plg = PluginSystem::instance();
@@ -187,7 +187,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     });
 }
 
-MainWindow::~MainWindow() { Logger::instance()->disconnect(); }
+MainWindow::~MainWindow() { Logger::instance().disconnect(); }
 
 void MainWindow::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
@@ -1155,17 +1155,17 @@ void MainWindow::buildUpSettingDialog() {
 
 void MainWindow::installPluginEditorWidgets() {
     QHash<QString, IWingPlugin *> names;
-    auto log = Logger::instance();
+    auto &log = Logger::instance();
 
     auto menu = m_toolBtneditors.value(EDITOR_WINS);
     for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
          ++p) {
         for (auto &w : p.value()) {
             if (names.contains(w->id())) {
-                log->critical(tr("Plugin %1 contains a duplicate ID (%2) that "
-                                 "is already registered by plugin %3")
-                                  .arg(p.key()->pluginName(), w->id(),
-                                       names.value(w->id())->pluginName()));
+                log.critical(tr("Plugin %1 contains a duplicate ID (%2) that "
+                                "is already registered by plugin %3")
+                                 .arg(p.key()->pluginName(), w->id(),
+                                      names.value(w->id())->pluginName()));
                 continue;
             }
 
