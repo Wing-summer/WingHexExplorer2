@@ -1,10 +1,29 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #ifndef WINGANGELAPI_H
 #define WINGANGELAPI_H
 
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "plugin/iwingplugin.h"
 
+#include <any>
 #include <functional>
+#include <vector>
 
 class asIScriptEngine;
 
@@ -45,11 +64,11 @@ private:
     template <class T>
     void registerAPI(asIScriptEngine *engine, const std::function<T> &fn,
                      const char *sig) {
-        auto *f = new std::function<T>(fn);
+        _fnbuffer.push_back(fn);
         auto r = engine->RegisterGlobalFunction(
             sig, asMETHOD(std::function<T>, operator()),
-            asCALL_THISCALL_ASGLOBAL, f);
-        _fnbuffer << f;
+            asCALL_THISCALL_ASGLOBAL,
+            std::any_cast<std::function<T>>(&_fnbuffer.back()));
         Q_ASSERT(r >= 0);
     }
 
@@ -118,7 +137,7 @@ private:
                                      const CScriptArray &headerNames);
 
 private:
-    QVector<void *> _fnbuffer;
+    std::vector<std::any> _fnbuffer;
 };
 
 #endif // WINGANGELAPI_H

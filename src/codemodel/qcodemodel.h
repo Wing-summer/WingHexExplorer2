@@ -16,18 +16,16 @@
 #ifndef _QCODE_MODEL_H_
 #define _QCODE_MODEL_H_
 
-#include "qcm-config.h"
-
 #include <QAbstractItemModel>
 #include <QHash>
 #include <QStack>
 
-struct QCodeNode;
+class QCodeNode;
 
-class QCM_EXPORT QCodeModel : public QAbstractItemModel {
+class QCodeModel : public QAbstractItemModel {
     Q_OBJECT
 
-    friend struct QCodeNode;
+    friend class QCodeNode;
 
 public:
     enum ExtraRoles { TypeRole = Qt::UserRole, VisibilityRole };

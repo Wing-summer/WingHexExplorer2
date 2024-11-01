@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "scriptqstring.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "angelscript.h"
@@ -50,8 +67,7 @@ public:
         asAcquireExclusiveLock();
         auto strv = *reinterpret_cast<const QString *>(str);
 
-        Map_t::iterator it =
-            stringCache.find(*reinterpret_cast<const QString *>(str));
+        Map_t::iterator it = stringCache.find(strv);
         if (it == stringCache.end())
             ret = asERROR;
         else {
@@ -363,6 +379,7 @@ static QString formatFloat(double value, const QString &options) {
 // AngelScript signature:
 // int64 parseInt(const string &in val, uint base = 10, uint &out byteCount = 0)
 static asINT64 parseInt(const QString &val, asUINT base, asUINT *byteCount) {
+    Q_UNUSED(byteCount);
     return val.toInt(nullptr, base);
 }
 
@@ -689,35 +706,6 @@ void RegisterQString_Native(asIScriptEngine *engine) {
         asFUNCTION(StringErase), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
 
-    r = engine->RegisterGlobalFunction(
-        "string formatInt(int64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        asFUNCTION(formatInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "string formatUInt(uint64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        asFUNCTION(formatUInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "string formatFloat(double val, const string &in options = \"\", uint "
-        "width = 0, uint precision = 0)",
-        asFUNCTION(formatFloat), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10, uint &out byteCount = 0)",
-                                       asFUNCTION(parseInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base = 10, uint &out "
-        "byteCount = 0)",
-        asFUNCTION(parseUInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, uint &out byteCount = 0)",
-        asFUNCTION(parseFloat), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-
 #if AS_USE_STLNAMES == 1
     // Same as length
     r = engine->RegisterObjectMethod("string", "uint size() const",
@@ -787,6 +775,38 @@ void RegisterQString_Native(asIScriptEngine *engine) {
         "bool caseSensitive = true)",
         asFUNCTION(stringSplit), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
+
+    r = engine->SetDefaultNamespace("string");
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction(
+        "string formatInt(int64 val, const string &in options = \"\", uint "
+        "width = 0)",
+        asFUNCTION(formatInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction(
+        "string formatUInt(uint64 val, const string &in options = \"\", uint "
+        "width = 0)",
+        asFUNCTION(formatUInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction(
+        "string formatFloat(double val, const string &in options = \"\", uint "
+        "width = 0, uint precision = 0)",
+        asFUNCTION(formatFloat), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
+                                       "base = 10, uint &out byteCount = 0)",
+                                       asFUNCTION(parseInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction(
+        "uint64 parseUInt(const string &in, uint base = 10, uint &out "
+        "byteCount = 0)",
+        asFUNCTION(parseUInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterGlobalFunction(
+        "double parseFloat(const string &in, uint &out byteCount = 0)",
+        asFUNCTION(parseFloat), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    engine->SetDefaultNamespace("");
 }
 
 static void ConstructStringGeneric(asIScriptGeneric *gen) {
@@ -1383,7 +1403,9 @@ static int StringCompare(const QString &s1, const QString &s2,
 // This is where the utility functions are registered.
 // The string type must have been registered first.
 void RegisterQStringUtils(asIScriptEngine *engine) {
-    int r;
+    int r = engine->SetDefaultNamespace("string");
+    Q_ASSERT(r >= 0);
+
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
         r = engine->RegisterGlobalFunction(
             "string join(const array<string> &in, const string &in)",
@@ -1406,6 +1428,7 @@ void RegisterQStringUtils(asIScriptEngine *engine) {
             asFUNCTION(StringCompare), asCALL_CDECL);
         Q_ASSERT(r >= 0);
     }
+    engine->SetDefaultNamespace("");
 }
 
 // This function returns the index of the first position where the substring
@@ -1465,6 +1488,7 @@ static CScriptArray *stringSplitReg(const QRegularExpression &exp,
 }
 
 void RegisterQStringRegExSupport(asIScriptEngine *engine) {
+
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
         Q_UNIMPLEMENTED();
     } else {
@@ -1476,7 +1500,10 @@ void RegisterQStringRegExSupport(asIScriptEngine *engine) {
          */
         Q_ASSERT(engine->GetTypeInfoByName("regex::exp"));
 
-        int r = engine->RegisterObjectMethod(
+        int r = engine->SetDefaultNamespace("string");
+        Q_ASSERT(r >= 0);
+
+        r = engine->RegisterObjectMethod(
             "string",
             "int findFirst(const regex::exp &in, uint start = 0) const",
             asFUNCTION(StringFindFirstReg), asCALL_CDECL_OBJLAST);
@@ -1501,6 +1528,8 @@ void RegisterQStringRegExSupport(asIScriptEngine *engine) {
             "bool skipEmpty = false)",
             asFUNCTION(stringSplitReg), asCALL_CDECL_OBJLAST);
         Q_ASSERT(r >= 0);
+
+        engine->SetDefaultNamespace("");
     }
 }
 

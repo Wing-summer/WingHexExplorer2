@@ -50,7 +50,7 @@ public:
     QAction *triggerAction() const;
 
     QEditor *editor() const;
-    void setEditor(QEditor *e);
+    virtual void setEditor(QEditor *e);
 
     QStringList triggers() const;
 

@@ -303,15 +303,12 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qformatconfig.ui)
 
 set(CODE_MODEL
-    src/codemodel/qcm-config.h
     src/codemodel/qcodemodel.cpp
     src/codemodel/qcodemodel.h
     src/codemodel/qcodenode.cpp
     src/codemodel/qcodenode.h
     src/codemodel/qcodeproxymodel.cpp
     src/codemodel/qcodeproxymodel.h
-    src/codemodel/qcodeserializer.cpp
-    src/codemodel/qcodeserializer.h
     src/codemodel/qcodeview.cpp
     src/codemodel/qcodeview.h
     src/codemodel/qsourcecodewatcher.cpp

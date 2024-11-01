@@ -34,7 +34,7 @@ void QCodeModel::q_cache(QCodeNode *n, QByteArray cxt = QByteArray()) {
         // qDebug("Caching %s [0x%x] in 0x%x", cxt.constData(), n, this);
     }
 
-    for (auto &child : n->children) {
+    for (auto &child : n->children()) {
         q_cache(child, cxt);
     }
 }
@@ -46,7 +46,7 @@ void QCodeModel::q_uncache(QCodeNode *n, QByteArray cxt = QByteArray()) {
         // qDebug("De-Caching %s", cxt.constData());
     }
 
-    for (auto &child : n->children) {
+    for (auto &child : n->children()) {
         q_uncache(child, cxt);
     }
 }
@@ -92,7 +92,7 @@ void QCodeModel::beginRemoveRows(const QModelIndex idx, int beg, int end) {
 
     Q_EXTRACT_INDEX(idx, parent)
 
-    const QList<QCodeNode *> &l = parent ? parent->children : m_topLevel;
+    const QList<QCodeNode *> &l = parent ? parent->children() : m_topLevel;
 
     QByteArray cxt;
 
@@ -113,7 +113,7 @@ void QCodeModel::endInsertRows() {
         CacheOp op = m_cache_ops.pop();
 
         const QList<QCodeNode *> &l =
-            op.parent ? op.parent->children : m_topLevel;
+            op.parent ? op.parent->children() : m_topLevel;
 
         QByteArray cxt;
 
@@ -152,9 +152,9 @@ void QCodeModel::appendTopLevelNode(QCodeNode *n) {
 
     while (nodes.count()) {
         n = nodes.pop();
-        n->model = this;
+        n->setModel(this);
 
-        foreach (QCodeNode *c, n->children)
+        foreach (QCodeNode *c, n->children())
             nodes.push(c);
     }
 
@@ -179,9 +179,9 @@ void QCodeModel::removeTopLevelNode(QCodeNode *n) {
 
     while (nodes.count()) {
         n = nodes.pop();
-        n->model = nullptr;
+        n->setModel(nullptr);
 
-        for (auto &c : n->children) {
+        for (auto &c : n->children()) {
             nodes.push(c);
         }
     }
@@ -260,7 +260,7 @@ QList<QCodeNode *> QCodeModel::findRootNodes(const QByteArray &name) {
     QList<QCodeNode *> l;
 
     for (auto &g : m_topLevel) {
-        for (auto &r : g->children) {
+        for (auto &r : g->children()) {
             if (r->role(QCodeNode::Name) == name)
                 l << r;
         }
@@ -296,10 +296,6 @@ bool QCodeModel::isCachable(QCodeNode *n, QByteArray &cxt) const {
         cxt += qn;
 
         return true;
-
-    } else if (t == QCodeNode::Language) {
-
-        cxt += n->role(QCodeNode::Name); // + "/";
     }
 
     return false;
@@ -321,7 +317,7 @@ int QCodeModel::rowCount(const QModelIndex &parent) const {
 
     Q_EXTRACT_INDEX(parent, item)
 
-    return item ? item->children.count() : 0;
+    return item ? item->children().count() : 0;
 }
 
 /*!
@@ -371,8 +367,8 @@ QCodeNode *QCodeModel::node(const QModelIndex &idx) const {
         \brief Please read Qt docs on Model/View framework for more informations
 */
 QModelIndex QCodeModel::index(QCodeNode *n) const {
-    return n ? createIndex(n->parent ? n->parent->children.indexOf(n)
-                                     : m_topLevel.indexOf(n),
+    return n ? createIndex(n->parent() ? n->parent()->children().indexOf(n)
+                                       : m_topLevel.indexOf(n),
                            0, n)
              : QModelIndex();
 }
@@ -392,8 +388,8 @@ QModelIndex QCodeModel::index(int row, int column,
 
     if (!parent.isValid() && (row < m_topLevel.count())) {
         abs = m_topLevel.at(row);
-    } else if (item && (row < item->children.count())) {
-        abs = item->children.at(row);
+    } else if (item && (row < item->children().count())) {
+        abs = item->children().at(row);
     }
 
 #ifdef _TRACE_MODEL_
@@ -420,7 +416,7 @@ QModelIndex QCodeModel::parent(const QModelIndex &index) const {
     Q_EXTRACT_INDEX(index, child)
 
     if (child)
-        parent = child->parent;
+        parent = child->parent();
 
 #ifdef _TRACE_MODEL_
 
@@ -435,8 +431,9 @@ QModelIndex QCodeModel::parent(const QModelIndex &index) const {
     if (!parent)
         return QModelIndex();
 
-    const int row = parent->parent ? parent->parent->children.indexOf(parent)
-                                   : m_topLevel.indexOf(parent);
+    const int row = parent->parent()
+                        ? parent->parent()->children().indexOf(parent)
+                        : m_topLevel.indexOf(parent);
 
     return createIndex(row, 0, parent);
 }

@@ -16,8 +16,6 @@
 #ifndef _QSOURCE_CODE_WATCHER_H_
 #define _QSOURCE_CODE_WATCHER_H_
 
-#include "qcm-config.h"
-
 #include <QFileSystemWatcher>
 #include <QHash>
 #include <QTimer>
@@ -25,7 +23,7 @@
 struct QCodeNode;
 class QCodeParser;
 
-class QCM_EXPORT QSourceCodeWatcher : public QFileSystemWatcher {
+class QSourceCodeWatcher : public QFileSystemWatcher {
     friend struct QCodeNode;
 
     Q_OBJECT

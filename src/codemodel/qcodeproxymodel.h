@@ -16,8 +16,6 @@
 #ifndef _QCODE_PROXY_MODEL_H_
 #define _QCODE_PROXY_MODEL_H_
 
-#include "qcm-config.h"
-
 /*!
         \file qcodeproxymodel.h
         \brief Definition of the QCodeProxyModel class.
@@ -25,7 +23,7 @@
 
 #include <QSortFilterProxyModel>
 
-class QCM_EXPORT QCodeProxyModel : public QSortFilterProxyModel {
+class QCodeProxyModel : public QSortFilterProxyModel {
     Q_OBJECT
 
 public:

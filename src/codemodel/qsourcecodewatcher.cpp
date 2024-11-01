@@ -32,7 +32,7 @@ QSourceCodeWatcher *QSourceCodeWatcher::watcher(QCodeNode *t, QCodeParser *c) {
         }
     }
 
-    return c ? new QSourceCodeWatcher(t, c, t->model) : 0;
+    return c ? new QSourceCodeWatcher(t, c, t->model()) : 0;
 }
 
 QSourceCodeWatcher::QSourceCodeWatcher(QCodeNode *n, QCodeParser *c, QObject *p)

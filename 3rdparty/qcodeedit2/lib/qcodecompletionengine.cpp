@@ -88,7 +88,7 @@ QEditor *QCodeCompletionEngine::editor() const { return pEdit; }
 */
 void QCodeCompletionEngine::setEditor(QEditor *e) {
     if (pEdit) {
-        pEdit->removeAction(pForcedTrigger, "&Edit");
+        pEdit->removeAction(pForcedTrigger, tr("&Edit"));
         // pEdit->removeEventFilter(this);
 
         disconnect(pEdit, SIGNAL(textEdited(QKeyEvent *)), this,
@@ -99,10 +99,9 @@ void QCodeCompletionEngine::setEditor(QEditor *e) {
 
     if (pEdit) {
         // pEdit->installEventFilter(this);
-        pEdit->addAction(pForcedTrigger, "&Edit");
-
-        connect(pEdit, SIGNAL(textEdited(QKeyEvent *)), this,
-                SLOT(textEdited(QKeyEvent *)));
+        pEdit->addAction(pForcedTrigger, tr("&Edit"));
+        connect(pEdit, &QEditor::textEdited, this,
+                &QCodeCompletionEngine::textEdited);
     }
 }
 

@@ -90,86 +90,15 @@ static QIcon icon(int cacheIndex) {
     return q_icon_cache.value(cacheIndex);
 }
 
-QByteArray section(const QByteArray &b, char c, int beg, int end = -1) {
-    QList<QByteArray> l = b.split(c);
-
-    // qDebug("split %s into %i parts...", b.constData(), l.length());
-    // qDebug("parts %i to %i", beg, end);
-
-    if (beg < 0)
-        beg = l.length() + beg;
-
-    if (end < 0)
-        end = l.length() + end;
-
-    int start = qMin(beg, end), stop = qMax(beg, end);
-
-    // qDebug("parts %i to %i", start, stop);
-
-    if ((start >= l.length()) || (stop < 0))
-        return QByteArray();
-
-    QByteArray sec = l.at(start);
-
-    while (++start <= stop)
-        sec.prepend(c).prepend(l.at(start));
-
-    return sec;
-}
-
-void setSection(QByteArray &b, char c, int beg, int end = -1,
-                const QByteArray &r = QByteArray()) {
-    QList<QByteArray> l = b.split(c);
-
-    if (beg < 0)
-        beg = l.length() + beg;
-
-    if (end < 0)
-        end = l.length() + end;
-
-    int offset = 0, length = 0;
-    int start = qMin(beg, end), stop = qMax(beg, end);
-
-    if ((start >= l.length()) || (stop < 0))
-        return;
-
-    for (int i = 0; i < start; ++i)
-        offset += l.at(i).length() + 1;
-
-    for (int i = start; i <= stop; ++i)
-        length += l.at(i).length() + 1;
-
-    --length;
-
-    /*
-    qDebug("set section [%i, %i]=>[%i, %i] of \"%s\" to \"%s\"",
-                    beg, end,
-                    offset, offset + length,
-                    b.constData(),
-                    r.constData());
-    */
-
-    b.replace(offset, length, r);
-}
-
-void QCodeNode::operator delete(void *p) {
-    QCodeNode *n = static_cast<QCodeNode *>(p);
-
-    if (!n)
-        return;
-    else
-        ::operator delete(p);
-}
-
-QCodeNode::QCodeNode() : line(-1), parent(0), model(0) {}
+QCodeNode::QCodeNode() : line(-1), _parent(0), _model(0) {}
 
 QCodeNode::~QCodeNode() {
-    detach();
+    QCodeNode::detach();
 
-    model = nullptr;
-    parent = nullptr;
+    _model = nullptr;
+    _parent = nullptr;
 
-    clear();
+    QCodeNode::clear();
 
     QSourceCodeWatcher *w = QSourceCodeWatcher::watcher(this, nullptr);
 
@@ -180,10 +109,10 @@ QCodeNode::~QCodeNode() {
 void QCodeNode::attach(QCodeNode *p) {
     detach();
 
-    if (!p || p->children.contains(this))
+    if (!p || p->_children.contains(this))
         return;
 
-    bool modelChange = model != p->model;
+    bool modelChange = _model != p->_model;
 
     if (modelChange) {
         QStack<QCodeNode *> tree;
@@ -193,44 +122,44 @@ void QCodeNode::attach(QCodeNode *p) {
         while (tree.length()) {
             QCodeNode *n = tree.pop();
 
-            n->model = p->model;
+            n->_model = p->_model;
 
-            foreach (QCodeNode *c, n->children)
+            foreach (QCodeNode *c, n->_children)
                 tree.push(c);
         }
     }
 
-    int row = p->children.length();
+    int row = p->_children.length();
 
-    if (model)
-        model->beginInsertRows(model->index(p), row, row);
+    if (_model)
+        _model->beginInsertRows(_model->index(p), row, row);
 
-    parent = p;
-    p->children.insert(row, this);
+    _parent = p;
+    p->_children.insert(row, this);
 
-    if (model)
-        model->endInsertRows();
+    if (_model)
+        _model->endInsertRows();
 }
 
 void QCodeNode::detach() {
-    if (!parent)
+    if (!_parent)
         return;
 
-    int row = parent->children.indexOf(this);
+    int row = _parent->_children.indexOf(this);
 
     if (row < 0)
         return;
 
-    if (model)
-        model->beginRemoveRows(model->index(parent), row, row);
+    if (_model)
+        _model->beginRemoveRows(_model->index(_parent), row, row);
 
-    parent->children.removeAt(row);
-    parent = 0;
+    _parent->_children.removeAt(row);
+    _parent = 0;
 
-    if (model)
-        model->endRemoveRows();
+    if (_model)
+        _model->endRemoveRows();
 
-    if (model) {
+    if (_model) {
         QStack<QCodeNode *> tree;
 
         tree.push(this);
@@ -238,16 +167,28 @@ void QCodeNode::detach() {
         while (tree.length()) {
             QCodeNode *n = tree.pop();
 
-            n->model = 0;
+            n->_model = 0;
 
-            foreach (QCodeNode *c, n->children)
+            foreach (QCodeNode *c, n->_children)
                 tree.push(c);
         }
     }
 }
 
+QCodeModel *QCodeNode::model() const { return _model; }
+
+void QCodeNode::setModel(QCodeModel *newModel) { _model = newModel; }
+
+QCodeNode *QCodeNode::parent() const { return _parent; }
+
+void QCodeNode::setParent(QCodeNode *newParent) { _parent = newParent; }
+
+int QCodeNode::getLine() const { return line; }
+
+void QCodeNode::setLine(int newLine) { line = newLine; }
+
 void QCodeNode::clear() {
-    QList<QCodeNode *> c = children;
+    QList<QCodeNode *> c = _children;
 
     removeAll();
 
@@ -255,65 +196,60 @@ void QCodeNode::clear() {
 }
 
 void QCodeNode::removeAll() {
-    if (children.isEmpty())
+    if (_children.isEmpty())
         return;
 
-    if (model)
-        model->beginRemoveRows(model->index(this), 0, children.length() - 1);
+    if (_model)
+        _model->beginRemoveRows(_model->index(this), 0, _children.length() - 1);
 
-    foreach (QCodeNode *n, children) {
-        n->model = 0;
-        n->parent = 0;
+    foreach (QCodeNode *n, _children) {
+        n->_model = nullptr;
+        n->_parent = nullptr;
     }
 
-    children.clear();
+    _children.clear();
 
-    if (model)
-        model->endRemoveRows();
+    if (_model)
+        _model->endRemoveRows();
 }
 
 int QCodeNode::type() const {
-    return roles.length() ? role(NodeType).at(0) : 0;
+    return roles.value(NodeType, QByteArray(1, 0)).at(0);
 }
 
 QByteArray QCodeNode::context() const {
     int t = type();
 
-    if ((t == Group) || (t == Language) || (t == Namespace))
+    if ((t == Group) || (t == Namespace))
         return QByteArray();
 
     const QCodeNode *p = this;
 
-    while (p->parent) {
-        int t = p->parent->type();
+    while (p->_parent) {
+        int t = p->_parent->type();
 
-        if ((t == Group) || (t == Language) || (t == Namespace))
+        if ((t == Group) || (t == Namespace))
             break;
 
-        p = p->parent;
+        p = p->_parent;
     }
 
     return p ? p->role(Context) : role(Context);
 }
 
-QByteArray QCodeNode::qualifiedName(bool language) const {
+QByteArray QCodeNode::qualifiedName(bool ext) const {
     int t = type();
 
     if (t == Group)
         return QByteArray();
-    else if (t == Language)
-        return language ? role(Name) : QByteArray();
 
-    QByteArray cxt = parent ? parent->qualifiedName(language) : QByteArray();
-
-    if (cxt.length()) {
-        // if ( parent->type() == Language )
-        //	cxt += "/";
-        // else
+    QByteArray cxt;
+    if (ext) {
+        if (_parent && _parent->type() == Namespace) {
+            cxt += _parent->role(Name);
+        }
         cxt += "::";
     }
-
-    // cxt += role(Name);
 
     cxt += role(Name);
 
@@ -537,15 +473,10 @@ QVariant QCodeNode::data(int r) const {
     return QVariant();
 }
 
-void QCodeNode::setData(int role, const QVariant &v) {
-    Q_UNUSED(v)
-    Q_UNUSED(role)
-}
+QByteArray QCodeNode::role(RoleIndex r) const { return roles.value(r); }
 
-QByteArray QCodeNode::role(RoleIndex r) const {
-    return section(roles, '@', (int)r, (int)r);
-}
+void QCodeNode::setRole(RoleIndex r, const QByteArray &b) { roles[r] = b; }
 
-void QCodeNode::setRole(RoleIndex r, const QByteArray &b) {
-    setSection(roles, '@', (int)r, (int)r, b);
+void QCodeNode::setNodeType(DefaultNodeTypes t) {
+    setRole(NodeType, QByteArray(1, t));
 }

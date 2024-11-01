@@ -14,8 +14,7 @@
 ****************************************************************************/
 
 #include "qcodecompletionwidget.h"
-
-#include "control/qcodecompletionwidget_p.h"
+#include "qcodecompletionwidget_p.h"
 
 #include "qdocument.h"
 #include "qdocumentcursor.h"
@@ -24,6 +23,8 @@
 
 #include "codemodel/qcodemodel.h"
 #include "codemodel/qcodenode.h"
+
+#include "class/ascompletion.h"
 
 #include <QApplication>
 #include <QFocusEvent>
@@ -118,9 +119,10 @@ QEditor *QCodeCompletionWidget::editor() const {
 }
 
 void QCodeCompletionWidget::setEditor(QEditor *e) {
-    pEditor = dynamic_cast<QObject *>(e);
-
-    setParent(e->viewport());
+    pEditor = e;
+    if (e) {
+        setParent(e->viewport());
+    }
     // QObject::setParent(pEditor);
 }
 
@@ -212,7 +214,8 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
         txt.remove(pb + 1, pe - pb - 1);
     }
 
-    txt.remove(QRegularExpression("(\\bconst\\s*)?(=\\s*0)?$"));
+    static QRegularExpression re("(\\bconst\\s*)?(=\\s*0)?$");
+    txt.remove(re);
 
     if (prefix.length() && txt.startsWith(prefix))
         txt.remove(0, prefix.length());
@@ -406,14 +409,14 @@ void QCodeCompletionModel::forceUpdate() const {
     m_visibles.clear();
 
     foreach (QCodeNode *n, m_nodes) {
-        foreach (QCodeNode *c, n->children) {
+        foreach (QCodeNode *c, n->children()) {
             if (match(c, m_filter, m_prefix)) {
                 m_visibles << c;
             }
 
             if (c->type() == QCodeNode::Enum) {
                 if (match(c, m_filter))
-                    for (QCodeNode *ev : c->children)
+                    for (QCodeNode *ev : c->children())
                         if (match(ev, m_filter, m_prefix))
                             m_visibles << ev;
             }
@@ -423,7 +426,7 @@ void QCodeCompletionModel::forceUpdate() const {
     // qDebug("model updated");
 
     bUpdate = false;
-    emit changed();
+    emit const_cast<QCodeCompletionModel *>(this)->changed();
 }
 
 QList<QCodeNode *> QCodeCompletionModel::focusNodes() const { return m_nodes; }
@@ -454,7 +457,7 @@ QVariant QCodeCompletionModel::data(const QModelIndex &index, int role) const {
     int type = n->type();
 
     if ((role == Qt::DisplayRole) && (type == QCodeNode::Enumerator))
-        return n->parent->data(role).toString() +
+        return n->parent()->data(role).toString() +
                "::" + n->data(role).toString();
 
     if (role == Qt::UserRole)
@@ -481,7 +484,7 @@ int QCodeCompletionModel::rowCount(const QModelIndex &parent) const {
 bool QCodeCompletionModel::match(QCodeNode *n,
                                  QCodeCompletionWidget::Filter filter,
                                  const QByteArray &prefix) {
-    QByteArray bcxt = n->parent->qualifiedName(),
+    QByteArray bcxt = n->parent()->qualifiedName(),
                bnn = n->role(QCodeNode::Name);
 
     if (!n || (prefix.length() && (!bnn.startsWith(prefix)))) {
@@ -537,7 +540,7 @@ bool QCodeCompletionModel::match(QCodeNode *n,
           ((qualifiers & QCodeNode::QUALIFIER_CONST) &&
            !(filter & QCodeCompletionWidget::KeepConst)) ||
           ((filter & QCodeCompletionWidget::IsStatic) &&
-           (n->parent->type() != QCodeNode::Namespace)) ||
+           (n->parent()->type() != QCodeNode::Namespace)) ||
           (!(qualifiers & QCodeNode::QUALIFIER_CONST) &&
            (filter & QCodeCompletionWidget::IsConst)) ||
           (!qstrcmp(name, ctxt + cxt_off) &&

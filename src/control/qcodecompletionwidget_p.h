@@ -21,14 +21,14 @@
 #include <QAbstractListModel>
 #include <QPointer>
 
-struct QCodeNode;
+class QCodeNode;
 class QCodeModel;
 
 class QCodeCompletionModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
-    QCodeCompletionModel(QObject *p = 0);
+    QCodeCompletionModel(QObject *p = nullptr);
 
     void clear();
     void update();
@@ -53,7 +53,7 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
 signals:
-    void changed() const;
+    void changed();
 
     void prefixChanged(const QString &newPrefix);
     void filterChanged(QCodeCompletionWidget::Filter f);

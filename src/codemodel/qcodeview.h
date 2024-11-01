@@ -16,8 +16,6 @@
 #ifndef _QCODE_VIEW_H_
 #define _QCODE_VIEW_H_
 
-#include "qcm-config.h"
-
 /*!
         \file qcodeview.h
         \brief Definition of the QCodeView class.
@@ -27,7 +25,7 @@
 
 class QCodeModel;
 
-class QCM_EXPORT QCodeView : public QTreeView {
+class QCodeView : public QTreeView {
     Q_OBJECT
 
 public:

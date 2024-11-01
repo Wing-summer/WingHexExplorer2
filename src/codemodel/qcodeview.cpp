@@ -47,7 +47,7 @@ QCodeView::QCodeView(QCodeModel *m, QWidget *p) : QTreeView(p), m_model(0) {
     connect(this, SIGNAL(activated(QModelIndex)), this,
             SLOT(indexActivated(QModelIndex)));
 
-    setModel(m);
+    QCodeView::setModel(m);
 }
 
 QCodeView::~QCodeView() {}
@@ -114,9 +114,10 @@ void QCodeView::indexActivated(const QModelIndex &idx) {
                 break;
             }
         }
-    } else if (n->line != -1) {
-        emit actionRequested("open", QStringList() << cxt << "-l"
-                                                   << QString::number(n->line));
+    } else if (n->getLine() != -1) {
+        emit actionRequested("open", QStringList()
+                                         << cxt << "-l"
+                                         << QString::number(n->getLine()));
         return;
     }
 
@@ -132,20 +133,21 @@ void QCodeView::indexActivated(const QModelIndex &idx) {
     ptp = qn;
     rxp = QRegularExpression::escape(qn);
 
-    rxp.replace(
-        QRegularExpression("\\s*(::|\\\\[()\\[\\]{}|*$+.?^]|[,&<>])\\s*"),
-        "\\s*\\1\\s*");
+    static QRegularExpression rxp_r(
+        "\\s*(::|\\\\[()\\[\\]{}|*$+.?^]|[,&<>])\\s*");
+    rxp.replace(rxp_r, "\\s*\\1\\s*");
     rxp.replace(" ", "\\s+");
 
     i = rxp.indexOf("(");
 
     QString tmp = rxp.mid(i);
-    tmp.replace(
-        QRegularExpression("(\\\\s[+*])[\\w_]+\\\\s\\*(,|\\\\\\)\\\\s\\*$)"),
-        "\\1[\\w_]*\\s*\\2");
+    static QRegularExpression tmp_r(
+        "(\\\\s[+*])[\\w_]+\\\\s\\*(,|\\\\\\)\\\\s\\*$)");
+    tmp.replace(tmp_r, QStringLiteral("\\1[\\w_]*\\s*\\2"));
     rxp = rxp.left(i) + tmp;
 
-    ptp.replace(QRegularExpression(" (::|[()<>]) "), "\\1");
+    static QRegularExpression ptp_r(" (::|[()<>]) ");
+    ptp.replace(ptp_r, QStringLiteral("\\1"));
     i = ptp.indexOf("(");
 
     if (i != -1)

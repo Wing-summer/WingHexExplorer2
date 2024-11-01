@@ -16,15 +16,15 @@
 #ifndef _QCODE_NODE_H_
 #define _QCODE_NODE_H_
 
-#include "qcm-config.h"
-
 #include <QByteArray>
 #include <QList>
+#include <QMap>
 #include <QVariant>
 
 class QCodeModel;
 
-struct QCM_EXPORT QCodeNode {
+class QCodeNode {
+public:
     enum RoleIndex {
         NodeType = 0,
         Name = 1,
@@ -55,9 +55,8 @@ struct QCM_EXPORT QCodeNode {
         Context = -1
     };
 
-    enum DefaultNodeTypes {
+    enum DefaultNodeTypes : char {
         Group = 'g',
-        Language = 'l',
 
         Class = 'c',
         // Struct = 's',
@@ -113,29 +112,40 @@ public:
     QCodeNode();
     virtual ~QCodeNode();
 
-    void operator delete(void *p);
+    int type() const;
+    QByteArray context() const;
+    QByteArray qualifiedName(bool ext = false) const;
 
-    virtual int type() const;
-    virtual QByteArray context() const;
-    virtual QByteArray qualifiedName(bool language = true) const;
-
-    virtual QVariant data(int role) const;
-    virtual void setData(int role, const QVariant &v);
+    QVariant data(int role) const;
 
     QByteArray role(RoleIndex r) const;
     void setRole(RoleIndex r, const QByteArray &b);
 
-    virtual void clear();
-    virtual void removeAll();
+    QList<QCodeNode *> &children() { return _children; }
 
-    virtual void attach(QCodeNode *p);
-    virtual void detach();
+    void setNodeType(DefaultNodeTypes t);
 
-    int line;
-    QByteArray roles;
-    QCodeNode *parent;
-    QCodeModel *model;
-    QList<QCodeNode *> children;
+    void clear();
+    void removeAll();
+
+    void attach(QCodeNode *p);
+    void detach();
+
+    QCodeModel *model() const;
+    void setModel(QCodeModel *newModel);
+
+    QCodeNode *parent() const;
+    void setParent(QCodeNode *newParent);
+
+    int getLine() const;
+    void setLine(int newLine);
+
+private:
+    int line = -1;
+    QMap<RoleIndex, QByteArray> roles;
+    QCodeNode *_parent = nullptr;
+    QCodeModel *_model = nullptr;
+    QList<QCodeNode *> _children;
 };
 
 #endif // !_QCODE_NODE_H_

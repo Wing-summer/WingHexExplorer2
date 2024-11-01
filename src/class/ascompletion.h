@@ -1,13 +1,27 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #ifndef _AS_COMPLETION_H_
 #define _AS_COMPLETION_H_
 
-#include "angelscript.h"
-#include "control/qcodecompletionwidget.h"
+#include "class/qasparser.h"
 #include "qcodecompletionengine.h"
 
-#include <QHash>
-
-class QByteArray;
+class QCodeCompletionWidget;
 
 class AsCompletion : public QCodeCompletionEngine {
     Q_OBJECT
@@ -21,11 +35,14 @@ public:
     virtual QString language() const override;
     virtual QStringList extensions() const override;
 
+    virtual void setEditor(QEditor *e) override;
+
 protected:
     virtual void complete(const QDocumentCursor &c,
                           const QString &trigger) override;
 
 private:
+    QAsParser parser;
     asIScriptEngine *_engine;
     QCodeCompletionWidget *pPopup;
     QPointer<QCodeModel> pModel;

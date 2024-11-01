@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "wingangelapi.h"
 
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
@@ -28,13 +45,7 @@ WingAngelAPI::WingAngelAPI() {
     _fnbuffer.reserve(signalCount);
 }
 
-WingAngelAPI::~WingAngelAPI() {
-    for (auto &p : _fnbuffer) {
-        auto f = reinterpret_cast<std::function<void(void *)> *>(p);
-        delete f;
-    }
-    _fnbuffer.clear();
-}
+WingAngelAPI::~WingAngelAPI() { _fnbuffer.clear(); }
 
 int WingAngelAPI::sdkVersion() const { return WingHex::SDKVERSION; }
 
