@@ -24,7 +24,16 @@
 
 #include <QDebug>
 
+/*
+ * Completion only support: Internal classes, enums and methods,
+ *                          Standard libraries and included headers,
+ *                          global classes, enums and methods in opened codes
+ *
+ * If you want to make it more powerful, PR will be welcomed.
+ */
+
 QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
+    addClassCompletion(engine);
     addEnumCompletion(engine);
     addGlobalFunctionCompletion(engine);
 }
@@ -32,59 +41,6 @@ QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
 QAsParser::~QAsParser() {
     qDeleteAll(_headerNodes);
     _headerNodes.clear();
-}
-
-void QAsParser::processNode(asCScriptCode *code, asCScriptNode *raw,
-                            QCodeNode *node) {
-    Q_ASSERT(raw && node);
-
-    int row = -1;
-    if (code) {
-        code->ConvertPosToRowCol(raw->tokenPos, &row, nullptr);
-    }
-    node->setLine(row);
-
-    QByteArray ns; // namespace
-
-    switch (raw->nodeType) {
-    case snScript:
-        break;
-    case snNamespace:
-        break;
-    case snIdentifier: {
-        auto name = QByteArray(m_code->code + raw->tokenPos, raw->tokenLength);
-        node->setRole(QCodeNode::Name, name);
-
-#ifdef QT_DEBUG
-        qDebug() << name;
-#endif
-    } break;
-    case snDeclaration:
-        qDebug() << QByteArray(m_code->code + raw->tokenPos, raw->tokenLength);
-        break;
-    case snImport:
-    case snEnum:
-    case snTypedef:
-    case snClass:
-    case snMixin:
-    case snInterface:
-    case snFuncDef:
-    case snVirtualProperty:
-    case snVariableAccess:
-    case snFunction:
-    default:
-        break;
-    }
-
-    auto p = raw->firstChild;
-    while (p) {
-        auto cnode = new QCodeNode;
-        // cnode->parent = node;
-        processNode(code, p, cnode);
-        node->children().append(cnode);
-        p = p->next;
-    }
-    node->children().append(node);
 }
 
 QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
@@ -153,6 +109,33 @@ QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
             tmp.Format(" = %s", defaultArgs[n]->AddressOf());
             str += tmp;
         }
+    }
+
+    return QByteArray(str.AddressOf(), str.GetLength());
+}
+
+QByteArray QAsParser::getFnRealName(asIScriptFunction *fn) {
+    auto fun = dynamic_cast<asCScriptFunction *>(fn);
+    if (fun == nullptr) {
+        return {};
+    }
+
+    asCString str;
+    asCString name = fun->GetName();
+
+    if (name.GetLength() == 0)
+        str += "_unnamed_function_";
+    else if (name.SubString(0, 4) == "$beh" && name.GetLength() == 5) {
+        if (name[4] == '0' + asBEHAVE_CONSTRUCT)
+            str += fun->objectType->name;
+        else if (name[4] == '0' + asBEHAVE_FACTORY)
+            str += fun->returnType.GetTypeInfo()->name;
+        else if (name[4] == '0' + asBEHAVE_DESTRUCT)
+            str += "~" + fun->objectType->name;
+        else
+            str += name;
+    } else {
+        str = name;
     }
 
     return QByteArray(str.AddressOf(), str.GetLength());
@@ -236,13 +219,6 @@ const QList<QCodeNode *> &QAsParser::headerNodes() const {
 void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
-    struct FnInfo {
-        QByteArray retType;
-        QByteArray fnName;
-        QByteArray params;
-        bool isConst = false;
-    };
-
     QHash<QByteArray, QList<FnInfo>> _maps;
 
     for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); ++i) {
@@ -291,11 +267,6 @@ void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
 void QAsParser::addEnumCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
-    struct EnumInfo {
-        QByteArray name;
-        QList<QPair<QByteArray, int>> enums;
-    };
-
     QHash<QByteArray, QList<EnumInfo>> _maps;
 
     for (asUINT i = 0; i < engine->GetEnumCount(); ++i) {
@@ -329,51 +300,109 @@ void QAsParser::addEnumCompletion(asIScriptEngine *engine) {
 
         auto pnodes = &node->children();
         auto nodeParent = node;
-        for (auto &fn : p->second) {
+        for (auto &e : p->second) {
             auto node = new QCodeNode;
             node->setNodeType(QCodeNode::Enum);
+            node->setRole(QCodeNode::Name, e.name);
+            node->setParent(nodeParent);
+            pnodes->append(node);
+
+            auto enode = new QCodeNode;
+            _headerNodes << enode;
+            enode->setNodeType(QCodeNode::Enum);
+            enode->setRole(QCodeNode::Name, e.name);
+            for (auto &ev : e.enums) {
+                auto node = new QCodeNode;
+                node->setNodeType(QCodeNode::Enumerator);
+                node->setRole(QCodeNode::Name, ev.first);
+                QByteArray value;
+                value.setNum(ev.second);
+                node->setRole(QCodeNode::Value, value);
+                node->setParent(enode);
+                enode->children().append(node);
+            }
         }
     }
 }
 
 void QAsParser::addClassCompletion(asIScriptEngine *engine) {
-    Q_ASSERT(engine);
-
-    struct ClassInfo {
-        QByteArray name;
-        //
-    };
+    auto eng = dynamic_cast<asCScriptEngine *>(engine);
+    Q_ASSERT(eng);
 
     QHash<QByteArray, QList<ClassInfo>> _maps;
 
     for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
-        auto obj = engine->GetObjectTypeByIndex(i);
+        auto obj = eng->registeredObjTypes[i];
         obj->AddRef();
 
         ClassInfo cls;
-        cls.name = obj->GetNamespace();
+        cls.name = obj->GetName();
         auto ns = obj->GetNamespace();
 
         for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
             asEBehaviours bv;
             auto b = obj->GetBehaviourByIndex(i, &bv);
+
             switch (bv) {
             case asBEHAVE_CONSTRUCT:
-            case asBEHAVE_DESTRUCT:
+            case asBEHAVE_DESTRUCT: {
                 // only these are supported
-
+                b->AddRef();
+                FnInfo fn;
+                fn.fnName = getFnRealName(b);
+                fn.params = getFnParamDeclString(b, false, true);
+                fn.isConst = b->IsReadOnly();
+                cls.methods << fn;
+                b->Release();
+            }
             default:
                 continue;
             }
         }
 
         for (asUINT i = 0; i < obj->GetMethodCount(); ++i) {
-            auto m = obj->GetMethodByIndex(i);
+            auto m = obj->GetMethodByIndex(i, true);
+
+            m->AddRef();
+            FnInfo fn;
+            fn.retType = getFnRetTypeString(m, true);
+            fn.fnName = getFnRealName(m);
+            fn.params = getFnParamDeclString(m, false, true);
+            fn.isConst = m->IsReadOnly();
+            cls.methods << fn;
+            m->Release();
+        }
+
+        for (asUINT i = 0; i < obj->GetPropertyCount(); ++i) {
+            auto p = obj->properties[i];
+
+            PropertyInfo pi;
+            pi.name = QByteArray(p->name.AddressOf(), p->name.GetLength());
+            auto tn = p->type.Format(obj->nameSpace);
+            pi.type = QByteArray(tn.AddressOf(), tn.GetLength());
+            pi.isPrivate = pi.isPrivate;
+            pi.isProtected = pi.isProtected;
+            pi.isRef = pi.isRef;
+
+            cls.properties << pi;
         }
 
         obj->Release();
 
         _maps[ns] << cls;
+    }
+
+    for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
+        auto node = new QCodeNode;
+        _headerNodes << node;
+        if (p->first.isEmpty()) {
+            node->setNodeType(QCodeNode::Group);
+        } else {
+            node->setNodeType(QCodeNode::Namespace);
+        }
+        node->setRole(QCodeNode::Name, p->first);
+
+        // TODO
     }
 }
 

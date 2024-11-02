@@ -32,11 +32,38 @@ public:
     virtual ~QAsParser();
 
 private:
-    void processNode(asCScriptCode *code, asCScriptNode *raw, QCodeNode *node);
+    struct FnInfo {
+        QByteArray retType;
+        QByteArray fnName;
+        QByteArray params;
+        bool isConst = false;
+    };
 
+    struct EnumInfo {
+        QByteArray name;
+        QList<QPair<QByteArray, int>> enums;
+    };
+
+    struct PropertyInfo {
+        QByteArray name;
+        QByteArray type;
+        bool isProtected = false;
+        bool isPrivate = false;
+        bool isRef = false;
+    };
+
+    struct ClassInfo {
+        QByteArray name;
+        QList<FnInfo> methods;
+        QList<PropertyInfo> properties;
+    };
+
+private:
     QByteArray getFnParamDeclString(asIScriptFunction *fn,
                                     bool includeNamespace,
                                     bool includeParamNames);
+
+    QByteArray getFnRealName(asIScriptFunction *fn);
 
     QByteArray getFnRetTypeString(asIScriptFunction *fn, bool includeNamespace);
 
