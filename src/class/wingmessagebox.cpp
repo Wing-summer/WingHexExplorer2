@@ -59,7 +59,9 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
             "information.</p>")
             .arg(QStringLiteral("qt.io/licensing"), QStringLiteral("qt.io"));
 
-    auto msgbox = new QMessageBox(parent);
+    auto d = new FramelessDialogBase(parent);
+
+    auto msgbox = new QMessageBox;
     msgbox->setText(translatedTextAboutQtCaption);
     msgbox->setInformativeText(translatedTextAboutQtText);
 
@@ -69,20 +71,19 @@ void WingMessageBox::aboutQt(QWidget *parent, const QString &title) {
 
     msgbox->setWindowFlag(Qt::Widget);
 
-    FramelessDialogBase d(parent);
-    d.buildUpContent(msgbox);
-    d.setMaximumSize(0, 0);
-    d.setWindowTitle(title.isEmpty() ? QMessageBox::tr("About Qt") : title);
+    d->buildUpContent(msgbox);
+    d->setMaximumSize(0, 0);
+    d->setWindowTitle(title.isEmpty() ? QMessageBox::tr("About Qt") : title);
 
-    auto e = new EventFilter(QEvent::Resize, &d);
-    QObject::connect(e, &EventFilter::eventTriggered, &d,
-                     [&d] { Utilities::moveToCenter(&d); });
-    d.installEventFilter(e);
+    auto e = new EventFilter(QEvent::Resize, d);
+    QObject::connect(e, &EventFilter::eventTriggered, d,
+                     [d] { Utilities::moveToCenter(d); });
+    d->installEventFilter(e);
 
-    QObject::connect(msgbox, &QMessageBox::finished, &d,
+    QObject::connect(msgbox, &QMessageBox::finished, d,
                      &FramelessDialogBase::done);
 
-    d.exec();
+    d->exec();
 }
 
 QMessageBox::StandardButton

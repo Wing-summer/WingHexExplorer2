@@ -3948,8 +3948,8 @@ void QEditor::repaintCursor() {
 bool QEditor::isCursorVisible() const {
     QPoint pos = m_cursor.documentPosition();
 
-    const QRect cursor(pos.x(), pos.y(), 1,
-                       QDocument::fontMetrics().lineSpacing());
+    // const QRect cursor(pos.x(), pos.y(), 1,
+    //                    QDocument::fontMetrics().lineSpacing());
     const QRect display(horizontalOffset(), verticalOffset(),
                         viewport()->width(), viewport()->height());
 

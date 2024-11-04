@@ -21,8 +21,7 @@
 #include "qdocumentline.h"
 #include "qeditor.h"
 
-#include "codemodel/qcodemodel.h"
-#include "codemodel/qcodenode.h"
+#include "class/qcodenode.h"
 
 #include "class/ascompletion.h"
 
@@ -220,12 +219,20 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
     if (prefix.length() && txt.startsWith(prefix))
         txt.remove(0, prefix.length());
 
-    // c.insertText(txt);
+    if (m_begin.isValid() && c > m_begin) {
+        m_begin.movePosition(c.position() - m_begin.position(),
+                             QDocumentCursor::NextCharacter,
+                             QDocumentCursor::KeepAnchor);
+        m_begin.removeSelectedText();
+        m_begin = QDocumentCursor();
+    }
+
     e->write(txt);
 
     if (back) {
-        // TODO : move back generically...
-        // c.movePosition(1, QDocumentCursor::PreviousCharacter);
+        auto c = e->cursor();
+        c.movePosition(1, QDocumentCursor::PreviousCharacter);
+        e->setCursor(c);
     }
 
     e->setFocus();
@@ -366,8 +373,6 @@ void QCodeCompletionWidget::keyPressEvent(QKeyEvent *e) {
 
 ////////////////////////////////
 
-// static char *_q_authenticate_string = "x-application/QCodeCompletionModel";
-
 QCodeCompletionModel::QCodeCompletionModel(QObject *p)
     : QAbstractListModel(p), bUpdate(false) {}
 
@@ -416,7 +421,7 @@ void QCodeCompletionModel::forceUpdate() const {
 
             if (c->type() == QCodeNode::Enum) {
                 if (match(c, m_filter))
-                    for (QCodeNode *ev : c->children())
+                    for (auto &ev : c->children())
                         if (match(ev, m_filter, m_prefix))
                             m_visibles << ev;
             }

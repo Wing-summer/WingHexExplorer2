@@ -72,7 +72,7 @@ public:
     };
 
 public:
-    explicit RecentFileManager(QMenu *menu);
+    explicit RecentFileManager(QMenu *menu, bool fileNameOnly);
     ~RecentFileManager();
     void addRecentFile(const RecentInfo &info);
     void clearFile();
@@ -81,7 +81,7 @@ public:
     const QList<RecentInfo> &saveRecent() const;
 
 signals:
-    void triggered(const RecentInfo &rinfo);
+    void triggered(const RecentFileManager::RecentInfo &rinfo);
 
 private:
     bool existsPath(const RecentInfo &info);
@@ -93,6 +93,8 @@ private:
     QWidget *m_parent;
     QList<RecentInfo> m_recents;
     QList<QAction *> hitems;
+
+    bool _fileNameOnly;
 };
 
 Q_DECLARE_METATYPE(RecentFileManager::RecentInfo)

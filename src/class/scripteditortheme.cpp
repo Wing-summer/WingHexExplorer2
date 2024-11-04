@@ -103,7 +103,11 @@ bool ScriptEditorTheme::loadTheme(const QString &filename) {
 
                     if (readAttr(attr, QStringLiteral("fontfamily"),
                                  styleAttr)) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                        if (QFontDatabase::hasFamily(styleAttr)) {
+#else
                         if (QFontDatabase().hasFamily(styleAttr)) {
+#endif
                             scheme.fontFamily = styleAttr;
                         }
                     }

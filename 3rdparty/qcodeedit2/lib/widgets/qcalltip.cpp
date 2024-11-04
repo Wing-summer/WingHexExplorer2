@@ -1,17 +1,19 @@
-/****************************************************************************
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
 **
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
 **
-** This file is part of the Edyuk project <http://edyuk.org>
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
 **
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
 
 #include "qcalltip.h"
 
@@ -23,6 +25,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 
+#include <QToolTip>
+
 /*!
         \class QCallTip
         \brief A widget dedicated to calltips display
@@ -32,6 +36,11 @@ QCallTip::QCallTip(QWidget *p) : QWidget(p), m_index(0) {
     setCursor(Qt::ArrowCursor);
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_DeleteOnClose);
+
+    auto palette = QToolTip::palette();
+    _background = palette.color(QPalette::ToolTipBase);
+    _foreground = palette.color(QPalette::ToolTipText);
+    _borderColor = palette.color(QPalette::Shadow);
 }
 
 QCallTip::~QCallTip() {}
@@ -49,6 +58,8 @@ void QCallTip::paintEvent(QPaintEvent *e) {
     Q_UNUSED(e)
 
     QPainter p(this);
+    p.setOpacity(_opacity);
+
     QFontMetrics fm = fontMetrics();
 
     m_up = m_down = QRect();
@@ -66,20 +77,17 @@ void QCallTip::paintEvent(QPaintEvent *e) {
         bg.setWidth(bg.width() + arrowWidth);
     }
 
-    p.fillRect(bg, QColor(0xca, 0xff, 0x70));
+    p.fillRect(bg, _background);
     // p.drawRect(bg);
 
     p.save();
 
-    p.setPen(QColor(0x00, 0x00, 0x00));
+    p.setPen(_borderColor);
     p.drawLine(0, height() - 1, bg.width() - 1, height() - 1);
     p.drawLine(bg.width() - 1, height() - 1, bg.width() - 1, 0);
 
-    p.setPen(QColor(0xc0, 0xc0, 0xc0));
     p.drawLine(0, height() - 1, 0, 0);
     p.drawLine(0, 0, bg.width() - 1, 0);
-
-    p.restore();
 
     int top = height() / 3, bottom = height() - height() / 3;
 
@@ -107,7 +115,10 @@ void QCallTip::paintEvent(QPaintEvent *e) {
         offset += arrowWidth;
     }
 
+    p.setPen(_foreground);
     p.drawText(offset, fm.ascent() + 2, m_tips.at(m_index));
+
+    p.restore();
 
     setFixedSize(bg.size() + QSize(1, 1));
 }
@@ -124,7 +135,7 @@ void QCallTip::keyPressEvent(QKeyEvent *e) {
         return;
     }
 
-    QString prefix, text = e->text();
+    QString text = e->text();
 
     switch (e->key()) {
     case Qt::Key_Escape:
@@ -231,3 +242,39 @@ void QCallTip::mousePressEvent(QMouseEvent *e) {
 }
 
 void QCallTip::mouseReleaseEvent(QMouseEvent *e) { e->accept(); }
+
+qreal QCallTip::opacity() const { return _opacity; }
+
+void QCallTip::setOpacity(qreal newOpacity) {
+    if (qFuzzyCompare(_opacity, newOpacity))
+        return;
+    _opacity = newOpacity;
+    emit opacityChanged();
+}
+
+QColor QCallTip::borderColor() const { return _borderColor; }
+
+void QCallTip::setBorderColor(const QColor &newBorderColor) {
+    if (_borderColor == newBorderColor)
+        return;
+    _borderColor = newBorderColor;
+    emit borderColorChanged();
+}
+
+QColor QCallTip::foreground() const { return _foreground; }
+
+void QCallTip::setForeground(const QColor &newForeground) {
+    if (_foreground == newForeground)
+        return;
+    _foreground = newForeground;
+    emit foregroundChanged();
+}
+
+QColor QCallTip::background() const { return _background; }
+
+void QCallTip::setBackground(const QColor &newBackground) {
+    if (_background == newBackground)
+        return;
+    _background = newBackground;
+    emit backgroundChanged();
+}

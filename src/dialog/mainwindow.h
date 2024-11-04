@@ -30,7 +30,7 @@
 #include <QTextBrowser>
 #include <QToolButton>
 #include <QTreeView>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
@@ -434,6 +434,7 @@ private:
     ScriptingConsole *m_scriptConsole = nullptr;
     QTableViewExt *m_varshowtable = nullptr;
 
+    ads::CDockWidget *m_find = nullptr;
     QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findEmptyResult = nullptr;
 

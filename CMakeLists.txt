@@ -223,7 +223,9 @@ set(CLASS_SRC
     src/class/qdocumentsearch.cpp
     src/class/qdocumentsearch.h
     src/class/ascontextmgr.h
-    src/class/ascontextmgr.cpp)
+    src/class/ascontextmgr.cpp
+    src/class/qcodenode.cpp
+    src/class/qcodenode.h)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -301,18 +303,6 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qformatconfig.h
     src/qcodeeditwidget/qformatconfig.cpp
     src/qcodeeditwidget/qformatconfig.ui)
-
-set(CODE_MODEL
-    src/codemodel/qcodemodel.cpp
-    src/codemodel/qcodemodel.h
-    src/codemodel/qcodenode.cpp
-    src/codemodel/qcodenode.h
-    src/codemodel/qcodeproxymodel.cpp
-    src/codemodel/qcodeproxymodel.h
-    src/codemodel/qcodeview.cpp
-    src/codemodel/qcodeview.h
-    src/codemodel/qsourcecodewatcher.cpp
-    src/codemodel/qsourcecodewatcher.h)
 
 set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
                src/plugin/pluginsystem.h src/plugin/settingpage.h)
@@ -408,7 +398,6 @@ set(PROJECT_SOURCES
     src/dbghelper.h
     ${QPATHEDIT_SRC}
     ${WIDGET_FRAME_SRC}
-    ${CODE_MODEL}
     ${RIBBON_SRC}
     ${CLASS_SRC}
     ${MODEL_SRC}

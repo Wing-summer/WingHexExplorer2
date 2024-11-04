@@ -19,7 +19,7 @@
 #include <QListView>
 #include <QPointer>
 
-#include "codemodel/qcodenode.h"
+#include "class/qcodenode.h"
 #include "qdocumentcursor.h"
 #include "qeditor.h"
 

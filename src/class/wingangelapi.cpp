@@ -1316,30 +1316,32 @@ bool WingAngelAPI::read2Ref(qsizetype offset, void *ref, int typeId) {
         if (typeId == asTYPEID_VOID)
             return false;
         else if (typeId == asTYPEID_BOOL)
-            *reinterpret_cast<bool *>(ref) = (reader.readInt8(offset) != 0);
+            *reinterpret_cast<bool *>(ref) =
+                (emit reader.readInt8(offset) != 0);
         else if (typeId == asTYPEID_INT8)
-            *reinterpret_cast<qint8 *>(ref) = reader.readInt8(offset);
+            *reinterpret_cast<qint8 *>(ref) = emit reader.readInt8(offset);
         else if (typeId == asTYPEID_INT16)
-            *reinterpret_cast<qint16 *>(ref) = reader.readInt16(offset);
+            *reinterpret_cast<qint16 *>(ref) = emit reader.readInt16(offset);
         else if (typeId == asTYPEID_INT32)
-            *reinterpret_cast<qint32 *>(ref) = reader.readInt32(offset);
+            *reinterpret_cast<qint32 *>(ref) = emit reader.readInt32(offset);
         else if (typeId == asTYPEID_INT64)
-            *reinterpret_cast<qint64 *>(ref) = reader.readInt64(offset);
+            *reinterpret_cast<qint64 *>(ref) = emit reader.readInt64(offset);
         else if (typeId == asTYPEID_UINT8)
-            *reinterpret_cast<quint8 *>(ref) = quint8(reader.readInt8(offset));
+            *reinterpret_cast<quint8 *>(ref) =
+                quint8(emit reader.readInt8(offset));
         else if (typeId == asTYPEID_UINT16)
             *reinterpret_cast<quint16 *>(ref) =
-                quint16(reader.readInt16(offset));
+                quint16(emit reader.readInt16(offset));
         else if (typeId == asTYPEID_UINT32)
             *reinterpret_cast<quint32 *>(ref) =
-                quint32(reader.readInt32(offset));
+                quint32(emit reader.readInt32(offset));
         else if (typeId == asTYPEID_UINT64)
             *reinterpret_cast<quint64 *>(ref) =
-                quint64(reader.readInt64(offset));
+                quint64(emit reader.readInt64(offset));
         else if (typeId == asTYPEID_FLOAT)
-            *reinterpret_cast<float *>(ref) = reader.readFloat(offset);
+            *reinterpret_cast<float *>(ref) = emit reader.readFloat(offset);
         else if (typeId == asTYPEID_DOUBLE)
-            *reinterpret_cast<double *>(ref) = reader.readDouble(offset);
+            *reinterpret_cast<double *>(ref) = emit reader.readDouble(offset);
         else if ((typeId & asTYPEID_MASK_OBJECT) == 0) {
             bool ok = false;
             // Check if the value matches one of the defined enums
@@ -1391,7 +1393,7 @@ bool WingAngelAPI::read2Ref(qsizetype offset, void *ref, int typeId) {
                     // TODO support other type, now only string
                     if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
                         *reinterpret_cast<QString *>(value) =
-                            reader.readString(offset);
+                            emit reader.readString(offset);
                     }
                 }
             }
@@ -1492,22 +1494,26 @@ bool WingAngelAPI::_HexReader_write(qsizetype offset, void *ref, int typeId) {
         if (typeId == asTYPEID_VOID)
             return false;
         else if (typeId == asTYPEID_BOOL)
-            controller.writeInt8(offset,
-                                 *reinterpret_cast<bool *>(ref) ? 1 : 0);
+            emit controller.writeInt8(offset,
+                                      *reinterpret_cast<bool *>(ref) ? 1 : 0);
         else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            controller.writeInt8(offset, *reinterpret_cast<qint8 *>(ref));
+            emit controller.writeInt8(offset, *reinterpret_cast<qint8 *>(ref));
         else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            controller.writeInt16(offset, *reinterpret_cast<qint16 *>(ref));
+            emit controller.writeInt16(offset,
+                                       *reinterpret_cast<qint16 *>(ref));
         else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            controller.writeInt32(offset, *reinterpret_cast<qint32 *>(ref));
+            emit controller.writeInt32(offset,
+                                       *reinterpret_cast<qint32 *>(ref));
         else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            controller.writeInt64(offset, *reinterpret_cast<qint64 *>(ref));
+            emit controller.writeInt64(offset,
+                                       *reinterpret_cast<qint64 *>(ref));
         else if (typeId == asTYPEID_FLOAT)
-            controller.writeFloat(offset, *reinterpret_cast<float *>(ref));
+            emit controller.writeFloat(offset, *reinterpret_cast<float *>(ref));
         else if (typeId == asTYPEID_DOUBLE)
-            controller.writeDouble(offset, *reinterpret_cast<double *>(ref));
+            emit controller.writeDouble(offset,
+                                        *reinterpret_cast<double *>(ref));
         else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            controller.writeInt32(offset, *reinterpret_cast<int *>(ref));
+            emit controller.writeInt32(offset, *reinterpret_cast<int *>(ref));
         else if (typeId & asTYPEID_SCRIPTOBJECT) {
             // Dereference handles, so we can see what it points to
             void *value = ref;
@@ -1520,7 +1526,7 @@ bool WingAngelAPI::_HexReader_write(qsizetype offset, void *ref, int typeId) {
                     int enumVal;
                     t->GetEnumValueByIndex(n, &enumVal);
                     if (enumVal == *(int *)value) {
-                        controller.writeInt32(offset, enumVal);
+                        emit controller.writeInt32(offset, enumVal);
                         break;
                     }
                 }
@@ -1537,7 +1543,7 @@ bool WingAngelAPI::_HexReader_write(qsizetype offset, void *ref, int typeId) {
                 if (value) {
                     // TODO support other type, now only string
                     if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        controller.writeString(
+                        emit controller.writeString(
                             offset, *reinterpret_cast<QString *>(value));
                     }
                 }
@@ -1557,22 +1563,27 @@ bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
         if (typeId == asTYPEID_VOID)
             return false;
         else if (typeId == asTYPEID_BOOL)
-            controller.insertInt8(offset,
-                                  *reinterpret_cast<bool *>(ref) ? 1 : 0);
+            emit controller.insertInt8(offset,
+                                       *reinterpret_cast<bool *>(ref) ? 1 : 0);
         else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            controller.insertInt8(offset, *reinterpret_cast<qint8 *>(ref));
+            emit controller.insertInt8(offset, *reinterpret_cast<qint8 *>(ref));
         else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            controller.insertInt16(offset, *reinterpret_cast<qint16 *>(ref));
+            emit controller.insertInt16(offset,
+                                        *reinterpret_cast<qint16 *>(ref));
         else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            controller.insertInt32(offset, *reinterpret_cast<qint32 *>(ref));
+            emit controller.insertInt32(offset,
+                                        *reinterpret_cast<qint32 *>(ref));
         else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            controller.insertInt64(offset, *reinterpret_cast<qint64 *>(ref));
+            emit controller.insertInt64(offset,
+                                        *reinterpret_cast<qint64 *>(ref));
         else if (typeId == asTYPEID_FLOAT)
-            controller.insertFloat(offset, *reinterpret_cast<float *>(ref));
+            emit controller.insertFloat(offset,
+                                        *reinterpret_cast<float *>(ref));
         else if (typeId == asTYPEID_DOUBLE)
-            controller.insertDouble(offset, *reinterpret_cast<double *>(ref));
+            emit controller.insertDouble(offset,
+                                         *reinterpret_cast<double *>(ref));
         else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            controller.insertInt32(offset, *reinterpret_cast<int *>(ref));
+            emit controller.insertInt32(offset, *reinterpret_cast<int *>(ref));
         else if (typeId & asTYPEID_SCRIPTOBJECT) {
             // Dereference handles, so we can see what it points to
             void *value = ref;
@@ -1585,7 +1596,7 @@ bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
                     int enumVal;
                     t->GetEnumValueByIndex(n, &enumVal);
                     if (enumVal == *(int *)value) {
-                        controller.insertInt32(offset, enumVal);
+                        emit controller.insertInt32(offset, enumVal);
                         break;
                     }
                 }
@@ -1602,7 +1613,7 @@ bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
                 if (value) {
                     // TODO support other type, now only string
                     if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        controller.insertString(
+                        emit controller.insertString(
                             offset, *reinterpret_cast<QString *>(value));
                     }
                 }
@@ -1622,21 +1633,21 @@ bool WingAngelAPI::_HexReader_append(qsizetype offset, void *ref, int typeId) {
         if (typeId == asTYPEID_VOID)
             return false;
         else if (typeId == asTYPEID_BOOL)
-            controller.appendInt8(*reinterpret_cast<bool *>(ref) ? 1 : 0);
+            emit controller.appendInt8(*reinterpret_cast<bool *>(ref) ? 1 : 0);
         else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            controller.appendInt8(*reinterpret_cast<qint8 *>(ref));
+            emit controller.appendInt8(*reinterpret_cast<qint8 *>(ref));
         else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            controller.appendInt16(*reinterpret_cast<qint16 *>(ref));
+            emit controller.appendInt16(*reinterpret_cast<qint16 *>(ref));
         else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            controller.appendInt32(*reinterpret_cast<qint32 *>(ref));
+            emit controller.appendInt32(*reinterpret_cast<qint32 *>(ref));
         else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            controller.appendInt64(*reinterpret_cast<qint64 *>(ref));
+            emit controller.appendInt64(*reinterpret_cast<qint64 *>(ref));
         else if (typeId == asTYPEID_FLOAT)
-            controller.appendFloat(*reinterpret_cast<float *>(ref));
+            emit controller.appendFloat(*reinterpret_cast<float *>(ref));
         else if (typeId == asTYPEID_DOUBLE)
-            controller.appendDouble(*reinterpret_cast<double *>(ref));
+            emit controller.appendDouble(*reinterpret_cast<double *>(ref));
         else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            controller.appendInt32(*reinterpret_cast<int *>(ref));
+            emit controller.appendInt32(*reinterpret_cast<int *>(ref));
         else if (typeId & asTYPEID_SCRIPTOBJECT) {
             // Dereference handles, so we can see what it points to
             void *value = ref;
@@ -1649,7 +1660,7 @@ bool WingAngelAPI::_HexReader_append(qsizetype offset, void *ref, int typeId) {
                     int enumVal;
                     t->GetEnumValueByIndex(n, &enumVal);
                     if (enumVal == *(int *)value) {
-                        controller.appendInt32(enumVal);
+                        emit controller.appendInt32(enumVal);
                         break;
                     }
                 }
@@ -1666,7 +1677,7 @@ bool WingAngelAPI::_HexReader_append(qsizetype offset, void *ref, int typeId) {
                 if (value) {
                     // TODO support other type, now only string
                     if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        controller.appendString(
+                        emit controller.appendString(
                             *reinterpret_cast<QString *>(value));
                     }
                 }
@@ -1853,7 +1864,7 @@ bool WingAngelAPI::_DataVisual_updateTextList(int stringID,
     bool o = false;
     auto ret = cArray2QStringList(data, stringID, &o);
     if (o) {
-        return visual.updateTextList(ret);
+        return emit visual.updateTextList(ret);
     } else {
         return false;
     }
@@ -1867,7 +1878,7 @@ bool WingAngelAPI::_DataVisual_updateTextTable(
     if (o) {
         auto hn = cArray2QStringList(headerNames, stringID, &o);
         if (o) {
-            return visual.updateTextTable(json, h, hn);
+            return emit visual.updateTextTable(json, h, hn);
         } else {
             return false;
         }

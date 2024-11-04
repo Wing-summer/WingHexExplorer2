@@ -81,6 +81,11 @@ private:
     void addClassCompletion(asIScriptEngine *engine);
 
 private:
+    QCodeNode *newFnCodeNode(const FnInfo &info);
+
+    QCodeNode *newEnumCodeNode(const EnumInfo &info);
+
+private:
     asIScriptEngine *_engine;
     QScopedPointer<asCScriptCode> m_code;
     QList<QCodeNode *> _headerNodes;

@@ -70,7 +70,7 @@ unsigned int asBuilder::GetSectionCount() const {
 }
 
 QString asBuilder::GetSectionName(unsigned int idx) const {
-    if (idx >= includedScripts.size())
+    if (qsizetype(idx) >= qsizetype(includedScripts.size()))
         return {};
 
     return includedScripts.at(idx);
@@ -189,12 +189,12 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
     // shouldn't be compiled
     unsigned int pos = 0;
     int nested = 0;
-    while (pos < modifiedScript.size()) {
+    while (qsizetype(pos) < modifiedScript.size()) {
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
         if (t == asTC_UNKNOWN && modifiedScript[pos] == '#' &&
-            (pos + 1 < modifiedScript.size())) {
+            (qsizetype(pos) + 1 < modifiedScript.size())) {
             int start = pos++;
 
             // Is this an #if directive?
@@ -251,7 +251,7 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
 
     // Then check for meta data and pre-processor directives
     pos = 0;
-    while (pos < modifiedScript.size()) {
+    while (qsizetype(pos) < modifiedScript.size()) {
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
@@ -276,7 +276,7 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
             // Get the identifier after "class"
             do {
                 pos += len;
-                if (pos >= modifiedScript.size()) {
+                if (qsizetype(pos) >= modifiedScript.size()) {
                     t = asTC_UNKNOWN;
                     break;
                 }
@@ -288,7 +288,7 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                 currentClass = modifiedScript.mid(pos, len);
 
                 // Search until first { or ; is encountered
-                while (pos < modifiedScript.length()) {
+                while (qsizetype(pos) < modifiedScript.length()) {
                     engine->ParseToken(modifiedScript.data() + pos,
                                        modifiedScript.size() - pos, &len);
 
@@ -340,7 +340,7 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                 (t == asTC_KEYWORD && modifiedScript.mid(pos, len) == "::"));
 
             // Search until first { is encountered
-            while (pos < modifiedScript.length()) {
+            while (qsizetype(pos) < modifiedScript.length()) {
                 engine->ParseToken(modifiedScript.data() + pos,
                                    modifiedScript.size() - pos, &len);
 
@@ -359,7 +359,7 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
 
         // Check if end of namespace
         if (currentNamespace != "" && token == "}") {
-            size_t found = currentNamespace.lastIndexOf("::");
+            auto found = currentNamespace.lastIndexOf("::");
             if (found >= 0) {
                 currentNamespace.remove(found, currentNamespace.size() - found);
             } else {
@@ -388,39 +388,85 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
         } else
 #endif
             // Is this a preprocessor directive?
-            if (token == "#" && (pos + 1 < modifiedScript.size())) {
-                int start = pos++;
+            if (token == "#" && (qsizetype(pos + 1) < modifiedScript.size())) {
+            int start = pos++;
 
-                t = engine->ParseToken(modifiedScript.data() + pos,
-                                       modifiedScript.size() - pos, &len);
-                if (t == asTC_IDENTIFIER) {
-                    token = modifiedScript.mid(pos, len);
-                    if (token == "include") {
+            t = engine->ParseToken(modifiedScript.data() + pos,
+                                   modifiedScript.size() - pos, &len);
+            if (t == asTC_IDENTIFIER) {
+                token = modifiedScript.mid(pos, len);
+                if (token == "include") {
+                    pos += len;
+                    t = engine->ParseToken(modifiedScript.data() + pos,
+                                           modifiedScript.size() - pos, &len);
+                    if (t == asTC_WHITESPACE) {
                         pos += len;
                         t = engine->ParseToken(modifiedScript.data() + pos,
                                                modifiedScript.size() - pos,
                                                &len);
-                        if (t == asTC_WHITESPACE) {
-                            pos += len;
-                            t = engine->ParseToken(modifiedScript.data() + pos,
-                                                   modifiedScript.size() - pos,
-                                                   &len);
+                    }
+
+                    if (t == asTC_VALUE && len > 2 &&
+                        (modifiedScript[pos] == '"' ||
+                         modifiedScript[pos] == '\'')) {
+                        // Get the include file
+                        QString includefile =
+                            modifiedScript.mid(pos + 1, len - 2);
+                        pos += len;
+
+                        // Make sure the includeFile doesn't contain any
+                        // line breaks
+                        auto p = includefile.indexOf('\n');
+                        if (p >= 0) {
+                            // TODO: Show the correct line number for the
+                            // error
+                            auto str =
+                                QObject::tr("Invalid file name for #include; "
+                                            "it contains a line-break: ") +
+                                QStringLiteral("'") + includefile.left(p) +
+                                QStringLiteral("'");
+                            engine->WriteMessage(sectionname.toUtf8(), 0, 0,
+                                                 asMSGTYPE_ERROR, str.toUtf8());
+                        } else {
+                            // Store it for later processing
+                            includes.append({includefile, true});
+
+                            // Overwrite the include directive with space
+                            // characters to avoid compiler error
+                            OverwriteCode(start, pos - start);
+                        }
+                    }
+
+                    if (t == asTC_KEYWORD && modifiedScript[pos] == '<') {
+                        pos += len;
+
+                        // find the next '>'
+                        auto rpos = pos;
+                        bool found = false;
+                        for (; qsizetype(rpos) < modifiedScript.size();
+                             ++rpos) {
+                            if (modifiedScript[rpos] == '>') {
+                                found = true;
+                                break;
+                            }
+                            if (modifiedScript[rpos] == '\n') {
+                                break;
+                            }
                         }
 
-                        if (t == asTC_VALUE && len > 2 &&
-                            (modifiedScript[pos] == '"' ||
-                             modifiedScript[pos] == '\'')) {
-                            // Get the include file
+                        if (found) {
                             QString includefile =
-                                modifiedScript.mid(pos + 1, len - 2);
-                            pos += len;
+                                modifiedScript.mid(pos, rpos - pos).trimmed();
+
+                            pos = rpos + 1;
 
                             // Make sure the includeFile doesn't contain any
                             // line breaks
                             auto p = includefile.indexOf('\n');
-                            if (p >= 0) {
-                                // TODO: Show the correct line number for the
-                                // error
+                            auto ws = includefile.indexOf(' ');
+                            if (!includefile.isEmpty() && p >= 0 && ws >= 0) {
+                                // TODO: Show the correct line number for
+                                // the error
                                 auto str =
                                     QObject::tr(
                                         "Invalid file name for #include; "
@@ -432,124 +478,70 @@ int asBuilder::ProcessScriptSection(const QByteArray &script, int length,
                                                      str.toUtf8());
                             } else {
                                 // Store it for later processing
-                                includes.append({includefile, true});
+                                includes.append({includefile, false});
 
-                                // Overwrite the include directive with space
-                                // characters to avoid compiler error
+                                // Overwrite the include directive with
+                                // space characters to avoid compiler error
                                 OverwriteCode(start, pos - start);
                             }
+                        } else {
+                            auto str =
+                                QObject::tr("Invalid file name for #include; "
+                                            "it contains a line-break or "
+                                            "unpaired symbol");
+                            engine->WriteMessage(sectionname.toUtf8(), 0, 0,
+                                                 asMSGTYPE_ERROR, str.toUtf8());
                         }
+                    }
+                } else if (token == "pragma") {
+                    // Read until the end of the line
+                    pos += len;
+                    for (; qsizetype(pos) < modifiedScript.size() &&
+                           modifiedScript[pos] != '\n';
+                         pos++)
+                        ;
 
-                        if (t == asTC_KEYWORD && modifiedScript[pos] == '<') {
-                            pos += len;
-
-                            // find the next '>'
-                            auto rpos = pos;
-                            bool found = false;
-                            for (; rpos < modifiedScript.size(); ++rpos) {
-                                if (modifiedScript[rpos] == '>') {
-                                    found = true;
-                                    break;
-                                }
-                                if (modifiedScript[rpos] == '\n') {
-                                    break;
-                                }
-                            }
-
-                            if (found) {
-                                QString includefile =
-                                    modifiedScript.mid(pos, rpos - pos)
-                                        .trimmed();
-
-                                pos = rpos + 1;
-
-                                // Make sure the includeFile doesn't contain any
-                                // line breaks
-                                auto p = includefile.indexOf('\n');
-                                auto ws = includefile.indexOf(' ');
-                                if (!includefile.isEmpty() && p >= 0 &&
-                                    ws >= 0) {
-                                    // TODO: Show the correct line number for
-                                    // the error
-                                    auto str =
-                                        QObject::tr(
-                                            "Invalid file name for #include; "
-                                            "it contains a line-break: ") +
-                                        QStringLiteral("'") +
-                                        includefile.left(p) +
-                                        QStringLiteral("'");
-                                    engine->WriteMessage(sectionname.toUtf8(),
-                                                         0, 0, asMSGTYPE_ERROR,
-                                                         str.toUtf8());
-                                } else {
-                                    // Store it for later processing
-                                    includes.append({includefile, false});
-
-                                    // Overwrite the include directive with
-                                    // space characters to avoid compiler error
-                                    OverwriteCode(start, pos - start);
-                                }
-                            } else {
-                                auto str = QObject::tr(
-                                    "Invalid file name for #include; "
-                                    "it contains a line-break or "
-                                    "unpaired symbol");
-                                engine->WriteMessage(sectionname.toUtf8(), 0, 0,
-                                                     asMSGTYPE_ERROR,
-                                                     str.toUtf8());
-                            }
-                        }
-                    } else if (token == "pragma") {
-                        // Read until the end of the line
-                        pos += len;
-                        for (; pos < modifiedScript.size() &&
-                               modifiedScript[pos] != '\n';
-                             pos++)
-                            ;
-
-                        // Call the pragma callback
-                        auto pragmaText =
-                            modifiedScript.mid(start + 7, pos - start - 7);
-                        int r =
-                            pragmaCallback
+                    // Call the pragma callback
+                    auto pragmaText =
+                        modifiedScript.mid(start + 7, pos - start - 7);
+                    int r = pragmaCallback
                                 ? pragmaCallback(pragmaText, this, pragmaParam)
                                 : -1;
-                        if (r < 0) {
-                            // TODO: Report the correct line number
-                            engine->WriteMessage(
-                                sectionname.toUtf8(), 0, 0, asMSGTYPE_ERROR,
-                                QObject::tr("Invalid #pragma directive")
-                                    .toUtf8());
-                            return r;
-                        }
-
-                        // Overwrite the pragma directive with space characters
-                        // to avoid compiler error
-                        OverwriteCode(start, pos - start);
+                    if (r < 0) {
+                        // TODO: Report the correct line number
+                        engine->WriteMessage(
+                            sectionname.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+                            QObject::tr("Invalid #pragma directive").toUtf8());
+                        return r;
                     }
-                } else {
-                    // Check for lines starting with #!, e.g. shebang
-                    // interpreter directive. These will be treated as comments
-                    // and removed by the preprocessor
-                    if (modifiedScript[pos] == '!') {
-                        // Read until the end of the line
-                        pos += len;
-                        for (; pos < modifiedScript.size() &&
-                               modifiedScript[pos] != '\n';
-                             pos++)
-                            ;
 
-                        // Overwrite the directive with space characters to
-                        // avoid compiler error
-                        OverwriteCode(start, pos - start);
-                    }
+                    // Overwrite the pragma directive with space characters
+                    // to avoid compiler error
+                    OverwriteCode(start, pos - start);
+                }
+            } else {
+                // Check for lines starting with #!, e.g. shebang
+                // interpreter directive. These will be treated as comments
+                // and removed by the preprocessor
+                if (modifiedScript[pos] == '!') {
+                    // Read until the end of the line
+                    pos += len;
+                    for (; qsizetype(pos) < modifiedScript.size() &&
+                           modifiedScript[pos] != '\n';
+                         pos++)
+                        ;
+
+                    // Overwrite the directive with space characters to
+                    // avoid compiler error
+                    OverwriteCode(start, pos - start);
                 }
             }
-            // Don't search for metadata/includes within statement blocks or
-            // between tokens in statements
-            else {
-                pos = SkipStatement(pos);
-            }
+        }
+        // Don't search for metadata/includes within statement blocks or
+        // between tokens in statements
+        else {
+            pos = SkipStatement(pos);
+        }
     }
 
     // Build the actual script

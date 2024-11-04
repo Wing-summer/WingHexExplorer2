@@ -74,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
 
     // recent file manager init
     m_recentMenu = new QMenu(this);
-    m_recentmanager = new RecentFileManager(m_recentMenu);
+    m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
                 AppManager::instance()->openFile(
@@ -153,12 +153,14 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
             [this](int v) {
-                for (auto &p : m_views.keys()) {
+                auto views = m_views.keys();
+                for (auto &p : views) {
                     p->setFontSize(qreal(v));
                 }
             });
     connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
-        for (auto &p : m_views.keys()) {
+        auto views = m_views.keys();
+        for (auto &p : views) {
             p->setCopyLimit(v);
         }
     });
@@ -390,6 +392,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
 
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
                               tr("FindResult"), m_findresult);
+    m_find = dw;
+
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -459,8 +463,6 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    QStringList hashNames = Utilities::supportedHashAlgorithmStringList();
-
     m_hashtable = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_hashtable);
     m_hashtable->setColumnWidth(0, 350);
@@ -1415,7 +1417,6 @@ void MainWindow::on_saveas() {
         }
     }
 
-    auto oldFileName = editor->fileName();
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
@@ -1628,6 +1629,7 @@ void MainWindow::on_findfile() {
                                  tr("MayTooMuchFindResult"));
                     break;
                 }
+                m_find->raise();
             });
     }
 }
@@ -2277,7 +2279,8 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 }
 
 EditorView *MainWindow::findEditorView(const QString &filename) {
-    for (auto &p : m_views.keys()) {
+    auto views = m_views.keys();
+    for (auto &p : views) {
 #ifdef Q_OS_WIN
         if (p->fileName().compare(filename, Qt::CaseInsensitive) == 0) {
 #else
@@ -2801,7 +2804,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                       this, qAppName(), tr("ConfirmAPPSave"),
                       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
         if (ret == QMessageBox::Yes) {
-            for (auto &p : m_views.keys()) {
+            auto views = m_views.keys();
+            for (auto &p : views) {
                 emit p->closeRequested();
             }
             m_isOnClosing = false;
@@ -2810,7 +2814,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                 return;
             }
         } else if (ret == QMessageBox::No) {
-            for (auto &p : m_views.keys()) {
+            auto views = m_views.keys();
+            for (auto &p : views) {
                 p->closeDockWidget(); // force close
             }
             m_isOnClosing = false;

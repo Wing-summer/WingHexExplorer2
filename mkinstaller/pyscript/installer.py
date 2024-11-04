@@ -161,7 +161,7 @@ def update(build_path):
     run_command_interactive(
         ["xdg-icon-resource", "forceupdate"])
     run_command_interactive(
-        ["update-icon-caches", "/usr/share/icons/hicolor"])
+        ["gtk-update-icon-caches", "/usr/share/icons/hicolor"])
     run_command_interactive(
         ["update-desktop-database", "/usr/share/applications"])
     print(Fore.GREEN + ">> Installation finished..." + Style.RESET_ALL)

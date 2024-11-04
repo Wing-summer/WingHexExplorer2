@@ -19,8 +19,7 @@
 
 #include "AngelScript/sdk/angelscript/source/as_builder.h"
 #include "AngelScript/sdk/angelscript/source/as_parser.h"
-#include "codemodel/qcodemodel.h"
-#include "codemodel/qcodenode.h"
+#include "class/qcodenode.h"
 
 #include <QDebug>
 
@@ -33,9 +32,9 @@
  */
 
 QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
+    addGlobalFunctionCompletion(engine);
     addClassCompletion(engine);
     addEnumCompletion(engine);
-    addGlobalFunctionCompletion(engine);
 }
 
 QAsParser::~QAsParser() {
@@ -248,16 +247,7 @@ void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         auto nodeParent = node;
 
         for (auto &fn : p->second) {
-            auto node = new QCodeNode;
-            node->setNodeType(QCodeNode::Function);
-            node->setRole(QCodeNode::Return, fn.retType);
-            node->setRole(QCodeNode::Name, fn.fnName);
-            node->setRole(QCodeNode::Arguments, fn.params);
-            QByteArray qualifiers;
-            if (fn.isConst) {
-                qualifiers.setNum(QCodeNode::QUALIFIER_CONST);
-            }
-            node->setRole(QCodeNode::Qualifiers, qualifiers);
+            auto node = newFnCodeNode(fn);
             node->setParent(nodeParent);
             pnodes->append(node);
         }
@@ -307,20 +297,8 @@ void QAsParser::addEnumCompletion(asIScriptEngine *engine) {
             node->setParent(nodeParent);
             pnodes->append(node);
 
-            auto enode = new QCodeNode;
+            auto enode = newEnumCodeNode(e);
             _headerNodes << enode;
-            enode->setNodeType(QCodeNode::Enum);
-            enode->setRole(QCodeNode::Name, e.name);
-            for (auto &ev : e.enums) {
-                auto node = new QCodeNode;
-                node->setNodeType(QCodeNode::Enumerator);
-                node->setRole(QCodeNode::Name, ev.first);
-                QByteArray value;
-                value.setNum(ev.second);
-                node->setRole(QCodeNode::Value, value);
-                node->setParent(enode);
-                enode->children().append(node);
-            }
         }
     }
 }
@@ -402,8 +380,78 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
         }
         node->setRole(QCodeNode::Name, p->first);
 
-        // TODO
+        auto pnodes = &node->children();
+        auto nodeParent = node;
+        for (auto &cls : p->second) {
+            auto node = new QCodeNode;
+            node->setNodeType(QCodeNode::Class);
+            node->setRole(QCodeNode::Name, cls.name);
+            node->setParent(nodeParent);
+            pnodes->append(node);
+
+            auto clsnode = new QCodeNode;
+            _headerNodes << clsnode;
+            clsnode->setNodeType(QCodeNode::Class);
+            clsnode->setRole(QCodeNode::Name, cls.name);
+            for (auto &m : cls.methods) {
+                auto node = newFnCodeNode(m);
+                node->setParent(clsnode);
+                clsnode->children().append(node);
+            }
+
+            for (auto &p : cls.properties) {
+                auto node = new QCodeNode;
+                node->setNodeType(QCodeNode::Variable);
+                node->setRole(QCodeNode::Name, p.name);
+                node->setRole(QCodeNode::Type, p.type);
+
+                QByteArray visibility;
+                if (p.isPrivate) {
+                    visibility.setNum(QCodeNode::VISIBILITY_PRIVATE);
+                } else if (p.isProtected) {
+                    visibility.setNum(QCodeNode::VISIBILITY_PROTECTED);
+                } else {
+                    visibility.setNum(QCodeNode::VISIBILITY_PUBLIC);
+                }
+
+                node->setRole(QCodeNode::Visibility, visibility);
+                node->setParent(clsnode);
+                clsnode->children().append(node);
+            }
+        }
     }
+}
+
+QCodeNode *QAsParser::newFnCodeNode(const FnInfo &info) {
+    auto node = new QCodeNode;
+    node->setNodeType(QCodeNode::Function);
+    node->setNodeType(QCodeNode::Function);
+    node->setRole(QCodeNode::Return, info.retType);
+    node->setRole(QCodeNode::Name, info.fnName);
+    node->setRole(QCodeNode::Arguments, info.params);
+    QByteArray qualifiers;
+    if (info.isConst) {
+        qualifiers.setNum(QCodeNode::QUALIFIER_CONST);
+    }
+    node->setRole(QCodeNode::Qualifiers, qualifiers);
+    return node;
+}
+
+QCodeNode *QAsParser::newEnumCodeNode(const EnumInfo &info) {
+    auto enode = new QCodeNode;
+    enode->setNodeType(QCodeNode::Enum);
+    enode->setRole(QCodeNode::Name, info.name);
+    for (auto &ev : info.enums) {
+        auto node = new QCodeNode;
+        node->setNodeType(QCodeNode::Enumerator);
+        node->setRole(QCodeNode::Name, ev.first);
+        QByteArray value;
+        value.setNum(ev.second);
+        node->setRole(QCodeNode::Value, value);
+        node->setParent(enode);
+        enode->children().append(node);
+    }
+    return enode;
 }
 
 QList<QCodeNode *> QAsParser::codeNodes() const { return _nodes; }

@@ -59,6 +59,9 @@ public:
 
     virtual void retranslate();
 
+    qsizetype trigWordLen() const;
+    void setTrigWordLen(qsizetype newTrigWordLen);
+
 signals:
     void popup();
     void cloned(QCodeCompletionEngine *e);
@@ -75,7 +78,12 @@ protected:
     virtual void complete(const QDocumentCursor &c, const QString &trigger);
 
 private:
+    void triggerWordLenComplete();
+
+private:
     qsizetype m_max;
+    qsizetype m_trigWordLen;
+
     QString m_trig;
     QDocumentCursor m_cur;
     QAction *pForcedTrigger;

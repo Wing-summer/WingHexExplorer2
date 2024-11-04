@@ -2972,3 +2972,11 @@ QEditor
     background-color: #282a36;
     selection-background-color: #44475a;
 }
+
+QCallTip
+{
+    qproperty-borderColor: #eff0f1;
+    qproperty-background: #31363b;
+    qproperty-foreground: #eff0f1;
+    qproperty-opacity: 0.8;
+}

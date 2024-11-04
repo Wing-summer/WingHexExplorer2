@@ -18,9 +18,6 @@
 #include <QIcon>
 #include <QVariant>
 
-#include "qcodemodel.h"
-#include "qsourcecodewatcher.h"
-
 enum CacheIndex {
     ICON_ENUM,
     ICON_ENUMERATOR,
@@ -33,7 +30,8 @@ enum CacheIndex {
     ICON_VARIABLE = ICON_FUNCTION + 5
 };
 
-static QHash<int, QIcon> q_icon_cache;
+using IconHash = QHash<int, QIcon>;
+Q_GLOBAL_STATIC(IconHash, q_icon_cache)
 
 inline static QIcon getIcon(const QString &name) {
     return QIcon(QStringLiteral(":/completion/images/completion/") + name +
@@ -46,64 +44,60 @@ static QIcon icon(int cacheIndex) {
     if (!setup) {
         // q_icon_cache[ICON_UNION] = QIcon(":/completion/CVunion.png");
 
-        q_icon_cache[ICON_ENUM] = getIcon(QStringLiteral("CVenum"));
-        q_icon_cache[ICON_ENUMERATOR] = getIcon(QStringLiteral("CVenumerator"));
+        (*q_icon_cache)[ICON_ENUM] = getIcon(QStringLiteral("CVenum"));
+        (*q_icon_cache)[ICON_ENUMERATOR] =
+            getIcon(QStringLiteral("CVenumerator"));
 
-        q_icon_cache[ICON_CLASS] = getIcon(QStringLiteral("CVclass"));
+        (*q_icon_cache)[ICON_CLASS] = getIcon(QStringLiteral("CVclass"));
 
         // q_icon_cache[ICON_STRUCT] = QIcon(":/completion/CVstruct.png");
 
-        q_icon_cache[ICON_TYPEDEF] = getIcon(QStringLiteral("CVtypedef"));
+        (*q_icon_cache)[ICON_TYPEDEF] = getIcon(QStringLiteral("CVtypedef"));
 
-        q_icon_cache[ICON_NAMESPACE] = getIcon(QStringLiteral("CVnamespace"));
+        (*q_icon_cache)[ICON_NAMESPACE] =
+            getIcon(QStringLiteral("CVnamespace"));
 
-        q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_DEFAULT] =
+        (*q_icon_cache)[ICON_FUNCTION + QCodeNode::VISIBILITY_DEFAULT] =
             getIcon(QStringLiteral("CVglobal_meth"));
 
-        q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_PUBLIC] =
+        (*q_icon_cache)[ICON_FUNCTION + QCodeNode::VISIBILITY_PUBLIC] =
             getIcon(QStringLiteral("CVpublic_meth"));
 
-        q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_PROTECTED] =
+        (*q_icon_cache)[ICON_FUNCTION + QCodeNode::VISIBILITY_PROTECTED] =
             getIcon(QStringLiteral("CVprotected_meth"));
 
-        q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_PRIVATE] =
+        (*q_icon_cache)[ICON_FUNCTION + QCodeNode::VISIBILITY_PRIVATE] =
             getIcon(QStringLiteral("CVprivate_meth"));
 
         // q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_SIGNAL] =
         //     QIcon(":/completion/CVprotected_signal.png");
 
-        q_icon_cache[ICON_VARIABLE + QCodeNode::VISIBILITY_DEFAULT] =
+        (*q_icon_cache)[ICON_VARIABLE + QCodeNode::VISIBILITY_DEFAULT] =
             getIcon(QStringLiteral("CVglobal_var"));
 
-        q_icon_cache[ICON_VARIABLE + QCodeNode::VISIBILITY_PUBLIC] =
+        (*q_icon_cache)[ICON_VARIABLE + QCodeNode::VISIBILITY_PUBLIC] =
             getIcon(QStringLiteral("CVpublic_var"));
 
-        q_icon_cache[ICON_VARIABLE + QCodeNode::VISIBILITY_PROTECTED] =
+        (*q_icon_cache)[ICON_VARIABLE + QCodeNode::VISIBILITY_PROTECTED] =
             getIcon(QStringLiteral("CVprotected_var"));
 
-        q_icon_cache[ICON_VARIABLE + QCodeNode::VISIBILITY_PRIVATE] =
+        (*q_icon_cache)[ICON_VARIABLE + QCodeNode::VISIBILITY_PRIVATE] =
             getIcon(QStringLiteral("CVprivate_var"));
 
         setup = true;
     }
 
-    return q_icon_cache.value(cacheIndex);
+    return q_icon_cache->value(cacheIndex);
 }
 
-QCodeNode::QCodeNode() : line(-1), _parent(0), _model(0) {}
+QCodeNode::QCodeNode() : line(-1), _parent(nullptr) {}
 
 QCodeNode::~QCodeNode() {
     QCodeNode::detach();
 
-    _model = nullptr;
     _parent = nullptr;
 
-    QCodeNode::clear();
-
-    QSourceCodeWatcher *w = QSourceCodeWatcher::watcher(this, nullptr);
-
-    if (w)
-        delete w;
+    clear();
 }
 
 void QCodeNode::attach(QCodeNode *p) {
@@ -112,33 +106,10 @@ void QCodeNode::attach(QCodeNode *p) {
     if (!p || p->_children.contains(this))
         return;
 
-    bool modelChange = _model != p->_model;
-
-    if (modelChange) {
-        QStack<QCodeNode *> tree;
-
-        tree.push(this);
-
-        while (tree.length()) {
-            QCodeNode *n = tree.pop();
-
-            n->_model = p->_model;
-
-            foreach (QCodeNode *c, n->_children)
-                tree.push(c);
-        }
-    }
-
     int row = p->_children.length();
-
-    if (_model)
-        _model->beginInsertRows(_model->index(p), row, row);
 
     _parent = p;
     p->_children.insert(row, this);
-
-    if (_model)
-        _model->endInsertRows();
 }
 
 void QCodeNode::detach() {
@@ -150,34 +121,9 @@ void QCodeNode::detach() {
     if (row < 0)
         return;
 
-    if (_model)
-        _model->beginRemoveRows(_model->index(_parent), row, row);
-
     _parent->_children.removeAt(row);
     _parent = 0;
-
-    if (_model)
-        _model->endRemoveRows();
-
-    if (_model) {
-        QStack<QCodeNode *> tree;
-
-        tree.push(this);
-
-        while (tree.length()) {
-            QCodeNode *n = tree.pop();
-
-            n->_model = 0;
-
-            foreach (QCodeNode *c, n->_children)
-                tree.push(c);
-        }
-    }
 }
-
-QCodeModel *QCodeNode::model() const { return _model; }
-
-void QCodeNode::setModel(QCodeModel *newModel) { _model = newModel; }
 
 QCodeNode *QCodeNode::parent() const { return _parent; }
 
@@ -199,18 +145,11 @@ void QCodeNode::removeAll() {
     if (_children.isEmpty())
         return;
 
-    if (_model)
-        _model->beginRemoveRows(_model->index(this), 0, _children.length() - 1);
-
-    foreach (QCodeNode *n, _children) {
-        n->_model = nullptr;
+    for (auto &n : _children) {
         n->_parent = nullptr;
     }
 
     _children.clear();
-
-    if (_model)
-        _model->endRemoveRows();
 }
 
 int QCodeNode::type() const {
@@ -269,9 +208,6 @@ QVariant QCodeNode::data(int r) const {
     case Qt::DisplayRole: {
         if (t == Function)
             return role(Name) + "(" + role(Arguments) + ")";
-
-        // if ( t == Enumerator )
-        //	;
 
         return role(Name);
     }
@@ -459,12 +395,6 @@ QVariant QCodeNode::data(int r) const {
 
         return QVariant();
     }
-
-    case QCodeModel::TypeRole:
-        return type();
-
-    case QCodeModel::VisibilityRole:
-        return role(Visibility).toInt();
 
     default:
         break;

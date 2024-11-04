@@ -32,20 +32,24 @@
 
 #include "control/qcodecompletionwidget.h"
 
-const auto DOT_TRIGGER = QStringLiteral(".");
-const auto SEMI_COLON_TRIGGER = QStringLiteral("::");
-const auto LEFT_PARE_TRIGGER = QStringLiteral("(");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DOT_TRIGGER, ("."))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SEMI_COLON_TRIGGER, ("::"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LEFT_PARE_TRIGGER, ("("))
 
 AsCompletion::AsCompletion(asIScriptEngine *engine, QObject *p)
     : QCodeCompletionEngine(p), parser(engine), _engine(engine),
       pPopup(new QCodeCompletionWidget()) {
     Q_ASSERT(engine);
 
-    addTrigger(DOT_TRIGGER);
-    addTrigger(SEMI_COLON_TRIGGER);
+    addTrigger(*DOT_TRIGGER);
+    addTrigger(*SEMI_COLON_TRIGGER);
 
     // unleash the power of call tips
-    addTrigger(LEFT_PARE_TRIGGER);
+    addTrigger(*LEFT_PARE_TRIGGER);
+
+    // TODO parse the std aslib
+
+    setTrigWordLen(3);
 }
 
 AsCompletion::~AsCompletion() {}
@@ -61,7 +65,7 @@ QCodeCompletionEngine *AsCompletion::clone() {
     return e;
 }
 
-QString AsCompletion::language() const { return "AngelScript"; }
+QString AsCompletion::language() const { return QStringLiteral("AngelScript"); }
 
 QStringList AsCompletion::extensions() const {
     QStringList l;
@@ -73,7 +77,11 @@ QStringList AsCompletion::extensions() const {
 }
 
 void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
-    // TODO
+    if (pPopup->isVisible()) {
+        return;
+    }
+
+    // TODO parse current code
     // auto codes = c.document()->text(true, false);
     // parser.parse(codes, this->editor()->fileName());
 
@@ -86,19 +94,23 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     auto end = p + len;
 
     struct Token {
+        qsizetype pos;
         asETokenClass type;
         QByteArray content;
     };
 
     QVector<Token> tokens;
+    qsizetype pos = 0;
     for (; p < end;) {
         asUINT tokenLen = 0;
         auto tt = _engine->ParseToken(p, len, &tokenLen);
         Token token;
+        token.pos = pos;
         token.type = tt;
         token.content = QByteArray(p, tokenLen);
         tokens << token;
         p += tokenLen;
+        pos += tokenLen;
     }
 
     QByteArray fn;
@@ -106,103 +118,151 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
 
     auto r =
         std::find_if(tokens.rbegin(), tokens.rend(), [](const Token &token) {
-            return token.type == asTC_IDENTIFIER || token.type == asTC_VALUE;
+            return token.type != asTC_WHITESPACE;
         });
     if (r == tokens.rend()) {
         return;
     }
 
+    QCodeCompletionWidget::Filter filter =
+        QCodeCompletionWidget::FilterFlag::KeepAll;
     auto &_headerNodes = parser.headerNodes();
     fn = r->content;
-    if (trigger == SEMI_COLON_TRIGGER) {
-        for (auto &n : _headerNodes) {
-            auto name = n->qualifiedName();
-            if (name == fn) {
-                nodes << n;
+
+    if (trigger.isEmpty()) {
+        auto eb = tokens.back();
+        if (eb.type == asTC_KEYWORD) {
+            // only support these
+            if (eb.content == *SEMI_COLON_TRIGGER) {
+                complete(c, *SEMI_COLON_TRIGGER);
+            } else if (eb.content == *DOT_TRIGGER) {
+                complete(c, *DOT_TRIGGER);
             }
-        }
-    } else if (trigger == LEFT_PARE_TRIGGER) {
-        if (r != tokens.rend()) {
-            auto pr = std::next(r);
-            if (pr->content == SEMI_COLON_TRIGGER) {
-                if (pr != tokens.rend()) {
-                    auto prr = std::next(pr);
-                    auto ns = prr->content;
-                    if (prr->type == asTC_IDENTIFIER) {
-                        for (auto &n : _headerNodes) {
-                            auto name = n->qualifiedName();
-                            if (name == ns) {
-                                nodes << n;
+            return;
+        } else if (eb.type == asTC_IDENTIFIER) {
+            if (r != tokens.rend()) {
+                auto pr = std::next(r);
+                if (pr->content == *SEMI_COLON_TRIGGER) {
+                    if (pr != tokens.rend()) {
+                        auto prr = std::next(pr);
+                        auto ns = prr->content;
+
+                        if (prr->type == asTC_IDENTIFIER) {
+                            for (auto &n : _headerNodes) {
+                                auto name = n->qualifiedName();
+                                if (name == ns) {
+                                    nodes << n;
+                                }
                             }
+
+                            auto cur = c;
+                            cur.movePosition(pr->pos + pr->content.length() -
+                                             txt.length());
+                            pPopup->setCursor(cur);
+                        } else {
+                            return;
                         }
-                    } else {
-                        return;
+                    }
+                }
+            }
+        } else {
+            return;
+        }
+
+        // pPopup->setTemporaryNodes(temp);
+        pPopup->setFilter(filter);
+        pPopup->setCompletions(nodes);
+        pPopup->popup();
+    } else {
+        if (trigger == *SEMI_COLON_TRIGGER) {
+            for (auto &n : _headerNodes) {
+                auto name = n->qualifiedName();
+                if (name == fn) {
+                    nodes << n;
+                }
+            }
+        } else if (trigger == *LEFT_PARE_TRIGGER) {
+            if (r != tokens.rend()) {
+                auto pr = std::next(r);
+                if (pr->content == *SEMI_COLON_TRIGGER) {
+                    if (pr != tokens.rend()) {
+                        auto prr = std::next(pr);
+                        auto ns = prr->content;
+                        if (prr->type == asTC_IDENTIFIER) {
+                            for (auto &n : _headerNodes) {
+                                auto name = n->qualifiedName();
+                                if (name == ns) {
+                                    nodes << n;
+                                }
+                            }
+                        } else {
+                            return;
+                        }
                     }
                 }
             }
         }
-    }
 
-    // TODO
-    // QList<QCodeNode *> temp; // internal CodeNodes
-    int filter = QCodeCompletionWidget::FilterFlag::KeepAll;
+        if (nodes.count()) {
+            if (trigger == *LEFT_PARE_TRIGGER) {
+                QStringList tips;
 
-    if (nodes.count()) {
-        if (trigger == "(") {
-            QStringList tips;
+                // qDebug("fn %s", fn.constData());
 
-            // qDebug("fn %s", fn.constData());
+                for (auto &n : nodes) {
+                    for (auto &f : n->children()) {
+                        if (f->type() != QCodeNode::Function ||
+                            f->role(QCodeNode::Name) != fn) {
+                            continue;
+                        }
 
-            for (auto &n : nodes) {
-                for (auto &f : n->children()) {
-                    if (f->type() != QCodeNode::Function ||
-                        f->role(QCodeNode::Name) != fn)
-                        continue;
+                        auto tip =
+                            QString::fromUtf8(f->role(QCodeNode::Arguments))
+                                .prepend('(')
+                                .append(')');
 
-                    auto tip = QString::fromUtf8(f->role(QCodeNode::Arguments))
-                                   .prepend('(')
-                                   .append(')');
-
-                    if (!tips.contains(tip))
-                        tips << tip;
+                        if (!tips.contains(tip))
+                            tips << tip;
+                    }
                 }
-            }
 
-            if (!tips.isEmpty()) {
-                QRect r = editor()->cursorRect();
-                QDocumentCursor cursor = editor()->cursor();
-                QDocumentLine line = cursor.line();
+                if (!tips.isEmpty()) {
+                    QRect r = editor()->cursorRect();
+                    QDocumentCursor cursor = editor()->cursor();
+                    QDocumentLine line = cursor.line();
 
-                int hx = editor()->horizontalOffset(),
-                    cx = line.cursorToX(cursor.columnNumber());
+                    int hx = editor()->horizontalOffset(),
+                        cx = line.cursorToX(cursor.columnNumber());
 
-                auto ct = new QCallTip(editor()->viewport());
-                ct->move(cx - hx, r.y() + r.height());
-                ct->setTips(tips);
-                ct->show();
-                ct->setFocus();
+                    auto ct = new QCallTip(editor()->viewport());
+                    ct->move(cx - hx, r.y() + r.height());
+                    ct->setTips(tips);
+                    ct->show();
+                    ct->setFocus();
+
+#ifdef TRACE_COMPLETION
+                    qDebug("parsing + scoping + search + pre-display : elapsed "
+                           "%i ms",
+                           time.elapsed());
+#endif
+                }
+            } else {
+                // pPopup->setTemporaryNodes(temp);
+                pPopup->setFilter(QCodeCompletionWidget::Filter(filter));
+                pPopup->setCompletions(nodes);
 
 #ifdef TRACE_COMPLETION
                 qDebug(
                     "parsing + scoping + search + pre-display : elapsed %i ms",
                     time.elapsed());
 #endif
+
+                pPopup->popup();
             }
         } else {
-            // pPopup->setTemporaryNodes(temp);
-            pPopup->setFilter(QCodeCompletionWidget::Filter(filter));
-            pPopup->setCompletions(nodes);
-
-#ifdef TRACE_COMPLETION
-            qDebug("parsing + scoping + search + pre-display : elapsed %i ms",
-                   time.elapsed());
-#endif
-
-            pPopup->popup();
+            // qDeleteAll(temp);
+            qDebug("completion failed");
         }
-    } else {
-        // qDeleteAll(temp);
-        qDebug("completion failed");
     }
 }
 

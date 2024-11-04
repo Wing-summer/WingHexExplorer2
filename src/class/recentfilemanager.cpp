@@ -23,7 +23,8 @@
 #include <QFile>
 #include <QMenu>
 
-RecentFileManager::RecentFileManager(QMenu *menu) : QObject(), m_menu(menu) {
+RecentFileManager::RecentFileManager(QMenu *menu, bool fileNameOnly)
+    : QObject(), m_menu(menu), _fileNameOnly(fileNameOnly) {
     Q_ASSERT(menu);
     menu->setToolTipsVisible(true);
 }
@@ -112,20 +113,24 @@ QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
 }
 
 QString RecentFileManager::getDisplayTooltip(const RecentInfo &info) {
-    auto tt = QStringLiteral("<p>") + tr("[file]") + info.fileName +
+    QString tt;
+    if (_fileNameOnly) {
+        tt = info.fileName;
+    } else {
+        tt = QStringLiteral("<p>") + tr("[file]") + info.fileName +
+             QStringLiteral("</p>");
+
+        tt += QStringLiteral("<p>") + tr("[isWorkSpace]") +
+              (info.isWorkSpace ? tr("True") : tr("False")) +
               QStringLiteral("</p>");
 
-    tt += QStringLiteral("<p>") + tr("[isWorkSpace]") +
-          (info.isWorkSpace ? tr("True") : tr("False")) +
-          QStringLiteral("</p>");
-
-    if (info.start >= 0 && info.stop > 0) {
-        tt += QStringLiteral("<p>") + tr("[start]") +
-              QString::number(info.start) + QStringLiteral("</p>");
-        tt += QStringLiteral("<p>") + tr("[stop]") +
-              QString::number(info.stop) + QStringLiteral("</p>");
+        if (info.start >= 0 && info.stop > 0) {
+            tt += QStringLiteral("<p>") + tr("[start]") +
+                  QString::number(info.start) + QStringLiteral("</p>");
+            tt += QStringLiteral("<p>") + tr("[stop]") +
+                  QString::number(info.stop) + QStringLiteral("</p>");
+        }
     }
-
     return tt;
 }
 

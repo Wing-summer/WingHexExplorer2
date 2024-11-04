@@ -45,7 +45,6 @@ private:
     QAsParser parser;
     asIScriptEngine *_engine;
     QCodeCompletionWidget *pPopup;
-    QPointer<QCodeModel> pModel;
 };
 
 #endif // _CPP_COMPLETION_H_

@@ -30,7 +30,7 @@
 
 */
 QCodeCompletionEngine::QCodeCompletionEngine(QObject *p)
-    : QObject(p), m_max(0) {
+    : QObject(p), m_max(0), m_trigWordLen(-1) {
     pForcedTrigger = new QAction(tr("&Trigger completion"), this);
 
     connect(pForcedTrigger, SIGNAL(triggered()), this, SLOT(complete()));
@@ -140,8 +140,14 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
 
     auto count = txt.length();
 
-    if (txt.isEmpty() || m_triggers.isEmpty())
+    if (txt.isEmpty()) {
         return;
+    }
+
+    if (m_triggers.isEmpty()) {
+        triggerWordLenComplete();
+        return;
+    }
 
     // qDebug("should trigger completion? (bis)");
 
@@ -160,7 +166,6 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
     }
 
     // qDebug("text : %s", qPrintable(txt));
-
     for (auto &trig : m_triggers) {
         if (txt.endsWith(trig)) {
             cur = editor()->cursor();
@@ -174,8 +179,11 @@ void QCodeCompletionEngine::textEdited(QKeyEvent *k) {
 
             // trigger completion
             complete(cur, trig);
+            return;
         }
     }
+
+    triggerWordLenComplete();
 }
 
 /*!
@@ -248,4 +256,18 @@ void QCodeCompletionEngine::complete(const QDocumentCursor &c,
     qWarning("From complete(QDocumentCursor, QString)");
     qWarning("QCodeCompletionEngine is not self-sufficient : subclasses should "
              "reimplement at least one of the complete() method...");
+}
+
+void QCodeCompletionEngine::triggerWordLenComplete() {
+    if (m_trigWordLen > 0) {
+        QDocumentCursor cur = editor()->cursor();
+        emit completionTriggered({});
+        complete(cur, {});
+    }
+}
+
+qsizetype QCodeCompletionEngine::trigWordLen() const { return m_trigWordLen; }
+
+void QCodeCompletionEngine::setTrigWordLen(qsizetype newTrigWordLen) {
+    m_trigWordLen = newTrigWordLen;
 }

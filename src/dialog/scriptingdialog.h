@@ -252,6 +252,7 @@ private:
     QLanguageFactory *m_language = nullptr;
 
     QByteArray _defaultLayout;
+    QByteArray _savedLayout;
 
     ScriptEditor *m_curEditor = nullptr;
     QList<QWidget *> m_editStateWidgets;

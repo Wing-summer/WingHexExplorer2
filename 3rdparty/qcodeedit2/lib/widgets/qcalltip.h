@@ -1,17 +1,19 @@
-/****************************************************************************
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
 **
-** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
 **
-** This file is part of the Edyuk project <http://edyuk.org>
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
 **
-** This file may be used under the terms of the GNU General Public License
-** version 3 as published by the Free Software Foundation and appearing in the
-** file GPL.txt included in the packaging of this file.
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-****************************************************************************/
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
 
 #ifndef _QCALL_TIP_H_
 #define _QCALL_TIP_H_
@@ -26,6 +28,17 @@
 #include <QWidget>
 
 class QCE_EXPORT QCallTip : public QWidget {
+    Q_OBJECT
+
+    Q_PROPERTY(QColor background READ background WRITE setBackground NOTIFY
+                   backgroundChanged FINAL)
+    Q_PROPERTY(QColor foreground READ foreground WRITE setForeground NOTIFY
+                   foregroundChanged FINAL)
+    Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY
+                   borderColorChanged FINAL)
+    Q_PROPERTY(
+        qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
+
 public:
     QCallTip(QWidget *p = nullptr);
     virtual ~QCallTip();
@@ -33,18 +46,43 @@ public:
     QStringList tips() const;
     void setTips(const QStringList &l);
 
+    QColor background() const;
+    void setBackground(const QColor &newBackground);
+
+    QColor foreground() const;
+    void setForeground(const QColor &newForeground);
+
+    QColor borderColor() const;
+    void setBorderColor(const QColor &newBorderColor);
+
+    qreal opacity() const;
+    void setOpacity(qreal newOpacity);
+
+signals:
+    void backgroundChanged();
+    void foregroundChanged();
+    void borderColorChanged();
+
+    void opacityChanged();
+
 protected:
-    virtual void paintEvent(QPaintEvent *e);
-    virtual void keyPressEvent(QKeyEvent *e);
-    virtual void focusInEvent(QFocusEvent *e);
-    virtual void focusOutEvent(QFocusEvent *e);
-    virtual void mousePressEvent(QMouseEvent *e);
-    virtual void mouseReleaseEvent(QMouseEvent *e);
+    virtual void paintEvent(QPaintEvent *e) override;
+    virtual void keyPressEvent(QKeyEvent *e) override;
+    virtual void focusInEvent(QFocusEvent *e) override;
+    virtual void focusOutEvent(QFocusEvent *e) override;
+    virtual void mousePressEvent(QMouseEvent *e) override;
+    virtual void mouseReleaseEvent(QMouseEvent *e) override;
 
 private:
     int m_index;
     QStringList m_tips;
     QRect m_up, m_down;
+
+    QColor _background;
+    QColor _foreground;
+    QColor _borderColor;
+
+    qreal _opacity = 1;
 };
 
 #endif

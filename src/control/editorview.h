@@ -87,7 +87,7 @@ public:
 public slots:
     EditorView *clone();
 
-    void registerView(WingEditorViewWidget *view);
+    void registerView(WingHex::WingEditorViewWidget *view);
     void switchView(qsizetype index);
     void registerQMenu(QMenu *menu);
 

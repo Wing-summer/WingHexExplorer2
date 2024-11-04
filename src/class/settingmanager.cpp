@@ -24,6 +24,14 @@
 #include <QMetaEnum>
 #include <QSettings>
 
+QString getRealContent(const QString &value) { return value; }
+
+template <typename T>
+QString getRealContent(T &value) {
+    static_assert(std::is_same<QString &, decltype(*value)>());
+    return *value;
+}
+
 #define HANDLE_CONFIG                                                          \
     QSettings set(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME))
 
@@ -31,11 +39,11 @@
 
 #define WRITE_CONFIG(config, dvalue)                                           \
     if (this->_setUnsaved.testFlag(SETTING_ITEM::config)) {                    \
-        set.setValue(config, dvalue);                                          \
+        set.setValue(getRealContent(config), dvalue);                          \
         _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
     }
 
-#define READ_CONFIG(config, dvalue) set.value(config, dvalue)
+#define READ_CONFIG(config, dvalue) set.value(getRealContent(config), dvalue)
 
 #define READ_CONFIG_SAFE(var, config, dvalue, func)                            \
     {                                                                          \
@@ -73,38 +81,41 @@
         }                                                                      \
     }
 
-const auto DOCK_LAYOUT = QStringLiteral("dock.layout");
-const auto SCRIPT_DOCK_LAYOUT = QStringLiteral("script.layout");
-const auto APP_LASTUSED_PATH = QStringLiteral("app.lastusedpath");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_DOCK_LAYOUT, ("script.layout"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LASTUSED_PATH, ("app.lastusedpath"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SKIN_THEME, ("skin.theme"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTFAMILY, ("app.fontfamily"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTSIZE, ("app.fontsize"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_WINDOWSIZE, ("app.windowsize"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LANGUAGE, ("app.lang"))
 
-const auto SKIN_THEME = QStringLiteral("skin.theme");
-const auto APP_FONTFAMILY = QStringLiteral("app.fontfamily");
-const auto APP_FONTSIZE = QStringLiteral("app.fontsize");
-const auto APP_WINDOWSIZE = QStringLiteral("app.windowsize");
-const auto APP_LANGUAGE = QStringLiteral("app.lang");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
+                          ("plugin.rootenableplugin"))
 
-const auto PLUGIN_ENABLE = QStringLiteral("plugin.enableplugin");
-const auto PLUGIN_ENABLE_ROOT = QStringLiteral("plugin.rootenableplugin");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FONTSIZE, ("editor.fontsize"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_ADDR, ("editor.showaddr"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_COL, ("editor.showcol"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_TEXT, ("editor.showtext"))
 
-const auto EDITOR_FONTSIZE = QStringLiteral("editor.fontsize");
-const auto EDITOR_SHOW_ADDR = QStringLiteral("editor.showaddr");
-const auto EDITOR_SHOW_COL = QStringLiteral("editor.showcol");
-const auto EDITOR_SHOW_TEXT = QStringLiteral("editor.showtext");
-const auto EDITOR_ENCODING = QStringLiteral("editor.encoding");
-const auto EDITOR_FIND_MAXCOUNT = QStringLiteral("editor.findmaxcount");
-const auto EDITOR_COPY_LIMIT = QStringLiteral("editor.copylimit");
-const auto EDITOR_DECSTRLIMIT = QStringLiteral("editor.decstrlimit");
-const auto EDITOR_RECENTFILES = QStringLiteral("editor.recentfiles");
-const auto SCRIPT_RECENTFILES = QStringLiteral("script.recentfiles");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_ENCODING, ("editor.encoding"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FIND_MAXCOUNT,
+                          ("editor.findmaxcount"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_COPY_LIMIT, ("editor.copylimit"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_DECSTRLIMIT, ("editor.decstrlimit"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_RECENTFILES, ("editor.recentfiles"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_RECENTFILES, ("script.recentfiles"))
 
-const auto SCRIPT_ALLOW_USRSCRIPT_INROOT =
-    QStringLiteral("script.allowUsrScriptRoot");
-const auto SCRIPT_USRHIDECATS = QStringLiteral("script.usrHideCats");
-const auto SCRIPT_SYSHIDECATS = QStringLiteral("script.sysHideCats");
-
-const auto OTHER_USESYS_FILEDIALOG = QStringLiteral("sys.nativeDialog");
-const auto OTHER_USE_NATIVE_TITLEBAR = QStringLiteral("sys.nativeTitleBar");
-const auto OTHER_LOG_LEVEL = QStringLiteral("sys.loglevel");
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ALLOW_USRSCRIPT_INROOT,
+                          ("script.allowUsrScriptRoot"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USESYS_FILEDIALOG,
+                          ("sys.nativeDialog"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USE_NATIVE_TITLEBAR,
+                          ("sys.nativeTitleBar"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_LEVEL, ("sys.loglevel"))
 
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
@@ -129,6 +140,7 @@ void SettingManager::load() {
     m_themeID = qBound(0, m_themeID,
                        QMetaEnum::fromType<SkinManager::Theme>().keyCount());
     m_defaultLang = READ_CONFIG(APP_LANGUAGE, QString()).toString();
+
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
     m_scriptDockLayout =
         READ_CONFIG(SCRIPT_DOCK_LAYOUT, QByteArray()).toByteArray();

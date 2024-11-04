@@ -49,7 +49,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     // recent file manager init
     m_recentMenu = new QMenu(this);
-    m_recentmanager = new RecentFileManager(m_recentMenu);
+    m_recentmanager = new RecentFileManager(m_recentMenu, true);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
                 openFile(rinfo.fileName);
@@ -231,7 +231,7 @@ void ScriptingDialog::initConsole() {
 
 void ScriptingDialog::saveDockLayout() {
     auto &set = SettingManager::instance();
-    set.setScriptDockLayout(m_dock->saveState());
+    set.setScriptDockLayout(_savedLayout);
     set.save(SettingManager::NONE);
 }
 
@@ -706,7 +706,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
 
         if (m_dock->focusedDockWidget() == editor) {
             if (!m_views.isEmpty()) {
-                for (auto p : m_views) {
+                for (auto &p : m_views) {
                     if (p != editor && p->isCurrentTab()) {
                         p->setFocus();
                     }
@@ -1104,8 +1104,6 @@ void ScriptingDialog::on_saveas() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto oldFileName = editor->fileName();
-
     auto res = editor->save(filename);
     if (res) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
@@ -1301,6 +1299,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         }
         on_stopscript();
     }
+
+    _savedLayout = m_dock->saveState();
 
     auto &set = SettingManager::instance();
     set.setRecentScriptFiles(m_recentmanager->saveRecent());

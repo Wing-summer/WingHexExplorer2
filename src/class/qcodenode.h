@@ -21,9 +21,7 @@
 #include <QMap>
 #include <QVariant>
 
-class QCodeModel;
-
-class QCodeNode {
+class QCodeNode final {
 public:
     enum RoleIndex {
         NodeType = 0,
@@ -110,7 +108,7 @@ public:
 
 public:
     QCodeNode();
-    virtual ~QCodeNode();
+    ~QCodeNode();
 
     int type() const;
     QByteArray context() const;
@@ -131,9 +129,6 @@ public:
     void attach(QCodeNode *p);
     void detach();
 
-    QCodeModel *model() const;
-    void setModel(QCodeModel *newModel);
-
     QCodeNode *parent() const;
     void setParent(QCodeNode *newParent);
 
@@ -144,7 +139,6 @@ private:
     int line = -1;
     QMap<RoleIndex, QByteArray> roles;
     QCodeNode *_parent = nullptr;
-    QCodeModel *_model = nullptr;
     QList<QCodeNode *> _children;
 };
 
