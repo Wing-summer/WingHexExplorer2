@@ -203,6 +203,10 @@ public:
     ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
                            qsizetype length);
 
+    ErrFile saveEditor(EditorView *editor, const QString &filename,
+                       bool ignoreMd5, bool isExport = false);
+    ErrFile closeEditor(EditorView *editor, bool force);
+
 private:
     QString saveLog();
 

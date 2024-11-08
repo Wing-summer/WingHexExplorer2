@@ -177,7 +177,7 @@ void QFormatConfig::apply() {
         ui->m_table->setRowCount(n);
 
         for (int i = 0; i < n; ++i) {
-            QString fid = m_currentScheme->id(i);
+            // QString fid = m_currentScheme->id(i);
             QFormat &fmt = m_currentScheme->formatRef(i);
 
             QTableWidgetItem *item;

@@ -9,16 +9,6 @@
 #include <QStorageInfo>
 #include <QUndoStack>
 
-/*=========================*/
-// added by wingsummer
-
-struct BookMarkStruct {
-    qsizetype pos;
-    QString comment;
-};
-
-/*=========================*/
-
 class QHexDocument : public QObject {
     Q_OBJECT
 
@@ -44,7 +34,7 @@ public:
 
     void addUndoCommand(QUndoCommand *command);
     bool lineHasBookMark(qsizetype line);
-    QList<qsizetype> getsBookmarkPos(qsizetype line);
+    QList<qsizetype> getLineBookmarksPos(qsizetype line);
 
     bool setLockedFile(bool b);
     bool setKeepSize(bool b);
@@ -54,28 +44,27 @@ public:
 
     //----------------------------------
     bool AddBookMark(qsizetype pos, QString comment);
-    bool RemoveBookMark(qsizetype index);
-    bool RemoveBookMarks(QList<qsizetype> &pos);
+    bool RemoveBookMark(qsizetype pos);
+    bool RemoveBookMarks(const QList<qsizetype> &pos);
     bool ModBookMark(qsizetype pos, QString comment);
     bool ClearBookMark();
     //----------------------------------
 
     bool addBookMark(qsizetype pos, QString comment);
-    bool modBookMark(qsizetype pos, QString comment);
+    bool modBookMark(qsizetype pos, const QString &comment);
 
-    BookMarkStruct bookMarkByIndex(qsizetype index);
-    BookMarkStruct bookMark(qsizetype pos);
+    QString bookMark(qsizetype pos);
+    bool bookMarkExists(qsizetype pos);
 
-    QString bookMarkComment(qsizetype pos);
-    const QList<BookMarkStruct> &getAllBookMarks();
+    // note: maybe changed when bookmarks are chaged
+    qsizetype bookMarkPos(qsizetype index);
+
     qsizetype bookMarksCount() const;
-    void applyBookMarks(const QList<BookMarkStruct> &books);
-    bool removeBookMarkByIndex(qsizetype index);
+    void applyBookMarks(const QMap<qsizetype, QString> &books);
     bool removeBookMark(qsizetype pos);
     bool clearBookMark();
 
-    QList<BookMarkStruct> *bookMarksPtr();
-    const QList<BookMarkStruct> &bookMarks() const;
+    const QMap<qsizetype, QString> &bookMarks() const;
 
     bool existBookMark(qsizetype pos);
 
@@ -101,7 +90,7 @@ public:
     /*======================*/
 
 public:
-    QByteArray read(qsizetype offset, qsizetype len = -1);
+    QByteArray read(qsizetype offset, qsizetype len = -1) const;
 
     char at(qsizetype offset) const;
     void SetBaseAddress(quintptr baseaddress);
@@ -122,7 +111,6 @@ public slots:
     bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                 int nibbleindex = 0);
 
-    QByteArray read(qsizetype offset, qsizetype len) const;
     bool saveTo(QIODevice *device, bool cleanUndo);
 
     // qsizetype searchForward(const QByteArray &ba);
@@ -205,7 +193,7 @@ private:
     bool m_readonly;
     bool m_keepsize;
     bool m_islocked;
-    QList<BookMarkStruct> bookmarks;
+    QMap<qsizetype, QString> _bookmarks;
 
     bool m_metafg = true;
     bool m_metabg = true;

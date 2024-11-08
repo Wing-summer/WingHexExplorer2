@@ -6,14 +6,14 @@
 
 class MetaReplaceCommand : public MetaCommand {
 public:
-    MetaReplaceCommand(QHexMetadata *hexmeta, QHexMetadataAbsoluteItem &meta,
-                       QHexMetadataAbsoluteItem &oldmeta,
+    MetaReplaceCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
+                       const QHexMetadataItem &oldmeta,
                        QUndoCommand *parent = nullptr);
     void undo() override;
     void redo() override;
 
 private:
-    QHexMetadataAbsoluteItem m_old;
+    QHexMetadataItem m_old;
 };
 
 #endif // METAREPLACECOMMAND_H

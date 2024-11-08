@@ -23,25 +23,29 @@
 /*======================*/
 // added by wingsummer
 
-QList<qsizetype> QHexDocument::getsBookmarkPos(qsizetype line) {
+QList<qsizetype> QHexDocument::getLineBookmarksPos(qsizetype line) {
     QList<qsizetype> pos;
     auto begin = m_hexlinewidth * line;
     auto end = m_hexlinewidth + begin;
-    for (auto item : bookmarks) {
-        if (item.pos >= begin && item.pos <= end)
-            pos.push_back(item.pos);
+
+    auto lbound = _bookmarks.lowerBound(begin);
+    auto ubound = _bookmarks.upperBound(end);
+
+    for (auto p = lbound; p != ubound; ++p) {
+        pos.append(p.key());
     }
+
     return pos;
 }
 
 bool QHexDocument::lineHasBookMark(qsizetype line) {
     auto begin = m_hexlinewidth * line;
     auto end = m_hexlinewidth + begin;
-    for (auto item : bookmarks) {
-        if (item.pos >= begin && item.pos <= end)
-            return true;
-    }
-    return false;
+
+    auto lbound = _bookmarks.lowerBound(begin);
+    auto ubound = _bookmarks.upperBound(end);
+
+    return lbound != ubound;
 }
 
 void QHexDocument::addUndoCommand(QUndoCommand *command) {
@@ -117,10 +121,8 @@ bool QHexDocument::setKeepSize(bool b) {
     return true;
 }
 
-QList<BookMarkStruct> *QHexDocument::bookMarksPtr() { return &bookmarks; }
-
-const QList<BookMarkStruct> &QHexDocument::bookMarks() const {
-    return bookmarks;
+const QMap<qsizetype, QString> &QHexDocument::bookMarks() const {
+    return _bookmarks;
 }
 
 bool QHexDocument::AddBookMark(qsizetype pos, QString comment) {
@@ -130,25 +132,29 @@ bool QHexDocument::AddBookMark(qsizetype pos, QString comment) {
     return true;
 }
 
+bool QHexDocument::RemoveBookMark(qsizetype pos) {
+    m_undostack->push(new BookMarkRemoveCommand(this, pos, bookMark(pos)));
+    return true;
+}
+
 bool QHexDocument::ModBookMark(qsizetype pos, QString comment) {
     if (!m_keepsize)
         return false;
     m_undostack->push(
-        new BookMarkReplaceCommand(this, pos, comment, bookMarkComment(pos)));
+        new BookMarkReplaceCommand(this, pos, comment, bookMark(pos)));
     return true;
 }
 
 bool QHexDocument::ClearBookMark() {
     if (!m_keepsize)
         return false;
-    m_undostack->push(new BookMarkClearCommand(this, getAllBookMarks()));
+    m_undostack->push(new BookMarkClearCommand(this, _bookmarks));
     return true;
 }
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (m_keepsize && !existBookMark(pos)) {
-        BookMarkStruct b{pos, comment};
-        bookmarks.append(b);
+        _bookmarks.insert(pos, comment);
         setDocSaved(false);
         emit documentChanged();
         emit bookMarkChanged();
@@ -157,97 +163,41 @@ bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     return false;
 }
 
-QString QHexDocument::bookMarkComment(qsizetype pos) {
-    if (pos > 0 && pos < m_buffer->length()) {
-        for (auto item : bookmarks) {
-            if (item.pos == pos) {
-                return item.comment;
-            }
-        }
-    }
-    return QString();
+QString QHexDocument::bookMark(qsizetype pos) { return _bookmarks.value(pos); }
+
+bool QHexDocument::bookMarkExists(qsizetype pos) {
+    return _bookmarks.contains(pos);
 }
 
-BookMarkStruct QHexDocument::bookMark(qsizetype pos) {
-    if (pos > 0 && pos < m_buffer->length()) {
-        for (auto item : bookmarks) {
-            if (item.pos == pos) {
-                return item;
-            }
-        }
-    }
-    return BookMarkStruct{-1, ""};
+qsizetype QHexDocument::bookMarkPos(qsizetype index) {
+    Q_ASSERT(index >= 0 && index < _bookmarks.size());
+    return *(std::next(_bookmarks.keyBegin(), index));
 }
 
-BookMarkStruct QHexDocument::bookMarkByIndex(qsizetype index) {
-    if (index >= 0 && index < bookmarks.count()) {
-        return bookmarks.at(index);
-    } else {
-        BookMarkStruct b;
-        b.pos = -1;
-        return b;
-    }
-}
-
-bool QHexDocument::RemoveBookMarks(QList<qsizetype> &pos) {
+bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
     if (!m_keepsize)
         return false;
     m_undostack->beginMacro("RemoveBookMarks");
     for (auto p : pos) {
-        m_undostack->push(
-            new BookMarkRemoveCommand(this, p, bookMarkComment(p)));
+        m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
     }
     m_undostack->endMacro();
     emit documentChanged();
     return true;
 }
 
-bool QHexDocument::RemoveBookMark(qsizetype index) {
-    if (!m_keepsize)
-        return false;
-    auto b = bookmarks.at(index);
-    m_undostack->push(new BookMarkRemoveCommand(this, b.pos, b.comment));
-    return true;
-}
-
 bool QHexDocument::removeBookMark(qsizetype pos) {
-    if (m_keepsize && pos >= 0 && pos < m_buffer->length()) {
-        int index = 0;
-        for (auto item : bookmarks) {
-            if (pos == item.pos) {
-                bookmarks.removeAt(index);
-                setDocSaved(false);
-                emit documentChanged();
-                emit bookMarkChanged();
-                break;
-            }
-            index++;
-        }
-        return true;
+    if (m_keepsize) {
+        return _bookmarks.remove(pos) != 0;
     }
     return false;
 }
 
-bool QHexDocument::removeBookMarkByIndex(qsizetype index) {
-    if (m_keepsize && index >= 0 && index < bookmarks.count()) {
-        bookmarks.removeAt(index);
-        setDocSaved(false);
-        emit documentChanged();
-        emit bookMarkChanged();
-        return true;
-    }
-    return false;
-}
-
-bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
-    if (m_keepsize && pos > 0 && pos < m_buffer->length()) {
-        for (auto &item : bookmarks) {
-            if (item.pos == pos) {
-                item.comment = comment;
-                setDocSaved(false);
-                emit bookMarkChanged();
-                return true;
-            }
+bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
+    if (m_keepsize) {
+        if (_bookmarks.contains(pos)) {
+            _bookmarks[pos] = comment;
+            return true;
         }
     }
     return false;
@@ -255,7 +205,7 @@ bool QHexDocument::modBookMark(qsizetype pos, QString comment) {
 
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
-        bookmarks.clear();
+        _bookmarks.clear();
         setDocSaved(false);
         emit documentChanged();
         emit bookMarkChanged();
@@ -265,22 +215,13 @@ bool QHexDocument::clearBookMark() {
 }
 
 bool QHexDocument::existBookMark(qsizetype pos) {
-    for (auto item : bookmarks) {
-        if (item.pos == pos) {
-            return true;
-        }
-    }
-    return false;
+    return _bookmarks.contains(pos);
 }
 
-const QList<BookMarkStruct> &QHexDocument::getAllBookMarks() {
-    return bookmarks;
-}
+qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
 
-qsizetype QHexDocument::bookMarksCount() const { return bookmarks.count(); }
-
-void QHexDocument::applyBookMarks(const QList<BookMarkStruct> &books) {
-    bookmarks.append(books);
+void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
+    _bookmarks = books;
     setDocSaved(false);
     emit documentChanged();
 }
@@ -424,9 +365,6 @@ void QHexDocument::setHexLineWidth(quint8 value) {
 }
 
 QHexMetadata *QHexDocument::metadata() const { return m_metadata; }
-QByteArray QHexDocument::read(qsizetype offset, qsizetype len) {
-    return m_buffer->read(offset, len);
-}
 
 char QHexDocument::at(qsizetype offset) const {
     return char(m_buffer->at(offset));

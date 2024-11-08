@@ -214,7 +214,7 @@ public:
     static int screenLength(const QChar *d, int l, int tabStop);
     static QString screenable(const QChar *d, int l, int tabStop);
 
-    inline void markViewDirty() { formatsChanged(); }
+    inline void markViewDirty() { emit formatsChanged(); }
 
     bool isClean() const;
 

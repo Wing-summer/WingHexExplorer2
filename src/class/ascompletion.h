@@ -42,9 +42,14 @@ protected:
                           const QString &trigger) override;
 
 private:
+    void applyEmptyNsNode(QList<QCodeNode *> &nodes);
+
+private:
     QAsParser parser;
     asIScriptEngine *_engine;
     QCodeCompletionWidget *pPopup;
+
+    QList<QCodeNode *> _emptyNsNodes;
 };
 
 #endif // _CPP_COMPLETION_H_

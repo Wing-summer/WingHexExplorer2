@@ -23,18 +23,21 @@
         \brief Definition of the QSnippetEdit widget
 */
 
-#include "ui_snippetedit.h"
 #include <QWidget>
 
 class QSnippet;
 class QSnippetManager;
 
-class QCE_EXPORT QSnippetEdit : public QWidget, private Ui::SnippetEdit {
+namespace Ui {
+class QSnippetEdit;
+}
+
+class QCE_EXPORT QSnippetEdit : public QWidget {
     Q_OBJECT
 
 public:
-    QSnippetEdit(QWidget *p = 0);
-    QSnippetEdit(QSnippetManager *mgr, QWidget *p = 0);
+    QSnippetEdit(QWidget *p = nullptr);
+    QSnippetEdit(QSnippetManager *mgr, QWidget *p = nullptr);
 
     QSnippetManager *snippetManager() const;
 
@@ -42,8 +45,6 @@ public slots:
     void setSnippetManager(QSnippetManager *mgr);
 
     bool maybeSave();
-
-    void retranslate();
 
 private slots:
     void on_lwSnippets_currentRowChanged(int idx);
@@ -53,12 +54,13 @@ private slots:
 
     void on_tbCreateSnippet_clicked();
     void on_tbDeleteSnippet_clicked();
-    void on_bMoreSnippets_clicked();
 
     void snippetRemoved(int i);
     void snippetAdded(QSnippet *s);
 
 private:
+    Ui::QSnippetEdit *ui;
+
     int m_editedSnippet;
     QSnippetManager *m_manager;
 };

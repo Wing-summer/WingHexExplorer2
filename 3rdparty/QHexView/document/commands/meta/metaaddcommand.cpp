@@ -1,7 +1,7 @@
 #include "metaaddcommand.h"
 
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
-                               QHexMetadataAbsoluteItem &meta,
+                               const QHexMetadataItem &meta,
                                QUndoCommand *parent)
     : MetaCommand(hexmeta, meta, parent) {}
 

@@ -112,23 +112,23 @@ struct HexPosition {
     }
 };
 
-struct HexMetadataAbsoluteItem {
+struct HexMetadataItem {
     qsizetype begin;
     qsizetype end;
     QColor foreground, background;
     QString comment;
 
     // added by wingsummer
-    bool operator==(const HexMetadataAbsoluteItem &item) {
+    bool operator==(const HexMetadataItem &item) {
         return begin == item.begin && end == item.end &&
                foreground == item.foreground && background == item.background &&
                comment == item.comment;
     }
 
-    HexMetadataAbsoluteItem() = default;
+    HexMetadataItem() = default;
 
-    HexMetadataAbsoluteItem(qsizetype begin, qsizetype end, QColor foreground,
-                            QColor background, QString comment) {
+    HexMetadataItem(qsizetype begin, qsizetype end, QColor foreground,
+                    QColor background, QString comment) {
         this->begin = begin;
         this->end = end;
         this->foreground = foreground;
@@ -136,34 +136,6 @@ struct HexMetadataAbsoluteItem {
         this->comment = comment;
     }
 };
-
-struct HexMetadataItem {
-    qsizetype line;
-    int start, length;
-    QColor foreground, background;
-    QString comment;
-
-    HexMetadataItem() = default;
-
-    // added by wingsummer
-    bool operator==(const HexMetadataItem &item) {
-        return line == item.line && start == item.start &&
-               foreground == item.foreground && background == item.background &&
-               comment == item.comment;
-    }
-
-    HexMetadataItem(qsizetype line, int start, int length, QColor foreground,
-                    QColor background, QString comment) {
-        this->line = line;
-        this->start = start;
-        this->length = length;
-        this->foreground = foreground;
-        this->background = background;
-        this->comment = comment;
-    }
-};
-
-typedef QList<HexMetadataItem> HexLineMetadata;
 
 namespace WingPlugin {
 
@@ -223,8 +195,7 @@ signals:
 
     // metadata
     bool lineHasMetadata(qsizetype line);
-    QList<HexMetadataAbsoluteItem> getMetadatas(qsizetype offset);
-    HexLineMetadata getMetaLine(qsizetype line);
+    QList<HexMetadataItem> getMetadatas(qsizetype offset);
 
     // bookmark
     bool lineHasBookMark(qsizetype line);
@@ -301,36 +272,32 @@ signals:
     bool setInsertionMode(bool isinsert);
 
     // metadata
+    bool foreground(qsizetype begin, qsizetype end, const QColor &fgcolor);
+    bool background(qsizetype begin, qsizetype end, const QColor &bgcolor);
+    bool comment(qsizetype begin, qsizetype end, const QString &comment);
+
     bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
-    bool metadata(qsizetype line, qsizetype start, qsizetype length,
-                  const QColor &fgcolor, const QColor &bgcolor,
-                  const QString &comment);
+
     bool removeMetadata(qsizetype offset);
     bool clearMetadata();
-    bool foreground(qsizetype line, qsizetype start, qsizetype length,
-                    const QColor &fgcolor);
-    bool background(qsizetype line, qsizetype start, qsizetype length,
-                    const QColor &bgcolor);
-    bool comment(qsizetype line, qsizetype start, qsizetype length,
-                 const QString &comment);
     bool setMetaVisible(bool b);
     bool setMetafgVisible(bool b);
     bool setMetabgVisible(bool b);
     bool setMetaCommentVisible(bool b);
 
     // mainwindow
-    bool newFile();
+    ErrFile newFile();
     ErrFile openFile(const QString &filename);
     ErrFile openRegionFile(const QString &filename, qsizetype start = 0,
                            qsizetype length = 1024);
     ErrFile openDriver(const QString &driver);
-    ErrFile closeFile(const QString &filename, bool force = false);
-    ErrFile saveFile(const QString &filename, bool ignoreMd5 = false);
-    ErrFile exportFile(const QString &filename, const QString &savename,
+    ErrFile closeFile(int handle, bool force = false);
+    ErrFile saveFile(int handle, bool ignoreMd5 = false);
+    ErrFile exportFile(int handle, const QString &savename,
                        bool ignoreMd5 = false);
     bool exportFileGUI();
-    ErrFile saveAsFile(const QString &filename, const QString &savename,
+    ErrFile saveAsFile(int handle, const QString &savename,
                        bool ignoreMd5 = false);
     bool saveAsFileGUI();
     ErrFile closeCurrentFile(bool force = false);
@@ -350,7 +317,7 @@ signals:
     bool clearBookMark();
 
     // workspace
-    bool openWorkSpace(const QString &filename);
+    ErrFile openWorkSpace(const QString &filename);
     bool setCurrentEncoding(const QString &encoding);
 };
 
@@ -524,7 +491,7 @@ public slots:
     virtual WingEditorViewWidget *clone() = 0;
 
 signals:
-    void raise();
+    void raiseView();
 };
 
 class IWingPlugin : public QObject {

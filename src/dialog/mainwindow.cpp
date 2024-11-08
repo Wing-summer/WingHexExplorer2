@@ -512,7 +512,12 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                     return;
                 }
                 hexeditor->renderer()->enableCursor(true);
-                hexeditor->gotoBookMark(index.row());
+
+                auto model = m_bookmarks->model();
+
+                auto offIndex = model->index(index.row(), 0);
+                auto offset = model->data(offIndex).value<qsizetype>();
+                hexeditor->cursor()->moveTo(offset);
             });
 
     m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
@@ -524,11 +529,14 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
         }
         auto s = m_bookmarks->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
-        const auto &bms = doc->bookMarks();
+
+        auto model = m_bookmarks->model();
 
         QList<qsizetype> pos;
         for (auto &item : s) {
-            pos.push_back(bms.at(item.row()).pos);
+            auto offIndex = model->index(item.row(), 0);
+            auto offset = model->data(offIndex).value<qsizetype>();
+            pos.append(offset);
         }
 
         doc->RemoveBookMarks(pos);
@@ -567,7 +575,12 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                     return;
                 }
                 hexeditor->renderer()->enableCursor(true);
-                hexeditor->gotoBookMark(index.row());
+
+                auto model = m_metadatas->model();
+                auto offIndex = model->index(index.row(), 0);
+                auto offset =
+                    model->data(offIndex, Qt::UserRole).value<qsizetype>();
+                hexeditor->cursor()->moveTo(offset);
             });
 
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
@@ -580,9 +593,9 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
         auto s = m_metadatas->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
 
-        const auto &mds = doc->metadata()->getallMetasPtr();
+        const auto &mds = doc->metadata()->getAllMetadata();
 
-        QList<QHexMetadataAbsoluteItem> pmetas;
+        QList<QHexMetadataItem> pmetas;
         for (auto &item : s) {
             pmetas.push_back(mds.at(item.row()));
         }
@@ -1350,27 +1363,19 @@ void MainWindow::on_save() {
         return;
     }
 
+    auto res = saveEditor(editor, {}, false);
+
     auto isNewFile = editor->isNewFile();
     if (isNewFile) {
         on_saveas();
         return;
     }
 
-    if (!writeSafeCheck(false, {})) {
-        if (WingMessageBox::warning(this, qAppName(), tr("RootSaveWarning"),
-                                    QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::No) {
-            return;
-        }
-    }
-
-    QString workspace = m_views.value(editor);
-    if (editor->change2WorkSpace()) {
-        workspace = editor->fileName() + PROEXT;
-    }
-
-    auto res = editor->save(workspace);
 restart:
+    if (res == ErrFile::IsNewFile) {
+        on_saveas();
+        return;
+    }
     if (res == ErrFile::Permission) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
         return;
@@ -1379,7 +1384,7 @@ restart:
         if (WingMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
                                     QMessageBox::Yes | QMessageBox::No) ==
             QMessageBox::Yes) {
-            res = editor->save(workspace);
+            res = saveEditor(editor, {}, true);
             goto restart;
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
@@ -1392,7 +1397,6 @@ restart:
         return;
     }
 
-    m_views[editor] = workspace;
     Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                  tr("SaveSuccessfully"));
 }
@@ -1409,26 +1413,13 @@ void MainWindow::on_saveas() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    if (!writeSafeCheck(true, filename)) {
-        if (WingMessageBox::warning(this, qAppName(), tr("RootSaveWarning"),
-                                    QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::No) {
-            return;
-        }
-    }
-
-    QString workspace = m_views.value(editor);
-    if (editor->change2WorkSpace()) {
-        workspace = editor->fileName() + PROEXT;
-    }
-    auto res = editor->save(workspace, filename);
+    auto res = saveEditor(editor, filename, false);
 
 restart:
     switch (res) {
     case ErrFile::Success: {
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
-        m_views[editor] = workspace;
         break;
     }
     case ErrFile::WorkSpaceUnSaved: {
@@ -1440,7 +1431,7 @@ restart:
         if (WingMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
                                     QMessageBox::Yes | QMessageBox::No) ==
             QMessageBox::Yes) {
-            res = editor->save(workspace, filename);
+            res = saveEditor(editor, filename, true);
             goto restart;
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
@@ -1467,12 +1458,7 @@ void MainWindow::on_exportfile() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    QString workspace = m_views.value(editor);
-    if (editor->change2WorkSpace()) {
-        workspace = editor->fileName() + PROEXT;
-    }
-    auto res = editor->save(workspace, filename, true);
-
+    auto res = saveEditor(editor, filename, false, true);
 restart:
     switch (res) {
     case ErrFile::Success: {
@@ -1484,7 +1470,7 @@ restart:
         if (QMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
                                  QMessageBox::Yes | QMessageBox::No) ==
             QMessageBox::Yes) {
-            res = editor->save(workspace, filename, true);
+            res = saveEditor(editor, filename, true, true);
             goto restart;
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
@@ -1791,16 +1777,17 @@ void MainWindow::on_bookmark() {
                      tr("CheckKeepSize"));
         return;
     }
-    qsizetype index = -1;
-    if (hexeditor->existBookMarkByIndex(index)) {
-        auto b = doc->bookMarkByIndex(index);
+
+    auto pos = hexeditor->currentOffset();
+    if (doc->existBookMark(pos)) {
+        auto bcomment = doc->bookMark(pos);
         bool ok;
         hexeditor->renderer()->enableCursor();
         auto comment =
             WingInputDialog::getText(this, tr("BookMark"), tr("InputComment"),
-                                     QLineEdit::Normal, b.comment, &ok);
+                                     QLineEdit::Normal, bcomment, &ok);
         if (ok) {
-            doc->ModBookMark(b.pos, comment);
+            doc->ModBookMark(pos, comment);
         }
     } else {
         bool ok;
@@ -1808,7 +1795,6 @@ void MainWindow::on_bookmark() {
             WingInputDialog::getText(this, tr("BookMark"), tr("InputComment"),
                                      QLineEdit::Normal, QString(), &ok);
         if (ok) {
-            auto pos = hexeditor->currentOffset();
             doc->AddBookMark(pos, comment);
         }
     }
@@ -1825,9 +1811,11 @@ void MainWindow::on_bookmarkdel() {
                      tr("CheckKeepSize"));
         return;
     }
-    qsizetype index = -1;
-    if (hexeditor->existBookMarkByIndex(index)) {
-        doc->removeBookMarkByIndex(index);
+
+    auto pos = hexeditor->currentOffset();
+
+    if (doc->bookMarkExists(pos)) {
+        doc->RemoveBookMark(pos);
     }
 }
 
@@ -1899,7 +1887,7 @@ void MainWindow::on_metadataedit() {
                 m.setComment(meta.comment);
                 if (m.exec()) {
                     auto mi = hexeditor->document()->metadata();
-                    QHexMetadataAbsoluteItem o;
+                    QHexMetadataItem o;
                     o.begin = begin;
                     o.end = end;
                     o.foreground = m.foreGroundColor();
@@ -2098,7 +2086,7 @@ void MainWindow::on_locChanged() {
     auto tmp = d->read(off, sizeof(quint64));
     quint64 n = *reinterpret_cast<const quint64 *>(tmp.constData());
 
-    auto len = tmp.length();
+    auto len = size_t(tmp.length());
 
     if (len == sizeof(quint64)) {
         auto s = processEndian(n);
@@ -2109,9 +2097,10 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
                               QString::number(s1));
         double s2 = *(double *)(&n);
-        auto s3 = processEndian(s2); // 大小端字节序转换函数
+        auto s3 = processEndian(s2);
         _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
-                              QString::number(s3));
+                              qIsNaN(s3) ? QStringLiteral("NAN")
+                                         : QString::number(s3));
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
@@ -2129,7 +2118,8 @@ void MainWindow::on_locChanged() {
         float s2 = *(float *)(&n);
         auto s3 = processEndian(s2);
         _numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
-                              QString::number(s3));
+                              qIsNaN(s3) ? QStringLiteral("NAN")
+                                         : QString::number(s3));
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
@@ -2186,7 +2176,13 @@ void MainWindow::on_locChanged() {
     }
 }
 
-void MainWindow::on_fullScreen() { this->showFullScreen(); }
+void MainWindow::on_fullScreen() {
+    if (this->isFullScreen()) {
+        this->showMaximized();
+    } else {
+        this->showFullScreen();
+    }
+}
 
 void MainWindow::on_restoreLayout() { m_dock->restoreState(_defaultLayout); }
 
@@ -2362,7 +2358,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                     m.setComment(meta.comment);
                     if (m.exec()) {
                         auto mi = hexeditor->document()->metadata();
-                        QHexMetadataAbsoluteItem o;
+                        QHexMetadataItem o;
                         o.begin = begin;
                         o.end = end;
                         o.foreground = m.foreGroundColor();
@@ -2394,41 +2390,16 @@ void MainWindow::connectEditorView(EditorView *editor) {
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
 
-        if (!editor->isCloneFile()) {
-            auto hexeditor = editor->hexEditor();
-            if (!hexeditor->isSaved()) {
-                auto ret =
-                    m_isOnClosing ? QMessageBox::Yes : this->saveRequest();
-                if (ret == QMessageBox::Cancel) {
-                    return;
-                } else if (ret == QMessageBox::Yes) {
-                    this->on_save();
-                    if (!hexeditor->isSaved()) {
-                        return;
-                    }
+        if (closeEditor(editor, m_isOnClosing) == ErrFile::UnSaved) {
+            auto ret = this->saveRequest();
+            if (ret == QMessageBox::Cancel) {
+                return;
+            } else if (ret == QMessageBox::Yes) {
+                if (saveEditor(editor, {}, false) == ErrFile::Success) {
+                    closeEditor(editor, m_isOnClosing);
                 }
-            }
-        }
-
-        m_views.remove(editor);
-        if (currentEditor() == editor) {
-            _editorLock.lockForWrite();
-            m_curEditor = nullptr;
-            _editorLock.unlock();
-        }
-        PluginSystem::instance().cleanUpEditorViewHandle(editor);
-        editor->deleteDockWidget();
-        m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-            ->setEnabled(m_views.size() != 0);
-
-        if (m_dock->focusedDockWidget() == editor) {
-            if (!m_views.isEmpty()) {
-                for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
-                    auto ev = *p;
-                    if (ev != editor && ev->isCurrentTab()) {
-                        ev->setFocus();
-                    }
-                }
+            } else {
+                closeEditor(editor, true);
             }
         }
     });
@@ -2665,6 +2636,70 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
 
     registerEditorView(ev);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    return ErrFile::Success;
+}
+
+ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
+                               bool ignoreMd5, bool isExport) {
+    if (editor == nullptr) {
+        return ErrFile::Error;
+    }
+
+    auto isNewFile = editor->isNewFile();
+    if (isNewFile && filename.isEmpty()) {
+        return ErrFile::IsNewFile;
+    }
+
+    if (!writeSafeCheck(false, {})) {
+        return ErrFile::Permission;
+    }
+
+    QString workspace = m_views.value(editor);
+    if (editor->change2WorkSpace()) {
+        workspace = editor->fileName() + PROEXT;
+    }
+
+    auto ret = editor->save(workspace, filename, ignoreMd5, isExport);
+    if (ret == ErrFile::Success) {
+        m_views[editor] = workspace;
+    }
+    return ret;
+}
+
+ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
+    if (editor == nullptr) {
+        return ErrFile::Error;
+    }
+    if (!editor->isCloneFile()) {
+        auto hexeditor = editor->hexEditor();
+        if (!force) {
+            if (!hexeditor->isSaved()) {
+                return ErrFile::UnSaved;
+            }
+        }
+    }
+
+    m_views.remove(editor);
+    if (currentEditor() == editor) {
+        _editorLock.lockForWrite();
+        m_curEditor = nullptr;
+        _editorLock.unlock();
+    }
+    PluginSystem::instance().cleanUpEditorViewHandle(editor);
+    editor->deleteDockWidget();
+    m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
+        ->setEnabled(m_views.size() != 0);
+
+    if (m_dock->focusedDockWidget() == editor) {
+        if (!m_views.isEmpty()) {
+            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
+                auto ev = *p;
+                if (ev != editor && ev->isCurrentTab()) {
+                    ev->setFocus();
+                }
+            }
+        }
+    }
     return ErrFile::Success;
 }
 

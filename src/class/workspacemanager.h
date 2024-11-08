@@ -18,17 +18,17 @@
 #ifndef WORKSPACEMANAGER_H
 #define WORKSPACEMANAGER_H
 
-#include "../../QHexView/document/qhexdocument.h"
-#include "../../QHexView/document/qhexmetadata.h"
+#include "QHexView/document/qhexmetadata.h"
 
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include <QList>
+#include <QMap>
 #include <QObject>
 #include <QStringList>
+#include <QVector>
 
 struct WorkSpaceInfo {
     QString encoding = QStringLiteral("ASCII");
@@ -40,13 +40,13 @@ class WorkSpaceManager {
 
 public:
     explicit WorkSpaceManager();
-    bool static saveWorkSpace(QString filename, QString file,
-                              QList<BookMarkStruct> bookmarks,
-                              QList<QHexMetadataAbsoluteItem> metas,
-                              WorkSpaceInfo infos);
-    bool static loadWorkSpace(QString filename, QString &file,
-                              QList<BookMarkStruct> &bookmarks,
-                              QList<QHexMetadataAbsoluteItem> &metas,
+    bool static saveWorkSpace(const QString &filename, const QString &file,
+                              const QMap<qsizetype, QString> &bookmarks,
+                              const QVector<QHexMetadataItem> &metas,
+                              const WorkSpaceInfo &infos);
+    bool static loadWorkSpace(const QString &filename, QString &file,
+                              QMap<qsizetype, QString> &bookmarks,
+                              QVector<QHexMetadataItem> &metas,
                               WorkSpaceInfo &infos);
 };
 

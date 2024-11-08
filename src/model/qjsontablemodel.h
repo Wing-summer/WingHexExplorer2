@@ -19,15 +19,15 @@
 #define QJSONTABLEMODEL_H
 
 #include <QAbstractTableModel>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QMap>
 #include <QObject>
 #include <QVector>
 
 class QJsonTableModel : public QAbstractTableModel {
 public:
-    typedef QMap<QString, QString> Heading;
+    typedef QHash<QString, QString> Heading;
     typedef QVector<Heading> Header;
     QJsonTableModel(const Header &header, QObject *parent = 0);
 

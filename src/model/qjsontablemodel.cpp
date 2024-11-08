@@ -51,10 +51,12 @@ QVariant QJsonTableModel::headerData(int section, Qt::Orientation orientation,
 }
 
 int QJsonTableModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return m_json.size();
 }
 
 int QJsonTableModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return m_header.size();
 }
 

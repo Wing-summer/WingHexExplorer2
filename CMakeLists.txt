@@ -302,7 +302,10 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qeditconfig.ui
     src/qcodeeditwidget/qformatconfig.h
     src/qcodeeditwidget/qformatconfig.cpp
-    src/qcodeeditwidget/qformatconfig.ui)
+    src/qcodeeditwidget/qformatconfig.ui
+    src/qcodeeditwidget/qsnippetedit.cpp
+    src/qcodeeditwidget/qsnippetedit.h
+    src/qcodeeditwidget/qsnippetedit.ui)
 
 set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
                src/plugin/pluginsystem.h src/plugin/settingpage.h)

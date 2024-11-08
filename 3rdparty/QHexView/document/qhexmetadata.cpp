@@ -5,12 +5,22 @@
 #include "commands/meta/metaremoveposcommand.h"
 #include "commands/meta/metareplacecommand.h"
 
+#include <QtAlgorithms>
+
 QHexMetadata::QHexMetadata(QUndoStack *undo, QObject *parent)
     : QObject(parent), m_undo(undo) {}
 
-const QHexLineMetadata &QHexMetadata::get(qsizetype line) const {
-    auto it = m_metadata.find(line);
-    return it.value();
+QHexLineMetadata QHexMetadata::get(qsizetype line) const {
+    if (!m_linemeta.contains(line)) {
+        return {};
+    }
+
+    QHexLineMetadata ret;
+    for (auto &item : m_linemeta[line]) {
+        ret.append(item);
+    }
+
+    return ret;
 }
 
 /*==================================*/
@@ -18,13 +28,12 @@ const QHexLineMetadata &QHexMetadata::get(qsizetype line) const {
 
 //----------undo redo wrapper----------
 
-void QHexMetadata::ModifyMetadata(QHexMetadataAbsoluteItem newmeta,
-                                  QHexMetadataAbsoluteItem oldmeta) {
+void QHexMetadata::ModifyMetadata(QHexMetadataItem newmeta,
+                                  QHexMetadataItem oldmeta) {
     m_undo->push(new MetaReplaceCommand(this, newmeta, oldmeta));
 }
 
-void QHexMetadata::RemoveMetadatas(
-    const QList<QHexMetadataAbsoluteItem> &items) {
+void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
     m_undo->beginMacro("RemoveMetadatas");
     for (auto &item : items) {
         RemoveMetadata(item);
@@ -32,7 +41,7 @@ void QHexMetadata::RemoveMetadatas(
     m_undo->endMacro();
 }
 
-void QHexMetadata::RemoveMetadata(QHexMetadataAbsoluteItem item) {
+void QHexMetadata::RemoveMetadata(QHexMetadataItem item) {
     m_undo->push(new MetaRemoveCommand(this, item));
 }
 
@@ -43,81 +52,103 @@ void QHexMetadata::RemoveMetadata(qsizetype offset) {
 void QHexMetadata::Metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    QHexMetadataAbsoluteItem absi{begin, end, fgcolor, bgcolor, comment};
+    QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
     m_undo->push(new MetaAddCommand(this, absi));
 }
 
 void QHexMetadata::Clear() {
-    m_undo->push(new MetaClearCommand(this, getallMetas()));
+    m_undo->push(new MetaClearCommand(this, this->getAllMetadata()));
 }
 
 //-------- the real function-----------
-void QHexMetadata::undo() { m_undo->undo(); }
-void QHexMetadata::redo() { m_undo->redo(); }
-bool QHexMetadata::canUndo() { return m_undo->canUndo(); }
-bool QHexMetadata::canRedo() { return m_undo->canRedo(); }
 
-QList<QHexMetadataAbsoluteItem> QHexMetadata::getallMetas() {
-    return m_absoluteMetadata;
+bool QHexMetadata::modifyMetadata(const QHexMetadataItem &newmeta,
+                                  const QHexMetadataItem &oldmeta) {
+    if (removeMetadata(oldmeta)) {
+        metadata(newmeta.begin, newmeta.end, newmeta.foreground,
+                 newmeta.background, newmeta.comment);
+        return true;
+    }
+    return false;
 }
 
-const QList<QHexMetadataAbsoluteItem> &QHexMetadata::getallMetasPtr() {
-    return m_absoluteMetadata;
-}
-
-void QHexMetadata::modifyMetadata(QHexMetadataAbsoluteItem newmeta,
-                                  QHexMetadataAbsoluteItem oldmeta) {
-    removeMetadata(oldmeta);
-    metadata(newmeta.begin, newmeta.end, newmeta.foreground, newmeta.background,
-             newmeta.comment);
-}
-
-void QHexMetadata::removeMetadata(QHexMetadataAbsoluteItem item) {
-    auto firstRow = item.begin / m_lineWidth;
-    auto lastRow = item.end / m_lineWidth;
-
-    for (auto i = firstRow; i <= lastRow; i++) {
-        QList<QHexMetadataItem> delmeta;
-        auto it = m_metadata.find(i);
-        if (it != m_metadata.end()) {
-            for (auto iitem : *it) {
-                if (iitem.foreground == item.foreground &&
-                    iitem.background == item.background &&
-                    iitem.comment == item.comment) {
-                    delmeta.push_back(iitem);
-                }
-            }
-            for (auto iitem : delmeta) {
-                it->remove(iitem);
-            }
-            m_absoluteMetadata.removeOne(item);
-        }
+bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
+    auto index = m_metadata.indexOf(item);
+    if (index < 0) {
+        return false;
+    }
+    m_metadata.removeAt(index);
+    for (auto &l : m_linemeta) {
+        l.remove(item);
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    m_linemeta.erase(std::remove_if(
+        m_linemeta.begin(), m_linemeta.end(),
+        [](const QHash<QHexMetadataItem, QHexLineMetadata> &item) {
+            return item.isEmpty();
+        }));
+#else
+    m_linemeta.removeIf(
+        [](const QPair<qsizetype, QHash<QHexMetadataItem, QHexLineMetadata>>
+               &item) { return item.second.isEmpty(); });
+#endif
+
     emit metadataChanged();
+    return true;
 }
 
 void QHexMetadata::removeMetadata(qsizetype offset) {
-    QList<QHexMetadataAbsoluteItem> delneeded;
-    for (auto item : m_absoluteMetadata) {
-        if (offset >= item.begin && offset <= item.end) {
-            removeMetadata(item);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    m_metadata.erase(
+        std::remove_if(m_metadata.begin(), m_metadata.end(),
+                       [offset, this](const QHexMetadataItem &item) {
+                           auto r = offset >= item.begin && offset <= item.end;
+                           if (r) {
+                               for (auto &l : m_linemeta) {
+                                   l.remove(item);
+                               }
+                           }
+                           return r;
+                       }));
+#else
+    m_metadata.removeIf([offset, this](const QHexMetadataItem &item) {
+        auto r = offset >= item.begin && offset <= item.end;
+        if (r) {
+            for (auto &l : m_linemeta) {
+                l.remove(item);
+            }
         }
-    }
+        return r;
+    });
+#endif
 }
 
-QList<QHexMetadataAbsoluteItem> QHexMetadata::gets(qsizetype offset) {
-    return m_absoluteMetadata;
+QVector<QHexMetadataItem> QHexMetadata::getAllMetadata() const {
+    return m_metadata;
 }
 
-void QHexMetadata::applyMetas(QList<QHexMetadataAbsoluteItem> metas) {
-    for (auto item : metas) {
-        metadata(item.begin, item.end, item.foreground, item.background,
-                 item.comment);
-    }
+QVector<QHexMetadataItem> QHexMetadata::gets(qsizetype offset) {
+    QVector<QHexMetadataItem> ret;
+
+    std::copy_if(
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        m_metadata.begin(), m_metadata.end(),
+#else
+        m_metadata.constBegin(), m_metadata.constEnd(),
+#endif
+        std::back_inserter(ret), [offset](const QHexMetadataItem &item) {
+            return offset >= item.begin && offset <= item.end;
+        });
+
+    return ret;
 }
 
-bool QHexMetadata::hasMetadata() { return m_absoluteMetadata.count() > 0; }
+void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
+    m_metadata = metas;
+}
+
+bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }
 
 /*==================================*/
 
@@ -145,13 +176,13 @@ QString QHexMetadata::comments(qsizetype line, qsizetype column) const {
 }
 
 bool QHexMetadata::lineHasMetadata(qsizetype line) const {
-    return m_metadata.contains(line);
+    return m_linemeta.contains(line);
 }
 
-qsizetype QHexMetadata::size() const { return m_absoluteMetadata.size(); }
+qsizetype QHexMetadata::size() const { return m_metadata.size(); }
 
 void QHexMetadata::clear() {
-    m_absoluteMetadata.clear();
+    m_linemeta.clear();
     m_metadata.clear();
     emit metadataChanged();
 }
@@ -159,27 +190,59 @@ void QHexMetadata::clear() {
 void QHexMetadata::metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    QHexMetadataAbsoluteItem absi{begin, end, fgcolor, bgcolor, comment};
-    m_absoluteMetadata.append(absi);
-    setAbsoluteMetadata(absi);
+    QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
+    addMetadata(absi);
     emit metadataChanged();
 }
 
-void QHexMetadata::setAbsoluteMetadata(const QHexMetadataAbsoluteItem &mai) {
-    Q_ASSERT(m_lineWidth > 0);
+void QHexMetadata::setLineWidth(quint8 width) {
+    if (width != m_lineWidth) {
+        m_lineWidth = width;
 
-    const auto firstRow = mai.begin / m_lineWidth;
-    const auto lastRow = mai.end / m_lineWidth;
+        m_linemeta.clear();
+        for (auto &item : m_metadata) {
+            addMetadata(item);
+        }
+
+        emit metadataChanged();
+    }
+}
+
+void QHexMetadata::color(qsizetype begin, qsizetype end, const QColor &fgcolor,
+                         const QColor &bgcolor) {
+    this->metadata(begin, end, fgcolor, bgcolor, QString());
+}
+
+void QHexMetadata::foreground(qsizetype begin, qsizetype end,
+                              const QColor &fgcolor) {
+    this->color(begin, end, fgcolor, QColor());
+}
+
+void QHexMetadata::background(qsizetype begin, qsizetype end,
+                              const QColor &bgcolor) {
+    this->color(begin, end, QColor(), bgcolor);
+}
+
+void QHexMetadata::comment(qsizetype begin, qsizetype end,
+                           const QString &comment) {
+    this->metadata(begin, end, QColor(), QColor(), comment);
+}
+
+void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
+    const auto firstRow = mi.begin / m_lineWidth;
+    const auto lastRow = mi.end / m_lineWidth;
 
     for (auto row = firstRow; row <= lastRow; ++row) {
         qsizetype start, length;
         if (row == firstRow) {
-            start = mai.begin % m_lineWidth;
+            Q_ASSERT(m_lineWidth > 0);
+            start = mi.begin % m_lineWidth;
         } else {
             start = 0;
         }
         if (row == lastRow) {
-            const int lastChar = mai.end % m_lineWidth;
+            Q_ASSERT(m_lineWidth > 0);
+            const int lastChar = mi.end % m_lineWidth;
             length = lastChar - start;
         } else {
             // fix the bug by wingsummer
@@ -190,69 +253,10 @@ void QHexMetadata::setAbsoluteMetadata(const QHexMetadataAbsoluteItem &mai) {
         }
 
         if (length > 0) {
-            setMetadata({row, start, length, mai.foreground, mai.background,
-                         mai.comment});
+            m_linemeta[row][mi].append(
+                {start, length, mi.foreground, mi.background, mi.comment});
         }
     }
-}
 
-void QHexMetadata::setLineWidth(quint8 width) {
-    if (width != m_lineWidth) {
-        m_lineWidth = width;
-        // clean m_metadata
-        m_metadata.clear();
-        // and regenerate with new line width size
-        for (int i = 0; i < m_absoluteMetadata.size(); ++i) {
-            setAbsoluteMetadata(m_absoluteMetadata[i]);
-        }
-    }
-}
-
-void QHexMetadata::metadata(qsizetype line, qsizetype start, qsizetype length,
-                            const QColor &fgcolor, const QColor &bgcolor,
-                            const QString &comment) {
-    const qsizetype begin = qsizetype(line * m_lineWidth + uint(start));
-    const qsizetype end = begin + length;
-    // delegate to the new interface
-    this->metadata(begin, end, fgcolor, bgcolor, comment);
-    emit metadataChanged();
-}
-
-void QHexMetadata::color(qsizetype line, qsizetype start, qsizetype length,
-                         const QColor &fgcolor, const QColor &bgcolor) {
-    this->metadata(line, start, length, fgcolor, bgcolor, QString());
-}
-
-void QHexMetadata::foreground(qsizetype line, qsizetype start, qsizetype length,
-                              const QColor &fgcolor) {
-    this->color(line, start, length, fgcolor, QColor());
-}
-
-void QHexMetadata::background(qsizetype line, qsizetype start, qsizetype length,
-                              const QColor &bgcolor) {
-    this->color(line, start, length, QColor(), bgcolor);
-}
-
-void QHexMetadata::comment(qsizetype line, qsizetype start, qsizetype length,
-                           const QString &comment) {
-    this->metadata(line, start, length, QColor(), QColor(), comment);
-}
-
-void QHexMetadata::setMetadata(const QHexMetadataItem &mi) {
-    if (!m_metadata.contains(mi.line)) {
-        QHexLineMetadata linemetadata;
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        linemetadata << mi;
-#else
-        linemetadata.push_back(mi);
-#endif
-        m_metadata[mi.line] = linemetadata;
-    } else {
-        QHexLineMetadata &linemetadata = m_metadata[mi.line];
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        linemetadata << mi;
-#else
-        linemetadata.push_back(mi);
-#endif
-    }
+    m_metadata << mi;
 }

@@ -1,7 +1,7 @@
 #include "metaremovecommand.h"
 
 MetaRemoveCommand::MetaRemoveCommand(QHexMetadata *hexmeta,
-                                     QHexMetadataAbsoluteItem &meta,
+                                     const QHexMetadataItem &meta,
                                      QUndoCommand *parent)
     : MetaCommand(hexmeta, meta, parent) {}
 

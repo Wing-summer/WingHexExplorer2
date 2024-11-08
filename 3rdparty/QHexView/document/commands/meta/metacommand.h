@@ -10,12 +10,12 @@
 
 class MetaCommand : public QUndoCommand {
 public:
-    MetaCommand(QHexMetadata *hexmeta, QHexMetadataAbsoluteItem &meta,
+    MetaCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
                 QUndoCommand *parent = nullptr);
 
 protected:
     QHexMetadata *m_hexmeta;
-    QHexMetadataAbsoluteItem m_meta;
+    QHexMetadataItem m_meta;
 };
 
 #endif // METACOMMAND_H

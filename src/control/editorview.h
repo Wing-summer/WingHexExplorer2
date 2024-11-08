@@ -108,9 +108,8 @@ public slots:
                        const QString &encoding = QString());
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
-         bool isExport = false,
-         SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace,
-         bool ignoreMd5 = false);
+         bool ignoreMd5 = false, bool isExport = false,
+         SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace);
     ErrFile reload();
 
     void setCopyLimit(qsizetype sizeMB);

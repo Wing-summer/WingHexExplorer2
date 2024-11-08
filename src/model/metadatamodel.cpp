@@ -21,16 +21,20 @@ MetaDataModel::MetaDataModel(QHexDocument *doc, QObject *parent)
     : QAbstractTableModel(parent), _doc(doc) {}
 
 int MetaDataModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _doc ? _doc->metadata()->size() : 0;
 }
 
-int MetaDataModel::columnCount(const QModelIndex &parent) const { return 5; }
+int MetaDataModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 5;
+}
 
 QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getallMetasPtr();
+        const auto &b = _doc->metadata()->getAllMetadata();
         auto d = b.at(r);
         switch (index.column()) {
         case 0: // begin
@@ -58,7 +62,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     }
     case Qt::ToolTipRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getallMetasPtr();
+        const auto &b = _doc->metadata()->getAllMetadata();
         auto d = b.at(r);
         switch (index.column()) {
         case 2: {
@@ -82,7 +86,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::BackgroundRole: {
         auto r = index.row();
-        const auto &b = _doc->metadata()->getallMetasPtr();
+        const auto &b = _doc->metadata()->getAllMetadata();
         auto d = b.at(r);
         switch (index.column()) {
         case 2:
@@ -95,6 +99,16 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     } break;
     case Qt::TextAlignmentRole:
         return int(Qt::AlignCenter);
+    case Qt::UserRole:
+        auto r = index.row();
+        const auto &b = _doc->metadata()->getAllMetadata();
+        auto d = b.at(r);
+        switch (index.column()) {
+        case 0: // begin
+            return d.begin;
+        case 1: // end
+            return d.end;
+        }
     }
     return QVariant();
 }

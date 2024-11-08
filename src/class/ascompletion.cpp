@@ -77,10 +77,6 @@ QStringList AsCompletion::extensions() const {
 }
 
 void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
-    if (pPopup->isVisible()) {
-        return;
-    }
-
     // TODO parse current code
     // auto codes = c.document()->text(true, false);
     // parser.parse(codes, this->editor()->fileName());
@@ -129,7 +125,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     auto &_headerNodes = parser.headerNodes();
     fn = r->content;
 
-    if (trigger.isEmpty()) {
+    if (trigger.isEmpty() && trigWordLen() <= r->content.length()) {
         auto eb = tokens.back();
         if (eb.type == asTC_KEYWORD) {
             // only support these
@@ -137,6 +133,8 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                 complete(c, *SEMI_COLON_TRIGGER);
             } else if (eb.content == *DOT_TRIGGER) {
                 complete(c, *DOT_TRIGGER);
+            } else {
+                pPopup->hide();
             }
             return;
         } else if (eb.type == asTC_IDENTIFIER) {
@@ -152,24 +150,27 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                                 auto name = n->qualifiedName();
                                 if (name == ns) {
                                     nodes << n;
+                                    break;
                                 }
                             }
-
-                            auto cur = c;
-                            cur.movePosition(pr->pos + pr->content.length() -
-                                             txt.length());
-                            pPopup->setCursor(cur);
                         } else {
                             return;
                         }
+                    } else {
+                        applyEmptyNsNode(nodes);
                     }
+                } else {
+                    applyEmptyNsNode(nodes);
                 }
+            } else {
+                applyEmptyNsNode(nodes);
             }
         } else {
             return;
         }
 
         // pPopup->setTemporaryNodes(temp);
+        pPopup->setPrefix(fn);
         pPopup->setFilter(filter);
         pPopup->setCompletions(nodes);
         pPopup->popup();
@@ -179,6 +180,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                 auto name = n->qualifiedName();
                 if (name == fn) {
                     nodes << n;
+                    break;
                 }
             }
         } else if (trigger == *LEFT_PARE_TRIGGER) {
@@ -193,6 +195,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                                 auto name = n->qualifiedName();
                                 if (name == ns) {
                                     nodes << n;
+                                    break;
                                 }
                             }
                         } else {
@@ -248,6 +251,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                 }
             } else {
                 // pPopup->setTemporaryNodes(temp);
+                pPopup->setPrefix({});
                 pPopup->setFilter(QCodeCompletionWidget::Filter(filter));
                 pPopup->setCompletions(nodes);
 
@@ -264,6 +268,20 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             qDebug("completion failed");
         }
     }
+}
+
+void AsCompletion::applyEmptyNsNode(QList<QCodeNode *> &nodes) {
+    if (_emptyNsNodes.isEmpty()) {
+        for (auto &n : parser.headerNodes()) {
+            auto name = n->qualifiedName();
+            if (name.isEmpty()) {
+                // only one group for empty namespace
+                _emptyNsNodes << n;
+            }
+        }
+    }
+
+    nodes = _emptyNsNodes;
 }
 
 void AsCompletion::setEditor(QEditor *e) {

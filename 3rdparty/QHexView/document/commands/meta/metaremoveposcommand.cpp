@@ -9,7 +9,7 @@ MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
 void MetaRemovePosCommand::redo() { m_hexmeta->removeMetadata(m_pos); }
 
 void MetaRemovePosCommand::undo() {
-    for (auto item : olditems)
+    for (auto &item : olditems)
         m_hexmeta->metadata(item.begin, item.end, item.foreground,
                             item.background, item.comment);
 }

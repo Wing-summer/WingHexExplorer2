@@ -161,8 +161,6 @@ void QCodeCompletionWidget::setCompletions(const QList<QCodeNode *> &nodes) {
     pModel->setFocusNodes(nodes);
 }
 
-void QCodeCompletionWidget::setCursor(const QDocumentCursor &c) { m_begin = c; }
-
 void QCodeCompletionWidget::setTemporaryNodes(const QList<QCodeNode *> &l) {
     m_temps = l;
 }
@@ -218,14 +216,6 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
 
     if (prefix.length() && txt.startsWith(prefix))
         txt.remove(0, prefix.length());
-
-    if (m_begin.isValid() && c > m_begin) {
-        m_begin.movePosition(c.position() - m_begin.position(),
-                             QDocumentCursor::NextCharacter,
-                             QDocumentCursor::KeepAnchor);
-        m_begin.removeSelectedText();
-        m_begin = QDocumentCursor();
-    }
 
     e->write(txt);
 
@@ -409,8 +399,6 @@ void QCodeCompletionModel::setFilter(QCodeCompletionWidget::Filter filter) {
 void QCodeCompletionModel::update() { bUpdate = true; }
 
 void QCodeCompletionModel::forceUpdate() const {
-    // qDebug("updating model");
-
     m_visibles.clear();
 
     foreach (QCodeNode *n, m_nodes) {
@@ -428,10 +416,8 @@ void QCodeCompletionModel::forceUpdate() const {
         }
     }
 
-    // qDebug("model updated");
-
+    emit const_cast<QCodeCompletionModel *>(this)->layoutChanged();
     bUpdate = false;
-    emit const_cast<QCodeCompletionModel *>(this)->changed();
 }
 
 QList<QCodeNode *> QCodeCompletionModel::focusNodes() const { return m_nodes; }

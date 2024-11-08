@@ -6,7 +6,7 @@
 
 class MetaAddCommand : public MetaCommand {
 public:
-    MetaAddCommand(QHexMetadata *hexmeta, QHexMetadataAbsoluteItem &meta,
+    MetaAddCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
                    QUndoCommand *parent = nullptr);
     void undo() override;
     void redo() override;

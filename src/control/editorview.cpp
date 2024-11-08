@@ -293,8 +293,8 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
     }
 
     QString file;
-    QList<BookMarkStruct> bookmarks;
-    QList<QHexMetadataAbsoluteItem> metas;
+    QMap<qsizetype, QString> bookmarks;
+    QVector<QHexMetadataItem> metas;
     WorkSpaceInfo infos;
 
     if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas,
@@ -407,11 +407,11 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
 }
 
 ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
-                         bool isExport, SaveWorkSpaceAttr workSpaceAttr,
-                         bool ignoreMd5) {
+                         bool ignoreMd5, bool isExport,
+                         SaveWorkSpaceAttr workSpaceAttr) {
     if (isCloneFile()) {
-        return this->cloneParent()->save(workSpaceName, path, isExport,
-                                         workSpaceAttr, ignoreMd5);
+        return this->cloneParent()->save(workSpaceName, path, ignoreMd5,
+                                         isExport, workSpaceAttr);
     }
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
@@ -447,8 +447,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         infos.base = doc->baseAddress();
 
         auto b = WorkSpaceManager::saveWorkSpace(
-            workSpaceName, m_fileName, doc->getAllBookMarks(),
-            doc->metadata()->getallMetas(), infos);
+            workSpaceName, m_fileName, doc->bookMarks(),
+            doc->metadata()->getAllMetadata(), infos);
         if (!b)
             return ErrFile::WorkSpaceUnSaved;
         if (!isExport) {
@@ -548,7 +548,7 @@ qsizetype EditorView::findAvailCloneIndex() {
 
 bool EditorView::hasMeta() const {
     auto doc = m_hex->document();
-    return doc->metadata()->hasMetadata() || doc->bookMarksPtr()->size() > 0;
+    return doc->metadata()->hasMetadata() || doc->bookMarksCount() > 0;
 }
 
 void EditorView::applyPluginData(const QHash<QString, QByteArray> &data) {

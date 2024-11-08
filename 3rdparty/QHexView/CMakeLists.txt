@@ -75,7 +75,7 @@ add_library(
 set_target_properties(
     QHexView
     PROPERTIES AUTOMOC ON
-               CXX_STANDARD 11
+               CXX_STANDARD 17
                CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(QHexView PRIVATE Qt${QT_VERSION_MAJOR}::Widgets

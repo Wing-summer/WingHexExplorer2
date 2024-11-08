@@ -243,17 +243,12 @@ QLayoutItem *QPanelLayout::takeAt(int idx) {
         \internal
 */
 void QPanelLayout::setGeometry(const QRect &r) {
-// qDebug("laying out %i panels", count());
-#ifdef _PANEL_POSITION_FIX_
     QScrollBar *vb = m_parent->verticalScrollBar(),
                *hb = m_parent->horizontalScrollBar();
 
     QRect rect(r.x(), r.y(),
                r.width() - (vb->isVisibleTo(m_parent) ? vb->width() : 0),
                r.height() - (hb->isVisibleTo(m_parent) ? hb->height() : 0));
-#else
-    QRect rect(r.x(), r.y(), r.width(), r.height());
-#endif
 
     int i, eastWidth = 0, westWidth = 0, northHeight = 0, southHeight = 0,
            centerHeight = 0;

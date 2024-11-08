@@ -69,7 +69,7 @@ void QSnippetManager::removeSnippet(int i, bool cleanup) {
 
     QSnippet *snip = m_snippets.takeAt(i);
 
-    emit snippetRemoved(i);
+    emit snippetRemovedByIndex(i);
     emit snippetRemoved(snip);
 
     if (cleanup)
@@ -84,7 +84,7 @@ void QSnippetManager::removeSnippet(QSnippet *snip) {
 
     m_snippets.removeAt(idx);
 
-    emit snippetRemoved(idx);
+    emit snippetRemovedByIndex(idx);
     emit snippetRemoved(snip);
 }
 

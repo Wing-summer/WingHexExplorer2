@@ -18,7 +18,7 @@ public:
 protected:
     QHexMetadata *m_hexmeta;
     qsizetype m_pos;
-    QList<QHexMetadataAbsoluteItem> olditems;
+    QVector<QHexMetadataItem> olditems;
 };
 
 #endif // METAREMOVEPOSCOMMAND_H

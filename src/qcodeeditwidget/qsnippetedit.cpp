@@ -14,6 +14,7 @@
 ****************************************************************************/
 
 #include "qsnippetedit.h"
+#include "ui_qsnippetedit.h"
 
 /*!
         \file qsnippetedit.cpp
@@ -33,14 +34,14 @@
 */
 
 QSnippetEdit::QSnippetEdit(QWidget *p)
-    : QWidget(p), m_editedSnippet(-1), m_manager(0) {
-    setupUi(this);
+    : QWidget(p), m_editedSnippet(-1), m_manager(nullptr) {
+    ui->setupUi(this);
     setEnabled(false);
 }
 
 QSnippetEdit::QSnippetEdit(QSnippetManager *mgr, QWidget *p)
-    : QWidget(p), m_editedSnippet(-1), m_manager(0) {
-    setupUi(this);
+    : QWidget(p), m_editedSnippet(-1), m_manager(nullptr) {
+    ui->setupUi(this);
     setSnippetManager(mgr);
 }
 
@@ -54,41 +55,35 @@ void QSnippetEdit::setSnippetManager(QSnippetManager *mgr) {
         disconnect(m_manager, SIGNAL(snippetRemoved(int)), this,
                    SLOT(snippetRemoved(int)));
 
-        QListWidgetItem *empty = lwSnippets->takeItem(0);
-        lwSnippets->clear();
-        lwSnippets->addItem(empty);
+        QListWidgetItem *empty = ui->lwSnippets->takeItem(0);
+        ui->lwSnippets->clear();
+        ui->lwSnippets->addItem(empty);
     }
 
     m_manager = mgr;
     setEnabled(mgr);
 
     if (m_manager) {
-        connect(m_manager, SIGNAL(snippetAdded(QSnippet *)), this,
-                SLOT(snippetAdded(QSnippet *)));
+        connect(m_manager, &QSnippetManager::snippetAdded, this,
+                &QSnippetEdit::snippetAdded);
 
-        connect(m_manager, SIGNAL(snippetRemoved(int)), this,
-                SLOT(snippetRemoved(int)));
+        connect(m_manager, &QSnippetManager::snippetRemovedByIndex, this,
+                &QSnippetEdit::snippetRemoved);
 
         for (int i = 0; i < m_manager->snippetCount(); ++i) {
-            lwSnippets->addItem(m_manager->snippet(i)->name());
+            ui->lwSnippets->addItem(m_manager->snippet(i)->name());
         }
     }
 
-    lwSnippets->setCurrentItem(0);
+    ui->lwSnippets->setCurrentItem(0);
 }
 
-void QSnippetEdit::snippetRemoved(int i) { delete lwSnippets->takeItem(i + 1); }
+void QSnippetEdit::snippetRemoved(int i) {
+    delete ui->lwSnippets->takeItem(i + 1);
+}
 
-void QSnippetEdit::snippetAdded(QSnippet *s) { lwSnippets->addItem(s->name()); }
-
-void QSnippetEdit::retranslate() {
-    QSnippetManager *mgr = snippetManager();
-    setSnippetManager(0);
-
-    lwSnippets->clear();
-    retranslateUi(this);
-
-    setSnippetManager(mgr);
+void QSnippetEdit::snippetAdded(QSnippet *s) {
+    ui->lwSnippets->addItem(s->name());
 }
 
 static const QRegularExpression _cxt_splitter("\\s*,\\s*");
@@ -96,13 +91,13 @@ static const QRegularExpression _cxt_splitter("\\s*,\\s*");
 bool QSnippetEdit::maybeSave() {
     static const QRegularExpression nonTrivial("\\S");
 
-    QString pattern = eSnippet->text();
+    QString pattern = ui->eSnippet->text();
 
     if (pattern.endsWith('\n'))
         pattern.chop(1);
 
-    QString name = leSnippetName->text();
-    QStringList contexts = leSnippetScope->text().split(_cxt_splitter);
+    // QString name = ui->leSnippetName->text();
+    // QStringList contexts = ui->leSnippetScope->text().split(_cxt_splitter);
     bool nonTrivialPattern = pattern.contains(nonTrivial);
 
     if (m_editedSnippet >= 0) {
@@ -142,26 +137,26 @@ void QSnippetEdit::on_lwSnippets_currentRowChanged(int idx) {
         return;
 
     if (maybeSave()) {
-        lwSnippets->setCurrentRow(m_editedSnippet);
+        ui->lwSnippets->setCurrentRow(m_editedSnippet);
         return;
     }
 
     m_editedSnippet = idx - 1;
 
     if (idx <= 0) {
-        eSnippet->setText(QString());
-        leSnippetName->setText(QString());
-        leSnippetScope->setText(QString());
+        ui->eSnippet->setText(QString());
+        ui->leSnippetName->setText(QString());
+        ui->leSnippetScope->setText(QString());
     } else {
         QSnippet *snip = m_manager->snippet(m_editedSnippet);
 
-        eSnippet->setText(snip->pattern());
-        leSnippetName->setText(snip->name());
-        leSnippetScope->setText(snip->contexts().join(","));
-        // eSnippet->highlight();
+        ui->eSnippet->setText(snip->pattern());
+        ui->leSnippetName->setText(snip->name());
+        ui->leSnippetScope->setText(snip->contexts().join(","));
+        // ui->eSnippet->highlight();
     }
 
-    eSnippet->setFocus();
+    ui->eSnippet->setFocus();
 }
 
 void QSnippetEdit::on_leSnippetName_editingFinished() {
@@ -170,9 +165,9 @@ void QSnippetEdit::on_leSnippetName_editingFinished() {
 
     QSnippet *snip = m_manager->snippet(m_editedSnippet);
 
-    snip->setName(leSnippetName->text());
+    snip->setName(ui->leSnippetName->text());
 
-    lwSnippets->item(m_editedSnippet + 1)->setText(snip->name());
+    ui->lwSnippets->item(m_editedSnippet + 1)->setText(snip->name());
 }
 
 void QSnippetEdit::on_leSnippetScope_editingFinished() {
@@ -181,13 +176,13 @@ void QSnippetEdit::on_leSnippetScope_editingFinished() {
 
     QSnippet *snip = m_manager->snippet(m_editedSnippet);
 
-    snip->setContexts(leSnippetScope->text().split(_cxt_splitter));
+    snip->setContexts(ui->leSnippetScope->text().split(_cxt_splitter));
 }
 
 void QSnippetEdit::on_tbCreateSnippet_clicked() {
-    QString name = leSnippetName->text();
-    QString pattern = eSnippet->text();
-    QStringList contexts = leSnippetScope->text().split(_cxt_splitter);
+    QString name = ui->leSnippetName->text();
+    QString pattern = ui->eSnippet->text();
+    QStringList contexts = ui->leSnippetScope->text().split(_cxt_splitter);
 
     if (pattern.endsWith('\n'))
         pattern.chop(1);
@@ -207,19 +202,19 @@ void QSnippetEdit::on_tbCreateSnippet_clicked() {
         return;
     }
 
-    eSnippet->setText(QString());
-    leSnippetScope->clear();
-    leSnippetName->clear();
+    ui->eSnippet->setText(QString());
+    ui->leSnippetScope->clear();
+    ui->leSnippetName->clear();
 
     QSnippet *snip = m_manager->snippet(m_manager->snippetCount() - 1);
     // snip->setName(name);
     snip->setContexts(contexts);
 
-    lwSnippets->setCurrentRow(0);
+    ui->lwSnippets->setCurrentRow(0);
 }
 
 void QSnippetEdit::on_tbDeleteSnippet_clicked() {
-    int row = lwSnippets->currentRow() - 1;
+    int row = ui->lwSnippets->currentRow() - 1;
 
     if (row < 0) {
         QMessageBox::warning(0, tr("Error"),
@@ -229,5 +224,3 @@ void QSnippetEdit::on_tbDeleteSnippet_clicked() {
 
     m_manager->removeSnippet(row);
 }
-
-void QSnippetEdit::on_bMoreSnippets_clicked() {}

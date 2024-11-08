@@ -115,16 +115,16 @@ void QHexView::establishSignal(QHexDocument *doc) {
             &QHexView::canRedoChanged);
     connect(doc, &QHexDocument::documentSaved, this, &QHexView::documentSaved);
     connect(doc, &QHexDocument::metabgVisibleChanged, this, [=](bool b) {
-        QHexView::metabgVisibleChanged(b);
-        emit this->metaStatusChanged();
+        emit metabgVisibleChanged(b);
+        emit metaStatusChanged();
     });
     connect(doc, &QHexDocument::metafgVisibleChanged, this, [=](bool b) {
-        QHexView::metafgVisibleChanged(b);
-        emit this->metaStatusChanged();
+        emit metafgVisibleChanged(b);
+        emit metaStatusChanged();
     });
     connect(doc, &QHexDocument::metaCommentVisibleChanged, this, [=](bool b) {
-        QHexView::metaCommentVisibleChanged(b);
-        emit this->metaStatusChanged();
+        emit metaCommentVisibleChanged(b);
+        emit metaStatusChanged();
     });
     connect(doc, &QHexDocument::metaDataChanged, this,
             [=] { this->viewport()->update(); });
@@ -292,26 +292,6 @@ qsizetype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
     return m_document->searchBackward(startPos, ba);
 }
 
-void QHexView::gotoBookMark(qsizetype index) {
-    if (index >= 0 && index < m_document->bookMarksCount()) {
-        auto bookmark = m_document->bookMarkByIndex(index);
-        m_cursor->moveTo(bookmark.pos);
-    }
-}
-
-bool QHexView::existBookMarkByIndex(qsizetype &index) {
-    auto curpos = m_cursor->position().offset();
-    int i = 0;
-    for (auto &item : m_document->getAllBookMarks()) {
-        if (item.pos == curpos) {
-            index = i;
-            return true;
-        }
-        i++;
-    }
-    return false;
-}
-
 bool QHexView::RemoveSelection(int nibbleindex) {
     if (!m_cursor->hasSelection())
         return false;
@@ -336,10 +316,6 @@ bool QHexView::removeSelection() {
 
 bool QHexView::atEnd() const {
     return m_cursor->position().offset() >= m_document->length();
-}
-
-void QHexView::gotoMetaData(qsizetype index) {
-    m_cursor->moveTo(m_document->metadata()->getallMetasPtr().at(index).begin);
 }
 
 QByteArray QHexView::selectedBytes() const {

@@ -76,8 +76,6 @@ public:
     QStringList completions() const;
     void setCompletions(const QList<QCodeNode *> &nodes);
 
-    void setCursor(const QDocumentCursor &c);
-
     void setTemporaryNodes(const QList<QCodeNode *> &l);
 
 public slots:
@@ -101,7 +99,6 @@ private:
     void adjustGeometry();
 
     int offset;
-    QDocumentCursor m_begin;
     QCodeCompletionModel *pModel;
     QPointer<QObject> pEditor;
     QList<QCodeNode *> m_temps;

@@ -38,6 +38,8 @@ public:
 
     virtual QString type() const;
 
+    virtual QSize sizeHint() const;
+
 public slots:
     void setVerboseMode(bool y);
 
@@ -47,6 +49,7 @@ protected:
 
     bool m_verbose;
     int mutable m_minWidth = 0;
+    int _fixWidth = 0;
 };
 
 #endif // _QLINE_NUMBER_PANEL_H_

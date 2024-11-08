@@ -60,20 +60,7 @@
 #include <QTextStream>
 #include <QTimer>
 
-// #define Q_GL_EDITOR
-
-#ifdef _QMDI_
-#include "qmdiserver.h"
-#endif
-
-#ifdef _EDYUK_
-#include "edyukapplication.h"
-#include "qshortcutmanager.h"
-
-#define Q_SHORTCUT(a, s, c) EDYUK_SHORTCUT(a, tr(c), tr(s))
-#else
 #define Q_SHORTCUT(a, s, c) a->setShortcut(QKeySequence(tr(s, c)))
-#endif
 
 #ifdef Q_GL_EDITOR
 #include <QtOpenGLWidgets/QOpenGLWidget>
@@ -463,42 +450,35 @@ void QEditor::init(bool actions) {
     setAttribute(Qt::WA_KeyCompression, true);
     setAttribute(Qt::WA_InputMethodEnabled, true);
 
-    connect(this,
-            SIGNAL(markChanged(QString, QDocumentLineHandle *, int, bool)),
-            QLineMarksInfoCenter::instance(),
-            SLOT(markChanged(QString, QDocumentLineHandle *, int, bool)));
+    connect(this, &QEditor::markChanged, QLineMarksInfoCenter::instance(),
+            &QLineMarksInfoCenter::markChanged);
 
     m_doc = new QDocument(this);
     _docfont = m_doc->font();
 
-    connect(m_doc, SIGNAL(formatsChange(int, int)), this,
-            SLOT(repaintContent(int, int)));
+    connect(m_doc, &QDocument::formatsChange, this, &QEditor::repaintContent);
 
-    connect(m_doc, SIGNAL(contentsChange(int, int)), this,
-            SLOT(updateContent(int, int)));
+    connect(m_doc, &QDocument::contentsChange, this, &QEditor::updateContent);
 
-    connect(m_doc, SIGNAL(formatsChanged()), viewport(), SLOT(update()));
+    connect(m_doc, &QDocument::formatsChanged, this,
+            [=] { this->viewport()->update(); });
 
-    connect(m_doc, SIGNAL(widthChanged(int)), this,
-            SLOT(documentWidthChanged(int)));
+    connect(m_doc, &QDocument::widthChanged, this,
+            &QEditor::documentWidthChanged);
 
-    connect(m_doc, SIGNAL(heightChanged(int)), this,
-            SLOT(documentHeightChanged(int)));
+    connect(m_doc, &QDocument::heightChanged, this,
+            &QEditor::documentHeightChanged);
 
-    connect(m_doc, SIGNAL(cleanChanged(bool)), this,
-            SLOT(setContentClean(bool)));
+    connect(m_doc, &QDocument::cleanChanged, this, &QEditor::setContentClean);
 
-    connect(m_doc, SIGNAL(undoAvailable(bool)), this,
-            SIGNAL(undoAvailable(bool)));
+    connect(m_doc, &QDocument::undoAvailable, this, &QEditor::undoAvailable);
 
-    connect(m_doc, SIGNAL(redoAvailable(bool)), this,
-            SIGNAL(redoAvailable(bool)));
+    connect(m_doc, &QDocument::redoAvailable, this, &QEditor::redoAvailable);
 
-    connect(m_doc, SIGNAL(markChanged(QDocumentLineHandle *, int, bool)), this,
-            SLOT(markChanged(QDocumentLineHandle *, int, bool)));
+    connect(m_doc, &QDocument::markChanged, this, &QEditor::emitMarkChanged);
 
-    connect(m_doc, SIGNAL(lineEndingChanged(int)), this,
-            SLOT(lineEndingChanged(int)));
+    connect(m_doc, &QDocument::lineEndingChanged, this,
+            &QEditor::lineEndingChanged);
 
     m_cursor = QDocumentCursor(m_doc);
     m_cursor.setAutoUpdated(true);
@@ -516,8 +496,8 @@ void QEditor::init(bool actions) {
         a->setObjectName("undo");
         Q_SHORTCUT(a, "Ctrl+Z", "Edit");
         a->setEnabled(false);
-        connect(this, SIGNAL(undoAvailable(bool)), a, SLOT(setEnabled(bool)));
-        connect(a, SIGNAL(triggered()), this, SLOT(undo()));
+        connect(this, &QEditor::undoAvailable, a, &QAction::setEnabled);
+        connect(a, &QAction::triggered, this, &QEditor::undo);
 
         addAction(a, "&Edit", "Edit");
 
@@ -1127,14 +1107,6 @@ void QEditor::retranslate() {
 
     if (aDefaultBinding)
         aDefaultBinding->setText(tr("Default"));
-
-#ifdef _QMDI_
-    menus.setTranslation("&Edit", tr("&Edit"));
-    menus.setTranslation("&Search", tr("&Search"));
-
-    toolbars.setTranslation("Edit", tr("Edit"));
-    toolbars.setTranslation("Search", tr("Search"));
-#endif
 }
 
 /*!
@@ -1167,16 +1139,6 @@ void QEditor::addAction(QAction *a, const QString &menu,
 
     if (pMenu && menu.size()) {
         pMenu->addAction(a);
-
-#ifdef _QMDI_
-        menus[menu]->addAction(a);
-#endif
-    }
-
-    if (toolbar.size()) {
-#ifdef _QMDI_
-        toolbars[toolbar]->addAction(a);
-#endif
     }
 }
 
@@ -1201,18 +1163,8 @@ void QEditor::removeAction(QAction *a, const QString &menu,
     if (pMenu)
         pMenu->removeAction(a);
 
-#ifdef _QMDI_
-    if (menu.count()) {
-        menus[menu]->removeAction(a);
-    }
-
-    if (toolbar.count()) {
-        toolbars[toolbar]->removeAction(a);
-    }
-#else
     Q_UNUSED(menu)
     Q_UNUSED(toolbar)
-#endif
 }
 
 /*!
@@ -1576,7 +1528,6 @@ void QEditor::setCursor(const QDocumentCursor &c) {
     setFlag(CursorOn, true);
     repaintCursor();
     ensureCursorVisible();
-    selectionChange();
 
     updateMicroFocus();
 }
@@ -1890,7 +1841,6 @@ void QEditor::undo() {
 
         m_doc->undo();
 
-        selectionChange();
         ensureCursorVisible();
         setFlag(CursorOn, true);
         emitCursorPositionChanged();
@@ -1908,7 +1858,6 @@ void QEditor::redo() {
 
         m_doc->redo();
 
-        selectionChange();
         ensureCursorVisible();
         setFlag(CursorOn, true);
         emitCursorPositionChanged();
@@ -2193,7 +2142,6 @@ void QEditor::selectAll() {
     m_cursor.movePosition(1, QDocumentCursor::End, QDocumentCursor::KeepAnchor);
 
     emitCursorPositionChanged();
-    selectionChange(true);
 
     viewport()->update();
 }
@@ -2412,8 +2360,6 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
             }
         }
 
-        selectionChange();
-
         // placeholders handling
         bool bHandled = false;
 
@@ -2481,7 +2427,6 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
                     viewport()->update();
                 } else {
                     repaintCursor();
-                    selectionChange();
                 }
 
                 bHandled = true;
@@ -2567,7 +2512,7 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
         setFlag(CursorOn, true);
         ensureCursorVisible();
         repaintCursor();
-        selectionChange();
+
         break;
     }
 
@@ -2634,7 +2579,6 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
         }
 
         repaintCursor();
-        selectionChange();
 
         const QPoint mousePos = mapToContents(e->pos());
 
@@ -2684,7 +2628,6 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
             // setFlag(FoldedCursor, isCollapsed());
         }
 
-        selectionChange(true);
         ensureCursorVisible();
         // emit clearAutoCloseStack();
         emitCursorPositionChanged();
@@ -2715,7 +2658,6 @@ void QEditor::mousePressEvent(QMouseEvent *e) {
         setFlag(MaybeDrag, false);
 
         repaintCursor();
-        selectionChange();
 
         if (m_click.isActive() &&
             ((
@@ -2819,7 +2761,7 @@ void QEditor::mousePressEvent(QMouseEvent *e) {
         // emit clearAutoCloseStack();
         emitCursorPositionChanged();
         repaintCursor();
-        selectionChange();
+
         break;
     }
 
@@ -2838,7 +2780,6 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
     m_scroll.stop();
 
     repaintCursor();
-    selectionChange();
 
     if (flag(MaybeDrag)) {
         setFlag(MousePressed, false);
@@ -2868,8 +2809,6 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
     if (m_drag.isActive())
         m_drag.stop();
 
-    selectionChange();
-
     for (QEditorInputBindingInterface *b : m_bindings)
         b->postMouseReleaseEvent(e, this);
 }
@@ -2891,7 +2830,7 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
         setFlag(MaybeDrag, false);
 
         repaintCursor();
-        selectionChange();
+
         clearCursorMirrors();
         setCursorPosition(mapToContents(e->pos()));
 
@@ -2905,7 +2844,7 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
             emitCursorPositionChanged();
 
             repaintCursor();
-            selectionChange();
+
         } else {
             // qDebug("invalid cursor");
         }
@@ -3037,8 +2976,6 @@ void QEditor::dropEvent(QDropEvent *e) {
     // m_cursor.endEditBlock();
 
     m_doc->endMacro();
-
-    selectionChange();
 }
 
 /*!
@@ -3163,46 +3100,17 @@ void QEditor::contextMenuEvent(QContextMenuEvent *e) {
         return;
     }
 
-    selectionChange();
-
     e->accept();
 
     pMenu->exec(e->globalPos());
 }
 
 /*!
-        \brief Close event
-
-        When build with qmdilib support (e.g in Edyuk) this check for
-        modifications and a dialog pops up to offer various options
-        (like saving, discarding or canceling)
-*/
-void QEditor::closeEvent(QCloseEvent *e) {
-#ifdef _QMDI_
-    bool bOK = true;
-
-    if (isContentModified())
-        bOK = server()->maybeSave(this);
-
-    if (bOK) {
-        e->accept();
-        notifyDeletion();
-    } else {
-        e->ignore();
-    }
-#else
-    QAbstractScrollArea::closeEvent(e);
-#endif
-}
-
-#ifndef _QMDI_
-/*!
         \return Whether the document has been modified.
 */
 bool QEditor::isContentModified() const {
     return m_doc ? !m_doc->isClean() : false;
 }
-#endif
 
 /*!
         \brief Notify that the content is clean (modifications undone or
@@ -3218,10 +3126,6 @@ void QEditor::setContentClean(bool y) { setContentModified(!y); }
         \note Don't mess with this. The document knows better.
 */
 void QEditor::setContentModified(bool y) {
-#ifdef _QMDI_
-    qmdiClient::setContentModified(y);
-#endif
-
     setWindowModified(y);
     emit contentModified(y);
 }
@@ -3246,12 +3150,8 @@ void QEditor::setFileName(const QString &f) {
 
     watcher()->removeWatch(QString(), this);
 
-#ifdef _QMDI_
-    qmdiClient::setFileName(f);
-#else
     m_fileName = f;
     m_name = QFileInfo(f).fileName();
-#endif
 
     // if ( fileName().count() )
     //	m_watcher->addPath(fileName());
@@ -3278,7 +3178,6 @@ void QEditor::setTitle(const QString &title) {
     emit titleChanged(title);
 }
 
-#ifndef _QMDI_
 /*!
         \return The name of the file being edited (without its path)
 */
@@ -3288,7 +3187,6 @@ QString QEditor::name() const { return m_name; }
         \return The full filename of the file being edited
 */
 QString QEditor::fileName() const { return m_fileName; }
-#endif
 
 /*!
         \brief Prevent tab key press to be considered as widget navigation
@@ -3734,8 +3632,6 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
     }
     }
 
-    selectionChange();
-
     return true;
 }
 
@@ -3871,7 +3767,6 @@ void QEditor::write(const QString &s) {
     setFlag(CursorOn, true);
     ensureCursorVisible();
     repaintCursor();
-    selectionChange();
 }
 
 /*!
@@ -3901,26 +3796,6 @@ void QEditor::setPanelMargins(int l, int t, int r, int b) {
         // qDebug("panel adjust : wrapping to %i", viewport()->width());
         m_doc->setWidthConstraint(wrapWidth());
     }
-}
-
-/*!
-        \deprecated
-        \brief Does not do anything anymore...
-*/
-void QEditor::selectionChange(bool force) {
-    Q_UNUSED(force)
-    // TODO : repaint only selection rect
-    /*
-    if ( false )//force )
-    {
-            //qDebug("repainting selection... [%i]", force);
-            viewport()->update();
-    } else if ( m_cursor.hasSelection() ) {
-            viewport()->update(selectionRect());
-    }
-
-    m_selection = m_cursor.hasSelection();
-    */
 }
 
 /*!
@@ -4047,7 +3922,8 @@ void QEditor::ensureVisible(const QRect &rect) {
    background whenever the cursor move from a line to another.
 */
 QRect QEditor::cursorRect() const {
-    return m_cursor.hasSelection() ? selectionRect() : cursorRect(m_cursor);
+    return m_cursor.hasSelection() ? selectionRect()
+                                   : QEditor::cursorRect(m_cursor);
 }
 
 /*!
@@ -4062,12 +3938,12 @@ QRect QEditor::cursorRect() const {
 */
 QRect QEditor::selectionRect() const {
     if (!m_cursor.hasSelection())
-        return cursorRect(m_cursor);
+        return QEditor::cursorRect(m_cursor);
 
     QDocumentSelection s = m_cursor.selection();
 
     if (s.startLine == s.endLine)
-        return cursorRect(m_cursor);
+        return QEditor::cursorRect(m_cursor);
 
     int y = m_doc->y(s.startLine);
     QRect r = m_doc->lineRect(s.endLine);
@@ -4119,7 +3995,7 @@ QRect QEditor::lineRect(const QDocumentLine &l) const {
         \return The line rect of the given cursor
 */
 QRect QEditor::cursorRect(const QDocumentCursor &c) const {
-    return lineRect(c.lineNumber());
+    return QEditor::lineRect(c.lineNumber());
 }
 
 /*!
@@ -4443,7 +4319,7 @@ void QEditor::updateContent(int i, int n) {
 /*!
         \internal
 */
-void QEditor::markChanged(QDocumentLineHandle *l, int mark, bool on) {
+void QEditor::emitMarkChanged(QDocumentLineHandle *l, int mark, bool on) {
     emit markChanged(fileName(), l, mark, on);
 }
 

@@ -53,8 +53,6 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
 signals:
-    void changed();
-
     void prefixChanged(const QString &newPrefix);
     void filterChanged(QCodeCompletionWidget::Filter f);
 

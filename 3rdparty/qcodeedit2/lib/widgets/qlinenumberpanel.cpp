@@ -82,17 +82,17 @@ void QLineNumberPanel::editorChange(QEditor *e) {
     }
 
     if (e) {
-        setFixedWidth(
+        _fixWidth =
             QFontMetrics(e->document()->font())
                 .horizontalAdvance(QString::number(e->document()->lines())) +
-            5);
+            5;
 
         connect(e, SIGNAL(cursorPositionChanged()), this, SLOT(update()));
         connect(e, &QEditor::zoomed, this, [=] {
-            setFixedWidth(QFontMetrics(e->document()->font())
-                              .horizontalAdvance(
-                                  QString::number(e->document()->lines())) +
-                          5);
+            _fixWidth = QFontMetrics(e->document()->font())
+                            .horizontalAdvance(
+                                QString::number(e->document()->lines())) +
+                        5;
         });
     }
 }
@@ -228,3 +228,5 @@ void QLineNumberPanel::paint(QPainter *p, QEditor *e) {
 }
 
 /*! @} */
+
+QSize QLineNumberPanel::sizeHint() const { return QSize(_fixWidth, 0); }

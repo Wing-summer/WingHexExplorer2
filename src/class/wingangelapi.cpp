@@ -26,14 +26,11 @@
 
 WingAngelAPI::WingAngelAPI() {
     qsizetype signalCount = 0;
-    const QMetaObject *objs[]{this->metaObject(),
-                              this->reader.metaObject(),
-                              this->controller.metaObject(),
-                              this->msgbox.metaObject(),
-                              this->inputbox.metaObject(),
-                              this->filedlg.metaObject(),
-                              this->colordlg.metaObject(),
-                              this->visual.metaObject()};
+    const QMetaObject *objs[]{
+        WingAngelAPI::metaObject(),    this->reader.metaObject(),
+        this->controller.metaObject(), this->msgbox.metaObject(),
+        this->inputbox.metaObject(),   this->filedlg.metaObject(),
+        this->colordlg.metaObject(),   this->visual.metaObject()};
     for (auto &obj : objs) {
         for (auto i = obj->methodOffset(); i < obj->methodCount(); ++i) {
             if (obj->method(i).methodType() == QMetaMethod::Signal) {
@@ -423,38 +420,6 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
 
-    // HexMetadataAbsoluteItem
-    r = engine->RegisterObjectType(
-        "HexMetadataAbsoluteItem", sizeof(WingHex::HexMetadataAbsoluteItem),
-        asOBJ_VALUE | asOBJ_POD |
-            asGetTypeTraits<WingHex::HexMetadataAbsoluteItem>());
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", QSIZETYPE_WRAP("begin"),
-        asOFFSET(WingHex::HexMetadataAbsoluteItem, begin));
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", QSIZETYPE_WRAP("end"),
-        asOFFSET(WingHex::HexMetadataAbsoluteItem, end));
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", "color foreground",
-        asOFFSET(WingHex::HexMetadataAbsoluteItem, foreground));
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", "color background",
-        asOFFSET(WingHex::HexMetadataAbsoluteItem, background));
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataAbsoluteItem", "string comment",
-        asOFFSET(WingHex::HexMetadataAbsoluteItem, comment));
-    Q_ASSERT(r >= 0);
-
     // HexMetadataItem
     r = engine->RegisterObjectType(
         "HexMetadataItem", sizeof(WingHex::HexMetadataItem),
@@ -462,18 +427,12 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
-        "HexMetadataItem", QSIZETYPE_WRAP("line"),
-        asOFFSET(WingHex::HexMetadataItem, line));
+        "HexMetadataItem", QSIZETYPE_WRAP("begin"),
+        asOFFSET(WingHex::HexMetadataItem, begin));
     Q_ASSERT(r >= 0);
 
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "int start",
-        asOFFSET(WingHex::HexMetadataItem, start));
-    Q_ASSERT(r >= 0);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "int length",
-        asOFFSET(WingHex::HexMetadataItem, length));
+    r = engine->RegisterObjectProperty("HexMetadataItem", QSIZETYPE_WRAP("end"),
+                                       asOFFSET(WingHex::HexMetadataItem, end));
     Q_ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
@@ -690,13 +649,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexReader_getMetadatas, this,
                   std::placeholders::_1),
-        "array<HexMetadataAbsoluteItem>@ getMetadatas(" QSIZETYPE ")");
-
-    registerAPI<CScriptArray *(qsizetype)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_getMetaLine, this,
-                  std::placeholders::_1),
-        "array<HexMetadataItem>@ getMetaLine(" QSIZETYPE ")");
+        "array<HexMetadataItem>@ getMetadatas(" QSIZETYPE ")");
 
     registerAPI<bool(qsizetype)>(
         engine,
@@ -805,11 +758,11 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_2, std::placeholders::_3),
         "bool insert(" QSIZETYPE ", ? &out)");
 
-    registerAPI<bool(qsizetype, void *, int)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_append, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3),
-        "bool append(" QSIZETYPE ", ? &out)");
+    registerAPI<bool(void *, int)>(engine,
+                                   std::bind(&WingAngelAPI::_HexReader_append,
+                                             this, std::placeholders::_1,
+                                             std::placeholders::_2),
+                                   "bool append(? &out)");
 
     registerAPI<bool()>(engine,
                         std::bind(&WingHex::WingPlugin::Controller::undo, ctl),
@@ -1024,18 +977,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         "bool metadata(" QSIZETYPE ", " QSIZETYPE
         ", color &in, color &in, string &in)");
 
-    registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &,
-                     const QColor &, const QString &)>(
-        engine,
-        std::bind(QOverload<qsizetype, qsizetype, qsizetype, const QColor &,
-                            const QColor &, const QString &>::
-                      of(&WingHex::WingPlugin::Controller::metadata),
-                  ctl, std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4,
-                  std::placeholders::_5, std::placeholders::_6),
-        "bool metadata(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", color &in, color &in, string &in)");
-
     registerAPI<bool(qsizetype)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::removeMetadata, ctl,
@@ -1046,29 +987,26 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Controller::clearMetadata, ctl),
         "bool clearMetadata()");
 
-    registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &)>(
+    registerAPI<bool(qsizetype, qsizetype, const QColor &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::foreground, ctl,
                   std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4),
-        "bool foreground(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", color &in)");
+                  std::placeholders::_3),
+        "bool foreground(" QSIZETYPE ", " QSIZETYPE ", color &in)");
 
-    registerAPI<bool(qsizetype, qsizetype, qsizetype, const QColor &)>(
+    registerAPI<bool(qsizetype, qsizetype, const QColor &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::background, ctl,
                   std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4),
-        "bool background(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", color &in)");
+                  std::placeholders::_3),
+        "bool background(" QSIZETYPE ", " QSIZETYPE ", color &in)");
 
-    registerAPI<bool(qsizetype, qsizetype, qsizetype, const QString &)>(
+    registerAPI<bool(qsizetype, qsizetype, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::comment, ctl,
                   std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4),
-        "bool comment(" QSIZETYPE ", " QSIZETYPE ", " QSIZETYPE
-        ", string &in)");
+                  std::placeholders::_3),
+        "bool comment(" QSIZETYPE ", " QSIZETYPE ", string &in)");
 
     registerAPI<bool(bool)>(
         engine,
@@ -1118,31 +1056,31 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "ErrFile openDriver(string &in)");
 
-    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::closeFile, ctl,
                   std::placeholders::_1, std::placeholders::_2),
-        "ErrFile closeFile(string &in, bool = false)");
+        "ErrFile closeFile(int, bool = false)");
 
-    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveFile, ctl,
                   std::placeholders::_1, std::placeholders::_2),
-        "ErrFile saveFile(string &in, bool = false)");
+        "ErrFile saveFile(int, bool = false)");
 
-    registerAPI<WingHex::ErrFile(const QString &, const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, const QString &, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::exportFile, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "ErrFile exportFile(string &in, string &in, bool = false)");
+        "ErrFile exportFile(int, string &in, bool = false)");
 
-    registerAPI<WingHex::ErrFile(const QString &, const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, const QString &, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveAsFile, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "ErrFile saveasFile(string &in, string &in, bool = false)");
+        "ErrFile saveasFile(int, string &in, bool = false)");
 
     registerAPI<WingHex::ErrFile(bool)>(
         engine,
@@ -1215,11 +1153,11 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Controller::clearBookMark, ctl),
         "bool clearBookMark()");
 
-    registerAPI<bool(const QString &)>(
+    registerAPI<WingHex::ErrFile(const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::openWorkSpace, ctl,
                   std::placeholders::_1),
-        "bool openWorkSpace(string &in)");
+        "ErrFile openWorkSpace(string &in)");
 
     registerAPI<bool(const QString &)>(
         engine,
@@ -1625,7 +1563,7 @@ bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
     }
 }
 
-bool WingAngelAPI::_HexReader_append(qsizetype offset, void *ref, int typeId) {
+bool WingAngelAPI::_HexReader_append(void *ref, int typeId) {
     asIScriptContext *ctx = asGetActiveContext();
     if (ctx) {
         asIScriptEngine *engine = ctx->GetEngine();
@@ -1764,16 +1702,8 @@ CScriptArray *WingAngelAPI::_HexReader_findAllBytes(qsizetype begin,
 
 CScriptArray *WingAngelAPI::_HexReader_getMetadatas(qsizetype offset) {
     return retarrayWrapperFunction(
-        [this, offset]() -> QList<WingHex::HexMetadataAbsoluteItem> {
+        [this, offset]() -> QList<WingHex::HexMetadataItem> {
             return emit reader.getMetadatas(offset);
-        },
-        "array<HexMetadataAbsoluteItem>");
-}
-
-CScriptArray *WingAngelAPI::_HexReader_getMetaLine(qsizetype line) {
-    return retarrayWrapperFunction(
-        [this, line]() -> WingHex::HexLineMetadata {
-            return emit reader.getMetaLine(line);
         },
         "array<HexMetadataItem>");
 }

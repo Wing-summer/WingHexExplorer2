@@ -21,22 +21,26 @@ BookMarksModel::BookMarksModel(QHexDocument *doc, QObject *parent)
     : QAbstractTableModel(parent), _doc(doc) {}
 
 int BookMarksModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _doc ? _doc->bookMarksCount() : 0;
 }
 
-int BookMarksModel::columnCount(const QModelIndex &parent) const { return 2; }
+int BookMarksModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 2;
+}
 
 QVariant BookMarksModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        auto b = _doc->bookMarkByIndex(r);
+        auto offset = _doc->bookMarkPos(r);
         switch (index.column()) {
         case 0: // offset
-            return b.pos;
+            return offset;
         case 1: // comment
-            return b.comment;
+            return _doc->bookMark(offset);
         }
     }
     case Qt::TextAlignmentRole:

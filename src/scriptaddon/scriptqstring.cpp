@@ -103,9 +103,9 @@ public:
 
 static CQStringFactory *stringFactory = nullptr;
 
-// TODO: Make this public so the application can also use the string
-//       factory and share the string constants if so desired, or to
-//       monitor the size of the string factory cache.
+// Make this public so the application can also use the string
+// factory and share the string constants if so desired, or to
+// monitor the size of the string factory cache.
 CQStringFactory *GetQStringFactorySingleton() {
     if (stringFactory == nullptr) {
         // Make sure no other thread is creating the string factory at the same
@@ -551,7 +551,6 @@ void RegisterQString_Native(asIScriptEngine *engine) {
 
     // The string length can be accessed through methods or through virtual
     // property
-    // TODO: Register as size() for consistency with other types
 #if AS_USE_ACCESSORS != 1
     r = engine->RegisterObjectMethod("string", "uint length() const",
                                      asFUNCTION(StringLength),

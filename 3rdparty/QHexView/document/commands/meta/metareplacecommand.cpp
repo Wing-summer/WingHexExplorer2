@@ -1,8 +1,8 @@
 #include "metareplacecommand.h"
 
 MetaReplaceCommand::MetaReplaceCommand(QHexMetadata *hexmeta,
-                                       QHexMetadataAbsoluteItem &meta,
-                                       QHexMetadataAbsoluteItem &oldmeta,
+                                       const QHexMetadataItem &meta,
+                                       const QHexMetadataItem &oldmeta,
                                        QUndoCommand *parent)
     : MetaCommand(hexmeta, meta, parent), m_old(oldmeta) {}
 

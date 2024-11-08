@@ -5,7 +5,6 @@
 #include <QTextCursor>
 #include <QWidget>
 #include <cctype>
-#include <cmath>
 #include <cwctype>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -23,21 +22,21 @@ bool QHexRenderer::stringVisible() { return m_asciiVisible; }
 
 void QHexRenderer::setStringVisible(bool b) {
     m_asciiVisible = b;
-    m_document->documentChanged();
+    emit m_document->documentChanged();
 }
 
 bool QHexRenderer::headerVisible() { return m_headerVisible; }
 
 void QHexRenderer::setHeaderVisible(bool b) {
     m_headerVisible = b;
-    m_document->documentChanged();
+    emit m_document->documentChanged();
 }
 
 bool QHexRenderer::addressVisible() { return m_addressVisible; }
 
 void QHexRenderer::setAddressVisible(bool b) {
     m_addressVisible = b;
-    m_document->documentChanged();
+    emit m_document->documentChanged();
 }
 
 QString QHexRenderer::encoding() {
@@ -66,7 +65,7 @@ bool QHexRenderer::setEncoding(const QString &encoding) {
     if (encoding.compare(QStringLiteral("ISO-8859-1"), Qt::CaseInsensitive) ==
         0) {
         m_encoding = QStringLiteral("ASCII");
-        m_document->documentChanged();
+        emit m_document->documentChanged();
         return true;
     }
     if (QStringConverter::encodingForName(enc.toUtf8())) {
@@ -74,7 +73,7 @@ bool QHexRenderer::setEncoding(const QString &encoding) {
     if (QTextCodec::codecForName(encoding.toUtf8())) {
 #endif
         m_encoding = encoding;
-        m_document->documentChanged();
+        emit m_document->documentChanged();
         return true;
     }
     return false;
@@ -406,7 +405,7 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
         return;
 
     const QHexLineMetadata &linemetadata = metadata->get(line);
-    for (const QHexMetadataItem &mi : linemetadata) {
+    for (auto &mi : linemetadata) {
         QTextCharFormat charformat;
         if (m_document->metabgVisible() && mi.background.isValid() &&
             mi.background.rgba())
@@ -577,7 +576,7 @@ void QHexRenderer::applyBookMark(QTextCursor &textcursor, qsizetype line,
     if (!m_document->lineHasBookMark(line))
         return;
 
-    auto pos = m_document->getsBookmarkPos(line);
+    auto pos = m_document->getLineBookmarksPos(line);
     for (auto item : pos) {
         textcursor.setPosition(int((item % hexLineWidth()) * factor) + 2);
         auto charformat = textcursor.charFormat();

@@ -12,7 +12,7 @@
 class MetaClearCommand : public QUndoCommand {
 public:
     MetaClearCommand(QHexMetadata *hexmeta,
-                     QList<QHexMetadataAbsoluteItem> metas,
+                     const QVector<QHexMetadataItem> &metas,
                      QUndoCommand *parent = nullptr);
 
     void undo() override;
@@ -20,7 +20,7 @@ public:
 
 protected:
     QHexMetadata *m_hexmeta;
-    QList<QHexMetadataAbsoluteItem> m_metas;
+    QVector<QHexMetadataItem> m_metas;
 };
 
 #endif // METACLEARCOMMAND_H

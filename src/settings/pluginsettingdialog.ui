@@ -80,7 +80,7 @@
       <attribute name="title">
        <string>PluginInfo</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_1">
        <property name="spacing">
         <number>5</number>
        </property>

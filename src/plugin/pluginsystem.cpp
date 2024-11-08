@@ -69,6 +69,60 @@ void PluginSystem::loadPlugin(QFileInfo fileinfo) {
 
 WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
 
+EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
+    if (plg == nullptr) {
+        return nullptr;
+    }
+    if (!m_plgviewMap.contains(plg)) {
+        return nullptr;
+    }
+    auto view = m_plgviewMap.value(plg);
+    if (view == nullptr) {
+        view = _win->m_curEditor;
+    }
+    return view;
+}
+
+EditorView *PluginSystem::handle2EditorView(IWingPlugin *plg, int handle) {
+    if (handle < 0) {
+        return getCurrentPluginView(plg);
+    }
+
+    auto handles = m_plgHandles.value(plg);
+    auto r = std::find_if(handles.begin(), handles.end(),
+                          [handle](const QPair<int, EditorView *> &d) {
+                              return d.first == handle;
+                          });
+    if (r != handles.end()) {
+        return r->second;
+    }
+    return nullptr;
+}
+
+PluginSystem::UniqueId
+PluginSystem::assginHandleForPluginView(IWingPlugin *plg, EditorView *view) {
+    if (plg == nullptr || view == nullptr) {
+        return {};
+    }
+    if (m_plgHandles.contains(plg)) {
+        auto id = m_idGen.get();
+        m_plgHandles[plg].append(qMakePair(id, view));
+        m_viewBindings[view].append(plg);
+        return id;
+    }
+    return {};
+}
+
+bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
+    if (plg == nullptr) {
+        return false;
+    }
+    if (m_plgHandles.contains(plg)) {
+        return m_plgHandles.value(plg).size() <= RAND_MAX;
+    }
+    return false;
+}
+
 void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
     if (m_viewBindings.contains(view)) {
         auto v = m_viewBindings.value(view);
@@ -76,11 +130,11 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
         // clean up
         for (auto &plg : v) {
             auto handles = m_plgHandles.value(plg);
-            auto r = std::remove_if(handles.begin(), handles.end(),
-                                    [view](const QPair<int, EditorView *> &v) {
-                                        return v.second == view;
-                                    });
-            Q_UNUSED(r);
+            handles.erase(
+                std::remove_if(handles.begin(), handles.end(),
+                               [view](const QPair<int, EditorView *> &v) {
+                                   return v.second == view;
+                               }));
         }
 
         m_viewBindings.remove(view);
@@ -567,31 +621,15 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 }
                 return qsizetype(-1);
             });
-    connect(preader, &WingPlugin::Reader::getMetaLine, _win,
-            [=](qsizetype line) -> HexLineMetadata {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto ometas =
-                        e->hexEditor()->document()->metadata()->get(line);
-                    HexLineMetadata metas;
-                    for (auto &item : ometas) {
-                        metas.push_back(HexMetadataItem(
-                            item.line, item.start, item.length, item.foreground,
-                            item.background, item.comment));
-                    }
-                    return metas;
-                }
-                return {};
-            });
     connect(preader, &WingPlugin::Reader::getMetadatas, _win,
-            [=](qsizetype offset) -> QList<HexMetadataAbsoluteItem> {
+            [=](qsizetype offset) -> QList<HexMetadataItem> {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto ometaline =
                         e->hexEditor()->document()->metadata()->gets(offset);
-                    QList<HexMetadataAbsoluteItem> metaline;
+                    QList<HexMetadataItem> metaline;
                     for (auto &item : ometaline) {
-                        metaline.push_back(HexMetadataAbsoluteItem(
+                        metaline.push_back(HexMetadataItem(
                             item.begin, item.end, item.foreground,
                             item.background, item.comment));
                     }
@@ -621,7 +659,8 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=](qsizetype line) -> QList<qsizetype> {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->getsBookmarkPos(line);
+                    return e->hexEditor()->document()->getLineBookmarksPos(
+                        line);
                 }
                 return {};
             });
@@ -629,10 +668,10 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=](qsizetype pos) -> BookMark {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    auto b = e->hexEditor()->document()->bookMark(pos);
+                    auto comment = e->hexEditor()->document()->bookMark(pos);
                     BookMark book;
-                    book.pos = b.pos;
-                    book.comment = b.comment;
+                    book.pos = pos;
+                    book.comment = comment;
                     return book;
                 }
                 return {};
@@ -641,7 +680,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=](qsizetype pos) -> QString {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->bookMarkComment(pos);
+                    return e->hexEditor()->document()->bookMark(pos);
                 }
                 return {};
             });
@@ -649,12 +688,12 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=]() -> QList<BookMark> {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    auto bs = e->hexEditor()->document()->getAllBookMarks();
+                    auto &bs = e->hexEditor()->document()->bookMarks();
                     QList<BookMark> bookmarks;
-                    for (auto &item : bs) {
+                    for (auto p = bs.cbegin(); p != bs.cbegin(); ++p) {
                         BookMark i;
-                        i.pos = item.pos;
-                        i.comment = item.comment;
+                        i.pos = p.key();
+                        i.comment = p.value();
                         bookmarks.push_back(i);
                     }
                 }
@@ -1064,20 +1103,18 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl,
-            QOverload<qsizetype, qsizetype, qsizetype, const QColor &,
-                      const QColor &,
+            QOverload<qsizetype, qsizetype, const QColor &, const QColor &,
                       const QString &>::of(&WingPlugin::Controller::metadata),
             _win,
-            [=](qsizetype line, qsizetype start, qsizetype length,
-                const QColor &fgcolor, const QColor &bgcolor,
-                const QString &comment) -> bool {
+            [=](qsizetype begin, qsizetype end, const QColor &fgcolor,
+                const QColor &bgcolor, const QString &comment) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
                         return false;
-                    doc->metadata()->metadata(line, start, length, fgcolor,
-                                              bgcolor, comment);
+                    doc->metadata()->metadata(begin, end, fgcolor, bgcolor,
+                                              comment);
                     return true;
                 }
                 return false;
@@ -1104,41 +1141,39 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         }
         return false;
     });
-    connect(pctl, &WingPlugin::Controller::comment, _win,
-            [=](qsizetype line, qsizetype start, qsizetype length,
-                const QString &comment) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->comment(line, start, length, comment);
-                    return true;
-                }
-                return false;
-            });
+    connect(
+        pctl, &WingPlugin::Controller::comment, _win,
+        [=](qsizetype begin, qsizetype end, const QString &comment) -> bool {
+            auto e = pluginCurrentEditor(plg);
+            if (e) {
+                auto doc = e->hexEditor()->document();
+                if (!doc->isKeepSize())
+                    return false;
+                doc->metadata()->comment(begin, end, comment);
+                return true;
+            }
+            return false;
+        });
     connect(pctl, &WingPlugin::Controller::foreground, _win,
-            [=](qsizetype line, qsizetype start, qsizetype length,
-                const QColor &fgcolor) -> bool {
+            [=](qsizetype begin, qsizetype end, const QColor &fgcolor) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
                         return false;
-                    doc->metadata()->foreground(line, start, length, fgcolor);
+                    doc->metadata()->foreground(begin, end, fgcolor);
                     return true;
                 }
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::background, _win,
-            [=](qsizetype line, qsizetype start, qsizetype length,
-                const QColor &bgcolor) -> bool {
+            [=](qsizetype begin, qsizetype end, const QColor &bgcolor) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     if (!doc->isKeepSize())
                         return false;
-                    doc->metadata()->background(line, start, length, bgcolor);
+                    doc->metadata()->background(begin, end, bgcolor);
                     return true;
                 }
                 return false;
@@ -1231,78 +1266,130 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     });
 
     // mainwindow
-    connect(pctl, &WingPlugin::Controller::newFile, _win, [=]() -> bool {
-        m_plgviewMap[plg] = _win->newfileGUI();
-        return true;
+    connect(pctl, &WingPlugin::Controller::newFile, _win, [=]() -> ErrFile {
+        auto view = _win->newfileGUI();
+        if (view) {
+            auto id = assginHandleForPluginView(plg, view);
+            m_plgviewMap[plg] = view;
+            return ErrFile(int(*id));
+        } else {
+            return ErrFile::Error;
+        }
     });
     connect(pctl, &WingPlugin::Controller::openWorkSpace, _win,
-            [=](const QString &filename) -> bool {
+            [=](const QString &filename) -> ErrFile {
                 EditorView *view = nullptr;
                 auto ret = _win->openWorkSpace(filename, &view);
-                m_plgviewMap[plg] = view;
-                return ret == ErrFile::Success;
+                if (view) {
+                    auto id = assginHandleForPluginView(plg, view);
+                    m_plgviewMap[plg] = view;
+                    return ErrFile(int(*id));
+                } else {
+                    return ret;
+                }
             });
     connect(pctl, &WingPlugin::Controller::openFile, _win,
             [=](const QString &filename) -> ErrFile {
                 EditorView *view = nullptr;
                 auto ret = _win->openFile(filename, &view);
-                m_plgviewMap[plg] = view;
-                return ret;
+                if (view) {
+                    auto id = assginHandleForPluginView(plg, view);
+                    m_plgviewMap[plg] = view;
+                    return ErrFile(int(*id));
+                } else {
+                    return ret;
+                }
             });
     connect(pctl, &WingPlugin::Controller::openRegionFile, _win,
             [=](const QString &filename, qsizetype start,
                 qsizetype length) -> ErrFile {
                 EditorView *view = nullptr;
                 auto ret = _win->openRegionFile(filename, &view, start, length);
-                m_plgviewMap[plg] = view;
-                return ret;
+                if (view) {
+                    auto id = assginHandleForPluginView(plg, view);
+                    m_plgviewMap[plg] = view;
+                    return ErrFile(int(*id));
+                } else {
+                    return ret;
+                }
             });
     connect(pctl, &WingPlugin::Controller::openDriver, _win,
             [=](const QString &driver) -> ErrFile {
                 EditorView *view = nullptr;
                 auto ret = _win->openDriver(driver, &view);
-                m_plgviewMap[plg] = view;
-                return ret;
+                if (view) {
+                    auto id = assginHandleForPluginView(plg, view);
+                    m_plgviewMap[plg] = view;
+                    return ErrFile(int(*id));
+                } else {
+                    return ret;
+                }
             });
     connect(pctl, &WingPlugin::Controller::closeFile, _win,
-            [=](const QString &filename, bool force) -> ErrFile {
-                // return closeFile(index, force);
-                return ErrFile::Success;
+            [=](int handle, bool force) -> ErrFile {
+                auto view = handle2EditorView(plg, handle);
+                if (view) {
+                    _win->closeEditor(view, force);
+                    return ErrFile::Success;
+                }
+                return ErrFile::NotExist;
             });
     connect(pctl, &WingPlugin::Controller::saveFile, _win,
-            [=](const QString &filename, bool ignoreMd5) -> ErrFile {
-                // return save(index, ignoreMd5);
-                return ErrFile::Success;
+            [=](int handle, bool ignoreMd5) -> ErrFile {
+                auto view = handle2EditorView(plg, handle);
+                if (view) {
+                    _win->saveEditor(view, {}, ignoreMd5);
+                    return ErrFile::Success;
+                }
+                return ErrFile::NotExist;
             });
-    connect(pctl, &WingPlugin::Controller::exportFile, _win,
-            [=](const QString &filename, const QString &savename,
-                bool ignoreMd5) -> ErrFile {
-                // return exportFile(filename, index, ignoreMd5);
+    connect(
+        pctl, &WingPlugin::Controller::exportFile, _win,
+        [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
+            auto view = handle2EditorView(plg, handle);
+            if (view) {
+                _win->saveEditor(view, savename, ignoreMd5, true);
                 return ErrFile::Success;
-            });
+            }
+            return ErrFile::NotExist;
+        });
 
     connect(pctl, &WingPlugin::Controller::exportFileGUI, _win,
             &MainWindow::on_exportfile);
 
-    connect(pctl, &WingPlugin::Controller::saveAsFile, _win,
-            [=](const QString &filename, const QString &savename,
-                bool ignoreMd5) -> ErrFile {
-                // return saveAs(filename, index, ignoreMd5);
+    connect(
+        pctl, &WingPlugin::Controller::saveAsFile, _win,
+        [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
+            auto view = handle2EditorView(plg, handle);
+            if (view) {
+                _win->saveEditor(view, savename, ignoreMd5);
                 return ErrFile::Success;
-            });
+            }
+            return ErrFile::NotExist;
+        });
 
     connect(pctl, &WingPlugin::Controller::saveAsFileGUI, _win,
             &MainWindow::on_saveas);
 
     connect(pctl, &WingPlugin::Controller::closeCurrentFile, _win,
             [=](bool force) -> ErrFile {
-                // return closeFile(_pcurfile, force);
-                return ErrFile::Success;
+                auto view = getCurrentPluginView(plg);
+                if (view == nullptr) {
+                    return ErrFile::NotExist;
+                }
+
+                return _win->closeEditor(view, force);
             });
     connect(pctl, &WingPlugin::Controller::saveCurrentFile, _win,
             [=](bool ignoreMd5) -> ErrFile {
-                // return save(_pcurfile, force);
-                return ErrFile::Success;
+                auto view = getCurrentPluginView(plg);
+                if (view) {
+                    auto ws = _win->m_views.value(view);
+                    return view->save(
+                        ws, {}, ignoreMd5, false,
+                        EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
+                }
+                return ErrFile::Error;
             });
 
     connect(pctl, &WingPlugin::Controller::openFileGUI, _win,
@@ -1490,7 +1577,8 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     connect(colordlg, &WingPlugin::ColorDialog::getColor, _win,
             [=](const QString &caption, QWidget *parent) -> QColor {
                 if (checkThreadAff()) {
-                    ColorPickerDialog d;
+                    ColorPickerDialog d(parent);
+                    d.setWindowTitle(caption);
                     if (d.exec()) {
                         return d.color();
                     }
@@ -1527,7 +1615,26 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                     oldmodel->deleteLater();
                 }
 
-                auto model = new QJsonTableModel({});
+                QJsonTableModel::Header header;
+                if (headers.size() > headerNames.size()) {
+                    for (auto &name : headers) {
+                        QJsonTableModel::Heading heading;
+                        heading["index"] = name;
+                        heading["title"] = name;
+                        header.append(heading);
+                    }
+                } else {
+                    auto np = headerNames.cbegin();
+                    for (auto p = headers.cbegin(); p != headers.cend();
+                         ++p, ++np) {
+                        QJsonTableModel::Heading heading;
+                        heading["index"] = *p;
+                        heading["title"] = *np;
+                        header.append(heading);
+                    }
+                }
+
+                auto model = new QJsonTableModel(header);
                 model->setJson(QJsonDocument::fromJson(json.toUtf8()));
                 _win->m_infotable->setModel(model);
             });

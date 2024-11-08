@@ -23,9 +23,9 @@
 
 WorkSpaceManager::WorkSpaceManager() {}
 
-bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
-                                     QList<BookMarkStruct> &bookmarks,
-                                     QList<QHexMetadataAbsoluteItem> &metas,
+bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
+                                     QMap<qsizetype, QString> &bookmarks,
+                                     QVector<QHexMetadataItem> &metas,
                                      WorkSpaceInfo &infos) {
     bool b = false;
     QFile f(filename);
@@ -98,7 +98,7 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                                     auto fcolor = QColor::fromRgba(nf);
                                     auto bcolor = QColor::fromRgba(nb);
 
-                                    QHexMetadataAbsoluteItem metaitem;
+                                    QHexMetadataItem metaitem;
                                     metaitem.begin = nbegin;
                                     metaitem.end = nend;
                                     metaitem.comment = comment.toString();
@@ -114,7 +114,8 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                         }
                         values = jobj.value("bookmarks");
                         if (!values.isUndefined() && values.isArray()) {
-                            for (auto item : values.toArray()) {
+                            auto array = values.toArray();
+                            for (auto item : array) {
                                 if (!item.isUndefined() && item.isObject()) {
                                     auto sitem = item.toObject();
                                     auto pos = sitem.value("pos");
@@ -127,10 +128,8 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
                                             pos.toString().toLongLong(&b);
                                         if (!b || ipos < 0 || ipos >= maxbytes)
                                             continue;
-                                        BookMarkStruct book;
-                                        book.pos = ipos;
-                                        book.comment = comment.toString();
-                                        bookmarks.append(book);
+                                        bookmarks.insert(ipos,
+                                                         comment.toString());
                                     }
                                 }
                             }
@@ -138,7 +137,8 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
 
                         values = jobj.value("plugindata");
                         if (!values.isUndefined() && values.isArray()) {
-                            for (auto item : values.toArray()) {
+                            auto array = values.toArray();
+                            for (auto item : array) {
                                 if (!item.isUndefined() && item.isObject()) {
                                     auto sitem = item.toObject();
                                     auto plgobj = sitem.value("key");
@@ -168,28 +168,29 @@ bool WorkSpaceManager::loadWorkSpace(QString filename, QString &file,
     return false;
 }
 
-bool WorkSpaceManager::saveWorkSpace(QString filename, QString file,
-                                     QList<BookMarkStruct> bookmarklist,
-                                     QList<QHexMetadataAbsoluteItem> metalist,
-                                     WorkSpaceInfo infos) {
+bool WorkSpaceManager::saveWorkSpace(
+    const QString &filename, const QString &file,
+    const QMap<qsizetype, QString> &bookmarklist,
+    const QVector<QHexMetadataItem> &metalist, const WorkSpaceInfo &infos) {
     QFile f(filename);
     if (f.open(QFile::WriteOnly)) {
         QJsonObject jobj;
         jobj.insert("type", "workspace");
 
+        QString ff = file;
         QFileInfo fileInfo(file);
         if (fileInfo.isAbsolute()) {
             QDir dir(QFileInfo(f).absoluteDir());
             QFileInfo fi(file);
-            file = dir.relativeFilePath(fi.absoluteFilePath());
+            ff = dir.relativeFilePath(fi.absoluteFilePath());
         }
 
-        jobj.insert("file", file);
+        jobj.insert("file", ff);
         jobj.insert("encoding", infos.encoding);
         jobj.insert("base", QString::number(infos.base));
 
         QJsonArray metas;
-        for (auto meta : metalist) {
+        for (auto &meta : metalist) {
             QJsonObject obj;
             obj.insert("begin", QString::number(meta.begin));
             obj.insert("end", QString::number(meta.end));
@@ -201,12 +202,13 @@ bool WorkSpaceManager::saveWorkSpace(QString filename, QString file,
         jobj.insert("metas", metas);
 
         QJsonArray bookmarks;
-        for (auto item : bookmarklist) {
+        for (auto p = bookmarklist.cbegin(); p != bookmarklist.cend(); ++p) {
             QJsonObject i;
-            i.insert("pos", QString::number(item.pos));
-            i.insert("comment", item.comment);
+            i.insert("pos", QString::number(p.key()));
+            i.insert("comment", p.value());
             bookmarks.append(i);
         }
+
         jobj.insert("bookmarks", bookmarks);
 
         // plugin data

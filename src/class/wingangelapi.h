@@ -104,7 +104,7 @@ private:
 
     bool _HexReader_insert(qsizetype offset, void *ref, int typeId);
 
-    bool _HexReader_append(qsizetype offset, void *ref, int typeId);
+    bool _HexReader_append(void *ref, int typeId);
 
     qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
 
@@ -115,8 +115,6 @@ private:
                                           const CScriptArray &ba);
 
     CScriptArray *_HexReader_getMetadatas(qsizetype offset);
-
-    CScriptArray *_HexReader_getMetaLine(qsizetype line);
 
     CScriptArray *_HexReader_getsBookmarkPos(qsizetype line);
 

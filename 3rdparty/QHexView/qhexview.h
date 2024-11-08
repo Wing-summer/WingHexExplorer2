@@ -97,13 +97,9 @@ public:
     qsizetype searchForward(qsizetype begin, const QByteArray &ba);
     qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
 
-    void gotoBookMark(qsizetype index);
-    bool existBookMarkByIndex(qsizetype &index);
     bool RemoveSelection(int nibbleindex = 1);
     bool removeSelection();
     bool atEnd() const;
-
-    void gotoMetaData(qsizetype index);
 
     QByteArray selectedBytes() const;
 

@@ -33,10 +33,6 @@
 #include "qdocument.h"
 #include "qdocumentcursor.h"
 
-#ifdef _QMDI_
-#include "qmdiclient.h"
-#endif
-
 class QMenu;
 class QAction;
 class QMimeData;
@@ -51,12 +47,7 @@ class QCodeCompletionEngine;
 
 class QEditorInputBindingInterface;
 
-class QCE_EXPORT QEditor : public QAbstractScrollArea
-#ifdef _QMDI_
-    ,
-                           public qmdiClient
-#endif
-{
+class QCE_EXPORT QEditor : public QAbstractScrollArea {
     friend class QEditConfig;
     friend class QEditorFactory;
 
@@ -165,12 +156,10 @@ public:
     virtual QRect lineRect(const QDocumentLine &l) const;
     virtual QRect cursorRect(const QDocumentCursor &c) const;
 
-#ifndef _QMDI_
     QString name() const;
     QString fileName() const;
 
     bool isContentModified() const;
-#endif
 
     bool isInConflict() const;
 
@@ -274,8 +263,6 @@ public slots:
 
     void setScaleRate(qreal rate);
 
-    qreal scaleRate() const;
-
     void setPanelMargins(int l, int t, int r, int b);
     void getPanelMargins(int *l, int *t, int *r, int *b) const;
 
@@ -287,14 +274,16 @@ public slots:
     void removePlaceHolder(int i);
     void addPlaceHolder(const PlaceHolder &p, bool autoUpdate = true);
 
-    int placeHolderCount() const;
-    int currentPlaceHolder() const;
-
     void nextPlaceHolder();
     void previousPlaceHolder();
     void setPlaceHolder(int i);
 
     virtual void setFileName(const QString &f);
+
+public:
+    int placeHolderCount() const;
+    int currentPlaceHolder() const;
+    qreal scaleRate() const;
 
 signals:
     void loaded(QEditor *e, const QString &s);
@@ -356,8 +345,6 @@ protected:
 
     virtual void contextMenuEvent(QContextMenuEvent *e);
 
-    virtual void closeEvent(QCloseEvent *e);
-
     virtual bool focusNextPrevChild(bool next);
 
     virtual bool moveKeyEvent(QDocumentCursor &c, QKeyEvent *e, bool *leave);
@@ -376,8 +363,6 @@ public:
 
     void pageUp(QDocumentCursor::MoveMode moveMode);
     void pageDown(QDocumentCursor::MoveMode moveMode);
-
-    void selectionChange(bool force = false);
 
     void repaintCursor();
     void ensureCursorVisible();
@@ -406,7 +391,7 @@ protected slots:
     void repaintContent(int i, int n);
     void updateContent(int i, int n);
 
-    void markChanged(QDocumentLineHandle *l, int mark, bool on);
+    void emitMarkChanged(QDocumentLineHandle *l, int mark, bool on);
 
     void bindingSelected(QAction *a);
 
@@ -419,9 +404,7 @@ protected:
     void init(bool actions = true);
     void updateBindingsMenu();
 
-#ifndef _QMDI_
     QString m_name, m_fileName;
-#endif
 
     QMenu *pMenu;
     QHash<QString, QAction *> m_actions;

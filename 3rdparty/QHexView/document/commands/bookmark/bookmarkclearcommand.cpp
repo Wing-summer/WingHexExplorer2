@@ -1,8 +1,8 @@
 #include "bookmarkclearcommand.h"
 
-BookMarkClearCommand::BookMarkClearCommand(QHexDocument *doc,
-                                           QList<BookMarkStruct> bookmarks,
-                                           QUndoCommand *parent)
+BookMarkClearCommand::BookMarkClearCommand(
+    QHexDocument *doc, const QMap<qsizetype, QString> &bookmarks,
+    QUndoCommand *parent)
     : QUndoCommand(parent), m_doc(doc), m_bookmarks(bookmarks) {}
 
 void BookMarkClearCommand::redo() { m_doc->clearBookMark(); }

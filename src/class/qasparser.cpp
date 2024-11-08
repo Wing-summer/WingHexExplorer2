@@ -233,6 +233,20 @@ void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         _maps[ns] << fnInfo;
     }
 
+    auto node = new QCodeNode;
+    node->setNodeType(QCodeNode::Group);
+    for (auto p = _maps.keyBegin(); p != _maps.keyEnd(); p++) {
+        if (p->isEmpty()) {
+            continue;
+        }
+        auto nsnode = new QCodeNode;
+        nsnode->setNodeType(QCodeNode::Namespace);
+        nsnode->setRole(QCodeNode::Name, *p);
+        nsnode->setParent(node);
+        node->children().append(nsnode);
+    }
+    _headerNodes << node;
+
     for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
         auto node = new QCodeNode;
         _headerNodes << node;

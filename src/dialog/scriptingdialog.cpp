@@ -115,6 +115,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     // load saved docking layout
     auto &set = SettingManager::instance();
     m_dock->restoreState(set.scriptDockLayout());
+    _savedLayout = set.scriptDockLayout();
 
     this->setUpdatesEnabled(true);
 }

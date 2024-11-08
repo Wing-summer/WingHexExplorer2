@@ -58,7 +58,7 @@ public slots:
 signals:
     void snippetAdded(QSnippet *s);
 
-    void snippetRemoved(int i);
+    void snippetRemovedByIndex(int i);
     void snippetRemoved(QSnippet *s);
 
 private:

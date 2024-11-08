@@ -182,9 +182,6 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     PluginSystem::instance().angelApi()->installAPI(
         engine, typeInfo(RegisteredType::tString));
 
-    // TODO TEST
-    QAsParser varname(engine);
-
     _immediateContext = engine->CreateContext();
     _immediateContext->SetExceptionCallback(
         asMETHOD(ScriptMachine, exceptionCallback), this, asCALL_THISCALL);

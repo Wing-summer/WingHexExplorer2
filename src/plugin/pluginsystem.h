@@ -38,6 +38,58 @@ class MainWindow;
 
 class PluginSystem : public QObject {
     Q_OBJECT
+private:
+    class UniqueIdGenerator {
+    public:
+        class UniqueId : public QSharedData {
+        public:
+            UniqueId() : _id(-1), _gen(nullptr) {}
+
+            UniqueId(UniqueIdGenerator *gen, int id) : _id(id), _gen(gen) {
+                Q_ASSERT(gen);
+                Q_ASSERT(id >= 0);
+            }
+
+            ~UniqueId() {
+                if (_gen) {
+                    _gen->release(_id);
+                }
+            }
+
+            operator int() { return _id; }
+
+        private:
+            int _id;
+            UniqueIdGenerator *_gen;
+        };
+
+    public:
+        UniqueIdGenerator() : currentId(0) {}
+
+        QExplicitlySharedDataPointer<UniqueId> get() {
+            if (!releasedIds.isEmpty()) {
+                int id = releasedIds.dequeue();
+                return QExplicitlySharedDataPointer<UniqueId>(
+                    new UniqueId(this, id));
+            } else {
+                return QExplicitlySharedDataPointer<UniqueId>(
+                    new UniqueId(this, currentId++));
+            }
+        }
+
+        void release(int id) {
+            if (id < currentId && !releasedIds.contains(id)) {
+                releasedIds.enqueue(id);
+            }
+        }
+
+    private:
+        int currentId;
+        QQueue<int> releasedIds;
+    };
+
+    using UniqueId = QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
+
 public:
     static PluginSystem &instance();
 
@@ -52,6 +104,14 @@ public:
     void loadPlugin(QFileInfo filename);
 
     WingAngelAPI *angelApi() const;
+
+    EditorView *getCurrentPluginView(IWingPlugin *plg);
+
+    EditorView *handle2EditorView(IWingPlugin *plg, int handle);
+
+    UniqueId assginHandleForPluginView(IWingPlugin *plg, EditorView *view);
+
+    bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
     void cleanUpEditorViewHandle(EditorView *view);
 
@@ -136,9 +196,10 @@ private:
     QList<IWingPlugin *> loadedplgs;
 
     QMap<IWingPlugin *, EditorView *> m_plgviewMap;
-
-    QMap<IWingPlugin *, QList<QPair<int, EditorView *>>> m_plgHandles;
+    QMap<IWingPlugin *, QList<QPair<UniqueId, EditorView *>>> m_plgHandles;
     QMap<EditorView *, QList<IWingPlugin *>> m_viewBindings;
+
+    UniqueIdGenerator m_idGen;
 
     WingAngelAPI *_angelplg = nullptr;
 };

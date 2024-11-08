@@ -54,12 +54,9 @@ set(SNIPPET_SRC
     lib/snippets/qsnippet_p.h
     lib/snippets/qsnippetbinding.cpp
     lib/snippets/qsnippetbinding.h
-    lib/snippets/qsnippetedit.cpp
-    lib/snippets/qsnippetedit.h
     lib/snippets/qsnippetmanager.cpp
     lib/snippets/qsnippetmanager.h
-    lib/snippets/qsnippetpatternloader.h
-    lib/snippets/snippetedit.ui)
+    lib/snippets/qsnippetpatternloader.h)
 
 set(SOURCE_FILES
     lib/qce-config.h
