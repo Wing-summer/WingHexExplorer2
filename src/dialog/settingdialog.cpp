@@ -75,6 +75,19 @@ void SettingDialog::showConfig(int index) {
     _dialog->exec();
 }
 
+void SettingDialog::showConfig(const QString &id) {
+    if (id.isEmpty()) {
+        ui->listWidget->setCurrentRow(0);
+    }
+    auto r = std::find_if(
+        m_pages.begin(), m_pages.end(),
+        [id](const WingHex::SettingPage *page) { return page->id() == id; });
+    if (r == m_pages.end()) {
+        ui->listWidget->setCurrentRow(0);
+    }
+    ui->listWidget->setCurrentRow(m_pages.indexOf(*r));
+}
+
 void SettingDialog::toastTakeEffectReboot() {
     auto page = qobject_cast<WingHex::SettingPage *>(sender());
     if (page) {

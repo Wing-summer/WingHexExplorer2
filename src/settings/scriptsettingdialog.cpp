@@ -76,7 +76,7 @@ QIcon ScriptSettingDialog::categoryIcon() const { return ICONRES("script"); }
 
 QString ScriptSettingDialog::name() const { return tr("Script"); }
 
-bool ScriptSettingDialog::isInPluginPage() const { return false; }
+QString ScriptSettingDialog::id() const { return QStringLiteral("Script"); }
 
 void ScriptSettingDialog::apply() {
     QStringList usrHideCats;

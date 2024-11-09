@@ -93,11 +93,13 @@ bool QHexDocument::metafgVisible() { return m_metafg; }
 
 bool QHexDocument::metaCommentVisible() { return m_metacomment; }
 
-bool QHexDocument::isDocSaved() { return m_undostack->isClean(); }
+bool QHexDocument::isDocSaved() { return m_isSaved; }
+
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();
     }
+    m_isSaved = b;
     emit documentSaved(b);
 }
 
@@ -188,7 +190,11 @@ bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
 
 bool QHexDocument::removeBookMark(qsizetype pos) {
     if (m_keepsize) {
-        return _bookmarks.remove(pos) != 0;
+        auto ret = _bookmarks.remove(pos) != 0;
+        if (ret) {
+            setDocSaved(false);
+        }
+        return ret;
     }
     return false;
 }
@@ -197,6 +203,7 @@ bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
     if (m_keepsize) {
         if (_bookmarks.contains(pos)) {
             _bookmarks[pos] = comment;
+            setDocSaved(false);
             return true;
         }
     }
@@ -332,8 +339,10 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
     m_metadata = new QHexMetadata(m_undostack, this);
     m_metadata->setLineWidth(m_hexlinewidth);
 
-    connect(m_metadata, &QHexMetadata::metadataChanged, this,
-            &QHexDocument::metaDataChanged);
+    connect(m_metadata, &QHexMetadata::metadataChanged, this, [this] {
+        setDocSaved(false);
+        emit metaDataChanged();
+    });
 
     /*=======================*/
     // added by wingsummer

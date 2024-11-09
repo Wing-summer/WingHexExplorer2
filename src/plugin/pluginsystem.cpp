@@ -130,15 +130,26 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
         // clean up
         for (auto &plg : v) {
             auto handles = m_plgHandles.value(plg);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             handles.erase(
                 std::remove_if(handles.begin(), handles.end(),
                                [view](const QPair<int, EditorView *> &v) {
                                    return v.second == view;
                                }));
-        }
 
+#else
+            handles.removeIf([view](const QPair<int, EditorView *> &v) {
+                return v.second == view;
+            });
+#endif
+        }
         m_viewBindings.remove(view);
     }
+}
+
+void PluginSystem::registerFn(IWingPlugin *plg,
+                              const IWingPlugin::ScriptFn &fn) {
+    // TODO
 }
 
 bool PluginSystem::loadPlugin(IWingPlugin *p) {
@@ -267,17 +278,43 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
             }
         }
 
-        if (p->registeredHexContextMenu()) {
-            _win->m_hexContextMenu.append(p->registeredHexContextMenu());
+        {
+            auto menu = p->registeredHexContextMenu();
+            if (menu) {
+                _win->m_hexContextMenu.append(menu);
+            }
         }
 
-        if (!p->registeredEditorViewWidgets().isEmpty()) {
-            _win->m_editorViewWidgets.insert(p,
-                                             p->registeredEditorViewWidgets());
+        {
+            auto vieww = p->registeredEditorViewWidgets();
+            if (!vieww.isEmpty()) {
+                _win->m_editorViewWidgets.insert(p, vieww);
+            }
         }
 
-        if (!p->registeredSettingPages().isEmpty()) {
-            _win->m_settingPages.append(p->registeredSettingPages());
+        {
+            auto sp = p->registeredSettingPages();
+            if (!sp.isEmpty()) {
+                for (auto page = sp.keyBegin(); page != sp.keyEnd(); ++page) {
+                    auto pp = *page;
+                    pp->setProperty("__plg__", QVariant::fromValue(p));
+                }
+                _win->m_settingPages.insert(sp);
+            }
+        }
+
+        {
+            auto rp = p->registeredPages();
+            if (!rp.isEmpty()) {
+                for (auto &page : rp) {
+                    page->setProperty("__plg__", QVariant::fromValue(p));
+                }
+                _win->m_plgPages.append(rp);
+            }
+        }
+
+        for (auto &fn : p->registeredScriptFn()) {
+            registerFn(p, fn);
         }
 
         connectInterface(p);

@@ -131,11 +131,6 @@
          <property name="placeholderText">
           <string notr="true"/>
          </property>
-         <property name="source">
-          <url>
-           <string>qrc:/com.wingsummer.winghex/LICENSE</string>
-          </url>
-         </property>
          <property name="openExternalLinks">
           <bool>true</bool>
          </property>

@@ -47,13 +47,10 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }
 
-void PluginSettingDialog::buildUp(const QList<SettingPage *> &pages) {
+void PluginSettingDialog::buildUp(const QList<PluginPage *> &pages) {
     ASSERT_SINGLETON;
     for (auto &page : pages) {
-        if (page->isInPluginPage()) {
-            ui->tabWidget->addTab(page, page->categoryIcon(), page->name());
-            _pages << page;
-        }
+        ui->tabWidget->addTab(page, page->categoryIcon(), page->name());
     }
 }
 
@@ -69,24 +66,17 @@ QIcon PluginSettingDialog::categoryIcon() const { return ICONRES("plugin"); }
 
 QString PluginSettingDialog::name() const { return tr("Plugin"); }
 
-bool PluginSettingDialog::isInPluginPage() const { return false; }
+QString PluginSettingDialog::id() const { return QStringLiteral("Plugin"); }
 
 void PluginSettingDialog::apply() {
     auto &set = SettingManager::instance();
     set.setEnablePlugin(ui->cbEnablePlugin->isChecked());
     set.setEnablePlgInRoot(ui->cbEnablePluginRoot->isChecked());
     set.save(SettingManager::SETTING::PLUGIN);
-
-    for (auto &page : _pages) {
-        page->apply();
-    }
 }
 
 void PluginSettingDialog::reset() {
     SettingManager::instance().reset(SettingManager::SETTING::PLUGIN);
-    for (auto &page : _pages) {
-        page->reset();
-    }
     reload();
 }
 

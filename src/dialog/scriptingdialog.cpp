@@ -33,6 +33,7 @@
 #include "qeditor.h"
 #include "qformatscheme.h"
 #include "qlinemarksinfocenter.h"
+#include "qsnippetmanager.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -95,6 +96,9 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
 
+    auto snippet = new QSnippetManager(this);
+    m_snipbind = new QSnippetBinding(snippet);
+
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
     // get symbol ID
@@ -119,6 +123,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     this->setUpdatesEnabled(true);
 }
+
+ScriptingDialog::~ScriptingDialog() { delete m_snipbind; }
 
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
@@ -243,8 +249,7 @@ void ScriptingDialog::buildUpRibbonBar() {
     buildViewPage(m_ribbon->addTab(tr("View")));
     m_editStateWidgets << buildDebugPage(m_ribbon->addTab(tr("Debugger")));
 
-    // TODO: not available for v1.0.0
-    // buildSettingPage(m_ribbon->addTab(tr("Setting")));
+    buildSettingPage(m_ribbon->addTab(tr("Setting")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
 
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
@@ -719,6 +724,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     });
 
     m_language->setLanguage(editor->editor(), QStringLiteral("AngelScript"));
+    editor->editor()->addInputBinding(m_snipbind);
 
     m_views.append(editor);
 

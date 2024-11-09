@@ -33,6 +33,13 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->tbTr->setMarkdown(data.trans);
     ui->lblVersion->setText(qApp->applicationVersion());
 
+    QFile license(QStringLiteral(":/com.wingsummer.winghex/LICENSE"));
+    auto ret = license.open(QFile::ReadOnly);
+    Q_ASSERT(ret);
+    Q_UNUSED(ret);
+    auto ltxt = license.readAll();
+    ui->tbLicense->setText(ltxt);
+
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());

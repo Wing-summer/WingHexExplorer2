@@ -43,7 +43,11 @@ SkinManager::SkinManager(QObject *parent) : QObject(parent) {
         break;
     }
     qss.open(QFile::ReadOnly | QFile::Text);
+#ifdef Q_OS_WIN
+    qApp->setStyle(QStyleFactory::create("windowsvista"));
+#else
     qApp->setStyle(QStyleFactory::create("fusion"));
+#endif
     qApp->setStyleSheet(qss.readAll());
     qss.close();
 }

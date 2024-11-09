@@ -45,7 +45,7 @@ QIcon EditorSettingDialog::categoryIcon() const { return ICONRES("edit"); }
 
 QString EditorSettingDialog::name() const { return tr("Editor"); }
 
-bool EditorSettingDialog::isInPluginPage() const { return false; }
+QString EditorSettingDialog::id() const { return QStringLiteral("Editor"); }
 
 void EditorSettingDialog::apply() {
     auto &set = SettingManager::instance();

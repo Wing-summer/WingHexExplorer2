@@ -32,7 +32,8 @@ int MetaDataModel::columnCount(const QModelIndex &parent) const {
 
 QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     switch (role) {
-    case Qt::DisplayRole: {
+    case Qt::DisplayRole:
+    case Qt::ToolTipRole: {
         auto r = index.row();
         const auto &b = _doc->metadata()->getAllMetadata();
         auto d = b.at(r);
@@ -47,52 +48,28 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
             if (d.foreground.alpha() == 0) {
                 return QStringLiteral("-");
             }
-            return QVariant();
-            break;
+            return d.foreground.name();
         }
         case 3:
             if (d.background.alpha() == 0) {
                 return QStringLiteral("-");
             }
-            return QVariant();
-            break;
+            return d.background.name();
         case 4:
             return d.comment;
         }
     }
-    case Qt::ToolTipRole: {
-        auto r = index.row();
-        const auto &b = _doc->metadata()->getAllMetadata();
-        auto d = b.at(r);
-        switch (index.column()) {
-        case 2: {
-            if (d.foreground.alpha() == 0) {
-                return QStringLiteral("-");
-            } else {
-                return d.foreground.name();
-            }
-            break;
-        }
-        case 3:
-            if (d.background.alpha() == 0) {
-                return QStringLiteral("-");
-            } else {
-                return d.background.name();
-            }
-            break;
-        case 4:
-            return d.comment;
-        }
-    } break;
-    case Qt::BackgroundRole: {
+    case Qt::DecorationRole: {
         auto r = index.row();
         const auto &b = _doc->metadata()->getAllMetadata();
         auto d = b.at(r);
         switch (index.column()) {
         case 2:
-            return d.foreground;
+            if (d.foreground.alpha() > 0)
+                return d.foreground;
         case 3:
-            return d.background;
+            if (d.background.alpha() > 0)
+                return d.background;
         default:
             break;
         }

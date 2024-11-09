@@ -103,8 +103,6 @@ QIcon QFormatConfig::categoryIcon() const { return ICONRES(""); }
 
 QString QFormatConfig::name() const { return tr("Format"); }
 
-bool QFormatConfig::isInPluginPage() const { return false; }
-
 /*!
         \brief Add a format scheme to the config widget
 

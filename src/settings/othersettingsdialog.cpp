@@ -64,7 +64,7 @@ QIcon OtherSettingsDialog::categoryIcon() const { return ICONRES("other"); }
 
 QString OtherSettingsDialog::name() const { return tr("Others"); }
 
-bool OtherSettingsDialog::isInPluginPage() const { return false; }
+QString OtherSettingsDialog::id() const { return QStringLiteral("Others"); }
 
 void OtherSettingsDialog::apply() {
     auto &set = SettingManager::instance();

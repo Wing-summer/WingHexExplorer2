@@ -111,7 +111,7 @@ QIcon GeneralSettingDialog::categoryIcon() const { return ICONRES("general"); }
 
 QString GeneralSettingDialog::name() const { return tr("General"); }
 
-bool GeneralSettingDialog::isInPluginPage() const { return false; }
+QString GeneralSettingDialog::id() const { return QStringLiteral("General"); }
 
 void GeneralSettingDialog::apply() {
     auto &set = SettingManager::instance();

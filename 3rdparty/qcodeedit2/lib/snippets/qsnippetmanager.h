@@ -33,7 +33,7 @@ class QCE_EXPORT QSnippetManager : public QObject {
     Q_OBJECT
 
 public:
-    QSnippetManager(QObject *p = 0);
+    explicit QSnippetManager(QObject *p = nullptr);
     virtual ~QSnippetManager();
 
     int snippetCount() const;

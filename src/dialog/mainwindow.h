@@ -486,10 +486,12 @@ private:
     EditorView *m_curEditor = nullptr;
 
     SettingDialog *m_setdialog = nullptr;
+    SettingDialog *m_plgsetdlg = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
     QMenu *m_recentMenu = nullptr;
 
     RibbonButtonGroup *m_scriptDBGroup = nullptr;
+    RibbonButtonGroup *m_pluginSettingsGroup = nullptr;
     ScriptManager::ScriptActionMaps _scriptMaps;
 
     //===================================================
@@ -525,7 +527,8 @@ private:
     QHash<QString, RibbonTabContent *> m_ribbonMaps;
     QList<QMenu *> m_hexContextMenu;
     QMap<IWingPlugin *, QList<WingEditorViewWidget *>> m_editorViewWidgets;
-    QList<SettingPage *> m_settingPages;
+    QHash<SettingPage *, bool> m_settingPages;
+    QList<PluginPage *> m_plgPages;
     QList<WingEditorViewWidget *> m_editorViewWidgetsBuffer;
 
     ads::CDockAreaWidget *m_leftViewArea = nullptr;

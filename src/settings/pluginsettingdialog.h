@@ -32,11 +32,10 @@ public:
     explicit PluginSettingDialog(QWidget *parent = nullptr);
     ~PluginSettingDialog();
 
-    void buildUp(const QList<WingHex::SettingPage *> &pages);
+    void buildUp(const QList<WingHex::PluginPage *> &pages);
 
 private:
     Ui::PluginSettingDialog *ui;
-    QList<WingHex::SettingPage *> _pages;
 
     void reload();
 
@@ -44,7 +43,7 @@ private:
 public:
     virtual QIcon categoryIcon() const override;
     virtual QString name() const override;
-    virtual bool isInPluginPage() const override;
+    virtual QString id() const override;
     virtual void apply() override;
     virtual void reset() override;
     virtual void cancel() override;

@@ -1106,6 +1106,7 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
         pannel->setVisible(false);
         connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
+        m_pluginSettingsGroup = pannel;
     }
     return tab;
 }
@@ -1149,35 +1150,89 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 }
 
 void MainWindow::buildUpSettingDialog() {
+    QStringList usedIDs;
+    QString id;
+
     m_setdialog = new SettingDialog(this);
     auto generalPage = new GeneralSettingDialog(m_setdialog);
     connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(generalPage);
+    id = generalPage->id();
+    Q_ASSERT(!id.isEmpty());
+    Q_ASSERT(usedIDs.indexOf(id) < 0);
+    usedIDs.append(id);
+
     auto editorPage = new EditorSettingDialog(m_setdialog);
     connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(editorPage);
+    id = editorPage->id();
+    Q_ASSERT(!id.isEmpty());
+    Q_ASSERT(usedIDs.indexOf(id) < 0);
+    usedIDs.append(id);
+
     auto plgPage = new PluginSettingDialog(m_setdialog);
     connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
-    plgPage->buildUp(m_settingPages);
+    plgPage->buildUp(m_plgPages);
     m_setdialog->addPage(plgPage);
+    id = plgPage->id();
+    Q_ASSERT(!id.isEmpty());
+    Q_ASSERT(usedIDs.indexOf(id) < 0);
+    usedIDs.append(id);
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
     connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(scriptPage);
-
-    for (auto &page : m_settingPages) {
-        if (!page->isInPluginPage()) {
-            connect(page, &SettingPage::optionNeedRestartChanged, m_setdialog,
-                    &SettingDialog::toastTakeEffectReboot);
-            m_setdialog->addPage(page);
-        }
-    }
+    id = scriptPage->id();
+    Q_ASSERT(!id.isEmpty());
+    Q_ASSERT(usedIDs.indexOf(id) < 0);
+    usedIDs.append(id);
 
     auto otherPage = new OtherSettingsDialog(m_setdialog);
+    id = otherPage->id();
+    Q_ASSERT(!id.isEmpty());
+    Q_ASSERT(usedIDs.indexOf(id) < 0);
+    usedIDs.append(id);
+
+    for (auto page_p = m_settingPages.constKeyValueBegin();
+         page_p != m_settingPages.constKeyValueEnd(); ++page_p) {
+        auto page = page_p->first;
+        auto name = page->name();
+        auto id = page->id();
+
+        // check
+        if (id.isEmpty()) {
+            id = name;
+            auto plg = page->property("__plg__").value<IWingPlugin *>();
+            Logger::warning(
+                QStringLiteral("[") + plg->metaObject()->className() +
+                QStringLiteral("::") + name + QStringLiteral("] ") +
+                QStringLiteral(":") + tr("SetPageIDEmptyTryUseName"));
+        }
+
+        if (usedIDs.contains(id)) {
+            auto plg = page->property("__plg__").value<IWingPlugin *>();
+            Logger::critical(
+                QStringLiteral("[") + plg->metaObject()->className() +
+                QStringLiteral("::") + name + QStringLiteral("] ") +
+                QStringLiteral(":") + tr("SetPageDupNameIgnored"));
+            continue;
+        }
+
+        connect(page, &SettingPage::optionNeedRestartChanged, m_setdialog,
+                &SettingDialog::toastTakeEffectReboot);
+        m_setdialog->addPage(page);
+        if (page_p->second) {
+            auto icon = page->categoryIcon();
+            addPannelAction(m_pluginSettingsGroup, icon, name,
+                            [=] { m_setdialog->showConfig(id); });
+        }
+        usedIDs.append(id);
+    }
+
     connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(otherPage);

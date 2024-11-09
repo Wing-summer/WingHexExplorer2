@@ -34,13 +34,15 @@
 */
 
 QSnippetEdit::QSnippetEdit(QWidget *p)
-    : QWidget(p), m_editedSnippet(-1), m_manager(nullptr) {
+    : QWidget(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
+      m_manager(nullptr) {
     ui->setupUi(this);
     setEnabled(false);
 }
 
 QSnippetEdit::QSnippetEdit(QSnippetManager *mgr, QWidget *p)
-    : QWidget(p), m_editedSnippet(-1), m_manager(nullptr) {
+    : QWidget(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
+      m_manager(nullptr) {
     ui->setupUi(this);
     setSnippetManager(mgr);
 }

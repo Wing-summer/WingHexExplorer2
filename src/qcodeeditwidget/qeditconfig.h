@@ -20,8 +20,7 @@ public:
 public:
     virtual QIcon categoryIcon() const override;
     virtual QString name() const override;
-    virtual bool isInPluginPage() const override;
-
+    virtual QString id() const override;
     virtual void apply() override;
     virtual void cancel() override;
     virtual void reset() override;

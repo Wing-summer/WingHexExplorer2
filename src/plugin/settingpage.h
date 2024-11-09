@@ -22,21 +22,33 @@
 
 namespace WingHex {
 
-class SettingPage : public QWidget {
+class PageBase : public QWidget {
+public:
+    explicit PageBase(QWidget *parent = nullptr) : QWidget(parent) {}
+
+public:
+    virtual QIcon categoryIcon() const = 0;
+    virtual QString name() const = 0;
+    virtual QString id() const = 0;
+};
+
+class SettingPage : public PageBase {
     Q_OBJECT
 public:
-    explicit SettingPage(QWidget *parent = nullptr) : QWidget(parent) {}
+    explicit SettingPage(QWidget *parent = nullptr) : PageBase(parent) {}
 
 signals:
     void optionNeedRestartChanged();
 
 public:
-    virtual QIcon categoryIcon() const = 0;
-    virtual QString name() const = 0;
-    virtual bool isInPluginPage() const = 0;
     virtual void apply() = 0;
     virtual void reset() = 0;
     virtual void cancel() = 0;
+};
+
+class PluginPage : public PageBase {
+public:
+    explicit PluginPage(QWidget *parent = nullptr) : PageBase(parent) {}
 };
 
 } // namespace WingHex

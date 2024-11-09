@@ -192,7 +192,7 @@ QIcon QEditConfig::categoryIcon() const { return ICONRES("file"); }
 
 QString QEditConfig::name() const { return tr("Edit"); }
 
-bool QEditConfig::isInPluginPage() const { return false; }
+QString QEditConfig::id() const { return QStringLiteral("Edit"); }
 
 /*!
         \brief Fills the widget subcontrols from a settings map

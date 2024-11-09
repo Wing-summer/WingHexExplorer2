@@ -26,6 +26,7 @@
 #include <QCryptographicHash>
 #include <QDockWidget>
 #include <QList>
+#include <QMap>
 #include <QMenu>
 #include <QObject>
 #include <QToolBar>
@@ -497,6 +498,10 @@ signals:
 class IWingPlugin : public QObject {
     Q_OBJECT
 public:
+    // TODO: implement the basic type only
+    typedef std::function<QVariant(const QVariantList &)> ScriptFn;
+
+public:
     virtual int sdkVersion() const = 0;
     virtual const QString signature() const = 0;
     virtual ~IWingPlugin() = default;
@@ -515,10 +520,17 @@ public:
     virtual QList<WingRibbonToolBoxInfo> registeredRibbonTools() const {
         return {};
     }
-    virtual QList<SettingPage *> registeredSettingPages() const { return {}; }
+    // QMap<page, whether is visible in setting tab>
+    virtual QHash<SettingPage *, bool> registeredSettingPages() const {
+        return {};
+    }
+    virtual QList<PluginPage *> registeredPages() const { return {}; }
     virtual QList<WingEditorViewWidget *> registeredEditorViewWidgets() const {
         return {};
     }
+
+    // QHash<signature, fn>
+    virtual QHash<QString, ScriptFn> registeredScriptFn() { return {}; }
 
 signals:
     // extension and exposed to WingHexAngelScript

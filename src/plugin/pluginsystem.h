@@ -115,6 +115,8 @@ public:
 
     void cleanUpEditorViewHandle(EditorView *view);
 
+    void registerFn(IWingPlugin *plg, const IWingPlugin::ScriptFn &fn);
+
 private:
     bool loadPlugin(IWingPlugin *p);
 

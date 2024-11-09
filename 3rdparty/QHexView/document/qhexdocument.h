@@ -190,6 +190,8 @@ private:
     /*======================*/
     // added by wingsummer
 
+    bool m_isSaved = true;
+
     bool m_readonly;
     bool m_keepsize;
     bool m_islocked;
