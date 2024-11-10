@@ -171,7 +171,7 @@ QDocument::QDocument(QObject *p)
     : QObject(p), m_impl(new QDocumentPrivate(this)) {
     if (!QDocumentPrivate::m_font) {
         // must not happen if config dialog plugged in...
-        setFont(QFont("Monospace", 10));
+        setFont(qApp->font());
     }
 
     setText(QString());
@@ -476,7 +476,7 @@ void QDocument::stopChunkLoading() {
 
     emit lineCountChanged(lineCount());
 
-    emit m_impl->emitContentsChange(0, m_impl->m_lines.count());
+    m_impl->emitContentsChange(0, m_impl->m_lines.count());
 }
 
 /*!
@@ -1010,11 +1010,11 @@ int QDocument::y(const QDocumentLine &l) const {
         \note the width of the returned rectangle is the DOCUMENT's width
 */
 QRect QDocument::lineRect(int line) const {
-    const int yoff = y(line);
+    const int yoff = y(line) - 1;
 
     return (yoff != -1)
                ? QRect(0, yoff, width(),
-                       this->line(line).lineSpan() * m_impl->m_lineSpacing)
+                       this->line(line).lineSpan() * m_impl->m_lineSpacing + 1)
                : QRect();
 }
 
@@ -3400,30 +3400,6 @@ void QDocumentCursorHandle::setColumnMemory(bool y) {
         clearFlag(ColumnMemory);
 }
 
-void QDocumentCursorHandle::setPosition(int pos, int m) {
-    Q_UNUSED(pos)
-    Q_UNUSED(m)
-
-    qWarning("Set position to cursor using character index : forbidden...");
-    /*
-    if ( m == QDocumentCursor::MoveAnchor )
-    {
-            m_begLine = m_doc->findLine(pos);
-            m_begOffset = (m_begLine.isValid() ? pos : 0);
-
-            m_endLine = QDocumentLine();
-            m_endOffset = 0;
-
-            m_max = m_begLine.cursorToX(m_begOffset);
-    } else {
-            m_endLine = m_doc->findLine(pos);
-            m_endOffset = (m_begLine.isValid() ? pos : 0);
-
-            //m_max = 0;
-    }
-    */
-}
-
 bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
     if (!m_doc)
         return false;
@@ -4941,7 +4917,7 @@ int QDocumentPrivate::position(const QDocumentLineHandle *l) const {
     return pos;
 }
 
-QDocumentLineHandle *QDocumentPrivate::lineForPosition(int &position) const {
+QDocumentLineHandle *QDocumentPrivate::lineForPosition(int position) const {
     int pos = 0, idx = 0;
 
     while ((pos + m_lines.at(idx)->length()) < position)

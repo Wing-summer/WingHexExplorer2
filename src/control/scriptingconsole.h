@@ -18,7 +18,7 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
-#include "QConsoleWidget/src/QConsoleWidget.h"
+#include "QConsoleWidget/QConsoleWidget.h"
 #include "class/scriptconsolemachine.h"
 
 #include <QMutex>

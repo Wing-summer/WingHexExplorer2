@@ -32,9 +32,9 @@
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
 #include "qlanguagefactory.h"
-#include "qsnippetbinding.h"
 #include "utilities.h"
 
+#include <QMessageBox>
 #include <QShortcut>
 #include <QStatusBar>
 #include <QTableView>
@@ -75,6 +75,8 @@ public:
 
     void initConsole();
 
+    bool about2Close();
+
     void saveDockLayout();
 
 private:
@@ -111,6 +113,8 @@ private:
                                       const QString &displayName,
                                       QWidget *content,
                                       ToolButtonIndex index = TOOL_VIEWS);
+
+    QMessageBox::StandardButton saveRequest();
 
 private:
     template <typename Func>
@@ -251,8 +255,6 @@ protected:
 private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
-    QLanguageFactory *m_language = nullptr;
-    QSnippetBinding *m_snipbind = nullptr;
 
     QByteArray _defaultLayout;
     QByteArray _savedLayout;

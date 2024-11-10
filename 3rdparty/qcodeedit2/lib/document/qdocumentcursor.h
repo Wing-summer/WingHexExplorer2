@@ -132,7 +132,6 @@ public:
     QDocumentLine anchorLine() const;
 
     void shift(int offset);
-    void setPosition(int pos, MoveMode m = MoveAnchor);
     bool movePosition(int offset, MoveOperation op = NextCharacter,
                       MoveMode m = MoveAnchor);
 

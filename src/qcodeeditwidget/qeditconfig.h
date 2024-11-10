@@ -25,11 +25,11 @@ public:
     virtual void cancel() override;
     virtual void reset() override;
 
+private:
+    void reload();
+
 public slots:
     void loadKeys(const QMap<QString, QVariant> &keys);
-
-signals:
-    void keyChanged(const QString &key, const QVariant &value);
 
 private slots:
     void on_spnFontSize_valueChanged(int size);

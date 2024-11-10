@@ -67,7 +67,7 @@ public:
 
     void draw(QPainter *p, QDocument::PaintContext &cxt);
 
-    QDocumentLineHandle *lineForPosition(int &position) const;
+    QDocumentLineHandle *lineForPosition(int position) const;
     int position(const QDocumentLineHandle *l) const;
 
     QDocumentLineHandle *at(int line) const;

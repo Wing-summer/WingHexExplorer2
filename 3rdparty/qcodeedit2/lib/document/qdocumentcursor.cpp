@@ -419,16 +419,6 @@ void QDocumentCursor::shift(int offset) {
 }
 
 /*!
-        \brief Set the text position of the cursor (within the whole document)
-
-        Remark made about position() applies.
-*/
-void QDocumentCursor::setPosition(int pos, MoveMode m) {
-    if (m_handle)
-        m_handle->setPosition(pos, m);
-}
-
-/*!
         \brief Moves the cursor position
         \param offset number of times the selected move will be done
         \param op movement type
@@ -515,7 +505,7 @@ void QDocumentCursor::eraseLine() {
 */
 void QDocumentCursor::insertLine(bool keepAnchor) {
     if (m_handle)
-        m_handle->insertText("\n", keepAnchor);
+        m_handle->insertText(QStringLiteral("\n"), keepAnchor);
 }
 
 /*!

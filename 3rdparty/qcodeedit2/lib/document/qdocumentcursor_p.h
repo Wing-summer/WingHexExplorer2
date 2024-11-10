@@ -90,7 +90,6 @@ public:
     int position() const;
 
     void shift(int offset);
-    void setPosition(int pos, int m);
     bool movePosition(int offset, int op, int m);
 
     void insertText(const QString &s, bool keepAnchor = false);

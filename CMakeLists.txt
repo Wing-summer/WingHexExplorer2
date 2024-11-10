@@ -62,7 +62,6 @@ add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
-add_subdirectory(3rdparty/QConsoleWidget)
 add_subdirectory(3rdparty/QJsonModel)
 
 set(ANGEL_SCRIPT_ADDON_ROOT
@@ -113,6 +112,12 @@ set(RIBBON_SRC
 
 set(QPATHEDIT_SRC 3rdparty/QPathEdit/qpathedit.cpp
                   3rdparty/QPathEdit/qpathedit.h)
+
+set(QCONSOLEWIDGET_SRC
+    3rdparty/QConsoleWidget/QConsoleIODevice.cpp
+    3rdparty/QConsoleWidget/QConsoleIODevice.h
+    3rdparty/QConsoleWidget/QConsoleWidget.cpp
+    3rdparty/QConsoleWidget/QConsoleWidget.h)
 
 set(DIALOG_SRC
     src/dialog/framelessmainwindow.h
@@ -225,7 +230,9 @@ set(CLASS_SRC
     src/class/ascontextmgr.h
     src/class/ascontextmgr.cpp
     src/class/qcodenode.cpp
-    src/class/qcodenode.h)
+    src/class/qcodenode.h
+    src/class/langservice.h
+    src/class/langservice.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -399,6 +406,7 @@ set(PROJECT_SOURCES
     main.cpp
     src/utilities.h
     src/dbghelper.h
+    ${QCONSOLEWIDGET_SRC}
     ${QPATHEDIT_SRC}
     ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
@@ -463,7 +471,6 @@ if(WINGHEX_USE_FRAMELESS)
                 QCodeEditor2
                 QJsonModel
                 angelscript
-                QConsoleWidget
                 qt${QT_VERSION_MAJOR}advanceddocking)
 else()
     target_link_libraries(
@@ -480,7 +487,6 @@ else()
                 QCodeEditor2
                 QJsonModel
                 angelscript
-                QConsoleWidget
                 qt${QT_VERSION_MAJOR}advanceddocking)
 endif()
 

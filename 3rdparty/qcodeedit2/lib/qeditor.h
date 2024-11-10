@@ -272,11 +272,13 @@ public slots:
 
     void clearPlaceHolders();
     void removePlaceHolder(int i);
-    void addPlaceHolder(const PlaceHolder &p, bool autoUpdate = true);
+    void addPlaceHolder(const QEditor::PlaceHolder &p, bool autoUpdate = true);
 
     void nextPlaceHolder();
     void previousPlaceHolder();
     void setPlaceHolder(int i);
+
+    void setUndoRedoEnabled(bool b);
 
     virtual void setFileName(const QString &f);
 
@@ -384,6 +386,8 @@ public:
     void clearCursorMirrors();
     void addCursorMirror(const QDocumentCursor &c);
 
+    bool undoRedoEnabled() const;
+
 protected slots:
     void documentWidthChanged(int newWidth);
     void documentHeightChanged(int newWidth);
@@ -432,6 +436,8 @@ protected:
 
     int m_curPlaceHolder, m_cphOffset;
     QList<PlaceHolder> m_placeHolders;
+
+    bool m_undoRedoEnabled = true;
 
     int m_state;
     bool m_selection;

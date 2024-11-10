@@ -34,20 +34,32 @@
 */
 
 QSnippetEdit::QSnippetEdit(QWidget *p)
-    : QWidget(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
+    : WingHex::SettingPage(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
       m_manager(nullptr) {
     ui->setupUi(this);
     setEnabled(false);
 }
 
 QSnippetEdit::QSnippetEdit(QSnippetManager *mgr, QWidget *p)
-    : QWidget(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
+    : WingHex::SettingPage(p), ui(new Ui::QSnippetEdit), m_editedSnippet(-1),
       m_manager(nullptr) {
     ui->setupUi(this);
     setSnippetManager(mgr);
 }
 
 QSnippetManager *QSnippetEdit::snippetManager() const { return m_manager; }
+
+QIcon QSnippetEdit::categoryIcon() const { return QIcon(); }
+
+QString QSnippetEdit::name() const { return tr("Snippets"); }
+
+QString QSnippetEdit::id() const { return QStringLiteral("Snippets"); }
+
+void QSnippetEdit::apply() {}
+
+void QSnippetEdit::reset() {}
+
+void QSnippetEdit::cancel() {}
 
 void QSnippetEdit::setSnippetManager(QSnippetManager *mgr) {
     if (m_manager) {

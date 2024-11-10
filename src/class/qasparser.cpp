@@ -404,7 +404,7 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
             pnodes->append(node);
 
             auto clsnode = new QCodeNode;
-            _headerNodes << clsnode;
+            _clsNodes << clsnode;
             clsnode->setNodeType(QCodeNode::Class);
             clsnode->setRole(QCodeNode::Name, cls.name);
             for (auto &m : cls.methods) {
@@ -467,5 +467,7 @@ QCodeNode *QAsParser::newEnumCodeNode(const EnumInfo &info) {
     }
     return enode;
 }
+
+QList<QCodeNode *> QAsParser::classNodes() const { return _clsNodes; }
 
 QList<QCodeNode *> QAsParser::codeNodes() const { return _nodes; }

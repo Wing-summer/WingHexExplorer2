@@ -7,7 +7,6 @@
 class QConsoleWidget;
 
 class QConsoleIODevice : public QIODevice {
-
     Q_OBJECT
 
 public:

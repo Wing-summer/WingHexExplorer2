@@ -23,7 +23,7 @@
 #include <QShortcut>
 
 ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
-    m_stdoutFmtTitle = this->currentCharFormat();
+    // m_stdoutFmtTitle = this->currentCharFormat();
 
     m_stdoutFmtWarn = m_stdoutFmtContent =
         channelCharFormat(ConsoleChannel::StandardOutput);
@@ -152,7 +152,7 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     if (storeOnly) {
         commandPrompt += QStringLiteral("... > ");
     } else {
-        auto cursor = this->textCursor();
+        auto cursor = this->cursor();
         if (!cursor.atBlockStart()) {
             commandPrompt = QStringLiteral("\n");
         }

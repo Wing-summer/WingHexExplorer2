@@ -16,6 +16,7 @@
 #ifndef _QSNIPPET_EDIT_H_
 #define _QSNIPPET_EDIT_H_
 
+#include "plugin/settingpage.h"
 #include "qce-config.h"
 
 /*!
@@ -32,7 +33,7 @@ namespace Ui {
 class QSnippetEdit;
 }
 
-class QCE_EXPORT QSnippetEdit : public QWidget {
+class QCE_EXPORT QSnippetEdit : public WingHex::SettingPage {
     Q_OBJECT
 
 public:
@@ -40,6 +41,18 @@ public:
     QSnippetEdit(QSnippetManager *mgr, QWidget *p = nullptr);
 
     QSnippetManager *snippetManager() const;
+
+    // PageBase interface
+public:
+    QIcon categoryIcon() const;
+    QString name() const;
+    QString id() const;
+
+    // SettingPage interface
+public:
+    void apply();
+    void reset();
+    void cancel();
 
 public slots:
     void setSnippetManager(QSnippetManager *mgr);

@@ -20,20 +20,19 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "aboutsoftwaredialog.h"
-#include "class/ascompletion.h"
+#include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
-#include "class/skinmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
 #include "qcodeeditwidget/qeditconfig.h"
+#include "qcodeeditwidget/qsnippetedit.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
 #include "qformatscheme.h"
 #include "qlinemarksinfocenter.h"
-#include "qsnippetmanager.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -79,25 +78,8 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     buildUpSettingDialog();
 
-    QFormatScheme *format = nullptr;
-
-    switch (SkinManager::instance().currentTheme()) {
-    case SkinManager::Theme::Dark:
-        format =
-            new QFormatScheme(QStringLiteral(":/qcodeedit/as_dark.qxf"), this);
-        break;
-    case SkinManager::Theme::Light:
-        format =
-            new QFormatScheme(QStringLiteral(":/qcodeedit/as_light.qxf"), this);
-        break;
-    }
-    QDocument::setDefaultFormatScheme(format);
-
-    m_language = new QLanguageFactory(format, this);
-    m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
-
-    auto snippet = new QSnippetManager(this);
-    m_snipbind = new QSnippetBinding(snippet);
+    QFormatScheme *format = QDocument::defaultFormatScheme();
+    Q_ASSERT(format);
 
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
@@ -124,7 +106,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     this->setUpdatesEnabled(true);
 }
 
-ScriptingDialog::~ScriptingDialog() { delete m_snipbind; }
+ScriptingDialog::~ScriptingDialog() {}
 
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
@@ -232,8 +214,55 @@ void ScriptingDialog::initConsole() {
 
             updateRunDebugMode();
         });
+}
 
-    m_language->addCompletionEngine(new AsCompletion(machine->engine(), this));
+bool ScriptingDialog::about2Close() {
+    if (m_views.isEmpty()) {
+        return true;
+    }
+
+    QStringList unSavedFiles;
+    QList<ScriptEditor *> need2CloseView;
+
+    for (auto &view : m_views) {
+        if (view->editor()->isContentModified()) {
+            unSavedFiles << view->fileName();
+        } else {
+            need2CloseView << view;
+        }
+    }
+
+    for (auto &view : need2CloseView) {
+        emit view->closeRequested();
+    }
+
+    if (unSavedFiles.isEmpty()) {
+        return true;
+    }
+
+    this->show();
+    this->raise();
+
+    auto ret =
+        unSavedFiles.isEmpty()
+            ? QMessageBox::No
+            : WingMessageBox::warning(this, qAppName(), tr("ConfirmScriptSave"),
+                                      QMessageBox::Yes | QMessageBox::No |
+                                          QMessageBox::Cancel);
+    if (ret == QMessageBox::Yes) {
+        for (auto &p : m_views) {
+            emit p->closeRequested();
+        }
+
+        return m_views.isEmpty();
+    } else if (ret == QMessageBox::No) {
+        for (auto &p : m_views) {
+            p->closeDockWidget(); // force close
+        }
+        return true;
+    }
+
+    return false;
 }
 
 void ScriptingDialog::saveDockLayout() {
@@ -687,6 +716,13 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
     return dw;
 }
 
+QMessageBox::StandardButton ScriptingDialog::saveRequest() {
+    auto ret = WingMessageBox::warning(this, qAppName(), tr("ConfirmSave"),
+                                       QMessageBox::Yes | QMessageBox::No |
+                                           QMessageBox::Cancel);
+    return ret;
+}
+
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::closeRequested, this, [this] {
         auto editor = qobject_cast<ScriptEditor *>(sender());
@@ -701,6 +737,23 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
                 return;
             }
             on_stopscript();
+        }
+
+        if (editor->editor()->isContentModified()) {
+            auto ret = saveRequest();
+            if (ret == QMessageBox::Cancel) {
+                return;
+            } else if (ret == QMessageBox::Yes) {
+                if (!editor->save()) {
+                    if (WingMessageBox::critical(this, this->windowTitle(),
+                                                 tr("ScriptSaveFailedClose"),
+                                                 QMessageBox::Yes |
+                                                     QMessageBox::No) ==
+                        QMessageBox::No) {
+                        return;
+                    }
+                }
+            }
         }
 
         m_views.removeOne(editor);
@@ -723,8 +776,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         editor->deleteDockWidget();
     });
 
-    m_language->setLanguage(editor->editor(), QStringLiteral("AngelScript"));
-    editor->editor()->addInputBinding(m_snipbind);
+    LangService::instance().applyLanguageSerivce(editor->editor());
 
     m_views.append(editor);
 
@@ -897,6 +949,10 @@ void ScriptingDialog::buildUpSettingDialog() {
 
     auto edit = new QEditConfig(m_setdialog);
     m_setdialog->addPage(edit);
+
+    auto snip =
+        new QSnippetEdit(LangService::instance().snippetManager(), m_setdialog);
+    m_setdialog->addPage(snip);
 
     m_setdialog->build();
 }

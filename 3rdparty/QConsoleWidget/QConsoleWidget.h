@@ -1,14 +1,17 @@
 #ifndef _QCONSOLEWIDGET_H_
 #define _QCONSOLEWIDGET_H_
 
-#include <QCompleter>
-#include <QPlainTextEdit>
+#include <QIODevice>
+#include <QTextCharFormat>
 #include <QTextStream>
 
-class QConsoleIODevice;
-class QConsoleWidgetCompleter;
+#include "control/qcodecompletionwidget.h"
+#include "qeditor.h"
+#include "qlanguagefactory.h"
 
-class QConsoleWidget : public QPlainTextEdit {
+class QConsoleIODevice;
+
+class QConsoleWidget : public QEditor {
     Q_OBJECT
 
 public:
@@ -23,8 +26,8 @@ public:
     };
     Q_ENUM(ConsoleChannel)
 
-    QConsoleWidget(QWidget *parent = 0);
-    ~QConsoleWidget();
+    explicit QConsoleWidget(QWidget *parent = nullptr);
+    virtual ~QConsoleWidget();
 
     ConsoleMode mode() const { return mode_; }
     void setMode(ConsoleMode m);
@@ -35,19 +38,15 @@ public:
     void setChannelCharFormat(ConsoleChannel ch, const QTextCharFormat &fmt) {
         chanFormat_[ch] = fmt;
     }
-    const QStringList &completionTriggers() const {
-        return completion_triggers_;
-    }
-    void setCompletionTriggers(const QStringList &l) {
-        completion_triggers_ = l;
-    }
     virtual QSize sizeHint() const override { return QSize(600, 400); }
     // write a formatted message to the console
     void write(const QString &message, const QTextCharFormat &fmt);
     static const QStringList &history() { return history_.strings_; }
-    void setCompleter(QConsoleWidgetCompleter *c);
+    void setCompleter(QCodeCompletionWidget *c);
     // get the current command line
     QString getCommandLine();
+
+    void clear();
 
 public slots:
 
@@ -67,10 +66,7 @@ protected:
     bool canPaste() const;
     bool canCut() const { return isSelectionInEditZone(); }
     void handleReturnKey();
-    void handleTabKey();
-    void updateCompleter();
-    void checkCompletionTriggers(const QString &txt);
-    // reimp QPlainTextEdit functions
+
     void keyPressEvent(QKeyEvent *e) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     // Returns true if there is a selection in edit zone
@@ -81,11 +77,6 @@ protected:
     void replaceCommandLine(const QString &str);
 
     static QString getHistoryPath();
-
-protected slots:
-
-    // insert the completion from completer
-    void insertCompletion(const QString &completion);
 
 private:
     struct History {
@@ -109,35 +100,18 @@ private:
 
     static History history_;
     ConsoleMode mode_;
-    int inpos_, completion_pos_;
-    QStringList completion_triggers_;
+    QDocumentCursor inpos_;
     QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
     QTextCharFormat chanFormat_[nConsoleChannels];
-    QConsoleWidgetCompleter *completer_;
+    QCodeCompletionWidget *completer_;
+
+    QLanguageFactory *m_language = nullptr;
 };
 
 QTextStream &waitForInput(QTextStream &s);
 QTextStream &inputMode(QTextStream &s);
 QTextStream &outChannel(QTextStream &s);
 QTextStream &errChannel(QTextStream &s);
-
-class QConsoleWidgetCompleter : public QCompleter {
-public:
-    /*
-     * Update the completion model given a string.  The given string
-     * is the current console text between the cursor and the start of
-     * the line.
-     *
-     * Return the completion count
-     */
-    virtual int updateCompletionModel(const QString &str) = 0;
-
-    /*
-     * Return the position in the command line where the completion
-     * should be inserted
-     */
-    virtual int insertPos() = 0;
-};
 
 #endif

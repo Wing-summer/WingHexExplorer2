@@ -24,7 +24,6 @@
 AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::AboutSoftwareDialog) {
     ui->setupUi(this);
-
     auto data = LanguageManager::instance().data();
     ui->tbAbout->setMarkdown(data.about);
     ui->tbBaseObj->setMarkdown(data.component);
@@ -32,6 +31,7 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->tbDev->setMarkdown(data.dev);
     ui->tbTr->setMarkdown(data.trans);
     ui->lblVersion->setText(qApp->applicationVersion());
+    ui->lblBuildDate->setText(QStringLiteral(__DATE__));
 
     QFile license(QStringLiteral(":/com.wingsummer.winghex/LICENSE"));
     auto ret = license.open(QFile::ReadOnly);

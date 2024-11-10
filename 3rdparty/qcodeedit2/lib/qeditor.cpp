@@ -203,7 +203,7 @@ QString QEditor::defaultInputBindingId() {
 void QEditor::registerInputBinding(QEditorInputBindingInterface *b) {
     m_registeredBindings[b->id()] = b;
 
-    for (QEditor *e : m_editors)
+    for (auto &e : m_editors)
         e->updateBindingsMenu();
 }
 
@@ -213,7 +213,7 @@ void QEditor::registerInputBinding(QEditorInputBindingInterface *b) {
 void QEditor::unregisterInputBinding(QEditorInputBindingInterface *b) {
     m_registeredBindings.remove(b->id());
 
-    for (QEditor *e : m_editors)
+    for (auto &e : m_editors)
         e->updateBindingsMenu();
 }
 
@@ -281,7 +281,7 @@ int QEditor::defaultFlags() { return m_defaultFlags; }
 void QEditor::setDefaultFlags(int flags) {
     m_defaultFlags = flags & Accessible;
 
-    for (QEditor *e : m_editors) {
+    for (auto &e : m_editors) {
         bool ontoWrap = (m_defaultFlags & LineWrap) && !(e->m_state & LineWrap);
         bool outOfWrap =
             !(m_defaultFlags & LineWrap) && (e->m_state & LineWrap);
@@ -318,7 +318,7 @@ QString QEditor::defaultCodecName() { return m_defaultCodecName; }
         affected by the change of the default codecName.
 */
 void QEditor::setDefaultCodec(const QString &name, int update) {
-    for (QEditor *e : m_editors) {
+    for (auto &e : m_editors) {
         if (e->codecName() == m_defaultCodecName) {
             if (update & UpdateOld)
                 e->setCodec(name);
@@ -644,8 +644,8 @@ void QEditor::init(bool actions) {
         m_bindingsActions = new QActionGroup(m_bindingsMenu);
         // m_bindingsActions->setExclusive(true);
 
-        connect(m_bindingsActions, SIGNAL(triggered(QAction *)), this,
-                SLOT(bindingSelected(QAction *)));
+        connect(m_bindingsActions, &QActionGroup::triggered, this,
+                &QEditor::bindingSelected);
 
         aDefaultBinding = new QAction(tr("Default"), m_bindingsMenu);
         aDefaultBinding->setCheckable(true);
@@ -669,8 +669,8 @@ void QEditor::init(bool actions) {
         m_lineEndingsActions = new QActionGroup(m_lineEndingsMenu);
         m_lineEndingsActions->setExclusive(true);
 
-        connect(m_lineEndingsActions, SIGNAL(triggered(QAction *)), this,
-                SLOT(lineEndingSelected(QAction *)));
+        connect(m_lineEndingsActions, &QActionGroup::triggered, this,
+                &QEditor::lineEndingSelected);
 
         m_lineEndingsActions->addAction(tr("Conservative"))
             ->setData("conservative");
@@ -681,7 +681,7 @@ void QEditor::init(bool actions) {
 
         QList<QAction *> lle = m_lineEndingsActions->actions();
 
-        for (QAction *a : lle) {
+        for (auto &a : lle) {
             a->setCheckable(true);
             m_lineEndingsMenu->addAction(a);
         }
@@ -746,12 +746,16 @@ void QEditor::setFlag(EditFlag f, bool b) {
 /*!
         \return whether it is possible to call undo()
 */
-bool QEditor::canUndo() const { return m_doc ? m_doc->canUndo() : false; }
+bool QEditor::canUndo() const {
+    return m_doc ? (m_undoRedoEnabled && m_doc->canUndo()) : false;
+}
 
 /*!
         \return whether it is possible to call redo()
 */
-bool QEditor::canRedo() const { return m_doc ? m_doc->canRedo() : false; }
+bool QEditor::canRedo() const {
+    return m_doc ? (m_undoRedoEnabled && m_doc->canRedo()) : false;
+}
 
 /*!
         \brief Set line wrapping
@@ -1333,7 +1337,7 @@ void QEditor::addInputBinding(QEditorInputBindingInterface *b) {
 
     QList<QAction *> actions = m_bindingsActions->actions();
 
-    for (QAction *a : actions) {
+    for (auto &a : actions) {
         if (a->data().toString() != id)
             a->setChecked(true);
     }
@@ -1356,7 +1360,7 @@ void QEditor::removeInputBinding(QEditorInputBindingInterface *b) {
 
     QList<QAction *> actions = m_bindingsActions->actions();
 
-    for (QAction *a : actions) {
+    for (auto &a : actions) {
         if (a->data().toString() != id)
             a->setChecked(false);
     }
@@ -1382,7 +1386,7 @@ void QEditor::setInputBinding(QEditorInputBindingInterface *b) {
 
     QList<QAction *> actions = m_bindingsActions->actions();
 
-    for (QAction *a : actions) {
+    for (auto &a : actions) {
         if (a)
             a->setChecked(a->data().toString() != id);
     }
@@ -1400,7 +1404,7 @@ void QEditor::updateBindingsMenu() {
 
     aDefaultBinding->setChecked(m_bindings.contains(m_defaultBinding));
 
-    for (QAction *a : actions) {
+    for (auto &a : actions) {
         int idx = bindings.indexOf(a->data().toString());
 
         if (idx == -1) {
@@ -1410,7 +1414,7 @@ void QEditor::updateBindingsMenu() {
         } else {
             bindings.removeAt(idx);
 
-            for (QEditorInputBindingInterface *b : m_bindings)
+            for (auto &b : m_bindings)
                 if (a->data().toString() == b->id())
                     a->setChecked(true);
         }
@@ -1684,6 +1688,8 @@ void QEditor::setPlaceHolder(int i) {
     viewport()->update();
 }
 
+void QEditor::setUndoRedoEnabled(bool b) { m_undoRedoEnabled = b; }
+
 /*!
         \brief Move to next placeholder
 
@@ -1835,7 +1841,7 @@ void QEditor::emitCursorPositionChanged() {
         \brief Undo the last editing operation, if any on the stack
 */
 void QEditor::undo() {
-    if (m_doc) {
+    if (m_doc && m_undoRedoEnabled) {
         if (m_definition)
             m_definition->clearMatches(m_doc);
 
@@ -1852,7 +1858,7 @@ void QEditor::undo() {
         \brief Redo the last undone editing operation, if any on the stack
 */
 void QEditor::redo() {
-    if (m_doc) {
+    if (m_doc && m_undoRedoEnabled) {
         if (m_definition)
             m_definition->clearMatches(m_doc);
 
@@ -1985,7 +1991,7 @@ void QEditor::indentSelection() {
         if (!protectedCursor(m_cursor))
             insert(m_cursor, txt);
 
-        for (const QDocumentCursor &m : m_mirrors)
+        for (auto &m : m_mirrors)
             if (!protectedCursor(m))
                 insert(m, txt);
 
@@ -2025,7 +2031,7 @@ void QEditor::unindentSelection() {
         if (!protectedCursor(m_cursor))
             unindent(m_cursor);
 
-        for (const QDocumentCursor &m : m_mirrors)
+        for (auto &m : m_mirrors)
             unindent(m);
 
         m_doc->endMacro();
@@ -2064,7 +2070,7 @@ void QEditor::commentSelection() {
         if (!protectedCursor(m_cursor))
             insert(m_cursor, txt);
 
-        for (const QDocumentCursor &m : m_mirrors)
+        for (auto &m : m_mirrors)
             if (!protectedCursor(m))
                 insert(m, txt);
 
@@ -2110,7 +2116,7 @@ void QEditor::uncommentSelection() {
         if (!protectedCursor(m_cursor))
             removeFromStart(m_cursor, txt);
 
-        for (const QDocumentCursor &m : m_mirrors)
+        for (auto &m : m_mirrors)
             if (!protectedCursor(m))
                 removeFromStart(m, txt);
 
@@ -2207,7 +2213,7 @@ void QEditor::paintEvent(QPaintEvent *e) {
     }
 
     // cursor mirrors :D
-    for (const QDocumentCursor &m : m_mirrors) {
+    for (auto &m : m_mirrors) {
         if (ctx.blinkingCursor)
             ctx.extra << m.handle();
 
@@ -2319,7 +2325,7 @@ bool QEditor::protectedCursor(const QDocumentCursor &c) const {
         \internal
 */
 void QEditor::keyPressEvent(QKeyEvent *e) {
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         if (b->keyPressEvent(e, this))
             return;
 
@@ -2439,7 +2445,7 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
             bool pke = isProcessingKeyEvent(e, &offset);
             bool prot = protectedCursor(m_cursor);
 
-            for (const QDocumentCursor &c : m_mirrors)
+            for (auto &c : m_mirrors)
                 prot |= protectedCursor(c);
 
             if (!pke || prot) {
@@ -2516,7 +2522,7 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
         break;
     }
 
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         b->postKeyPressEvent(e, this);
 }
 
@@ -2524,7 +2530,7 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
         \internal
 */
 void QEditor::inputMethodEvent(QInputMethodEvent *e) {
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         if (b->inputMethodEvent(e, this))
             return;
 
@@ -2543,7 +2549,7 @@ void QEditor::inputMethodEvent(QInputMethodEvent *e) {
 
     m_cursor.endEditBlock();
 
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         b->postInputMethodEvent(e, this);
 }
 
@@ -2551,7 +2557,7 @@ void QEditor::inputMethodEvent(QInputMethodEvent *e) {
         \internal
 */
 void QEditor::mouseMoveEvent(QMouseEvent *e) {
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         if (b->mouseMoveEvent(e, this))
             return;
 
@@ -2636,7 +2642,7 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
         break;
     }
 
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         b->postMouseMoveEvent(e, this);
 }
 
@@ -2644,7 +2650,7 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
         \internal
 */
 void QEditor::mousePressEvent(QMouseEvent *e) {
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         if (b->mousePressEvent(e, this))
             return;
 
@@ -2809,7 +2815,7 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
     if (m_drag.isActive())
         m_drag.stop();
 
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         b->postMouseReleaseEvent(e, this);
 }
 
@@ -2817,7 +2823,7 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
         \internal
 */
 void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
-    for (QEditorInputBindingInterface *b : m_bindings)
+    for (auto &b : m_bindings)
         if (b->mouseDoubleClickEvent(e, this))
             return;
 
@@ -3945,6 +3951,7 @@ QRect QEditor::selectionRect() const {
     if (s.startLine == s.endLine)
         return QEditor::cursorRect(m_cursor);
 
+    Q_ASSERT(m_doc);
     int y = m_doc->y(s.startLine);
     QRect r = m_doc->lineRect(s.endLine);
     int height = r.y() + r.height() - y;
@@ -4154,6 +4161,8 @@ void QEditor::addCursorMirror(const QDocumentCursor &c) {
     m_mirrors.last().setSilent(true);
     m_mirrors.last().setAutoUpdated(true);
 }
+
+bool QEditor::undoRedoEnabled() const { return m_undoRedoEnabled; }
 
 /*!
         \internal

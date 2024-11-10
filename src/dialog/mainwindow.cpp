@@ -24,6 +24,7 @@
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
 #include "class/appmanager.h"
+#include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
@@ -145,6 +146,10 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     m_scriptConsole->init();
     m_scriptDialog->initConsole();
     ScriptManager::instance().attach(m_scriptConsole);
+
+    auto &langins = LangService::instance();
+    langins.init(m_scriptConsole->machine()->engine());
+    langins.applyLanguageSerivce(m_scriptConsole);
 
     // load the model
     Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
@@ -2870,6 +2875,14 @@ ads::CDockAreaWidget *MainWindow::editorViewArea() const {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     m_isOnClosing = true;
+    // first checking the scripting dialog
+    if (!m_scriptDialog->about2Close()) {
+        event->ignore();
+        m_isOnClosing = false;
+        return;
+    }
+
+    // then checking itself
     if (!m_views.isEmpty()) {
         QStringList unSavedFiles;
         QList<EditorView *> need2CloseView;
@@ -2918,6 +2931,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
+
     m_scriptDialog->saveDockLayout();
     set.setRecentFiles(m_recentmanager->saveRecent());
     set.save();

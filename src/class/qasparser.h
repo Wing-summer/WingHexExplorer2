@@ -75,6 +75,8 @@ public:
 
     const QList<QCodeNode *> &headerNodes() const;
 
+    QList<QCodeNode *> classNodes() const;
+
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine);
     void addEnumCompletion(asIScriptEngine *engine);
@@ -89,6 +91,7 @@ private:
     asIScriptEngine *_engine;
     QScopedPointer<asCScriptCode> m_code;
     QList<QCodeNode *> _headerNodes;
+    QList<QCodeNode *> _clsNodes;
     QList<QCodeNode *> _nodes;
 };
 
