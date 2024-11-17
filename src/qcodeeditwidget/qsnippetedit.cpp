@@ -23,6 +23,7 @@
 
 #include "qsnippet.h"
 #include "qsnippetmanager.h"
+#include "utilities.h"
 
 #include <QMessageBox>
 
@@ -49,7 +50,9 @@ QSnippetEdit::QSnippetEdit(QSnippetManager *mgr, QWidget *p)
 
 QSnippetManager *QSnippetEdit::snippetManager() const { return m_manager; }
 
-QIcon QSnippetEdit::categoryIcon() const { return QIcon(); }
+QIcon QSnippetEdit::categoryIcon() const {
+    return ICONRES(QStringLiteral("snippt"));
+}
 
 QString QSnippetEdit::name() const { return tr("Snippets"); }
 

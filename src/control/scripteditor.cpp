@@ -65,7 +65,11 @@ ScriptEditor::ScriptEditor(QWidget *parent)
                        true);
 }
 
-ScriptEditor::~ScriptEditor() { m_editor->editor()->document(); }
+ScriptEditor::~ScriptEditor() {
+    auto e = m_editor->editor();
+    e->disconnect();
+    e->document()->disconnect();
+}
 
 QString ScriptEditor::fileName() const {
     return m_editor->editor()->fileName();

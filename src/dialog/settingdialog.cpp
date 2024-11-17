@@ -86,6 +86,8 @@ void SettingDialog::showConfig(const QString &id) {
         ui->listWidget->setCurrentRow(0);
     }
     ui->listWidget->setCurrentRow(m_pages.indexOf(*r));
+    Utilities::moveToCenter(this);
+    _dialog->exec();
 }
 
 void SettingDialog::toastTakeEffectReboot() {

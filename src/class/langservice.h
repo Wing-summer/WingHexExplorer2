@@ -1,6 +1,7 @@
 #ifndef LANGSERVICE_H
 #define LANGSERVICE_H
 
+#include "class/ascompletion.h"
 #include "qlanguagefactory.h"
 #include "qsnippetbinding.h"
 
@@ -32,6 +33,8 @@ private:
     QSnippetBinding *m_snipbind = nullptr;
     QLanguageFactory *m_language = nullptr;
     QSnippetManager *m_snippetManager = nullptr;
+
+    AsCompletion *_completion = nullptr;
 
     Q_DISABLE_COPY_MOVE(LangService)
 };

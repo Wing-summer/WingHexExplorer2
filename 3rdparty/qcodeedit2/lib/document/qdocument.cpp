@@ -169,11 +169,6 @@ static InitStruct init_inst;
 */
 QDocument::QDocument(QObject *p)
     : QObject(p), m_impl(new QDocumentPrivate(this)) {
-    if (!QDocumentPrivate::m_font) {
-        // must not happen if config dialog plugged in...
-        setFont(qApp->font());
-    }
-
     setText(QString());
     setLineEnding(QDocument::Conservative);
 
@@ -186,9 +181,8 @@ QDocument::QDocument(QObject *p)
     connect(&(m_impl->m_commands), SIGNAL(canRedoChanged(bool)), this,
             SIGNAL(redoAvailable(bool)));
 
-    connect(this, SIGNAL(lineDeleted(QDocumentLineHandle *)),
-            QLineMarksInfoCenter::instance(),
-            SLOT(lineDeleted(QDocumentLineHandle *)));
+    connect(this, &QDocument::lineDeleted, QLineMarksInfoCenter::instance(),
+            &QLineMarksInfoCenter::lineDeleted);
 }
 
 /*!
@@ -744,7 +738,7 @@ void QDocument::setLineEnding(LineEnding le) {
         \note this limitation is historic and may disappear
         in future versions
 */
-QFont QDocument::font() { return *(QDocumentPrivate::m_font); }
+QFont QDocument::font() { return m_impl->m_font; }
 
 /*!
         \brief Set the font of ALL documents
@@ -753,7 +747,7 @@ QFont QDocument::font() { return *(QDocumentPrivate::m_font); }
         in future versions
 */
 void QDocument::setFont(const QFont &f) {
-    QDocumentPrivate::setFont(f);
+    m_impl->setFont(f);
     // emit contentsChanged();
 }
 
@@ -763,9 +757,7 @@ void QDocument::setFont(const QFont &f) {
         \note this limitation is historic and may disappear
         in future versions
 */
-const QFontMetrics &QDocument::fontMetrics() {
-    return *(QDocumentPrivate::m_fontMetrics);
-}
+const QFontMetrics &QDocument::fontMetrics() { return m_impl->m_fontMetrics; }
 
 /*!
         \return The default tab stop common to ALL documents
@@ -773,7 +765,7 @@ const QFontMetrics &QDocument::fontMetrics() {
         \note this limitation is historic and may disappear
         in future versions
 */
-int QDocument::tabStop() { return QDocumentPrivate::m_defaultTabStop; }
+int QDocument::tabStop() { return m_impl->m_tabStop; }
 
 /*!
         \brief Set the default tab stop common to all documents
@@ -782,29 +774,23 @@ int QDocument::tabStop() { return QDocumentPrivate::m_defaultTabStop; }
         in future versions
 */
 void QDocument::setTabStop(int n) {
-    QDocumentPrivate::m_defaultTabStop = n;
-
-    foreach (QDocumentPrivate *d, QDocumentPrivate::m_documents) {
-        d->m_tabStop = n;
-        d->emitFormatsChanged();
-    }
+    m_impl->m_tabStop = n;
+    emit formatsChanged();
 }
 
 /*!
         \return the whitesapce display mode
 */
 QDocument::WhiteSpaceMode QDocument::showSpaces() {
-    return QDocumentPrivate::m_showSpaces;
+    return m_impl->m_showSpaces;
 }
 
 /*!
         \brief Set the whitespace display mode
 */
 void QDocument::setShowSpaces(WhiteSpaceMode m) {
-    QDocumentPrivate::m_showSpaces = m;
-
-    foreach (QDocumentPrivate *d, QDocumentPrivate::m_documents)
-        d->emitFormatsChanged();
+    m_impl->m_showSpaces = m;
+    emit formatsChanged();
 }
 
 /*!
@@ -887,8 +873,8 @@ int QDocument::visualLineCount() const {
 /*!
         \brief Convert a text (logical) line number int a visual line number
 
-        \note this is not a 1:1 mapping as logical lines can span over several
-   visual lines
+        \note this is not a 1:1 mapping as logical lines can span over
+   several visual lines
 */
 int QDocument::visualLineNumber(int textLineNumber) const {
     return m_impl ? m_impl->visualLine(textLineNumber) : -1;
@@ -897,8 +883,8 @@ int QDocument::visualLineNumber(int textLineNumber) const {
 /*!
         \brief Convert a visual line number int a text (logical) line number
 
-        \note this is not a 1:1 mapping as logical lines can span over several
-   visual lines
+        \note this is not a 1:1 mapping as logical lines can span over
+   several visual lines
 */
 int QDocument::textLineNumber(int visualLineNumber) const {
     return m_impl ? m_impl->textLine(visualLineNumber) : -1;
@@ -916,8 +902,8 @@ void QDocument::clearWidthConstraint() {
         \brief Set a new width constraint
         \param width maximum width to allow
 
-        Passing a value inferior (or equal) to zero clear the width constraint,
-   if any.
+        Passing a value inferior (or equal) to zero clear the width
+   constraint, if any.
 */
 void QDocument::setWidthConstraint(int width) {
     if (m_impl)
@@ -933,10 +919,10 @@ QDocumentLine QDocument::line(int line) const {
 }
 
 /*!
-        \return the line number corresponding to a given document y coordinate
-        \param ypos Y document coordinate of the target
-        \param wrap if not null, will be set to the wrap offset (position of the
-        visual line among the sublines of the wrapped text line).
+        \return the line number corresponding to a given document y
+   coordinate \param ypos Y document coordinate of the target \param wrap if
+   not null, will be set to the wrap offset (position of the visual line
+   among the sublines of the wrapped text line).
 
 */
 int QDocument::lineNumber(int ypos, int *wrap) const {
@@ -955,21 +941,21 @@ QDocumentLine QDocument::line(QDocumentConstIterator iterator) const {
 }
 
 /*!
-        \return A cursor operating on the document, placed at a given position
-        \param line target line number (text line)
-        \param column target text column
+        \return A cursor operating on the document, placed at a given
+   position \param line target line number (text line) \param column target
+   text column
 */
 QDocumentCursor QDocument::cursor(int line, int column) const {
     return QDocumentCursor(const_cast<QDocument *>(this), line, column);
 }
 
 /*!
-        \return the document line which contains a given (document-wide) text
-   position
+        \return the document line which contains a given (document-wide)
+   text position
 
-        \note The sole purpose of this method is to have an API close to that of
-   QTextDocument. This method being ridiculously slow it is recommended to avoid
-   it whenever possible.
+        \note The sole purpose of this method is to have an API close to
+   that of QTextDocument. This method being ridiculously slow it is
+   recommended to avoid it whenever possible.
 */
 QDocumentLine QDocument::findLine(int &position) const {
     if (!m_impl)
@@ -1010,11 +996,11 @@ int QDocument::y(const QDocumentLine &l) const {
         \note the width of the returned rectangle is the DOCUMENT's width
 */
 QRect QDocument::lineRect(int line) const {
-    const int yoff = y(line) - 1;
+    const int yoff = y(line);
 
     return (yoff != -1)
                ? QRect(0, yoff, width(),
-                       this->line(line).lineSpan() * m_impl->m_lineSpacing + 1)
+                       this->line(line).lineSpan() * m_impl->m_lineSpacing)
                : QRect();
 }
 
@@ -1088,9 +1074,9 @@ QDocumentConstIterator QDocument::iterator(const QDocumentLine &l) const {
 
 /*!
         \brief Convert a document (or viewport) (x, y) position to a (line,
-   column) cursor position \param p document position \param line where the line
-   number will be stored \param column where the column (text position within
-   line) will be stored
+   column) cursor position \param p document position \param line where the
+   line number will be stored \param column where the column (text position
+   within line) will be stored
 */
 void QDocument::cursorForDocumentPosition(const QPoint &p, int &line,
                                           int &column) const {
@@ -1105,10 +1091,10 @@ void QDocument::cursorForDocumentPosition(const QPoint &p, int &line,
         return;
 
     // qDebug("%i %i", line, wrap);
-    column =
-        l.documentOffsetToCursor(p.x(), wrap * QDocumentPrivate::m_lineSpacing);
+    column = l.documentOffsetToCursor(p.x(), wrap * m_impl->m_lineSpacing);
 
-    // qDebug("(%i, %i) -> (%i [+%i], %i)", p.x(), p.y(), line, wrap, column);
+    // qDebug("(%i, %i) -> (%i [+%i], %i)", p.x(), p.y(), line, wrap,
+    // column);
 }
 
 /*!
@@ -1125,8 +1111,8 @@ QDocumentCursor QDocument::cursorAt(const QPoint &p) const {
 /*!
         \brief Draw the contents of the document
         \param p painter to use
-        \param cxt paint context (specifies what part of the document to draw,
-   among other things)
+        \param cxt paint context (specifies what part of the document to
+   draw, among other things)
 */
 void QDocument::draw(QPainter *p, PaintContext &cxt) { m_impl->draw(p, cxt); }
 
@@ -1139,27 +1125,6 @@ void QDocument::execute(QDocumentCommand *cmd) {
 }
 
 /*!
-        \return The default line ending policy
-*/
-QDocument::LineEnding QDocument::defaultLineEnding() {
-    return QDocumentPrivate::m_defaultLineEnding;
-}
-
-/*!
-        \brief Set the default line ending policy
-
-        \note The line ending policy of existing documents is changed
-   accordingly
-*/
-void QDocument::setDefaultLineEnding(QDocument::LineEnding le) {
-    QDocumentPrivate::m_defaultLineEnding = le;
-
-    foreach (QDocumentPrivate *d, QDocumentPrivate::m_documents) {
-        d->m_doc->setLineEnding(le);
-    }
-}
-
-/*!
         \return The default format scheme used to draw document contents
 */
 QFormatScheme *QDocument::defaultFormatScheme() {
@@ -1169,8 +1134,8 @@ QFormatScheme *QDocument::defaultFormatScheme() {
 /*!
         \brief Set the default format scheme
 
-        \note Existing documents using the default format scheme will see their
-   format scheme changed
+        \note Existing documents using the default format scheme will see
+   their format scheme changed
 */
 void QDocument::setDefaultFormatScheme(QFormatScheme *f) {
     foreach (QDocumentPrivate *d, QDocumentPrivate::m_documents) {
@@ -1198,7 +1163,8 @@ void QDocument::setFormatFactory(QFormatScheme *f) {
 /*!
         \brief Begin a macro
 
-        Macro in QDocument map directly to macro in the underlying undo stack
+        Macro in QDocument map directly to macro in the underlying undo
+   stack
 */
 void QDocument::beginMacro() {
     if (m_impl)
@@ -1237,7 +1203,8 @@ void QDocument::clearMatches(int gid) {
 /*!
         \brief Highlight the matched sequences
 
-        \note Both position are BEFORE the matched characters (cursor position).
+        \note Both position are BEFORE the matched characters (cursor
+   position).
 */
 void QDocument::addMatch(int gid, int line, int pos, int len, int format) {
     if (m_impl) {
@@ -1499,26 +1466,28 @@ void QDocumentLineHandle::updateWrap() const {
     m_indent = 0;
     m_frontiers.clear();
 
-    if (!m_doc->impl()->m_constrained) {
+    auto impl = m_doc->impl();
+
+    if (!impl->m_constrained) {
         if (m_layout)
             setFlag(QDocumentLine::LayoutDirty, true);
 
         return;
     }
 
-    const int tabStop = m_doc->impl()->m_tabStop;
+    const int tabStop = impl->m_tabStop;
     const int maxWidth = m_doc->widthConstraint();
 
     if (m_layout) {
         layout();
-    } else if (QDocumentPrivate::m_fixedPitch) {
+    } else if (impl->m_fixedPitch) {
 
         int idx = 0, minx = 0, lastBreak = 0, lastWidth = 0, lastX = 0, rx,
-            x = QDocumentPrivate::m_leftMargin, column = 0, cwidth;
+            x = impl->m_leftMargin, column = 0, cwidth;
 
         QChar c;
         int indent = 0;
-        const int sw = QDocumentPrivate::m_spaceWidth;
+        const int sw = impl->m_spaceWidth;
 
         while (idx < m_text.length() && m_text.at(idx).isSpace()) {
             c = m_text.at(idx);
@@ -1541,16 +1510,16 @@ void QDocumentLineHandle::updateWrap() const {
         minx = rx = x;
 
         if ((minx + sw) >= maxWidth) {
-            // qWarning("Please stop shrinking so aggressively.\nNo attempt will
-            // be made to show something decent");
+            // qWarning("Please stop shrinking so aggressively.\nNo attempt
+            // will be made to show something decent");
             //  shrinking too aggresively (or too much spaces...) ungraceful
             //  fallback
 
             indent = idx = 0;
-            minx = rx = x = QDocumentPrivate::m_leftMargin;
+            minx = rx = x = impl->m_leftMargin;
         }
 
-        m_indent = minx - QDocumentPrivate::m_leftMargin;
+        m_indent = minx - impl->m_leftMargin;
 
         while (idx < m_text.length()) {
             if (c.isSpace()) //! isWord(c) || !isWord(m_text.at(idx)) )
@@ -1599,7 +1568,7 @@ void QDocumentLineHandle::updateWrap() const {
         QMediumArray composited = compose();
 
         int idx = 0, minx = 0, lastBreak = 0, lastWidth = 0, lastX = 0, rx,
-            x = QDocumentPrivate::m_leftMargin, column = 0, cwidth;
+            x = impl->m_leftMargin, column = 0, cwidth;
 
         QChar c;
         int indent = 0;
@@ -1628,15 +1597,15 @@ void QDocumentLineHandle::updateWrap() const {
         indent = idx;
         minx = rx = x;
 
-        if ((minx + QDocumentPrivate::m_spaceWidth) >= maxWidth) {
-            // qWarning("Please stop shrinking so aggressively.\nNo attempt will
-            // be made to show something decent");
+        if ((minx + impl->m_spaceWidth) >= maxWidth) {
+            // qWarning("Please stop shrinking so aggressively.\nNo attempt
+            // will be made to show something decent");
 
             indent = idx = 0;
-            minx = rx = x = QDocumentPrivate::m_leftMargin;
+            minx = rx = x = impl->m_leftMargin;
         }
 
-        m_indent = minx - QDocumentPrivate::m_leftMargin;
+        m_indent = minx - impl->m_leftMargin;
 
         while (idx < m_text.length()) {
             if (c.isSpace()) //! isWord(c) || !isWord(m_text.at(idx)) )
@@ -1689,9 +1658,10 @@ void QDocumentLineHandle::updateWrap() const {
 int QDocumentLineHandle::cursorToX(int cpos) const {
     cpos = qBound(0, cpos, m_text.length());
 
+    auto impl = m_doc->impl();
+
     if (m_layout) {
-        int xoff = QDocumentPrivate::m_leftMargin, coff = 0,
-            line = m_frontiers.count();
+        int xoff = impl->m_leftMargin, coff = 0, line = m_frontiers.count();
 
         for (int i = 0; i < m_frontiers.count(); ++i) {
             if (m_frontiers.at(i).first >= cpos) {
@@ -1706,16 +1676,17 @@ int QDocumentLineHandle::cursorToX(int cpos) const {
             xoff = m_frontiers.at(line - 1).second;
         }
 
-        // qDebug("c:%i (wrap:%i) => c2x(x - %i) + %i", cpos, line, coff, xoff);
+        // qDebug("c:%i (wrap:%i) => c2x(x - %i) + %i", cpos, line, coff,
+        // xoff);
         return qRound(m_layout->lineAt(line).cursorToX(cpos - coff)) + xoff;
     }
 
     int tabStop = m_doc->impl()->m_tabStop;
 
-    if (QDocumentPrivate::m_fixedPitch) {
+    if (impl->m_fixedPitch) {
         return QDocument::screenLength(m_text.constData(), cpos, tabStop) *
-                   QDocumentPrivate::m_spaceWidth +
-               QDocumentPrivate::m_leftMargin;
+                   impl->m_spaceWidth +
+               impl->m_leftMargin;
     }
 
     // qDebug("c->x(%i) unsafe computations...", cpos);
@@ -1724,11 +1695,10 @@ int QDocumentLineHandle::cursorToX(int cpos) const {
     const QVector<QFont> &fonts = m_doc->impl()->m_fonts;
 
     if ((composited.count() < cpos) || fonts.isEmpty())
-        return QDocumentPrivate::m_fontMetrics->horizontalAdvance(
-            m_text.left(cpos));
+        return impl->m_fontMetrics.horizontalAdvance(m_text.left(cpos));
 
     int idx = 0, column = 0, cwidth;
-    int screenx = QDocumentPrivate::m_leftMargin;
+    int screenx = impl->m_leftMargin;
 
     while (idx < cpos) {
         QChar c = m_text.at(idx);
@@ -1756,9 +1726,10 @@ int QDocumentLineHandle::cursorToX(int cpos) const {
 
 int QDocumentLineHandle::xToCursor(int xpos) const {
     // qDebug("x->c(%i) unsafe computations...", xpos);
+    auto impl = m_doc->impl();
+
     if (m_layout) {
-        int xoff = QDocumentPrivate::m_leftMargin, coff = 0,
-            line = m_frontiers.count();
+        int xoff = impl->m_leftMargin, coff = 0, line = m_frontiers.count();
 
         for (int i = 0; i < m_frontiers.count(); ++i) {
             if (m_frontiers.at(i).second >= xpos) {
@@ -1773,7 +1744,8 @@ int QDocumentLineHandle::xToCursor(int xpos) const {
             xoff = m_frontiers.at(line - 1).second;
         }
 
-        // qDebug("x:%i (wrap:%i) => x2c(x - %i) + %i", xpos, line, xoff, coff);
+        // qDebug("x:%i (wrap:%i) => x2c(x - %i) + %i", xpos, line, xoff,
+        // coff);
         return m_layout->lineAt(line).xToCursor(xpos - xoff) + coff;
     }
 
@@ -1781,9 +1753,8 @@ int QDocumentLineHandle::xToCursor(int xpos) const {
     int tabStop = m_doc->impl()->m_tabStop;
     const QVector<QFont> &fonts = m_doc->impl()->m_fonts;
 
-    if (QDocumentPrivate::m_fixedPitch) {
-        int screenPos = (screenx - QDocumentPrivate::m_leftMargin / 2) /
-                        QDocumentPrivate::m_spaceWidth;
+    if (impl->m_fixedPitch) {
+        int screenPos = (screenx - impl->m_leftMargin / 2) / impl->m_spaceWidth;
 
         if (tabStop == 1)
             return screenPos;
@@ -1805,13 +1776,13 @@ int QDocumentLineHandle::xToCursor(int xpos) const {
 
         return idx;
     } else {
-        if (screenx <= QDocumentPrivate::m_leftMargin)
+        if (screenx <= impl->m_leftMargin)
             return 0;
 
         QMediumArray composited = compose();
 
         int idx = 0, x = 0, column = 0, cwidth;
-        screenx -= QDocumentPrivate::m_leftMargin;
+        screenx -= impl->m_leftMargin;
 
         while (idx < m_text.length()) {
             QFontMetrics fm(
@@ -1856,7 +1827,8 @@ int QDocumentLineHandle::wrappedLineForCursor(int cpos) const {
 }
 
 int QDocumentLineHandle::documentOffsetToCursor(int x, int y) const {
-    int wrap = y / QDocumentPrivate::m_lineSpacing;
+    auto impl = m_doc->impl();
+    int wrap = y / impl->m_lineSpacing;
 
     if (wrap > m_frontiers.count()) {
         // return an invalid value instead?
@@ -1880,20 +1852,20 @@ int QDocumentLineHandle::documentOffsetToCursor(int x, int y) const {
     if (wrap > 0)
         cpos = m_frontiers.at(wrap - 1).first;
 
-    x -= QDocumentPrivate::m_leftMargin;
+    x -= impl->m_leftMargin;
 
     int idx = cpos, column = 0;
     const int ts = m_doc->tabStop();
 
     if (m_layout) {
         cpos = m_layout->lineAt(wrap).xToCursor(x);
-    } else if (QDocumentPrivate::m_fixedPitch) {
+    } else if (impl->m_fixedPitch) {
         if (wrap)
             x -= m_indent;
 
         while ((idx < max) && (x > 0)) {
             bool tab = m_text.at(idx).unicode() == '\t';
-            int cwidth = QDocumentPrivate::m_spaceWidth;
+            int cwidth = impl->m_spaceWidth;
 
             if (tab) {
                 int coff = ts - (column % ts);
@@ -1963,6 +1935,8 @@ int QDocumentLineHandle::documentOffsetToCursor(int x, int y) const {
 
 void QDocumentLineHandle::cursorToDocumentOffset(int cpos, int &x,
                                                  int &y) const {
+    auto impl = m_doc->impl();
+
     if (cpos > m_text.length())
         cpos = m_text.length();
     else if (cpos < 0)
@@ -1971,8 +1945,8 @@ void QDocumentLineHandle::cursorToDocumentOffset(int cpos, int &x,
     int idx = 0;
     int wrap = wrappedLineForCursor(cpos);
 
-    x = QDocumentPrivate::m_leftMargin;
-    y = wrap * QDocumentPrivate::m_lineSpacing;
+    x = impl->m_leftMargin;
+    y = wrap * impl->m_lineSpacing;
 
     if (wrap) {
         idx = m_frontiers.at(wrap - 1).first;
@@ -1983,13 +1957,13 @@ void QDocumentLineHandle::cursorToDocumentOffset(int cpos, int &x,
 
     if (m_layout) {
         x += m_layout->lineAt(wrap).cursorToX(cpos);
-    } else if (QDocumentPrivate::m_fixedPitch) {
+    } else if (impl->m_fixedPitch) {
         if (wrap)
             x += m_indent;
 
         while (idx < cpos) {
             bool tab = m_text.at(idx).unicode() == '\t';
-            int cwidth = QDocumentPrivate::m_spaceWidth;
+            int cwidth = impl->m_spaceWidth;
 
             if (tab) {
                 int coff = ts - (column % ts);
@@ -2251,7 +2225,7 @@ void QDocumentLineHandle::layout() const {
         // qDebug("layout needed at line %i", this->line());
 
         if (!m_layout) {
-            m_layout = new QTextLayout(m_text, QDocument::font());
+            m_layout = new QTextLayout(m_text, m_doc->font());
         } else {
             m_layout->setText(m_text);
             // m_layout->setFont(config()->font());
@@ -2263,8 +2237,7 @@ void QDocumentLineHandle::layout() const {
         // Tab width
         QTextOption opt;
         opt.setFlags(QTextOption::IncludeTrailingSpaces);
-        opt.setTabStopDistance(m_doc->tabStop() *
-                               QDocumentPrivate::m_spaceWidth);
+        opt.setTabStopDistance(m_doc->tabStop() * m_doc->impl()->m_spaceWidth);
 
         // opt.setWrapMode(QTextOption::NoWrap);
         opt.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
@@ -2273,11 +2246,11 @@ void QDocumentLineHandle::layout() const {
         // If it is an RTL character, set the base layout direction of the
         // string to RTL.
         //
-        // See http://www.unicode.org/reports/tr9/#The_Paragraph_Level (Sections
-        // P2 & P3). Qt's text renderer ("scribe") version 4.2 assumes a
-        // "higher-level protocol" (such as KatePart) will specify the paragraph
-        // level, so it does not apply P2 & P3 by itself. If this ever change in
-        // Qt, the next code block could be removed.
+        // See http://www.unicode.org/reports/tr9/#The_Paragraph_Level
+        // (Sections P2 & P3). Qt's text renderer ("scribe") version 4.2
+        // assumes a "higher-level protocol" (such as KatePart) will specify
+        // the paragraph level, so it does not apply P2 & P3 by itself. If
+        // this ever change in Qt, the next code block could be removed.
         if (m_text.isRightToLeft())
             opt.setTextDirection(Qt::RightToLeft);
 
@@ -2305,7 +2278,7 @@ void QDocumentLineHandle::layout() const {
 
             if (m_doc->widthConstraint())
                 line.setLineWidth(m_doc->widthConstraint() -
-                                  QDocumentPrivate::m_leftMargin);
+                                  m_doc->impl()->m_leftMargin);
             else
                 line.setNumColumns(m_text.length());
 
@@ -2316,7 +2289,7 @@ void QDocumentLineHandle::layout() const {
                 m_layout->textOption().textDirection() == Qt::RightToLeft) {
                 line.setPosition(
                     QPoint(qRound(qreal(m_doc->widthConstraint() -
-                                        2 * QDocumentPrivate::m_leftMargin) -
+                                        2 * m_doc->impl()->m_leftMargin) -
                                   line.naturalTextWidth()),
                            height));
             } else {
@@ -2324,7 +2297,7 @@ void QDocumentLineHandle::layout() const {
 
                 if (!i) {
                     m_indent = minwidth = cursorToX(nextNonSpaceChar(0)) -
-                                          QDocumentPrivate::m_leftMargin;
+                                          m_doc->impl()->m_leftMargin;
 
                     if (minwidth < 0 || minwidth >= m_doc->widthConstraint())
                         minwidth = 0;
@@ -2335,7 +2308,7 @@ void QDocumentLineHandle::layout() const {
 
             ++i;
 
-            height += QDocumentPrivate::m_lineSpacing;
+            height += m_doc->impl()->m_lineSpacing;
             // height += QDocument::fontMetrics().height();
         }
 
@@ -2371,12 +2344,13 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         m_layout->setFormats(decorations());
 
     QMediumArray m_composited = compose();
+    auto impl = m_doc->impl();
 
     if (m_layout) {
         // if ( !hasFlag(QDocumentLine::FormatsApplied) )
         //	applyOverlays();
 
-        const int lh = QDocument::fontMetrics().height();
+        const int lh = m_doc->fontMetrics().height();
 
         QVector<QTextLayout::FormatRange> selections;
 
@@ -2405,8 +2379,8 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     qreal lineWidth =
                         m_layout->lineAt(m_layout->lineCount() - 1)
                             .naturalTextWidth();
-                    const int endX = QDocumentPrivate::m_leftMargin +
-                                     qRound(lineWidth) - xOffset;
+                    const int endX =
+                        impl->m_leftMargin + qRound(lineWidth) - xOffset;
 
                     QRect area(endX, lh * i, vWidth - endX, lh);
 
@@ -2417,7 +2391,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
             }
         }
 
-        QPoint off(QDocumentPrivate::m_leftMargin, 0);
+        QPoint off(impl->m_leftMargin, 0);
 
         m_layout->draw(p, off, selections);
 
@@ -2428,15 +2402,13 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
     } else if (m_text.isEmpty()) {
         // enforce selection drawing on empty lines
         if (sel.count() == 1)
-            p->fillRect(qMax(xOffset, QDocumentPrivate::m_leftMargin), 0,
-                        vWidth, QDocumentPrivate::m_lineSpacing,
-                        pal.highlight());
+            p->fillRect(qMax(xOffset, impl->m_leftMargin), 0, vWidth,
+                        impl->m_lineSpacing, pal.highlight());
 
         // enforce cursor drawing on empty lines
-        if (cursor.count() && (xOffset < QDocumentPrivate::m_leftMargin))
-            p->drawLine(QDocumentPrivate::m_leftMargin, 0,
-                        QDocumentPrivate::m_leftMargin,
-                        QDocumentPrivate::m_lineSpacing);
+        if (cursor.count() && (xOffset < impl->m_leftMargin))
+            p->drawLine(impl->m_leftMargin, 0, impl->m_leftMargin,
+                        impl->m_lineSpacing);
 
     } else if (true) {
 
@@ -2552,21 +2524,19 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         const bool unbounded = sel.count() & 1;
         const QColor ht = pal.highlightedText().color();
 
-        const bool showTabs = QDocument::showSpaces() & QDocument::ShowTabs,
-                   showLeading =
-                       QDocument::showSpaces() & QDocument::ShowLeading,
-                   showTrailing =
-                       QDocument::showSpaces() & QDocument::ShowTrailing;
+        const bool showTabs = m_doc->showSpaces() & QDocument::ShowTabs,
+                   showLeading = m_doc->showSpaces() & QDocument::ShowLeading,
+                   showTrailing = m_doc->showSpaces() & QDocument::ShowTrailing;
 
         // const int fns = nextNonSpaceChar(0);
-        int indent = qMax(m_indent, QDocumentPrivate::m_leftMargin);
+        int indent = qMax(m_indent, impl->m_leftMargin);
 
         int cidx = 0;
         int rngIdx = 0;
         int column = 0;
         bool continuingWave = false, brokenWave = false;
         int dir = 0; // 0 = down; 1 = up
-        int wrap = 0, xpos = QDocumentPrivate::m_leftMargin, ypos = 0;
+        int wrap = 0, xpos = impl->m_leftMargin, ypos = 0;
         bool leading = ranges.first().format & 0x4000, pastLead = false;
 
         foreach (const RenderRange &r, ranges) {
@@ -2578,24 +2548,22 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                 if (fmt & 0x8000) {
                     // finish selection
                     p->fillRect(xpos, ypos, maxWidth - xpos,
-                                QDocumentPrivate::m_lineSpacing,
-                                pal.highlight());
+                                impl->m_lineSpacing, pal.highlight());
                 }
 
                 if (pastLead && (r.format & 0x4000)) {
-                    indent = QDocumentPrivate::m_leftMargin;
+                    indent = impl->m_leftMargin;
                 }
 
                 ++wrap;
                 column = 0;
-                ypos += QDocumentPrivate::m_lineSpacing;
+                ypos += impl->m_lineSpacing;
                 xpos = indent;
 
                 if (r.format & 0x8000) {
                     // finish selection
-                    p->fillRect(QDocumentPrivate::m_leftMargin, ypos, xpos,
-                                QDocumentPrivate::m_lineSpacing,
-                                pal.highlight());
+                    p->fillRect(impl->m_leftMargin, ypos, xpos,
+                                impl->m_lineSpacing, pal.highlight());
                 }
             }
             if (leading && !(r.format & 0x4000)) {
@@ -2622,18 +2590,18 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                 foreach (QChar c, rng) {
                     if (c.unicode() == '\t') {
                         int toff = ts - (tcol % ts);
-                        rwidth += toff * QDocumentPrivate::m_spaceWidth;
+                        rwidth += toff * impl->m_spaceWidth;
                         tcol += toff;
                     } else {
-                        rwidth += QDocumentPrivate::m_spaceWidth;
+                        rwidth += impl->m_spaceWidth;
                         ++tcol;
                     }
                 }
             } else {
                 column += r.length;
 
-                if (QDocumentPrivate::m_fixedPitch)
-                    rwidth = QDocumentPrivate::m_spaceWidth * r.length;
+                if (impl->m_fixedPitch)
+                    rwidth = impl->m_spaceWidth * r.length;
                 else
                     rwidth = p->fontMetrics().horizontalAdvance(rng);
             }
@@ -2650,7 +2618,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
             QFormat format;
             int xspos = xpos;
             const QPen oldpen = p->pen();
-            const int baseline = ypos + QDocumentPrivate::m_ascent;
+            const int baseline = ypos + impl->m_ascent;
 
             if (d->m_formatScheme)
                 format = d->m_formatScheme->format(fmt & 0x0fff);
@@ -2658,7 +2626,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
             if (fullSel || (fmt & 0x8000)) {
                 p->setPen(ht);
 
-                p->fillRect(xpos, ypos, rwidth, QDocumentPrivate::m_lineSpacing,
+                p->fillRect(xpos, ypos, rwidth, impl->m_lineSpacing,
                             pal.highlight());
 
             } else {
@@ -2669,8 +2637,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                 }
 
                 if (format.background.isValid()) {
-                    p->fillRect(xpos, ypos, rwidth,
-                                QDocumentPrivate::m_lineSpacing,
+                    p->fillRect(xpos, ypos, rwidth, impl->m_lineSpacing,
                                 format.background);
                 }
             }
@@ -2686,7 +2653,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     while (cidx < cursor.count()) {
                         if (cursor.at(cidx) == i) {
                             p->drawLine(xpos, ypos, xpos,
-                                        ypos + QDocumentPrivate::m_lineSpacing);
+                                        ypos + impl->m_lineSpacing);
                             ++cidx;
                         } else {
                             break;
@@ -2701,7 +2668,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     if (isTab) {
                         int toff = ts - (column % ts);
                         column += toff;
-                        int xoff = toff * QDocumentPrivate::m_spaceWidth;
+                        int xoff = toff * impl->m_spaceWidth;
                         /*
                         if ( r.format & 0x8000 )
                         {
@@ -2713,11 +2680,11 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                         */
                         if (showTabs) {
                             p->translate(xpos - m_spaceSignOffset,
-                                         ypos + QDocumentPrivate::m_ascent);
+                                         ypos + impl->m_ascent);
                             p->drawPoints(m_spaceSign,
                                           sizeof(m_spaceSign) / sizeof(QPoint));
                             p->translate(m_spaceSignOffset - xpos,
-                                         -ypos - QDocumentPrivate::m_ascent);
+                                         -ypos - impl->m_ascent);
                         }
 
                         xpos += xoff;
@@ -2735,14 +2702,14 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                         if ((leading && showLeading) ||
                             ((r.position >= last) && showTrailing)) {
                             p->translate(xpos - m_spaceSignOffset,
-                                         ypos + QDocumentPrivate::m_ascent);
+                                         ypos + impl->m_ascent);
                             p->drawPoints(m_spaceSign,
                                           sizeof(m_spaceSign) / sizeof(QPoint));
                             p->translate(m_spaceSignOffset - xpos,
-                                         -ypos - QDocumentPrivate::m_ascent);
+                                         -ypos - impl->m_ascent);
                         }
 
-                        xpos += QDocumentPrivate::m_spaceWidth;
+                        xpos += impl->m_spaceWidth;
                     }
                 }
 
@@ -2771,8 +2738,8 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                         int xcpos = xpos;
 
                         if (xcoff) {
-                            if (QDocumentPrivate::m_fixedPitch) {
-                                xcpos += xcoff * QDocumentPrivate::m_spaceWidth;
+                            if (impl->m_fixedPitch) {
+                                xcpos += xcoff * impl->m_spaceWidth;
                             } else {
                                 xcpos += p->fontMetrics().horizontalAdvance(
                                     rng.left(xcoff));
@@ -2783,7 +2750,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                         // cursor.at(cidx), xcpos);
 
                         p->drawLine(xcpos, ypos, xcpos,
-                                    ypos + QDocumentPrivate::m_lineSpacing);
+                                    ypos + impl->m_lineSpacing);
 
                         ++cidx;
                     } else {
@@ -2794,13 +2761,14 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                 xpos += rwidth;
             }
 
-            // qDebug("underline pos : %i", p->fontMetrics().underlinePos());
+            // qDebug("underline pos : %i",
+            // p->fontMetrics().underlinePos());
 
             if (format.linescolor.isValid())
                 p->setPen(format.linescolor);
 
             const int ydo = qMin(baseline + p->fontMetrics().underlinePos(),
-                                 ypos + QDocumentPrivate::m_lineSpacing - 1);
+                                 ypos + impl->m_lineSpacing - 1);
             const int yin = baseline - p->fontMetrics().strikeOutPos();
             const int yup =
                 qMax(baseline - p->fontMetrics().overlinePos() + 1, ypos);
@@ -2820,10 +2788,10 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
             if (format.waveUnderline) {
                 /*
                 those goddamn font makers take liberties with common sense
-                and make it so damn harder to figure proper y offset for wave
-                underline (keeping the regular underline pos make it look
-                weird or even invisible on some fonts... reference rendering
-                with DejaVu Sans Mono)
+                and make it so damn harder to figure proper y offset for
+                wave underline (keeping the regular underline pos make it
+                look weird or even invisible on some fonts... reference
+                rendering with DejaVu Sans Mono)
                 */
 
                 // we used fixed wave amplitude of 3 (well strictly speaking
@@ -2831,7 +2799,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                 // focus on getting that code to work...
 
                 // gotta center things
-                const int ycenter = ypos + QDocumentPrivate::m_lineSpacing - 3;
+                const int ycenter = ypos + impl->m_lineSpacing - 3;
                 /*
                 qMin(
                         ypos + (QDocumentPrivate::m_ascent +
@@ -2895,8 +2863,8 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         }
 
         if (unbounded)
-            p->fillRect(xpos, ypos, maxWidth - xpos,
-                        QDocumentPrivate::m_lineSpacing, pal.highlight());
+            p->fillRect(xpos, ypos, maxWidth - xpos, impl->m_lineSpacing,
+                        pal.highlight());
 
     } else {
         QChar c;
@@ -2908,14 +2876,14 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         int fmt = 0;
 
         bool leading = true, unbounded = false, leftSel = false,
-             showTabs = QDocument::showSpaces() & QDocument::ShowTabs,
-             showLeading = QDocument::showSpaces() & QDocument::ShowLeading,
-             showTrailing = QDocument::showSpaces() & QDocument::ShowTrailing;
+             showTabs = m_doc->showSpaces() & QDocument::ShowTabs,
+             showLeading = m_doc->showSpaces() & QDocument::ShowLeading,
+             showTrailing = m_doc->showSpaces() & QDocument::ShowTrailing;
 
         int cwidth, ypos = 0, indent = 0, idx = 0, column = 0, selidx = 0,
-                    sellen = 0, wrap = 0, xpos = QDocumentPrivate::m_leftMargin;
+                    sellen = 0, wrap = 0, xpos = impl->m_leftMargin;
 
-        const int ts = QDocument::tabStop();
+        const int ts = m_doc->tabStop();
 
         // find start of trailing whitespaces
         int last = m_text.length();
@@ -2940,8 +2908,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     sellen = m_text.length() - idx;
 
                     p->fillRect(xpos, ypos, maxWidth - xpos,
-                                QDocumentPrivate::m_lineSpacing,
-                                pal.highlight());
+                                impl->m_lineSpacing, pal.highlight());
                 }
             }
 
@@ -2949,10 +2916,10 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
 
             if (c == '\t') {
                 int toff = ts - (column % ts);
-                cwidth = toff * QDocumentPrivate::m_spaceWidth;
+                cwidth = toff * impl->m_spaceWidth;
                 column += toff - 1;
             } else if (c == ' ') {
-                cwidth = QDocumentPrivate::m_spaceWidth;
+                cwidth = impl->m_spaceWidth;
             } else if (idx < m_composited.count()) {
                 int nfmt = m_composited[idx];
 
@@ -2961,11 +2928,12 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     fmt = nfmt;
                 }
 
-                // make sure bold/italicized/.. chars are taken into account...
+                // make sure bold/italicized/.. chars are taken into
+                // account...
                 cwidth = p->fontMetrics().horizontalAdvance(c);
             } else {
                 // char uses default font...
-                cwidth = QDocumentPrivate::m_fontMetrics->horizontalAdvance(c);
+                cwidth = impl->m_fontMetrics.horizontalAdvance(c);
             }
 
             if ((xpos + cwidth) > xOffset) {
@@ -2974,31 +2942,28 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     (idx >= m_frontiers.at(wrap).first)) {
                     if (sellen || leftSel) {
                         p->fillRect(xpos, ypos, maxWidth - xpos,
-                                    QDocumentPrivate::m_lineSpacing,
-                                    pal.highlight());
+                                    impl->m_lineSpacing, pal.highlight());
                     }
 
                     ++wrap;
                     xpos = indent;
-                    ypos += QDocumentPrivate::m_lineSpacing;
+                    ypos += impl->m_lineSpacing;
 
                     if (sellen || leftSel) {
-                        p->fillRect(QDocumentPrivate::m_leftMargin, ypos,
-                                    xpos - QDocumentPrivate::m_leftMargin +
+                        p->fillRect(impl->m_leftMargin, ypos,
+                                    xpos - impl->m_leftMargin +
                                         (leftSel ? 0 : cwidth),
-                                    QDocumentPrivate::m_lineSpacing,
-                                    pal.highlight());
+                                    impl->m_lineSpacing, pal.highlight());
                     }
 
                 } else {
                     if (sellen) {
-                        p->fillRect(xpos, ypos, cwidth,
-                                    QDocumentPrivate::m_lineSpacing,
+                        p->fillRect(xpos, ypos, cwidth, impl->m_lineSpacing,
                                     pal.highlight());
                     }
                 }
 
-                const int baseline = ypos + QDocumentPrivate::m_ascent;
+                const int baseline = ypos + impl->m_ascent;
 
                 if (!c.isSpace()) {
                     if (leading)
@@ -3017,17 +2982,17 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     // QDocumentPrivate::m_ascent, QChar(0x231E));
 
                     p->translate(xpos - m_spaceSignOffset,
-                                 ypos + QDocumentPrivate::m_ascent);
+                                 ypos + impl->m_ascent);
                     p->drawPoints(m_spaceSign,
                                   sizeof(m_spaceSign) / sizeof(QPoint));
                     p->translate(m_spaceSignOffset - xpos,
-                                 -ypos - QDocumentPrivate::m_ascent);
+                                 -ypos - impl->m_ascent);
                 }
 
                 for (int cidx = 0; cidx < cursor.count(); ++cidx) {
                     if (cursor[cidx] == idx)
                         p->drawLine(xpos, ypos, xpos,
-                                    ypos + QDocumentPrivate::m_lineSpacing);
+                                    ypos + impl->m_lineSpacing);
                 }
 
                 if (idx < m_composited.count()) {
@@ -3058,10 +3023,10 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                         p->setPen(QColor(255, 0, 0));
 
                         p->drawLine(xpos, ydo, xpos + cwidth / 2,
-                                    ypos + QDocumentPrivate::m_lineSpacing - 1);
+                                    ypos + impl->m_lineSpacing - 1);
 
                         p->drawLine(xpos + cwidth / 2,
-                                    ypos + QDocumentPrivate::m_lineSpacing - 1,
+                                    ypos + impl->m_lineSpacing - 1,
                                     xpos + cwidth, ydo);
 
                         p->setPen(oldpen);
@@ -3072,7 +3037,7 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
                     (idx >= m_frontiers.at(wrap).first)) {
                     ++wrap;
                     xpos = indent;
-                    ypos += QDocumentPrivate::m_lineSpacing;
+                    ypos += impl->m_lineSpacing;
                 }
 
                 if (!c.isSpace()) {
@@ -3104,13 +3069,12 @@ void QDocumentLineHandle::draw(QPainter *p, int xOffset, int vWidth,
         // ensure drawing of cursor at EOL
         for (int cidx = 0; cidx < cursor.count(); ++cidx) {
             if (cursor[cidx] == idx)
-                p->drawLine(xpos, ypos, xpos,
-                            ypos + QDocumentPrivate::m_lineSpacing);
+                p->drawLine(xpos, ypos, xpos, ypos + impl->m_lineSpacing);
         }
 
         if (wrapped && unbounded)
-            p->fillRect(xpos, ypos, maxWidth - xpos,
-                        QDocumentPrivate::m_lineSpacing, pal.highlight());
+            p->fillRect(xpos, ypos, maxWidth - xpos, impl->m_lineSpacing,
+                        pal.highlight());
     }
 }
 
@@ -3273,7 +3237,7 @@ int QDocumentCursorHandle::anchorColumnNumber() const {
 
 int QDocumentCursorHandle::visualColumnNumber() const {
     return QDocument::screenLength(line().text().constData(), m_begOffset,
-                                   QDocument::tabStop());
+                                   m_doc->tabStop());
 }
 
 int QDocumentCursorHandle::columnNumber() const { return m_begOffset; }
@@ -3496,7 +3460,7 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
             if (hasColumnMemory())
                 p.rx() = qMax(p.x(), m_max);
 
-            p.ry() -= QDocumentPrivate::m_lineSpacing * count;
+            p.ry() -= m_doc->impl()->m_lineSpacing * count;
 
             if (p.y() >= 0) {
                 m_doc->cursorForDocumentPosition(p, line, offset);
@@ -3516,7 +3480,8 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
         }
 
         //*line = QDocumentLine(*it);
-        //*offset = line->xToCursor(qMin(line->cursorToX(*offset), m_max), 0);
+        //*offset = line->xToCursor(qMin(line->cursorToX(*offset), m_max),
+        // 0);
         l = m_doc->line(line);
 
         if (count)
@@ -3540,7 +3505,7 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
             if (hasColumnMemory())
                 p.rx() = qMax(p.x(), m_max);
 
-            p.ry() += QDocumentPrivate::m_lineSpacing * count;
+            p.ry() += m_doc->impl()->m_lineSpacing * count;
 
             int oldLine = line, oldCol = offset;
             m_doc->cursorForDocumentPosition(p, line, offset);
@@ -3676,9 +3641,8 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
             // -- patch --
             {
                 // 					//offset = qMin(offset,
-                // l.length() - 1); 					bool
-                // next = (l.length() && offset >= 0) ?
-                // isWord(l.text().at(offset)) : true;
+                // l.length() - 1); bool next = (l.length() && offset >= 0)
+                // ? isWord(l.text().at(offset)) : true;
                 //
                 // 					if ( loop )
                 // 						next = !next;
@@ -3700,7 +3664,7 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
                 // offset = l.length() - 1;
                 // } while ( l.isValid() && (line != beg) &&
                 // l.hasFlag(QDocumentLine::Hidden) );
-                // } else { 						break;
+                // } else { break;
                 // 					}
                 // 				}
                 // 			}
@@ -3771,8 +3735,8 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
                 // 					{
                 // 						++offset;
                 // 					} else if ( (line + 1)
-                // != end ) { 						offset =
-                // 0; 						do
+                // != end ) { offset = 0;
+                // do
                 // 						{
                 // 							++line;
                 // 							l =
@@ -3889,7 +3853,8 @@ void QDocumentCursorHandle::moveTo(int line, int column) {
     refreshColumnMemory();
 }
 
-void QDocumentCursorHandle::insertText(const QString &s, bool keepAnchor) {
+void QDocumentCursorHandle::insertText(const QString &s, bool keepAnchor,
+                                       const QString &sfmtID) {
     if (!m_doc || s.isEmpty() || m_doc->line(m_begLine).isNull())
         return;
 
@@ -3901,7 +3866,7 @@ void QDocumentCursorHandle::insertText(const QString &s, bool keepAnchor) {
     }
 
     QDocumentCommand *command =
-        new QDocumentInsertCommand(m_begLine, m_begOffset, s, m_doc);
+        new QDocumentInsertCommand(m_begLine, m_begOffset, s, m_doc, sfmtID);
 
     command->setKeepAnchor(keepAnchor);
     command->setTargetCursor(this);
@@ -4121,7 +4086,8 @@ QString QDocumentCursorHandle::selectedText() const {
         s = l1.text().mid(m_begOffset);
 
         int it = m_begLine;
-        // QDocumentConstIterator it = m_doc->impl()->index(m_begLine.handle());
+        // QDocumentConstIterator it =
+        // m_doc->impl()->index(m_begLine.handle());
 
         while (++it < m_endLine) {
             s += '\n';
@@ -4134,7 +4100,8 @@ QString QDocumentCursorHandle::selectedText() const {
         s = l2.text().mid(m_endOffset);
 
         int it = m_endLine;
-        // QDocumentConstIterator it = m_doc->impl()->index(m_endLine.handle());
+        // QDocumentConstIterator it =
+        // m_doc->impl()->index(m_endLine.handle());
 
         while (++it < m_begLine) {
             s += '\n';
@@ -4187,8 +4154,8 @@ void QDocumentCursorHandle::replaceSelectedText(const QString &text) {
         */
     }
 
-    // qDebug("[%i, %i] => ( (%i, %i), (%i, %i) )", begline, begcol, m_begLine,
-    // m_begOffset, m_endLine, m_endOffset);
+    // qDebug("[%i, %i] => ( (%i, %i), (%i, %i) )", begline, begcol,
+    // m_begLine, m_begOffset, m_endLine, m_endOffset);
 }
 
 void QDocumentCursorHandle::select(QDocumentCursor::SelectionType t) {
@@ -4393,8 +4360,8 @@ void QDocumentCursorHandle::substractBoundaries(int lbeg, int cbeg, int lend,
         }
     }
 
-    // qDebug("(%i, %i : %i, %i) corrected to (%i, %i : %i, %i)", tlmin, tcmin,
-    // tlmax, tcmax, m_begLine, m_begOffset, m_endLine, m_endOffset);
+    // qDebug("(%i, %i : %i, %i) corrected to (%i, %i : %i, %i)", tlmin,
+    // tcmin, tlmax, tcmax, m_begLine, m_begOffset, m_endLine, m_endOffset);
 }
 
 void QDocumentCursorHandle::intersectBoundaries(int &lbeg, int &cbeg, int &lend,
@@ -4476,7 +4443,8 @@ void QDocumentCursorHandle::intersectBoundaries(QDocumentCursorHandle *h,
 QDocumentCursor
 QDocumentCursorHandle::intersect(const QDocumentCursor &c) const {
     if (!hasSelection()) {
-        // if ( c.hasSelection() && c.isWithinSelection(QDocumentCursor(this)) )
+        // if ( c.hasSelection() &&
+        // c.isWithinSelection(QDocumentCursor(this)) )
         //	return QDocumentCursor(clone());
 
     } else if (!c.hasSelection()) {
@@ -4553,35 +4521,19 @@ T *getStaticDefault() {
     return &_globStatInst;
 }
 
-QFont *QDocumentPrivate::m_font = nullptr; // = QApplication::font();
-QFontMetrics *QDocumentPrivate::m_fontMetrics = nullptr; //(m_font);
-
-int QDocumentPrivate::m_defaultTabStop = 4;
 QFormatScheme *QDocumentPrivate::m_defaultFormatScheme =
     getStaticDefault<QFormatScheme>();
 
 QList<QDocumentPrivate *> QDocumentPrivate::m_documents;
 
-bool QDocumentPrivate::m_fixedPitch;
-int QDocumentPrivate::m_ascent;      // = m_fontMetrics.ascent();
-int QDocumentPrivate::m_descent;     // = m_fontMetrics.descent();
-int QDocumentPrivate::m_leading;     // = m_fontMetrics.leading();
-int QDocumentPrivate::m_spaceWidth;  // = m_fontMetrics.width(' ');
-int QDocumentPrivate::m_lineHeight;  // = m_fontMetrics.height();
-int QDocumentPrivate::m_lineSpacing; // = m_fontMetrics.lineSpacing();
-
-int QDocumentPrivate::m_leftMargin = 5;
-QDocument::WhiteSpaceMode QDocumentPrivate::m_showSpaces = QDocument::ShowNone;
-QDocument::LineEnding QDocumentPrivate::m_defaultLineEnding =
-    QDocument::Conservative;
-
-int QDocumentPrivate::m_wrapMargin = 15;
-
 QDocumentPrivate::QDocumentPrivate(QDocument *d)
     : m_doc(d), m_editCursor(0), m_lastGroupId(-1), m_constrained(false),
-      m_width(0), m_height(0), m_tabStop(m_defaultTabStop), m_formatScheme(0),
-      m_language(0), m_maxMarksPerLine(0), _nix(0), _dos(0), _mac(0),
-      m_lineEnding(m_defaultLineEnding) {
+      m_width(0), m_height(0), m_tabStop(4), m_formatScheme(0),
+      m_language(nullptr), m_maxMarksPerLine(0), _nix(0), _dos(0), _mac(0),
+      m_lineEnding(QDocument::Conservative), m_wrapMargin(15), m_font(),
+      m_fontMetrics(m_font), m_leftMargin(5),
+      m_showSpaces(QDocument::ShowNone) {
+    setFont(qApp->font());
     m_documents << this;
     updateFormatCache();
 }
@@ -4710,7 +4662,7 @@ void QDocumentPrivate::draw(QPainter *p, QDocument::PaintContext &cxt) {
     if (cxt.height % m_lineSpacing)
         ++lastLine;
 
-    p->setFont(*m_font);
+    p->setFont(m_font);
 
     QBrush bg, base = cxt.palette.base(), selbg = cxt.palette.highlight(),
                alternate = cxt.palette.base().color().lighter();
@@ -4960,8 +4912,8 @@ void QDocumentPrivate::setWidth(int width) {
                 }
             }
         } else if (oldWidth > width) {
-            // shrink : scan whole document and create new wraps wherever needed
-            // qDebug("global width scan [constraint on]");
+            // shrink : scan whole document and create new wraps wherever
+            // needed qDebug("global width scan [constraint on]");
             // m_wrapped.clear();
             setWidth();
         }
@@ -4978,7 +4930,7 @@ void QDocumentPrivate::setWidth(int width) {
     emitWidthChanged();
     setHeight();
 
-    emitFormatsChanged();
+    emit m_doc->formatsChanged();
 }
 
 void QDocumentPrivate::setWidth() {
@@ -5105,42 +5057,36 @@ void QDocumentPrivate::setHeight() {
 }
 
 void QDocumentPrivate::setFont(const QFont &f) {
-    if (!m_font) {
-        m_font = new QFont;
-        m_fontMetrics = new QFontMetrics(*m_font);
-    }
-
-    *m_font = f;
+    m_font = f;
 
     // ensures the font is fixed pitch to avoid idsplay glitches
     // and inconsistency of column selections
     // :( does not work well...
     // m_font->setFixedPitch(true);
 
-    // set the styling so that if the font is not found Courier one will be used
-    m_font->setStyleHint(QFont::Courier, QFont::PreferQuality);
+    // set the styling so that if the font is not found Courier one will be
+    // used
+    m_font.setStyleHint(QFont::Courier, QFont::PreferQuality);
 
-    *m_fontMetrics = QFontMetrics(*m_font);
+    m_fontMetrics = QFontMetrics(m_font);
 
-    m_spaceWidth = m_fontMetrics->horizontalAdvance(' ');
-    m_lineSpacing = m_fontMetrics->lineSpacing();
-    m_ascent = m_fontMetrics->ascent();
-    m_descent = m_fontMetrics->descent();
-    m_leading = m_fontMetrics->leading();
+    m_spaceWidth = m_fontMetrics.horizontalAdvance(' ');
+    m_lineSpacing = m_fontMetrics.lineSpacing();
+    m_ascent = m_fontMetrics.ascent();
+    m_descent = m_fontMetrics.descent();
+    m_leading = m_fontMetrics.leading();
 
-    m_lineHeight = m_fontMetrics->height();
+    m_lineHeight = m_fontMetrics.height();
     // m_lineHeight = m_ascent + m_descent - 2;
 
-    m_fixedPitch = QFontInfo(*m_font).fixedPitch();
+    m_fixedPitch = QFontInfo(m_font).fixedPitch();
+
+    updateFormatCache();
+    setWidth();
+    setHeight();
 
     // if ( !m_fixedPitch )
     //	qDebug("unsafe computations...");
-
-    foreach (QDocumentPrivate *d, m_documents) {
-        d->updateFormatCache();
-        d->setWidth();
-        d->setHeight();
-    }
 }
 
 void QDocumentPrivate::setFormatScheme(QFormatScheme *f) {
@@ -5153,7 +5099,7 @@ void QDocumentPrivate::tunePainter(QPainter *p, int fid) {
         p->setFont(m_fonts.at(fid));
         // p->setPen(m_colors.at(fid));
     } else {
-        p->setFont(*m_font);
+        p->setFont(m_font);
         // p->setPen(Qt::black);
     }
 }
@@ -5161,15 +5107,12 @@ void QDocumentPrivate::tunePainter(QPainter *p, int fid) {
 void QDocumentPrivate::updateFormatCache() {
     m_fonts.clear();
 
-    if (!m_font)
-        return;
-
     if (!m_formatScheme) {
-        m_fonts << *m_font;
+        m_fonts << m_font;
         return;
     }
 
-    QFont f(*m_font);
+    QFont f(m_font);
     const int end = m_formatScheme->formatCount();
 
     m_fonts.reserve(end);
@@ -5186,7 +5129,7 @@ void QDocumentPrivate::updateFormatCache() {
     // foreach ( QDocumentPrivate *d, m_documents )
     //	d->emitFormatsChanged();
 
-    emitFormatsChanged();
+    emit m_doc->formatsChanged();
 }
 
 void QDocumentPrivate::emitWidthChanged() {
@@ -5432,7 +5375,8 @@ void QDocumentPrivate::clearMatches(int groupId) {
 /*!
         \brief Highlight the matched sequences
 
-        \note Both position are BEFORE the matched characters (cursor position).
+        \note Both position are BEFORE the matched characters (cursor
+   position).
 */
 void QDocumentPrivate::addMatch(int groupId, int line, int pos, int len,
                                 int format) {
@@ -5654,8 +5598,8 @@ int QDocumentPrivate::textLine(int visualLine, int *wrap) const {
                     break;
 
                 if (w != we && w.key() == hl) {
-                    // qDebug("trying to solve : h=(%i, %i), w=(%i, %i)", hl,
-                    // *h, w.key(), *w);
+                    // qDebug("trying to solve : h=(%i, %i), w=(%i, %i)",
+                    // hl, *h, w.key(), *w);
                     const int off = (visualLine + mess) - hl;
                     if (off <= *w) {
                         // qDebug("%i -> %i + %i", visualLine, hl, off);
@@ -5673,8 +5617,8 @@ int QDocumentPrivate::textLine(int visualLine, int *wrap) const {
                     ++h;
                 } while ((h != he) && (h.key() <= hl + max));
 
-                // very important : do not forget possible wrapping on folded
-                // block start
+                // very important : do not forget possible wrapping on
+                // folded block start
                 if (w != we && w.key() == hl) {
                     wrappedLines += *w;
                     ++w;
@@ -5764,7 +5708,7 @@ void QDocumentPrivate::hideEvent(int line, int count) {
 
     setHeight();
     // emitFormatsChange(line, count);
-    emitFormatsChanged();
+    emit m_doc->formatsChanged();
 }
 
 void QDocumentPrivate::showEvent(int line, int count) {
@@ -5772,7 +5716,8 @@ void QDocumentPrivate::showEvent(int line, int count) {
 
     while ((it != m_hidden.end()) && (it.key() == line)) {
         if (*it == count) {
-            //			qDebug("showing %i lines from %i", count, line);
+            //			qDebug("showing %i lines from %i",
+            // count, line);
             it = m_hidden.erase(it);
         } else
             ++it;
@@ -5780,7 +5725,7 @@ void QDocumentPrivate::showEvent(int line, int count) {
 
     setHeight();
     // emitFormatsChange(line, count);
-    emitFormatsChanged();
+    emit m_doc->formatsChanged();
 }
 
 void QDocumentPrivate::updateHidden(int line, int count) {
@@ -5820,8 +5765,8 @@ void QDocumentPrivate::updateWrapped(int line, int count) {
         if (it.key() < line) {
             m_wrapped.insert(it.key(), *it);
         } else {
-            // qDebug("moved wrap from line %i to line %i", it.key(), it.key() +
-            // count);
+            // qDebug("moved wrap from line %i to line %i", it.key(),
+            // it.key() + count);
             m_wrapped.insert(it.key() + count, *it);
         }
 
@@ -5850,8 +5795,6 @@ void QDocumentPrivate::emitContentsChange(int line, int lines) {
     if (n > lines)
         emitFormatsChange(line + lines, n - lines);
 }
-
-void QDocumentPrivate::emitFormatsChanged() { emit m_doc->formatsChanged(); }
 
 void QDocumentPrivate::emitContentsChanged() {
     // emit m_doc->contentsChanged();
@@ -5884,7 +5827,7 @@ void QDocumentPrivate::emitLineDeleted(QDocumentLineHandle *h) {
 }
 
 void QDocumentPrivate::emitMarkChanged(QDocumentLineHandle *l, int m, bool on) {
-    emitFormatsChanged();
+    emit m_doc->formatsChanged();
     emit m_doc->markChanged(l, m, on);
 }
 

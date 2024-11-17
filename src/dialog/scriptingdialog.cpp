@@ -20,6 +20,7 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "aboutsoftwaredialog.h"
+#include "class/clangformatmanager.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
@@ -27,12 +28,14 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qcodeeditwidget/qeditconfig.h"
 #include "qcodeeditwidget/qsnippetedit.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
 #include "qformatscheme.h"
 #include "qlinemarksinfocenter.h"
+#include "settings/clangformatsetdialog.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -375,6 +378,12 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
                                shortcuts.keySequence(QKeySequences::Key::GOTO));
     }
 
+    {
+        auto pannel = tab->addGroup(tr("Format"));
+        addPannelAction(pannel, QStringLiteral("codefmt"), tr("CodeFormat"),
+                        &ScriptingDialog::on_codefmt);
+    }
+
     return tab;
 }
 
@@ -508,8 +517,13 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     auto pannel = tab->addGroup(tr("Settings"));
 
     addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
-                    &ScriptingDialog::on_setting);
-
+                    [=] { m_setdialog->showConfig(QStringLiteral("Edit")); });
+    addPannelAction(pannel, QStringLiteral("snippt"), tr("Snippets"), [=] {
+        m_setdialog->showConfig(QStringLiteral("Snippets"));
+    });
+    addPannelAction(
+        pannel, QStringLiteral("codeformat"), tr("ClangFormat"),
+        [=] { m_setdialog->showConfig(QStringLiteral("ClangFormat")); });
     return tab;
 }
 
@@ -572,7 +586,6 @@ ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
                                        ads::CDockAreaWidget *areaw) {
     m_consoleout = new ScriptingConsole(this);
-    m_consoleout->clear();
     m_consoleout->setMode(ScriptingConsole::Output);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
                               tr("ConsoleOutput"), m_consoleout);
@@ -954,6 +967,9 @@ void ScriptingDialog::buildUpSettingDialog() {
         new QSnippetEdit(LangService::instance().snippetManager(), m_setdialog);
     m_setdialog->addPage(snip);
 
+    auto clang = new ClangFormatSetDialog(m_setdialog);
+    m_setdialog->addPage(clang);
+
     m_setdialog->build();
 }
 
@@ -1239,7 +1255,23 @@ void ScriptingDialog::on_gotoline() {
     }
 }
 
-void ScriptingDialog::on_setting() { m_setdialog->showConfig(); }
+void ScriptingDialog::on_codefmt() {
+    auto e = currentEditor();
+    if (e) {
+        auto editor = e->editor();
+        auto codes = editor->text();
+        bool ok;
+
+        auto fmtcodes = ClangFormatManager::instance().formatCode(codes, ok);
+        if (ok) {
+            auto doc = editor->document();
+            doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc));
+        } else {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("codefmt")),
+                         tr("FormatCodeFailed"));
+        }
+    }
+}
 
 void ScriptingDialog::on_about() { AboutSoftwareDialog().exec(); }
 

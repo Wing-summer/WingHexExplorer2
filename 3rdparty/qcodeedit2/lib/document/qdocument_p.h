@@ -86,7 +86,7 @@ public:
     void setWidth();
     void setHeight();
 
-    static void setFont(const QFont &f);
+    void setFont(const QFont &f);
 
     void beginChangeBlock();
     void endChangeBlock();
@@ -120,7 +120,6 @@ public:
 
     void setWidth(int width);
 
-    void emitFormatsChanged();
     void emitContentsChanged();
 
     void emitLineDeleted(QDocumentLineHandle *h);
@@ -165,7 +164,7 @@ private:
     struct Match {
         int line;
         QFormatRange range;
-        QDocumentLineHandle *h;
+        QDocumentLineHandle *h = nullptr;
     };
 
     struct MatchList : QList<Match> {
@@ -182,21 +181,19 @@ private:
     int m_width, m_height;
 
     int m_tabStop;
-    static int m_defaultTabStop;
 
-    static QFont *m_font;
-    static bool m_fixedPitch;
-    static QFontMetrics *m_fontMetrics;
-    static int m_leftMargin;
-    static QDocument::WhiteSpaceMode m_showSpaces;
-    static QDocument::LineEnding m_defaultLineEnding;
-    static int m_lineHeight;
-    static int m_lineSpacing;
-    static int m_spaceWidth;
-    static int m_ascent;
-    static int m_descent;
-    static int m_leading;
-    static int m_wrapMargin;
+    QFont m_font;
+    bool m_fixedPitch;
+    QFontMetrics m_fontMetrics;
+    int m_leftMargin;
+    QDocument::WhiteSpaceMode m_showSpaces;
+    int m_lineHeight;
+    int m_lineSpacing;
+    int m_spaceWidth;
+    int m_ascent;
+    int m_descent;
+    int m_leading;
+    int m_wrapMargin;
 
     QFormatScheme *m_formatScheme;
     QLanguageDefinition *m_language;

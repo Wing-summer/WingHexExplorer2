@@ -237,7 +237,7 @@ public slots:
 
     virtual void retranslate();
 
-    virtual void write(const QString &s);
+    virtual void write(const QString &s, const QString &sfmtID = {});
 
     void addAction(QAction *a, const QString &menu,
                    const QString &toolbar = QString());
@@ -372,7 +372,8 @@ public:
     void ensureVisible(const QRect &rect);
 
     void preInsert(QDocumentCursor &c, const QString &text);
-    void insertText(QDocumentCursor &c, const QString &text);
+    void insertText(QDocumentCursor &c, const QString &text,
+                    const QString &sfmtID = {});
 
     QDocumentLine lineAtPosition(const QPoint &p) const;
     QDocumentCursor cursorForPosition(const QPoint &p) const;
@@ -387,6 +388,9 @@ public:
     void addCursorMirror(const QDocumentCursor &c);
 
     bool undoRedoEnabled() const;
+
+private:
+    bool unindent(const QDocumentCursor &cur);
 
 protected slots:
     void documentWidthChanged(int newWidth);

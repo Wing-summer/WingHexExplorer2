@@ -21,6 +21,7 @@
 */
 
 #include "qdocument_p.h"
+#include "qformatscheme.h"
 
 /*!
         \ingroup document
@@ -142,7 +143,8 @@ void QDocumentCommand::setUndoOffset(int off) { m_undoOffset = off; }
         This helper method is provided so that subclasses may actually
         modify the document contents without using private API.
 */
-void QDocumentCommand::insertText(int line, int pos, const QString &s) {
+void QDocumentCommand::insertText(int line, int pos, const QString &s,
+                                  const QString &sfmtID) {
     if (!m_doc)
         return;
 
@@ -154,6 +156,19 @@ void QDocumentCommand::insertText(int line, int pos, const QString &s) {
 
     h->textBuffer().insert(pos, s);
     h->shiftOverlays(pos, s.length());
+
+    if (!sfmtID.isEmpty()) {
+        auto fmt = m_doc->formatScheme();
+        auto id = fmt->id(sfmtID);
+        if (id) {
+            QFormatRange range;
+            range.format = id;
+            range.offset = pos;
+            range.length = s.length();
+
+            h->addOverlay(range);
+        }
+    }
 
     pd->adjustWidth(line);
 }
@@ -484,8 +499,9 @@ void QDocumentCommand::markUndone(QDocumentLineHandle *h) {
 QDocumentInsertCommand::QDocumentInsertCommand(int l, int offset,
                                                const QString &text,
                                                QDocument *doc,
+                                               const QString &sfmtID,
                                                QDocumentCommand *p)
-    : QDocumentCommand(Insert, doc, p) {
+    : QDocumentCommand(Insert, doc, p), m_sfmtID(sfmtID) {
     QStringList lines = text.split(QLatin1Char('\n'), Qt::KeepEmptyParts);
 
     if (!m_doc || text.isEmpty())
@@ -497,8 +513,9 @@ QDocumentInsertCommand::QDocumentInsertCommand(int l, int offset,
     m_data.begin = lines.takeAt(0);
     m_data.endOffset = lines.count() ? lines.last().length() : -1;
 
-    foreach (const QString &s, lines)
+    for (auto &s : lines) {
         m_data.handles << new QDocumentLineHandle(s, m_doc);
+    }
 
     QDocumentLine bl = m_doc->line(l);
 
@@ -541,7 +558,7 @@ void QDocumentInsertCommand::redo() {
         removeText(m_data.lineNumber, m_data.startOffset, m_data.end.length());
     }
 
-    insertText(m_data.lineNumber, m_data.startOffset, m_data.begin);
+    insertText(m_data.lineNumber, m_data.startOffset, m_data.begin, m_sfmtID);
 
     insertLines(m_data.lineNumber, m_data.handles);
 

@@ -78,6 +78,8 @@ public:
 
     void setTemporaryNodes(const QList<QCodeNode *> &l);
 
+    bool isCompleting() const;
+
 public slots:
     void popup();
     void clear();
@@ -102,6 +104,7 @@ private:
     QCodeCompletionModel *pModel;
     QPointer<QObject> pEditor;
     QList<QCodeNode *> m_temps;
+    bool _completing = false;
 };
 
 #endif // _QCOMPLETION_WIDGET_H_

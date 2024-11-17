@@ -4,6 +4,7 @@
 #include "class/skinmanager.h"
 #include "qdocument.h"
 #include "qeditor.h"
+#include "qformat.h"
 #include "qformatscheme.h"
 #include "qsnippetmanager.h"
 
@@ -25,11 +26,22 @@ void LangService::init(asIScriptEngine *engine) {
             new QFormatScheme(QStringLiteral(":/qcodeedit/as_light.qxf"), this);
         break;
     }
+
+    // additional formats
+    QFormat fmt;
+    fmt.foreground = Qt::red;
+    format->setFormat(QStringLiteral("stderr"), fmt);
+    fmt.foreground = QColorConstants::Svg::gold;
+    format->setFormat(QStringLiteral("stdwarn"), fmt);
+    fmt.foreground = Qt::cyan;
+    format->setFormat(QStringLiteral("stdout"), fmt);
+
     QDocument::setDefaultFormatScheme(format);
 
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
-    m_language->addCompletionEngine(new AsCompletion(engine, this));
+    _completion = new AsCompletion(engine, this);
+    m_language->addCompletionEngine(_completion);
 
     m_snippetManager = new QSnippetManager(this);
     m_snipbind = new QSnippetBinding(m_snippetManager);

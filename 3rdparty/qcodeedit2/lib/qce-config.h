@@ -59,7 +59,7 @@ void addDataPath(const QString &path);
 template <typename Registerable>
 class Registar {
 public:
-    Registar() { Registerable::_register(); }
+    constexpr Registar() { Registerable::_register(); }
 };
 
 // added by wingsummer

@@ -2,6 +2,7 @@
 #define QEDITCONFIG_H
 
 #include "plugin/settingpage.h"
+#include "qeditor.h"
 #include <QWidget>
 
 namespace Ui {
@@ -50,6 +51,8 @@ private slots:
 
 private:
     Ui::QEditConfig *ui;
+
+    QEditor *_edit;
 };
 
 #endif // QEDITCONFIG_H

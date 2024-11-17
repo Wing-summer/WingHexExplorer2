@@ -156,6 +156,8 @@ public slots:
     void toggleLineMark(const QLineMarkHandle &mark);
     void removeLineMark(const QLineMarkHandle &mark);
 
+    void lineDeleted(QDocumentLineHandle *h);
+
     void flush(const QString &file);
 
 signals:
@@ -168,7 +170,6 @@ protected:
 
 protected slots:
     void cursorMoved(QEditor *e);
-    void lineDeleted(QDocumentLineHandle *h);
     void markChanged(const QString &f, QDocumentLineHandle *h, int mark,
                      bool on);
 

@@ -1927,34 +1927,6 @@ void QEditor::paste() {
         insertFromMimeData(d);
 }
 
-static bool unindent(const QDocumentCursor &cur) {
-    QDocumentLine beg(cur.line());
-    int r = 0, n = 0, t = QDocument::tabStop();
-    QString txt = beg.text().left(beg.firstChar());
-
-    while (txt.size() && (n < t)) {
-        if (txt.at(txt.length() - 1) == '\t')
-            n += t - (n % t);
-        else
-            ++n;
-
-        ++r;
-        txt.chop(1);
-    }
-
-    if (!r)
-        return false;
-
-    QDocumentCursor c(cur);
-    c.setSilent(true);
-    c.movePosition(1, QDocumentCursor::StartOfBlock,
-                   QDocumentCursor::MoveAnchor);
-    c.movePosition(r, QDocumentCursor::Right, QDocumentCursor::KeepAnchor);
-    c.removeSelectedText();
-
-    return true;
-}
-
 static void insert(const QDocumentCursor &cur, const QString &txt) {
     QDocumentCursor c(cur);
     c.setSilent(true);
@@ -2325,6 +2297,11 @@ bool QEditor::protectedCursor(const QDocumentCursor &c) const {
         \internal
 */
 void QEditor::keyPressEvent(QKeyEvent *e) {
+    if (flag(ReadOnly)) {
+        e->ignore();
+        return;
+    }
+
     for (auto &b : m_bindings)
         if (b->keyPressEvent(e, this))
             return;
@@ -2534,13 +2511,10 @@ void QEditor::inputMethodEvent(QInputMethodEvent *e) {
         if (b->inputMethodEvent(e, this))
             return;
 
-    /*
-    if ( m_doc->readOnly() )
-    {
-            e->ignore();
-            return;
+    if (flag(ReadOnly)) {
+        e->ignore();
+        return;
     }
-    */
 
     m_cursor.beginEditBlock();
 
@@ -3471,7 +3445,7 @@ void QEditor::pageUp(QDocumentCursor::MoveMode moveMode) {
     if (m_cursor.atStart())
         return;
 
-    int n = viewport()->height() / QDocument::fontMetrics().lineSpacing();
+    int n = viewport()->height() / m_doc->fontMetrics().lineSpacing();
 
     repaintCursor();
     m_cursor.movePosition(n, QDocumentCursor::Up, moveMode);
@@ -3493,7 +3467,7 @@ void QEditor::pageDown(QDocumentCursor::MoveMode moveMode) {
     if (m_cursor.atEnd())
         return;
 
-    int n = viewport()->height() / QDocument::fontMetrics().lineSpacing();
+    int n = viewport()->height() / m_doc->fontMetrics().lineSpacing();
 
     repaintCursor();
     m_cursor.movePosition(n, QDocumentCursor::Down, moveMode);
@@ -3691,7 +3665,8 @@ void QEditor::preInsert(QDocumentCursor &c, const QString &s) {
         This function is provided to keep indenting/outdenting working when
    editing
 */
-void QEditor::insertText(QDocumentCursor &c, const QString &text) {
+void QEditor::insertText(QDocumentCursor &c, const QString &text,
+                         const QString &sfmtID) {
     if (protectedCursor(c))
         return;
 
@@ -3712,11 +3687,11 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text) {
             // TODO : replace tabs by spaces properly
         }
 
-        c.insertText(text);
+        c.insertText(text, false, sfmtID);
     } else {
 
         preInsert(c, lines.first());
-        c.insertText(lines.takeFirst());
+        c.insertText(lines.takeFirst(), false, sfmtID);
 
         QString indent;
         // FIXME ? work on strings to make sure command grouping does not
@@ -3743,11 +3718,11 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text) {
             }
 
             c.insertLine();
-            c.insertText(indent);
+            c.insertText(indent, false, sfmtID);
 
             preInsert(c, l);
 
-            c.insertText(l);
+            c.insertText(l, false, sfmtID);
         }
     }
 }
@@ -3759,13 +3734,13 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text) {
         from the outside and to keep them compatible with cursor
         mirrors.
 */
-void QEditor::write(const QString &s) {
+void QEditor::write(const QString &s, const QString &sfmtID) {
     m_doc->beginMacro();
 
-    insertText(m_cursor, s);
+    insertText(m_cursor, s, sfmtID);
 
     for (int i = 0; i < m_mirrors.count(); ++i)
-        insertText(m_mirrors[i], s);
+        insertText(m_mirrors[i], s, sfmtID);
 
     m_doc->endMacro();
 
@@ -3850,7 +3825,7 @@ void QEditor::ensureCursorVisible() {
 
     QPoint pos = m_cursor.documentPosition();
 
-    const int ls = QDocument::fontMetrics().lineSpacing();
+    const int ls = m_doc->fontMetrics().lineSpacing();
 
     int ypos = pos.y(), yval = verticalOffset(), ylen = viewport()->height(),
         yend = ypos + ls;
@@ -3882,7 +3857,7 @@ void QEditor::ensureVisible(int line) {
     if (!m_doc)
         return;
 
-    const int ls = QDocument::fontMetrics().lineSpacing();
+    const int ls = m_doc->fontMetrics().lineSpacing();
     int ypos = m_doc->y(line), yval = verticalOffset(),
         ylen = viewport()->height(), yend = ypos + ls;
 
@@ -3900,7 +3875,7 @@ void QEditor::ensureVisible(const QRect &rect) {
     if (!m_doc)
         return;
 
-    const int ls = QDocument::fontMetrics().lineSpacing();
+    const int ls = m_doc->fontMetrics().lineSpacing();
     int ypos = rect.y(), yval = verticalOffset(), ylen = viewport()->height(),
         yend = ypos + rect.height();
 
@@ -4002,7 +3977,7 @@ QRect QEditor::lineRect(const QDocumentLine &l) const {
         \return The line rect of the given cursor
 */
 QRect QEditor::cursorRect(const QDocumentCursor &c) const {
-    return QEditor::lineRect(c.lineNumber());
+    return QEditor::lineRect(c.lineNumber()).adjusted(0, -1, 0, 1);
 }
 
 /*!
@@ -4163,6 +4138,34 @@ void QEditor::addCursorMirror(const QDocumentCursor &c) {
 }
 
 bool QEditor::undoRedoEnabled() const { return m_undoRedoEnabled; }
+
+bool QEditor::unindent(const QDocumentCursor &cur) {
+    QDocumentLine beg(cur.line());
+    int r = 0, n = 0, t = m_doc->tabStop();
+    QString txt = beg.text().left(beg.firstChar());
+
+    while (txt.size() && (n < t)) {
+        if (txt.at(txt.length() - 1) == '\t')
+            n += t - (n % t);
+        else
+            ++n;
+
+        ++r;
+        txt.chop(1);
+    }
+
+    if (!r)
+        return false;
+
+    QDocumentCursor c(cur);
+    c.setSilent(true);
+    c.movePosition(1, QDocumentCursor::StartOfBlock,
+                   QDocumentCursor::MoveAnchor);
+    c.movePosition(r, QDocumentCursor::Right, QDocumentCursor::KeepAnchor);
+    c.removeSelectedText();
+
+    return true;
+}
 
 /*!
         \internal

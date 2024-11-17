@@ -92,7 +92,8 @@ public:
     void shift(int offset);
     bool movePosition(int offset, int op, int m);
 
-    void insertText(const QString &s, bool keepAnchor = false);
+    void insertText(const QString &s, bool keepAnchor = false,
+                    const QString &sfmtID = {});
 
     QChar nextChar() const;
     QChar previousChar() const;

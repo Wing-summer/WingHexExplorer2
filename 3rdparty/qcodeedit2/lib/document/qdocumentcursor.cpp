@@ -515,9 +515,10 @@ void QDocumentCursor::insertLine(bool keepAnchor) {
 
         \note Nothing happens if \a s is empty
 */
-void QDocumentCursor::insertText(const QString &s, bool keepAnchor) {
+void QDocumentCursor::insertText(const QString &s, bool keepAnchor,
+                                 const QString &sfmtID) {
     if (m_handle)
-        m_handle->insertText(s, keepAnchor);
+        m_handle->insertText(s, keepAnchor, sfmtID);
 }
 
 /*!

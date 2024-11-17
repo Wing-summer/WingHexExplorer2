@@ -41,7 +41,7 @@ public:
         QList<QDocumentLineHandle *> handles;
     };
 
-    QDocumentCommand(Command c, QDocument *d, QDocumentCommand *p = 0);
+    QDocumentCommand(Command c, QDocument *d, QDocumentCommand *p = nullptr);
     virtual ~QDocumentCommand();
 
     virtual int id() const;
@@ -77,7 +77,8 @@ protected:
 
     void updateTarget(int l, int offset);
 
-    void insertText(int line, int pos, const QString &s);
+    void insertText(int line, int pos, const QString &s,
+                    const QString &sfmtID = {});
     void removeText(int line, int pos, int length);
 
     void insertLines(int after, const QList<QDocumentLineHandle *> &l);
@@ -102,7 +103,8 @@ Q_DECLARE_TYPEINFO(QDocumentCommand::TextCommandData, Q_MOVABLE_TYPE);
 class QCE_EXPORT QDocumentInsertCommand : public QDocumentCommand {
 public:
     QDocumentInsertCommand(int l, int offset, const QString &text,
-                           QDocument *doc, QDocumentCommand *p = 0);
+                           QDocument *doc, const QString &sfmtID = 0,
+                           QDocumentCommand *p = nullptr);
 
     virtual ~QDocumentInsertCommand();
 
@@ -113,12 +115,13 @@ public:
 
 private:
     TextCommandData m_data;
+    QString m_sfmtID;
 };
 
 class QCE_EXPORT QDocumentEraseCommand : public QDocumentCommand {
 public:
     QDocumentEraseCommand(int bl, int bo, int el, int eo, QDocument *doc,
-                          QDocumentCommand *p = 0);
+                          QDocumentCommand *p = nullptr);
 
     virtual ~QDocumentEraseCommand();
 

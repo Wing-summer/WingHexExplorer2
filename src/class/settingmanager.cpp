@@ -19,66 +19,15 @@
 
 #include "class/logger.h"
 #include "class/skinmanager.h"
+#include "settings/settings.h"
 #include "utilities.h"
 #include <QFileInfo>
 #include <QMetaEnum>
-#include <QSettings>
 
-QString getRealContent(const QString &value) { return value; }
-
-template <typename T>
-QString getRealContent(T &value) {
-    static_assert(std::is_same<QString &, decltype(*value)>());
-    return *value;
-}
-
-#define HANDLE_CONFIG                                                          \
-    QSettings set(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME))
-
-#define CONFIG set
-
-#define WRITE_CONFIG(config, dvalue)                                           \
+#define WRITE_CONFIG_SET(config, dvalue)                                       \
     if (this->_setUnsaved.testFlag(SETTING_ITEM::config)) {                    \
-        set.setValue(getRealContent(config), dvalue);                          \
+        WRITE_CONFIG(config, dvalue);                                          \
         _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
-    }
-
-#define READ_CONFIG(config, dvalue) set.value(getRealContent(config), dvalue)
-
-#define READ_CONFIG_SAFE(var, config, dvalue, func)                            \
-    {                                                                          \
-        auto b = false;                                                        \
-        var = READ_CONFIG(config, dvalue).func(&b);                            \
-        if (!b) {                                                              \
-            var = dvalue;                                                      \
-        }                                                                      \
-    }
-
-#define READ_CONFIG_INT(var, config, dvalue)                                   \
-    READ_CONFIG_SAFE(var, config, dvalue, toInt)
-
-#define READ_CONFIG_BOOL(var, config, dvalue)                                  \
-    var = READ_CONFIG(config, dvalue).toBool()
-
-#define READ_CONFIG_QSIZETYPE(var, config, dvalue)                             \
-    READ_CONFIG_SAFE(var, config, dvalue, toLongLong)
-
-#define READ_CONFIG_INT_POSITIVE(var, config, dvalue)                          \
-    {                                                                          \
-        Q_ASSERT(dvalue > 0);                                                  \
-        READ_CONFIG_SAFE(var, config, dvalue, toInt);                          \
-        if (var <= 0) {                                                        \
-            var = dvalue;                                                      \
-        }                                                                      \
-    }
-
-#define READ_CONFIG_DOUBLE_POSITIVE(var, config, dvalue)                       \
-    {                                                                          \
-        Q_ASSERT(dvalue > 0);                                                  \
-        READ_CONFIG_SAFE(var, config, dvalue, toDouble);                       \
-        if (var <= 0) {                                                        \
-            var = dvalue;                                                      \
-        }                                                                      \
     }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
@@ -144,8 +93,8 @@ void SettingManager::load() {
     m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
     m_scriptDockLayout =
         READ_CONFIG(SCRIPT_DOCK_LAYOUT, QByteArray()).toByteArray();
-    m_appFontFamily =
-        READ_CONFIG(APP_FONTFAMILY, _defaultFont.family()).toString();
+    READ_CONFIG_STRING(m_appFontFamily, APP_FONTFAMILY, _defaultFont.family());
+
     // check font
     QFont fm(m_appFontFamily);
     if (!QFontInfo(fm).exactMatch()) {
@@ -373,79 +322,79 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
 
 void SettingManager::save(SETTINGS cat) {
     HANDLE_CONFIG;
-    WRITE_CONFIG(DOCK_LAYOUT, m_dockLayout);
-    WRITE_CONFIG(SCRIPT_DOCK_LAYOUT, m_scriptDockLayout);
-    WRITE_CONFIG(EDITOR_RECENTFILES, getVarList(m_recentHexFiles));
-    WRITE_CONFIG(SCRIPT_RECENTFILES, getVarList(m_recentScriptFiles));
-    WRITE_CONFIG(APP_LASTUSED_PATH, m_lastUsedPath);
+    WRITE_CONFIG_SET(DOCK_LAYOUT, m_dockLayout);
+    WRITE_CONFIG_SET(SCRIPT_DOCK_LAYOUT, m_scriptDockLayout);
+    WRITE_CONFIG_SET(EDITOR_RECENTFILES, getVarList(m_recentHexFiles));
+    WRITE_CONFIG_SET(SCRIPT_RECENTFILES, getVarList(m_recentScriptFiles));
+    WRITE_CONFIG_SET(APP_LASTUSED_PATH, m_lastUsedPath);
     if (cat.testFlag(SETTING::APP)) {
-        WRITE_CONFIG(SKIN_THEME, m_themeID);
-        WRITE_CONFIG(APP_LANGUAGE, m_defaultLang);
-        WRITE_CONFIG(APP_FONTFAMILY, m_appFontFamily);
-        WRITE_CONFIG(APP_FONTSIZE, m_appfontSize);
-        WRITE_CONFIG(APP_WINDOWSIZE, m_defaultWinState);
+        WRITE_CONFIG_SET(SKIN_THEME, m_themeID);
+        WRITE_CONFIG_SET(APP_LANGUAGE, m_defaultLang);
+        WRITE_CONFIG_SET(APP_FONTFAMILY, m_appFontFamily);
+        WRITE_CONFIG_SET(APP_FONTSIZE, m_appfontSize);
+        WRITE_CONFIG_SET(APP_WINDOWSIZE, m_defaultWinState);
     }
     if (cat.testFlag(SETTING::PLUGIN)) {
-        WRITE_CONFIG(PLUGIN_ENABLE, m_enablePlugin);
-        WRITE_CONFIG(PLUGIN_ENABLE_ROOT, m_enablePlgInRoot);
+        WRITE_CONFIG_SET(PLUGIN_ENABLE, m_enablePlugin);
+        WRITE_CONFIG_SET(PLUGIN_ENABLE_ROOT, m_enablePlgInRoot);
     }
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG(EDITOR_FONTSIZE, m_editorfontSize);
-        WRITE_CONFIG(EDITOR_SHOW_ADDR, m_editorShowHeader);
-        WRITE_CONFIG(EDITOR_SHOW_COL, m_editorShowcol);
-        WRITE_CONFIG(EDITOR_SHOW_TEXT, m_editorShowtext);
-        WRITE_CONFIG(EDITOR_ENCODING, m_editorEncoding);
-        WRITE_CONFIG(EDITOR_COPY_LIMIT, m_copylimit);
-        WRITE_CONFIG(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
+        WRITE_CONFIG_SET(EDITOR_FONTSIZE, m_editorfontSize);
+        WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, m_editorShowHeader);
+        WRITE_CONFIG_SET(EDITOR_SHOW_COL, m_editorShowcol);
+        WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, m_editorShowtext);
+        WRITE_CONFIG_SET(EDITOR_ENCODING, m_editorEncoding);
+        WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, m_copylimit);
+        WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
-        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
-        WRITE_CONFIG(SCRIPT_USRHIDECATS, m_usrHideCats);
-        WRITE_CONFIG(SCRIPT_SYSHIDECATS, m_sysHideCats);
+        WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
+        WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, m_usrHideCats);
+        WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, m_sysHideCats);
     }
     if (cat.testFlag(SETTING::OTHER)) {
-        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
+        WRITE_CONFIG_SET(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
 #ifdef WINGHEX_USE_FRAMELESS
-        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
+        WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
 #endif
-        WRITE_CONFIG(OTHER_LOG_LEVEL, m_logLevel);
+        WRITE_CONFIG_SET(OTHER_LOG_LEVEL, m_logLevel);
     }
 }
 
 void SettingManager::reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::APP)) {
-        WRITE_CONFIG(SKIN_THEME, 0);
-        WRITE_CONFIG(APP_LANGUAGE, QString());
-        WRITE_CONFIG(APP_FONTFAMILY, _defaultFont.family());
-        WRITE_CONFIG(APP_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized);
+        WRITE_CONFIG_SET(SKIN_THEME, 0);
+        WRITE_CONFIG_SET(APP_LANGUAGE, QString());
+        WRITE_CONFIG_SET(APP_FONTFAMILY, _defaultFont.family());
+        WRITE_CONFIG_SET(APP_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG_SET(APP_WINDOWSIZE, Qt::WindowMaximized);
     }
     if (cat.testFlag(SETTING::PLUGIN)) {
-        WRITE_CONFIG(PLUGIN_ENABLE, true);
-        WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
+        WRITE_CONFIG_SET(PLUGIN_ENABLE, true);
+        WRITE_CONFIG_SET(PLUGIN_ENABLE_ROOT, false);
     }
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG(EDITOR_SHOW_ADDR, true);
-        WRITE_CONFIG(EDITOR_SHOW_COL, true);
-        WRITE_CONFIG(EDITOR_SHOW_TEXT, true);
-        WRITE_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII"));
-        WRITE_CONFIG(EDITOR_FIND_MAXCOUNT, 100);
-        WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
-        WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
+        WRITE_CONFIG_SET(EDITOR_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, true);
+        WRITE_CONFIG_SET(EDITOR_SHOW_COL, true);
+        WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, true);
+        WRITE_CONFIG_SET(EDITOR_ENCODING, QStringLiteral("ASCII"));
+        WRITE_CONFIG_SET(EDITOR_FIND_MAXCOUNT, 100);
+        WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, 100);
+        WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, 10);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
-        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
-        WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
-        WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());
+        WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
+        WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, QStringList());
+        WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, QStringList());
     }
     if (cat.testFlag(SETTING::OTHER)) {
-        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
+        WRITE_CONFIG_SET(OTHER_USESYS_FILEDIALOG, true);
 #ifdef WINGHEX_USE_FRAMELESS
-        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
+        WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, false);
 #endif
-        WRITE_CONFIG(OTHER_LOG_LEVEL, Logger::defaultLevel());
+        WRITE_CONFIG_SET(OTHER_LOG_LEVEL, Logger::defaultLevel());
     }
     load();
 }

@@ -121,7 +121,6 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     layout->addWidget(m_status);
 
     buildUpContent(cw);
-    m_scriptDialog = new ScriptingDialog(this);
 
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
@@ -144,12 +143,16 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     plg.LoadPlugin();
     // At this time, AngelScript service plugin has started
     m_scriptConsole->init();
-    m_scriptDialog->initConsole();
     ScriptManager::instance().attach(m_scriptConsole);
 
     auto &langins = LangService::instance();
     langins.init(m_scriptConsole->machine()->engine());
     langins.applyLanguageSerivce(m_scriptConsole);
+
+    m_scriptConsole->initOutput();
+
+    m_scriptDialog = new ScriptingDialog(this);
+    m_scriptDialog->initConsole();
 
     // load the model
     Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());

@@ -232,7 +232,9 @@ set(CLASS_SRC
     src/class/qcodenode.cpp
     src/class/qcodenode.h
     src/class/langservice.h
-    src/class/langservice.cpp)
+    src/class/langservice.cpp
+    src/class/clangformatmanager.h
+    src/class/clangformatmanager.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -268,6 +270,7 @@ set(MODEL_SRC
     src/model/dbgbreakpointmodel.cpp)
 
 set(SETTING_SRC
+    src/settings/settings.h
     src/settings/generalsettingdialog.h
     src/settings/generalsettingdialog.cpp
     src/settings/generalsettingdialog.ui
@@ -285,7 +288,10 @@ set(SETTING_SRC
     src/settings/scriptbehaviorsettingdialog.ui
     src/settings/othersettingsdialog.h
     src/settings/othersettingsdialog.cpp
-    src/settings/othersettingsdialog.ui)
+    src/settings/othersettingsdialog.ui
+    src/settings/clangformatsetdialog.h
+    src/settings/clangformatsetdialog.cpp
+    src/settings/clangformatsetdialog.ui)
 
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptqstring.h
@@ -312,7 +318,9 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qformatconfig.ui
     src/qcodeeditwidget/qsnippetedit.cpp
     src/qcodeeditwidget/qsnippetedit.h
-    src/qcodeeditwidget/qsnippetedit.ui)
+    src/qcodeeditwidget/qsnippetedit.ui
+    src/qcodeeditwidget/qdocumentswaptextcommand.h
+    src/qcodeeditwidget/qdocumentswaptextcommand.cpp)
 
 set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
                src/plugin/pluginsystem.h src/plugin/settingpage.h)

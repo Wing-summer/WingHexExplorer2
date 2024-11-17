@@ -80,7 +80,7 @@ void QCodeCompletionWidget::adjustGeometry() {
     QDocumentCursor cursor = e->cursor();
     QDocumentLine line = cursor.line();
     const QRect lrect = e->lineRect(cursor.lineNumber());
-    const QFontMetrics fm = QDocument::fontMetrics();
+    const QFontMetrics fm = e->document()->fontMetrics();
 
     int h = 0, w = 300, ls = fm.lineSpacing(), y = lrect.y(),
         x = line.cursorToX(cursor.columnNumber() + offset);
@@ -165,6 +165,8 @@ void QCodeCompletionWidget::setTemporaryNodes(const QList<QCodeNode *> &l) {
     m_temps = l;
 }
 
+bool QCodeCompletionWidget::isCompleting() const { return _completing; }
+
 void QCodeCompletionWidget::clear() { pModel->clear(); }
 
 void QCodeCompletionWidget::popup() {
@@ -191,6 +193,8 @@ void QCodeCompletionWidget::popup() {
 }
 
 void QCodeCompletionWidget::complete(const QModelIndex &index) {
+    _completing = true;
+
     QEditor *e = editor();
 
     if (!index.isValid() || !e)
@@ -226,6 +230,8 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
     }
 
     e->setFocus();
+
+    _completing = false;
 }
 
 void QCodeCompletionWidget::showEvent(QShowEvent *e) {

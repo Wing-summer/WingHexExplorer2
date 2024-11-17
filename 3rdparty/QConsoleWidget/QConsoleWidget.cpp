@@ -1,11 +1,13 @@
 #include "QConsoleWidget.h"
-#include "QConsoleIODevice.h"
 
-#include "class/langservice.h"
+#include "class/ascompletion.h"
+#include "control/qcodecompletionwidget.h"
 #include "qdocumentline.h"
 #include "qformatscheme.h"
 #include "qlanguagefactory.h"
 #include "utilities.h"
+
+#include "QConsoleIODevice.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -19,18 +21,8 @@
 #include <QScrollBar>
 
 QConsoleWidget::QConsoleWidget(QWidget *parent)
-    : QEditor(false, parent), mode_(Output), completer_(nullptr) {
+    : QEditor(false, parent), mode_(Output) {
     iodevice_ = new QConsoleIODevice(this, this);
-
-    // QTextCharFormat fmt = currentCharFormat();
-    // for (int i = 0; i < nConsoleChannels; i++)
-    //     chanFormat_[i] = fmt;
-
-    chanFormat_[StandardOutput].setForeground(Qt::darkBlue);
-    chanFormat_[StandardError].setForeground(Qt::red);
-
-    // setTextInteractionFlags();
-
     setUndoRedoEnabled(false);
 }
 
@@ -44,7 +36,6 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         auto cursor = this->cursor();
         cursor.movePosition(QDocumentCursor::End);
         setCursor(cursor);
-        // setCurrentCharFormat(chanFormat_[StandardInput]);
         inpos_ = cursor;
         mode_ = Input;
     }
@@ -88,34 +79,26 @@ void QConsoleWidget::handleReturnKey() {
     emit consoleCommand(code);
 }
 
-void QConsoleWidget::setCompleter(QCodeCompletionWidget *c) {
-    if (completer_) {
-        // completer_->setWidget(0);
-        // QObject::disconnect(completer_, SIGNAL(activated(const QString &)),
-        //                     this, SLOT(insertCompletion(const QString &)));
-    }
-    completer_ = c;
-    if (completer_) {
-        // completer_->setWidget(this);
-        // QObject::connect(completer_, SIGNAL(activated(const QString &)),
-        // this,
-        //                  SLOT(insertCompletion(const QString &)));
-    }
-}
-
 void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
-    if (completer_ && completer_->isVisible()) {
-        // The following keys are forwarded by the completer to the widget
-        switch (e->key()) {
-        case Qt::Key_Tab:
-        case Qt::Key_Enter:
-        case Qt::Key_Return:
-        case Qt::Key_Escape:
-        case Qt::Key_Backtab:
-            e->ignore();
-            return; // let the completer do default behavior
-        default:
-            break;
+    if (mode() == Input) {
+        auto ascom = dynamic_cast<AsCompletion *>(completionEngine());
+        if (ascom) {
+            auto cw = ascom->codeCompletionWidget();
+            if (cw && cw->isVisible()) {
+                // The following keys are forwarded by the completer to the
+                // widget
+                switch (e->key()) {
+                case Qt::Key_Tab:
+                case Qt::Key_Enter:
+                case Qt::Key_Return:
+                case Qt::Key_Escape:
+                case Qt::Key_Backtab:
+                    e->ignore();
+                    return; // let the completer do default behavior
+                default:
+                    break;
+                }
+            }
         }
     }
 
@@ -302,7 +285,6 @@ bool QConsoleWidget::canPaste() const {
 }
 
 void QConsoleWidget::replaceCommandLine(const QString &str) {
-
     // Select the text after the last command prompt ...
     auto textCursor = this->cursor();
     auto line = textCursor.line();
@@ -321,25 +303,14 @@ QString QConsoleWidget::getHistoryPath() {
     return dir.absoluteFilePath(QStringLiteral(".command_history.lst"));
 }
 
-void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
-    // QTextCharFormat currfmt = currentCharFormat();
+void QConsoleWidget::write(const QString &message, const QString &sfmtID) {
     auto tc = cursor();
+    auto ascom = dynamic_cast<AsCompletion *>(completionEngine());
+    Q_ASSERT(ascom);
+    auto cw = ascom->codeCompletionWidget();
 
-    if (mode() == Input) {
-        // in Input mode output messages are inserted
-        // before the edit block
-
-        // get offset of current pos from the end
-        auto editpos = tc;
-        auto line = editpos.line();
-        tc.moveTo(line, 0);
-        tc.insertLine();
-        tc.insertText(message /*, fmt*/);
-
-        setCursor(editpos);
-        // setCurrentCharFormat(currfmt);
-    } else {
-        // in output mode messages are appended
+    if (mode() == Output || (cw && cw->isCompleting())) {
+        // in output mode or completion messages are appended
         auto tc1 = tc;
         tc1.movePosition(QDocumentCursor::End);
 
@@ -349,21 +320,32 @@ void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
 
         // insert text
         setCursor(tc1);
-        tc.insertText(message /*, fmt*/);
+        tc.insertText(message, false, sfmtID);
         ensureCursorVisible();
 
         // restore cursor if needed
         if (needsRestore)
             setCursor(tc);
+    } else {
+        // in Input mode output messages are inserted
+        // before the edit block
+
+        // get offset of current pos from the end
+        auto editpos = tc;
+        auto line = editpos.line();
+        tc.moveTo(line, 0);
+        tc.insertLine();
+        tc.insertText(message, false, sfmtID);
+        setCursor(editpos);
     }
 }
 
 void QConsoleWidget::writeStdOut(const QString &s) {
-    write(s, chanFormat_[StandardOutput]);
+    write(s, QStringLiteral("stdout"));
 }
 
 void QConsoleWidget::writeStdErr(const QString &s) {
-    write(s, chanFormat_[StandardError]);
+    write(s, QStringLiteral("stderr"));
 }
 
 /////////////////// QConsoleWidget::History /////////////////////
@@ -454,12 +436,12 @@ QTextStream &inputMode(QTextStream &s) {
 QTextStream &outChannel(QTextStream &s) {
     QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
     if (d)
-        d->setCurrentWriteChannel(QConsoleWidget::StandardOutput);
+        d->setCurrentWriteChannel(STDOUT_FILENO);
     return s;
 }
 QTextStream &errChannel(QTextStream &s) {
     QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
     if (d)
-        d->setCurrentWriteChannel(QConsoleWidget::StandardError);
+        d->setCurrentWriteChannel(STDERR_FILENO);
     return s;
 }

@@ -192,18 +192,15 @@ public:
     void flushMatches(int groupId);
     void addMatch(int groupId, int line, int pos, int len, int format);
 
-    static QFont font();
-    static void setFont(const QFont &f);
-    static const QFontMetrics &fontMetrics();
+    QFont font();
+    void setFont(const QFont &f);
+    const QFontMetrics &fontMetrics();
 
-    static LineEnding defaultLineEnding();
-    static void setDefaultLineEnding(LineEnding le);
+    int tabStop();
+    void setTabStop(int n);
 
-    static int tabStop();
-    static void setTabStop(int n);
-
-    static WhiteSpaceMode showSpaces();
-    static void setShowSpaces(WhiteSpaceMode y);
+    WhiteSpaceMode showSpaces();
+    void setShowSpaces(WhiteSpaceMode y);
 
     static QFormatScheme *defaultFormatScheme();
     static void setDefaultFormatScheme(QFormatScheme *f);

@@ -45,7 +45,6 @@ def main():
         "folder", help="A folder that has contained the binary build")
     parser.add_argument("-c", "--cc", help="where ISCC.exe locates", default="C:\Program Files (x86)\Inno Setup 6\ISCC.exe")
     parser.add_argument("-o", "--output", help="where to put the installer")
-    parser.add_argument("--no-build", action='store_false')
     
     args = parser.parse_args()
 
@@ -231,7 +230,7 @@ Source: {#MyAppExePath}; DestDir: "{app}"; Flags: ignoreversion
 """
 
     iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: expandsz; ValueName: ""; ValueData: {cm:OpenWithWingHexExplorer}; Flags: uninsdeletekey' + '\n'
-    iss_content += r'Root: HKCR; Subkey: "*\shell\WingHexExplorer"; ValueType: expandsz; ValueName: "Icon"; ValueData: {app}\{#MyAppExeName}; Flags: uninsdeletekey' + '\n'
+    iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer"; ValueType: expandsz; ValueName: "Icon"; ValueData: {app}\{#MyAppExeName}; Flags: uninsdeletekey' + '\n'
     iss_content += r'Root: HKCR; Subkey: "*\shell\OpenWithWingHexExplorer\command"; ValueType: expandsz; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey' + '\n'
 
     iss_content += """
@@ -249,19 +248,18 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
     with codecs.open(script_src,'w', "utf-8-sig") as iss:
         iss.write(iss_content)
 
-    if(args.build):
-        print(Fore.GREEN + ">> Copying finished, running ISCC building..." + Style.RESET_ALL)
-        
-        pak_out = ""
-        if args.output is None:
-            pak_out = exeDebPath
-        else:
-            pak_out = args.output
-        
-        ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
-        exit(ret)
-            
-    exit(0)    
+
+    print(Fore.GREEN + ">> Copying finished, running ISCC building..." + Style.RESET_ALL)
+    
+    pak_out = ""
+    if args.output is None:
+        pak_out = exeDebPath
+    else:
+        pak_out = args.output
+    
+    ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
+    exit(ret)
+
 
 if __name__ == "__main__":
     main()

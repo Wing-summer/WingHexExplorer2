@@ -45,6 +45,8 @@ public slots:
 
     void init();
 
+    void initOutput();
+
     void clearConsole();
 
     void pushInputCmd(const QString &cmd);
@@ -63,10 +65,6 @@ private:
     QStringList _cmdQueue;
     QMutex _queueLocker;
     bool _waitforRead = false;
-
-    QTextCharFormat m_stdoutFmtTitle;
-    QTextCharFormat m_stdoutFmtContent;
-    QTextCharFormat m_stdoutFmtWarn;
 
     std::function<QString(void)> _getInputFn;
 };

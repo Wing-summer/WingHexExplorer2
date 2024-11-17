@@ -141,7 +141,8 @@ public:
 
     void eraseLine();
     void insertLine(bool keepAnchor = false);
-    void insertText(const QString &s, bool keepAnchor = false);
+    void insertText(const QString &s, bool keepAnchor = false,
+                    const QString &sfmtID = {});
 
     QDocumentCursor selectionStart() const;
     QDocumentCursor selectionEnd() const;

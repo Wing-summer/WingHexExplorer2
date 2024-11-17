@@ -33,9 +33,12 @@ public:
     virtual QCodeCompletionEngine *clone() override;
 
     virtual QString language() const override;
+
     virtual QStringList extensions() const override;
 
     virtual void setEditor(QEditor *e) override;
+
+    QCodeCompletionWidget *codeCompletionWidget() const;
 
 protected:
     virtual void complete(const QDocumentCursor &c,

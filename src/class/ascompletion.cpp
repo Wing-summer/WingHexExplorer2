@@ -82,8 +82,11 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     // parser.parse(codes, this->editor()->fileName());
 
     // QList<QCodeNode *> nodes = parser.codeNodes();
-    auto txt = c.line().text().left(c.columnNumber());
-    auto code = txt.toUtf8();
+    auto txt = c.line().text();
+    if (txt.isEmpty()) {
+        return;
+    }
+    auto code = txt.left(c.columnNumber()).toUtf8();
 
     auto p = code.data();
     auto len = code.length();
@@ -140,21 +143,25 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
         } else if (eb.type == asTC_IDENTIFIER) {
             if (r != tokens.rend()) {
                 auto pr = std::next(r);
-                if (pr->content == *SEMI_COLON_TRIGGER) {
-                    if (pr != tokens.rend()) {
-                        auto prr = std::next(pr);
-                        auto ns = prr->content;
+                if (pr != tokens.rend()) {
+                    if (pr->content == *SEMI_COLON_TRIGGER) {
+                        if (pr != tokens.rend()) {
+                            auto prr = std::next(pr);
+                            auto ns = prr->content;
 
-                        if (prr->type == asTC_IDENTIFIER) {
-                            for (auto &n : _headerNodes) {
-                                auto name = n->qualifiedName();
-                                if (name == ns) {
-                                    nodes << n;
-                                    break;
+                            if (prr->type == asTC_IDENTIFIER) {
+                                for (auto &n : _headerNodes) {
+                                    auto name = n->qualifiedName();
+                                    if (name == ns) {
+                                        nodes << n;
+                                        break;
+                                    }
                                 }
+                            } else {
+                                return;
                             }
                         } else {
-                            return;
+                            applyEmptyNsNode(nodes);
                         }
                     } else {
                         applyEmptyNsNode(nodes);
@@ -186,20 +193,22 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
         } else if (trigger == *LEFT_PARE_TRIGGER) {
             if (r != tokens.rend()) {
                 auto pr = std::next(r);
-                if (pr->content == *SEMI_COLON_TRIGGER) {
-                    if (pr != tokens.rend()) {
-                        auto prr = std::next(pr);
-                        auto ns = prr->content;
-                        if (prr->type == asTC_IDENTIFIER) {
-                            for (auto &n : _headerNodes) {
-                                auto name = n->qualifiedName();
-                                if (name == ns) {
-                                    nodes << n;
-                                    break;
+                if (pr != tokens.rend()) {
+                    if (pr->content == *SEMI_COLON_TRIGGER) {
+                        if (pr != tokens.rend()) {
+                            auto prr = std::next(pr);
+                            auto ns = prr->content;
+                            if (prr->type == asTC_IDENTIFIER) {
+                                for (auto &n : _headerNodes) {
+                                    auto name = n->qualifiedName();
+                                    if (name == ns) {
+                                        nodes << n;
+                                        break;
+                                    }
                                 }
+                            } else {
+                                return;
                             }
-                        } else {
-                            return;
                         }
                     }
                 }
@@ -282,6 +291,10 @@ void AsCompletion::applyEmptyNsNode(QList<QCodeNode *> &nodes) {
     }
 
     nodes = _emptyNsNodes;
+}
+
+QCodeCompletionWidget *AsCompletion::codeCompletionWidget() const {
+    return pPopup;
 }
 
 void AsCompletion::setEditor(QEditor *e) {

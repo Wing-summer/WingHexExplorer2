@@ -2980,3 +2980,10 @@ QCallTip
     qproperty-foreground: #eff0f1;
     qproperty-opacity: 0.8;
 }
+
+QConsoleWidget
+{
+    background-color: #1d2023;
+    color: #eff0f1;
+    selection-background-color: #3daee9;
+}

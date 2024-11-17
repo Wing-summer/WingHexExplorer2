@@ -23,24 +23,6 @@
 #include <QShortcut>
 
 ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
-    // m_stdoutFmtTitle = this->currentCharFormat();
-
-    m_stdoutFmtWarn = m_stdoutFmtContent =
-        channelCharFormat(ConsoleChannel::StandardOutput);
-
-    m_stdoutFmtContent.setForeground(Qt::green);
-    m_stdoutFmtWarn.setForeground(QColorConstants::Svg::gold);
-
-    setChannelCharFormat(ConsoleChannel::StandardOutput, m_stdoutFmtContent);
-
-    _s.setDevice(this->device());
-    stdWarn(tr("Scripting console for WingHexExplorer"));
-    _s << Qt::endl;
-    stdWarn(tr(">>>> Powered by AngelScript <<<<"));
-    _s << Qt::endl << Qt::endl;
-    appendCommandPrompt();
-    setMode(Input);
-
     auto shortCut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), this);
     connect(shortCut, &QShortcut::activated, this,
             &ScriptingConsole::clearConsole);
@@ -53,7 +35,7 @@ void ScriptingConsole::stdOut(const QString &str) { writeStdOut(str); }
 void ScriptingConsole::stdErr(const QString &str) { writeStdErr(str); }
 
 void ScriptingConsole::stdWarn(const QString &str) {
-    write(str, m_stdoutFmtWarn);
+    write(str, QStringLiteral("stdwarn"));
 }
 
 void ScriptingConsole::newLine() { _s << Qt::endl; }
@@ -89,6 +71,17 @@ void ScriptingConsole::init() {
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::consoleCommand);
+}
+
+void ScriptingConsole::initOutput() {
+    _s.setDevice(this->device());
+    stdWarn(tr("Scripting console for WingHexExplorer"));
+
+    _s << Qt::endl;
+    stdWarn(tr(">>>> Powered by AngelScript <<<<"));
+    _s << Qt::endl << Qt::endl;
+    appendCommandPrompt();
+    setMode(Input);
 }
 
 void ScriptingConsole::clearConsole() {
@@ -131,7 +124,7 @@ QString ScriptingConsole::getInput() {
             if (!_cmdQueue.isEmpty()) {
                 instr = _cmdQueue.takeFirst();
                 setMode(Output);
-                write(instr, QTextCharFormat());
+                QConsoleWidget::write(instr);
                 setMode(Input);
                 break;
             }
@@ -165,7 +158,7 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
 
     _lastCommandPrompt = storeOnly;
 
-    write(commandPrompt, m_stdoutFmtTitle);
+    QConsoleWidget::write(commandPrompt);
 }
 
 ScriptMachine *ScriptingConsole::machine() const { return _sp; }

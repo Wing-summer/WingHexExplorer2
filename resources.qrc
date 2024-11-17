@@ -10,6 +10,8 @@
         <file>images/clearhis.png</file>
         <file>images/clone.png</file>
         <file>images/closefile.png</file>
+        <file>images/codefmt.png</file>
+        <file>images/codeformat.png</file>
         <file>images/copy.png</file>
         <file>images/copyhex.png</file>
         <file>images/cut.png</file>
@@ -89,6 +91,7 @@
         <file>images/scriptfolderusr.png</file>
         <file>images/setting.png</file>
         <file>images/settingplugin.png</file>
+        <file>images/snippt.png</file>
         <file>images/soft.png</file>
         <file>images/sponsor.png</file>
         <file>images/sum.png</file>
@@ -100,6 +103,7 @@
         <file>images/win.png</file>
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
+        <file>src/TESTCODE.as</file>
     </qresource>
     <qresource prefix="/qpathedit/icons">
         <file alias="dialog.ico">3rdparty/QPathEdit/Fatcow-Farm-Fresh-Dialog.ico</file>
@@ -114,14 +118,13 @@
         <file alias="copy.png">images/copy.png</file>
         <file alias="cut.png">images/cut.png</file>
         <file alias="find.png">images/find.png</file>
+        <file alias="goto.png">images/goto.png</file>
         <file alias="paste.png">images/paste.png</file>
         <file alias="redo.png">images/redo.png</file>
         <file alias="replace.png">images/replace.png</file>
         <file alias="undo.png">images/undo.png</file>
-        <file alias="goto.png">images/goto.png</file>
     </qresource>
     <qresource prefix="/completion">
-        <file>images/completion/classnew.png</file>
         <file>images/completion/CTvirtuals.png</file>
         <file>images/completion/CVclass.png</file>
         <file>images/completion/CVenum.png</file>
@@ -146,5 +149,6 @@
         <file>images/completion/CVstruct.png</file>
         <file>images/completion/CVtypedef.png</file>
         <file>images/completion/CVunion.png</file>
+        <file>images/completion/classnew.png</file>
     </qresource>
 </RCC>

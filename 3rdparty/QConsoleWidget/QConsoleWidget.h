@@ -5,7 +5,6 @@
 #include <QTextCharFormat>
 #include <QTextStream>
 
-#include "control/qcodecompletionwidget.h"
 #include "qeditor.h"
 #include "qlanguagefactory.h"
 
@@ -18,31 +17,20 @@ public:
     enum ConsoleMode { Input, Output };
     Q_ENUM(ConsoleMode)
 
-    enum ConsoleChannel {
-        StandardInput,
-        StandardOutput,
-        StandardError,
-        nConsoleChannels
-    };
-    Q_ENUM(ConsoleChannel)
-
     explicit QConsoleWidget(QWidget *parent = nullptr);
     virtual ~QConsoleWidget();
 
     ConsoleMode mode() const { return mode_; }
     void setMode(ConsoleMode m);
     QIODevice *device() const { return (QIODevice *)iodevice_; }
-    QTextCharFormat channelCharFormat(ConsoleChannel ch) const {
-        return chanFormat_[ch];
-    }
-    void setChannelCharFormat(ConsoleChannel ch, const QTextCharFormat &fmt) {
-        chanFormat_[ch] = fmt;
-    }
+
     virtual QSize sizeHint() const override { return QSize(600, 400); }
+
     // write a formatted message to the console
-    void write(const QString &message, const QTextCharFormat &fmt);
+    void write(const QString &message, const QString &sfmtID = {}) override;
+
     static const QStringList &history() { return history_.strings_; }
-    void setCompleter(QCodeCompletionWidget *c);
+
     // get the current command line
     QString getCommandLine();
 
@@ -103,8 +91,6 @@ private:
     QDocumentCursor inpos_;
     QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
-    QTextCharFormat chanFormat_[nConsoleChannels];
-    QCodeCompletionWidget *completer_;
 
     QLanguageFactory *m_language = nullptr;
 };
