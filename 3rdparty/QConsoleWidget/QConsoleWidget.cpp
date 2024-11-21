@@ -306,10 +306,13 @@ QString QConsoleWidget::getHistoryPath() {
 void QConsoleWidget::write(const QString &message, const QString &sfmtID) {
     auto tc = cursor();
     auto ascom = dynamic_cast<AsCompletion *>(completionEngine());
-    Q_ASSERT(ascom);
-    auto cw = ascom->codeCompletionWidget();
 
-    if (mode() == Output || (cw && cw->isCompleting())) {
+    QCodeCompletionWidget *cw = nullptr;
+    if (ascom) {
+        cw = ascom->codeCompletionWidget();
+    }
+
+    if (ascom == nullptr || mode() == Output || (cw && cw->isCompleting())) {
         // in output mode or completion messages are appended
         auto tc1 = tc;
         tc1.movePosition(QDocumentCursor::End);

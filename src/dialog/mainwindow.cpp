@@ -949,25 +949,15 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 auto hexeditor = editor->hexEditor();
                 auto doc = hexeditor->document();
 
-                if (hexeditor->isKeepSize() &&
-                    (doc->metadata()->hasMetadata() ||
-                     doc->bookMarksCount() > 0)) {
-                    auto ret = WingMessageBox::warning(
-                        this, qAppName(), tr("MetaBrokingPos"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (ret == QMessageBox::No) {
-                        return;
-                    }
-                }
-
                 auto b = !hexeditor->isKeepSize();
                 if ((!b && editor->documentType() ==
                                EditorView::DocumentType::RegionFile) ||
                     !hexeditor->setKeepSize(b)) {
                     Toast::toast(this, _pixCannotOver, tr("ErrUnOver"));
                 } else {
-                    if (hexeditor->document()->metadata()->hasMetadata()) {
-                        Toast::toast(this, _pixCanOver, tr("InfoCanOverLimit"));
+                    if (b) {
+                        Toast::toast(this, _pixCannotOver,
+                                     tr("InfoCanOverLimit"));
                     }
                 }
             });
@@ -1835,13 +1825,8 @@ void MainWindow::on_bookmark() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("bookmark")),
-                     tr("CheckKeepSize"));
-        return;
-    }
-
     auto pos = hexeditor->currentOffset();
+
     if (doc->existBookMark(pos)) {
         auto bcomment = doc->bookMark(pos);
         bool ok;
@@ -1869,12 +1854,6 @@ void MainWindow::on_bookmarkdel() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("bookmarkdel")),
-                     tr("CheckKeepSize"));
-        return;
-    }
-
     auto pos = hexeditor->currentOffset();
 
     if (doc->bookMarkExists(pos)) {
@@ -1888,11 +1867,6 @@ void MainWindow::on_bookmarkcls() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("bookmarkcls")),
-                     tr("CheckKeepSize"));
-        return;
-    }
     doc->ClearBookMark();
 }
 
@@ -1902,11 +1876,6 @@ void MainWindow::on_metadata() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                     tr("CheckKeepSize"));
-        return;
-    }
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
@@ -1930,11 +1899,7 @@ void MainWindow::on_metadataedit() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadataedit")),
-                     tr("CheckKeepSize"));
-        return;
-    }
+
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
@@ -1975,11 +1940,6 @@ void MainWindow::on_metadatadel() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadatadel")),
-                     tr("CheckKeepSize"));
-        return;
-    }
     auto meta = doc->metadata();
     auto pos = hexeditor->cursor()->position().offset();
     meta->RemoveMetadata(pos);
@@ -1991,11 +1951,6 @@ void MainWindow::on_metadatacls() {
         return;
     }
     auto doc = hexeditor->document();
-    if (!doc->isKeepSize()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("metadatacls")),
-                     tr("CheckKeepSize"));
-        return;
-    }
     doc->metadata()->Clear();
 }
 
@@ -2401,11 +2356,6 @@ void MainWindow::connectEditorView(EditorView *editor) {
             return;
         }
         auto doc = hexeditor->document();
-        if (!doc->isKeepSize()) {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("metadataedit")),
-                         tr("CheckKeepSize"));
-            return;
-        }
         if (hexeditor->documentBytes() > 0) {
             MetaDialog m(this);
             auto cur = hexeditor->cursor();

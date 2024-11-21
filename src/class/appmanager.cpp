@@ -20,7 +20,6 @@
 #include <QFont>
 
 #include "class/clangformatmanager.h"
-#include "class/langservice.h"
 #include "class/logger.h"
 #include "languagemanager.h"
 #include "settingmanager.h"
@@ -95,6 +94,8 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
+    ClangFormatManager::instance().save();
+
     _w->deleteLater();
     _w = nullptr;
 }

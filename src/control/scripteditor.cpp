@@ -16,6 +16,7 @@
 */
 
 #include "scripteditor.h"
+#include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qeditor.h"
 
 #include <QAction>
@@ -26,6 +27,8 @@
 #include "qlinemarkpanel.h"
 #include "qlinenumberpanel.h"
 #include "qpanellayout.h"
+
+#include "class/clangformatmanager.h"
 
 ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(QString(), parent) {
@@ -66,22 +69,25 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 }
 
 ScriptEditor::~ScriptEditor() {
-    auto e = m_editor->editor();
+    auto e = editor();
     e->disconnect();
     e->document()->disconnect();
 }
 
-QString ScriptEditor::fileName() const {
-    return m_editor->editor()->fileName();
-}
+QString ScriptEditor::fileName() const { return editor()->fileName(); }
 
 bool ScriptEditor::openFile(const QString &filename) {
-    auto e = m_editor->editor();
+    auto e = editor();
     return e->load(filename);
 }
 
 bool ScriptEditor::save(const QString &path) {
-    auto e = m_editor->editor();
+    auto e = editor();
+    auto clang = ClangFormatManager::instance();
+    if (clang.exists() && clang.autoFormat()) {
+        formatCode();
+    }
+
     if (path.isEmpty()) {
         return e->save();
     }
@@ -103,3 +109,15 @@ void ScriptEditor::processTitle() {
 }
 
 QEditor *ScriptEditor::editor() const { return m_editor->editor(); }
+
+bool ScriptEditor::formatCode() {
+    bool ok;
+    auto e = editor();
+    auto fmtcodes = ClangFormatManager::instance().formatCode(e->text(), ok);
+    if (ok) {
+        auto doc = e->document();
+        doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc));
+        return true;
+    }
+    return false;
+}

@@ -8,6 +8,10 @@
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_ENABLE_FMT, ("clang.enabled"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_AUTO_FMT, ("clang.auto"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_STYLE, ("clang.style"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_CUSTOM_STYLE, ("clang.customStyle"))
+
+Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_DEFAULT_CUSTOM,
+                          ("BasedOnStyle: llvm, IndentWidth: 4"))
 
 ClangFormatManager::ClangFormatManager() {
     // load config
@@ -18,6 +22,9 @@ ClangFormatManager::ClangFormatManager() {
 
     auto styles = supportedStyles();
     READ_CONFIG_STRING(m_clangStyle, CLANG_STYLE, styles.first());
+
+    READ_CONFIG_STRING(m_customStyleString, CLANG_CUSTOM_STYLE,
+                       *CLANG_DEFAULT_CUSTOM);
 
     // ok find
     refind();
@@ -56,6 +63,11 @@ bool ClangFormatManager::refind() {
                 auto vstr = QStringLiteral("clang-format version ");
                 if (ret.startsWith(vstr)) {
                     m_clangVersion = ret.mid(vstr.length()).simplified();
+
+                    if (!checkClangCustomStyle(m_customStyleString)) {
+                        m_customStyleString = *CLANG_DEFAULT_CUSTOM;
+                    }
+
                     return true;
                 } else {
                     m_clangPath.clear();
@@ -137,16 +149,57 @@ QString ClangFormatManager::runClangFormat(const QStringList &params,
     }
 }
 
+bool ClangFormatManager::autoFormat() const { return m_autoFmt; }
+
+void ClangFormatManager::setAutoFormat(bool newAutoFmt) {
+    m_autoFmt = newAutoFmt;
+}
+
+bool ClangFormatManager::checkClangCustomStyle(const QString &styles) {
+    bool ok = false;
+    auto style = QStringLiteral("--style={%1}").arg(styles.simplified());
+    runClangFormat({style, QStringLiteral("--assume-filename=wing.cpp")},
+                   QStringLiteral("void main(){}"), ok);
+    return ok;
+}
 quint32 ClangFormatManager::identWidth() const { return m_identWidth; }
 
 void ClangFormatManager::setIdentWidth(quint32 newIdentWidth) {
     m_identWidth = newIdentWidth;
 }
 
+void ClangFormatManager::save() {
+    HANDLE_CONFIG;
+    WRITE_CONFIG(CLANG_ENABLE_FMT, m_enabled);
+    WRITE_CONFIG(CLANG_AUTO_FMT, m_autoFmt);
+    WRITE_CONFIG(CLANG_STYLE, m_clangStyle);
+    WRITE_CONFIG(CLANG_CUSTOM_STYLE, m_customStyleString);
+}
+
+void ClangFormatManager::reset() {
+    m_enabled = true;
+    m_autoFmt = false;
+    auto styles = supportedStyles();
+    m_clangPath = styles.first();
+    m_customStyleString = *CLANG_DEFAULT_CUSTOM;
+    save();
+}
+
 QString ClangFormatManager::clangStyle() const { return m_clangStyle; }
 
-void ClangFormatManager::setClangStyle(const QString &newClangStyle) {
-    m_clangStyle = newClangStyle;
+bool ClangFormatManager::setClangStyle(const QString &newClangStyle) {
+    if (m_clangStyle != newClangStyle) {
+        if (checkClangCustomStyle(newClangStyle)) {
+            m_clangStyle = newClangStyle;
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+int ClangFormatManager::clangCurrentStyleIndex() const {
+    return supportedStyles().indexOf(m_clangStyle);
 }
 
 bool ClangFormatManager::enabled() const { return m_enabled; }

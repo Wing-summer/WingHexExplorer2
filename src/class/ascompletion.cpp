@@ -274,7 +274,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             }
         } else {
             // qDeleteAll(temp);
-            qDebug("completion failed");
+            // qDebug("completion failed");
         }
     }
 }

@@ -93,6 +93,54 @@ bool QHexDocument::metafgVisible() { return m_metafg; }
 
 bool QHexDocument::metaCommentVisible() { return m_metacomment; }
 
+void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
+    QMap<qsizetype, QString> bms;
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto rmbegin = _bookmarks.lowerBound(offset);
+#else
+    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
+#endif
+    auto addbegin = _bookmarks.upperBound(offset);
+    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+        bms.insert(p.key() + length, p.value());
+    }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    for (auto it = rmbegin; it != _bookmarks.end();) {
+        it = _bookmarks.erase(it);
+    }
+#else
+    _bookmarks.erase(rmbegin, _bookmarks.cend());
+#endif
+
+    _bookmarks.insert(bms);
+}
+
+void QHexDocument::removeBookMarkAdjust(qsizetype offset, qsizetype length) {
+    QMap<qsizetype, QString> bms;
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto rmbegin = _bookmarks.lowerBound(offset);
+#else
+    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
+#endif
+    auto addbegin = _bookmarks.upperBound(offset);
+    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+        bms.insert(p.key() - length, p.value());
+    }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    for (auto it = rmbegin; it != _bookmarks.end();) {
+        it = _bookmarks.erase(it);
+    }
+#else
+    _bookmarks.erase(rmbegin, _bookmarks.cend());
+#endif
+
+    _bookmarks.insert(bms);
+}
+
 bool QHexDocument::isDocSaved() { return m_isSaved; }
 
 void QHexDocument::setDocSaved(bool b) {
@@ -285,10 +333,7 @@ bool QHexDocument::insert(qsizetype offset, const QByteArray &data) {
     if (m_keepsize || m_readonly || m_islocked ||
         (offset < m_buffer->length() && m_metadata->hasMetadata()))
         return false;
-    m_buffer->insert(offset, data);
-    setDocSaved(false);
-    emit documentChanged();
-    return true;
+    return this->_insert(offset, data);
 }
 
 bool QHexDocument::replace(qsizetype offset, uchar b) {
@@ -300,16 +345,44 @@ bool QHexDocument::replace(qsizetype offset, uchar b) {
 bool QHexDocument::replace(qsizetype offset, const QByteArray &data) {
     if (m_readonly || m_islocked)
         return false;
+    return this->_replace(offset, data);
+}
+
+bool QHexDocument::remove(qsizetype offset, qsizetype len) {
+    if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
+        return false;
+    return this->_remove(offset, len);
+}
+
+bool QHexDocument::_insert(qsizetype offset, uchar b) {
+    return this->_insert(offset, QByteArray(1, char(b)));
+}
+
+bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
+    m_buffer->insert(offset, data);
+    auto len = data.size();
+    insertBookMarkAdjust(offset, len);
+    m_metadata->insertAdjust(offset, len);
+    setDocSaved(false);
+    emit documentChanged();
+    return true;
+}
+
+bool QHexDocument::_replace(qsizetype offset, uchar b) {
+    return this->_replace(offset, QByteArray(1, char(b)));
+}
+
+bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
     m_buffer->replace(offset, data);
     setDocSaved(false);
     emit documentChanged();
     return true;
 }
 
-bool QHexDocument::remove(qsizetype offset, qsizetype len) {
-    if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
-        return false;
+bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     m_buffer->remove(offset, len);
+    removeBookMarkAdjust(offset, len);
+    m_metadata->removeAdjust(offset, len);
     setDocSaved(false);
     emit documentChanged();
     return true;
@@ -419,14 +492,12 @@ void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset, uchar b,
 
 void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
                           const QByteArray &data, int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked ||
-        (offset < m_buffer->length() && m_metadata->hasMetadata()))
+    if (m_keepsize || m_readonly || m_islocked)
         return;
-    if (!m_metadata->hasMetadata())
-        m_undostack->push(
-            new InsertCommand(m_buffer, offset, data, cursor, nibbleindex));
-    else
-        m_buffer->insert(offset, data);
+
+    m_undostack->push(
+        new InsertCommand(this, cursor, offset, data, nibbleindex));
+
     emit documentChanged();
 }
 
@@ -435,7 +506,7 @@ void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
     if (m_readonly || m_islocked)
         return;
     m_undostack->push(
-        new ReplaceCommand(m_buffer, offset, data, cursor, nibbleindex));
+        new ReplaceCommand(this, offset, data, cursor, nibbleindex));
     emit documentChanged();
 }
 
@@ -444,7 +515,7 @@ bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
     if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
         return false;
     m_undostack->push(
-        new RemoveCommand(m_buffer, offset, len, cursor, nibbleindex));
+        new RemoveCommand(this, offset, len, cursor, nibbleindex));
     emit documentChanged();
     return true;
 }

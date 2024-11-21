@@ -5,7 +5,7 @@
 
 class ReplaceCommand : public HexCommand {
 public:
-    ReplaceCommand(QHexBuffer *buffer, qsizetype offset, const QByteArray &data,
+    ReplaceCommand(QHexDocument *doc, qsizetype offset, const QByteArray &data,
                    QHexCursor *cursor, int nibbleindex,
                    QUndoCommand *parent = nullptr);
     void undo() override;

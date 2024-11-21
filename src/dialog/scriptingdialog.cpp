@@ -20,7 +20,6 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "aboutsoftwaredialog.h"
-#include "class/clangformatmanager.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/qkeysequences.h"
@@ -28,7 +27,6 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
-#include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qcodeeditwidget/qeditconfig.h"
 #include "qcodeeditwidget/qsnippetedit.h"
 #include "qdocumentline.h"
@@ -113,6 +111,11 @@ ScriptingDialog::~ScriptingDialog() {}
 
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
+
+    auto fmt = new QFormatScheme(this);
+    LangService::addAdditionalFormat(fmt);
+    m_consoleout->document()->setFormatScheme(fmt);
+
     m_consoleout->init();
     auto machine = m_consoleout->machine();
     connect(machine, &ScriptMachine::onDebugFinished, this, [=] {
@@ -1258,15 +1261,7 @@ void ScriptingDialog::on_gotoline() {
 void ScriptingDialog::on_codefmt() {
     auto e = currentEditor();
     if (e) {
-        auto editor = e->editor();
-        auto codes = editor->text();
-        bool ok;
-
-        auto fmtcodes = ClangFormatManager::instance().formatCode(codes, ok);
-        if (ok) {
-            auto doc = editor->document();
-            doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc));
-        } else {
+        if (!e->formatCode()) {
             Toast::toast(this, NAMEICONRES(QStringLiteral("codefmt")),
                          tr("FormatCodeFailed"));
         }
@@ -1300,7 +1295,13 @@ void ScriptingDialog::on_wiki() {
                        "doc_script.html")));
 }
 
-void ScriptingDialog::on_fullScreen() { this->showFullScreen(); }
+void ScriptingDialog::on_fullScreen() {
+    if (this->isFullScreen()) {
+        this->showMaximized();
+    } else {
+        this->showFullScreen();
+    }
+}
 
 void ScriptingDialog::on_restoreLayout() {
     m_dock->restoreState(_defaultLayout);

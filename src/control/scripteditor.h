@@ -32,6 +32,8 @@ public:
 
     QEditor *editor() const;
 
+    bool formatCode();
+
 signals:
     void onToggleMark(int lineIndex);
 

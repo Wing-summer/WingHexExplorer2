@@ -25,7 +25,6 @@ public:
     QString version() const;
 
     QString customStyleString() const;
-
     void setCustomStyleString(const QString &newCustomStyleString);
 
     QString path() const;
@@ -34,13 +33,23 @@ public:
     void setEnabled(bool newEnabled);
 
     QString clangStyle() const;
-    void setClangStyle(const QString &newClangStyle);
+    bool setClangStyle(const QString &newClangStyle);
+    int clangCurrentStyleIndex() const;
 
     quint32 identWidth() const;
     void setIdentWidth(quint32 newIdentWidth);
 
+public:
+    void save();
+    void reset();
+
+    bool autoFormat() const;
+    void setAutoFormat(bool newAutoFmt);
+
 private:
     explicit ClangFormatManager();
+
+    bool checkClangCustomStyle(const QString &styles);
 
     QString runClangFormat(const QStringList &params, const QString &stdinput,
                            bool &ok);

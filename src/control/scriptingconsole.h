@@ -52,7 +52,7 @@ public slots:
     void pushInputCmd(const QString &cmd);
 
 private:
-    void consoleCommand(const QString &code);
+    void runConsoleCommand(const QString &code);
 
     QString getInput();
 
@@ -61,6 +61,7 @@ private:
     QTextStream _s;
 
     bool _lastCommandPrompt = false;
+    QString _codes;
 
     QStringList _cmdQueue;
     QMutex _queueLocker;

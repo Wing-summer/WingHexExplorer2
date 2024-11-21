@@ -6,6 +6,7 @@
 #include "commands/meta/metareplacecommand.h"
 
 #include <QtAlgorithms>
+#include <QtConcurrent/QtConcurrentMap>
 
 QHexMetadata::QHexMetadata(QUndoStack *undo, QObject *parent)
     : QObject(parent), m_undo(undo) {}
@@ -99,20 +100,7 @@ bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
 }
 
 void QHexMetadata::removeMetadata(qsizetype offset) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    m_metadata.erase(
-        std::remove_if(m_metadata.begin(), m_metadata.end(),
-                       [offset, this](const QHexMetadataItem &item) {
-                           auto r = offset >= item.begin && offset <= item.end;
-                           if (r) {
-                               for (auto &l : m_linemeta) {
-                                   l.remove(item);
-                               }
-                           }
-                           return r;
-                       }));
-#else
-    m_metadata.removeIf([offset, this](const QHexMetadataItem &item) {
+    auto rmfn = [offset, this](const QHexMetadataItem &item) {
         auto r = offset >= item.begin && offset <= item.end;
         if (r) {
             for (auto &l : m_linemeta) {
@@ -120,8 +108,16 @@ void QHexMetadata::removeMetadata(qsizetype offset) {
             }
         }
         return r;
-    });
+    };
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    m_metadata.erase(
+        std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
+#else
+    m_metadata.removeIf(rmfn);
 #endif
+
+    emit metadataChanged();
 }
 
 QVector<QHexMetadataItem> QHexMetadata::getAllMetadata() const {
@@ -187,12 +183,17 @@ void QHexMetadata::clear() {
     emit metadataChanged();
 }
 
-void QHexMetadata::metadata(qsizetype begin, qsizetype end,
+bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
+    if (begin < end ||
+        ((!fgcolor.isValid() || fgcolor.alpha() == 0) &&
+         (!bgcolor.isValid() || bgcolor.alpha() == 0) && comment.isEmpty()))
+        return false;
     QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
     addMetadata(absi);
     emit metadataChanged();
+    return true;
 }
 
 void QHexMetadata::setLineWidth(quint8 width) {
@@ -208,27 +209,86 @@ void QHexMetadata::setLineWidth(quint8 width) {
     }
 }
 
-void QHexMetadata::color(qsizetype begin, qsizetype end, const QColor &fgcolor,
+void QHexMetadata::insertAdjust(qsizetype offset, qsizetype length) {
+    m_linemeta.clear();
+
+    QtConcurrent::blockingMap(
+        m_metadata, [offset, length](QHexMetadataItem &meta) {
+            if (meta.end < offset) {
+                return;
+            }
+            if (meta.begin <= offset && meta.end > offset) {
+                meta.end += length;
+            } else {
+                meta.begin += length;
+                meta.end += length;
+            }
+        });
+
+    for (auto &meta : m_metadata) {
+        addMetaLines(meta);
+    }
+}
+
+void QHexMetadata::removeAdjust(qsizetype offset, qsizetype length) {
+    m_linemeta.clear();
+
+    QtConcurrent::blockingMap(
+        m_metadata, [offset, length](QHexMetadataItem &meta) {
+            if (meta.end < offset) {
+                return;
+            }
+            if (meta.begin <= offset && meta.end > offset) {
+                meta.end -= length;
+                if (meta.begin > meta.end) {
+                    meta.flag = true;
+                }
+            } else {
+                meta.begin -= length;
+                meta.end -= length;
+            }
+        });
+
+    auto rmfn = [](const QHexMetadataItem &meta) { return meta.flag; };
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    m_metadata.erase(
+        std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
+#else
+    m_metadata.removeIf(rmfn);
+#endif
+
+    for (auto &meta : m_metadata) {
+        addMetaLines(meta);
+    }
+}
+
+bool QHexMetadata::color(qsizetype begin, qsizetype end, const QColor &fgcolor,
                          const QColor &bgcolor) {
-    this->metadata(begin, end, fgcolor, bgcolor, QString());
+    return this->metadata(begin, end, fgcolor, bgcolor, QString());
 }
 
-void QHexMetadata::foreground(qsizetype begin, qsizetype end,
+bool QHexMetadata::foreground(qsizetype begin, qsizetype end,
                               const QColor &fgcolor) {
-    this->color(begin, end, fgcolor, QColor());
+    return this->color(begin, end, fgcolor, QColor());
 }
 
-void QHexMetadata::background(qsizetype begin, qsizetype end,
+bool QHexMetadata::background(qsizetype begin, qsizetype end,
                               const QColor &bgcolor) {
-    this->color(begin, end, QColor(), bgcolor);
+    return this->color(begin, end, QColor(), bgcolor);
 }
 
-void QHexMetadata::comment(qsizetype begin, qsizetype end,
+bool QHexMetadata::comment(qsizetype begin, qsizetype end,
                            const QString &comment) {
-    this->metadata(begin, end, QColor(), QColor(), comment);
+    return this->metadata(begin, end, QColor(), QColor(), comment);
 }
 
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
+    addMetaLines(mi);
+    m_metadata << mi;
+}
+
+void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {
     const auto firstRow = mi.begin / m_lineWidth;
     const auto lastRow = mi.end / m_lineWidth;
 
@@ -257,6 +317,4 @@ void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
                 {start, length, mi.foreground, mi.background, mi.comment});
         }
     }
-
-    m_metadata << mi;
 }

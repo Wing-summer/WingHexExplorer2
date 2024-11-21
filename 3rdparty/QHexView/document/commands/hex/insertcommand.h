@@ -5,8 +5,8 @@
 
 class InsertCommand : public HexCommand {
 public:
-    InsertCommand(QHexBuffer *buffer, qsizetype offset, const QByteArray &data,
-                  QHexCursor *cursor, int nibbleindex,
+    InsertCommand(QHexDocument *doc, QHexCursor *cursor, qsizetype offset,
+                  const QByteArray &data, int nibbleindex,
                   QUndoCommand *parent = nullptr);
     void undo() override;
     void redo() override;

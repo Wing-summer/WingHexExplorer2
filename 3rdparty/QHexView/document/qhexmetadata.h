@@ -45,6 +45,7 @@ struct QHexMetadataItem {
     qsizetype end = -1;
     QColor foreground, background;
     QString comment;
+    bool flag = false;
 
     // added by wingsummer
     bool operator==(const QHexMetadataItem &item) const {
@@ -110,19 +111,24 @@ public:
     void clear();
     void setLineWidth(quint8 width);
 
+    void insertAdjust(qsizetype offset, qsizetype length);
+    void removeAdjust(qsizetype offset, qsizetype length);
+
 public:
     // new interface with begin, end
-    void metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
+    bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
 
-    void color(qsizetype begin, qsizetype end, const QColor &fgcolor,
+    bool color(qsizetype begin, qsizetype end, const QColor &fgcolor,
                const QColor &bgcolor);
-    void foreground(qsizetype begin, qsizetype end, const QColor &fgcolor);
-    void background(qsizetype begin, qsizetype end, const QColor &bgcolor);
-    void comment(qsizetype begin, qsizetype end, const QString &comment);
+    bool foreground(qsizetype begin, qsizetype end, const QColor &fgcolor);
+    bool background(qsizetype begin, qsizetype end, const QColor &bgcolor);
+    bool comment(qsizetype begin, qsizetype end, const QString &comment);
 
 private:
     void addMetadata(const QHexMetadataItem &mi);
+
+    void addMetaLines(const QHexMetadataItem &mi);
 
 signals:
     void metadataChanged();

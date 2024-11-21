@@ -17,6 +17,7 @@
 
 #include "scriptingconsole.h"
 #include "class/scriptconsolemachine.h"
+#include "qregularexpression.h"
 
 #include <QApplication>
 #include <QColor>
@@ -70,7 +71,7 @@ void ScriptingConsole::init() {
             });
 
     connect(this, &QConsoleWidget::consoleCommand, this,
-            &ScriptingConsole::consoleCommand);
+            &ScriptingConsole::runConsoleCommand);
 }
 
 void ScriptingConsole::initOutput() {
@@ -96,17 +97,28 @@ void ScriptingConsole::pushInputCmd(const QString &cmd) {
     _cmdQueue.append(cmd);
 }
 
-void ScriptingConsole::consoleCommand(const QString &code) {
+void ScriptingConsole::runConsoleCommand(const QString &code) {
     if (_waitforRead) {
         _waitforRead = false;
         return;
     }
 
-    setMode(Output);
-    if (!_sp->executeCode(code)) {
+    auto exec = code.trimmed();
+    if (exec.endsWith('\\')) {
+        static QRegularExpression ex(QStringLiteral("[\\\\\\s]+$"));
+        _codes += exec.remove(ex);
+        setMode(Output);
+        appendCommandPrompt(true);
+        setMode(Input);
+    } else {
+        setMode(Output);
+        _codes += exec;
+        if (!_sp->executeCode(_codes)) {
+        }
+        _codes.clear();
+        appendCommandPrompt();
+        setMode(Input);
     }
-    appendCommandPrompt();
-    setMode(Input);
 }
 
 QString ScriptingConsole::getInput() {

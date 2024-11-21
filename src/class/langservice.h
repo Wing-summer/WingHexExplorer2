@@ -25,6 +25,8 @@ public:
 
     QSnippetManager *snippetManager() const;
 
+    static void addAdditionalFormat(QFormatScheme *scheme);
+
 private:
     LangService();
     ~LangService();

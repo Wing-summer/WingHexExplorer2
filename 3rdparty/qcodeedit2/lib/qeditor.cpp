@@ -1277,9 +1277,14 @@ QDocument *QEditor::document() const { return m_doc; }
         \internal
 */
 void QEditor::setDocument(QDocument *d) {
-    Q_UNUSED(d)
+    if (d == nullptr) {
+        return;
+    }
 
-    qWarning("QEditor::setDocument() is not working yet...");
+    m_doc = d;
+    documentWidthChanged(m_doc->width());
+    documentHeightChanged(m_doc->height());
+    setFileName(QString());
 }
 
 /*!
@@ -3787,7 +3792,7 @@ void QEditor::repaintCursor() {
     if (m_mirrors.count())
         viewport()->update();
 
-    QRect r = QEditor::cursorRect();
+    QRect r = QEditor::cursorRect().adjusted(0, -1, 0, 1);
 
     if (m_crect != r) {
         viewport()->update(m_crect.translated(horizontalOffset(), 0));
@@ -3977,7 +3982,7 @@ QRect QEditor::lineRect(const QDocumentLine &l) const {
         \return The line rect of the given cursor
 */
 QRect QEditor::cursorRect(const QDocumentCursor &c) const {
-    return QEditor::lineRect(c.lineNumber()).adjusted(0, -1, 0, 1);
+    return QEditor::lineRect(c.lineNumber());
 }
 
 /*!

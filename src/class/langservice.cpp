@@ -27,15 +27,7 @@ void LangService::init(asIScriptEngine *engine) {
         break;
     }
 
-    // additional formats
-    QFormat fmt;
-    fmt.foreground = Qt::red;
-    format->setFormat(QStringLiteral("stderr"), fmt);
-    fmt.foreground = QColorConstants::Svg::gold;
-    format->setFormat(QStringLiteral("stdwarn"), fmt);
-    fmt.foreground = Qt::cyan;
-    format->setFormat(QStringLiteral("stdout"), fmt);
-
+    addAdditionalFormat(format);
     QDocument::setDefaultFormatScheme(format);
 
     m_language = new QLanguageFactory(format, this);
@@ -53,6 +45,18 @@ LangService::~LangService() { delete m_snipbind; }
 
 QSnippetManager *LangService::snippetManager() const {
     return m_snippetManager;
+}
+
+void LangService::addAdditionalFormat(QFormatScheme *scheme) {
+    if (scheme) {
+        QFormat fmt;
+        fmt.foreground = Qt::red;
+        scheme->setFormat(QStringLiteral("stderr"), fmt);
+        fmt.foreground = QColorConstants::Svg::gold;
+        scheme->setFormat(QStringLiteral("stdwarn"), fmt);
+        fmt.foreground = Qt::green;
+        scheme->setFormat(QStringLiteral("stdout"), fmt);
+    }
 }
 
 QLanguageFactory *LangService::languageFactory() const { return m_language; }

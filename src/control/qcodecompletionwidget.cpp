@@ -52,10 +52,11 @@ QCodeCompletionWidget::QCodeCompletionWidget(QEditor *p)
     pModel = new QCodeCompletionModel(this);
     setModel(pModel);
 
-    connect(pModel, SIGNAL(changed()), this, SLOT(changed()));
+    connect(pModel, &QCodeCompletionModel::changed, this,
+            &QCodeCompletionWidget::changed);
 
-    connect(this, SIGNAL(activated(QModelIndex)), this,
-            SLOT(complete(QModelIndex)));
+    connect(this, &QCodeCompletionWidget::activated, this,
+            &QCodeCompletionWidget::complete);
 }
 
 void QCodeCompletionWidget::changed() {
@@ -424,6 +425,7 @@ void QCodeCompletionModel::forceUpdate() const {
 
     emit const_cast<QCodeCompletionModel *>(this)->layoutChanged();
     bUpdate = false;
+    emit const_cast<QCodeCompletionModel *>(this)->changed();
 }
 
 QList<QCodeNode *> QCodeCompletionModel::focusNodes() const { return m_nodes; }

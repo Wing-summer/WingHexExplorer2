@@ -1130,12 +1130,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->metadata(begin, end, fgcolor, bgcolor,
-                                              comment);
-                    doc->setDocSaved(false);
-                    return true;
+                    return doc->metadata()->metadata(begin, end, fgcolor,
+                                                     bgcolor, comment);
                 }
                 return false;
             });
@@ -1148,11 +1144,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->metadata(begin, end, fgcolor, bgcolor,
-                                              comment);
-                    return true;
+                    return doc->metadata()->metadata(begin, end, fgcolor,
+                                                     bgcolor, comment);
                 }
                 return false;
             });
@@ -1162,7 +1155,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 if (e) {
                     auto doc = e->hexEditor()->document();
                     doc->metadata()->removeMetadata(offset);
-                    doc->setDocSaved(false);
                     return true;
                 }
                 return false;
@@ -1171,8 +1163,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
-            if (!doc->isKeepSize())
-                return false;
             doc->metadata()->clear();
             return true;
         }
@@ -1184,10 +1174,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
-                if (!doc->isKeepSize())
-                    return false;
-                doc->metadata()->comment(begin, end, comment);
-                return true;
+                return doc->metadata()->comment(begin, end, comment);
             }
             return false;
         });
@@ -1196,10 +1183,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->foreground(begin, end, fgcolor);
-                    return true;
+                    return doc->metadata()->foreground(begin, end, fgcolor);
                 }
                 return false;
             });
@@ -1208,10 +1192,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    if (!doc->isKeepSize())
-                        return false;
-                    doc->metadata()->background(begin, end, bgcolor);
-                    return true;
+                    return doc->metadata()->background(begin, end, bgcolor);
                 }
                 return false;
             });

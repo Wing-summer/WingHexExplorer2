@@ -4,7 +4,7 @@ project(QHexView LANGUAGES CXX)
 
 find_package(
     Qt${QT_VERSION_MAJOR}
-    COMPONENTS Widgets Gui
+    COMPONENTS Widgets Gui Concurrent
     REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
@@ -78,5 +78,6 @@ set_target_properties(
                CXX_STANDARD 17
                CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(QHexView PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-                                       Qt${QT_VERSION_MAJOR}::Gui)
+target_link_libraries(
+    QHexView PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui
+                     Qt${QT_VERSION_MAJOR}::Concurrent)

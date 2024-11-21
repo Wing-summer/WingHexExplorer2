@@ -159,14 +159,16 @@ void QDocumentCommand::insertText(int line, int pos, const QString &s,
 
     if (!sfmtID.isEmpty()) {
         auto fmt = m_doc->formatScheme();
-        auto id = fmt->id(sfmtID);
-        if (id) {
-            QFormatRange range;
-            range.format = id;
-            range.offset = pos;
-            range.length = s.length();
+        if (fmt) {
+            auto id = fmt->id(sfmtID);
+            if (id) {
+                QFormatRange over;
+                over.format = id;
+                over.offset = pos;
+                over.length = s.length();
 
-            h->addOverlay(range);
+                h->addOverlay(over);
+            }
         }
     }
 
@@ -514,7 +516,17 @@ QDocumentInsertCommand::QDocumentInsertCommand(int l, int offset,
     m_data.endOffset = lines.count() ? lines.last().length() : -1;
 
     for (auto &s : lines) {
-        m_data.handles << new QDocumentLineHandle(s, m_doc);
+        auto lh = new QDocumentLineHandle(s, m_doc);
+        QFormatRange over;
+        auto fmt = m_doc->formatScheme();
+        auto id = fmt->id(sfmtID);
+        if (id) {
+            over.format = id;
+            over.offset = 0;
+            over.length = s.length();
+            lh->addOverlay(over);
+        }
+        m_data.handles << lh;
     }
 
     QDocumentLine bl = m_doc->line(l);

@@ -797,12 +797,15 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
 
             // modified by wingsummer
             if (isKeepSize()) {
-                if (e->key() == Qt::Key_Backspace)
-                    m_document->Replace(m_cursor, cur->position().offset() - 1,
-                                        uchar(0), 0);
-                else
-                    m_document->Replace(m_cursor, cur->position().offset(),
-                                        uchar(0), 0);
+                if (cur->insertionMode() == QHexCursor::OverwriteMode) {
+                    if (e->key() == Qt::Key_Backspace)
+                        m_document->Replace(m_cursor,
+                                            cur->position().offset() - 1,
+                                            uchar(0), 0);
+                    else
+                        m_document->Replace(m_cursor, cur->position().offset(),
+                                            uchar(0), 0);
+                }
             } else {
                 if (e->key() == Qt::Key_Backspace)
                     m_document->Remove(m_cursor, cur->position().offset() - 1,
@@ -930,11 +933,12 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
     if (isReadOnly() || isLocked() || (e->modifiers() & Qt::ControlModifier))
         return false;
 
-    if (e->text().isEmpty()) {
+    auto text = e->text();
+    if (text.isEmpty()) {
         return false;
     }
 
-    uchar key = static_cast<uchar>(e->text()[0].toLatin1());
+    uchar key = static_cast<uchar>(text[0].toLatin1());
 
     if ((m_renderer->selectedArea() == QHexRenderer::HexArea)) {
         if (!((key >= '0' && key <= '9') ||

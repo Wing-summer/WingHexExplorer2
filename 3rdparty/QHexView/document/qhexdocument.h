@@ -87,6 +87,9 @@ public:
     bool metabgVisible();
     bool metaCommentVisible();
 
+    void insertBookMarkAdjust(qsizetype offset, qsizetype length);
+    void removeBookMarkAdjust(qsizetype offset, qsizetype length);
+
     /*======================*/
 
 public:
@@ -127,6 +130,12 @@ public slots:
     bool replace(qsizetype offset, uchar b);
     bool replace(qsizetype offset, const QByteArray &data);
     bool remove(qsizetype offset, qsizetype len);
+
+    bool _insert(qsizetype offset, uchar b);
+    bool _insert(qsizetype offset, const QByteArray &data);
+    bool _replace(qsizetype offset, uchar b);
+    bool _replace(qsizetype offset, const QByteArray &data);
+    bool _remove(qsizetype offset, qsizetype len);
 
     /*================================*/
 

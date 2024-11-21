@@ -17,6 +17,11 @@ public:
 private:
     Ui::ClangFormatSetDialog *ui;
 
+    QStringList getEditableStyleTextLines();
+    QString getEditableStyleTexts();
+
+    void reload();
+
     // PageBase interface
 public:
     virtual QIcon categoryIcon() const override;
