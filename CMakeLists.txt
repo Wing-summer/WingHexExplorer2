@@ -152,7 +152,12 @@ set(DIALOG_SRC
     src/dialog/checksumdialog.cpp
     src/dialog/colorpickerdialog.h
     src/dialog/colorpickerdialog.cpp
-    src/dialog/colorpickerdialog.ui)
+    src/dialog/colorpickerdialog.ui
+    src/dialog/showtextdialog.h
+    src/dialog/showtextdialog.cpp
+    src/dialog/splashdialog.ui
+    src/dialog/splashdialog.cpp
+    src/dialog/splashdialog.h)
 
 set(CONTROL_SRC
     src/control/editorview.h
@@ -176,7 +181,9 @@ set(CONTROL_SRC
     src/control/qlistviewext.cpp
     src/control/qcodecompletionwidget.h
     src/control/qcodecompletionwidget_p.h
-    src/control/qcodecompletionwidget.cpp)
+    src/control/qcodecompletionwidget.cpp
+    src/control/codeedit.h
+    src/control/codeedit.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -283,9 +290,6 @@ set(SETTING_SRC
     src/settings/scriptsettingdialog.h
     src/settings/scriptsettingdialog.cpp
     src/settings/scriptsettingdialog.ui
-    src/settings/scriptbehaviorsettingdialog.h
-    src/settings/scriptbehaviorsettingdialog.cpp
-    src/settings/scriptbehaviorsettingdialog.ui
     src/settings/othersettingsdialog.h
     src/settings/othersettingsdialog.cpp
     src/settings/othersettingsdialog.ui

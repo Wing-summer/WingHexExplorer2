@@ -27,6 +27,7 @@
 
 #include "dbghelper.h"
 #include "dialog/mainwindow.h"
+#include "dialog/splashdialog.h"
 #include "utilities.h"
 
 AppManager *AppManager::_instance = nullptr;
@@ -59,9 +60,12 @@ AppManager::AppManager(int &argc, char *argv[])
 
     SkinManager::instance();
     LanguageManager::instance();
+
+    SplashDialog splash;
+    splash.setInfoText(tr("SetupClang"));
     ClangFormatManager::instance();
 
-    _w = new MainWindow;
+    _w = new MainWindow(&splash);
 
     connect(this, &SingleApplication::instanceStarted, this, [this] {
         Q_ASSERT(_w);
@@ -84,6 +88,7 @@ AppManager::AppManager(int &argc, char *argv[])
                 }
             });
 
+    splash.setInfoText(tr("OpeningFiles"));
     if (args.size() > 1) {
         for (auto var = args.begin() + 1; var != args.end(); ++var) {
             openFile(*var);

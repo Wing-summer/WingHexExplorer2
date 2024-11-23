@@ -59,6 +59,8 @@ QLineNumberPanel::~QLineNumberPanel() {}
 */
 QString QLineNumberPanel::type() const { return "Line numbers"; }
 
+QString QLineNumberPanel::name() const { return tr("Line Number Panel"); }
+
 /*!
 
 */

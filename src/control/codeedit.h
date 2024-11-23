@@ -15,24 +15,21 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTBEHAVIORSETTINGDIALOG_H
-#define SCRIPTBEHAVIORSETTINGDIALOG_H
+#ifndef CODEEDIT_H
+#define CODEEDIT_H
 
-#include <QWidget>
+#include "qcodeedit.h"
 
-namespace Ui {
-class ScriptBehaviorSettingDialog;
-}
+#include <QObject>
 
-class ScriptBehaviorSettingDialog : public QWidget {
+class CodeEdit : public QObject, public QCodeEdit {
     Q_OBJECT
-
 public:
-    explicit ScriptBehaviorSettingDialog(QWidget *parent = nullptr);
-    ~ScriptBehaviorSettingDialog();
+    explicit CodeEdit(bool haslineMark, QWidget *parent = nullptr,
+                      bool actions = true);
 
-private:
-    Ui::ScriptBehaviorSettingDialog *ui;
+signals:
+    void onToggleMark(int lineIndex);
 };
 
-#endif // SCRIPTBEHAVIORSETTINGDIALOG_H
+#endif // CODEEDIT_H

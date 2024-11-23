@@ -498,8 +498,41 @@ signals:
 class IWingPlugin : public QObject {
     Q_OBJECT
 public:
-    // TODO: implement the basic type only
     typedef std::function<QVariant(const QVariantList &)> ScriptFn;
+
+    enum MetaType : uint {
+        Void,
+
+        Bool,
+        Int,
+        UInt,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int64,
+        UInt64,
+
+        Float,
+        Double,
+
+        String,
+        // DateTime,
+        Color,
+
+        MetaMax, // reserved
+        MetaTypeMask = 0xFFFFF,
+        Ref = 0x10000000,
+        Array = 0x100000,
+    };
+
+    static_assert(MetaType::MetaMax < MetaType::Array);
+
+    struct ScriptFnInfo {
+        MetaType ret;
+        QVector<QPair<MetaType, QString>> params;
+        ScriptFn fn;
+    };
 
 public:
     virtual int sdkVersion() const = 0;
@@ -529,8 +562,8 @@ public:
         return {};
     }
 
-    // QHash<signature, fn>
-    virtual QHash<QString, ScriptFn> registeredScriptFn() { return {}; }
+    // QHash<function-name, fn>
+    virtual QHash<QString, ScriptFnInfo> registeredScriptFn() { return {}; }
 
 signals:
     // extension and exposed to WingHexAngelScript

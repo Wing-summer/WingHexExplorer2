@@ -15,12 +15,29 @@
 ** =============================================================================
 */
 
-#include "scriptbehaviorsettingdialog.h"
-#include "ui_scriptbehaviorsettingdialog.h"
+#include "splashdialog.h"
+#include "ui_splashdialog.h"
 
-ScriptBehaviorSettingDialog::ScriptBehaviorSettingDialog(QWidget *parent)
-    : QWidget(parent), ui(new Ui::ScriptBehaviorSettingDialog) {
+#include <QTimer>
+
+SplashDialog::SplashDialog(QWidget *parent)
+    : QDialog(parent), ui(new Ui::SplashDialog) {
     ui->setupUi(this);
+    ui->label->setText(
+        QStringLiteral("<html><head/><body><p><span style=\" font-size:16pt; "
+                       "font-weight:600;\">%1</span></p></body></html>")
+            .arg(qAppName()));
+    setWindowFlags(Qt::CustomizeWindowHint | Qt::SplashScreen);
+    setAttribute(Qt::WA_DeleteOnClose);
+    setModal(true);
+    show();
 }
 
-ScriptBehaviorSettingDialog::~ScriptBehaviorSettingDialog() { delete ui; }
+SplashDialog::~SplashDialog() { delete ui; }
+
+void SplashDialog::setInfoText(const QString &text) {
+    ui->lblinfo->setText(text + QStringLiteral("..."));
+    qApp->processEvents();
+}
+
+void SplashDialog::cancel() { close(); }

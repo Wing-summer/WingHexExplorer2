@@ -115,7 +115,13 @@ public:
 
     void cleanUpEditorViewHandle(EditorView *view);
 
-    void registerFn(IWingPlugin *plg, const IWingPlugin::ScriptFn &fn);
+private:
+    void registerFns(IWingPlugin *plg);
+
+    QString type2AngelScriptString(IWingPlugin::MetaType type);
+
+    QString getScriptFnSig(const QString &fnName,
+                           const IWingPlugin::ScriptFnInfo &fninfo);
 
 private:
     bool loadPlugin(IWingPlugin *p);
@@ -188,6 +194,9 @@ private:
         return false;
     }
 
+signals:
+    void pluginLoading(const QString &plgName);
+
 private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();
@@ -202,6 +211,8 @@ private:
     QMap<EditorView *, QList<IWingPlugin *>> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
+
+    QHash<QString, QHash<QString, WingAngelAPI::ScriptFnInfo>> _scfns;
 
     WingAngelAPI *_angelplg = nullptr;
 };

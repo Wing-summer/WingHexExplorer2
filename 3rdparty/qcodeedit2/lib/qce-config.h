@@ -63,7 +63,7 @@ public:
 };
 
 // added by wingsummer
-[[maybe_unused]] static QStringList getEncodings() {
+Q_DECL_UNUSED static QStringList getEncodings() {
     static QStringList encodings;
 
     if (encodings.isEmpty()) {
@@ -91,8 +91,8 @@ public:
     return encodings;
 }
 
-[[maybe_unused]] static QString convertString(const QString &encoding,
-                                              const QByteArray &data) {
+Q_DECL_UNUSED static QString convertString(const QString &encoding,
+                                           const QByteArray &data) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     auto enc = QStringConverter::encodingForName(encoding.toUtf8());
     if (enc) {
@@ -113,8 +113,8 @@ public:
 #endif
 }
 
-[[maybe_unused]] static QByteArray convertByteArray(const QString &encoding,
-                                                    const QString &data) {
+Q_DECL_UNUSED static QByteArray convertByteArray(const QString &encoding,
+                                                 const QString &data) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     auto enc = QStringConverter::encodingForName(encoding.toUtf8());
     if (enc) {

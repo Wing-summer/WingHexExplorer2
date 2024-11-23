@@ -1,4 +1,5 @@
 #include "class/appmanager.h"
+#include "class/settingmanager.h"
 
 int main(int argc, char *argv[]) {
     /* 有关对在 QT5 的 Win 平台禁用高 dpi 支持
@@ -19,8 +20,24 @@ int main(int argc, char *argv[]) {
 
     AppManager a(argc, argv);
     auto w = a.mainWindow();
-    w->show();
-    Utilities::moveToCenter(w);
+
+    auto &set = SettingManager::instance();
+    switch (set.defaultWinState()) {
+    case Qt::WindowNoState:
+        w->show();
+        Utilities::moveToCenter(w);
+        break;
+    case Qt::WindowMinimized:
+        w->showMinimized();
+        break;
+    case Qt::WindowActive:
+    case Qt::WindowMaximized:
+        w->showMaximized();
+        break;
+    case Qt::WindowFullScreen:
+        w->showFullScreen();
+        break;
+    }
 
     return a.exec();
 }

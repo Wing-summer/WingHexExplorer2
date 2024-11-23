@@ -88,6 +88,8 @@ QPanel::~QPanel() {
     //	qDebug("Panels cleared.");
 }
 
+QString QPanel::name() const { return type(); }
+
 /*!
  */
 QEditor *QPanel::editor() { return m_editor; }
@@ -107,7 +109,7 @@ void QPanel::attach(QEditor *e) {
                    this, SLOT(update()));
     }
 
-    editorChange(e);
+    QPanel::editorChange(e);
 
     m_editor = e;
     setParent(e);

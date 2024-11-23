@@ -222,7 +222,7 @@ QPanelLayout *QCodeEdit::panelLayout() const { return m_layout; }
 QAction *QCodeEdit::addPanel(QPanel *panel, Position pos, bool _add) {
     panel->attach(m_editor);
 
-    QAction *a = new QAction(panel->type(), m_editor);
+    QAction *a = new QAction(panel->name(), m_editor);
     a->setCheckable(true);
     a->setChecked(panel->defaultVisibility());
 

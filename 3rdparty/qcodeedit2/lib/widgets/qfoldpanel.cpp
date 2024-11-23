@@ -63,6 +63,8 @@ QFoldPanel::~QFoldPanel() {}
 */
 QString QFoldPanel::type() const { return "Fold indicators"; }
 
+QString QFoldPanel::name() const { return tr("Fold Panel"); }
+
 /*!
 
 */

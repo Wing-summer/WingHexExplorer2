@@ -24,8 +24,6 @@
 #include <QPixmap>
 
 #include "qlanguagefactory.h"
-#include "qlinemarkpanel.h"
-#include "qlinenumberpanel.h"
 #include "qpanellayout.h"
 
 #include "class/clangformatmanager.h"
@@ -39,9 +37,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
-    m_editor = new QCodeEdit(this);
-    auto l = m_editor->panelLayout();
-    l->setSizeConstraint(QLayout::SetMinimumSize);
+    m_editor = new CodeEdit(true, this);
+    connect(m_editor, &CodeEdit::onToggleMark, this,
+            &ScriptEditor::onToggleMark);
 
     auto editor = m_editor->editor();
     connect(editor, &QEditor::titleChanged, this, &ScriptEditor::processTitle);
@@ -49,23 +47,6 @@ ScriptEditor::ScriptEditor(QWidget *parent)
             &ScriptEditor::processTitle);
 
     this->setWidget(editor);
-
-    auto lineMark = new QLineMarkPanel(editor);
-    m_editor->addPanel(lineMark, QCodeEdit::West, true);
-    connect(lineMark, &QLineMarkPanel::onToggleMark, this,
-            &ScriptEditor::onToggleMark);
-
-    auto lineNum = new QLineNumberPanel(editor);
-    lineNum->setVerboseMode(true);
-    m_editor->addPanel(lineNum, QCodeEdit::West, true);
-
-    m_editor->addPanel(QStringLiteral("Fold Panel"), QCodeEdit::West, true);
-    m_editor->addPanel(QStringLiteral("Line Change Panel"), QCodeEdit::West,
-                       true);
-    m_editor->addPanel(QStringLiteral("Goto Line Panel"), QCodeEdit::South,
-                       true);
-    m_editor->addPanel(QStringLiteral("Search Replace Panel"), QCodeEdit::South,
-                       true);
 }
 
 ScriptEditor::~ScriptEditor() {

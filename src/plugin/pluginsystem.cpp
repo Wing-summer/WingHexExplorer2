@@ -147,15 +147,109 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
     }
 }
 
-void PluginSystem::registerFn(IWingPlugin *plg,
-                              const IWingPlugin::ScriptFn &fn) {
-    // TODO
+void PluginSystem::registerFns(IWingPlugin *plg) {
+    Q_ASSERT(plg);
+    auto fns = plg->registeredScriptFn();
+    if (fns.isEmpty()) {
+        return;
+    }
+    for (auto p = fns.constKeyValueBegin(); p != fns.constKeyValueEnd(); ++p) {
+        auto fn = p->second;
+    }
+}
+
+QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type) {
+    bool isArray = type & WingHex::IWingPlugin::Array;
+    bool isRef = type & WingHex::IWingPlugin::Ref;
+
+    QString retype;
+
+    type = IWingPlugin::MetaType(type & WingHex::IWingPlugin::MetaTypeMask);
+    switch (type) {
+    case WingHex::IWingPlugin::Void:
+        retype = QStringLiteral("void");
+        break;
+    case WingHex::IWingPlugin::Bool:
+        retype = QStringLiteral("bool");
+        break;
+    case WingHex::IWingPlugin::Int:
+        retype = QStringLiteral("int");
+        break;
+    case WingHex::IWingPlugin::UInt:
+        retype = QStringLiteral("uint");
+        break;
+    case WingHex::IWingPlugin::Int8:
+        retype = QStringLiteral("int8");
+        break;
+    case WingHex::IWingPlugin::UInt8:
+        retype = QStringLiteral("uint8");
+        break;
+    case WingHex::IWingPlugin::Int16:
+        retype = QStringLiteral("int16");
+        break;
+    case WingHex::IWingPlugin::UInt16:
+        retype = QStringLiteral("uint16");
+        break;
+    case WingHex::IWingPlugin::Int64:
+        retype = QStringLiteral("int64");
+        break;
+    case WingHex::IWingPlugin::UInt64:
+        retype = QStringLiteral("uint64");
+        break;
+    case WingHex::IWingPlugin::Float:
+        retype = QStringLiteral("float");
+        break;
+    case WingHex::IWingPlugin::Double:
+        retype = QStringLiteral("double");
+        break;
+    case WingHex::IWingPlugin::String:
+        retype = QStringLiteral("string");
+        break;
+    case WingHex::IWingPlugin::Color:
+        retype = QStringLiteral("color");
+        break;
+    default:
+        return {};
+    }
+
+    if (isArray) {
+        retype = QStringLiteral("array<") + retype + QStringLiteral(">");
+    }
+
+    if (isRef) {
+        retype += QStringLiteral("@");
+    }
+
+    return retype;
+}
+
+QString PluginSystem::getScriptFnSig(const QString &fnName,
+                                     const IWingPlugin::ScriptFnInfo &fninfo) {
+    if (fnName.isEmpty()) {
+        return {};
+    }
+
+    QString sig;
+
+    auto ret = type2AngelScriptString(fninfo.ret);
+    if (ret.isEmpty()) {
+        return {};
+    }
+
+    sig += ret + QStringLiteral(" ") + fnName + QStringLiteral("(");
+
+    QStringList params;
+    for (auto &param : fninfo.params) {
+        params << type2AngelScriptString(fninfo.ret) + QStringLiteral(" ") +
+                      param.second;
+    }
+
+    return sig + params.join(',') + QStringLiteral(")");
 }
 
 bool PluginSystem::loadPlugin(IWingPlugin *p) {
     QList<WingPluginInfo> loadedplginfos;
     try {
-
         if (p->signature() != WINGSUMMER) {
             throw tr("ErrLoadPluginSign");
         }
@@ -174,6 +268,8 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         if (loadedpuid.contains(puid)) {
             throw tr("ErrLoadLoadedPlugin");
         }
+
+        emit pluginLoading(p->pluginName());
 
         if (!p->init(loadedplginfos)) {
             throw tr("ErrLoadInitPlugin");
@@ -313,9 +409,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
             }
         }
 
-        for (auto &fn : p->registeredScriptFn()) {
-            registerFn(p, fn);
-        }
+        registerFns(p);
 
         connectInterface(p);
         m_plgviewMap.insert(p, nullptr);
@@ -1687,6 +1781,7 @@ void PluginSystem::LoadPlugin() {
 
     auto ret = loadPlugin(_angelplg);
     Q_ASSERT(ret);
+    Q_UNUSED(ret);
 
     auto &set = SettingManager::instance();
     if (!set.enablePlugin()) {

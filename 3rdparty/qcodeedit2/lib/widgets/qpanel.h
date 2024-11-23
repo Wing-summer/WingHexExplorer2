@@ -46,6 +46,7 @@ public:
 
     virtual QString id() const = 0;
     virtual QString type() const = 0;
+    virtual QString name() const;
 
     QEditor *editor();
     void attach(QEditor *e);

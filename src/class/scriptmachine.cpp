@@ -116,7 +116,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     // Register a couple of extra functions for the scripts
     _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
                          std::placeholders::_2);
-    r = engine->RegisterGlobalFunction("void print(? &in)",
+    r = engine->RegisterGlobalFunction("void print(? &in obj)",
                                        asMETHOD(decltype(_printFn), operator()),
                                        asCALL_THISCALL_ASGLOBAL, &_printFn);
     Q_ASSERT(r >= 0);
@@ -133,7 +133,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     }
 
     r = engine->RegisterGlobalFunction(
-        "int exec(const string &in, const string &in)",
+        "int exec(const string &in exe, const string &in params)",
         asFUNCTIONPR(execSystemCmd, (const std::string &, const std::string &),
                      int),
         asCALL_CDECL);
@@ -143,7 +143,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     }
 
     r = engine->RegisterGlobalFunction(
-        "int exec(const string &in, const string &in, string &out)",
+        "int exec(const string &in exe, const string &in params, "
+        "string &out output)",
         asFUNCTIONPR(execSystemCmd,
                      (const std::string &, const std::string &, std::string &),
                      int),

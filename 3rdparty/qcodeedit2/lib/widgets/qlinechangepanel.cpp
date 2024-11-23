@@ -60,6 +60,8 @@ QLineChangePanel::~QLineChangePanel() {}
 */
 QString QLineChangePanel::type() const { return "Line changes"; }
 
+QString QLineChangePanel::name() const { return tr("Line Change Panel"); }
+
 /*!
         \internal
 */

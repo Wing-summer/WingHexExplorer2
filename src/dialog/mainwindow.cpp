@@ -69,11 +69,14 @@
 
 constexpr auto EMPTY_FUNC = [] {};
 
-MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
+MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
+    Q_ASSERT(splash);
+
     this->setUpdatesEnabled(false);
     this->setMinimumSize(900, 800);
 
     // recent file manager init
+    splash->setInfoText(tr("SetupRecent"));
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
@@ -83,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
+    splash->setInfoText(tr("SetupUI"));
     // build up UI
     buildUpRibbonBar();
 
@@ -94,6 +98,7 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
+    splash->setInfoText(tr("SetupDocking"));
     buildUpDockSystem(cw);
     _defaultLayout = m_dock->saveState();
 
@@ -133,24 +138,35 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
     auto &set = SettingManager::instance();
 
     // launch logging system
+    splash->setInfoText(tr("LaunchingLog"));
     auto &log = Logger::instance();
     log.setLogLevel(Logger::Level(set.logLevel()));
     connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
 
     // launch plugin system
+    splash->setInfoText(tr("SetupPluginSystem"));
     auto &plg = PluginSystem::instance();
+    connect(&plg, &PluginSystem::pluginLoading, this,
+            [=](const QString &plgName) {
+                splash->setInfoText(tr("LoadingPlg:") + plgName);
+            });
     plg.setMainWindow(this);
     plg.LoadPlugin();
+
     // At this time, AngelScript service plugin has started
+    splash->setInfoText(tr("SetupConsole"));
     m_scriptConsole->init();
+    splash->setInfoText(tr("SetupScriptManager"));
     ScriptManager::instance().attach(m_scriptConsole);
 
+    splash->setInfoText(tr("SetupScriptService"));
     auto &langins = LangService::instance();
     langins.init(m_scriptConsole->machine()->engine());
     langins.applyLanguageSerivce(m_scriptConsole);
 
     m_scriptConsole->initOutput();
 
+    splash->setInfoText(tr("SetupScriptEditor"));
     m_scriptDialog = new ScriptingDialog(this);
     m_scriptDialog->initConsole();
 
@@ -176,42 +192,32 @@ MainWindow::MainWindow(QWidget *parent) : FramelessMainWindow(parent) {
             [this](int v) { _decstrlim = v; });
 
     // ok, build up the dialog of setting
+    splash->setInfoText(tr("SetupSetDialog"));
     buildUpSettingDialog();
 
     // we start to installing plugin widgets
+    splash->setInfoText(tr("SetupPlgWidgets"));
     installPluginEditorWidgets();
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
     // load saved docking layout
+    splash->setInfoText(tr("SetupDockingLayout"));
     m_dock->restoreState(set.dockLayout());
 
     m_lastusedpath = set.lastUsedPath();
+
+    splash->setInfoText(tr("SetupWaiting"));
+    // others
+    _showtxt = new ShowTextDialog(this);
+    qApp->processEvents();
 
     // update status
     updateEditModeEnabled();
 
     this->setUpdatesEnabled(true);
 
-    // Don't call without QTimer::singleShot.
-    // I don't know why it doesn't work with direct call.
-    QTimer::singleShot(0, this, [this] {
-        auto &set = SettingManager::instance();
-        switch (set.defaultWinState()) {
-        case Qt::WindowNoState:
-            break;
-        case Qt::WindowMinimized:
-            this->showMinimized();
-            break;
-        case Qt::WindowActive:
-        case Qt::WindowMaximized:
-            this->showMaximized();
-            break;
-        case Qt::WindowFullScreen:
-            this->showFullScreen();
-            break;
-        }
-    });
+    splash->setInfoText(tr("SetupFinished"));
 }
 
 MainWindow::~MainWindow() { Logger::instance().disconnect(); }
@@ -225,17 +231,24 @@ void MainWindow::buildUpRibbonBar() {
     RibbonCatagories catagories;
 
     m_ribbonMaps[catagories.FILE] = buildFilePage(m_ribbon->addTab(tr("File")));
+    qApp->processEvents();
     m_editStateWidgets << (m_ribbonMaps[catagories.EDIT] =
                                buildEditPage(m_ribbon->addTab(tr("Edit"))));
+    qApp->processEvents();
     m_ribbonMaps[catagories.VIEW] = buildViewPage(m_ribbon->addTab(tr("View")));
+    qApp->processEvents();
     m_ribbonMaps[catagories.SCRIPT] =
         buildScriptPage(m_ribbon->addTab(tr("Script")));
+    qApp->processEvents();
     m_ribbonMaps[catagories.PLUGIN] =
         buildPluginPage(m_ribbon->addTab(tr("Plugin")));
+    qApp->processEvents();
     m_ribbonMaps[catagories.SETTING] =
         buildSettingPage(m_ribbon->addTab(tr("Setting")));
+    qApp->processEvents();
     m_ribbonMaps[catagories.ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
+    qApp->processEvents();
 
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
             [=](const QStringList &files) {
@@ -262,6 +275,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
+    qApp->processEvents();
+
     m_dock = new CDockManager;
     m_dock->setStyleSheet(QString());
     m_dock->setParent(this);
@@ -283,6 +298,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 updateEditModeEnabled();
             });
 
+    qApp->processEvents();
+
     // add empty area
     auto label = new QLabel(this);
 
@@ -298,6 +315,9 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     label->setPicture(backimg);
     label->setAlignment(Qt::AlignCenter);
+
+    qApp->processEvents();
+
     CDockWidget *CentralDockWidget =
         new CDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
@@ -305,9 +325,13 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
     auto editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
+    qApp->processEvents();
+
     // build up basic docking widgets
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
+
+    qApp->processEvents();
 
     auto splitter =
         ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
@@ -316,8 +340,12 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         splitter->setSizes({height() - bottomHeight, bottomHeight});
     }
 
+    qApp->processEvents();
+
     auto rightArea =
         buildUpLogDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
+
+    qApp->processEvents();
 
     splitter = ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
     if (splitter) {
@@ -327,21 +355,32 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     m_rightViewArea = rightArea;
 
+    qApp->processEvents();
+
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    qApp->processEvents();
     buildUpHexBookMarkDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    qApp->processEvents();
     buildUpHexMetaDataDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    qApp->processEvents();
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    qApp->processEvents();
     auto bottomRightArea = buildUpScriptConsoleDock(
         m_dock, ads::RightDockWidgetArea, bottomLeftArea);
+    qApp->processEvents();
     buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea, bottomRightArea);
+    qApp->processEvents();
     buildUpVisualDataDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
+    qApp->processEvents();
     buildUpScriptObjShowDock(m_dock, ads::CenterDockWidgetArea,
                              bottomRightArea);
+    qApp->processEvents();
     m_bottomViewArea = bottomRightArea;
 
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
+            qApp->processEvents();
             auto d = item->dockWidget(i);
             if (d->features().testFlag(ads::CDockWidget::NoTab)) {
                 continue;
@@ -349,6 +388,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
             item->setCurrentIndex(i);
             break;
         }
+        qApp->processEvents();
     }
 }
 
@@ -856,6 +896,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Display"));
+
         auto menu = new QMenu(this);
         menu->addAction(newAction(QStringLiteral("80%"), [this] {
             this->setCurrentHexEditorScale(0.8);
@@ -886,6 +927,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                         EMPTY_FUNC, {}, menu);
         addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
                         [this] { this->setCurrentHexEditorScale(1.0); });
+        addPannelAction(pannel, QStringLiteral("viewtxt"), tr("ViewText"),
+                        &MainWindow::on_viewtxt);
         m_editStateWidgets << pannel;
     }
 
@@ -1152,6 +1195,8 @@ void MainWindow::buildUpSettingDialog() {
     QString id;
 
     m_setdialog = new SettingDialog(this);
+    qApp->processEvents();
+
     auto generalPage = new GeneralSettingDialog(m_setdialog);
     connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
@@ -1160,6 +1205,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
+    qApp->processEvents();
 
     auto editorPage = new EditorSettingDialog(m_setdialog);
     connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1169,6 +1215,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
+    qApp->processEvents();
 
     auto plgPage = new PluginSettingDialog(m_setdialog);
     connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1179,6 +1226,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
+    qApp->processEvents();
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
     connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1188,12 +1236,14 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
+    qApp->processEvents();
 
     auto otherPage = new OtherSettingsDialog(m_setdialog);
     id = otherPage->id();
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
+    qApp->processEvents();
 
     for (auto page_p = m_settingPages.constKeyValueBegin();
          page_p != m_settingPages.constKeyValueEnd(); ++page_p) {
@@ -1229,11 +1279,13 @@ void MainWindow::buildUpSettingDialog() {
                             [=] { m_setdialog->showConfig(id); });
         }
         usedIDs.append(id);
+        qApp->processEvents();
     }
 
     connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(otherPage);
+    qApp->processEvents();
 
     m_setdialog->build();
 }
@@ -1246,6 +1298,7 @@ void MainWindow::installPluginEditorWidgets() {
     for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
          ++p) {
         for (auto &w : p.value()) {
+            qApp->processEvents();
             if (names.contains(w->id())) {
                 log.critical(tr("Plugin %1 contains a duplicate ID (%2) that "
                                 "is already registered by plugin %3")
@@ -1265,6 +1318,7 @@ void MainWindow::installPluginEditorWidgets() {
             names.insert(w->id(), p.key());
             m_editorViewWidgetsBuffer.append(w);
         }
+        qApp->processEvents();
     }
 
     // clear for no using
@@ -2192,6 +2246,15 @@ void MainWindow::on_locChanged() {
     } else {
         m_txtDecode->clear();
     }
+}
+
+void MainWindow::on_viewtxt() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+    _showtxt->load(hexeditor->document()->buffer(),
+                   hexeditor->renderer()->encoding());
 }
 
 void MainWindow::on_fullScreen() {

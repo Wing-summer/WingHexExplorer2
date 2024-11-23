@@ -589,3 +589,5 @@ QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
     return fromLargeFile(storage.device(), readonly);
 #endif
 }
+
+QHexBuffer *QHexDocument::buffer() const { return m_buffer; }

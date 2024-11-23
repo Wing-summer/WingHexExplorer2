@@ -37,6 +37,7 @@ public:
     virtual ~QFoldPanel();
 
     virtual QString type() const;
+    virtual QString name() const;
 
 protected:
     virtual void mousePressEvent(QMouseEvent *e);

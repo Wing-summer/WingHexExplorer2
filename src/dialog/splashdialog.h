@@ -15,40 +15,28 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#ifndef SPLASHDIALOG_H
+#define SPLASHDIALOG_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "control/codeedit.h"
-#include "qcodeedit.h"
+#include <QDialog>
 
-class ScriptEditor : public ads::CDockWidget {
+namespace Ui {
+class SplashDialog;
+}
+
+class SplashDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
-    virtual ~ScriptEditor();
-
-    QString fileName() const;
-
-    QEditor *editor() const;
-
-    bool formatCode();
-
-signals:
-    void onToggleMark(int lineIndex);
+    explicit SplashDialog(QWidget *parent = nullptr);
+    virtual ~SplashDialog() override;
 
 public slots:
-    bool openFile(const QString &filename);
-
-    bool save(const QString &path = QString());
-    bool reload();
+    void setInfoText(const QString &text);
+    void cancel();
 
 private:
-    void processTitle();
-
-private:
-    CodeEdit *m_editor = nullptr;
+    Ui::SplashDialog *ui;
 };
 
-#endif // SCRIPTEDITOR_H
+#endif // SPLASHDIALOG_H

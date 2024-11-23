@@ -163,6 +163,8 @@ public:
     static QHexDocument *fromStorageDriver(const QStorageInfo &storage,
                                            bool readonly = false);
 
+    QHexBuffer *buffer() const;
+
 signals:
 
     /*================================*/

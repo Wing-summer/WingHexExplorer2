@@ -37,6 +37,7 @@ public:
     bool isVerboseMode() const;
 
     virtual QString type() const;
+    virtual QString name() const;
 
     virtual QSize sizeHint() const;
 

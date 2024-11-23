@@ -289,6 +289,7 @@ public:
 
 signals:
     void loaded(QEditor *e, const QString &s);
+    void needLoading(QEditor *e);
     void saved(QEditor *e, const QString &s);
 
     void contentModified(bool y);
@@ -403,9 +404,6 @@ protected slots:
 
     void bindingSelected(QAction *a);
 
-    void lineEndingSelected(QAction *a);
-    void lineEndingChanged(int lineEnding);
-
 protected:
     enum SaveState { Undefined, Saving, Saved, Conflict };
 
@@ -416,9 +414,6 @@ protected:
 
     QMenu *pMenu;
     QHash<QString, QAction *> m_actions;
-
-    QMenu *m_lineEndingsMenu;
-    QActionGroup *m_lineEndingsActions;
 
     QMenu *m_bindingsMenu;
     QAction *aDefaultBinding;

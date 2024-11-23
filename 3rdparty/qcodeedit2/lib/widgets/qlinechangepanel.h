@@ -40,6 +40,7 @@ public:
     virtual ~QLineChangePanel();
 
     virtual QString type() const;
+    virtual QString name() const;
 
 protected:
     virtual void paint(QPainter *p, QEditor *e);

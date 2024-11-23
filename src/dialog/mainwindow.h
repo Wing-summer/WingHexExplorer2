@@ -18,6 +18,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
 #include <QListView>
@@ -50,6 +51,7 @@
 #include "plugin/iwingplugin.h"
 #include "scriptingdialog.h"
 #include "settingdialog.h"
+#include "showtextdialog.h"
 #include "utilities.h"
 
 class PluginSystem;
@@ -60,7 +62,7 @@ class MainWindow : public FramelessMainWindow {
     friend class PluginSystem;
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(SplashDialog *splash);
     virtual ~MainWindow() override;
 
 private:
@@ -183,6 +185,7 @@ private slots:
     void on_exportfindresult();
     void on_locChanged();
 
+    void on_viewtxt();
     void on_fullScreen();
     void on_restoreLayout();
     void on_exportlog();
@@ -542,5 +545,7 @@ private:
     bool m_islittle = true;
     bool m_enablePlugin = true;
     bool m_isOnClosing = false;
+
+    ShowTextDialog *_showtxt = nullptr;
 };
 #endif // MAINWINDOW_H

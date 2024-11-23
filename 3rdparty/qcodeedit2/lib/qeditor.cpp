@@ -343,8 +343,7 @@ void QEditor::setDefaultCodec(const QString &name, int update) {
         \note Creates builtin menus/actions
 */
 QEditor::QEditor(QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
-      m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
+    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
       m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
       m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
@@ -359,8 +358,7 @@ QEditor::QEditor(QWidget *p)
         \param actions Whether builtin actions and menus should be created
 */
 QEditor::QEditor(bool actions, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
-      m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
+    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
       m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
       m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
@@ -377,8 +375,7 @@ QEditor::QEditor(bool actions, QWidget *p)
         \note Creates builtin menus/actions
 */
 QEditor::QEditor(const QString &s, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
-      m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
+    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
       m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
       m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
@@ -397,8 +394,7 @@ QEditor::QEditor(const QString &s, QWidget *p)
         \note Creates builtin menus/action
 */
 QEditor::QEditor(const QString &s, bool actions, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_lineEndingsMenu(0),
-      m_lineEndingsActions(0), m_bindingsMenu(0), aDefaultBinding(0),
+    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
       m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
       m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
     m_editors << this;
@@ -476,9 +472,6 @@ void QEditor::init(bool actions) {
     connect(m_doc, &QDocument::redoAvailable, this, &QEditor::redoAvailable);
 
     connect(m_doc, &QDocument::markChanged, this, &QEditor::emitMarkChanged);
-
-    connect(m_doc, &QDocument::lineEndingChanged, this,
-            &QEditor::lineEndingChanged);
 
     m_cursor = QDocumentCursor(m_doc);
     m_cursor.setAutoUpdated(true);
@@ -664,32 +657,6 @@ void QEditor::init(bool actions) {
         sep = new QAction(this);
         sep->setSeparator(true);
         addAction(sep, QString());
-
-        m_lineEndingsMenu = new QMenu(tr("Line endings"), this);
-        m_lineEndingsActions = new QActionGroup(m_lineEndingsMenu);
-        m_lineEndingsActions->setExclusive(true);
-
-        connect(m_lineEndingsActions, &QActionGroup::triggered, this,
-                &QEditor::lineEndingSelected);
-
-        m_lineEndingsActions->addAction(tr("Conservative"))
-            ->setData("conservative");
-        m_lineEndingsActions->addAction(tr("Local"))->setData("local");
-        m_lineEndingsActions->addAction(tr("Unix/Linux"))->setData("unix");
-        m_lineEndingsActions->addAction(tr("Dos/Windows"))->setData("dos");
-        m_lineEndingsActions->addAction(tr("Old Mac"))->setData("mac");
-
-        QList<QAction *> lle = m_lineEndingsActions->actions();
-
-        for (auto &a : lle) {
-            a->setCheckable(true);
-            m_lineEndingsMenu->addAction(a);
-        }
-
-        lle.at(0)->setChecked(true);
-
-        m_lineEndingsMenu->menuAction()->setObjectName("lineEndings");
-        addAction(m_lineEndingsMenu->menuAction(), "&Edit", "");
 
         /*
         sep = new QAction(this);
@@ -1234,34 +1201,6 @@ bool QEditor::load(const QString &file) {
 
     // qDebug("checksum = %i", m_lastFileState.checksum);
 
-    if (m_lineEndingsActions) {
-        // TODO : update Conservative to report original line endings
-        static const QRegularExpression rx(" \\[\\w+\\]");
-        QAction *a = m_lineEndingsActions->actions().at(0);
-
-        if (a) {
-            QDocument::LineEnding le = m_doc->originalLineEnding();
-
-            QString det, txt = a->text();
-            txt.remove(rx);
-
-            if (le == QDocument::Windows)
-                det = tr("Windows");
-            else if (le == QDocument::OldMac)
-                det = tr("Old Mac");
-            else if (le == QDocument::Unix)
-                det = tr("Unix");
-
-            if (det.size()) {
-                txt += " [";
-                txt += det;
-                txt += ']';
-            }
-
-            a->setText(txt);
-        }
-    }
-
     setFileName(file);
 
     emit loaded(this, file);
@@ -1301,11 +1240,12 @@ void QEditor::setCodec(const QString &c) {
 
     m_codec = c;
 
-    // TODO : reload file?
-    if (fileName().size() && QFile::exists(fileName())) {
+    if (!fileName().isEmpty() && QFile::exists(fileName())) {
         if (!isContentModified()) {
             load(fileName());
         }
+    } else {
+        emit needLoading(this);
     }
 }
 
@@ -1463,45 +1403,6 @@ void QEditor::bindingSelected(QAction *a) {
     // m_binding);
 
     updateMicroFocus();
-}
-
-/*!
-        \internal
-*/
-void QEditor::lineEndingSelected(QAction *a) {
-    a = m_lineEndingsActions->checkedAction();
-
-    if (!a)
-        return;
-
-    QString le = a->data().toString();
-
-    if (le == "conservative")
-        m_doc->setLineEnding(QDocument::Conservative);
-    else if (le == "local")
-        m_doc->setLineEnding(QDocument::Local);
-    else if (le == "unix")
-        m_doc->setLineEnding(QDocument::Unix);
-    else if (le == "dos")
-        m_doc->setLineEnding(QDocument::Windows);
-    else if (le == "mac")
-        m_doc->setLineEnding(QDocument::OldMac);
-
-    updateMicroFocus();
-}
-
-/*!
-        \internal
-*/
-void QEditor::lineEndingChanged(int lineEnding) {
-    if (!m_lineEndingsActions)
-        return;
-
-    QAction *a = m_lineEndingsActions->checkedAction(),
-            *n = m_lineEndingsActions->actions().at(lineEnding);
-
-    if (a != n)
-        n->setChecked(true);
 }
 
 /*!
@@ -1846,6 +1747,10 @@ void QEditor::emitCursorPositionChanged() {
         \brief Undo the last editing operation, if any on the stack
 */
 void QEditor::undo() {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     if (m_doc && m_undoRedoEnabled) {
         if (m_definition)
             m_definition->clearMatches(m_doc);
@@ -1863,6 +1768,10 @@ void QEditor::undo() {
         \brief Redo the last undone editing operation, if any on the stack
 */
 void QEditor::redo() {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     if (m_doc && m_undoRedoEnabled) {
         if (m_definition)
             m_definition->clearMatches(m_doc);
@@ -1880,6 +1789,10 @@ void QEditor::redo() {
         \brief Cut the selected text, if any
 */
 void QEditor::cut() {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     copy();
 
     bool macro = m_mirrors.count();
@@ -1926,6 +1839,10 @@ void QEditor::copy() {
         \note May paste column selections from other QCE editors
 */
 void QEditor::paste() {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     const QMimeData *d = QApplication::clipboard()->mimeData();
 
     if (d)
@@ -1958,6 +1875,9 @@ static void removeFromStart(const QDocumentCursor &cur, const QString &txt) {
 */
 void QEditor::indentSelection() {
     // TODO : respect tab stops in case of screwed up indent (correct it?)
+    if (flag(ReadOnly)) {
+        return;
+    }
 
     QString txt =
         flag(ReplaceTabs) ? QString(m_doc->tabStop(), ' ') : QString("\t");
@@ -1999,6 +1919,10 @@ void QEditor::indentSelection() {
         \brief Unindent the selection
 */
 void QEditor::unindentSelection() {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     if (!m_cursor.line().firstChar())
         return;
 

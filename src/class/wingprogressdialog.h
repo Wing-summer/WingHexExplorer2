@@ -20,10 +20,12 @@
 
 #include <QProgressDialog>
 
-#include "../dialog/framelessdialogbase.h"
+#include "dialog/framelessdialogbase.h"
 
 class WingProgressDialog {
 public:
+    explicit WingProgressDialog(QWidget *parent = nullptr);
+
     WingProgressDialog(const QString &labelText,
                        const QString &cancelButtonText, int minimum,
                        int maximum, QWidget *parent = nullptr);
