@@ -34,9 +34,9 @@ EncodingDialog::EncodingDialog(QWidget *parent) : FramelessDialogBase(parent) {
     layout->addWidget(l);
     layout->addSpacing(5);
     enclist = new QListWidget(this);
-    for (auto &item : Utilities::getEncodings()) {
-        enclist->addItem(item);
-    }
+    enclist->addItems(Utilities::getEncodings());
+    enclist->setCurrentRow(0);
+
     layout->addWidget(enclist);
     layout->addSpacing(10);
     auto dbbox = new QDialogButtonBox(

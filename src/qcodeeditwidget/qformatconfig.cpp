@@ -99,7 +99,7 @@ bool QFormatConfig::hasUnsavedChanges() const {
 */
 QList<QFormatScheme *> QFormatConfig::schemes() const { return m_schemes; }
 
-QIcon QFormatConfig::categoryIcon() const { return ICONRES(""); }
+QIcon QFormatConfig::categoryIcon() const { return ICONRES("scheme"); }
 
 QString QFormatConfig::name() const { return tr("Format"); }
 
@@ -462,3 +462,5 @@ void QFormatConfig::on_m_selector_currentIndexChanged(int idx) {
 }
 
 /*! @} */
+
+QString QFormatConfig::id() const { return QStringLiteral("Scheme"); }

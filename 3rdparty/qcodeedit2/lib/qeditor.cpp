@@ -261,7 +261,7 @@ QReliableFileWatch *QEditor::watcher() {
 ////////////////////////////////////////////////////////////////////////
 
 int QEditor::m_defaultFlags = QEditor::AutoIndent | QEditor::AdjustIndent;
-QString QEditor::m_defaultCodecName = 0;
+QString QEditor::m_defaultCodecName = {};
 
 /*!
         \return The default flags set to every QEditor upon construction
@@ -299,6 +299,53 @@ void QEditor::setDefaultFlags(int flags) {
 
         if (a && (a->isChecked() != (bool)(e->m_state & LineWrap)))
             a->setChecked(e->m_state & LineWrap);
+    }
+}
+
+QFont QEditor::defaultFont() { return QDocumentPrivate::m_defaultFont; }
+
+void QEditor::setDefaultFont(const QFont &font) {
+    QDocumentPrivate::m_defaultFont = font;
+    for (auto &e : m_editors) {
+        auto doc = e->document();
+        doc->setFont(font);
+    }
+}
+
+int QEditor::defaultTabStop() { return QDocumentPrivate::m_defaultTabStop; }
+
+void QEditor::setDefaultTabStop(int tabstop) {
+    if (tabstop <= 0) {
+        return;
+    }
+    QDocumentPrivate::m_defaultTabStop = tabstop;
+    for (auto &e : m_editors) {
+        auto doc = e->document();
+        doc->setTabStop(tabstop);
+    }
+}
+
+QDocument::LineEnding QEditor::defaultLineEnding() {
+    return QDocumentPrivate::m_defaultLineEnding;
+}
+
+void QEditor::setDefaultLineEnding(QDocument::LineEnding le) {
+    QDocumentPrivate::m_defaultLineEnding = le;
+    for (auto &e : m_editors) {
+        auto doc = e->document();
+        doc->setLineEnding(le);
+    }
+}
+
+QDocument::WhiteSpaceMode QEditor::defaultShowSpaces() {
+    return QDocumentPrivate::m_defaultShowSpaces;
+}
+
+void QEditor::setDefaultShowSpaces(QDocument::WhiteSpaceMode y) {
+    QDocumentPrivate::m_defaultShowSpaces = y;
+    for (auto &e : m_editors) {
+        auto doc = e->document();
+        doc->setShowSpaces(y);
     }
 }
 
@@ -343,9 +390,10 @@ void QEditor::setDefaultCodec(const QString &name, int update) {
         \note Creates builtin menus/actions
 */
 QEditor::QEditor(QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
-      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
+    : QAbstractScrollArea(p), pMenu(nullptr), m_bindingsMenu(nullptr),
+      aDefaultBinding(nullptr), m_bindingsActions(nullptr), m_doc(nullptr),
+      m_codec(m_defaultCodecName), m_definition(nullptr), m_curPlaceHolder(-1),
+      m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
@@ -358,52 +406,15 @@ QEditor::QEditor(QWidget *p)
         \param actions Whether builtin actions and menus should be created
 */
 QEditor::QEditor(bool actions, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
-      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
+    : QAbstractScrollArea(p), pMenu(nullptr), m_bindingsMenu(nullptr),
+      aDefaultBinding(nullptr), m_bindingsActions(nullptr), m_doc(nullptr),
+      m_codec(m_defaultCodecName), m_definition(nullptr), m_curPlaceHolder(-1),
+      m_state(defaultFlags()) {
     m_editors << this;
 
     m_saveState = Undefined;
 
     init(actions);
-}
-
-/*!
-        \brief ctor
-        \param s file to load
-
-        \note Creates builtin menus/actions
-*/
-QEditor::QEditor(const QString &s, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
-      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
-    m_editors << this;
-
-    m_saveState = Undefined;
-
-    init();
-
-    setText(s);
-}
-
-/*!
-        \brief ctor
-        \param s file to load
-        \param actions Whether builtin actions and menus should be created
-        \note Creates builtin menus/action
-*/
-QEditor::QEditor(const QString &s, bool actions, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(0), m_bindingsMenu(0), aDefaultBinding(0),
-      m_bindingsActions(0), m_doc(0), m_codec(m_defaultCodecName),
-      m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags()) {
-    m_editors << this;
-
-    m_saveState = Undefined;
-
-    init(actions);
-
-    setText(s);
 }
 
 /*!
@@ -480,9 +491,9 @@ void QEditor::init(bool actions) {
         m_bindings << m_defaultBinding;
     }
 
-    if (actions) {
-        pMenu = new QMenu;
+    pMenu = new QMenu;
 
+    if (actions) {
         QAction *a, *sep;
 
         a = new QAction(QIcon(":/qeditor/undo.png"), tr("&Undo"), this);
@@ -1235,17 +1246,24 @@ QString QEditor::codecName() const { return m_codec; }
         \brief Set the text codec to use for load/save operations
 */
 void QEditor::setCodec(const QString &c) {
-    if (c == m_codec || !QCE::getEncodings().contains(c))
+    if (c == m_codec)
         return;
 
-    m_codec = c;
+    if (c == QStringLiteral("ISO-8859-1")) {
+        m_codec = QStringLiteral("ASCII");
+    } else {
+        if (!QCE::getEncodings().contains(c)) {
+            return;
+        }
+        m_codec = c;
+    }
 
     if (!fileName().isEmpty() && QFile::exists(fileName())) {
         if (!isContentModified()) {
             load(fileName());
         }
     } else {
-        emit needLoading(this);
+        emit needLoading();
     }
 }
 
@@ -1595,6 +1613,13 @@ void QEditor::setPlaceHolder(int i) {
 }
 
 void QEditor::setUndoRedoEnabled(bool b) { m_undoRedoEnabled = b; }
+
+void QEditor::setCursorMirrorEnabled(bool b) {
+    m_cursorMirrorEnabled = b;
+    if (!b) {
+        clearCursorMirrors();
+    }
+}
 
 /*!
         \brief Move to next placeholder
@@ -1999,8 +2024,8 @@ void QEditor::commentSelection() {
 }
 
 /*!
-        \brief Uncomment the selection (or current line), provided it has been
-   commented with single line comments
+        \brief Uncomment the selection (or current line), provided it has
+   been commented with single line comments
 */
 void QEditor::uncommentSelection() {
     if (!m_definition)
@@ -2064,8 +2089,9 @@ bool QEditor::event(QEvent *e) {
             qMax(0, 1 + (m_doc->height() - viewport()->height()) /
                             m_doc->fontMetrics().lineSpacing()));
 
-    if (e->type() == QEvent::Resize && flag(LineWrap)) {
-        // qDebug("resize adjust (1) : wrapping to %i", viewport()->width());
+    if (e->type() == QEvent::Resize && flag(LineWrap) && m_doc) {
+        // qDebug("resize adjust (1) : wrapping to %i",
+        // viewport()->width());
         m_doc->setWidthConstraint(wrapWidth());
         ensureCursorVisible();
     }
@@ -2222,6 +2248,116 @@ bool QEditor::protectedCursor(const QDocumentCursor &c) const {
     return false;
 }
 
+void QEditor::createSimpleBasicContextMenu(bool shortcut, bool extTool) {
+    if (pMenu == nullptr) {
+        pMenu = new QMenu(this);
+    }
+
+    QAction *a = nullptr, *sep = nullptr;
+
+    if (m_undoRedoEnabled) {
+        a = new QAction(QIcon(":/qeditor/undo.png"), tr("&Undo"), this);
+        a->setObjectName("undo");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+Z", "Edit");
+        a->setEnabled(false);
+        connect(this, &QEditor::undoAvailable, a, &QAction::setEnabled);
+        connect(a, &QAction::triggered, this, &QEditor::undo);
+
+        addAction(a, "&Edit", "Edit");
+
+        a = new QAction(QIcon(":/qeditor/redo.png"), tr("&Redo"), this);
+        a->setObjectName("redo");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+Y", "Edit");
+        a->setEnabled(false);
+        connect(this, SIGNAL(redoAvailable(bool)), a, SLOT(setEnabled(bool)));
+        connect(a, SIGNAL(triggered()), this, SLOT(redo()));
+
+        addAction(a, "&Edit", "Edit");
+    }
+
+    sep = new QAction(this);
+    sep->setSeparator(true);
+    addAction(sep, "&Edit", "Edit");
+
+    if (!flag(ReadOnly)) {
+        a = new QAction(QIcon(":/qeditor/cut.png"), tr("Cu&t"), this);
+        a->setObjectName("cut");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+X", "Edit");
+        a->setEnabled(false);
+        connect(this, SIGNAL(copyAvailable(bool)), a, SLOT(setEnabled(bool)));
+        connect(a, SIGNAL(triggered()), this, SLOT(cut()));
+
+        addAction(a, "&Edit", "Edit");
+    }
+
+    a = new QAction(QIcon(":/qeditor/copy.png"), tr("&Copy"), this);
+    a->setObjectName("copy");
+    if (shortcut)
+        Q_SHORTCUT(a, "Ctrl+C", "Edit");
+    a->setEnabled(false);
+    connect(this, SIGNAL(copyAvailable(bool)), a, SLOT(setEnabled(bool)));
+    connect(a, SIGNAL(triggered()), this, SLOT(copy()));
+
+    addAction(a, "&Edit", "Edit");
+
+    if (!flag(ReadOnly)) {
+        a = new QAction(QIcon(":/qeditor/paste.png"), tr("&Paste"), this);
+        a->setObjectName("paste");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+V", "Edit");
+        connect(QApplication::clipboard(), SIGNAL(dataChanged()), this,
+                SLOT(checkClipboard()));
+
+        connect(a, SIGNAL(triggered()), this, SLOT(paste()));
+
+        addAction(a, "&Edit", "Edit");
+    }
+
+    if (extTool) {
+        sep = new QAction(this);
+        sep->setSeparator(true);
+        addAction(sep, QString());
+
+        a = new QAction(QIcon(":/qeditor/find.png"), tr("&Find"), this);
+        a->setObjectName("find");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+F", "Search");
+        connect(a, SIGNAL(triggered()), this, SLOT(find()));
+
+        addAction(a, "&Search", "Search");
+
+        a = new QAction(tr("Fin&d next"), pMenu);
+        a->setObjectName("findNext");
+        if (shortcut)
+            Q_SHORTCUT(a, "F3", "Search");
+        connect(a, SIGNAL(triggered()), this, SLOT(findNext()));
+
+        addAction(a, "&Search", "Search");
+
+        a = new QAction(QIcon(":/qeditor/replace.png"), tr("&Replace"), this);
+        a->setObjectName("replace");
+        Q_SHORTCUT(a, "Ctrl+R", "Search");
+        connect(a, SIGNAL(triggered()), this, SLOT(replace()));
+
+        addAction(a, "&Search", "Search");
+
+        sep = new QAction(this);
+        sep->setSeparator(true);
+        addAction(sep, "&Search", "Search");
+
+        a = new QAction(QIcon(":/qeditor/goto.png"), tr("&Goto line..."), this);
+        a->setObjectName("goto");
+        if (shortcut)
+            Q_SHORTCUT(a, "Ctrl+G", "Search");
+        connect(a, SIGNAL(triggered()), this, SLOT(gotoLine()));
+
+        addAction(a, "&Search", "Search");
+    }
+}
+
 /*!
         \internal
 */
@@ -2358,8 +2494,8 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
                 bHandled = false;
             } else {
 
-                // clear matches to avoid offsetting and subsequent remanence of
-                // matches
+                // clear matches to avoid offsetting and subsequent
+                // remanence of matches
                 if (m_definition)
                     m_definition->clearMatches(m_doc);
 
@@ -2395,10 +2531,10 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
                 }
 
                 if (m_mirrors.isEmpty()) {
-                    // this signal is NOT emitted when cursor mirrors are used
-                    // ON PURPOSE as it is the "standard" entry point for code
-                    // completion, which cannot work properly with cursor
-                    // mirrors (art least not always and not simply)
+                    // this signal is NOT emitted when cursor mirrors are
+                    // used ON PURPOSE as it is the "standard" entry point
+                    // for code completion, which cannot work properly with
+                    // cursor mirrors (art least not always and not simply)
                     if (bHandled)
                         emit textEdited(e);
 
@@ -2778,6 +2914,10 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
         \internal
 */
 void QEditor::dragEnterEvent(QDragEnterEvent *e) {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     if (e && e->mimeData() &&
         (e->mimeData()->hasFormat("text/plain") ||
          e->mimeData()->hasFormat("text/html")) &&
@@ -2804,6 +2944,10 @@ void QEditor::dragLeaveEvent(QDragLeaveEvent *) {
         \internal
 */
 void QEditor::dragMoveEvent(QDragMoveEvent *e) {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     if (e && e->mimeData() &&
         (e->mimeData()->hasFormat("text/plain") ||
          e->mimeData()->hasFormat("text/html")) &&
@@ -2837,6 +2981,10 @@ void QEditor::dragMoveEvent(QDragMoveEvent *e) {
         \internal
 */
 void QEditor::dropEvent(QDropEvent *e) {
+    if (flag(ReadOnly)) {
+        return;
+    }
+
     m_dragAndDrop = QDocumentCursor();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -3074,8 +3222,8 @@ void QEditor::setFileName(const QString &f) {
 /*!
         \brief Set the title of the widget
 
-        Take care of adding a "[*]" prefix so that document changes are visible
-        on title bars.
+        Take care of adding a "[*]" prefix so that document changes are
+   visible on title bars.
 */
 void QEditor::setTitle(const QString &title) {
     QString s(title);
@@ -3140,8 +3288,8 @@ bool QEditor::moveKeyEvent(QDocumentCursor &cursor, QKeyEvent *e, bool *leave) {
 
     QDocumentCursor::MoveOperation op = QDocumentCursor::NoMove;
 #ifdef Q_WS_MAC
-    // There can be only one modifier (+ shift), but we also need to make sure
-    // that we have a "move key" pressed before we reject it.
+    // There can be only one modifier (+ shift), but we also need to make
+    // sure that we have a "move key" pressed before we reject it.
     bool twoModifiers =
         ((e->modifiers() & (Qt::ControlModifier | Qt::AltModifier)) ==
          (Qt::ControlModifier | Qt::AltModifier)) ||
@@ -3199,19 +3347,19 @@ bool QEditor::moveKeyEvent(QDocumentCursor &cursor, QKeyEvent *e, bool *leave) {
                 Except for pageup and pagedown, Mac OS X has very different
            behavior, we don't do it all, but here's the breakdown:
 
-                Shift still works as an anchor, but only one of the other keys
-           can be dow Ctrl (Command), Alt (Option), or Meta (Control).
+                Shift still works as an anchor, but only one of the other
+           keys can be dow Ctrl (Command), Alt (Option), or Meta (Control).
 
                 Command/Control + Left/Right -- Move to left or right of the
            line
-                                                + Up/Down -- Move to top bottom
-           of the file. (Control doesn't move the cursor)
+                                                + Up/Down -- Move to top
+           bottom of the file. (Control doesn't move the cursor)
 
                 Option	+ Left/Right -- Move one word Left/right.
                                 + Up/Down  -- Begin/End of Paragraph.
 
-                Home/End Top/Bottom of file. (usually don't move the cursor, but
-           will select)
+                Home/End Top/Bottom of file. (usually don't move the cursor,
+           but will select)
         */
     case Qt::Key_Up:
         if (twoModifiers) {
@@ -3563,8 +3711,8 @@ void QEditor::preInsert(QDocumentCursor &c, const QString &s) {
 
         /*
                 It might be possible to improve that part to have a more
-           natural/smarter unindenting by trying to guess the scheme used by the
-           user...
+           natural/smarter unindenting by trying to guess the scheme used by
+           the user...
         */
 
         if (txt.at(firstNS - 1) == '\t') {
@@ -3638,8 +3786,8 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text,
             l.remove(0, n);
 
             if (m_definition) {
-                // FIXME ? work on strings to make sure command grouping does
-                // not interfere with cursor state...
+                // FIXME ? work on strings to make sure command grouping
+                // does not interfere with cursor state...
                 indent = m_definition->indent(c);
 
                 if (flag(ReplaceTabs))
@@ -3709,8 +3857,8 @@ void QEditor::setPanelMargins(int l, int t, int r, int b) {
 }
 
 /*!
-        \brief Request repaint (using QWidget::update()) for the region occupied
-   by the cursor
+        \brief Request repaint (using QWidget::update()) for the region
+   occupied by the cursor
 */
 void QEditor::repaintCursor() {
     if (m_mirrors.count())
@@ -3822,14 +3970,15 @@ void QEditor::ensureVisible(const QRect &rect) {
         This will either return a cursorRect for the current cursor or
         the selectionRect() if the cursor has a selection.
 
-        The cursor position, which would be the top left corner of the actual
-        rectangle occupied by the cursor can be obtained using
+        The cursor position, which would be the top left corner of the
+   actual rectangle occupied by the cursor can be obtained using
    QDocumentCursor::documentPosition()
 
-        The behavior of this method may surprise newcomers but it is actually
-   quite sensible as this rectangle is mainly used to specify the update rect of
-   the widget and the whole line needs to be updated to properly update the line
-   background whenever the cursor move from a line to another.
+        The behavior of this method may surprise newcomers but it is
+   actually quite sensible as this rectangle is mainly used to specify the
+   update rect of the widget and the whole line needs to be updated to
+   properly update the line background whenever the cursor move from a line
+   to another.
 */
 QRect QEditor::cursorRect() const {
     return m_cursor.hasSelection() ? selectionRect()
@@ -3837,14 +3986,15 @@ QRect QEditor::cursorRect() const {
 }
 
 /*!
-        \return the rectangle occupied by the selection in viewport coordinates
+        \return the rectangle occupied by the selection in viewport
+   coordinates
 
         If the current cursor does not have a selection, its cursorRect() is
    returned.
 
-        The returned rectangle will always be bigger than the actual selection
-   has it is actually the union of all the rectangles occupied by all lines the
-   selection spans over.
+        The returned rectangle will always be bigger than the actual
+   selection has it is actually the union of all the rectangles occupied by
+   all lines the selection spans over.
 */
 QRect QEditor::selectionRect() const {
     if (!m_cursor.hasSelection())
@@ -3869,7 +4019,8 @@ QRect QEditor::selectionRect() const {
         \return the rectangle occupied by the given line, in viewport
    coordinates
 
-        The width of the returned rectangle will always be the viewport width.
+        The width of the returned rectangle will always be the viewport
+   width.
 */
 QRect QEditor::lineRect(int line) const {
     if (!m_doc)
@@ -3886,8 +4037,8 @@ QRect QEditor::lineRect(int line) const {
         \overload
 
         \note This function relies on QDocumentLine::lineNumber() so avoid
-        it whenever possible as it is much slower than providing a line number
-        directly.
+        it whenever possible as it is much slower than providing a line
+   number directly.
 */
 QRect QEditor::lineRect(const QDocumentLine &l) const {
     // qFatal("bad practice...");
@@ -3947,7 +4098,8 @@ static void fixLineEndings(QString &text) {
 }
 
 /*!
-        \brief Inserts the content of a QMimeData object at the cursor position
+        \brief Inserts the content of a QMimeData object at the cursor
+   position
 
         \note Only plain text is supported... \see QMimeData::hasText()
 */
@@ -4056,7 +4208,8 @@ void QEditor::clearCursorMirrors() {
         \brief Add a cursor mirror
 */
 void QEditor::addCursorMirror(const QDocumentCursor &c) {
-    if (c.isNull() || (c == m_cursor) || m_mirrors.contains(c))
+    if (!m_cursorMirrorEnabled || c.isNull() || (c == m_cursor) ||
+        m_mirrors.contains(c))
         return;
 
     m_mirrors << c;
@@ -4067,6 +4220,8 @@ void QEditor::addCursorMirror(const QDocumentCursor &c) {
 }
 
 bool QEditor::undoRedoEnabled() const { return m_undoRedoEnabled; }
+
+bool QEditor::cursorMirrorEnabled() const { return m_cursorMirrorEnabled; }
 
 bool QEditor::unindent(const QDocumentCursor &cur) {
     QDocumentLine beg(cur.line());
@@ -4165,7 +4320,8 @@ void QEditor::documentWidthChanged(int newWidth) {
         \brief Slot called whenever document height changes
 
         Vertical scrollbar is updated here (maximum is changed
-        and value is modified if needed to ensure that the cursor is visible)
+        and value is modified if needed to ensure that the cursor is
+   visible)
 */
 void QEditor::documentHeightChanged(int newHeight) {
     if (flag(LineWrap)) {

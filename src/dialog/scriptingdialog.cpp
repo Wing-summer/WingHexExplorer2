@@ -28,6 +28,7 @@
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
 #include "qcodeeditwidget/qeditconfig.h"
+#include "qcodeeditwidget/qformatconfig.h"
 #include "qcodeeditwidget/qsnippetedit.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
@@ -290,7 +291,19 @@ void ScriptingDialog::buildUpRibbonBar() {
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
             [=](const QStringList &files) {
                 for (auto &file : files) {
-                    openFile(file);
+                    QFileInfo info(file);
+                    auto suffix = info.suffix();
+                    if (info.exists() && Utilities::isTextFile(info) &&
+                        (suffix.compare(QStringLiteral("as"),
+                                        Qt::CaseInsensitive) == 0 ||
+                         suffix.compare(QStringLiteral("anglescript"),
+                                        Qt::CaseInsensitive) == 0)) {
+                        openFile(file);
+                    } else {
+                        Toast::toast(this,
+                                     NAMEICONRES(QStringLiteral("script")),
+                                     tr("InvalidSourceFile"));
+                    }
                 }
             });
 }
@@ -527,6 +540,8 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     addPannelAction(
         pannel, QStringLiteral("codeformat"), tr("ClangFormat"),
         [=] { m_setdialog->showConfig(QStringLiteral("ClangFormat")); });
+    addPannelAction(pannel, QStringLiteral("scheme"), tr("Format"),
+                    [=] { m_setdialog->showConfig(QStringLiteral("Scheme")); });
     return tab;
 }
 
@@ -966,12 +981,15 @@ void ScriptingDialog::buildUpSettingDialog() {
     auto edit = new QEditConfig(m_setdialog);
     m_setdialog->addPage(edit);
 
+    auto clang = new ClangFormatSetDialog(m_setdialog);
+    m_setdialog->addPage(clang);
+
     auto snip =
         new QSnippetEdit(LangService::instance().snippetManager(), m_setdialog);
     m_setdialog->addPage(snip);
 
-    auto clang = new ClangFormatSetDialog(m_setdialog);
-    m_setdialog->addPage(clang);
+    auto scheme = new QFormatConfig(m_setdialog);
+    m_setdialog->addPage(scheme);
 
     m_setdialog->build();
 }
@@ -1133,10 +1151,6 @@ void ScriptingDialog::on_openfile() {
     if (!filename.isEmpty()) {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
         openFile(filename);
-
-        // TODO test
-        // QAsParser parser(m_consoleout->machine()->engine());
-        // parser.parse(filename);
     }
 
     RecentFileManager::RecentInfo info;

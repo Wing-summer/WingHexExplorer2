@@ -54,6 +54,7 @@ Q_DECLARE_TYPEINFO(QDocumentSelection, Q_PRIMITIVE_TYPE);
 class QCE_EXPORT QDocumentPrivate {
     friend class QEditConfig;
 
+    friend class QEditor;
     friend class QDocument;
     friend class QDocumentCommand;
     friend class QDocumentLineHandle;
@@ -194,6 +195,11 @@ private:
     int m_descent;
     int m_leading;
     int m_wrapMargin;
+
+    static QFont m_defaultFont;
+    static int m_defaultTabStop;
+    static QDocument::LineEnding m_defaultLineEnding;
+    static QDocument::WhiteSpaceMode m_defaultShowSpaces;
 
     QFormatScheme *m_formatScheme;
     QLanguageDefinition *m_language;

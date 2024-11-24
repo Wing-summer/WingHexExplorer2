@@ -120,10 +120,8 @@ public:
         QList<QDocumentCursor> mirrors;
     };
 
-    QEditor(QWidget *p = nullptr);
-    QEditor(bool actions, QWidget *p = nullptr);
-    QEditor(const QString &s, QWidget *p = nullptr);
-    QEditor(const QString &s, bool actions, QWidget *p = nullptr);
+    explicit QEditor(QWidget *p = nullptr);
+    explicit QEditor(bool actions, QWidget *p = nullptr);
     virtual ~QEditor();
 
     bool flag(EditFlag) const;
@@ -187,10 +185,24 @@ public:
                       point.y() - verticalOffset());
     }
 
+    void createSimpleBasicContextMenu(bool shortcut, bool extTool);
+
     virtual bool protectedCursor(const QDocumentCursor &c) const;
 
     static int defaultFlags();
     static void setDefaultFlags(int f);
+
+    static QFont defaultFont();
+    static void setDefaultFont(const QFont &font);
+
+    static int defaultTabStop();
+    static void setDefaultTabStop(int tabstop);
+
+    static QDocument::LineEnding defaultLineEnding();
+    static void setDefaultLineEnding(QDocument::LineEnding le);
+
+    static QDocument::WhiteSpaceMode defaultShowSpaces();
+    static void setDefaultShowSpaces(QDocument::WhiteSpaceMode y);
 
     static QString defaultCodecName();
     static void setDefaultCodec(const QString &name, int update);
@@ -210,9 +222,9 @@ public slots:
     void undo();
     void redo();
 
-    void cut();
-    void copy();
-    void paste();
+    virtual void cut();
+    virtual void copy();
+    virtual void paste();
 
     void selectAll();
 
@@ -280,6 +292,8 @@ public slots:
 
     void setUndoRedoEnabled(bool b);
 
+    void setCursorMirrorEnabled(bool b);
+
     virtual void setFileName(const QString &f);
 
 public:
@@ -289,7 +303,7 @@ public:
 
 signals:
     void loaded(QEditor *e, const QString &s);
-    void needLoading(QEditor *e);
+    void needLoading();
     void saved(QEditor *e, const QString &s);
 
     void contentModified(bool y);
@@ -390,6 +404,8 @@ public:
 
     bool undoRedoEnabled() const;
 
+    bool cursorMirrorEnabled() const;
+
 private:
     bool unindent(const QDocumentCursor &cur);
 
@@ -437,6 +453,7 @@ protected:
     QList<PlaceHolder> m_placeHolders;
 
     bool m_undoRedoEnabled = true;
+    bool m_cursorMirrorEnabled = true;
 
     int m_state;
     bool m_selection;

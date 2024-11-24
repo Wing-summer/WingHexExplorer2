@@ -29,6 +29,7 @@ public:
     virtual void apply() override;
     virtual void cancel() override;
     virtual void reset() override;
+    virtual QString id() const override;
 
 public slots:
     void setAutonomous(bool y);

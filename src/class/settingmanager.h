@@ -37,7 +37,8 @@ public:
         EDITOR = 4,
         SCRIPT = 8,
         OTHER = 16,
-        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER
+        CODEEDIT = 32,
+        ALL = APP | PLUGIN | EDITOR | SCRIPT | OTHER | CODEEDIT
     };
     Q_DECLARE_FLAGS(SETTINGS, SETTING)
 private:
@@ -165,6 +166,10 @@ signals:
     void sigCopylimitChanged(int v);
 
     void logLevelChanged();
+
+private:
+    void loadCodeEditorConfig();
+    void saveCodeEditorConfig();
 
 private:
     SettingManager();

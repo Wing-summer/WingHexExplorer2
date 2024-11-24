@@ -28,6 +28,7 @@
 #include "utilities.h"
 
 #include <QShortcut>
+#include <QStatusBar>
 #include <QToolButton>
 
 class ShowTextDialog : public FramelessDialogBase {
@@ -37,8 +38,9 @@ public:
     virtual ~ShowTextDialog();
 
 public:
-    void load(QHexBuffer *buffer, const QString &enc, qsizetype offset = 0,
+    void load(QHexBuffer *buffer, const QString encoding, qsizetype offset = 0,
               qsizetype size = -1);
+    void load(QHexBuffer *buffer, qsizetype offset = 0, qsizetype size = -1);
 
 private:
     void buildUpRibbonBar();
@@ -123,9 +125,10 @@ private:
     CodeEdit *m_edit = nullptr;
     bool m_canceled = false;
 
+    QStatusBar *m_status = nullptr;
+
     struct {
         QHexBuffer *buffer = nullptr;
-        QString enc;
         qsizetype offset = 0;
         qsizetype size = -1;
     } m_last;

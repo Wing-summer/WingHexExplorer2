@@ -38,6 +38,8 @@ CodeEdit::CodeEdit(bool haslineMark, QWidget *parent, bool actions)
     auto lineNum = new QLineNumberPanel(editor);
     lineNum->setVerboseMode(true);
     this->addPanel(lineNum, QCodeEdit::West, true);
+    connect(editor, &QEditor::cursorPositionChanged, lineNum,
+            QOverload<>::of(&QLineMarkPanel::update));
 
     this->addPanel(QStringLiteral("Fold Panel"), QCodeEdit::West, true);
     this->addPanel(QStringLiteral("Line Change Panel"), QCodeEdit::West, true);

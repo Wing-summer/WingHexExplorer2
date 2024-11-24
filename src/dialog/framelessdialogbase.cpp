@@ -28,6 +28,9 @@
 #include <QVBoxLayout>
 
 FramelessDialogBase::FramelessDialogBase(QWidget *parent) : QDialog(parent) {
+    setWindowFlag(Qt::WindowMaximizeButtonHint, false);
+    setWindowFlag(Qt::WindowMinimizeButtonHint, false);
+
 #ifdef WINGHEX_USE_FRAMELESS
     _useFrameLess = !SettingManager::instance().useNativeTitleBar();
     if (_useFrameLess) {

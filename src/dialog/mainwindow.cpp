@@ -2253,8 +2253,7 @@ void MainWindow::on_viewtxt() {
     if (hexeditor == nullptr) {
         return;
     }
-    _showtxt->load(hexeditor->document()->buffer(),
-                   hexeditor->renderer()->encoding());
+    _showtxt->load(hexeditor->document()->buffer());
 }
 
 void MainWindow::on_fullScreen() {

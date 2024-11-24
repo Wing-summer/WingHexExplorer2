@@ -186,10 +186,17 @@ void QHexMetadata::clear() {
 bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    if (begin < end ||
-        ((!fgcolor.isValid() || fgcolor.alpha() == 0) &&
-         (!bgcolor.isValid() || bgcolor.alpha() == 0) && comment.isEmpty()))
+    if (begin > end)
         return false;
+
+    if (!fgcolor.isValid() || fgcolor.alpha() == 0) {
+        if (!bgcolor.isValid() || bgcolor.alpha() == 0) {
+            if (comment.isEmpty()) {
+                return false;
+            }
+        }
+    }
+
     QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
     addMetadata(absi);
     emit metadataChanged();

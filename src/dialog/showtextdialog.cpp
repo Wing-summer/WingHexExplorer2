@@ -24,6 +24,7 @@
 #include "dialog/encodingdialog.h"
 #include "qeditor.h"
 
+#include <QThread>
 #include <QVBoxLayout>
 
 constexpr auto EMPTY_FUNC = [] {};
@@ -45,14 +46,17 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
     m_edit = new CodeEdit(false, this, false);
     auto editor = m_edit->editor();
     editor->setCodec(QStringLiteral("ASCII"));
-    connect(editor, &QEditor::needLoading, this, [this]() {
-        load(m_last.buffer, m_last.enc, m_last.offset, m_last.size);
-    });
+    connect(editor, &QEditor::needLoading, this,
+            [this]() { load(m_last.buffer, m_last.offset, m_last.size); });
 
     editor->setFlag(QEditor::ReadOnly, true);
+    editor->setAcceptDrops(false);
     editor->setUndoRedoEnabled(false);
+    editor->createSimpleBasicContextMenu(true, true);
     layout->addWidget(editor);
 
+    m_status = new QStatusBar(this);
+    layout->addWidget(m_status);
     buildUpContent(cw);
 
     // ok, preparing for starting...
@@ -65,8 +69,16 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
 
 ShowTextDialog::~ShowTextDialog() {}
 
-void ShowTextDialog::load(QHexBuffer *buffer, const QString &enc,
+void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding,
                           qsizetype offset, qsizetype size) {
+    auto editor = m_edit->editor();
+    editor->blockSignals(true);
+    load(buffer, offset, size);
+    editor->blockSignals(false);
+}
+
+void ShowTextDialog::load(QHexBuffer *buffer, qsizetype offset,
+                          qsizetype size) {
     if (buffer == nullptr || offset < 0) {
         return;
     }
@@ -83,49 +95,65 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString &enc,
     }
 
     auto editor = m_edit->editor();
-    if (!enc.isEmpty()) {
-        editor->setCodec(enc);
-    }
+    editor->setUpdatesEnabled(false);
 
     auto doc = editor->document();
     auto orign = offset;
 
     WingProgressDialog pdialog(tr("Loading"), tr("Cancel"), 0, size - orign);
-    pdialog.dialog()->setAutoClose(true);
-    pdialog.pdialog()->setAttribute(Qt::WA_DeleteOnClose);
-    connect(pdialog.dialog(), &QProgressDialog::canceled, this,
+    pdialog.setAutoClose(false);
+    pdialog.setAutoReset(true);
+
+    connect(&pdialog, &WingProgressDialog::canceled, this,
             &ShowTextDialog::on_cancel);
-    pdialog.pdialog()->open();
+    pdialog.open();
 
-    QByteArray ba;
-    auto codec = editor->codecName();
+    QEventLoop loop;
 
-    doc->startChunkLoading();
-    constexpr auto CHUNK_SIZE = 100000;
+    auto th = QThread::create([&] {
+        QByteArray ba;
+        auto codec = editor->codecName();
 
-    do {
-        ba = buffer->read(offset, CHUNK_SIZE);
-        offset += ba.size();
+        doc->startChunkLoading();
+        constexpr auto CHUNK_SIZE = 100000;
 
-        if (codec.size())
-            doc->addChunk(QCE::convertString(codec, ba));
-        else
-            doc->addChunk(QString::fromLatin1(ba));
+        do {
+            ba = buffer->read(offset, CHUNK_SIZE);
+            offset += ba.size();
 
-        pdialog.dialog()->setValue(offset - orign);
-        qApp->processEvents();
-    } while (!m_canceled && (offset < size) && ba.size());
+            if (codec.size())
+                doc->addChunk(QCE::convertString(codec, ba));
+            else
+                doc->addChunk(QString::fromLatin1(ba));
 
-    doc->stopChunkLoading();
-    editor->setCursor(QDocumentCursor(doc));
+            QMetaObject::invokeMethod(
+                qApp, [&] { pdialog.setValue(offset - orign); });
+            qApp->processEvents();
+        } while (!m_canceled && (offset < size) && ba.size());
 
-    // record
-    m_last.buffer = buffer;
-    m_last.enc = enc;
-    m_last.offset = orign;
-    m_last.size = offset;
+        pdialog.setRange(-1, -1);
+        doc->stopChunkLoading();
+        editor->setCursor(QDocumentCursor(doc));
+        pdialog.close();
+    });
 
-    show();
+    connect(th, &QThread::finished, this,
+            [this, buffer, orign, th, &offset, &loop] {
+                // record
+                m_last.buffer = buffer;
+                m_last.offset = orign;
+                m_last.size = offset;
+
+                show();
+                loop.quit();
+                th->deleteLater();
+            });
+
+    th->start();
+
+    loop.exec();
+    editor->setUpdatesEnabled(true);
+    m_status->showMessage(editor->codecName());
 }
 
 void ShowTextDialog::buildUpRibbonBar() {

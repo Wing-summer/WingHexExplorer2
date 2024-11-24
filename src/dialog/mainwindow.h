@@ -386,19 +386,17 @@ private:
         watcher->setFuture(fu);
 
         if (!tip.isEmpty()) {
-            std::unique_ptr<WingProgressDialog> pdialog(
-                new WingProgressDialog(tip, QString(), 0, 0));
-            auto dialog = pdialog->dialog();
-            dialog->setModal(true);
-            dialog->setValue(0);
+            auto pdialog = new WingProgressDialog(tip, QString(), 0, 0);
+            pdialog->setModal(true);
+            pdialog->setValue(0);
 
             QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished,
-                             this, [dialog]() mutable {
-                                 dialog->cancel();
-                                 dialog->deleteLater();
+                             this, [pdialog]() mutable {
+                                 pdialog->cancel();
+                                 pdialog->deleteLater();
                              });
 
-            pdialog->pdialog()->exec();
+            pdialog->exec();
         }
     }
 
@@ -417,19 +415,17 @@ private:
         watcher->setFuture(fu);
 
         if (!tip.isEmpty()) {
-            std::unique_ptr<WingProgressDialog> pdialog(
-                new WingProgressDialog(tip, QString(), 0, 0));
-            auto dialog = pdialog->dialog();
-            dialog->setModal(true);
-            dialog->setValue(0);
+            auto pdialog = new WingProgressDialog(tip, QString(), 0, 0);
+            pdialog->setModal(true);
+            pdialog->setValue(0);
 
             QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
-                             [dialog]() mutable {
-                                 dialog->cancel();
-                                 dialog->deleteLater();
+                             [pdialog]() mutable {
+                                 pdialog->cancel();
+                                 pdialog->deleteLater();
                              });
 
-            pdialog->pdialog()->exec();
+            pdialog->exec();
         }
     }
 

@@ -23,7 +23,10 @@
 QConsoleWidget::QConsoleWidget(QWidget *parent)
     : QEditor(false, parent), mode_(Output) {
     iodevice_ = new QConsoleIODevice(this, this);
+    setAcceptDrops(false);
     setUndoRedoEnabled(false);
+    setCursorMirrorEnabled(false);
+    createSimpleBasicContextMenu(false, false);
 }
 
 QConsoleWidget::~QConsoleWidget() {}
@@ -131,8 +134,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     // Allow cut only if the selection is limited to the interactive area ...
     if (e->key() == Qt::Key_X && e->modifiers() == Qt::ControlModifier) {
-        if (selectionInEditZone)
-            cut();
+        cut();
         e->accept();
         return;
     }
@@ -144,8 +146,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
                 QApplication::clipboard()->mimeData();
             const QString text = clipboard->text();
             if (!text.isNull()) {
-                textCursor.insertText(text/*,
-                channelCharFormat(StandardInput)*/);
+                textCursor.insertText(text);
             }
         }
 
@@ -247,21 +248,6 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         }
         break;
     }
-}
-
-void QConsoleWidget::contextMenuEvent(QContextMenuEvent *event) {
-    // QMenu *menu = createStandardContextMenu();
-
-    // QAction *a;
-    // if ((a = menu->findChild<QAction *>("edit-cut")))
-    //     a->setEnabled(canCut());
-    // if ((a = menu->findChild<QAction *>("edit-delete")))
-    //     a->setEnabled(canCut());
-    // if ((a = menu->findChild<QAction *>("edit-paste")))
-    //     a->setEnabled(canPaste());
-
-    // menu->exec(event->globalPos());
-    // delete menu;
 }
 
 bool QConsoleWidget::isSelectionInEditZone() const {
@@ -421,6 +407,12 @@ int QConsoleWidget::History::indexOf(bool dir, int from) const {
     return to;
 }
 
+void QConsoleWidget::cut() {
+    if (isSelectionInEditZone()) {
+        QEditor::cut();
+    }
+}
+
 /////////////////// Stream manipulators /////////////////////
 
 QTextStream &waitForInput(QTextStream &s) {
@@ -442,6 +434,7 @@ QTextStream &outChannel(QTextStream &s) {
         d->setCurrentWriteChannel(STDOUT_FILENO);
     return s;
 }
+
 QTextStream &errChannel(QTextStream &s) {
     QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
     if (d)

@@ -56,7 +56,7 @@ protected:
     void handleReturnKey();
 
     void keyPressEvent(QKeyEvent *e) override;
-    void contextMenuEvent(QContextMenuEvent *event) override;
+
     // Returns true if there is a selection in edit zone
     bool isSelectionInEditZone() const;
     // Returns true if cursor is in edit zone
@@ -65,6 +65,10 @@ protected:
     void replaceCommandLine(const QString &str);
 
     static QString getHistoryPath();
+
+    // QEditor interface
+public slots:
+    virtual void cut() override;
 
 private:
     struct History {

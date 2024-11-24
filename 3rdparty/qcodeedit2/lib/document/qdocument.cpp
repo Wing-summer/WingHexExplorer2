@@ -155,6 +155,8 @@ QString QDocument::screenable(const QChar *d, int l, int tabStop) {
     return fragment;
 }
 
+int QDocument::lineSpacing() const { return m_impl->m_lineSpacing; }
+
 struct InitStruct {
     InitStruct() {
         qRegisterMetaType<QDocumentIterator>("QDocumentIterator");
@@ -421,7 +423,7 @@ void QDocument::startChunkLoading() {
 
     // qDeleteAll(m_impl->m_lines);
     foreach (QDocumentLineHandle *h, m_impl->m_lines) {
-        h->m_doc = 0;
+        h->m_doc = nullptr;
         h->deref();
     }
 
@@ -748,7 +750,7 @@ QFont QDocument::font() { return m_impl->m_font; }
 */
 void QDocument::setFont(const QFont &f) {
     m_impl->setFont(f);
-    // emit contentsChanged();
+    emit fontChanged(f);
 }
 
 /*!
@@ -4313,18 +4315,28 @@ T *getStaticDefault() {
 QFormatScheme *QDocumentPrivate::m_defaultFormatScheme =
     getStaticDefault<QFormatScheme>();
 
+QFont QDocumentPrivate::m_defaultFont = qApp->font();
+int QDocumentPrivate::m_defaultTabStop = 4;
+QDocument::LineEnding QDocumentPrivate::m_defaultLineEnding =
+    QDocument::LineEnding::Conservative;
+QDocument::WhiteSpaceMode QDocumentPrivate::m_defaultShowSpaces =
+    QDocument::ShowNone;
+
 QList<QDocumentPrivate *> QDocumentPrivate::m_documents;
 
 QDocumentPrivate::QDocumentPrivate(QDocument *d)
     : m_doc(d), m_editCursor(0), m_lastGroupId(-1), m_constrained(false),
-      m_width(0), m_height(0), m_tabStop(4), m_formatScheme(0),
-      m_language(nullptr), m_maxMarksPerLine(0), _nix(0), _dos(0), _mac(0),
-      m_lineEnding(QDocument::Conservative), m_wrapMargin(15), m_font(),
-      m_fontMetrics(m_font), m_leftMargin(5),
-      m_showSpaces(QDocument::ShowNone) {
-    setFont(qApp->font());
+      m_width(0), m_height(0), m_tabStop(m_defaultTabStop),
+      m_formatScheme(nullptr), m_language(nullptr), m_maxMarksPerLine(0),
+      _nix(0), _dos(0), _mac(0), m_lineEnding(m_defaultLineEnding),
+      m_wrapMargin(15), m_font(), m_fontMetrics(m_font), m_leftMargin(5),
+      m_showSpaces(m_defaultShowSpaces) {
+    setFont(m_defaultFont);
     m_documents << this;
-    updateFormatCache();
+
+    if (d) {
+        updateFormatCache();
+    }
 }
 
 QDocumentPrivate::~QDocumentPrivate() {
@@ -4750,6 +4762,8 @@ void QDocumentPrivate::setWidth() {
 
             if (first != -1)
                 first = i;
+
+            qApp->processEvents();
         }
 
         if (first != -1)
@@ -4773,6 +4787,8 @@ void QDocumentPrivate::setWidth() {
                 m_largest.clear();
                 m_largest << qMakePair(l, w);
             }
+
+            qApp->processEvents();
         }
 
         if (m_width != oldWidth)
@@ -4914,9 +4930,6 @@ void QDocumentPrivate::updateFormatCache() {
 
         m_fonts << f;
     }
-
-    // foreach ( QDocumentPrivate *d, m_documents )
-    //	d->emitFormatsChanged();
 
     emit m_doc->formatsChanged();
 }

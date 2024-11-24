@@ -16,8 +16,6 @@ public:
     explicit QEditConfig(QWidget *parent = nullptr);
     virtual ~QEditConfig();
 
-    QMap<QString, QVariant> dumpKeys() const;
-
 public:
     virtual QIcon categoryIcon() const override;
     virtual QString name() const override;
@@ -28,9 +26,6 @@ public:
 
 private:
     void reload();
-
-public slots:
-    void loadKeys(const QMap<QString, QVariant> &keys);
 
 private slots:
     void on_spnFontSize_valueChanged(int size);

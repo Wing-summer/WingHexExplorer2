@@ -20,34 +20,24 @@
         \brief Implementation of the QPanelLayout class.
 */
 
-#include "qdebug.h"
 #include "qeditor.h"
 #include "qpanel.h"
-
-#include <QScrollBar>
-#include <QWidget>
-
-#ifdef Q_WS_WIN
-// panel position fix required on some systems to work around a bug in
-// QAbstractScrollArea
-#define _PANEL_POSITION_FIX_
-#endif
 
 /*!
         \class QPanelLayout
         \brief A specialized layout taking care of panel display
 
-        The panel layout is specialized in several ways :
-        <ul>
-        <li>It only operates on specific widgets (which inherit QPanel)</li>
-        <li>It can only layout widgets in the viewport margins of a QEditor
-   (could work with any QAbstractScrollArea if a single method was made public
-   instead of protected...) so it does not qualify as a "real" layout  (contrary
-   to grid/box layouts)</li> <li>It positions widgets on the border of the
-   editor in the same way the Border Layout example does (most of the layout
-   code actually comes from there).</li> <li>It provides
-   serialization/deserialization of its layout structure</li>
-        </ul>
+The panel layout is specialized in several ways :
+<ul>
+<li>It only operates on specific widgets (which inherit QPanel)</li>
+<li>It can only layout widgets in the viewport margins of a QEditor (could work
+with any QAbstractScrollArea if a single method was made public instead of
+protected...) so it does not qualify as a "real" layout  (contrary to grid/box
+layouts)</li> <li>It positions widgets on the border of the editor in the same
+way the Border Layout example does (most of the layout code actually comes from
+there).</li> <li>It provides serialization/deserialization of its layout
+structure</li>
+</ul>
 */
 
 /*
@@ -88,8 +78,8 @@ QString QPanelLayout::serialized() const {
     /*
             Scheme :
 
-            QPanelLayout::Position '{' comma-separated list of identifiers '}'
-    */
+ QPanelLayout::Position '{' comma-separated list of identifiers '}'
+*/
 
     QHash<int, QString> posMap;
 
@@ -108,11 +98,12 @@ QString QPanelLayout::serialized() const {
         } else {
             QString &ref = posMap[position];
 
-            ref.insert(ref.size() - 2, QString(",") + panel->id());
+            ref.insert(ref.length() - 2, QStringLiteral(",") + panel->id());
         }
     }
 
-    return QStringList(posMap.values()).join("");
+    auto values = posMap.values();
+    return values.join("");
 }
 
 /*!
@@ -146,7 +137,8 @@ void QPanelLayout::addSerialized(const QString &layout) {
             }
         } else if (layout.at(i) == '{') {
             inList = true;
-            position = Position(layout.mid(last, i - last).toInt());
+            auto pos = layout.mid(last, i - last);
+            position = Position(pos.toInt());
 
             // qDebug("position : %i [%s]", position,
             // qPrintable(layout.mid(last, i - last)));
@@ -233,7 +225,12 @@ QLayoutItem *QPanelLayout::itemAt(int idx) const {
 QLayoutItem *QPanelLayout::takeAt(int idx) {
     if ((idx >= 0) && (idx < m_list.size())) {
         PanelWrapper *layoutStruct = m_list.takeAt(idx);
-        return layoutStruct->item;
+        Q_ASSERT(layoutStruct);
+        if (!layoutStruct)
+            return 0;
+        QLayoutItem *li = layoutStruct->item;
+        delete layoutStruct;
+        return li;
     }
 
     return 0;
@@ -243,6 +240,8 @@ QLayoutItem *QPanelLayout::takeAt(int idx) {
         \internal
 */
 void QPanelLayout::setGeometry(const QRect &r) {
+    // qDebug("laying out %i panels", count());
+
     QScrollBar *vb = m_parent->verticalScrollBar(),
                *hb = m_parent->horizontalScrollBar();
 
@@ -264,13 +263,17 @@ void QPanelLayout::setGeometry(const QRect &r) {
             continue;
 
         if (position == North) {
-            item->setGeometry(QRect(rect.x(), northHeight, rect.width(),
-                                    item->sizeHint().height()));
+            item->setGeometry(QRect(rect.x(), rect.y() + northHeight,
+                                    rect.width(), item->sizeHint().height()));
 
             northHeight += item->geometry().height() + spacing();
         } else if (position == South) {
+            int ht = item->sizeHint().height();
+            if (item->hasHeightForWidth()) {
+                ht = item->heightForWidth(rect.width());
+            }
             item->setGeometry(QRect(item->geometry().x(), item->geometry().y(),
-                                    rect.width(), item->sizeHint().height()));
+                                    rect.width(), ht));
 
             southHeight += item->geometry().height() + spacing();
 
@@ -291,7 +294,8 @@ void QPanelLayout::setGeometry(const QRect &r) {
             continue;
 
         if (position == West) {
-            item->setGeometry(QRect(rect.x() + westWidth, northHeight,
+            item->setGeometry(QRect(rect.x() + westWidth,
+                                    rect.y() + northHeight,
                                     item->sizeHint().width(), centerHeight));
 
             westWidth += item->geometry().width() + spacing();
@@ -301,23 +305,15 @@ void QPanelLayout::setGeometry(const QRect &r) {
 
             eastWidth += item->geometry().width() + spacing();
 
-            item->setGeometry(QRect(
-                rect.x() + rect.width() - eastWidth + spacing(), northHeight,
-                item->geometry().width(), item->geometry().height()));
+            item->setGeometry(
+                QRect(rect.x() + rect.width() - eastWidth + spacing(),
+                      rect.y() + northHeight, item->geometry().width(),
+                      item->geometry().height()));
         }
     }
 
-    /*
-    if ( center )
-            center->item->setGeometry(QRect(westWidth, northHeight,
-                                                                            rect.width()
-    - eastWidth - westWidth, centerHeight));
-    */
-    // qDebug("{%i, %i, %i, %i}", westWidth, northHeight, eastWidth,
-    // southHeight);
-
-    // qDebug() << westWidth;
-    m_parent->setPanelMargins(westWidth, northHeight, eastWidth, southHeight);
+    m_parent->setPanelMargins(westWidth, rect.y() + northHeight, eastWidth,
+                              southHeight);
 }
 
 /*!

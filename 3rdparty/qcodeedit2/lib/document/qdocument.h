@@ -186,6 +186,8 @@ public:
     QFormatScheme *formatScheme() const;
     void setFormatScheme(QFormatScheme *f);
 
+    int lineSpacing() const;
+
     int getNextGroupId();
     void releaseGroupId(int groupId);
     void clearMatches(int groupId);
@@ -253,6 +255,8 @@ signals:
     void markChanged(QDocumentLineHandle *l, int m, bool on);
 
     void lineEndingChanged(int lineEnding);
+
+    void fontChanged(const QFont &font);
 
 private:
     QString m_leftOver;

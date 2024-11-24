@@ -1451,8 +1451,8 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="1487"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1550"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1589"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2375"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2591"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2374"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2590"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -1516,12 +1516,12 @@
         <translation>搜索数量已到达上限，结果可能不全，建议请按区段搜索。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2882"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2881"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2923"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2922"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
@@ -1639,7 +1639,7 @@
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="1945"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="1986"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2456"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2455"/>
         <source>NoSelection</source>
         <translation>没有选区，无法继续的操作！</translation>
     </message>
@@ -1669,32 +1669,32 @@
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2274"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2273"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2277"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2276"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2285"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2284"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2376"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2375"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2523"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2522"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2592"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2591"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -2123,7 +2123,7 @@ Restart from the begining ?</source>
         <translation>保留尾部缩进</translation>
     </message>
     <message>
-        <location filename="../../src/qcodeeditwidget/qeditconfig.cpp" line="214"/>
+        <location filename="../../src/qcodeeditwidget/qeditconfig.cpp" line="184"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
@@ -2142,113 +2142,122 @@ Restart from the begining ?</source>
     </message>
     <message>
         <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="197"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="643"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1080"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="654"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1091"/>
         <source>Default</source>
         <translation>默认</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="488"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1053"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="499"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1064"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2259"/>
         <source>&amp;Undo</source>
         <translation>撤销（&amp;U）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="497"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1054"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="508"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1065"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2269"/>
         <source>&amp;Redo</source>
         <translation>恢复（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="510"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1056"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="521"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1067"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2285"/>
         <source>Cu&amp;t</source>
         <translation>剪切（&amp;T）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="519"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1057"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="530"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1068"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2296"/>
         <source>&amp;Copy</source>
         <translation>复制（&amp;C）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="528"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1058"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="539"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1069"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2307"/>
         <source>&amp;Paste</source>
         <translation>粘贴（&amp;P）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="543"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1060"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="554"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1071"/>
         <source>&amp;Indent</source>
         <translation>缩进（&amp;I）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="550"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1061"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="561"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1072"/>
         <source>&amp;Unindent</source>
         <translation>取消缩进（&amp;U）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="561"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1062"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="572"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1073"/>
         <source>Co&amp;mment</source>
         <translation>批注（&amp;M）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="568"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1063"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="579"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1074"/>
         <source>Unc&amp;omment</source>
         <translation>取消批注（&amp;O）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="579"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1065"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="590"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1076"/>
         <source>&amp;Select all</source>
         <translation>全选（&amp;S）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="590"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1067"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="601"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1078"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2324"/>
         <source>&amp;Find</source>
         <translation>查找（&amp;F）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="597"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1068"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="608"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1079"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2332"/>
         <source>Fin&amp;d next</source>
         <translation>查找下一个（&amp;D）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="604"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1069"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="615"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1080"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2340"/>
         <source>&amp;Replace</source>
         <translation>替换（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="615"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1071"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="626"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1082"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2351"/>
         <source>&amp;Goto line...</source>
         <translation>跳转到行（&amp;G）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="626"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="637"/>
         <source>Dynamic line wrapping</source>
         <translation>自动换行</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="636"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1077"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="647"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1088"/>
         <source>Input binding</source>
         <translation>输入绑定</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="790"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="801"/>
         <source>Conflict!</source>
         <translation>冲突！</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="791"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="802"/>
         <source>%1
 has been modified by another application.
 Press &quot;Save&quot; to overwrite the file on disk
@@ -2262,12 +2271,12 @@ Press &quot;Discard&quot; to ignore this warning.
 按“放弃”忽略此警告。</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="928"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="939"/>
         <source>File changed</source>
         <translation>文件被修改</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="929"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="940"/>
         <source>%1
 has been modified by another application.
 
@@ -2280,7 +2289,7 @@ Do you wish to keep up to date by reloading the file?</source>
 您是否希望通过重新加载文件来保持最新状态？</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3071"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3219"/>
         <source>untitled</source>
         <translation>未命名</translation>
     </message>
@@ -2318,7 +2327,7 @@ Do you wish to keep up to date by reloading the file?</source>
     <message>
         <location filename="../../src/qcodeeditwidget/qformatconfig.cpp" line="104"/>
         <source>Format</source>
-        <translation>格式</translation>
+        <translation>代码样式</translation>
     </message>
     <message>
         <location filename="../../src/qcodeeditwidget/qformatconfig.cpp" line="266"/>
@@ -2417,7 +2426,7 @@ Do you want them to be saved?</source>
 <context>
     <name>QLineNumberPanel</name>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qlinenumberpanel.cpp" line="62"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/widgets/qlinenumberpanel.cpp" line="65"/>
         <source>Line Number Panel</source>
         <translation>行号面板</translation>
     </message>
@@ -4455,420 +4464,426 @@ Do you want them to be saved?</source>
 <context>
     <name>ScriptingDialog</name>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="98"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="99"/>
         <source>ScriptEditor</source>
         <translation>脚本编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="187"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="188"/>
         <source>ScriptPermissionDenied</source>
         <translation>因权限无法打开脚本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="282"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="283"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="283"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="284"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="285"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="286"/>
         <source>Debugger</source>
         <translation>调试器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="287"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="288"/>
         <source>Setting</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="288"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="289"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="301"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="305"/>
+        <source>InvalidSourceFile</source>
+        <translation>非法代码文件</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="314"/>
         <source>Basic</source>
         <translation>基础</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="302"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="315"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="305"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="318"/>
         <source>OpenF</source>
         <translation>打开文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="308"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="321"/>
         <source>RecentFiles</source>
         <translation>最近打开</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="312"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="325"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="317"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="319"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="330"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="332"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="324"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="337"/>
         <source>SaveAs</source>
         <translation>另存为</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="336"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="349"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="338"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="351"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="343"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="356"/>
         <source>Redo</source>
         <translation>恢复</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="349"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="362"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="353"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="366"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="358"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="371"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="362"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="375"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="368"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="381"/>
         <source>Lookup</source>
         <translation>查询</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="369"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="382"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="373"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="386"/>
         <source>Replace</source>
         <translation>替换</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="378"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="391"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="385"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="398"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="543"/>
         <source>Format</source>
         <translation>代码样式</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="386"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="399"/>
         <source>CodeFormat</source>
         <translation>代码格式化</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="396"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="409"/>
         <source>Display</source>
         <translation>显示</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="423"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="436"/>
         <source>Scale</source>
         <translation>缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="425"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="438"/>
         <source>ResetScale</source>
         <translation>重置缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="431"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="444"/>
         <source>Window</source>
         <translation>窗体</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="434"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="522"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="447"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="535"/>
         <source>Editor</source>
         <translation>编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="438"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="451"/>
         <source>Tools</source>
         <translation>工具</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="443"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="456"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="444"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="457"/>
         <source>Fullscreen</source>
         <translation>全屏</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="446"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="459"/>
         <source>RestoreLayout</source>
         <translation>恢复默认布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="505"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="518"/>
         <source>BreakPoint</source>
         <translation>断点</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="507"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="520"/>
         <source>ToggleBreakPoint</source>
         <translation>切换断点</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="510"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="523"/>
         <source>AddBreakPoint</source>
         <translation>添加断点</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="520"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="533"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="524"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="537"/>
         <source>Snippets</source>
         <translation>代码片段</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="528"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="541"/>
         <source>ClangFormat</source>
         <translation>Clang Format</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="561"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="576"/>
         <source>Local</source>
         <translation>本地</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="567"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="582"/>
         <source>Global</source>
         <translation>全局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="570"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="585"/>
         <source>Variables</source>
         <translation>变量</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="583"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="598"/>
         <source>BreakPoints</source>
         <translation>断点</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="594"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="609"/>
         <source>ConsoleOutput</source>
         <translation>输出</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="608"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="623"/>
         <source>StackTrace</source>
         <translation>栈跟踪</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="622"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="637"/>
         <source>Watch</source>
         <translation>监视</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="711"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="945"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1116"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1156"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1171"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1194"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="726"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="960"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1134"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1170"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1185"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1208"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="712"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="727"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="736"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="751"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的脚本文件，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="765"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="780"/>
         <source>ScriptSaveFailedClose</source>
         <translation>脚本保存失败，你仍确认关闭吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1091"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1131"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1109"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1149"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="945"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1116"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1171"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="960"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1134"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1185"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1154"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1168"/>
         <source>ReloadSuccessfully</source>
         <translation>文件重新加载成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1156"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1170"/>
         <source>ReloadUnSuccessfully</source>
         <translation>文件重新加载失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1183"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1197"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1169"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1192"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1183"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1206"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1194"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1208"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1266"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1280"/>
         <source>FormatCodeFailed</source>
         <translation>代码格式化失败</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1316"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1331"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1330"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1345"/>
         <source>CannotSave2RunScript</source>
         <translation>无法保存，故无法继续运行脚本。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="751"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1391"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="766"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1405"/>
         <source>ScriptStillRunning</source>
         <translation>脚本仍在运行，你确定要退出吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="255"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="256"/>
         <source>ConfirmScriptSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的脚本文件，你确定保存这些更改吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="284"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="285"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="455"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="468"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="458"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="471"/>
         <source>Run</source>
         <translation>运行</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="463"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="476"/>
         <source>RunWithDbg</source>
         <translation>调试运行</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="469"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="482"/>
         <source>Pause</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="474"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="487"/>
         <source>Continue</source>
         <translation>继续</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="479"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="492"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="483"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="496"/>
         <source>Restart</source>
         <translation>重启</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="488"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="501"/>
         <source>StepInto</source>
         <translation>单步步入</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="493"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="506"/>
         <source>StepOver</source>
         <translation>单步步过</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="497"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="510"/>
         <source>StepOut</source>
         <translation>单步跳出</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="513"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="526"/>
         <source>RemoveBreakPoint</source>
         <translation>删除断点</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="534"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="549"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="536"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="551"/>
         <source>Software</source>
         <translation>软件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="539"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="554"/>
         <source>Sponsor</source>
         <translation>赞助</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="542"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="557"/>
         <source>Wiki</source>
         <translation>网页 Wiki</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="545"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="560"/>
         <source>AboutQT</source>
         <translation>关于 QT</translation>
     </message>
@@ -4894,72 +4909,72 @@ Do you want them to be saved?</source>
 <context>
     <name>ShowTextDialog</name>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="141"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="169"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="143"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="171"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="59"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="63"/>
         <source>TextBroswer</source>
         <translation>文本浏览</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="81"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="93"/>
         <source>TooHugeFile</source>
         <translation>文件内容过大</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="93"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="103"/>
         <source>Loading</source>
         <translation>加载中</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="93"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="103"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="134"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="162"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="135"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="163"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="147"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="175"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="151"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="179"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="156"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="184"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="167"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="195"/>
         <source>Display</source>
         <translation>显示</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="186"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="214"/>
         <source>Scale</source>
         <translation>缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="188"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="216"/>
         <source>ResetScale</source>
         <translation>重置缩放</translation>
     </message>
