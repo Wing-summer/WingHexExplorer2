@@ -193,6 +193,7 @@ private slots:
 
     void on_scriptwindow();
     void on_setting_general();
+    void on_setting_script();
     void on_setting_plugin();
 
     void on_about();

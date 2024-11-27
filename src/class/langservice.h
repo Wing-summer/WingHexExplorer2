@@ -27,9 +27,18 @@ public:
 
     static void addAdditionalFormat(QFormatScheme *scheme);
 
+    QHash<QString, QFormatScheme *> formatSchemes() const;
+
+    const QString defaultSchemeName() const;
+
+    void saveSnippets();
+
 private:
     LangService();
     ~LangService();
+
+private:
+    void initAdditionalFormatScheme();
 
 private:
     QSnippetBinding *m_snipbind = nullptr;
@@ -37,6 +46,8 @@ private:
     QSnippetManager *m_snippetManager = nullptr;
 
     AsCompletion *_completion = nullptr;
+
+    QHash<QString, QFormatScheme *> _formatSchemes;
 
     Q_DISABLE_COPY_MOVE(LangService)
 };

@@ -23,7 +23,6 @@
 #include <QFile>
 #include <QPixmap>
 
-#include "qlanguagefactory.h"
 #include "qpanellayout.h"
 
 #include "class/clangformatmanager.h"

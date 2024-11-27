@@ -91,9 +91,7 @@ QStringList QLanguageFactory::fileFilters() const {
     QStringList l;
 
     foreach (QString lng, m_languages)
-        l << tr("%1 files (*.%2)")
-                 .arg(lng)
-                 .arg(m_data[lng].extensions.join(" *."));
+        l << tr("%1 files (*.%2)").arg(lng, m_data[lng].extensions.join(" *."));
 
     l << tr("All files (*)");
 
@@ -238,18 +236,6 @@ void QLanguageFactory::addLanguage(const QLanguageFactory::LangData &d) {
 const QLanguageFactory::LangData &
 QLanguageFactory::languageData(const QString &lang) {
     return m_data[lang];
-}
-
-/*!
-        \brief Registers a new completion engine
-
-        \note This engine will NOT be used if there are no language definition
-   for the language it supports...
-*/
-void QLanguageFactory::addLanguageDefinition(QLanguageDefinition *l) {
-    Q_UNUSED(l)
-
-    qWarning("New design does not allow this sorry...");
 }
 
 /*!

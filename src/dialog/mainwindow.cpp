@@ -1160,6 +1160,8 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
             pannel, QStringLiteral("general"), tr("General"),
             &MainWindow::on_setting_general,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
+        addPannelAction(pannel, QStringLiteral("scriptset"),
+                        tr("ScriptSetting"), &MainWindow::on_setting_script);
     }
 
     {
@@ -2292,6 +2294,10 @@ void MainWindow::on_scriptwindow() {
 
 void MainWindow::on_setting_general() { m_setdialog->showConfig(); }
 
+void MainWindow::on_setting_script() {
+    m_scriptDialog->settingDialog()->showConfig();
+}
+
 void MainWindow::on_setting_plugin() { m_setdialog->showConfig(2); }
 
 void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
@@ -2950,6 +2956,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     m_scriptDialog->saveDockLayout();
     set.setRecentFiles(m_recentmanager->saveRecent());
     set.save();
+
+    LangService::instance().saveSnippets();
 
     FramelessMainWindow::closeEvent(event);
 }

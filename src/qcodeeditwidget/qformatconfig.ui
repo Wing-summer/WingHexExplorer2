@@ -43,7 +43,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="m_table">
+    <widget class="QTableView" name="m_table">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
        <horstretch>0</horstretch>
@@ -56,56 +56,6 @@
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
-     <column>
-      <property name="text">
-       <string>Identifier</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>O</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>W</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
     </widget>
    </item>
   </layout>

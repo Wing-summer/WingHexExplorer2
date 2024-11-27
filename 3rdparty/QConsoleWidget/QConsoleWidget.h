@@ -6,7 +6,6 @@
 #include <QTextStream>
 
 #include "qeditor.h"
-#include "qlanguagefactory.h"
 
 class QConsoleIODevice;
 
@@ -95,8 +94,6 @@ private:
     QDocumentCursor inpos_;
     QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
-
-    QLanguageFactory *m_language = nullptr;
 };
 
 QTextStream &waitForInput(QTextStream &s);

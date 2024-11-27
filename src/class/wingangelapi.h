@@ -26,6 +26,7 @@
 #include <vector>
 
 class asIScriptEngine;
+class ScriptMachine;
 
 class WingAngelAPI : public WingHex::IWingPlugin {
     Q_OBJECT
@@ -46,7 +47,11 @@ public:
     virtual uint pluginVersion() const override;
     virtual const QString pluginComment() const override;
 
-    void installAPI(asIScriptEngine *engine, asITypeInfo *stringType);
+    void
+    registerScriptFns(const QString &ns,
+                      const QHash<QString, IWingPlugin::ScriptFnInfo> &rfns);
+
+    void installAPI(ScriptMachine *machine);
 
 private:
     void installLogAPI(asIScriptEngine *engine);
@@ -59,6 +64,7 @@ private:
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
     void installDataVisualAPI(asIScriptEngine *engine, int stringID);
+    void installScriptFns(asIScriptEngine *engine);
 
 private:
     template <class T>
@@ -70,7 +76,10 @@ private:
             asCALL_THISCALL_ASGLOBAL,
             std::any_cast<std::function<T>>(&_fnbuffer.back()));
         Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
     }
+
+    using WrapperFn = std::function<void(asIScriptGeneric *)>;
 
 private:
     QStringList cArray2QStringList(const CScriptArray &array, int stringID,
@@ -81,6 +90,35 @@ private:
     bool read2Ref(qsizetype offset, void *ref, int typeId);
 
     qsizetype getAsTypeSize(int typeId, void *data);
+
+    template <typename T>
+    static void assignTmpBuffer(asQWORD &buffer, const T &v) {
+        static_assert(std::is_pod<T>());
+        static_assert(sizeof(T) <= sizeof(asQWORD));
+        *reinterpret_cast<T *>(&buffer) = v;
+    }
+
+    template <typename T>
+    static T qvariantCastGetValue(void *buffer) {
+        static_assert(std::is_pod<T>());
+        static_assert(sizeof(T) <= sizeof(asQWORD));
+        return *reinterpret_cast<T *>(buffer);
+    }
+
+    static void
+    qvariantCastOp(asIScriptEngine *engine, const QVariant &var,
+                   const std::function<void(void *, QMetaType::Type)> &fn);
+
+    static QVariant qvariantGet(asIScriptEngine *engine, const void *raw,
+                                int typeID);
+
+    static int qvariantCastASID(asIScriptEngine *engine,
+                                const QMetaType::Type &id);
+
+    static bool isTempBuffered(QMetaType::Type type);
+
+    void script_call(asIScriptEngine *engine, qsizetype id,
+                     asIScriptGeneric *gen);
 
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
@@ -136,6 +174,10 @@ private:
 
 private:
     std::vector<std::any> _fnbuffer;
+    QVector<IWingPlugin::ScriptFnInfo> _sfns;
+    QHash<asIScriptEngine *, std::vector<WrapperFn>> _sfn_wraps;
+
+    QHash<QString, QHash<QString, qsizetype>> _rfns;
 };
 
 #endif // WINGANGELAPI_H

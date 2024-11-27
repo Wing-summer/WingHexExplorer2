@@ -40,9 +40,7 @@ set(WIDGETS_SRC
     lib/widgets/qlinenumberpanel.cpp
     lib/widgets/qlinenumberpanel.h
     lib/widgets/qpanel.cpp
-    lib/widgets/qpanel.h
-    lib/widgets/qsimplecolorpicker.cpp
-    lib/widgets/qsimplecolorpicker.h)
+    lib/widgets/qpanel.h)
 
 set(QNFA_SRC
     lib/qnfa/light_vector.h lib/qnfa/qnfadefinition.h lib/qnfa/qnfa.h

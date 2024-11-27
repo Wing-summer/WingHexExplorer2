@@ -56,10 +56,14 @@ void NumShowModel::clear() {
 }
 
 int NumShowModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _numHeader.size();
 }
 
-int NumShowModel::columnCount(const QModelIndex &parent) const { return 1; }
+int NumShowModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 1;
+}
 
 QVariant NumShowModel::data(const QModelIndex &index, int role) const {
     switch (role) {

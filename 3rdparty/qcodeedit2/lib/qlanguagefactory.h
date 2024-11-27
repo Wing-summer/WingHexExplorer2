@@ -68,7 +68,6 @@ public:
 
 public slots:
     void addLanguage(const LangData &d);
-    void addLanguageDefinition(QLanguageDefinition *l);
     void addCompletionEngine(QCodeCompletionEngine *e);
 
     virtual void setLanguage(QEditor *e, const QString &f);

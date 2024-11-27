@@ -77,6 +77,8 @@ void QLineNumberPanel::setVerboseMode(bool y) {
     update();
 }
 
+void QLineNumberPanel::setFont_slot(const QFont &font) { setFont(font); }
+
 /*!
 
 */
@@ -97,7 +99,7 @@ void QLineNumberPanel::editorChange(QEditor *e) {
                 QOverload<>::of(&QLineNumberPanel::update));
 
         connect(e->document(), &QDocument::fontChanged, this,
-                &QLineNumberPanel::setFont);
+                &QLineNumberPanel::setFont_slot);
     }
 }
 

@@ -34,11 +34,10 @@ public:
 
     static QString arrayToString(void *obj, int expandMembers, asDebugger *dbg);
 
+    static QString charToString(void *obj, int expandMembers, asDebugger *dbg);
+
     static QString dictionaryToString(void *obj, int expandMembers,
                                       asDebugger *dbg);
-
-    static QString dateTimeToString(void *obj, int expandMembers,
-                                    asDebugger *dbg);
 
 public:
     // ==================================================

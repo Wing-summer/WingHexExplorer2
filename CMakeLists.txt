@@ -70,16 +70,12 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/autowrapper/aswrappedcall.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scripthandle/scripthandle.cpp
@@ -324,7 +320,9 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qsnippetedit.h
     src/qcodeeditwidget/qsnippetedit.ui
     src/qcodeeditwidget/qdocumentswaptextcommand.h
-    src/qcodeeditwidget/qdocumentswaptextcommand.cpp)
+    src/qcodeeditwidget/qdocumentswaptextcommand.cpp
+    src/qcodeeditwidget/formatconfigmodel.h
+    src/qcodeeditwidget/formatconfigmodel.cpp)
 
 set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
                src/plugin/pluginsystem.h src/plugin/settingpage.h)

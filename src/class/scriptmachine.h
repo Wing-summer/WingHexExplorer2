@@ -42,9 +42,9 @@ public:
         QString message;
     };
 
-protected:
     enum RegisteredType {
         tString,
+        tChar,
         tArray,
         tComplex,
         tWeakref,
@@ -53,7 +53,6 @@ protected:
         tDictionary,
         tDictionaryValue,
         tGrid,
-        tDateTime,
         tRef,
         tMAXCOUNT
     };

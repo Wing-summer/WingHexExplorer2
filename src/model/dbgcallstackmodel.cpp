@@ -23,10 +23,12 @@ DbgCallStackModel::DbgCallStackModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
 int DbgCallStackModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _stack.size();
 }
 
 int DbgCallStackModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return 3;
 }
 

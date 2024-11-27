@@ -118,7 +118,7 @@ public:
 private:
     void registerFns(IWingPlugin *plg);
 
-    QString type2AngelScriptString(IWingPlugin::MetaType type);
+    QString type2AngelScriptString(IWingPlugin::MetaType type, bool isArg);
 
     QString getScriptFnSig(const QString &fnName,
                            const IWingPlugin::ScriptFnInfo &fninfo);

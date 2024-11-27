@@ -157,7 +157,7 @@ QSnippetManager::patternLoader(const QString &type) const {
             return pl;
     }
 
-    return 0;
+    return nullptr;
 }
 
 void QSnippetManager::saveSnippetsToDirectory(const QString &path) {
@@ -179,14 +179,9 @@ void QSnippetManager::saveSnippetsToDirectory(const QString &path) {
 void QSnippetManager::loadSnippetsFromDirectory(const QString &path) {
     QDir d(path);
 
-    QFileInfoList l = d.entryInfoList(QDir::Files | QDir::Readable);
-
-    foreach (const QFileInfo &info, l) {
-        if (info.suffix() != "qcs")
-            continue;
-
-        // TODO : pattern selection?
-        loadSnippetFromFile(info.absoluteFilePath(), "Simple");
+    for (auto &info : d.entryInfoList({QStringLiteral("*.qcs")},
+                                      QDir::Files | QDir::Readable)) {
+        loadSnippetFromFile(info.absoluteFilePath(), QStringLiteral("Simple"));
     }
 }
 

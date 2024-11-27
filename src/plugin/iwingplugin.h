@@ -517,7 +517,7 @@ public:
         Double,
 
         String,
-        // DateTime,
+        Char,
         Color,
 
         MetaMax, // reserved

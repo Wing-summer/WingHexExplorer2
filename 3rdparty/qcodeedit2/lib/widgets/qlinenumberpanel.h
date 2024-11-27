@@ -44,6 +44,8 @@ public:
 public slots:
     void setVerboseMode(bool y);
 
+    void setFont_slot(const QFont &font);
+
 protected:
     virtual void editorChange(QEditor *e);
     virtual void paint(QPainter *p, QEditor *e);

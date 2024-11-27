@@ -31,7 +31,6 @@
 #include "model/dbgbreakpointmodel.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
-#include "qlanguagefactory.h"
 #include "utilities.h"
 
 #include <QMessageBox>
@@ -78,6 +77,8 @@ public:
     bool about2Close();
 
     void saveDockLayout();
+
+    SettingDialog *settingDialog() const;
 
 private:
     void buildUpRibbonBar();

@@ -17,18 +17,15 @@
 
 #include "scriptmachine.h"
 
-#include "AngelScript/sdk/add_on/datetime/datetime.h"
 #include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/sdk/add_on/scriptdictionary/scriptdictionary.h"
-#include "AngelScript/sdk/add_on/scriptfile/scriptfilesystem.h"
 #include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/sdk/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/sdk/add_on/scripthelper/scripthelper.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
-#include "class/qasparser.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptqstring.h"
@@ -83,8 +80,6 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptAny(engine);
     RegisterScriptDictionary(engine);
     RegisterScriptGrid(engine);
-    RegisterScriptDateTime(engine);
-    RegisterScriptFileSystem(engine);
     RegisterScriptHandle(engine);
     RegisterColor(engine);
     RegisterExceptionRoutines(engine);
@@ -92,6 +87,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     _rtypes.resize(RegisteredType::tMAXCOUNT);
     _rtypes[RegisteredType::tString] =
         q_check_ptr(_engine->GetTypeInfoByName("string"));
+    _rtypes[RegisteredType::tChar] =
+        q_check_ptr(_engine->GetTypeInfoByName("char"));
     _rtypes[RegisteredType::tArray] =
         q_check_ptr(_engine->GetTypeInfoByName("array"));
     _rtypes[RegisteredType::tComplex] =
@@ -108,8 +105,6 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         q_check_ptr(_engine->GetTypeInfoByName("dictionaryValue"));
     _rtypes[RegisteredType::tGrid] =
         q_check_ptr(_engine->GetTypeInfoByName("grid"));
-    _rtypes[RegisteredType::tDateTime] =
-        q_check_ptr(_engine->GetTypeInfoByName("datetime"));
     _rtypes[RegisteredType::tRef] =
         q_check_ptr(_engine->GetTypeInfoByName("ref"));
 
@@ -173,15 +168,14 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     // strings
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tString],
                                         &AngelObjString::stringToString);
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tChar],
+                                        &AngelObjString::charToString);
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tArray],
                                         &AngelObjString::arrayToString);
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tDictionary],
                                         &AngelObjString::dictionaryToString);
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tDateTime],
-                                        &AngelObjString::dateTimeToString);
 
-    PluginSystem::instance().angelApi()->installAPI(
-        engine, typeInfo(RegisteredType::tString));
+    PluginSystem::instance().angelApi()->installAPI(this);
 
     _immediateContext = engine->CreateContext();
     _immediateContext->SetExceptionCallback(

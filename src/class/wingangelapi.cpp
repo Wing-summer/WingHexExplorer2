@@ -19,10 +19,17 @@
 
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/angelscripthelper.h"
+#include "class/logger.h"
+#include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
+#include "scriptaddon/scriptqdictionary.h"
 
 #include <QJsonDocument>
+
+#ifdef Q_OS_WIN
+#undef MessageBox
+#endif
 
 WingAngelAPI::WingAngelAPI() {
     qsizetype signalCount = 0;
@@ -68,24 +75,45 @@ const QString WingAngelAPI::pluginComment() const {
               "ability to call the host API.");
 }
 
-void WingAngelAPI::installAPI(asIScriptEngine *engine,
-                              asITypeInfo *stringType) {
+void WingAngelAPI::registerScriptFns(const QString &ns,
+                                     const QHash<QString, ScriptFnInfo> &rfns) {
+    Q_ASSERT(ns.isEmpty());
+    if (rfns.empty()) {
+        return;
+    }
+
+    auto id = _sfns.size();
+    for (auto p = rfns.constKeyValueBegin(); p != rfns.constKeyValueEnd();
+         p++) {
+        _rfns[ns][p->first] = id;
+        id++;
+        _sfns.append(p->second);
+    }
+}
+
+void WingAngelAPI::installAPI(ScriptMachine *machine) {
+    auto engine = machine->engine();
+    auto stringTypeID = machine->typeInfo(ScriptMachine::tString)->GetTypeId();
+
     installExtAPI(engine);
     installLogAPI(engine);
     installMsgboxAPI(engine);
-    installInputboxAPI(engine, stringType->GetTypeId());
+    installInputboxAPI(engine, stringTypeID);
     installFileDialogAPI(engine);
     installColorDialogAPI(engine);
 
     installHexBaseType(engine);
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
-    installDataVisualAPI(engine, stringType->GetTypeId());
+    installDataVisualAPI(engine, stringTypeID);
+
+    installScriptFns(engine);
 }
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("log");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     registerAPI<void(const QString &)>(
         engine, std::bind(&WingAngelAPI::info, this, std::placeholders::_1),
@@ -122,6 +150,7 @@ void WingAngelAPI::installExtAPI(asIScriptEngine *engine) {
 void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("msgbox");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
     registerAngelType<QMessageBox::Icon>(engine, "icon");
@@ -203,6 +232,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
 void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
     int r = engine->SetDefaultNamespace("inputbox");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
     registerAngelType<Qt::InputMethodHints>(engine, "InputMethodHints");
@@ -279,6 +309,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
 void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("filedlg");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     registerAngelType<QFileDialog::Options>(engine, "options");
 
@@ -334,6 +365,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
 void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("colordlg");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     auto colordlg = &this->colordlg;
 
@@ -351,71 +383,86 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
 
     int r = engine->RegisterTypedef("byte", "uint8");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     // FindResult
     r = engine->RegisterObjectType("FindResult", sizeof(WingHex::FindResult),
                                    asOBJ_VALUE | asOBJ_POD |
                                        asGetTypeTraits<WingHex::FindResult>());
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("FindResult", QSIZETYPE_WRAP("offset"),
                                        asOFFSET(WingHex::FindResult, offset));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     r = engine->RegisterObjectProperty("FindResult", QSIZETYPE_WRAP("line"),
                                        asOFFSET(WingHex::FindResult, line));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     r = engine->RegisterObjectProperty("FindResult", QSIZETYPE_WRAP("col"),
                                        asOFFSET(WingHex::FindResult, col));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     // BookMark
     r = engine->RegisterObjectType("BookMark", sizeof(WingHex::BookMark),
                                    asOBJ_VALUE | asOBJ_POD |
                                        asGetTypeTraits<WingHex::BookMark>());
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("BookMark", QSIZETYPE_WRAP("pos"),
                                        asOFFSET(WingHex::BookMark, pos));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("BookMark", "string comment",
                                        asOFFSET(WingHex::BookMark, comment));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     // HexPosition
     r = engine->RegisterObjectType("HexPosition", sizeof(WingHex::HexPosition),
                                    asOBJ_VALUE | asOBJ_POD |
                                        asGetTypeTraits<WingHex::HexPosition>());
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("HexPosition", QSIZETYPE_WRAP("line"),
                                        asOFFSET(WingHex::HexPosition, line));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("HexPosition", "int column",
                                        asOFFSET(WingHex::HexPosition, column));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexPosition", "uint8 lineWidth",
         asOFFSET(WingHex::HexPosition, lineWidth));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexPosition", "int nibbleindex",
         asOFFSET(WingHex::HexPosition, nibbleindex));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod("HexPosition", QSIZETYPE_WRAP("offset()"),
                                      asMETHOD(WingHex::HexPosition, offset),
                                      asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
         "HexPosition", "int opSub(const HexPosition &in) const",
         asMETHODPR(WingHex::HexPosition, operator-,
                    (const WingHex::HexPosition &) const, qsizetype),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
         "HexPosition", "bool opEquals(const HexPosition &in) const",
@@ -423,41 +470,49 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
                    (const WingHex::HexPosition &) const, bool),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     // HexMetadataItem
     r = engine->RegisterObjectType(
         "HexMetadataItem", sizeof(WingHex::HexMetadataItem),
         asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<WingHex::HexMetadataItem>());
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexMetadataItem", QSIZETYPE_WRAP("begin"),
         asOFFSET(WingHex::HexMetadataItem, begin));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty("HexMetadataItem", QSIZETYPE_WRAP("end"),
                                        asOFFSET(WingHex::HexMetadataItem, end));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexMetadataItem", "color foreground",
         asOFFSET(WingHex::HexMetadataItem, foreground));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexMetadataItem", "color background",
         asOFFSET(WingHex::HexMetadataItem, background));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectProperty(
         "HexMetadataItem", "string comment",
         asOFFSET(WingHex::HexMetadataItem, comment));
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 }
 
 void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("reader");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     auto reader = &this->reader;
 
     registerAPI<bool(void)>(
@@ -707,6 +762,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
 void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("ctl");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     auto ctl = &this->controller;
 
@@ -1185,6 +1241,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
 void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
     int r = engine->SetDefaultNamespace("visual");
     Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     auto datavis = &this->visual;
 
@@ -1216,6 +1273,33 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
         "array<string> &in headerNames = array<string>())");
 
     engine->SetDefaultNamespace("");
+}
+
+void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
+    for (auto pfns = _rfns.constKeyValueBegin();
+         pfns != _rfns.constKeyValueEnd(); pfns++) {
+        auto ns = pfns->first;
+        int r = engine->SetDefaultNamespace(ns.toUtf8());
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        auto &pfn = pfns->second;
+        for (auto p = pfn.constKeyValueBegin(); p != pfn.constKeyValueEnd();
+             p++) {
+            auto sig = p->first;
+            auto id = p->second;
+            WrapperFn fn = std::bind(&WingAngelAPI::script_call, this, engine,
+                                     id, std::placeholders::_1);
+            _sfn_wraps[engine][id] = fn;
+            auto r = engine->RegisterGlobalFunction(
+                sig.toUtf8(), asMETHOD(WrapperFn, operator()), asCALL_GENERIC,
+                &_sfn_wraps[engine][id]);
+            Q_ASSERT(r >= 0);
+            Q_UNUSED(r);
+        }
+
+        engine->SetDefaultNamespace("");
+    }
 }
 
 QStringList WingAngelAPI::cArray2QStringList(const CScriptArray &array,
@@ -1386,13 +1470,406 @@ qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
         asIScriptContext *ctx = asGetActiveContext();
         auto engine = ctx->GetEngine();
         asITypeInfo *type = engine->GetTypeInfoByName("string");
-
-        // TODO support other type, now only string
-        if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
+        if (type->GetTypeId() == typeId) {
             return reinterpret_cast<QString *>(data)->length() + 1;
         }
     }
     return -1;
+}
+
+void WingAngelAPI::qvariantCastOp(
+    asIScriptEngine *engine, const QVariant &var,
+    const std::function<void(void *, QMetaType::Type)> &fn) {
+    static asQWORD buffer;
+    buffer = 0;
+
+    auto dicop = [](asIScriptEngine *engine, CScriptDictionary *dic,
+                    const QString &key, void *addr, QMetaType::Type type) {
+        auto b = isTempBuffered(type);
+        if (b) {
+            switch (type) {
+            case QMetaType::Type::Bool:
+                dic->Set(key, addr, asTYPEID_BOOL);
+                break;
+            case QMetaType::Short:
+                dic->Set(key, addr, asTYPEID_INT16);
+                break;
+            case QMetaType::UShort:
+                dic->Set(key, addr, asTYPEID_UINT16);
+                break;
+            case QMetaType::Int:
+            case QMetaType::Long:
+                dic->Set(key, addr, asTYPEID_INT32);
+                break;
+            case QMetaType::UInt:
+            case QMetaType::ULong:
+                dic->Set(key, addr, asTYPEID_UINT32);
+                break;
+            case QMetaType::LongLong:
+                dic->Set(key, addr, asTYPEID_INT64);
+                break;
+            case QMetaType::ULongLong:
+                dic->Set(key, addr, asTYPEID_UINT64);
+                break;
+            case QMetaType::Float:
+                dic->Set(key, qvariantCastGetValue<float>(addr));
+                break;
+            case QMetaType::Double:
+                dic->Set(key, qvariantCastGetValue<double>(addr));
+                break;
+            case QMetaType::UChar:
+                dic->Set(key, addr, asTYPEID_UINT8);
+                break;
+            case QMetaType::SChar:
+            case QMetaType::Char:
+                dic->Set(key, addr, asTYPEID_INT8);
+                break;
+            default:
+                // should not go here
+                Q_ASSERT(false);
+                break;
+            }
+        } else {
+            auto id = qvariantCastASID(engine, type);
+            Q_ASSERT(id >= 0);
+            dic->Set(key, addr, id);
+        }
+    };
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto type = QMetaType::Type(var.userType());
+#else
+    auto type = QMetaType::Type(var.typeId());
+#endif
+    switch (type) {
+    case QMetaType::Type::Bool:
+        assignTmpBuffer(buffer, var.toBool());
+        fn(&buffer, type);
+        break;
+    case QMetaType::Short:
+    case QMetaType::UShort:
+        assignTmpBuffer(buffer, var.value<ushort>());
+        fn(&buffer, type);
+        break;
+    case QMetaType::Int:
+    case QMetaType::Long:
+    case QMetaType::UInt:
+    case QMetaType::ULong:
+        assignTmpBuffer(buffer, var.toUInt());
+        fn(&buffer, type);
+        break;
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+        assignTmpBuffer(buffer, var.toULongLong());
+        fn(&buffer, type);
+        break;
+    case QMetaType::QChar:
+        fn(new QChar(var.toChar()), type);
+        break;
+    case QMetaType::Float:
+        assignTmpBuffer(buffer, var.toULongLong());
+        fn(&buffer, type);
+        break;
+    case QMetaType::Double:
+        assignTmpBuffer(buffer, var.toDouble());
+        fn(&buffer, type);
+        break;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    case QMetaType::Char16:
+        fn(new QChar(var.value<char16_t>()), type);
+        break;
+    case QMetaType::Char32:
+        fn(new QChar(var.value<char32_t>()), type);
+        break;
+#endif
+    case QMetaType::UChar:
+    case QMetaType::SChar:
+    case QMetaType::Char:
+        assignTmpBuffer(buffer, var.value<uchar>());
+        break;
+    case QMetaType::QString:
+        fn(new QString(var.toString()), type);
+        break;
+    case QMetaType::QByteArray: {
+        auto value = var.toByteArray();
+        auto info = engine->GetTypeInfoByDecl("array<byte>");
+        Q_ASSERT(info);
+        auto len = value.length();
+        auto arr = CScriptArray::Create(info, len);
+        arr->AddRef();
+        for (int i = 0; i < len; ++i) {
+            auto addr = arr->At(i);
+            *reinterpret_cast<char *>(addr) = value.at(i);
+        }
+        fn(arr, type);
+        arr->Release();
+    } break;
+    case QMetaType::QVariantMap: {
+        auto values = var.value<QVariantMap>();
+        auto dic = CScriptDictionary::Create(engine);
+        dic->AddRef();
+        for (auto p = values.constKeyValueBegin();
+             p != values.constKeyValueEnd(); ++p) {
+            auto op = std::bind(dicop, engine, dic, p->first,
+                                std::placeholders::_1, std::placeholders::_2);
+            qvariantCastOp(engine, p->second, op);
+        }
+        fn(dic, type);
+        dic->Release();
+    } break;
+    case QMetaType::QVariantHash: {
+        auto values = var.value<QVariantHash>();
+        auto dic = CScriptDictionary::Create(engine);
+        dic->AddRef();
+        for (auto p = values.constKeyValueBegin();
+             p != values.constKeyValueEnd(); ++p) {
+            auto op = std::bind(dicop, engine, dic, p->first,
+                                std::placeholders::_1, std::placeholders::_2);
+            qvariantCastOp(engine, p->second, op);
+        }
+        fn(dic, type);
+        dic->Release();
+    } break;
+    case QMetaType::QStringList: {
+        auto values = var.toStringList();
+        auto info = engine->GetTypeInfoByDecl("string");
+        Q_ASSERT(info);
+        auto len = values.length();
+        auto arr = CScriptArray::Create(info, len);
+        arr->AddRef();
+        for (int i = 0; i < len; ++i) {
+            auto addr = arr->At(i);
+            *reinterpret_cast<QString *>(addr) = values.at(i);
+        }
+        fn(arr, type);
+        arr->Release();
+    } break;
+    case QMetaType::QColor:
+        fn(new QColor(var.value<QColor>()), type);
+        break;
+    default:
+        Logger::critical(tr("NotSupportedQMetaType:") + QMetaType(type).name());
+        break;
+    case QMetaType::Void:
+        break;
+    }
+}
+
+QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
+                                   int typeID) {
+    switch (typeID) {
+    case asTYPEID_BOOL:
+        return *reinterpret_cast<const bool *>(raw);
+    case asTYPEID_INT8:
+        return *reinterpret_cast<const qint8 *>(raw);
+    case asTYPEID_INT16:
+        return *reinterpret_cast<const qint16 *>(raw);
+    case asTYPEID_INT32:
+        return *reinterpret_cast<const qint32 *>(raw);
+    case asTYPEID_INT64:
+        return *reinterpret_cast<const qint64 *>(raw);
+    case asTYPEID_UINT8:
+        return *reinterpret_cast<const quint8 *>(raw);
+    case asTYPEID_UINT16:
+        return *reinterpret_cast<const quint16 *>(raw);
+    case asTYPEID_UINT32:
+        return *reinterpret_cast<const quint32 *>(raw);
+    case asTYPEID_UINT64:
+        return *reinterpret_cast<const quint64 *>(raw);
+    case asTYPEID_FLOAT:
+        return *reinterpret_cast<const float *>(raw);
+    case asTYPEID_DOUBLE:
+        return *reinterpret_cast<const double *>(raw);
+    default: {
+        typeID &= ~asTYPEID_OBJHANDLE;
+        auto id = engine->GetTypeIdByDecl("char");
+        if (id == typeID) {
+            return *reinterpret_cast<const QChar *>(raw);
+        }
+        id = engine->GetTypeIdByDecl("string");
+        if (id == typeID) {
+            return *reinterpret_cast<const QString *>(raw);
+        }
+        id = engine->GetTypeIdByDecl("array<byte>");
+        if (id == typeID) {
+            auto values = reinterpret_cast<const CScriptArray *>(raw);
+            auto len = values->GetSize();
+            QByteArray arr;
+            arr.resize(len);
+            for (auto i = 0u; i < len; ++i) {
+                arr[i] = *reinterpret_cast<const char *>(values->At(i));
+            }
+            return arr;
+        }
+        id = engine->GetTypeIdByDecl("dictionary");
+        if (id == typeID) {
+            auto values = reinterpret_cast<const CScriptDictionary *>(raw);
+
+            QVariantHash map;
+            for (auto p = values->begin(); p != values->end(); ++p) {
+                auto id = p.GetTypeId();
+                auto value = qvariantGet(engine, p.GetAddressOfValue(), id);
+                map.insert(p.GetKey(), value);
+            }
+            return map;
+        }
+
+        id = engine->GetTypeIdByDecl("array<string>");
+        if (id == typeID) {
+            auto values = reinterpret_cast<const CScriptArray *>(raw);
+            auto len = values->GetSize();
+            QStringList arr;
+            for (auto i = 0u; i < len; ++i) {
+                arr.append(*reinterpret_cast<const QString *>(values->At(i)));
+            }
+            return arr;
+        }
+
+        id = engine->GetTypeIdByDecl("color");
+        if (id == typeID) {
+            return *reinterpret_cast<const QColor *>(raw);
+        }
+    } break;
+    }
+    return {};
+}
+
+int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
+                                   const QMetaType::Type &id) {
+    switch (id) {
+    case QMetaType::Type::Bool:
+        return asTYPEID_BOOL;
+    case QMetaType::Short:
+        return asTYPEID_INT16;
+    case QMetaType::UShort:
+        return asTYPEID_UINT16;
+    case QMetaType::Int:
+    case QMetaType::Long:
+        return asTYPEID_INT32;
+    case QMetaType::UInt:
+    case QMetaType::ULong:
+        return asTYPEID_UINT32;
+    case QMetaType::LongLong:
+        return asTYPEID_INT64;
+    case QMetaType::ULongLong:
+        return asTYPEID_UINT64;
+    case QMetaType::Float:
+        return asTYPEID_FLOAT;
+    case QMetaType::Double:
+        return asTYPEID_DOUBLE;
+    case QMetaType::QChar:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    case QMetaType::Char16:
+    case QMetaType::Char32:
+#endif
+        return engine->GetTypeIdByDecl("char");
+    case QMetaType::UChar:
+        return asTYPEID_UINT8;
+    case QMetaType::SChar:
+    case QMetaType::Char:
+        return asTYPEID_INT8;
+    case QMetaType::QString:
+        return engine->GetTypeIdByDecl("string");
+    case QMetaType::QByteArray:
+        return engine->GetTypeIdByDecl("array<byte>");
+    case QMetaType::QVariantMap:
+    case QMetaType::QVariantHash:
+        return engine->GetTypeIdByDecl("dictionary");
+    case QMetaType::QStringList:
+        return engine->GetTypeIdByDecl("array<string>");
+    case QMetaType::QColor:
+        return engine->GetTypeIdByDecl("color");
+    case QMetaType::Void:
+        return asTYPEID_VOID;
+    default:
+        return -1;
+    }
+}
+
+bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
+    switch (type) {
+    case QMetaType::Type::Bool:
+    case QMetaType::Short:
+    case QMetaType::UShort:
+    case QMetaType::Int:
+    case QMetaType::Long:
+    case QMetaType::UInt:
+    case QMetaType::ULong:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+    case QMetaType::Float:
+    case QMetaType::Double:
+    case QMetaType::UChar:
+    case QMetaType::SChar:
+    case QMetaType::Char:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void WingAngelAPI::script_call(asIScriptEngine *engine, qsizetype id,
+                               asIScriptGeneric *gen) {
+    Q_ASSERT(id >= 0 && id < _sfns.size());
+    if (id < 0 || id >= _sfns.size()) {
+        return;
+    }
+
+    QVariantList params;
+    auto total = gen->GetArgCount();
+    for (int i = 0; i < total; ++i) {
+        auto raw = gen->GetAddressOfArg(i);
+        auto id = gen->GetArgTypeId(i);
+        auto obj = qvariantGet(engine, raw, id);
+        params.append(obj);
+    }
+
+    auto ret = _sfns.at(id).fn(params);
+    auto op = [](asIScriptGeneric *gen, void *addr, QMetaType::Type type) {
+        auto b = isTempBuffered(type);
+        if (b) {
+            switch (type) {
+            case QMetaType::Type::Bool:
+                gen->SetReturnByte(qvariantCastGetValue<bool>(addr));
+                break;
+            case QMetaType::Short:
+            case QMetaType::UShort:
+                gen->SetReturnWord(qvariantCastGetValue<ushort>(addr));
+                break;
+            case QMetaType::Int:
+            case QMetaType::Long:
+            case QMetaType::UInt:
+            case QMetaType::ULong:
+                gen->SetReturnDWord(qvariantCastGetValue<asDWORD>(addr));
+                break;
+            case QMetaType::LongLong:
+            case QMetaType::ULongLong:
+                gen->SetReturnQWord(
+                    qvariantCastGetValue<unsigned long long>(addr));
+                break;
+            case QMetaType::Float:
+                gen->SetReturnFloat(qvariantCastGetValue<float>(addr));
+                break;
+            case QMetaType::Double:
+                gen->SetReturnDouble(qvariantCastGetValue<double>(addr));
+                break;
+            case QMetaType::UChar:
+            case QMetaType::SChar:
+            case QMetaType::Char:
+                gen->SetReturnByte(qvariantCastGetValue<uchar>(addr));
+                break;
+            default:
+                // should not go here
+                Q_ASSERT(false);
+                break;
+            }
+        } else {
+            gen->SetReturnObject(addr);
+        }
+    };
+
+    qvariantCastOp(
+        engine, ret,
+        std::bind(op, gen, std::placeholders::_1, std::placeholders::_2));
 }
 
 QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,

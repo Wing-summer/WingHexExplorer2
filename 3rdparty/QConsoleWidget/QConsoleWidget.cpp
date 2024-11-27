@@ -4,7 +4,6 @@
 #include "control/qcodecompletionwidget.h"
 #include "qdocumentline.h"
 #include "qformatscheme.h"
-#include "qlanguagefactory.h"
 #include "utilities.h"
 
 #include "QConsoleIODevice.h"

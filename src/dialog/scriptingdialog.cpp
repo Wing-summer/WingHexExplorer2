@@ -80,9 +80,6 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     buildUpSettingDialog();
 
-    QFormatScheme *format = QDocument::defaultFormatScheme();
-    Q_ASSERT(format);
-
     auto lmic = QLineMarksInfoCenter::instance();
     lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
     // get symbol ID
@@ -988,7 +985,9 @@ void ScriptingDialog::buildUpSettingDialog() {
         new QSnippetEdit(LangService::instance().snippetManager(), m_setdialog);
     m_setdialog->addPage(snip);
 
-    auto scheme = new QFormatConfig(m_setdialog);
+    auto &langsev = LangService::instance();
+    auto scheme = new QFormatConfig(langsev.formatSchemes(),
+                                    langsev.defaultSchemeName(), m_setdialog);
     m_setdialog->addPage(scheme);
 
     m_setdialog->build();
@@ -1418,3 +1417,5 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
 
     FramelessMainWindow::closeEvent(event);
 }
+
+SettingDialog *ScriptingDialog::settingDialog() const { return m_setdialog; }

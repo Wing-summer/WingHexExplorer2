@@ -153,12 +153,25 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     if (fns.isEmpty()) {
         return;
     }
+
+    // <signatures, std::function>
+    QHash<QString, IWingPlugin::ScriptFnInfo> rfns;
     for (auto p = fns.constKeyValueBegin(); p != fns.constKeyValueEnd(); ++p) {
-        auto fn = p->second;
+        auto &fn = p->second;
+        auto sig = getScriptFnSig(p->first, fn);
+        if (rfns.find(sig) != rfns.end()) {
+            Logger::warning(tr(""));
+            continue;
+        }
+        rfns.insert(sig, p->second);
     }
+
+    Q_ASSERT(_angelplg);
+    _angelplg->registerScriptFns(plg->pluginName(), rfns);
 }
 
-QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type) {
+QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
+                                             bool isArg) {
     bool isArray = type & WingHex::IWingPlugin::Array;
     bool isRef = type & WingHex::IWingPlugin::Ref;
 
@@ -205,6 +218,9 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type) {
     case WingHex::IWingPlugin::String:
         retype = QStringLiteral("string");
         break;
+    case WingHex::IWingPlugin::Char:
+        retype = QStringLiteral("char");
+        break;
     case WingHex::IWingPlugin::Color:
         retype = QStringLiteral("color");
         break;
@@ -217,7 +233,11 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type) {
     }
 
     if (isRef) {
-        retype += QStringLiteral("@");
+        if (isArg) {
+            retype += QStringLiteral(" @out");
+        } else {
+            retype += QStringLiteral("@");
+        }
     }
 
     return retype;
@@ -231,7 +251,7 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
 
     QString sig;
 
-    auto ret = type2AngelScriptString(fninfo.ret);
+    auto ret = type2AngelScriptString(fninfo.ret, false);
     if (ret.isEmpty()) {
         return {};
     }
@@ -240,8 +260,8 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
 
     QStringList params;
     for (auto &param : fninfo.params) {
-        params << type2AngelScriptString(fninfo.ret) + QStringLiteral(" ") +
-                      param.second;
+        params << type2AngelScriptString(fninfo.ret, true) +
+                      QStringLiteral(" ") + param.second;
     }
 
     return sig + params.join(',') + QStringLiteral(")");

@@ -475,9 +475,56 @@ static CScriptArray *stringSplit(const QString &sep, bool skipEmpty,
 
 //=================================================
 
+static void ConstructChar(QString *thisPointer) { new (thisPointer) QString(); }
+
+static void CopyConstructChar(const QChar &other, QChar *thisPointer) {
+    new (thisPointer) QChar(other);
+}
+
+static void DestructChar(QChar *thisPointer) { thisPointer->~QChar(); }
+
+//=================================================
+
 void RegisterQString_Native(asIScriptEngine *engine) {
     int r = 0;
     Q_UNUSED(r);
+
+    // register the char type
+    r = engine->RegisterObjectType("char", sizeof(QChar),
+                                   asOBJ_VALUE | asGetTypeTraits<QChar>());
+    Q_ASSERT(r >= 0);
+    r = engine->RegisterObjectBehaviour("char", asBEHAVE_CONSTRUCT, "void f()",
+                                        asFUNCTION(ConstructChar),
+                                        asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+
+    r = engine->RegisterObjectBehaviour(
+        "char", asBEHAVE_CONSTRUCT, "void f(const char &in)",
+        asFUNCTION(CopyConstructChar), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+
+    r = engine->RegisterObjectBehaviour("char", asBEHAVE_DESTRUCT, "void f()",
+                                        asFUNCTION(DestructChar),
+                                        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    r = engine->RegisterObjectMethod(
+        "char", "int16 unicode() const",
+        asMETHODPR(QChar, unicode, () const, ushort), asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+#else
+    r = engine->RegisterObjectMethod(
+        "char", "int16 unicode() const",
+        asMETHODPR(QChar, unicode, () const, char16_t), asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+#endif
+
+    r = engine->RegisterObjectMethod(
+        "char", "char &opAssign(const char &in)",
+        asMETHODPR(QChar, operator=, (const QChar &), QChar &),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
 
     // Register the string type
 #if AS_CAN_USE_CPP11
@@ -585,12 +632,12 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     // Register the index operator, both as a mutator and as an inspector
     // Note that we don't register the operator[] directly, as it doesn't do
     // bounds checking
-    r = engine->RegisterObjectMethod("string", "uint8 &opIndex(uint)",
+    r = engine->RegisterObjectMethod("string", "char &opIndex(uint)",
                                      asFUNCTION(StringCharAt),
                                      asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
-        "string", "const uint8 &opIndex(uint) const", asFUNCTION(StringCharAt),
+        "string", "const char &opIndex(uint) const", asFUNCTION(StringCharAt),
         asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
 
@@ -1126,6 +1173,9 @@ static void StringSubString_Generic(asIScriptGeneric *gen) {
 void RegisterQString_Generic(asIScriptEngine *engine) {
     int r = 0;
     Q_UNUSED(r);
+    // QChar is wrapper of uint16 so...
+    r = engine->RegisterTypedef("char", "uint16");
+    Q_ASSERT(r >= 0);
 
     // Register the string type
     r = engine->RegisterObjectType("string", sizeof(QString),
@@ -1197,12 +1247,12 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
 
     // Register the index operator, both as a mutator and as an inspector
-    r = engine->RegisterObjectMethod("string", "uint8 &opIndex(uint)",
+    r = engine->RegisterObjectMethod("string", "char &opIndex(uint)",
                                      asFUNCTION(StringCharAtGeneric),
                                      asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
-        "string", "const uint8 &opIndex(uint) const",
+        "string", "const char &opIndex(uint) const",
         asFUNCTION(StringCharAtGeneric), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
 

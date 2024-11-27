@@ -16,7 +16,6 @@
 */
 
 #include "angelobjstring.h"
-#include "AngelScript/sdk/add_on/datetime/datetime.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "scriptaddon/scriptqdictionary.h"
 
@@ -71,6 +70,16 @@ QString AngelObjString::arrayToString(void *obj, int expandMembers,
     return str;
 }
 
+QString AngelObjString::charToString(void *obj, int expandMembers,
+                                     asDebugger *dbg) {
+    Q_UNUSED(expandMembers);
+    Q_UNUSED(dbg);
+
+    // We know the received object is a char
+    QChar *val = reinterpret_cast<QChar *>(obj);
+    return QString(*val);
+}
+
 QString AngelObjString::dictionaryToString(void *obj, int expandMembers,
                                            asDebugger *dbg) {
     CScriptDictionary *dic = reinterpret_cast<CScriptDictionary *>(obj);
@@ -104,23 +113,6 @@ QString AngelObjString::dictionaryToString(void *obj, int expandMembers,
         }
         s << "]";
     }
-
-    return str;
-}
-
-QString AngelObjString::dateTimeToString(void *obj, int expandMembers,
-                                         asDebugger *dbg) {
-    Q_UNUSED(expandMembers);
-    Q_UNUSED(dbg);
-
-    CDateTime *dt = reinterpret_cast<CDateTime *>(obj);
-
-    QString str;
-    QTextStream s(&str);
-    s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay()
-      << " ";
-    s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond()
-      << "}";
 
     return str;
 }

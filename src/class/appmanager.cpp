@@ -19,16 +19,17 @@
 
 #include <QFont>
 
-#include "class/clangformatmanager.h"
-#include "class/logger.h"
-#include "languagemanager.h"
-#include "settingmanager.h"
-#include "skinmanager.h"
-
+#include "angelscript.h"
+#include "clangformatmanager.h"
 #include "dbghelper.h"
 #include "dialog/mainwindow.h"
 #include "dialog/splashdialog.h"
+#include "languagemanager.h"
+#include "logger.h"
+#include "settingmanager.h"
+#include "skinmanager.h"
 #include "utilities.h"
+#include "wingmessagebox.h"
 
 AppManager *AppManager::_instance = nullptr;
 
@@ -50,6 +51,20 @@ AppManager::AppManager(int &argc, char *argv[])
             }
         }
         sendMessage(buffer);
+    }
+
+#ifndef ANGELSCRIPT_H
+#error "You should include angelscript.h header to check the PORTABILITY"
+#else
+#ifdef AS_MAX_PORTABILITY
+#error "Generic call is NOT FULLY SUPPORTED in WingHexExplorer2 library!"
+#endif
+#endif
+
+    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
+        WingMessageBox::critical(nullptr, qAppName(),
+                                 tr("GenericCallNotFullySupported"));
+        exit(-1);
     }
 
     Logger::instance();
