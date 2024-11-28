@@ -125,11 +125,11 @@ private:
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 
-    static int pragmaCallback(const QByteArray &pragmaText, asBuilder *builder,
-                              void *userParam);
+    static int pragmaCallback(const QByteArray &pragmaText,
+                              AsPreprocesser *builder, void *userParam);
 
     static int includeCallback(const QString &include, bool quotedInclude,
-                               const QString &from, asBuilder *builder,
+                               const QString &from, AsPreprocesser *builder,
                                void *userParam);
 
     static QString processTranslation(const char *content);

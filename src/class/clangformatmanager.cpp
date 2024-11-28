@@ -23,8 +23,18 @@ ClangFormatManager::ClangFormatManager() {
     auto styles = supportedStyles();
     READ_CONFIG_STRING(m_clangStyle, CLANG_STYLE, styles.first());
 
-    READ_CONFIG_STRING(m_customStyleString, CLANG_CUSTOM_STYLE,
-                       *CLANG_DEFAULT_CUSTOM);
+    QByteArray buffer;
+    buffer = READ_CONFIG(CLANG_CUSTOM_STYLE, QByteArray()).toByteArray();
+    if (buffer.isEmpty()) {
+        m_customStyleString = *CLANG_DEFAULT_CUSTOM;
+    } else {
+        auto data = qUncompress(buffer);
+        if (buffer.isEmpty()) {
+            m_customStyleString = QString::fromUtf8(data);
+        } else {
+            m_customStyleString = *CLANG_DEFAULT_CUSTOM;
+        }
+    }
 
     // ok find
     refind();
@@ -173,7 +183,7 @@ void ClangFormatManager::save() {
     WRITE_CONFIG(CLANG_ENABLE_FMT, m_enabled);
     WRITE_CONFIG(CLANG_AUTO_FMT, m_autoFmt);
     WRITE_CONFIG(CLANG_STYLE, m_clangStyle);
-    WRITE_CONFIG(CLANG_CUSTOM_STYLE, m_customStyleString);
+    WRITE_CONFIG(CLANG_CUSTOM_STYLE, qCompress(m_customStyleString.toUtf8()));
 }
 
 void ClangFormatManager::reset() {

@@ -15,30 +15,19 @@
 ** =============================================================================
 */
 
-#ifndef ASBUILDER_H
-#define ASBUILDER_H
+#ifndef ASOBJTREEWIDGET_H
+#define ASOBJTREEWIDGET_H
 
-#include "aspreprocesser.h"
+#include "angelscript.h"
 
-#include <QMap>
-#include <QSet>
-#include <QVector>
+#include <QTreeWidget>
 
-class asBuilder : public AsPreprocesser {
+class ASObjTreeWidget : public QTreeWidget {
+    Q_OBJECT
 public:
-    explicit asBuilder(asIScriptEngine *engine);
+    explicit ASObjTreeWidget(QWidget *parent = nullptr);
 
-    // Start a new module
-    int StartNewModule(const char *moduleName);
-
-    // Build the added script sections
-    int Build();
-
-    // Returns the current module
-    asIScriptModule *GetModule();
-
-protected:
-    asIScriptModule *module;
+    void setEngine(asIScriptEngine *engine);
 };
 
-#endif // ASBUILDER_H
+#endif // ASOBJTREEWIDGET_H

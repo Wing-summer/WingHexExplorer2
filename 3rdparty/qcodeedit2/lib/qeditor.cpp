@@ -1235,6 +1235,7 @@ void QEditor::setDocument(QDocument *d) {
     documentWidthChanged(m_doc->width());
     documentHeightChanged(m_doc->height());
     setFileName(QString());
+    m_cursor = *m_doc->editCursor();
 }
 
 /*!
@@ -1872,6 +1873,11 @@ void QEditor::paste() {
 
     if (d)
         insertFromMimeData(d);
+}
+
+void QEditor::clear() {
+    m_doc->clear();
+    m_cursor = *m_doc->editCursor();
 }
 
 static void insert(const QDocumentCursor &cur, const QString &txt) {

@@ -42,6 +42,8 @@ void ScriptingConsole::stdWarn(const QString &str) {
 void ScriptingConsole::newLine() { _s << Qt::endl; }
 
 void ScriptingConsole::init() {
+    _s.setDevice(this->device());
+
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
 
     _sp = new ScriptConsoleMachine(_getInputFn, this);
@@ -54,14 +56,17 @@ void ScriptingConsole::init() {
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
                     stdOut(tr("[Info]") + message.message);
+                    _s << Qt::flush;
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Warn:
                     stdWarn(tr("[Warn]") + message.message);
+                    _s << Qt::flush;
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Error:
                     stdErr(tr("[Error]") + message.message);
+                    _s << Qt::flush;
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Print:
@@ -75,7 +80,6 @@ void ScriptingConsole::init() {
 }
 
 void ScriptingConsole::initOutput() {
-    _s.setDevice(this->device());
     stdWarn(tr("Scripting console for WingHexExplorer"));
 
     _s << Qt::endl;

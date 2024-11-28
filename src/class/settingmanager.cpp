@@ -60,12 +60,14 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_RECENTFILES, ("script.recentfiles"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                           ("script.allowUsrScriptRoot"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE, ("script.enable"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USESYS_FILEDIALOG,
                           ("sys.nativeDialog"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USE_NATIVE_TITLEBAR,
                           ("sys.nativeTitleBar"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_DONT_USE_SPLASH, ("sys.dontUseSplash"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_LEVEL, ("sys.loglevel"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT, ("codeedit.font"))
@@ -131,6 +133,8 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_editorShowHeader, EDITOR_SHOW_ADDR, true);
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
+
+    READ_CONFIG_BOOL(m_dontUseSplash, OTHER_DONT_USE_SPLASH, false);
     READ_CONFIG_BOOL(m_useNativeFileDialog, OTHER_USESYS_FILEDIALOG, true);
 #ifdef WINGHEX_USE_FRAMELESS
     READ_CONFIG_BOOL(m_useNativeTitleBar, OTHER_USE_NATIVE_TITLEBAR, false);
@@ -158,6 +162,7 @@ void SettingManager::load() {
     m_recentScriptFiles = getDataFromVarList(
         READ_CONFIG(SCRIPT_RECENTFILES, QVariantList()).toList());
 
+    READ_CONFIG_BOOL(m_scriptEnabled, SCRIPT_ENABLE, true);
     READ_CONFIG_BOOL(m_allowUsrScriptInRoot, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                      false);
     m_usrHideCats =
@@ -197,6 +202,24 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+bool SettingManager::dontUseSplash() const { return m_dontUseSplash; }
+
+void SettingManager::setDontUseSplash(bool newDontUseSplash) {
+    if (m_dontUseSplash != newDontUseSplash) {
+        m_dontUseSplash = newDontUseSplash;
+        _setUnsaved.setFlag(SETTING_ITEM::OTHER_DONT_USE_SPLASH);
+    }
+}
+
+bool SettingManager::scriptEnabled() const { return m_scriptEnabled; }
+
+void SettingManager::setScriptEnabled(bool newScriptEnabled) {
+    if (m_scriptEnabled != newScriptEnabled) {
+        m_scriptEnabled = newScriptEnabled;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_ENABLE);
+    }
 }
 
 bool SettingManager::allowUsrScriptInRoot() const {
@@ -457,6 +480,7 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
+        WRITE_CONFIG_SET(SCRIPT_ENABLE, m_scriptEnabled);
         WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
         WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, m_usrHideCats);
         WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, m_sysHideCats);
@@ -466,6 +490,7 @@ void SettingManager::save(SETTINGS cat) {
 #ifdef WINGHEX_USE_FRAMELESS
         WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
 #endif
+        WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, m_dontUseSplash);
         WRITE_CONFIG_SET(OTHER_LOG_LEVEL, m_logLevel);
     }
     if (cat.testFlag(SETTING::CODEEDIT)) {
@@ -497,6 +522,7 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, 10);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
+        WRITE_CONFIG_SET(SCRIPT_ENABLE, true);
         WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
         WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, QStringList());
         WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, QStringList());
@@ -506,6 +532,7 @@ void SettingManager::reset(SETTINGS cat) {
 #ifdef WINGHEX_USE_FRAMELESS
         WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, false);
 #endif
+        WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, false);
         WRITE_CONFIG_SET(OTHER_LOG_LEVEL, Logger::defaultLevel());
     }
     load();

@@ -226,6 +226,8 @@ public slots:
     virtual void copy();
     virtual void paste();
 
+    void clear();
+
     void selectAll();
 
     void find();

@@ -213,7 +213,7 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
         tr("- Exception '%1' in '%2'\n")
             .arg(context->GetExceptionString(),
                  context->GetExceptionFunction()->GetDeclaration()) +
-        getCallStack(context);
+        QStringLiteral("\n") + getCallStack(context);
 
     const char *section;
     MessageInfo msg;
@@ -264,14 +264,14 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // ready to execute, so disable the automatic initialization
     _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
-    asBuilder builder;
+    asBuilder builder(_engine);
 
     // Set the pragma callback so we can detect
     builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, this);
     builder.SetIncludeCallback(&ScriptMachine::includeCallback, this);
 
     // Compile the script
-    auto r = builder.StartNewModule(_engine, "script");
+    auto r = builder.StartNewModule("script");
     if (r < 0) {
         return false;
     }
@@ -281,7 +281,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    r = builder.BuildModule();
+    r = builder.Build();
     if (r < 0) {
         MessageInfo info;
         info.message = tr("Script failed to build");
@@ -401,7 +401,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 }
 
 void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
-    MessageType t;
+    MessageType t = MessageType::Print;
     switch (msg->type) {
     case asMSGTYPE_ERROR:
         t = MessageType::Error;
@@ -486,7 +486,7 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
 }
 
 int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
-                                  asBuilder *builder, void *userParam) {
+                                  AsPreprocesser *builder, void *userParam) {
     // asIScriptEngine *engine = builder->GetEngine();
 
     // Filter the pragmaText so only what is of interest remains
@@ -519,7 +519,7 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
 }
 
 int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
-                                   const QString &from, asBuilder *builder,
+                                   const QString &from, AsPreprocesser *builder,
                                    void *userParam) {
     QFileInfo info(include);
     bool isAbsolute = info.isAbsolute();

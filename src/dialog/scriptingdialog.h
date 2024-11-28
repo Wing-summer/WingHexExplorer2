@@ -18,6 +18,7 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
+#include "control/asobjtreewidget.h"
 #include "control/scriptingconsole.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
@@ -102,8 +103,8 @@ private:
     buildUpStackShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                          ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
-    buildUpWatchDock(ads::CDockManager *dock, ads::DockWidgetArea area,
-                     ads::CDockAreaWidget *areaw = nullptr);
+    buildSymbolShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                        ads::CDockAreaWidget *areaw = nullptr);
 
     void buildUpDockSystem(QWidget *container);
 
@@ -283,8 +284,8 @@ private:
     DbgVarShowModel *m_varshow = nullptr;
     DbgVarShowModel *m_gvarshow = nullptr;
     DbgBreakpointModel *m_breakpoints = nullptr;
-    DbgVarShowModel *m_watch = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
+    ASObjTreeWidget *m_sym = nullptr;
 
     QString _DebugingScript;
 

@@ -62,7 +62,7 @@ class MainWindow : public FramelessMainWindow {
     friend class PluginSystem;
 
 public:
-    MainWindow(SplashDialog *splash);
+    explicit MainWindow(SplashDialog *splash);
     virtual ~MainWindow() override;
 
 private:

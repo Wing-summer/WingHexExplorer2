@@ -218,6 +218,8 @@ void ScriptingDialog::initConsole() {
 
             updateRunDebugMode();
         });
+
+    m_sym->setEngine(machine->engine());
 }
 
 bool ScriptingDialog::about2Close() {
@@ -622,16 +624,13 @@ ScriptingDialog::buildUpStackShowDock(ads::CDockManager *dock,
 }
 
 ads::CDockAreaWidget *
-ScriptingDialog::buildUpWatchDock(ads::CDockManager *dock,
-                                  ads::DockWidgetArea area,
-                                  ads::CDockAreaWidget *areaw) {
-    auto watch = new QTableView(this);
-    Utilities::applyTableViewProperty(watch);
-    m_watch = new DbgVarShowModel(watch);
-    watch->setModel(m_watch);
-
+ScriptingDialog::buildSymbolShowDock(ads::CDockManager *dock,
+                                     ads::DockWidgetArea area,
+                                     ads::CDockAreaWidget *areaw) {
+    Q_ASSERT(m_consoleout);
+    m_sym = new ASObjTreeWidget(this);
     auto dw =
-        buildDockWidget(dock, QStringLiteral("Watch"), tr("Watch"), watch);
+        buildDockWidget(dock, QStringLiteral("Symbol"), tr("Symbol"), m_sym);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -700,9 +699,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     auto rightArea = buildUpBreakpointShowDock(m_dock, ads::RightDockWidgetArea,
                                                m_editorViewArea);
     buildUpVarShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-
-    // not avaliable for v1.0.0
-    // buildUpWatchDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {

@@ -33,8 +33,6 @@ public:
     // get the current command line
     QString getCommandLine();
 
-    void clear();
-
 public slots:
 
     // write to StandardOutput

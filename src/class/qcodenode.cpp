@@ -176,7 +176,7 @@ QByteArray QCodeNode::context() const {
     return p ? p->role(Context) : role(Context);
 }
 
-QByteArray QCodeNode::qualifiedName(bool ext) const {
+QByteArray QCodeNode::qualifiedBaseName(bool ext) const {
     int t = type();
 
     if (t == Group)
@@ -186,11 +186,21 @@ QByteArray QCodeNode::qualifiedName(bool ext) const {
     if (ext) {
         if (_parent && _parent->type() == Namespace) {
             cxt += _parent->role(Name);
+            cxt += "::";
         }
-        cxt += "::";
     }
 
     cxt += role(Name);
+    return cxt;
+}
+
+QByteArray QCodeNode::qualifiedName(bool ext) const {
+    int t = type();
+
+    if (t == Group)
+        return QByteArray();
+
+    auto cxt = qualifiedBaseName(ext);
 
     if (t == Function) {
         cxt += "(";

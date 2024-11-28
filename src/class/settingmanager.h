@@ -66,12 +66,14 @@ private:
         EDITOR_DECSTRLIMIT = 1u << 17,
         EDITOR_RECENTFILES = 1u << 18,
         SCRIPT_RECENTFILES = 1u << 19,
-        SCRIPT_ALLOW_USRSCRIPT_INROOT = 1u << 20,
-        SCRIPT_USRHIDECATS = 1u << 21,
-        SCRIPT_SYSHIDECATS = 1u << 22,
-        OTHER_USESYS_FILEDIALOG = 1u << 23,
-        OTHER_USE_NATIVE_TITLEBAR = 1u << 24,
-        OTHER_LOG_LEVEL = 1u << 25
+        SCRIPT_ENABLE = 1u << 20,
+        SCRIPT_ALLOW_USRSCRIPT_INROOT = 1u << 21,
+        SCRIPT_USRHIDECATS = 1u << 22,
+        SCRIPT_SYSHIDECATS = 1u << 23,
+        OTHER_USESYS_FILEDIALOG = 1u << 24,
+        OTHER_USE_NATIVE_TITLEBAR = 1u << 25,
+        OTHER_DONT_USE_SPLASH = 1u << 26,
+        OTHER_LOG_LEVEL = 1u << 27
     };
     Q_DECLARE_FLAGS(SETTING_ITEMS, SETTING_ITEM)
 
@@ -160,6 +162,12 @@ public:
     bool allowUsrScriptInRoot() const;
     void setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot);
 
+    bool scriptEnabled() const;
+    void setScriptEnabled(bool newScriptEnabled);
+
+    bool dontUseSplash() const;
+    void setDontUseSplash(bool newDontUseSplash);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
@@ -205,12 +213,14 @@ private:
     QList<RecentFileManager::RecentInfo> m_recentScriptFiles;
     Qt::WindowState m_defaultWinState = Qt::WindowMaximized;
 
+    bool m_scriptEnabled = true;
     bool m_allowUsrScriptInRoot = false;
     QStringList m_usrHideCats;
     QStringList m_sysHideCats;
 
     QString m_lastUsedPath;
 
+    bool m_dontUseSplash = false;
     bool m_useNativeFileDialog = true;
     bool m_useNativeTitleBar = false;
     int m_logLevel = 0;

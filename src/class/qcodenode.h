@@ -112,6 +112,7 @@ public:
 
     int type() const;
     QByteArray context() const;
+    QByteArray qualifiedBaseName(bool ext = false) const;
     QByteArray qualifiedName(bool ext = false) const;
 
     QVariant data(int role) const;

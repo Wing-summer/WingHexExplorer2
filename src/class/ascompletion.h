@@ -47,6 +47,8 @@ protected:
 private:
     void applyEmptyNsNode(QList<QCodeNode *> &nodes);
 
+    void parse(const QDocumentCursor &c);
+
 private:
     QAsParser parser;
     asIScriptEngine *_engine;

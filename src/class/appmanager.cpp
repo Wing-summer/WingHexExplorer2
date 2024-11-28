@@ -76,11 +76,16 @@ AppManager::AppManager(int &argc, char *argv[])
     SkinManager::instance();
     LanguageManager::instance();
 
-    SplashDialog splash;
-    splash.setInfoText(tr("SetupClang"));
-    ClangFormatManager::instance();
+    auto dontSplash = set.dontUseSplash();
 
-    _w = new MainWindow(&splash);
+    SplashDialog *splash = nullptr;
+    if (!dontSplash) {
+        splash = new SplashDialog;
+        splash->setInfoText(tr("SetupClang"));
+        ClangFormatManager::instance();
+    }
+
+    _w = new MainWindow(splash);
 
     connect(this, &SingleApplication::instanceStarted, this, [this] {
         Q_ASSERT(_w);
@@ -103,7 +108,9 @@ AppManager::AppManager(int &argc, char *argv[])
                 }
             });
 
-    splash.setInfoText(tr("OpeningFiles"));
+    if (splash)
+        splash->setInfoText(tr("OpeningFiles"));
+
     if (args.size() > 1) {
         for (auto var = args.begin() + 1; var != args.end(); ++var) {
             openFile(*var);
@@ -111,6 +118,9 @@ AppManager::AppManager(int &argc, char *argv[])
     }
 
     _instance = this;
+
+    if (splash)
+        splash->close();
 }
 
 AppManager::~AppManager() {

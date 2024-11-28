@@ -293,6 +293,11 @@ void AsCompletion::applyEmptyNsNode(QList<QCodeNode *> &nodes) {
     nodes = _emptyNsNodes;
 }
 
+void AsCompletion::parse(const QDocumentCursor &c) {
+    auto codes = c.document()->text();
+    // asBuilder builder;
+}
+
 QCodeCompletionWidget *AsCompletion::codeCompletionWidget() const {
     return pPopup;
 }

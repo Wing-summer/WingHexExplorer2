@@ -27,6 +27,7 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::ScriptSettingDialog) {
     ui->setupUi(this);
 
+    Utilities::addSpecialMark(ui->cbEnable);
     Utilities::addSpecialMark(ui->cbAllowUsrScript);
     connect(ui->cbAllowUsrScript, &QCheckBox::stateChanged, this,
             &ScriptSettingDialog::optionNeedRestartChanged);
@@ -37,27 +38,32 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 ScriptSettingDialog::~ScriptSettingDialog() { delete ui; }
 
 void ScriptSettingDialog::loadData() {
-    auto &sm = ScriptManager::instance();
     auto &set = SettingManager::instance();
 
     this->blockSignals(true);
+    ui->cbEnable->setChecked(set.scriptEnabled());
     ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
     this->blockSignals(false);
 
-    auto usrCats = sm.usrScriptsDbCats();
-    auto hidden = set.usrHideCats();
-    for (auto &cat : usrCats) {
-        if (addCatagory(sm.usrDirMeta(cat), true, hidden.contains(cat))) {
-            m_usrHideCats << cat;
+    if (set.scriptEnabled()) {
+        auto &sm = ScriptManager::instance();
+        auto usrCats = sm.usrScriptsDbCats();
+        auto hidden = set.usrHideCats();
+        for (auto &cat : usrCats) {
+            if (addCatagory(sm.usrDirMeta(cat), true, hidden.contains(cat))) {
+                m_usrHideCats << cat;
+            }
         }
-    }
 
-    auto sysCats = sm.sysScriptsDbCats();
-    hidden = set.sysHideCats();
-    for (auto &cat : sysCats) {
-        if (addCatagory(sm.sysDirMeta(cat), false, hidden.contains(cat))) {
-            m_sysHideCats << cat;
+        auto sysCats = sm.sysScriptsDbCats();
+        hidden = set.sysHideCats();
+        for (auto &cat : sysCats) {
+            if (addCatagory(sm.sysDirMeta(cat), false, hidden.contains(cat))) {
+                m_sysHideCats << cat;
+            }
         }
+    } else {
+        ui->groupBox_2->setEnabled(false);
     }
 }
 
@@ -99,6 +105,7 @@ void ScriptSettingDialog::apply() {
     }
 
     auto &set = SettingManager::instance();
+    set.setScriptEnabled(ui->cbEnable->isChecked());
     set.setAllowUsrScriptInRoot(ui->cbAllowUsrScript->isChecked());
     set.setUsrHideCats(usrHideCats);
     set.setSysHideCats(sysHideCats);

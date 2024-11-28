@@ -56,8 +56,6 @@ QString QConsoleWidget::getCommandLine() {
     return code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
 }
 
-void QConsoleWidget::clear() { document()->clear(); }
-
 void QConsoleWidget::handleReturnKey() {
     QString code = getCommandLine();
 
@@ -300,7 +298,8 @@ void QConsoleWidget::write(const QString &message, const QString &sfmtID) {
     if (ascom == nullptr || mode() == Output || (cw && cw->isCompleting())) {
         // in output mode or completion messages are appended
         auto tc1 = tc;
-        tc1.movePosition(QDocumentCursor::End);
+        auto line = tc1.line();
+        tc1.moveTo(line, line.length());
 
         // check is cursor was not at the end
         // (e.g. had been moved per mouse action)

@@ -70,13 +70,12 @@
 constexpr auto EMPTY_FUNC = [] {};
 
 MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
-    Q_ASSERT(splash);
-
     this->setUpdatesEnabled(false);
     this->setMinimumSize(900, 800);
 
     // recent file manager init
-    splash->setInfoText(tr("SetupRecent"));
+    if (splash)
+        splash->setInfoText(tr("SetupRecent"));
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
@@ -86,7 +85,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
-    splash->setInfoText(tr("SetupUI"));
+    if (splash)
+        splash->setInfoText(tr("SetupUI"));
     // build up UI
     buildUpRibbonBar();
 
@@ -98,7 +98,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
-    splash->setInfoText(tr("SetupDocking"));
+    if (splash)
+        splash->setInfoText(tr("SetupDocking"));
     buildUpDockSystem(cw);
     _defaultLayout = m_dock->saveState();
 
@@ -138,41 +139,50 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     auto &set = SettingManager::instance();
 
     // launch logging system
-    splash->setInfoText(tr("LaunchingLog"));
+    if (splash)
+        splash->setInfoText(tr("LaunchingLog"));
     auto &log = Logger::instance();
     log.setLogLevel(Logger::Level(set.logLevel()));
     connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
 
     // launch plugin system
-    splash->setInfoText(tr("SetupPluginSystem"));
+    if (splash)
+        splash->setInfoText(tr("SetupPluginSystem"));
     auto &plg = PluginSystem::instance();
     connect(&plg, &PluginSystem::pluginLoading, this,
             [=](const QString &plgName) {
-                splash->setInfoText(tr("LoadingPlg:") + plgName);
+                if (splash)
+                    splash->setInfoText(tr("LoadingPlg:") + plgName);
             });
     plg.setMainWindow(this);
     plg.LoadPlugin();
 
-    // At this time, AngelScript service plugin has started
-    splash->setInfoText(tr("SetupConsole"));
-    m_scriptConsole->init();
-    splash->setInfoText(tr("SetupScriptManager"));
-    ScriptManager::instance().attach(m_scriptConsole);
+    if (set.scriptEnabled()) {
+        // At this time, AngelScript service plugin has started
+        if (splash)
+            splash->setInfoText(tr("SetupConsole"));
+        m_scriptConsole->init();
+        if (splash)
+            splash->setInfoText(tr("SetupScriptManager"));
+        ScriptManager::instance().attach(m_scriptConsole);
 
-    splash->setInfoText(tr("SetupScriptService"));
-    auto &langins = LangService::instance();
-    langins.init(m_scriptConsole->machine()->engine());
-    langins.applyLanguageSerivce(m_scriptConsole);
+        if (splash)
+            splash->setInfoText(tr("SetupScriptService"));
+        auto &langins = LangService::instance();
+        langins.init(m_scriptConsole->machine()->engine());
+        langins.applyLanguageSerivce(m_scriptConsole);
 
-    m_scriptConsole->initOutput();
+        m_scriptConsole->initOutput();
 
-    splash->setInfoText(tr("SetupScriptEditor"));
-    m_scriptDialog = new ScriptingDialog(this);
-    m_scriptDialog->initConsole();
+        if (splash)
+            splash->setInfoText(tr("SetupScriptEditor"));
+        m_scriptDialog = new ScriptingDialog(this);
+        m_scriptDialog->initConsole();
 
-    // load the model
-    Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
-    m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
+        // load the model
+        Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
+        m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
+    }
 
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
@@ -192,22 +202,26 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             [this](int v) { _decstrlim = v; });
 
     // ok, build up the dialog of setting
-    splash->setInfoText(tr("SetupSetDialog"));
+    if (splash)
+        splash->setInfoText(tr("SetupSetDialog"));
     buildUpSettingDialog();
 
     // we start to installing plugin widgets
-    splash->setInfoText(tr("SetupPlgWidgets"));
+    if (splash)
+        splash->setInfoText(tr("SetupPlgWidgets"));
     installPluginEditorWidgets();
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
     // load saved docking layout
-    splash->setInfoText(tr("SetupDockingLayout"));
+    if (splash)
+        splash->setInfoText(tr("SetupDockingLayout"));
     m_dock->restoreState(set.dockLayout());
 
     m_lastusedpath = set.lastUsedPath();
 
-    splash->setInfoText(tr("SetupWaiting"));
+    if (splash)
+        splash->setInfoText(tr("SetupWaiting"));
     // others
     _showtxt = new ShowTextDialog(this);
     qApp->processEvents();
@@ -217,7 +231,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     this->setUpdatesEnabled(true);
 
-    splash->setInfoText(tr("SetupFinished"));
+    if (splash)
+        splash->setInfoText(tr("SetupFinished"));
 }
 
 MainWindow::~MainWindow() { Logger::instance().disconnect(); }
@@ -237,12 +252,20 @@ void MainWindow::buildUpRibbonBar() {
     qApp->processEvents();
     m_ribbonMaps[catagories.VIEW] = buildViewPage(m_ribbon->addTab(tr("View")));
     qApp->processEvents();
-    m_ribbonMaps[catagories.SCRIPT] =
-        buildScriptPage(m_ribbon->addTab(tr("Script")));
-    qApp->processEvents();
-    m_ribbonMaps[catagories.PLUGIN] =
-        buildPluginPage(m_ribbon->addTab(tr("Plugin")));
-    qApp->processEvents();
+
+    auto &set = SettingManager::instance();
+    if (set.scriptEnabled()) {
+        m_ribbonMaps[catagories.SCRIPT] =
+            buildScriptPage(m_ribbon->addTab(tr("Script")));
+        qApp->processEvents();
+    }
+
+    if (set.enablePlugin()) {
+        m_ribbonMaps[catagories.PLUGIN] =
+            buildPluginPage(m_ribbon->addTab(tr("Plugin")));
+        qApp->processEvents();
+    }
+
     m_ribbonMaps[catagories.SETTING] =
         buildSettingPage(m_ribbon->addTab(tr("Setting")));
     qApp->processEvents();
@@ -365,16 +388,27 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     qApp->processEvents();
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     qApp->processEvents();
-    auto bottomRightArea = buildUpScriptConsoleDock(
-        m_dock, ads::RightDockWidgetArea, bottomLeftArea);
-    qApp->processEvents();
-    buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea, bottomRightArea);
-    qApp->processEvents();
+
+    ads::CDockAreaWidget *bottomRightArea;
+    if (SettingManager::instance().scriptEnabled()) {
+        bottomRightArea = buildUpScriptConsoleDock(
+            m_dock, ads::RightDockWidgetArea, bottomLeftArea);
+        qApp->processEvents();
+        buildUpScriptObjShowDock(m_dock, ads::CenterDockWidgetArea,
+                                 bottomRightArea);
+        qApp->processEvents();
+        buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea,
+                              bottomRightArea);
+        qApp->processEvents();
+    } else {
+        bottomRightArea = buildUpHashResultDock(
+            m_dock, ads::RightDockWidgetArea, bottomLeftArea);
+        qApp->processEvents();
+    }
+
     buildUpVisualDataDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
     qApp->processEvents();
-    buildUpScriptObjShowDock(m_dock, ads::CenterDockWidgetArea,
-                             bottomRightArea);
-    qApp->processEvents();
+
     m_bottomViewArea = bottomRightArea;
 
     // set the first tab visible
@@ -1154,17 +1188,24 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
 
 RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
+
+    auto &set = SettingManager::instance();
+
     {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
             pannel, QStringLiteral("general"), tr("General"),
             &MainWindow::on_setting_general,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
-        addPannelAction(pannel, QStringLiteral("scriptset"),
-                        tr("ScriptSetting"), &MainWindow::on_setting_script);
+
+        if (set.scriptEnabled()) {
+            addPannelAction(pannel, QStringLiteral("scriptset"),
+                            tr("ScriptSetting"),
+                            &MainWindow::on_setting_script);
+        }
     }
 
-    {
+    if (set.enablePlugin()) {
         auto pannel = tab->addGroup(tr("PluginSettings"));
         pannel->setVisible(false);
         connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,

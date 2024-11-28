@@ -179,7 +179,9 @@ set(CONTROL_SRC
     src/control/qcodecompletionwidget_p.h
     src/control/qcodecompletionwidget.cpp
     src/control/codeedit.h
-    src/control/codeedit.cpp)
+    src/control/codeedit.cpp
+    src/control/asobjtreewidget.h
+    src/control/asobjtreewidget.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -237,7 +239,9 @@ set(CLASS_SRC
     src/class/langservice.h
     src/class/langservice.cpp
     src/class/clangformatmanager.h
-    src/class/clangformatmanager.cpp)
+    src/class/clangformatmanager.cpp
+    src/class/aspreprocesser.h
+    src/class/aspreprocesser.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC

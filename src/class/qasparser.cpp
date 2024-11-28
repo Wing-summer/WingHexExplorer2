@@ -31,7 +31,8 @@
  * If you want to make it more powerful, PR will be welcomed.
  */
 
-QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
+QAsParser::QAsParser(asIScriptEngine *engine)
+    : asBuilder(engine), _engine(engine) {
     addGlobalFunctionCompletion(engine);
     addClassCompletion(engine);
     addEnumCompletion(engine);
@@ -40,6 +41,10 @@ QAsParser::QAsParser(asIScriptEngine *engine) : asBuilder(), _engine(engine) {
 QAsParser::~QAsParser() {
     qDeleteAll(_headerNodes);
     _headerNodes.clear();
+    qDeleteAll(_clsNodes);
+    _clsNodes.clear();
+    qDeleteAll(_nodes);
+    _nodes.clear();
 }
 
 QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
@@ -164,7 +169,7 @@ QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
 }
 
 bool QAsParser::parse(const QString &filename) {
-    if (StartNewModule(_engine, "as_parser") != 0) {
+    if (StartNewModule("as_parser") != 0) {
         return false;
     }
 
@@ -179,14 +184,14 @@ bool QAsParser::parse(const QString &filename) {
     Q_ASSERT(mod);
     asCParser parser(mod->m_builder);
 
-    m_code.reset(new asCScriptCode);
-    m_code->SetCode("as_parser", modifiedScript.data(), true);
+    // m_code.reset(new asCScriptCode);
+    // m_code->SetCode("as_parser", modifiedScript.data(), true);
 
-    parser.ParseScript(m_code.get());
+    // parser.ParseScript(m_code.get());
 
-    auto pnodes = parser.GetScriptNode();
+    // auto pnodes = parser.GetScriptNode();
 
-    QList<QCodeNode *> qnodes;
+    // QList<QCodeNode *> qnodes;
 
     // do {
     //     auto node = asNode2CodeNode(pnodes);

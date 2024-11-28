@@ -61,9 +61,6 @@ QFormatConfig::QFormatConfig(const QHash<QString, QFormatScheme *> &schemes,
         addScheme(p->first, p->second);
     }
     setCurrentScheme(schemes.value(defaultScheme));
-
-    connect(ui->m_table, SIGNAL(itemSelectionChanged()), ui->m_table,
-            SLOT(clearSelection()));
 }
 
 QFormatConfig::~QFormatConfig() { delete ui; }

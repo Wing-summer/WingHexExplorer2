@@ -376,13 +376,8 @@ void QDocument::setText(const QString &s) {
         m_impl->m_lines << new QDocumentLineHandle(
             s.mid(last, s.length() - last), this);
     }
-    //
-    //	if ( (idx > 0) && ((idx - 1) < s.length()) && ((s.at(idx - 1) == '\n')
-    //|| (s.at(idx - 1) == '\r')) ) 		m_impl->m_lines << new
-    // QDocumentLineHandle(this);
-    //
 
-    // qDebug("[one go] dos : %i; nix : %i", m_impl->_dos, m_impl->_nix);
+    m_impl->m_editCursor = new QDocumentCursor(this);
 
     m_impl->m_lastModified = QDateTime::currentDateTime();
 
@@ -4315,7 +4310,7 @@ T *getStaticDefault() {
 QFormatScheme *QDocumentPrivate::m_defaultFormatScheme =
     getStaticDefault<QFormatScheme>();
 
-QFont QDocumentPrivate::m_defaultFont = qApp->font();
+QFont QDocumentPrivate::m_defaultFont;
 int QDocumentPrivate::m_defaultTabStop = 4;
 QDocument::LineEnding QDocumentPrivate::m_defaultLineEnding =
     QDocument::LineEnding::Conservative;
@@ -4326,11 +4321,11 @@ QList<QDocumentPrivate *> QDocumentPrivate::m_documents;
 
 QDocumentPrivate::QDocumentPrivate(QDocument *d)
     : m_doc(d), m_editCursor(0), m_lastGroupId(-1), m_constrained(false),
-      m_width(0), m_height(0), m_tabStop(m_defaultTabStop),
-      m_formatScheme(nullptr), m_language(nullptr), m_maxMarksPerLine(0),
-      _nix(0), _dos(0), _mac(0), m_lineEnding(m_defaultLineEnding),
-      m_wrapMargin(15), m_font(), m_fontMetrics(m_font), m_leftMargin(5),
-      m_showSpaces(m_defaultShowSpaces) {
+      m_width(0), m_height(0), m_tabStop(m_defaultTabStop), m_font(),
+      m_fontMetrics(m_font), m_leftMargin(5), m_showSpaces(m_defaultShowSpaces),
+      m_wrapMargin(15), m_formatScheme(nullptr), m_language(nullptr),
+      m_maxMarksPerLine(0), _nix(0), _dos(0), _mac(0),
+      m_lineEnding(m_defaultLineEnding) {
     setFont(m_defaultFont);
     m_documents << this;
 
@@ -4795,8 +4790,6 @@ void QDocumentPrivate::setWidth() {
             emitWidthChanged();
     }
 }
-
-static const int widthCacheSize = 5;
 
 void QDocumentPrivate::adjustWidth(int line) {
     if (line < 0 || line >= m_lines.count())

@@ -27,6 +27,13 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
+       <widget class="QCheckBox" name="cbDontShowSplash">
+        <property name="text">
+         <string>DontShowSplash</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="cbNativeFileDialog">
         <property name="text">
          <string>UseNativeFileDialog</string>

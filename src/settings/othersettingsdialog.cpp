@@ -38,6 +38,7 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     ui->cbNativeTitile->setEnabled(false);
 #endif
 
+    Utilities::addSpecialMark(ui->cbDontShowSplash);
     Utilities::addSpecialMark(ui->cbNativeTitile);
     Utilities::addSpecialMark(ui->lblLevel);
     connect(ui->cbNativeTitile, &QCheckBox::stateChanged, this,
@@ -53,6 +54,7 @@ OtherSettingsDialog::~OtherSettingsDialog() { delete ui; }
 void OtherSettingsDialog::reload() {
     this->blockSignals(true);
     auto &set = SettingManager::instance();
+    ui->cbDontShowSplash->setChecked(set.dontUseSplash());
     ui->cbNativeFileDialog->setChecked(set.useNativeFileDialog());
 #ifdef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setChecked(set.useNativeTitleBar());
@@ -68,6 +70,7 @@ QString OtherSettingsDialog::id() const { return QStringLiteral("Others"); }
 
 void OtherSettingsDialog::apply() {
     auto &set = SettingManager::instance();
+    set.setDontUseSplash(ui->cbDontShowSplash->isChecked());
     set.setUseNativeFileDialog(ui->cbNativeFileDialog->isChecked());
 #ifdef WINGHEX_USE_FRAMELESS
     set.setUseNativeTitleBar(ui->cbNativeTitile->isChecked());
