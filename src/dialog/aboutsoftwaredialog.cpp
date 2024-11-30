@@ -29,7 +29,6 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->tbBaseObj->setMarkdown(data.component);
     ui->tbCredit->setMarkdown(data.credit);
     ui->tbDev->setMarkdown(data.dev);
-    ui->tbTr->setMarkdown(data.trans);
     ui->lblVersion->setText(qApp->applicationVersion());
     ui->lblBuildDate->setText(QStringLiteral(__DATE__));
 
@@ -39,6 +38,13 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     Q_UNUSED(ret);
     auto ltxt = license.readAll();
     ui->tbLicense->setText(ltxt);
+
+    QFile trans(QStringLiteral(":/com.wingsummer.winghex/src/translist.md"));
+    ret = trans.open(QFile::ReadOnly);
+    Q_ASSERT(ret);
+    Q_UNUSED(ret);
+    auto ttxt = trans.readAll();
+    ui->tbTr->setMarkdown(ttxt);
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);

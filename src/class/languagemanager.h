@@ -33,7 +33,6 @@ public:
         QString component;
         QString dev;
         QString credit;
-        QString trans;
     };
 
 public:
@@ -52,6 +51,8 @@ private:
 
 private:
     bool unpackTr(const QString &filename);
+
+    void abortAndExit();
 
 private:
     LanguageData _data;

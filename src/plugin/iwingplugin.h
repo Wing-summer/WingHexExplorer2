@@ -47,11 +47,6 @@ namespace WingHex {
 
 Q_DECL_UNUSED constexpr auto SDKVERSION = 13;
 
-Q_DECL_UNUSED static QString GETPLUGINQM(const QString &name) {
-    return QCoreApplication::applicationDirPath() +
-           QStringLiteral("/plglang/") + name;
-};
-
 Q_DECL_UNUSED static QString PLUGINDIR() {
     return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
 }

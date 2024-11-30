@@ -56,24 +56,7 @@ LanguageManager::LanguageManager() {
     _defaultLocale = QLocale::system();
 
     if (m_langs.isEmpty()) {
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-        if (QLocale::China == _defaultLocale.territory()
-#else
-        if (QLocale::China == _defaultLocale.country()
-#endif
-        ) {
-            QMessageBox::critical(
-                nullptr, QStringLiteral("程序损坏"),
-                QStringLiteral(
-                    "语言文件已损坏，请尝试重装软件以解决这个问题。"));
-        } else {
-            QMessageBox::critical(
-                nullptr, QStringLiteral("Corruption"),
-                QStringLiteral("The language file has been damaged. "
-                               "Please try reinstalling the software to "
-                               "solve the problem."));
-        }
-        qApp->exit(-1);
+        abortAndExit();
     }
 
     bool found = false;
@@ -123,9 +106,7 @@ LanguageManager::LanguageManager() {
             qApp->installTranslator(translator);
         }
     } else {
-        WingMessageBox::critical(
-            nullptr, qAppName(),
-            "Translation files loading error! Please try to reinstall.");
+        abortAndExit();
     }
 
     m_langMap = {{"zh_CN", tr("Chinese(Simplified)")}};
@@ -141,22 +122,24 @@ bool LanguageManager::unpackTr(const QString &filename) {
     }
 
     QZipReader reader(filename);
+
+    if (reader.count() != 5) {
+        return false;
+    }
+
     _data = {};
     for (auto &file : reader.fileInfoList()) {
         if (file.isValid() && file.isFile) {
-            if (file.filePath.endsWith(QStringLiteral("winghex.qm"))) {
+            if (file.filePath == QStringLiteral("winghex.qm")) {
                 _data.trFiles = reader.fileData(file.filePath);
-            } else if (file.filePath.endsWith(QStringLiteral("about.md"))) {
+            } else if (file.filePath == QStringLiteral("about.md")) {
                 _data.about = reader.fileData(file.filePath);
-            } else if (file.filePath.endsWith(
-                           QStringLiteral("components.md"))) {
+            } else if (file.filePath == QStringLiteral("components.md")) {
                 _data.component = reader.fileData(file.filePath);
-            } else if (file.filePath.endsWith(QStringLiteral("credits.md"))) {
+            } else if (file.filePath == QStringLiteral("credits.md")) {
                 _data.credit = reader.fileData(file.filePath);
-            } else if (file.filePath.endsWith(QStringLiteral("devs.md"))) {
+            } else if (file.filePath == QStringLiteral("devs.md")) {
                 _data.dev = reader.fileData(file.filePath);
-            } else if (file.filePath.endsWith(QStringLiteral("trans.md"))) {
-                _data.trans = reader.fileData(file.filePath);
             }
         }
     }
@@ -164,7 +147,27 @@ bool LanguageManager::unpackTr(const QString &filename) {
 
     return !_data.trFiles.isEmpty() && !_data.about.isEmpty() &&
            !_data.component.isEmpty() && !_data.credit.isEmpty() &&
-           !_data.dev.isEmpty() && !_data.trans.isEmpty();
+           !_data.dev.isEmpty();
+}
+
+void LanguageManager::abortAndExit() {
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    if (QLocale::China == _defaultLocale.territory()
+#else
+    if (QLocale::China == _defaultLocale.country()
+#endif
+    ) {
+        WingMessageBox::critical(
+            nullptr, QStringLiteral("程序损坏"),
+            QStringLiteral("语言文件已损坏，请尝试重装软件以解决这个问题。"));
+    } else {
+        WingMessageBox::critical(
+            nullptr, QStringLiteral("Corruption"),
+            QStringLiteral("The language file has been damaged. "
+                           "Please try reinstalling the software to "
+                           "solve the problem."));
+    }
+    qApp->exit(-1);
 }
 
 QLocale LanguageManager::defaultLocale() const { return _defaultLocale; }

@@ -383,8 +383,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
         "${LANG_NEED_COPY_PREFIX}/about.md"
         "${LANG_NEED_COPY_PREFIX}/components.md"
         "${LANG_NEED_COPY_PREFIX}/credits.md"
-        "${LANG_NEED_COPY_PREFIX}/devs.md"
-        "${LANG_NEED_COPY_PREFIX}/trans.md")
+        "${LANG_NEED_COPY_PREFIX}/devs.md")
     add_custom_target(
         copy_lang_files
         COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
@@ -393,7 +392,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
     set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
     set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "components.md"
-                              "credits.md" "devs.md" "trans.md")
+                              "credits.md" "devs.md")
 
     add_custom_target(
         pak_lang_files

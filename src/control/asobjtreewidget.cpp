@@ -44,15 +44,13 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
 
         auto header = QString::fromUtf8(node->role(QCodeNode::Name));
         auto item = new QTreeWidgetItem({header});
-        item->setData(0, Qt::UserRole, node->qualifiedBaseName(true));
-        item->setToolTip(0, header);
+        item->setToolTip(0, node->qualifiedBaseName(true));
         item->setIcon(0, node->data(Qt::DecorationRole).value<QIcon>());
 
         for (auto &n : node->children()) {
             QStringList contents{QString::fromUtf8(n->role(QCodeNode::Name)),
                                  n->data(Qt::ToolTipRole).toString()};
             auto c = new QTreeWidgetItem(contents);
-            c->setData(0, Qt::UserRole, n->qualifiedBaseName(true));
             c->setToolTip(0, contents.at(0));
             c->setToolTip(1, contents.at(1));
             c->setIcon(0, n->data(Qt::DecorationRole).value<QIcon>());

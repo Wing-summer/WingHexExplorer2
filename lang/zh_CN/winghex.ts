@@ -788,7 +788,7 @@
 <context>
     <name>LanguageManager</name>
     <message>
-        <location filename="../../src/class/languagemanager.cpp" line="131"/>
+        <location filename="../../src/class/languagemanager.cpp" line="112"/>
         <source>Chinese(Simplified)</source>
         <translation>中文（简体）</translation>
     </message>
