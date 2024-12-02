@@ -120,12 +120,11 @@ public:
     QByteArray role(RoleIndex r) const;
     void setRole(RoleIndex r, const QByteArray &b);
 
-    QList<QCodeNode *> &children() { return _children; }
+    QList<QCodeNode *> &children();
 
     void setNodeType(DefaultNodeTypes t);
 
     void clear();
-    void removeAll();
 
     void attach(QCodeNode *p);
     void detach();

@@ -4,14 +4,19 @@
 <context>
     <name>ASObjTreeWidget</name>
     <message>
-        <location filename="../../src/control/asobjtreewidget.cpp" line="29"/>
+        <location filename="../../src/control/asobjtreewidget.cpp" line="27"/>
         <source>Symbol</source>
         <translation>符号</translation>
     </message>
     <message>
-        <location filename="../../src/control/asobjtreewidget.cpp" line="29"/>
+        <location filename="../../src/control/asobjtreewidget.cpp" line="27"/>
         <source>Decl</source>
         <translation>声明</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/asobjtreewidget.cpp" line="44"/>
+        <source>[Global]</source>
+        <translation>【全局】</translation>
     </message>
 </context>
 <context>
@@ -783,14 +788,6 @@
         <location filename="../../src/class/langservice.cpp" line="86"/>
         <source>Default</source>
         <translation>默认</translation>
-    </message>
-</context>
-<context>
-    <name>LanguageManager</name>
-    <message>
-        <location filename="../../src/class/languagemanager.cpp" line="112"/>
-        <source>Chinese(Simplified)</source>
-        <translation>中文（简体）</translation>
     </message>
 </context>
 <context>
@@ -2378,7 +2375,7 @@ Do you wish to keep up to date by reloading the file?</source>
 您是否希望通过重新加载文件来保持最新状态？</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3225"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3226"/>
         <source>untitled</source>
         <translation>未命名</translation>
     </message>

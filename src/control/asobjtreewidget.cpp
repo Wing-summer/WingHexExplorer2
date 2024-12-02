@@ -18,10 +18,8 @@
 #include "asobjtreewidget.h"
 
 #include "class/qasparser.h"
-#include "class/qcodenode.h"
 
 #include <QHeaderView>
-#include <QTreeWidgetItem>
 
 ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
     setColumnCount(2);
@@ -36,27 +34,51 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
     }
 
     QAsParser parser(engine);
-    auto nodes = parser.headerNodes() + parser.classNodes();
+    auto &nodes = parser.headerNodes();
     for (auto &node : nodes) {
-        if (node->type() == QCodeNode::Group) {
-            continue;
+        auto header = QString::fromUtf8(node->role(QCodeNode::Name));
+
+        QTreeWidgetItem *item = nullptr;
+
+        if (header.isEmpty()) {
+            item = new QTreeWidgetItem({tr("[Global]")});
+        } else {
+            item = new QTreeWidgetItem({header});
         }
 
-        auto header = QString::fromUtf8(node->role(QCodeNode::Name));
-        auto item = new QTreeWidgetItem({header});
         item->setToolTip(0, node->qualifiedBaseName(true));
         item->setIcon(0, node->data(Qt::DecorationRole).value<QIcon>());
 
-        for (auto &n : node->children()) {
-            QStringList contents{QString::fromUtf8(n->role(QCodeNode::Name)),
-                                 n->data(Qt::ToolTipRole).toString()};
-            auto c = new QTreeWidgetItem(contents);
-            c->setToolTip(0, contents.at(0));
-            c->setToolTip(1, contents.at(1));
-            c->setIcon(0, n->data(Qt::DecorationRole).value<QIcon>());
-            item->addChild(c);
-        }
-
+        createObjNodes(node->children(), item);
         addTopLevelItem(item);
+    }
+}
+
+QTreeWidgetItem *ASObjTreeWidget::createObjNode(QCodeNode *node,
+                                                QTreeWidgetItem *parent) {
+    Q_ASSERT(node && parent);
+    QStringList contents{QString::fromUtf8(node->role(QCodeNode::Name)),
+                         node->data(Qt::ToolTipRole).toString()};
+    auto c = new QTreeWidgetItem(contents);
+    c->setToolTip(0, contents.at(0));
+    c->setToolTip(1, contents.at(1));
+    c->setIcon(0, node->data(Qt::DecorationRole).value<QIcon>());
+    parent->addChild(c);
+    return c;
+}
+
+void ASObjTreeWidget::createObjNodes(const QList<QCodeNode *> &children,
+                                     QTreeWidgetItem *parent) {
+    for (auto &n : children) {
+        // only for code namespace completion
+        if (n->role(QCodeNode::NodeType).at(0) == QCodeNode::Namespace) {
+            if (n->children().isEmpty()) {
+                continue;
+            }
+        }
+        auto c = createObjNode(n, parent);
+        if (!n->children().isEmpty()) {
+            createObjNodes(n->children(), c);
+        }
     }
 }

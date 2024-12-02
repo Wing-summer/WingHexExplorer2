@@ -49,6 +49,8 @@ private:
 
     void parse(const QDocumentCursor &c);
 
+    QList<QCodeNode *> lookupNamespace(const QByteArrayList &ns);
+
 private:
     QAsParser parser;
     asIScriptEngine *_engine;

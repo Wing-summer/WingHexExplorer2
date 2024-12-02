@@ -17,6 +17,7 @@
 
 #include "languagemanager.h"
 
+#include "class/settingmanager.h"
 #include "wingmessagebox.h"
 
 #include <QApplication>
@@ -36,6 +37,8 @@ LanguageManager &LanguageManager::instance() {
 }
 
 LanguageManager::LanguageManager() {
+    m_langMap = {{"zh_CN", QStringLiteral("简体中文")}};
+
     auto langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
 
@@ -46,14 +49,24 @@ LanguageManager::LanguageManager() {
     for (auto &langinfo : langFiles) {
         auto lang = langinfo.fileName();
         QLocale locale(lang);
-        if (locale == QLocale::C) {
+        if (locale == QLocale::c()) {
             continue;
         }
         m_langs << lang;
         m_localeMap.insert(lang, locale);
     }
 
-    _defaultLocale = QLocale::system();
+    auto lang = SettingManager::instance().defaultLang();
+    if (lang.isEmpty()) {
+        _defaultLocale = QLocale::system();
+    } else {
+        QLocale locale(lang);
+        if (locale == QLocale::c()) {
+            _defaultLocale = QLocale::system();
+        } else {
+            _defaultLocale = locale;
+        }
+    }
 
     if (m_langs.isEmpty()) {
         abortAndExit();
@@ -108,8 +121,6 @@ LanguageManager::LanguageManager() {
     } else {
         abortAndExit();
     }
-
-    m_langMap = {{"zh_CN", tr("Chinese(Simplified)")}};
 
     for (auto &lang : m_langs) {
         m_langsDisplay << m_langMap.value(lang, lang);

@@ -36,13 +36,13 @@ QAsParser::QAsParser(asIScriptEngine *engine)
     addGlobalFunctionCompletion(engine);
     addClassCompletion(engine);
     addEnumCompletion(engine);
+    _buffer.clear();
+    _buffer.squeeze();
 }
 
 QAsParser::~QAsParser() {
     qDeleteAll(_headerNodes);
     _headerNodes.clear();
-    qDeleteAll(_clsNodes);
-    _clsNodes.clear();
     qDeleteAll(_nodes);
     _nodes.clear();
 }
@@ -238,7 +238,7 @@ void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         _maps[ns] << fnInfo;
     }
 
-    auto node = new QCodeNode;
+    auto node = getNewHeadNodePointer(QByteArray());
     node->setNodeType(QCodeNode::Group);
     for (auto p = _maps.keyBegin(); p != _maps.keyEnd(); p++) {
         if (p->isEmpty()) {
@@ -247,28 +247,20 @@ void QAsParser::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         auto nsnode = new QCodeNode;
         nsnode->setNodeType(QCodeNode::Namespace);
         nsnode->setRole(QCodeNode::Name, *p);
-        nsnode->setParent(node);
-        node->children().append(nsnode);
+        nsnode->attach(node);
     }
-    _headerNodes << node;
 
     for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
-        auto node = new QCodeNode;
-        _headerNodes << node;
+        auto node = getNewHeadNodePointer(p->first);
         if (p->first.isEmpty()) {
             node->setNodeType(QCodeNode::Group);
         } else {
             node->setNodeType(QCodeNode::Namespace);
         }
-        node->setRole(QCodeNode::Name, p->first);
-
-        auto pnodes = &node->children();
-        auto nodeParent = node;
 
         for (auto &fn : p->second) {
-            auto node = newFnCodeNode(fn);
-            node->setParent(nodeParent);
-            pnodes->append(node);
+            auto fnnode = newFnCodeNode(fn);
+            fnnode->attach(node);
         }
     }
 }
@@ -298,26 +290,16 @@ void QAsParser::addEnumCompletion(asIScriptEngine *engine) {
     }
 
     for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
-        auto node = new QCodeNode;
-        _headerNodes << node;
+        auto node = getNewHeadNodePointer(p->first);
         if (p->first.isEmpty()) {
             node->setNodeType(QCodeNode::Group);
         } else {
             node->setNodeType(QCodeNode::Namespace);
         }
-        node->setRole(QCodeNode::Name, p->first);
 
-        auto pnodes = &node->children();
-        auto nodeParent = node;
         for (auto &e : p->second) {
-            auto node = new QCodeNode;
-            node->setNodeType(QCodeNode::Enum);
-            node->setRole(QCodeNode::Name, e.name);
-            node->setParent(nodeParent);
-            pnodes->append(node);
-
             auto enode = newEnumCodeNode(e);
-            _headerNodes << enode;
+            enode->attach(node);
         }
     }
 }
@@ -390,32 +372,22 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
     }
 
     for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
-        auto node = new QCodeNode;
-        _headerNodes << node;
+        auto node = getNewHeadNodePointer(p->first);
         if (p->first.isEmpty()) {
             node->setNodeType(QCodeNode::Group);
         } else {
             node->setNodeType(QCodeNode::Namespace);
         }
-        node->setRole(QCodeNode::Name, p->first);
 
-        auto pnodes = &node->children();
-        auto nodeParent = node;
         for (auto &cls : p->second) {
-            auto node = new QCodeNode;
-            node->setNodeType(QCodeNode::Class);
-            node->setRole(QCodeNode::Name, cls.name);
-            node->setParent(nodeParent);
-            pnodes->append(node);
-
             auto clsnode = new QCodeNode;
-            _clsNodes << clsnode;
             clsnode->setNodeType(QCodeNode::Class);
             clsnode->setRole(QCodeNode::Name, cls.name);
+            clsnode->attach(node);
+
             for (auto &m : cls.methods) {
                 auto node = newFnCodeNode(m);
-                node->setParent(clsnode);
-                clsnode->children().append(node);
+                node->attach(clsnode);
             }
 
             for (auto &p : cls.properties) {
@@ -439,6 +411,18 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
             }
         }
     }
+}
+
+QCodeNode *QAsParser::getNewHeadNodePointer(const QByteArray &name) {
+    auto ptr = _buffer.value(name, nullptr);
+    if (ptr) {
+        return ptr;
+    }
+    auto node = new QCodeNode;
+    node->setRole(QCodeNode::Name, name);
+    _headerNodes.append(node);
+    _buffer.insert(name, node);
+    return node;
 }
 
 QCodeNode *QAsParser::newFnCodeNode(const FnInfo &info) {
@@ -472,7 +456,5 @@ QCodeNode *QAsParser::newEnumCodeNode(const EnumInfo &info) {
     }
     return enode;
 }
-
-QList<QCodeNode *> QAsParser::classNodes() const { return _clsNodes; }
 
 QList<QCodeNode *> QAsParser::codeNodes() const { return _nodes; }

@@ -75,12 +75,12 @@ public:
 
     const QList<QCodeNode *> &headerNodes() const;
 
-    QList<QCodeNode *> classNodes() const;
-
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine);
     void addEnumCompletion(asIScriptEngine *engine);
     void addClassCompletion(asIScriptEngine *engine);
+
+    QCodeNode *getNewHeadNodePointer(const QByteArray &name);
 
 private:
     QCodeNode *newFnCodeNode(const FnInfo &info);
@@ -90,9 +90,10 @@ private:
 private:
     asIScriptEngine *_engine;
     QScopedPointer<asCScriptCode> m_code;
-    QList<QCodeNode *> _headerNodes;
-    QList<QCodeNode *> _clsNodes;
     QList<QCodeNode *> _nodes;
+
+    QHash<QString, QCodeNode *> _buffer;
+    QList<QCodeNode *> _headerNodes;
 };
 
 #endif // !_QCPP_PARSER_H_

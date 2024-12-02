@@ -94,9 +94,7 @@ QCodeNode::QCodeNode() : line(-1), _parent(nullptr) {}
 
 QCodeNode::~QCodeNode() {
     QCodeNode::detach();
-
     _parent = nullptr;
-
     clear();
 }
 
@@ -106,10 +104,8 @@ void QCodeNode::attach(QCodeNode *p) {
     if (!p || p->_children.contains(this))
         return;
 
-    int row = p->_children.length();
-
     _parent = p;
-    p->_children.insert(row, this);
+    p->_children.append(this);
 }
 
 void QCodeNode::detach() {
@@ -134,21 +130,15 @@ int QCodeNode::getLine() const { return line; }
 void QCodeNode::setLine(int newLine) { line = newLine; }
 
 void QCodeNode::clear() {
-    QList<QCodeNode *> c = _children;
-
-    removeAll();
-
-    qDeleteAll(c);
-}
-
-void QCodeNode::removeAll() {
     if (_children.isEmpty())
         return;
 
     for (auto &n : _children) {
         n->_parent = nullptr;
+        n->clear();
     }
 
+    qDeleteAll(_children);
     _children.clear();
 }
 
@@ -416,6 +406,8 @@ QVariant QCodeNode::data(int r) const {
 QByteArray QCodeNode::role(RoleIndex r) const { return roles.value(r); }
 
 void QCodeNode::setRole(RoleIndex r, const QByteArray &b) { roles[r] = b; }
+
+QList<QCodeNode *> &QCodeNode::children() { return _children; }
 
 void QCodeNode::setNodeType(DefaultNodeTypes t) {
     setRole(NodeType, QByteArray(1, t));

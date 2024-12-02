@@ -19,8 +19,11 @@
 #define ASOBJTREEWIDGET_H
 
 #include "angelscript.h"
+#include "class/qcodenode.h"
 
+#include <QHash>
 #include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 class ASObjTreeWidget : public QTreeWidget {
     Q_OBJECT
@@ -28,6 +31,12 @@ public:
     explicit ASObjTreeWidget(QWidget *parent = nullptr);
 
     void setEngine(asIScriptEngine *engine);
+
+private:
+    QTreeWidgetItem *createObjNode(QCodeNode *node, QTreeWidgetItem *parent);
+
+    void createObjNodes(const QList<QCodeNode *> &children,
+                        QTreeWidgetItem *parent);
 };
 
 #endif // ASOBJTREEWIDGET_H

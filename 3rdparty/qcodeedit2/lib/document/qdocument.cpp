@@ -318,7 +318,7 @@ void QDocument::setText(const QString &s) {
 
     // qDeleteAll(m_impl->m_lines);
     foreach (QDocumentLineHandle *h, m_impl->m_lines) {
-        h->m_doc = 0;
+        h->m_doc = nullptr;
         h->deref();
     }
 

@@ -22,6 +22,7 @@
 QConsoleWidget::QConsoleWidget(QWidget *parent)
     : QEditor(false, parent), mode_(Output) {
     iodevice_ = new QConsoleIODevice(this, this);
+    m_doc->setProperty("console", QVariant::fromValue(inpos_));
     setAcceptDrops(false);
     setUndoRedoEnabled(false);
     setCursorMirrorEnabled(false);
@@ -39,6 +40,7 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         cursor.movePosition(QDocumentCursor::End);
         setCursor(cursor);
         inpos_ = cursor;
+        m_doc->setProperty("console", QVariant::fromValue(inpos_));
         mode_ = Input;
     }
 

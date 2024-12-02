@@ -18,6 +18,8 @@
 
 #include "qce-config.h"
 
+#include <QMetaType>
+
 /*!
         \file qdocumentcursor.h
         \brief Definition of the QDocumentCursor class
@@ -180,5 +182,7 @@ public:
 private:
     QDocumentCursorHandle *m_handle;
 };
+
+Q_DECLARE_METATYPE(QDocumentCursor);
 
 #endif

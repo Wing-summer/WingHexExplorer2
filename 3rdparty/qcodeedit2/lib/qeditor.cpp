@@ -2502,8 +2502,10 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
 
                 // clear matches to avoid offsetting and subsequent
                 // remanence of matches
-                if (m_definition)
+                if (m_definition) {
                     m_definition->clearMatches(m_doc);
+                    viewport()->repaint(); // force repaint in case of crash
+                }
 
                 bool hasPH = m_placeHolders.count() && m_curPlaceHolder != -1;
                 bool macroing = hasPH || m_mirrors.count();
@@ -2557,7 +2559,6 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
 
         if (!bHandled) {
             QAbstractScrollArea::keyPressEvent(e);
-
             break;
         }
 
