@@ -26,8 +26,10 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
+#include "class/asbuilder.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
+#include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
 
@@ -82,6 +84,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     RegisterScriptGrid(engine);
     RegisterScriptHandle(engine);
     RegisterColor(engine);
+    RegisterScriptJson(engine);
     RegisterExceptionRoutines(engine);
 
     _rtypes.resize(RegisteredType::tMAXCOUNT);
@@ -225,7 +228,7 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
 
 void ScriptMachine::print(void *ref, int typeId) {
     MessageInfo info;
-    info.message = _debugger->toString(ref, typeId, 3, _engine);
+    info.message = _debugger->toString(ref, typeId, _engine);
     emit onOutput(MessageType::Print, info);
 }
 
@@ -470,6 +473,8 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
 
 void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
                                           asIScriptContext *ctx, void *param) {
+    Q_UNUSED(engine);
+
     // We can also check for possible script exceptions here if so desired
 
     // Unprepare the context to free any objects it may still hold (e.g. return
@@ -487,6 +492,11 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
 
 int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
                                   AsPreprocesser *builder, void *userParam) {
+    Q_UNUSED(pragmaText);
+    Q_UNUSED(builder);
+    Q_UNUSED(userParam);
+    // Maybe I will use these codes next time
+
     // asIScriptEngine *engine = builder->GetEngine();
 
     // Filter the pragmaText so only what is of interest remains
@@ -521,6 +531,8 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
 int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
                                    const QString &from, AsPreprocesser *builder,
                                    void *userParam) {
+    Q_UNUSED(userParam);
+
     QFileInfo info(include);
     bool isAbsolute = info.isAbsolute();
     bool hasNoExt = info.suffix().isEmpty();

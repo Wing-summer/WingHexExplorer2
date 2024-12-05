@@ -194,8 +194,8 @@ asDebugger::localVariables(asIScriptContext *ctx) {
 
             VariablesInfo var;
             var.name = func->GetVarDecl(n);
-            var.value = toString(ctx->GetAddressOfVar(n), typeId,
-                                 _expandMembers, ctx->GetEngine());
+            var.value =
+                toString(ctx->GetAddressOfVar(n), typeId, ctx->GetEngine());
             vars << var;
         }
     }
@@ -226,8 +226,8 @@ asDebugger::globalVariables(asIScriptContext *ctx) {
 
         VariablesInfo var;
         var.name = mod->GetGlobalVarDeclaration(n);
-        var.value = toString(mod->GetAddressOfGlobalVar(n), typeId,
-                             _expandMembers, ctx->GetEngine());
+        var.value =
+            toString(mod->GetAddressOfGlobalVar(n), typeId, ctx->GetEngine());
     }
 
     return vars;
@@ -244,9 +244,7 @@ void asDebugger::listMemberProperties(asIScriptContext *ctx) {
         QTextStream s(&str);
 
         s << QStringLiteral("this = ")
-          << toString(ptr, ctx->GetThisTypeId(), _expandMembers,
-                      ctx->GetEngine())
-          << Qt::endl;
+          << toString(ptr, ctx->GetThisTypeId(), ctx->GetEngine()) << Qt::endl;
     }
 }
 
@@ -318,7 +316,7 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
     return false;
 }
 
-QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
+QString asDebugger::toString(void *value, asUINT typeId,
                              asIScriptEngine *engine) {
     if (value == nullptr)
         return QStringLiteral("<null>");
@@ -378,8 +376,9 @@ QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
         asIScriptObject *obj = (asIScriptObject *)value;
 
         // Print the address of the object
-        s << QStringLiteral("{") << obj << QStringLiteral("}");
+        // s << QStringLiteral("{") << obj << QStringLiteral("}");
 
+        s << QStringLiteral("{");
         // Print the members
         if (obj && _expandMembers > 0) {
             asITypeInfo *type = obj->GetObjectType();
@@ -389,12 +388,18 @@ QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
                 else
                     s << QStringLiteral(", ");
 
-                s << type->GetPropertyDeclaration(n) << QStringLiteral(" = ")
-                  << toString(obj->GetAddressOfProperty(n),
-                              obj->GetPropertyTypeId(n), _expandMembers - 1,
-                              type->GetEngine());
+                const char *name = nullptr;
+                type->GetProperty(n, &name);
+                if (name) {
+                    s << name /*type->GetPropertyDeclaration(n)*/
+                      << QStringLiteral(" = ")
+                      << toString(obj->GetAddressOfProperty(n),
+                                  obj->GetPropertyTypeId(n), type->GetEngine());
+                }
             }
         }
+
+        s << QStringLiteral("}");
     } else {
         // Dereference handles, so we can see what it points to
         if (typeId & asTYPEID_OBJHANDLE)
@@ -404,8 +409,8 @@ QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
         // possible to see when handles point to the same object
         if (engine) {
             asITypeInfo *type = engine->GetTypeInfoById(typeId);
-            if (type->GetFlags() & asOBJ_REF)
-                s << QStringLiteral("{") << value << QStringLiteral("}");
+            // if (type->GetFlags() & asOBJ_REF)
+            //     s << QStringLiteral("{") << value << QStringLiteral("}");
 
             if (value) {
                 // Check if there is a registered to-string callback
@@ -426,7 +431,7 @@ QString asDebugger::toString(void *value, asUINT typeId, int expandMembersLevel,
 
                     // Invoke the callback to get the string representation of
                     // this type
-                    s << it.value()(value, _expandMembers, this);
+                    s << it.value()(value, this);
                 }
             }
         } else
@@ -614,7 +619,7 @@ QString asDebugger::printValue(const QString &expr, asIScriptContext *ctx,
                 error = WatchExpError::NotEndAfterSymbol;
                 return {};
             } else {
-                return toString(ptr, typeId, _expandMembers, engine);
+                return toString(ptr, typeId, engine);
             }
         } else {
             error = WatchExpError::NoMatchingSymbol;

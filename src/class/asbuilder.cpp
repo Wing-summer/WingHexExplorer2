@@ -22,9 +22,7 @@
 #include <QFileInfo>
 #include <QObject>
 
-asBuilder::asBuilder(asIScriptEngine *engine) : AsPreprocesser(engine) {
-    module = nullptr;
-}
+asBuilder::asBuilder(asIScriptEngine *engine) : AsPreprocesser(engine) {}
 
 int asBuilder::StartNewModule(const char *moduleName) {
     module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);

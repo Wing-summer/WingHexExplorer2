@@ -18,15 +18,19 @@
 #ifndef _QAS_PARSER_H_
 #define _QAS_PARSER_H_
 
-#include "class/asbuilder.h"
+#include "angelscript.h"
+#include "class/aspreprocesser.h"
 
+#include <QByteArray>
+#include <QHash>
+#include <QList>
 #include <QScopedPointer>
 
 class asCScriptCode;
 class asCScriptNode;
 class QCodeNode;
 
-class QAsParser : protected asBuilder {
+class QAsParser : protected AsPreprocesser {
 public:
     explicit QAsParser(asIScriptEngine *engine);
     virtual ~QAsParser();

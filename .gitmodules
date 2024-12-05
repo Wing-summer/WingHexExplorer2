@@ -10,3 +10,6 @@
 [submodule "3rdparty/SingleApplication"]
 	path = 3rdparty/SingleApplication
 	url = git@github.com:itay-grudev/SingleApplication.git
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
+	url = git@github.com:nlohmann/json.git

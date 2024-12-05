@@ -63,6 +63,7 @@ add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QJsonModel)
+add_subdirectory(3rdparty/json)
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -305,7 +306,9 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptregex.h
     src/scriptaddon/scriptregex.cpp
     src/scriptaddon/scriptcolor.h
-    src/scriptaddon/scriptcolor.cpp)
+    src/scriptaddon/scriptcolor.cpp
+    src/scriptaddon/scriptjson.cpp
+    src/scriptaddon/scriptjson.h)
 
 set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qgotolinepanel.h
@@ -484,6 +487,7 @@ if(WINGHEX_USE_FRAMELESS)
                 QCodeEditor2
                 QJsonModel
                 angelscript
+                nlohmann_json::nlohmann_json
                 qt${QT_VERSION_MAJOR}advanceddocking)
 else()
     target_link_libraries(
@@ -500,6 +504,7 @@ else()
                 QCodeEditor2
                 QJsonModel
                 angelscript
+                nlohmann_json::nlohmann_json
                 qt${QT_VERSION_MAJOR}advanceddocking)
 endif()
 

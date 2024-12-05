@@ -85,12 +85,7 @@ public:
     virtual ~asDebugger();
 
     // Register callbacks to handle to-string conversions of application types
-    // The expandMembersLevel is a counter for how many recursive levels the
-    // members should be expanded. If the object that is being converted to a
-    // string has members of its own the callback should call the debugger's
-    // ToString passing in expandMembersLevel - 1.
-    typedef QString (*ToStringCallback)(void *obj, int expandMembersLevel,
-                                        asDebugger *dbg);
+    typedef QString (*ToStringCallback)(void *obj, asDebugger *dbg);
 
     void registerToStringCallback(const asITypeInfo *ti,
                                   ToStringCallback callback);
@@ -114,7 +109,7 @@ public:
     // Line callback invoked by context
     void lineCallback(asIScriptContext *ctx);
 
-    QString toString(void *value, asUINT typeId, int expandMembersLevel,
+    QString toString(void *value, asUINT typeId,
                      asIScriptEngine *engine = nullptr);
 
     GCStatistic gcStatistics();
@@ -151,7 +146,7 @@ private:
         QString file;
         int line = -1;
         int col = -1;
-        int stackCount = -1;
+        asUINT stackCount = 0;
     };
 
 private:

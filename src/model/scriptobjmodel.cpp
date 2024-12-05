@@ -44,7 +44,7 @@ void ScriptObjModel::updateData() {
         d.name = name;
         d.type = (isConst ? QStringLiteral(" const ") : QStringLiteral(" ")) +
                  _engine->GetTypeDeclaration(typeId);
-        d.value = _debugger->toString(v, typeId, 3, _engine);
+        d.value = _debugger->toString(v, typeId, _engine);
 
         _datas.append(d);
     }
@@ -62,17 +62,21 @@ void ScriptObjModel::updateData() {
         d.name = name;
         d.type = (isConst ? QStringLiteral(" const ") : QStringLiteral(" ")) +
                  _engine->GetTypeDeclaration(typeId);
-        d.value = _debugger->toString(v, typeId, 3, _engine);
+        d.value = _debugger->toString(v, typeId, _engine);
         _datas.append(d);
     }
     this->endResetModel();
 }
 
 int ScriptObjModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _datas.size();
 }
 
-int ScriptObjModel::columnCount(const QModelIndex &parent) const { return 3; }
+int ScriptObjModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 3;
+}
 
 QVariant ScriptObjModel::data(const QModelIndex &index, int role) const {
     switch (role) {

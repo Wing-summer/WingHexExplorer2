@@ -29,16 +29,16 @@ public:
     explicit asBuilder(asIScriptEngine *engine);
 
     // Start a new module
-    int StartNewModule(const char *moduleName);
+    virtual int StartNewModule(const char *moduleName);
 
     // Build the added script sections
-    int Build();
+    virtual int Build();
 
     // Returns the current module
     asIScriptModule *GetModule();
 
 protected:
-    asIScriptModule *module;
+    asIScriptModule *module = nullptr;
 };
 
 #endif // ASBUILDER_H

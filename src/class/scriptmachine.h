@@ -19,7 +19,7 @@
 #define SCRIPTMACHINE_H
 
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
-#include "class/asbuilder.h"
+#include "class/aspreprocesser.h"
 
 #include "asdebugger.h"
 #include "class/ascontextmgr.h"

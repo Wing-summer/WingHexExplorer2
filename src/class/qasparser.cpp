@@ -32,7 +32,7 @@
  */
 
 QAsParser::QAsParser(asIScriptEngine *engine)
-    : asBuilder(engine), _engine(engine) {
+    : AsPreprocesser(engine), _engine(engine) {
     addGlobalFunctionCompletion(engine);
     addClassCompletion(engine);
     addEnumCompletion(engine);
@@ -169,20 +169,20 @@ QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
 }
 
 bool QAsParser::parse(const QString &filename) {
-    if (StartNewModule("as_parser") != 0) {
-        return false;
-    }
+    // if (StartNewModule("as_parser") != 0) {
+    //     return false;
+    // }
+
+    ClearAll();
 
     auto ret = LoadScriptSection(filename);
     if (ret != 0) {
         return false;
     }
 
-    ClearAll();
-
-    auto mod = dynamic_cast<asCModule *>(GetModule());
-    Q_ASSERT(mod);
-    asCParser parser(mod->m_builder);
+    // auto mod = dynamic_cast<asCModule *>(GetModule());
+    // Q_ASSERT(mod);
+    // asCParser parser(mod->m_builder);
 
     // m_code.reset(new asCScriptCode);
     // m_code->SetCode("as_parser", modifiedScript.data(), true);
@@ -190,24 +190,6 @@ bool QAsParser::parse(const QString &filename) {
     // parser.ParseScript(m_code.get());
 
     // auto pnodes = parser.GetScriptNode();
-
-    // QList<QCodeNode *> qnodes;
-
-    // do {
-    //     auto node = asNode2CodeNode(pnodes);
-
-    //     auto p = pnodes->firstChild;
-    //     while (p) {
-    //         auto cnode = asNode2CodeNode(pnodes);
-    //         cnode->parent = node;
-    //         node->children.append(cnode);
-
-    //         p = pnodes->next;
-    //     }
-
-    //     qnodes.append(node);
-    //     pnodes = pnodes->next;
-    // } while (pnodes != nullptr);
 
     return true;
 }

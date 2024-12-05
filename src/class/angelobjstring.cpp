@@ -24,9 +24,7 @@
 
 AngelObjString::AngelObjString() {}
 
-QString AngelObjString::stringToString(void *obj, int expandMembers,
-                                       asDebugger *dbg) {
-    Q_UNUSED(expandMembers);
+QString AngelObjString::stringToString(void *obj, asDebugger *dbg) {
     Q_UNUSED(dbg);
 
     // We know the received object is a string
@@ -47,32 +45,27 @@ QString AngelObjString::stringToString(void *obj, int expandMembers,
     }
 }
 
-QString AngelObjString::arrayToString(void *obj, int expandMembers,
-                                      asDebugger *dbg) {
+QString AngelObjString::arrayToString(void *obj, asDebugger *dbg) {
     CScriptArray *arr = reinterpret_cast<CScriptArray *>(obj);
 
     QString str;
     QTextStream s(&str);
     s << tr("(len=") << arr->GetSize() << QStringLiteral(")");
 
-    if (expandMembers > 0) {
-        s << QStringLiteral(" [");
-        for (asUINT n = 0; n < arr->GetSize(); n++) {
-            s << dbg->toString(arr->At(n), arr->GetElementTypeId(),
-                               expandMembers - 1,
-                               arr->GetArrayObjectType()->GetEngine());
-            if (n < arr->GetSize() - 1)
-                s << ", ";
-        }
-        s << QStringLiteral("]");
+    s << QStringLiteral(" [");
+    for (asUINT n = 0; n < arr->GetSize(); n++) {
+        s << dbg->toString(arr->At(n), arr->GetElementTypeId(),
+                           arr->GetArrayObjectType()->GetEngine());
+        if (n < arr->GetSize() - 1)
+            s << ", ";
     }
+    s << QStringLiteral("]");
 
     return str;
 }
 
-QString AngelObjString::charToString(void *obj, int expandMembers,
-                                     asDebugger *dbg) {
-    Q_UNUSED(expandMembers);
+QString AngelObjString::charToString(void *obj, asDebugger *dbg) {
+
     Q_UNUSED(dbg);
 
     // We know the received object is a char
@@ -80,39 +73,36 @@ QString AngelObjString::charToString(void *obj, int expandMembers,
     return QString(*val);
 }
 
-QString AngelObjString::dictionaryToString(void *obj, int expandMembers,
-                                           asDebugger *dbg) {
+QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
     CScriptDictionary *dic = reinterpret_cast<CScriptDictionary *>(obj);
 
     QString str;
     QTextStream s(&str);
     s << tr("(len=") << dic->GetSize() << ")";
 
-    if (expandMembers > 0) {
-        s << " [";
-        asUINT n = 0;
-        for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
-             it++, n++) {
-            s << "[" << it.GetKey() << "] = ";
+    s << " [";
+    asUINT n = 0;
+    for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
+         it++, n++) {
+        s << "[" << it.GetKey() << "] = ";
 
-            // Get the type and address of the value
-            const void *val = it.GetAddressOfValue();
-            int typeId = it.GetTypeId();
+        // Get the type and address of the value
+        const void *val = it.GetAddressOfValue();
+        int typeId = it.GetTypeId();
 
-            // Use the engine from the currently active context (if none is
-            // active, the debugger will use the engine held inside it by
-            // default, but in an environment where there multiple engines this
-            // might not be the correct instance).
-            asIScriptContext *ctx = asGetActiveContext();
+        // Use the engine from the currently active context (if none is
+        // active, the debugger will use the engine held inside it by
+        // default, but in an environment where there multiple engines this
+        // might not be the correct instance).
+        asIScriptContext *ctx = asGetActiveContext();
 
-            s << dbg->toString(const_cast<void *>(val), typeId,
-                               expandMembers - 1, ctx ? ctx->GetEngine() : 0);
+        s << dbg->toString(const_cast<void *>(val), typeId,
+                           ctx ? ctx->GetEngine() : 0);
 
-            if (n < dic->GetSize() - 1)
-                s << ", ";
-        }
-        s << "]";
+        if (n < dic->GetSize() - 1)
+            s << ", ";
     }
+    s << "]";
 
     return str;
 }

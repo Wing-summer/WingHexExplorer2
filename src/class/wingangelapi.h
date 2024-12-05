@@ -89,6 +89,12 @@ private:
 
     bool read2Ref(qsizetype offset, void *ref, int typeId);
 
+    bool write2Ref(qsizetype offset, void *ref, int typeId);
+
+    bool insert2Ref(qsizetype offset, void *ref, int typeId);
+
+    bool append2Ref(void *ref, int typeId);
+
     qsizetype getAsTypeSize(int typeId, void *data);
 
     template <typename T>
