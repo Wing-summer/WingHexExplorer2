@@ -90,7 +90,8 @@ public:
     int position() const;
 
     void shift(int offset);
-    bool movePosition(int offset, int op, int m);
+    bool movePosition(int offset, QDocumentCursor::MoveOperation op,
+                      QDocumentCursor::MoveMode m);
 
     void insertText(const QString &s, bool keepAnchor = false,
                     const QString &sfmtID = {});

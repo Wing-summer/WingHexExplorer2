@@ -836,13 +836,13 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     if (old != nullptr) {
-        old->disconnect(SLOT(onToggleMark(int)));
+        old->disconnect(SIGNAL(onToggleMark(int)));
         auto editor = old->editor();
-        editor->disconnect(SLOT(copyAvailable(bool)));
-        editor->disconnect(SLOT(contentModified(bool)));
-        editor->disconnect(SLOT(undoAvailable(bool)));
-        editor->disconnect(SLOT(redoAvailable(bool)));
-        editor->disconnect(SLOT(zoomed()));
+        editor->disconnect(SIGNAL(copyAvailable(bool)));
+        editor->disconnect(SIGNAL(contentModified(bool)));
+        editor->disconnect(SIGNAL(undoAvailable(bool)));
+        editor->disconnect(SIGNAL(redoAvailable(bool)));
+        editor->disconnect(SIGNAL(zoomed()));
     }
 
     auto editor = cur->editor();

@@ -411,6 +411,10 @@ public:
 private:
     bool unindent(const QDocumentCursor &cur);
 
+    bool isAutoCloseChar(const QString &ch);
+
+    QString getPairedCloseChar(const QString &ch);
+
 protected slots:
     void documentWidthChanged(int newWidth);
     void documentHeightChanged(int newWidth);

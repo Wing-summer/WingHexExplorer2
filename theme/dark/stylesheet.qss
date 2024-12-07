@@ -2970,7 +2970,7 @@ QEditor
 {
     color: #f8f8f2;
     background-color: #282a36;
-    selection-background-color: #44475a;
+    selection-background-color: #3daee9;
 }
 
 QCallTip

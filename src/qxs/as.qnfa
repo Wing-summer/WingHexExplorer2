@@ -24,14 +24,14 @@
 		<escape>\\</escape>
 	</context>
 	
-	<context id="data/string" format="text" >
+	<context id="data/string" format="string" >
 		<start>&quot;</start>
 		<stop>&quot;</stop>
 		<stop exclusive="false">\n</stop>
 		<sequence id="escape" format="escapeseq" >\\[nrtvf\\"'\n]</sequence>
 	</context>
 	
-	<context id="data/chars" format="text" >
+	<context id="data/chars" format="string" >
 		<start>'</start>
 		<stop>'</stop>
 		<stop exclusive="false">\n</stop>

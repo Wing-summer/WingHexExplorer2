@@ -29,7 +29,7 @@
 class ScriptMachine : public QObject {
     Q_OBJECT
 private:
-    typedef QString (*TranslateFunc)(const QStringList &contents);
+    using TranslateFunc = std::function<QString(const QStringList &)>;
 
 public:
     enum class MessageType { Info, Warn, Error, Print };
@@ -94,6 +94,9 @@ public:
 
     asIScriptEngine *engine() const;
 
+    bool insteadFoundDisabled() const;
+    void setInsteadFoundDisabled(bool newInsteadFoundDisabled);
+
 public slots:
     virtual bool executeCode(const QString &code);
     virtual bool executeScript(const QString &script, bool isInDebug = false);
@@ -132,7 +135,8 @@ private:
                                const QString &from, AsPreprocesser *builder,
                                void *userParam);
 
-    static QString processTranslation(const char *content);
+    static QString processTranslation(const char *content,
+                                      ScriptMachine *machine);
 
     void exceptionCallback(asIScriptContext *context);
 
@@ -154,6 +158,8 @@ private:
     std::function<QString(void)> _getInputFn;
 
     asIScriptContext *_immediateContext = nullptr;
+
+    bool m_insteadFoundDisabled = false;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

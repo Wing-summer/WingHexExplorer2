@@ -23,6 +23,7 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
     : QEditor(false, parent), mode_(Output) {
     iodevice_ = new QConsoleIODevice(this, this);
     m_doc->setProperty("console", QVariant::fromValue(inpos_));
+    setFlag(QEditor::AutoCloseChars, true);
     setAcceptDrops(false);
     setUndoRedoEnabled(false);
     setCursorMirrorEnabled(false);
@@ -56,6 +57,13 @@ QString QConsoleWidget::getCommandLine() {
     auto ltxt = textCursor.line().text();
     QString code = ltxt.mid(inpos_.columnNumber());
     return code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
+}
+
+void QConsoleWidget::paste() {
+    auto text = qApp->clipboard()->text();
+    if (canPaste()) {
+        m_cursor.insertText(text.replace('\n', ' '));
+    }
 }
 
 void QConsoleWidget::handleReturnKey() {

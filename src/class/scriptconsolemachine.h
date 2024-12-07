@@ -41,6 +41,14 @@ protected:
 private:
     bool execString(asIScriptEngine *engine, const QString &code);
 
+    // copy from helper
+    int ExecuteString(asIScriptEngine *engine, const char *code,
+                      asIScriptModule *mod, asIScriptContext *ctx);
+
+    int ExecuteString(asIScriptEngine *engine, const char *code, void *ref,
+                      int refTypeId, asIScriptModule *mod,
+                      asIScriptContext *ctx);
+
 private:
     ScriptObjModel *_model = nullptr;
 

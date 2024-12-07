@@ -51,6 +51,8 @@ public slots:
 
     void pushInputCmd(const QString &cmd);
 
+    void processKeyEvent(QKeyEvent *e);
+
 private:
     void runConsoleCommand(const QString &code);
 

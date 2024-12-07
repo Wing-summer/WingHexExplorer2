@@ -34,6 +34,7 @@ public:
     QString getCommandLine();
 
 public slots:
+    virtual void paste() override;
 
     // write to StandardOutput
     void writeStdOut(const QString &s);

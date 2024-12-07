@@ -30,9 +30,7 @@ public:
     struct LanguageData {
         QByteArray trFiles;
         QString about;
-        QString component;
         QString dev;
-        QString credit;
     };
 
 public:

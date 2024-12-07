@@ -31,7 +31,6 @@
 </p>
 
 <p align="center">
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
@@ -100,17 +99,11 @@
 
 ## WingHexExplorer2
 
-&emsp;&emsp;本软件是基于 QT 编写的十六进制编辑器，采用 C++ 进行开发，提供强大而免费的十六进制编辑器。目前只有 010 Editor 具有强大的十六进制编辑功能，但它是商用的。关注我开发动态的应该知道我开发了在 Windows 上用 C# 开发的`WingSummer.WingCloudHexExplorer`，目的是方便专业人士修改分析 PE 文件，并可作为学习 PE 结构的重要辅助工具。还有我已经开发了只针对 Deepin 平台适配的`WingHexExplorer`，目前功能已基本完善了。除了在大文件搜索功能有问题，其他已经可以稳定使用了，我决定不再维护`WingHexExplorer`，我将移植重置这个项目。
-
-&emsp;&emsp;为什么要开发这个项目？`WingHexExplorer2`和原来的版本有什么不同？首先，窗体界面是我自己基于开源项目进行修改，重新实现了自己的界面，保证在跨平台的 UI 一致性。虽然功能和系统原生相比还是有点缺陷，也只是算美中不足了。
-
-&emsp;&emsp;该项目终极目标是实现一个功能强大、轻量级且跨平台（只针对 PC 平台）的十六进制编辑器。当然，实现这个目标仅仅靠我是不能够实现的，这也是我开源的目的之一。我只维护我使用的操作系统平台，只对我使用的平台出现的我能够修复的 Bug 在我有空闲的时间进行及时的响应。
-
-&emsp;&emsp;如果你发现该项目的功能并没有满足你的需求。请看看`TODO.txt`里面有没有说明。如果没有，可以通过`issue`进行提出。我会评估提出的需求是共性的。如果是特别私有的需求，我将不会实现。如果你实在想加入，请自行实现插件，也欢迎来开源。提建议的时候不要天马行空，注意本软件只提供最基本的十六进制编辑和浏览服务，比如 010 Editor 里面的模版和脚本等服务，还需大家一起通过插件来实现！希望大家不要只提需求，更要提出建设性建议和解决方案，共同维护开源社区。具体详情将会在后面进行介绍。
+&emsp;&emsp;本软件是基于 QT 编写的十六进制编辑器，采用 C++ 进行开发，提供强大而免费的十六进制编辑器。该项目终极目标是实现一个功能强大、轻量级且跨平台（只针对 PC 平台）的十六进制编辑器。当然，实现这个目标仅仅靠我是不能够实现的，这也是我开源的目的之一。我只维护我使用的操作系统平台，只对我使用的平台出现的我能够修复的 Bug 在我有空闲的时间进行及时的响应。具体细节请看我的博客园的 [相关说明](https://www.cnblogs.com/wingsummer/p/18286419) 。
 
 ### 协议
 
-&emsp;&emsp;本软件遵循`AGPL-3.0`协议，请勿用于该协议之外的用途。我的初衷是让 Linux 的生态更加完整，早日让祖国推动操作系统国产化，软件跨平台只是顺带。我不希望“吸血鬼”们利益归自己，脏活累活给开源，都那么理所当然，开源就是这么被败坏的。我不希望因为版权的事情牵扯了大量的精力。
+&emsp;&emsp;本软件遵循`AGPL-3.0`协议，请勿用于该协议之外的用途。我不希望因为版权的事情牵扯了大量的精力。
 
 &emsp;&emsp;如果你想将本软件的代码用于闭源的商业代码，想要解除`GPL`系列的必须开源的限制，请必须亲自咨询我，商讨商业授权相关事宜。
 

@@ -418,11 +418,15 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     }
     auto ins = static_cast<ScriptMachine *>(param);
 
+    auto m = processTranslation(msg->message, ins);
+    if (m.isEmpty()) {
+        return;
+    }
     MessageInfo info;
     info.row = msg->row;
     info.col = msg->col;
     info.section = msg->section;
-    info.message = processTranslation(msg->message);
+    info.message = m;
     emit ins->onOutput(t, info);
 }
 
@@ -565,7 +569,8 @@ int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
     return builder->AddSectionFromFile(inc);
 }
 
-QString ScriptMachine::processTranslation(const char *content) {
+QString ScriptMachine::processTranslation(const char *content,
+                                          ScriptMachine *machine) {
     static QHash<QRegularExpression, TranslateFunc> exps{
         {QRegularExpression(QStringLiteral("^'(.*?)' is already declared")),
          [](const QStringList &contents) -> QString {
@@ -779,7 +784,9 @@ QString ScriptMachine::processTranslation(const char *content) {
                  .arg(contents.at(1), contents.at(2));
          }},
         {QRegularExpression(QStringLiteral("^Instead found '(.*?)'")),
-         [](const QStringList &contents) -> QString {
+         [machine](const QStringList &contents) -> QString {
+             if (machine->m_insteadFoundDisabled)
+                 return {};
              return tr("Instead found '%1'").arg(contents.at(1));
          }},
         {QRegularExpression(
@@ -1556,6 +1563,14 @@ void ScriptMachine::translation() {
     tr("Caught an exception from the application");
     tr("Mismatching types in value assignment");
     tr("Too many nested calls");
+}
+
+bool ScriptMachine::insteadFoundDisabled() const {
+    return m_insteadFoundDisabled;
+}
+
+void ScriptMachine::setInsteadFoundDisabled(bool newInsteadFoundDisabled) {
+    m_insteadFoundDisabled = newInsteadFoundDisabled;
 }
 
 asIScriptEngine *ScriptMachine::engine() const { return _engine; }

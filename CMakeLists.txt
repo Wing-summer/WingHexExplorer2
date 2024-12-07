@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.0.0-WIP")
+set(PROJECT_VERSION "2.0.0-beta")
 
 find_package(
     QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
@@ -382,11 +382,8 @@ foreach(TS_FILE IN LISTS TS_FILES)
     set(QM_DIR "${CMAKE_CURRENT_BINARY_DIR}/.tmp/${TS_DIR}")
     set(QM_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TS_DIR}")
     set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
-    set(LANG_NEED_COPY
-        "${LANG_NEED_COPY_PREFIX}/about.md"
-        "${LANG_NEED_COPY_PREFIX}/components.md"
-        "${LANG_NEED_COPY_PREFIX}/credits.md"
-        "${LANG_NEED_COPY_PREFIX}/devs.md")
+    set(LANG_NEED_COPY "${LANG_NEED_COPY_PREFIX}/about.md"
+                       "${LANG_NEED_COPY_PREFIX}/devs.md")
     add_custom_target(
         copy_lang_files
         COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
@@ -394,8 +391,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
 
     set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
-    set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "components.md"
-                              "credits.md" "devs.md")
+    set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "devs.md")
 
     add_custom_target(
         pak_lang_files

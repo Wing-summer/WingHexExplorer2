@@ -43,27 +43,22 @@
         <translation>编译日期</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="122"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="126"/>
         <source>Components</source>
         <translation>组件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="132"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="140"/>
         <source>License</source>
         <translation>协议</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="152"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="160"/>
         <source>Developer</source>
         <translation>开发者</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="162"/>
-        <source>Credit</source>
-        <translation>鸣谢</translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="172"/>
+        <location filename="../../src/dialog/aboutsoftwaredialog.ui" line="174"/>
         <source>Translator</source>
         <translation>译者</translation>
     </message>
@@ -851,931 +846,931 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="248"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="252"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="253"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1060"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="257"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1061"/>
         <source>View</source>
         <translation>视图</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="273"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="277"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.ui" line="14"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="134"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="135"/>
         <source>WingHexExplorer</source>
         <translation>羽云十六进制编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="113"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="114"/>
         <source>loc:</source>
         <translation>坐标：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="119"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="120"/>
         <source>sel:</source>
         <translation>选长：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="251"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="255"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="259"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="263"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="265"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1069"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1174"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="269"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1070"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1175"/>
         <source>Plugin</source>
         <translation>插件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="270"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="274"/>
         <source>Setting</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="438"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1140"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="442"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1141"/>
         <source>Log</source>
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="455"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="459"/>
         <source>ExportFindResult</source>
         <translation>导出搜索结果</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="458"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="462"/>
         <source>ClearFindResult</source>
         <translation>清空记录</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="476"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="480"/>
         <source>FindResult</source>
         <translation>搜索结果</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="493"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="559"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="847"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="497"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="563"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="848"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="499"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="565"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1698"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1867"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="503"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="569"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1699"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1868"/>
         <source>CopyToClipBoard</source>
         <translation>数据已拷贝到粘贴板</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="518"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="522"/>
         <source>LittleEndian</source>
         <translation>小端</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="528"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="532"/>
         <source>BigEndian</source>
         <translation>大端</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="539"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="543"/>
         <source>Number</source>
         <translation>数值</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="574"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="869"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="578"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="870"/>
         <source>CheckSum</source>
         <translation>校验和</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="606"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="902"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="610"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="903"/>
         <source>DeleteBookMark</source>
         <translation>删除书签</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="630"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="906"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="634"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="907"/>
         <source>ClearBookMark</source>
         <translation>清空书签</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="637"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="898"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1932"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1940"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="641"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="899"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1933"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1941"/>
         <source>BookMark</source>
         <translation>书签</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="711"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="715"/>
         <source>DecodeText</source>
         <translation>解码字符串</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="722"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="726"/>
         <source>ScriptConsole</source>
         <translation>脚本控制台</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="748"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="752"/>
         <source>DVList</source>
         <translation>可视化列表</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="754"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="758"/>
         <source>DVTree</source>
         <translation>可视化树数据</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="759"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="763"/>
         <source>DVTable</source>
         <translation>可视化表格</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="764"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="768"/>
         <source>DVText</source>
         <translation>可视化文本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="774"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1152"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="778"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1153"/>
         <source>Basic</source>
         <translation>基础</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="775"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="779"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="778"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="782"/>
         <source>OpenF</source>
         <translation>打开文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="782"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="786"/>
         <source>OpenFR</source>
         <translation>打开局部文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="787"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="791"/>
         <source>OpenWorkSpace</source>
         <translation>打开工作区</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="791"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="795"/>
         <source>OpenD</source>
         <translation>打开驱动器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="794"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="798"/>
         <source>RecentFiles</source>
         <translation>最近打开</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="797"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="801"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="804"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="806"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="808"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="810"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="811"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="814"/>
         <source>SaveAs</source>
         <translation>另存为</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="817"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="820"/>
         <source>Export</source>
         <translation>导出</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="823"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="825"/>
         <source>SaveSel</source>
         <translation>保存选区字节</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="835"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1172"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1195"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1197"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="836"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1173"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1196"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1198"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="838"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="839"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="842"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="843"/>
         <source>Redo</source>
         <translation>恢复</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="845"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="846"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="849"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="850"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="851"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="852"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="853"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="854"/>
         <source>Clone</source>
         <translation>克隆</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="858"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="859"/>
         <source>Lookup</source>
         <translation>查询</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="859"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="860"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="862"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="863"/>
         <source>Goto</source>
         <translation>跳转</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="866"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="867"/>
         <source>Encoding</source>
         <translation>编码</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="871"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="872"/>
         <source>FileInfo</source>
         <translation>文件信息</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="877"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1051"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="878"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1052"/>
         <source>Hex</source>
         <translation>十六进制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="878"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="879"/>
         <source>CutHex</source>
         <translation>剪切（十六进制）</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="882"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="883"/>
         <source>CopyHex</source>
         <translation>复制（十六进制）</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="885"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="886"/>
         <source>PasteHex</source>
         <translation>粘贴（十六进制）</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="888"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1888"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="889"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1889"/>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="891"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="892"/>
         <source>FillZero</source>
         <translation>填充零</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="698"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="897"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="909"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="970"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="986"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="702"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="898"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="910"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="971"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="987"/>
         <source>MetaData</source>
         <translation>标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="669"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="673"/>
         <source>DeleteMetadata</source>
         <translation>删除标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="691"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="695"/>
         <source>ClearMetadata</source>
         <translation>清空标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="913"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="914"/>
         <source>MetaDataEdit</source>
         <translation>编辑标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="917"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="918"/>
         <source>DeleteMetaData</source>
         <translation>删除标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="921"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="922"/>
         <source>ClearMetaData</source>
         <translation>清空标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="932"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="933"/>
         <source>Display</source>
         <translation>显示</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="964"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="965"/>
         <source>ViewText</source>
         <translation>文本预览</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="960"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="961"/>
         <source>Scale</source>
         <translation>缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="78"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="79"/>
         <source>SetupRecent</source>
         <translation>启动最近文件服务</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="89"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="90"/>
         <source>SetupUI</source>
         <translation>初始化界面</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="102"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="103"/>
         <source>SetupDocking</source>
         <translation>启动 Dock 服务</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="143"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="144"/>
         <source>LaunchingLog</source>
         <translation>启动日志系统</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="150"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="151"/>
         <source>SetupPluginSystem</source>
         <translation>启动插件系统</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="155"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="156"/>
         <source>LoadingPlg:</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="163"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="164"/>
         <source>SetupConsole</source>
         <translation>启动脚本控制台</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="166"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="167"/>
         <source>SetupScriptManager</source>
         <translation>启动脚本管理器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="170"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="171"/>
         <source>SetupScriptService</source>
         <translation>启动脚本服务</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="178"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="180"/>
         <source>SetupScriptEditor</source>
         <translation>构建脚本编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="206"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="208"/>
         <source>SetupSetDialog</source>
         <translation>构建设置窗体</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="211"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="213"/>
         <source>SetupPlgWidgets</source>
         <translation>启动插件组件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="218"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="220"/>
         <source>SetupDockingLayout</source>
         <translation>恢复 Dock 布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="224"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="226"/>
         <source>SetupWaiting</source>
         <translation>启动即将完成</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="235"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="239"/>
         <source>SetupFinished</source>
         <translation>启动完毕</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="962"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="963"/>
         <source>ResetScale</source>
         <translation>重置缩放</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="975"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="976"/>
         <source>ShowMetafg</source>
         <translation>标注前景色</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="979"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="980"/>
         <source>ShowMetabg</source>
         <translation>标注背景色</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="983"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="984"/>
         <source>ShowMetaComment</source>
         <translation>批注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="990"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="991"/>
         <source>MetaShowAll</source>
         <translation>显示所有标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="994"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="995"/>
         <source>MetaHideAll</source>
         <translation>隐藏所有标注</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1001"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1002"/>
         <source>FileStatus</source>
         <translation>文件状态</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1005"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1006"/>
         <source>InfoSave</source>
         <translation>是否保存</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1008"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1009"/>
         <source>ReadOnly</source>
         <translation>可读写</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1011"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1012"/>
         <source>SetLocked</source>
         <translation>启用/禁用锁定编辑</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1017"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1018"/>
         <source>ErrUnLock</source>
         <translation>锁定编辑失败</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1021"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1022"/>
         <source>SetOver</source>
         <translation>启用/禁用改变大小</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1033"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1034"/>
         <source>ErrUnOver</source>
         <translation>锁定文件大小失败</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1037"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1038"/>
         <source>InfoCanOverLimit</source>
         <translation>当前编辑处于受限模式！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1045"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1046"/>
         <source>Window</source>
         <translation>窗体</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1048"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1049"/>
         <source>Editor</source>
         <translation>编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1064"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1065"/>
         <source>Tools</source>
         <translation>工具</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1076"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1077"/>
         <source>HexEditorLayout</source>
         <translation>编辑器布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1078"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1079"/>
         <source>SetBaseAddr</source>
         <translation>设置基址</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1085"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1086"/>
         <source>addressBase</source>
         <translation>基址</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1085"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1086"/>
         <source>inputAddressBase</source>
         <translation>请输入基址</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1095"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1096"/>
         <source>WarnBigBaseAddress</source>
         <translation>基址过大，你得到的地址将会不正确！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1100"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1101"/>
         <source>ErrBaseAddress</source>
         <translation>非法基址输入</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1105"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1106"/>
         <source>SetColInfo</source>
         <translation>显示/隐藏地址栏</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1113"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1114"/>
         <source>SetHeaderInfo</source>
         <translation>显示/隐藏表头</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1121"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1122"/>
         <source>SetAsciiString</source>
         <translation>显示/隐藏解码字符串</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1132"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1133"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1133"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1134"/>
         <source>Fullscreen</source>
         <translation>全屏</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1135"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1136"/>
         <source>RestoreLayout</source>
         <translation>恢复默认布局</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1141"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1142"/>
         <source>ExportLog</source>
         <translation>导出日志</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1143"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1144"/>
         <source>ClearLog</source>
         <translation>清空日志</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1153"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1154"/>
         <source>ScriptEditor</source>
         <translation>脚本编辑器</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1158"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1159"/>
         <source>Scripts</source>
         <translation>脚本仓库</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1180"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1181"/>
         <source>PluginFunctions</source>
         <translation>插件功能</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1203"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1204"/>
         <source>ScriptSetting</source>
         <translation>脚本设置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1209"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1210"/>
         <source>PluginSettings</source>
         <translation>插件设置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1219"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1220"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1221"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1222"/>
         <source>Software</source>
         <translation>软件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1224"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1225"/>
         <source>Sponsor</source>
         <translation>赞助</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1227"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1228"/>
         <source>Wiki</source>
         <translation>网页 Wiki</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1230"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1231"/>
         <source>AboutQT</source>
         <translation>关于 QT</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1304"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1305"/>
         <source>SetPageIDEmptyTryUseName</source>
         <translation>设置页 ID 为空，尝试使用名称作为 ID</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1312"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1313"/>
         <source>SetPageDupNameIgnored</source>
         <translation>设置页重复的 ID 名称，已忽略加载</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1346"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1347"/>
         <source>Plugin %1 contains a duplicate ID (%2) that is already registered by plugin %3</source>
         <translation>插件 %1 包含重复 ID (%2)，该 ID 已被插件 %3 注册</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1387"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1438"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1388"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1439"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1393"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1397"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1420"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1424"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1445"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1449"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1469"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1475"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1479"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1504"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1530"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1593"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1632"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2421"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2637"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1394"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1398"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1421"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1425"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1446"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1450"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1470"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1476"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1480"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1505"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1531"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1594"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1633"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2422"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2638"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1393"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1420"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1445"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1475"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1394"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1421"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1446"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1476"/>
         <source>FileNotExist</source>
         <translation>文件不存在！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1397"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1424"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1449"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1479"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1530"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1398"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1425"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1450"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1480"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1531"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1438"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1439"/>
         <source>ProjectFile (*.wingpro)</source>
         <translation>项目文件 (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1469"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1470"/>
         <source>Root Required!</source>
         <translation>需要管理员权限继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1500"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1501"/>
         <source>ReloadSuccessfully</source>
         <translation>文件重新加载成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1504"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1505"/>
         <source>ReloadUnSuccessfully</source>
         <translation>文件重新加载失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1560"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1643"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2150"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1561"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1644"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2151"/>
         <source>ChooseSaveFile</source>
         <translation>请选择保存文件路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1729"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1730"/>
         <source>NoMoreClone</source>
         <translation>克隆已到上限，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1761"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1762"/>
         <source>FindFininishBusy</source>
         <translation>查找任务繁忙，请勿重复查找！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1765"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1766"/>
         <source>MayTooMuchFindResult</source>
         <translation>搜索数量已到达上限，结果可能不全，建议请按区段搜索。</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2928"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2929"/>
         <source>ConfirmSave</source>
         <translation>正在关闭未保存的文件或工作区，你确定保存吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2969"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2970"/>
         <source>ConfirmAPPSave</source>
         <translation>你尝试关闭程序，但仍存在未保存的文件或工作区，你确定保存这些更改吗？</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1551"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1572"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1552"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1573"/>
         <source>SaveSuccessfully</source>
         <translation>保存成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1546"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1577"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1547"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1578"/>
         <source>SaveWSError</source>
         <translation>保存工作区错误！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1534"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1581"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1620"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1535"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1582"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1621"/>
         <source>Warn</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="737"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="741"/>
         <source>ScriptObjShow</source>
         <translation>脚本对象</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1534"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1581"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1620"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1535"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1582"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1621"/>
         <source>SourceChanged</source>
         <translation>局部打开原始文件更改！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1541"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1588"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1542"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1589"/>
         <source>SaveSourceFileError</source>
         <translation>由于原文件更改，保存文件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1593"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1594"/>
         <source>SaveUnSuccessfully</source>
         <translation>保存失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1606"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1607"/>
         <source>ChooseExportFile</source>
         <translation>请选择导出文件路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1616"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1617"/>
         <source>ExportSuccessfully</source>
         <translation>导出成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1627"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1628"/>
         <source>ExportSourceFileError</source>
         <translation>由于原文件更改，导出文件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1632"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1633"/>
         <source>ExportUnSuccessfully</source>
         <translation>导出失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1654"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1655"/>
         <source>SaveSelSuccess</source>
         <translation>保存选区字节成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1657"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1658"/>
         <source>SaveSelError</source>
         <translation>保存选区字节失败，因文件不具有可写权限！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1684"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1853"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1685"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1854"/>
         <source>CutToClipBoard</source>
         <translation>数据已剪切到粘贴板！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1687"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1856"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1688"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1857"/>
         <source>UnCutToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到粘贴板失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1701"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1870"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1702"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1871"/>
         <source>UnCopyToClipBoard</source>
         <translation>由于保持大小限制，数据剪切到复制板失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1757"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1758"/>
         <source>FindFininish</source>
         <translation>查找结果完毕！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1888"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1889"/>
         <source>PleaseInputFill</source>
         <translation>请输入填充字节值</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1901"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1902"/>
         <source>FillInputError</source>
         <translation>填充字节输入错误</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1932"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1940"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1933"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1941"/>
         <source>InputComment</source>
         <translation>请输入批注：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="1988"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2029"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2502"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="1989"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2030"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2503"/>
         <source>NoSelection</source>
         <translation>没有选区，无法继续的操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2025"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2026"/>
         <source>NoMetaData</source>
         <translation>无可编辑标记</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2147"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2148"/>
         <source>EmptyFindResult</source>
         <translation>没有可导出的搜索结果！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2176"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2177"/>
         <source>SaveFindResult</source>
         <translation>导出搜索结果成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2180"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2181"/>
         <source>SaveFindResultError</source>
         <translation>导出结果失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2287"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2288"/>
         <source>TooManyBytesDecode</source>
         <translation>超出解码字节限制……</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2316"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2317"/>
         <source>ExportLogError</source>
         <translation>导出日志失败！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2319"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2320"/>
         <source>ExportLogSuccess</source>
         <translation>导出日志成功，路径：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2327"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2328"/>
         <source>ClearLogSuccess</source>
         <translation>清空日志成功！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2422"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2423"/>
         <source>Too much opened files</source>
         <translation>打开的文件过多，无法继续操作！</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2569"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2570"/>
         <source>CopyLimit</source>
         <translation>拷贝字节超出限制</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="2638"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="2639"/>
         <source>ErrOpenFileBelow</source>
         <translation>打开文件出现错误（由于权限不足），如下为打开错误的文件：</translation>
     </message>
@@ -2375,7 +2370,7 @@ Do you wish to keep up to date by reloading the file?</source>
 您是否希望通过重新加载文件来保持最新状态？</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3226"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3230"/>
         <source>untitled</source>
         <translation>未命名</translation>
     </message>
@@ -2780,22 +2775,22 @@ Do you wish to keep up to date by reloading the file?</source>
 <context>
     <name>ScriptConsoleMachine</name>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="128"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="127"/>
         <source>Application functions:</source>
         <translation>程序函数：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="141"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="140"/>
         <source>User functions:</source>
         <translation>用户函数：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="162"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="161"/>
         <source>Application variables:</source>
         <translation>程序变量：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptconsolemachine.cpp" line="179"/>
+        <location filename="../../src/class/scriptconsolemachine.cpp" line="178"/>
         <source>User variables:</source>
         <translation>用户变量：</translation>
     </message>
@@ -2850,1503 +2845,1503 @@ Do you wish to keep up to date by reloading the file?</source>
         <translation>脚本异常退出</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="572"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="577"/>
         <source>&apos;%1&apos; is already declared</source>
         <translation>&quot;%1&quot; 已被声明</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="577"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="582"/>
         <source>Abstract class &apos;%1&apos; cannot be instantiated</source>
         <translation>无法实例化抽象类 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="583"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="588"/>
         <source>Accessing private property &apos;%1&apos; of parent class</source>
         <translation>非法访问父类的私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="589"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="594"/>
         <source>Attribute &apos;%1&apos; informed multiple times</source>
         <translation>属性 &quot;%1&quot; 已被多次通知</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="595"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="600"/>
         <source>Can&apos;t form arrays of subtype &apos;%1&apos;</source>
         <translation>无法创建子类型 &quot;%1&quot; 的数组</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="600"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="605"/>
         <source>Can&apos;t inherit from class &apos;%1&apos; marked as final</source>
         <translation>无法从标记为 final 的类 &quot;%1&quot; 继承</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="606"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="611"/>
         <source>Cannot access non-static member &apos;%1&apos; like this</source>
         <translation>无法和像使用 this 一样访问非静态成员 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="612"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="617"/>
         <source>Can&apos;t construct handle &apos;%1&apos;. Use ref cast instead</source>
         <translation>无法构造句柄 &quot;%1&quot; 。请改用引用强制转换</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="618"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="623"/>
         <source>Can&apos;t implicitly convert from &apos;%1&apos; to &apos;%2&apos;.</source>
         <translation>无法从 &quot;%1&apos; 隐式转换为 &quot;%2&quot;。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="623"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="628"/>
         <source>Compiling %1</source>
         <translation>正在编译 %1</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="627"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="632"/>
         <source>Compiling auto generated %1</source>
         <translation>编译自动生成的 %1</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="633"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="638"/>
         <source>Implemented property accessor &apos;%1&apos; does not expect index argument</source>
         <translation>已实现的属性访问器 &quot;%1&quot; 不需要索引参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="640"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="645"/>
         <source>Implemented property accessor &apos;%1&apos; expects index argument</source>
         <translation>已实现的属性访问器 &quot;%1&quot; 需要索引参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="646"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="651"/>
         <source>Data type can&apos;t be &apos;%1&apos;</source>
         <translation>数据类型不能为 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="652"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="657"/>
         <source>All subsequent parameters after the first default value must have default values in function &apos;%1&apos;</source>
         <translation>在函数 &quot;%1&quot; 中，第一个默认值之后的所有后续参数都必须具有默认值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="660"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="665"/>
         <source>The method in the derived class must have the same return type as in the base class: &apos;%1&apos;</source>
         <translation>派生类中的方法必须具有与基类相同的返回类型：&quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="668"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="673"/>
         <source>The name of the destructor &apos;%1::~%2&apos; must be the same as the class</source>
         <translation>析构函数 &quot;%1::~%2&quot; 的名称必须与类相同</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="674"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="679"/>
         <source>Expected &apos;%1&apos;</source>
         <translation>应为 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="678"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="683"/>
         <source>Expected &apos;%1&apos; or &apos;%2&apos;</source>
         <translation>应为 ”%1“ 或 ”%2“</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="684"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="689"/>
         <source>Expression must be of boolean type, instead found &apos;%1&apos;</source>
         <translation>表达式必须是布尔类型，但实际使用的是 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="690"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="695"/>
         <source>Expression &apos;%1&apos; is a data type</source>
         <translation>表达式 &quot;%1&quot; 是一种数据类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="695"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="700"/>
         <source>External shared entity &apos;%1&apos; not found</source>
         <translation>未找到外部共享实体 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="702"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="707"/>
         <source>External shared entity &apos;%1&apos; cannot redefine the original entity</source>
         <translation>外部共享实体 &quot;%1&quot; 无法重新定义原始实体</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="710"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="715"/>
         <source>Failed while compiling default arg for parameter %1 in function &apos;%2&apos;</source>
         <translation>为函数 &quot;%2&quot; 中的参数 %1 编译默认参数时失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="716"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="721"/>
         <source>Function &apos;%1&apos; not found</source>
         <translation>未找到函数 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="722"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="727"/>
         <source>The property &apos;%1&apos; has mismatching types for the get and set accessors</source>
         <translation>属性 &quot;%1&quot; 的 get 和 set 访问器类型不匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="730"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="735"/>
         <source>Variable &apos;%1&apos; hides another variable of same name in outer scope</source>
         <translation>变量 &quot;%1&quot; 隐藏了外部作用域中另一个同名变量</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="737"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="742"/>
         <source>Identifier &apos;%1&apos; is not a data type</source>
         <translation>标识符 &quot;%1&quot; 不是数据类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="743"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="748"/>
         <source>Identifier &apos;%1&apos; is not a data type in global namespace</source>
         <translation>标识符 &quot;%1&quot; 不是全局命名空间中的数据类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="750"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="755"/>
         <source>Identifier &apos;%1&apos; is not a data type in namespace &apos;%2&apos; or parent</source>
         <translation>标识符 &quot;%1&quot; 不是命名空间 &quot;%2&quot; 或其父级中的数据类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="756"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="761"/>
         <source>Illegal operation on &apos;%1&apos;</source>
         <translation>对 &quot;%1&quot; 的非法操作</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="760"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="765"/>
         <source>Illegal variable name &apos;%1&apos;.</source>
         <translation>非法变量名 &quot;%1&quot;。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="765"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="770"/>
         <source>Illegal access to inherited private property &apos;%1&apos;</source>
         <translation>非法访问继承的私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="771"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="776"/>
         <source>Initialization lists cannot be used with &apos;%1&apos;</source>
         <translation>初始化列表不能与 &quot;%1&quot; 一起使用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="777"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="782"/>
         <source>Attempting to instantiate invalid template type &apos;%1&lt;%2&gt;&apos;</source>
         <translation>尝试实例化无效的模板类型 &quot;%1&lt;%2&gt;&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="783"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="790"/>
         <source>Instead found &apos;%1&apos;</source>
         <translation>而是找到了 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="788"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="795"/>
         <source>Instead found identifier &apos;%1&apos;</source>
         <translation>而是找到标识符 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="793"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="800"/>
         <source>Instead found reserved keyword &apos;%1&apos;</source>
         <translation>而是找到了保留关键字 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="799"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="806"/>
         <source>Interface &apos;%1&apos; cannot be instantiated</source>
         <translation>无法实例化接口 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="805"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="812"/>
         <source>Invalid unicode escape sequence, expected %1 hex digits</source>
         <translation>无效的 Unicode 转义序列，预期为 %1 个十六进制数字</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="812"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="819"/>
         <source>Method &apos;%1&apos; declared as final and cannot be overridden</source>
         <translation>方法 &quot;%1&quot; 已声明为 final，因此无法被覆盖</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="819"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="826"/>
         <source>Method &apos;%1&apos; marked as override but does not replace any base class or interface method</source>
         <translation>方法 &quot;%1&quot; 标记为覆盖，但并未替换任何基类或接口方法</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="827"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="834"/>
         <source>Method &apos;%1::%2&apos; is missing the return type, nor is it the same name as object to be a constructor</source>
         <translation>方法 &quot;%1::%2&quot; 缺少返回类型，并且其名称与构造函数对象不同</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="834"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="841"/>
         <source>Method &apos;%1&apos; is not part of object &apos;%2&apos;</source>
         <translation>方法 &quot;%1&quot; 不是对象 &quot;%2&quot; 的一部分</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="840"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="847"/>
         <source>Missing implementation of &apos;%1&apos;</source>
         <translation>缺少 &quot;%1&quot; 的实现</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="844"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="851"/>
         <source>Missing definition of &apos;%1&apos;</source>
         <translation>缺少 &quot;%1&quot; 的定义</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="849"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="856"/>
         <source>Mixin class cannot be declared as &apos;%1&apos;</source>
         <translation>Mixin 类不能声明为 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="855"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="862"/>
         <source>Multiple matching signatures to &apos;%1&apos;</source>
         <translation>&quot;%1&quot; 有多个匹配的签名</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="861"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="868"/>
         <source>Found multiple get accessors for property &apos;%1&apos;</source>
         <translation>发现属性 &quot;%1&quot; 的多个 get 访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="867"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="874"/>
         <source>Found multiple set accessors for property &apos;%1&apos;</source>
         <translation>发现属性 &quot;%1&quot; 的多个集合访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="873"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="880"/>
         <source>Namespace &apos;%1&apos; doesn&apos;t exist.</source>
         <translation>命名空间 &quot;%1&quot; 不存在。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="878"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="884"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="890"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="896"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="902"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="908"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="914"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="920"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="926"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="932"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="938"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="944"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="885"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="891"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="897"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="903"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="909"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="915"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="921"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="927"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="933"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="939"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="945"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="951"/>
         <source>Name conflict. </source>
         <translation>名称冲突。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="879"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="886"/>
         <source>&apos;%1&apos; is an extended data type.</source>
         <translation>&quot;%1&quot; 是扩展数据类型。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="885"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="892"/>
         <source>&apos;%1&apos; is a global property.</source>
         <translation>&quot;%1&quot; 是全局属性。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="891"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="898"/>
         <source>&apos;%1&apos; is a named type.</source>
         <translation>&quot;%1&quot; 是被命名的类型。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="897"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="904"/>
         <source>&apos;%1&apos; is a funcdef.</source>
         <translation>&quot;%1&quot; 是一个函数签名定义。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="903"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="910"/>
         <source>&apos;%1&apos; is a global function.</source>
         <translation>&quot;%1&quot; 是一个全局函数。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="909"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="916"/>
         <source>&apos;%1&apos; is a mixin class.</source>
         <translation>&quot;%1&quot; 是一个 Mixin 类。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="915"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="922"/>
         <source>&apos;%1&apos; is a virtual property.</source>
         <translation>&quot;%1&quot; 是虚拟属性。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="921"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="928"/>
         <source>&apos;%1&apos; is a class.</source>
         <translation>&quot;%1&quot; 是一个类。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="927"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="934"/>
         <source>&apos;%1&apos; is an interface.</source>
         <translation>&quot;%1&quot; 是一个接口。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="933"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="940"/>
         <source>&apos;%1&apos; is an object property.</source>
         <translation>&quot;%1&quot; 是一个对象属性。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="939"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="946"/>
         <source>&apos;%1&apos; is a class method.</source>
         <translation>&quot;%1&quot; 是一个类方法。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="945"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="952"/>
         <source>&apos;%1&apos; is already used.</source>
         <translation>”%1“ 已被使用。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="951"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="958"/>
         <source>No appropriate opHndlAssign method found in &apos;%1&apos; for handle assignment</source>
         <translation>在 &quot;%1&quot; 中未找到适当的 opHndlAssign 方法用于句柄分配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="958"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="965"/>
         <source>No conversion from &apos;%1&apos; to &apos;%2&apos; available.</source>
         <translation>无法进行从 &quot;%1&quot; 到 &quot;%2&quot; 的转换。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="964"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="971"/>
         <source>No conversion from &apos;%1&apos; to math type available.</source>
         <translation>无法将 &quot;%1&quot; 转换为数学类型。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="970"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="977"/>
         <source>No default constructor for object of type &apos;%1&apos;.</source>
         <translation>&quot;%1&quot; 类型对象没有默认构造函数。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="977"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="984"/>
         <source>No appropriate opAssign method found in &apos;%1&apos; for value assignment</source>
         <translation>在 &quot;%1&quot; 中未找到适合赋值的 opAssign 方法</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="984"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="991"/>
         <source>No copy constructor for object of type &apos;%1&apos;.</source>
         <translation>没有 &quot;%1&quot; 类型对象的复制构造函数。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="990"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="997"/>
         <source>No matching signatures to &apos;%1&apos;</source>
         <translation>没有与 &quot;%1&quot; 匹配的签名</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="995"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1002"/>
         <source>No matching operator that takes the type &apos;%1&apos; found</source>
         <translation>未找到采用类型 &quot;%1&quot; 的匹配运算符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1002"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1009"/>
         <source>No matching operator that takes the types &apos;%1&apos; and &apos;%2&apos; found</source>
         <translation>未找到采用类型 &quot;%1&quot; 和 &quot;%2&quot; 的匹配运算符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1008"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1015"/>
         <source>No matching symbol &apos;%1&apos;</source>
         <translation>没有匹配的符号 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1014"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1021"/>
         <source>Expression doesn&apos;t form a function call. &apos;%1&apos; evaluates to the non-function type &apos;%2&apos;</source>
         <translation>表达式不构成函数调用。&quot;%1&quot; 计算结果为非函数类型 &quot;%2&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1020"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1027"/>
         <source>&apos;%1&apos; is not declared</source>
         <translation>&quot;%1&quot; 未被声明</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1024"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1031"/>
         <source>&apos;%1&apos; is not initialized.</source>
         <translation>”%1“ 未初始化。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1029"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1036"/>
         <source>&apos;%1&apos; is not a member of &apos;%2&apos;</source>
         <translation>”%1“ 不是 ”%2“ 的成员</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1035"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1042"/>
         <source>Type &apos;%1&apos; doesn&apos;t support the indexing operator</source>
         <translation>类型 &quot;%1&quot; 不支持索引运算符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1042"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1049"/>
         <source>Parameter type can&apos;t be &apos;%1&apos;, because the type cannot be instantiated.</source>
         <translation>参数类型不能是 &quot;%1&quot;，因为该类型无法实例化。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1050"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1057"/>
         <source>Previous error occurred while attempting to compile initialization list for type &apos;%1&apos;</source>
         <translation>尝试编译类型 &quot;%1&quot; 的初始化列表时发生先前的错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1057"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1064"/>
         <source>Illegal call to private method &apos;%1&apos;</source>
         <translation>非法调用私有方法 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1063"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1070"/>
         <source>Illegal access to private property &apos;%1&apos;</source>
         <translation>非法访问私有属性 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1069"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1076"/>
         <source>Illegal call to protected method &apos;%1&apos;</source>
         <translation>非法调用受保护的方法 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1075"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1082"/>
         <source>Illegal access to protected property &apos;%1&apos;</source>
         <translation>非法访问受保护的属性 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1080"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1087"/>
         <source>Return type can&apos;t be &apos;%1&apos;</source>
         <translation>返回类型不能是 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1085"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1092"/>
         <source>Shared code cannot access non-shared global variable &apos;%1&apos;</source>
         <translation>共享代码无法访问非共享全局变量 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1092"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1099"/>
         <source>Shared code cannot call non-shared function &apos;%1&apos;</source>
         <translation>共享代码无法调用非共享函数 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1098"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1105"/>
         <source>Shared type cannot implement non-shared interface &apos;%1&apos;</source>
         <translation>共享类型无法实现非共享接口 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1104"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1111"/>
         <source>Shared class cannot inherit from non-shared class &apos;%1&apos;</source>
         <translation>共享类不能从非共享类 &quot;%1&quot; 继承</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1110"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1117"/>
         <source>Shared code cannot use non-shared type &apos;%1&apos;</source>
         <translation>共享代码不能使用非共享类型 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1117"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1124"/>
         <source>Shared type &apos;%1&apos; doesn&apos;t match the original declaration in other module</source>
         <translation>共享类型 &quot;%1&quot; 与其他模块中的原始声明不匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1124"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1131"/>
         <source>Template &apos;%1&apos; expects %2 sub type(s)</source>
         <translation>模板 &quot;%1&quot; 需要 %2 个子类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1130"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1137"/>
         <source>Type &apos;%1&apos; cannot be a reference</source>
         <translation>类型 &quot;%1&quot; 不能是引用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1135"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1142"/>
         <source>Type &apos;%1&apos; is not available for this module</source>
         <translation>类型 &quot;%1&quot; 不适用于此模块</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1141"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1148"/>
         <source>Type &apos;%1&apos; is not a template type</source>
         <translation>类型 &quot;%1&quot; 不是模板类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1145"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1152"/>
         <source>Unexpected token &apos;%1&apos;</source>
         <translation>意外标记 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1150"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1157"/>
         <source>Use of uninitialized global variable &apos;%1&apos;.</source>
         <translation>使用未初始化的全局变量 &quot;%1&quot;。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1155"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1162"/>
         <source>Unknown scope &apos;%1&apos;</source>
         <translation>未知作用域 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1159"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1166"/>
         <source>Where &apos;%1&apos; is &apos;%2&apos;</source>
         <translation>其中 &quot;%1&quot; 是 &quot;%2&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1165"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1172"/>
         <source>Failed to initialize global variable &apos;%1&apos;</source>
         <translation>无法初始化全局变量 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1170"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1177"/>
         <source>Exception &apos;%1&apos; in &apos;%2&apos;</source>
         <translation>&quot;%2&quot; 中的异常 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1176"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1183"/>
         <source>Type &apos;%1&apos; is missing behaviours</source>
         <translation>类型 &quot;%1&quot; 缺少的行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1182"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1189"/>
         <source>Can&apos;t pass type &apos;%1&apos; by value unless the application type is informed in the registration</source>
         <translation>除非在注册时告知应用程序类型，否则无法按值传递类型 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1190"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1197"/>
         <source>Can&apos;t return type &apos;%1&apos; by value unless the application type is informed in the registration</source>
         <translation>除非在注册时告知应用程序类型，否则无法按值返回类型 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1198"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1205"/>
         <source>Don&apos;t support passing type &apos;%1&apos; by value to application in native calling convention on this platform</source>
         <translation>不支持在此平台上按照本机调用约定将类型 &quot;%1&quot; 按值传递给应用程序</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1208"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1215"/>
         <source>Don&apos;t support returning type &apos;%1&apos; by value from application in native calling convention on this platform</source>
         <translation>不支持在此平台上按照本机调用约定从应用程序返回类型 &quot;%1&quot; 的值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1218"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1225"/>
         <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it doesn&apos;t know how many references to there are.</source>
         <translation>对象 {%1}。GC 无法销毁类型为 &quot;%2&quot; 的对象，因为它不知道有多少个引用。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1227"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1234"/>
         <source>Object {%1}. GC cannot destroy an object of type &apos;%2&apos; as it can&apos;t see all references. Current ref count is %3.</source>
         <translation>对象 {%1}。GC 无法销毁类型为 &quot;%2&quot; 的对象，因为它无法看到所有引用。当前引用计数为 %3。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1235"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1242"/>
         <source>Object type &apos;%1&apos; doesn&apos;t exist</source>
         <translation>对象类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1241"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1248"/>
         <source>Cannot register. The template type instance &apos;%1&apos; has already been generated.</source>
         <translation>无法注册。模板类型实例 &quot;%1&quot; 已生成。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1248"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1255"/>
         <source>Template type &apos;%1&apos; doesn&apos;t exist</source>
         <translation>模板类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1253"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1260"/>
         <source>Template subtype &apos;%1&apos; doesn&apos;t exist</source>
         <translation>模板子类型 &quot;%1&quot; 不存在</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1259"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1266"/>
         <source>Failed to read subtype of template type &apos;%1&apos;</source>
         <translation>无法读取模板类型 &quot;%1&quot; 的子类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1265"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1272"/>
         <source>Failed in call to function &apos;%1&apos; (Code: %2, %3)</source>
         <translation>调用函数 &quot;%1&quot; 失败（代码：%2，%3）</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1272"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1279"/>
         <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; (Code: %3, %4)</source>
         <translation>使用 &quot;%2&quot; 调用函数 &quot;%1&quot; 失败（代码：%3，%4）</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1281"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1288"/>
         <source>Failed in call to function &apos;%1&apos; with &apos;%2&apos; and &apos;%3&apos; (Code: %4, %5)</source>
         <translation>使用 &quot;%2&quot; 和 &quot;%3&quot; 调用函数 &quot;%1&quot; 失败（代码：%4，%5）</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1289"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1296"/>
         <source>Type &apos;%1&apos; is still used by function &apos;%2&apos;</source>
         <translation>类型 &quot;%1&quot; 仍被函数 &quot;%2&quot; 使用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1295"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1302"/>
         <source>The builtin type in previous message is named &apos;%1&apos;</source>
         <translation>上一条消息中的内置类型名为 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1302"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1309"/>
         <source>The function in previous message is named &apos;%1&apos;. The func type is %2</source>
         <translation>上一条消息中的函数名为 &quot;%1&quot;。函数类型为 %2</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1310"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1317"/>
         <source>The script object of type &apos;%1&apos; is being resurrected illegally during destruction</source>
         <translation>类型为 &quot;%1&quot; 的脚本对象在销毁过程中被非法复活</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1318"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1325"/>
         <source>LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: %1</source>
         <translation>LoadByteCode 失败。字节码无效。从流中读取的字节数：%1</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1326"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1333"/>
         <source>Function &apos;%1&apos; appears to have been compiled without JIT entry points</source>
         <translation>函数 &quot;%1&quot; 似乎已在无 JIT 入口点的情况下进行编译</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1334"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1341"/>
         <source>There is an external reference to an object in module &apos;%1&apos;, preventing it from being deleted</source>
         <translation>存在对模块 &quot;%1&quot; 中对象的外部引用，导致无法删除该对象</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1352"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1359"/>
         <source>Output argument expression is not assignable</source>
         <translation>输出参数表达式不可分配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1353"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1360"/>
         <source>Auto is not allowed here</source>
         <translation>这里禁止使用 auto 关键字</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1354"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1361"/>
         <source>Can&apos;t find unambiguous implicit conversion to make both expressions have the same type</source>
         <translation>无法找到明确的隐式转换来使两个表达式具有相同的类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1356"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1363"/>
         <source>Both conditions must call constructor</source>
         <translation>两个条件都必须调用构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1357"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1364"/>
         <source>Base class doesn&apos;t have default constructor. Make explicit call to base constructor</source>
         <translation>基类没有默认构造函数。明确调用基类构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1359"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1366"/>
         <source>Base class doesn&apos;t have copy constructor or default constructor and assign operator. Make explicit call to base constructor</source>
         <translation>基类没有复制构造函数或默认构造函数和赋值运算符。明确调用基类构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1361"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1368"/>
         <source>Candidates are:</source>
         <translation>候选包括：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1362"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1369"/>
         <source>Can&apos;t call a constructor in loops</source>
         <translation>无法在循环中调用构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1363"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1370"/>
         <source>Can&apos;t call a constructor in switch</source>
         <translation>无法在 switch 中调用构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1364"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1371"/>
         <source>Can&apos;t call a constructor multiple times</source>
         <translation>无法多次调用构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1365"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1372"/>
         <source>Can&apos;t create delegate</source>
         <translation>无法创建委托</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1366"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1373"/>
         <source>Can&apos;t create delegate for types that do not support handles</source>
         <translation>无法为不支持句柄的类型创建委托</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1367"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1374"/>
         <source>Cannot flag function that will not be auto generated as deleted</source>
         <translation>无法将不会自动生成的函数标记为已删除</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1368"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1375"/>
         <source>Conflict with explicit declaration of function and deleted function</source>
         <translation>与函数的显式声明和已删除函数冲突</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1369"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1376"/>
         <source>Can&apos;t implement itself, or another interface that implements this interface</source>
         <translation>无法实现自身，也无法实现此接口的其他接口</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1371"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1378"/>
         <source>Can&apos;t inherit from multiple classes</source>
         <translation>不能从多个类继承</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1372"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1379"/>
         <source>Can&apos;t inherit from itself, or another class that inherits from this class</source>
         <translation>不能从其自身或从该类继承的其他类继承</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1374"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1381"/>
         <source>Can&apos;t pass class method as arg directly. Use a delegate object instead</source>
         <translation>无法直接将类方法作为参数传递。请改用委托对象</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1376"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1383"/>
         <source>Unable to resolve auto type</source>
         <translation>无法解析自动类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1377"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1384"/>
         <source>Can&apos;t return reference to local value.</source>
         <translation>无法返回对本地值的引用。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1378"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1385"/>
         <source>Can&apos;t return value when return type is &apos;void&apos;</source>
         <translation>返回类型为 &quot;void&quot; 时无法返回值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1379"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1386"/>
         <source>Implicit conversion changed sign of value</source>
         <translation>隐式转换改变了值的符号</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1380"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1387"/>
         <source>A class cannot be both abstract and final</source>
         <translation>一个类不能同时是 abstract 和 final</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1381"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1388"/>
         <source>Compound assignments with property accessors on value types are not supported</source>
         <translation>不支持对值类型使用属性访问器的复合赋值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1383"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1390"/>
         <source>Compound assignments with indexed property accessors are not supported</source>
         <translation>不支持使用索引属性访问器的复合赋值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1385"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1392"/>
         <source>Compound assignments with property accessors require both get and set accessors</source>
         <translation>具有属性访问器的复合赋值需要 get 和 set 访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1387"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1394"/>
         <source>Variables cannot be declared in switch cases, except inside statement blocks</source>
         <translation>变量不能在 switch 语句中声明，除非在语句块内</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1389"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1396"/>
         <source>The default case must be the last one</source>
         <translation>default 情况必须是最后一个</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1390"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1397"/>
         <source>The type of the default argument expression doesn&apos;t match the function parameter type</source>
         <translation>默认参数表达式的类型与函数参数类型不匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1392"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1399"/>
         <source>Deleted functions cannot have implementation</source>
         <translation>已删除的函数不能有实现</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1393"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1400"/>
         <source>The destructor must not have any parameters</source>
         <translation>析构函数不能有任何参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1394"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1401"/>
         <source>Value assignment on reference types is not allowed. Did you mean to do a handle assignment?</source>
         <translation>不允许对引用类型进行值分配。是要进行句柄分配吗？</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1396"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1403"/>
         <source>Compound assignment on reference types is not allowed</source>
         <translation>不允许对引用类型进行复合赋值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1397"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1404"/>
         <source>Duplicate named argument</source>
         <translation>重复命名参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1398"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1405"/>
         <source>Duplicate switch case</source>
         <translation>重复的 switch case</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1399"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1406"/>
         <source>Else with empty statement</source>
         <translation>else 中使用空语句</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1400"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1407"/>
         <source>Empty list element is not allowed</source>
         <translation>不允许空列表元素</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1401"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1408"/>
         <source>Empty switch statement</source>
         <translation>空的 switch 语句</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1402"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1409"/>
         <source>Expected constant</source>
         <translation>应为常量</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1403"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1410"/>
         <source>Expected data type</source>
         <translation>应为数据类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1404"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1411"/>
         <source>Expected expression value</source>
         <translation>应为表达值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1405"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1412"/>
         <source>Expected identifier</source>
         <translation>应为标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1406"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1413"/>
         <source>Expected a list enclosed by { } to match pattern</source>
         <translation>应为用 { } 括起来的列表与模式匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1407"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1414"/>
         <source>Expected method or property</source>
         <translation>应为方法或属性</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1408"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1415"/>
         <source>Expected one of: </source>
         <translation>应为为以下之一：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1409"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1416"/>
         <source>Expected operator</source>
         <translation>应为操作符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1410"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1417"/>
         <source>Expected post operator</source>
         <translation>应为右操作符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1411"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1418"/>
         <source>Expected pre operator</source>
         <translation>应为左操作符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1412"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1419"/>
         <source>Expected string</source>
         <translation>应为字符串</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1413"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1420"/>
         <source>Expression doesn&apos;t evaluate to a function</source>
         <translation>表达式无法计算函数值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1414"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1421"/>
         <source>Previous error occurred while attempting to create a temporary copy of object</source>
         <translation>尝试创建对象的临时副本时发生上一个错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1416"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1423"/>
         <source>Float value truncated in implicit conversion to integer</source>
         <translation>浮点值在隐式转换为整数时被截断</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1417"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1424"/>
         <source>Found multiple matching enum values</source>
         <translation>找到多个匹配的枚举值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1418"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1425"/>
         <source>A function with the same name and parameters already exists</source>
         <translation>具有相同名称和参数的函数已存在</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1419"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1426"/>
         <source>Global variables have been disabled by the application</source>
         <translation>全局变量已被应用程序禁用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1420"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1427"/>
         <source>It is not allowed to perform a handle assignment on a non-handle property</source>
         <translation>不允许对非句柄属性执行句柄分配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1422"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1429"/>
         <source>The operand is implicitly converted to handle in order to compare them</source>
         <translation>操作数被隐式转换为句柄，以便进行比较</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1424"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1431"/>
         <source>Handle to handle is not allowed</source>
         <translation>不允许使用句柄</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1425"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1432"/>
         <source>If with empty statement</source>
         <translation>如果带有空语句</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1426"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1433"/>
         <source>Illegal member type</source>
         <translation>非法成员类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1427"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1434"/>
         <source>Illegal operation on this datatype</source>
         <translation>对该数据类型的非法操作</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1428"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1435"/>
         <source>Illegal target type for reference cast</source>
         <translation>非法引用转换的目标类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1429"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1436"/>
         <source>Interfaces can only implement other interfaces</source>
         <translation>接口只能实现其他接口</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1430"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1437"/>
         <source>Invalid &apos;break&apos;</source>
         <translation>无效的 break 关键字</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1431"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1438"/>
         <source>Invalid character literal</source>
         <translation>无效的字符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1432"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1439"/>
         <source>Invalid &apos;continue&apos;</source>
         <translation>无效的 continue 关键字</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1433"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1440"/>
         <source>Invalid escape sequence</source>
         <translation>无效的转义序列</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1434"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1441"/>
         <source>Invalid expression: ambiguous name</source>
         <translation>无效表达式：二义性名称</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1435"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1442"/>
         <source>Invalid expression: stand-alone anonymous function</source>
         <translation>无效表达式：独立匿名函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1436"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1443"/>
         <source>Invalid operation on method</source>
         <translation>方法操作无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1437"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1444"/>
         <source>Invalid reference. Property accessors cannot be used in combined read/write operations</source>
         <translation>引用无效。属性访问器不能用于组合读/写操作。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1439"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1446"/>
         <source>Invalid scope resolution</source>
         <translation>范围解析无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1440"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1447"/>
         <source>Invalid signature for virtual property</source>
         <translation>虚拟属性签名无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1441"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1448"/>
         <source>Invalid type</source>
         <translation>类型无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1442"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1449"/>
         <source>Invalid unicode code point</source>
         <translation>无效的 Unicode 代码点</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1443"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1450"/>
         <source>Invalid unicode sequence in source</source>
         <translation>源代码中的 Unicode 序列无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1444"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1451"/>
         <source>Invalid use of named arguments</source>
         <translation>命名参数的使用无效</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1445"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1452"/>
         <source>The method cannot be named with the class name</source>
         <translation>该方法不能以类名命名</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1446"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1453"/>
         <source>Mixin classes cannot have constructors or destructors</source>
         <translation>Mixin 类不能有构造函数或析构函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1447"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1454"/>
         <source>Mixin class cannot inherit from classes</source>
         <translation>Mixin 类不能从类继承</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1448"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1455"/>
         <source>Mixin classes cannot have child types</source>
         <translation>Mixin 类不能有子类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1449"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1456"/>
         <source>Found more than one matching operator</source>
         <translation>找到多个匹配的运算符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1450"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1457"/>
         <source>Multiline strings are not allowed in this application</source>
         <translation>此应用程序不允许使用多行字符串</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1451"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1458"/>
         <source>Only objects have constructors</source>
         <translation>只有对象才有构造函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1452"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1459"/>
         <source>Must return a value</source>
         <translation>必须返回一个值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1453"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1460"/>
         <source>Detected named argument with old syntax</source>
         <translation>检测到具有旧语法的命名参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1454"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1461"/>
         <source>No appropriate indexing operator found</source>
         <translation>未找到合适的索引运算符</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1455"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1462"/>
         <source>No appropriate opEquals method found</source>
         <translation>未找到合适的 opEquals 方法</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1456"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1463"/>
         <source>The application doesn&apos;t support the default array type.</source>
         <translation>该应用程序不支持默认数组类型。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1457"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1464"/>
         <source>Non-const method call on read-only object reference</source>
         <translation>只读对象引用上的非常量方法调用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1458"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1465"/>
         <source>Non-terminated string literal</source>
         <translation>未终止的字符串</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1459"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1466"/>
         <source>Not all paths return a value</source>
         <translation>并非所有路径都会返回值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1460"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1467"/>
         <source>Not enough values to match pattern</source>
         <translation>没有足够的值来模式匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1461"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1468"/>
         <source>Implicit conversion of value is not exact</source>
         <translation>值的隐式转换并不准确</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1462"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1469"/>
         <source>Expression is not an l-value</source>
         <translation>表达式不是左值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1463"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1470"/>
         <source>Not a valid reference</source>
         <translation>无效引用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1464"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1471"/>
         <source>Not a valid lvalue</source>
         <translation>不是有效的左值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1465"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1472"/>
         <source>Nothing was built in the module</source>
         <translation>模块中没有构建任何内容</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1466"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1473"/>
         <source>Object handle is not supported for this type</source>
         <translation>此类型不支持对象句柄</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1467"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1474"/>
         <source>Only object types that support object handles can use &amp;inout. Use &amp;in or &amp;out instead</source>
         <translation>只有支持对象句柄的对象类型才能使用 &amp;inout。请改用 &amp;in 或 &amp;out</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1469"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1476"/>
         <source>A cast operator has one argument</source>
         <translation>强制类型转换运算符有一个参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1470"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1477"/>
         <source>The code must contain one and only one function</source>
         <translation>代码必须包含一个且只能包含一个函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1471"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1478"/>
         <source>The code must contain one and only one global variable</source>
         <translation>代码必须包含一个且只能有一个全局变量</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1472"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1479"/>
         <source>Both operands must be handles when comparing identity</source>
         <translation>比较时，两个操作数都必须是句柄</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1473"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1480"/>
         <source>The overloaded functions are identical on initial parameters without default arguments</source>
         <translation>重载函数在初始参数上相同，没有默认参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1475"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1482"/>
         <source>Parameter already declared</source>
         <translation>参数已声明</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1476"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1483"/>
         <source>Positional arguments cannot be passed after named arguments</source>
         <translation>位置参数不能在命名参数之后传递</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1477"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1484"/>
         <source>Potentially matching non-const method is hidden on read-only object reference</source>
         <translation>可能匹配的非 const 方法隐藏在只读对象引用中</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1479"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1486"/>
         <source>Property accessor with index must have 1 and only 1 index argument</source>
         <translation>带索引的属性访问器必须有 1 个且只能有 1 个索引参数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1480"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1487"/>
         <source>Property accessors have been disabled by the application</source>
         <translation>应用程序已禁用属性访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1481"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1488"/>
         <source>Property accessor must be implemented</source>
         <translation>必须实现属性访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1482"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1489"/>
         <source>Class properties cannot be declared as const</source>
         <translation>类属性不能声明为 const</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1483"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1490"/>
         <source>The property has no get accessor</source>
         <translation>该属性没有 get 访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1484"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1491"/>
         <source>The property has no set accessor</source>
         <translation>该属性没有设置访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1485"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1492"/>
         <source>Virtual property must have at least one get or set accessor</source>
         <translation>虚拟属性必须至少有一个 get 或 set 访问器</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1486"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1493"/>
         <source>Resulting reference cannot be returned. Returned references must not refer to local variables.</source>
         <translation>无法返回结果引用。返回的引用不得引用局部变量。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1488"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1495"/>
         <source>Resulting reference cannot be returned. There are deferred arguments that may invalidate it.</source>
         <translation>无法返回结果引用。存在可能使其无效的延迟参数。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1490"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1497"/>
         <source>Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.</source>
         <translation>无法返回结果引用。表达式使用的对象在清理过程中可能会使其失效。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1492"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1499"/>
         <source>Reference is read-only</source>
         <translation>引用是只读的</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1493"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1500"/>
         <source>Reference is temporary</source>
         <translation>参考是临时的</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1494"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1501"/>
         <source>Reference types cannot be passed by value in function parameters</source>
         <translation>引用类型不能在函数参数中按值传递</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1495"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1502"/>
         <source>Reference types cannot be returned by value from functions</source>
         <translation>引用类型不能通过函数返回值</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1496"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1503"/>
         <source>The script section is empty</source>
         <translation>脚本节区为空</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1497"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1504"/>
         <source>Signed/Unsigned mismatch</source>
         <translation>有符号/无符号不匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1498"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1505"/>
         <source>Strings are not recognized by the application</source>
         <translation>应用程序无法识别字符串</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1499"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1506"/>
         <source>Case expressions must be literal constants</source>
         <translation>case 表达式必须是文字常量</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1500"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1507"/>
         <source>Switch expressions must be integral numbers</source>
         <translation>switch 表达式必须是整数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1501"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1508"/>
         <source>The function has too many jump labels to handle. Split the function into smaller ones.</source>
         <translation>该函数的跳转标签过多，无法处理。请将函数拆分为较小的函数。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1503"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1510"/>
         <source>Too many values to match pattern</source>
         <translation>与模式匹配的值过多</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1504"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1511"/>
         <source>Unexpected end of file</source>
         <translation>意外的文件结束</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1505"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1512"/>
         <source>Unexpected variable declaration</source>
         <translation>意外的变量声明</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1506"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1513"/>
         <source>Unreachable code</source>
         <translation>无法访问的代码</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1507"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1514"/>
         <source>Virtual property contains unrecognized aspect</source>
         <translation>虚拟属性包含未被认可的部分</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1508"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1515"/>
         <source>Unused script node</source>
         <translation>未使用的脚本节点</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1509"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1516"/>
         <source>Value is too large for data type</source>
         <translation>对于数据类型来说，值太大</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1510"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1517"/>
         <source>Void cannot be an operand in expressions</source>
         <translation>void 不能作为表达式中的操作数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1511"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1518"/>
         <source>Warnings are treated as errors by the application</source>
         <translation>应用程序将警告视为错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1512"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1519"/>
         <source>While parsing argument list</source>
         <translation>解析参数列表时</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1513"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1520"/>
         <source>While parsing expression</source>
         <translation>解析表达式时</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1514"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1521"/>
         <source>While parsing initialization list</source>
         <translation>解析初始化列表时</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1515"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1522"/>
         <source>While parsing namespace</source>
         <translation>解析命名空间时</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1516"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1523"/>
         <source>While parsing statement block</source>
         <translation>解析语句块时</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1517"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1524"/>
         <source>Previous error occurred while including mixin</source>
         <translation>包含 mixin 时发生先前错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1518"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1525"/>
         <source>Autohandles cannot be used with types that have been registered with NOCOUNT</source>
         <translation>自动句柄不能与已使用 NOCOUNT 注册的类型一起使用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1520"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1527"/>
         <source>First parameter to template factory must be a reference. This will be used to pass the object type of the template</source>
         <translation>模板工厂的第一个参数必须是引用。这将用于传递模板的对象类型</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1522"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1529"/>
         <source>Invalid configuration. Verify the registered application interface.</source>
         <translation>配置无效。请验证已注册的应用程序接口。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1523"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1530"/>
         <source>A value type must be registered with a non-zero size</source>
         <translation>值类型必须注册为非零大小</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1524"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1531"/>
         <source>The behaviour is not compatible with the type</source>
         <translation>行为与类型不兼容</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1525"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1532"/>
         <source>A garbage collected ref type must have the addref, release, and all gc behaviours</source>
         <translation>垃圾收集引用类型必须具有 addref、release 和所有 gc 行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1527"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1534"/>
         <source>A garbage collected value type must have the gc enum references behaviour</source>
         <translation>垃圾收集值类型必须具有 gc 枚举引用行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1529"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1536"/>
         <source>A scoped reference type must have the release behaviour</source>
         <translation>作用域引用类型必须具有释放行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1530"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1537"/>
         <source>A reference type must have the addref and release behaviours</source>
         <translation>引用类型必须具有 addref 和 release 行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1531"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1538"/>
         <source>A non-pod value type must have at least one constructor and the destructor behaviours</source>
         <translation>非 pod 值类型必须至少有一个构造函数和析构函数行为</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1533"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1540"/>
         <source>Template list factory expects two reference parameters. The last is the pointer to the initialization buffer</source>
         <translation>模板列表工厂需要两个引用参数。最后一个是指向初始化缓冲区的指针</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1535"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1542"/>
         <source>List factory expects only one reference parameter. The pointer to the initialization buffer will be passed in this parameter</source>
         <translation>列表工厂仅需要一个引用参数。指向初始化缓冲区的指针将在此参数中传递</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1537"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1544"/>
         <source>AddScriptObjectToGC called with null pointer</source>
         <translation>使用空指针调用 AddScriptObjectToGC</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1538"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1545"/>
         <source>An exception occurred in a nested call</source>
         <translation>嵌套调用中发生异常</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1539"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1546"/>
         <source>Uh oh! The engine&apos;s reference count is increasing while it is being destroyed. Make sure references needed for clean-up are immediately released</source>
         <translation>哎呀！引擎的引用计数在被销毁时不断增加。确保立即释放清理所需的引用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1542"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1549"/>
         <source>The module is still in use and cannot be rebuilt. Discard it and request another module</source>
         <translation>该模块仍在使用中，无法重建。丢弃它并请求另一个模块</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1544"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1551"/>
         <source>Property</source>
         <translation>属性</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1545"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1552"/>
         <source>System function</source>
         <translation>系统函数</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1546"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1553"/>
         <source>Variable declaration</source>
         <translation>变量声明</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1547"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1554"/>
         <source>Stack overflow</source>
         <translation>栈溢出</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1548"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1555"/>
         <source>Null pointer access</source>
         <translation>空指针访问</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1549"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1556"/>
         <source>Divide by zero</source>
         <translation>除以零</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1550"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1557"/>
         <source>Overflow in integer division</source>
         <translation>整数除法溢出</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1551"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1558"/>
         <source>Overflow in exponent operation</source>
         <translation>指数运算溢出</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1552"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1559"/>
         <source>Unrecognized byte code</source>
         <translation>无法识别的字节码</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1553"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1560"/>
         <source>Invalid calling convention</source>
         <translation>无效调用约定</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1554"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1561"/>
         <source>Unbound function called</source>
         <translation>未绑定的函数被调用</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1555"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1562"/>
         <source>Out of range</source>
         <translation>越界</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1556"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1563"/>
         <source>Caught an exception from the application</source>
         <translation>捕获应用程序异常</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1557"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1564"/>
         <source>Mismatching types in value assignment</source>
         <translation>值分配中的类型不匹配</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1558"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1565"/>
         <source>Too many nested calls</source>
         <translation>嵌套调用过多</translation>
     </message>

@@ -18,26 +18,30 @@ int main(int argc, char *argv[]) {
 
     QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 
-    AppManager a(argc, argv);
-    auto w = a.mainWindow();
+    try {
+        AppManager a(argc, argv);
+        auto w = a.mainWindow();
 
-    auto &set = SettingManager::instance();
-    switch (set.defaultWinState()) {
-    case Qt::WindowNoState:
-        w->show();
-        Utilities::moveToCenter(w);
-        break;
-    case Qt::WindowMinimized:
-        w->showMinimized();
-        break;
-    case Qt::WindowActive:
-    case Qt::WindowMaximized:
-        w->showMaximized();
-        break;
-    case Qt::WindowFullScreen:
-        w->showFullScreen();
-        break;
+        auto &set = SettingManager::instance();
+        switch (set.defaultWinState()) {
+        case Qt::WindowNoState:
+            w->show();
+            Utilities::moveToCenter(w);
+            break;
+        case Qt::WindowMinimized:
+            w->showMinimized();
+            break;
+        case Qt::WindowActive:
+        case Qt::WindowMaximized:
+            w->showMaximized();
+            break;
+        case Qt::WindowFullScreen:
+            w->showFullScreen();
+            break;
+        }
+
+        return a.exec();
+    } catch (int errCode) {
+        return errCode;
     }
-
-    return a.exec();
 }

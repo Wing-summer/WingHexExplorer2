@@ -422,6 +422,12 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
+    if (isDriver()) {
+        if (!fileName.isEmpty()) {
+            return ErrFile::IsDirver;
+        }
+    }
+
     QFile file(fileName);
 
     switch (m_docType) {

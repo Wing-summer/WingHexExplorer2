@@ -101,6 +101,8 @@ void ScriptingConsole::pushInputCmd(const QString &cmd) {
     _cmdQueue.append(cmd);
 }
 
+void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
+
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     if (_waitforRead) {
         _waitforRead = false;

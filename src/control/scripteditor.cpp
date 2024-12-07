@@ -41,6 +41,7 @@ ScriptEditor::ScriptEditor(QWidget *parent)
             &ScriptEditor::onToggleMark);
 
     auto editor = m_editor->editor();
+    editor->setFlag(QEditor::AutoCloseChars, true);
     connect(editor, &QEditor::titleChanged, this, &ScriptEditor::processTitle);
     connect(editor, &QEditor::contentModified, this,
             &ScriptEditor::processTitle);

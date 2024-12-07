@@ -35,6 +35,9 @@ public slots:
     int exec();
 
 private:
+    QString readContent(const QString &path);
+
+private:
     Ui::AboutSoftwareDialog *ui;
 
     FramelessDialogBase *_dialog;

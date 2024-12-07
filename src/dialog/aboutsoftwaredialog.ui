@@ -113,7 +113,11 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QTextBrowser" name="tbAbout"/>
+        <widget class="QTextBrowser" name="tbAbout">
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -123,7 +127,11 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
-        <widget class="QTextBrowser" name="tbBaseObj"/>
+        <widget class="QTextBrowser" name="tbBaseObj">
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -153,17 +161,11 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_12">
        <item>
-        <widget class="QTextBrowser" name="tbDev"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabCredit">
-      <attribute name="title">
-       <string>Credit</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_13">
-       <item>
-        <widget class="QTextBrowser" name="tbCredit"/>
+        <widget class="QTextBrowser" name="tbDev">
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -173,7 +175,11 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_14">
        <item>
-        <widget class="QTextBrowser" name="tbTr"/>
+        <widget class="QTextBrowser" name="tbTr">
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

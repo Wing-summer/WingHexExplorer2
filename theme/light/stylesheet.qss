@@ -2964,7 +2964,31 @@ QHexView
 
 Toast
 {
-    qproperty-textcolor: white;
-    qproperty-backcolor: black;
+    qproperty-textcolor: black;
+    qproperty-backcolor: white;
     qproperty-fontPointSize: 18;
 }
+
+/* style sheet for ScriptEditor */
+QEditor
+{
+    color: #31363b;
+    background-color: #eff0f1;
+    selection-background-color: #3daee9;
+}
+
+QCallTip
+{
+    qproperty-borderColor: #eff0f1;
+    qproperty-background: #eff0f1;
+    qproperty-foreground: #31363b;
+    qproperty-opacity: 0.8;
+}
+
+QConsoleWidget
+{
+    background-color: #1d2023;
+    color: #eff0f1;
+    selection-background-color: #3daee9;
+}
+

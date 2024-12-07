@@ -3150,7 +3150,9 @@ void QDocumentCursorHandle::setColumnMemory(bool y) {
         clearFlag(ColumnMemory);
 }
 
-bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
+bool QDocumentCursorHandle::movePosition(int count,
+                                         QDocumentCursor::MoveOperation op,
+                                         QDocumentCursor::MoveMode m) {
     if (!m_doc)
         return false;
 
@@ -3158,7 +3160,6 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
 
     int &line = m_begLine;
     int &offset = m_begOffset;
-    static QRegularExpression wordStart("\\b\\w+$"), wordEnd("^\\w+\\b");
 
     if (!(m & QDocumentCursor::KeepAnchor)) {
         m_endLine = -1;
@@ -3574,14 +3575,31 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
     }
 
     case QDocumentCursor::StartOfWord: {
-        int x = m_doc->line(line).text().left(offset).indexOf(wordStart);
-
-        if (x != -1) {
-            offset = x;
+        auto txt = m_doc->line(line).text().left(offset);
+        auto len = txt.length();
+        qsizetype index = 0;
+        if (txt.back().isSpace()) {
+            for (qsizetype i = len - 1; i >= 0; --i) {
+                if (!txt.at(i).isSpace()) {
+                    index = i + 1;
+                    break;
+                }
+            }
         } else {
-            qDebug("failed to find SOW");
-            return false;
+            for (qsizetype i = len - 1; i >= 0; --i) {
+                if (!txt.at(i).isLetterOrNumber()) {
+                    index = i + 1;
+                    break;
+                }
+            }
         }
+
+        // if (x >= 0) {
+        offset = index;
+        // } else {
+        //     qDebug("failed to find SOW");
+        //     return false;
+        // }
 
         refreshColumnMemory();
 
@@ -3589,19 +3607,34 @@ bool QDocumentCursorHandle::movePosition(int count, int op, int m) {
     }
 
     case QDocumentCursor::EndOfWord: {
-        auto match = wordEnd.match(m_doc->line(line).text());
-
-        auto x = match.capturedEnd();
-
-        // int x = wordEnd.indexIn(m_doc->line(line).text(), offset,
-        //                         QRegExp::CaretAtOffset);
-
-        if (x == offset) {
-            offset += wordEnd.captureCount();
+        auto txt = m_doc->line(line).text().mid(offset);
+        qsizetype index = 0;
+        auto len = txt.length();
+        if (txt.front().isSpace()) {
+            for (qsizetype i = 0; i < len; ++i) {
+                if (!txt.at(i).isSpace()) {
+                    index = i;
+                    break;
+                }
+            }
         } else {
-            qDebug("failed to find EOW");
-            return false;
+            for (qsizetype i = 0; i < len; ++i) {
+                if (!txt.at(i).isLetterOrNumber()) {
+                    index = i;
+                    break;
+                }
+            }
         }
+
+        // static QRegularExpression regex("\\b\\w+");
+
+        // auto match = regex.match(txt, offset);
+        // if (match.hasMatch()) {
+        offset += index;
+        // } else {
+        //     qDebug("failed to find EOW");
+        //     return false;
+        // }
 
         refreshColumnMemory();
 
@@ -3915,7 +3948,7 @@ void QDocumentCursorHandle::replaceSelectedText(const QString &text) {
     int begline, begcol;
     beginBoundary(begline, begcol);
 
-    bool atStart = (begline == m_begLine && begcol == m_begOffset);
+    // bool atStart = (begline == m_begLine && begcol == m_begOffset);
 
     if (text.isEmpty()) {
         removeSelectedText();

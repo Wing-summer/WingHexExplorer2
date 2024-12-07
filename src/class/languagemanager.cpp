@@ -134,7 +134,7 @@ bool LanguageManager::unpackTr(const QString &filename) {
 
     QZipReader reader(filename);
 
-    if (reader.count() != 5) {
+    if (reader.count() != 3) {
         return false;
     }
 
@@ -145,10 +145,6 @@ bool LanguageManager::unpackTr(const QString &filename) {
                 _data.trFiles = reader.fileData(file.filePath);
             } else if (file.filePath == QStringLiteral("about.md")) {
                 _data.about = reader.fileData(file.filePath);
-            } else if (file.filePath == QStringLiteral("components.md")) {
-                _data.component = reader.fileData(file.filePath);
-            } else if (file.filePath == QStringLiteral("credits.md")) {
-                _data.credit = reader.fileData(file.filePath);
             } else if (file.filePath == QStringLiteral("devs.md")) {
                 _data.dev = reader.fileData(file.filePath);
             }
@@ -157,7 +153,6 @@ bool LanguageManager::unpackTr(const QString &filename) {
     reader.close();
 
     return !_data.trFiles.isEmpty() && !_data.about.isEmpty() &&
-           !_data.component.isEmpty() && !_data.credit.isEmpty() &&
            !_data.dev.isEmpty();
 }
 
@@ -178,7 +173,8 @@ void LanguageManager::abortAndExit() {
                            "Please try reinstalling the software to "
                            "solve the problem."));
     }
-    qApp->exit(-1);
+
+    throw(-1);
 }
 
 QLocale LanguageManager::defaultLocale() const { return _defaultLocale; }

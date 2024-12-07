@@ -53,6 +53,7 @@
 #include <QDesktopServices>
 #include <QGridLayout>
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QPicture>
 #include <QPushButton>
@@ -173,6 +174,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         langins.applyLanguageSerivce(m_scriptConsole);
 
         m_scriptConsole->initOutput();
+        m_scriptConsole->machine()->setInsteadFoundDisabled(true);
 
         if (splash)
             splash->setInfoText(tr("SetupScriptEditor"));
@@ -228,6 +230,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     // update status
     updateEditModeEnabled();
+
+    qApp->installEventFilter(this);
 
     this->setUpdatesEnabled(true);
 
@@ -805,7 +809,6 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
                                  &MainWindow::on_save, QKeySequence::Save);
-        m_driverStateWidgets << a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
@@ -817,12 +820,10 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         a = addPannelAction(pannel, QStringLiteral("export"), tr("Export"),
                             &MainWindow::on_exportfile,
                             shortcuts.keySequence(QKeySequences::Key::EXPORT));
-        m_driverStateWidgets << a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("savesel"), tr("SaveSel"),
                             &MainWindow::on_savesel);
-        m_driverStateWidgets << a;
         m_editStateWidgets << a;
     }
 
@@ -2534,14 +2535,14 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     if (old != nullptr) {
         auto hexeditor = old->hexEditor();
-        hexeditor->disconnect(SLOT(cursorLocationChanged()));
-        hexeditor->disconnect(SLOT(canUndoChanged(bool)));
-        hexeditor->disconnect(SLOT(canRedoChanged(bool)));
-        hexeditor->disconnect(SLOT(documentSaved(bool)));
-        hexeditor->disconnect(SLOT(documentKeepSize(bool)));
-        hexeditor->disconnect(SLOT(documentLockedFile(bool)));
-        hexeditor->disconnect(SLOT(copyLimitRaised()));
-        hexeditor->disconnect(SLOT(scaleRateChanged()));
+        hexeditor->disconnect(SIGNAL(cursorLocationChanged()));
+        hexeditor->disconnect(SIGNAL(canUndoChanged(bool)));
+        hexeditor->disconnect(SIGNAL(canRedoChanged(bool)));
+        hexeditor->disconnect(SIGNAL(documentSaved(bool)));
+        hexeditor->disconnect(SIGNAL(documentKeepSize(bool)));
+        hexeditor->disconnect(SIGNAL(documentLockedFile(bool)));
+        hexeditor->disconnect(SIGNAL(copyLimitRaised()));
+        hexeditor->disconnect(SIGNAL(scaleRateChanged()));
         hexeditor->document()->disconnect();
     }
 
@@ -3001,4 +3002,43 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     LangService::instance().saveSnippets();
 
     FramelessMainWindow::closeEvent(event);
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    Q_UNUSED(watched);
+    if (isVisible()) {
+        if (event->type() == QEvent::Shortcut) {
+            auto e = reinterpret_cast<QShortcutEvent *>(event);
+            if (m_scriptConsole) {
+                if (m_scriptConsole->hasFocus()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                    auto k = e->key()[0];
+                    QKeyEvent ev(QEvent::KeyPress, k.key(),
+                                 k.keyboardModifiers());
+                    m_scriptConsole->processKeyEvent(&ev);
+#else
+                    auto key = e->key()[0];
+                    Qt::KeyboardModifiers modifiers = Qt::NoModifier;
+
+                    // Determine modifiers (simplified logic)
+                    if (key & Qt::SHIFT)
+                        modifiers |= Qt::ShiftModifier;
+                    if (key & Qt::CTRL)
+                        modifiers |= Qt::ControlModifier;
+                    if (key & Qt::ALT)
+                        modifiers |= Qt::AltModifier;
+                    if (key & Qt::META)
+                        modifiers |= Qt::MetaModifier;
+
+                    // Filter out the modifiers from the key itself
+                    key &= ~Qt::KeyboardModifierMask;
+                    QKeyEvent ev(QEvent::KeyPress, key, modifiers);
+                    m_scriptConsole->processKeyEvent(&ev);
+#endif
+                    return true;
+                }
+            }
+        }
+    }
+    return FramelessMainWindow::eventFilter(watched, event);
 }

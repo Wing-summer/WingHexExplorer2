@@ -2368,11 +2368,6 @@ void QEditor::createSimpleBasicContextMenu(bool shortcut, bool extTool) {
         \internal
 */
 void QEditor::keyPressEvent(QKeyEvent *e) {
-    if (flag(ReadOnly)) {
-        e->ignore();
-        return;
-    }
-
     for (auto &b : m_bindings)
         if (b->keyPressEvent(e, this))
             return;
@@ -2438,9 +2433,17 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
             copy();
             break;
         } else if (e->matches(QKeySequence::Paste)) {
+            if (flag(ReadOnly)) {
+                e->ignore();
+                return;
+            }
             paste();
             break;
         } else if (e->matches(QKeySequence::Cut)) {
+            if (flag(ReadOnly)) {
+                e->ignore();
+                return;
+            }
             cut();
             break;
         } else if (e->matches(QKeySequence::Print)) {
@@ -2897,6 +2900,7 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
 
             repaintCursor();
 
+            viewport()->repaint();
         } else {
             // qDebug("invalid cursor");
         }
@@ -3615,10 +3619,11 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
         if (flag(FoldedCursor))
             return false;
 
-        if (hasSelection)
+        if (hasSelection) {
             c.removeSelectedText();
-        else
+        } else {
             c.deletePreviousChar();
+        }
 
         break;
 
@@ -3688,9 +3693,46 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
             text.replace("\t", QString(m_doc->tabStop(), ' '));
         }
 
-        c.beginEditBlock();
-        insertText(c, text);
-        c.endEditBlock();
+        if (flag(AutoCloseChars)) {
+            // auto close: {} [] () "" ''
+            if (isAutoCloseChar(text)) {
+                QString content =
+                    text + m_cursor.selectedText() + getPairedCloseChar(text);
+                c.replaceSelectedText(content);
+                c.clearSelection();
+            } else {
+                if (text == QStringLiteral("\"") ||
+                    text == QStringLiteral("'")) {
+                    if (c.selectionStart().lineNumber() ==
+                        c.selectionEnd().lineNumber()) {
+                        if (c.hasSelection()) {
+                            QString content =
+                                text + m_cursor.selectedText() + text;
+                            c.replaceSelectedText(content);
+                            c.clearSelection();
+                        } else {
+                            auto ch = c.nextChar();
+                            if (ch == QChar('"') || ch == QChar('\'')) {
+                                c.movePosition(1);
+                            } else {
+                                c.beginEditBlock();
+                                insertText(c, text + text);
+                                c.endEditBlock();
+                                c.movePosition(-1);
+                            }
+                        }
+                    }
+                } else {
+                    c.beginEditBlock();
+                    insertText(c, text);
+                    c.endEditBlock();
+                }
+            }
+        } else {
+            c.beginEditBlock();
+            insertText(c, text);
+            c.endEditBlock();
+        }
 
         break;
     }
@@ -3767,9 +3809,9 @@ void QEditor::insertText(QDocumentCursor &c, const QString &text,
     if ((lines.count() == 1) || !flag(AdjustIndent)) {
         preInsert(c, lines.first());
 
-        if (flag(ReplaceTabs)) {
-            // TODO : replace tabs by spaces properly
-        }
+        // if (flag(ReplaceTabs)) {
+        //     // replace tabs by spaces properly
+        // }
 
         c.insertText(text, false, sfmtID);
     } else {
@@ -4256,6 +4298,25 @@ bool QEditor::unindent(const QDocumentCursor &cur) {
     c.removeSelectedText();
 
     return true;
+}
+
+bool QEditor::isAutoCloseChar(const QString &ch) {
+    // auto close: {} [] ()
+    return ch == QStringLiteral("{") || ch == QStringLiteral("[") ||
+           ch == QStringLiteral("(");
+}
+
+QString QEditor::getPairedCloseChar(const QString &ch) {
+    // auto close: {} [] ()
+    if (ch == QStringLiteral("{")) {
+        return QStringLiteral("}");
+    } else if (ch == QStringLiteral("[")) {
+        return QStringLiteral("]");
+    } else if (ch == QStringLiteral("(")) {
+        return QStringLiteral(")");
+    } else {
+        return {};
+    }
 }
 
 /*!

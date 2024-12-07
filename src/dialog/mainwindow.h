@@ -248,7 +248,9 @@ private:
     inline ads::CDockAreaWidget *editorViewArea() const;
 
 protected:
-    void closeEvent(QCloseEvent *event) override;
+    virtual void closeEvent(QCloseEvent *event) override;
+
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     template <typename Func>
@@ -544,5 +546,8 @@ private:
     bool m_isOnClosing = false;
 
     ShowTextDialog *_showtxt = nullptr;
+
+    // Guard against recursion
+    bool _isHandlingEvent = false;
 };
 #endif // MAINWINDOW_H

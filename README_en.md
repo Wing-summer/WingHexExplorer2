@@ -31,7 +31,6 @@
 </p>
 
 <p align="center">
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
@@ -100,17 +99,11 @@ The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of 
 
 ## WingHexExplorer2
 
-This software is a hexadecimal editor written in QT and developed in C++, providing a powerful and free hexadecimal editor. Currently, only 010 Editor has powerful hexadecimal editing functions, but it is commercial. Those who follow my development activities should know that I developed `WingSummer.WingCloudHexExplorer` developed in C# on Windows, with the purpose of facilitating professionals to modify and analyze PE files, and can be used as an important auxiliary tool for learning PE structure. In addition, I have developed `WingHexExplorer` adapted only for the Deepin platform, and its functions are basically complete. Except for the problem with the large file search function, the others can be used stably. I decided not to maintain `WingHexExplorer` anymore, and I will port and reset this project.
-
-Why developping this project? What is the difference between `WingHexExplorer2` and the original version? First of all, the interface is modified by myself based on the open source project, and I re-implemented my own interface to ensure the UI consistency across platforms. Although the functions are still a little problem compared to the original system, it is just a flaw in the ointment.
-
-The ultimate goal of this project is to create a powerful, lightweight, and cross-platform (only for PC) hex editor. Of course, I cannot achieve this goal by myself, which is one of the purposes of my open source. I only maintain the operating system platform I use, and only respond to the bugs that I can fix on the platform I use in my free time.
-
-If you find that the functions of this project do not meet your needs. Please check if there is any description in `TODO.txt`. If not, you can raise it through `issue`. I will evaluate whether the requirements raised are common. If it is a particularly private requirement, I will not implement it. If you really want to join, please implement the plug-in yourself, and you are also welcome to open source. Don't be fanciful when making suggestions. Please note that this software only provides the most basic hexadecimal editing and browsing services, such as templates and scripts in 010 Editor, which still need everyone to work together through plugins to achieve! I hope that everyone will not only raise requirements, but also put forward constructive suggestions and solutions to jointly maintain the open source community. Specific details will be introduced later.
+This software is a hexadecimal editor written in QT and developed in C++, providing a powerful and free hexadecimal editor. The ultimate goal of this project is to create a powerful, lightweight, and cross-platform (only for PC) hex editor. Of course, I cannot achieve this goal by myself, which is one of the purposes of my open source. I only maintain the operating system platform I use, and only respond to the bugs that I can fix on the platform I use in my free time. More details will be seen in my [CNBlog](https://www.cnblogs.com/wingsummer/p/18286419) .
 
 ### License
 
-This software complies with the `AGPL-3.0` agreement. Please do not use it for purposes other than this agreement. My original intention was to make the Linux ecosystem more complete and to promote the localization of the operating system as soon as possible. Cross-platform software is just a by-product. I don't want the "vampires" to take the profits for themselves and do the dirty work for open source. It's all so natural. This is how open source is corrupted. I don't want to be involved in a lot of energy because of copyright issues.
+This software complies with the `AGPL-3.0` agreement. Please do not use it for purposes other than this agreement. Selfishness knows no bound. I don't want to be involved in a lot of energy because of copyright issues.
 
 If you want to use the code of this software for closed-source commercial code and want to lift the restriction of the `GPL` series that it must be open source, please consult me ​​in person to discuss commercial licensing matters.
 

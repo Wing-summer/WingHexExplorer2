@@ -142,7 +142,7 @@ def main():
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 
     material_files = ["LICENSE", "authorband.svg",
-                      "licenseband.svg", "screenshot.png", "README.md", "TODO.txt"]
+                      "licenseband.svg", "screenshot.png", "README.md"]
 
     for f in material_files:
         shutil.copyfile(os.path.join(projectbase, f),

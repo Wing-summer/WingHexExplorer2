@@ -26,25 +26,16 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->setupUi(this);
     auto data = LanguageManager::instance().data();
     ui->tbAbout->setMarkdown(data.about);
-    ui->tbBaseObj->setMarkdown(data.component);
-    ui->tbCredit->setMarkdown(data.credit);
+    ui->tbBaseObj->setMarkdown(readContent(
+        QStringLiteral(":/com.wingsummer.winghex/src/components.md")));
+    ui->tbTr->setMarkdown(readContent(
+        QStringLiteral(":/com.wingsummer.winghex/src/translist.md")));
     ui->tbDev->setMarkdown(data.dev);
     ui->lblVersion->setText(qApp->applicationVersion());
     ui->lblBuildDate->setText(QStringLiteral(__DATE__));
 
-    QFile license(QStringLiteral(":/com.wingsummer.winghex/LICENSE"));
-    auto ret = license.open(QFile::ReadOnly);
-    Q_ASSERT(ret);
-    Q_UNUSED(ret);
-    auto ltxt = license.readAll();
-    ui->tbLicense->setText(ltxt);
-
-    QFile trans(QStringLiteral(":/com.wingsummer.winghex/src/translist.md"));
-    ret = trans.open(QFile::ReadOnly);
-    Q_ASSERT(ret);
-    Q_UNUSED(ret);
-    auto ttxt = trans.readAll();
-    ui->tbTr->setMarkdown(ttxt);
+    ui->tbLicense->setText(
+        readContent(QStringLiteral(":/com.wingsummer.winghex/LICENSE")));
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
@@ -60,3 +51,11 @@ AboutSoftwareDialog::~AboutSoftwareDialog() {
 }
 
 int AboutSoftwareDialog::exec() { return _dialog->exec(); }
+
+QString AboutSoftwareDialog::readContent(const QString &path) {
+    QFile file(path);
+    auto ret = file.open(QFile::ReadOnly);
+    Q_ASSERT(ret);
+    Q_UNUSED(ret);
+    return file.readAll();
+}

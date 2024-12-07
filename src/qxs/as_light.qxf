@@ -130,6 +130,15 @@
         <waveUnderline>false</waveUnderline>
         <foreground>#ff0000</foreground>
     </format>
+    <format id="string" >
+        <bold>false</bold>
+        <italic>false</italic>
+        <overline>false</overline>
+        <underline>false</underline>
+        <strikeout>false</strikeout>
+        <waveUnderline>false</waveUnderline>
+        <foreground>#bd937a</foreground>
+    </format>
     <format id="escapeseq" >
         <bold>false</bold>
         <italic>false</italic>
