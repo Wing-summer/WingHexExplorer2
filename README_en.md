@@ -154,13 +154,7 @@ Without standing on the shoulders of giants, it will not have powerful and stabl
 
 <p align="center">
 
-<img alt="Alipay" src="支付宝捐助.jpg" height=50% width=50%>
-<p align="center">Thanks for your support</p>
-
-</p>
-
-<p align="center">
-<img alt="Wechat" src="微信捐助.png" height=50% width=50%>
+<img alt="Donate" src="Donate.jpg" />
 <p align="center">Thanks for your support</p>
 
 </p>

@@ -11,3 +11,5 @@
 * [QConsoleWidget](https://github.com/gapost/qconsolewidget) (MIT, **FORK** -> AGPL-3.0)
 * [QColorPicker](https://github.com/arsdever/qcolorpicker) (MIT)
 * [QtJsonModel](https://github.com/dridk/QJsonmodel) (MIT)
+* [nlohmann/json](https://github.com/nlohmann/json) (MIT)
+* [Qt](https://www.qt.io/) (LGPL)
