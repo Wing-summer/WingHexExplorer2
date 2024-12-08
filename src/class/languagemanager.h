@@ -22,6 +22,7 @@
 #include <QLocale>
 #include <QObject>
 #include <QStringList>
+#include <QTranslator>
 
 class LanguageManager : public QObject {
     Q_OBJECT
@@ -41,6 +42,8 @@ public:
     LanguageData data() const;
 
     QLocale defaultLocale() const;
+
+    QTranslator *try2LoadPluginLang(const QString &plgID);
 
 private:
     LanguageManager();

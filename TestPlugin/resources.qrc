@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images/TestPlugin">
+        <file>images/btn.png</file>
+        <file>images/test.png</file>
+    </qresource>
+</RCC>

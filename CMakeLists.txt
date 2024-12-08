@@ -17,6 +17,11 @@ find_package(
     Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network Concurrent
                                               PrintSupport Xml LinguistTools)
 
+option(BUILD_TEST_PLUGIN OFF)
+if(BUILD_TEST_PLUGIN)
+    add_subdirectory(TestPlugin)
+endif()
+
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
                 -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
@@ -418,6 +423,7 @@ set(PROJECT_SOURCES
     main.cpp
     src/utilities.h
     src/dbghelper.h
+    src/define.h
     ${QCONSOLEWIDGET_SRC}
     ${QPATHEDIT_SRC}
     ${WIDGET_FRAME_SRC}

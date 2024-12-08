@@ -45,7 +45,7 @@
 
 namespace WingHex {
 
-Q_DECL_UNUSED constexpr auto SDKVERSION = 13;
+Q_DECL_UNUSED constexpr auto SDKVERSION = 14;
 
 Q_DECL_UNUSED static QString PLUGINDIR() {
     return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
@@ -147,8 +147,8 @@ signals:
     bool isLocked();
     qsizetype documentLines();
     qsizetype documentBytes();
-    HexPosition currentPos();
-    HexPosition selectionPos();
+    WingHex::HexPosition currentPos();
+    WingHex::HexPosition selectionPos();
     qsizetype currentRow();
     qsizetype currentColumn();
     qsizetype currentOffset();
@@ -191,23 +191,19 @@ signals:
 
     // metadata
     bool lineHasMetadata(qsizetype line);
-    QList<HexMetadataItem> getMetadatas(qsizetype offset);
+    QList<WingHex::HexMetadataItem> getMetadatas(qsizetype offset);
 
     // bookmark
     bool lineHasBookMark(qsizetype line);
     QList<qsizetype> getsBookmarkPos(qsizetype line);
-    BookMark bookMark(qsizetype pos);
+    WingHex::BookMark bookMark(qsizetype pos);
     QString bookMarkComment(qsizetype pos);
-    QList<BookMark> getBookMarks();
+    QList<WingHex::BookMark> getBookMarks();
     bool existBookMark(qsizetype pos);
 
     // extension
     QStringList getSupportedEncodings();
     QString currentEncoding();
-
-    // not available for AngelScript
-    // only for plugin UI extenstion
-    QDialog *createDialog(QWidget *content);
 };
 
 class Controller : public QObject {
@@ -283,21 +279,22 @@ signals:
     bool setMetaCommentVisible(bool b);
 
     // mainwindow
-    ErrFile newFile();
-    ErrFile openFile(const QString &filename);
-    ErrFile openRegionFile(const QString &filename, qsizetype start = 0,
-                           qsizetype length = 1024);
-    ErrFile openDriver(const QString &driver);
-    ErrFile closeFile(int handle, bool force = false);
-    ErrFile saveFile(int handle, bool ignoreMd5 = false);
-    ErrFile exportFile(int handle, const QString &savename,
-                       bool ignoreMd5 = false);
+    WingHex::ErrFile newFile();
+    WingHex::ErrFile openFile(const QString &filename);
+    WingHex::ErrFile openRegionFile(const QString &filename,
+                                    qsizetype start = 0,
+                                    qsizetype length = 1024);
+    WingHex::ErrFile openDriver(const QString &driver);
+    WingHex::ErrFile closeFile(int handle, bool force = false);
+    WingHex::ErrFile saveFile(int handle, bool ignoreMd5 = false);
+    WingHex::ErrFile exportFile(int handle, const QString &savename,
+                                bool ignoreMd5 = false);
     bool exportFileGUI();
-    ErrFile saveAsFile(int handle, const QString &savename,
-                       bool ignoreMd5 = false);
+    WingHex::ErrFile saveAsFile(int handle, const QString &savename,
+                                bool ignoreMd5 = false);
     bool saveAsFileGUI();
-    ErrFile closeCurrentFile(bool force = false);
-    ErrFile saveCurrentFile(bool ignoreMd5 = false);
+    WingHex::ErrFile closeCurrentFile(bool force = false);
+    WingHex::ErrFile saveCurrentFile(bool ignoreMd5 = false);
     bool openFileGUI();
     bool openRegionFileGUI();
     bool openDriverGUI();
@@ -313,7 +310,7 @@ signals:
     bool clearBookMark();
 
     // workspace
-    ErrFile openWorkSpace(const QString &filename);
+    WingHex::ErrFile openWorkSpace(const QString &filename);
     bool setCurrentEncoding(const QString &encoding);
 };
 
@@ -426,14 +423,6 @@ signals:
 
 } // namespace WingPlugin
 
-struct WingPluginInfo {
-    QString pluginName;
-    QString pluginAuthor;
-    uint pluginVersion;
-    QString puid;
-    QString pluginComment;
-};
-
 const auto WINGSUMMER = QStringLiteral("wingsummer");
 
 struct WingDockWidgetInfo {
@@ -534,8 +523,8 @@ public:
     virtual const QString signature() const = 0;
     virtual ~IWingPlugin() = default;
 
-    virtual bool init(const QList<WingPluginInfo> &loadedplugin) = 0;
-    virtual void unload() = 0;
+    virtual bool init(const QSettings &set) = 0;
+    virtual void unload(QSettings &set) = 0;
     virtual const QString pluginName() const = 0;
     virtual const QString pluginAuthor() const = 0;
     virtual uint pluginVersion() const = 0;
@@ -569,6 +558,10 @@ signals:
     void error(const QString &message);
     void info(const QString &message);
 
+    // not available for AngelScript
+    // only for plugin UI extenstion
+    QDialog *createDialog(QWidget *content);
+
 public:
     WingPlugin::Reader reader;
     WingPlugin::Controller controller;
@@ -581,8 +574,6 @@ public:
 
 } // namespace WingHex
 
-constexpr auto IWINGPLUGIN_INTERFACE_IID = "com.wingsummer.iwingplugin";
-
-Q_DECLARE_INTERFACE(WingHex::IWingPlugin, IWINGPLUGIN_INTERFACE_IID)
+Q_DECLARE_INTERFACE(WingHex::IWingPlugin, "com.wingsummer.iwingplugin")
 
 #endif // IWINGPLUGIN_H

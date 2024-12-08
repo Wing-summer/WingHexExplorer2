@@ -107,6 +107,8 @@ This software complies with the `AGPL-3.0` agreement. Please do not use it for p
 
 If you want to use the code of this software for closed-source commercial code and want to lift the restriction of the `GPL` series that it must be open source, please consult me ​​in person to discuss commercial licensing matters.
 
+For plugin development, the corresponding open source agreements are different. Only `src/plugin/iwingplugin.h` and `src/plugin/settingpage.h` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source and commercial development. The code of `TestPlugin` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
+
 ### Usage Statement
 
 1. The source code of this software shall not be used for closed-source commercial purposes unless you open source it completely (as required by the GPL agreement). If you want to commercially close the code of the software warehouse, you must contact me to purchase a commercial license and sign a contract. Please contact me for the price. Please do not disturb me if you are not serious.

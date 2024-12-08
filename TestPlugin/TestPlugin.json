@@ -1,0 +1,13 @@
+{
+    "Id" : "testplugin",
+    "Name" : "TestPlugin",
+    "Version" : "0.0.1",
+    "CompatVersion" : "0.0.1",
+    "Vendor" : "WingCloudStudio",
+    "VendorId" : "wingcloudstudio",
+    "Copyright" : "wingsummer",
+    "License" : "AGPL-3.0",
+    "Description" : "A Test Plugin for WingHexExplorer2",
+    "Url" : "https://github.com/Wing-summer/WingHexExplorer2",
+    "DocumentationUrl" : ""
+}

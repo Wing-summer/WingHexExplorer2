@@ -1,6 +1,8 @@
 #include "class/appmanager.h"
 #include "class/settingmanager.h"
 
+#include "define.h"
+
 int main(int argc, char *argv[]) {
     /* 有关对在 QT5 的 Win 平台禁用高 dpi 支持
      * 的原因说明：
@@ -41,7 +43,7 @@ int main(int argc, char *argv[]) {
         }
 
         return a.exec();
-    } catch (int errCode) {
-        return errCode;
+    } catch (CrashCode errCode) {
+        return int(errCode);
     }
 }

@@ -101,7 +101,7 @@ public:
     const QList<IWingPlugin *> &plugins() const;
     const IWingPlugin *plugin(qsizetype index) const;
 
-    void loadPlugin(QFileInfo filename);
+    void loadPlugin(const QFileInfo &filename, const QDir &setdir);
 
     WingAngelAPI *angelApi() const;
 
@@ -123,10 +123,13 @@ private:
     QString getScriptFnSig(const QString &fnName,
                            const IWingPlugin::ScriptFnInfo &fninfo);
 
+    QString getPUID(IWingPlugin *p);
+
 private:
-    bool loadPlugin(IWingPlugin *p);
+    bool loadPlugin(IWingPlugin *p, const QDir &setdir);
 
     void connectInterface(IWingPlugin *plg);
+    void connectLoadingInterface(IWingPlugin *plg);
     void connectBaseInterface(IWingPlugin *plg);
     void connectReaderInterface(IWingPlugin *plg);
     void connectControllerInterface(IWingPlugin *plg);

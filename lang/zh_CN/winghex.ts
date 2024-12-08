@@ -1966,62 +1966,62 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="57"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="69"/>
         <source>LoadingPlugin</source>
         <translation>正在加载插件：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="274"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="297"/>
         <source>ErrLoadPluginSign</source>
         <translation>插件加载失败：非法插件签名！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="278"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="301"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加载失败：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="282"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="305"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="289"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="310"/>
         <source>ErrLoadLoadedPlugin</source>
         <translation>插件加载失败：重复加载插件！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="295"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="331"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="309"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="338"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="310"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="339"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="311"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="340"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1778"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1836"/>
         <source>Creating UI widget is not allowed in non-UI thread</source>
         <translation>不能够在非用户界面线程创建用户界面组件</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1829"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1887"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1835"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1900"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -5007,17 +5007,17 @@ Do you wish to keep up to date by reloading the file?</source>
 <context>
     <name>WingAngelAPI</name>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="66"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="69"/>
         <source>AngelScriptService</source>
         <translation>AngelScript 服务</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="74"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="77"/>
         <source>A internal plugin that provides AngelScript scripts with the ability to call the host API.</source>
         <translation>为 AngelScript 脚本提供调用主机 API 能力的内部插件。</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1867"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1870"/>
         <source>NotSupportedQMetaType:</source>
         <translation>不支持的 QT 数据元类型：</translation>
     </message>

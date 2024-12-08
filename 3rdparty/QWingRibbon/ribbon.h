@@ -31,6 +31,11 @@ public:
 
     /// Add a tab to the ribbon.
     ///
+    /// \param[in] tabContent pointer of the tab
+    void addTab(RibbonTabContent *tabContent, const QString &tabName);
+
+    /// Add a tab to the ribbon.
+    ///
     /// \param[in] tabIcon Icon of the tab
     /// \param[in] tabName Name of the tab
     RibbonTabContent *addTab(const QIcon &tabIcon, const QString &tabName);

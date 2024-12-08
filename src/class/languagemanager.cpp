@@ -18,6 +18,7 @@
 #include "languagemanager.h"
 
 #include "class/settingmanager.h"
+#include "define.h"
 #include "wingmessagebox.h"
 
 #include <QApplication>
@@ -174,10 +175,27 @@ void LanguageManager::abortAndExit() {
                            "solve the problem."));
     }
 
-    throw(-1);
+    throw CrashCode::LanguageFile;
 }
 
 QLocale LanguageManager::defaultLocale() const { return _defaultLocale; }
+
+QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
+    QDir langDir(QStringLiteral(":/PLGLANG"));
+    if (!langDir.cd(plgID)) {
+        return nullptr;
+    }
+    auto translator = new QTranslator(this);
+    if (translator->load(_defaultLocale, plgID, QStringLiteral("_"),
+                         langDir.absolutePath())) {
+        if (qApp->installTranslator(translator)) {
+            return translator;
+        }
+    }
+
+    translator->deleteLater();
+    return nullptr;
+}
 
 LanguageManager::LanguageData LanguageManager::data() const { return _data; }
 

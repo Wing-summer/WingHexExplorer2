@@ -18,13 +18,16 @@
 #include "pluginsystem.h"
 #include "QJsonModel/include/QJsonModel.hpp"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "define.h"
 #include "dialog/colorpickerdialog.h"
+#include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
 #include "model/qjsontablemodel.h"
 
@@ -37,8 +40,17 @@
 PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {}
 
 PluginSystem::~PluginSystem() {
+    QDir udir(Utilities::getAppDataPath());
+    auto plgset = QStringLiteral("plgset");
+    udir.mkdir(plgset);
+    if (!udir.cd(plgset)) {
+        qApp->exit(int(CrashCode::PluginSetting));
+    }
+
     for (auto &item : loadedplgs) {
-        item->unload();
+        QSettings set(udir.absoluteFilePath(item->metaObject()->className()),
+                      QSettings::Format::IniFormat);
+        item->unload(set);
         delete item;
     }
 }
@@ -49,7 +61,7 @@ const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
     return loadedplgs.at(index);
 }
 
-void PluginSystem::loadPlugin(QFileInfo fileinfo) {
+void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
 
     if (fileinfo.exists()) {
@@ -59,7 +71,7 @@ void PluginSystem::loadPlugin(QFileInfo fileinfo) {
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
-            if (!loadPlugin(p)) {
+            if (!loadPlugin(p, setdir)) {
                 loader.unload();
             }
         }
@@ -267,8 +279,19 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
     return sig + params.join(',') + QStringLiteral(")");
 }
 
-bool PluginSystem::loadPlugin(IWingPlugin *p) {
-    QList<WingPluginInfo> loadedplginfos;
+QString PluginSystem::getPUID(IWingPlugin *p) {
+    if (p) {
+        auto prop = p->property("puid").toString().trimmed();
+        auto pid = QString(p->metaObject()->className());
+        return prop.isEmpty() ? pid : prop;
+    } else {
+        return {};
+    }
+}
+
+bool PluginSystem::loadPlugin(IWingPlugin *p, const QDir &setdir) {
+    QTranslator *p_tr = nullptr;
+
     try {
         if (p->signature() != WINGSUMMER) {
             throw tr("ErrLoadPluginSign");
@@ -282,34 +305,41 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
             throw tr("ErrLoadPluginNoName");
         }
 
-        auto prop = p->property("puid").toString().trimmed();
-        auto puid =
-            prop.isEmpty() ? QString(p->metaObject()->className()) : prop;
+        auto puid = getPUID(p);
         if (loadedpuid.contains(puid)) {
             throw tr("ErrLoadLoadedPlugin");
         }
 
         emit pluginLoading(p->pluginName());
 
-        if (!p->init(loadedplginfos)) {
-            throw tr("ErrLoadInitPlugin");
+        auto pid = QString(p->metaObject()->className());
+        p_tr = LanguageManager::instance().try2LoadPluginLang(pid);
+
+        connectLoadingInterface(p);
+
+        QSettings *setp;
+        if (setdir == QDir()) {
+            setp = new QSettings;
+        } else {
+            setp = new QSettings(
+                setdir.absoluteFilePath(p->metaObject()->className()),
+                QSettings::Format::IniFormat);
         }
 
-        WingPluginInfo info;
-        info.puid = puid;
-        info.pluginName = p->pluginName();
-        info.pluginAuthor = p->pluginAuthor();
-        info.pluginComment = p->pluginComment();
-        info.pluginVersion = p->pluginVersion();
+        if (!p->init(*setp)) {
+            setp->deleteLater();
+            throw tr("ErrLoadInitPlugin");
+        }
+        setp->deleteLater();
 
-        loadedplginfos.push_back(info);
         loadedplgs.push_back(p);
         loadedpuid << puid;
 
-        Logger::warning(tr("PluginName :") + info.pluginName);
-        Logger::warning(tr("PluginAuthor :") + info.pluginAuthor);
+        Logger::warning(tr("PluginName :") + p->pluginName());
+        Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
         Logger::warning(tr("PluginWidgetRegister"));
 
+        // ensure call only once
         auto ribbonToolboxInfos = p->registeredRibbonTools();
         if (!ribbonToolboxInfos.isEmpty()) {
             for (auto &item : ribbonToolboxInfos) {
@@ -328,7 +358,14 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
                     }
                 } else {
                     if (!item.toolboxs.isEmpty()) {
-                        auto cat = _win->m_ribbon->addTab(item.displayName);
+                        bool isSys = false;
+                        RibbonTabContent *cat;
+                        if (_win->m_ribbonMaps.contains(item.catagory)) {
+                            isSys = true;
+                            cat = _win->m_ribbonMaps.value(item.catagory);
+                        } else {
+                            cat = new RibbonTabContent;
+                        }
                         bool hasAdded = false;
                         for (auto &group : item.toolboxs) {
                             if (group.tools.isEmpty()) {
@@ -340,10 +377,13 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
                             }
                             hasAdded = true;
                         }
-                        if (hasAdded) {
-                            _win->m_ribbonMaps[item.catagory] = cat;
-                        } else {
-                            _win->m_ribbon->removeTab(cat);
+                        if (!isSys) {
+                            if (hasAdded) {
+                                _win->m_ribbon->addTab(cat, item.displayName);
+                                _win->m_ribbonMaps[item.catagory] = cat;
+                            } else {
+                                delete cat;
+                            }
                         }
                     }
                 }
@@ -430,20 +470,26 @@ bool PluginSystem::loadPlugin(IWingPlugin *p) {
         }
 
         registerFns(p);
-
         connectInterface(p);
+
         m_plgviewMap.insert(p, nullptr);
     } catch (const QString &error) {
         Logger::critical(error);
+        if (p_tr) {
+            p_tr->deleteLater();
+        }
         return false;
     }
     return true;
 }
 
 void PluginSystem::connectInterface(IWingPlugin *plg) {
-    connectBaseInterface(plg);
     connectReaderInterface(plg);
     connectControllerInterface(plg);
+}
+
+void PluginSystem::connectLoadingInterface(IWingPlugin *plg) {
+    connectBaseInterface(plg);
     connectUIInterface(plg);
 }
 
@@ -472,6 +518,18 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
         Logger::critical(
             packLogMessage(plg->metaObject()->className(), message));
     });
+    connect(plg, &IWingPlugin::createDialog, this,
+            [=](QWidget *w) -> QDialog * {
+                if (w) {
+                    auto d = new FramelessDialogBase;
+                    d->buildUpContent(w);
+                    d->setWindowTitle(w->windowTitle());
+                    d->setWindowIcon(w->windowIcon());
+                    return d;
+                } else {
+                    return nullptr;
+                }
+            });
 }
 
 void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
@@ -1799,7 +1857,7 @@ void PluginSystem::LoadPlugin() {
 
     _angelplg = new WingAngelAPI;
 
-    auto ret = loadPlugin(_angelplg);
+    auto ret = loadPlugin(_angelplg, QDir());
     Q_ASSERT(ret);
     Q_UNUSED(ret);
 
@@ -1828,8 +1886,15 @@ void PluginSystem::LoadPlugin() {
     auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 
+    QDir udir(Utilities::getAppDataPath());
+    auto plgset = QStringLiteral("plgset");
+    udir.mkdir(plgset);
+    if (!udir.cd(plgset)) {
+        throw CrashCode::PluginSetting;
+    }
+
     for (auto &item : plgs) {
-        loadPlugin(item);
+        loadPlugin(item, udir);
     }
 
     Logger::info(tr("PluginLoadingFinished"));

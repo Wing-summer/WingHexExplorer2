@@ -55,12 +55,15 @@ int WingAngelAPI::sdkVersion() const { return WingHex::SDKVERSION; }
 
 const QString WingAngelAPI::signature() const { return WingHex::WINGSUMMER; }
 
-bool WingAngelAPI::init(const QList<WingHex::WingPluginInfo> &loadedplugin) {
-    Q_UNUSED(loadedplugin);
+bool WingAngelAPI::init(const QSettings &set) {
+    Q_UNUSED(set);
     return true;
 }
 
-void WingAngelAPI::unload() { this->disconnect(); }
+void WingAngelAPI::unload(QSettings &set) {
+    Q_UNUSED(set);
+    this->disconnect();
+}
 
 const QString WingAngelAPI::pluginName() const {
     return tr("AngelScriptService");

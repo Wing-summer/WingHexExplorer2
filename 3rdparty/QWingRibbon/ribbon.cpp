@@ -60,6 +60,12 @@ RibbonTabContent *Ribbon::addTab(const QString &tabName) {
     return ribbonTabContent;
 }
 
+void Ribbon::addTab(RibbonTabContent *tabContent, const QString &tabName) {
+    if (tabContent) {
+        QTabWidget::addTab(tabContent, tabName);
+    }
+}
+
 RibbonTabContent *Ribbon::addTab(const QIcon &tabIcon, const QString &tabName) {
     // Note: superclass QTabWidget also has a function addTab()
     RibbonTabContent *ribbonTabContent = new RibbonTabContent;
