@@ -39,8 +39,8 @@ public:
 public:
     virtual int sdkVersion() const override;
     virtual const QString signature() const override;
-    virtual bool init(const QSettings &set) override;
-    virtual void unload(QSettings &set) override;
+    virtual bool init(const std::unique_ptr<QSettings> &set) override;
+    virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
     virtual const QString pluginAuthor() const override;
     virtual uint pluginVersion() const override;
@@ -137,7 +137,9 @@ private:
                                                QString *selectedFilter,
                                                QFileDialog::Options options);
 
-    CScriptArray *_HexReader_selectedBytes();
+    CScriptArray *_HexReader_selectedBytes(qsizetype index);
+
+    CScriptArray *_HexReader_selectionBytes();
 
     CScriptArray *_HexReader_readBytes(qsizetype offset, qsizetype len);
 
@@ -157,11 +159,7 @@ private:
     CScriptArray *_HexReader_findAllBytes(qsizetype begin, qsizetype end,
                                           const CScriptArray &ba);
 
-    CScriptArray *_HexReader_getMetadatas(qsizetype offset);
-
     CScriptArray *_HexReader_getsBookmarkPos(qsizetype line);
-
-    CScriptArray *_HexReader_getBookMarks();
 
     CScriptArray *_HexReader_getSupportedEncodings();
 

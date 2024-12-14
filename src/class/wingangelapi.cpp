@@ -55,12 +55,12 @@ int WingAngelAPI::sdkVersion() const { return WingHex::SDKVERSION; }
 
 const QString WingAngelAPI::signature() const { return WingHex::WINGSUMMER; }
 
-bool WingAngelAPI::init(const QSettings &set) {
+bool WingAngelAPI::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     return true;
 }
 
-void WingAngelAPI::unload(QSettings &set) {
+void WingAngelAPI::unload(std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     this->disconnect();
 }
@@ -383,6 +383,7 @@ void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
 
 void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     registerAngelType<WingHex::ErrFile>(engine, "ErrFile");
+    registerAngelType<WingHex::SelectionMode>(engine, "SelectionMode");
 
     int r = engine->RegisterTypedef("byte", "uint8");
     Q_ASSERT(r >= 0);
@@ -405,23 +406,6 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     Q_UNUSED(r);
     r = engine->RegisterObjectProperty("FindResult", QSIZETYPE_WRAP("col"),
                                        asOFFSET(WingHex::FindResult, col));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    // BookMark
-    r = engine->RegisterObjectType("BookMark", sizeof(WingHex::BookMark),
-                                   asOBJ_VALUE | asOBJ_POD |
-                                       asGetTypeTraits<WingHex::BookMark>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty("BookMark", QSIZETYPE_WRAP("pos"),
-                                       asOFFSET(WingHex::BookMark, pos));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty("BookMark", "string comment",
-                                       asOFFSET(WingHex::BookMark, comment));
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -474,42 +458,6 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-
-    // HexMetadataItem
-    r = engine->RegisterObjectType(
-        "HexMetadataItem", sizeof(WingHex::HexMetadataItem),
-        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<WingHex::HexMetadataItem>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", QSIZETYPE_WRAP("begin"),
-        asOFFSET(WingHex::HexMetadataItem, begin));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty("HexMetadataItem", QSIZETYPE_WRAP("end"),
-                                       asOFFSET(WingHex::HexMetadataItem, end));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "color foreground",
-        asOFFSET(WingHex::HexMetadataItem, foreground));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "color background",
-        asOFFSET(WingHex::HexMetadataItem, background));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectProperty(
-        "HexMetadataItem", "string comment",
-        asOFFSET(WingHex::HexMetadataItem, comment));
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
 }
 
 void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
@@ -543,10 +491,6 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
     registerAPI<WingHex::HexPosition(void)>(
         engine, std::bind(&WingHex::WingPlugin::Reader::currentPos, reader),
         "HexPosition currentPos()");
-
-    registerAPI<WingHex::HexPosition(void)>(
-        engine, std::bind(&WingHex::WingPlugin::Reader::selectionPos, reader),
-        "HexPosition selectionPos()");
 
     registerAPI<bool(void)>(
         engine, std::bind(&WingHex::WingPlugin::Reader::stringVisible, reader),
@@ -609,9 +553,34 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Reader::selectedLength, reader),
         QSIZETYPE_WRAP("selectedLength()"));
 
-    registerAPI<CScriptArray *(void)>(
-        engine, std::bind(&WingAngelAPI::_HexReader_selectedBytes, this),
-        "array<byte>@ selectedBytes()");
+    registerAPI<CScriptArray *(qsizetype)>(
+        engine,
+        std::bind(&WingAngelAPI::_HexReader_selectedBytes, this,
+                  std::placeholders::_1),
+        "array<byte>@ selectedBytes(" QSIZETYPE " index)");
+
+    registerAPI<CScriptArray *()>(
+        engine, std::bind(&WingAngelAPI::_HexReader_selectionBytes, this),
+        "array<array<byte>>@ selectionBytes()");
+    registerAPI<WingHex::HexPosition(qsizetype)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::selectionStart, reader,
+                  std::placeholders::_1),
+        "HexPosition selectionStart(" QSIZETYPE " index)");
+    registerAPI<WingHex::HexPosition(qsizetype)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::selectionEnd, reader,
+                  std::placeholders::_1),
+        "HexPosition selectionEnd(" QSIZETYPE " index)");
+    registerAPI<qsizetype(qsizetype)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::selectionLength, reader,
+                  std::placeholders::_1),
+        QSIZETYPE_WRAP("selectionLength(" QSIZETYPE " index)"));
+
+    registerAPI<qsizetype()>(
+        engine, std::bind(&WingHex::WingPlugin::Reader::selectionCount, reader),
+        QSIZETYPE_WRAP("selectionCount()"));
 
     registerAPI<quintptr(void)>(
         engine, std::bind(&WingHex::WingPlugin::Reader::addressBase, reader),
@@ -709,12 +678,6 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "bool lineHasMetadata(" QSIZETYPE " line)");
 
-    registerAPI<CScriptArray *(qsizetype)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_getMetadatas, this,
-                  std::placeholders::_1),
-        "array<HexMetadataItem>@ getMetadatas(" QSIZETYPE " offset)");
-
     registerAPI<bool(qsizetype)>(
         engine,
         std::bind(&WingHex::WingPlugin::Reader::lineHasBookMark, reader,
@@ -727,21 +690,11 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "array<" QSIZETYPE ">@ getsBookmarkPos(" QSIZETYPE " pos)");
 
-    registerAPI<WingHex::BookMark(qsizetype)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Reader::bookMark, reader,
-                  std::placeholders::_1),
-        "BookMark bookMark(" QSIZETYPE " pos)");
-
     registerAPI<QString(qsizetype)>(
         engine,
         std::bind(&WingHex::WingPlugin::Reader::bookMarkComment, reader,
                   std::placeholders::_1),
         "string bookMarkComment(" QSIZETYPE " pos)");
-
-    registerAPI<CScriptArray *()>(
-        engine, std::bind(&WingAngelAPI::_HexReader_getBookMarks, this),
-        "array<BookMark>@ getBookMarks()");
 
     registerAPI<bool(qsizetype)>(
         engine,
@@ -1005,27 +958,29 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Controller::removeAll, ctl),
         "bool removeAll()");
 
-    registerAPI<bool(qsizetype, qsizetype, int)>(
+    registerAPI<bool(qsizetype, qsizetype, int, bool)>(
         engine,
-        std::bind(QOverload<qsizetype, qsizetype, int>::of(
+        std::bind(QOverload<qsizetype, qsizetype, int, bool>::of(
                       &WingHex::WingPlugin::Controller::moveTo),
                   ctl, std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
+                  std::placeholders::_3, std::placeholders::_4),
         "bool moveTo(" QSIZETYPE " line, " QSIZETYPE
-        " column, int nibbleindex = -1)");
+        " column, int nibbleindex = -1, bool clearSelection = true)");
 
-    registerAPI<bool(qsizetype)>(
+    registerAPI<bool(qsizetype, bool)>(
         engine,
-        std::bind(
-            QOverload<qsizetype>::of(&WingHex::WingPlugin::Controller::moveTo),
-            ctl, std::placeholders::_1),
-        "bool moveTo(" QSIZETYPE " offset)");
+        std::bind(QOverload<qsizetype, bool>::of(
+                      &WingHex::WingPlugin::Controller::moveTo),
+                  ctl, std::placeholders::_1, std::placeholders::_2),
+        "bool moveTo(" QSIZETYPE " offset, bool clearSelection = true)");
 
-    registerAPI<bool(qsizetype, qsizetype)>(
+    registerAPI<bool(qsizetype, qsizetype, WingHex::SelectionMode)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::select, ctl,
-                  std::placeholders::_1, std::placeholders::_2),
-        "bool select(" QSIZETYPE " offset, " QSIZETYPE " len)");
+                  std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3),
+        "bool select(" QSIZETYPE " offset, " QSIZETYPE
+        " len, SelectionMode mode = SelectionMode::Add)");
 
     registerAPI<bool(bool)>(
         engine,
@@ -1036,14 +991,14 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     registerAPI<bool(qsizetype, qsizetype, const QColor &, const QColor &,
                      const QString &)>(
         engine,
-        std::bind(QOverload<qsizetype, qsizetype, const QColor &,
+        std::bind(QOverload<qsizetype, WingHex::qusizetype, const QColor &,
                             const QColor &, const QString &>::
                       of(&WingHex::WingPlugin::Controller::metadata),
                   ctl, std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
-        "bool metadata(" QSIZETYPE " begin, " QSIZETYPE
-        " end, color &in fgcolor, color &in bgcolor, string &in comment)");
+        "bool metadata(" QSIZETYPE " begin, " QUSIZETYPE
+        " length, color &in fgcolor, color &in bgcolor, string &in comment)");
 
     registerAPI<bool(qsizetype)>(
         engine,
@@ -1055,29 +1010,29 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Controller::clearMetadata, ctl),
         "bool clearMetadata()");
 
-    registerAPI<bool(qsizetype, qsizetype, const QColor &)>(
+    registerAPI<bool(qsizetype, WingHex::qusizetype, const QColor &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::foreground, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "bool foreground(" QSIZETYPE " begin, " QSIZETYPE
-        " end, color &in fgcolor)");
+        "bool foreground(" QSIZETYPE " begin, " QUSIZETYPE
+        " length, color &in fgcolor)");
 
-    registerAPI<bool(qsizetype, qsizetype, const QColor &)>(
+    registerAPI<bool(qsizetype, WingHex::qusizetype, const QColor &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::background, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "bool background(" QSIZETYPE " begin, " QSIZETYPE
-        " end, color &in bgcolor)");
+        "bool background(" QSIZETYPE " begin, " QUSIZETYPE
+        " length, color &in bgcolor)");
 
-    registerAPI<bool(qsizetype, qsizetype, const QString &)>(
+    registerAPI<bool(qsizetype, WingHex::qusizetype, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::comment, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "bool comment(" QSIZETYPE " begin, " QSIZETYPE
-        " end, string &in comment)");
+        "bool comment(" QSIZETYPE " begin, " QUSIZETYPE
+        " length, string &in comment)");
 
     registerAPI<bool(bool)>(
         engine,
@@ -2119,9 +2074,41 @@ CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
         "array<string>");
 }
 
-CScriptArray *WingAngelAPI::_HexReader_selectedBytes() {
-    return byteArrayWrapperFunction(
-        [this]() -> QByteArray { return emit reader.selectedBytes(); });
+CScriptArray *WingAngelAPI::_HexReader_selectedBytes(qsizetype index) {
+    return byteArrayWrapperFunction([this, index]() -> QByteArray {
+        return emit reader.selectedBytes(index);
+    });
+}
+
+CScriptArray *WingAngelAPI::_HexReader_selectionBytes() {
+    // context, which can be used to obtain a pointer to the
+    // engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+
+        auto ret = emit reader.selectionBytes();
+
+        // The script array needs to know its type to properly handle the
+        // elements. Note that the object type should be cached to avoid
+        // performance issues if the function is called frequently.
+        asITypeInfo *arrt = engine->GetTypeInfoByDecl("array<array<byte>>");
+        asITypeInfo *t = engine->GetTypeInfoByDecl("array<byte>");
+        Q_ASSERT(arrt && t);
+        auto array = CScriptArray::Create(arrt, ret.size());
+        for (qsizetype i = 0; i < ret.size(); ++i) {
+            auto buffer = ret.at(i);
+            auto conarr = CScriptArray::Create(t, ret.size());
+            for (qsizetype i = 0; i < ret.size(); ++i) {
+                auto v = ret.at(buffer.at(i));
+                conarr->SetValue(i, &v);
+            }
+            array->SetValue(i, conarr);
+        }
+        return array;
+    } else {
+        return nullptr;
+    }
 }
 
 CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
@@ -2220,28 +2207,12 @@ CScriptArray *WingAngelAPI::_HexReader_findAllBytes(qsizetype begin,
     }
 }
 
-CScriptArray *WingAngelAPI::_HexReader_getMetadatas(qsizetype offset) {
-    return retarrayWrapperFunction(
-        [this, offset]() -> QList<WingHex::HexMetadataItem> {
-            return emit reader.getMetadatas(offset);
-        },
-        "array<HexMetadataItem>");
-}
-
 CScriptArray *WingAngelAPI::_HexReader_getsBookmarkPos(qsizetype line) {
     return retarrayWrapperFunction(
         [this, line]() -> QList<qsizetype> {
             return emit reader.getsBookmarkPos(line);
         },
         "array<" QSIZETYPE ">");
-}
-
-CScriptArray *WingAngelAPI::_HexReader_getBookMarks() {
-    return retarrayWrapperFunction(
-        [this]() -> QList<WingHex::BookMark> {
-            return emit reader.getBookMarks();
-        },
-        "array<BookMark>");
 }
 
 CScriptArray *WingAngelAPI::_HexReader_getSupportedEncodings() {

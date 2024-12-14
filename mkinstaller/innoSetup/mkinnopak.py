@@ -257,6 +257,9 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
     else:
         pak_out = args.output
     
+    if len(args.cc) == 0:
+        exit(0)
+    
     ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
     exit(ret)
 

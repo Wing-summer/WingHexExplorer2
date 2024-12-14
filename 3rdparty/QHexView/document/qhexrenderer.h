@@ -120,8 +120,13 @@ private:
                          Factor factor) const;
     void applyMetadata(QTextCursor &textcursor, qsizetype line,
                        Factor factor) const;
+
     void applySelection(QTextCursor &textcursor, qsizetype line,
                         Factor factor) const;
+    void applySelection(const QHexSelection &selection, QTextCursor &textcursor,
+                        qsizetype line, Factor factor, bool strikeOut,
+                        bool hasSelection) const;
+
     void applyBookMark(QTextCursor &textcursor, qsizetype line,
                        Factor factor); // added by wingsummer
     void applyCursorAscii(QTextCursor &textcursor, qsizetype line) const;

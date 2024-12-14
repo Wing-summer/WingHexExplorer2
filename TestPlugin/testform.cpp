@@ -21,8 +21,57 @@
 #include "testform.h"
 #include "ui_testform.h"
 
-TestForm::TestForm(QWidget *parent) : QWidget(parent), ui(new Ui::TestForm) {
+#include <QMetaEnum>
+
+TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
+    : QWidget(parent), ui(new Ui::TestForm), _plg(plg) {
     ui->setupUi(this);
+
+    initLogCombo();
+    initStyleCombo();
 }
 
 TestForm::~TestForm() { delete ui; }
+
+void TestForm::initLogCombo() {
+    auto e = QMetaEnum::fromType<Level>();
+    for (int i = LEVEL_BEGIN; i < LEVEL_END; ++i) {
+        ui->cbLogLevel->addItem(e.key(i));
+    }
+}
+
+void TestForm::initStyleCombo() {
+    auto style = this->style();
+    auto e = QMetaEnum::fromType<QStyle::StandardPixmap>();
+    for (int i = 0; i < QStyle::StandardPixmap::NStandardPixmap; ++i) {
+        auto icon = style->standardIcon(QStyle::StandardPixmap(i));
+        if (!icon.isNull()) {
+            ui->cbToastIcon->addItem(icon, e.key(i));
+        }
+    }
+}
+
+void TestForm::on_btnSendLog_clicked() {
+    auto txt = ui->leLogText->text();
+    switch (Level(ui->cbLogLevel->currentIndex())) {
+    case q1ERROR:
+        emit _plg->error(txt);
+        break;
+    case q2WARN:
+        emit _plg->warn(txt);
+        break;
+    case q3INFO:
+        emit _plg->info(txt);
+        break;
+    case q4DEBUG:
+        emit _plg->debug(txt);
+        break;
+    case q5TRACE:
+        emit _plg->trace(txt);
+        break;
+    default:
+        break;
+    }
+}
+
+void TestForm::on_btnSendToast_clicked() {}

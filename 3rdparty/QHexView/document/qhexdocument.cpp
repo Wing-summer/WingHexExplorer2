@@ -476,6 +476,12 @@ void QHexDocument::redo() {
     emit documentChanged();
 }
 
+void QHexDocument::beginMarco(const QString &text) {
+    m_undostack->beginMacro(text);
+}
+
+void QHexDocument::endMarco() { m_undostack->endMacro(); }
+
 void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset, uchar b,
                           int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked)

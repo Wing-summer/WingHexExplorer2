@@ -45,8 +45,8 @@ public:
 public:
     virtual int sdkVersion() const override;
     virtual const QString signature() const override;
-    virtual bool init(const QSettings &set) override;
-    virtual void unload(QSettings &set) override;
+    virtual bool init(const std::unique_ptr<QSettings> &set) override;
+    virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
     virtual const QString pluginAuthor() const override;
     virtual uint pluginVersion() const override;

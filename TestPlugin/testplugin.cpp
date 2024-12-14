@@ -36,13 +36,13 @@ int TestPlugin::sdkVersion() const { return WingHex::SDKVERSION; }
 
 const QString TestPlugin::signature() const { return WingHex::WINGSUMMER; }
 
-bool TestPlugin::init(const QSettings &set) {
-    auto v = set.value("Test", 0).toInt();
+bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
+    auto v = set->value("Test", 0).toInt();
     // 如果你之前启动过且正常推出，这个值一定是 5
     qDebug() << v;
 
     // 和日志与 UI 相关的接口此时可用，剩余的 API 初始化成功才可用
-    _tform = emit createDialog(new TestForm);
+    _tform = emit createDialog(new TestForm(this));
 
     using TBInfo = WingHex::WingRibbonToolBoxInfo;
     TBInfo::RibbonCatagories cats;
@@ -60,17 +60,48 @@ bool TestPlugin::init(const QSettings &set) {
             _tform->raise();
         }
     });
-    _rtbinfo = {WingHex::WingRibbonToolBoxInfo{
-        .catagory = cats.PLUGIN,
-        .toolboxs = {
-            TBInfo::Toolbox{.name = tr("TestPlugin"), .tools = {tb}}}}};
+
+    {
+        WingHex::WingRibbonToolBoxInfo rtinfo;
+        rtinfo.catagory = cats.PLUGIN;
+        TBInfo::Toolbox tbtb;
+        tbtb.name = tr("TestPlugin");
+        tbtb.tools = {tb};
+        rtinfo.toolboxs = {tbtb};
+        _rtbinfo.append(rtinfo);
+    }
+
+    {
+        WingHex::WingRibbonToolBoxInfo rtinfo;
+        rtinfo.catagory = QStringLiteral("TestPlugin");
+        rtinfo.displayName = tr("TestPlugin");
+
+        QIcon btnIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+        for (int i = 0; i < 3; ++i) {
+            TBInfo::Toolbox tbtb;
+            tbtb.name = tr("TestPlugin") + QStringLiteral("(%1)").arg(i);
+            for (int y = 0; y < 5; ++y) {
+                auto tb = new QToolButton;
+                tb->setIcon(btnIcon);
+                tb->setText(tr("Button - ") +
+                            QStringLiteral("(%1, %2)").arg(i).arg(y));
+                connect(tb, &QToolButton::clicked, this, [this] {
+                    auto tb = qobject_cast<QToolButton *>(sender());
+                    emit msgbox.information(nullptr, tr("Click"), tb->text());
+                });
+                tbtb.tools.append(tb);
+            }
+            rtinfo.toolboxs.append(tbtb);
+        }
+        _rtbinfo.append(rtinfo);
+    }
 
     return true;
 }
 
-void TestPlugin::unload(QSettings &set) {
+void TestPlugin::unload(std::unique_ptr<QSettings> &set) {
     // 设个数字，那就是 5 测试一下配置是否正常工作
-    set.setValue("Test", 5);
+    set->setValue("Test", 5);
 
     _tform->close();
     _tform->deleteLater();

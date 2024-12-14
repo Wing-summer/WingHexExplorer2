@@ -51,7 +51,10 @@ public:
     qsizetype currentRow();
     qsizetype currentColumn();
     qsizetype currentOffset();
-    qsizetype selectlength();
+    qsizetype currentSelectionLength();
+
+    qsizetype selectionCount();
+    bool hasSelection();
 
     void setAsciiVisible(bool b);
     bool asciiVisible();
@@ -101,7 +104,9 @@ public:
     bool removeSelection();
     bool atEnd() const;
 
-    QByteArray selectedBytes() const;
+    QByteArray selectedBytes(qsizetype index) const;
+    QByteArray previewSelectedBytes() const;
+    QByteArrayList selectedBytes() const;
 
     bool cut(bool hex);
     bool copy(bool hex = false);
@@ -167,6 +172,8 @@ private slots:
 private:
     void moveNext(bool select = false);
     void movePrevious(bool select = false);
+
+    QHexCursor::SelectionMode getSelectionMode() const;
 
 private:
     bool processMove(QHexCursor *cur, QKeyEvent *e);

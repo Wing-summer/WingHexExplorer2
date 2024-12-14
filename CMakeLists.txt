@@ -247,7 +247,9 @@ set(CLASS_SRC
     src/class/clangformatmanager.h
     src/class/clangformatmanager.cpp
     src/class/aspreprocesser.h
-    src/class/aspreprocesser.cpp)
+    src/class/aspreprocesser.cpp
+    src/class/layoutmanager.h
+    src/class/layoutmanager.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC

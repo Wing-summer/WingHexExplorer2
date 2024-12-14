@@ -22,6 +22,7 @@
 #include "angelscript.h"
 #include "clangformatmanager.h"
 #include "dbghelper.h"
+#include "define.h"
 #include "dialog/mainwindow.h"
 #include "dialog/splashdialog.h"
 #include "languagemanager.h"
@@ -37,10 +38,6 @@ AppManager::AppManager(int &argc, char *argv[])
     : SingleApplication(argc, argv, true) {
     ASSERT_SINGLETON;
 
-    setApplicationName(APP_NAME);
-    setOrganizationName(APP_ORG);
-    setApplicationVersion(WINGHEX_VERSION);
-
     auto args = arguments();
     if (isSecondary()) {
         QByteArray buffer;
@@ -51,6 +48,7 @@ AppManager::AppManager(int &argc, char *argv[])
             }
         }
         sendMessage(buffer);
+        throw CrashCode::AlreadyStart;
     }
 
 #ifndef ANGELSCRIPT_H
@@ -64,7 +62,7 @@ AppManager::AppManager(int &argc, char *argv[])
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
         WingMessageBox::critical(nullptr, qAppName(),
                                  tr("GenericCallNotFullySupported"));
-        exit(-1);
+        throw CrashCode::GenericCallNotSupported;
     }
 
     Logger::instance();
@@ -93,19 +91,28 @@ AppManager::AppManager(int &argc, char *argv[])
             return;
         }
         _w->show();
-        _w->raise();
         _w->activateWindow();
+        _w->raise();
     });
 
     connect(this, &SingleApplication::receivedMessage, this,
             [this](quint32 instanceId, QByteArray message) {
                 Q_UNUSED(instanceId);
-                QDataStream out(&message, QIODevice::WriteOnly);
+
+                Q_ASSERT(_w);
+                if (!_w->isEnabled()) {
+                    return;
+                }
+
+                QDataStream out(&message, QIODevice::ReadOnly);
                 while (!out.atEnd()) {
                     QString param;
                     out >> param;
                     openFile(param);
                 }
+                _w->show();
+                _w->activateWindow();
+                _w->raise();
             });
 
     if (splash)

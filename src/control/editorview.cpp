@@ -175,8 +175,8 @@ EditorView::FindError EditorView::find(const QByteArray &data,
         } break;
         case SearchDirection::Selection: {
             auto cur = m_hex->cursor();
-            begin = cur->selectionStart().offset();
-            end = cur->selectionEnd().offset();
+            begin = cur->selectionStart(0).offset();
+            end = cur->selectionEnd(0).offset();
         } break;
         default: {
             begin = -1;

@@ -48,8 +48,9 @@ PluginSystem::~PluginSystem() {
     }
 
     for (auto &item : loadedplgs) {
-        QSettings set(udir.absoluteFilePath(item->metaObject()->className()),
-                      QSettings::Format::IniFormat);
+        auto set = std::make_unique<QSettings>(
+            udir.absoluteFilePath(item->metaObject()->className()),
+            QSettings::Format::IniFormat);
         item->unload(set);
         delete item;
     }
@@ -289,7 +290,8 @@ QString PluginSystem::getPUID(IWingPlugin *p) {
     }
 }
 
-bool PluginSystem::loadPlugin(IWingPlugin *p, const QDir &setdir) {
+bool PluginSystem::loadPlugin(IWingPlugin *p,
+                              const std::optional<QDir> &setdir) {
     QTranslator *p_tr = nullptr;
 
     try {
@@ -317,20 +319,19 @@ bool PluginSystem::loadPlugin(IWingPlugin *p, const QDir &setdir) {
 
         connectLoadingInterface(p);
 
-        QSettings *setp;
-        if (setdir == QDir()) {
-            setp = new QSettings;
-        } else {
-            setp = new QSettings(
-                setdir.absoluteFilePath(p->metaObject()->className()),
-                QSettings::Format::IniFormat);
-        }
+        {
+            std::unique_ptr<QSettings> setp(nullptr);
+            if (setdir.has_value()) {
+                setp = std::make_unique<QSettings>(
+                    setdir->absoluteFilePath(p->metaObject()->className()),
+                    QSettings::Format::IniFormat);
+            }
 
-        if (!p->init(*setp)) {
-            setp->deleteLater();
-            throw tr("ErrLoadInitPlugin");
+            if (!p->init(setp)) {
+                setp->deleteLater();
+                throw tr("ErrLoadInitPlugin");
+            }
         }
-        setp->deleteLater();
 
         loadedplgs.push_back(p);
         loadedpuid << puid;
@@ -603,26 +604,11 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
 
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    auto qpos = e->hexEditor()->cursor()->position();
-                    pos.line = qpos.line;
-                    pos.column = qpos.column;
-                    pos.lineWidth = qpos.lineWidth;
-                    pos.nibbleindex = qpos.nibbleindex;
-                }
-                return pos;
-            });
-    connect(preader, &WingPlugin::Reader::selectionPos, _win,
-            [=]() -> HexPosition {
-                HexPosition pos;
-                memset(&pos, 0, sizeof(HexPosition));
-
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto cur = e->hexEditor()->cursor();
-                    pos.line = cur->selectionLine();
-                    pos.column = cur->selectionColumn();
-                    pos.nibbleindex = cur->selectionNibble();
-                    pos.lineWidth = cur->position().lineWidth;
+                    auto cursor = e->hexEditor()->cursor();
+                    pos.line = cursor->currentLine();
+                    pos.column = cursor->currentColumn();
+                    pos.lineWidth = e->hexEditor()->document()->hexLineWidth();
+                    pos.nibbleindex = cursor->currentNibble();
                 }
                 return pos;
             });
@@ -653,17 +639,76 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=]() -> qsizetype {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->cursor()->selectionLength();
+                    return e->hexEditor()->cursor()->currentSelectionLength();
                 }
                 return 0;
             });
     connect(preader, &WingPlugin::Reader::selectedBytes, _win,
-            [=]() -> QByteArray {
+            [=](qsizetype index) -> QByteArray {
+                auto e = pluginCurrentEditor(plg);
+                if (e && index >= 0 &&
+                    index < e->hexEditor()->cursor()->selectionCount()) {
+                    return e->hexEditor()->selectedBytes(index);
+                }
+                return {};
+            });
+    connect(preader, &WingPlugin::Reader::selectionBytes, _win,
+            [=]() -> QByteArrayList {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->selectedBytes();
                 }
                 return {};
+            });
+    connect(preader, &WingPlugin::Reader::selectionStart, _win,
+            [=](qsizetype index) -> HexPosition {
+                HexPosition pos;
+                memset(&pos, 0, sizeof(HexPosition));
+
+                auto e = pluginCurrentEditor(plg);
+                auto cursor = e->hexEditor()->cursor();
+                if (e && index >= 0 && index < cursor->selectionCount()) {
+                    auto qpos = cursor->selectionStart(index);
+                    pos.line = qpos.line;
+                    pos.column = qpos.column;
+                    pos.lineWidth = qpos.lineWidth;
+                    pos.nibbleindex = qpos.nibbleindex;
+                }
+                return pos;
+            });
+    connect(preader, &WingPlugin::Reader::selectionEnd, _win,
+            [=](qsizetype index) -> HexPosition {
+                HexPosition pos;
+                memset(&pos, 0, sizeof(HexPosition));
+
+                auto e = pluginCurrentEditor(plg);
+                auto cursor = e->hexEditor()->cursor();
+                if (e && index >= 0 && index < cursor->selectionCount()) {
+                    auto qpos = cursor->selectionEnd(index);
+                    pos.line = qpos.line;
+                    pos.column = qpos.column;
+                    pos.lineWidth = qpos.lineWidth;
+                    pos.nibbleindex = qpos.nibbleindex;
+                }
+                return pos;
+            });
+    connect(preader, &WingPlugin::Reader::selectionLength, _win,
+            [=](qsizetype index) -> qsizetype {
+                auto e = pluginCurrentEditor(plg);
+                auto cursor = e->hexEditor()->cursor();
+                if (e && index >= 0 && index < cursor->selectionCount()) {
+                    return cursor->selectionLength(index);
+                }
+                return 0;
+            });
+    connect(preader, &WingPlugin::Reader::selectionCount, _win,
+            [=]() -> qsizetype {
+                auto e = pluginCurrentEditor(plg);
+                auto cursor = e->hexEditor()->cursor();
+                if (e) {
+                    return cursor->selectionCount();
+                }
+                return 0;
             });
     connect(preader, &WingPlugin::Reader::stringVisible, _win, [=]() -> bool {
         auto e = pluginCurrentEditor(plg);
@@ -830,22 +875,6 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 }
                 return qsizetype(-1);
             });
-    connect(preader, &WingPlugin::Reader::getMetadatas, _win,
-            [=](qsizetype offset) -> QList<HexMetadataItem> {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto ometaline =
-                        e->hexEditor()->document()->metadata()->gets(offset);
-                    QList<HexMetadataItem> metaline;
-                    for (auto &item : ometaline) {
-                        metaline.push_back(HexMetadataItem(
-                            item.begin, item.end, item.foreground,
-                            item.background, item.comment));
-                    }
-                    return metaline;
-                }
-                return {};
-            });
     connect(
         preader, &WingPlugin::Reader::lineHasMetadata, _win,
         [=](qsizetype line) -> bool {
@@ -873,38 +902,11 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 }
                 return {};
             });
-    connect(preader, &WingPlugin::Reader::bookMark, _win,
-            [=](qsizetype pos) -> BookMark {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto comment = e->hexEditor()->document()->bookMark(pos);
-                    BookMark book;
-                    book.pos = pos;
-                    book.comment = comment;
-                    return book;
-                }
-                return {};
-            });
     connect(preader, &WingPlugin::Reader::bookMarkComment, _win,
             [=](qsizetype pos) -> QString {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->bookMark(pos);
-                }
-                return {};
-            });
-    connect(preader, &WingPlugin::Reader::getBookMarks, _win,
-            [=]() -> QList<BookMark> {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto &bs = e->hexEditor()->document()->bookMarks();
-                    QList<BookMark> bookmarks;
-                    for (auto p = bs.cbegin(); p != bs.cbegin(); ++p) {
-                        BookMark i;
-                        i.pos = p.key();
-                        i.comment = p.value();
-                        bookmarks.push_back(i);
-                    }
                 }
                 return {};
             });
@@ -1253,35 +1255,53 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         return false;
     });
     connect(pctl,
-            QOverload<qsizetype, qsizetype, int>::of(
+            QOverload<qsizetype, qsizetype, int, bool>::of(
                 &WingPlugin::Controller::moveTo),
             _win,
-            [=](qsizetype line, qsizetype column, int nibbleindex) -> bool {
+            [=](qsizetype line, qsizetype column, int nibbleindex,
+                bool clearSelection) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    e->hexEditor()->cursor()->moveTo(line, column, nibbleindex);
+                    e->hexEditor()->cursor()->moveTo(line, column, nibbleindex,
+                                                     clearSelection);
                     return true;
                 }
                 return false;
             });
-    connect(pctl, QOverload<qsizetype>::of(&WingPlugin::Controller::moveTo),
-            _win, [=](qsizetype offset) -> bool {
+    connect(pctl,
+            QOverload<qsizetype, bool>::of(&WingPlugin::Controller::moveTo),
+            _win, [=](qsizetype offset, bool clearSelection) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    e->hexEditor()->cursor()->moveTo(offset);
+                    e->hexEditor()->cursor()->moveTo(offset, clearSelection);
                     return true;
                 }
                 return false;
             });
-    connect(pctl, &WingPlugin::Controller::select, _win,
-            [=](qsizetype offset, qsizetype length) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    e->hexEditor()->cursor()->setSelection(offset, length);
-                    return true;
+    connect(
+        pctl, &WingPlugin::Controller::select, _win,
+        [=](qsizetype offset, qsizetype length, SelectionMode mode) -> bool {
+            auto e = pluginCurrentEditor(plg);
+            if (e) {
+                auto cursor = e->hexEditor()->cursor();
+                cursor->moveTo(offset);
+                QHexCursor::SelectionMode smode;
+                switch (mode) {
+                case WingHex::SelectionMode::Add:
+                    smode = QHexCursor::SelectionAdd;
+                    break;
+                case WingHex::SelectionMode::Remove:
+                    smode = QHexCursor::SelectionRemove;
+                    break;
+                case WingHex::SelectionMode::Single:
+                    smode = QHexCursor::SelectionNormal;
+                    break;
                 }
-                return false;
-            });
+                cursor->select(length, smode);
+                return true;
+            }
+            return false;
+        });
     connect(pctl, &WingPlugin::Controller::setInsertionMode, _win,
             [=](bool isinsert) -> bool {
                 auto e = pluginCurrentEditor(plg);
@@ -1294,30 +1314,30 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl,
-            QOverload<qsizetype, qsizetype, const QColor &, const QColor &,
+            QOverload<qsizetype, qusizetype, const QColor &, const QColor &,
                       const QString &>::of(&WingPlugin::Controller::metadata),
             _win,
-            [=](qsizetype begin, qsizetype end, const QColor &fgcolor,
+            [=](qsizetype begin, qusizetype length, const QColor &fgcolor,
                 const QColor &bgcolor, const QString &comment) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->metadata()->metadata(begin, end, fgcolor,
-                                                     bgcolor, comment);
+                    return doc->metadata()->metadata(begin, begin + length,
+                                                     fgcolor, bgcolor, comment);
                 }
                 return false;
             });
     connect(pctl,
-            QOverload<qsizetype, qsizetype, const QColor &, const QColor &,
+            QOverload<qsizetype, qusizetype, const QColor &, const QColor &,
                       const QString &>::of(&WingPlugin::Controller::metadata),
             _win,
-            [=](qsizetype begin, qsizetype end, const QColor &fgcolor,
+            [=](qsizetype begin, qusizetype length, const QColor &fgcolor,
                 const QColor &bgcolor, const QString &comment) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->metadata()->metadata(begin, end, fgcolor,
-                                                     bgcolor, comment);
+                    return doc->metadata()->metadata(begin, begin + length,
+                                                     fgcolor, bgcolor, comment);
                 }
                 return false;
             });
@@ -1340,34 +1360,39 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         }
         return false;
     });
+    connect(pctl, &WingPlugin::Controller::comment, _win,
+            [=](qsizetype begin, qusizetype length,
+                const QString &comment) -> bool {
+                auto e = pluginCurrentEditor(plg);
+                if (e) {
+                    auto doc = e->hexEditor()->document();
+                    return doc->metadata()->comment(begin, begin + length,
+                                                    comment);
+                }
+                return false;
+            });
     connect(
-        pctl, &WingPlugin::Controller::comment, _win,
-        [=](qsizetype begin, qsizetype end, const QString &comment) -> bool {
+        pctl, &WingPlugin::Controller::foreground, _win,
+        [=](qsizetype begin, qusizetype length, const QColor &fgcolor) -> bool {
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
-                return doc->metadata()->comment(begin, end, comment);
+                return doc->metadata()->foreground(begin, begin + length,
+                                                   fgcolor);
             }
             return false;
         });
-    connect(pctl, &WingPlugin::Controller::foreground, _win,
-            [=](qsizetype begin, qsizetype end, const QColor &fgcolor) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    return doc->metadata()->foreground(begin, end, fgcolor);
-                }
-                return false;
-            });
-    connect(pctl, &WingPlugin::Controller::background, _win,
-            [=](qsizetype begin, qsizetype end, const QColor &bgcolor) -> bool {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    return doc->metadata()->background(begin, end, bgcolor);
-                }
-                return false;
-            });
+    connect(
+        pctl, &WingPlugin::Controller::background, _win,
+        [=](qsizetype begin, qusizetype length, const QColor &bgcolor) -> bool {
+            auto e = pluginCurrentEditor(plg);
+            if (e) {
+                auto doc = e->hexEditor()->document();
+                return doc->metadata()->background(begin, begin + length,
+                                                   bgcolor);
+            }
+            return false;
+        });
     connect(pctl, &WingPlugin::Controller::setMetaVisible, _win,
             [=](bool b) -> bool {
                 auto e = pluginCurrentEditor(plg);
@@ -1857,7 +1882,7 @@ void PluginSystem::LoadPlugin() {
 
     _angelplg = new WingAngelAPI;
 
-    auto ret = loadPlugin(_angelplg, QDir());
+    auto ret = loadPlugin(_angelplg, std::nullopt);
     Q_ASSERT(ret);
     Q_UNUSED(ret);
 

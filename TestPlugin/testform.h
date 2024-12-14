@@ -21,6 +21,8 @@
 #ifndef TESTFORM_H
 #define TESTFORM_H
 
+#include "iwingplugin.h"
+
 #include <QWidget>
 
 namespace Ui {
@@ -31,11 +33,37 @@ class TestForm : public QWidget {
     Q_OBJECT
 
 public:
-    explicit TestForm(QWidget *parent = nullptr);
+    // copy from LogError
+    enum Level : int {
+        q1ERROR,
+        q2WARN,
+        q3INFO,
+        q4DEBUG,
+        q5TRACE,
+        LEVEL_BEGIN = q1ERROR,
+        LEVEL_LAST = q5TRACE,
+        LEVEL_END = LEVEL_LAST + 1
+    };
+    Q_ENUM(Level)
+
+public:
+    explicit TestForm(WingHex::IWingPlugin *plg, QWidget *parent = nullptr);
     ~TestForm();
+
+private slots:
+    void on_btnSendLog_clicked();
+
+    void on_btnSendToast_clicked();
+
+private:
+    void initLogCombo();
+
+    void initStyleCombo();
 
 private:
     Ui::TestForm *ui;
+
+    WingHex::IWingPlugin *_plg;
 };
 
 #endif // TESTFORM_H

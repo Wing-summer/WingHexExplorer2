@@ -31,7 +31,8 @@ constexpr inline bool QNothrowHashable_v = QNothrowHashable<T>::value;
 } // namespace QtPrivate
 
 template <typename... T>
-constexpr qhash_result_t qHashMulti(size_t seed, const T &...args) noexcept(
+constexpr qhash_result_t
+qHashMulti(qhash_result_t seed, const T &...args) noexcept(
     std::conjunction_v<QtPrivate::QNothrowHashable<T>...>) {
     QtPrivate::QHashCombine hash;
     return ((seed = hash(seed, args)), ...), seed;
@@ -84,6 +85,9 @@ public:
 
     /*============================*/
     // added by wingsummer
+
+    void beginMarco(const QString &text);
+    void endMarco();
 
     void ModifyMetadata(QHexMetadataItem newmeta, QHexMetadataItem oldmeta);
     void RemoveMetadatas(const QList<QHexMetadataItem> &items);

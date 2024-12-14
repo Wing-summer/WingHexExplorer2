@@ -23,6 +23,8 @@
 
 #include "settingpage.h"
 
+#include <memory>
+
 #include <QCryptographicHash>
 #include <QDockWidget>
 #include <QList>
@@ -44,6 +46,8 @@
  */
 
 namespace WingHex {
+
+using qusizetype = QIntegerForSizeof<std::size_t>::Unsigned;
 
 Q_DECL_UNUSED constexpr auto SDKVERSION = 14;
 
@@ -73,15 +77,14 @@ enum ErrFile : int {
 };
 Q_ENUM_NS(ErrFile)
 
+Q_NAMESPACE
+enum class SelectionMode : int { Add, Remove, Single };
+Q_ENUM_NS(SelectionMode)
+
 struct FindResult {
     qsizetype offset = -1;
     qsizetype line = -1;
     qsizetype col = -1;
-};
-
-struct BookMark {
-    qsizetype pos = -1;
-    QString comment;
 };
 
 class IWingPlugin;
@@ -108,31 +111,6 @@ struct HexPosition {
     }
 };
 
-struct HexMetadataItem {
-    qsizetype begin;
-    qsizetype end;
-    QColor foreground, background;
-    QString comment;
-
-    // added by wingsummer
-    bool operator==(const HexMetadataItem &item) {
-        return begin == item.begin && end == item.end &&
-               foreground == item.foreground && background == item.background &&
-               comment == item.comment;
-    }
-
-    HexMetadataItem() = default;
-
-    HexMetadataItem(qsizetype begin, qsizetype end, QColor foreground,
-                    QColor background, QString comment) {
-        this->begin = begin;
-        this->end = end;
-        this->foreground = foreground;
-        this->background = background;
-        this->comment = comment;
-    }
-};
-
 namespace WingPlugin {
 
 class Reader : public QObject {
@@ -148,12 +126,18 @@ signals:
     qsizetype documentLines();
     qsizetype documentBytes();
     WingHex::HexPosition currentPos();
-    WingHex::HexPosition selectionPos();
     qsizetype currentRow();
     qsizetype currentColumn();
     qsizetype currentOffset();
     qsizetype selectedLength();
-    QByteArray selectedBytes();
+
+    QByteArray selectedBytes(qsizetype index);
+    QByteArrayList selectionBytes();
+
+    WingHex::HexPosition selectionStart(qsizetype index);
+    WingHex::HexPosition selectionEnd(qsizetype index);
+    qsizetype selectionLength(qsizetype index);
+    qsizetype selectionCount();
 
     bool stringVisible();
     bool addressVisible();
@@ -191,14 +175,11 @@ signals:
 
     // metadata
     bool lineHasMetadata(qsizetype line);
-    QList<WingHex::HexMetadataItem> getMetadatas(qsizetype offset);
 
     // bookmark
     bool lineHasBookMark(qsizetype line);
     QList<qsizetype> getsBookmarkPos(qsizetype line);
-    WingHex::BookMark bookMark(qsizetype pos);
     QString bookMarkComment(qsizetype pos);
-    QList<WingHex::BookMark> getBookMarks();
     bool existBookMark(qsizetype pos);
 
     // extension
@@ -258,17 +239,19 @@ signals:
     bool removeAll(); // extension
 
     // cursor
-    bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1);
-    bool moveTo(qsizetype offset);
-    bool select(qsizetype offset, qsizetype length);
+    bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1,
+                bool clearSelection = true);
+    bool moveTo(qsizetype offset, bool clearSelection = true);
+    bool select(qsizetype offset, qsizetype length,
+                SelectionMode mode = SelectionMode::Add);
     bool setInsertionMode(bool isinsert);
 
     // metadata
-    bool foreground(qsizetype begin, qsizetype end, const QColor &fgcolor);
-    bool background(qsizetype begin, qsizetype end, const QColor &bgcolor);
-    bool comment(qsizetype begin, qsizetype end, const QString &comment);
+    bool foreground(qsizetype begin, qusizetype length, const QColor &fgcolor);
+    bool background(qsizetype begin, qusizetype length, const QColor &bgcolor);
+    bool comment(qsizetype begin, qusizetype length, const QString &comment);
 
-    bool metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
+    bool metadata(qsizetype begin, qusizetype length, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
 
     bool removeMetadata(qsizetype offset);
@@ -523,8 +506,8 @@ public:
     virtual const QString signature() const = 0;
     virtual ~IWingPlugin() = default;
 
-    virtual bool init(const QSettings &set) = 0;
-    virtual void unload(QSettings &set) = 0;
+    virtual bool init(const std::unique_ptr<QSettings> &set) = 0;
+    virtual void unload(std::unique_ptr<QSettings> &set) = 0;
     virtual const QString pluginName() const = 0;
     virtual const QString pluginAuthor() const = 0;
     virtual uint pluginVersion() const = 0;

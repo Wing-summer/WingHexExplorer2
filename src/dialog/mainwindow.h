@@ -187,7 +187,7 @@ private slots:
 
     void on_viewtxt();
     void on_fullScreen();
-    void on_restoreLayout();
+    void on_saveLayout();
     void on_exportlog();
     void on_clslog();
 

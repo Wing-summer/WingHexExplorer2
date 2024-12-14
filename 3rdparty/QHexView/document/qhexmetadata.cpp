@@ -177,6 +177,10 @@ bool QHexMetadata::lineHasMetadata(qsizetype line) const {
 
 qsizetype QHexMetadata::size() const { return m_metadata.size(); }
 
+void QHexMetadata::beginMarco(const QString &text) { m_undo->beginMacro(text); }
+
+void QHexMetadata::endMarco() { m_undo->endMacro(); }
+
 void QHexMetadata::clear() {
     m_linemeta.clear();
     m_metadata.clear();

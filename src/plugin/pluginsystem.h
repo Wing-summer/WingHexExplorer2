@@ -126,7 +126,7 @@ private:
     QString getPUID(IWingPlugin *p);
 
 private:
-    bool loadPlugin(IWingPlugin *p, const QDir &setdir);
+    bool loadPlugin(IWingPlugin *p, const std::optional<QDir> &setdir);
 
     void connectInterface(IWingPlugin *plg);
     void connectLoadingInterface(IWingPlugin *plg);

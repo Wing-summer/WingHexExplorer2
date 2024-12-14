@@ -2965,6 +2965,8 @@ Toast
     qproperty-fontPointSize: 18;
 }
 
+QStatusBar::item { border: 0px solid black; }
+
 /* style sheet for ScriptEditor */
 QEditor
 {

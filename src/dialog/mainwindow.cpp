@@ -26,6 +26,7 @@
 #include "class/appmanager.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
+#include "class/layoutmanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
 #include "class/scriptconsolemachine.h"
@@ -1133,8 +1134,28 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("Layout"));
         addPannelAction(pannel, QStringLiteral("fullscreen"), tr("Fullscreen"),
                         &MainWindow::on_fullScreen);
+
+        auto &l = LayoutManager::instance().layouts();
+
+        auto menu = new QMenu(this);
+        menu->addAction(newAction(
+            tr("Default"), [this]() { m_dock->restoreState(_defaultLayout); }));
+
+        if (!l.isEmpty()) {
+            menu->addSeparator();
+        }
+
+        for (auto p = l.constKeyValueBegin(); p != l.constKeyValueEnd(); ++p) {
+            auto layout = p->second;
+            menu->addAction(newAction(
+                p->first, [this, layout]() { m_dock->restoreState(layout); }));
+        }
+
         addPannelAction(pannel, QStringLiteral("layout"), tr("RestoreLayout"),
-                        &MainWindow::on_restoreLayout);
+                        EMPTY_FUNC, {}, menu);
+
+        addPannelAction(pannel, QStringLiteral("layoutexport"),
+                        tr("SaveLayout"), &MainWindow::on_saveLayout);
     }
 
     {
@@ -1648,7 +1669,7 @@ void MainWindow::on_savesel() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
     QFile qfile(filename);
     if (qfile.open(QFile::WriteOnly)) {
-        auto buffer = hexeditor->selectedBytes();
+        auto buffer = hexeditor->selectedBytes().join();
         qfile.write(buffer);
         qfile.close();
         Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
@@ -1743,7 +1764,7 @@ void MainWindow::on_findfile() {
     }
     auto hexeditor = editor->hexEditor();
     FindDialog fd(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
-                  hexeditor->selectlength() > 1, this);
+                  hexeditor->selectionCount() == 1, this);
     if (fd.exec()) {
         FindDialog::Result r;
         auto res = fd.getResult(r);
@@ -1801,12 +1822,12 @@ void MainWindow::on_checksum() {
         auto cs = d.getResults();
         auto hashes = Utilities::supportedHashAlgorithms();
 
-        if (editor->hexEditor()->selectlength() > 1) {
+        if (editor->hexEditor()->hasSelection()) {
             auto data = editor->hexEditor()->selectedBytes();
             for (auto &c : cs) {
                 auto h = hashes.at(c);
                 QCryptographicHash hash(h);
-                hash.addData(data);
+                hash.addData(data.join());
                 _hashModel->setCheckSumData(h, hash.result().toHex().toUpper());
             }
         } else {
@@ -1892,11 +1913,17 @@ void MainWindow::on_fill() {
         auto ch = char(in.toULongLong(&b, 0));
         if (b) {
             auto doc = hexeditor->document();
-            if (doc->isEmpty() || hexeditor->selectlength() == 0)
+            if (doc->isEmpty() || !hexeditor->hasSelection())
                 return;
-            auto pos = hexeditor->cursor()->selectionStart().offset();
-            hexeditor->Replace(
-                pos, QByteArray(int(hexeditor->selectlength()), char(ch)));
+
+            auto total = hexeditor->selectionCount();
+            doc->beginMarco(QStringLiteral("FillBytes"));
+            for (int i = 0; i < total; ++i) {
+                auto pos = hexeditor->cursor()->selectionStart(i).offset();
+                hexeditor->Replace(
+                    pos, QByteArray(int(hexeditor->hasSelection()), char(ch)));
+            }
+            doc->endMarco();
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("fill")),
                          tr("FillInputError"));
@@ -1910,11 +1937,18 @@ void MainWindow::on_fillzero() {
         return;
     }
     auto doc = hexeditor->document();
-    if (doc->isEmpty() || hexeditor->selectlength() == 0)
+    if (doc->isEmpty() || !hexeditor->hasSelection())
         return;
-    auto pos = hexeditor->cursor()->selectionStart().offset();
-    hexeditor->Replace(pos,
-                       QByteArray(int(hexeditor->selectlength()), char(0)));
+
+    auto cur = hexeditor->cursor();
+    auto total = cur->selectionCount();
+    doc->beginMarco(QStringLiteral("FillZero"));
+    for (int i = 0; i < total; ++i) {
+        auto pos = cur->selectionStart(i).offset();
+        hexeditor->Replace(pos,
+                           QByteArray(int(hexeditor->hasSelection()), char(0)));
+    }
+    doc->endMarco();
 }
 
 void MainWindow::on_bookmark() {
@@ -1977,12 +2011,19 @@ void MainWindow::on_metadata() {
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
-        if (cur->selectionLength() > 0) {
-            auto begin = cur->selectionStart().offset();
-            auto end = cur->selectionEnd().offset() + 1;
+        if (cur->hasSelection()) {
             if (m.exec()) {
-                doc->metadata()->Metadata(begin, end, m.foreGroundColor(),
-                                          m.backGroundColor(), m.comment());
+                auto total = cur->selectionCount();
+                auto meta = doc->metadata();
+                meta->beginMarco(QStringLiteral("MetaData"));
+                for (int i = 0; i < total; ++i) {
+                    auto begin = cur->selectionStart(i).offset();
+                    auto end = cur->selectionEnd(i).offset() + 1;
+                    meta->Metadata(begin, end, m.foreGroundColor(),
+                                   m.backGroundColor(), m.comment());
+                }
+                meta->endMarco();
+                cur->clearSelection();
             }
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
@@ -2001,7 +2042,7 @@ void MainWindow::on_metadataedit() {
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
-        if (cur->selectionLength() > 0) {
+        if (cur->currentSelectionLength() > 0) {
             auto mc = doc->metadata()->gets(cur->position().offset());
 
             if (mc.length() > 0) {
@@ -2190,7 +2231,7 @@ void MainWindow::on_locChanged() {
     m_lblloc->setText(QStringLiteral("(%1,%2)")
                           .arg(hexeditor->currentRow())
                           .arg(hexeditor->currentColumn()));
-    auto sellen = hexeditor->selectlength();
+    auto sellen = hexeditor->currentSelectionLength();
     m_lblsellen->setText(QStringLiteral("%1 - 0x%2")
                              .arg(sellen)
                              .arg(QString::number(sellen, 16).toUpper()));
@@ -2268,27 +2309,55 @@ void MainWindow::on_locChanged() {
     }
 
     // 解码字符串
-    if (sellen > 1) {
+    auto cursor = hexeditor->cursor();
+    QByteArrayList buffer;
+    bool isPreview = false;
+    if (cursor->previewSelectionMode() != QHexCursor::SelectionRemove &&
+        cursor->hasPreviewSelection()) {
+        buffer.append(hexeditor->previewSelectedBytes());
+        isPreview = true;
+    }
+
+    if (buffer.isEmpty()) {
+        if (hexeditor->selectionCount() > 0) {
+            buffer = hexeditor->selectedBytes();
+        }
+    }
+
+    auto total = buffer.size();
+    m_txtDecode->clear();
+
+    for (int i = 0; i < total; i++) {
+        auto b = buffer.at(i);
+
+        if (!isPreview) {
+            m_txtDecode->insertHtml(
+                QStringLiteral("<font color=\"gold\">[ %1 / %2 ]</font><br />")
+                    .arg(i + 1)
+                    .arg(total));
+        }
+
         // 如果不超过 10KB （默认）那么解码，防止太多卡死
-        if (sellen <= 1024 * _decstrlim) {
+        if (buffer.length() <= 1024 * _decstrlim) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             auto enc = QStringConverter::encodingForName(
                 hexeditor->renderer()->encoding().toUtf8());
             Q_ASSERT(enc.has_value());
             QStringDecoder dec(enc.value());
-            m_txtDecode->setText(dec.decode(hexeditor->selectedBytes()));
+
+            m_txtDecode->insertPlainText(dec.decode(b));
 #else
             auto enc = QTextCodec::codecForName(
                 hexeditor->renderer()->encoding().toUtf8());
             auto dec = enc->makeDecoder();
-            m_txtDecode->setText(dec->toUnicode(hexeditor->selectedBytes()));
+            m_txtDecode->setText(dec->toUnicode(b));
 #endif
+            m_txtDecode->insertPlainText(QStringLiteral("\n"));
         } else {
-            m_txtDecode->setHtml(QStringLiteral("<font color=\"red\">%1</font>")
-                                     .arg(tr("TooManyBytesDecode")));
+            m_txtDecode->insertHtml(
+                QStringLiteral("<font color=\"red\">%1</font><br />")
+                    .arg(tr("TooManyBytesDecode")));
         }
-    } else {
-        m_txtDecode->clear();
     }
 }
 
@@ -2308,7 +2377,23 @@ void MainWindow::on_fullScreen() {
     }
 }
 
-void MainWindow::on_restoreLayout() { m_dock->restoreState(_defaultLayout); }
+void MainWindow::on_saveLayout() {
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("SaveLayout"), m_lastusedpath,
+        QStringLiteral("Layout (*.wing-layout)"));
+    if (!filename.isEmpty()) {
+        QFile f(filename);
+        if (f.open(QFile::WriteOnly)) {
+            f.write(m_dock->saveState());
+            f.close();
+            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                         tr("SaveLayoutSuccess"));
+        } else {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                         tr("SaveLayoutError"));
+        }
+    }
+}
 
 void MainWindow::on_exportlog() {
     auto nfile = saveLog();
@@ -2469,7 +2554,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
         if (hexeditor->documentBytes() > 0) {
             MetaDialog m(this);
             auto cur = hexeditor->cursor();
-            if (cur->selectionLength() > 0) {
+            if (cur->hasSelection()) {
                 auto mc = doc->metadata()->gets(cur->position().offset());
 
                 if (mc.length() > 0) {
@@ -2490,12 +2575,18 @@ void MainWindow::connectEditorView(EditorView *editor) {
                         mi->ModifyMetadata(meta, o);
                     }
                 } else {
-                    auto begin = cur->selectionStart().offset();
-                    auto end = cur->selectionEnd().offset() + 1;
+                    auto total = hexeditor->selectionCount();
                     if (m.exec()) {
-                        doc->metadata()->Metadata(
-                            begin, end, m.foreGroundColor(),
-                            m.backGroundColor(), m.comment());
+                        auto meta = doc->metadata();
+                        meta->beginMarco(QStringLiteral("OnMetaData"));
+                        for (int i = 0; i < total; ++i) {
+                            auto begin = cur->selectionStart(i).offset();
+                            auto end = cur->selectionEnd(i).offset() + 1;
+                            meta->Metadata(begin, end, m.foreGroundColor(),
+                                           m.backGroundColor(), m.comment());
+                        }
+                        meta->endMarco();
+                        cur->clearSelection();
                     }
                 }
             } else {

@@ -18,7 +18,11 @@ int main(int argc, char *argv[]) {
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 
-    QGuiApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+    QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+
+    QApplication::setApplicationName(APP_NAME);
+    QApplication::setOrganizationName(APP_ORG);
+    QApplication::setApplicationVersion(WINGHEX_VERSION);
 
     try {
         AppManager a(argc, argv);

@@ -44,7 +44,13 @@ qsizetype QHexView::currentRow() { return m_cursor->currentLine(); }
 qsizetype QHexView::currentColumn() { return m_cursor->currentColumn(); }
 qsizetype QHexView::currentOffset() { return m_cursor->position().offset(); }
 
-qsizetype QHexView::selectlength() { return m_cursor->selectionLength(); }
+qsizetype QHexView::currentSelectionLength() {
+    return m_cursor->currentSelectionLength();
+}
+
+qsizetype QHexView::selectionCount() { return m_cursor->selectionCount(); }
+
+bool QHexView::hasSelection() { return m_cursor->hasSelection(); }
 
 bool QHexView::asciiVisible() { return m_renderer->stringVisible(); }
 
@@ -100,13 +106,15 @@ void QHexView::getStatus() {
 }
 
 void QHexView::establishSignal(QHexDocument *doc) {
-    connect(doc, &QHexDocument::documentChanged, this, [&]() {
+    connect(doc, &QHexDocument::documentChanged, this, [this]() {
         this->adjustScrollBars();
         this->viewport()->update();
     });
 
     connect(m_cursor, &QHexCursor::positionChanged, this,
             &QHexView::moveToSelection);
+    connect(m_cursor, &QHexCursor::selectionChanged, this,
+            [this]() { this->viewport()->update(); });
     connect(m_cursor, &QHexCursor::insertionModeChanged, this,
             &QHexView::renderCurrentLine);
     connect(doc, &QHexDocument::canUndoChanged, this,
@@ -283,9 +291,6 @@ qsizetype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
     qsizetype startPos;
     if (begin < 0) {
         startPos = m_cursor->position().offset() - 1;
-        if (m_cursor->hasSelection()) {
-            startPos = m_cursor->selectionStart().offset() - 1;
-        }
     } else {
         startPos = begin;
     }
@@ -296,10 +301,17 @@ bool QHexView::RemoveSelection(int nibbleindex) {
     if (!m_cursor->hasSelection())
         return false;
 
-    auto res = m_document->Remove(m_cursor, m_cursor->selectionStart().offset(),
-                                  m_cursor->selectionLength(), nibbleindex);
-    if (res)
-        m_cursor->clearSelection();
+    auto total = m_cursor->selectionCount();
+    bool res = true;
+    m_document->beginMarco(QStringLiteral(""));
+    for (int i = 0; i < total; ++i) {
+        res &=
+            m_document->Remove(m_cursor, m_cursor->selectionStart(i).offset(),
+                               m_cursor->selectionLength(i), nibbleindex);
+    }
+    m_document->endMarco();
+    m_cursor->clearSelection();
+
     return res;
 }
 
@@ -307,10 +319,16 @@ bool QHexView::removeSelection() {
     if (!m_cursor->hasSelection())
         return false;
 
-    auto res = m_document->remove(m_cursor->selectionStart().offset(),
-                                  m_cursor->selectionLength());
-    if (res)
-        m_cursor->clearSelection();
+    // We essure selections are ordered by desending
+    // by selection-start, so it's safe to remove
+    auto total = m_cursor->selectionCount();
+    bool res = true;
+    for (int i = 0; i < total; ++i) {
+        res &= m_document->remove(m_cursor->selectionStart(i).offset(),
+                                  m_cursor->selectionLength(i));
+    }
+
+    m_cursor->clearSelection();
     return res;
 }
 
@@ -318,12 +336,27 @@ bool QHexView::atEnd() const {
     return m_cursor->position().offset() >= m_document->length();
 }
 
-QByteArray QHexView::selectedBytes() const {
-    if (!m_cursor->hasSelection())
-        return QByteArray();
+QByteArray QHexView::selectedBytes(qsizetype index) const {
+    return m_document->read(m_cursor->selectionStart(index).offset(),
+                            m_cursor->currentSelectionLength());
+}
 
-    return m_document->read(m_cursor->selectionStart().offset(),
-                            m_cursor->selectionLength());
+QByteArray QHexView::previewSelectedBytes() const {
+    auto sel = m_cursor->previewSelection().normalized();
+    return m_document->read(sel.start.offset(), sel.length());
+}
+
+QByteArrayList QHexView::selectedBytes() const {
+    if (!m_cursor->hasSelection())
+        return {};
+
+    QByteArrayList res;
+    auto total = m_cursor->selectionCount();
+    for (int i = 0; i < total; ++i) {
+        res << m_document->read(m_cursor->selectionStart(i).offset(),
+                                m_cursor->selectionLength(i));
+    }
+    return res;
 }
 
 void QHexView::paste(bool hex) {
@@ -412,7 +445,7 @@ bool QHexView::copy(bool hex) {
 
     QClipboard *c = qApp->clipboard();
 
-    auto len = m_cursor->selectionLength();
+    auto len = currentSelectionLength();
 
     // 如果拷贝字节超过 ? MB 阻止
     if (len > 1024 * 1024 * m_copylimit) {
@@ -420,7 +453,7 @@ bool QHexView::copy(bool hex) {
         return false;
     }
 
-    QByteArray bytes = this->selectedBytes();
+    QByteArray bytes = this->selectedBytes().join();
 
     if (hex)
         bytes = bytes.toHex(' ').toUpper();
@@ -521,8 +554,18 @@ void QHexView::mousePressEvent(QMouseEvent *e) {
 
     m_renderer->selectArea(abspos);
 
-    if (m_renderer->editableArea(m_renderer->selectedArea()))
-        m_cursor->moveTo(position);
+    if (m_renderer->editableArea(m_renderer->selectedArea())) {
+        auto m = getSelectionMode();
+        bool clearSelection = false;
+        if (m == QHexCursor::SelectionNormal) {
+            clearSelection = m_cursor->selectionCount() <= 1 ||
+                             e->modifiers().testFlag(Qt::ControlModifier);
+        } else if (m == QHexCursor::SelectionSingle) {
+            clearSelection = true;
+        }
+
+        m_cursor->moveTo(position, clearSelection);
+    }
 
     e->accept();
 }
@@ -546,7 +589,9 @@ void QHexView::mouseMoveEvent(QMouseEvent *e) {
         if (!m_renderer->hitTest(abspos, &position, this->firstVisibleLine()))
             return;
 
-        cursor->select(position.line, position.column, 0);
+        cursor->select(position.line, position.column, 0,
+                       QHexCursor::SelectionModes(
+                           getSelectionMode() | QHexCursor::SelectionPreview));
         e->accept();
     }
 
@@ -567,6 +612,13 @@ void QHexView::mouseReleaseEvent(QMouseEvent *e) {
         return;
     if (!m_blinktimer->isActive())
         m_blinktimer->start();
+
+    if (m_cursor->hasPreviewSelection()) {
+        auto sel = m_cursor->previewSelection();
+        m_cursor->mergePreviewSelection();
+        m_cursor->moveTo(sel.end);
+    }
+
     e->accept();
 }
 
@@ -706,7 +758,7 @@ void QHexView::moveNext(bool select) {
 
     if (select)
         cur->select(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
-                    nibbleindex);
+                    nibbleindex, QHexCursor::SelectionAdd);
     else
         cur->moveTo(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
                     nibbleindex);
@@ -747,6 +799,34 @@ void QHexView::movePrevious(bool select) {
         cur->select(line, std::max(0, column), nibbleindex);
     else
         cur->moveTo(line, std::max(0, column), nibbleindex);
+}
+
+QHexCursor::SelectionMode QHexView::getSelectionMode() const {
+    auto mods = qApp->keyboardModifiers();
+
+    bool pressedShift = mods.testFlag(Qt::ShiftModifier);
+    bool pressedAlt = mods.testFlag(Qt::AltModifier);
+    bool pressedControl = mods.testFlag(Qt::ControlModifier);
+
+    if (pressedAlt && pressedShift) {
+        pressedShift = false;
+        pressedAlt = false;
+        pressedControl = true;
+    }
+
+    if (pressedControl) {
+        return QHexCursor::SelectionSingle;
+    }
+
+    if (pressedShift) {
+        return QHexCursor::SelectionAdd;
+    }
+
+    if (pressedAlt) {
+        return QHexCursor::SelectionRemove;
+    }
+
+    return QHexCursor::SelectionNormal;
 }
 
 void QHexView::renderCurrentLine() {
@@ -896,7 +976,7 @@ bool QHexView::processMove(QHexCursor *cur, QKeyEvent *e) {
 
         if (e->matches(QKeySequence::MoveToEndOfDocument))
             cur->moveTo(m_renderer->documentLastLine(),
-                        m_renderer->documentLastColumn());
+                        int(m_renderer->documentLastColumn()));
         else
             cur->select(m_renderer->documentLastLine(),
                         m_renderer->documentLastColumn());
@@ -911,7 +991,7 @@ bool QHexView::processMove(QHexCursor *cur, QKeyEvent *e) {
         if (e->matches(QKeySequence::MoveToEndOfLine)) {
             if (cur->currentLine() == m_renderer->documentLastLine())
                 cur->moveTo(cur->currentLine(),
-                            m_renderer->documentLastColumn());
+                            int(m_renderer->documentLastColumn()));
             else
                 cur->moveTo(cur->currentLine(), m_renderer->hexLineWidth() - 1,
                             0);

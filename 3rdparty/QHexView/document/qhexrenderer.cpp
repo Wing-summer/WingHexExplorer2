@@ -429,8 +429,31 @@ void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
     if (!m_cursor->isLineSelected(line))
         return;
 
-    const QHexPosition &startsel = m_cursor->selectionStart();
-    const QHexPosition &endsel = m_cursor->selectionEnd();
+    auto total = m_cursor->selectionCount();
+    for (int i = 0; i < total; ++i) {
+        applySelection(m_cursor->selection(i), textcursor, line, factor, false,
+                       false);
+    }
+
+    if (m_cursor->hasPreviewSelection()) {
+        applySelection(
+            m_cursor->previewSelection().normalized(), textcursor, line, factor,
+            m_cursor->previewSelectionMode() == QHexCursor::SelectionRemove,
+            m_cursor->previewSelectionMode() == QHexCursor::SelectionNormal &&
+                m_cursor->hasInternalSelection());
+    }
+}
+
+void QHexRenderer::applySelection(const QHexSelection &selection,
+                                  QTextCursor &textcursor, qsizetype line,
+                                  Factor factor, bool strikeOut,
+                                  bool hasSelection) const {
+    if (!selection.isLineSelected(line)) {
+        return;
+    }
+
+    const QHexPosition &startsel = selection.start;
+    const QHexPosition &endsel = selection.end;
 
     if (startsel.line == endsel.line) {
         textcursor.setPosition(startsel.column * factor);
@@ -455,8 +478,13 @@ void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
         textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
 
     QTextCharFormat charformat;
-    charformat.setBackground(m_selBackgroundColor);
-    charformat.setForeground(m_selectionColor);
+    charformat.setBackground(strikeOut || hasSelection
+                                 ? m_selBackgroundColor.darker()
+                                 : m_selBackgroundColor);
+    charformat.setForeground(strikeOut ? m_selectionColor.darker()
+                                       : m_selectionColor);
+    charformat.setFontStrikeOut(strikeOut);
+    charformat.setFontItalic(strikeOut);
     textcursor.mergeCharFormat(charformat);
 }
 
@@ -543,7 +571,7 @@ void QHexRenderer::drawHex(QPainter *painter, const QRect &linerect,
     textcursor.insertText(this->hexString(line, &rawline));
 
     if (line == this->documentLastLine())
-        textcursor.insertText(" ");
+        textcursor.insertText(QStringLiteral(" "));
 
     QRect hexrect = linerect;
     hexrect.setX(this->getHexColumnX() + this->borderSize());

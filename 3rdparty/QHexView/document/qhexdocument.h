@@ -104,6 +104,9 @@ public slots:
     void undo();
     void redo();
 
+    void beginMarco(const QString &text);
+    void endMarco();
+
     void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
     void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);

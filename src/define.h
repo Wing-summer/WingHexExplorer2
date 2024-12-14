@@ -1,6 +1,11 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-enum class CrashCode : int { LanguageFile = 1, PluginSetting };
+enum class CrashCode : int {
+    AlreadyStart,
+    LanguageFile,
+    PluginSetting,
+    GenericCallNotSupported
+};
 
 #endif // DEFINE_H
