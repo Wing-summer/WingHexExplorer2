@@ -17,6 +17,8 @@ find_package(
     Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network Concurrent
                                               PrintSupport Xml LinguistTools)
 
+install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
+
 option(BUILD_TEST_PLUGIN OFF)
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
@@ -533,4 +535,21 @@ set_target_properties(
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(WingHexExplorer2)
+endif()
+
+if(${QT_VERSION_MAJOR} EQUAL 6)
+    if(Qt6Widgets_VERSION VERSION_GREATER_EQUAL 6.5.0)
+        install(
+            TARGETS WingHexExplorer2
+            BUNDLE DESTINATION .
+            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+        # Generate the deployment script.
+        qt6_generate_deploy_app_script(
+            TARGET WingHexExplorer2 OUTPUT_SCRIPT deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR)
+
+        # Call the deployment script on "cmake --install".
+        install(SCRIPT ${deploy_script})
+    endif()
 endif()
