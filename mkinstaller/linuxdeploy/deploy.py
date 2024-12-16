@@ -146,6 +146,9 @@ def main():
     create_dir(os.path.join(installer_path_exec, "scripts"))
     create_dir(os.path.join(installer_path_exec, "aslib"))
 
+    shutil.copyfile(version_file_src, os.path.join(
+        installer_path_exec, "VERSION"))
+
     shutil.copytree(os.path.join(installer_path, "share"),
                     os.path.join(installer_path_exec, "share"), dirs_exist_ok=True)
 
@@ -175,17 +178,23 @@ def main():
     # in the end, start patching
     ld_execs = [filename for filename in os.listdir(os.path.join(
         installer_path_exec, "lib")) if filename.startswith("ld-linux")]
-    if (len(ld_execs) != 1):
+    
+    ld_count = len(ld_execs)
+    if (ld_count > 1):
         print(
             Fore.RED + "[Error] dynamic linker/loader can not be determined!" + Style.RESET_ALL)
         exit(-3)
 
-    ret = run_command_interactive(
-        ["patchelf", "--set-interpreter", f"./lib/{ld_execs[0]}", exemain_src])
-    if (ret != 0):
-        print(
-            Fore.RED + "[Error] patchelf error!" + Style.RESET_ALL)
-        exit(-4)
+    ld_exec = ""
+
+    if (ld_count == 1):
+        ld_exec = ld_execs[0]
+        ret = run_command_interactive(
+            ["patchelf", "--set-interpreter", f"./lib/{ld_exec}", exemain_src])
+        if (ret != 0):
+            print(
+                Fore.RED + "[Error] patchelf error!" + Style.RESET_ALL)
+            exit(-4)
 
     print(Fore.GREEN + ">> Calculating checksum..." + Style.RESET_ALL)
 
@@ -201,10 +210,13 @@ def main():
 
     print(Fore.GREEN + ">> Deployment finished..." + Style.RESET_ALL)
 
-    ld_path = os.path.join(installer_path_exec, "lib", ld_execs[0])
-    if (os.access(ld_path, os.X_OK) == False):
-        print(Fore.YELLOW + f"[Warn] {
-              ld_execs[0]} has no executable permission! You should set it for running a deployed program!" + Style.RESET_ALL)
+    if(ld_count == 1):
+        ld_path = os.path.join(installer_path_exec, "lib", ld_exec)
+        if (os.access(ld_path, os.X_OK) == False):
+            print(Fore.YELLOW + f"[Warn] {ld_exec} has no executable permission! You should set it for running a deployed program!" + Style.RESET_ALL)
+
+    with open(os.path.join(installer_path_exec, "LD_PATH"), "w") as ld_file:
+        ld_file.write(ld_exec)
 
     exit(0)
 

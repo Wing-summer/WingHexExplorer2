@@ -1,0 +1,2 @@
+colorama==0.4.6
+psutil==6.1.0

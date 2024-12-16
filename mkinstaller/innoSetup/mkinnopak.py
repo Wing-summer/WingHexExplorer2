@@ -40,16 +40,28 @@ def run_command_interactive(command):
 def main():
     parser = argparse.ArgumentParser(
         prog="mkdeb.py", description="A deb installer maker for WingHexExplorer2")
-
+    
     parser.add_argument(
-        "folder", help="A folder that has contained the binary build")
-    parser.add_argument("-c", "--cc", help="where ISCC.exe locates", default="C:\Program Files (x86)\Inno Setup 6\ISCC.exe")
-    parser.add_argument("-o", "--output", help="where to put the installer")
+        "folder", help="A folder that has contained the binary build", type=str
+    )
+    parser.add_argument(
+        "-c", "--cc", help="Where ISCC.exe locates", default=r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe", type=str
+    )
+    parser.add_argument(
+        "-o", "--output", help="Where to put the installer", type=str
+    )
+    parser.add_argument(
+        "--build", action="store_true", help="Build the installer"
+    )
+    parser.add_argument(
+        "--no-build", dest="build", action="store_false", help="Skip building the installer"
+    )
+    parser.set_defaults(build=True)
     
     args = parser.parse_args()
 
     # checking build toolkits
-    if (os.path.exists(args.cc) == False):
+    if (args.build and os.path.exists(args.cc) == False):
         print(Fore.RED +
               "[Error] InnoSetup is not installed on your system." + Style.RESET_ALL)
         exit(-5)
@@ -110,7 +122,13 @@ def main():
     os.mkdir(exeDebPath)
 
     # check
-    exemain_src = os.path.join(projectdeb, exe_name)
+    exemain_src = ""
+    
+    if(os.path.exists(os.path.join(projectdeb, "WingHexExplorer2.sln"))):
+        exemain_src = os.path.join(projectdeb, "Release", exe_name)  # only support Release for MSVC sln build (GitAction)
+    else:
+        exemain_src = os.path.join(projectdeb, exe_name)
+    
     if (os.path.exists(exemain_src) == False):
         print(
             Fore.RED + "[Error] WingHexExplorer2.exe is not found!" + Style.RESET_ALL)
@@ -177,7 +195,7 @@ def main():
 #define MyAppExeName "{exe_name}"
 #define MyAppLicenseFile "{os.path.join(exeDebPath, "LICENSE")}"
 #define MyAppExePath "{os.path.join(exeDebPath, exe_name)}"
-#define MyOutputBaseFilename "{package_name}_Setup_{version}_{platform.machine()}"
+#define MyOutputBaseFilename "{package_name}_Setup_v{version}_{platform.machine()}"
 
 """
     iss_content += r"""
@@ -248,17 +266,16 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
     with codecs.open(script_src,'w', "utf-8-sig") as iss:
         iss.write(iss_content)
 
-
+    if args.build == False:
+        exit(0)
+        
     print(Fore.GREEN + ">> Copying finished, running ISCC building..." + Style.RESET_ALL)
     
     pak_out = ""
     if args.output is None:
-        pak_out = exeDebPath
+        pak_out = os.path.join(exeDebPath,"..") 
     else:
         pak_out = args.output
-    
-    if len(args.cc) == 0:
-        exit(0)
     
     ret = run_command_interactive([args.cc, f'/O{pak_out}', script_src]) 
     exit(ret)

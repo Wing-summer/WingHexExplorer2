@@ -1,0 +1,63 @@
+name: CMake build release for linux
+
+on:
+  push:
+    branches:
+    - release
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        token: ${{ secrets.CONTRIBUTORS_TOKEN }}
+    - name: Install Qt
+      # Installs the Qt SDK
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: 6.8.1
+        host: 'linux'
+        target: 'desktop'
+        arch: 'linux_gcc_64'
+        cache: true
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/package
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install  
+      
+    - name: Install Packing Tools
+      run: sudo apt install fakeroot patchelf -y
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        cache: 'pip'
+
+    - name: Install Python packages
+      run: pip install -r ${{github.workspace}}/mkinstaller/linuxdeploy/requirements.txt
+
+    - name: Deploy WingHexExplorer2
+      run: python ${{github.workspace}}/mkinstaller/linuxdeploy/deploy.py ${{github.workspace}}/build
+
+    - name: +x for ld-linux if it has
+      run: sudo ${{github.workspace}}/mkinstaller/linuxdeploy/add-ld-x.sh ${{github.workspace}}/build/package
+
+    - name: Create installer
+      run: bash ${{github.workspace}}/mkinstaller/linuxdeploy/build.sh ${{github.workspace}}/build/package
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: WingHexExplorer2-linux-release-build-cache
+        path: ${{github.workspace}}/mkinstaller/linuxdeploy/build
