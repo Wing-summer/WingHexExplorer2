@@ -43,6 +43,11 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
 
     // 和日志与 UI 相关的接口此时可用，剩余的 API 初始化成功才可用
     _tform = emit createDialog(new TestForm(this));
+    if (_tform == nullptr) {
+        return false;
+    }
+    _tform->setWindowFlag(Qt::WindowStaysOnTopHint);
+    _tform->setMaximumHeight(500);
 
     using TBInfo = WingHex::WingRibbonToolBoxInfo;
     TBInfo::RibbonCatagories cats;

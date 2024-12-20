@@ -49,10 +49,14 @@ void CheckSumModel::clearData() {
 }
 
 int CheckSumModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return _checkSumData.size();
 }
 
-int CheckSumModel::columnCount(const QModelIndex &parent) const { return 1; }
+int CheckSumModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 1;
+}
 
 QVariant CheckSumModel::data(const QModelIndex &index, int role) const {
     switch (role) {

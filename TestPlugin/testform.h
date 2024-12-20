@@ -55,13 +55,79 @@ private slots:
 
     void on_btnSendToast_clicked();
 
+    void on_btnAboutQt_clicked();
+
+    void on_btnQuestion_clicked();
+
+    void on_btnWarning_clicked();
+
+    void on_btnCritical_clicked();
+
+    void on_btnAbout_clicked();
+
+    void on_btnMsgBox_clicked();
+
+    void on_btnText_clicked();
+
+    void on_btnMultiLineText_clicked();
+
+    void on_btnItem_clicked();
+
+    void on_btnInt_clicked();
+
+    void on_btnDouble_clicked();
+
+    void on_btnExistingDirectory_clicked();
+
+    void on_btnOpenFileName_clicked();
+
+    void on_btnOpenFileNames_clicked();
+
+    void on_btnSaveFileName_clicked();
+
+    void on_btnGetColor_clicked();
+
+    void on_btnText_2_clicked();
+
+    void on_btnTextList_clicked();
+
+    void on_btnTextTree_clicked();
+
+    void on_btnTextTable_clicked();
+
+    void on_btnTextListByModel_clicked();
+
+    void on_btnTextTableByModel_clicked();
+
+    void on_btnTextTreeByModel_clicked();
+
 private:
     void initLogCombo();
 
     void initStyleCombo();
 
+    void initMsgBoxCheckedBtnCombo();
+
+    void initMsgBoxBtnCombo();
+
+    void initMsgBoxIconCombo();
+
+    void initFileDialogOps();
+
+private:
+    QMessageBox::StandardButtons getMsgButtons() const;
+
+    QFileDialog::Options getFileDialogOptions() const;
+
+    void onDVClicked(const QModelIndex &index);
+
+    void onDVDoubleClicked(const QModelIndex &index);
+
 private:
     Ui::TestForm *ui;
+
+    WingHex::WingPlugin::DataVisual::ClickedCallBack _click;
+    WingHex::WingPlugin::DataVisual::DoubleClickedCallBack _dblclick;
 
     WingHex::IWingPlugin *_plg;
 };

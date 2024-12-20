@@ -41,9 +41,9 @@ void QHexRenderer::setAddressVisible(bool b) {
 
 QString QHexRenderer::encoding() {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    if (m_encoding.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive))
+    if (m_encoding.compare(QStringLiteral("ISO-8859-1"), Qt::CaseInsensitive))
         return m_encoding;
-    return QStringLiteral("ISO-8859-1");
+    return QStringLiteral("ASCII");
 #else
     return m_encoding;
 #endif

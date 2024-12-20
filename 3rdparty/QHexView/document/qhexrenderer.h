@@ -134,7 +134,7 @@ private:
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawString(QPainter *painter, const QRect &linerect, qsizetype line,
-                    QString encoding = "ASCII");
+                    QString encoding);
     void drawHeader(QPainter *painter);
 
 private:

@@ -163,6 +163,8 @@ private:
 
     CScriptArray *_HexReader_getSupportedEncodings();
 
+    CScriptArray *_HexReader_getStorageDrivers();
+
     bool _HexController_writeBytes(qsizetype offset, const CScriptArray &ba);
 
     bool _HexController_insertBytes(qsizetype offset, const CScriptArray &ba);

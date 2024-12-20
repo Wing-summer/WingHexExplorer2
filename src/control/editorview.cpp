@@ -265,16 +265,16 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         }
 
         m_docType = DocumentType::File;
-        m_fileName = info.fileName();
+        m_fileName = info.absoluteFilePath();
         m_isNewFile = false;
         p->setDocSaved();
 
-        this->setWindowTitle(m_fileName);
+        this->setWindowTitle(info.fileName());
         connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
-        tab->setIcon(Utilities::getIconFromFile(style(), filename));
-        tab->setToolTip(filename);
+        tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
+        tab->setToolTip(m_fileName);
     }
 
     return ErrFile::Success;
@@ -314,6 +314,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
 
         m_docType = DocumentType::File;
         m_isWorkSpace = true;
+
         this->tabWidget()->setIcon(ICONRES(QStringLiteral("pro")));
 
         return ret;
@@ -352,15 +353,15 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         }
 
         p->setDocSaved();
-        m_fileName = info.fileName();
+        m_fileName = info.absoluteFilePath();
         m_isNewFile = false;
 
-        this->setWindowTitle(m_fileName);
+        this->setWindowTitle(info.fileName());
         connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
-        tab->setIcon(Utilities::getIconFromFile(style(), filename));
-        tab->setToolTip(filename);
+        tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
+        tab->setToolTip(m_fileName);
     }
 
     return ErrFile::Success;
@@ -466,7 +467,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         file.close();
 
         if (!isExport) {
-            m_fileName = QFileInfo(fileName).fileName();
+            m_fileName = QFileInfo(fileName).absoluteFilePath();
             doc->setDocSaved();
         }
 
@@ -602,13 +603,15 @@ EditorView *EditorView::clone() {
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
 
-    ev->m_fileName = this->m_fileName + QStringLiteral(" : ") +
-                     QString::number(cloneIndex + 1);
+    ev->m_fileName = this->m_fileName;
 
     if (doc->isDocSaved()) {
-        ev->setWindowTitle(ev->m_fileName);
+        ev->setWindowTitle(QFileInfo(ev->m_fileName).fileName() +
+                           QStringLiteral(" : ") +
+                           QString::number(cloneIndex + 1));
     } else {
-        ev->setWindowTitle(QStringLiteral("* ") + m_fileName);
+        ev->setWindowTitle(QStringLiteral("* ") +
+                           QFileInfo(m_fileName).fileName());
     }
 
     ev->setIcon(this->icon());

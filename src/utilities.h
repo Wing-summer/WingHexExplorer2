@@ -110,8 +110,9 @@ public:
                     QStringConverter::Encoding(e));
                 if (ee == QStringLiteral("ISO-8859-1")) {
                     encodings << QStringLiteral("ASCII");
+                } else {
+                    encodings << ee;
                 }
-                encodings << ee;
             }
 #else
             for (auto &e : QTextCodec::availableCodecs()) {

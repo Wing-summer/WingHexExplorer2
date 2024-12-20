@@ -77,7 +77,17 @@ add_library(
     testform.ui
     ${QM_FILES}
     ${QM_RES}
-    resources.qrc)
+    resources.qrc
+    readertestform.h
+    readertestform.cpp
+    readertestform.ui
+    qchecklist.h
+    qchecklist.cpp
+    ctltestform.h
+    ctltestform.cpp
+    ctltestform.ui
+    testtablemodel.h
+    testtablemodel.cpp)
 
 set_target_properties(TestPlugin PROPERTIES SUFFIX ".wingplg")
 

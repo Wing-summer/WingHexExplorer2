@@ -23,6 +23,7 @@
 
 #include "settingpage.h"
 
+#include <functional>
 #include <memory>
 
 #include <QCryptographicHash>
@@ -73,7 +74,8 @@ enum ErrFile : int {
     WorkSpaceUnSaved = -8,
     SourceFileChanged = -9,
     ClonedFile = -10,
-    InvalidFormat = -11
+    InvalidFormat = -11,
+    TooManyOpenedFile = -12
 };
 Q_ENUM_NS(ErrFile)
 
@@ -95,7 +97,7 @@ struct HexPosition {
     quint8 lineWidth;
     int nibbleindex;
 
-    inline qsizetype offset() const {
+    Q_REQUIRED_RESULT inline qsizetype offset() const {
         return static_cast<qsizetype>(line * lineWidth) + column;
     }
     inline qsizetype operator-(const HexPosition &rhs) const {
@@ -116,185 +118,176 @@ namespace WingPlugin {
 class Reader : public QObject {
     Q_OBJECT
 signals:
-    bool isCurrentDocEditing();
-    QString currentDocFilename();
+    Q_REQUIRED_RESULT bool isCurrentDocEditing();
+    Q_REQUIRED_RESULT QString currentDocFilename();
 
     // document
-    bool isReadOnly();
-    bool isKeepSize();
-    bool isLocked();
-    qsizetype documentLines();
-    qsizetype documentBytes();
-    WingHex::HexPosition currentPos();
-    qsizetype currentRow();
-    qsizetype currentColumn();
-    qsizetype currentOffset();
-    qsizetype selectedLength();
+    Q_REQUIRED_RESULT bool isReadOnly();
+    Q_REQUIRED_RESULT bool isKeepSize();
+    Q_REQUIRED_RESULT bool isLocked();
+    Q_REQUIRED_RESULT qsizetype documentLines();
+    Q_REQUIRED_RESULT qsizetype documentBytes();
+    Q_REQUIRED_RESULT WingHex::HexPosition currentPos();
+    Q_REQUIRED_RESULT qsizetype currentRow();
+    Q_REQUIRED_RESULT qsizetype currentColumn();
+    Q_REQUIRED_RESULT qsizetype currentOffset();
+    Q_REQUIRED_RESULT qsizetype selectedLength();
 
-    QByteArray selectedBytes(qsizetype index);
-    QByteArrayList selectionBytes();
+    Q_REQUIRED_RESULT QByteArray selectedBytes(qsizetype index);
+    Q_REQUIRED_RESULT QByteArrayList selectionBytes();
 
-    WingHex::HexPosition selectionStart(qsizetype index);
-    WingHex::HexPosition selectionEnd(qsizetype index);
-    qsizetype selectionLength(qsizetype index);
-    qsizetype selectionCount();
+    Q_REQUIRED_RESULT WingHex::HexPosition selectionStart(qsizetype index);
+    Q_REQUIRED_RESULT WingHex::HexPosition selectionEnd(qsizetype index);
+    Q_REQUIRED_RESULT qsizetype selectionLength(qsizetype index);
+    Q_REQUIRED_RESULT qsizetype selectionCount();
 
-    bool stringVisible();
-    bool addressVisible();
-    bool headerVisible();
-    quintptr addressBase();
-    bool isModified();
+    Q_REQUIRED_RESULT bool stringVisible();
+    Q_REQUIRED_RESULT bool addressVisible();
+    Q_REQUIRED_RESULT bool headerVisible();
+    Q_REQUIRED_RESULT quintptr addressBase();
+    Q_REQUIRED_RESULT bool isModified();
 
-    bool isEmpty();
-    bool atEnd();
-    bool canUndo();
-    bool canRedo();
-
-    bool copy(bool hex = false);
-
-    qint8 readInt8(qsizetype offset);
-    qint16 readInt16(qsizetype offset);
-    qint32 readInt32(qsizetype offset);
-    qint64 readInt64(qsizetype offset);
-    float readFloat(qsizetype offset);
-    double readDouble(qsizetype offset);
-    QString readString(qsizetype offset, const QString &encoding = QString());
-    QByteArray readBytes(qsizetype offset, qsizetype count);
+    Q_REQUIRED_RESULT qint8 readInt8(qsizetype offset);
+    Q_REQUIRED_RESULT qint16 readInt16(qsizetype offset);
+    Q_REQUIRED_RESULT qint32 readInt32(qsizetype offset);
+    Q_REQUIRED_RESULT qint64 readInt64(qsizetype offset);
+    Q_REQUIRED_RESULT float readFloat(qsizetype offset);
+    Q_REQUIRED_RESULT double readDouble(qsizetype offset);
+    Q_REQUIRED_RESULT QString readString(qsizetype offset,
+                                         const QString &encoding = QString());
+    Q_REQUIRED_RESULT QByteArray readBytes(qsizetype offset, qsizetype count);
 
     // an extension for AngelScript
     // void read(? &in);    // this function can read bytes to input container
 
-    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
-    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
-    QList<qsizetype> findAllBytes(qsizetype begin, qsizetype end,
-                                  const QByteArray &b);
-
-    // render
-    qsizetype documentLastLine();
-    qsizetype documentLastColumn();
+    Q_REQUIRED_RESULT qsizetype searchForward(qsizetype begin,
+                                              const QByteArray &ba);
+    Q_REQUIRED_RESULT qsizetype searchBackward(qsizetype begin,
+                                               const QByteArray &ba);
+    Q_REQUIRED_RESULT QList<qsizetype>
+    findAllBytes(qsizetype begin, qsizetype end, const QByteArray &b);
 
     // metadata
-    bool lineHasMetadata(qsizetype line);
+    Q_REQUIRED_RESULT bool lineHasMetadata(qsizetype line);
 
     // bookmark
-    bool lineHasBookMark(qsizetype line);
-    QList<qsizetype> getsBookmarkPos(qsizetype line);
-    QString bookMarkComment(qsizetype pos);
-    bool existBookMark(qsizetype pos);
+    Q_REQUIRED_RESULT bool lineHasBookMark(qsizetype line);
+    Q_REQUIRED_RESULT QList<qsizetype> getsBookmarkPos(qsizetype line);
+    Q_REQUIRED_RESULT QString bookMarkComment(qsizetype pos);
+    Q_REQUIRED_RESULT bool existBookMark(qsizetype pos);
 
     // extension
-    QStringList getSupportedEncodings();
-    QString currentEncoding();
+    Q_REQUIRED_RESULT QStringList getSupportedEncodings();
+    Q_REQUIRED_RESULT QStringList getStorageDrivers();
+    Q_REQUIRED_RESULT QString currentEncoding();
 };
 
 class Controller : public QObject {
     Q_OBJECT
 signals:
     // document
-    bool switchDocument(int handle);
-    bool raiseDocument(int handle);
-    bool setLockedFile(bool b);
-    bool setKeepSize(bool b);
-    bool setStringVisible(bool b);
-    bool setAddressVisible(bool b);
-    bool setHeaderVisible(bool b);
-    bool setAddressBase(quintptr base);
+    Q_REQUIRED_RESULT bool switchDocument(int handle);
+    Q_REQUIRED_RESULT bool raiseDocument(int handle);
+    Q_REQUIRED_RESULT bool setLockedFile(bool b);
+    Q_REQUIRED_RESULT bool setKeepSize(bool b);
+    Q_REQUIRED_RESULT bool setStringVisible(bool b);
+    Q_REQUIRED_RESULT bool setAddressVisible(bool b);
+    Q_REQUIRED_RESULT bool setHeaderVisible(bool b);
+    Q_REQUIRED_RESULT bool setAddressBase(quintptr base);
 
-    bool undo();
-    bool redo();
-    bool cut(bool hex = false);
-    bool paste(bool hex = false);
+    Q_REQUIRED_RESULT bool writeInt8(qsizetype offset, qint8 value);
+    Q_REQUIRED_RESULT bool writeInt16(qsizetype offset, qint16 value);
+    Q_REQUIRED_RESULT bool writeInt32(qsizetype offset, qint32 value);
+    Q_REQUIRED_RESULT bool writeInt64(qsizetype offset, qint64 value);
+    Q_REQUIRED_RESULT bool writeFloat(qsizetype offset, float value);
+    Q_REQUIRED_RESULT bool writeDouble(qsizetype offset, double value);
+    Q_REQUIRED_RESULT bool writeString(qsizetype offset, const QString &value,
+                                       const QString &encoding = QString());
+    Q_REQUIRED_RESULT bool writeBytes(qsizetype offset, const QByteArray &data);
 
-    bool writeInt8(qsizetype offset, qint8 value);
-    bool writeInt16(qsizetype offset, qint16 value);
-    bool writeInt32(qsizetype offset, qint32 value);
-    bool writeInt64(qsizetype offset, qint64 value);
-    bool writeFloat(qsizetype offset, float value);
-    bool writeDouble(qsizetype offset, double value);
-    bool writeString(qsizetype offset, const QString &value,
-                     const QString &encoding = QString());
-    bool writeBytes(qsizetype offset, const QByteArray &data);
+    Q_REQUIRED_RESULT bool insertInt8(qsizetype offset, qint8 value);
+    Q_REQUIRED_RESULT bool insertInt16(qsizetype offset, qint16 value);
+    Q_REQUIRED_RESULT bool insertInt32(qsizetype offset, qint32 value);
+    Q_REQUIRED_RESULT bool insertInt64(qsizetype offset, qint64 value);
+    Q_REQUIRED_RESULT bool insertFloat(qsizetype offset, float value);
+    Q_REQUIRED_RESULT bool insertDouble(qsizetype offset, double value);
+    Q_REQUIRED_RESULT bool insertString(qsizetype offset, const QString &value,
+                                        const QString &encoding = QString());
+    Q_REQUIRED_RESULT bool insertBytes(qsizetype offset,
+                                       const QByteArray &data);
 
-    bool insertInt8(qsizetype offset, qint8 value);
-    bool insertInt16(qsizetype offset, qint16 value);
-    bool insertInt32(qsizetype offset, qint32 value);
-    bool insertInt64(qsizetype offset, qint64 value);
-    bool insertFloat(qsizetype offset, float value);
-    bool insertDouble(qsizetype offset, double value);
-    bool insertString(qsizetype offset, const QString &value,
-                      const QString &encoding = QString());
-    bool insertBytes(qsizetype offset, const QByteArray &data);
+    Q_REQUIRED_RESULT bool appendInt8(qint8 value);
+    Q_REQUIRED_RESULT bool appendInt16(qint16 value);
+    Q_REQUIRED_RESULT bool appendInt32(qint32 value);
+    Q_REQUIRED_RESULT bool appendInt64(qint64 value);
+    Q_REQUIRED_RESULT bool appendFloat(float value);
+    Q_REQUIRED_RESULT bool appendDouble(double value);
+    Q_REQUIRED_RESULT bool appendString(const QString &value,
+                                        const QString &encoding = QString());
+    Q_REQUIRED_RESULT bool appendBytes(const QByteArray &data);
 
-    bool appendInt8(qint8 value);
-    bool appendInt16(qint16 value);
-    bool appendInt32(qint32 value);
-    bool appendInt64(qint64 value);
-    bool appendFloat(float value);
-    bool appendDouble(double value);
-    bool appendString(const QString &value,
-                      const QString &encoding = QString());
-    bool appendBytes(const QByteArray &data);
-
-    bool remove(qsizetype offset, qsizetype len);
-    bool removeAll(); // extension
+    Q_REQUIRED_RESULT bool remove(qsizetype offset, qsizetype len);
+    Q_REQUIRED_RESULT bool removeAllBytes(); // extension
 
     // cursor
-    bool moveTo(qsizetype line, qsizetype column, int nibbleindex = 1,
-                bool clearSelection = true);
-    bool moveTo(qsizetype offset, bool clearSelection = true);
-    bool select(qsizetype offset, qsizetype length,
-                SelectionMode mode = SelectionMode::Add);
-    bool setInsertionMode(bool isinsert);
+    Q_REQUIRED_RESULT bool moveTo(qsizetype line, qsizetype column,
+                                  int nibbleindex = 1,
+                                  bool clearSelection = true);
+    Q_REQUIRED_RESULT bool moveTo(qsizetype offset, bool clearSelection = true);
+    Q_REQUIRED_RESULT bool select(qsizetype offset, qsizetype length,
+                                  SelectionMode mode = SelectionMode::Add);
+    Q_REQUIRED_RESULT bool setInsertionMode(bool isinsert);
 
     // metadata
-    bool foreground(qsizetype begin, qusizetype length, const QColor &fgcolor);
-    bool background(qsizetype begin, qusizetype length, const QColor &bgcolor);
-    bool comment(qsizetype begin, qusizetype length, const QString &comment);
+    Q_REQUIRED_RESULT bool foreground(qsizetype begin, qusizetype length,
+                                      const QColor &fgcolor);
+    Q_REQUIRED_RESULT bool background(qsizetype begin, qusizetype length,
+                                      const QColor &bgcolor);
+    Q_REQUIRED_RESULT bool comment(qsizetype begin, qusizetype length,
+                                   const QString &comment);
 
-    bool metadata(qsizetype begin, qusizetype length, const QColor &fgcolor,
-                  const QColor &bgcolor, const QString &comment);
+    Q_REQUIRED_RESULT bool metadata(qsizetype begin, qusizetype length,
+                                    const QColor &fgcolor,
+                                    const QColor &bgcolor,
+                                    const QString &comment);
 
-    bool removeMetadata(qsizetype offset);
-    bool clearMetadata();
-    bool setMetaVisible(bool b);
-    bool setMetafgVisible(bool b);
-    bool setMetabgVisible(bool b);
-    bool setMetaCommentVisible(bool b);
+    Q_REQUIRED_RESULT bool removeMetadata(qsizetype offset);
+    Q_REQUIRED_RESULT bool clearMetadata();
+    Q_REQUIRED_RESULT bool setMetaVisible(bool b);
+    Q_REQUIRED_RESULT bool setMetafgVisible(bool b);
+    Q_REQUIRED_RESULT bool setMetabgVisible(bool b);
+    Q_REQUIRED_RESULT bool setMetaCommentVisible(bool b);
 
     // mainwindow
-    WingHex::ErrFile newFile();
-    WingHex::ErrFile openFile(const QString &filename);
-    WingHex::ErrFile openRegionFile(const QString &filename,
-                                    qsizetype start = 0,
-                                    qsizetype length = 1024);
-    WingHex::ErrFile openDriver(const QString &driver);
-    WingHex::ErrFile closeFile(int handle, bool force = false);
-    WingHex::ErrFile saveFile(int handle, bool ignoreMd5 = false);
-    WingHex::ErrFile exportFile(int handle, const QString &savename,
-                                bool ignoreMd5 = false);
-    bool exportFileGUI();
-    WingHex::ErrFile saveAsFile(int handle, const QString &savename,
-                                bool ignoreMd5 = false);
-    bool saveAsFileGUI();
-    WingHex::ErrFile closeCurrentFile(bool force = false);
-    WingHex::ErrFile saveCurrentFile(bool ignoreMd5 = false);
-    bool openFileGUI();
-    bool openRegionFileGUI();
-    bool openDriverGUI();
-    bool findGUI();
-    bool gotoGUI();
-    bool fillGUI();
-    bool fillZeroGUI();
+    Q_REQUIRED_RESULT WingHex::ErrFile newFile();
+    Q_REQUIRED_RESULT WingHex::ErrFile openFile(const QString &filename);
+    Q_REQUIRED_RESULT WingHex::ErrFile openRegionFile(const QString &filename,
+                                                      qsizetype start = 0,
+                                                      qsizetype length = 1024);
+    Q_REQUIRED_RESULT WingHex::ErrFile openDriver(const QString &driver);
+    Q_REQUIRED_RESULT WingHex::ErrFile closeFile(int handle,
+                                                 bool force = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveFile(int handle,
+                                                bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile
+    exportFile(int handle, const QString &savename, bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile
+    saveAsFile(int handle, const QString &savename, bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile closeCurrentFile(bool force = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveCurrentFile(bool ignoreMd5 = false);
 
     // bookmark
-    bool addBookMark(qsizetype pos, const QString &comment);
-    bool modBookMark(qsizetype pos, const QString &comment);
-    bool removeBookMark(qsizetype pos);
-    bool clearBookMark();
+    Q_REQUIRED_RESULT bool addBookMark(qsizetype pos, const QString &comment);
+    Q_REQUIRED_RESULT bool modBookMark(qsizetype pos, const QString &comment);
+    Q_REQUIRED_RESULT bool removeBookMark(qsizetype pos);
+    Q_REQUIRED_RESULT bool clearBookMark();
 
     // workspace
-    WingHex::ErrFile openWorkSpace(const QString &filename);
-    bool setCurrentEncoding(const QString &encoding);
+    Q_REQUIRED_RESULT WingHex::ErrFile openWorkSpace(const QString &filename);
+    Q_REQUIRED_RESULT bool setCurrentEncoding(const QString &encoding);
+
+    // extension
+    void closeAllPluginFiles();
 };
 
 class MessageBox : public QObject {
@@ -335,53 +328,57 @@ signals:
 class InputBox : public QObject {
     Q_OBJECT
 signals:
-    QString getText(QWidget *parent, const QString &title, const QString &label,
-                    QLineEdit::EchoMode echo = QLineEdit::Normal,
-                    const QString &text = QString(), bool *ok = nullptr,
-                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
-    QString
-    getMultiLineText(QWidget *parent, const QString &title,
-                     const QString &label, const QString &text = QString(),
-                     bool *ok = nullptr,
-                     Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+    Q_REQUIRED_RESULT QString
+    getText(QWidget *parent, const QString &title, const QString &label,
+            QLineEdit::EchoMode echo = QLineEdit::Normal,
+            const QString &text = QString(), bool *ok = nullptr,
+            Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+    Q_REQUIRED_RESULT QString getMultiLineText(
+        QWidget *parent, const QString &title, const QString &label,
+        const QString &text = QString(), bool *ok = nullptr,
+        Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
 
-    QString getItem(QWidget *parent, const QString &title, const QString &label,
-                    const QStringList &items, int current = 0,
-                    bool editable = true, bool *ok = nullptr,
-                    Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
+    Q_REQUIRED_RESULT QString
+    getItem(QWidget *parent, const QString &title, const QString &label,
+            const QStringList &items, int current = 0, bool editable = true,
+            bool *ok = nullptr,
+            Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
 
-    int getInt(QWidget *parent, const QString &title, const QString &label,
-               int value = 0, int minValue = -2147483647,
-               int maxValue = 2147483647, int step = 1, bool *ok = nullptr);
+    Q_REQUIRED_RESULT int getInt(QWidget *parent, const QString &title,
+                                 const QString &label, int value = 0,
+                                 int minValue = -2147483647,
+                                 int maxValue = 2147483647, int step = 1,
+                                 bool *ok = nullptr);
 
-    double getDouble(QWidget *parent, const QString &title,
-                     const QString &label, double value = 0,
-                     double minValue = -2147483647,
-                     double maxValue = 2147483647, int decimals = 1,
-                     bool *ok = nullptr, double step = 1);
+    Q_REQUIRED_RESULT double getDouble(QWidget *parent, const QString &title,
+                                       const QString &label, double value = 0,
+                                       double minValue = -2147483647,
+                                       double maxValue = 2147483647,
+                                       int decimals = 1, bool *ok = nullptr,
+                                       double step = 1);
 };
 
 class FileDialog : public QObject {
     Q_OBJECT
 signals:
-    QString getExistingDirectory(
+    Q_REQUIRED_RESULT QString getExistingDirectory(
         QWidget *parent = nullptr, const QString &caption = QString(),
         const QString &dir = QString(),
         QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 
-    QString getOpenFileName(
+    Q_REQUIRED_RESULT QString getOpenFileName(
         QWidget *parent = nullptr, const QString &caption = QString(),
         const QString &dir = QString(), const QString &filter = QString(),
         QString *selectedFilter = nullptr,
         QFileDialog::Options options = QFileDialog::Options());
 
-    QStringList getOpenFileNames(
+    Q_REQUIRED_RESULT QStringList getOpenFileNames(
         QWidget *parent = nullptr, const QString &caption = QString(),
         const QString &dir = QString(), const QString &filter = QString(),
         QString *selectedFilter = nullptr,
         QFileDialog::Options options = QFileDialog::Options());
 
-    QString getSaveFileName(
+    Q_REQUIRED_RESULT QString getSaveFileName(
         QWidget *parent = nullptr, const QString &caption = QString(),
         const QString &dir = QString(), const QString &filter = QString(),
         QString *selectedFilter = nullptr,
@@ -391,17 +388,43 @@ signals:
 class ColorDialog : public QObject {
     Q_OBJECT
 signals:
-    QColor getColor(const QString &caption, QWidget *parent = nullptr);
+    Q_REQUIRED_RESULT QColor getColor(const QString &caption,
+                                      QWidget *parent = nullptr);
 };
 
 class DataVisual : public QObject {
     Q_OBJECT
+public:
+    typedef std::function<void(const QModelIndex &)> ClickedCallBack;
+    typedef ClickedCallBack DoubleClickedCallBack;
+
 signals:
     bool updateText(const QString &data);
-    bool updateTextList(const QStringList &data);
-    bool updateTextTree(const QString &json);
-    bool updateTextTable(const QString &json, const QStringList &headers,
-                         const QStringList &headerNames = {});
+    bool updateTextList(const QStringList &data, ClickedCallBack clicked = {},
+                        DoubleClickedCallBack dblClicked = {});
+
+    Q_REQUIRED_RESULT bool
+    updateTextTree(const QString &json, ClickedCallBack clicked = {},
+                   DoubleClickedCallBack dblClicked = {});
+    Q_REQUIRED_RESULT bool
+    updateTextTable(const QString &json, const QStringList &headers,
+                    const QStringList &headerNames = {},
+                    ClickedCallBack clicked = {},
+                    DoubleClickedCallBack dblClicked = {});
+
+    // API for Qt Plugin Only
+    Q_REQUIRED_RESULT bool
+    updateTextListByModel(QAbstractItemModel *model,
+                          ClickedCallBack clicked = {},
+                          DoubleClickedCallBack dblClicked = {});
+    Q_REQUIRED_RESULT bool
+    updateTextTableByModel(QAbstractItemModel *model,
+                           ClickedCallBack clicked = {},
+                           DoubleClickedCallBack dblClicked = {});
+    Q_REQUIRED_RESULT bool
+    updateTextTreeByModel(QAbstractItemModel *model,
+                          ClickedCallBack clicked = {},
+                          DoubleClickedCallBack dblClicked = {});
 };
 
 } // namespace WingPlugin
@@ -501,6 +524,13 @@ public:
         ScriptFn fn;
     };
 
+    enum class RegisteredEvent : uint {
+        None,
+        SelectionChanged = 1u,
+        CursorPositionChanged = 1u << 1
+    };
+    Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
+
 public:
     virtual int sdkVersion() const = 0;
     virtual const QString signature() const = 0;
@@ -531,6 +561,19 @@ public:
 
     // QHash<function-name, fn>
     virtual QHash<QString, ScriptFnInfo> registeredScriptFn() { return {}; }
+
+    virtual RegisteredEvents registeredEvents() const {
+        return RegisteredEvent::None;
+    }
+
+public:
+    virtual void eventSelectionChanged(const QByteArrayList &selections) {
+        Q_UNUSED(selections);
+    }
+
+    virtual void eventCursorPositionChanged(const WingHex::HexPosition &pos) {
+        Q_UNUSED(pos);
+    }
 
 signals:
     // extension and exposed to WingHexAngelScript

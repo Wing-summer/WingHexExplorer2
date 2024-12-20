@@ -182,28 +182,28 @@ QByteArray escapedString(const QString &s) {
 
 QJsonModel::QJsonModel(QObject *parent)
     : QAbstractItemModel(parent), mRootItem{new QJsonTreeItem} {
-    mHeaders.append("key");
-    mHeaders.append("value");
+    mHeaders.append(tr("key"));
+    mHeaders.append(tr("value"));
 }
 
 QJsonModel::QJsonModel(const QString &fileName, QObject *parent)
     : QAbstractItemModel(parent), mRootItem{new QJsonTreeItem} {
-    mHeaders.append("key");
-    mHeaders.append("value");
+    mHeaders.append(tr("key"));
+    mHeaders.append(tr("value"));
     load(fileName);
 }
 
 QJsonModel::QJsonModel(QIODevice *device, QObject *parent)
     : QAbstractItemModel(parent), mRootItem{new QJsonTreeItem} {
-    mHeaders.append("key");
-    mHeaders.append("value");
+    mHeaders.append(tr("key"));
+    mHeaders.append(tr("value"));
     load(device);
 }
 
 QJsonModel::QJsonModel(const QByteArray &json, QObject *parent)
     : QAbstractItemModel(parent), mRootItem{new QJsonTreeItem} {
-    mHeaders.append("key");
-    mHeaders.append("value");
+    mHeaders.append(tr("key"));
+    mHeaders.append(tr("value"));
     loadJson(json);
 }
 
@@ -225,7 +225,12 @@ bool QJsonModel::load(const QString &fileName) {
 bool QJsonModel::load(QIODevice *device) { return loadJson(device->readAll()); }
 
 bool QJsonModel::loadJson(const QByteArray &json) {
-    auto const &jdoc = QJsonDocument::fromJson(json);
+    QJsonParseError error;
+    auto const &jdoc = QJsonDocument::fromJson(json, &error);
+
+    if (error.error != QJsonParseError::NoError) {
+        return false;
+    }
 
     if (!jdoc.isNull()) {
         beginResetModel();

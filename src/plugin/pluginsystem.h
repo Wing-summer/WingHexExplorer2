@@ -113,6 +113,8 @@ public:
 
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
+    bool checkPluginHasAlreadyOpened(IWingPlugin *plg, EditorView *view);
+
     void cleanUpEditorViewHandle(EditorView *view);
 
 private:
@@ -139,6 +141,8 @@ private:
     static QString packLogMessage(const char *header, const QString &msg);
 
     EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
+
+    QByteArray toByteArray(const QString &buffer, const QString &encoding);
 
 private:
     template <typename T>

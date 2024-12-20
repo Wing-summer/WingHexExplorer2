@@ -42,6 +42,7 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent)
 
     _oldColor.setHsv(180, 255, 255);
     updateColor(_oldColor);
+    _color = _oldColor;
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);

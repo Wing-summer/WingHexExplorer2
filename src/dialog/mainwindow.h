@@ -61,6 +61,10 @@ class MainWindow : public FramelessMainWindow {
 
     friend class PluginSystem;
 
+    using ClickedCallBack = WingHex::WingPlugin::DataVisual::ClickedCallBack;
+    using DblClickedCallBack =
+        WingHex::WingPlugin::DataVisual::DoubleClickedCallBack;
+
 public:
     explicit MainWindow(SplashDialog *splash);
     virtual ~MainWindow() override;
@@ -461,9 +465,17 @@ private:
 
     // data visualization widgets
     QListView *m_infolist = nullptr;
+    ClickedCallBack m_infoclickfn;
+    DblClickedCallBack m_infodblclickfn;
+
     QTreeView *m_infotree = nullptr;
+    ClickedCallBack m_infotreeclickfn;
+    DblClickedCallBack m_infotreedblclickfn;
+
     QTableView *m_infotable = nullptr;
     QTextBrowser *m_infotxt = nullptr;
+    ClickedCallBack m_infotableclickfn;
+    DblClickedCallBack m_infotabledblclickfn;
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 

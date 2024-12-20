@@ -750,17 +750,55 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     using namespace ads;
 
     m_infolist = new QListView(this);
+    m_infolist->setEditTriggers(QListView::EditTrigger::NoEditTriggers);
+    connect(m_infolist, &QListView::clicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infoclickfn) {
+                    m_infoclickfn(index);
+                }
+            });
+    connect(m_infolist, &QListView::doubleClicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infodblclickfn) {
+                    m_infodblclickfn(index);
+                }
+            });
     auto dw = buildDockWidget(dock, QStringLiteral("DVList"), tr("DVList"),
                               m_infolist);
     auto ar = dock->addDockWidget(area, dw, areaw);
 
     m_infotree = new QTreeView(this);
-
+    m_infotree->setEditTriggers(QTreeView::EditTrigger::NoEditTriggers);
+    connect(m_infotree, &QTreeView::clicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infotreeclickfn) {
+                    m_infotreeclickfn(index);
+                }
+            });
+    connect(m_infotree, &QTreeView::doubleClicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infotreedblclickfn) {
+                    m_infotreedblclickfn(index);
+                }
+            });
     dw = buildDockWidget(dock, QStringLiteral("DVTree"), tr("DVTree"),
                          m_infotree);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     m_infotable = new QTableView(this);
+    m_infotable->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
+    connect(m_infotable, &QTableView::clicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infotableclickfn) {
+                    m_infotableclickfn(index);
+                }
+            });
+    connect(m_infotable, &QTableView::doubleClicked, this,
+            [this](const QModelIndex &index) {
+                if (m_infotabledblclickfn) {
+                    m_infotabledblclickfn(index);
+                }
+            });
     dw = buildDockWidget(dock, QStringLiteral("DVTable"), tr("DVTable"),
                          m_infotable);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
@@ -2339,16 +2377,19 @@ void MainWindow::on_locChanged() {
 
         // 如果不超过 10KB （默认）那么解码，防止太多卡死
         if (buffer.length() <= 1024 * _decstrlim) {
+            auto encname = hexeditor->renderer()->encoding();
+            if (encname == QStringLiteral("ASCII")) {
+                encname = QStringLiteral("ISO-8859-1");
+            }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            auto enc = QStringConverter::encodingForName(
-                hexeditor->renderer()->encoding().toUtf8());
+            auto enc = QStringConverter::encodingForName(encname.toUtf8());
             Q_ASSERT(enc.has_value());
             QStringDecoder dec(enc.value());
 
             m_txtDecode->insertPlainText(dec.decode(b));
 #else
-            auto enc = QTextCodec::codecForName(
-                hexeditor->renderer()->encoding().toUtf8());
+            auto enc = QTextCodec::codecForName(encname.toUtf8());
             auto dec = enc->makeDecoder();
             m_txtDecode->setText(dec->toUnicode(b));
 #endif
