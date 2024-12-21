@@ -1115,7 +1115,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     registerAPI<void()>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::closeAllPluginFiles, ctl),
-        "void closeAllPluginFiles()");
+        "bool closeAllPluginFiles()");
 
     engine->SetDefaultNamespace("");
 }

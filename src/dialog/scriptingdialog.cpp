@@ -16,9 +16,9 @@
 */
 
 #include "scriptingdialog.h"
-#include "DockSplitter.h"
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "Qt-Advanced-Docking-System/src/DockSplitter.h"
 #include "aboutsoftwaredialog.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
@@ -679,7 +679,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     label->setPicture(backimg);
     label->setAlignment(Qt::AlignCenter);
     CDockWidget *CentralDockWidget =
-        new CDockWidget(QStringLiteral("CentralWidget"));
+        m_dock->createDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
     CentralDockWidget->setFeature(ads::CDockWidget::DockWidgetFocusable, false);
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
@@ -730,7 +730,7 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
                                                    QWidget *content,
                                                    ToolButtonIndex index) {
     using namespace ads;
-    auto dw = new CDockWidget(displayName, dock);
+    auto dw = dock->createDockWidget(displayName, dock);
     dw->setObjectName(widgetName);
     dw->setFeatures(CDockWidget::DockWidgetMovable |
                     CDockWidget::DockWidgetClosable |

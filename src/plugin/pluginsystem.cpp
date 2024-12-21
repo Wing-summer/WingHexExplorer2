@@ -112,38 +112,33 @@ EditorView *PluginSystem::handle2EditorView(IWingPlugin *plg, int handle) {
     return nullptr;
 }
 
-PluginSystem::UniqueId
+PluginSystem::SharedUniqueId
 PluginSystem::assginHandleForPluginView(IWingPlugin *plg, EditorView *view) {
     if (plg == nullptr || view == nullptr) {
         return {};
     }
-    if (m_plgHandles.contains(plg)) {
-        auto id = m_idGen.get();
-        m_plgHandles[plg].append(qMakePair(id, view));
-        m_viewBindings[view].append(plg);
-        return id;
-    }
-    return {};
+
+    auto id = m_idGen.get();
+    m_plgHandles[plg].append(qMakePair(id, view));
+    m_viewBindings[view].append(plg);
+    return id;
 }
 
 bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
     if (plg == nullptr) {
         return false;
     }
-    if (m_plgHandles.contains(plg)) {
-        return m_plgHandles.value(plg).size() <= RAND_MAX;
-    }
-    return false;
+    return m_plgHandles[plg].size() <= UCHAR_MAX;
 }
 
 bool PluginSystem::checkPluginHasAlreadyOpened(IWingPlugin *plg,
                                                EditorView *view) {
     auto &maps = m_plgHandles[plg];
-    auto ret =
-        std::find_if(maps.begin(), maps.end(),
-                     [view](const QPair<UniqueId, EditorView *> &content) {
-                         return content.second == view;
-                     });
+    auto ret = std::find_if(
+        maps.begin(), maps.end(),
+        [view](const QPair<SharedUniqueId, EditorView *> &content) {
+            return content.second == view;
+        });
     return ret != maps.end();
 }
 
@@ -171,6 +166,41 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
     }
 }
 
+bool PluginSystem::closeEditor(IWingPlugin *plg, int handle, bool force) {
+    if (handle >= 0) {
+        auto &handles = m_plgHandles[plg];
+        auto r = std::find_if(
+            handles.begin(), handles.end(),
+            [handle](const QPair<SharedUniqueId, EditorView *> &d) {
+                return (*d.first) == handle;
+            });
+        if (r == handles.end()) {
+            return false;
+        }
+
+        auto &bind = m_viewBindings[r->second];
+        bind.removeOne(plg);
+        if (bind.isEmpty()) {
+            _win->closeEditor(r->second, force);
+        }
+    } else {
+        if (_win->m_curEditor == nullptr) {
+            return false;
+        }
+
+        auto &bind = m_viewBindings[_win->m_curEditor];
+        bind.removeOne(plg);
+        if (bind.isEmpty()) {
+            _win->closeEditor(_win->m_curEditor, force);
+        }
+    }
+
+    m_plgviewMap.remove(plg);
+    m_plgHandles.remove(plg);
+
+    return true;
+}
+
 void PluginSystem::registerFns(IWingPlugin *plg) {
     Q_ASSERT(plg);
     auto fns = plg->registeredScriptFn();
@@ -184,7 +214,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
         auto &fn = p->second;
         auto sig = getScriptFnSig(p->first, fn);
         if (rfns.find(sig) != rfns.end()) {
-            Logger::warning(tr(""));
+            Logger::warning(tr("RegisteredFnDup"));
             continue;
         }
         rfns.insert(sig, p->second);
@@ -508,6 +538,9 @@ void PluginSystem::connectLoadingInterface(IWingPlugin *plg) {
 void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
     connect(plg, &IWingPlugin::toast, this,
             [=](const QPixmap &icon, const QString &message) {
+                if (!checkThreadAff()) {
+                    return;
+                }
                 if (message.isEmpty()) {
                     return;
                 }
@@ -532,6 +565,9 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
     });
     connect(plg, &IWingPlugin::createDialog, this,
             [=](QWidget *w) -> QDialog * {
+                if (!checkThreadAff()) {
+                    return nullptr;
+                }
                 if (w) {
                     auto d = new FramelessDialogBase;
                     d->buildUpContent(w);
@@ -752,7 +788,9 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=](qsizetype offset, qsizetype len) -> QByteArray {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->read(offset, len);
+                    _rwlock.lockForRead();
+                    auto ret = e->hexEditor()->document()->read(offset, len);
+                    return ret;
                 }
                 return {};
             });
@@ -785,6 +823,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
             [=](qsizetype offset, const QString &encoding) -> QString {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
+                    _rwlock.lockForRead();
                     auto hexeditor = e->hexEditor();
                     auto doc = hexeditor->document();
                     auto render = hexeditor->renderer();
@@ -802,6 +841,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                         enco = render->encoding();
                     }
 
+                    _rwlock.unlock();
                     return toByteArray(buffer, enco);
                 }
                 return QString();
@@ -905,6 +945,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     auto pctl = &plg->controller;
     connect(pctl, &WingPlugin::Controller::switchDocument, _win,
             [=](int handle) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 if (handle < 0) {
                     m_plgviewMap[plg] = nullptr;
                 } else {
@@ -923,6 +966,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::raiseDocument, _win,
             [=](int handle) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
+
                 if (handle < 0) {
                     auto cur = _win->m_curEditor;
                     if (cur) {
@@ -946,6 +993,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setLockedFile, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->setLockedFile(b);
@@ -954,6 +1004,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setKeepSize, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->document()->setKeepSize(b);
@@ -962,6 +1015,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setStringVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAsciiVisible(b);
@@ -971,6 +1027,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setHeaderVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setHeaderVisible(b);
@@ -980,6 +1039,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setAddressVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAddressVisible(b);
@@ -989,6 +1051,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setAddressBase, _win,
             [=](quintptr base) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->setAddressBase(base);
@@ -1000,7 +1065,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->insert(offset, data);
+                    _rwlock.lockForWrite();
+                    auto ret = e->hexEditor()->document()->insert(offset, data);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1008,7 +1076,11 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->replace(offset, data);
+                    _rwlock.lockForWrite();
+                    auto ret =
+                        e->hexEditor()->document()->replace(offset, data);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1053,7 +1125,11 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     }
 
                     auto unicode = toByteArray(value, enco);
-                    return doc->insert(offset, unicode);
+
+                    _rwlock.lockForWrite();
+                    auto ret = doc->insert(offset, unicode);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1098,7 +1174,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     }
 
                     auto unicode = toByteArray(value, enco);
-                    return doc->replace(offset, unicode);
+                    _rwlock.lockForWrite();
+                    auto ret = doc->replace(offset, unicode);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1142,7 +1221,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     }
 
                     auto unicode = toByteArray(value, enco);
-                    return doc->insert(offset, unicode);
+                    _rwlock.lockForWrite();
+                    auto ret = doc->insert(offset, unicode);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1152,7 +1234,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->remove(offset, len);
+                    _rwlock.lockForWrite();
+                    auto ret = doc->remove(offset, len);
+                    _rwlock.unlock();
+                    return ret;
                 }
                 return false;
             });
@@ -1161,7 +1246,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         if (e) {
             auto doc = e->hexEditor()->document();
             auto len = doc->length();
-            return doc->remove(0, len);
+            _rwlock.lockForWrite();
+            auto ret = doc->remove(0, len);
+            _rwlock.unlock();
+            return ret;
         }
         return false;
     });
@@ -1171,6 +1259,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             _win,
             [=](qsizetype line, qsizetype column, int nibbleindex,
                 bool clearSelection) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->moveTo(line, column, nibbleindex,
@@ -1182,6 +1273,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl,
             QOverload<qsizetype, bool>::of(&WingPlugin::Controller::moveTo),
             _win, [=](qsizetype offset, bool clearSelection) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->moveTo(offset, clearSelection);
@@ -1192,6 +1286,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(
         pctl, &WingPlugin::Controller::select, _win,
         [=](qsizetype offset, qsizetype length, SelectionMode mode) -> bool {
+            if (!checkThreadAff()) {
+                return false;
+            }
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto cursor = e->hexEditor()->cursor();
@@ -1215,6 +1312,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         });
     connect(pctl, &WingPlugin::Controller::setInsertionMode, _win,
             [=](bool isinsert) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     e->hexEditor()->cursor()->setInsertionMode(
@@ -1230,6 +1330,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             _win,
             [=](qsizetype begin, qusizetype length, const QColor &fgcolor,
                 const QColor &bgcolor, const QString &comment) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1244,6 +1347,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             _win,
             [=](qsizetype begin, qusizetype length, const QColor &fgcolor,
                 const QColor &bgcolor, const QString &comment) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1254,6 +1360,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::removeMetadata, _win,
             [=](qsizetype offset) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1263,6 +1372,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::clearMetadata, _win, [=]() -> bool {
+        if (!checkThreadAff()) {
+            return false;
+        }
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
@@ -1274,6 +1386,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::comment, _win,
             [=](qsizetype begin, qusizetype length,
                 const QString &comment) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1285,6 +1400,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(
         pctl, &WingPlugin::Controller::foreground, _win,
         [=](qsizetype begin, qusizetype length, const QColor &fgcolor) -> bool {
+            if (!checkThreadAff()) {
+                return false;
+            }
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
@@ -1296,6 +1414,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(
         pctl, &WingPlugin::Controller::background, _win,
         [=](qsizetype begin, qusizetype length, const QColor &bgcolor) -> bool {
+            if (!checkThreadAff()) {
+                return false;
+            }
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
@@ -1306,6 +1427,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         });
     connect(pctl, &WingPlugin::Controller::setMetaVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1318,6 +1442,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetafgVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1328,6 +1455,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetabgVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1338,6 +1468,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setMetaCommentVisible, _win,
             [=](bool b) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1348,6 +1481,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::setCurrentEncoding, _win,
             [=](const QString &encoding) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     return e->hexEditor()->renderer()->setEncoding(encoding);
@@ -1357,6 +1493,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::addBookMark, _win,
             [=](qsizetype pos, const QString &comment) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1366,6 +1505,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::modBookMark, _win,
             [=](qsizetype pos, const QString &comment) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1375,6 +1517,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::removeBookMark, _win,
             [=](qsizetype pos) -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
@@ -1383,6 +1528,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::clearBookMark, _win, [=]() -> bool {
+        if (!checkThreadAff()) {
+            return false;
+        }
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
@@ -1393,6 +1541,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     // mainwindow
     connect(pctl, &WingPlugin::Controller::newFile, _win, [=]() -> ErrFile {
+        if (!checkThreadAff()) {
+            return ErrFile::NotAllowedInNoneGUIThread;
+        }
         if (!checkPluginCanOpenedFile(plg)) {
             return ErrFile::TooManyOpenedFile;
         }
@@ -1407,6 +1558,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     });
     connect(pctl, &WingPlugin::Controller::openWorkSpace, _win,
             [=](const QString &filename) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 EditorView *view = nullptr;
                 if (!checkPluginCanOpenedFile(plg)) {
                     return ErrFile::TooManyOpenedFile;
@@ -1426,6 +1580,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::openFile, _win,
             [=](const QString &filename) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 EditorView *view = nullptr;
                 if (!checkPluginCanOpenedFile(plg)) {
                     return ErrFile::TooManyOpenedFile;
@@ -1446,6 +1603,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(pctl, &WingPlugin::Controller::openRegionFile, _win,
             [=](const QString &filename, qsizetype start,
                 qsizetype length) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 EditorView *view = nullptr;
                 if (!checkPluginCanOpenedFile(plg)) {
                     return ErrFile::TooManyOpenedFile;
@@ -1465,6 +1625,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::openDriver, _win,
             [=](const QString &driver) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 EditorView *view = nullptr;
                 auto ret = _win->openDriver(driver, &view);
                 if (!checkPluginCanOpenedFile(plg)) {
@@ -1484,15 +1647,19 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::closeFile, _win,
             [=](int handle, bool force) -> ErrFile {
-                auto view = handle2EditorView(plg, handle);
-                if (view) {
-                    _win->closeEditor(view, force);
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
+                if (closeEditor(plg, handle, force)) {
                     return ErrFile::Success;
                 }
                 return ErrFile::NotExist;
             });
     connect(pctl, &WingPlugin::Controller::saveFile, _win,
             [=](int handle, bool ignoreMd5) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 auto view = handle2EditorView(plg, handle);
                 if (view) {
                     _win->saveEditor(view, {}, ignoreMd5);
@@ -1503,6 +1670,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(
         pctl, &WingPlugin::Controller::exportFile, _win,
         [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
+            if (!checkThreadAff()) {
+                return ErrFile::NotAllowedInNoneGUIThread;
+            }
             auto view = handle2EditorView(plg, handle);
             if (view) {
                 _win->saveEditor(view, savename, ignoreMd5, true);
@@ -1514,6 +1684,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
     connect(
         pctl, &WingPlugin::Controller::saveAsFile, _win,
         [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
+            if (!checkThreadAff()) {
+                return ErrFile::NotAllowedInNoneGUIThread;
+            }
             auto view = handle2EditorView(plg, handle);
             if (view) {
                 _win->saveEditor(view, savename, ignoreMd5);
@@ -1524,6 +1697,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
     connect(pctl, &WingPlugin::Controller::closeCurrentFile, _win,
             [=](bool force) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 auto view = getCurrentPluginView(plg);
                 if (view == nullptr) {
                     return ErrFile::NotExist;
@@ -1533,6 +1709,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::saveCurrentFile, _win,
             [=](bool ignoreMd5) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
                 auto view = getCurrentPluginView(plg);
                 if (view) {
                     auto ws = _win->m_views.value(view);
@@ -1544,7 +1723,10 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
 
     connect(pctl, &WingPlugin::Controller::closeAllPluginFiles, _win,
-            [=]() -> void {
+            [=]() -> bool {
+                if (!checkThreadAff()) {
+                    return false;
+                }
                 auto &maps = m_plgHandles[plg];
                 for (auto &item : maps) {
                     auto &bind = m_viewBindings[item.second];
@@ -1555,6 +1737,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
                 m_plgviewMap.remove(plg);
                 m_plgHandles.remove(plg);
+                return true;
             });
 }
 
@@ -1874,8 +2057,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
 
 bool PluginSystem::checkThreadAff() {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(
-            tr("Creating UI widget is not allowed in non-UI thread"));
+        Logger::warning(tr("Not allowed operation in non-UI thread"));
         return false;
     }
     return true;

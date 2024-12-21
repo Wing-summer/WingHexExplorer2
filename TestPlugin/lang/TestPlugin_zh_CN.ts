@@ -128,7 +128,7 @@
     <message>
         <location filename="../testform.ui" line="97"/>
         <location filename="../testform.ui" line="194"/>
-        <location filename="../testform.ui" line="521"/>
+        <location filename="../testform.ui" line="693"/>
         <source>Text</source>
         <translation>文本 </translation>
     </message>
@@ -142,9 +142,9 @@
         <location filename="../testform.ui" line="131"/>
         <location filename="../testform.ui" line="228"/>
         <location filename="../testform.ui" line="293"/>
-        <location filename="../testform.ui" line="344"/>
-        <location filename="../testform.ui" line="811"/>
-        <location filename="../testform.ui" line="972"/>
+        <location filename="../testform.ui" line="444"/>
+        <location filename="../testform.ui" line="983"/>
+        <location filename="../testform.ui" line="1144"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
@@ -155,7 +155,7 @@
     </message>
     <message>
         <location filename="../testform.ui" line="184"/>
-        <location filename="../testform.ui" line="558"/>
+        <location filename="../testform.ui" line="730"/>
         <source>Icon</source>
         <translation>图标</translation>
     </message>
@@ -166,150 +166,151 @@
     </message>
     <message>
         <location filename="../testform.ui" line="305"/>
+        <source>EditorAttr</source>
+        <translation>编辑器属性</translation>
+    </message>
+    <message>
+        <location filename="../testform.ui" line="369"/>
+        <source>Visible</source>
+        <translation>可见</translation>
+    </message>
+    <message>
+        <location filename="../testform.ui" line="382"/>
+        <source>Invisible</source>
+        <translation>不可见</translation>
+    </message>
+    <message>
+        <location filename="../testform.ui" line="405"/>
         <source>Controller</source>
         <translation>控制器</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="356"/>
+        <location filename="../testform.ui" line="456"/>
         <source>MutiFile</source>
         <translation>多文件</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="368"/>
-        <source>Hangle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="391"/>
+        <location filename="../testform.ui" line="480"/>
         <source>Operation</source>
-        <translation type="unfinished"></translation>
+        <translation>操作</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="403"/>
-        <source>NewFile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="416"/>
-        <source>OpenFile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="429"/>
-        <source>Switch</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="442"/>
-        <source>CloseAll</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="449"/>
+        <location filename="../testform.ui" line="621"/>
         <source>Metadata</source>
-        <translation type="unfinished"></translation>
+        <translation>元数据</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="454"/>
+        <location filename="../testform.ui" line="626"/>
         <source>BookMark</source>
-        <translation type="unfinished"></translation>
+        <translation>书签</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="459"/>
-        <location filename="../testform.ui" line="490"/>
+        <location filename="../testform.ui" line="631"/>
+        <location filename="../testform.ui" line="662"/>
         <source>MessageBox</source>
         <translation>信息框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="467"/>
-        <location filename="../testform.ui" line="504"/>
-        <location filename="../testform.ui" line="681"/>
+        <location filename="../testform.ui" line="639"/>
+        <location filename="../testform.ui" line="676"/>
+        <location filename="../testform.ui" line="853"/>
         <source>Title</source>
         <translation>标题</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="538"/>
+        <location filename="../testform.ui" line="710"/>
         <source>Buttons</source>
         <translation>按钮组</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="548"/>
+        <location filename="../testform.ui" line="720"/>
         <source>DefaultButton</source>
         <translation>默认按钮</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="659"/>
+        <location filename="../testform.ui" line="831"/>
         <source>InputBox</source>
         <translation>输入框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="674"/>
+        <location filename="../testform.ui" line="846"/>
         <source>Label</source>
         <translation>标签内容</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="710"/>
-        <location filename="../testform.ui" line="884"/>
-        <location filename="../testform.ui" line="1073"/>
+        <location filename="../testform.ui" line="311"/>
+        <location filename="../testform.ui" line="882"/>
+        <location filename="../testform.ui" line="1056"/>
+        <location filename="../testform.ui" line="1245"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="823"/>
+        <location filename="../testform.ui" line="469"/>
+        <source>Handle</source>
+        <translation>句柄</translation>
+    </message>
+    <message>
+        <location filename="../testform.ui" line="995"/>
         <source>FileDialog</source>
         <translation>文件框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="838"/>
+        <location filename="../testform.ui" line="1010"/>
         <source>Filter</source>
         <translation>过滤器</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="845"/>
-        <location filename="../testform.ui" line="998"/>
+        <location filename="../testform.ui" line="1017"/>
+        <location filename="../testform.ui" line="1170"/>
         <source>Caption</source>
         <translation>标题</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="866"/>
+        <location filename="../testform.ui" line="1038"/>
         <source>Options</source>
         <translation>选项组</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="984"/>
+        <location filename="../testform.ui" line="1156"/>
         <source>ColorDialog</source>
         <translation>颜色框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1012"/>
+        <location filename="../testform.ui" line="1184"/>
         <source>Color</source>
         <translation>颜色</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1058"/>
+        <location filename="../testform.ui" line="1230"/>
         <source>DataVisual</source>
         <translation>数据可视化</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="338"/>
-        <location filename="../testform.cpp" line="348"/>
+        <location filename="../testform.cpp" line="345"/>
+        <location filename="../testform.cpp" line="355"/>
         <source>UpdateTextTreeError</source>
         <translation>更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="363"/>
+        <location filename="../testform.cpp" line="370"/>
         <source>UpdateTextListByModelError</source>
         <translation>通过模型更新文本列表失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="373"/>
+        <location filename="../testform.cpp" line="380"/>
         <source>UpdateTextTableByModelError</source>
         <translation>通过模型更新文本表格失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="384"/>
+        <location filename="../testform.cpp" line="391"/>
         <source>UpdateTextTreeByModelError</source>
         <translation>通过模型更新文本树失败</translation>
+    </message>
+    <message>
+        <location filename="../testform.cpp" line="492"/>
+        <source>Choose</source>
+        <translation>选择</translation>
     </message>
 </context>
 <context>

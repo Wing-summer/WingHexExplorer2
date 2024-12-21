@@ -75,7 +75,8 @@ enum ErrFile : int {
     SourceFileChanged = -9,
     ClonedFile = -10,
     InvalidFormat = -11,
-    TooManyOpenedFile = -12
+    TooManyOpenedFile = -12,
+    NotAllowedInNoneGUIThread = -13
 };
 Q_ENUM_NS(ErrFile)
 
@@ -287,7 +288,7 @@ signals:
     Q_REQUIRED_RESULT bool setCurrentEncoding(const QString &encoding);
 
     // extension
-    void closeAllPluginFiles();
+    bool closeAllPluginFiles();
 };
 
 class MessageBox : public QObject {

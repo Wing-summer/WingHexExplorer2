@@ -494,7 +494,7 @@ if(WINGHEX_USE_FRAMELESS)
                 QJsonModel
                 angelscript
                 nlohmann_json::nlohmann_json
-                qt${QT_VERSION_MAJOR}advanceddocking)
+                qtadvanceddocking-qt${QT_VERSION_MAJOR})
 else()
     target_link_libraries(
         ${CMAKE_PROJECT_NAME}
@@ -511,7 +511,7 @@ else()
                 QJsonModel
                 angelscript
                 nlohmann_json::nlohmann_json
-                qt${QT_VERSION_MAJOR}advanceddocking)
+                qtadvanceddocking-qt${QT_VERSION_MAJOR})
 endif()
 
 target_include_directories(

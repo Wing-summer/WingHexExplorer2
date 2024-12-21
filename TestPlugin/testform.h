@@ -101,6 +101,30 @@ private slots:
 
     void on_btnTextTreeByModel_clicked();
 
+    void on_btnStatusVisible_clicked();
+
+    void on_btnStatusInvisible_clicked();
+
+    void on_btnSwitch_clicked();
+
+    void on_btnNewFile_clicked();
+
+    void on_btnOpenFile_clicked();
+
+    void on_btnOpenRegionFile_clicked();
+
+    void on_btnOpenWorkSpace_clicked();
+
+    void on_btnOpenDriver_clicked();
+
+    void on_btnSaveFile_clicked();
+
+    void on_btnSaveAsFile_clicked();
+
+    void on_btnExportFile_clicked();
+
+    void on_btnCloseFile_clicked();
+
 private:
     void initLogCombo();
 
@@ -113,6 +137,8 @@ private:
     void initMsgBoxIconCombo();
 
     void initFileDialogOps();
+
+    void initFileHandleListWidget();
 
 private:
     QMessageBox::StandardButtons getMsgButtons() const;

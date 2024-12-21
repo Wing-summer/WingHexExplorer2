@@ -88,7 +88,8 @@ private:
         QQueue<int> releasedIds;
     };
 
-    using UniqueId = QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
+    using SharedUniqueId =
+        QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
 
 public:
     static PluginSystem &instance();
@@ -109,13 +110,16 @@ public:
 
     EditorView *handle2EditorView(IWingPlugin *plg, int handle);
 
-    UniqueId assginHandleForPluginView(IWingPlugin *plg, EditorView *view);
+    SharedUniqueId assginHandleForPluginView(IWingPlugin *plg,
+                                             EditorView *view);
 
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
     bool checkPluginHasAlreadyOpened(IWingPlugin *plg, EditorView *view);
 
     void cleanUpEditorViewHandle(EditorView *view);
+
+    bool closeEditor(IWingPlugin *plg, int handle, bool force);
 
 private:
     void registerFns(IWingPlugin *plg);
@@ -150,10 +154,15 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
+            _rwlock.lockForRead();
             auto buffer = e->hexEditor()->document()->read(offset, sizeof(T));
-            auto pb = reinterpret_cast<const T *>(buffer.constData());
-            return *pb;
+            if (buffer.size() == sizeof(T)) {
+                auto pb = reinterpret_cast<const T *>(buffer.constData());
+                _rwlock.unlock();
+                return *pb;
+            }
         }
+
         if constexpr (std::is_floating_point_v<T>) {
             return qQNaN();
         } else {
@@ -167,9 +176,12 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
+            _rwlock.lockForWrite();
             auto doc = e->hexEditor()->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            return doc->insert(offset, QByteArray(buffer, sizeof(T)));
+            auto ret = doc->insert(offset, QByteArray(buffer, sizeof(T)));
+            _rwlock.unlock();
+            return ret;
         }
         return false;
     }
@@ -180,9 +192,12 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
+            _rwlock.lockForWrite();
             auto doc = e->hexEditor()->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            return doc->replace(offset, QByteArray(buffer, sizeof(T)));
+            auto ret = doc->replace(offset, QByteArray(buffer, sizeof(T)));
+            _rwlock.unlock();
+            return ret;
         }
         return false;
     }
@@ -192,11 +207,14 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
+            _rwlock.lockForWrite();
             auto doc = e->hexEditor()->document();
             auto offset = doc->length();
             auto buffer = reinterpret_cast<const char *>(&value);
             QByteArray data(buffer, sizeof(T));
-            return doc->insert(offset, data);
+            auto ret = doc->insert(offset, data);
+            _rwlock.unlock();
+            return ret;
         }
         return false;
     }
@@ -213,15 +231,18 @@ private:
     QStringList loadedpuid;
     QList<IWingPlugin *> loadedplgs;
 
-    QMap<IWingPlugin *, EditorView *> m_plgviewMap;
-    QMap<IWingPlugin *, QList<QPair<UniqueId, EditorView *>>> m_plgHandles;
-    QMap<EditorView *, QList<IWingPlugin *>> m_viewBindings;
+    QHash<IWingPlugin *, EditorView *> m_plgviewMap;
+    QHash<IWingPlugin *, QList<QPair<SharedUniqueId, EditorView *>>>
+        m_plgHandles;
+    QHash<EditorView *, QList<IWingPlugin *>> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
 
     QHash<QString, QHash<QString, WingAngelAPI::ScriptFnInfo>> _scfns;
 
     WingAngelAPI *_angelplg = nullptr;
+
+    QReadWriteLock _rwlock;
 };
 
 #endif // PLUGINSYSTEM_H
