@@ -122,8 +122,7 @@ private:
 
     static bool isTempBuffered(QMetaType::Type type);
 
-    void script_call(asIScriptEngine *engine, qsizetype id,
-                     asIScriptGeneric *gen);
+    static void script_call(asIScriptGeneric *gen);
 
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
@@ -180,7 +179,6 @@ private:
 private:
     std::vector<std::any> _fnbuffer;
     QVector<IWingPlugin::ScriptFnInfo> _sfns;
-    QHash<asIScriptEngine *, std::vector<WrapperFn>> _sfn_wraps;
 
     QHash<QString, QHash<QString, qsizetype>> _rfns;
 };

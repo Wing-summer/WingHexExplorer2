@@ -74,7 +74,7 @@ BEGIN
             VALUE "LegalCopyright", "AGPL-3.0"
             VALUE "OriginalFilename", "WingHexExplorer2.exe"
             VALUE "ProductName", "ÓðÔÆÊ®Áù½øÖÆ±à¼­Æ÷2"
-            VALUE "ProductVersion", "1.0.0"
+            VALUE "ProductVersion", "2.0.0"
         END
     END
     BLOCK "VarFileInfo"

@@ -41,8 +41,24 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     Utilities::addSpecialMark(ui->cbDontShowSplash);
     Utilities::addSpecialMark(ui->cbNativeTitile);
     Utilities::addSpecialMark(ui->lblLevel);
-    connect(ui->cbNativeTitile, &QCheckBox::stateChanged, this,
-            &OtherSettingsDialog::optionNeedRestartChanged);
+    Utilities::addSpecialMark(ui->cbCheckWhenStartup);
+
+    connect(ui->cbNativeTitile,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &OtherSettingsDialog::optionNeedRestartChanged);
+
+    connect(ui->cbCheckWhenStartup,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &OtherSettingsDialog::optionNeedRestartChanged);
+
     connect(ui->cbLogLevel, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &OtherSettingsDialog::optionNeedRestartChanged);
 
@@ -56,6 +72,7 @@ void OtherSettingsDialog::reload() {
     auto &set = SettingManager::instance();
     ui->cbDontShowSplash->setChecked(set.dontUseSplash());
     ui->cbNativeFileDialog->setChecked(set.useNativeFileDialog());
+    ui->cbCheckWhenStartup->setChecked(set.checkUpdate());
 #ifdef WINGHEX_USE_FRAMELESS
     ui->cbNativeTitile->setChecked(set.useNativeTitleBar());
 #endif
@@ -75,12 +92,13 @@ void OtherSettingsDialog::apply() {
 #ifdef WINGHEX_USE_FRAMELESS
     set.setUseNativeTitleBar(ui->cbNativeTitile->isChecked());
 #endif
+    set.setCheckUpdate(ui->cbCheckWhenStartup->isChecked());
     set.setLogLevel(ui->cbLogLevel->currentIndex());
     set.save(SettingManager::OTHER);
 }
 
 void OtherSettingsDialog::reset() {
-    SettingManager::instance().reset(SettingManager::SETTING::APP);
+    SettingManager::instance().reset(SettingManager::SETTING::OTHER);
     reload();
 }
 

@@ -28,7 +28,7 @@
 #include "class/clangformatmanager.h"
 
 ScriptEditor::ScriptEditor(QWidget *parent)
-    : ads::CDockWidget(QString(), parent) {
+    : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
         CDockWidget::DockWidgetClosable | CDockWidget::DockWidgetPinnable |

@@ -4,7 +4,7 @@
 * [Qt-Advanced-Docking-System](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System) (LGPL)
 * [QCodeEditor2](https://sourceforge.net/projects/edyuk) (GPL, **FORK**)
 * [QWingRibbon](https://github.com/martijnkoopman/Qt-Ribbon-Widget) (LGPL, **FORK**)
-* [SingleApplication](https://github.com/itay-grudev/SingleApplication) (MIT)
+* [QtSingleApplication](https://github.com/qtproject/qt-solutions/tree/master/qtsingleapplication) (BSD-3-Clause)
 * [QPathEdit](https://github.com/Skycoder42/QPathEdit) (MIT)
 * [QWindowKit](https://github.com/stdware/qwindowkit) (Apache v2.0)
 * [AngelScript](https://github.com/codecat/angelscript-mirror) (zlib license)

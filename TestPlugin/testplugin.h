@@ -71,12 +71,24 @@ public:
 private:
     QString getPuid() const;
 
+    QVariant test_a(const QVariantList &);
+    QVariant test_b(const QVariantList &params);
+
+private:
+    void test_a();
+    void test_b(const QString &a);
+
 private:
     QDialog *_tform = nullptr;
     QMenu *_tmenu = nullptr;
     const QString puid;
 
+    QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
+    QList<WingHex::WingDockWidgetInfo> _winfo;
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
+    QHash<WingHex::SettingPage *, bool> _setpages;
+    QList<WingHex::WingEditorViewWidget *> _evws;
+    QList<WingHex::PluginPage *> _plgps;
 };
 
 #endif // TESTPLUGIN_H

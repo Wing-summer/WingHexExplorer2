@@ -23,6 +23,7 @@
 #include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
+#include "define.h"
 #include "scriptaddon/scriptqdictionary.h"
 
 #include <QJsonDocument>
@@ -80,8 +81,8 @@ const QString WingAngelAPI::pluginComment() const {
 
 void WingAngelAPI::registerScriptFns(const QString &ns,
                                      const QHash<QString, ScriptFnInfo> &rfns) {
-    Q_ASSERT(ns.isEmpty());
-    if (rfns.empty()) {
+    Q_ASSERT(!ns.isEmpty());
+    if (rfns.isEmpty()) {
         return;
     }
 
@@ -1172,14 +1173,17 @@ void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
              p++) {
             auto sig = p->first;
             auto id = p->second;
-            WrapperFn fn = std::bind(&WingAngelAPI::script_call, this, engine,
-                                     id, std::placeholders::_1);
-            _sfn_wraps[engine][id] = fn;
             auto r = engine->RegisterGlobalFunction(
-                sig.toUtf8(), asMETHOD(WrapperFn, operator()), asCALL_GENERIC,
-                &_sfn_wraps[engine][id]);
-            Q_ASSERT(r >= 0);
-            Q_UNUSED(r);
+                sig.toUtf8(), asFUNCTION(script_call), asCALL_GENERIC);
+            if (r >= 0) {
+                // r is the AngelScript function ID
+                auto fn = engine->GetFunctionById(r);
+                fn->SetUserData(this, AsUserDataType::UserData_API);
+                fn->SetUserData(reinterpret_cast<void *>(id),
+                                AsUserDataType::UserData_PluginFn);
+            } else {
+                emit warn(tr("RegisterScriptFnInvalidSig:") + sig);
+            }
         }
 
         engine->SetDefaultNamespace("");
@@ -1647,9 +1651,11 @@ void WingAngelAPI::qvariantCastOp(
         }
     };
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto type = QMetaType::Type(var.userType());
+    auto type =
+        var.isNull() ? QMetaType::Type::Void : QMetaType::Type(var.userType());
 #else
-    auto type = QMetaType::Type(var.typeId());
+    auto type =
+        var.isNull() ? QMetaType::Type::Void : QMetaType::Type(var.typeId());
 #endif
     switch (type) {
     case QMetaType::Type::Bool:
@@ -1757,10 +1763,10 @@ void WingAngelAPI::qvariantCastOp(
     case QMetaType::QColor:
         fn(new QColor(var.value<QColor>()), type);
         break;
+    case QMetaType::Void:
+        break;
     default:
         Logger::critical(tr("NotSupportedQMetaType:") + QMetaType(type).name());
-        break;
-    case QMetaType::Void:
         break;
     }
 }
@@ -1918,10 +1924,18 @@ bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
     }
 }
 
-void WingAngelAPI::script_call(asIScriptEngine *engine, qsizetype id,
-                               asIScriptGeneric *gen) {
-    Q_ASSERT(id >= 0 && id < _sfns.size());
-    if (id < 0 || id >= _sfns.size()) {
+void WingAngelAPI::script_call(asIScriptGeneric *gen) {
+    auto fn = gen->GetFunction();
+
+    auto p = reinterpret_cast<WingAngelAPI *>(
+        fn->GetUserData(AsUserDataType::UserData_API));
+    auto id = reinterpret_cast<qsizetype>(
+        fn->GetUserData(AsUserDataType::UserData_PluginFn));
+    auto engine = fn->GetEngine();
+
+    Q_ASSERT(p);
+    Q_ASSERT(id >= 0 && id < p->_sfns.size());
+    if (id < 0 || id >= p->_sfns.size()) {
         return;
     }
 
@@ -1934,7 +1948,7 @@ void WingAngelAPI::script_call(asIScriptEngine *engine, qsizetype id,
         params.append(obj);
     }
 
-    auto ret = _sfns.at(id).fn(params);
+    auto ret = p->_sfns.at(id).fn(params);
     auto op = [](asIScriptGeneric *gen, void *addr, QMetaType::Type type) {
         auto b = isTempBuffered(type);
         if (b) {

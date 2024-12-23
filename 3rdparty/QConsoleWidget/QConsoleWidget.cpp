@@ -4,7 +4,6 @@
 #include "control/qcodecompletionwidget.h"
 #include "qdocumentline.h"
 #include "qformatscheme.h"
-#include "utilities.h"
 
 #include "QConsoleIODevice.h"
 
@@ -291,11 +290,6 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
     setCursor(bcursor);
 }
 
-QString QConsoleWidget::getHistoryPath() {
-    QDir dir(Utilities::getAppDataPath());
-    return dir.absoluteFilePath(QStringLiteral(".command_history.lst"));
-}
-
 void QConsoleWidget::write(const QString &message, const QString &sfmtID) {
     auto tc = cursor();
     auto ascom = dynamic_cast<AsCompletion *>(completionEngine());
@@ -350,23 +344,9 @@ void QConsoleWidget::writeStdErr(const QString &s) {
 QConsoleWidget::History QConsoleWidget::history_;
 
 QConsoleWidget::History::History(void)
-    : pos_(0), active_(false), maxsize_(10000) {
-    QFile f(QConsoleWidget::getHistoryPath());
-    if (f.open(QFile::ReadOnly)) {
-        QTextStream is(&f);
-        while (!is.atEnd())
-            add(is.readLine());
-    }
-}
-QConsoleWidget::History::~History(void) {
-    QFile f(QConsoleWidget::getHistoryPath());
-    if (f.open(QFile::WriteOnly | QFile::Truncate)) {
-        QTextStream os(&f);
-        int n = strings_.size();
-        while (n > 0)
-            os << strings_.at(--n) << Qt::endl;
-    }
-}
+    : pos_(0), active_(false), maxsize_(10000) {}
+
+QConsoleWidget::History::~History(void) {}
 
 void QConsoleWidget::History::add(const QString &str) {
     active_ = false;

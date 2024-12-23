@@ -73,7 +73,9 @@ private:
         OTHER_USESYS_FILEDIALOG = 1u << 24,
         OTHER_USE_NATIVE_TITLEBAR = 1u << 25,
         OTHER_DONT_USE_SPLASH = 1u << 26,
-        OTHER_LOG_LEVEL = 1u << 27
+        OTHER_LOG_LEVEL = 1u << 27,
+        OTHER_CHECK_UPDATE = 1u << 28,
+        OTHER_LOG_COUNT = 1u << 29,
     };
     Q_DECLARE_FLAGS(SETTING_ITEMS, SETTING_ITEM)
 
@@ -168,6 +170,12 @@ public:
     bool dontUseSplash() const;
     void setDontUseSplash(bool newDontUseSplash);
 
+    bool checkUpdate() const;
+    void setCheckUpdate(bool newCheckUpdate);
+
+    qsizetype logCount() const;
+    void setLogCount(qsizetype newLogCount);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
@@ -223,7 +231,9 @@ private:
     bool m_dontUseSplash = false;
     bool m_useNativeFileDialog = true;
     bool m_useNativeTitleBar = false;
+    bool m_checkUpdate = false;
     int m_logLevel = 0;
+    qsizetype m_logCount = 20;
 
 private:
     QFont _defaultFont;

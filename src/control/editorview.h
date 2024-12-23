@@ -89,6 +89,7 @@ public slots:
 
     void registerView(WingHex::WingEditorViewWidget *view);
     void switchView(qsizetype index);
+    void switchView(WingEditorViewWidget *w);
     void registerQMenu(QMenu *menu);
 
     FindError find(const QByteArray &data, const FindDialog::Result &result);
@@ -165,6 +166,7 @@ private:
     QStackedWidget *m_stack = nullptr;
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
+    bool _hasRegistered = false;
 
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;

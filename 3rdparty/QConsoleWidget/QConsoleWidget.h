@@ -13,6 +13,26 @@ class QConsoleWidget : public QEditor {
     Q_OBJECT
 
 public:
+    struct History {
+        QStringList strings_;
+        int pos_;
+        QString token_;
+        bool active_;
+        int maxsize_;
+        History(void);
+        ~History(void);
+        void add(const QString &str);
+        const QString &currentValue() const {
+            return pos_ == -1 ? token_ : strings_.at(pos_);
+        }
+        void activate(const QString &tk = QString());
+        void deactivate() { active_ = false; }
+        bool isActive() const { return active_; }
+        bool move(bool dir);
+        int indexOf(bool dir, int from) const;
+    };
+
+public:
     enum ConsoleMode { Input, Output };
     Q_ENUM(ConsoleMode)
 
@@ -28,7 +48,7 @@ public:
     // write a formatted message to the console
     void write(const QString &message, const QString &sfmtID = {}) override;
 
-    static const QStringList &history() { return history_.strings_; }
+    static History &history() { return history_; }
 
     // get the current command line
     QString getCommandLine();
@@ -62,32 +82,11 @@ protected:
     // replace the command line
     void replaceCommandLine(const QString &str);
 
-    static QString getHistoryPath();
-
     // QEditor interface
 public slots:
     virtual void cut() override;
 
 private:
-    struct History {
-        QStringList strings_;
-        int pos_;
-        QString token_;
-        bool active_;
-        int maxsize_;
-        History(void);
-        ~History(void);
-        void add(const QString &str);
-        const QString &currentValue() const {
-            return pos_ == -1 ? token_ : strings_.at(pos_);
-        }
-        void activate(const QString &tk = QString());
-        void deactivate() { active_ = false; }
-        bool isActive() const { return active_; }
-        bool move(bool dir);
-        int indexOf(bool dir, int from) const;
-    };
-
     static History history_;
     ConsoleMode mode_;
     QDocumentCursor inpos_;

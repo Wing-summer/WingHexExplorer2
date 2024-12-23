@@ -221,7 +221,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     }
 
     Q_ASSERT(_angelplg);
-    _angelplg->registerScriptFns(plg->pluginName(), rfns);
+    _angelplg->registerScriptFns(plg->metaObject()->className(), rfns);
 }
 
 QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
@@ -314,7 +314,7 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
 
     QStringList params;
     for (auto &param : fninfo.params) {
-        params << type2AngelScriptString(fninfo.ret, true) +
+        params << type2AngelScriptString(param.first, true) +
                       QStringLiteral(" ") + param.second;
     }
 
@@ -435,8 +435,39 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         auto dockWidgets = p->registeredDockWidgets();
         if (!dockWidgets.isEmpty()) {
             for (auto &info : dockWidgets) {
-                auto dw = _win->buildDockWidget(_win->m_dock, info.widgetName,
-                                                info.displayName, info.widget,
+                auto widgetName = info.widgetName.trimmed();
+                auto displayName = info.displayName.trimmed();
+                if (displayName.isEmpty()) {
+                    displayName = widgetName;
+                }
+                if (widgetName.isEmpty()) {
+                    Logger::warning(tr("EmptyNameDockWidget:") %
+                                    QStringLiteral("{ ") % p->pluginName() %
+                                    QStringLiteral(" }"));
+                    continue;
+                }
+
+                auto inch = std::find_if_not(
+                    widgetName.begin(), widgetName.end(),
+                    [](const QChar &ch) { return ch.isLetterOrNumber(); });
+                if (inch != widgetName.end()) {
+                    Logger::warning(tr("InvalidNameDockWidget:") %
+                                    QStringLiteral("{ ") % p->pluginName() %
+                                    QStringLiteral(" } ") % widgetName);
+                    continue;
+                }
+
+                if (info.widget == nullptr) {
+                    Logger::warning(tr("InvalidNullDockWidget:") %
+                                    QStringLiteral("{ ") % p->pluginName() %
+                                    QStringLiteral(" } ") % widgetName %
+                                    QStringLiteral(" ( ") % displayName %
+                                    QStringLiteral(" )"));
+                    continue;
+                }
+
+                auto dw = _win->buildDockWidget(_win->m_dock, widgetName,
+                                                displayName, info.widget,
                                                 MainWindow::PLUGIN_VIEWS);
                 switch (info.area) {
                 case Qt::LeftDockWidgetArea: {
@@ -2079,23 +2110,24 @@ QWidget *PluginSystem::mainWindow() const { return _win; }
 void PluginSystem::LoadPlugin() {
     Q_ASSERT(_win);
 
-    _angelplg = new WingAngelAPI;
-
-    auto ret = loadPlugin(_angelplg, std::nullopt);
-    Q_ASSERT(ret);
-    Q_UNUSED(ret);
-
     auto &set = SettingManager::instance();
-    if (!set.enablePlugin()) {
-        return;
+    if (set.scriptEnabled()) {
+        _angelplg = new WingAngelAPI;
+
+        auto ret = loadPlugin(_angelplg, std::nullopt);
+        Q_ASSERT(ret);
+        Q_UNUSED(ret);
     }
-    if (Utilities::isRoot() && !set.enablePlgInRoot()) {
+
+    bool ok;
+    auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
+    if (displg > 0 || !set.enablePlugin()) {
         return;
     }
 
 #ifdef QT_DEBUG
-    QDir plugindir(QCoreApplication::applicationDirPath() +
-                   QStringLiteral("/plugin"));
+    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                   QStringLiteral("plugin"));
     // 这是我的插件调试目录，如果调试插件，请更换路径
 #ifdef Q_OS_WIN
     plugindir.setNameFilters({"*.dll", "*.wingplg"});
@@ -2103,10 +2135,28 @@ void PluginSystem::LoadPlugin() {
     plugindir.setNameFilters({"*.so", "*.wingplg"});
 #endif
 #else
-    QDir plugindir(QCoreApplication::applicationDirPath() +
-                   QStringLiteral("/plugin"));
+    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                   QStringLiteral("plugin"));
     plugindir.setNameFilters({"*.wingplg"});
 #endif
+
+    if (Utilities::isRoot()) {
+        if (!set.enablePlgInRoot()) {
+            return;
+        }
+    } else {
+        auto testFileName = plugindir.absoluteFilePath(
+            QUuid::createUuid().toString(QUuid::Id128));
+
+        QFile f(testFileName);
+        if (f.open(QFile::WriteOnly)) {
+            f.close();
+            f.remove();
+            Logger::warning(QStringLiteral("<i><u>") % tr("UnsafePluginDir") %
+                            QStringLiteral("</u></i>"));
+        }
+    }
+
     auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 

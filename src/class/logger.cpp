@@ -21,6 +21,7 @@
 #include <QDir>
 #include <QRegularExpression>
 
+#include "settingmanager.h"
 #include "utilities.h"
 
 #define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"
@@ -41,6 +42,15 @@ Logger::Logger(QObject *parent)
     QDir logDir;
     logDir.mkpath(logPath);
     logDir.setPath(logPath);
+
+    // clean up log files if too much
+    auto logs = logDir.entryInfoList({"*.log"}, QDir::Files, QDir::Time);
+    auto total = logs.size();
+    for (decltype(total) i = SettingManager::instance().logCount() - 1;
+         i < total; ++i) {
+        QFile::remove(logs.at(i).absoluteFilePath());
+    }
+
     auto path = logDir.absoluteFilePath(newFileName);
     _file = QSharedPointer<QFile>(new QFile(path));
     if (_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -48,11 +58,12 @@ Logger::Logger(QObject *parent)
     }
 
     connect(this, &Logger::log, this, [this](const QString &message) {
+        static QRegularExpression exp("<[^>]*>");
         auto str = message;
-        *_stream << str.remove(QRegularExpression("<[^>]*>")) << Qt::endl;
+        *_stream << str.remove(exp) << Qt::endl;
     });
 
-    if (qEnvironmentVariableIntValue("debug")) {
+    if (qEnvironmentVariableIntValue("WING_DEBUG")) {
         setLogLevel(Level::q4DEBUG);
     } else {
 #ifdef QT_DEBUG

@@ -28,10 +28,20 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnablePlugin);
     Utilities::addSpecialMark(ui->cbEnablePluginRoot);
-    connect(ui->cbEnablePlugin, &QCheckBox::stateChanged, this,
-            &PluginSettingDialog::optionNeedRestartChanged);
-    connect(ui->cbEnablePluginRoot, &QCheckBox::stateChanged, this,
-            &PluginSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbEnablePlugin,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &PluginSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbEnablePluginRoot,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &PluginSettingDialog::optionNeedRestartChanged);
 
     reload();
 

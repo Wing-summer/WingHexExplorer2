@@ -27,6 +27,7 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
 #include "class/asbuilder.h"
+#include "define.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptjson.h"
@@ -70,6 +71,14 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     if (r < 0) {
         return false;
     }
+
+    engine->SetContextUserDataCleanupCallback(
+        &ScriptMachine::cleanUpDbgContext,
+        AsUserDataType::UserData_ContextDbgInfo);
+
+    engine->SetFunctionUserDataCleanupCallback(
+        &ScriptMachine::cleanUpPluginSysIDFunction,
+        AsUserDataType::UserData_PluginFn);
 
     RegisterScriptArray(engine, false);
     RegisterQString(engine);
@@ -428,6 +437,18 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     info.section = msg->section;
     info.message = m;
     emit ins->onOutput(t, info);
+}
+
+void ScriptMachine::cleanUpDbgContext(asIScriptContext *context) {
+    auto dbgContext =
+        context->GetUserData(AsUserDataType::UserData_ContextDbgInfo);
+    asDebugger::deleteDbgContextInfo(dbgContext);
+}
+
+void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *fn) {
+    // do nothing
+    // UserData_API is readonly and it will delete later by its allocator
+    // UserData_PluginFn is just an id, not a valid pointer to data
 }
 
 asITypeInfo *ScriptMachine::typeInfo(RegisteredType type) const {

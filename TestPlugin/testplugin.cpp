@@ -20,6 +20,9 @@
 
 #include "testplugin.h"
 #include "testform.h"
+#include "testpluginpage.h"
+#include "testsettingpage.h"
+#include "testwingeditorviewwidget.h"
 
 TestPlugin::TestPlugin() : puid(QStringLiteral("TestPlugin2")) {
     // 在构造函数中，所有的 API 都无法调用。插件的翻译文件也不会自动加载。
@@ -28,6 +31,25 @@ TestPlugin::TestPlugin() : puid(QStringLiteral("TestPlugin2")) {
     // 插件的语言文件会在初始化前自动加载，如果初始化失败则会被卸载
     // 初始化会传递一个配置类，插件系统会统一管理放到统一的地方，使用 INI 保存
     // 你可以自行管理，但不建议，统一管理方便使用者备份和转移插件配置
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_a),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        _scriptInfo.insert(QStringLiteral("test_a"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_b),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("info")));
+        _scriptInfo.insert(QStringLiteral("test_b"), info);
+    }
 }
 
 TestPlugin::~TestPlugin() {}
@@ -101,12 +123,65 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         _rtbinfo.append(rtinfo);
     }
 
+    {
+        auto sp = new TestSettingPage(QStringLiteral("Test1"),
+                                      QStringLiteral("This is a Test1"));
+        _setpages.insert(sp, true);
+    }
+
+    {
+        auto sp = new TestSettingPage(QStringLiteral("Test2"),
+                                      QStringLiteral("This is a Test2"));
+        _setpages.insert(sp, false);
+    }
+
+    {
+        WingHex::WingDockWidgetInfo info;
+        auto lbl = new QLabel(QStringLiteral("DockTest1"));
+        lbl->setAlignment(Qt::AlignCenter);
+        info.widget = lbl;
+        info.widgetName = QStringLiteral("DockTest1");
+        info.area = Qt::LeftDockWidgetArea;
+        _winfo.append(info);
+    }
+
+    {
+        auto ev = new TestWingEditorViewWidget;
+        _evws.append(ev);
+    }
+
+    {
+        auto pp = new TestPluginPage;
+        _plgps.append(pp);
+    }
+
+    _tmenu = new QMenu(QStringLiteral("TestPlugin"));
+    auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+    _tmenu->setIcon(micon);
+    for (int i = 0; i < 5; ++i) {
+        auto a = new QAction(
+            micon, QStringLiteral("Test - ") + QString::number(i), _tmenu);
+        connect(a, &QAction::triggered, this, [this, a]() {
+            emit msgbox.information(nullptr, QStringLiteral("Test"), a->text());
+        });
+        _tmenu->addAction(a);
+    }
+
     return true;
 }
 
 void TestPlugin::unload(std::unique_ptr<QSettings> &set) {
     // 设个数字，那就是 5 测试一下配置是否正常工作
     set->setValue("Test", 5);
+
+    for (auto p = _setpages.constKeyValueBegin();
+         p != _setpages.constKeyValueEnd(); ++p) {
+        p->first->deleteLater();
+    }
+
+    for (auto &item : _winfo) {
+        item.widget->deleteLater();
+    }
 
     _tform->close();
     _tform->deleteLater();
@@ -123,7 +198,7 @@ const QString TestPlugin::pluginComment() const {
 }
 
 QList<WingHex::WingDockWidgetInfo> TestPlugin::registeredDockWidgets() const {
-    return {};
+    return _winfo;
 }
 
 QMenu *TestPlugin::registeredHexContextMenu() const { return _tmenu; }
@@ -134,19 +209,41 @@ TestPlugin::registeredRibbonTools() const {
 }
 
 QHash<WingHex::SettingPage *, bool> TestPlugin::registeredSettingPages() const {
-    return {};
+    return _setpages;
 }
 
-QList<WingHex::PluginPage *> TestPlugin::registeredPages() const { return {}; }
+QList<WingHex::PluginPage *> TestPlugin::registeredPages() const {
+    return _plgps;
+}
 
 QList<WingHex::WingEditorViewWidget *>
 TestPlugin::registeredEditorViewWidgets() const {
-    return {};
+    return _evws;
 }
 
 QString TestPlugin::getPuid() const { return puid; }
 
+QVariant TestPlugin::test_a(const QVariantList &) {
+    test_a();
+    return {};
+}
+
+QVariant TestPlugin::test_b(const QVariantList &params) {
+    if (params.isEmpty()) {
+        return {};
+    }
+    auto arg0 = params.first().toString();
+    test_b(arg0);
+    return {};
+}
+
+void TestPlugin::test_a() { emit debug(__FUNCTION__); }
+
+void TestPlugin::test_b(const QString &a) {
+    emit warn(__FUNCTION__ + QStringLiteral(" : ") % a);
+}
+
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
 TestPlugin::registeredScriptFn() {
-    return {};
+    return _scriptInfo;
 }

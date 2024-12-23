@@ -118,6 +118,8 @@ public:
 
     DebugAction currentState() const;
 
+    static void deleteDbgContextInfo(void *info);
+
 private:
     QVector<VariablesInfo> globalVariables(asIScriptContext *ctx);
     QVector<VariablesInfo> localVariables(asIScriptContext *ctx);

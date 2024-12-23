@@ -19,6 +19,8 @@
 
 #include <QFont>
 
+#include "QConsoleWidget/QConsoleWidget.h"
+#include "QConsoleWidget/commandhistorymanager.h"
 #include "angelscript.h"
 #include "clangformatmanager.h"
 #include "dbghelper.h"
@@ -35,11 +37,11 @@
 AppManager *AppManager::_instance = nullptr;
 
 AppManager::AppManager(int &argc, char *argv[])
-    : SingleApplication(argc, argv, true) {
+    : QtSingleApplication(argc, argv) {
     ASSERT_SINGLETON;
 
     auto args = arguments();
-    if (isSecondary()) {
+    if (this->isRunning()) {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::WriteOnly);
         if (args.size() > 1) {
@@ -83,22 +85,18 @@ AppManager::AppManager(int &argc, char *argv[])
         ClangFormatManager::instance();
     }
 
+    auto cmdlist = CommandHistoryManager::load();
+    auto &his = QConsoleWidget::history();
+    for (auto &cmd : cmdlist) {
+        his.add(cmd);
+    }
+
     _w = new MainWindow(splash);
 
-    connect(this, &SingleApplication::instanceStarted, this, [this] {
-        Q_ASSERT(_w);
-        if (!_w->isEnabled()) {
-            return;
-        }
-        _w->show();
-        _w->activateWindow();
-        _w->raise();
-    });
+    setActivationWindow(_w);
 
-    connect(this, &SingleApplication::receivedMessage, this,
-            [this](quint32 instanceId, QByteArray message) {
-                Q_UNUSED(instanceId);
-
+    connect(this, &QtSingleApplication::messageReceived, this,
+            [this](QByteArray message) {
                 Q_ASSERT(_w);
                 if (!_w->isEnabled()) {
                     return;
@@ -111,8 +109,6 @@ AppManager::AppManager(int &argc, char *argv[])
                     openFile(param);
                 }
                 _w->show();
-                _w->activateWindow();
-                _w->raise();
             });
 
     if (splash)
@@ -132,6 +128,7 @@ AppManager::AppManager(int &argc, char *argv[])
 
 AppManager::~AppManager() {
     ClangFormatManager::instance().save();
+    CommandHistoryManager::save(QConsoleWidget::history().strings_);
 
     _w->deleteLater();
     _w = nullptr;

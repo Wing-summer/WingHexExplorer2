@@ -16,6 +16,7 @@
 */
 
 #include "asdebugger.h"
+#include "define.h"
 
 #include <QApplication>
 #include <QFileInfo>
@@ -82,7 +83,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     // for(auto i = 0; i < 5 ; i++) this line will break twice at first
     if (ctx->GetUserData() == nullptr) {
         auto dbgContext = new ContextDbgInfo;
-        ctx->SetUserData(dbgContext);
+        ctx->SetUserData(dbgContext, AsUserDataType::UserData_ContextDbgInfo);
     } else {
         auto dbgContext =
             reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
@@ -454,6 +455,12 @@ asDebugger::GCStatistic asDebugger::gcStatistics() {
 }
 
 void asDebugger::runDebugAction(DebugAction action) { m_action = action; }
+
+void asDebugger::deleteDbgContextInfo(void *info) {
+    if (info) {
+        delete reinterpret_cast<ContextDbgInfo *>(info);
+    }
+}
 
 asDebugger::DebugAction asDebugger::currentState() const { return m_action; }
 

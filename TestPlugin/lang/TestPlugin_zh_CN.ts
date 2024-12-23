@@ -54,18 +54,18 @@
         <translation>请输入64位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="137"/>
-        <location filename="../ctltestform.cpp" line="162"/>
+        <location filename="../ctltestform.cpp" line="138"/>
+        <location filename="../ctltestform.cpp" line="164"/>
         <source>PleaseInputFloat</source>
         <translation>请输入单精度浮点数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="187"/>
+        <location filename="../ctltestform.cpp" line="189"/>
         <source>PleaseInputString</source>
         <translation>请输入字符串</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="203"/>
+        <location filename="../ctltestform.cpp" line="205"/>
         <source>PleaseInputByteArray(00 23 5A)</source>
         <translation>请输入字节数组（举例：00 23 5A）</translation>
     </message>
@@ -316,32 +316,48 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="61"/>
+        <location filename="../testplugin.cpp" line="83"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="73"/>
-        <location filename="../testplugin.cpp" line="82"/>
-        <location filename="../testplugin.cpp" line="87"/>
-        <location filename="../testplugin.cpp" line="115"/>
+        <location filename="../testplugin.cpp" line="95"/>
+        <location filename="../testplugin.cpp" line="104"/>
+        <location filename="../testplugin.cpp" line="109"/>
+        <location filename="../testplugin.cpp" line="190"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="91"/>
+        <location filename="../testplugin.cpp" line="113"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="95"/>
+        <location filename="../testplugin.cpp" line="117"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="122"/>
+        <location filename="../testplugin.cpp" line="197"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
+    </message>
+</context>
+<context>
+    <name>TestPluginPage</name>
+    <message>
+        <location filename="../testpluginpage.cpp" line="16"/>
+        <source>TestPluginPage</source>
+        <translation>测试插件页</translation>
+    </message>
+</context>
+<context>
+    <name>TestWingEditorViewWidget</name>
+    <message>
+        <location filename="../testwingeditorviewwidget.cpp" line="18"/>
+        <source>TestWingEditorView</source>
+        <translation>测试插件编辑视图</translation>
     </message>
 </context>
 </TS>

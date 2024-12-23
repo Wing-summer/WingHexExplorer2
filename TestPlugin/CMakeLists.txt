@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
 # Test mode, please configure the main program directory to facilitate debugging
 
 # 测试模式，启用请配置主程序目录，方便调试
@@ -87,7 +89,13 @@ add_library(
     ctltestform.cpp
     ctltestform.ui
     testtablemodel.h
-    testtablemodel.cpp)
+    testtablemodel.cpp
+    testsettingpage.h
+    testsettingpage.cpp
+    testwingeditorviewwidget.h
+    testwingeditorviewwidget.cpp
+    testpluginpage.h
+    testpluginpage.cpp)
 
 set_target_properties(TestPlugin PROPERTIES SUFFIX ".wingplg")
 

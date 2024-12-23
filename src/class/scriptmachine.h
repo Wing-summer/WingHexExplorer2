@@ -123,6 +123,10 @@ private:
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);
 
+    static void cleanUpDbgContext(asIScriptContext *context);
+
+    static void cleanUpPluginSysIDFunction(asIScriptFunction *fn);
+
     static asIScriptContext *requestContextCallback(asIScriptEngine *engine,
                                                     void *param);
     static void returnContextCallback(asIScriptEngine *engine,

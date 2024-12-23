@@ -18,10 +18,10 @@
 #ifndef APPMANAGER_H
 #define APPMANAGER_H
 
-#include "SingleApplication/singleapplication.h"
 #include "dialog/mainwindow.h"
+#include "qtsingleapplication/src/qtsingleapplication.h"
 
-class AppManager : public SingleApplication {
+class AppManager : public QtSingleApplication {
     Q_OBJECT
 public:
     explicit AppManager(int &argc, char *argv[]);

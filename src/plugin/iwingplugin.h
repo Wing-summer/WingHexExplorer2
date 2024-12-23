@@ -464,6 +464,10 @@ class WingEditorViewWidget : public QWidget {
     Q_OBJECT
 
 public:
+    explicit WingEditorViewWidget(QWidget *parent = nullptr)
+        : QWidget(parent) {}
+
+public:
     virtual QIcon icon() const = 0;
 
     virtual QString name() const = 0;

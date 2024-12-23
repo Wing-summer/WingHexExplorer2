@@ -203,6 +203,7 @@ private slots:
     void on_about();
     void on_sponsor();
     void on_wiki();
+    void on_update();
 
 public:
     ErrFile openFile(const QString &file, EditorView **editor);

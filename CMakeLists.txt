@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.0.0-beta")
+set(PROJECT_VERSION "2.0.0")
 
 find_package(
     QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
@@ -99,10 +99,7 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h)
 
-set(QAPPLICATION_CLASS
-    QApplication
-    CACHE STRING "Inheritance class for SingleApplication")
-add_subdirectory(3rdparty/SingleApplication)
+add_subdirectory(3rdparty/qtsingleapplication)
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -121,7 +118,9 @@ set(QCONSOLEWIDGET_SRC
     3rdparty/QConsoleWidget/QConsoleIODevice.cpp
     3rdparty/QConsoleWidget/QConsoleIODevice.h
     3rdparty/QConsoleWidget/QConsoleWidget.cpp
-    3rdparty/QConsoleWidget/QConsoleWidget.h)
+    3rdparty/QConsoleWidget/QConsoleWidget.h
+    3rdparty/QConsoleWidget/commandhistorymanager.h
+    3rdparty/QConsoleWidget/commandhistorymanager.cpp)
 
 set(DIALOG_SRC
     src/dialog/framelessmainwindow.h
@@ -251,7 +250,9 @@ set(CLASS_SRC
     src/class/aspreprocesser.h
     src/class/aspreprocesser.cpp
     src/class/layoutmanager.h
-    src/class/layoutmanager.cpp)
+    src/class/layoutmanager.cpp
+    src/class/wingupdater.h
+    src/class/wingupdater.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -366,7 +367,6 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SingleApplication
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(${QT_VERSION_MAJOR} EQUAL 5)
     qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
@@ -486,7 +486,7 @@ if(WINGHEX_USE_FRAMELESS)
                 Qt${QT_VERSION_MAJOR}::GuiPrivate
                 Qt${QT_VERSION_MAJOR}::CorePrivate
                 Qt${QT_VERSION_MAJOR}::Xml
-                SingleApplication::SingleApplication
+                QtSingleApplication::QtSingleApplication
                 QWKCore
                 QWKWidgets
                 QHexView
@@ -505,7 +505,7 @@ else()
                 Qt${QT_VERSION_MAJOR}::GuiPrivate
                 Qt${QT_VERSION_MAJOR}::CorePrivate
                 Qt${QT_VERSION_MAJOR}::Xml
-                SingleApplication::SingleApplication
+                QtSingleApplication::QtSingleApplication
                 QHexView
                 QCodeEditor2
                 QJsonModel

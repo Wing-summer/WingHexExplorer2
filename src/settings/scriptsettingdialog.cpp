@@ -29,8 +29,13 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnable);
     Utilities::addSpecialMark(ui->cbAllowUsrScript);
-    connect(ui->cbAllowUsrScript, &QCheckBox::stateChanged, this,
-            &ScriptSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbAllowUsrScript,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &ScriptSettingDialog::optionNeedRestartChanged);
 
     loadData();
 }

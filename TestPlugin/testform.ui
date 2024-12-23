@@ -23,7 +23,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
@@ -57,7 +57,7 @@
              <string>Tip: MaybeCanNotSeen</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -237,7 +237,7 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -257,7 +257,7 @@
        <item>
         <widget class="QSplitter" name="spltReader">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <widget class="QScrollArea" name="saReader">
           <property name="widgetResizable">
@@ -268,8 +268,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>570</width>
-             <height>49</height>
+             <width>566</width>
+             <height>58</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7"/>
@@ -312,7 +312,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <property name="sizeConstraint">
-           <enum>QLayout::SetMinAndMaxSize</enum>
+           <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
           </property>
           <item>
            <widget class="QRadioButton" name="rbLockedFile">
@@ -388,7 +388,7 @@
        <item>
         <spacer name="verticalSpacer_4">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -408,7 +408,7 @@
        <item>
         <widget class="QSplitter" name="spltCtl">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <widget class="QScrollArea" name="saCtl">
           <property name="widgetResizable">
@@ -419,8 +419,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>570</width>
-             <height>49</height>
+             <width>566</width>
+             <height>58</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_17"/>
@@ -459,7 +459,7 @@
        <item>
         <widget class="QSplitter" name="splitter_3">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -814,7 +814,7 @@
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -834,7 +834,7 @@
        <item>
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <widget class="QWidget" name="layoutWidget2">
           <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -883,7 +883,7 @@
              </property>
              <layout class="QGridLayout" name="gridLayout">
               <property name="sizeConstraint">
-               <enum>QLayout::SetMinAndMaxSize</enum>
+               <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
               </property>
               <item row="1" column="1">
                <widget class="QLabel" name="label_12">
@@ -891,7 +891,7 @@
                  <string notr="true">WingSummer</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -998,7 +998,7 @@
        <item>
         <widget class="QSplitter" name="splitter_2">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <widget class="QWidget" name="layoutWidget_3">
           <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1057,7 +1057,7 @@
              </property>
              <layout class="QGridLayout" name="gridLayout_2">
               <property name="sizeConstraint">
-               <enum>QLayout::SetMinAndMaxSize</enum>
+               <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
               </property>
               <item row="0" column="1">
                <widget class="QPushButton" name="btnOpenFileName">
@@ -1117,7 +1117,7 @@
                  <string notr="true">WingSummer</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1213,7 +1213,7 @@
        <item>
         <spacer name="verticalSpacer_3">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1246,7 +1246,7 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="sizeConstraint">
-           <enum>QLayout::SetMinAndMaxSize</enum>
+           <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
           </property>
           <item row="0" column="1">
            <widget class="QPushButton" name="btnTextList">
@@ -1345,7 +1345,7 @@
              <string notr="true">WingSummer</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>

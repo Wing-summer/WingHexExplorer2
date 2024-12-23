@@ -34,6 +34,7 @@
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
+#include "class/wingupdater.h"
 #include "control/toast.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
@@ -103,7 +104,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash)
         splash->setInfoText(tr("SetupDocking"));
     buildUpDockSystem(cw);
-    _defaultLayout = m_dock->saveState();
 
     layout->addWidget(m_dock, 1);
 
@@ -219,6 +219,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     // load saved docking layout
     if (splash)
         splash->setInfoText(tr("SetupDockingLayout"));
+
+    _defaultLayout = m_dock->saveState();
     m_dock->restoreState(set.dockLayout());
 
     m_lastusedpath = set.lastUsedPath();
@@ -285,6 +287,26 @@ void MainWindow::buildUpRibbonBar() {
                     app->openFile(f);
                 }
             });
+
+    // check update if set
+    if (set.checkUpdate()) {
+        ExecAsync<int>(
+            []() -> int {
+                bool ok = false;
+                auto newest = WingUpdater::checkUpdate(&ok);
+                if (ok) {
+                    return newest ? 1 : 0;
+                } else {
+                    return -1;
+                }
+            },
+            [this](int status) {
+                if (status == 0) {
+                    WingMessageBox::warning(this, qAppName(),
+                                            tr("OlderVersion"));
+                }
+            });
+    }
 }
 
 void MainWindow::buildUpDockSystem(QWidget *container) {
@@ -1290,6 +1312,9 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     addPannelAction(pannel, QStringLiteral("qt"), tr("AboutQT"),
                     [this] { WingMessageBox::aboutQt(this); });
 
+    addPannelAction(pannel, QStringLiteral("update"), tr("CheckUpdate"),
+                    &MainWindow::on_update);
+
     return tab;
 }
 
@@ -1397,7 +1422,7 @@ void MainWindow::installPluginEditorWidgets() {
     QHash<QString, IWingPlugin *> names;
     auto &log = Logger::instance();
 
-    auto menu = m_toolBtneditors.value(EDITOR_WINS);
+    auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
     for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
          ++p) {
         for (auto &w : p.value()) {
@@ -1410,12 +1435,12 @@ void MainWindow::installPluginEditorWidgets() {
                 continue;
             }
 
-            menu->addAction(newAction(w->icon(), w->name(), [this] {
+            menu->addAction(newAction(w->icon(), w->name(), [this, w] {
                 auto editor = currentEditor();
                 if (editor == nullptr) {
                     return;
                 }
-                editor->switchView(m_editorViewWidgets.size());
+                editor->switchView(w);
             }));
 
             names.insert(w->id(), p.key());
@@ -2492,6 +2517,30 @@ void MainWindow::on_sponsor() {
 void MainWindow::on_wiki() {
     QDesktopServices::openUrl(
         QUrl(QStringLiteral("https://www.cnblogs.com/wingsummer/p/18286419")));
+}
+
+void MainWindow::on_update() {
+    ExecAsync<int>(
+        []() -> int {
+            bool ok = false;
+            auto newest = WingUpdater::checkUpdate(&ok);
+            if (ok) {
+                return newest ? 1 : 0;
+            } else {
+                return -1;
+            }
+        },
+        [this](int status) {
+            if (status < 0) {
+                WingMessageBox::critical(this, qAppName(), tr("BadNetwork"));
+            } else if (status == 0) {
+                WingMessageBox::warning(this, qAppName(), tr("OlderVersion"));
+            } else {
+                WingMessageBox::information(this, qAppName(),
+                                            tr("NewestVersion"));
+            }
+        },
+        tr("CheckingUpdate"));
 }
 
 QString MainWindow::saveLog() {

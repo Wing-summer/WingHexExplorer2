@@ -125,6 +125,7 @@ void QHexCursor::select(qsizetype line, int column, int nibbleindex,
     if (modes.testFlag(SelectionPreview)) {
         m_selection.line = line;
         m_selection.column = qMax(0, column); // fix the bug by wingsummer
+        m_selection.lineWidth = m_position.lineWidth;
         m_selection.nibbleindex = nibbleindex;
 
         modes.setFlag(SelectionPreview, false);
@@ -136,6 +137,7 @@ void QHexCursor::select(qsizetype line, int column, int nibbleindex,
 
         sel.end.line = line;
         sel.end.column = column;
+        sel.end.lineWidth = m_position.lineWidth;
         sel.end.nibbleindex = nibbleindex;
 
         sel.normalize();

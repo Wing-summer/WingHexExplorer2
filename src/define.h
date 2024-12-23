@@ -8,4 +8,12 @@ enum class CrashCode : int {
     GenericCallNotSupported
 };
 
+namespace AsUserDataType {
+enum AsUserDataType {
+    UserData_ContextDbgInfo,
+    UserData_API,
+    UserData_PluginFn,
+};
+}
+
 #endif // DEFINE_H

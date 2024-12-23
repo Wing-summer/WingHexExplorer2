@@ -133,9 +133,10 @@ void CtlTestForm::on_btnInt64_clicked() {
 
 void CtlTestForm::on_btnFloat_clicked() {
     bool ok;
-    auto ret = emit _plg->inputbox.getDouble(this, QStringLiteral("Test"),
-                                             tr("PleaseInputFloat"), 0, FLT_MIN,
-                                             FLT_MAX, 0.0, &ok);
+    auto limit = std::numeric_limits<float>();
+    auto ret = emit _plg->inputbox.getDouble(
+        this, QStringLiteral("Test"), tr("PleaseInputFloat"), 0, limit.min(),
+        limit.max(), 0.0, &ok);
     if (ok) {
         auto buffer = float(ret);
         if (ui->rbInsert->isChecked()) {
@@ -158,9 +159,10 @@ void CtlTestForm::on_btnFloat_clicked() {
 
 void CtlTestForm::on_btnDouble_clicked() {
     bool ok;
-    auto ret = emit _plg->inputbox.getDouble(this, QStringLiteral("Test"),
-                                             tr("PleaseInputFloat"), 0, DBL_MIN,
-                                             DBL_MAX, 0.0, &ok);
+    auto limit = std::numeric_limits<double>();
+    auto ret = emit _plg->inputbox.getDouble(
+        this, QStringLiteral("Test"), tr("PleaseInputFloat"), 0, limit.min(),
+        limit.max(), 0.0, &ok);
     if (ok) {
         auto buffer = double(ret);
         if (ui->rbInsert->isChecked()) {

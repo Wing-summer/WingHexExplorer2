@@ -35,7 +35,8 @@
 constexpr qsizetype FILEMAXBUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
-EditorView::EditorView(QWidget *parent) : ads::CDockWidget(QString(), parent) {
+EditorView::EditorView(QWidget *parent)
+    : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
         CDockWidget::DockWidgetClosable | CDockWidget::DockWidgetPinnable |
@@ -134,25 +135,37 @@ EditorView::~EditorView() {}
 void EditorView::registerView(WingEditorViewWidget *view) {
     Q_ASSERT(view);
     m_others << view;
+    m_stack->addWidget(view);
 }
 
 void EditorView::switchView(qsizetype index) {
     if (index < 0) {
-        m_stack->setCurrentWidget(m_hex);
+        m_stack->setCurrentWidget(m_hexContainer);
     } else {
         m_stack->setCurrentWidget(m_others.at(index));
     }
     emit viewChanged(index);
 }
 
+void EditorView::switchView(WingEditorViewWidget *w) {
+    if (w) {
+        if (m_others.contains(w)) {
+            m_stack->setCurrentWidget(w);
+            emit viewChanged(m_others.indexOf(w));
+        }
+    } else {
+        m_stack->setCurrentWidget(m_hexContainer);
+        emit viewChanged(-1);
+    }
+}
+
 void EditorView::registerQMenu(QMenu *menu) {
     if (menu == nullptr) {
         return;
     }
-    static bool hasRegistered = false;
-    if (!hasRegistered) {
+    if (!_hasRegistered) {
         m_menu->addSeparator();
-        hasRegistered = true;
+        _hasRegistered = true;
     }
     m_menu->addMenu(menu);
 }

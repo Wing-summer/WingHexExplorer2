@@ -69,6 +69,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USE_NATIVE_TITLEBAR,
                           ("sys.nativeTitleBar"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_DONT_USE_SPLASH, ("sys.dontUseSplash"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_LEVEL, ("sys.loglevel"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_COUNT, ("sys.logCount"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_CHECK_UPDATE, ("sys.checkUpdate"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT, ("codeedit.font"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT_SIZE, ("codeedit.fontsize"))
@@ -143,8 +145,12 @@ void SettingManager::load() {
 #endif
     READ_CONFIG_INT_POSITIVE(m_logLevel, OTHER_LOG_LEVEL,
                              Logger::defaultLevel());
+    READ_CONFIG_BOOL(m_checkUpdate, OTHER_CHECK_UPDATE, false);
     m_logLevel =
         qBound(int(Logger::LEVEL_BEGIN), m_logLevel, int(Logger::LEVEL_LAST));
+
+    READ_CONFIG_INT_POSITIVE(m_logCount, OTHER_LOG_COUNT, 20);
+    m_logCount = qBound(qsizetype(20), m_logCount, qsizetype(100));
 
     m_editorEncoding =
         READ_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII")).toString();
@@ -202,6 +208,18 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+qsizetype SettingManager::logCount() const { return m_logCount; }
+
+void SettingManager::setLogCount(qsizetype newLogCount) {
+    m_logCount = newLogCount;
+}
+
+bool SettingManager::checkUpdate() const { return m_checkUpdate; }
+
+void SettingManager::setCheckUpdate(bool newCheckUpdate) {
+    m_checkUpdate = newCheckUpdate;
 }
 
 bool SettingManager::dontUseSplash() const { return m_dontUseSplash; }
@@ -491,7 +509,9 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
 #endif
         WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, m_dontUseSplash);
+        WRITE_CONFIG_SET(OTHER_CHECK_UPDATE, m_checkUpdate);
         WRITE_CONFIG_SET(OTHER_LOG_LEVEL, m_logLevel);
+        WRITE_CONFIG_SET(OTHER_LOG_COUNT, m_logCount);
     }
     if (cat.testFlag(SETTING::CODEEDIT)) {
         saveCodeEditorConfig();
@@ -533,7 +553,9 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, false);
 #endif
         WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, false);
+        WRITE_CONFIG_SET(OTHER_CHECK_UPDATE, false);
         WRITE_CONFIG_SET(OTHER_LOG_LEVEL, Logger::defaultLevel());
+        WRITE_CONFIG_SET(OTHER_LOG_COUNT, 20);
     }
     load();
 }

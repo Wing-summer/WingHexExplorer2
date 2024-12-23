@@ -759,9 +759,9 @@ void QHexView::moveNext(bool select) {
     if (select)
         cur->select(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
                     nibbleindex, QHexCursor::SelectionAdd);
-    else
-        cur->moveTo(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
-                    nibbleindex);
+
+    cur->moveTo(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
+                nibbleindex);
 }
 
 void QHexView::movePrevious(bool select) {
@@ -796,9 +796,10 @@ void QHexView::movePrevious(bool select) {
     }
 
     if (select)
-        cur->select(line, std::max(0, column), nibbleindex);
-    else
-        cur->moveTo(line, std::max(0, column), nibbleindex);
+        cur->select(line, std::max(0, column), nibbleindex,
+                    QHexCursor::SelectionAdd);
+
+    cur->moveTo(line, std::max(0, column), nibbleindex);
 }
 
 QHexCursor::SelectionMode QHexView::getSelectionMode() const {
