@@ -1,0 +1,216 @@
+{
+    "version": 1,
+    "supportedProjectTypes": [ "CMakeProjectManager.CMakeProject" ],
+    "id": "H.WingHex2Plugin",
+    "category": "G.Library",
+    "trDescription": "Creates a plugin for WingHexExplorer2.",
+    "trDisplayName": "WingHexExplorer2 Plugin",
+    "trDisplayCategory": "Library",
+    "icon": "winghexplugin.png",
+    "iconKind": "Themed",
+    "enabled": "%{JS: value('Plugins').indexOf('CppEditor') >= 0 && value('Plugins').indexOf('CMakeProjectManager') >= 0 }",
+
+    "options":
+    [
+        { "key": "WingHexSDKPath", "value": "%{SDKPath}" },
+        { "key": "WingHexEXEPath", "value": "%{WingHexPath}" },
+        { "key": "ProjectFile", "value": "%{JS: value('CMakeFile') }" },
+        { "key": "PluginNameLower", "value": "%{JS: value('PluginName').toLowerCase()}"},
+        { "key": "PluginJsonFile", "value": "%{JS: Util.fileName(value('PluginName'), 'json.in')}" },
+        { "key": "CMakeFile", "value": "%{ProjectDirectory}/CMakeLists.txt" },
+        { "key": "PluginJsonFile", "value": "%{JS: Util.fileName(value('ProjectName'), 'json')}" },
+        { "key": "SrcFileName", "value": "%{JS: Util.fileName(value('PluginNameLower'), Util.preferredSuffix('text/x-c++src'))}" },
+        { "key": "HdrFileName", "value": "%{JS: Util.fileName(value('PluginNameLower'), Util.preferredSuffix('text/x-c++hdr'))}" },
+        { "key": "BaseClassName", "value": "%{JS: value('BaseClassInfo').BaseClassName }" },
+        { "key": "CN", "value": "%{JS: Cpp.className(value('PluginName'))}" },
+        { "key": "GUARD", "value": "%{JS: Cpp.headerGuard(value('HdrFileName'))}" },
+        { "key": "HasTranslation", "value": "%{JS: value('TsFileName') !== ''}" }
+    ],
+
+    "pages":
+    [
+        {
+            "trDisplayName": "Project Location",
+            "trShortTitle": "Location",
+            "typeId": "Project",
+            "data": { "trDescription": "This wizard creates a plugin for WingHexExplorer2." }
+        },
+        {
+            "trDisplayName": "Define Project Details",
+            "trShortTitle": "Details",
+            "typeId": "Fields",
+            "data":
+            [
+                {
+                    "name": "ClassPageDescription",
+                    "type": "Label",
+                    "data":
+                    {
+                        "trText": "Specify details about your WingHexExplorer2 plugin.",
+                        "wordWrap": true
+                    }
+                },
+                {
+                    "name": "PluginName",
+                    "trDisplayName": "Plugin name:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "validator": "[a-zA-Z_][a-zA-Z_0-9]*",
+                        "text": "%{JS: value('ProjectName').charAt(0).toUpperCase() + value('ProjectName').slice(1)}"
+                    }
+                },
+                {
+                    "name": "PluginVersion",
+                    "trDisplayName": "Plugin version:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "validator": "^[1-9][0-9]*$",
+                        "text": "1"
+                    }
+                },
+                {
+                    "name": "VendorName",
+                    "persistenceKey": "VendorName",
+                    "trDisplayName": "Vendor name:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "trText": "MyCompany"
+                    }
+                },
+                {
+                    "name": "Copyright",
+                    "trDisplayName": "Copyright:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "trText": "(C) %{VendorName}"
+                    }
+                },
+                {
+                    "name": "License",
+                    "trDisplayName": "License:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "trText": "Put short license information here"
+                    }
+                },
+                {
+                    "name": "Description",
+                    "trDisplayName": "Description:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "trText": "Put a short description of your plugin here"
+                    }
+                },
+                {
+                    "name": "Url",
+                    "persistenceKey": "VendorUrl",
+                    "trDisplayName": "URL:",
+                    "mandatory": true,
+                    "type": "LineEdit",
+                    "data":
+                    {
+                        "text": "https://www.%{JS: encodeURIComponent(value('VendorName').toLowerCase())}.com"
+                    }
+                },
+                {
+                    "name": "SDKPath",
+                    "persistenceKey": "SDKPath",
+                    "trDisplayName": "SDK Path:",
+                    "mandatory": true,
+                    "type": "PathChooser",
+                    "data":
+                    {
+                        "kind": "existingDirectory"
+                    }
+                },
+                {
+                    "name": "WingHexPath",
+                    "persistenceKey": "WingHexPath",
+                    "type": "PathChooser",
+                    "trDisplayName": "WingHexExplorer2 Installation:",
+                    "mandatory": true,
+                    "data":
+                    {
+                        "kind": "existingDirectory"
+                    }
+                }
+            ]
+        },
+        {
+            "trDisplayName": "Translation File",
+            "trShortTitle": "Translation",
+            "data": { "enabled": "yes" },
+            "typeId": "QtTranslation"
+        },
+        {
+            "trDisplayName": "Kit Selection",
+            "trShortTitle": "Kits",
+            "typeId": "Kits",
+            "data": { "projectFilePath": "%{ProjectFile}" }
+        },
+
+        {
+            "trDisplayName": "Project Management",
+            "trShortTitle": "Summary",
+            "typeId": "Summary"
+        }
+    ],
+    "generators":
+    [
+        {
+            "typeId": "File",
+            "data":
+            [
+                {
+                    "source": "CMakeLists.txt",
+                    "openAsProject": true
+                },
+                {
+                    "source": "lib.cpp",
+                    "target": "%{SrcFileName}",
+                    "openInEditor": true
+                },
+                {
+                    "source": "lib.h",
+                    "target": "%{HdrFileName}"
+                },
+                {
+                    "source": "cmake/TranslationUtils.cmake",
+                    "target": "cmake/TranslationUtils.cmake"
+                },
+                {
+                    "source": "cmake/LICENSE.txt",
+                    "target": "cmake/LICENSE.txt"
+                },
+                {
+                    "source": "MyPlugin.json.in",
+                    "target": "%{PluginJsonFile}"
+                },
+                {
+                    "source": "git.ignore",
+                    "target": ".gitignore"
+                },
+                {
+                    "source": ".clang-format",
+                    "target": ".clang-format"
+                },
+                {
+                    "source": ".cmake-format.py",
+                    "target": ".cmake-format.py"
+                }
+            ]
+        }
+    ]
+}

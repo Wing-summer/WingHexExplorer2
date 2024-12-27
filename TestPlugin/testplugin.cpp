@@ -24,7 +24,8 @@
 #include "testsettingpage.h"
 #include "testwingeditorviewwidget.h"
 
-TestPlugin::TestPlugin() : puid(QStringLiteral("TestPlugin2")) {
+TestPlugin::TestPlugin()
+    : WingHex::IWingPlugin(), puid(QStringLiteral("TestPlugin2")) {
     // 在构造函数中，所有的 API 都无法调用。插件的翻译文件也不会自动加载。
     // 在构造函数中，仅适合做一些为初始化准备的操作。
 

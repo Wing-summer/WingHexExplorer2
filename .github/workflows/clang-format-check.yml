@@ -10,4 +10,5 @@ jobs:
       uses: jidicula/clang-format-action@v4.14.0
       with:
         clang-format-version: '12'
+        exclude-regex: '(qt-template|mkinstaller)'
         fallback-style: 'LLVM' # optional

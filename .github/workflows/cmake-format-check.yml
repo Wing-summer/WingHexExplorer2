@@ -12,3 +12,4 @@ jobs:
       uses: neg-c/cmake-format-action@v0.1.3
       with:
         inplace: true
+        exclude: "qt-template mkinstaller"
