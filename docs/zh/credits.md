@@ -6,7 +6,7 @@ key: docs-credits
 ## 鸣谢
 
 <p align="center">
-<img alt="羽云十六进制编辑器2" src="/assets/images/appicon.png" />
+<img alt="羽云十六进制编辑器2" src="{{site.url}}/assets/images/appicon.png" />
 </p>
 
 🏅 如果您对本项目文档有贡献，但被忘记记录在内。首先对疏忽遗漏的情况表示抱歉，请 [联系我](https://github.com/Wing-summer) 补充。

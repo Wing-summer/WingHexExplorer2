@@ -30,13 +30,13 @@ key: page-about
 ## 关于软件
 
 <p align="center">
-<img alt="" src="assets/images/appicon.png" width=200 />
+<img alt="" src="{{site.url}}/assets/images/appicon.png" width=200 />
 </p>
 
 该软件起源于`WingHexExplorer`，是它的重构翻新版本，修复了大量的 Bug，增强功能。原来的版本是基于`DTK`做的，所以仅仅支持某些`Linux`发行版。原本在`Linux`上没有发现跟`Windows`上媲美好用的开源软件，于是在 2022 年 6 月，我创建了代码仓库开始开发，最后依次更新是在 2023 年 7 月，持续了一年的时间。最后软件长这个样子：
 
 <p align="center">
-<img alt="" src="assets/images/old-screenshot.png"/>
+<img alt="" src="{{site.url}}/assets/images/old-screenshot.png"/>
 </p>
 
 从图上看，这其实是我现在十六进制编辑器的原型。此时软件已经具备插件系统和`Python`脚本的支持，不过仅支持单文件编辑，也没有特别强大，但已经十分够用，并且具有一定的复杂度和专业性。
@@ -50,7 +50,7 @@ key: page-about
 ## 关于作者
 
 <p align="center">
-<img alt="作者" src="assets/images/author.jpg" width=200 />
+<img alt="作者" src="{{site.url}}/assets/images/author.jpg" width=200 />
 </p>
 
 网名/昵称是寂静的羽夏，英文网名有`wingsummer`、`Wing-summer`或`WingSummer`这三种。中国人，羽云系列软件发起人和目前唯一维护者，一个热爱开源的非科班专业贡献者，是一位热爱计算机技术的菜鸟。目前在维护的代表作：[WingHexExplorer2](https://github.com/Wing-summer/WingHexExplorer2)、[WingGifEditor2](https://github.com/Wing-summer/WingGifEditor2) 以及相关插件。
@@ -66,6 +66,6 @@ key: page-about
 <p align="center"><b>您的每一份支持都将是我开源的强大动力，十分感谢您的支持</b></p>
 
 <p align="center">
-<img alt="捐助" src="/assets/images/Donate.jpg" />
+<img alt="捐助" src="{{site.url}}/assets/images/Donate.jpg" />
 <p align="center">感谢支持</p>
 </p>
