@@ -188,7 +188,9 @@ set(CONTROL_SRC
     src/control/codeedit.h
     src/control/codeedit.cpp
     src/control/asobjtreewidget.h
-    src/control/asobjtreewidget.cpp)
+    src/control/asobjtreewidget.cpp
+    src/control/qtlonglongspinbox.cpp
+    src/control/qtlonglongspinbox.h)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -252,7 +254,9 @@ set(CLASS_SRC
     src/class/layoutmanager.h
     src/class/layoutmanager.cpp
     src/class/wingupdater.h
-    src/class/wingupdater.cpp)
+    src/class/wingupdater.cpp
+    src/class/richtextitemdelegate.h
+    src/class/richtextitemdelegate.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC

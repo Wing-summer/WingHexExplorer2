@@ -188,6 +188,7 @@ private slots:
     void on_clearfindresult();
     void on_exportfindresult();
     void on_locChanged();
+    void on_selectionChanged();
 
     void on_viewtxt();
     void on_fullScreen();

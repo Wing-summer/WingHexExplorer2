@@ -170,8 +170,7 @@ void EditorView::registerQMenu(QMenu *menu) {
     m_menu->addMenu(menu);
 }
 
-EditorView::FindError EditorView::find(const QByteArray &data,
-                                       const FindDialog::Result &result) {
+EditorView::FindError EditorView::find(const FindDialog::Result &result) {
     if (m_findMutex.tryLock(3000)) {
         std::unique_lock<QMutex> locker(m_findMutex, std::adopt_lock_t());
         auto d = m_hex->document();
@@ -196,19 +195,41 @@ EditorView::FindError EditorView::find(const QByteArray &data,
             end = -1;
         } break;
         }
+
+        QByteArray data;
+
+        if (result.isStringFind) {
+            data = Utilities::encodingString(result.str, result.encoding);
+        } else {
+            data = result.buffer;
+        }
+
         d->findAllBytes(begin, end, data, results);
 
         m_findResults->beginUpdate();
         m_findResults->clear();
-        for (auto &result : results) {
+
+        auto lineWidth = m_hex->renderer()->hexLineWidth();
+        for (auto &ritem : results) {
             FindResult r;
-            r.offset = result;
-            r.line = r.offset / m_hex->renderer()->hexLineWidth();
-            r.col = r.offset % m_hex->renderer()->hexLineWidth();
+            r.offset = ritem;
+            r.line = r.offset / lineWidth;
+            r.col = r.offset % lineWidth;
             m_findResults->results().append(r);
+
+            QString content;
+            QByteArray buffer;
+            // TODO
+            FindResultModel::FindInfo info;
+
+            // default show lineWidth count
+            if (data.size() > lineWidth - 4) {
+            }
+
+            info.decoding = Utilities::decodingString(buffer, result.encoding);
+            m_findResults->lastFindData().append(info);
         }
 
-        m_findResults->lastFindData() = data.toHex(' ').toUpper();
         m_findResults->endUpdate();
 
         if (m_findResults->size() ==

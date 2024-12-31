@@ -27,6 +27,7 @@
 
 class asIScriptEngine;
 class ScriptMachine;
+class ScriptingConsole;
 
 class WingAngelAPI : public WingHex::IWingPlugin {
     Q_OBJECT
@@ -46,11 +47,15 @@ public:
     virtual uint pluginVersion() const override;
     virtual const QString pluginComment() const override;
 
+public:
     void
     registerScriptFns(const QString &ns,
                       const QHash<QString, IWingPlugin::ScriptFnInfo> &rfns);
 
     void installAPI(ScriptMachine *machine);
+
+    ScriptingConsole *bindingConsole() const;
+    void setBindingConsole(ScriptingConsole *console);
 
 private:
     void installLogAPI(asIScriptEngine *engine);
@@ -86,14 +91,6 @@ private:
     QByteArray cArray2ByteArray(const CScriptArray &array, int byteID,
                                 bool *ok = nullptr);
 
-    bool read2Ref(qsizetype offset, void *ref, int typeId);
-
-    bool write2Ref(qsizetype offset, void *ref, int typeId);
-
-    bool insert2Ref(qsizetype offset, void *ref, int typeId);
-
-    bool append2Ref(void *ref, int typeId);
-
     qsizetype getAsTypeSize(int typeId, void *data);
 
     template <typename T>
@@ -125,6 +122,11 @@ private:
     static void script_call(asIScriptGeneric *gen);
 
 private:
+    WING_SERVICE bool execScriptCode(const QString &code);
+    WING_SERVICE bool execScript(const QString &fileName);
+    WING_SERVICE bool execCode(const QString &code);
+
+private:
     QString _InputBox_getItem(int stringID, const QString &title,
                               const QString &label, const CScriptArray &items,
                               int current, bool editable, bool *ok,
@@ -141,14 +143,6 @@ private:
     CScriptArray *_HexReader_selectionBytes();
 
     CScriptArray *_HexReader_readBytes(qsizetype offset, qsizetype len);
-
-    bool _HexReader_read(qsizetype offset, void *ref, int typeId);
-
-    bool _HexReader_write(qsizetype offset, void *ref, int typeId);
-
-    bool _HexReader_insert(qsizetype offset, void *ref, int typeId);
-
-    bool _HexReader_append(void *ref, int typeId);
 
     qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
 
@@ -179,6 +173,8 @@ private:
 private:
     std::vector<std::any> _fnbuffer;
     QVector<IWingPlugin::ScriptFnInfo> _sfns;
+
+    ScriptingConsole *_console = nullptr;
 
     QHash<QString, QHash<QString, qsizetype>> _rfns;
 };

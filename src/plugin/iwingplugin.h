@@ -40,6 +40,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QMetaObject>
 
 /**
  * Don't try to modify this file, unless you are the dev
@@ -50,7 +51,7 @@ namespace WingHex {
 
 using qusizetype = QIntegerForSizeof<std::size_t>::Unsigned;
 
-Q_DECL_UNUSED constexpr auto SDKVERSION = 14;
+Q_DECL_UNUSED constexpr auto SDKVERSION = 15;
 
 Q_DECL_UNUSED static QString PLUGINDIR() {
     return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
@@ -490,6 +491,22 @@ signals:
     void raiseView();
 };
 
+struct WingDependency {
+    QString puid;
+    uint version;
+    QString md5; // optional, but recommend
+};
+
+#ifdef WING_SERVICE
+#undef WING_SERVICE
+#endif
+
+#define WING_SERVICE Q_INVOKABLE
+
+// for bad broken Qt API
+#define WINGAPI_ARG(type, data) QArgument<type>(#type, data)
+#define WINGAPI_RETURN_ARG(type, data) QReturnArgument<type>(#type, data)
+
 class IWingPlugin : public QObject {
     Q_OBJECT
 public:
@@ -519,6 +536,7 @@ public:
         MetaTypeMask = 0xFFFFF,
         Ref = 0x10000000,
         Array = 0x100000,
+        Map = 0x200000
     };
 
     static_assert(MetaType::MetaMax < MetaType::Array);
@@ -531,10 +549,17 @@ public:
 
     enum class RegisteredEvent : uint {
         None,
-        SelectionChanged = 1u,
-        CursorPositionChanged = 1u << 1
+        AppReady = 1u,
+        SelectionChanged = 1u << 1,
+        CursorPositionChanged = 1u << 2,
+        FileOpened = 1u << 3,
+        FileSaved = 1u << 4,
+        FileSwitched = 1u << 5,
+        FileClosed = 1u << 6
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
+
+    enum class PluginFileEvent { Opened, Saved, Switched, Closed };
 
 public:
     virtual int sdkVersion() const = 0;
@@ -548,6 +573,13 @@ public:
     virtual uint pluginVersion() const = 0;
     virtual const QString pluginComment() const = 0;
 
+    virtual QList<WingDependency> dependencies() const { return {}; }
+
+    virtual RegisteredEvents registeredEvents() const {
+        return RegisteredEvent::None;
+    }
+
+public:
     virtual QList<WingDockWidgetInfo> registeredDockWidgets() const {
         return {};
     }
@@ -564,21 +596,40 @@ public:
         return {};
     }
 
-    // QHash<function-name, fn>
-    virtual QHash<QString, ScriptFnInfo> registeredScriptFn() { return {}; }
-
-    virtual RegisteredEvents registeredEvents() const {
-        return RegisteredEvent::None;
+public:
+    // QHash< function-name, fn >
+    virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const {
+        return {};
     }
 
+    // QHash< obj-names, decl-members >
+    virtual QHash<QString, QStringList> registeredScriptObjs() const {
+        return {};
+    }
+
+signals:
+    // QHash< obj-names, decl-members >
+    bool registerScriptObj(const QString &obj, const QStringList &members);
+
 public:
-    virtual void eventSelectionChanged(const QByteArrayList &selections) {
+    virtual void eventSelectionChanged(const QByteArrayList &selections,
+                                       bool isPreview) {
         Q_UNUSED(selections);
+        Q_UNUSED(isPreview);
     }
 
     virtual void eventCursorPositionChanged(const WingHex::HexPosition &pos) {
         Q_UNUSED(pos);
     }
+
+    virtual void eventPluginFile(PluginFileEvent e, const QString &newfileName,
+                                 const QString &oldfileName) {
+        Q_UNUSED(e);
+        Q_UNUSED(newfileName);
+        Q_UNUSED(oldfileName);
+    }
+
+    virtual void eventReady() {}
 
 signals:
     // extension and exposed to WingHexAngelScript
@@ -591,7 +642,71 @@ signals:
 
     // not available for AngelScript
     // only for plugin UI extenstion
+
     QDialog *createDialog(QWidget *content);
+
+    bool invokeService(const QString &puid, const char *method,
+                       Qt::ConnectionType type, QGenericReturnArgument ret,
+                       QGenericArgument val0 = QGenericArgument(nullptr),
+                       QGenericArgument val1 = QGenericArgument(),
+                       QGenericArgument val2 = QGenericArgument(),
+                       QGenericArgument val3 = QGenericArgument(),
+                       QGenericArgument val4 = QGenericArgument(),
+                       QGenericArgument val5 = QGenericArgument(),
+                       QGenericArgument val6 = QGenericArgument(),
+                       QGenericArgument val7 = QGenericArgument(),
+                       QGenericArgument val8 = QGenericArgument(),
+                       QGenericArgument val9 = QGenericArgument());
+
+public:
+    inline bool invokeService(const QString &puid, const char *member,
+                              QGenericReturnArgument ret,
+                              QGenericArgument val0 = QGenericArgument(nullptr),
+                              QGenericArgument val1 = QGenericArgument(),
+                              QGenericArgument val2 = QGenericArgument(),
+                              QGenericArgument val3 = QGenericArgument(),
+                              QGenericArgument val4 = QGenericArgument(),
+                              QGenericArgument val5 = QGenericArgument(),
+                              QGenericArgument val6 = QGenericArgument(),
+                              QGenericArgument val7 = QGenericArgument(),
+                              QGenericArgument val8 = QGenericArgument(),
+                              QGenericArgument val9 = QGenericArgument()) {
+        return emit invokeService(puid, member, Qt::AutoConnection, ret, val0,
+                                  val1, val2, val3, val4, val5, val6, val7,
+                                  val8, val9);
+    }
+
+    inline bool invokeService(const QString &puid, const char *member,
+                              Qt::ConnectionType type, QGenericArgument val0,
+                              QGenericArgument val1 = QGenericArgument(),
+                              QGenericArgument val2 = QGenericArgument(),
+                              QGenericArgument val3 = QGenericArgument(),
+                              QGenericArgument val4 = QGenericArgument(),
+                              QGenericArgument val5 = QGenericArgument(),
+                              QGenericArgument val6 = QGenericArgument(),
+                              QGenericArgument val7 = QGenericArgument(),
+                              QGenericArgument val8 = QGenericArgument(),
+                              QGenericArgument val9 = QGenericArgument()) {
+        return emit invokeService(puid, member, type, QGenericReturnArgument(),
+                                  val0, val1, val2, val3, val4, val5, val6,
+                                  val7, val8, val9);
+    }
+
+    inline bool invokeService(const QString &puid, const char *member,
+                              QGenericArgument val0,
+                              QGenericArgument val1 = QGenericArgument(),
+                              QGenericArgument val2 = QGenericArgument(),
+                              QGenericArgument val3 = QGenericArgument(),
+                              QGenericArgument val4 = QGenericArgument(),
+                              QGenericArgument val5 = QGenericArgument(),
+                              QGenericArgument val6 = QGenericArgument(),
+                              QGenericArgument val7 = QGenericArgument(),
+                              QGenericArgument val8 = QGenericArgument(),
+                              QGenericArgument val9 = QGenericArgument()) {
+        return emit invokeService(puid, member, Qt::AutoConnection,
+                                  QGenericReturnArgument(), val0, val1, val2,
+                                  val3, val4, val5, val6, val7, val8, val9);
+    }
 
 public:
     WingPlugin::Reader reader;

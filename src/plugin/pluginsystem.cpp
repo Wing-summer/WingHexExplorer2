@@ -47,7 +47,7 @@ PluginSystem::~PluginSystem() {
         qApp->exit(int(CrashCode::PluginSetting));
     }
 
-    for (auto &item : loadedplgs) {
+    for (auto &item : _loadedplgs) {
         auto set = std::make_unique<QSettings>(
             udir.absoluteFilePath(item->metaObject()->className()),
             QSettings::Format::IniFormat);
@@ -56,10 +56,12 @@ PluginSystem::~PluginSystem() {
     }
 }
 
-const QList<IWingPlugin *> &PluginSystem::plugins() const { return loadedplgs; }
+const QList<IWingPlugin *> &PluginSystem::plugins() const {
+    return _loadedplgs;
+}
 
 const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
-    return loadedplgs.at(index);
+    return _loadedplgs.at(index);
 }
 
 void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
@@ -201,9 +203,82 @@ bool PluginSystem::closeEditor(IWingPlugin *plg, int handle, bool force) {
     return true;
 }
 
+void PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
+                                 const QVariantList &params) {
+    switch (event) {
+    case WingHex::IWingPlugin::RegisteredEvent::SelectionChanged: {
+        Q_ASSERT(params.size() == 2 &&
+                 params.at(0).canConvert<QByteArrayList>() &&
+                 params.at(1).canConvert<bool>());
+        auto buffers = params.first().value<QByteArrayList>();
+        auto isPreview = params.at(1).toBool();
+        for (auto &plg : _evplgs[event]) {
+            plg->eventSelectionChanged(buffers, isPreview);
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::CursorPositionChanged: {
+        Q_ASSERT(params.size() == 1 && params.at(0).canConvert<QHexPosition>());
+        auto cursor = params.at(0).value<QHexPosition>();
+        HexPosition pos;
+        pos.line = cursor.line;
+        pos.column = cursor.column;
+        pos.nibbleindex = cursor.nibbleindex;
+        pos.lineWidth = cursor.lineWidth;
+        for (auto &plg : _evplgs[event]) {
+            plg->eventCursorPositionChanged(pos);
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::FileOpened: {
+        Q_ASSERT(params.size() == 1);
+        auto fileName = params.first().toString();
+        Q_ASSERT(!fileName.isEmpty());
+        for (auto &plg : _evplgs[event]) {
+            plg->eventPluginFile(IWingPlugin::PluginFileEvent::Opened, fileName,
+                                 {});
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::FileSaved: {
+        Q_ASSERT(params.size() == 2);
+        auto newFileName = params.at(0).toString();
+        auto oldFileName = params.at(1).toString();
+        Q_ASSERT(!newFileName.isEmpty() && !oldFileName.isEmpty());
+        for (auto &plg : _evplgs[event]) {
+            plg->eventPluginFile(IWingPlugin::PluginFileEvent::Saved,
+                                 oldFileName, newFileName);
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::FileSwitched: {
+        Q_ASSERT(params.size() == 2);
+        auto newFileName = params.at(0).toString();
+        auto oldFileName = params.at(1).toString();
+        for (auto &plg : _evplgs[event]) {
+            plg->eventPluginFile(IWingPlugin::PluginFileEvent::Switched,
+                                 oldFileName, newFileName);
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::AppReady: {
+        Q_ASSERT(params.isEmpty());
+        for (auto &plg : _evplgs[event]) {
+            plg->eventReady();
+        }
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::FileClosed: {
+        Q_ASSERT(params.size() == 1);
+        auto fileName = params.first().toString();
+        Q_ASSERT(!fileName.isEmpty());
+        for (auto &plg : _evplgs[event]) {
+            plg->eventPluginFile(IWingPlugin::PluginFileEvent::Closed, fileName,
+                                 {});
+        }
+    } break;
+    default:
+        break;
+    }
+}
+
 void PluginSystem::registerFns(IWingPlugin *plg) {
     Q_ASSERT(plg);
-    auto fns = plg->registeredScriptFn();
+    auto fns = plg->registeredScriptFns();
     if (fns.isEmpty()) {
         return;
     }
@@ -224,9 +299,48 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     _angelplg->registerScriptFns(plg->metaObject()->className(), rfns);
 }
 
+void PluginSystem::registerEvents(IWingPlugin *plg) {
+    Q_ASSERT(plg);
+    auto evs = plg->registeredEvents();
+    using FlagInt = decltype(evs)::Int;
+    if (FlagInt(evs) == FlagInt(IWingPlugin::RegisteredEvent::None)) {
+        return;
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::SelectionChanged)) {
+        _evplgs[IWingPlugin::RegisteredEvent::SelectionChanged].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::CursorPositionChanged)) {
+        _evplgs[IWingPlugin::RegisteredEvent::CursorPositionChanged].append(
+            plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::FileOpened)) {
+        _evplgs[IWingPlugin::RegisteredEvent::FileOpened].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::FileSaved)) {
+        _evplgs[IWingPlugin::RegisteredEvent::FileSaved].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::FileSwitched)) {
+        _evplgs[IWingPlugin::RegisteredEvent::FileSwitched].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::AppReady)) {
+        _evplgs[IWingPlugin::RegisteredEvent::AppReady].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::FileClosed)) {
+        _evplgs[IWingPlugin::RegisteredEvent::FileClosed].append(plg);
+    }
+}
+
 QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
                                              bool isArg) {
     bool isArray = type & WingHex::IWingPlugin::Array;
+    bool isMap = type & WingHex::IWingPlugin::Map;
     bool isRef = type & WingHex::IWingPlugin::Ref;
 
     QString retype;
@@ -282,8 +396,16 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
         return {};
     }
 
+    if (isMap && isArray) {
+        return {};
+    }
+
     if (isArray) {
         retype = QStringLiteral("array<") + retype + QStringLiteral(">");
+    }
+
+    if (isMap) {
+        retype = QStringLiteral("dictionary<") + retype + QStringLiteral(">");
     }
 
     if (isRef) {
@@ -349,7 +471,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         }
 
         auto puid = getPUID(p);
-        if (loadedpuid.contains(puid)) {
+        if (_loadedpuid.contains(puid)) {
             throw tr("ErrLoadLoadedPlugin");
         }
 
@@ -374,8 +496,8 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
             }
         }
 
-        loadedplgs.push_back(p);
-        loadedpuid << puid;
+        _loadedplgs.push_back(p);
+        _loadedpuid << puid;
 
         Logger::warning(tr("PluginName :") + p->pluginName());
         Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
@@ -543,6 +665,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         }
 
         registerFns(p);
+        registerEvents(p);
         connectInterface(p);
 
         m_plgviewMap.insert(p, nullptr);
@@ -609,6 +732,82 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                     return nullptr;
                 }
             });
+    connect(
+        plg,
+        QOverload<const QString &, const char *, Qt::ConnectionType,
+                  QGenericReturnArgument, QGenericArgument, QGenericArgument,
+                  QGenericArgument, QGenericArgument, QGenericArgument,
+                  QGenericArgument, QGenericArgument, QGenericArgument,
+                  QGenericArgument,
+                  QGenericArgument>::of(&IWingPlugin::invokeService),
+        this,
+        [=](const QString &puid, const char *method, Qt::ConnectionType type,
+            QGenericReturnArgument ret, QGenericArgument val0,
+            QGenericArgument val1, QGenericArgument val2, QGenericArgument val3,
+            QGenericArgument val4, QGenericArgument val5, QGenericArgument val6,
+            QGenericArgument val7, QGenericArgument val8,
+            QGenericArgument val9) -> bool {
+            auto r = std::find_if(
+                _loadedplgs.begin(), _loadedplgs.end(),
+                [=](IWingPlugin *plg) { return getPUID(plg) == puid; });
+            if (r == _loadedplgs.end()) {
+                return false;
+            }
+            auto meta = (*r)->metaObject();
+
+            // filter the evil call and report to log
+            QVarLengthArray<char, 512> sig;
+            int len = qstrlen(method);
+            if (len <= 0)
+                return false;
+            sig.append(method, len);
+            sig.append('(');
+            const char *typeNames[] = {ret.name(),  val0.name(), val1.name(),
+                                       val2.name(), val3.name(), val4.name(),
+                                       val5.name(), val6.name(), val7.name(),
+                                       val8.name(), val9.name()};
+            size_t paramCount;
+            constexpr auto maxParamCount =
+                sizeof(typeNames) / sizeof(const char *);
+            for (paramCount = 1; paramCount < maxParamCount; ++paramCount) {
+                len = qstrlen(typeNames[paramCount]);
+                if (len <= 0)
+                    break;
+                sig.append(typeNames[paramCount], len);
+                sig.append(',');
+            }
+            if (paramCount == 1)
+                sig.append(')'); // no parameters
+            else
+                sig[sig.size() - 1] = ')';
+            sig.append('\0');
+
+            // checking
+            auto midx = meta->indexOfMethod(sig.constData());
+            if (midx < 0) {
+                auto norm = QMetaObject::normalizedSignature(sig.constData());
+                midx = meta->indexOfMethod(norm.constData());
+                if (midx < 0) {
+                    return false;
+                }
+            }
+
+            auto m = meta->method(midx);
+
+            if (m.methodType() == QMetaMethod::Signal) {
+                // report
+                Logger::warning(packLogMessage(
+                    plg->metaObject()->className(),
+                    tr("[EvilCall]") %
+                        QString::fromLatin1(sig.data(), sig.length())));
+                return false;
+            }
+
+            auto obj = *r;
+            obj->setProperty("__LAST_CALLER__", plg->metaObject()->className());
+            return m.invoke(obj, type, ret, val0, val1, val2, val3, val4, val5,
+                            val6, val7, val8, val9);
+        });
 }
 
 void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
@@ -873,7 +1072,7 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                     }
 
                     _rwlock.unlock();
-                    return toByteArray(buffer, enco);
+                    return Utilities::decodingString(buffer, enco);
                 }
                 return QString();
             });
@@ -1155,7 +1354,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         enco = render->encoding();
                     }
 
-                    auto unicode = toByteArray(value, enco);
+                    auto unicode = Utilities::encodingString(value, enco);
 
                     _rwlock.lockForWrite();
                     auto ret = doc->insert(offset, unicode);
@@ -1204,7 +1403,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         enco = render->encoding();
                     }
 
-                    auto unicode = toByteArray(value, enco);
+                    auto unicode = Utilities::encodingString(value, enco);
                     _rwlock.lockForWrite();
                     auto ret = doc->replace(offset, unicode);
                     _rwlock.unlock();
@@ -1251,7 +1450,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         enco = render->encoding();
                     }
 
-                    auto unicode = toByteArray(value, enco);
+                    auto unicode = Utilities::encodingString(value, enco);
                     _rwlock.lockForWrite();
                     auto ret = doc->insert(offset, unicode);
                     _rwlock.unlock();
@@ -2184,27 +2383,4 @@ EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *sender) const {
         }
     }
     return nullptr;
-}
-
-QByteArray PluginSystem::toByteArray(const QString &buffer,
-                                     const QString &encoding) {
-    auto enn = encoding;
-
-    if (enn.isEmpty() || enn == QStringLiteral("ASCII")) {
-        enn = QStringLiteral("ISO-8859-1");
-    }
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    auto en = QStringConverter::encodingForName(enn.toUtf8());
-    QByteArray unicode;
-    if (en.has_value()) {
-        QStringEncoder e(en.value());
-        unicode = e.encode(buffer);
-    }
-#else
-    auto enc = QTextCodec::codecForName(enn.toUtf8());
-    auto e = enc->makeEncoder();
-    auto unicode = e->fromUnicode(buffer);
-#endif
-    return unicode;
 }

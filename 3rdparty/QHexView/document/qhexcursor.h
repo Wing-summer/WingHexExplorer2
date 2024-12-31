@@ -57,6 +57,7 @@ struct QHexPosition {
         return this->offset() >= rhs.offset();
     }
 };
+Q_DECLARE_METATYPE(QHexPosition)
 
 struct QHexSelection {
     QHexPosition start;

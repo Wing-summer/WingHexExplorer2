@@ -25,14 +25,7 @@
 #include <QShortcut>
 #include <QVBoxLayout>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QStringDecoder>
-#else
-#include <QTextCodec>
-#endif
-
-FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
-                       QWidget *parent)
+FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     : FramelessDialogBase(parent) {
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
@@ -71,30 +64,44 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
     layout->addWidget(m_hexeditor);
     layout->addSpacing(10);
 
-    m_hex->setChecked(true);
+    if (info.isStringFind) {
+        m_string->setChecked(true);
+        m_lineeditor->setEnabled(true);
+        m_hex->setEnabled(false);
+        if (!info.encoding.isEmpty()) {
+            m_encodings->setCurrentText(info.encoding);
+        }
+    } else {
+        m_hex->setChecked(true);
+        m_lineeditor->setEnabled(false);
+        m_hex->setEnabled(true);
+    }
+
+    m_lineeditor->setText(info.str);
+    m_hexeditor->document()->_insert(0, info.buffer);
 
     auto regionw = new QWidget(this);
     auto regionLayout = new QHBoxLayout(regionw);
 
     regionLayout->addWidget(new QLabel(tr("Region:"), regionw));
 
-    m_regionStart = new QSpinBox(regionw);
-    Q_ASSERT(stop >= start);
-    m_regionStart->setRange(start, stop);
+    m_regionStart = new QtLongLongSpinBox(regionw);
+    Q_ASSERT(info.stop >= info.start);
+    m_regionStart->setRange(info.start, info.stop);
     m_regionStart->setEnabled(false);
-    m_regionStart->setValue(start);
+    m_regionStart->setValue(info.start);
     m_regionStart->setDisplayIntegerBase(16);
     m_regionStart->setPrefix(QStringLiteral("0x"));
     regionLayout->addWidget(m_regionStart, 1);
 
     regionLayout->addWidget(new QLabel(QStringLiteral(" - "), regionw));
 
-    m_regionStop = new QSpinBox(regionw);
-    m_regionStop->setRange(start, stop);
-    connect(m_regionStart, QOverload<int>::of(&QSpinBox::valueChanged),
-            m_regionStop, &QSpinBox::setMinimum);
+    m_regionStop = new QtLongLongSpinBox(regionw);
+    m_regionStop->setRange(info.start, info.stop);
+    connect(m_regionStart, &QtLongLongSpinBox::valueChanged, m_regionStop,
+            &QtLongLongSpinBox::setMinimum);
     m_regionStop->setEnabled(false);
-    m_regionStop->setValue(qMin(start + 1024 * 1024, stop));
+    m_regionStop->setValue(qMin(info.start + 1024 * 1024, info.stop));
     m_regionStop->setDisplayIntegerBase(16);
     m_regionStop->setPrefix(QStringLiteral("0x"));
     regionLayout->addWidget(m_regionStop, 1);
@@ -118,7 +125,7 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
         }
     });
     group->addButton(b, id++);
-    b->setEnabled(!isBigFile);
+    b->setEnabled(!info.isBigFile);
     buttonLayout->addWidget(b);
 
     b = new QPushButton(tr("Region"), this);
@@ -155,7 +162,7 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
 
     b = new QPushButton(tr("Selection"), this);
     b->setCheckable(true);
-    if (sel) {
+    if (info.isSel) {
         connect(b, &QPushButton::toggled, this, [=](bool b) {
             if (b) {
                 _result.dir = SearchDirection::Selection;
@@ -167,7 +174,7 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
 
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
-    group->button(isBigFile ? 1 : 0)->setChecked(true);
+    group->button(info.isBigFile ? 1 : 0)->setChecked(true);
 
     layout->addWidget(btnBox);
     layout->addSpacing(20);
@@ -184,38 +191,20 @@ FindDialog::FindDialog(bool isBigFile, int start, int stop, bool sel,
     this->setWindowTitle(tr("find"));
 }
 
-QByteArray FindDialog::getResult(Result &result) {
+FindDialog::Result FindDialog::getResult() const { return _result; }
+
+void FindDialog::on_accept() {
     _result.start = 0;
     _result.stop = 0;
     if (m_regionStart->isEnabled()) {
         _result.start = m_regionStart->value();
         _result.stop = m_regionStop->value();
     }
-    result = _result;
-    return _findarr;
-}
-
-void FindDialog::on_accept() {
-    if (m_string->isChecked()) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        auto en = QStringConverter::encodingForName(
-            m_encodings->currentText().toUtf8());
-        Q_ASSERT(en.has_value());
-        QStringEncoder e(en.value());
-        _findarr = e.encode(m_lineeditor->text());
-#else
-        auto en = QTextCodec::codecForName(m_encodings->currentText().toUtf8());
-        auto e = en->makeEncoder();
-        _findarr = e->fromUnicode(m_lineeditor->text());
-#endif
-    } else {
-        _findarr =
-            m_hexeditor->document()->read(0, int(m_hexeditor->documentBytes()));
-    }
+    _result.encoding = m_encodings->currentText();
+    _result.isStringFind = m_string->isChecked();
+    _result.buffer = m_hexeditor->document()->read(0);
+    _result.str = m_lineeditor->text();
     done(1);
 }
 
-void FindDialog::on_reject() {
-    _findarr.clear();
-    done(0);
-}
+void FindDialog::on_reject() { done(0); }

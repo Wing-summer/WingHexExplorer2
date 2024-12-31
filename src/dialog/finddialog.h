@@ -19,13 +19,13 @@
 #define FINDDIALOG_H
 
 #include "QHexView/qhexview.h"
+#include "control/qtlonglongspinbox.h"
 #include "framelessdialogbase.h"
 
 #include <QComboBox>
 #include <QLineEdit>
 #include <QObject>
 #include <QRadioButton>
-#include <QSpinBox>
 
 enum class SearchDirection { None, Region, Foreword, Backword, Selection };
 
@@ -36,12 +36,30 @@ public:
         SearchDirection dir = SearchDirection::None;
         qsizetype start = 0;
         qsizetype stop = 0;
+
+        // for searching info
+        bool isStringFind;
+        QByteArray buffer;
+        QString encoding;
+        QString str;
+    };
+
+    struct FindInfo {
+        bool isBigFile;
+        bool isStringFind;
+        qlonglong start;
+        qlonglong stop;
+        bool isSel;
+
+        // for searching info
+        QByteArray buffer;
+        QString encoding;
+        QString str;
     };
 
 public:
-    FindDialog(bool isBigFile, int start, int stop, bool sel = true,
-               QWidget *parent = nullptr);
-    QByteArray getResult(Result &result);
+    explicit FindDialog(const FindInfo &info, QWidget *parent = nullptr);
+    Result getResult() const;
 
 private:
     void on_accept();
@@ -53,10 +71,9 @@ private:
     QRadioButton *m_string;
     QRadioButton *m_hex;
     QComboBox *m_encodings;
-    QByteArray _findarr;
 
-    QSpinBox *m_regionStart;
-    QSpinBox *m_regionStop;
+    QtLongLongSpinBox *m_regionStart;
+    QtLongLongSpinBox *m_regionStop;
 
     Result _result;
 };

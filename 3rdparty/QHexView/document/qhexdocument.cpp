@@ -96,12 +96,17 @@ bool QHexDocument::metaCommentVisible() { return m_metacomment; }
 void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
     QMap<qsizetype, QString> bms;
 
+    if (_bookmarks.isEmpty()) {
+        return;
+    }
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto rmbegin = _bookmarks.lowerBound(offset);
 #else
     auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
 #endif
     auto addbegin = _bookmarks.upperBound(offset);
+
     for (auto p = addbegin; p != _bookmarks.end(); ++p) {
         bms.insert(p.key() + length, p.value());
     }
@@ -119,6 +124,10 @@ void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
 
 void QHexDocument::removeBookMarkAdjust(qsizetype offset, qsizetype length) {
     QMap<qsizetype, QString> bms;
+
+    if (_bookmarks.isEmpty()) {
+        return;
+    }
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto rmbegin = _bookmarks.lowerBound(offset);

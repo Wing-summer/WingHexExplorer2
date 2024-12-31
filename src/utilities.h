@@ -250,6 +250,47 @@ public:
             }
         }
     }
+
+    static QByteArray encodingString(const QString &str,
+                                     const QString &enc = {}) {
+        auto encoding = enc;
+        if (encoding.isEmpty() || encoding.compare(QStringLiteral("ASCII"),
+                                                   Qt::CaseInsensitive) == 0) {
+            encoding = QStringLiteral("ISO-8859-1");
+        }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        auto en = QStringConverter::encodingForName(encoding.toUtf8());
+        Q_ASSERT(en.has_value());
+        QStringEncoder e(en.value());
+        return e.encode(str);
+#else
+        auto en = QTextCodec::codecForName(encoding.toUtf8());
+        auto e = en->makeEncoder();
+        return e->fromUnicode(str);
+#endif
+    }
+
+    static QString decodingString(const QByteArray &buffer,
+                                  const QString &enc = {}) {
+        auto encoding = enc;
+        if (encoding.isEmpty() || encoding.compare(QStringLiteral("ASCII"),
+                                                   Qt::CaseInsensitive) == 0) {
+            encoding = QStringLiteral("ISO-8859-1");
+        }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        auto en = QStringConverter::encodingForName(encoding.toUtf8());
+        Q_ASSERT(en.has_value());
+        QStringDecoder dec(en.value());
+
+        return dec.decode(buffer);
+#else
+        auto en = QTextCodec::codecForName(encoding.toUtf8());
+        auto dec = en->makeDecoder();
+        return dec->toUnicode(buffer);
+#endif
+    }
 };
 
 #endif // UTILITIES_H

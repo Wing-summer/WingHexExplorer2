@@ -66,7 +66,10 @@ public:
     virtual QList<WingHex::PluginPage *> registeredPages() const override;
     virtual QList<WingHex::WingEditorViewWidget *>
     registeredEditorViewWidgets() const override;
-    virtual QHash<QString, ScriptFnInfo> registeredScriptFn() override;
+    virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
+
+    virtual RegisteredEvents registeredEvents() const override;
+    virtual void eventReady() override;
 
 private:
     QString getPuid() const;

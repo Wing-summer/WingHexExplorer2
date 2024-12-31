@@ -29,6 +29,7 @@
 #include "class/layoutmanager.h"
 #include "class/logger.h"
 #include "class/qkeysequences.h"
+#include "class/richtextitemdelegate.h"
 #include "class/scriptconsolemachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
@@ -185,6 +186,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         // load the model
         Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
         m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
+
+        plg.angelApi()->setBindingConsole(m_scriptConsole);
     }
 
     // connect settings signals
@@ -237,6 +240,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     qApp->installEventFilter(this);
 
     this->setUpdatesEnabled(true);
+
+    plg.dispatchEvent(IWingPlugin::RegisteredEvent::AppReady, {});
 
     if (splash)
         splash->setInfoText(tr("SetupFinished"));
@@ -484,6 +489,9 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->addAction(newAction(QStringLiteral("del"),
                                       tr("ClearFindResult"),
                                       &MainWindow::on_clearfindresult));
+
+    m_findresult->setItemDelegate(new RichTextItemDelegate(m_findresult));
+
     m_findresult->setModel(_findEmptyResult);
 
     connect(m_findresult, &QTableView::doubleClicked, this,
@@ -1826,14 +1834,24 @@ void MainWindow::on_findfile() {
         return;
     }
     auto hexeditor = editor->hexEditor();
-    FindDialog fd(editor->isBigFile(), 0, int(hexeditor->documentBytes()),
-                  hexeditor->selectionCount() == 1, this);
+
+    static FindDialog::FindInfo info;
+    info.isBigFile = editor->isBigFile();
+    info.start = 0;
+    info.stop = hexeditor->documentBytes();
+    info.isSel = hexeditor->selectionCount() == 1;
+
+    FindDialog fd(info, this);
     if (fd.exec()) {
-        FindDialog::Result r;
-        auto res = fd.getResult(r);
+        auto r = fd.getResult();
+        info.isStringFind = r.isStringFind;
+        info.encoding = r.encoding;
+        info.buffer = r.buffer;
+        info.str = r.str;
+
         ExecAsync<EditorView::FindError>(
-            [this, r, res]() -> EditorView::FindError {
-                return currentEditor()->find(res, r);
+            [this, r]() -> EditorView::FindError {
+                return currentEditor()->find(r);
             },
             [this](EditorView::FindError err) {
                 switch (err) {
@@ -2262,7 +2280,10 @@ void MainWindow::on_exportfindresult() {
     if (f.open(QFile::WriteOnly)) {
         QJsonObject fobj;
         fobj.insert(QStringLiteral("file"), editor->fileName());
-        fobj.insert(QStringLiteral("data"), findresitem->lastFindData());
+
+        // auto d= findresitem->lastFindData();
+
+        // fobj.insert(QStringLiteral("data"), findresitem->lastFindData());
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             auto data = findresitem->resultAt(i);
@@ -2371,6 +2392,19 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
     }
 
+    auto cursor = hexeditor->cursor();
+
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::CursorPositionChanged,
+        {QVariant::fromValue(cursor->position())});
+}
+
+void MainWindow::on_selectionChanged() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+
     // 解码字符串
     auto cursor = hexeditor->cursor();
     QByteArrayList buffer;
@@ -2402,22 +2436,8 @@ void MainWindow::on_locChanged() {
 
         // 如果不超过 10KB （默认）那么解码，防止太多卡死
         if (buffer.length() <= 1024 * _decstrlim) {
-            auto encname = hexeditor->renderer()->encoding();
-            if (encname == QStringLiteral("ASCII")) {
-                encname = QStringLiteral("ISO-8859-1");
-            }
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            auto enc = QStringConverter::encodingForName(encname.toUtf8());
-            Q_ASSERT(enc.has_value());
-            QStringDecoder dec(enc.value());
-
-            m_txtDecode->insertPlainText(dec.decode(b));
-#else
-            auto enc = QTextCodec::codecForName(encname.toUtf8());
-            auto dec = enc->makeDecoder();
-            m_txtDecode->setText(dec->toUnicode(b));
-#endif
+            m_txtDecode->insertPlainText(Utilities::decodingString(
+                b, hexeditor->renderer()->encoding()));
             m_txtDecode->insertPlainText(QStringLiteral("\n"));
         } else {
             m_txtDecode->insertHtml(
@@ -2425,6 +2445,10 @@ void MainWindow::on_locChanged() {
                     .arg(tr("TooManyBytesDecode")));
         }
     }
+
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::SelectionChanged,
+        {QVariant::fromValue(buffer), isPreview});
 }
 
 void MainWindow::on_viewtxt() {
@@ -2621,6 +2645,9 @@ void MainWindow::registerEditorView(EditorView *editor) {
     auto ta = editor->toggleViewAction();
     menu->addAction(ta);
     ev->setEnabled(true);
+
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::FileOpened, {editor->fileName()});
 }
 
 void MainWindow::connectEditorView(EditorView *editor) {
@@ -2717,6 +2744,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     if (old != nullptr) {
         auto hexeditor = old->hexEditor();
         hexeditor->disconnect(SIGNAL(cursorLocationChanged()));
+        hexeditor->disconnect(SIGNAL(cursorSelectionChanged()));
         hexeditor->disconnect(SIGNAL(canUndoChanged(bool)));
         hexeditor->disconnect(SIGNAL(canRedoChanged(bool)));
         hexeditor->disconnect(SIGNAL(documentSaved(bool)));
@@ -2731,6 +2759,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     auto hexeditor = cur->hexEditor();
     connect(hexeditor, &QHexView::cursorLocationChanged, this,
             &MainWindow::on_locChanged);
+    connect(hexeditor, &QHexView::cursorSelectionChanged, this,
+            &MainWindow::on_selectionChanged);
     connect(hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
     });
@@ -2793,6 +2823,10 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     m_curEditor = cur;
     hexeditor->getStatus();
+
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::FileSwitched,
+        {cur->fileName(), (old ? old->fileName() : QString())});
 }
 
 void MainWindow::loadFindResult(EditorView *view) {
@@ -2971,6 +3005,8 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
         return ErrFile::Permission;
     }
 
+    auto oldName = editor->fileName();
+
     QString workspace = m_views.value(editor);
     if (editor->change2WorkSpace()) {
         workspace = editor->fileName() + PROEXT;
@@ -2979,6 +3015,10 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     auto ret = editor->save(workspace, filename, ignoreMd5, isExport);
     if (ret == ErrFile::Success) {
         m_views[editor] = workspace;
+
+        PluginSystem::instance().dispatchEvent(
+            IWingPlugin::RegisteredEvent::FileSaved,
+            {filename.isEmpty() ? oldName : filename, oldName});
     }
     return ret;
 }
@@ -3002,8 +3042,13 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         m_curEditor = nullptr;
         _editorLock.unlock();
     }
+
+    auto fileName = editor->fileName();
     PluginSystem::instance().cleanUpEditorViewHandle(editor);
     editor->deleteDockWidget();
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::FileClosed, {fileName});
+
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
         ->setEnabled(m_views.size() != 0);
 

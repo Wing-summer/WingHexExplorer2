@@ -23,6 +23,7 @@
 #include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
+#include "control/scriptingconsole.h"
 #include "define.h"
 #include "scriptaddon/scriptqdictionary.h"
 
@@ -96,6 +97,8 @@ void WingAngelAPI::registerScriptFns(const QString &ns,
 }
 
 void WingAngelAPI::installAPI(ScriptMachine *machine) {
+    Q_ASSERT(machine);
+
     auto engine = machine->engine();
     auto stringTypeID = machine->typeInfo(ScriptMachine::tString)->GetTypeId();
 
@@ -566,12 +569,6 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingHex::WingPlugin::Reader::addressBase, reader),
         QPTR_WRAP("addressBase()"));
 
-    registerAPI<bool(qsizetype, void *, int)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_read, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3),
-        "bool read(" QSIZETYPE " offset, ? &out obj)");
-
     registerAPI<CScriptArray *(qsizetype, qsizetype)>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_readBytes, this,
@@ -737,24 +734,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::WingPlugin::Controller::setAddressBase, ctl,
                   std::placeholders::_1),
         "bool setAddressBase(" QPTR " base)");
-
-    registerAPI<bool(qsizetype, void *, int)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_write, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3),
-        "bool write(" QSIZETYPE " offset, ? &in obj)");
-
-    registerAPI<bool(qsizetype, void *, int)>(
-        engine,
-        std::bind(&WingAngelAPI::_HexReader_insert, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3),
-        "bool insert(" QSIZETYPE " offset, ? &in obj)");
-
-    registerAPI<bool(void *, int)>(engine,
-                                   std::bind(&WingAngelAPI::_HexReader_append,
-                                             this, std::placeholders::_1,
-                                             std::placeholders::_2),
-                                   "bool append(? &in obj)");
 
     registerAPI<bool(qsizetype, qint8)>(
         engine,
@@ -1232,329 +1211,6 @@ QByteArray WingAngelAPI::cArray2ByteArray(const CScriptArray &array, int byteID,
     return buffer;
 }
 
-bool WingAngelAPI::read2Ref(qsizetype offset, void *ref, int typeId) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        if (typeId == asTYPEID_VOID)
-            return false;
-        else if (typeId == asTYPEID_BOOL)
-            *reinterpret_cast<bool *>(ref) =
-                (emit reader.readInt8(offset) != 0);
-        else if (typeId == asTYPEID_INT8)
-            *reinterpret_cast<qint8 *>(ref) = emit reader.readInt8(offset);
-        else if (typeId == asTYPEID_INT16)
-            *reinterpret_cast<qint16 *>(ref) = emit reader.readInt16(offset);
-        else if (typeId == asTYPEID_INT32)
-            *reinterpret_cast<qint32 *>(ref) = emit reader.readInt32(offset);
-        else if (typeId == asTYPEID_INT64)
-            *reinterpret_cast<qint64 *>(ref) = emit reader.readInt64(offset);
-        else if (typeId == asTYPEID_UINT8)
-            *reinterpret_cast<quint8 *>(ref) =
-                quint8(emit reader.readInt8(offset));
-        else if (typeId == asTYPEID_UINT16)
-            *reinterpret_cast<quint16 *>(ref) =
-                quint16(emit reader.readInt16(offset));
-        else if (typeId == asTYPEID_UINT32)
-            *reinterpret_cast<quint32 *>(ref) =
-                quint32(emit reader.readInt32(offset));
-        else if (typeId == asTYPEID_UINT64)
-            *reinterpret_cast<quint64 *>(ref) =
-                quint64(emit reader.readInt64(offset));
-        else if (typeId == asTYPEID_FLOAT)
-            *reinterpret_cast<float *>(ref) = emit reader.readFloat(offset);
-        else if (typeId == asTYPEID_DOUBLE)
-            *reinterpret_cast<double *>(ref) = emit reader.readDouble(offset);
-        else if ((typeId & asTYPEID_MASK_OBJECT) == 0) {
-            bool ok = false;
-            // Check if the value matches one of the defined enums
-            if (engine) {
-                asITypeInfo *t = engine->GetTypeInfoById(typeId);
-                for (int n = t->GetEnumValueCount(); n-- > 0;) {
-                    int enumVal;
-                    t->GetEnumValueByIndex(n, &enumVal);
-                    if (enumVal == *(int *)ref) {
-                        *reinterpret_cast<int *>(ref) = enumVal;
-                        ok = true;
-                        break;
-                    }
-                }
-            }
-            if (!ok) {
-                return false;
-            }
-        } else if (typeId & asTYPEID_SCRIPTOBJECT) {
-            void *value = ref;
-
-            // Dereference handles, so we can see what it points to
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            asIScriptObject *obj = (asIScriptObject *)value;
-
-            if (obj) {
-                for (asUINT n = 0; n < obj->GetPropertyCount(); n++) {
-                    auto id = obj->GetPropertyTypeId(n);
-                    auto data = obj->GetAddressOfProperty(n);
-                    auto size = getAsTypeSize(id, data);
-                    auto ret = read2Ref(offset, data, id);
-                    if (!ret) {
-                        return false;
-                    }
-                    if (size > 0) {
-                        offset += size;
-                    }
-                }
-            }
-        } else {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            if (engine) {
-                asITypeInfo *type = engine->GetTypeInfoByName("string");
-                if (value) {
-                    // only string supported
-                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        *reinterpret_cast<QString *>(value) =
-                            emit reader.readString(offset);
-                    }
-                }
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool WingAngelAPI::write2Ref(qsizetype offset, void *ref, int typeId) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        if (typeId == asTYPEID_VOID)
-            return false;
-        else if (typeId == asTYPEID_BOOL)
-            return emit controller.writeInt8(
-                offset, *reinterpret_cast<bool *>(ref) ? 1 : 0);
-        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            return emit controller.writeInt8(offset,
-                                             *reinterpret_cast<qint8 *>(ref));
-        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            return emit controller.writeInt16(offset,
-                                              *reinterpret_cast<qint16 *>(ref));
-        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            return emit controller.writeInt32(offset,
-                                              *reinterpret_cast<qint32 *>(ref));
-        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            return emit controller.writeInt64(offset,
-                                              *reinterpret_cast<qint64 *>(ref));
-        else if (typeId == asTYPEID_FLOAT)
-            return emit controller.writeFloat(offset,
-                                              *reinterpret_cast<float *>(ref));
-        else if (typeId == asTYPEID_DOUBLE)
-            return emit controller.writeDouble(
-                offset, *reinterpret_cast<double *>(ref));
-        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            return emit controller.writeInt32(offset,
-                                              *reinterpret_cast<int *>(ref));
-        else if (typeId & asTYPEID_SCRIPTOBJECT) {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            asIScriptObject *obj = (asIScriptObject *)value;
-
-            if (obj) {
-                for (asUINT n = 0; n < obj->GetPropertyCount(); n++) {
-                    auto id = obj->GetPropertyTypeId(n);
-                    auto data = obj->GetAddressOfProperty(n);
-                    auto size = getAsTypeSize(id, data);
-                    auto ret = write2Ref(offset, data, id);
-                    if (!ret) {
-                        return false;
-                    }
-                    if (size > 0) {
-                        offset += size;
-                    }
-                }
-            }
-        } else {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            if (engine) {
-                asITypeInfo *type = engine->GetTypeInfoById(typeId);
-                if (value) {
-                    // only string supported
-                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        return emit controller.writeString(
-                            offset, *reinterpret_cast<QString *>(value));
-                    }
-                }
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool WingAngelAPI::insert2Ref(qsizetype offset, void *ref, int typeId) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        if (typeId == asTYPEID_VOID)
-            return false;
-        else if (typeId == asTYPEID_BOOL)
-            return emit controller.insertInt8(
-                offset, *reinterpret_cast<bool *>(ref) ? 1 : 0);
-        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            return emit controller.insertInt8(offset,
-                                              *reinterpret_cast<qint8 *>(ref));
-        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            return emit controller.insertInt16(
-                offset, *reinterpret_cast<qint16 *>(ref));
-        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            return emit controller.insertInt32(
-                offset, *reinterpret_cast<qint32 *>(ref));
-        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            return emit controller.insertInt64(
-                offset, *reinterpret_cast<qint64 *>(ref));
-        else if (typeId == asTYPEID_FLOAT)
-            return emit controller.insertFloat(offset,
-                                               *reinterpret_cast<float *>(ref));
-        else if (typeId == asTYPEID_DOUBLE)
-            return emit controller.insertDouble(
-                offset, *reinterpret_cast<double *>(ref));
-        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            return emit controller.insertInt32(offset,
-                                               *reinterpret_cast<int *>(ref));
-        else if (typeId & asTYPEID_SCRIPTOBJECT) {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            asIScriptObject *obj = (asIScriptObject *)value;
-
-            if (obj) {
-                for (asUINT n = 0; n < obj->GetPropertyCount(); n++) {
-                    auto id = obj->GetPropertyTypeId(n);
-                    auto data = obj->GetAddressOfProperty(n);
-                    auto size = getAsTypeSize(id, data);
-                    auto ret = insert2Ref(offset, data, id);
-                    if (!ret) {
-                        return false;
-                    }
-                    if (size > 0) {
-                        offset += size;
-                    }
-                }
-            }
-        } else {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            if (engine) {
-                asITypeInfo *type = engine->GetTypeInfoById(typeId);
-                if (value) {
-                    // TODO support other type, now only string
-                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        return emit controller.insertString(
-                            offset, *reinterpret_cast<QString *>(value));
-                    }
-                }
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool WingAngelAPI::append2Ref(void *ref, int typeId) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        if (typeId == asTYPEID_VOID)
-            return false;
-        else if (typeId == asTYPEID_BOOL)
-            return emit controller.appendInt8(
-                *reinterpret_cast<bool *>(ref) ? 1 : 0);
-        else if (typeId == asTYPEID_INT8 || typeId == asTYPEID_UINT8)
-            return emit controller.appendInt8(*reinterpret_cast<qint8 *>(ref));
-        else if (typeId == asTYPEID_INT16 || typeId == asTYPEID_UINT16)
-            return emit controller.appendInt16(
-                *reinterpret_cast<qint16 *>(ref));
-        else if (typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32)
-            return emit controller.appendInt32(
-                *reinterpret_cast<qint32 *>(ref));
-        else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64)
-            return emit controller.appendInt64(
-                *reinterpret_cast<qint64 *>(ref));
-        else if (typeId == asTYPEID_FLOAT)
-            return emit controller.appendFloat(*reinterpret_cast<float *>(ref));
-        else if (typeId == asTYPEID_DOUBLE)
-            return emit controller.appendDouble(
-                *reinterpret_cast<double *>(ref));
-        else if ((typeId & asTYPEID_MASK_OBJECT) == 0)
-            return emit controller.appendInt32(*reinterpret_cast<int *>(ref));
-        else if (typeId & asTYPEID_SCRIPTOBJECT) {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            asIScriptObject *obj = (asIScriptObject *)value;
-
-            if (obj) {
-                for (asUINT n = 0; n < obj->GetPropertyCount(); n++) {
-                    auto id = obj->GetPropertyTypeId(n);
-                    auto data = obj->GetAddressOfProperty(n);
-                    auto ret = append2Ref(data, id);
-                    if (!ret) {
-                        return false;
-                    }
-                }
-            }
-        } else {
-            // Dereference handles, so we can see what it points to
-            void *value = ref;
-
-            if (typeId & asTYPEID_OBJHANDLE)
-                value = *(void **)value;
-
-            if (engine) {
-                asITypeInfo *type = engine->GetTypeInfoById(typeId);
-                if (value) {
-                    // only string supported
-                    if (type->GetTypeId() == (typeId & ~asTYPEID_OBJHANDLE)) {
-                        return emit controller.appendString(
-                            *reinterpret_cast<QString *>(value));
-                    }
-                }
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-}
-
 qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
     if (typeId == asTYPEID_VOID)
         return false;
@@ -1904,7 +1560,7 @@ int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
 
 bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
     switch (type) {
-    case QMetaType::Type::Bool:
+    case QMetaType::Bool:
     case QMetaType::Short:
     case QMetaType::UShort:
     case QMetaType::Int:
@@ -1997,6 +1653,52 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         std::bind(op, gen, std::placeholders::_1, std::placeholders::_2));
 }
 
+bool WingAngelAPI::execScriptCode(const QString &code) {
+    if (code.isEmpty()) {
+        return true;
+    }
+
+    if (_console) {
+        QTemporaryFile f;
+        if (f.open()) {
+            f.write(code.toUtf8());
+            f.close();
+        }
+
+        _console->setMode(ScriptingConsole::Output);
+        _console->write(QStringLiteral("(") %
+                        property("__LAST_CALLER__").toString() %
+                        QStringLiteral(") "));
+        _console->machine()->executeScript(f.fileName());
+        _console->appendCommandPrompt();
+        _console->setMode(ScriptingConsole::Input);
+    }
+
+    return false;
+}
+
+bool WingAngelAPI::execScript(const QString &fileName) {
+    _console->setMode(ScriptingConsole::Output);
+    _console->write(QStringLiteral("(") %
+                    property("__LAST_CALLER__").toString() %
+                    QStringLiteral(") "));
+    auto ret = _console->machine()->executeScript(fileName);
+    _console->appendCommandPrompt();
+    _console->setMode(ScriptingConsole::Input);
+    return ret;
+}
+
+bool WingAngelAPI::execCode(const QString &code) {
+    _console->setMode(ScriptingConsole::Output);
+    _console->write(QStringLiteral("(") %
+                    property("__LAST_CALLER__").toString() %
+                    QStringLiteral(") "));
+    auto ret = _console->machine()->executeCode(code);
+    _console->appendCommandPrompt();
+    _console->setMode(ScriptingConsole::Input);
+    return ret;
+}
+
 QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
                                         const QString &label,
                                         const CScriptArray &items, int current,
@@ -2066,22 +1768,6 @@ CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
     return byteArrayWrapperFunction([this, offset, len]() -> QByteArray {
         return emit reader.readBytes(offset, len);
     });
-}
-
-bool WingAngelAPI::_HexReader_read(qsizetype offset, void *ref, int typeId) {
-    return read2Ref(offset, ref, typeId);
-}
-
-bool WingAngelAPI::_HexReader_write(qsizetype offset, void *ref, int typeId) {
-    return write2Ref(offset, ref, typeId);
-}
-
-bool WingAngelAPI::_HexReader_insert(qsizetype offset, void *ref, int typeId) {
-    return insert2Ref(offset, ref, typeId);
-}
-
-bool WingAngelAPI::_HexReader_append(void *ref, int typeId) {
-    return append2Ref(ref, typeId);
 }
 
 qsizetype WingAngelAPI::_HexReader_searchForward(qsizetype begin,
@@ -2262,4 +1948,10 @@ bool WingAngelAPI::_DataVisual_updateTextTable(
     } else {
         return false;
     }
+}
+
+ScriptingConsole *WingAngelAPI::bindingConsole() const { return _console; }
+
+void WingAngelAPI::setBindingConsole(ScriptingConsole *console) {
+    _console = console;
 }

@@ -92,7 +92,7 @@ public slots:
     void switchView(WingEditorViewWidget *w);
     void registerQMenu(QMenu *menu);
 
-    FindError find(const QByteArray &data, const FindDialog::Result &result);
+    FindError find(const FindDialog::Result &result);
 
     void clearFindResult();
 

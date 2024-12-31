@@ -93,6 +93,7 @@ bool QHexCursor::hasInternalSelection() const { return !m_sels.isEmpty(); }
 void QHexCursor::clearPreviewSelection() {
     m_selection = m_position;
     m_preMode = SelectionNormal;
+    emit selectionChanged();
 }
 
 void QHexCursor::clearSelection() { m_sels.clear(); }
@@ -156,7 +157,6 @@ void QHexCursor::select(qsizetype line, int column, int nibbleindex,
         }
     }
 
-    emit positionChanged();
     emit selectionChanged();
 }
 
@@ -306,4 +306,6 @@ void QHexCursor::mergePreviewSelection() {
         break;
     }
     clearPreviewSelection();
+
+    emit selectionChanged();
 }

@@ -21,15 +21,20 @@ FindResultModel::FindResultModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
 int FindResultModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return m_results.size();
 }
 
-int FindResultModel::columnCount(const QModelIndex &parent) const { return 4; }
+int FindResultModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+    return 5;
+}
 
 QVariant FindResultModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
-        auto r = m_results.at(index.row());
+        auto row = index.row();
+        auto r = m_results.at(row);
         switch (index.column()) {
         case 0: // line
             return r.line;
@@ -38,8 +43,10 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
         case 2: // offset
             return QStringLiteral("0x") +
                    QString::number(r.offset, 16).toUpper();
-        case 3: // value
-            return m_lastFindData;
+        case 3: // range
+            return m_lastFindData.at(row).findRange;
+        case 4: // decoding
+            return m_lastFindData.at(row).decoding;
         }
         return QVariant();
     }
@@ -62,6 +69,8 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
                 return tr("offset");
             case 3:
                 return tr("value");
+            case 4:
+                return tr("encoding");
             }
         } else {
             return section + 1;
@@ -72,7 +81,9 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
 
 QList<WingHex::FindResult> &FindResultModel::results() { return m_results; }
 
-QString &FindResultModel::lastFindData() { return m_lastFindData; }
+QList<FindResultModel::FindInfo> &FindResultModel::lastFindData() {
+    return m_lastFindData;
+}
 
 void FindResultModel::beginUpdate() { this->beginResetModel(); }
 

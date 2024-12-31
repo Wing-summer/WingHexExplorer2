@@ -121,8 +121,12 @@ public:
 
     bool closeEditor(IWingPlugin *plg, int handle, bool force);
 
+    void dispatchEvent(IWingPlugin::RegisteredEvent event,
+                       const QVariantList &params);
+
 private:
     void registerFns(IWingPlugin *plg);
+    void registerEvents(IWingPlugin *plg);
 
     QString type2AngelScriptString(IWingPlugin::MetaType type, bool isArg);
 
@@ -145,8 +149,6 @@ private:
     static QString packLogMessage(const char *header, const QString &msg);
 
     EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
-
-    QByteArray toByteArray(const QString &buffer, const QString &encoding);
 
 private:
     template <typename T>
@@ -228,8 +230,10 @@ private:
 
 private:
     MainWindow *_win = nullptr;
-    QStringList loadedpuid;
-    QList<IWingPlugin *> loadedplgs;
+    QStringList _loadedpuid;
+    QList<IWingPlugin *> _loadedplgs;
+
+    QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
     QHash<IWingPlugin *, EditorView *> m_plgviewMap;
     QHash<IWingPlugin *, QList<QPair<SharedUniqueId, EditorView *>>>

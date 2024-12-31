@@ -113,8 +113,10 @@ void QHexView::establishSignal(QHexDocument *doc) {
 
     connect(m_cursor, &QHexCursor::positionChanged, this,
             &QHexView::moveToSelection);
-    connect(m_cursor, &QHexCursor::selectionChanged, this,
-            [this]() { this->viewport()->update(); });
+    connect(m_cursor, &QHexCursor::selectionChanged, this, [this]() {
+        this->viewport()->update();
+        emit cursorSelectionChanged();
+    });
     connect(m_cursor, &QHexCursor::insertionModeChanged, this,
             &QHexView::renderCurrentLine);
     connect(doc, &QHexDocument::canUndoChanged, this,

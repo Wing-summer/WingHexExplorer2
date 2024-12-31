@@ -19,15 +19,22 @@
 #define FINDRESULTMODEL_H
 
 #include "plugin/iwingplugin.h"
+
 #include <QAbstractTableModel>
 
 class FindResultModel : public QAbstractTableModel {
     Q_OBJECT
 public:
+    struct FindInfo {
+        QString findRange;
+        QString decoding;
+    };
+
+public:
     explicit FindResultModel(QObject *parent = nullptr);
 
     QList<WingHex::FindResult> &results();
-    QString &lastFindData();
+    QList<FindInfo> &lastFindData();
 
     void beginUpdate();
     void endUpdate();
@@ -46,7 +53,7 @@ public:
 
 private:
     QList<WingHex::FindResult> m_results;
-    QString m_lastFindData;
+    QList<FindInfo> m_lastFindData;
 };
 
 #endif // FINDRESULTMODEL_H

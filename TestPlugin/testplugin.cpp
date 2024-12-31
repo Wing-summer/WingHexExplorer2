@@ -245,6 +245,18 @@ void TestPlugin::test_b(const QString &a) {
 }
 
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
-TestPlugin::registeredScriptFn() {
+TestPlugin::registeredScriptFns() const {
     return _scriptInfo;
+}
+
+WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
+    return RegisteredEvent::AppReady;
+}
+
+void TestPlugin::eventReady() {
+    bool ret;
+    emit invokeService(
+        QStringLiteral("WingAngelAPI"), "execCode", Qt::AutoConnection,
+        WINGAPI_RETURN_ARG(bool, ret),
+        WINGAPI_ARG(QString, R"(print("Hello, this is TestPlugin!");)"));
 }
