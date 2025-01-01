@@ -210,25 +210,19 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         m_findResults->clear();
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
+        auto docLen = d->length();
         for (auto &ritem : results) {
             FindResult r;
             r.offset = ritem;
             r.line = r.offset / lineWidth;
             r.col = r.offset % lineWidth;
             m_findResults->results().append(r);
-
-            QString content;
-            QByteArray buffer;
-            // TODO
-            FindResultModel::FindInfo info;
-
-            // default show lineWidth count
-            if (data.size() > lineWidth - 4) {
-            }
-
-            info.decoding = Utilities::decodingString(buffer, result.encoding);
-            m_findResults->lastFindData().append(info);
+            m_findResults->findData().append(
+                readContextFinding(ritem, data.size(), FIND_CONTEXT_SIZE,
+                                   FIND_MAX_DISPLAY_FIND_CHARS));
         }
+
+        m_findResults->lastFindData() = data;
 
         m_findResults->endUpdate();
 
@@ -610,6 +604,37 @@ QHash<QString, QByteArray> EditorView::savePluginData() {
         ret.insert(item->id(), item->saveState());
     }
     return ret;
+}
+
+FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
+                                                         qsizetype findSize,
+                                                         int contextSize,
+                                                         int maxDisplayBytes) {
+    auto doc = m_hex->document();
+
+    qsizetype halfSize = maxDisplayBytes / 2;
+    auto header = doc->read(offset, qMin(findSize, halfSize));
+    QByteArray tailer;
+    if (header.size() < findSize) {
+        tailer = doc->read(
+            offset, qMin(findSize, qsizetype(maxDisplayBytes) - halfSize));
+    }
+
+    auto left = qsizetype(maxDisplayBytes) - header.size() - tailer.size();
+
+    // append to contextSize
+    contextSize += (left / 2);
+
+    auto cheader = doc->read(offset - contextSize, contextSize);
+    auto ctailer = doc->read(offset + findSize, contextSize);
+
+    FindResultModel::FindInfo info;
+    info.cheader = cheader;
+    info.hbuffer = header;
+    info.tbuffer = tailer;
+    info.ctailer = ctailer;
+
+    return info;
 }
 
 EditorView *EditorView::cloneParent() const { return m_cloneParent; }

@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "richtextitemdelegate.h"
 
 #include <QAbstractTextDocumentLayout>
@@ -11,44 +28,64 @@ RichTextItemDelegate::RichTextItemDelegate(QObject *parent)
 void RichTextItemDelegate::paint(QPainter *painter,
                                  const QStyleOptionViewItem &option,
                                  const QModelIndex &index) const {
-    auto options = option;
-    initStyleOption(&options, index);
+    if (!index.isValid())
+        return;
 
-    painter->save();
+    // Get the rich text content
+    QString text = index.data(Qt::DisplayRole).toString();
+    if (text.isEmpty())
+        return;
 
+    // Get alignment
+    QVariant alignmentVariant = index.data(Qt::TextAlignmentRole);
+    Qt::Alignment alignment = alignmentVariant.isValid()
+                                  ? Qt::Alignment(alignmentVariant.toInt())
+                                  : Qt::AlignLeft;
+
+    // Set up a QTextDocument to render the HTML content
     QTextDocument doc;
-    doc.setHtml(options.text);
+    doc.setHtml(text);
 
-    options.text.clear();
-    options.widget->style()->drawControl(QStyle::CE_ItemViewItem, &options,
-                                         painter);
+    // Disable word wrapping
+    QTextOption textOption;
+    textOption.setWrapMode(QTextOption::NoWrap);
+    doc.setDefaultTextOption(textOption);
 
-    // shift text right to make icon visible
-    QSize iconSize = options.icon.actualSize(options.rect.size());
-    painter->translate(options.rect.left() + iconSize.width(),
-                       options.rect.top());
-    QRect clip(0, 0, options.rect.width() + iconSize.width(),
-               options.rect.height());
+    // Clip the painter to the cell rectangle
+    painter->save();
+    painter->setClipRect(option.rect);
 
-    painter->setClipRect(clip);
-    QAbstractTextDocumentLayout::PaintContext ctx;
-    // set text color to red for selected item
-    if (option.state & QStyle::State_Selected)
-        ctx.palette.setColor(QPalette::Text, Qt::red);
+    // Calculate the rendering rectangle based on alignment
+    QRect rect = option.rect;
+    QSize contentSize = doc.size().toSize();
+    if (alignment & Qt::AlignHCenter) {
+        rect.setLeft(rect.left() + (rect.width() - contentSize.width()) / 2);
+    } else if (alignment & Qt::AlignRight) {
+        rect.setLeft(rect.right() - contentSize.width());
+    }
 
-    ctx.clip = clip;
-    doc.documentLayout()->draw(painter, ctx);
+    if (alignment & Qt::AlignVCenter) {
+        rect.setTop(rect.top() + (rect.height() - contentSize.height()) / 2);
+    } else if (alignment & Qt::AlignBottom) {
+        rect.setTop(rect.bottom() - contentSize.height());
+    }
+
+    // Render the document in the adjusted rectangle
+    painter->translate(rect.topLeft());
+    doc.setTextWidth(option.rect.width());
+    doc.drawContents(painter);
 
     painter->restore();
 }
 
 QSize RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
                                      const QModelIndex &index) const {
-    auto options = option;
-    initStyleOption(&options, index);
+    QString text = index.data(Qt::DisplayRole).toString();
+    if (text.isEmpty())
+        return QStyledItemDelegate::sizeHint(option, index);
 
     QTextDocument doc;
-    doc.setHtml(options.text);
-    doc.setTextWidth(options.rect.width());
-    return QSize(doc.idealWidth(), doc.size().height());
+    doc.setHtml(text);
+    doc.setTextWidth(option.rect.width());
+    return doc.size().toSize();
 }

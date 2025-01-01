@@ -287,28 +287,28 @@
         <translation>数据可视化</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="345"/>
-        <location filename="../testform.cpp" line="355"/>
+        <location filename="../testform.cpp" line="348"/>
+        <location filename="../testform.cpp" line="359"/>
         <source>UpdateTextTreeError</source>
         <translation>更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="370"/>
+        <location filename="../testform.cpp" line="374"/>
         <source>UpdateTextListByModelError</source>
         <translation>通过模型更新文本列表失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="380"/>
+        <location filename="../testform.cpp" line="384"/>
         <source>UpdateTextTableByModelError</source>
         <translation>通过模型更新文本表格失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="391"/>
+        <location filename="../testform.cpp" line="395"/>
         <source>UpdateTextTreeByModelError</source>
         <translation>通过模型更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="492"/>
+        <location filename="../testform.cpp" line="496"/>
         <source>Choose</source>
         <translation>选择</translation>
     </message>

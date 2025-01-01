@@ -80,6 +80,17 @@ const QString WingAngelAPI::pluginComment() const {
               "ability to call the host API.");
 }
 
+void WingAngelAPI::registerScriptEnums(
+    const QString &ns, const QHash<QString, QList<QPair<QString, int>>> &objs) {
+    Q_ASSERT(!ns.isEmpty());
+    if (objs.isEmpty()) {
+        return;
+    }
+
+    // check it later
+    _objs.insert(ns, objs);
+}
+
 void WingAngelAPI::registerScriptFns(const QString &ns,
                                      const QHash<QString, ScriptFnInfo> &rfns) {
     Q_ASSERT(!ns.isEmpty());
@@ -115,6 +126,7 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
     installDataVisualAPI(engine, stringTypeID);
 
     installScriptFns(engine);
+    installScriptEnums(engine);
 }
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
@@ -1107,34 +1119,35 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
 
     auto datavis = &this->visual;
 
-    registerAPI<bool(const QString &)>(
+    registerAPI<bool(const QString &, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::DataVisual::updateText, datavis,
-                  std::placeholders::_1),
-        "bool updateText(string &in data)");
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool updateText(string &in data, string &in title=\"\")");
 
-    registerAPI<bool(const CScriptArray &)>(
+    registerAPI<bool(const CScriptArray &, const QString &)>(
         engine,
         std::bind(&WingAngelAPI::_DataVisual_updateTextList, this, stringID,
-                  std::placeholders::_1),
-        "bool updateTextList(array<string> &in data)");
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool updateTextList(array<string> &in data, string &in title=\"\")");
 
-    registerAPI<bool(const QString &)>(
+    registerAPI<bool(const QString &, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::DataVisual::updateTextTree, datavis,
-                  std::placeholders::_1,
+                  std::placeholders::_1, std::placeholders::_2,
                   WingHex::WingPlugin::DataVisual::ClickedCallBack(),
                   WingHex::WingPlugin::DataVisual::DoubleClickedCallBack()),
-        "bool updateTextTree(string &in json)");
+        "bool updateTextTree(string &in json, string &in title=\"\")");
 
     registerAPI<bool(const QString &, const CScriptArray &,
-                     const CScriptArray &)>(
+                     const CScriptArray &, const QString &)>(
         engine,
         std::bind(&WingAngelAPI::_DataVisual_updateTextTable, this, stringID,
                   std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
+                  std::placeholders::_3, std::placeholders::_4),
         "bool updateTextTable(string &in json, array<string> &in headers, "
-        "array<string> &in headerNames = array<string>())");
+        "array<string> &in headerNames = array<string>(), string &in "
+        "title=\"\")");
 
     engine->SetDefaultNamespace("");
 }
@@ -1165,6 +1178,40 @@ void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
             }
         }
 
+        engine->SetDefaultNamespace("");
+    }
+}
+
+void WingAngelAPI::installScriptEnums(asIScriptEngine *engine) {
+    for (auto pobjs = _objs.constKeyValueBegin();
+         pobjs != _objs.constKeyValueEnd(); ++pobjs) {
+        auto ns = pobjs->first;
+        int r = engine->SetDefaultNamespace(ns.toUtf8());
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        auto &pobj = pobjs->second;
+        for (auto p = pobj.constKeyValueBegin(); p != pobj.constKeyValueEnd();
+             p++) {
+            auto en = p->first.toUtf8();
+            r = engine->RegisterEnum(en.data());
+            if (r < 0) {
+                emit warn(tr("InvalidEnumName:") + p->first);
+                continue;
+            }
+
+            for (auto &e : p->second) {
+                auto ev = e.first.toUtf8();
+                r = engine->RegisterEnumValue(en.data(), ev.data(), e.second);
+                if (r < 0) {
+                    emit warn(tr("InvalidEnumValue:") % p->first %
+                              QStringLiteral("::") % e.first %
+                              QStringLiteral(" (") % QString::number(e.second) %
+                              QStringLiteral(")"));
+                    continue;
+                }
+            }
+        }
         engine->SetDefaultNamespace("");
     }
 }
@@ -1653,7 +1700,8 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         std::bind(op, gen, std::placeholders::_1, std::placeholders::_2));
 }
 
-bool WingAngelAPI::execScriptCode(const QString &code) {
+bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
+                                  const QString &code) {
     if (code.isEmpty()) {
         return true;
     }
@@ -1666,9 +1714,7 @@ bool WingAngelAPI::execScriptCode(const QString &code) {
         }
 
         _console->setMode(ScriptingConsole::Output);
-        _console->write(QStringLiteral("(") %
-                        property("__LAST_CALLER__").toString() %
-                        QStringLiteral(") "));
+        _console->write(getSenderHeader(sender));
         _console->machine()->executeScript(f.fileName());
         _console->appendCommandPrompt();
         _console->setMode(ScriptingConsole::Input);
@@ -1677,26 +1723,29 @@ bool WingAngelAPI::execScriptCode(const QString &code) {
     return false;
 }
 
-bool WingAngelAPI::execScript(const QString &fileName) {
+bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
+                              const QString &fileName) {
     _console->setMode(ScriptingConsole::Output);
-    _console->write(QStringLiteral("(") %
-                    property("__LAST_CALLER__").toString() %
-                    QStringLiteral(") "));
+    _console->write(getSenderHeader(sender));
     auto ret = _console->machine()->executeScript(fileName);
     _console->appendCommandPrompt();
     _console->setMode(ScriptingConsole::Input);
     return ret;
 }
 
-bool WingAngelAPI::execCode(const QString &code) {
+bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
+                            const QString &code) {
     _console->setMode(ScriptingConsole::Output);
-    _console->write(QStringLiteral("(") %
-                    property("__LAST_CALLER__").toString() %
-                    QStringLiteral(") "));
+    _console->write(getSenderHeader(sender));
     auto ret = _console->machine()->executeCode(code);
     _console->appendCommandPrompt();
     _console->setMode(ScriptingConsole::Input);
     return ret;
+}
+
+QString WingAngelAPI::getSenderHeader(const WingHex::SenderInfo &sender) {
+    return QStringLiteral("(") % sender.puid % QStringLiteral("::") %
+           sender.plgcls % QStringLiteral(") ");
 }
 
 QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
@@ -1923,25 +1972,28 @@ bool WingAngelAPI::_HexController_appendBytes(const CScriptArray &ba) {
 }
 
 bool WingAngelAPI::_DataVisual_updateTextList(int stringID,
-                                              const CScriptArray &data) {
+                                              const CScriptArray &data,
+                                              const QString &title) {
     bool o = false;
     auto ret = cArray2QStringList(data, stringID, &o);
     if (o) {
-        return emit visual.updateTextList(ret);
+        return emit visual.updateTextList(ret, title);
     } else {
         return false;
     }
 }
 
-bool WingAngelAPI::_DataVisual_updateTextTable(
-    int stringID, const QString &json, const CScriptArray &headers,
-    const CScriptArray &headerNames) {
+bool WingAngelAPI::_DataVisual_updateTextTable(int stringID,
+                                               const QString &json,
+                                               const CScriptArray &headers,
+                                               const CScriptArray &headerNames,
+                                               const QString &title) {
     bool o = false;
     auto h = cArray2QStringList(headers, stringID, &o);
     if (o) {
         auto hn = cArray2QStringList(headerNames, stringID, &o);
         if (o) {
-            return emit visual.updateTextTable(json, h, hn);
+            return emit visual.updateTextTable(json, h, hn, title);
         } else {
             return false;
         }

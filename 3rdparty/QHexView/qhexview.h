@@ -128,7 +128,7 @@ private:
 signals:
     void documentChanged(QHexDocument *doc);
     void cursorLocationChanged();
-    void cursorSelectionChanged(); // TODO
+    void cursorSelectionChanged();
     void canUndoChanged(bool canUndo);
     void canRedoChanged(bool canRedo);
     void documentSaved(bool saved);

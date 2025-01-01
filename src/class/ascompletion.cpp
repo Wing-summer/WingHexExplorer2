@@ -186,7 +186,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                         return;
                     }
                 } else if (rbegin->content == DOT_TRIGGER) {
-                    // TODO
+                    // TODO only PR
                 } else {
                     applyEmptyNsNode(nodes);
                 }

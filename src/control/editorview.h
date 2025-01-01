@@ -125,6 +125,11 @@ private:
     void applyPluginData(const QHash<QString, QByteArray> &data);
     QHash<QString, QByteArray> savePluginData();
 
+    FindResultModel::FindInfo readContextFinding(qsizetype offset,
+                                                 qsizetype findSize,
+                                                 int contextSize,
+                                                 int maxDisplayBytes);
+
 private:
     template <typename Func>
     inline void newAction(QWidget *parent, const QString &icon,

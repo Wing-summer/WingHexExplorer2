@@ -126,6 +126,7 @@ public:
 
 private:
     void registerFns(IWingPlugin *plg);
+    void registerEnums(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
 
     QString type2AngelScriptString(IWingPlugin::MetaType type, bool isArg);
@@ -135,8 +136,11 @@ private:
 
     QString getPUID(IWingPlugin *p);
 
+    bool isPluginLoaded(const WingDependency &d);
+
 private:
-    bool loadPlugin(IWingPlugin *p, const std::optional<QDir> &setdir);
+    void loadPlugin(IWingPlugin *p, const QString &fileName,
+                    const std::optional<QDir> &setdir);
 
     void connectInterface(IWingPlugin *plg);
     void connectLoadingInterface(IWingPlugin *plg);
@@ -230,8 +234,9 @@ private:
 
 private:
     MainWindow *_win = nullptr;
-    QStringList _loadedpuid;
+    QList<WingDependency> _loadedplginfo;
     QList<IWingPlugin *> _loadedplgs;
+    QList<QPair<IWingPlugin *, QString>> _lazyplgs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 

@@ -68,15 +68,14 @@ void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
 
     if (fileinfo.exists()) {
-        QPluginLoader loader(fileinfo.absoluteFilePath(), this);
+        auto fileName = fileinfo.absoluteFilePath();
+        QPluginLoader loader(fileName, this);
         Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
         auto p = qobject_cast<IWingPlugin *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
-            if (!loadPlugin(p, setdir)) {
-                loader.unload();
-            }
+            loadPlugin(p, fileName, setdir);
         }
         Logger::_log("");
     }
@@ -299,6 +298,17 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     _angelplg->registerScriptFns(plg->metaObject()->className(), rfns);
 }
 
+void PluginSystem::registerEnums(IWingPlugin *plg) {
+    Q_ASSERT(plg);
+    auto objs = plg->registeredScriptEnums();
+    if (objs.isEmpty()) {
+        return;
+    }
+
+    Q_ASSERT(_angelplg);
+    _angelplg->registerScriptEnums(plg->metaObject()->className(), objs);
+}
+
 void PluginSystem::registerEvents(IWingPlugin *plg) {
     Q_ASSERT(plg);
     auto evs = plg->registeredEvents();
@@ -445,15 +455,35 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
 
 QString PluginSystem::getPUID(IWingPlugin *p) {
     if (p) {
+        constexpr auto puid_limit = 36; // same as uuid length, so enough
         auto prop = p->property("puid").toString().trimmed();
+        if (prop.length() > puid_limit) {
+            return {};
+        }
         auto pid = QString(p->metaObject()->className());
+        if (pid.length() > puid_limit) {
+            return {};
+        }
         return prop.isEmpty() ? pid : prop;
     } else {
         return {};
     }
 }
 
-bool PluginSystem::loadPlugin(IWingPlugin *p,
+bool PluginSystem::isPluginLoaded(const WingDependency &d) {
+    for (auto &info : _loadedplginfo) {
+        if (info.version >= d.version && info.puid == d.puid) {
+            if (d.md5.isEmpty()) {
+                return true;
+            } else {
+                return d.md5.compare(info.md5, Qt::CaseInsensitive) == 0;
+            }
+        }
+    }
+    return false;
+}
+
+void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
                               const std::optional<QDir> &setdir) {
     QTranslator *p_tr = nullptr;
 
@@ -471,8 +501,25 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         }
 
         auto puid = getPUID(p);
-        if (_loadedpuid.contains(puid)) {
-            throw tr("ErrLoadLoadedPlugin");
+        if (puid.isEmpty()) {
+            throw tr("ErrLoadInvalidPUID");
+        }
+
+        for (auto &uid : _loadedplginfo) {
+            if (uid.puid == puid) {
+                throw tr("ErrLoadLoadedPlugin");
+            }
+        }
+
+        // check dependencise
+        auto dps = p->dependencies();
+        if (!dps.isEmpty()) {
+            for (auto &d : dps) {
+                if (!isPluginLoaded(d)) {
+                    _lazyplgs.append(qMakePair(p, fileName));
+                    return;
+                }
+            }
         }
 
         emit pluginLoading(p->pluginName());
@@ -496,8 +543,14 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
             }
         }
 
-        _loadedplgs.push_back(p);
-        _loadedpuid << puid;
+        _loadedplgs.append(p);
+
+        WingDependency de;
+        de.puid = puid;
+        de.version = p->pluginVersion();
+        de.md5 = Utilities::getMd5(fileName);
+
+        _loadedplginfo.append(de);
 
         Logger::warning(tr("PluginName :") + p->pluginName());
         Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
@@ -665,6 +718,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         }
 
         registerFns(p);
+        registerEnums(p);
         registerEvents(p);
         connectInterface(p);
 
@@ -674,9 +728,7 @@ bool PluginSystem::loadPlugin(IWingPlugin *p,
         if (p_tr) {
             p_tr->deleteLater();
         }
-        return false;
     }
-    return true;
 }
 
 void PluginSystem::connectInterface(IWingPlugin *plg) {
@@ -738,22 +790,22 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                   QGenericReturnArgument, QGenericArgument, QGenericArgument,
                   QGenericArgument, QGenericArgument, QGenericArgument,
                   QGenericArgument, QGenericArgument, QGenericArgument,
-                  QGenericArgument,
                   QGenericArgument>::of(&IWingPlugin::invokeService),
         this,
         [=](const QString &puid, const char *method, Qt::ConnectionType type,
             QGenericReturnArgument ret, QGenericArgument val0,
             QGenericArgument val1, QGenericArgument val2, QGenericArgument val3,
             QGenericArgument val4, QGenericArgument val5, QGenericArgument val6,
-            QGenericArgument val7, QGenericArgument val8,
-            QGenericArgument val9) -> bool {
+            QGenericArgument val7, QGenericArgument val8) -> bool {
             auto r = std::find_if(
                 _loadedplgs.begin(), _loadedplgs.end(),
                 [=](IWingPlugin *plg) { return getPUID(plg) == puid; });
             if (r == _loadedplgs.end()) {
                 return false;
             }
-            auto meta = (*r)->metaObject();
+
+            auto obj = *r;
+            auto meta = obj->metaObject();
 
             // filter the evil call and report to log
             QVarLengthArray<char, 512> sig;
@@ -762,10 +814,13 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                 return false;
             sig.append(method, len);
             sig.append('(');
-            const char *typeNames[] = {ret.name(),  val0.name(), val1.name(),
-                                       val2.name(), val3.name(), val4.name(),
-                                       val5.name(), val6.name(), val7.name(),
-                                       val8.name(), val9.name()};
+
+            auto sname = QMetaType::fromType<WingHex::SenderInfo>().name();
+
+            const char *typeNames[] = {ret.name(),  sname,       val0.name(),
+                                       val1.name(), val2.name(), val3.name(),
+                                       val4.name(), val5.name(), val6.name(),
+                                       val7.name(), val8.name()};
             size_t paramCount;
             constexpr auto maxParamCount =
                 sizeof(typeNames) / sizeof(const char *);
@@ -803,10 +858,26 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                 return false;
             }
 
-            auto obj = *r;
-            obj->setProperty("__LAST_CALLER__", plg->metaObject()->className());
-            return m.invoke(obj, type, ret, val0, val1, val2, val3, val4, val5,
-                            val6, val7, val8, val9);
+            meta = plg->metaObject();
+            SenderInfo info;
+            info.plgcls = meta->className();
+            info.puid = getPUID(plg);
+
+            auto meta_name = "WING_META";
+            // property first
+            auto var = plg->property(meta_name);
+            if (var.isValid()) {
+                info.meta = var;
+            } else {
+                auto iidx = meta->indexOfClassInfo(meta_name);
+                if (iidx >= 0) {
+                    info.meta = QString(meta->classInfo(iidx).value());
+                }
+            }
+
+            return m.invoke(obj, type, ret,
+                            WINGAPI_ARG(WingHex::SenderInfo, info), val0, val1,
+                            val2, val3, val4, val5, val6, val7, val8);
         });
 }
 
@@ -2152,13 +2223,14 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
 
     auto visual = &plg->visual;
     connect(visual, &WingPlugin::DataVisual::updateText, _win,
-            [=](const QString &txt) -> bool {
+            [=](const QString &txt, const QString &title) -> bool {
+                _win->m_infotxt->setProperty("__TITLE__", title);
                 _win->m_infotxt->setText(txt);
                 return true;
             });
     connect(
         visual, &WingPlugin::DataVisual::updateTextList, _win,
-        [=](const QStringList &data,
+        [=](const QStringList &data, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2166,6 +2238,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             if (oldmodel) {
                 oldmodel->deleteLater();
             }
+            _win->m_infolist->setProperty("__TITLE__", title);
             auto model = new QStringListModel(data);
             _win->m_infolist->setModel(model);
             _win->m_infoclickfn = clicked;
@@ -2174,7 +2247,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextListByModel, _win,
-        [=](QAbstractItemModel *model,
+        [=](QAbstractItemModel *model, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2183,6 +2256,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                 if (oldmodel) {
                     oldmodel->deleteLater();
                 }
+                _win->m_infolist->setProperty("__TITLE__", title);
                 _win->m_infolist->setModel(model);
                 _win->m_infoclickfn = clicked;
                 _win->m_infodblclickfn = dblClicked;
@@ -2192,7 +2266,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextTree, _win,
-        [=](const QString &json,
+        [=](const QString &json, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2200,6 +2274,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             if (oldmodel) {
                 oldmodel->deleteLater();
             }
+            _win->m_infotree->setProperty("__TITLE__", title);
             auto model = new QJsonModel;
             if (model->loadJson(json.toUtf8())) {
                 _win->m_infotree->setModel(model);
@@ -2211,7 +2286,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextTreeByModel, _win,
-        [=](QAbstractItemModel *model,
+        [=](QAbstractItemModel *model, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2220,6 +2295,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                 if (oldmodel) {
                     oldmodel->deleteLater();
                 }
+                _win->m_infotree->setProperty("__TITLE__", title);
                 _win->m_infotree->setModel(model);
                 _win->m_infotreeclickfn = clicked;
                 _win->m_infotreedblclickfn = dblClicked;
@@ -2230,7 +2306,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
     connect(
         visual, &WingPlugin::DataVisual::updateTextTable, _win,
         [=](const QString &json, const QStringList &headers,
-            const QStringList &headerNames,
+            const QStringList &headerNames, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2257,7 +2333,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                     header.append(heading);
                 }
             }
-
+            _win->m_infotable->setProperty("__TITLE__", title);
             auto model = new QJsonTableModel(header);
             model->setJson(QJsonDocument::fromJson(json.toUtf8()));
             _win->m_infotable->setModel(model);
@@ -2267,7 +2343,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextTableByModel, _win,
-        [=](QAbstractItemModel *model,
+        [=](QAbstractItemModel *model, const QString &title,
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
@@ -2276,6 +2352,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                 if (oldmodel) {
                     oldmodel->deleteLater();
                 }
+                _win->m_infotable->setProperty("__TITLE__", title);
                 _win->m_infotable->setModel(model);
                 _win->m_infotableclickfn = clicked;
                 _win->m_infotabledblclickfn = dblClicked;
@@ -2313,9 +2390,7 @@ void PluginSystem::LoadPlugin() {
     if (set.scriptEnabled()) {
         _angelplg = new WingAngelAPI;
 
-        auto ret = loadPlugin(_angelplg, std::nullopt);
-        Q_ASSERT(ret);
-        Q_UNUSED(ret);
+        loadPlugin(_angelplg, {}, std::nullopt);
     }
 
     bool ok;
@@ -2368,6 +2443,33 @@ void PluginSystem::LoadPlugin() {
 
     for (auto &item : plgs) {
         loadPlugin(item, udir);
+    }
+
+    if (!_lazyplgs.isEmpty()) {
+        decltype(_lazyplgs) lazyplgs;
+        lazyplgs.swap(_lazyplgs);
+
+        for (auto &item : lazyplgs) {
+            loadPlugin(item.first, item.second, udir);
+        }
+    }
+
+    if (!_lazyplgs.isEmpty()) {
+        Logger::critical(tr("PluginLoadingFailedSummary"));
+        Logger::_log({});
+        for (auto &lplg : _lazyplgs) {
+            auto plg = lplg.first;
+            Logger::critical(tr("- PluginName:") + plg->pluginName());
+            Logger::critical(tr("- Dependencies:"));
+            for (auto &d : plg->dependencies()) {
+                Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
+                Logger::critical(QString(4, ' ') + tr("Version:") +
+                                 QString::number(d.version));
+                Logger::critical(QString(4, ' ') + tr("MD5:") + d.md5);
+            }
+            plg->deleteLater();
+        }
+        _lazyplgs.clear();
     }
 
     Logger::info(tr("PluginLoadingFinished"));

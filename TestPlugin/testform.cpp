@@ -329,16 +329,19 @@ void TestForm::on_btnGetColor_clicked() {
 }
 
 void TestForm::on_btnText_2_clicked() {
-    emit _plg->visual.updateText(ui->teDataVisual->toPlainText());
+    emit _plg->visual.updateText(ui->teDataVisual->toPlainText(),
+                                 QStringLiteral("TestForm"));
 }
 
 void TestForm::on_btnTextList_clicked() {
     auto txts = ui->teDataVisual->toPlainText().split('\n');
-    emit _plg->visual.updateTextList(txts, _click, _dblclick);
+    emit _plg->visual.updateTextList(txts, QStringLiteral("TestForm"), _click,
+                                     _dblclick);
 }
 
 void TestForm::on_btnTextTree_clicked() {
     auto ret = emit _plg->visual.updateTextTree(ui->teDataVisual->toPlainText(),
+                                                QStringLiteral("TestForm"),
                                                 _click, _dblclick);
     if (!ret) {
         emit _plg->msgbox.critical(this, QStringLiteral("Test"),
@@ -349,7 +352,8 @@ void TestForm::on_btnTextTree_clicked() {
 void TestForm::on_btnTextTable_clicked() {
     auto ret = emit _plg->visual.updateTextTable(
         ui->teDataVisual->toPlainText(),
-        {WingHex::WINGSUMMER, WingHex::WINGSUMMER}, {}, _click, _dblclick);
+        {WingHex::WINGSUMMER, WingHex::WINGSUMMER}, {},
+        QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         emit _plg->msgbox.critical(this, QStringLiteral("Test"),
                                    tr("UpdateTextTreeError"));
@@ -363,8 +367,8 @@ void TestForm::on_btnTextListByModel_clicked() {
         buffer.append(WingHex::WINGSUMMER % QString::number(i));
     }
     model->setStringList(buffer);
-    auto ret =
-        emit _plg->visual.updateTextListByModel(model, _click, _dblclick);
+    auto ret = emit _plg->visual.updateTextListByModel(
+        model, QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         emit _plg->msgbox.critical(this, QStringLiteral("Test"),
                                    tr("UpdateTextListByModelError"));
@@ -373,8 +377,8 @@ void TestForm::on_btnTextListByModel_clicked() {
 
 void TestForm::on_btnTextTableByModel_clicked() {
     auto model = new TestTableModel;
-    auto ret =
-        emit _plg->visual.updateTextTableByModel(model, _click, _dblclick);
+    auto ret = emit _plg->visual.updateTextTableByModel(
+        model, QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         emit _plg->msgbox.critical(this, QStringLiteral("Test"),
                                    tr("UpdateTextTableByModelError"));
@@ -384,8 +388,8 @@ void TestForm::on_btnTextTableByModel_clicked() {
 void TestForm::on_btnTextTreeByModel_clicked() {
     auto model = new QFileSystemModel;
     model->setRootPath(QDir::currentPath());
-    auto ret =
-        emit _plg->visual.updateTextTreeByModel(model, _click, _dblclick);
+    auto ret = emit _plg->visual.updateTextTreeByModel(
+        model, QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         emit _plg->msgbox.critical(this, QStringLiteral("Test"),
                                    tr("UpdateTextTreeByModelError"));

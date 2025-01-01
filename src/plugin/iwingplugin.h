@@ -401,30 +401,32 @@ public:
     typedef ClickedCallBack DoubleClickedCallBack;
 
 signals:
-    bool updateText(const QString &data);
-    bool updateTextList(const QStringList &data, ClickedCallBack clicked = {},
+    bool updateText(const QString &data, const QString &title = {});
+    bool updateTextList(const QStringList &data, const QString &title = {},
+                        ClickedCallBack clicked = {},
                         DoubleClickedCallBack dblClicked = {});
 
     Q_REQUIRED_RESULT bool
-    updateTextTree(const QString &json, ClickedCallBack clicked = {},
+    updateTextTree(const QString &json, const QString &title = {},
+                   ClickedCallBack clicked = {},
                    DoubleClickedCallBack dblClicked = {});
     Q_REQUIRED_RESULT bool
     updateTextTable(const QString &json, const QStringList &headers,
                     const QStringList &headerNames = {},
-                    ClickedCallBack clicked = {},
+                    const QString &title = {}, ClickedCallBack clicked = {},
                     DoubleClickedCallBack dblClicked = {});
 
     // API for Qt Plugin Only
     Q_REQUIRED_RESULT bool
-    updateTextListByModel(QAbstractItemModel *model,
+    updateTextListByModel(QAbstractItemModel *model, const QString &title = {},
                           ClickedCallBack clicked = {},
                           DoubleClickedCallBack dblClicked = {});
     Q_REQUIRED_RESULT bool
-    updateTextTableByModel(QAbstractItemModel *model,
+    updateTextTableByModel(QAbstractItemModel *model, const QString &title = {},
                            ClickedCallBack clicked = {},
                            DoubleClickedCallBack dblClicked = {});
     Q_REQUIRED_RESULT bool
-    updateTextTreeByModel(QAbstractItemModel *model,
+    updateTextTreeByModel(QAbstractItemModel *model, const QString &title = {},
                           ClickedCallBack clicked = {},
                           DoubleClickedCallBack dblClicked = {});
 };
@@ -494,7 +496,13 @@ signals:
 struct WingDependency {
     QString puid;
     uint version;
-    QString md5; // optional, but recommend
+    QByteArray md5; // optional, but recommend
+};
+
+struct SenderInfo {
+    QString plgcls;
+    QString puid;
+    QVariant meta;
 };
 
 #ifdef WING_SERVICE
@@ -602,8 +610,9 @@ public:
         return {};
     }
 
-    // QHash< obj-names, decl-members >
-    virtual QHash<QString, QStringList> registeredScriptObjs() const {
+    // QHash< enum , members >
+    virtual QHash<QString, QList<QPair<QString, int>>>
+    registeredScriptEnums() const {
         return {};
     }
 
@@ -655,8 +664,7 @@ signals:
                        QGenericArgument val5 = QGenericArgument(),
                        QGenericArgument val6 = QGenericArgument(),
                        QGenericArgument val7 = QGenericArgument(),
-                       QGenericArgument val8 = QGenericArgument(),
-                       QGenericArgument val9 = QGenericArgument());
+                       QGenericArgument val8 = QGenericArgument());
 
 public:
     inline bool invokeService(const QString &puid, const char *member,
@@ -669,11 +677,10 @@ public:
                               QGenericArgument val5 = QGenericArgument(),
                               QGenericArgument val6 = QGenericArgument(),
                               QGenericArgument val7 = QGenericArgument(),
-                              QGenericArgument val8 = QGenericArgument(),
-                              QGenericArgument val9 = QGenericArgument()) {
+                              QGenericArgument val8 = QGenericArgument()) {
         return emit invokeService(puid, member, Qt::AutoConnection, ret, val0,
                                   val1, val2, val3, val4, val5, val6, val7,
-                                  val8, val9);
+                                  val8);
     }
 
     inline bool invokeService(const QString &puid, const char *member,
@@ -685,11 +692,10 @@ public:
                               QGenericArgument val5 = QGenericArgument(),
                               QGenericArgument val6 = QGenericArgument(),
                               QGenericArgument val7 = QGenericArgument(),
-                              QGenericArgument val8 = QGenericArgument(),
-                              QGenericArgument val9 = QGenericArgument()) {
+                              QGenericArgument val8 = QGenericArgument()) {
         return emit invokeService(puid, member, type, QGenericReturnArgument(),
                                   val0, val1, val2, val3, val4, val5, val6,
-                                  val7, val8, val9);
+                                  val7, val8);
     }
 
     inline bool invokeService(const QString &puid, const char *member,
@@ -701,11 +707,10 @@ public:
                               QGenericArgument val5 = QGenericArgument(),
                               QGenericArgument val6 = QGenericArgument(),
                               QGenericArgument val7 = QGenericArgument(),
-                              QGenericArgument val8 = QGenericArgument(),
-                              QGenericArgument val9 = QGenericArgument()) {
+                              QGenericArgument val8 = QGenericArgument()) {
         return emit invokeService(puid, member, Qt::AutoConnection,
                                   QGenericReturnArgument(), val0, val1, val2,
-                                  val3, val4, val5, val6, val7, val8, val9);
+                                  val3, val4, val5, val6, val7, val8);
     }
 
 public:
@@ -720,6 +725,7 @@ public:
 
 } // namespace WingHex
 
+Q_DECLARE_METATYPE(WingHex::SenderInfo)
 Q_DECLARE_INTERFACE(WingHex::IWingPlugin, "com.wingsummer.iwingplugin")
 
 #endif // IWINGPLUGIN_H

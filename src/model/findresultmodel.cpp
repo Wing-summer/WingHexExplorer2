@@ -16,9 +16,10 @@
 */
 
 #include "findresultmodel.h"
+#include "utilities.h"
 
 FindResultModel::FindResultModel(QObject *parent)
-    : QAbstractTableModel(parent) {}
+    : QAbstractTableModel(parent), m_encoding(QStringLiteral("ASCII")) {}
 
 int FindResultModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
@@ -43,15 +44,53 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
         case 2: // offset
             return QStringLiteral("0x") +
                    QString::number(r.offset, 16).toUpper();
-        case 3: // range
-            return m_lastFindData.at(row).findRange;
-        case 4: // decoding
-            return m_lastFindData.at(row).decoding;
+        case 3: {
+            // range
+            auto data = m_findData.at(row);
+            QString buffer =
+                data.cheader.toHex(' ').toUpper() % QStringLiteral(" <b>");
+            if (!data.hbuffer.isEmpty()) {
+                buffer += data.hbuffer.toHex(' ').toUpper();
+                if (!data.tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" .. ");
+                }
+            }
+
+            buffer += data.tbuffer.toHex(' ').toUpper() %
+                      QStringLiteral("</b> ") %
+                      data.ctailer.toHex(' ').toUpper();
+
+            return buffer;
+        }
+        case 4: { // decoding
+            auto data = m_findData.at(row);
+            QString buffer =
+                Utilities::decodingString(data.cheader, m_encoding) %
+                QStringLiteral(" <b>");
+            if (!data.hbuffer.isEmpty()) {
+                buffer += Utilities::decodingString(data.hbuffer);
+                if (!data.tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" ... ");
+                }
+            }
+
+            buffer += Utilities::decodingString(data.tbuffer) %
+                      QStringLiteral("</b> ") %
+                      Utilities::decodingString(data.ctailer);
+
+            return buffer;
+        }
         }
         return QVariant();
     }
     case Qt::TextAlignmentRole:
-        return Qt::AlignCenter;
+        switch (index.column()) {
+        case 3:
+        case 4:
+            return Qt::AlignLeft;
+        default:
+            return Qt::AlignCenter;
+        }
     }
     return QVariant();
 }
@@ -79,11 +118,19 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
+QString FindResultModel::encoding() const { return m_encoding; }
+
+void FindResultModel::setEncoding(const QString &newEncoding) {
+    m_encoding = newEncoding;
+}
+
 QList<WingHex::FindResult> &FindResultModel::results() { return m_results; }
 
-QList<FindResultModel::FindInfo> &FindResultModel::lastFindData() {
-    return m_lastFindData;
+QList<FindResultModel::FindInfo> &FindResultModel::findData() {
+    return m_findData;
 }
+
+QByteArray &FindResultModel::lastFindData() { return m_lastFindData; }
 
 void FindResultModel::beginUpdate() { this->beginResetModel(); }
 
@@ -95,7 +142,7 @@ WingHex::FindResult FindResultModel::resultAt(qsizetype index) const {
 
 void FindResultModel::clear() {
     m_results.clear();
-    m_lastFindData.clear();
+    m_findData.clear();
 }
 
 QList<WingHex::FindResult>::size_type FindResultModel::size() const {

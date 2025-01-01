@@ -24,17 +24,21 @@
 
 class FindResultModel : public QAbstractTableModel {
     Q_OBJECT
+
 public:
     struct FindInfo {
-        QString findRange;
-        QString decoding;
+        QByteArray cheader;
+        QByteArray hbuffer;
+        QByteArray tbuffer;
+        QByteArray ctailer;
     };
 
 public:
     explicit FindResultModel(QObject *parent = nullptr);
 
     QList<WingHex::FindResult> &results();
-    QList<FindInfo> &lastFindData();
+    QList<FindInfo> &findData();
+    QByteArray &lastFindData();
 
     void beginUpdate();
     void endUpdate();
@@ -51,9 +55,15 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation,
                                 int role) const override;
 
+    QString encoding() const;
+    void setEncoding(const QString &newEncoding);
+
 private:
     QList<WingHex::FindResult> m_results;
-    QList<FindInfo> m_lastFindData;
+    QList<FindInfo> m_findData;
+    QByteArray m_lastFindData;
+
+    QString m_encoding;
 };
 
 #endif // FINDRESULTMODEL_H

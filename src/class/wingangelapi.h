@@ -52,6 +52,10 @@ public:
     registerScriptFns(const QString &ns,
                       const QHash<QString, IWingPlugin::ScriptFnInfo> &rfns);
 
+    void
+    registerScriptEnums(const QString &ns,
+                        const QHash<QString, QList<QPair<QString, int>>> &objs);
+
     void installAPI(ScriptMachine *machine);
 
     ScriptingConsole *bindingConsole() const;
@@ -69,6 +73,7 @@ private:
     void installHexControllerAPI(asIScriptEngine *engine);
     void installDataVisualAPI(asIScriptEngine *engine, int stringID);
     void installScriptFns(asIScriptEngine *engine);
+    void installScriptEnums(asIScriptEngine *engine);
 
 private:
     template <class T>
@@ -122,9 +127,14 @@ private:
     static void script_call(asIScriptGeneric *gen);
 
 private:
-    WING_SERVICE bool execScriptCode(const QString &code);
-    WING_SERVICE bool execScript(const QString &fileName);
-    WING_SERVICE bool execCode(const QString &code);
+    WING_SERVICE bool execScriptCode(const WingHex::SenderInfo &sender,
+                                     const QString &code);
+    WING_SERVICE bool execScript(const WingHex::SenderInfo &sender,
+                                 const QString &fileName);
+    WING_SERVICE bool execCode(const WingHex::SenderInfo &sender,
+                               const QString &code);
+
+    QString getSenderHeader(const WingHex::SenderInfo &sender);
 
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
@@ -164,11 +174,13 @@ private:
 
     bool _HexController_appendBytes(const CScriptArray &ba);
 
-    bool _DataVisual_updateTextList(int stringID, const CScriptArray &data);
+    bool _DataVisual_updateTextList(int stringID, const CScriptArray &data,
+                                    const QString &title);
 
     bool _DataVisual_updateTextTable(int stringID, const QString &json,
                                      const CScriptArray &headers,
-                                     const CScriptArray &headerNames);
+                                     const CScriptArray &headerNames,
+                                     const QString &title);
 
 private:
     std::vector<std::any> _fnbuffer;
@@ -177,6 +189,7 @@ private:
     ScriptingConsole *_console = nullptr;
 
     QHash<QString, QHash<QString, qsizetype>> _rfns;
+    QHash<QString, QHash<QString, QList<QPair<QString, int>>>> _objs;
 };
 
 #endif // WINGANGELAPI_H

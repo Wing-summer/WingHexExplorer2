@@ -67,14 +67,14 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     if (info.isStringFind) {
         m_string->setChecked(true);
         m_lineeditor->setEnabled(true);
-        m_hex->setEnabled(false);
+        m_hexeditor->setEnabled(false);
         if (!info.encoding.isEmpty()) {
             m_encodings->setCurrentText(info.encoding);
         }
     } else {
         m_hex->setChecked(true);
         m_lineeditor->setEnabled(false);
-        m_hex->setEnabled(true);
+        m_hexeditor->setEnabled(true);
     }
 
     m_lineeditor->setText(info.str);

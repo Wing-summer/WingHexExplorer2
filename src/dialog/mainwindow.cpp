@@ -24,6 +24,7 @@
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
 #include "class/appmanager.h"
+#include "class/eventfilter.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/layoutmanager.h"
@@ -480,6 +481,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setProperty("EditorView", quintptr(0));
 
     Utilities::applyTableViewProperty(m_findresult);
+    auto header = m_findresult->horizontalHeader();
 
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
@@ -493,6 +495,9 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setItemDelegate(new RichTextItemDelegate(m_findresult));
 
     m_findresult->setModel(_findEmptyResult);
+
+    header->setSectionResizeMode(3, QHeaderView::Stretch);
+    header->setSectionResizeMode(4, QHeaderView::Stretch);
 
     connect(m_findresult, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
@@ -779,6 +784,29 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
                                   ads::CDockAreaWidget *areaw) {
     using namespace ads;
 
+    auto efilter = new EventFilter(QEvent::DynamicPropertyChange, this);
+    connect(efilter, &EventFilter::eventTriggered, this,
+            [this](QObject *obj, QEvent *event) {
+                auto e = static_cast<QDynamicPropertyChangeEvent *>(event);
+                constexpr auto ppname = "__TITLE__";
+                if (e->propertyName() == QByteArray(ppname)) {
+                    auto title = obj->property(ppname).toString();
+                    auto display = obj->property("__DISPLAY__").toString();
+                    auto dock = reinterpret_cast<QDockWidget *>(
+                        obj->property("__DOCK__").value<quintptr>());
+                    if (dock) {
+                        if (!title.isEmpty()) {
+                            display += QStringLiteral("(") % title %
+                                       QStringLiteral(")");
+                        }
+                        dock->setWindowTitle(display);
+                    }
+                }
+            });
+
+    constexpr auto dpname = "__DISPLAY__";
+    constexpr auto dockpname = "__DOCK__";
+
     m_infolist = new QListView(this);
     m_infolist->setEditTriggers(QListView::EditTrigger::NoEditTriggers);
     connect(m_infolist, &QListView::clicked, this,
@@ -795,6 +823,10 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
             });
     auto dw = buildDockWidget(dock, QStringLiteral("DVList"), tr("DVList"),
                               m_infolist);
+    m_infolist->setProperty(dpname, tr("DVList"));
+    m_infolist->setProperty(dockpname, quintptr(dw));
+    m_infolist->installEventFilter(efilter);
+
     auto ar = dock->addDockWidget(area, dw, areaw);
 
     m_infotree = new QTreeView(this);
@@ -813,6 +845,9 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
             });
     dw = buildDockWidget(dock, QStringLiteral("DVTree"), tr("DVTree"),
                          m_infotree);
+    m_infotree->setProperty(dpname, tr("DVTree"));
+    m_infotree->setProperty(dockpname, quintptr(dw));
+    m_infotree->installEventFilter(efilter);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     m_infotable = new QTableView(this);
@@ -831,11 +866,17 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
             });
     dw = buildDockWidget(dock, QStringLiteral("DVTable"), tr("DVTable"),
                          m_infotable);
+    m_infotable->setProperty(dpname, tr("DVTable"));
+    m_infotable->setProperty(dockpname, quintptr(dw));
+    m_infotable->installEventFilter(efilter);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     m_infotxt = new QTextBrowser(this);
     dw = buildDockWidget(dock, QStringLiteral("DVText"), tr("DVText"),
                          m_infotxt);
+    m_infotxt->setProperty(dpname, tr("DVText"));
+    m_infotxt->setProperty(dockpname, quintptr(dw));
+    m_infotxt->installEventFilter(efilter);
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     return ar;
@@ -2270,8 +2311,8 @@ void MainWindow::on_exportfindresult() {
                      tr("EmptyFindResult"));
         return;
     }
-    auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
-                                                    m_lastusedpath);
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseSaveFile"), m_lastusedpath, {"Json (*.json)"});
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
@@ -2281,9 +2322,10 @@ void MainWindow::on_exportfindresult() {
         QJsonObject fobj;
         fobj.insert(QStringLiteral("file"), editor->fileName());
 
-        // auto d= findresitem->lastFindData();
+        auto d = findresitem->lastFindData();
 
-        // fobj.insert(QStringLiteral("data"), findresitem->lastFindData());
+        fobj.insert(QStringLiteral("find"),
+                    QString::fromLatin1(d.toHex(' ').toUpper()));
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             auto data = findresitem->resultAt(i);
@@ -2291,6 +2333,18 @@ void MainWindow::on_exportfindresult() {
             jobj.insert(QStringLiteral("line"), QString::number(data.line));
             jobj.insert(QStringLiteral("col"), QString::number(data.col));
             jobj.insert(QStringLiteral("offset"), QString::number(data.offset));
+
+            QTextDocument doc;
+            doc.setHtml(
+                findresitem->data(findresitem->index(i, 3), Qt::DisplayRole)
+                    .toString());
+            jobj.insert(QStringLiteral("range"), doc.toPlainText());
+
+            doc.setHtml(
+                findresitem->data(findresitem->index(i, 4), Qt::DisplayRole)
+                    .toString());
+            jobj.insert(QStringLiteral("encoding"), doc.toPlainText());
+
             arr.append(jobj);
         }
         fobj.insert(QStringLiteral("data"), arr);

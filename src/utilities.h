@@ -50,6 +50,9 @@
 
 #define PROEXT ".wingpro"
 
+constexpr auto FIND_CONTEXT_SIZE = 3;
+constexpr auto FIND_MAX_DISPLAY_FIND_CHARS = 8;
+
 Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
     return ":/com.wingsummer.winghex/images/" + name + ".png";
 }
@@ -156,6 +159,10 @@ public:
     }
 
     static QByteArray getMd5(QString filename) {
+        if (filename.isEmpty()) {
+            return {};
+        }
+
         QFile sourceFile(filename);
         if (sourceFile.open(QIODevice::ReadOnly)) {
             QCryptographicHash hash(QCryptographicHash::Md5);
@@ -163,7 +170,7 @@ public:
                 return hash.result();
             }
         }
-        return QByteArray();
+        return {};
     }
 
     static bool checkIsLittleEndian() {

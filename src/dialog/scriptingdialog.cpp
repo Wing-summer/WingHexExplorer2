@@ -629,6 +629,7 @@ ScriptingDialog::buildSymbolShowDock(ads::CDockManager *dock,
                                      ads::CDockAreaWidget *areaw) {
     Q_ASSERT(m_consoleout);
     m_sym = new ASObjTreeWidget(this);
+    m_sym->header()->setSectionResizeMode(QHeaderView::Stretch);
     auto dw =
         buildDockWidget(dock, QStringLiteral("Symbol"), tr("Symbol"), m_sym);
     return dock->addDockWidget(area, dw, areaw);
