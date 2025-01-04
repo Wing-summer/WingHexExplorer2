@@ -18,7 +18,9 @@ endif()
 
 option(TEST_MODE TRUE)
 
-set(WINGHEX_SDK "%{WingHexSDKPath}")
+if(NOT EXISTS "${WINGHEX_SDK}")
+    message(FATAL_ERROR "Please config the SDK Path - WINGHEX_SDK")
+endif()
 
 set(PLUGIN_INTERFACE_FOUND FALSE)
 set(PLUGIN_SETPAGE_FOUND FALSE)
@@ -96,7 +98,11 @@ if(TEST_MODE)
     # this variable. Because this test plugin is a subproject of the main
     # project, use CMAKE_BINARY_DIR
 
-    set(WINGHEX_PATH "%{WingHexEXEPath}")
+    if(NOT EXISTS "${WINGHEX_PATH}")
+        message(
+            FATAL_ERROR "Please config the WingHexExplorer2 Path - WINGHEX_PATH"
+        )
+    endif()
 
     set(WINGHEX_PLUGIN_PATH "${WINGHEX_PATH}/plugin")
     add_custom_command(

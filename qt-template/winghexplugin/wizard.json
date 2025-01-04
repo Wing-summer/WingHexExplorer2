@@ -12,8 +12,6 @@
 
     "options":
     [
-        { "key": "WingHexSDKPath", "value": "%{SDKPath}" },
-        { "key": "WingHexEXEPath", "value": "%{WingHexPath}" },
         { "key": "ProjectFile", "value": "%{JS: value('CMakeFile') }" },
         { "key": "PluginNameLower", "value": "%{JS: value('PluginName').toLowerCase()}"},
         { "key": "PluginJsonFile", "value": "%{JS: Util.fileName(value('PluginName'), 'json.in')}" },
@@ -122,28 +120,6 @@
                     "data":
                     {
                         "text": "https://www.%{JS: encodeURIComponent(value('VendorName').toLowerCase())}.com"
-                    }
-                },
-                {
-                    "name": "SDKPath",
-                    "persistenceKey": "SDKPath",
-                    "trDisplayName": "SDK Path:",
-                    "mandatory": true,
-                    "type": "PathChooser",
-                    "data":
-                    {
-                        "kind": "existingDirectory"
-                    }
-                },
-                {
-                    "name": "WingHexPath",
-                    "persistenceKey": "WingHexPath",
-                    "type": "PathChooser",
-                    "trDisplayName": "WingHexExplorer2 Installation:",
-                    "mandatory": true,
-                    "data":
-                    {
-                        "kind": "existingDirectory"
                     }
                 }
             ]

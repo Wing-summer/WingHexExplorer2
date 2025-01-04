@@ -21,6 +21,7 @@
 #include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/settingmanager.h"
+#include "class/skinmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
@@ -769,6 +770,17 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
         Logger::critical(
             packLogMessage(plg->metaObject()->className(), message));
     });
+    connect(plg, &IWingPlugin::currentAppTheme, this,
+            []() -> WingHex::AppTheme {
+                auto theme = SkinManager::instance().currentTheme();
+                switch (theme) {
+                case SkinManager::Theme::Dark:
+                    return WingHex::AppTheme::Dark;
+                case SkinManager::Theme::Light:
+                    return WingHex::AppTheme::Light;
+                }
+                return WingHex::AppTheme::Dark; // fallback to default theme
+            });
     connect(plg, &IWingPlugin::createDialog, this,
             [=](QWidget *w) -> QDialog * {
                 if (!checkThreadAff()) {

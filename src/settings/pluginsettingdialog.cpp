@@ -49,7 +49,9 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto pico = ICONRES("plugin");
     ui->plglist->clear();
     for (auto &p : plgsys.plugins()) {
-        ui->plglist->addItem(new QListWidgetItem(pico, p->pluginName()));
+        auto pco = p->pluginIcon();
+        ui->plglist->addItem(
+            new QListWidgetItem(pco.isNull() ? pico : pco, p->pluginName()));
     }
 
     ui->txtc->clear();
@@ -96,7 +98,7 @@ void PluginSettingDialog::on_plglist_itemSelectionChanged() {
     auto &plgsys = PluginSystem::instance();
 
     auto plg = plgsys.plugin(ui->plglist->currentRow());
-
+    ui->txtc->clear();
     ui->txtc->append(tr("pluginName") + " : " + plg->pluginName());
     ui->txtc->append(tr("pluginAuthor") + " : " + plg->pluginAuthor());
     ui->txtc->append(tr("pluginVersion") + " : " +

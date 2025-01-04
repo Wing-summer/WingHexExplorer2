@@ -13,6 +13,7 @@ from colorama import Fore, Style
 def install():
     installer_path = os.path.dirname(os.path.abspath(__file__))
     install_path = os.path.join(getQtTemplateDir(), "winghexplugin")
+    shutil.rmtree(install_path, ignore_errors=True)   # uninstall first
     shutil.copytree(os.path.join(installer_path, "winghexplugin"),
                     install_path, dirs_exist_ok=True)
     print(Fore.GREEN + "WingHexExplorer2 plugin Template was installed under: " + install_path + Style.RESET_ALL)
@@ -27,7 +28,7 @@ def getQtTemplateDir() -> pathlib.Path:
     # https://docs.huihoo.com/qt/qtcreator/4.2/creator-project-wizards.html#locating-wizards
     home = pathlib.Path.home()
     if sys.platform == "win32":
-        return home / "AppData/QtProject/qtcreator/templates/wizards"
+        return home / "AppData/Roaming/QtProject/qtcreator/templates/wizards"
     else:
         return home / ".config/QtProject/qtcreator/templates/wizards"
     

@@ -98,47 +98,11 @@ QString AsPreprocesser::GetSectionName(unsigned int idx) const {
     return includedScripts.at(idx);
 }
 
-QVector<QString> AsPreprocesser::GetMetadataForType(int typeId) {
-    return typeMetadataMap.value(typeId);
-}
-
-QVector<QString> AsPreprocesser::GetMetadataForFunc(asIScriptFunction *func) {
-    return funcMetadataMap.value(func->GetId());
-}
-
-QVector<QString> AsPreprocesser::GetMetadataForVar(int varIdx) {
-    return varMetadataMap.value(varIdx);
-}
-
-QVector<QString> AsPreprocesser::GetMetadataForTypeProperty(int typeId,
-                                                            int varIdx) {
-    if (classMetadataMap.contains(typeId)) {
-        return varMetadataMap.value(varIdx);
-    }
-    return {};
-}
-
-QVector<QString>
-AsPreprocesser::GetMetadataForTypeMethod(int typeId,
-                                         asIScriptFunction *method) {
-    if (method) {
-        if (classMetadataMap.contains(typeId)) {
-            return funcMetadataMap.value(method->GetId());
-        }
-    }
-    return {};
-}
-
 void AsPreprocesser::ClearAll() {
     includedScripts.clear();
 
     currentClass.clear();
     currentNamespace.clear();
-
-    foundDeclarations.clear();
-    typeMetadataMap.clear();
-    funcMetadataMap.clear();
-    varMetadataMap.clear();
 }
 
 int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
@@ -335,26 +299,8 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
             continue;
         }
 
-        // Is this the start of metadata?
-        if (token == "[") {
-            // Get the metadata string
-            pos = ExtractMetadata(modifiedScript, pos, metadata);
-
-            // Determine what this metadata is for
-            int type;
-            ExtractDeclaration(modifiedScript, pos, name, declaration, type);
-
-            // Store away the declaration in a map for lookup after the build
-            // has completed
-            if (type > 0) {
-                SMetadataDecl decl(metadata, name, declaration, type,
-                                   currentClass, currentNamespace);
-                foundDeclarations.push_back(decl);
-            }
-        } else
-
-            // Is this a preprocessor directive?
-            if (token == "#" && (qsizetype(pos + 1) < modifiedScript.size())) {
+        // Is this a preprocessor directive?
+        if (token == "#" && (qsizetype(pos + 1) < modifiedScript.size())) {
             int start = pos++;
 
             t = engine->ParseToken(modifiedScript.data() + pos,
@@ -678,176 +624,4 @@ void AsPreprocesser::AddScriptSection(const QString &section,
     data.lineOffset = lineOffset;
     data.script = code;
     modifiedScripts.append(data);
-}
-
-int AsPreprocesser::ExtractMetadata(QByteArray &modifiedScript, int pos,
-                                    QVector<QString> &metadata) {
-    metadata.clear();
-
-    // Extract all metadata. They can be separated by whitespace and comments
-    for (;;) {
-        QString metadataString;
-
-        // Overwrite the metadata with space characters to allow compilation
-        modifiedScript[pos] = ' ';
-
-        // Skip opening brackets
-        pos += 1;
-
-        int level = 1;
-        asUINT len = 0;
-        while (level > 0 && pos < (int)modifiedScript.size()) {
-            asETokenClass t = engine->ParseToken(
-                modifiedScript.data() + pos, modifiedScript.size() - pos, &len);
-            if (t == asTC_KEYWORD) {
-                if (modifiedScript[pos] == '[')
-                    level++;
-                else if (modifiedScript[pos] == ']')
-                    level--;
-            }
-
-            // Copy the metadata to our buffer
-            if (level > 0)
-                metadataString.append(modifiedScript.mid(pos, len));
-
-            // Overwrite the metadata with space characters to allow compilation
-            if (t != asTC_WHITESPACE)
-                OverwriteCode(modifiedScript, pos, len);
-
-            pos += len;
-        }
-
-        metadata.push_back(metadataString);
-
-        // Check for more metadata. Possibly separated by comments
-        asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
-                                             modifiedScript.size() - pos, &len);
-        while (t == asTC_COMMENT || t == asTC_WHITESPACE) {
-            pos += len;
-            t = engine->ParseToken(modifiedScript.data() + pos,
-                                   modifiedScript.size() - pos, &len);
-        }
-
-        if (modifiedScript[pos] != '[')
-            break;
-    }
-
-    return pos;
-}
-
-int AsPreprocesser::ExtractDeclaration(QByteArray &modifiedScript, int pos,
-                                       QString &name, QString &declaration,
-                                       int &type) {
-    declaration.clear();
-    type = 0;
-
-    int start = pos;
-
-    QString token;
-    asUINT len = 0;
-    asETokenClass t = asTC_WHITESPACE;
-
-    // Skip white spaces, comments, and leading decorators
-    do {
-        pos += len;
-        t = engine->ParseToken(modifiedScript.data() + pos,
-                               modifiedScript.size() - pos, &len);
-        token = modifiedScript.mid(pos, len);
-    } while (t == asTC_WHITESPACE || t == asTC_COMMENT || token == "private" ||
-             token == "protected" || token == "shared" || token == "external" ||
-             token == "final" || token == "abstract");
-
-    // We're expecting, either a class, interface, function, or variable
-    // declaration
-    if (t == asTC_KEYWORD || t == asTC_IDENTIFIER) {
-        token = modifiedScript.mid(pos, len);
-        if (token == "interface" || token == "class" || token == "enum") {
-            // Skip white spaces and comments
-            do {
-                pos += len;
-                t = engine->ParseToken(modifiedScript.data() + pos,
-                                       modifiedScript.size() - pos, &len);
-            } while (t == asTC_WHITESPACE || t == asTC_COMMENT);
-
-            if (t == asTC_IDENTIFIER) {
-                type = MDT_TYPE;
-                declaration = modifiedScript.mid(pos, len);
-                pos += len;
-                return pos;
-            }
-        } else {
-            // For function declarations, store everything up to the start of
-            // the statement block, except for succeeding decorators (final,
-            // override, etc)
-
-            // For variable declaration store just the name as there can only be
-            // one
-
-            // We'll only know if the declaration is a variable or function
-            // declaration when we see the statement block, or absense of a
-            // statement block.
-            bool hasParenthesis = false;
-            int nestedParenthesis = 0;
-            declaration.append(modifiedScript.mid(pos, len));
-            pos += len;
-            for (; pos < (int)modifiedScript.size();) {
-                t = engine->ParseToken(modifiedScript.data() + pos,
-                                       modifiedScript.size() - pos, &len);
-                token = modifiedScript.mid(pos, len);
-                if (t == asTC_KEYWORD) {
-                    if (token == "{" && nestedParenthesis == 0) {
-                        if (hasParenthesis) {
-                            // We've found the end of a function signature
-                            type = MDT_FUNC;
-                        } else {
-                            // We've found a virtual property. Just keep the
-                            // name
-                            declaration = name;
-                            type = MDT_VIRTPROP;
-                        }
-                        return pos;
-                    }
-                    if ((token == "=" && !hasParenthesis) || token == ";") {
-                        if (hasParenthesis) {
-                            // The declaration is ambigous. It can be a variable
-                            // with initialization, or a function prototype
-                            type = MDT_FUNC_OR_VAR;
-                        } else {
-                            // Substitute the declaration with just the name
-                            declaration = name;
-                            type = MDT_VAR;
-                        }
-                        return pos;
-                    } else if (token == "(") {
-                        nestedParenthesis++;
-
-                        // This is the first parenthesis we encounter. If the
-                        // parenthesis isn't followed by a statement block, then
-                        // this is a variable declaration, in which case we
-                        // should only store the type and name of the variable,
-                        // not the initialization parameters.
-                        hasParenthesis = true;
-                    } else if (token == ")") {
-                        nestedParenthesis--;
-                    }
-                } else if (t == asTC_IDENTIFIER) {
-                    // If a parenthesis is already found then the name is
-                    // already known so it must not be overwritten
-                    if (!hasParenthesis)
-                        name = token;
-                }
-
-                // Skip trailing decorators
-                if (!hasParenthesis || nestedParenthesis > 0 ||
-                    t != asTC_IDENTIFIER ||
-                    (token != "final" && token != "override" &&
-                     token != "delete" && token != "property"))
-                    declaration += token;
-
-                pos += len;
-            }
-        }
-    }
-
-    return start;
 }

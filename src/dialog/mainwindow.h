@@ -91,6 +91,8 @@ private:
 private:
     void buildUpRibbonBar();
     void buildUpDockSystem(QWidget *container);
+    void finishBuildDockSystem();
+
     ads::CDockAreaWidget *buildUpLogDock(ads::CDockManager *dock,
                                          ads::DockWidgetArea area,
                                          ads::CDockAreaWidget *areaw = nullptr);

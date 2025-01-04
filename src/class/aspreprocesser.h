@@ -107,22 +107,6 @@ public:
 
     QString GetSectionName(unsigned int idx) const;
 
-    // Get metadata declared for classes, interfaces, and enums
-    QVector<QString> GetMetadataForType(int typeId);
-
-    // Get metadata declared for functions
-    QVector<QString> GetMetadataForFunc(asIScriptFunction *func);
-
-    // Get metadata declared for global variables
-    QVector<QString> GetMetadataForVar(int varIdx);
-
-    // Get metadata declared for class variables
-    QVector<QString> GetMetadataForTypeProperty(int typeId, int varIdx);
-
-    // Get metadata declared for class methods
-    QVector<QString> GetMetadataForTypeMethod(int typeId,
-                                              asIScriptFunction *method);
-
 protected:
     void ClearAll();
     int ProcessScriptSection(const QByteArray &script, int length,
@@ -147,50 +131,8 @@ protected:
     PRAGMACALLBACK_t pragmaCallback;
     void *pragmaParam;
 
-    int ExtractMetadata(QByteArray &modifiedScript, int pos,
-                        QVector<QString> &metadata);
-    int ExtractDeclaration(QByteArray &modifiedScript, int pos, QString &name,
-                           QString &declaration, int &type);
-
-    enum METADATATYPE {
-        MDT_TYPE = 1,
-        MDT_FUNC = 2,
-        MDT_VAR = 3,
-        MDT_VIRTPROP = 4,
-        MDT_FUNC_OR_VAR = 5
-    };
-
-    // Temporary structure for storing metadata and declaration
-    struct SMetadataDecl {
-        SMetadataDecl(const QVector<QString> &m, const QString &n,
-                      const QString &d, int t, const QString &c,
-                      const QString &ns)
-            : metadata(m), name(n), declaration(d), type(t), parentClass(c),
-              nameSpace(ns) {}
-        QVector<QString> metadata;
-        QString name;
-        QString declaration;
-        int type;
-        QString parentClass;
-        QString nameSpace;
-    };
-    QVector<SMetadataDecl> foundDeclarations;
     QString currentClass;
     QString currentNamespace;
-
-    // Storage of metadata for global declarations
-    QMap<int, QVector<QString>> typeMetadataMap;
-    QMap<int, QVector<QString>> funcMetadataMap;
-    QMap<int, QVector<QString>> varMetadataMap;
-
-    // Storage of metadata for class member declarations
-    struct SClassMetadata {
-        SClassMetadata(const QString &aName) : className(aName) {}
-        QString className;
-        QMap<int, QVector<QString>> funcMetadataMap;
-        QMap<int, QVector<QString>> varMetadataMap;
-    };
-    QMap<int, SClassMetadata> classMetadataMap;
 
     QVector<QString> includedScripts;
 

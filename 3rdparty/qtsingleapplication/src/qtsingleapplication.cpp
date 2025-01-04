@@ -18,6 +18,9 @@
 #define NOMINMAX 1
 #endif
 #include <lmcons.h>
+#ifdef PASCAL
+#undef PASCAL
+#endif
 #include <windows.h>
 #endif
 

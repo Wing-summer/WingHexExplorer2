@@ -210,7 +210,6 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         m_findResults->clear();
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
-        auto docLen = d->length();
         for (auto &ritem : results) {
             FindResult r;
             r.offset = ritem;
@@ -616,8 +615,8 @@ FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
     auto header = doc->read(offset, qMin(findSize, halfSize));
     QByteArray tailer;
     if (header.size() < findSize) {
-        tailer = doc->read(
-            offset, qMin(findSize, qsizetype(maxDisplayBytes) - halfSize));
+        auto len = qMin(findSize, qsizetype(maxDisplayBytes) - halfSize);
+        tailer = doc->read(offset + findSize - len, len);
     }
 
     auto left = qsizetype(maxDisplayBytes) - header.size() - tailer.size();

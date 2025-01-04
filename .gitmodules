@@ -7,6 +7,7 @@
 [submodule "3rdparty/AngelScript"]
 	path = 3rdparty/AngelScript
 	url = git@github.com:Wing-summer/AngelScript.git
+	branch=stable
 [submodule "3rdparty/json"]
 	path = 3rdparty/json
 	url = git@github.com:nlohmann/json.git

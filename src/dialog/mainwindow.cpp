@@ -220,6 +220,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
+    finishBuildDockSystem();
+
     // load saved docking layout
     if (splash)
         splash->setInfoText(tr("SetupDockingLayout"));
@@ -443,7 +445,9 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     qApp->processEvents();
 
     m_bottomViewArea = bottomRightArea;
+}
 
+void MainWindow::finishBuildDockSystem() {
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
@@ -455,7 +459,6 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
             item->setCurrentIndex(i);
             break;
         }
-        qApp->processEvents();
     }
 }
 

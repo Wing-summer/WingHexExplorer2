@@ -159,9 +159,6 @@ signals:
                                          const QString &encoding = QString());
     Q_REQUIRED_RESULT QByteArray readBytes(qsizetype offset, qsizetype count);
 
-    // an extension for AngelScript
-    // void read(? &in);    // this function can read bytes to input container
-
     Q_REQUIRED_RESULT qsizetype searchForward(qsizetype begin,
                                               const QByteArray &ba);
     Q_REQUIRED_RESULT qsizetype searchBackward(qsizetype begin,
@@ -515,6 +512,8 @@ struct SenderInfo {
 #define WINGAPI_ARG(type, data) QArgument<type>(#type, data)
 #define WINGAPI_RETURN_ARG(type, data) QReturnArgument<type>(#type, data)
 
+enum class AppTheme { Dark, Light };
+
 class IWingPlugin : public QObject {
     Q_OBJECT
 public:
@@ -577,6 +576,7 @@ public:
     virtual bool init(const std::unique_ptr<QSettings> &set) = 0;
     virtual void unload(std::unique_ptr<QSettings> &set) = 0;
     virtual const QString pluginName() const = 0;
+    virtual QIcon pluginIcon() const { return {}; }
     virtual const QString pluginAuthor() const = 0;
     virtual uint pluginVersion() const = 0;
     virtual const QString pluginComment() const = 0;
@@ -616,10 +616,6 @@ public:
         return {};
     }
 
-signals:
-    // QHash< obj-names, decl-members >
-    bool registerScriptObj(const QString &obj, const QStringList &members);
-
 public:
     virtual void eventSelectionChanged(const QByteArrayList &selections,
                                        bool isPreview) {
@@ -648,6 +644,9 @@ signals:
     void warn(const QString &message);
     void error(const QString &message);
     void info(const QString &message);
+
+    // theme
+    WingHex::AppTheme currentAppTheme();
 
     // not available for AngelScript
     // only for plugin UI extenstion
