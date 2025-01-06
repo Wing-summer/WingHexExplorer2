@@ -1,8 +1,6 @@
 #include "qhexcursor.h"
 #include <QWidget>
 
-#include <QtConcurrent/QtConcurrentMap>
-
 QHexCursor::QHexCursor(QObject *parent)
     : QObject(parent), m_insertionmode(QHexCursor::OverwriteMode) {
     m_position.line = m_position.column = 0;
@@ -17,7 +15,7 @@ QHexCursor::QHexCursor(QObject *parent)
 }
 
 const QHexPosition &QHexCursor::selectionStart(qsizetype index) const {
-    return m_sels.at(index).start;
+    return m_sels.at(index).begin;
 }
 
 const QHexPosition &QHexCursor::selectionEnd(qsizetype index) const {
@@ -103,7 +101,7 @@ void QHexCursor::moveTo(const QHexPosition &pos, bool clearSelection) {
 }
 void QHexCursor::select(const QHexPosition &pos,
                         QHexCursor::SelectionModes mode) {
-    this->select(pos.line, pos.column, pos.nibbleindex, mode);
+    this->select(pos.line, pos.column, mode);
 }
 
 void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
@@ -121,38 +119,38 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
     emit positionChanged();
 }
 
-void QHexCursor::select(qsizetype line, int column, int nibbleindex,
-                        SelectionModes modes) {
+void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
     if (modes.testFlag(SelectionPreview)) {
         m_selection.line = line;
         m_selection.column = qMax(0, column); // fix the bug by wingsummer
         m_selection.lineWidth = m_position.lineWidth;
-        m_selection.nibbleindex = nibbleindex;
+        m_selection.nibbleindex = 0;
 
         modes.setFlag(SelectionPreview, false);
         m_preMode = SelectionMode(int(modes));
     } else {
         QHexSelection sel;
 
-        sel.start = m_position;
+        sel.begin = m_position;
+        sel.begin.nibbleindex = 1;
 
         sel.end.line = line;
         sel.end.column = column;
         sel.end.lineWidth = m_position.lineWidth;
-        sel.end.nibbleindex = nibbleindex;
+        sel.end.nibbleindex = 0;
 
         sel.normalize();
 
         switch (modes) {
         case SelectionAdd:
-            mergeAdd(sel);
+            m_sels.mergeAdd(sel);
             break;
         case SelectionNormal:
             m_sels.clear();
             m_sels.append(sel);
             break;
         case SelectionRemove:
-            mergeRemove(sel);
+            m_sels.mergeRemove(sel);
             break;
         }
     }
@@ -173,14 +171,9 @@ void QHexCursor::setPos(qsizetype offset, int nibbleindex,
 }
 
 void QHexCursor::select(qsizetype length, QHexCursor::SelectionModes mode) {
-    this->select(m_position.line,
-                 std::min(m_lineWidth - 1, int(m_position.column + length - 1)),
-                 1, mode);
-}
-
-void QHexCursor::selectOffset(qsizetype offset, qsizetype length) {
-    this->moveTo(offset);
-    this->select(length);
+    auto div = std::div(qsizetype(m_position.column + length - 1),
+                        qsizetype(m_lineWidth));
+    this->select(m_position.line + div.quot, div.rem, mode);
 }
 
 void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {
@@ -197,7 +190,7 @@ void QHexCursor::setLineWidth(quint8 width) {
     m_selection.lineWidth = width;
 
     for (auto &sel : m_sels) {
-        sel.start.lineWidth = width;
+        sel.begin.lineWidth = width;
         sel.end.lineWidth = width;
     }
 }
@@ -215,52 +208,10 @@ bool QHexCursor::hasPreviewSelection() const {
     return m_selection != m_position;
 }
 
-void QHexCursor::mergeRemove(const QHexSelection &sel) {
-    Q_ASSERT(sel.isNormalized());
-
-    QList<QHexSelection> buffer;
-    QMutex locker;
-    QtConcurrent::blockingMap(m_sels,
-                              [&buffer, &locker, &sel](QHexSelection &s) {
-                                  auto r = s.removeSelection(sel);
-                                  if (r.has_value()) {
-                                      QMutexLocker l(&locker);
-                                      buffer.append(r.value());
-                                  }
-                              });
-
-    // clean up invalid selections
-    auto cleanup = [](const QHexSelection &s) { return s.start == s.end; };
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    m_sels.removeIf(cleanup);
-#else
-    m_sels.erase(std::remove_if(m_sels.begin(), m_sels.end(), cleanup));
-#endif
-
-    QtConcurrent::blockingMap(
-        buffer, [&locker, this](QHexSelection &s) { mergeAdd(s, &locker); });
-}
-
-void QHexCursor::mergeAdd(const QHexSelection &sel, QMutex *locker) {
-    bool merged = false;
-    Q_ASSERT(sel.isNormalized());
-
-    for (auto p = m_sels.begin(); p != m_sels.end(); ++p) {
-        merged = p->mergeSelection(sel, locker);
-        if (merged) {
-            break;
-        }
-    }
-
-    if (!merged) {
-        m_sels.append(sel);
-    }
-}
-
 bool QHexCursor::isLineSelected(const QHexSelection &sel,
                                 qsizetype line) const {
-    auto first = std::min(sel.start.line, sel.end.line);
-    auto last = std::max(sel.start.line, sel.end.line);
+    auto first = std::min(sel.begin.line, sel.end.line);
+    auto last = std::max(sel.begin.line, sel.end.line);
 
     if ((line >= first) && (line <= last))
         return true;
@@ -270,7 +221,7 @@ bool QHexCursor::isLineSelected(const QHexSelection &sel,
 
 QHexSelection QHexCursor::previewSelection() const {
     QHexSelection sel;
-    sel.start = m_position;
+    sel.begin = m_position;
     sel.end = m_selection;
     return sel;
 }
@@ -284,7 +235,7 @@ QHexCursor::SelectionMode QHexCursor::previewSelectionMode() const {
 }
 
 void QHexCursor::mergePreviewSelection() {
-    auto ss = QHexSelection{m_position, m_selection}.normalized();
+    auto ss = QHexSelection(m_position, m_selection).normalized();
     switch (m_preMode) {
     case SelectionNormal:
         if (m_sels.isEmpty()) {
@@ -292,10 +243,10 @@ void QHexCursor::mergePreviewSelection() {
         }
         break;
     case SelectionAdd:
-        mergeAdd(ss);
+        m_sels.mergeAdd(ss);
         break;
     case SelectionRemove:
-        mergeRemove(ss);
+        m_sels.mergeRemove(ss);
         break;
     case SelectionSingle:
         m_sels.clear();

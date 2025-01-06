@@ -236,6 +236,7 @@ private:
     MainWindow *_win = nullptr;
     QList<WingDependency> _loadedplginfo;
     QList<IWingPlugin *> _loadedplgs;
+    QHash<QWidget *, ads::CDockWidget *> _raisedw;
     QList<QPair<IWingPlugin *, QString>> _lazyplgs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;

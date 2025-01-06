@@ -10,6 +10,9 @@ public:
                    QUndoCommand *parent = nullptr);
     void undo() override;
     void redo() override;
+
+private:
+    QVector<QHexMetadataItem> _brokenMetas;
 };
 
 #endif // METAADDCOMMAND_H

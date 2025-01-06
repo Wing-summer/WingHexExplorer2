@@ -487,17 +487,56 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     auto header = m_findresult->horizontalHeader();
 
     m_findresult->setContextMenuPolicy(
-        Qt::ContextMenuPolicy::ActionsContextMenu);
-    m_findresult->addAction(newAction(QStringLiteral("export"),
-                                      tr("ExportFindResult"),
-                                      &MainWindow::on_exportfindresult));
-    m_findresult->addAction(newAction(QStringLiteral("del"),
-                                      tr("ClearFindResult"),
-                                      &MainWindow::on_clearfindresult));
+        Qt::ContextMenuPolicy::CustomContextMenu);
+
+    auto menu = new QMenu(tr("Encoding"), this);
+    menu->setIcon(ICONRES(QStringLiteral("encoding")));
+    auto aGroup = new QActionGroup(this);
+    auto langs = Utilities::getEncodings();
+    for (auto &l : langs) {
+        auto a = newCheckableAction(menu, l, [=]() {
+            auto model = qobject_cast<FindResultModel *>(m_findresult->model());
+            if (model) {
+                model->setEncoding(l);
+            }
+        });
+        aGroup->addAction(a);
+        menu->addAction(a);
+        m_findEncoding.insert(l, a);
+    }
+
+    m_menuFind = new QMenu(m_findresult);
+    m_menuFind->addMenu(menu);
+    m_menuFind->addAction(
+        newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
+            auto idx = m_findresult->currentIndex();
+            if (idx.isValid()) {
+                auto model =
+                    qobject_cast<FindResultModel *>(m_findresult->model());
+                if (model) {
+                    auto content = model->copyContent(idx);
+                    qApp->clipboard()->setText(content);
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                                 tr("CopyToClipBoard"));
+                }
+            }
+        }));
+    m_menuFind->addAction(newAction(QStringLiteral("export"),
+                                    tr("ExportFindResult"),
+                                    &MainWindow::on_exportfindresult));
+    m_menuFind->addAction(newAction(QStringLiteral("del"),
+                                    tr("ClearFindResult"),
+                                    &MainWindow::on_clearfindresult));
+
+    connect(m_findresult, &QTableViewExt::customContextMenuRequested, this,
+            [=](const QPoint &pos) {
+                m_menuFind->popup(m_findresult->viewport()->mapToGlobal(pos));
+            });
 
     m_findresult->setItemDelegate(new RichTextItemDelegate(m_findresult));
 
     m_findresult->setModel(_findEmptyResult);
+    m_findEncoding.value(_findEmptyResult->encoding())->setChecked(true);
 
     header->setSectionResizeMode(3, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
@@ -511,8 +550,15 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                     editor->raise();
                     editor->setFocus();
                 }
-                editor->hexEditor()->cursor()->moveTo(
-                    editor->findResultModel()->resultAt(index.row()).offset);
+
+                auto e = editor->hexEditor();
+                auto fm = editor->findResultModel();
+                auto cursor = e->cursor();
+
+                cursor->moveTo(fm->resultAt(index.row()).offset);
+                if (cursor->selectionCount() <= 1 && index.column() >= 3) {
+                    cursor->select(fm->lastFindData().length());
+                }
             });
 
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
@@ -829,7 +875,53 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     m_infolist->setProperty(dpname, tr("DVList"));
     m_infolist->setProperty(dockpname, quintptr(dw));
     m_infolist->installEventFilter(efilter);
+    m_infolist->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_infolist->addAction(
+        newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
+            auto idx = m_infolist->currentIndex();
+            if (idx.isValid()) {
+                qApp->clipboard()->setText(
+                    m_infolist->model()->data(idx).toString());
+                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                             tr("CopyToClipBoard"));
+            }
+        }));
+    m_infolist->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto model = m_infotable->model();
+            if (!model) {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                             tr("NothingToSave"));
+                return;
+            }
 
+            auto filename = WingFileDialog::getSaveFileName(
+                this, tr("ChooseSaveFile"), m_lastusedpath,
+                QStringLiteral("TXT (*.txt)"));
+            if (filename.isEmpty()) {
+                return;
+            }
+            QFile f(filename);
+            if (!f.open(QFile::WriteOnly | QFile::Text)) {
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("FilePermission"));
+                return;
+            }
+
+            auto total = model->rowCount();
+            for (int i = 0; i < total; ++i) {
+                f.write(model->data(model->index(i, 0)).toString().toUtf8());
+                f.write("\n");
+            }
+            f.close();
+            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                         tr("SaveSuccessfully"));
+        }));
+    m_infolist->addAction(
+        newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
+            auto model = m_infolist->model();
+            model->removeRows(0, model->rowCount());
+        }));
     auto ar = dock->addDockWidget(area, dw, areaw);
 
     m_infotree = new QTreeView(this);
@@ -851,6 +943,57 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     m_infotree->setProperty(dpname, tr("DVTree"));
     m_infotree->setProperty(dockpname, quintptr(dw));
     m_infotree->installEventFilter(efilter);
+    m_infotree->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_infotree->addAction(
+        newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
+            auto idx = m_infotree->currentIndex();
+            if (idx.isValid()) {
+                qApp->clipboard()->setText(
+                    m_infotree->model()->data(idx).toString());
+                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                             tr("CopyToClipBoard"));
+            }
+        }));
+    m_infotree->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto model = m_infotable->model();
+            if (!model) {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                             tr("NothingToSave"));
+                return;
+            }
+
+            auto filename = WingFileDialog::getSaveFileName(
+                this, tr("ChooseSaveFile"), m_lastusedpath,
+                QStringLiteral("Json (*.json)"));
+            if (filename.isEmpty()) {
+                return;
+            }
+
+            QJsonArray rootArray;
+            for (int row = 0; row < model->rowCount(); ++row) {
+                QModelIndex index = model->index(row, 0);
+                rootArray.append(extractModelData(model, index));
+            }
+
+            QJsonDocument jsonDocument(rootArray);
+            QFile file(filename);
+            if (!file.open(QFile::WriteOnly | QFile::Text)) {
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("FilePermission"));
+                return;
+            }
+
+            file.write(jsonDocument.toJson(QJsonDocument::Indented));
+            file.close();
+            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                         tr("SaveSuccessfully"));
+        }));
+    m_infotree->addAction(
+        newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
+            auto model = m_infotree->model();
+            model->removeRows(0, model->rowCount());
+        }));
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     m_infotable = new QTableView(this);
@@ -872,6 +1015,111 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     m_infotable->setProperty(dpname, tr("DVTable"));
     m_infotable->setProperty(dockpname, quintptr(dw));
     m_infotable->installEventFilter(efilter);
+    m_infotable->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_infotable->addAction(
+        newAction(QStringLiteral("copy"), tr("Copy"), [this]() {
+            auto idx = m_infotable->currentIndex();
+            if (idx.isValid()) {
+                qApp->clipboard()->setText(
+                    m_infotable->model()->data(idx).toString());
+                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                             tr("CopyToClipBoard"));
+            }
+        }));
+    m_infotable->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto model = m_infotable->model();
+            if (!model) {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                             tr("NothingToSave"));
+                return;
+            }
+
+            QString selFilter;
+            auto filename = WingFileDialog::getSaveFileName(
+                this, tr("ChooseSaveFile"), m_lastusedpath,
+                QStringLiteral("Json (*.json);;CSV (*.csv)"), &selFilter);
+            if (filename.isEmpty()) {
+                return;
+            }
+
+            if (selFilter.startsWith(QStringLiteral("Json"))) {
+                QJsonArray tableData;
+
+                // Add header row
+                QJsonArray headers;
+                for (int col = 0; col < model->columnCount(); ++col) {
+                    headers.append(
+                        model->headerData(col, Qt::Horizontal).toString());
+                }
+                tableData.append(headers);
+
+                // Add data rows
+                for (int row = 0; row < model->rowCount(); ++row) {
+                    QJsonArray rowData;
+                    for (int col = 0; col < model->columnCount(); ++col) {
+                        QModelIndex index = model->index(row, col);
+                        rowData.append(model->data(index).toString());
+                    }
+                    tableData.append(rowData);
+                }
+
+                // Create JSON document
+                QJsonDocument jsonDocument(tableData);
+
+                // Write to file
+                QFile file(filename);
+                if (!file.open(QFile::WriteOnly | QFile::Text)) {
+                    WingMessageBox::critical(this, tr("Error"),
+                                             tr("FilePermission"));
+                    return;
+                }
+
+                file.write(jsonDocument.toJson(QJsonDocument::Indented));
+                file.close();
+            } else {
+                QFile file(filename);
+                if (!file.open(QFile::WriteOnly | QFile::Text)) {
+                    WingMessageBox::critical(this, tr("Error"),
+                                             tr("FilePermission"));
+                    return;
+                }
+
+                QTextStream stream(&file);
+
+                // Write headers
+                QStringList headers;
+                for (int col = 0; col < model->columnCount(); ++col) {
+                    auto content =
+                        model->headerData(col, Qt::Horizontal).toString();
+                    content.prepend('"').append('"');
+                    headers << content;
+                }
+                stream << headers.join(',') << Qt::endl;
+
+                // Write data rows
+                for (int row = 0; row < model->rowCount(); ++row) {
+                    QStringList rowData;
+                    for (int col = 0; col < model->columnCount(); ++col) {
+                        QModelIndex index = model->index(row, col);
+                        auto content = model->data(index).toString();
+                        content.prepend('"').append('"');
+                        rowData << content;
+                    }
+                    stream << rowData.join(',') << Qt::endl;
+                }
+
+                file.close();
+            }
+
+            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                         tr("SaveSuccessfully"));
+        }));
+    m_infotable->addAction(
+        newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
+            auto model = m_infotable->model();
+            model->removeRows(0, model->rowCount());
+        }));
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     m_infotxt = new QTextBrowser(this);
@@ -880,6 +1128,37 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     m_infotxt->setProperty(dpname, tr("DVText"));
     m_infotxt->setProperty(dockpname, quintptr(dw));
     m_infotxt->installEventFilter(efilter);
+    m_infotxt->setContextMenuPolicy(Qt::CustomContextMenu);
+    auto menu = m_infotxt->createStandardContextMenu();
+    menu->addSeparator();
+    menu->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto filename = WingFileDialog::getSaveFileName(
+                this, tr("ChooseSaveFile"), m_lastusedpath,
+                QStringLiteral("TXT (*.txt)"));
+            if (filename.isEmpty()) {
+                return;
+            }
+
+            QFile file(filename);
+            if (!file.open(QFile::WriteOnly | QFile::Text)) {
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("FilePermission"));
+                return;
+            }
+
+            file.write(m_infotxt->toPlainText().toUtf8());
+
+            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                         tr("SaveSuccessfully"));
+        }));
+    menu->addAction(newAction(QStringLiteral("del"), tr("ClearResult"),
+                              [this]() { m_infotxt->clear(); }));
+    connect(m_infotxt, &QTextBrowser::customContextMenuRequested, this,
+            [=](const QPoint &pos) {
+                menu->popup(m_infotxt->viewport()->mapToGlobal(pos));
+            });
+
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
     return ar;
@@ -1912,6 +2191,12 @@ void MainWindow::on_findfile() {
                                  tr("MayTooMuchFindResult"));
                     break;
                 }
+
+                auto result =
+                    qobject_cast<FindResultModel *>(m_findresult->model());
+                if (result) {
+                    m_findEncoding.value(result->encoding())->setChecked(true);
+                }
                 m_find->raise();
             });
     }
@@ -2168,10 +2453,10 @@ void MainWindow::on_metadataedit() {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
         if (cur->currentSelectionLength() > 0) {
-            auto mc = doc->metadata()->gets(cur->position().offset());
+            auto mc = doc->metadata()->get(cur->position().offset());
 
-            if (mc.length() > 0) {
-                auto meta = mc.last();
+            if (mc.has_value()) {
+                auto meta = mc.value();
                 auto begin = meta.begin;
                 auto end = meta.end;
                 m.setForeGroundColor(meta.foreground);
@@ -2303,6 +2588,8 @@ void MainWindow::on_clearfindresult() {
 void MainWindow::on_exportfindresult() {
     auto editor = currentEditor();
     if (editor == nullptr) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
+                     tr("EmptyFindResult"));
         return;
     }
 
@@ -2729,10 +3016,23 @@ void MainWindow::connectEditorView(EditorView *editor) {
             MetaDialog m(this);
             auto cur = hexeditor->cursor();
             if (cur->hasSelection()) {
-                auto mc = doc->metadata()->gets(cur->position().offset());
-
-                if (mc.length() > 0) {
-                    auto meta = mc.last();
+                auto total = hexeditor->selectionCount();
+                if (m.exec()) {
+                    auto meta = doc->metadata();
+                    meta->beginMarco(QStringLiteral("OnMetaData"));
+                    for (int i = 0; i < total; ++i) {
+                        auto begin = cur->selectionStart(i).offset();
+                        auto end = cur->selectionEnd(i).offset() + 1;
+                        meta->Metadata(begin, end, m.foreGroundColor(),
+                                       m.backGroundColor(), m.comment());
+                    }
+                    meta->endMarco();
+                    cur->clearSelection();
+                }
+            } else {
+                auto md = doc->metadata()->get(cur->position().offset());
+                if (md.has_value()) {
+                    auto meta = md.value();
                     auto begin = meta.begin;
                     auto end = meta.end;
                     m.setForeGroundColor(meta.foreground);
@@ -2749,23 +3049,9 @@ void MainWindow::connectEditorView(EditorView *editor) {
                         mi->ModifyMetadata(meta, o);
                     }
                 } else {
-                    auto total = hexeditor->selectionCount();
-                    if (m.exec()) {
-                        auto meta = doc->metadata();
-                        meta->beginMarco(QStringLiteral("OnMetaData"));
-                        for (int i = 0; i < total; ++i) {
-                            auto begin = cur->selectionStart(i).offset();
-                            auto end = cur->selectionEnd(i).offset() + 1;
-                            meta->Metadata(begin, end, m.foreGroundColor(),
-                                           m.backGroundColor(), m.comment());
-                        }
-                        meta->endMarco();
-                        cur->clearSelection();
-                    }
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
+                                 tr("NoSelection"));
                 }
-            } else {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                             tr("NoSelection"));
             }
         }
     });
@@ -2889,6 +3175,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 void MainWindow::loadFindResult(EditorView *view) {
     auto result = view->findResultModel();
     m_findresult->setModel(result);
+    m_findEncoding.value(result->encoding())->setChecked(true);
     m_findresult->setProperty("EditorView", QVariant::fromValue(view));
 }
 
@@ -3230,6 +3517,32 @@ QMessageBox::StandardButton MainWindow::saveRequest() {
 
 ads::CDockAreaWidget *MainWindow::editorViewArea() const {
     return m_dock->centralWidget()->dockAreaWidget();
+}
+
+QJsonObject MainWindow::extractModelData(const QAbstractItemModel *model,
+                                         const QModelIndex &parent) {
+    QJsonObject jsonObject;
+
+    // Add data for the current row
+    for (int col = 0; col < model->columnCount(parent); ++col) {
+        QVariant data =
+            model->data(model->index(parent.row(), col, parent.parent()));
+        QString header = model->headerData(col, Qt::Horizontal).toString();
+        jsonObject[header.isEmpty() ? tr("Column %1").arg(col) : header] =
+            data.toString();
+    }
+
+    // Recursively add child rows
+    QJsonArray children;
+    for (int row = 0; row < model->rowCount(parent); ++row) {
+        QModelIndex childIndex = model->index(row, 0, parent);
+        children.append(extractModelData(model, childIndex));
+    }
+
+    if (!children.isEmpty())
+        jsonObject["children"] = children;
+
+    return jsonObject;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

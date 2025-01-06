@@ -53,7 +53,7 @@ void QHexMetadata::RemoveMetadata(qsizetype offset) {
 void QHexMetadata::Metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
+    QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
     m_undo->push(new MetaAddCommand(this, absi));
 }
 
@@ -78,7 +78,20 @@ bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
     if (index < 0) {
         return false;
     }
-    m_metadata.removeAt(index);
+
+    m_metadata.takeAt(index);
+    auto ret = removeLineMetadata(item);
+    return ret;
+}
+
+void QHexMetadata::removeMetadata(qsizetype begin, qsizetype end) {
+    auto broken = mayBrokenMetaData(begin, end);
+    for (auto &item : broken) {
+        removeMetadata(item);
+    }
+}
+
+bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
     for (auto &l : m_linemeta) {
         l.remove(item);
     }
@@ -124,24 +137,66 @@ QVector<QHexMetadataItem> QHexMetadata::getAllMetadata() const {
     return m_metadata;
 }
 
-QVector<QHexMetadataItem> QHexMetadata::gets(qsizetype offset) {
-    QVector<QHexMetadataItem> ret;
+std::optional<QHexMetadataItem> QHexMetadata::get(qsizetype offset) {
+    auto r = std::find_if(m_metadata.begin(), m_metadata.end(),
+                          [offset](const QHexMetadataItem &item) {
+                              return offset >= item.begin && offset <= item.end;
+                          });
+    if (r == m_metadata.end()) {
+        return {};
+    }
+    return *r;
+}
 
-    std::copy_if(
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        m_metadata.begin(), m_metadata.end(),
-#else
-        m_metadata.constBegin(), m_metadata.constEnd(),
-#endif
-        std::back_inserter(ret), [offset](const QHexMetadataItem &item) {
-            return offset >= item.begin && offset <= item.end;
-        });
+QHexLineMetadata QHexMetadata::gets(qsizetype line) {
+    QHexLineMetadata ret;
+
+    if (!m_linemeta.contains(line)) {
+        return {};
+    }
+
+    for (auto &lms : m_linemeta[line]) {
+        ret.append(lms);
+    }
 
     return ret;
 }
 
+QPair<qsizetype, qsizetype> QHexMetadata::getRealMetaRange(qsizetype begin,
+                                                           qsizetype end) {
+    Q_ASSERT(begin <= end);
+
+    using QHexRegionGadget = QHexRegionGadget<qsizetype>;
+
+    QList<QHexRegionGadget> items;
+    for (auto &meta : m_metadata) {
+        if (!(end < meta.begin || begin > meta.end)) {
+            items.append(QHexRegionGadget(meta.begin, meta.end));
+        }
+    }
+
+    if (items.isEmpty()) {
+        return qMakePair(-1, -1);
+    } else {
+        auto pitem = items.first();
+        for (auto meta = std::next(items.constBegin());
+             meta != items.constEnd(); ++meta) {
+            pitem.mergeRegion(*meta);
+        }
+
+        QHexRegionGadget g(begin, end);
+        auto ret = g.intersect(pitem);
+        if (!ret) {
+            return qMakePair(-1, -1);
+        }
+        return qMakePair(g.begin, g.end);
+    }
+}
+
 void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
-    m_metadata = metas;
+    for (auto &meta : metas) {
+        m_metadata.mergeAdd(meta);
+    }
 }
 
 bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }
@@ -201,7 +256,7 @@ bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
         }
     }
 
-    QHexMetadataItem absi{begin, end, fgcolor, bgcolor, comment};
+    QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
     addMetadata(absi);
     emit metadataChanged();
     return true;
@@ -294,9 +349,33 @@ bool QHexMetadata::comment(qsizetype begin, qsizetype end,
     return this->metadata(begin, end, QColor(), QColor(), comment);
 }
 
+QVector<QHexMetadataItem> QHexMetadata::mayBrokenMetaData(qsizetype begin,
+                                                          qsizetype end) {
+    QVector<QHexMetadataItem> ret;
+    std::copy_if(
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        m_metadata.begin(), m_metadata.end(),
+#else
+        m_metadata.constBegin(), m_metadata.constEnd(),
+#endif
+        std::back_inserter(ret), [begin, end](const QHexMetadataItem &item) {
+            return !(end < item.begin || begin > item.end);
+        });
+    return ret;
+}
+
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
+    auto old = m_metadata;
+    auto idx = m_metadata.mergeAdd(mi);
+    if (idx >= 0) {
+        auto meta = m_metadata.at(idx);
+        auto lastMeta = m_metadata.last();
+        removeLineMetadata(old.at(idx));
+        addMetaLines(meta);
+        addMetaLines(lastMeta);
+    }
+
     addMetaLines(mi);
-    m_metadata << mi;
 }
 
 void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {

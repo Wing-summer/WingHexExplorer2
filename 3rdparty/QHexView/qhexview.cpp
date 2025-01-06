@@ -345,7 +345,7 @@ QByteArray QHexView::selectedBytes(qsizetype index) const {
 
 QByteArray QHexView::previewSelectedBytes() const {
     auto sel = m_cursor->previewSelection().normalized();
-    return m_document->read(sel.start.offset(), sel.length());
+    return m_document->read(sel.begin.offset(), sel.length());
 }
 
 QByteArrayList QHexView::selectedBytes() const {
@@ -591,7 +591,7 @@ void QHexView::mouseMoveEvent(QMouseEvent *e) {
         if (!m_renderer->hitTest(abspos, &position, this->firstVisibleLine()))
             return;
 
-        cursor->select(position.line, position.column, 0,
+        cursor->select(position.line, position.column,
                        QHexCursor::SelectionModes(
                            getSelectionMode() | QHexCursor::SelectionPreview));
         e->accept();
@@ -760,7 +760,7 @@ void QHexView::moveNext(bool select) {
 
     if (select)
         cur->select(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
-                    nibbleindex, QHexCursor::SelectionAdd);
+                    QHexCursor::SelectionAdd);
 
     cur->moveTo(line, std::min(m_renderer->hexLineWidth() - 1, int(column)),
                 nibbleindex);
@@ -798,8 +798,7 @@ void QHexView::movePrevious(bool select) {
     }
 
     if (select)
-        cur->select(line, std::max(0, column), nibbleindex,
-                    QHexCursor::SelectionAdd);
+        cur->select(line, std::max(0, column), QHexCursor::SelectionAdd);
 
     cur->moveTo(line, std::max(0, column), nibbleindex);
 }
@@ -1003,8 +1002,7 @@ bool QHexView::processMove(QHexCursor *cur, QKeyEvent *e) {
                 cur->select(cur->currentLine(),
                             m_renderer->documentLastColumn());
             else
-                cur->select(cur->currentLine(), m_renderer->hexLineWidth() - 1,
-                            0);
+                cur->select(cur->currentLine(), m_renderer->hexLineWidth() - 1);
         }
     } else
         return false;

@@ -168,7 +168,7 @@ bool CScriptJson::Get(const jsonKey_t &key, CScriptArray &value) const {
         return false;
 
     json js_temp = (*js_info)[key];
-    value.Resize(js_temp.size());
+    value.Resize(asUINT(js_temp.size()));
 
     for (asUINT i = 0; i < js_temp.size(); ++i) {
         CScriptJson *childNode = Create(engine);
@@ -227,7 +227,7 @@ bool CScriptJson::Exists(const jsonKey_t &key) const {
 
 bool CScriptJson::IsEmpty() const { return js_info->empty(); }
 
-asUINT CScriptJson::GetSize() const { return js_info->size(); }
+asUINT CScriptJson::GetSize() const { return asUINT(js_info->size()); }
 
 void CScriptJson::Clear() { js_info->clear(); }
 

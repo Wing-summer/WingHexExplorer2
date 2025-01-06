@@ -130,7 +130,12 @@ EditorView::EditorView(QWidget *parent)
     applySettings();
 }
 
-EditorView::~EditorView() {}
+EditorView::~EditorView() {
+    for (auto &w : m_others) {
+        m_stack->removeWidget(w);
+        w->setParent(nullptr);
+    }
+}
 
 void EditorView::registerView(WingEditorViewWidget *view) {
     Q_ASSERT(view);
@@ -200,6 +205,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
 
         if (result.isStringFind) {
             data = Utilities::encodingString(result.str, result.encoding);
+            m_findResults->setEncoding(result.encoding);
         } else {
             data = result.buffer;
         }
@@ -555,10 +561,17 @@ qsizetype EditorView::copyLimit() const { return m_hex->copyLimit(); }
 void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
-                if (b) {
-                    editor->setWindowTitle(m_fileName);
+                QString fileName;
+                if (editor->isNewFile() || editor->isDriver()) {
+                    fileName = m_fileName;
                 } else {
-                    editor->setWindowTitle(QStringLiteral("* ") + m_fileName);
+                    fileName = QFileInfo(m_fileName).fileName();
+                }
+                if (b) {
+
+                    editor->setWindowTitle(fileName);
+                } else {
+                    editor->setWindowTitle(QStringLiteral("* ") + fileName);
                 }
             });
 }

@@ -645,6 +645,8 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
                 auto dw = _win->buildDockWidget(_win->m_dock, widgetName,
                                                 displayName, info.widget,
                                                 MainWindow::PLUGIN_VIEWS);
+                _raisedw.insert(info.widget, dw);
+
                 switch (info.area) {
                 case Qt::LeftDockWidgetArea: {
                     if (_win->m_leftViewArea == nullptr) {
@@ -796,6 +798,13 @@ void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
                     return nullptr;
                 }
             });
+    connect(plg, &IWingPlugin::raiseDockWidget, this, [=](QWidget *w) -> bool {
+        if (_raisedw.contains(w)) {
+            _raisedw.value(w)->raise();
+            return true;
+        }
+        return false;
+    });
     connect(
         plg,
         QOverload<const QString &, const char *, Qt::ConnectionType,

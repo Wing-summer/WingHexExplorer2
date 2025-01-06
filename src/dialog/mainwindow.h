@@ -18,6 +18,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "class/eventfilter.h"
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
@@ -255,6 +256,10 @@ private:
 
     inline ads::CDockAreaWidget *editorViewArea() const;
 
+private:
+    QJsonObject extractModelData(const QAbstractItemModel *model,
+                                 const QModelIndex &parent = QModelIndex());
+
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 
@@ -449,6 +454,8 @@ private:
     QTableViewExt *m_varshowtable = nullptr;
 
     ads::CDockWidget *m_find = nullptr;
+    QMenu *m_menuFind = nullptr;
+    QHash<QString, QAction *> m_findEncoding;
     QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findEmptyResult = nullptr;
 

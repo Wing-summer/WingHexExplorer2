@@ -47,6 +47,8 @@ public:
     void clear();
     QList<WingHex::FindResult>::size_type size() const;
 
+    QString copyContent(const QModelIndex &index) const;
+
     // QAbstractItemModel interface
 public:
     virtual int rowCount(const QModelIndex &parent) const override;

@@ -67,6 +67,7 @@ add_library(
     document/qhexmetadata.h
     document/qhexrenderer.cpp
     document/qhexrenderer.h
+    document/qhexregionobject.h
     QHexEdit2/chunks.cpp
     QHexEdit2/chunks.h
     qhexview.h

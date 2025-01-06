@@ -17,8 +17,10 @@
 
 #include "qasparser.h"
 
-#include "AngelScript/sdk/angelscript/source/as_builder.h"
-#include "AngelScript/sdk/angelscript/source/as_parser.h"
+#include "AngelScript/sdk/angelscript/source/as_objecttype.h"
+#include "AngelScript/sdk/angelscript/source/as_scriptcode.h"
+#include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
+#include "AngelScript/sdk/angelscript/source/as_scriptfunction.h"
 #include "class/qcodenode.h"
 
 #include <QDebug>
@@ -115,7 +117,7 @@ QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
         }
     }
 
-    return QByteArray(str.AddressOf(), str.GetLength());
+    return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
 }
 
 QByteArray QAsParser::getFnRealName(asIScriptFunction *fn) {
@@ -142,7 +144,7 @@ QByteArray QAsParser::getFnRealName(asIScriptFunction *fn) {
         str = name;
     }
 
-    return QByteArray(str.AddressOf(), str.GetLength());
+    return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
 }
 
 QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
@@ -162,7 +164,8 @@ QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
            (name.GetLength() > 0 && name[0] == '~') || name == "$beh0" ||
            name == "$beh2"))) {
         auto str = returnType.Format(nameSpace, includeNamespace);
-        return QByteArray(str.AddressOf(), str.GetLength());
+        return QByteArray(str.AddressOf(),
+                          QByteArray::size_type(str.GetLength()));
     }
 
     return {};
@@ -338,9 +341,11 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
             auto p = obj->properties[i];
 
             PropertyInfo pi;
-            pi.name = QByteArray(p->name.AddressOf(), p->name.GetLength());
+            pi.name = QByteArray(p->name.AddressOf(),
+                                 QByteArray::size_type(p->name.GetLength()));
             auto tn = p->type.Format(obj->nameSpace);
-            pi.type = QByteArray(tn.AddressOf(), tn.GetLength());
+            pi.type = QByteArray(tn.AddressOf(),
+                                 QByteArray::size_type(tn.GetLength()));
             pi.isPrivate = pi.isPrivate;
             pi.isProtected = pi.isProtected;
             pi.isRef = pi.isRef;

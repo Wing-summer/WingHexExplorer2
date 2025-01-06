@@ -562,7 +562,8 @@ public:
         FileOpened = 1u << 3,
         FileSaved = 1u << 4,
         FileSwitched = 1u << 5,
-        FileClosed = 1u << 6
+        FileClosed = 1u << 6,
+        ScriptPragma = 1u << 7 // TODO
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
@@ -636,6 +637,17 @@ public:
 
     virtual void eventReady() {}
 
+public:
+    virtual bool eventOnScriptPragma(const QStringList &comments) {
+        Q_UNUSED(comments);
+        return false;
+    }
+
+    virtual bool eventScriptPragmaLineStep(const QString &codes) {
+        Q_UNUSED(codes);
+        return false;
+    }
+
 signals:
     // extension and exposed to WingHexAngelScript
     void toast(const QPixmap &icon, const QString &message);
@@ -652,6 +664,8 @@ signals:
     // only for plugin UI extenstion
 
     QDialog *createDialog(QWidget *content);
+
+    bool raiseDockWidget(QWidget *w);
 
     bool invokeService(const QString &puid, const char *method,
                        Qt::ConnectionType type, QGenericReturnArgument ret,

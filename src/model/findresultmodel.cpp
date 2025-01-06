@@ -121,7 +121,10 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
 QString FindResultModel::encoding() const { return m_encoding; }
 
 void FindResultModel::setEncoding(const QString &newEncoding) {
-    m_encoding = newEncoding;
+    if (m_encoding != newEncoding) {
+        m_encoding = newEncoding;
+        emit dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));
+    }
 }
 
 QList<WingHex::FindResult> &FindResultModel::results() { return m_results; }
@@ -147,4 +150,53 @@ void FindResultModel::clear() {
 
 QList<WingHex::FindResult>::size_type FindResultModel::size() const {
     return m_results.size();
+}
+
+QString FindResultModel::copyContent(const QModelIndex &index) const {
+    if (index.isValid()) {
+        auto row = index.row();
+        auto r = m_results.at(row);
+        switch (index.column()) {
+        case 0: // line
+            return QString::number(r.line);
+        case 1: // col
+            return QString::number(r.col);
+        case 2: // offset
+            return QStringLiteral("0x") +
+                   QString::number(r.offset, 16).toUpper();
+        case 3: {
+            // range
+            auto data = m_findData.at(row);
+            QString buffer = data.cheader.toHex(' ').toUpper();
+            if (!data.hbuffer.isEmpty()) {
+                buffer += data.hbuffer.toHex(' ').toUpper();
+                if (!data.tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" .. ");
+                }
+            }
+
+            buffer += data.tbuffer.toHex(' ').toUpper() %
+                      data.ctailer.toHex(' ').toUpper();
+
+            return buffer;
+        }
+        case 4: { // decoding
+            auto data = m_findData.at(row);
+            QString buffer =
+                Utilities::decodingString(data.cheader, m_encoding);
+            if (!data.hbuffer.isEmpty()) {
+                buffer += Utilities::decodingString(data.hbuffer);
+                if (!data.tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" ... ");
+                }
+            }
+
+            buffer += Utilities::decodingString(data.tbuffer) %
+                      Utilities::decodingString(data.ctailer);
+
+            return buffer;
+        }
+        }
+    }
+    return {};
 }

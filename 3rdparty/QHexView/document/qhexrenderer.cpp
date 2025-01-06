@@ -404,7 +404,7 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
     if (!metadata->lineHasMetadata(line))
         return;
 
-    const QHexLineMetadata &linemetadata = metadata->get(line);
+    const QHexLineMetadata &linemetadata = metadata->gets(line);
     for (auto &mi : linemetadata) {
         QTextCharFormat charformat;
         if (m_document->metabgVisible() && mi.background.isValid() &&
@@ -452,14 +452,82 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
         return;
     }
 
-    const QHexPosition &startsel = selection.start;
+    const QHexPosition &startsel = selection.begin;
     const QHexPosition &endsel = selection.end;
 
+    QTextCharFormat charfmt;
+    charfmt.setBackground(strikeOut || hasSelection
+                              ? m_selBackgroundColor.darker()
+                              : m_selBackgroundColor);
+    charfmt.setForeground(strikeOut ? m_selectionColor.darker()
+                                    : m_selectionColor);
+    charfmt.setFontStrikeOut(strikeOut);
+    charfmt.setFontItalic(strikeOut);
+
+    QTextCharFormat charfmt_meta = charfmt;
+    charfmt_meta.setFontWeight(QFont::Bold);
+    charfmt_meta.setFontUnderline(true);
+    charfmt_meta.setFontItalic(true);
+
     if (startsel.line == endsel.line) {
-        textcursor.setPosition(startsel.column * factor);
-        textcursor.movePosition(
-            QTextCursor::Right, QTextCursor::KeepAnchor,
-            ((endsel.column - startsel.column + 1) * factor));
+        auto selbegin = startsel.offset();
+        auto len = endsel.column - startsel.column + 1;
+        auto selend = selbegin + len;
+
+        auto meta = m_document->metadata()->getRealMetaRange(selbegin, selend);
+
+        if (meta.first >= 0) {
+            auto begin = meta.first - startsel.lineWidth * startsel.line;
+            auto mlen = meta.second - meta.first;
+
+            textcursor.setPosition(startsel.column * factor);
+            textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                    (begin - startsel.column) * factor);
+            if (factor == Hex)
+                textcursor.movePosition(QTextCursor::Left,
+                                        QTextCursor::KeepAnchor, 1);
+
+            textcursor.mergeCharFormat(charfmt);
+            len -= (begin - startsel.column);
+            textcursor.clearSelection();
+
+            if (factor == Hex)
+                textcursor.movePosition(QTextCursor::Right,
+                                        QTextCursor::MoveAnchor, 1);
+
+            textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                    mlen * factor);
+
+            if (factor == Hex)
+                textcursor.movePosition(QTextCursor::Left,
+                                        QTextCursor::KeepAnchor, 1);
+
+            textcursor.mergeCharFormat(charfmt_meta);
+            textcursor.clearSelection();
+
+            len -= mlen;
+            if (len > 0) {
+                if (factor == Hex)
+                    textcursor.movePosition(QTextCursor::Right,
+                                            QTextCursor::MoveAnchor, 1);
+
+                textcursor.movePosition(QTextCursor::Right,
+                                        QTextCursor::KeepAnchor, len * factor);
+                if (factor == Hex)
+                    textcursor.movePosition(QTextCursor::Left,
+                                            QTextCursor::KeepAnchor, 1);
+
+                textcursor.mergeCharFormat(charfmt);
+            }
+        } else {
+            textcursor.setPosition(startsel.column * factor);
+            textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                    len * factor);
+            if (factor == Hex)
+                textcursor.movePosition(QTextCursor::Left,
+                                        QTextCursor::KeepAnchor, 1);
+            textcursor.mergeCharFormat(charfmt);
+        }
     } else {
         if (line == startsel.line)
             textcursor.setPosition(startsel.column * factor);
@@ -472,20 +540,9 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
         else
             textcursor.movePosition(QTextCursor::EndOfLine,
                                     QTextCursor::KeepAnchor);
+
+        textcursor.mergeCharFormat(charfmt);
     }
-
-    if (factor == Hex)
-        textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
-
-    QTextCharFormat charformat;
-    charformat.setBackground(strikeOut || hasSelection
-                                 ? m_selBackgroundColor.darker()
-                                 : m_selBackgroundColor);
-    charformat.setForeground(strikeOut ? m_selectionColor.darker()
-                                       : m_selectionColor);
-    charformat.setFontStrikeOut(strikeOut);
-    charformat.setFontItalic(strikeOut);
-    textcursor.mergeCharFormat(charformat);
 }
 
 void QHexRenderer::applyCursorAscii(QTextCursor &textcursor,

@@ -4,7 +4,7 @@
 #include <QMutex>
 #include <QObject>
 
-#include <optional>
+#include "qhexregionobject.h"
 
 #define DEFAULT_HEX_LINE_LENGTH 0x10
 #define DEFAULT_AREA_IDENTATION 0x01
@@ -36,6 +36,7 @@ struct QHexPosition {
             this->column = lineWidth - 1;
         }
     }
+
     inline bool operator==(const QHexPosition &rhs) const {
         return (line == rhs.line) && (column == rhs.column) &&
                (nibbleindex == rhs.nibbleindex);
@@ -59,120 +60,21 @@ struct QHexPosition {
 };
 Q_DECLARE_METATYPE(QHexPosition)
 
-struct QHexSelection {
-    QHexPosition start;
-    QHexPosition end;
+struct QHexSelection : QHexRegionObject<QHexPosition, QHexSelection> {
+    QHexSelection() { setAdjusted(true); };
 
-    void normalize(QMutex *locker = nullptr) {
-        if (locker) {
-            locker->lock();
-        }
-        if (end < start) {
-            std::swap(start, end);
-        }
-        if (locker) {
-            locker->unlock();
-        }
-    }
-
-    qsizetype length() const { return qAbs(end - start) + 1; }
-
-    bool contains(const QHexSelection &sel) const {
-        Q_ASSERT(isNormalized());
-        return this->start <= sel.start && this->end >= sel.end;
+    explicit QHexSelection(const QHexPosition &begin, const QHexPosition &end) {
+        setAdjusted(true);
+        this->begin = begin;
+        this->end = end;
     }
 
     bool isLineSelected(qsizetype line) const {
         Q_ASSERT(isNormalized());
-        if (this->start.line == line || this->end.line == line) {
+        if (this->begin.line == line || this->end.line == line) {
             return true;
         }
-        return this->start.line < line && line < this->end.line;
-    }
-
-    bool isNormalized() const { return end >= start; }
-
-    QHexSelection normalized() const {
-        QHexSelection sel = *this;
-        if (end < start) {
-            std::swap(sel.start, sel.end);
-        }
-        return sel;
-    }
-
-    bool isIntersected(const QHexSelection &sel) const {
-        Q_ASSERT(isNormalized());
-        return !(sel.end < this->start || sel.start > this->end);
-    }
-
-    void intersect(const QHexSelection &sel, QMutex *locker = nullptr) {
-        Q_ASSERT(isNormalized());
-        auto s = sel.normalized();
-        if (locker) {
-            locker->lock();
-        }
-        this->start = qMax(this->start, s.start);
-        this->end = qMin(this->end, s.end);
-        if (locker) {
-            locker->unlock();
-        }
-    }
-
-    Q_REQUIRED_RESULT std::optional<QHexSelection>
-    removeSelection(const QHexSelection &sel, QMutex *locker = nullptr) {
-        Q_ASSERT(isNormalized());
-        Q_ASSERT(sel.isNormalized());
-        if (locker) {
-            locker->lock();
-        }
-
-        if (sel.start <= this->start) {
-            if (sel.end >= this->start) {
-                if (sel.end < this->end) {
-                    this->start = sel.end;
-                    ++this->start;
-                } else {
-                    // makes it invalid, delete later
-                    this->end = this->start;
-                }
-            }
-        } else if (sel.start > this->start && sel.start < this->end) {
-            this->end = sel.start;
-            --this->end;
-            if (sel.end < this->end) {
-                // break into two ranges
-                QHexSelection sel;
-                sel.start = sel.end;
-                sel.end = this->end;
-
-                if (locker) {
-                    locker->unlock();
-                }
-
-                return sel;
-            }
-        }
-
-        if (locker) {
-            locker->unlock();
-        }
-        return {};
-    }
-
-    bool mergeSelection(const QHexSelection &sel, QMutex *locker = nullptr) {
-        Q_ASSERT(isNormalized());
-        if (isIntersected(sel)) {
-            if (locker) {
-                locker->lock();
-            }
-            this->start = qMin(this->start, sel.start);
-            this->end = qMax(this->end, sel.end);
-            if (locker) {
-                locker->unlock();
-            }
-            return true;
-        }
-        return false;
+        return this->begin.line < line && line < this->end.line;
     }
 };
 
@@ -231,12 +133,11 @@ public:
 
     void select(const QHexPosition &pos,
                 QHexCursor::SelectionModes mode = SelectionNormal);
-    void select(qsizetype line, int column, int nibbleindex = 1,
+    void select(qsizetype line, int column,
                 QHexCursor::SelectionModes mode = SelectionNormal);
     void select(qsizetype length,
                 QHexCursor::SelectionModes mode = SelectionNormal);
 
-    void selectOffset(qsizetype offset, qsizetype length);
     void setInsertionMode(InsertionMode mode);
     void setLineWidth(quint8 width);
     void switchInsertionMode();
@@ -248,9 +149,6 @@ public:
     void mergePreviewSelection();
 
 private:
-    void mergeRemove(const QHexSelection &sel);
-    void mergeAdd(const QHexSelection &sel, QMutex *locker = nullptr);
-
     bool isLineSelected(const QHexSelection &sel, qsizetype line) const;
 
 signals:
@@ -264,7 +162,7 @@ private:
     QHexPosition m_position, m_selection;
 
     SelectionMode m_preMode;
-    QList<QHexSelection> m_sels;
+    QHexRegionObjectList<QHexPosition, QHexSelection> m_sels;
 };
 
 #endif // QHEXCURSOR_H
