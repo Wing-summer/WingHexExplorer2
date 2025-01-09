@@ -55,4 +55,6 @@ private:
     QList<int> m_lines;
 };
 
+QCE_AUTO_REGISTER(QLineMarkPanel)
+
 #endif // _QLINE_MARK_PANEL_H_

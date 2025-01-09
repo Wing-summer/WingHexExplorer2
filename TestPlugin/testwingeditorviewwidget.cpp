@@ -10,19 +10,19 @@ TestWingEditorViewWidget::TestWingEditorViewWidget(QWidget *parent)
     layout->addWidget(lbl);
 }
 
-QIcon TestWingEditorViewWidget::icon() const {
+QIcon TestWingEditorViewWidget::Creator::icon() const {
     return QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
 }
 
-QString TestWingEditorViewWidget::name() const {
+QString TestWingEditorViewWidget::Creator::name() const {
     return tr("TestWingEditorView");
 }
 
-QString TestWingEditorViewWidget::id() const {
+QString TestWingEditorViewWidget::Creator::id() const {
     return QStringLiteral("TestWingEditorView");
 }
 
-void TestWingEditorViewWidget::toggled(bool isVisible) {}
+void TestWingEditorViewWidget::toggled(bool isVisible) { Q_UNUSED(isVisible); }
 
 WingHex::WingEditorViewWidget *TestWingEditorViewWidget::clone() {
     return nullptr;

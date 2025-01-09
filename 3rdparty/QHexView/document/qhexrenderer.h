@@ -126,6 +126,10 @@ private:
     void applySelection(const QHexSelection &selection, QTextCursor &textcursor,
                         qsizetype line, Factor factor, bool strikeOut,
                         bool hasSelection) const;
+    void applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
+                        QTextCursor &textcursor, qsizetype startLine,
+                        qsizetype lineStart, qsizetype lineEnd, Factor factor,
+                        bool strikeOut, bool hasSelection) const;
 
     void applyBookMark(QTextCursor &textcursor, qsizetype line,
                        Factor factor); // added by wingsummer

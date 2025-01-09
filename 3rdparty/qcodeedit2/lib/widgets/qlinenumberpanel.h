@@ -55,4 +55,6 @@ protected:
     int _fixWidth = 0;
 };
 
+QCE_AUTO_REGISTER(QLineNumberPanel)
+
 #endif // _QLINE_NUMBER_PANEL_H_

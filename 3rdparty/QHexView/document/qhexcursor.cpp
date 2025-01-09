@@ -40,7 +40,7 @@ qsizetype QHexCursor::selectionLength(qsizetype index) const {
 
 qsizetype QHexCursor::currentSelectionLength() const {
     if (hasPreviewSelection() && m_preMode != SelectionRemove) {
-        return qAbs(m_position - m_selection);
+        return qAbs(m_position - m_selection + 1);
     }
 
     qsizetype len = 0;
@@ -75,6 +75,23 @@ bool QHexCursor::isLineSelected(qsizetype line) const {
 
     for (auto &sel : m_sels) {
         if (isLineSelected(sel, line)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool QHexCursor::isSelected(const QHexPosition &pos) const {
+    if (!this->hasSelection())
+        return false;
+
+    if (previewSelection().contains(pos)) {
+        return true;
+    }
+
+    for (auto &sel : m_sels) {
+        if (sel.contains(pos)) {
             return true;
         }
     }
@@ -210,10 +227,9 @@ bool QHexCursor::hasPreviewSelection() const {
 
 bool QHexCursor::isLineSelected(const QHexSelection &sel,
                                 qsizetype line) const {
-    auto first = std::min(sel.begin.line, sel.end.line);
-    auto last = std::max(sel.begin.line, sel.end.line);
+    Q_ASSERT(sel.isNormalized());
 
-    if ((line >= first) && (line <= last))
+    if ((line >= sel.begin.line) && (line <= sel.end.line))
         return true;
 
     return false;
@@ -223,7 +239,7 @@ QHexSelection QHexCursor::previewSelection() const {
     QHexSelection sel;
     sel.begin = m_position;
     sel.end = m_selection;
-    return sel;
+    return sel.normalized();
 }
 
 void QHexCursor::setPreviewSelectionMode(SelectionMode mode) {
@@ -235,7 +251,7 @@ QHexCursor::SelectionMode QHexCursor::previewSelectionMode() const {
 }
 
 void QHexCursor::mergePreviewSelection() {
-    auto ss = QHexSelection(m_position, m_selection).normalized();
+    auto ss = previewSelection();
     switch (m_preMode) {
     case SelectionNormal:
         if (m_sels.isEmpty()) {

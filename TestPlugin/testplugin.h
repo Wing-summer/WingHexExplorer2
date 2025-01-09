@@ -64,7 +64,7 @@ public:
     virtual QHash<WingHex::SettingPage *, bool>
     registeredSettingPages() const override;
     virtual QList<WingHex::PluginPage *> registeredPages() const override;
-    virtual QList<WingHex::WingEditorViewWidget *>
+    virtual QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>
     registeredEditorViewWidgets() const override;
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
 
@@ -90,7 +90,7 @@ private:
     QList<WingHex::WingDockWidgetInfo> _winfo;
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
     QHash<WingHex::SettingPage *, bool> _setpages;
-    QList<WingHex::WingEditorViewWidget *> _evws;
+    QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
     QList<WingHex::PluginPage *> _plgps;
 };
 

@@ -15,6 +15,8 @@
 
 #define HEX_UNPRINTABLE_CHAR '.'
 
+constexpr qreal CONTRASTING_COLOR_BORDER = 0.35;
+
 /*===================================*/
 // added by wingsummer
 
@@ -407,14 +409,36 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
     const QHexLineMetadata &linemetadata = metadata->gets(line);
     for (auto &mi : linemetadata) {
         QTextCharFormat charformat;
+
+        QColor bg, fg;
         if (m_document->metabgVisible() && mi.background.isValid() &&
-            mi.background.rgba())
+            mi.background.alpha()) {
             charformat.setBackground(mi.background);
+            bg = mi.background;
+        }
         if (m_document->metafgVisible() && mi.foreground.isValid() &&
-            mi.foreground.rgba())
+            mi.foreground.alpha()) {
             charformat.setForeground(mi.foreground);
-        if (m_document->metaCommentVisible() && !mi.comment.isEmpty())
+            fg = mi.foreground;
+        }
+        if (m_document->metaCommentVisible() && !mi.comment.isEmpty()) {
             charformat.setUnderlineStyle(QTextCharFormat::SingleUnderline);
+            charformat.setToolTip(mi.comment);
+        }
+
+        if (!bg.isValid()) {
+            bg = m_bytesBackground;
+        }
+        if (!fg.isValid()) {
+            fg = m_bytesColor;
+        }
+
+        if (!QHexMetadata::areColorsContrast(bg, fg)) {
+            charformat.setFontWeight(QFont::Bold);
+            charformat.setTextOutline(
+                QPen(QHexMetadata::generateContrastingColor(bg),
+                     CONTRASTING_COLOR_BORDER, Qt::SolidLine));
+        }
 
         textcursor.setPosition(int(mi.start * factor));
         textcursor.movePosition(
@@ -437,7 +461,7 @@ void QHexRenderer::applySelection(QTextCursor &textcursor, qsizetype line,
 
     if (m_cursor->hasPreviewSelection()) {
         applySelection(
-            m_cursor->previewSelection().normalized(), textcursor, line, factor,
+            m_cursor->previewSelection(), textcursor, line, factor,
             m_cursor->previewSelectionMode() == QHexCursor::SelectionRemove,
             m_cursor->previewSelectionMode() == QHexCursor::SelectionNormal &&
                 m_cursor->hasInternalSelection());
@@ -451,9 +475,6 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
     if (!selection.isLineSelected(line)) {
         return;
     }
-
-    const QHexPosition &startsel = selection.begin;
-    const QHexPosition &endsel = selection.end;
 
     QTextCharFormat charfmt;
     charfmt.setBackground(strikeOut || hasSelection
@@ -469,31 +490,83 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
     charfmt_meta.setFontUnderline(true);
     charfmt_meta.setFontItalic(true);
 
+    const QHexPosition &startsel = selection.begin;
+    const QHexPosition &endsel = selection.end;
+
+    QHexSelection lineSel;
+    lineSel.begin.line = line;
+    lineSel.begin.lineWidth = startsel.lineWidth;
+    lineSel.begin.column = 0;
+    lineSel.begin.nibbleindex = 0;
+    lineSel.end = lineSel.begin;
+    lineSel.end.column = startsel.lineWidth - 1;
+
+    QVector<QHexMetadata::MetaInfo> metas;
+    if (lineSel.isIntersected(selection)) {
+        lineSel.intersect(selection);
+        metas = m_document->metadata()->getRealMetaRange(lineSel.begin.offset(),
+                                                         lineSel.end.offset());
+    }
+
+    qsizetype begin;
+    qsizetype end;
+
     if (startsel.line == endsel.line) {
-        auto selbegin = startsel.offset();
-        auto len = endsel.column - startsel.column + 1;
-        auto selend = selbegin + len;
+        begin = startsel.column;
+        end = endsel.column;
+    } else {
+        if (line == startsel.line)
+            begin = startsel.column;
+        else
+            begin = 0;
 
-        auto meta = m_document->metadata()->getRealMetaRange(selbegin, selend);
+        if (line == endsel.line)
+            end = endsel.column;
+        else
+            end = startsel.lineWidth - 1;
+    }
 
-        if (meta.first >= 0) {
-            auto begin = meta.first - startsel.lineWidth * startsel.line;
-            auto mlen = meta.second - meta.first;
+    applySelection(metas, textcursor, line * startsel.lineWidth, begin, end,
+                   factor, strikeOut, hasSelection);
+}
 
-            textcursor.setPosition(startsel.column * factor);
+void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
+                                  QTextCursor &textcursor,
+                                  qsizetype startLineOffset,
+                                  qsizetype lineStart, qsizetype lineEnd,
+                                  Factor factor, bool strikeOut,
+                                  bool hasSelection) const {
+    auto totallen = lineEnd - lineStart + 1;
+
+    QTextCharFormat charfmt;
+    charfmt.setBackground(strikeOut || hasSelection
+                              ? m_selBackgroundColor.darker()
+                              : m_selBackgroundColor);
+    charfmt.setForeground(strikeOut ? m_selectionColor.darker()
+                                    : m_selectionColor);
+    charfmt.setFontStrikeOut(strikeOut);
+    charfmt.setFontItalic(strikeOut);
+
+    if (!metas.isEmpty()) {
+        auto fmtBegin = lineStart;
+        for (int i = 0; i < metas.size(); ++i) {
+            QTextCharFormat charfmt_meta = charfmt;
+            charfmt_meta.setFontWeight(QFont::Bold);
+            charfmt_meta.setFontItalic(true);
+
+            auto mi = metas.at(i);
+            auto begin = mi.begin - startLineOffset;
+            auto mlen = mi.end - mi.begin + 1;
+
+            auto blen = begin - fmtBegin;
+
+            textcursor.setPosition(fmtBegin * factor);
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    (begin - startsel.column) * factor);
-            if (factor == Hex)
-                textcursor.movePosition(QTextCursor::Left,
-                                        QTextCursor::KeepAnchor, 1);
+                                    blen * factor);
 
             textcursor.mergeCharFormat(charfmt);
-            len -= (begin - startsel.column);
             textcursor.clearSelection();
-
-            if (factor == Hex)
-                textcursor.movePosition(QTextCursor::Right,
-                                        QTextCursor::MoveAnchor, 1);
+            totallen -= blen;
 
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
                                     mlen * factor);
@@ -502,45 +575,65 @@ void QHexRenderer::applySelection(const QHexSelection &selection,
                 textcursor.movePosition(QTextCursor::Left,
                                         QTextCursor::KeepAnchor, 1);
 
+            if (!strikeOut) {
+                QColor fg, bg = charfmt.background().color();
+
+                if (m_document->metafgVisible() && mi.foreground.isValid() &&
+                    mi.foreground.alpha()) {
+                    fg = mi.foreground.darker();
+                    charfmt_meta.setForeground(fg);
+                }
+
+                if (m_document->metaCommentVisible() && !mi.comment.isEmpty()) {
+                    charfmt_meta.setUnderlineStyle(
+                        QTextCharFormat::SingleUnderline);
+                }
+
+                if (!fg.isValid()) {
+                    fg = m_selectionColor;
+                }
+
+                if (!QHexMetadata::areColorsContrast(bg, fg)) {
+                    charfmt_meta.setFontWeight(QFont::Bold);
+                    charfmt_meta.setTextOutline(
+                        QPen(QHexMetadata::generateContrastingColor(bg),
+                             CONTRASTING_COLOR_BORDER, Qt::SolidLine));
+                }
+            }
+
             textcursor.mergeCharFormat(charfmt_meta);
             textcursor.clearSelection();
+            totallen -= mlen;
 
-            len -= mlen;
-            if (len > 0) {
-                if (factor == Hex)
+            if (totallen > 0) {
+                if (factor == Hex) {
                     textcursor.movePosition(QTextCursor::Right,
-                                            QTextCursor::MoveAnchor, 1);
-
-                textcursor.movePosition(QTextCursor::Right,
-                                        QTextCursor::KeepAnchor, len * factor);
-                if (factor == Hex)
-                    textcursor.movePosition(QTextCursor::Left,
                                             QTextCursor::KeepAnchor, 1);
-
-                textcursor.mergeCharFormat(charfmt);
+                    textcursor.mergeCharFormat(charfmt);
+                    textcursor.clearSelection();
+                }
             }
-        } else {
-            textcursor.setPosition(startsel.column * factor);
+
+            fmtBegin = mi.end - startLineOffset + 1;
+        }
+
+        if (totallen > 0) {
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    len * factor);
+                                    totallen * factor);
             if (factor == Hex)
                 textcursor.movePosition(QTextCursor::Left,
                                         QTextCursor::KeepAnchor, 1);
+
             textcursor.mergeCharFormat(charfmt);
+            textcursor.clearSelection();
         }
     } else {
-        if (line == startsel.line)
-            textcursor.setPosition(startsel.column * factor);
-        else
-            textcursor.setPosition(0);
-
-        if (line == endsel.line)
-            textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
-                                    ((endsel.column + 1) * factor));
-        else
-            textcursor.movePosition(QTextCursor::EndOfLine,
-                                    QTextCursor::KeepAnchor);
-
+        textcursor.setPosition(lineStart * factor);
+        textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                totallen * factor);
+        if (factor == Hex)
+            textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
+                                    1);
         textcursor.mergeCharFormat(charfmt);
     }
 }

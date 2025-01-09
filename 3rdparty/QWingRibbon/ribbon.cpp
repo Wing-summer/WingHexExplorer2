@@ -29,6 +29,12 @@ Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     setAcceptDrops(true);
 
+#if QT_VERSION > QT_VERSION_CHECK(6, 6, 0)
+    setStyleSheet("QToolButton::down-arrow { width:10px; height:10px; "
+                  "subcontrol-position:right center; "
+                  "subcontrol-origin:content; left: -2px;}");
+#endif
+
     auto hideBtn = new QToolButton(this);
     hideBtn->setObjectName(QStringLiteral("RIBBON_HIDE_BTN"));
     hideBtn->setCheckable(true);

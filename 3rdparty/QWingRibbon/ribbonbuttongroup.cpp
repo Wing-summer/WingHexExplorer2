@@ -44,12 +44,13 @@ void RibbonButtonGroup::addButton(QToolButton *button) {
     }
 
     button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-
-    auto font = button->font();
-    QFontMetrics fm(font);
     button->setIconSize(QSize(32, 32));
     button->setAutoRaise(true);
     button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+#if QT_VERSION > QT_VERSION_CHECK(6, 6, 0)
+    button->setMinimumWidth(32 + 30); // Icon size + padding
+#endif
 
     _buttons << button;
     ui->horizontalLayout->addWidget(button);

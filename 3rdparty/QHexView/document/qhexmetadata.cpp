@@ -5,6 +5,8 @@
 #include "commands/meta/metaremoveposcommand.h"
 #include "commands/meta/metareplacecommand.h"
 
+#include <cmath>
+
 #include <QtAlgorithms>
 #include <QtConcurrent/QtConcurrentMap>
 
@@ -162,35 +164,26 @@ QHexLineMetadata QHexMetadata::gets(qsizetype line) {
     return ret;
 }
 
-QPair<qsizetype, qsizetype> QHexMetadata::getRealMetaRange(qsizetype begin,
-                                                           qsizetype end) {
+QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
+                                                               qsizetype end) {
     Q_ASSERT(begin <= end);
 
-    using QHexRegionGadget = QHexRegionGadget<qsizetype>;
-
-    QList<QHexRegionGadget> items;
+    QVector<MetaInfo> ret;
+    MetaInfo g(begin, end);
     for (auto &meta : m_metadata) {
         if (!(end < meta.begin || begin > meta.end)) {
-            items.append(QHexRegionGadget(meta.begin, meta.end));
+            auto m = MetaInfo(meta.begin, meta.end, meta.foreground,
+                              meta.background, meta.comment);
+            if (m.intersect(g)) {
+                ret.insert(std::distance(ret.constBegin(),
+                                         std::upper_bound(ret.constBegin(),
+                                                          ret.constEnd(), m)),
+                           m);
+            }
         }
     }
 
-    if (items.isEmpty()) {
-        return qMakePair(-1, -1);
-    } else {
-        auto pitem = items.first();
-        for (auto meta = std::next(items.constBegin());
-             meta != items.constEnd(); ++meta) {
-            pitem.mergeRegion(*meta);
-        }
-
-        QHexRegionGadget g(begin, end);
-        auto ret = g.intersect(pitem);
-        if (!ret) {
-            return qMakePair(-1, -1);
-        }
-        return qMakePair(g.begin, g.end);
-    }
+    return ret;
 }
 
 void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
@@ -201,30 +194,28 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
 
 bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }
 
-/*==================================*/
+QColor QHexMetadata::generateContrastingColor(const QColor &backgroundColor) {
+    // Invert RGB values
+    QColor invertedColor(255 - backgroundColor.red(),
+                         255 - backgroundColor.green(),
+                         255 - backgroundColor.blue());
 
-QString QHexMetadata::comments(qsizetype line, qsizetype column) const {
-    if (!this->lineHasMetadata(line))
-        return QString();
-
-    QString s;
-
-    const auto &linemetadata = this->get(line);
-
-    for (auto &mi : linemetadata) {
-        if (!(mi.start <= column && column < mi.start + mi.length))
-            continue;
-        if (mi.comment.isEmpty())
-            continue;
-
-        if (!s.isEmpty())
-            s += "\n";
-
-        s += mi.comment;
+    // Ensure it meets contrast ratio criteria
+    double contrastRatio =
+        calculateContrastRatio(backgroundColor, invertedColor);
+    if (contrastRatio >= 4.5) {
+        return invertedColor;
     }
 
-    return s;
+    // If contrast is still too low, adjust brightness or saturation
+    int luminance = (backgroundColor.red() + backgroundColor.green() +
+                     backgroundColor.blue()) /
+                    3;
+    return (luminance < 128) ? QColor(255, 255, 255)
+                             : QColor(0, 0, 0); // Use black or white
 }
+
+/*==================================*/
 
 bool QHexMetadata::lineHasMetadata(qsizetype line) const {
     return m_linemeta.contains(line);
@@ -329,6 +320,43 @@ void QHexMetadata::removeAdjust(qsizetype offset, qsizetype length) {
     }
 }
 
+bool QHexMetadata::areColorsContrast(const QColor &color1,
+                                     const QColor &color2) {
+    return calculateContrastRatio(color1, color2) >= 4.5;
+}
+
+double QHexMetadata::calculateLuminance(const QColor &color) {
+    // Normalize RGB values to [0, 1]
+    double r = color.redF();
+    double g = color.greenF();
+    double b = color.blueF();
+
+    // Apply gamma correction
+    auto gammaCorrect = [](double value) {
+        return (value <= 0.03928) ? (value / 12.92)
+                                  : std::pow((value + 0.055) / 1.055, 2.4);
+    };
+
+    r = gammaCorrect(r);
+    g = gammaCorrect(g);
+    b = gammaCorrect(b);
+
+    // Calculate relative luminance
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+double QHexMetadata::calculateContrastRatio(const QColor &color1,
+                                            const QColor &color2) {
+    double luminance1 = calculateLuminance(color1);
+    double luminance2 = calculateLuminance(color2);
+
+    // Ensure luminance1 is the lighter one
+    if (luminance1 < luminance2)
+        std::swap(luminance1, luminance2);
+
+    return (luminance1 + 0.05) / (luminance2 + 0.05);
+}
+
 bool QHexMetadata::color(qsizetype begin, qsizetype end, const QColor &fgcolor,
                          const QColor &bgcolor) {
     return this->metadata(begin, end, fgcolor, bgcolor, QString());
@@ -393,7 +421,7 @@ void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {
         if (row == lastRow) {
             Q_ASSERT(m_lineWidth > 0);
             const int lastChar = mi.end % m_lineWidth;
-            length = lastChar - start;
+            length = lastChar - start + 1;
         } else {
             // fix the bug by wingsummer
             if (firstRow != lastRow)

@@ -40,8 +40,6 @@
         \brief A specific panel in charge of drawing line numbers of an editor
 */
 
-QCE_AUTO_REGISTER(QLineNumberPanel)
-
 /*!
         \brief Constructor
 */

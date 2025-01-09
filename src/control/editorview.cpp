@@ -130,37 +130,21 @@ EditorView::EditorView(QWidget *parent)
     applySettings();
 }
 
-EditorView::~EditorView() {
-    for (auto &w : m_others) {
-        m_stack->removeWidget(w);
-        w->setParent(nullptr);
-    }
-}
+EditorView::~EditorView() {}
 
-void EditorView::registerView(WingEditorViewWidget *view) {
+void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
     Q_ASSERT(view);
-    m_others << view;
+    m_others.insert(id, view);
     m_stack->addWidget(view);
 }
 
-void EditorView::switchView(qsizetype index) {
-    if (index < 0) {
+void EditorView::switchView(const QString &id) {
+    if (id.isEmpty()) {
         m_stack->setCurrentWidget(m_hexContainer);
     } else {
-        m_stack->setCurrentWidget(m_others.at(index));
-    }
-    emit viewChanged(index);
-}
-
-void EditorView::switchView(WingEditorViewWidget *w) {
-    if (w) {
-        if (m_others.contains(w)) {
-            m_stack->setCurrentWidget(w);
-            emit viewChanged(m_others.indexOf(w));
+        if (m_others.contains(id)) {
+            m_stack->setCurrentWidget(m_others.value(id));
         }
-    } else {
-        m_stack->setCurrentWidget(m_hexContainer);
-        emit viewChanged(-1);
     }
 }
 
@@ -545,15 +529,6 @@ QHexView *EditorView::hexEditor() const { return m_hex; }
 
 EditorView::DocumentType EditorView::documentType() const { return m_docType; }
 
-WingEditorViewWidget *EditorView::otherEditor(qsizetype index) const {
-    if (index < 0 ||
-        index >= std::numeric_limits<decltype(m_others)::size_type>::max() ||
-        index >= m_others.size()) {
-        return nullptr;
-    }
-    return m_others.at(index);
-}
-
 void EditorView::setCopyLimit(qsizetype sizeMB) { m_hex->setCopyLimit(sizeMB); }
 
 qsizetype EditorView::copyLimit() const { return m_hex->copyLimit(); }
@@ -600,20 +575,21 @@ bool EditorView::hasMeta() const {
 
 void EditorView::applyPluginData(const QHash<QString, QByteArray> &data) {
     for (auto p = data.begin(); p != data.end(); p++) {
-        auto plgw = std::find_if(m_others.begin(), m_others.end(),
-                                 [=](const WingEditorViewWidget *editor) {
-                                     return editor->id() == p.key();
-                                 });
-        if (plgw != m_others.end()) {
-            (*plgw)->loadState(p.value());
+        for (auto pw = m_others.constKeyValueBegin();
+             pw != m_others.constKeyValueEnd(); ++pw) {
+            if (pw->first == p.key()) {
+                pw->second->loadState(p.value());
+                break;
+            }
         }
     }
 }
 
 QHash<QString, QByteArray> EditorView::savePluginData() {
     QHash<QString, QByteArray> ret;
-    for (auto &item : m_others) {
-        ret.insert(item->id(), item->saveState());
+    for (auto p = m_others.constKeyValueBegin();
+         p != m_others.constKeyValueEnd(); ++p) {
+        ret.insert(p->first, p->second->saveState());
     }
     return ret;
 }
@@ -689,9 +665,11 @@ EditorView *EditorView::clone() {
 
     ev->m_docType = DocumentType::Cloned;
 
-    for (auto &evw : m_others) {
-        ev->m_others << evw->clone();
+    for (auto p = m_others.constKeyValueBegin();
+         p != m_others.constKeyValueEnd(); ++p) {
+        ev->m_others.insert(p->first, p->second->clone());
     }
+
     this->m_cloneChildren[cloneIndex] = ev;
 
     connectDocSavedFlag(ev);

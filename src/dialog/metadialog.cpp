@@ -41,7 +41,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     iforeground->setEnabled(false);
     layout->addWidget(iforeground);
     connect(iforeground, &HueColorPickerSlider::colorChanged, this,
-            [=](QColor color) { _foreground = color; });
+            [=](QColor color) { _foreground = color.toRgb(); });
     _foreground = iforeground->color();
 
     layout->addSpacing(2);
@@ -56,7 +56,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     ibackground->setEnabled(false);
     layout->addWidget(ibackground);
     connect(ibackground, &HueColorPickerSlider::colorChanged, this,
-            [=](QColor color) { _background = color; });
+            [=](QColor color) { _background = color.toRgb(); });
     _background = ibackground->color();
 
     layout->addSpacing(2);
@@ -93,10 +93,12 @@ MetaDialog::MetaDialog(QWidget *parent)
 }
 
 void MetaDialog::on_accept() {
-    if ((cforeground->isChecked() &&
-         (!_foreground.isValid() || _foreground.rgba() == 0)) ||
+    if ((!cforeground->isChecked() && !cbackground->isChecked() &&
+         !ccomment->isChecked()) ||
+        (cforeground->isChecked() &&
+         (!_foreground.isValid() || _foreground.alpha() == 0)) ||
         (cbackground->isChecked() &&
-         (!_background.isValid() || _background.rgba() == 0)) ||
+         (!_background.isValid() || _background.alpha() == 0)) ||
         (ccomment->isChecked() && m_comment->text().trimmed().length() == 0)) {
         Toast::toast(this->parentWidget(),
                      NAMEICONRES(QStringLiteral("metadata")), tr("NoChoose"));

@@ -50,4 +50,6 @@ private:
     QList<int> m_lines;
 };
 
+QCE_AUTO_REGISTER(QFoldPanel)
+
 #endif // _QFOLD_PANEL_H_

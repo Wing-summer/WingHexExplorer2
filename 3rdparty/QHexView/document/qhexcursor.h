@@ -15,7 +15,7 @@ struct QHexPosition {
     quint8 lineWidth = 0;
     int nibbleindex = -1;
 
-    QHexPosition() = default;
+    inline QHexPosition() = default;
     inline qsizetype offset() const {
         return static_cast<qsizetype>(line * lineWidth) + column;
     }
@@ -61,15 +61,15 @@ struct QHexPosition {
 Q_DECLARE_METATYPE(QHexPosition)
 
 struct QHexSelection : QHexRegionObject<QHexPosition, QHexSelection> {
-    QHexSelection() { setAdjusted(true); };
+    inline QHexSelection() = default;
 
-    explicit QHexSelection(const QHexPosition &begin, const QHexPosition &end) {
-        setAdjusted(true);
+    inline explicit QHexSelection(const QHexPosition &begin,
+                                  const QHexPosition &end) {
         this->begin = begin;
         this->end = end;
     }
 
-    bool isLineSelected(qsizetype line) const {
+    inline bool isLineSelected(qsizetype line) const {
         Q_ASSERT(isNormalized());
         if (this->begin.line == line || this->end.line == line) {
             return true;
@@ -118,6 +118,7 @@ public:
     bool atEnd() const;
 
     bool isLineSelected(qsizetype line) const;
+    bool isSelected(const QHexPosition &pos) const;
     bool hasSelection() const;
     bool hasInternalSelection() const;
 

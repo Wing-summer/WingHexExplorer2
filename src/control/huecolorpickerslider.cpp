@@ -72,6 +72,7 @@ void HueColorPickerSlider::setColor(const QColor &newColor) {
                                 {359.0 / 360.0, redColor(colorS, colorV)}});
 
         this->setValue(_color.hsvHue());
+        emit colorChanged(newColor);
     }
 }
 

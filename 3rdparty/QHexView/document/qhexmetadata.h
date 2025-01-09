@@ -115,12 +115,32 @@ class QHexMetadata : public QObject {
     Q_OBJECT
 
 public:
-    enum class MetaOpError { Error = -2 };
+    struct MetaInfo : QHexRegionObject<qsizetype, MetaInfo> {
+        QColor foreground;
+        QColor background;
+        QString comment;
+
+        explicit MetaInfo() {
+            this->begin = -1;
+            this->end = -1;
+        }
+
+        explicit MetaInfo(qsizetype begin, qsizetype end) {
+            this->begin = begin;
+            this->end = end;
+        }
+
+        explicit MetaInfo(qsizetype begin, qsizetype end, QColor foreground,
+                          QColor background, QString comment)
+            : foreground(foreground), background(background), comment(comment) {
+            this->begin = begin;
+            this->end = end;
+        }
+    };
 
 public:
     explicit QHexMetadata(QUndoStack *undo, QObject *parent = nullptr);
     QHexLineMetadata get(qsizetype line) const;
-    QString comments(qsizetype line, qsizetype column) const;
     bool lineHasMetadata(qsizetype line) const; // modified by wingsummer
 
     qsizetype size() const;
@@ -152,15 +172,27 @@ public:
 
     std::optional<QHexMetadataItem> get(qsizetype offset);
     QHexLineMetadata gets(qsizetype line);
-    QPair<qsizetype, qsizetype> getRealMetaRange(qsizetype begin,
-                                                 qsizetype end);
+    QVector<MetaInfo> getRealMetaRange(qsizetype begin, qsizetype end);
 
     void applyMetas(const QVector<QHexMetadataItem> &metas);
 
     bool hasMetadata();
 
+public:
+    static QColor generateContrastingColor(const QColor &backgroundColor);
+
+    static bool areColorsContrast(const QColor &color1, const QColor &color2);
+
+    // Function to calculate relative luminance
+    static double calculateLuminance(const QColor &color);
+
+    // Function to calculate contrast ratio
+    static double calculateContrastRatio(const QColor &color1,
+                                         const QColor &color2);
+
     /*============================*/
 
+public:
     void clear();
     void setLineWidth(quint8 width);
 

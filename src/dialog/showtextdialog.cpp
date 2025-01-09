@@ -73,6 +73,7 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding,
                           qsizetype offset, qsizetype size) {
     auto editor = m_edit->editor();
     editor->blockSignals(true);
+    editor->setCodec(encoding);
     load(buffer, offset, size);
     editor->blockSignals(false);
 }

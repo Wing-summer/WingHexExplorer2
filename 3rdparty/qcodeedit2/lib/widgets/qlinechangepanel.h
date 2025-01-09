@@ -44,8 +44,8 @@ public:
 
 protected:
     virtual void paint(QPainter *p, QEditor *e);
-
-private:
 };
+
+QCE_AUTO_REGISTER(QLineChangePanel)
 
 #endif // _QLINE_CHANGE_PANEL_H_

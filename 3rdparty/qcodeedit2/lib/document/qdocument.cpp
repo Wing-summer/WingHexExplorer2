@@ -3578,18 +3578,20 @@ bool QDocumentCursorHandle::movePosition(int count,
         auto txt = m_doc->line(line).text().left(offset);
         auto len = txt.length();
         qsizetype index = 0;
-        if (txt.back().isSpace()) {
-            for (qsizetype i = len - 1; i >= 0; --i) {
-                if (!txt.at(i).isSpace()) {
-                    index = i + 1;
-                    break;
+        if (!txt.isEmpty()) {
+            if (txt.back().isSpace()) {
+                for (qsizetype i = len - 1; i >= 0; --i) {
+                    if (!txt.at(i).isSpace()) {
+                        index = i + 1;
+                        break;
+                    }
                 }
-            }
-        } else {
-            for (qsizetype i = len - 1; i >= 0; --i) {
-                if (!txt.at(i).isLetterOrNumber()) {
-                    index = i + 1;
-                    break;
+            } else {
+                for (qsizetype i = len - 1; i >= 0; --i) {
+                    if (!txt.at(i).isLetterOrNumber()) {
+                        index = i + 1;
+                        break;
+                    }
                 }
             }
         }

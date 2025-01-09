@@ -43,8 +43,6 @@
         \see QEditorInterface
 */
 
-QCE_AUTO_REGISTER(QLineChangePanel)
-
 /*!
         \brief Constructor
 */

@@ -80,16 +80,13 @@ public:
 
     DocumentType documentType() const;
 
-    WingEditorViewWidget *otherEditor(qsizetype index) const;
-
     qsizetype copyLimit() const;
 
 public slots:
     EditorView *clone();
 
-    void registerView(WingHex::WingEditorViewWidget *view);
-    void switchView(qsizetype index);
-    void switchView(WingEditorViewWidget *w);
+    void registerView(const QString &id, WingHex::WingEditorViewWidget *view);
+    void switchView(const QString &id);
     void registerQMenu(QMenu *menu);
 
     FindError find(const FindDialog::Result &result);
@@ -149,8 +146,6 @@ private:
     void connectDocSavedFlag(EditorView *editor);
 
 signals:
-    void viewChanged(int index);
-
     void sigFileSaved(QString filename, QString oldFileName);
 
     void sigOnCutFile();
@@ -176,7 +171,7 @@ private:
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;
 
-    QList<WingEditorViewWidget *> m_others;
+    QHash<QString, WingEditorViewWidget *> m_others;
     QString m_fileName;
     bool m_isNewFile = true;
     QByteArray m_md5;

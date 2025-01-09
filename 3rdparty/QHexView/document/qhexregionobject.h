@@ -1,51 +1,58 @@
 #ifndef QHEXREGIONOBJECT_H
 #define QHEXREGIONOBJECT_H
 
+#include <type_traits>
+#include <utility>
+
 namespace REQUIRE_CHECK {
 
-struct NO_OP {};
-
-template <typename T, typename Arg>
-NO_OP &operator>(const T &, const Arg &);
-template <typename T, typename Arg>
-NO_OP &operator>=(const T &, const Arg &);
-template <typename T, typename Arg>
-NO_OP &operator<(const T &, const Arg &);
-template <typename T, typename Arg>
-NO_OP &operator<=(const T &, const Arg &);
-template <typename T, typename Arg>
-NO_OP &operator==(const T &, const Arg &);
-template <typename T, typename Arg>
-NO_OP &operator!=(const T &, const Arg &);
-int optest(NO_OP const &);
+template <typename, typename = void>
+struct has_greater_equal : std::false_type {};
 
 template <typename T>
-char optest(T const &);
+struct has_greater_equal<
+    T, std::void_t<decltype(std::declval<T>() >= std::declval<T>())>>
+    : std::true_type {};
 
-template <typename T, typename Arg = T>
-struct GreatThanExists {
-    enum { value = sizeof(optest(*(T *)(0) > *(Arg *)(0))) == sizeof(char) };
-};
-template <typename T, typename Arg = T>
-struct LessThanExists {
-    enum { value = sizeof(optest(*(T *)(0) < *(Arg *)(0))) == sizeof(char) };
-};
-template <typename T, typename Arg = T>
-struct GreatEqualThanExists {
-    enum { value = sizeof(optest(*(T *)(0) >= *(Arg *)(0))) == sizeof(char) };
-};
-template <typename T, typename Arg = T>
-struct LessEqualThanExists {
-    enum { value = sizeof(optest(*(T *)(0) <= *(Arg *)(0))) == sizeof(char) };
-};
-template <typename T, typename Arg = T>
-struct EqualExists {
-    enum { value = sizeof(optest(*(T *)(0) == *(Arg *)(0))) == sizeof(char) };
-};
-template <typename T, typename Arg = T>
-struct NotEqualExists {
-    enum { value = sizeof(optest(*(T *)(0) != *(Arg *)(0))) == sizeof(char) };
-};
+// Repeat for other operators
+template <typename, typename = void>
+struct has_greater : std::false_type {};
+
+template <typename T>
+struct has_greater<T,
+                   std::void_t<decltype(std::declval<T>() > std::declval<T>())>>
+    : std::true_type {};
+
+template <typename, typename = void>
+struct has_less_equal : std::false_type {};
+
+template <typename T>
+struct has_less_equal<
+    T, std::void_t<decltype(std::declval<T>() <= std::declval<T>())>>
+    : std::true_type {};
+
+template <typename, typename = void>
+struct has_less : std::false_type {};
+
+template <typename T>
+struct has_less<T, std::void_t<decltype(std::declval<T>() < std::declval<T>())>>
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct has_equal : std::false_type {};
+
+template <typename T>
+struct has_equal<T,
+                 std::void_t<decltype(std::declval<T>() == std::declval<T>())>>
+    : std::true_type {};
+
+template <typename, typename = void>
+struct has_not_equal : std::false_type {};
+
+template <typename T>
+struct has_not_equal<
+    T, std::void_t<decltype(std::declval<T>() != std::declval<T>())>>
+    : std::true_type {};
 
 } // namespace REQUIRE_CHECK
 
@@ -54,156 +61,23 @@ struct NotEqualExists {
 
 #include <QMutex>
 
-template <typename T>
-struct QHexRegionGadget final {
-    static_assert(REQUIRE_CHECK::GreatThanExists<T>::value,
-                  "Operator > is required");
-    static_assert(REQUIRE_CHECK::LessThanExists<T>::value,
-                  "Operator < is required");
-    static_assert(REQUIRE_CHECK::GreatEqualThanExists<T>::value,
-                  "Operator >= is required");
-    static_assert(REQUIRE_CHECK::LessEqualThanExists<T>::value,
-                  "Operator <= is required");
-    static_assert(REQUIRE_CHECK::EqualExists<T>::value,
-                  "Operator == is required");
-    static_assert(REQUIRE_CHECK::NotEqualExists<T>::value,
-                  "Operator != is required");
-
-    bool _valid = true;
-
-public:
-    T begin;
-    T end;
-
-    QHexRegionGadget() : begin(T()), end(T()) {}
-
-    explicit QHexRegionGadget(const T &begin, const T &end)
-        : begin(begin), end(end) {}
-
-    void normalize() {
-        Q_ASSERT(isValid());
-        if (end < begin) {
-            std::swap(begin, end);
-        }
-    }
-
-    qsizetype length() const {
-        Q_ASSERT(isValid());
-        return qAbs(end - begin) + 1;
-    }
-
-    bool contains(const QHexRegionGadget &sel) const {
-        Q_ASSERT(isValid());
-        Q_ASSERT(isNormalized());
-        return this->begin <= sel.begin && this->end >= sel.end;
-    }
-
-    bool isNormalized() const {
-        Q_ASSERT(isValid());
-        return end >= begin;
-    }
-
-    QHexRegionGadget normalized() const {
-        Q_ASSERT(isValid());
-        QHexRegionGadget sel = *this;
-        if (end < begin) {
-            std::swap(sel.begin, sel.end);
-        }
-        return sel;
-    }
-
-    bool isIntersected(const QHexRegionGadget &sel) const {
-        Q_ASSERT(isValid());
-        Q_ASSERT(isNormalized());
-        return !(sel.end < begin || sel.begin > end);
-    }
-
-    bool intersect(const QHexRegionGadget &sel) {
-        Q_ASSERT(isValid());
-        Q_ASSERT(isNormalized());
-
-        if (!isIntersected(sel)) {
-            _valid = false;
-            return false;
-        }
-
-        auto s = sel.normalized();
-
-        this->begin = qMax(this->begin, s.begin);
-        this->end = qMin(this->end, s.end);
-
-        return true;
-    }
-
-    Q_REQUIRED_RESULT std::variant<bool, QHexRegionGadget>
-    removeRegion(const QHexRegionGadget &sel) {
-        Q_ASSERT(isValid());
-        Q_ASSERT(isNormalized());
-        Q_ASSERT(sel.isNormalized());
-
-        std::variant<bool, QHexRegionGadget> result = false;
-        if (sel.begin <= this->begin) {
-            if (sel.end >= this->begin) {
-                if (sel.end < this->end) {
-                    this->begin = sel.end;
-                } else {
-                    // makes it invalid, delete later
-                    _valid = false;
-                }
-                result = true;
-            }
-        } else if (sel.begin > this->begin && sel.begin < this->end) {
-            this->end = sel.begin;
-            result = true;
-
-            if (sel.end < this->end) {
-                // break into two ranges
-                QHexRegionGadget sel;
-                sel.begin = sel.end;
-                sel.end = this->end;
-
-                return sel;
-            }
-        }
-
-        return result;
-    }
-
-    std::variant<bool, std::optional<QHexRegionGadget>>
-    mergeRegion(const QHexRegionGadget &sel) {
-        Q_ASSERT(isValid());
-        Q_ASSERT(isNormalized());
-        if (isIntersected(sel)) {
-            this->begin = qMin(this->begin, sel.begin);
-            this->end = qMax(this->end, sel.end);
-            return true;
-        }
-        return false;
-    };
-
-    bool isValid() const { return _valid; }
-};
-
 template <typename T, typename P>
 struct QHexRegionObject {
-    static_assert(REQUIRE_CHECK::GreatThanExists<T>::value,
+    static_assert(REQUIRE_CHECK::has_greater<T>::value,
                   "Operator > is required");
-    static_assert(REQUIRE_CHECK::LessThanExists<T>::value,
-                  "Operator < is required");
-    static_assert(REQUIRE_CHECK::GreatEqualThanExists<T>::value,
+    static_assert(REQUIRE_CHECK::has_less<T>::value, "Operator < is required");
+    static_assert(REQUIRE_CHECK::has_greater_equal<T>::value,
                   "Operator >= is required");
-    static_assert(REQUIRE_CHECK::LessEqualThanExists<T>::value,
+    static_assert(REQUIRE_CHECK::has_less_equal<T>::value,
                   "Operator <= is required");
-    static_assert(REQUIRE_CHECK::EqualExists<T>::value,
+    static_assert(REQUIRE_CHECK::has_equal<T>::value,
                   "Operator == is required");
-    static_assert(REQUIRE_CHECK::NotEqualExists<T>::value,
+    static_assert(REQUIRE_CHECK::has_not_equal<T>::value,
                   "Operator != is required");
 
     using Super = QHexRegionObject<T, P>;
 
 private:
-    bool _adjusted = false;
-
     bool _valid = true;
 
     T next(const T &obj) const {
@@ -241,6 +115,12 @@ public:
         return this->begin <= sel.begin && this->end >= sel.end;
     }
 
+    bool contains(const T &offset) const {
+        Q_ASSERT(isValid());
+        Q_ASSERT(isNormalized());
+        return this->begin <= offset && this->end >= offset;
+    }
+
     bool isNormalized() const {
         Q_ASSERT(isValid());
         return end >= begin;
@@ -260,11 +140,13 @@ public:
         static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
-        if (_adjusted) {
-            return !(next(sel.end) < this->begin ||
-                     sel.begin > next(this->end));
-        }
         return !(sel.end < begin || sel.begin > end);
+    }
+
+    bool canMerge(const P &sel) const {
+        Q_ASSERT(isValid());
+        Q_ASSERT(isNormalized());
+        return !(next(sel.end) < this->begin || sel.begin > next(this->end));
     }
 
     bool intersect(const P &sel, QMutex *locker = nullptr) {
@@ -278,18 +160,10 @@ public:
         if (locker) {
             locker->lock();
         }
-        if (_adjusted) {
-            if (this->begin < s.end) {
-                this->begin = qMax(this->begin, next(s.begin));
-                this->end = qMin(next(this->end), s.end);
-            } else {
-                this->begin = qMax(next(this->begin), s.begin);
-                this->end = qMin(this->end, next(s.end));
-            }
-        } else {
-            this->begin = qMax(this->begin, s.begin);
-            this->end = qMin(this->end, s.end);
-        }
+
+        this->begin = qMax(this->begin, s.begin);
+        this->end = qMin(this->end, s.end);
+
         if (locker) {
             locker->unlock();
         }
@@ -312,9 +186,7 @@ public:
             if (sel.end >= this->begin) {
                 if (sel.end < this->end) {
                     this->begin = sel.end;
-                    if (_adjusted) {
-                        ++this->begin;
-                    }
+                    ++this->begin;
                 } else {
                     // makes it invalid, delete later
                     _valid = false;
@@ -322,23 +194,23 @@ public:
                 result = true;
             }
         } else if (sel.begin > this->begin && sel.begin < this->end) {
+            auto oldend = this->end;
+
             this->end = sel.begin;
-            if (_adjusted) {
-                --this->end;
-            }
+            --this->end;
             result = true;
 
-            if (sel.end < this->end) {
+            if (sel.end < oldend) {
                 // break into two ranges
-                P sel;
-                sel.begin = sel.end;
-                sel.end = this->end;
+                P s;
+                s.begin = sel.end;
+                s.end = oldend;
 
                 if (locker) {
                     locker->unlock();
                 }
 
-                return sel;
+                return s.normalized();
             }
         }
 
@@ -352,22 +224,19 @@ public:
     mergeRegion(const P &sel, QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
-        if (isIntersected(sel)) {
+        if (canMerge(sel)) {
             if (locker) {
                 locker->lock();
             }
-            if (_adjusted) {
-                if (this->begin < sel.end) {
-                    this->begin = qMin(this->begin, next(sel.begin));
-                    this->end = qMax(next(this->end), sel.end);
-                } else {
-                    this->begin = qMin(next(this->begin), sel.begin);
-                    this->end = qMax(this->end, next(sel.end));
-                }
+
+            if (this->begin < sel.end) {
+                this->begin = qMin(this->begin, next(sel.begin));
+                this->end = qMax(next(this->end), sel.end);
             } else {
-                this->begin = qMin(this->begin, sel.begin);
-                this->end = qMax(this->end, sel.end);
+                this->begin = qMin(next(this->begin), sel.begin);
+                this->end = qMax(this->end, next(sel.end));
             }
+
             if (locker) {
                 locker->unlock();
             }
@@ -376,17 +245,9 @@ public:
         return false;
     };
 
-    bool adjusted() const {
-        Q_ASSERT(isValid());
-        return _adjusted;
-    };
-
-    void setAdjusted(bool newAdjusted) {
-        Q_ASSERT(isValid());
-        _adjusted = newAdjusted;
-    };
-
     bool isValid() const { return _valid; }
+
+    bool operator<(const Super &item) const { return begin < item.begin; }
 };
 
 #include <QtConcurrent/QtConcurrentMap>
@@ -442,7 +303,12 @@ public:
                 auto region = std::get<std::optional<P>>(res);
                 idx = std::distance(this->begin(), p);
                 if (region.has_value()) {
-                    this->append(region.value());
+                    auto v = region.value();
+                    this->insert(
+                        std::distance(this->constBegin(),
+                                      std::upper_bound(this->constBegin(),
+                                                       this->constEnd(), v)),
+                        v);
                 }
                 break;
             }
@@ -455,10 +321,12 @@ public:
                 auto m = this->takeAt(idx);
                 mergeAdd(m, locker);
             } else {
-                this->append(sel);
+                this->insert(
+                    std::distance(this->constBegin(),
+                                  std::upper_bound(this->constBegin(),
+                                                   this->constEnd(), sel)),
+                    sel);
             }
-        } else {
-            this->append(sel);
         }
 
         return idx;

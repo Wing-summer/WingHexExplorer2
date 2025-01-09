@@ -835,7 +835,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
 
     auto efilter = new EventFilter(QEvent::DynamicPropertyChange, this);
     connect(efilter, &EventFilter::eventTriggered, this,
-            [this](QObject *obj, QEvent *event) {
+            [](QObject *obj, QEvent *event) {
                 auto e = static_cast<QDynamicPropertyChangeEvent *>(event);
                 constexpr auto ppname = "__TITLE__";
                 if (e->propertyName() == QByteArray(ppname)) {
@@ -1446,7 +1446,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             if (editor == nullptr) {
                 return;
             }
-            editor->switchView(-1);
+            editor->switchView({});
         }));
         m_toolBtneditors.insert(ToolButtonIndex::EDITOR_WINS,
                                 addPannelAction(pannel, QStringLiteral("win"),
@@ -1756,26 +1756,27 @@ void MainWindow::installPluginEditorWidgets() {
     auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
     for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
          ++p) {
-        for (auto &w : p.value()) {
+        for (auto &wctor : p.value()) {
             qApp->processEvents();
-            if (names.contains(w->id())) {
+            if (names.contains(wctor->id())) {
                 log.critical(tr("Plugin %1 contains a duplicate ID (%2) that "
                                 "is already registered by plugin %3")
-                                 .arg(p.key()->pluginName(), w->id(),
-                                      names.value(w->id())->pluginName()));
+                                 .arg(p.key()->pluginName(), wctor->id(),
+                                      names.value(wctor->id())->pluginName()));
                 continue;
             }
 
-            menu->addAction(newAction(w->icon(), w->name(), [this, w] {
-                auto editor = currentEditor();
-                if (editor == nullptr) {
-                    return;
-                }
-                editor->switchView(w);
-            }));
+            menu->addAction(
+                newAction(wctor->icon(), wctor->name(), [this, wctor] {
+                    auto editor = currentEditor();
+                    if (editor == nullptr) {
+                        return;
+                    }
+                    editor->switchView(wctor->id());
+                }));
 
-            names.insert(w->id(), p.key());
-            m_editorViewWidgetsBuffer.append(w);
+            names.insert(wctor->id(), p.key());
+            m_editorViewWidgetsBuffer.append(wctor);
         }
         qApp->processEvents();
     }
@@ -2428,7 +2429,7 @@ void MainWindow::on_metadata() {
                 meta->beginMarco(QStringLiteral("MetaData"));
                 for (int i = 0; i < total; ++i) {
                     auto begin = cur->selectionStart(i).offset();
-                    auto end = cur->selectionEnd(i).offset() + 1;
+                    auto end = cur->selectionEnd(i).offset();
                     meta->Metadata(begin, end, m.foreGroundColor(),
                                    m.backGroundColor(), m.comment());
                 }
@@ -2971,7 +2972,7 @@ bool MainWindow::newOpenFileSafeCheck() {
 
 void MainWindow::registerEditorView(EditorView *editor) {
     for (auto &w : m_editorViewWidgetsBuffer) {
-        editor->registerView(w);
+        editor->registerView(w->id(), w->create(editor));
     }
     for (auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
@@ -3022,7 +3023,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                     meta->beginMarco(QStringLiteral("OnMetaData"));
                     for (int i = 0; i < total; ++i) {
                         auto begin = cur->selectionStart(i).offset();
-                        auto end = cur->selectionEnd(i).offset() + 1;
+                        auto end = cur->selectionEnd(i).offset();
                         meta->Metadata(begin, end, m.foreGroundColor(),
                                        m.backGroundColor(), m.comment());
                     }

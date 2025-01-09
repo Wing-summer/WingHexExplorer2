@@ -46,8 +46,6 @@
    to the user
 */
 
-QCE_AUTO_REGISTER(QFoldPanel)
-
 /*!
         \brief Constructor
 */

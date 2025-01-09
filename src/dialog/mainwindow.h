@@ -18,7 +18,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "class/eventfilter.h"
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
@@ -284,7 +283,15 @@ private:
                     QMenu *menu = nullptr) {
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
-        a->setText(title);
+#if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
+        if (menu) {
+            a->setText(title + QStringLiteral(" ▼"));
+        } else
+#endif
+        {
+            a->setText(title);
+        }
+
         a->setIcon(icon);
         a->setToolTip(
             shortcut.isEmpty()
@@ -301,6 +308,9 @@ private:
 
         a->setMenu(menu);
         if (menu) {
+#if QT_VERSION > QT_VERSION_CHECK(6, 6, 0)
+            a->setArrowType(Qt::DownArrow);
+#endif
             a->setPopupMode(QToolButton::InstantPopup);
         }
         connect(a, &QToolButton::clicked, this, slot);
@@ -551,10 +561,12 @@ private:
     // for plugin system use
     QHash<QString, RibbonTabContent *> m_ribbonMaps;
     QList<QMenu *> m_hexContextMenu;
-    QMap<IWingPlugin *, QList<WingEditorViewWidget *>> m_editorViewWidgets;
+    QMap<IWingPlugin *, QList<QSharedPointer<WingEditorViewWidget::Creator>>>
+        m_editorViewWidgets;
     QHash<SettingPage *, bool> m_settingPages;
     QList<PluginPage *> m_plgPages;
-    QList<WingEditorViewWidget *> m_editorViewWidgetsBuffer;
+    QList<QSharedPointer<WingEditorViewWidget::Creator>>
+        m_editorViewWidgetsBuffer;
 
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空

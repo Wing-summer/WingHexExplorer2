@@ -45,8 +45,6 @@
         \brief A specific panel in charge of drawing line marks of an editor
 */
 
-QCE_AUTO_REGISTER(QLineMarkPanel)
-
 /*!
         \brief Constructor
 */
@@ -83,8 +81,8 @@ void QLineMarkPanel::paint(QPainter *p, QEditor *e) {
                  pageBottom = e->viewport()->height(),
                  contentsY = e->verticalOffset();
 
-    QString txt;
-    const QFontMetrics sfm(fontMetrics());
+    // QString txt;
+    // const QFontMetrics sfm(fontMetrics());
     QLineMarksInfoCenter *mic = QLineMarksInfoCenter::instance();
 
     n = d->lineNumber(contentsY);

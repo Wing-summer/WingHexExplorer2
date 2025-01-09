@@ -464,15 +464,24 @@ class WingEditorViewWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit WingEditorViewWidget(QWidget *parent = nullptr)
-        : QWidget(parent) {}
+    class Creator {
+    public:
+        Creator() = default;
+
+    public:
+        virtual QIcon icon() const = 0;
+
+        virtual QString name() const = 0;
+
+        virtual QString id() const = 0;
+
+    public:
+        virtual WingEditorViewWidget *create(QWidget *parent) const = 0;
+    };
 
 public:
-    virtual QIcon icon() const = 0;
-
-    virtual QString name() const = 0;
-
-    virtual QString id() const = 0;
+    explicit WingEditorViewWidget(QWidget *parent = nullptr)
+        : QWidget(parent) {}
 
 signals:
     void docSaved(bool saved);
@@ -601,7 +610,8 @@ public:
         return {};
     }
     virtual QList<PluginPage *> registeredPages() const { return {}; }
-    virtual QList<WingEditorViewWidget *> registeredEditorViewWidgets() const {
+    virtual QList<QSharedPointer<WingEditorViewWidget::Creator>>
+    registeredEditorViewWidgets() const {
         return {};
     }
 

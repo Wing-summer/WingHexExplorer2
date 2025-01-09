@@ -147,7 +147,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     }
 
     {
-        auto ev = new TestWingEditorViewWidget;
+        auto ev = QSharedPointer<TestWingEditorViewWidget::Creator>::create();
         _evws.append(ev);
     }
 
@@ -217,7 +217,7 @@ QList<WingHex::PluginPage *> TestPlugin::registeredPages() const {
     return _plgps;
 }
 
-QList<WingHex::WingEditorViewWidget *>
+QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>
 TestPlugin::registeredEditorViewWidgets() const {
     return _evws;
 }

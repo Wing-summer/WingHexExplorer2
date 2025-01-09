@@ -232,8 +232,38 @@ bool QHexView::event(QEvent *e) {
 
         QPoint abspos = absolutePosition(helpevent->pos());
         if (m_renderer->hitTest(abspos, &position, this->firstVisibleLine())) {
-            QString comments = m_document->metadata()->comments(
-                position.line, position.column);
+            QString comments;
+
+            auto mi = m_document->metadata()->get(position.offset());
+            if (mi.has_value()) {
+                QTextStream ss(&comments);
+
+                if (mi->foreground.isValid() && mi->foreground.alpha()) {
+                    auto color = mi->foreground.name();
+                    auto bcolor =
+                        QHexMetadata::generateContrastingColor(mi->foreground)
+                            .name();
+                    ss << QStringLiteral("<p>") << tr("Foreground:")
+                       << QStringLiteral("<b><a style=\"color:") << color
+                       << QStringLiteral(";background-color:") << bcolor
+                       << QStringLiteral("\">") << color
+                       << QStringLiteral("</a></b></p>");
+                }
+                if (mi->background.isValid() && mi->background.alpha()) {
+                    auto color = mi->background.name();
+                    auto bcolor =
+                        QHexMetadata::generateContrastingColor(mi->background)
+                            .name();
+                    ss << QStringLiteral("<p>") << tr("Background:")
+                       << QStringLiteral("<b><a style=\"color:") << color
+                       << QStringLiteral(";background-color:") << bcolor
+                       << QStringLiteral("\">") << color
+                       << QStringLiteral("</a></b></p>");
+                }
+                if (!mi->comment.isEmpty()) {
+                    ss << tr("Comment:") << mi->comment;
+                }
+            }
 
             if (!comments.isEmpty())
                 QToolTip::showText(helpevent->globalPos(), comments, this);
@@ -344,7 +374,7 @@ QByteArray QHexView::selectedBytes(qsizetype index) const {
 }
 
 QByteArray QHexView::previewSelectedBytes() const {
-    auto sel = m_cursor->previewSelection().normalized();
+    auto sel = m_cursor->previewSelection();
     return m_document->read(sel.begin.offset(), sel.length());
 }
 
