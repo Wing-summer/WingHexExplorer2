@@ -445,7 +445,7 @@ void ScriptMachine::cleanUpDbgContext(asIScriptContext *context) {
     asDebugger::deleteDbgContextInfo(dbgContext);
 }
 
-void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *fn) {
+void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *) {
     // do nothing
     // UserData_API is readonly and it will delete later by its allocator
     // UserData_PluginFn is just an id, not a valid pointer to data
@@ -516,38 +516,38 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
 }
 
 int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
-                                  AsPreprocesser *builder, void *userParam) {
-    Q_UNUSED(pragmaText);
-    Q_UNUSED(builder);
+                                  AsPreprocesser *builder,
+                                  const QString &sectionname, void *userParam) {
     Q_UNUSED(userParam);
-    // Maybe I will use these codes next time
 
-    // asIScriptEngine *engine = builder->GetEngine();
+    asIScriptEngine *engine = builder->GetEngine();
 
     // Filter the pragmaText so only what is of interest remains
     // With this the user can add comments and use different whitespaces
     // without affecting the result
-    // asUINT pos = 0;
-    // asUINT length = 0;
-    // QStringList tokens;
-    // while (pos < pragmaText.size()) {
-    //     asETokenClass tokenClass =
-    //         engine->ParseToken(pragmaText.data() + pos, 0, &length);
-    //     if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
-    //         tokenClass == asTC_VALUE) {
-    //         auto token = pragmaText.mid(pos, length);
-    //         tokens << token;
-    //     }
-    //     if (tokenClass == asTC_UNKNOWN)
-    //         return -1;
-    //     pos += length;
-    // }
 
-    // Interpret the result
-    // if (cleanText == " debug") {
-    //     // g_doDebug = true;
-    //     return 0;
-    // }
+    asUINT pos = 0;
+    asUINT length = 0;
+    QStringList tokens;
+    while (pos < pragmaText.size()) {
+        asETokenClass tokenClass =
+            engine->ParseToken(pragmaText.data() + pos, 0, &length);
+        if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
+            tokenClass == asTC_VALUE) {
+            auto token = pragmaText.mid(pos, length);
+            tokens << token;
+        }
+        if (tokenClass == asTC_UNKNOWN)
+            return -1;
+        pos += length;
+    }
+
+    auto pn = tokens.takeFirst();
+    if (PluginSystem::instance().dispatchEvent(
+            IWingPlugin::RegisteredEvent::ScriptPragma,
+            {quintptr(builder), sectionname, pn, tokens})) {
+        return 0;
+    }
 
     // The #pragma directive was not accepted
     return -1;

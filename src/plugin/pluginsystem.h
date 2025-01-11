@@ -31,6 +31,7 @@
 
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
+#include "plugin/iwingdevice.h"
 
 using namespace WingHex;
 
@@ -97,14 +98,34 @@ public:
     void setMainWindow(MainWindow *win);
     QWidget *mainWindow() const;
 
-    void LoadPlugin();
-    void UnloadPlugin();
+    void loadAllPlugin();
+    void unloadAllPlugin();
+
     const QList<IWingPlugin *> &plugins() const;
     const IWingPlugin *plugin(qsizetype index) const;
 
+    WingAngelAPI *angelApi() const;
+
+    void cleanUpEditorViewHandle(EditorView *view);
+
+    bool dispatchEvent(IWingPlugin::RegisteredEvent event,
+                       const QVariantList &params);
+
+private:
+    void loadExtPlugin();
+
+    void loadDevicePlugin();
+
+    void checkDirRootSafe(const QDir &dir);
+
+    template <typename T>
     void loadPlugin(const QFileInfo &filename, const QDir &setdir);
 
-    WingAngelAPI *angelApi() const;
+    bool closeEditor(IWingPlugin *plg, int handle, bool force);
+
+    bool checkPluginCanOpenedFile(IWingPlugin *plg);
+
+    bool checkPluginHasAlreadyOpened(IWingPlugin *plg, EditorView *view);
 
     EditorView *getCurrentPluginView(IWingPlugin *plg);
 
@@ -113,35 +134,34 @@ public:
     SharedUniqueId assginHandleForPluginView(IWingPlugin *plg,
                                              EditorView *view);
 
-    bool checkPluginCanOpenedFile(IWingPlugin *plg);
-
-    bool checkPluginHasAlreadyOpened(IWingPlugin *plg, EditorView *view);
-
-    void cleanUpEditorViewHandle(EditorView *view);
-
-    bool closeEditor(IWingPlugin *plg, int handle, bool force);
-
-    void dispatchEvent(IWingPlugin::RegisteredEvent event,
-                       const QVariantList &params);
-
 private:
     void registerFns(IWingPlugin *plg);
     void registerEnums(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
 
-    QString type2AngelScriptString(IWingPlugin::MetaType type, bool isArg);
+    static QString type2AngelScriptString(IWingPlugin::MetaType type,
+                                          bool isArg);
 
-    QString getScriptFnSig(const QString &fnName,
-                           const IWingPlugin::ScriptFnInfo &fninfo);
+    static QString getScriptFnSig(const QString &fnName,
+                                  const IWingPlugin::ScriptFnInfo &fninfo);
 
-    QString getPUID(IWingPlugin *p);
+    static QString getPUID(IWingPlugin *p);
 
     bool isPluginLoaded(const WingDependency &d);
+
+    bool checkThreadAff();
+
+    static QString packLogMessage(const char *header, const QString &msg);
+
+    EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
 
 private:
     void loadPlugin(IWingPlugin *p, const QString &fileName,
                     const std::optional<QDir> &setdir);
+    void loadPlugin(IWingDevice *p, const QString &fileName,
+                    const std::optional<QDir> &setdir);
 
+private:
     void connectInterface(IWingPlugin *plg);
     void connectLoadingInterface(IWingPlugin *plg);
     void connectBaseInterface(IWingPlugin *plg);
@@ -149,11 +169,17 @@ private:
     void connectControllerInterface(IWingPlugin *plg);
     void connectUIInterface(IWingPlugin *plg);
 
-    bool checkThreadAff();
-    static QString packLogMessage(const char *header, const QString &msg);
+private:
+    void connectInterface(IWingDevice *plg);
+    void connectLoadingInterface(IWingDevice *plg);
 
-    EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
+private:
+    void connectBaseInterface(IWingPluginBase *plg);
+    void connectUIInterface(IWingPluginBase *plg);
+    void registerPluginDockWidgets(IWingPluginBase *p);
+    void registerPluginPages(IWingPluginBase *p);
 
+private:
 private:
     template <typename T>
     T readBasicTypeContent(IWingPlugin *plg, qsizetype offset) {

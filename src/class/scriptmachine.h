@@ -133,7 +133,8 @@ private:
                                       asIScriptContext *ctx, void *param);
 
     static int pragmaCallback(const QByteArray &pragmaText,
-                              AsPreprocesser *builder, void *userParam);
+                              AsPreprocesser *builder,
+                              const QString &sectionname, void *userParam);
 
     static int includeCallback(const QString &include, bool quotedInclude,
                                const QString &from, AsPreprocesser *builder,

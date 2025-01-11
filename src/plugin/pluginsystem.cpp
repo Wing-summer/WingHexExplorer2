@@ -65,6 +65,7 @@ const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
     return _loadedplgs.at(index);
 }
 
+template <typename T>
 void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
 
@@ -72,7 +73,7 @@ void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
         auto fileName = fileinfo.absoluteFilePath();
         QPluginLoader loader(fileName, this);
         Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
-        auto p = qobject_cast<IWingPlugin *>(loader.instance());
+        auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
@@ -203,7 +204,7 @@ bool PluginSystem::closeEditor(IWingPlugin *plg, int handle, bool force) {
     return true;
 }
 
-void PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
+bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                                  const QVariantList &params) {
     switch (event) {
     case WingHex::IWingPlugin::RegisteredEvent::SelectionChanged: {
@@ -271,8 +272,141 @@ void PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                                  {});
         }
     } break;
+    case WingHex::IWingPlugin::RegisteredEvent::ScriptPragma: {
+        Q_ASSERT(params.size() == 4);
+        auto pproc =
+            reinterpret_cast<AsPreprocesser *>(params.at(0).value<quintptr>());
+        auto section = params.at(1).toString();
+        auto plgID = params.at(2).toString();
+        auto &es = _evplgs[event];
+        auto r = std::find_if(
+            es.constBegin(), es.constEnd(),
+            [plgID](IWingPlugin *p) { return getPUID(p) == plgID; });
+        if (r == es.constEnd()) {
+            return false;
+        }
+        auto plg = *r;
+        if (plg->eventOnScriptPragma(params.at(3).toStringList())) {
+            auto codes = pproc->ReadLineAndSkip(section);
+            while (true) {
+                if (codes.has_value()) {
+                    plg->eventScriptPragmaLineStep(codes.value());
+                } else {
+                    break;
+                }
+            }
+            plg->eventScriptPragmaFinished();
+        }
+    } break;
     default:
-        break;
+        return false;
+    }
+    return true;
+}
+
+void PluginSystem::loadExtPlugin() {
+#ifdef QT_DEBUG
+    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                   QStringLiteral("plugin"));
+#ifdef Q_OS_WIN
+    plugindir.setNameFilters({"*.dll", "*.wingplg"});
+#else
+    plugindir.setNameFilters({"*.so", "*.wingplg"});
+#endif
+#else
+    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                   QStringLiteral("plugin"));
+    plugindir.setNameFilters({"*.wingplg"});
+#endif
+
+    checkDirRootSafe(plugindir);
+
+    auto plgs = plugindir.entryInfoList();
+    Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
+
+    QDir udir(Utilities::getAppDataPath());
+    auto plgset = QStringLiteral("plgset");
+    udir.mkdir(plgset);
+    if (!udir.cd(plgset)) {
+        throw CrashCode::PluginSetting;
+    }
+
+    for (auto &item : plgs) {
+        loadPlugin<IWingPlugin>(item, udir);
+    }
+
+    if (!_lazyplgs.isEmpty()) {
+        decltype(_lazyplgs) lazyplgs;
+        lazyplgs.swap(_lazyplgs);
+
+        for (auto &item : lazyplgs) {
+            loadPlugin(item.first, item.second, udir);
+        }
+    }
+
+    if (!_lazyplgs.isEmpty()) {
+        Logger::critical(tr("PluginLoadingFailedSummary"));
+        Logger::_log({});
+        for (auto &lplg : _lazyplgs) {
+            auto plg = lplg.first;
+            Logger::critical(tr("- PluginName:") + plg->pluginName());
+            Logger::critical(tr("- Dependencies:"));
+            for (auto &d : plg->dependencies()) {
+                Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
+                Logger::critical(QString(4, ' ') + tr("Version:") +
+                                 QString::number(d.version));
+                Logger::critical(QString(4, ' ') + tr("MD5:") + d.md5);
+            }
+            plg->deleteLater();
+        }
+        _lazyplgs.clear();
+    }
+
+    Logger::info(tr("PluginLoadingFinished"));
+}
+
+void PluginSystem::loadDevicePlugin() {
+#ifdef QT_DEBUG
+    QDir devdir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                QStringLiteral("devdrv"));
+#ifdef Q_OS_WIN
+    devdir.setNameFilters({"*.dll", "*.wingdrv"});
+#else
+    devdir.setNameFilters({"*.so", "*.wingdrv"});
+#endif
+#else
+    QDir devdir(QCoreApplication::applicationDirPath() + QDir::separator() +
+                QStringLiteral("devdrv"));
+    devdir.setNameFilters({"*.wingdrv"});
+#endif
+
+    checkDirRootSafe(devdir);
+
+    auto plgs = devdir.entryInfoList();
+    Logger::info(tr("FoundDrvPluginCount") + QString::number(plgs.count()));
+
+    QDir udir(Utilities::getAppDataPath());
+    auto plgset = QStringLiteral("drvset");
+    udir.mkdir(plgset);
+    if (!udir.cd(plgset)) {
+        throw CrashCode::PluginSetting;
+    }
+
+    for (auto &item : plgs) {
+        loadPlugin<IWingDevice>(item, udir);
+    }
+}
+
+void PluginSystem::checkDirRootSafe(const QDir &dir) {
+    auto testFileName =
+        dir.absoluteFilePath(QUuid::createUuid().toString(QUuid::Id128));
+
+    QFile f(testFileName);
+    if (f.open(QFile::WriteOnly)) {
+        f.close();
+        f.remove();
+        Logger::warning(QStringLiteral("<i><u>") % tr("UnsafePluginDir") %
+                        QStringLiteral("</u></i>"));
     }
 }
 
@@ -345,6 +479,10 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::FileClosed)) {
         _evplgs[IWingPlugin::RegisteredEvent::FileClosed].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptPragma)) {
+        _evplgs[IWingPlugin::RegisteredEvent::ScriptPragma].append(plg);
     }
 }
 
@@ -608,82 +746,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
             }
         }
 
-        auto dockWidgets = p->registeredDockWidgets();
-        if (!dockWidgets.isEmpty()) {
-            for (auto &info : dockWidgets) {
-                auto widgetName = info.widgetName.trimmed();
-                auto displayName = info.displayName.trimmed();
-                if (displayName.isEmpty()) {
-                    displayName = widgetName;
-                }
-                if (widgetName.isEmpty()) {
-                    Logger::warning(tr("EmptyNameDockWidget:") %
-                                    QStringLiteral("{ ") % p->pluginName() %
-                                    QStringLiteral(" }"));
-                    continue;
-                }
-
-                auto inch = std::find_if_not(
-                    widgetName.begin(), widgetName.end(),
-                    [](const QChar &ch) { return ch.isLetterOrNumber(); });
-                if (inch != widgetName.end()) {
-                    Logger::warning(tr("InvalidNameDockWidget:") %
-                                    QStringLiteral("{ ") % p->pluginName() %
-                                    QStringLiteral(" } ") % widgetName);
-                    continue;
-                }
-
-                if (info.widget == nullptr) {
-                    Logger::warning(tr("InvalidNullDockWidget:") %
-                                    QStringLiteral("{ ") % p->pluginName() %
-                                    QStringLiteral(" } ") % widgetName %
-                                    QStringLiteral(" ( ") % displayName %
-                                    QStringLiteral(" )"));
-                    continue;
-                }
-
-                auto dw = _win->buildDockWidget(_win->m_dock, widgetName,
-                                                displayName, info.widget,
-                                                MainWindow::PLUGIN_VIEWS);
-                _raisedw.insert(info.widget, dw);
-
-                switch (info.area) {
-                case Qt::LeftDockWidgetArea: {
-                    if (_win->m_leftViewArea == nullptr) {
-                        _win->m_leftViewArea = _win->m_dock->addDockWidget(
-                            ads::LeftDockWidgetArea, dw);
-                    } else {
-                        _win->m_leftViewArea = _win->m_dock->addDockWidget(
-                            ads::CenterDockWidgetArea, dw,
-                            _win->m_leftViewArea);
-                    }
-                } break;
-                case Qt::RightDockWidgetArea:
-                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
-                                                _win->m_rightViewArea);
-                    break;
-                case Qt::TopDockWidgetArea: {
-                    if (_win->m_topViewArea == nullptr) {
-                        _win->m_topViewArea = _win->m_dock->addDockWidget(
-                            ads::LeftDockWidgetArea, dw);
-                    } else {
-                        _win->m_topViewArea = _win->m_dock->addDockWidget(
-                            ads::CenterDockWidgetArea, dw, _win->m_topViewArea);
-                    }
-                } break;
-                case Qt::BottomDockWidgetArea:
-                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
-                                                _win->m_bottomViewArea);
-                    break;
-                case Qt::DockWidgetArea_Mask:
-                case Qt::NoDockWidgetArea:
-                    _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
-                                                _win->m_rightViewArea);
-                    dw->hide();
-                    break;
-                }
-            }
-        }
+        registerPluginDockWidgets(p);
 
         {
             auto menu = p->registeredHexContextMenu();
@@ -710,15 +773,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
             }
         }
 
-        {
-            auto rp = p->registeredPages();
-            if (!rp.isEmpty()) {
-                for (auto &page : rp) {
-                    page->setProperty("__plg__", QVariant::fromValue(p));
-                }
-                _win->m_plgPages.append(rp);
-            }
-        }
+        registerPluginPages(p);
 
         registerFns(p);
         registerEnums(p);
@@ -734,6 +789,145 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
     }
 }
 
+void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
+                              const std::optional<QDir> &setdir) {
+    Q_UNUSED(fileName);
+
+    QTranslator *p_tr = nullptr;
+
+    try {
+        if (p->signature() != WINGSUMMER) {
+            throw tr("ErrLoadPluginSign");
+        }
+
+        if (p->sdkVersion() != SDKVERSION) {
+            throw tr("ErrLoadPluginSDKVersion");
+        }
+
+        if (!p->pluginName().trimmed().length()) {
+            throw tr("ErrLoadPluginNoName");
+        }
+
+        Logger::warning(tr("PluginName :") + p->pluginName());
+        Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
+        Logger::warning(tr("PluginWidgetRegister"));
+
+        // TODO
+
+        connectLoadingInterface(p);
+
+        {
+            std::unique_ptr<QSettings> setp(nullptr);
+            if (setdir.has_value()) {
+                setp = std::make_unique<QSettings>(
+                    setdir->absoluteFilePath(p->metaObject()->className()),
+                    QSettings::Format::IniFormat);
+            }
+
+            if (!p->init(setp)) {
+                setp->deleteLater();
+                throw tr("ErrLoadInitPlugin");
+            }
+        }
+
+        registerPluginPages(p);
+        connectInterface(p);
+
+    } catch (const QString &error) {
+        Logger::critical(error);
+        if (p_tr) {
+            p_tr->deleteLater();
+        }
+    }
+}
+
+void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
+    auto dockWidgets = p->registeredDockWidgets();
+    if (!dockWidgets.isEmpty()) {
+        for (auto &info : dockWidgets) {
+            auto widgetName = info.widgetName.trimmed();
+            auto displayName = info.displayName.trimmed();
+            if (displayName.isEmpty()) {
+                displayName = widgetName;
+            }
+            if (widgetName.isEmpty()) {
+                Logger::warning(tr("EmptyNameDockWidget:") %
+                                QStringLiteral("{ ") % p->pluginName() %
+                                QStringLiteral(" }"));
+                continue;
+            }
+
+            auto inch = std::find_if_not(
+                widgetName.begin(), widgetName.end(),
+                [](const QChar &ch) { return ch.isLetterOrNumber(); });
+            if (inch != widgetName.end()) {
+                Logger::warning(tr("InvalidNameDockWidget:") %
+                                QStringLiteral("{ ") % p->pluginName() %
+                                QStringLiteral(" } ") % widgetName);
+                continue;
+            }
+
+            if (info.widget == nullptr) {
+                Logger::warning(
+                    tr("InvalidNullDockWidget:") % QStringLiteral("{ ") %
+                    p->pluginName() % QStringLiteral(" } ") % widgetName %
+                    QStringLiteral(" ( ") % displayName % QStringLiteral(" )"));
+                continue;
+            }
+
+            auto dw =
+                _win->buildDockWidget(_win->m_dock, widgetName, displayName,
+                                      info.widget, MainWindow::PLUGIN_VIEWS);
+            _raisedw.insert(info.widget, dw);
+
+            switch (info.area) {
+            case Qt::LeftDockWidgetArea: {
+                if (_win->m_leftViewArea == nullptr) {
+                    _win->m_leftViewArea = _win->m_dock->addDockWidget(
+                        ads::LeftDockWidgetArea, dw);
+                } else {
+                    _win->m_leftViewArea = _win->m_dock->addDockWidget(
+                        ads::CenterDockWidgetArea, dw, _win->m_leftViewArea);
+                }
+            } break;
+            case Qt::RightDockWidgetArea:
+                _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                            _win->m_rightViewArea);
+                break;
+            case Qt::TopDockWidgetArea: {
+                if (_win->m_topViewArea == nullptr) {
+                    _win->m_topViewArea = _win->m_dock->addDockWidget(
+                        ads::LeftDockWidgetArea, dw);
+                } else {
+                    _win->m_topViewArea = _win->m_dock->addDockWidget(
+                        ads::CenterDockWidgetArea, dw, _win->m_topViewArea);
+                }
+            } break;
+            case Qt::BottomDockWidgetArea:
+                _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                            _win->m_bottomViewArea);
+                break;
+            case Qt::DockWidgetArea_Mask:
+            case Qt::NoDockWidgetArea:
+                _win->m_dock->addDockWidget(ads::CenterDockWidgetArea, dw,
+                                            _win->m_rightViewArea);
+                dw->hide();
+                break;
+            }
+        }
+    }
+}
+
+void PluginSystem::registerPluginPages(IWingPluginBase *p) {
+    auto rp = p->registeredPages();
+    if (!rp.isEmpty()) {
+        for (auto &page : rp) {
+            page->setProperty("__plg__", QVariant::fromValue(p));
+        }
+        _win->m_plgPages.append(rp);
+    }
+}
+
 void PluginSystem::connectInterface(IWingPlugin *plg) {
     connectReaderInterface(plg);
     connectControllerInterface(plg);
@@ -745,66 +939,7 @@ void PluginSystem::connectLoadingInterface(IWingPlugin *plg) {
 }
 
 void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
-    connect(plg, &IWingPlugin::toast, this,
-            [=](const QPixmap &icon, const QString &message) {
-                if (!checkThreadAff()) {
-                    return;
-                }
-                if (message.isEmpty()) {
-                    return;
-                }
-                Toast::toast(_win, icon, message);
-            });
-    connect(plg, &IWingPlugin::trace, this, [=](const QString &message) {
-        Logger::trace(packLogMessage(plg->metaObject()->className(), message));
-    });
-    connect(plg, &IWingPlugin::debug, this, [=](const QString &message) {
-        Logger::debug(packLogMessage(plg->metaObject()->className(), message));
-    });
-    connect(plg, &IWingPlugin::info, this, [=](const QString &message) {
-        Logger::info(packLogMessage(plg->metaObject()->className(), message));
-    });
-    connect(plg, &IWingPlugin::warn, this, [=](const QString &message) {
-        Logger::warning(
-            packLogMessage(plg->metaObject()->className(), message));
-    });
-    connect(plg, &IWingPlugin::error, this, [=](const QString &message) {
-        Logger::critical(
-            packLogMessage(plg->metaObject()->className(), message));
-    });
-    connect(plg, &IWingPlugin::currentAppTheme, this,
-            []() -> WingHex::AppTheme {
-                auto theme = SkinManager::instance().currentTheme();
-                switch (theme) {
-                case SkinManager::Theme::Dark:
-                    return WingHex::AppTheme::Dark;
-                case SkinManager::Theme::Light:
-                    return WingHex::AppTheme::Light;
-                }
-                return WingHex::AppTheme::Dark; // fallback to default theme
-            });
-    connect(plg, &IWingPlugin::createDialog, this,
-            [=](QWidget *w) -> QDialog * {
-                if (!checkThreadAff()) {
-                    return nullptr;
-                }
-                if (w) {
-                    auto d = new FramelessDialogBase;
-                    d->buildUpContent(w);
-                    d->setWindowTitle(w->windowTitle());
-                    d->setWindowIcon(w->windowIcon());
-                    return d;
-                } else {
-                    return nullptr;
-                }
-            });
-    connect(plg, &IWingPlugin::raiseDockWidget, this, [=](QWidget *w) -> bool {
-        if (_raisedw.contains(w)) {
-            _raisedw.value(w)->raise();
-            return true;
-        }
-        return false;
-    });
+    connectBaseInterface(dynamic_cast<IWingPluginBase *>(plg));
     connect(
         plg,
         QOverload<const QString &, const char *, Qt::ConnectionType,
@@ -2064,6 +2199,286 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 }
 
 void PluginSystem::connectUIInterface(IWingPlugin *plg) {
+    connectUIInterface(static_cast<IWingPluginBase *>(plg));
+
+    auto visual = &plg->visual;
+    connect(visual, &WingPlugin::DataVisual::updateText, _win,
+            [=](const QString &txt, const QString &title) -> bool {
+                _win->m_infotxt->setProperty("__TITLE__", title);
+                _win->m_infotxt->setText(txt);
+                return true;
+            });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextList, _win,
+        [=](const QStringList &data, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            auto oldmodel = _win->m_infolist->model();
+            if (oldmodel) {
+                oldmodel->deleteLater();
+            }
+            _win->m_infolist->setProperty("__TITLE__", title);
+            auto model = new QStringListModel(data);
+            _win->m_infolist->setModel(model);
+            _win->m_infoclickfn = clicked;
+            _win->m_infodblclickfn = dblClicked;
+            return true;
+        });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextListByModel, _win,
+        [=](QAbstractItemModel *model, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            if (model) {
+                auto oldmodel = _win->m_infolist->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+                _win->m_infolist->setProperty("__TITLE__", title);
+                _win->m_infolist->setModel(model);
+                _win->m_infoclickfn = clicked;
+                _win->m_infodblclickfn = dblClicked;
+                return true;
+            }
+            return false;
+        });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextTree, _win,
+        [=](const QString &json, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            auto oldmodel = _win->m_infotree->model();
+            if (oldmodel) {
+                oldmodel->deleteLater();
+            }
+            _win->m_infotree->setProperty("__TITLE__", title);
+            auto model = new QJsonModel;
+            if (model->loadJson(json.toUtf8())) {
+                _win->m_infotree->setModel(model);
+                _win->m_infotreeclickfn = clicked;
+                _win->m_infotreedblclickfn = dblClicked;
+                return true;
+            }
+            return false;
+        });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextTreeByModel, _win,
+        [=](QAbstractItemModel *model, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            if (model) {
+                auto oldmodel = _win->m_infotree->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+                _win->m_infotree->setProperty("__TITLE__", title);
+                _win->m_infotree->setModel(model);
+                _win->m_infotreeclickfn = clicked;
+                _win->m_infotreedblclickfn = dblClicked;
+                return true;
+            }
+            return false;
+        });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextTable, _win,
+        [=](const QString &json, const QStringList &headers,
+            const QStringList &headerNames, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            auto oldmodel = _win->m_infotable->model();
+            if (oldmodel) {
+                oldmodel->deleteLater();
+            }
+
+            QJsonTableModel::Header header;
+            if (headers.size() > headerNames.size()) {
+                for (auto &name : headers) {
+                    QJsonTableModel::Heading heading;
+                    heading["index"] = name;
+                    heading["title"] = name;
+                    header.append(heading);
+                }
+            } else {
+                auto np = headerNames.cbegin();
+                for (auto p = headers.cbegin(); p != headers.cend();
+                     ++p, ++np) {
+                    QJsonTableModel::Heading heading;
+                    heading["index"] = *p;
+                    heading["title"] = *np;
+                    header.append(heading);
+                }
+            }
+            _win->m_infotable->setProperty("__TITLE__", title);
+            auto model = new QJsonTableModel(header);
+            model->setJson(QJsonDocument::fromJson(json.toUtf8()));
+            _win->m_infotable->setModel(model);
+            _win->m_infotableclickfn = clicked;
+            _win->m_infotabledblclickfn = dblClicked;
+            return true;
+        });
+    connect(
+        visual, &WingPlugin::DataVisual::updateTextTableByModel, _win,
+        [=](QAbstractItemModel *model, const QString &title,
+            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
+            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
+            -> bool {
+            if (model) {
+                auto oldmodel = _win->m_infotable->model();
+                if (oldmodel) {
+                    oldmodel->deleteLater();
+                }
+                _win->m_infotable->setProperty("__TITLE__", title);
+                _win->m_infotable->setModel(model);
+                _win->m_infotableclickfn = clicked;
+                _win->m_infotabledblclickfn = dblClicked;
+                return true;
+            }
+            return false;
+        });
+}
+
+void PluginSystem::connectInterface(IWingDevice *plg) {
+    Q_UNUSED(plg);
+    // do nothing
+}
+
+void PluginSystem::connectLoadingInterface(IWingDevice *plg) {
+    connectBaseInterface(plg);
+    connectUIInterface(plg);
+}
+
+bool PluginSystem::checkThreadAff() {
+    if (QThread::currentThread() != qApp->thread()) {
+        Logger::warning(tr("Not allowed operation in non-UI thread"));
+        return false;
+    }
+    return true;
+}
+
+QString PluginSystem::packLogMessage(const char *header, const QString &msg) {
+    return QStringLiteral("{") + header + QStringLiteral("} ") + msg;
+}
+
+PluginSystem &PluginSystem::instance() {
+    static PluginSystem ins;
+    return ins;
+}
+
+void PluginSystem::setMainWindow(MainWindow *win) { _win = win; }
+
+QWidget *PluginSystem::mainWindow() const { return _win; }
+
+void PluginSystem::loadAllPlugin() {
+    Q_ASSERT(_win);
+
+    auto &set = SettingManager::instance();
+    if (set.scriptEnabled()) {
+        _angelplg = new WingAngelAPI;
+        loadPlugin(_angelplg, {}, std::nullopt);
+    }
+
+    bool ok;
+    auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
+    if (displg > 0 || !set.enablePlugin()) {
+        return;
+    }
+
+    if (Utilities::isRoot()) {
+        if (!set.enablePlgInRoot()) {
+            return;
+        }
+    }
+
+    loadDevicePlugin();
+    loadExtPlugin();
+}
+
+EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *sender) const {
+    if (sender) {
+        auto editor = m_plgviewMap.value(sender);
+        if (editor) {
+            return editor;
+        } else {
+            return _win->currentEditor();
+        }
+    }
+    return nullptr;
+}
+
+void PluginSystem::connectBaseInterface(IWingPluginBase *plg) {
+    Q_ASSERT(plg);
+
+    connect(plg, &IWingPluginBase::toast, this,
+            [=](const QPixmap &icon, const QString &message) {
+                if (!checkThreadAff()) {
+                    return;
+                }
+                if (message.isEmpty()) {
+                    return;
+                }
+                Toast::toast(_win, icon, message);
+            });
+    connect(plg, &IWingPluginBase::trace, this, [=](const QString &message) {
+        Logger::trace(packLogMessage(plg->metaObject()->className(), message));
+    });
+    connect(plg, &IWingPluginBase::debug, this, [=](const QString &message) {
+        Logger::debug(packLogMessage(plg->metaObject()->className(), message));
+    });
+    connect(plg, &IWingPluginBase::info, this, [=](const QString &message) {
+        Logger::info(packLogMessage(plg->metaObject()->className(), message));
+    });
+    connect(plg, &IWingPluginBase::warn, this, [=](const QString &message) {
+        Logger::warning(
+            packLogMessage(plg->metaObject()->className(), message));
+    });
+    connect(plg, &IWingPluginBase::error, this, [=](const QString &message) {
+        Logger::critical(
+            packLogMessage(plg->metaObject()->className(), message));
+    });
+    connect(plg, &IWingPluginBase::currentAppTheme, this,
+            []() -> WingHex::AppTheme {
+                auto theme = SkinManager::instance().currentTheme();
+                switch (theme) {
+                case SkinManager::Theme::Dark:
+                    return WingHex::AppTheme::Dark;
+                case SkinManager::Theme::Light:
+                    return WingHex::AppTheme::Light;
+                }
+                return WingHex::AppTheme::Dark; // fallback to default theme
+            });
+    connect(plg, &IWingPluginBase::createDialog, this,
+            [=](QWidget *w) -> QDialog * {
+                if (!checkThreadAff()) {
+                    return nullptr;
+                }
+                if (w) {
+                    auto d = new FramelessDialogBase;
+                    d->buildUpContent(w);
+                    d->setWindowTitle(w->windowTitle());
+                    d->setWindowIcon(w->windowIcon());
+                    return d;
+                } else {
+                    return nullptr;
+                }
+            });
+    connect(plg, &IWingPluginBase::raiseDockWidget, this,
+            [=](QWidget *w) -> bool {
+                if (_raisedw.contains(w)) {
+                    _raisedw.value(w)->raise();
+                    return true;
+                }
+                return false;
+            });
+}
+
+void PluginSystem::connectUIInterface(IWingPluginBase *plg) {
+    Q_ASSERT(plg);
+
     auto msgbox = &plg->msgbox;
     connect(msgbox, &WingPlugin::MessageBox::aboutQt, _win,
             [this](QWidget *parent, const QString &title) -> void {
@@ -2241,269 +2656,4 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
                 }
                 return {};
             });
-
-    auto visual = &plg->visual;
-    connect(visual, &WingPlugin::DataVisual::updateText, _win,
-            [=](const QString &txt, const QString &title) -> bool {
-                _win->m_infotxt->setProperty("__TITLE__", title);
-                _win->m_infotxt->setText(txt);
-                return true;
-            });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextList, _win,
-        [=](const QStringList &data, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            auto oldmodel = _win->m_infolist->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-            _win->m_infolist->setProperty("__TITLE__", title);
-            auto model = new QStringListModel(data);
-            _win->m_infolist->setModel(model);
-            _win->m_infoclickfn = clicked;
-            _win->m_infodblclickfn = dblClicked;
-            return true;
-        });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextListByModel, _win,
-        [=](QAbstractItemModel *model, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            if (model) {
-                auto oldmodel = _win->m_infolist->model();
-                if (oldmodel) {
-                    oldmodel->deleteLater();
-                }
-                _win->m_infolist->setProperty("__TITLE__", title);
-                _win->m_infolist->setModel(model);
-                _win->m_infoclickfn = clicked;
-                _win->m_infodblclickfn = dblClicked;
-                return true;
-            }
-            return false;
-        });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextTree, _win,
-        [=](const QString &json, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            auto oldmodel = _win->m_infotree->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-            _win->m_infotree->setProperty("__TITLE__", title);
-            auto model = new QJsonModel;
-            if (model->loadJson(json.toUtf8())) {
-                _win->m_infotree->setModel(model);
-                _win->m_infotreeclickfn = clicked;
-                _win->m_infotreedblclickfn = dblClicked;
-                return true;
-            }
-            return false;
-        });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextTreeByModel, _win,
-        [=](QAbstractItemModel *model, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            if (model) {
-                auto oldmodel = _win->m_infotree->model();
-                if (oldmodel) {
-                    oldmodel->deleteLater();
-                }
-                _win->m_infotree->setProperty("__TITLE__", title);
-                _win->m_infotree->setModel(model);
-                _win->m_infotreeclickfn = clicked;
-                _win->m_infotreedblclickfn = dblClicked;
-                return true;
-            }
-            return false;
-        });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextTable, _win,
-        [=](const QString &json, const QStringList &headers,
-            const QStringList &headerNames, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            auto oldmodel = _win->m_infotable->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-
-            QJsonTableModel::Header header;
-            if (headers.size() > headerNames.size()) {
-                for (auto &name : headers) {
-                    QJsonTableModel::Heading heading;
-                    heading["index"] = name;
-                    heading["title"] = name;
-                    header.append(heading);
-                }
-            } else {
-                auto np = headerNames.cbegin();
-                for (auto p = headers.cbegin(); p != headers.cend();
-                     ++p, ++np) {
-                    QJsonTableModel::Heading heading;
-                    heading["index"] = *p;
-                    heading["title"] = *np;
-                    header.append(heading);
-                }
-            }
-            _win->m_infotable->setProperty("__TITLE__", title);
-            auto model = new QJsonTableModel(header);
-            model->setJson(QJsonDocument::fromJson(json.toUtf8()));
-            _win->m_infotable->setModel(model);
-            _win->m_infotableclickfn = clicked;
-            _win->m_infotabledblclickfn = dblClicked;
-            return true;
-        });
-    connect(
-        visual, &WingPlugin::DataVisual::updateTextTableByModel, _win,
-        [=](QAbstractItemModel *model, const QString &title,
-            WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
-            WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
-            -> bool {
-            if (model) {
-                auto oldmodel = _win->m_infotable->model();
-                if (oldmodel) {
-                    oldmodel->deleteLater();
-                }
-                _win->m_infotable->setProperty("__TITLE__", title);
-                _win->m_infotable->setModel(model);
-                _win->m_infotableclickfn = clicked;
-                _win->m_infotabledblclickfn = dblClicked;
-                return true;
-            }
-            return false;
-        });
-}
-
-bool PluginSystem::checkThreadAff() {
-    if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Not allowed operation in non-UI thread"));
-        return false;
-    }
-    return true;
-}
-
-QString PluginSystem::packLogMessage(const char *header, const QString &msg) {
-    return QStringLiteral("{") + header + QStringLiteral("} ") + msg;
-}
-
-PluginSystem &PluginSystem::instance() {
-    static PluginSystem ins;
-    return ins;
-}
-
-void PluginSystem::setMainWindow(MainWindow *win) { _win = win; }
-
-QWidget *PluginSystem::mainWindow() const { return _win; }
-
-void PluginSystem::LoadPlugin() {
-    Q_ASSERT(_win);
-
-    auto &set = SettingManager::instance();
-    if (set.scriptEnabled()) {
-        _angelplg = new WingAngelAPI;
-
-        loadPlugin(_angelplg, {}, std::nullopt);
-    }
-
-    bool ok;
-    auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
-    if (displg > 0 || !set.enablePlugin()) {
-        return;
-    }
-
-#ifdef QT_DEBUG
-    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
-                   QStringLiteral("plugin"));
-    // 这是我的插件调试目录，如果调试插件，请更换路径
-#ifdef Q_OS_WIN
-    plugindir.setNameFilters({"*.dll", "*.wingplg"});
-#else
-    plugindir.setNameFilters({"*.so", "*.wingplg"});
-#endif
-#else
-    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
-                   QStringLiteral("plugin"));
-    plugindir.setNameFilters({"*.wingplg"});
-#endif
-
-    if (Utilities::isRoot()) {
-        if (!set.enablePlgInRoot()) {
-            return;
-        }
-    } else {
-        auto testFileName = plugindir.absoluteFilePath(
-            QUuid::createUuid().toString(QUuid::Id128));
-
-        QFile f(testFileName);
-        if (f.open(QFile::WriteOnly)) {
-            f.close();
-            f.remove();
-            Logger::warning(QStringLiteral("<i><u>") % tr("UnsafePluginDir") %
-                            QStringLiteral("</u></i>"));
-        }
-    }
-
-    auto plgs = plugindir.entryInfoList();
-    Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
-
-    QDir udir(Utilities::getAppDataPath());
-    auto plgset = QStringLiteral("plgset");
-    udir.mkdir(plgset);
-    if (!udir.cd(plgset)) {
-        throw CrashCode::PluginSetting;
-    }
-
-    for (auto &item : plgs) {
-        loadPlugin(item, udir);
-    }
-
-    if (!_lazyplgs.isEmpty()) {
-        decltype(_lazyplgs) lazyplgs;
-        lazyplgs.swap(_lazyplgs);
-
-        for (auto &item : lazyplgs) {
-            loadPlugin(item.first, item.second, udir);
-        }
-    }
-
-    if (!_lazyplgs.isEmpty()) {
-        Logger::critical(tr("PluginLoadingFailedSummary"));
-        Logger::_log({});
-        for (auto &lplg : _lazyplgs) {
-            auto plg = lplg.first;
-            Logger::critical(tr("- PluginName:") + plg->pluginName());
-            Logger::critical(tr("- Dependencies:"));
-            for (auto &d : plg->dependencies()) {
-                Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
-                Logger::critical(QString(4, ' ') + tr("Version:") +
-                                 QString::number(d.version));
-                Logger::critical(QString(4, ' ') + tr("MD5:") + d.md5);
-            }
-            plg->deleteLater();
-        }
-        _lazyplgs.clear();
-    }
-
-    Logger::info(tr("PluginLoadingFinished"));
-}
-
-EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *sender) const {
-    if (sender) {
-        auto editor = m_plgviewMap.value(sender);
-        if (editor) {
-            return editor;
-        } else {
-            return _win->currentEditor();
-        }
-    }
-    return nullptr;
 }

@@ -21,25 +21,20 @@
 #ifndef IWINGPLUGIN_H
 #define IWINGPLUGIN_H
 
-#include "settingpage.h"
+#include "iwingpluginbase.h"
 
 #include <functional>
-#include <memory>
 
 #include <QCryptographicHash>
 #include <QDockWidget>
 #include <QList>
 #include <QMap>
 #include <QMenu>
-#include <QObject>
 #include <QToolBar>
 #include <QToolButton>
 #include <QWidget>
 #include <QtCore>
 
-#include <QFileDialog>
-#include <QInputDialog>
-#include <QMessageBox>
 #include <QMetaObject>
 
 /**
@@ -48,19 +43,6 @@
  */
 
 namespace WingHex {
-
-using qusizetype = QIntegerForSizeof<std::size_t>::Unsigned;
-
-Q_DECL_UNUSED constexpr auto SDKVERSION = 15;
-
-Q_DECL_UNUSED static QString PLUGINDIR() {
-    return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
-}
-
-Q_DECL_UNUSED static QString HOSTRESPIMG(const QString &name) {
-    return QStringLiteral(":/com.wingsummer.winghex/images/") + name +
-           QStringLiteral(".png");
-}
 
 Q_NAMESPACE
 enum ErrFile : int {
@@ -289,108 +271,6 @@ signals:
     bool closeAllPluginFiles();
 };
 
-class MessageBox : public QObject {
-    Q_OBJECT
-signals:
-    void aboutQt(QWidget *parent = nullptr, const QString &title = QString());
-
-    QMessageBox::StandardButton information(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-
-    QMessageBox::StandardButton question(
-        QWidget *parent, const QString &title, const QString &text,
-        QMessageBox::StandardButtons buttons =
-            QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
-        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-
-    QMessageBox::StandardButton
-    warning(QWidget *parent, const QString &title, const QString &text,
-            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-
-    QMessageBox::StandardButton
-    critical(QWidget *parent, const QString &title, const QString &text,
-             QMessageBox::StandardButtons buttons = QMessageBox::Ok,
-             QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-
-    void about(QWidget *parent, const QString &title, const QString &text);
-
-    QMessageBox::StandardButton
-    msgbox(QWidget *parent, QMessageBox::Icon icon, const QString &title,
-           const QString &text,
-           QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
-           QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
-};
-
-class InputBox : public QObject {
-    Q_OBJECT
-signals:
-    Q_REQUIRED_RESULT QString
-    getText(QWidget *parent, const QString &title, const QString &label,
-            QLineEdit::EchoMode echo = QLineEdit::Normal,
-            const QString &text = QString(), bool *ok = nullptr,
-            Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
-    Q_REQUIRED_RESULT QString getMultiLineText(
-        QWidget *parent, const QString &title, const QString &label,
-        const QString &text = QString(), bool *ok = nullptr,
-        Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
-
-    Q_REQUIRED_RESULT QString
-    getItem(QWidget *parent, const QString &title, const QString &label,
-            const QStringList &items, int current = 0, bool editable = true,
-            bool *ok = nullptr,
-            Qt::InputMethodHints inputMethodHints = Qt::ImhNone);
-
-    Q_REQUIRED_RESULT int getInt(QWidget *parent, const QString &title,
-                                 const QString &label, int value = 0,
-                                 int minValue = -2147483647,
-                                 int maxValue = 2147483647, int step = 1,
-                                 bool *ok = nullptr);
-
-    Q_REQUIRED_RESULT double getDouble(QWidget *parent, const QString &title,
-                                       const QString &label, double value = 0,
-                                       double minValue = -2147483647,
-                                       double maxValue = 2147483647,
-                                       int decimals = 1, bool *ok = nullptr,
-                                       double step = 1);
-};
-
-class FileDialog : public QObject {
-    Q_OBJECT
-signals:
-    Q_REQUIRED_RESULT QString getExistingDirectory(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(),
-        QFileDialog::Options options = QFileDialog::ShowDirsOnly);
-
-    Q_REQUIRED_RESULT QString getOpenFileName(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
-
-    Q_REQUIRED_RESULT QStringList getOpenFileNames(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
-
-    Q_REQUIRED_RESULT QString getSaveFileName(
-        QWidget *parent = nullptr, const QString &caption = QString(),
-        const QString &dir = QString(), const QString &filter = QString(),
-        QString *selectedFilter = nullptr,
-        QFileDialog::Options options = QFileDialog::Options());
-};
-
-class ColorDialog : public QObject {
-    Q_OBJECT
-signals:
-    Q_REQUIRED_RESULT QColor getColor(const QString &caption,
-                                      QWidget *parent = nullptr);
-};
-
 class DataVisual : public QObject {
     Q_OBJECT
 public:
@@ -429,15 +309,6 @@ signals:
 };
 
 } // namespace WingPlugin
-
-const auto WINGSUMMER = QStringLiteral("wingsummer");
-
-struct WingDockWidgetInfo {
-    QString widgetName;
-    QString displayName;
-    QWidget *widget = nullptr;
-    Qt::DockWidgetArea area = Qt::DockWidgetArea::NoDockWidgetArea;
-};
 
 struct WingRibbonToolBoxInfo {
     struct RibbonCatagories {
@@ -499,31 +370,17 @@ signals:
     void raiseView();
 };
 
-struct WingDependency {
-    QString puid;
-    uint version;
-    QByteArray md5; // optional, but recommend
-};
-
 struct SenderInfo {
     QString plgcls;
     QString puid;
     QVariant meta;
 };
 
-#ifdef WING_SERVICE
-#undef WING_SERVICE
-#endif
-
-#define WING_SERVICE Q_INVOKABLE
-
 // for bad broken Qt API
 #define WINGAPI_ARG(type, data) QArgument<type>(#type, data)
 #define WINGAPI_RETURN_ARG(type, data) QReturnArgument<type>(#type, data)
 
-enum class AppTheme { Dark, Light };
-
-class IWingPlugin : public QObject {
+class IWingPlugin : public IWingPluginBase {
     Q_OBJECT
 public:
     typedef std::function<QVariant(const QVariantList &)> ScriptFn;
@@ -572,24 +429,14 @@ public:
         FileSaved = 1u << 4,
         FileSwitched = 1u << 5,
         FileClosed = 1u << 6,
-        ScriptPragma = 1u << 7 // TODO
+        ScriptPragma = 1u << 7
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
     enum class PluginFileEvent { Opened, Saved, Switched, Closed };
 
 public:
-    virtual int sdkVersion() const = 0;
-    virtual const QString signature() const = 0;
     virtual ~IWingPlugin() = default;
-
-    virtual bool init(const std::unique_ptr<QSettings> &set) = 0;
-    virtual void unload(std::unique_ptr<QSettings> &set) = 0;
-    virtual const QString pluginName() const = 0;
-    virtual QIcon pluginIcon() const { return {}; }
-    virtual const QString pluginAuthor() const = 0;
-    virtual uint pluginVersion() const = 0;
-    virtual const QString pluginComment() const = 0;
 
     virtual QList<WingDependency> dependencies() const { return {}; }
 
@@ -598,9 +445,6 @@ public:
     }
 
 public:
-    virtual QList<WingDockWidgetInfo> registeredDockWidgets() const {
-        return {};
-    }
     virtual QMenu *registeredHexContextMenu() const { return nullptr; }
     virtual QList<WingRibbonToolBoxInfo> registeredRibbonTools() const {
         return {};
@@ -609,7 +453,7 @@ public:
     virtual QHash<SettingPage *, bool> registeredSettingPages() const {
         return {};
     }
-    virtual QList<PluginPage *> registeredPages() const { return {}; }
+
     virtual QList<QSharedPointer<WingEditorViewWidget::Creator>>
     registeredEditorViewWidgets() const {
         return {};
@@ -658,25 +502,9 @@ public:
         return false;
     }
 
+    virtual void eventScriptPragmaFinished() {}
+
 signals:
-    // extension and exposed to WingHexAngelScript
-    void toast(const QPixmap &icon, const QString &message);
-    void trace(const QString &message);
-    void debug(const QString &message);
-    void warn(const QString &message);
-    void error(const QString &message);
-    void info(const QString &message);
-
-    // theme
-    WingHex::AppTheme currentAppTheme();
-
-    // not available for AngelScript
-    // only for plugin UI extenstion
-
-    QDialog *createDialog(QWidget *content);
-
-    bool raiseDockWidget(QWidget *w);
-
     bool invokeService(const QString &puid, const char *method,
                        Qt::ConnectionType type, QGenericReturnArgument ret,
                        QGenericArgument val0 = QGenericArgument(nullptr),
@@ -739,10 +567,6 @@ public:
 public:
     WingPlugin::Reader reader;
     WingPlugin::Controller controller;
-    WingPlugin::MessageBox msgbox;
-    WingPlugin::InputBox inputbox;
-    WingPlugin::FileDialog filedlg;
-    WingPlugin::ColorDialog colordlg;
     WingPlugin::DataVisual visual;
 };
 

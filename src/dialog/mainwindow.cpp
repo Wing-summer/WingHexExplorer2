@@ -159,7 +159,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     splash->setInfoText(tr("LoadingPlg:") + plgName);
             });
     plg.setMainWindow(this);
-    plg.LoadPlugin();
+    plg.loadAllPlugin();
 
     if (set.scriptEnabled()) {
         // At this time, AngelScript service plugin has started

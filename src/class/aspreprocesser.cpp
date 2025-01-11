@@ -49,20 +49,6 @@ int AsPreprocesser::AddSectionFromFile(const QString &filename) {
     return 0;
 }
 
-int AsPreprocesser::AddSectionFromMemory(const QString &sectionName,
-                                         const QByteArray &code,
-                                         int lineOffset) {
-    if (IncludeIfNotAlreadyIncluded(sectionName)) {
-        int r = ProcessScriptSection(code, 0, sectionName, lineOffset);
-        if (r < 0)
-            return r;
-        else
-            return 1;
-    }
-
-    return 0;
-}
-
 QList<AsPreprocesser::ScriptData> AsPreprocesser::GetScriptData() const {
     return modifiedScripts;
 }
@@ -98,12 +84,36 @@ QString AsPreprocesser::GetSectionName(unsigned int idx) const {
     return includedScripts.at(idx);
 }
 
-void AsPreprocesser::ClearAll() {
-    includedScripts.clear();
+std::optional<QString>
+AsPreprocesser::ReadLineAndSkip(const QString &sectionName) {
+    if (_currentScripts.contains(sectionName)) {
+        auto &scriptInfo = _currentScripts[sectionName];
+        auto begin = *scriptInfo.first;
+        if (begin < 0) {
+            return std::nullopt;
+        }
 
-    currentClass.clear();
-    currentNamespace.clear();
+        auto strpos = scriptInfo.second->indexOf('\n', begin);
+        QString ret;
+
+        int overLen = 0;
+        if (strpos < 0) {
+            ret = scriptInfo.second->mid(*scriptInfo.first);
+            overLen = scriptInfo.second->length() - strpos;
+        } else {
+            overLen = strpos - begin + 1;
+            ret = scriptInfo.second->mid(*scriptInfo.first, overLen);
+        }
+
+        OverwriteCode(*scriptInfo.second, begin, overLen);
+
+        *scriptInfo.first = strpos;
+        return ret;
+    }
+    return std::nullopt;
 }
+
+void AsPreprocesser::ClearAll() { includedScripts.clear(); }
 
 int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                                          const QString &sectionname,
@@ -120,14 +130,19 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
 
     // First perform the checks for #if directives to exclude code that
     // shouldn't be compiled
-    unsigned int pos = 0;
+    QByteArray::size_type pos = 0;
+
+    _currentScripts.insert(sectionname, qMakePair(&pos, &modifiedScript));
+    LocalGuardHelper guard(
+        [this, sectionname]() { _currentScripts.remove(sectionname); });
+
     int nested = 0;
-    while (qsizetype(pos) < modifiedScript.size()) {
+    while (pos < modifiedScript.size()) {
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
         if (t == asTC_UNKNOWN && modifiedScript[pos] == '#' &&
-            (qsizetype(pos) + 1 < modifiedScript.size())) {
+            (pos + 1 < modifiedScript.size())) {
             int start = pos++;
 
             // Is this an #if directive?
@@ -175,14 +190,9 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
             pos += len;
     }
 
-    // Preallocate memory
-    QString name, declaration;
-    QVector<QString> metadata;
-    declaration.reserve(100);
-
-    // Then check for meta data and pre-processor directives
+    // Then check for pre-processor directives
     pos = 0;
-    while (qsizetype(pos) < modifiedScript.size()) {
+    while (pos >= 0 && pos < modifiedScript.size()) {
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
@@ -199,108 +209,8 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
             continue;
         }
 
-        // Check if class or interface so the metadata for members can be
-        // gathered
-        if (currentClass.isEmpty() &&
-            (token == "class" || token == "interface")) {
-            // Get the identifier after "class"
-            do {
-                pos += len;
-                if (qsizetype(pos) >= modifiedScript.size()) {
-                    t = asTC_UNKNOWN;
-                    break;
-                }
-                t = engine->ParseToken(modifiedScript.data() + pos,
-                                       modifiedScript.size() - pos, &len);
-            } while (t == asTC_COMMENT || t == asTC_WHITESPACE);
-
-            if (t == asTC_IDENTIFIER) {
-                currentClass = modifiedScript.mid(pos, len);
-
-                // Search until first { or ; is encountered
-                while (qsizetype(pos) < modifiedScript.length()) {
-                    engine->ParseToken(modifiedScript.data() + pos,
-                                       modifiedScript.size() - pos, &len);
-
-                    // If start of class section encountered stop
-                    if (modifiedScript[pos] == '{') {
-                        pos += len;
-                        break;
-                    } else if (modifiedScript[pos] == ';') {
-                        // The class declaration has ended and there are no
-                        // children
-                        currentClass.clear();
-                        pos += len;
-                        break;
-                    }
-
-                    // Check next symbol
-                    pos += len;
-                }
-            }
-
-            continue;
-        }
-
-        // Check if end of class
-        if (currentClass != "" && token == "}") {
-            currentClass = "";
-            pos += len;
-            continue;
-        }
-
-        // Check if namespace so the metadata for members can be gathered
-        if (token == "namespace") {
-            // Get the scope after "namespace". It can be composed of multiple
-            // nested namespaces, e.g. A::B::C
-            do {
-                do {
-                    pos += len;
-                    t = engine->ParseToken(modifiedScript.data() + pos,
-                                           modifiedScript.size() - pos, &len);
-                } while (t == asTC_COMMENT || t == asTC_WHITESPACE);
-
-                if (t == asTC_IDENTIFIER) {
-                    if (currentNamespace != "")
-                        currentNamespace += "::";
-                    currentNamespace += modifiedScript.mid(pos, len);
-                }
-            } while (
-                t == asTC_IDENTIFIER ||
-                (t == asTC_KEYWORD && modifiedScript.mid(pos, len) == "::"));
-
-            // Search until first { is encountered
-            while (qsizetype(pos) < modifiedScript.length()) {
-                engine->ParseToken(modifiedScript.data() + pos,
-                                   modifiedScript.size() - pos, &len);
-
-                // If start of namespace section encountered stop
-                if (modifiedScript[pos] == '{') {
-                    pos += len;
-                    break;
-                }
-
-                // Check next symbol
-                pos += len;
-            }
-
-            continue;
-        }
-
-        // Check if end of namespace
-        if (currentNamespace != "" && token == "}") {
-            auto found = currentNamespace.lastIndexOf("::");
-            if (found >= 0) {
-                currentNamespace.remove(found, currentNamespace.size() - found);
-            } else {
-                currentNamespace = "";
-            }
-            pos += len;
-            continue;
-        }
-
         // Is this a preprocessor directive?
-        if (token == "#" && (qsizetype(pos + 1) < modifiedScript.size())) {
+        if (token == "#" && (pos + 1 < modifiedScript.size())) {
             int start = pos++;
 
             t = engine->ParseToken(modifiedScript.data() + pos,
@@ -355,8 +265,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                         // find the next '>'
                         auto rpos = pos;
                         bool found = false;
-                        for (; qsizetype(rpos) < modifiedScript.size();
-                             ++rpos) {
+                        for (; rpos < modifiedScript.size(); ++rpos) {
                             if (modifiedScript[rpos] == '>') {
                                 found = true;
                                 break;
@@ -409,7 +318,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                 } else if (token == "pragma") {
                     // Read until the end of the line
                     pos += len;
-                    for (; qsizetype(pos) < modifiedScript.size() &&
+                    for (; pos < modifiedScript.size() &&
                            modifiedScript[pos] != '\n';
                          pos++)
                         ;
@@ -417,8 +326,14 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                     // Call the pragma callback
                     auto pragmaText =
                         modifiedScript.mid(start + 7, pos - start - 7);
+
+                    // Overwrite the pragma directive with space characters
+                    // to avoid compiler error
+                    OverwriteCode(modifiedScript, start, pos - start);
+
                     int r = pragmaCallback
-                                ? pragmaCallback(pragmaText, this, pragmaParam)
+                                ? pragmaCallback(pragmaText, this, sectionname,
+                                                 pragmaParam)
                                 : -1;
                     if (r < 0) {
                         // TODO: Report the correct line number
@@ -427,30 +342,10 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                             QObject::tr("Invalid #pragma directive").toUtf8());
                         return r;
                     }
-
-                    // Overwrite the pragma directive with space characters
-                    // to avoid compiler error
-                    OverwriteCode(modifiedScript, start, pos - start);
-                }
-            } else {
-                // Check for lines starting with #!, e.g. shebang
-                // interpreter directive. These will be treated as comments
-                // and removed by the preprocessor
-                if (modifiedScript[pos] == '!') {
-                    // Read until the end of the line
-                    pos += len;
-                    for (; qsizetype(pos) < modifiedScript.size() &&
-                           modifiedScript[pos] != '\n';
-                         pos++)
-                        ;
-
-                    // Overwrite the directive with space characters to
-                    // avoid compiler error
-                    OverwriteCode(modifiedScript, start, pos - start);
                 }
             }
         }
-        // Don't search for metadata/includes within statement blocks or
+        // Don't search for includes within statement blocks or
         // between tokens in statements
         else {
             pos = SkipStatement(modifiedScript, pos);
@@ -572,6 +467,10 @@ int AsPreprocesser::SkipStatement(const QByteArray &modifiedScript, int pos) {
         pos += 1;
 
     return pos;
+}
+
+int AsPreprocesser::ReadLine(const QByteArray &modifiedScript, int pos) {
+    return modifiedScript.indexOf('\n', pos);
 }
 
 int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {

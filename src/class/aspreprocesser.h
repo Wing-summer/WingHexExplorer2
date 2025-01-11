@@ -39,6 +39,8 @@
 #include <QSet>
 #include <QVector>
 
+#include <optional>
+
 class AsPreprocesser;
 class asCScriptCode;
 
@@ -56,7 +58,8 @@ typedef int (*INCLUDECALLBACK_t)(const QString &include, bool quotedInclude,
 // based on that. If the callback returns a negative value the builder will
 // report an error and abort the compilation.
 typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
-                                AsPreprocesser *builder, void *userParam);
+                                AsPreprocesser *builder,
+                                const QString &sectionname, void *userParam);
 
 // Helper class for loading and pre-processing script files to
 // support include directives and metadata declarations
@@ -73,20 +76,22 @@ public:
         QByteArray script;
     };
 
+private:
+    class LocalGuardHelper {
+        std::function<void()> _dctorfn;
+
+    public:
+        LocalGuardHelper(const std::function<void()> &dctorfn)
+            : _dctorfn(dctorfn) {}
+        ~LocalGuardHelper() { _dctorfn(); }
+    };
+
 public:
     // Load a script section from a file on disk
     // Returns  1 if the file was included
     //          0 if the file had already been included before
     //         <0 on error
     int AddSectionFromFile(const QString &filename);
-
-    // Load a script section from memory
-    // Returns  1 if the section was included
-    //          0 if a section with the same name had already been included
-    //          before
-    //         <0 on error
-    int AddSectionFromMemory(const QString &sectionName, const QByteArray &code,
-                             int lineOffset = 0);
 
     QList<ScriptData> GetScriptData() const;
 
@@ -107,6 +112,8 @@ public:
 
     QString GetSectionName(unsigned int idx) const;
 
+    std::optional<QString> ReadLineAndSkip(const QString &sectionName);
+
 protected:
     void ClearAll();
     int ProcessScriptSection(const QByteArray &script, int length,
@@ -115,6 +122,8 @@ protected:
     bool IncludeIfNotAlreadyIncluded(const QString &filename);
 
     int SkipStatement(const QByteArray &modifiedScript, int pos);
+
+    int ReadLine(const QByteArray &modifiedScript, int pos);
 
     int ExcludeCode(QByteArray &modifiedScript, int pos);
     void OverwriteCode(QByteArray &modifiedScript, int start, int len);
@@ -131,12 +140,12 @@ protected:
     PRAGMACALLBACK_t pragmaCallback;
     void *pragmaParam;
 
-    QString currentClass;
-    QString currentNamespace;
-
     QVector<QString> includedScripts;
 
     QVector<QString> definedWords;
+
+    QHash<QString, QPair<QByteArray::size_type *, QByteArray *>>
+        _currentScripts;
 };
 
 #endif // ASPREPROCESSER_H

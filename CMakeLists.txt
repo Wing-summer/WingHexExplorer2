@@ -345,14 +345,16 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/formatconfigmodel.h
     src/qcodeeditwidget/formatconfigmodel.cpp)
 
-set(PLUGIN_SRC src/plugin/iwingplugin.h src/plugin/pluginsystem.cpp
-               src/plugin/pluginsystem.h src/plugin/settingpage.h)
+set(PLUGIN_SRC
+    src/plugin/iwingplugin.h src/plugin/iwingpluginbase.h
+    src/plugin/iwingdevice.h src/plugin/pluginsystem.cpp
+    src/plugin/pluginsystem.h src/plugin/settingpage.h)
 
 # localization support
 file(
     GLOB_RECURSE TS_FILES
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex.ts")
+    "${CMAKE_CURRENT_SOURCE_DIR}/lang/*/winghex_*.ts")
 
 foreach(TS_FILE IN LISTS TS_FILES)
     get_filename_component(TS_DIR ${TS_FILE} DIRECTORY)
@@ -372,6 +374,7 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 if(${QT_VERSION_MAJOR} EQUAL 5)
     qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
                            -no-obsolete)
@@ -397,22 +400,23 @@ foreach(TS_FILE IN LISTS TS_FILES)
     set(LANG_NEED_COPY_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/${TS_DIR}")
     set(LANG_NEED_COPY "${LANG_NEED_COPY_PREFIX}/about.md"
                        "${LANG_NEED_COPY_PREFIX}/devs.md")
+
     add_custom_target(
-        copy_lang_files
+        copy_lang_files_${LANG_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy ${LANG_NEED_COPY} ${QM_DIR}
         COMMENT "Copying files to ${LANG_DEST}")
 
     set(LANG_PAK "${QM_DIR}/${LANG_PAK_NAME}")
 
-    set(LANG_COMPRESS_CONTENT "winghex.qm" "about.md" "devs.md")
+    set(LANG_COMPRESS_CONTENT "winghex_${LANG_NAME}.qm" "about.md" "devs.md")
 
     add_custom_target(
-        pak_lang_files
+        pak_lang_files_${LANG_NAME}
         COMMAND ${CMAKE_COMMAND} -E tar cf ${LANG_PAK_NAME} --format=zip
                 ${LANG_COMPRESS_CONTENT}
         WORKING_DIRECTORY "${QM_DIR}"
         COMMENT "Compressing ${TS_FILE} into ${LANG_PAK_NAME}"
-        DEPENDS ${QM_FILES} copy_lang_files)
+        DEPENDS ${QM_FILES} copy_lang_files_${LANG_NAME})
 
     set(TARGET_NAME "langgen_${LANG_NAME}")
     add_custom_target(
@@ -420,7 +424,7 @@ foreach(TS_FILE IN LISTS TS_FILES)
         COMMAND ${CMAKE_COMMAND} -E copy ${LANG_PAK_NAME} ${QM_OUT_DIR}
         WORKING_DIRECTORY "${QM_DIR}"
         COMMENT "Copy ${TS_FILE} into ${LANG_PAK_NAME}"
-        DEPENDS pak_lang_files)
+        DEPENDS pak_lang_files_${LANG_NAME})
 
     list(APPEND LANG_TARGETS ${TARGET_NAME})
 endforeach()

@@ -37,8 +37,13 @@ LanguageManager &LanguageManager::instance() {
     return ins;
 }
 
+QString LanguageManager::langDisplay(const QString &lang) const {
+    return m_langMap.value(lang, lang);
+}
+
 LanguageManager::LanguageManager() {
-    m_langMap = {{"zh_CN", QStringLiteral("简体中文")}};
+    m_langMap = {{"zh_CN", QStringLiteral("简体中文")},
+                 {"zh_TW", QStringLiteral("繁體中文")}};
 
     auto langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
@@ -46,6 +51,7 @@ LanguageManager::LanguageManager() {
     QDir langDir(langPath);
     Q_ASSERT(langDir.exists());
 
+    QHash<QString, QLocale> localeMap;
     auto langFiles = langDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (auto &langinfo : langFiles) {
         auto lang = langinfo.fileName();
@@ -54,7 +60,7 @@ LanguageManager::LanguageManager() {
             continue;
         }
         m_langs << lang;
-        m_localeMap.insert(lang, locale);
+        localeMap.insert(lang, locale);
     }
 
     auto lang = SettingManager::instance().defaultLang();
@@ -74,7 +80,7 @@ LanguageManager::LanguageManager() {
     }
 
     bool found = false;
-    for (auto p = m_localeMap.begin(); p != m_localeMap.end(); ++p) {
+    for (auto p = localeMap.begin(); p != localeMap.end(); ++p) {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
         if (p->territory() == _defaultLocale.territory() &&
 #else
@@ -87,8 +93,10 @@ LanguageManager::LanguageManager() {
         }
     }
     if (!found) {
-        _defaultLocale = m_localeMap.value(m_langs.first());
+        _defaultLocale = localeMap.value(m_langs.first());
     }
+
+    m_langs = localeMap.keys();
 
     auto qtPath =
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
@@ -112,7 +120,8 @@ LanguageManager::LanguageManager() {
     }
 
     if (unpackTr(langPath + QStringLiteral("/") + _defaultLocale.name() +
-                 QStringLiteral("/") + QStringLiteral(LANG_PAK_NAME))) {
+                     QStringLiteral("/") + QStringLiteral(LANG_PAK_NAME),
+                 _defaultLocale)) {
         auto translator = new QTranslator(this);
         if (translator->load(
                 reinterpret_cast<const uchar *>(_data.trFiles.data()),
@@ -122,13 +131,9 @@ LanguageManager::LanguageManager() {
     } else {
         abortAndExit();
     }
-
-    for (auto &lang : m_langs) {
-        m_langsDisplay << m_langMap.value(lang, lang);
-    }
 }
 
-bool LanguageManager::unpackTr(const QString &filename) {
+bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale) {
     if (!QFile::exists(filename)) {
         return false;
     }
@@ -142,7 +147,8 @@ bool LanguageManager::unpackTr(const QString &filename) {
     _data = {};
     for (auto &file : reader.fileInfoList()) {
         if (file.isValid() && file.isFile) {
-            if (file.filePath == QStringLiteral("winghex.qm")) {
+            if (file.filePath == QStringLiteral("winghex_") + locale.name() +
+                                     QStringLiteral(".qm")) {
                 _data.trFiles = reader.fileData(file.filePath);
             } else if (file.filePath == QStringLiteral("about.md")) {
                 _data.about = reader.fileData(file.filePath);
@@ -178,6 +184,8 @@ void LanguageManager::abortAndExit() {
     throw CrashCode::LanguageFile;
 }
 
+QStringList LanguageManager::langs() const { return m_langs; }
+
 QLocale LanguageManager::defaultLocale() const { return _defaultLocale; }
 
 QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
@@ -198,5 +206,3 @@ QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
 }
 
 LanguageManager::LanguageData LanguageManager::data() const { return _data; }
-
-QStringList LanguageManager::langsDisplay() const { return m_langsDisplay; }

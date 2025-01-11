@@ -22,22 +22,29 @@ if(NOT EXISTS "${WINGHEX_SDK}")
     message(FATAL_ERROR "Please config the SDK Path - WINGHEX_SDK")
 endif()
 
+set(PLUGIN_INTERFACE_BASE_FOUND FALSE)
 set(PLUGIN_INTERFACE_FOUND FALSE)
 set(PLUGIN_SETPAGE_FOUND FALSE)
+if(EXISTS "${WINGHEX_SDK}/iwingpluginbase.h")
+    set(PLUGIN_INTERFACE_BASE_FOUND TRUE)
+endif()
 if(EXISTS "${WINGHEX_SDK}/iwingplugin.h")
     set(PLUGIN_INTERFACE_FOUND TRUE)
 endif()
 if(EXISTS "${WINGHEX_SDK}/settingpage.h")
     set(PLUGIN_SETPAGE_FOUND TRUE)
 endif()
-if(PLUGIN_INTERFACE_FOUND AND PLUGIN_SETPAGE_FOUND)
+if(PLUGIN_INTERFACE_FOUND
+   AND PLUGIN_INTERFACE_BASE_FOUND
+   AND PLUGIN_SETPAGE_FOUND)
     message(STATUS "${WINGHEX_SDK} is valid SDK path")
 else()
     message(FATAL_ERROR "Invalid SDK path!")
 endif()
 
-set(WINGHEX_SDK_HEADER "${WINGHEX_SDK}/iwingplugin.h"
-                       "${WINGHEX_SDK}/settingpage.h")
+set(WINGHEX_SDK_HEADER
+    "${WINGHEX_SDK}/iwingplugin.h" "${WINGHEX_SDK}/iwingpluginbase.h"
+    "${WINGHEX_SDK}/settingpage.h")
 include_directories(${WINGHEX_SDK})
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)

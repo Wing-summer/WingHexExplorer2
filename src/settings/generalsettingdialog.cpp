@@ -74,13 +74,17 @@ void GeneralSettingDialog::reload() {
 
     auto &set = SettingManager::instance();
 
-    auto langs = LanguageManager::instance().langsDisplay();
-    ui->cbLanguage->addItems(langs);
-    auto lang = set.defaultLang();
-    if (lang.isEmpty()) {
+    auto &lang = LanguageManager::instance();
+    auto langs = lang.langs();
+    for (auto &l : langs) {
+        ui->cbLanguage->addItem(lang.langDisplay(l), l);
+    }
+
+    auto deflang = set.defaultLang();
+    if (deflang.isEmpty()) {
         ui->cbLanguage->setCurrentIndex(0);
     } else {
-        ui->cbLanguage->setCurrentIndex(langs.indexOf(lang) + 1);
+        ui->cbLanguage->setCurrentIndex(langs.indexOf(deflang) + 1);
     }
 
     ui->sbFontSize->setValue(set.appfontSize());
@@ -115,6 +119,7 @@ QString GeneralSettingDialog::id() const { return QStringLiteral("General"); }
 
 void GeneralSettingDialog::apply() {
     auto &set = SettingManager::instance();
+    set.setDefaultLang(ui->cbLanguage->currentData().toString());
     set.setAppfontSize(ui->sbFontSize->value());
     set.setAppFontFamily(ui->cbFont->currentText());
     set.setThemeID(ui->cbTheme->currentIndex());

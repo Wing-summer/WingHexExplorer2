@@ -37,7 +37,7 @@ public:
 public:
     static LanguageManager &instance();
 
-    QStringList langsDisplay() const;
+    QString langDisplay(const QString &lang) const;
 
     LanguageData data() const;
 
@@ -45,13 +45,15 @@ public:
 
     QTranslator *try2LoadPluginLang(const QString &plgID);
 
+    QStringList langs() const;
+
 private:
     LanguageManager();
 
     Q_DISABLE_COPY(LanguageManager)
 
 private:
-    bool unpackTr(const QString &filename);
+    bool unpackTr(const QString &filename, const QLocale &locale);
 
     void abortAndExit();
 
@@ -61,9 +63,7 @@ private:
     QLocale _defaultLocale;
 
     QStringList m_langs;
-    QStringList m_langsDisplay;
     QHash<QString, QString> m_langMap;
-    QHash<QString, QLocale> m_localeMap;
 };
 
 #endif // LANGUAGEMANAGER_H
