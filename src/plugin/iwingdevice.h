@@ -36,13 +36,21 @@ public:
         bool needLargeBuffer;
     };
 
-    virtual QStringList supportedFileIDs() = 0;
+public:
+    virtual QString supportedFileExtDisplayName() const = 0;
+
+    virtual QString supportedFileExtID() const = 0;
+
+    virtual QIcon supportedFileIcon() const { return {}; };
 
 public:
-    virtual QPair<QString, QVariantList> onOpenFileBegin() { return {}; }
+    virtual std::optional<QPair<QString, QVariantList>> onOpenFileBegin() {
+        return std::nullopt;
+    }
 
     virtual std::optional<DeviceInfo>
-    onOpenFile(const QString &path, const QVariantList &params) = 0;
+    onOpenFile(const QString &path, bool readOnly,
+               const QVariantList &params) = 0;
 
     virtual bool onCloseFile(QIODevice *dev) = 0;
 };

@@ -24,6 +24,11 @@ if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
 endif()
 
+option(BUILD_SHARED_MEM_EXT OFF)
+if(BUILD_SHARED_MEM_EXT)
+    add_subdirectory(ShareMemoryDrv)
+endif()
+
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
                 -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})

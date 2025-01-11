@@ -7,6 +7,9 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QVersionNumber>
+
+#include <QLocale>
 
 bool WingUpdater::checkUpdate(bool *ok) {
     QNetworkAccessManager manager;
@@ -55,7 +58,7 @@ bool WingUpdater::checkUpdate(bool *ok) {
         if (ok) {
             *ok = true;
         }
-        auto ret = versionCompare(version);
+        auto ret = versionCompare(version, WINGHEX_VERSION);
         return ret;
     } else {
         // Handle errors
@@ -69,91 +72,25 @@ bool WingUpdater::checkUpdate(bool *ok) {
     return true;
 }
 
-bool WingUpdater::versionCompare(const QString &version) {
-    return compareVersions(WINGHEX_VERSION, version) >= 0;
-}
+bool WingUpdater::versionCompare(const QString &remote, const QString &local) {
+    qsizetype rsuffix;
+    qsizetype lsuffix;
 
-int WingUpdater::compareVersions(const QString &version1,
-                                 const QString &version2) {
-    // Extract main version and beta part
-    QString main1, beta1;
-    parseVersion(version1, main1, beta1);
-    QString main2, beta2;
-    parseVersion(version2, main2, beta2);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto rversion = QVersionNumber::fromString(remote);
+    auto lversion = QVersionNumber::fromString(local);
+    rsuffix = remote.length();
+    lsuffix = local.length();
+#else
+    auto rversion = QVersionNumber::fromString(remote, &rsuffix);
+    auto lversion = QVersionNumber::fromString(local, &lsuffix);
+#endif
 
-    // Compare main version
-    int mainComparison = compareMainVersions(main1, main2);
-    if (mainComparison != 0) {
-        return mainComparison;
-    }
-
-    // Compare beta part
-    return compareBetaVersions(beta1, beta2);
-}
-
-void WingUpdater::parseVersion(const QString &version, QString &mainPart,
-                               QString &betaPart) {
-    static QRegularExpression regex(R"((.*?)(-beta(\d*)?)?$)");
-    QRegularExpressionMatch match = regex.match(version);
-
-    if (match.hasMatch()) {
-        mainPart = match.captured(1);
-        betaPart = match.captured(2); // Full beta string, e.g., "-beta2"
+    if (rversion > lversion) {
+        return false;
+    } else if (rversion == lversion) {
+        return remote.mid(rsuffix) <= local.mid(lsuffix);
     } else {
-        mainPart = version;
-        betaPart.clear();
+        return true;
     }
-}
-
-int WingUpdater::compareMainVersions(const QString &main1,
-                                     const QString &main2) {
-    QStringList parts1 = main1.split('.', Qt::SkipEmptyParts);
-    QStringList parts2 = main2.split('.', Qt::SkipEmptyParts);
-
-    int maxParts = qMax(parts1.size(), parts2.size());
-    for (int i = 0; i < maxParts; ++i) {
-        int v1 = i < parts1.size() ? parts1[i].toInt() : 0;
-        int v2 = i < parts2.size() ? parts2[i].toInt() : 0;
-
-        if (v1 < v2)
-            return -1;
-        else if (v1 > v2)
-            return 1;
-    }
-    return 0;
-}
-
-int WingUpdater::compareBetaVersions(const QString &beta1,
-                                     const QString &beta2) {
-    if (beta1.isEmpty() && beta2.isEmpty()) {
-        return 0; // Both are not beta versions
-    }
-    if (beta1.isEmpty()) {
-        return 1; // Non-beta is greater
-    }
-    if (beta2.isEmpty()) {
-        return -1; // Beta is less
-    }
-
-    // Extract numeric beta suffix
-    int betaNum1 = extractBetaNumber(beta1);
-    int betaNum2 = extractBetaNumber(beta2);
-
-    if (betaNum1 < betaNum2) {
-        return -1;
-    } else if (betaNum1 > betaNum2) {
-        return 1;
-    }
-    return 0; // Both beta versions are equal
-}
-
-int WingUpdater::extractBetaNumber(const QString &beta) {
-    static QRegularExpression regex(R"(-beta(\d*))");
-    QRegularExpressionMatch match = regex.match(beta);
-
-    if (match.hasMatch()) {
-        QString number = match.captured(1);
-        return number.isEmpty() ? 0 : number.toInt();
-    }
-    return 0; // No numeric suffix
 }

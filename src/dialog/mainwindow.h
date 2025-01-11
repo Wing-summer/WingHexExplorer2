@@ -85,7 +85,8 @@ private:
         PLUGIN_VIEWS,
         EDITOR_WINS,
         UNDO_ACTION,
-        REDO_ACTION
+        REDO_ACTION,
+        OPEN_EXT,
     };
 
 private:

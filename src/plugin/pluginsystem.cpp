@@ -833,6 +833,47 @@ void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
         registerPluginPages(p);
         connectInterface(p);
 
+        // ok register into menu open
+        auto menu =
+            _win->m_toolBtneditors[MainWindow::ToolButtonIndex::OPEN_EXT]
+                ->menu();
+        menu->addAction(_win->newAction(
+            p->supportedFileIcon(), p->supportedFileExtDisplayName(),
+            [p, this]() {
+                QString file;
+                QVariantList params;
+
+                auto ret = p->onOpenFileBegin();
+                if (ret.has_value()) {
+                    auto ob = ret.value();
+                    file = ob.first;
+                    params = ob.second;
+                } else {
+                    // common dialog
+                    auto ob =
+                        WingFileDialog::getOpenFileName(_win, tr(""), tr(""));
+                    if (ob.isEmpty()) {
+                        return;
+                    }
+                    file = ob;
+                }
+
+                if (file.isEmpty()) {
+                    return;
+                }
+
+                auto f = p->onOpenFile(file, false, params);
+                if (f.has_value()) {
+
+                } else {
+                    f = p->onOpenFile(file, true, params);
+                    if (f.has_value()) {
+
+                    } else {
+                    }
+                }
+            }));
+
     } catch (const QString &error) {
         Logger::critical(error);
         if (p_tr) {

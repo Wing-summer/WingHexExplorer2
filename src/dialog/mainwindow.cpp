@@ -448,6 +448,14 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 }
 
 void MainWindow::finishBuildDockSystem() {
+    // add empty action to ext
+    auto menu = m_toolBtneditors[MainWindow::ToolButtonIndex::OPEN_EXT]->menu();
+    if (menu->isEmpty()) {
+        auto a = newAction(tr("NoExtension"), EMPTY_FUNC);
+        a->setEnabled(false);
+        menu->addAction(a);
+    }
+
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
@@ -1186,6 +1194,12 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
 
         addPannelAction(pannel, QStringLiteral("opendriver"), tr("OpenD"),
                         &MainWindow::on_opendriver);
+
+        auto menu = new QMenu(this);
+        m_toolBtneditors.insert(
+            ToolButtonIndex::OPEN_EXT,
+            addPannelAction(pannel, QStringLiteral("openother"), tr("OpenExt"),
+                            EMPTY_FUNC, {}, menu));
 
         addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
                         EMPTY_FUNC, {}, m_recentMenu);
