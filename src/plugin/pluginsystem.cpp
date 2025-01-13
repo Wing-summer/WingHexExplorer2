@@ -65,6 +65,14 @@ const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
     return _loadedplgs.at(index);
 }
 
+const QList<IWingDevice *> &PluginSystem::devices() const {
+    return _loadeddevs;
+}
+
+const IWingDevice *PluginSystem::device(qsizetype index) const {
+    return _loadeddevs.at(index);
+}
+
 template <typename T>
 void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
@@ -797,20 +805,20 @@ void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
 
     try {
         if (p->signature() != WINGSUMMER) {
-            throw tr("ErrLoadPluginSign");
+            throw tr("ErrLoadExtPluginSign");
         }
 
         if (p->sdkVersion() != SDKVERSION) {
-            throw tr("ErrLoadPluginSDKVersion");
+            throw tr("ErrLoadExtPluginSDKVersion");
         }
 
         if (!p->pluginName().trimmed().length()) {
-            throw tr("ErrLoadPluginNoName");
+            throw tr("ErrLoadExtPluginNoName");
         }
 
-        Logger::warning(tr("PluginName :") + p->pluginName());
-        Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
-        Logger::warning(tr("PluginWidgetRegister"));
+        Logger::warning(tr("ExtPluginName :") + p->pluginName());
+        Logger::warning(tr("ExtPluginAuthor :") + p->pluginAuthor());
+        Logger::warning(tr("ExtPluginWidgetRegister"));
 
         // TODO
 
@@ -826,9 +834,11 @@ void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
 
             if (!p->init(setp)) {
                 setp->deleteLater();
-                throw tr("ErrLoadInitPlugin");
+                throw tr("ErrLoadInitExtPlugin");
             }
         }
+
+        _loadeddevs.append(p);
 
         registerPluginPages(p);
         connectInterface(p);

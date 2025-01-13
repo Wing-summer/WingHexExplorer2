@@ -104,6 +104,9 @@ public:
     const QList<IWingPlugin *> &plugins() const;
     const IWingPlugin *plugin(qsizetype index) const;
 
+    const QList<IWingDevice *> &devices() const;
+    const IWingDevice *device(qsizetype index) const;
+
     WingAngelAPI *angelApi() const;
 
     void cleanUpEditorViewHandle(EditorView *view);
@@ -264,6 +267,8 @@ private:
     QList<IWingPlugin *> _loadedplgs;
     QHash<QWidget *, ads::CDockWidget *> _raisedw;
     QList<QPair<IWingPlugin *, QString>> _lazyplgs;
+
+    QList<IWingDevice *> _loadeddevs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 

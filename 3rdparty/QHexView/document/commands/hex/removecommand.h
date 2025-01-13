@@ -10,6 +10,10 @@ public:
                   QUndoCommand *parent = nullptr);
     void undo() override;
     void redo() override;
+
+private:
+    QVector<QHexMetadataItem> _rmMetas;
+    QMap<qsizetype, QString> _rmbms;
 };
 
 #endif // REMOVECOMMAND_H

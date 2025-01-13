@@ -6,10 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QRegularExpression>
 #include <QVersionNumber>
-
-#include <QLocale>
 
 bool WingUpdater::checkUpdate(bool *ok) {
     QNetworkAccessManager manager;
@@ -73,24 +70,8 @@ bool WingUpdater::checkUpdate(bool *ok) {
 }
 
 bool WingUpdater::versionCompare(const QString &remote, const QString &local) {
-    qsizetype rsuffix;
-    qsizetype lsuffix;
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // only stable version updating notification
     auto rversion = QVersionNumber::fromString(remote);
     auto lversion = QVersionNumber::fromString(local);
-    rsuffix = remote.length();
-    lsuffix = local.length();
-#else
-    auto rversion = QVersionNumber::fromString(remote, &rsuffix);
-    auto lversion = QVersionNumber::fromString(local, &lsuffix);
-#endif
-
-    if (rversion > lversion) {
-        return false;
-    } else if (rversion == lversion) {
-        return remote.mid(rsuffix) <= local.mid(lsuffix);
-    } else {
-        return true;
-    }
+    return rversion <= lversion;
 }

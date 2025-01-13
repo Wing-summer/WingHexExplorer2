@@ -99,7 +99,7 @@
        <item>
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -119,6 +119,42 @@
           </layout>
          </widget>
          <widget class="QTextBrowser" name="txtc"/>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="widget">
+      <attribute name="icon">
+       <iconset resource="../../resources.qrc">
+        <normaloff>:/com.wingsummer.winghex/images/devext.png</normaloff>:/com.wingsummer.winghex/images/devext.png</iconset>
+      </attribute>
+      <attribute name="title">
+       <string>DevExtInfo</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QSplitter" name="splitter_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <widget class="QWidget" name="layoutWidget_2">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <property name="spacing">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>DevExt:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="devlist"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QTextBrowser" name="txtd"/>
         </widget>
        </item>
       </layout>

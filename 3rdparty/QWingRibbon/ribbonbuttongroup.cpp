@@ -43,13 +43,21 @@ void RibbonButtonGroup::addButton(QToolButton *button) {
         return;
     }
 
-    button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     button->setIconSize(QSize(32, 32));
     button->setAutoRaise(true);
     button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
+    auto txt = button->text();
+    auto font = button->font();
+    auto metr = QFontMetrics(font);
+    auto txtlen = int(metr.horizontalAdvance(txt) + 15);
+
 #if QT_VERSION > QT_VERSION_CHECK(6, 6, 0)
-    button->setMinimumWidth(32 + 30); // Icon size + padding
+    // Icon size + padding = 32 + 30
+    button->setFixedWidth(qMax(32 + 30, txtlen));
+#else
+    button->setFixedWidth(qMax(32 + 15, txtlen));
 #endif
 
     _buttons << button;

@@ -53,8 +53,16 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->plglist->addItem(
             new QListWidgetItem(pco.isNull() ? pico : pco, p->pluginName()));
     }
-
     ui->txtc->clear();
+
+    pico = ICONRES("devext");
+    ui->devlist->clear();
+    for (auto &d : plgsys.devices()) {
+        auto pco = d->pluginIcon();
+        ui->devlist->addItem(
+            new QListWidgetItem(pco.isNull() ? pico : pco, d->pluginName()));
+    }
+    ui->txtd->clear();
 }
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }

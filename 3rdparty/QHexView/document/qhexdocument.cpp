@@ -122,11 +122,13 @@ void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
     _bookmarks.insert(bms);
 }
 
-void QHexDocument::removeBookMarkAdjust(qsizetype offset, qsizetype length) {
+QMap<qsizetype, QString> QHexDocument::removeBookMarkAdjust(qsizetype offset,
+                                                            qsizetype length) {
+    QMap<qsizetype, QString> rmbms;
     QMap<qsizetype, QString> bms;
 
     if (_bookmarks.isEmpty()) {
-        return;
+        return {};
     }
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -135,6 +137,11 @@ void QHexDocument::removeBookMarkAdjust(qsizetype offset, qsizetype length) {
     auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
 #endif
     auto addbegin = _bookmarks.upperBound(offset);
+
+    for (auto p = rmbegin; p != addbegin; ++p) {
+        rmbms.insert(p.key(), p.value());
+    }
+
     for (auto p = addbegin; p != _bookmarks.end(); ++p) {
         bms.insert(p.key() - length, p.value());
     }
@@ -148,6 +155,68 @@ void QHexDocument::removeBookMarkAdjust(qsizetype offset, qsizetype length) {
 #endif
 
     _bookmarks.insert(bms);
+
+    return rmbms;
+}
+
+void QHexDocument::insertBookMarkAdjustRevert(qsizetype offset,
+                                              qsizetype length) {
+    QMap<qsizetype, QString> bms;
+
+    if (_bookmarks.isEmpty()) {
+        return;
+    }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto rmbegin = _bookmarks.lowerBound(offset);
+#else
+    auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
+#endif
+    auto addbegin = _bookmarks.upperBound(offset);
+
+    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+        bms.insert(p.key() - length, p.value());
+    }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    for (auto it = rmbegin; it != _bookmarks.end();) {
+        it = _bookmarks.erase(it);
+    }
+#else
+    _bookmarks.erase(rmbegin, _bookmarks.cend());
+#endif
+
+    _bookmarks.insert(bms);
+}
+
+void QHexDocument::removeBookMarkAdjustRevert(
+    const QMap<qsizetype, QString> &rmbms, qsizetype offset, qsizetype length) {
+    QMap<qsizetype, QString> bms;
+
+    if (!_bookmarks.isEmpty()) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        auto rmbegin = _bookmarks.lowerBound(offset);
+#else
+        auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
+#endif
+        auto addbegin = _bookmarks.upperBound(offset);
+
+        for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+            bms.insert(p.key() + length, p.value());
+        }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        for (auto it = rmbegin; it != _bookmarks.end();) {
+            it = _bookmarks.erase(it);
+        }
+#else
+        _bookmarks.erase(rmbegin, _bookmarks.cend());
+#endif
+
+        _bookmarks.insert(bms);
+    }
+
+    _bookmarks.insert(rmbms);
 }
 
 bool QHexDocument::isDocSaved() { return m_isSaved; }
@@ -185,8 +254,6 @@ const QMap<qsizetype, QString> &QHexDocument::bookMarks() const {
 }
 
 bool QHexDocument::AddBookMark(qsizetype pos, QString comment) {
-    if (!m_keepsize)
-        return false;
     m_undostack->push(new BookMarkAddCommand(this, pos, comment));
     return true;
 }
@@ -197,22 +264,18 @@ bool QHexDocument::RemoveBookMark(qsizetype pos) {
 }
 
 bool QHexDocument::ModBookMark(qsizetype pos, QString comment) {
-    if (!m_keepsize)
-        return false;
     m_undostack->push(
         new BookMarkReplaceCommand(this, pos, comment, bookMark(pos)));
     return true;
 }
 
 bool QHexDocument::ClearBookMark() {
-    if (!m_keepsize)
-        return false;
     m_undostack->push(new BookMarkClearCommand(this, _bookmarks));
     return true;
 }
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
-    if (m_keepsize && !existBookMark(pos)) {
+    if (!existBookMark(pos)) {
         _bookmarks.insert(pos, comment);
         setDocSaved(false);
         emit documentChanged();
@@ -370,8 +433,6 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
     m_buffer->insert(offset, data);
     auto len = data.size();
-    insertBookMarkAdjust(offset, len);
-    m_metadata->insertAdjust(offset, len);
     setDocSaved(false);
     emit documentChanged();
     return true;
@@ -390,8 +451,6 @@ bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
 
 bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     m_buffer->remove(offset, len);
-    removeBookMarkAdjust(offset, len);
-    m_metadata->removeAdjust(offset, len);
     setDocSaved(false);
     emit documentChanged();
     return true;

@@ -197,7 +197,10 @@ public:
     void setLineWidth(quint8 width);
 
     void insertAdjust(qsizetype offset, qsizetype length);
-    void removeAdjust(qsizetype offset, qsizetype length);
+    void insertAdjustRevert(qsizetype offset, qsizetype length);
+    QVector<QHexMetadataItem> removeAdjust(qsizetype offset, qsizetype length);
+    void removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
+                            qsizetype offset, qsizetype length);
 
 public:
     // new interface with begin, end

@@ -88,7 +88,11 @@ public:
     bool metaCommentVisible();
 
     void insertBookMarkAdjust(qsizetype offset, qsizetype length);
-    void removeBookMarkAdjust(qsizetype offset, qsizetype length);
+    QMap<qsizetype, QString> removeBookMarkAdjust(qsizetype offset,
+                                                  qsizetype length);
+    void insertBookMarkAdjustRevert(qsizetype offset, qsizetype length);
+    void removeBookMarkAdjustRevert(const QMap<qsizetype, QString> &rmbms,
+                                    qsizetype offset, qsizetype length);
 
     /*======================*/
 
