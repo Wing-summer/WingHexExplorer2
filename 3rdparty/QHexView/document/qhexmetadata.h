@@ -151,13 +151,35 @@ public:
     void beginMarco(const QString &text);
     void endMarco();
 
-    void ModifyMetadata(QHexMetadataItem newmeta, QHexMetadataItem oldmeta);
+    void ModifyMetadata(const QHexMetadataItem &newmeta,
+                        const QHexMetadataItem &oldmeta);
     void RemoveMetadatas(const QList<QHexMetadataItem> &items);
-    void RemoveMetadata(QHexMetadataItem item);
+    void RemoveMetadata(const QHexMetadataItem &item);
     void RemoveMetadata(qsizetype offset);
     void Metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
     void Clear();
+
+    QUndoCommand *MakeColor(QUndoCommand *parent, qsizetype begin,
+                            qsizetype end, const QColor &fgcolor,
+                            const QColor &bgcolor);
+    QUndoCommand *MakeForeground(QUndoCommand *parent, qsizetype begin,
+                                 qsizetype end, const QColor &fgcolor);
+    QUndoCommand *MakeBackground(QUndoCommand *parent, qsizetype begin,
+                                 qsizetype end, const QColor &bgcolor);
+    QUndoCommand *MakeComment(QUndoCommand *parent, qsizetype begin,
+                              qsizetype end, const QString &comment);
+
+    QUndoCommand *MakeModifyMetadata(QUndoCommand *parent,
+                                     const QHexMetadataItem &newmeta,
+                                     const QHexMetadataItem &oldmeta);
+    QUndoCommand *MakeRemoveMetadata(QUndoCommand *parent,
+                                     const QHexMetadataItem &item);
+    QUndoCommand *MakeRemoveMetadata(QUndoCommand *parent, qsizetype offset);
+    QUndoCommand *MakeMetadata(QUndoCommand *parent, qsizetype begin,
+                               qsizetype end, const QColor &fgcolor,
+                               const QColor &bgcolor, const QString &comment);
+    QUndoCommand *MakeClear(QUndoCommand *parent);
 
     //---------------------------------------------------------
 
@@ -219,6 +241,11 @@ private:
     void addMetadata(const QHexMetadataItem &mi);
 
     void addMetaLines(const QHexMetadataItem &mi);
+
+    bool checkValidMetadata(const QHexMetadataItem &mi);
+    bool checkValidMetadata(qsizetype begin, qsizetype end,
+                            const QColor &fgcolor, const QColor &bgcolor,
+                            const QString &comment);
 
 signals:
     void metadataChanged();

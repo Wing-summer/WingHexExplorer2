@@ -39,8 +39,6 @@ public:
 public:
     virtual QString supportedFileExtDisplayName() const = 0;
 
-    virtual QString supportedFileExtID() const = 0;
-
     virtual QIcon supportedFileIcon() const { return {}; };
 
 public:

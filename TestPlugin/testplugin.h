@@ -26,11 +26,6 @@
 class TestPlugin final : public WingHex::IWingPlugin {
     Q_OBJECT
 
-    // 可选：用于自定义插件唯一标帜，请不要随意取名，否则很可能会和其他插件冲突导致无法加载
-    // 如果不注明，则是插件的类名作为唯一标帜，所以也不要随意给插件类起名字
-    // 当然，你可以在构造函数中，使用 setProperty("puid", yourID) 来实现自定义
-    Q_PROPERTY(QString puid READ getPuid CONSTANT FINAL)
-
     // 这两行是必须，只有后面的 "TestPlugin.json" 你根据需要修改，
     // 具体可见 QT 文档，剩下直接 CV 大法
     Q_PLUGIN_METADATA(IID "com.wingsummer.iwingplugin" FILE "TestPlugin.json")
@@ -48,8 +43,6 @@ public:
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
-    virtual const QString pluginAuthor() const override;
-    virtual uint pluginVersion() const override;
     virtual const QString pluginComment() const override;
 
     // IWingPlugin interface (可选)

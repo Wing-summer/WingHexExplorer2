@@ -9,22 +9,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="52"/>
+        <location filename="../sharememorydrv.cpp" line="46"/>
         <source>An extension for opening sshared memory in WingHexExplorer2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="88"/>
+        <location filename="../sharememorydrv.cpp" line="78"/>
         <source>ShareMemory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="99"/>
+        <location filename="../sharememorydrv.cpp" line="89"/>
         <source>SharedMemory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="99"/>
+        <location filename="../sharememorydrv.cpp" line="89"/>
         <source>PleaseInputID:</source>
         <translation type="unfinished"></translation>
     </message>

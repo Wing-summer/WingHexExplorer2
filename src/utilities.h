@@ -50,8 +50,8 @@
 
 #define PROEXT ".wingpro"
 
-constexpr auto FIND_CONTEXT_SIZE = 3;
-constexpr auto FIND_MAX_DISPLAY_FIND_CHARS = 8;
+Q_DECL_UNUSED constexpr auto FIND_CONTEXT_SIZE = 3;
+Q_DECL_UNUSED constexpr auto FIND_MAX_DISPLAY_FIND_CHARS = 8;
 
 Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
     return ":/com.wingsummer.winghex/images/" + name + ".png";
@@ -158,7 +158,7 @@ public:
         return hashNames;
     }
 
-    static QByteArray getMd5(QString filename) {
+    static QByteArray getMd5(const QString &filename) {
         if (filename.isEmpty()) {
             return {};
         }

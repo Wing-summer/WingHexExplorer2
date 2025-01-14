@@ -111,6 +111,7 @@
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
         <file>src/TESTCODE.as</file>
+        <file>src/class/WingAngelAPI.json</file>
         <file>src/components.md</file>
         <file>src/translist.md</file>
     </qresource>

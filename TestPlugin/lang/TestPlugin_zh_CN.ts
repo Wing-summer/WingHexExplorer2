@@ -339,7 +339,7 @@
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="198"/>
+        <location filename="../testplugin.cpp" line="194"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
     </message>

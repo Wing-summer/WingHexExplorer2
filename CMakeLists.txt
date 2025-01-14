@@ -144,8 +144,6 @@ set(DIALOG_SRC
     src/dialog/fileinfodialog.h
     src/dialog/encodingdialog.cpp
     src/dialog/encodingdialog.h
-    src/dialog/pluginwindow.cpp
-    src/dialog/pluginwindow.h
     src/dialog/metadialog.cpp
     src/dialog/metadialog.h
     src/dialog/driverselectordialog.cpp

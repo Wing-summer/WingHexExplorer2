@@ -16,7 +16,7 @@
 */
 
 #include "pluginsettingdialog.h"
-#include "../class/settingmanager.h"
+#include "class/settingmanager.h"
 #include "dbghelper.h"
 #include "plugin/pluginsystem.h"
 #include "ui_pluginsettingdialog.h"
@@ -102,14 +102,50 @@ void PluginSettingDialog::reset() {
 
 void PluginSettingDialog::cancel() { reload(); }
 
-void PluginSettingDialog::on_plglist_itemSelectionChanged() {
-    auto &plgsys = PluginSystem::instance();
+void PluginSettingDialog::on_devlist_currentRowChanged(int currentRow) {
+    if (currentRow < 0) {
+        return;
+    }
 
-    auto plg = plgsys.plugin(ui->plglist->currentRow());
+    auto &plgsys = PluginSystem::instance();
+    auto plg = plgsys.device(currentRow);
+
+    auto info = plgsys.getPluginInfo(plg);
+    ui->txtd->clear();
+    ui->txtd->append(tr("ID") + " : " + info.id);
+    ui->txtd->append(tr("Name") + " : " + plg->pluginName());
+    ui->txtd->append(tr("License") + " : " + info.license);
+    ui->txtd->append(tr("Author") + " : " + info.author);
+    ui->txtd->append(tr("Vendor") + " : " + info.vendor);
+    ui->txtd->append(tr("Version") + " : " + info.version.toString());
+    ui->txtd->append(tr("Comment") + " : " + plg->pluginComment());
+    ui->txtd->append(tr("URL") + " : " + info.url);
+}
+
+void PluginSettingDialog::on_plglist_currentRowChanged(int currentRow) {
+    if (currentRow < 0) {
+        return;
+    }
+
+    auto &plgsys = PluginSystem::instance();
+    auto plg = plgsys.plugin(currentRow);
+
+    auto info = plgsys.getPluginInfo(plg);
     ui->txtc->clear();
-    ui->txtc->append(tr("pluginName") + " : " + plg->pluginName());
-    ui->txtc->append(tr("pluginAuthor") + " : " + plg->pluginAuthor());
-    ui->txtc->append(tr("pluginVersion") + " : " +
-                     QString::number(plg->pluginVersion()));
-    ui->txtc->append(tr("pluginComment") + " : " + plg->pluginComment());
+    ui->txtc->append(tr("ID") + " : " + info.id);
+    ui->txtc->append(tr("Name") + " : " + plg->pluginName());
+    ui->txtc->append(tr("License") + " : " + info.license);
+    ui->txtc->append(tr("Author") + " : " + info.author);
+    ui->txtc->append(tr("Vendor") + " : " + info.vendor);
+    ui->txtc->append(tr("Version") + " : " + info.version.toString());
+    ui->txtc->append(tr("Comment") + " : " + plg->pluginComment());
+    if (!info.dependencies.isEmpty()) {
+        ui->txtc->append(tr("pluginDependencies:"));
+        for (auto &d : info.dependencies) {
+            ui->txtc->append(QString(4, ' ') + tr("PUID:") + d.puid);
+            ui->txtc->append(QString(4, ' ') + tr("Version:") +
+                             d.version.toString());
+        }
+    }
+    ui->txtc->append(tr("URL") + " : " + info.url);
 }

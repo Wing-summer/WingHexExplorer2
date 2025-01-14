@@ -190,10 +190,6 @@ void TestPlugin::unload(std::unique_ptr<QSettings> &set) {
 
 const QString TestPlugin::pluginName() const { return tr("TestPlugin"); }
 
-const QString TestPlugin::pluginAuthor() const { return WingHex::WINGSUMMER; }
-
-uint TestPlugin::pluginVersion() const { return WingHex::SDKVERSION; }
-
 const QString TestPlugin::pluginComment() const {
     return tr("A Test Plugin for WingHexExplorer2.");
 }

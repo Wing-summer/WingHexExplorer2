@@ -1061,8 +1061,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
 
         if (this->atEnd() || (cur->currentNibble() && !isKeepSize() &&
                               cur->insertionMode() == QHexCursor::InsertMode)) {
-            m_document->Insert(m_cursor, cur->position().offset(),
-                               uchar(val << 4),
+            m_document->Insert(cur, cur->position().offset(), uchar(val << 4),
                                1); // X0 byte
             return true;
         }
@@ -1074,7 +1073,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
         else // 0X
             val = (ch & 0xF0) | val;
 
-        m_document->Replace(m_cursor, cur->position().offset(), val,
+        m_document->Replace(cur, cur->position().offset(), val,
                             cur->currentNibble());
         return true;
     }
@@ -1087,9 +1086,9 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
 
         if (!this->atEnd() &&
             (cur->insertionMode() == QHexCursor::OverwriteMode))
-            m_document->Replace(m_cursor, cur->position().offset(), key, 1);
+            m_document->Replace(cur, cur->position().offset(), key, 1);
         else
-            m_document->Insert(m_cursor, cur->position().offset(), key, 1);
+            m_document->Insert(cur, cur->position().offset(), key, 1);
 
         QKeyEvent keyevent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
         qApp->sendEvent(this, &keyevent);

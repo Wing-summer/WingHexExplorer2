@@ -43,11 +43,19 @@ public:
     bool isLocked();
 
     //----------------------------------
-    bool AddBookMark(qsizetype pos, QString comment);
+    bool AddBookMark(qsizetype pos, const QString &comment);
     bool RemoveBookMark(qsizetype pos);
     bool RemoveBookMarks(const QList<qsizetype> &pos);
-    bool ModBookMark(qsizetype pos, QString comment);
+    bool ModBookMark(qsizetype pos, const QString &comment);
     bool ClearBookMark();
+
+    QUndoCommand *MakeAddBookMark(QUndoCommand *parent, qsizetype pos,
+                                  QString comment);
+    QUndoCommand *MakeRemoveBookMark(QUndoCommand *parent, qsizetype pos);
+    QUndoCommand *MakeModBookMark(QUndoCommand *parent, qsizetype pos,
+                                  QString comment);
+    QUndoCommand *MakeClearBookMark(QUndoCommand *parent);
+
     //----------------------------------
 
     bool addBookMark(qsizetype pos, QString comment);
@@ -77,11 +85,6 @@ public:
     void setMetafgVisible(bool b);
     void setMetabgVisible(bool b);
     void setMetaCommentVisible(bool b);
-
-    void SetMetafgVisible(bool b);
-    void SetMetabgVisible(bool b);
-    void SetMetaCommentVisible(bool b);
-    void SetMetaVisible(bool b);
 
     bool metafgVisible();
     bool metabgVisible();
@@ -121,10 +124,23 @@ public slots:
     bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                 int nibbleindex = 0);
 
-    bool saveTo(QIODevice *device, bool cleanUndo);
+    QUndoCommand *MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
+                             qsizetype offset, uchar b, int nibbleindex = 0);
+    QUndoCommand *MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
+                             qsizetype offset, const QByteArray &data,
+                             int nibbleindex = 0);
+    QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,
+                              qsizetype offset, uchar b, int nibbleindex = 0);
+    QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,
+                              qsizetype offset, const QByteArray &data,
+                              int nibbleindex = 0);
+    QUndoCommand *MakeRemove(QUndoCommand *parent, QHexCursor *cursor,
+                             qsizetype offset, qsizetype len,
+                             int nibbleindex = 0);
 
-    // qsizetype searchForward(const QByteArray &ba);
-    // qsizetype searchBackward(const QByteArray &ba);
+    void pushMakeUndo(QUndoCommand *cmd);
+
+    bool saveTo(QIODevice *device, bool cleanUndo);
 
     /*================================*/
     // added by wingsummer

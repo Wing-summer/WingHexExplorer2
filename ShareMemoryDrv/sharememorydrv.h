@@ -39,8 +39,6 @@ public:
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
-    virtual const QString pluginAuthor() const override;
-    virtual uint pluginVersion() const override;
     virtual const QString pluginComment() const override;
 
 public:
@@ -52,7 +50,6 @@ public:
     onOpenFileBegin() override;
     virtual QString supportedFileExtDisplayName() const override;
     virtual QIcon supportedFileIcon() const override;
-    virtual QString supportedFileExtID() const override;
     virtual std::optional<DeviceInfo>
     onOpenFile(const QString &path, bool readOnly,
                const QVariantList &params) override;

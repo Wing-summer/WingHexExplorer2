@@ -93,6 +93,27 @@ private:
         QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
 
 public:
+    struct PluginInfo {
+        QString id;
+        QString name;
+        QVersionNumber version;
+        QString vendor;
+        QList<WingDependency> dependencies;
+        QString author;
+        QString license;
+        QString url;
+    };
+
+    enum class PluginStatus {
+        Valid,
+        BrokenVersion,
+        InvalidID,
+        DupID,
+        LackDependencies
+    };
+    Q_ENUM(PluginStatus)
+
+public:
     static PluginSystem &instance();
 
     void setMainWindow(MainWindow *win);
@@ -102,10 +123,10 @@ public:
     void unloadAllPlugin();
 
     const QList<IWingPlugin *> &plugins() const;
-    const IWingPlugin *plugin(qsizetype index) const;
+    IWingPlugin *plugin(qsizetype index) const;
 
     const QList<IWingDevice *> &devices() const;
-    const IWingDevice *device(qsizetype index) const;
+    IWingDevice *device(qsizetype index) const;
 
     WingAngelAPI *angelApi() const;
 
@@ -113,6 +134,11 @@ public:
 
     bool dispatchEvent(IWingPlugin::RegisteredEvent event,
                        const QVariantList &params);
+
+public:
+    PluginInfo getPluginInfo(IWingPluginBase *plg) const;
+
+    QString getPluginID(IWingPluginBase *plg) const;
 
 private:
     void loadExtPlugin();
@@ -122,7 +148,8 @@ private:
     void checkDirRootSafe(const QDir &dir);
 
     template <typename T>
-    void loadPlugin(const QFileInfo &filename, const QDir &setdir);
+    std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
+                                         const QDir &setdir);
 
     bool closeEditor(IWingPlugin *plg, int handle, bool force);
 
@@ -138,6 +165,11 @@ private:
                                              EditorView *view);
 
 private:
+    PluginInfo parsePluginMetadata(const QJsonObject &meta);
+
+    PluginStatus checkPluginMetadata(const PluginInfo &meta, bool isPlg);
+
+private:
     void registerFns(IWingPlugin *plg);
     void registerEnums(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
@@ -148,9 +180,11 @@ private:
     static QString getScriptFnSig(const QString &fnName,
                                   const IWingPlugin::ScriptFnInfo &fninfo);
 
-    static QString getPUID(IWingPlugin *p);
+    static QString getPUID(IWingPluginBase *p);
 
     bool isPluginLoaded(const WingDependency &d);
+
+    bool isPluginLoaded(const QString &id);
 
     bool checkThreadAff();
 
@@ -159,9 +193,9 @@ private:
     EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
 
 private:
-    void loadPlugin(IWingPlugin *p, const QString &fileName,
+    void loadPlugin(IWingPlugin *p, PluginInfo &meta,
                     const std::optional<QDir> &setdir);
-    void loadPlugin(IWingDevice *p, const QString &fileName,
+    void loadPlugin(IWingDevice *p, PluginInfo &meta,
                     const std::optional<QDir> &setdir);
 
 private:
@@ -182,7 +216,6 @@ private:
     void registerPluginDockWidgets(IWingPluginBase *p);
     void registerPluginPages(IWingPluginBase *p);
 
-private:
 private:
     template <typename T>
     T readBasicTypeContent(IWingPlugin *plg, qsizetype offset) {
@@ -211,12 +244,19 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
-            _rwlock.lockForWrite();
-            auto doc = e->hexEditor()->document();
+            auto editor = e->hexEditor();
+            auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            auto ret = doc->insert(offset, QByteArray(buffer, sizeof(T)));
-            _rwlock.unlock();
-            return ret;
+
+            auto cmd =
+                doc->MakeInsert(m_plgviewMap[plg].second, editor->cursor(),
+                                offset, QByteArray(buffer, sizeof(T)));
+            if (cmd) {
+                _rwlock.lockForWrite();
+                doc->pushMakeUndo(cmd);
+                _rwlock.unlock();
+                return true;
+            }
         }
         return false;
     }
@@ -227,12 +267,19 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
-            _rwlock.lockForWrite();
-            auto doc = e->hexEditor()->document();
+            auto editor = e->hexEditor();
+            auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            auto ret = doc->replace(offset, QByteArray(buffer, sizeof(T)));
-            _rwlock.unlock();
-            return ret;
+
+            auto cmd =
+                doc->MakeReplace(m_plgviewMap[plg].second, editor->cursor(),
+                                 offset, QByteArray(buffer, sizeof(T)));
+            if (cmd) {
+                _rwlock.lockForWrite();
+                doc->pushMakeUndo(cmd);
+                _rwlock.unlock();
+                return true;
+            }
         }
         return false;
     }
@@ -242,14 +289,20 @@ private:
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
         auto e = pluginCurrentEditor(plg);
         if (e) {
-            _rwlock.lockForWrite();
-            auto doc = e->hexEditor()->document();
-            auto offset = doc->length();
+            auto editor = e->hexEditor();
+            auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            QByteArray data(buffer, sizeof(T));
-            auto ret = doc->insert(offset, data);
-            _rwlock.unlock();
-            return ret;
+            auto offset = doc->length();
+
+            auto cmd =
+                doc->MakeInsert(m_plgviewMap[plg].second, editor->cursor(),
+                                offset, QByteArray(buffer, sizeof(T)));
+            if (cmd) {
+                _rwlock.lockForWrite();
+                doc->pushMakeUndo(cmd);
+                _rwlock.unlock();
+                return true;
+            }
         }
         return false;
     }
@@ -263,16 +316,16 @@ private:
 
 private:
     MainWindow *_win = nullptr;
-    QList<WingDependency> _loadedplginfo;
+    QHash<IWingPluginBase *, PluginInfo> _pinfos;
     QList<IWingPlugin *> _loadedplgs;
     QHash<QWidget *, ads::CDockWidget *> _raisedw;
-    QList<QPair<IWingPlugin *, QString>> _lazyplgs;
+    QStringList _lazyplgs;
 
     QList<IWingDevice *> _loadeddevs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
-    QHash<IWingPlugin *, EditorView *> m_plgviewMap;
+    QHash<IWingPlugin *, QPair<EditorView *, QUndoCommand *>> m_plgviewMap;
     QHash<IWingPlugin *, QList<QPair<SharedUniqueId, EditorView *>>>
         m_plgHandles;
     QHash<EditorView *, QList<IWingPlugin *>> m_viewBindings;

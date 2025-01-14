@@ -49,7 +49,8 @@ public:
     virtual void cancel() override;
 
 private slots:
-    void on_plglist_itemSelectionChanged();
+    void on_devlist_currentRowChanged(int currentRow);
+    void on_plglist_currentRowChanged(int currentRow);
 };
 
 #endif // PLUGINSETTINGDIALOG_H

@@ -71,10 +71,6 @@ const QString WingAngelAPI::pluginName() const {
     return tr("AngelScriptService");
 }
 
-const QString WingAngelAPI::pluginAuthor() const { return WingHex::WINGSUMMER; }
-
-uint WingAngelAPI::pluginVersion() const { return WingHex::SDKVERSION; }
-
 const QString WingAngelAPI::pluginComment() const {
     return tr("A internal plugin that provides AngelScript scripts with the "
               "ability to call the host API.");

@@ -30,6 +30,7 @@
 #include <QMessageBox>
 #include <QObject>
 #include <QSettings>
+#include <QVersionNumber>
 
 namespace WingHex {
 
@@ -154,8 +155,7 @@ signals:
 
 struct WingDependency {
     QString puid;
-    uint version;
-    QByteArray md5; // optional, but recommend
+    QVersionNumber version;
 };
 
 struct WingDockWidgetInfo {
@@ -190,8 +190,6 @@ public:
 
     virtual const QString pluginName() const = 0;
     virtual QIcon pluginIcon() const { return {}; }
-    virtual const QString pluginAuthor() const = 0;
-    virtual uint pluginVersion() const = 0;
     virtual const QString pluginComment() const = 0;
 
 public:

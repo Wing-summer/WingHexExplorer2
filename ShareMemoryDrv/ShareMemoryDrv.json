@@ -1,13 +1,10 @@
 {
-    "Id" : "sharememorydrv",
+    "Id" : "shmem",
     "Name" : "ShareMemoryDrv",
     "Version" : "0.0.1",
-    "CompatVersion" : "0.0.1",
     "Vendor" : "WingCloudStudio",
-    "VendorId" : "wingcloudstudio",
-    "Copyright" : "wingsummer",
+    "Author" : "wingsummer",
     "License" : "AGPL-3.0",
     "Description" : "An extension for opening sshared memory in WingHexExplorer2.",
-    "Url" : "https://github.com/Wing-summer/WingHexExplorer2",
-    "DocumentationUrl" : ""
+    "Url" : "https://github.com/Wing-summer/WingHexExplorer2"
 }

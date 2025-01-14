@@ -42,22 +42,12 @@ const QString SharedMemoryDriver::pluginName() const {
     return tr("SharedMemoryDriver");
 }
 
-const QString SharedMemoryDriver::pluginAuthor() const {
-    return WingHex::WINGSUMMER;
-}
-
-uint SharedMemoryDriver::pluginVersion() const { return WingHex::SDKVERSION; }
-
 const QString SharedMemoryDriver::pluginComment() const {
     return tr("An extension for opening sshared memory in WingHexExplorer2.");
 }
 
 QList<WingHex::PluginPage *> SharedMemoryDriver::registeredPages() const {
     return _plgps;
-}
-
-QString SharedMemoryDriver::supportedFileExtID() const {
-    return QStringLiteral("shmem");
 }
 
 std::optional<WingHex::IWingDevice::DeviceInfo>

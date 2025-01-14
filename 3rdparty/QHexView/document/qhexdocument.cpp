@@ -9,7 +9,6 @@
 #include "commands/hex/insertcommand.h"
 #include "commands/hex/removecommand.h"
 #include "commands/hex/replacecommand.h"
-#include "commands/meta/metashowcommand.h"
 
 #include <QApplication>
 #include <QBuffer>
@@ -51,22 +50,6 @@ bool QHexDocument::lineHasBookMark(qsizetype line) {
 void QHexDocument::addUndoCommand(QUndoCommand *command) {
     if (command)
         m_undostack->push(command);
-}
-
-void QHexDocument::SetMetaVisible(bool b) {
-    m_undostack->push(new MetaShowCommand(this, ShowType::All, b));
-}
-
-void QHexDocument::SetMetabgVisible(bool b) {
-    m_undostack->push(new MetaShowCommand(this, ShowType::BgColor, b));
-}
-
-void QHexDocument::SetMetafgVisible(bool b) {
-    m_undostack->push(new MetaShowCommand(this, ShowType::FgColor, b));
-}
-
-void QHexDocument::SetMetaCommentVisible(bool b) {
-    m_undostack->push(new MetaShowCommand(this, ShowType::Comment, b));
 }
 
 void QHexDocument::setMetabgVisible(bool b) {
@@ -253,25 +236,68 @@ const QMap<qsizetype, QString> &QHexDocument::bookMarks() const {
     return _bookmarks;
 }
 
-bool QHexDocument::AddBookMark(qsizetype pos, QString comment) {
-    m_undostack->push(new BookMarkAddCommand(this, pos, comment));
+bool QHexDocument::AddBookMark(qsizetype pos, const QString &comment) {
+    auto cmd = MakeAddBookMark(nullptr, pos, comment);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     return true;
 }
 
 bool QHexDocument::RemoveBookMark(qsizetype pos) {
-    m_undostack->push(new BookMarkRemoveCommand(this, pos, bookMark(pos)));
+    auto cmd = MakeRemoveBookMark(nullptr, pos);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     return true;
 }
 
-bool QHexDocument::ModBookMark(qsizetype pos, QString comment) {
-    m_undostack->push(
-        new BookMarkReplaceCommand(this, pos, comment, bookMark(pos)));
+bool QHexDocument::ModBookMark(qsizetype pos, const QString &comment) {
+    auto cmd = MakeModBookMark(nullptr, pos, comment);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     return true;
 }
 
 bool QHexDocument::ClearBookMark() {
-    m_undostack->push(new BookMarkClearCommand(this, _bookmarks));
+    auto cmd = MakeClearBookMark(nullptr);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     return true;
+}
+
+QUndoCommand *QHexDocument::MakeAddBookMark(QUndoCommand *parent, qsizetype pos,
+                                            QString comment) {
+    if (pos < length()) {
+        return new BookMarkAddCommand(this, pos, comment, parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexDocument::MakeRemoveBookMark(QUndoCommand *parent,
+                                               qsizetype pos) {
+    if (_bookmarks.contains(pos)) {
+        return new BookMarkRemoveCommand(this, pos, bookMark(pos), parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexDocument::MakeModBookMark(QUndoCommand *parent, qsizetype pos,
+                                            QString comment) {
+    if (_bookmarks.contains(pos)) {
+        return new BookMarkReplaceCommand(this, pos, comment, bookMark(pos),
+                                          parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexDocument::MakeClearBookMark(QUndoCommand *parent) {
+    if (_bookmarks.isEmpty()) {
+        return nullptr;
+    }
+    return new BookMarkClearCommand(this, _bookmarks, parent);
 }
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
@@ -569,8 +595,10 @@ void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
     if (m_keepsize || m_readonly || m_islocked)
         return;
 
-    m_undostack->push(
-        new InsertCommand(this, cursor, offset, data, nibbleindex));
+    auto cmd = MakeInsert(nullptr, cursor, offset, data, nibbleindex);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
 
     emit documentChanged();
 }
@@ -579,8 +607,10 @@ void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
                            const QByteArray &data, int nibbleindex) {
     if (m_readonly || m_islocked)
         return;
-    m_undostack->push(
-        new ReplaceCommand(this, offset, data, cursor, nibbleindex));
+    auto cmd = MakeReplace(nullptr, cursor, offset, data, nibbleindex);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     emit documentChanged();
 }
 
@@ -588,10 +618,60 @@ bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                           int nibbleindex) {
     if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
         return false;
-    m_undostack->push(
-        new RemoveCommand(this, offset, len, cursor, nibbleindex));
+    auto cmd = MakeRemove(nullptr, cursor, offset, len, nibbleindex);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     emit documentChanged();
     return true;
+}
+
+QUndoCommand *QHexDocument::MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
+                                       qsizetype offset, uchar b,
+                                       int nibbleindex) {
+    return MakeInsert(parent, cursor, offset, QByteArray(1, char(b)),
+                      nibbleindex);
+}
+
+QUndoCommand *QHexDocument::MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
+                                       qsizetype offset, const QByteArray &data,
+                                       int nibbleindex) {
+    if (offset > length()) {
+        return nullptr;
+    }
+    return new InsertCommand(this, cursor, offset, data, nibbleindex, parent);
+}
+
+QUndoCommand *QHexDocument::MakeReplace(QUndoCommand *parent,
+                                        QHexCursor *cursor, qsizetype offset,
+                                        uchar b, int nibbleindex) {
+    return MakeReplace(parent, cursor, offset, QByteArray(1, char(b)),
+                       nibbleindex);
+}
+
+QUndoCommand *QHexDocument::MakeReplace(QUndoCommand *parent,
+                                        QHexCursor *cursor, qsizetype offset,
+                                        const QByteArray &data,
+                                        int nibbleindex) {
+    if (offset + data.length() > length()) {
+        return nullptr;
+    }
+    return new ReplaceCommand(this, offset, data, cursor, nibbleindex, parent);
+}
+
+QUndoCommand *QHexDocument::MakeRemove(QUndoCommand *parent, QHexCursor *cursor,
+                                       qsizetype offset, qsizetype len,
+                                       int nibbleindex) {
+    if (offset + len > length()) {
+        return nullptr;
+    }
+    return new RemoveCommand(this, offset, len, cursor, nibbleindex, parent);
+}
+
+void QHexDocument::pushMakeUndo(QUndoCommand *cmd) {
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
 }
 
 QByteArray QHexDocument::read(qsizetype offset, qsizetype len) const {

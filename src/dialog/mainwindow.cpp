@@ -2525,11 +2525,7 @@ void MainWindow::on_metadatafg(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isOriginWorkSpace()) {
-        doc->SetMetafgVisible(checked);
-    } else {
-        doc->setMetafgVisible(checked);
-    }
+    doc->setMetafgVisible(checked);
 }
 
 void MainWindow::on_metadatabg(bool checked) {
@@ -2539,11 +2535,7 @@ void MainWindow::on_metadatabg(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isOriginWorkSpace()) {
-        doc->SetMetabgVisible(checked);
-    } else {
-        doc->setMetabgVisible(checked);
-    }
+    doc->setMetabgVisible(checked);
 }
 
 void MainWindow::on_metadatacomment(bool checked) {
@@ -2553,11 +2545,7 @@ void MainWindow::on_metadatacomment(bool checked) {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isOriginWorkSpace()) {
-        doc->SetMetaCommentVisible(checked);
-    } else {
-        doc->setMetaCommentVisible(checked);
-    }
+    doc->setMetaCommentVisible(checked);
 }
 
 void MainWindow::on_metashowall() {
@@ -2567,13 +2555,9 @@ void MainWindow::on_metashowall() {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isOriginWorkSpace()) {
-        doc->SetMetaVisible(true);
-    } else {
-        doc->setMetafgVisible(true);
-        doc->setMetabgVisible(true);
-        doc->setMetaCommentVisible(true);
-    }
+    doc->setMetafgVisible(true);
+    doc->setMetabgVisible(true);
+    doc->setMetaCommentVisible(true);
 }
 
 void MainWindow::on_metahideall() {
@@ -2583,13 +2567,9 @@ void MainWindow::on_metahideall() {
     }
     auto hexeditor = editor->hexEditor();
     auto doc = hexeditor->document();
-    if (editor->isOriginWorkSpace()) {
-        doc->SetMetaVisible(false);
-    } else {
-        doc->setMetafgVisible(false);
-        doc->setMetabgVisible(false);
-        doc->setMetaCommentVisible(false);
-    }
+    doc->setMetafgVisible(false);
+    doc->setMetabgVisible(false);
+    doc->setMetaCommentVisible(false);
 }
 
 void MainWindow::on_clearfindresult() {

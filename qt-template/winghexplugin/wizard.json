@@ -60,17 +60,6 @@
                     }
                 },
                 {
-                    "name": "PluginVersion",
-                    "trDisplayName": "Plugin version:",
-                    "mandatory": true,
-                    "type": "LineEdit",
-                    "data":
-                    {
-                        "validator": "^[1-9][0-9]*$",
-                        "text": "1"
-                    }
-                },
-                {
                     "name": "VendorName",
                     "persistenceKey": "VendorName",
                     "trDisplayName": "Vendor name:",
@@ -82,13 +71,13 @@
                     }
                 },
                 {
-                    "name": "Copyright",
-                    "trDisplayName": "Copyright:",
+                    "name": "Author",
+                    "trDisplayName": "Author:",
                     "mandatory": true,
                     "type": "LineEdit",
                     "data":
                     {
-                        "trText": "(C) %{VendorName}"
+                        "trText": "MyName"
                     }
                 },
                 {
@@ -99,16 +88,6 @@
                     "data":
                     {
                         "trText": "Put short license information here"
-                    }
-                },
-                {
-                    "name": "Description",
-                    "trDisplayName": "Description:",
-                    "mandatory": true,
-                    "type": "LineEdit",
-                    "data":
-                    {
-                        "trText": "Put a short description of your plugin here"
                     }
                 },
                 {

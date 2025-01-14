@@ -29,14 +29,12 @@ add_library(
     document/commands/hex/removecommand.h
     document/commands/hex/replacecommand.cpp
     document/commands/hex/replacecommand.h
-    document/commands/meta/metashowcommand.h
     document/commands/meta/metaremovecommand.cpp
     document/commands/meta/metaremovecommand.h
     document/commands/meta/metaremoveposcommand.cpp
     document/commands/meta/metaremoveposcommand.h
     document/commands/meta/metareplacecommand.cpp
     document/commands/meta/metareplacecommand.h
-    document/commands/meta/metashowcommand.cpp
     document/commands/meta/metaclearcommand.cpp
     document/commands/meta/metaclearcommand.h
     document/commands/meta/metaaddcommand.h

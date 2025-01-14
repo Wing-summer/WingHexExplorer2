@@ -61,7 +61,7 @@ const QList<IWingPlugin *> &PluginSystem::plugins() const {
     return _loadedplgs;
 }
 
-const IWingPlugin *PluginSystem::plugin(qsizetype index) const {
+IWingPlugin *PluginSystem::plugin(qsizetype index) const {
     return _loadedplgs.at(index);
 }
 
@@ -69,26 +69,59 @@ const QList<IWingDevice *> &PluginSystem::devices() const {
     return _loadeddevs;
 }
 
-const IWingDevice *PluginSystem::device(qsizetype index) const {
+IWingDevice *PluginSystem::device(qsizetype index) const {
     return _loadeddevs.at(index);
 }
 
 template <typename T>
-void PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
+std::optional<PluginSystem::PluginInfo>
+PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
     Q_ASSERT(_win);
 
     if (fileinfo.exists()) {
         auto fileName = fileinfo.absoluteFilePath();
         QPluginLoader loader(fileName, this);
         Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
+
+        auto lmeta = loader.metaData();
+        PluginStatus cret;
+        std::optional<PluginSystem::PluginInfo> meta;
+        if (lmeta.contains("MetaData")) {
+            auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
+            cret = checkPluginMetadata(m, std::is_same_v<T, IWingPlugin>);
+            meta = m;
+        } else {
+            cret = PluginStatus::BrokenVersion;
+        }
+
+        switch (cret) {
+        case PluginStatus::Valid:
+            break;
+        case PluginStatus::BrokenVersion:
+            Logger::critical(tr("InvalidPluginBrokenInfo"));
+            return std::nullopt;
+        case PluginStatus::LackDependencies: {
+            _lazyplgs.append(fileName);
+            return meta;
+        } break;
+        case PluginStatus::InvalidID:
+            Logger::critical(tr("InvalidPluginID"));
+            return std::nullopt;
+        case PluginStatus::DupID:
+            Logger::critical(tr("InvalidDupPlugin"));
+            return std::nullopt;
+        }
+
         auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
-            loadPlugin(p, fileName, setdir);
+            loadPlugin(p, meta.value(), setdir);
         }
         Logger::_log("");
     }
+
+    return std::nullopt;
 }
 
 WingAngelAPI *PluginSystem::angelApi() const { return _angelplg; }
@@ -100,7 +133,7 @@ EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
     if (!m_plgviewMap.contains(plg)) {
         return nullptr;
     }
-    auto view = m_plgviewMap.value(plg);
+    auto view = m_plgviewMap.value(plg).first;
     if (view == nullptr) {
         view = _win->m_curEditor;
     }
@@ -133,6 +166,67 @@ PluginSystem::assginHandleForPluginView(IWingPlugin *plg, EditorView *view) {
     m_plgHandles[plg].append(qMakePair(id, view));
     m_viewBindings[view].append(plg);
     return id;
+}
+
+PluginSystem::PluginInfo
+PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
+    PluginSystem::PluginInfo info;
+
+    info.id = meta["Id"].toString();
+    info.version = QVersionNumber::fromString(meta["Version"].toString());
+
+    info.name = meta["Name"].toString();
+    info.vendor = meta["Vendor"].toString();
+    info.author = meta["Author"].toString();
+    info.license = meta["License"].toString();
+    info.url = meta["Url"].toString();
+
+    auto dependsObj = meta["Dependencies"];
+    if (!dependsObj.isNull()) {
+        if (dependsObj.isArray()) {
+            auto arr = dependsObj.toArray();
+            for (int i = 0; i < arr.size(); ++i) {
+                auto d = arr.at(i);
+                if (d.isObject()) {
+                    auto id = d["Id"].toString();
+                    if (id.isEmpty()) {
+                        continue;
+                    }
+                    auto version =
+                        QVersionNumber::fromString(d["Version"].toString());
+                    WingDependency dp;
+                    dp.puid = id;
+                    dp.version = version;
+                    info.dependencies.append(dp);
+                }
+            }
+        }
+    }
+
+    return info;
+}
+
+PluginSystem::PluginStatus
+PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
+    constexpr auto puid_limit = 36; // same as uuid length, so enough
+
+    if (meta.id.isEmpty() && meta.id.length() > puid_limit) {
+        return PluginStatus::InvalidID;
+    }
+    if (isPluginLoaded(meta.id)) {
+        return PluginStatus::DupID;
+    }
+    if (meta.version.isNull()) {
+        return PluginStatus::BrokenVersion;
+    }
+    if (isPlg) {
+        for (auto &d : meta.dependencies) {
+            if (!isPluginLoaded(d)) {
+                return PluginStatus::LackDependencies;
+            }
+        }
+    }
+    return PluginStatus::Valid;
 }
 
 bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
@@ -174,6 +268,8 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
 #endif
         }
         m_viewBindings.remove(view);
+
+        // TODO cleanup
     }
 }
 
@@ -312,6 +408,17 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     return true;
 }
 
+PluginSystem::PluginInfo
+PluginSystem::getPluginInfo(IWingPluginBase *plg) const {
+    Q_ASSERT(plg);
+    return _pinfos.value(plg);
+}
+
+QString PluginSystem::getPluginID(IWingPluginBase *plg) const {
+    Q_ASSERT(plg);
+    return _pinfos.value(plg).id;
+}
+
 void PluginSystem::loadExtPlugin() {
 #ifdef QT_DEBUG
     QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
@@ -343,29 +450,30 @@ void PluginSystem::loadExtPlugin() {
         loadPlugin<IWingPlugin>(item, udir);
     }
 
+    QList<PluginSystem::PluginInfo> errorplg;
     if (!_lazyplgs.isEmpty()) {
-        decltype(_lazyplgs) lazyplgs;
+        QStringList lazyplgs;
         lazyplgs.swap(_lazyplgs);
 
         for (auto &item : lazyplgs) {
-            loadPlugin(item.first, item.second, udir);
+            auto r = loadPlugin<IWingPlugin>(QFileInfo(item), udir);
+            if (r) {
+                errorplg.append(r.value());
+            }
         }
     }
 
     if (!_lazyplgs.isEmpty()) {
         Logger::critical(tr("PluginLoadingFailedSummary"));
         Logger::_log({});
-        for (auto &lplg : _lazyplgs) {
-            auto plg = lplg.first;
-            Logger::critical(tr("- PluginName:") + plg->pluginName());
+        for (auto &lplg : errorplg) {
+            Logger::critical(tr("- PluginName:") + lplg.name);
             Logger::critical(tr("- Dependencies:"));
-            for (auto &d : plg->dependencies()) {
+            for (auto &d : lplg.dependencies) {
                 Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
                 Logger::critical(QString(4, ' ') + tr("Version:") +
-                                 QString::number(d.version));
-                Logger::critical(QString(4, ' ') + tr("MD5:") + d.md5);
+                                 d.version.toString());
             }
-            plg->deleteLater();
         }
         _lazyplgs.clear();
     }
@@ -600,37 +708,34 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
     return sig + params.join(',') + QStringLiteral(")");
 }
 
-QString PluginSystem::getPUID(IWingPlugin *p) {
+QString PluginSystem::getPUID(IWingPluginBase *p) {
     if (p) {
-        constexpr auto puid_limit = 36; // same as uuid length, so enough
-        auto prop = p->property("puid").toString().trimmed();
-        if (prop.length() > puid_limit) {
-            return {};
-        }
-        auto pid = QString(p->metaObject()->className());
-        if (pid.length() > puid_limit) {
-            return {};
-        }
-        return prop.isEmpty() ? pid : prop;
+        return PluginSystem::instance().getPluginID(p);
     } else {
         return {};
     }
 }
 
 bool PluginSystem::isPluginLoaded(const WingDependency &d) {
-    for (auto &info : _loadedplginfo) {
-        if (info.version >= d.version && info.puid == d.puid) {
-            if (d.md5.isEmpty()) {
-                return true;
-            } else {
-                return d.md5.compare(info.md5, Qt::CaseInsensitive) == 0;
-            }
+    for (auto &info : _pinfos) {
+        if ((d.version.isNull() || info.version >= d.version) &&
+            info.id == d.puid) {
+            return true;
         }
     }
     return false;
 }
 
-void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
+bool PluginSystem::isPluginLoaded(const QString &id) {
+    for (auto &info : _pinfos) {
+        if (info.id == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
                               const std::optional<QDir> &setdir) {
     QTranslator *p_tr = nullptr;
 
@@ -647,27 +752,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
             throw tr("ErrLoadPluginNoName");
         }
 
-        auto puid = getPUID(p);
-        if (puid.isEmpty()) {
-            throw tr("ErrLoadInvalidPUID");
-        }
-
-        for (auto &uid : _loadedplginfo) {
-            if (uid.puid == puid) {
-                throw tr("ErrLoadLoadedPlugin");
-            }
-        }
-
-        // check dependencise
-        auto dps = p->dependencies();
-        if (!dps.isEmpty()) {
-            for (auto &d : dps) {
-                if (!isPluginLoaded(d)) {
-                    _lazyplgs.append(qMakePair(p, fileName));
-                    return;
-                }
-            }
-        }
+        // dependencies had been checked
 
         emit pluginLoading(p->pluginName());
 
@@ -691,16 +776,10 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
         }
 
         _loadedplgs.append(p);
-
-        WingDependency de;
-        de.puid = puid;
-        de.version = p->pluginVersion();
-        de.md5 = Utilities::getMd5(fileName);
-
-        _loadedplginfo.append(de);
+        _pinfos.insert(p, meta);
 
         Logger::warning(tr("PluginName :") + p->pluginName());
-        Logger::warning(tr("PluginAuthor :") + p->pluginAuthor());
+        Logger::warning(tr("PluginAuthor :") + meta.author);
         Logger::warning(tr("PluginWidgetRegister"));
 
         // ensure call only once
@@ -788,7 +867,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
         registerEvents(p);
         connectInterface(p);
 
-        m_plgviewMap.insert(p, nullptr);
+        m_plgviewMap.insert(p, qMakePair(nullptr, nullptr));
     } catch (const QString &error) {
         Logger::critical(error);
         if (p_tr) {
@@ -797,10 +876,8 @@ void PluginSystem::loadPlugin(IWingPlugin *p, const QString &fileName,
     }
 }
 
-void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
+void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                               const std::optional<QDir> &setdir) {
-    Q_UNUSED(fileName);
-
     QTranslator *p_tr = nullptr;
 
     try {
@@ -812,12 +889,12 @@ void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
             throw tr("ErrLoadExtPluginSDKVersion");
         }
 
-        if (!p->pluginName().trimmed().length()) {
+        if (meta.name.isEmpty()) {
             throw tr("ErrLoadExtPluginNoName");
         }
 
-        Logger::warning(tr("ExtPluginName :") + p->pluginName());
-        Logger::warning(tr("ExtPluginAuthor :") + p->pluginAuthor());
+        Logger::warning(tr("ExtPluginName :") + meta.name);
+        Logger::warning(tr("ExtPluginAuthor :") + meta.author);
         Logger::warning(tr("ExtPluginWidgetRegister"));
 
         // TODO
@@ -839,6 +916,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, const QString &fileName,
         }
 
         _loadeddevs.append(p);
+        _pinfos.insert(p, meta);
 
         registerPluginPages(p);
         connectInterface(p);
@@ -1457,7 +1535,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     return false;
                 }
                 if (handle < 0) {
-                    m_plgviewMap[plg] = nullptr;
+                    m_plgviewMap[plg].first = nullptr;
                 } else {
                     auto handles = m_plgHandles.value(plg);
                     auto ret = std::find_if(
@@ -1468,7 +1546,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     if (ret == handles.end()) {
                         return false;
                     }
-                    m_plgviewMap[plg] = ret->second;
+                    m_plgviewMap[plg].first = ret->second;
                 }
                 return true;
             });
@@ -1569,14 +1647,47 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
                 return false;
             });
+    connect(pctl, &WingPlugin::Controller::beginMarco, _win,
+            [=](const QString &txt) -> bool {
+                auto e = pluginCurrentEditor(plg);
+                if (e) {
+                    auto &info = m_plgviewMap[plg];
+                    if (info.second) {
+                        return false;
+                    }
+                    info.second = new QUndoCommand(txt);
+                    return true;
+                }
+                return false;
+            });
+    connect(pctl, &WingPlugin::Controller::endMarco, _win, [=]() -> bool {
+        auto e = pluginCurrentEditor(plg);
+        if (e) {
+            auto &info = m_plgviewMap[plg];
+            if (info.second) {
+                e->hexEditor()->document()->pushMakeUndo(info.second);
+                info.second = nullptr;
+                return true;
+            }
+            return false;
+        }
+        return false;
+    });
     connect(pctl, &WingPlugin::Controller::insertBytes, _win,
             [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    _rwlock.lockForWrite();
-                    auto ret = e->hexEditor()->document()->insert(offset, data);
-                    _rwlock.unlock();
-                    return ret;
+                    auto editor = e->hexEditor();
+                    auto doc = editor->document();
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->MakeInsert(m_plgviewMap[plg].second,
+                                               editor->cursor(), offset, data);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1584,11 +1695,17 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             [=](qsizetype offset, const QByteArray &data) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    _rwlock.lockForWrite();
-                    auto ret =
-                        e->hexEditor()->document()->replace(offset, data);
-                    _rwlock.unlock();
-                    return ret;
+                    auto editor = e->hexEditor();
+                    auto doc = editor->document();
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->MakeReplace(m_plgviewMap[plg].second,
+                                                editor->cursor(), offset, data);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1634,10 +1751,15 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
                     auto unicode = Utilities::encodingString(value, enco);
 
-                    _rwlock.lockForWrite();
-                    auto ret = doc->insert(offset, unicode);
-                    _rwlock.unlock();
-                    return ret;
+                    auto cmd =
+                        doc->MakeInsert(m_plgviewMap[plg].second,
+                                        editor->cursor(), offset, unicode);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1682,10 +1804,16 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     }
 
                     auto unicode = Utilities::encodingString(value, enco);
-                    _rwlock.lockForWrite();
-                    auto ret = doc->replace(offset, unicode);
-                    _rwlock.unlock();
-                    return ret;
+
+                    auto cmd =
+                        doc->MakeReplace(m_plgviewMap[plg].second,
+                                         editor->cursor(), offset, unicode);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1729,10 +1857,16 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     }
 
                     auto unicode = Utilities::encodingString(value, enco);
-                    _rwlock.lockForWrite();
-                    auto ret = doc->insert(offset, unicode);
-                    _rwlock.unlock();
-                    return ret;
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd =
+                        doc->MakeInsert(m_plgviewMap[plg].second,
+                                        editor->cursor(), offset, unicode);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1741,23 +1875,37 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             [=](qsizetype offset, qsizetype len) -> bool {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    auto doc = e->hexEditor()->document();
-                    _rwlock.lockForWrite();
-                    auto ret = doc->remove(offset, len);
-                    _rwlock.unlock();
-                    return ret;
+                    auto editor = e->hexEditor();
+                    auto doc = editor->document();
+
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->MakeRemove(m_plgviewMap[plg].second,
+                                               editor->cursor(), offset, len);
+                    if (cmd) {
+                        _rwlock.lockForWrite();
+                        doc->pushMakeUndo(cmd);
+                        _rwlock.unlock();
+                        return true;
+                    }
                 }
                 return false;
             });
     connect(pctl, &WingPlugin::Controller::removeAllBytes, _win, [=]() -> bool {
         auto e = pluginCurrentEditor(plg);
         if (e) {
-            auto doc = e->hexEditor()->document();
+            auto editor = e->hexEditor();
+            auto doc = editor->document();
             auto len = doc->length();
-            _rwlock.lockForWrite();
-            auto ret = doc->remove(0, len);
-            _rwlock.unlock();
-            return ret;
+
+            Q_ASSERT(m_plgviewMap.contains(plg));
+            auto cmd = doc->MakeRemove(m_plgviewMap[plg].second,
+                                       editor->cursor(), 0, len);
+            if (cmd) {
+                _rwlock.lockForWrite();
+                doc->pushMakeUndo(cmd);
+                _rwlock.unlock();
+                return true;
+            }
         }
         return false;
     });
@@ -1844,25 +1992,15 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->metadata()->metadata(begin, begin + length,
-                                                     fgcolor, bgcolor, comment);
-                }
-                return false;
-            });
-    connect(pctl,
-            QOverload<qsizetype, qusizetype, const QColor &, const QColor &,
-                      const QString &>::of(&WingPlugin::Controller::metadata),
-            _win,
-            [=](qsizetype begin, qusizetype length, const QColor &fgcolor,
-                const QColor &bgcolor, const QString &comment) -> bool {
-                if (!checkThreadAff()) {
-                    return false;
-                }
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    auto doc = e->hexEditor()->document();
-                    return doc->metadata()->metadata(begin, begin + length,
-                                                     fgcolor, bgcolor, comment);
+
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->metadata()->MakeMetadata(
+                        m_plgviewMap[plg].second, begin, begin + length,
+                        fgcolor, bgcolor, comment);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1874,8 +2012,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    doc->metadata()->removeMetadata(offset);
-                    return true;
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->metadata()->MakeRemoveMetadata(
+                        m_plgviewMap[plg].second, offset);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1886,8 +2029,12 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
-            doc->metadata()->clear();
-            return true;
+            Q_ASSERT(m_plgviewMap.contains(plg));
+            auto cmd = doc->metadata()->MakeClear(m_plgviewMap[plg].second);
+            if (cmd) {
+                doc->pushMakeUndo(cmd);
+                return true;
+            }
         }
         return false;
     });
@@ -1900,8 +2047,14 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->metadata()->comment(begin, begin + length,
-                                                    comment);
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->metadata()->MakeComment(
+                        m_plgviewMap[plg].second, begin, begin + length,
+                        comment);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -1914,8 +2067,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
-                return doc->metadata()->foreground(begin, begin + length,
-                                                   fgcolor);
+                Q_ASSERT(m_plgviewMap.contains(plg));
+                auto cmd = doc->metadata()->MakeForeground(
+                    m_plgviewMap[plg].second, begin, begin + length, fgcolor);
+                if (cmd) {
+                    doc->pushMakeUndo(cmd);
+                    return true;
+                }
             }
             return false;
         });
@@ -1928,8 +2086,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             auto e = pluginCurrentEditor(plg);
             if (e) {
                 auto doc = e->hexEditor()->document();
-                return doc->metadata()->background(begin, begin + length,
-                                                   bgcolor);
+                Q_ASSERT(m_plgviewMap.contains(plg));
+                auto cmd = doc->metadata()->MakeBackground(
+                    m_plgviewMap[plg].second, begin, begin + length, bgcolor);
+                if (cmd) {
+                    doc->pushMakeUndo(cmd);
+                    return true;
+                }
             }
             return false;
         });
@@ -2007,7 +2170,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->addBookMark(pos, comment);
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->MakeAddBookMark(m_plgviewMap[plg].second,
+                                                    pos, comment);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -2019,7 +2188,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->modBookMark(pos, comment);
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd = doc->MakeModBookMark(m_plgviewMap[plg].second,
+                                                    pos, comment);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -2031,7 +2206,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
                     auto doc = e->hexEditor()->document();
-                    return doc->removeBookMark(pos);
+                    Q_ASSERT(m_plgviewMap.contains(plg));
+                    auto cmd =
+                        doc->MakeRemoveBookMark(m_plgviewMap[plg].second, pos);
+                    if (cmd) {
+                        doc->pushMakeUndo(cmd);
+                        return true;
+                    }
                 }
                 return false;
             });
@@ -2042,7 +2223,12 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         auto e = pluginCurrentEditor(plg);
         if (e) {
             auto doc = e->hexEditor()->document();
-            return doc->clearBookMark();
+            Q_ASSERT(m_plgviewMap.contains(plg));
+            auto cmd = doc->MakeClearBookMark(m_plgviewMap[plg].second);
+            if (cmd) {
+                doc->pushMakeUndo(cmd);
+                return true;
+            }
         }
         return false;
     });
@@ -2058,7 +2244,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         auto view = _win->newfileGUI();
         if (view) {
             auto id = assginHandleForPluginView(plg, view);
-            m_plgviewMap[plg] = view;
+            auto &info = m_plgviewMap[plg];
+            info.first = view;
+            info.second = nullptr;
             return ErrFile(int(*id));
         } else {
             return ErrFile::Error;
@@ -2080,7 +2268,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         return ErrFile::AlreadyOpened;
                     }
                     auto id = assginHandleForPluginView(plg, view);
-                    m_plgviewMap[plg] = view;
+                    auto &info = m_plgviewMap[plg];
+                    info.first = view;
+                    info.second = nullptr;
                     return ErrFile(int(*id));
                 } else {
                     return ret;
@@ -2102,7 +2292,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         return ErrFile::AlreadyOpened;
                     }
                     auto id = assginHandleForPluginView(plg, view);
-                    m_plgviewMap[plg] = view;
+                    auto &info = m_plgviewMap[plg];
+                    info.first = view;
+                    info.second = nullptr;
                     return ErrFile(int(*id));
                 } else {
                     return ret;
@@ -2125,7 +2317,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         return ErrFile::AlreadyOpened;
                     }
                     auto id = assginHandleForPluginView(plg, view);
-                    m_plgviewMap[plg] = view;
+                    auto &info = m_plgviewMap[plg];
+                    info.first = view;
+                    info.second = nullptr;
                     return ErrFile(int(*id));
                 } else {
                     return ret;
@@ -2147,7 +2341,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                         return ErrFile::AlreadyOpened;
                     }
                     auto id = assginHandleForPluginView(plg, view);
-                    m_plgviewMap[plg] = view;
+                    auto &info = m_plgviewMap[plg];
+                    info.first = view;
+                    info.second = nullptr;
                     return ErrFile(int(*id));
                 } else {
                     return ret;
@@ -2430,7 +2626,19 @@ void PluginSystem::loadAllPlugin() {
     auto &set = SettingManager::instance();
     if (set.scriptEnabled()) {
         _angelplg = new WingAngelAPI;
-        loadPlugin(_angelplg, {}, std::nullopt);
+
+        QFile angeljson(QStringLiteral(
+            ":/com.wingsummer.winghex/src/class/WingAngelAPI.json"));
+        auto ret = angeljson.open(QFile::ReadOnly);
+        Q_ASSERT(ret);
+        Q_UNUSED(ret);
+        auto angelapi = angeljson.readAll();
+        angeljson.close();
+
+        QJsonDocument doc = QJsonDocument::fromJson(angelapi);
+        auto meta = parsePluginMetadata(doc.object());
+
+        loadPlugin(_angelplg, meta, std::nullopt);
     }
 
     bool ok;
@@ -2451,7 +2659,7 @@ void PluginSystem::loadAllPlugin() {
 
 EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *sender) const {
     if (sender) {
-        auto editor = m_plgviewMap.value(sender);
+        auto editor = m_plgviewMap.value(sender).first;
         if (editor) {
             return editor;
         } else {

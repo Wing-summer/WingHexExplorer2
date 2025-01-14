@@ -31,9 +31,12 @@ QHexLineMetadata QHexMetadata::get(qsizetype line) const {
 
 //----------undo redo wrapper----------
 
-void QHexMetadata::ModifyMetadata(QHexMetadataItem newmeta,
-                                  QHexMetadataItem oldmeta) {
-    m_undo->push(new MetaReplaceCommand(this, newmeta, oldmeta));
+void QHexMetadata::ModifyMetadata(const QHexMetadataItem &newmeta,
+                                  const QHexMetadataItem &oldmeta) {
+    auto cmd = MakeModifyMetadata(nullptr, newmeta, oldmeta);
+    if (cmd) {
+        m_undo->push(cmd);
+    }
 }
 
 void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
@@ -44,23 +47,102 @@ void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
     m_undo->endMacro();
 }
 
-void QHexMetadata::RemoveMetadata(QHexMetadataItem item) {
-    m_undo->push(new MetaRemoveCommand(this, item));
+void QHexMetadata::RemoveMetadata(const QHexMetadataItem &item) {
+    auto cmd = MakeRemoveMetadata(nullptr, item);
+    if (cmd) {
+        m_undo->push(cmd);
+    }
 }
 
 void QHexMetadata::RemoveMetadata(qsizetype offset) {
-    m_undo->push(new MetaRemovePosCommand(this, offset));
+    auto cmd = MakeRemoveMetadata(nullptr, offset);
+    if (cmd) {
+        m_undo->push(cmd);
+    }
 }
 
 void QHexMetadata::Metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
-    m_undo->push(new MetaAddCommand(this, absi));
+    auto cmd = MakeMetadata(nullptr, begin, end, fgcolor, bgcolor, comment);
+    if (cmd) {
+        m_undo->push(cmd);
+    }
 }
 
 void QHexMetadata::Clear() {
-    m_undo->push(new MetaClearCommand(this, this->getAllMetadata()));
+    auto cmd = MakeClear(nullptr);
+    if (cmd) {
+        m_undo->push(cmd);
+    }
+}
+
+QUndoCommand *QHexMetadata::MakeColor(QUndoCommand *parent, qsizetype begin,
+                                      qsizetype end, const QColor &fgcolor,
+                                      const QColor &bgcolor) {
+    return MakeMetadata(parent, begin, end, fgcolor, bgcolor, QString());
+}
+
+QUndoCommand *QHexMetadata::MakeForeground(QUndoCommand *parent,
+                                           qsizetype begin, qsizetype end,
+                                           const QColor &fgcolor) {
+    return MakeMetadata(parent, begin, end, fgcolor, QColor(), QString());
+}
+
+QUndoCommand *QHexMetadata::MakeBackground(QUndoCommand *parent,
+                                           qsizetype begin, qsizetype end,
+                                           const QColor &bgcolor) {
+    return MakeMetadata(parent, begin, end, QColor(), bgcolor, QString());
+}
+
+QUndoCommand *QHexMetadata::MakeComment(QUndoCommand *parent, qsizetype begin,
+                                        qsizetype end, const QString &comment) {
+    return MakeMetadata(parent, begin, end, QColor(), QColor(), comment);
+}
+
+QUndoCommand *
+QHexMetadata::MakeModifyMetadata(QUndoCommand *parent,
+                                 const QHexMetadataItem &newmeta,
+                                 const QHexMetadataItem &oldmeta) {
+    if (m_metadata.contains(oldmeta) && checkValidMetadata(newmeta)) {
+        return new MetaReplaceCommand(this, newmeta, oldmeta, parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexMetadata::MakeRemoveMetadata(QUndoCommand *parent,
+                                               const QHexMetadataItem &item) {
+    if (m_metadata.contains(item)) {
+        return new MetaRemoveCommand(this, item, parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexMetadata::MakeRemoveMetadata(QUndoCommand *parent,
+                                               qsizetype offset) {
+    if (get(offset)) {
+        return new MetaRemovePosCommand(this, offset, parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexMetadata::MakeMetadata(QUndoCommand *parent, qsizetype begin,
+                                         qsizetype end, const QColor &fgcolor,
+                                         const QColor &bgcolor,
+                                         const QString &comment) {
+    if (checkValidMetadata(begin, end, fgcolor, bgcolor, comment)) {
+        QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
+        return new MetaAddCommand(this, absi, parent);
+    }
+    return nullptr;
+}
+
+QUndoCommand *QHexMetadata::MakeClear(QUndoCommand *parent) {
+    auto metas = this->getAllMetadata();
+    if (metas.isEmpty()) {
+        return nullptr;
+    }
+    return new MetaClearCommand(this, metas, parent);
 }
 
 //-------- the real function-----------
@@ -236,21 +318,13 @@ void QHexMetadata::clear() {
 bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
                             const QColor &fgcolor, const QColor &bgcolor,
                             const QString &comment) {
-    if (begin > end)
-        return false;
-
-    if (!fgcolor.isValid() || fgcolor.alpha() == 0) {
-        if (!bgcolor.isValid() || bgcolor.alpha() == 0) {
-            if (comment.isEmpty()) {
-                return false;
-            }
-        }
+    if (checkValidMetadata(begin, end, fgcolor, bgcolor, comment)) {
+        QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
+        addMetadata(absi);
+        emit metadataChanged();
+        return true;
     }
-
-    QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
-    addMetadata(absi);
-    emit metadataChanged();
-    return true;
+    return false;
 }
 
 void QHexMetadata::setLineWidth(quint8 width) {
@@ -509,4 +583,26 @@ void QHexMetadata::addMetaLines(const QHexMetadataItem &mi) {
                 {start, length, mi.foreground, mi.background, mi.comment});
         }
     }
+}
+
+bool QHexMetadata::checkValidMetadata(const QHexMetadataItem &mi) {
+    return checkValidMetadata(mi.begin, mi.end, mi.foreground, mi.background,
+                              mi.comment);
+}
+
+bool QHexMetadata::checkValidMetadata(qsizetype begin, qsizetype end,
+                                      const QColor &fgcolor,
+                                      const QColor &bgcolor,
+                                      const QString &comment) {
+    if (begin > end)
+        return false;
+
+    if (!fgcolor.isValid() || fgcolor.alpha() == 0) {
+        if (!bgcolor.isValid() || bgcolor.alpha() == 0) {
+            if (comment.isEmpty()) {
+                return false;
+            }
+        }
+    }
+    return true;
 }

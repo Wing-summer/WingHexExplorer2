@@ -176,6 +176,9 @@ signals:
     Q_REQUIRED_RESULT bool setHeaderVisible(bool b);
     Q_REQUIRED_RESULT bool setAddressBase(quintptr base);
 
+    Q_REQUIRED_RESULT bool beginMarco(const QString &txt);
+    Q_REQUIRED_RESULT bool endMarco();
+
     Q_REQUIRED_RESULT bool writeInt8(qsizetype offset, qint8 value);
     Q_REQUIRED_RESULT bool writeInt16(qsizetype offset, qint16 value);
     Q_REQUIRED_RESULT bool writeInt32(qsizetype offset, qint32 value);
@@ -242,10 +245,13 @@ signals:
     // mainwindow
     Q_REQUIRED_RESULT WingHex::ErrFile newFile();
     Q_REQUIRED_RESULT WingHex::ErrFile openFile(const QString &filename);
+    Q_REQUIRED_RESULT WingHex::ErrFile openDriver(const QString &driver);
     Q_REQUIRED_RESULT WingHex::ErrFile openRegionFile(const QString &filename,
                                                       qsizetype start = 0,
                                                       qsizetype length = 1024);
-    Q_REQUIRED_RESULT WingHex::ErrFile openDriver(const QString &driver);
+    Q_REQUIRED_RESULT WingHex::ErrFile openExtFile(const QString &file,
+                                                   const QVariantList &params);
+
     Q_REQUIRED_RESULT WingHex::ErrFile closeFile(int handle,
                                                  bool force = false);
     Q_REQUIRED_RESULT WingHex::ErrFile saveFile(int handle,
@@ -437,8 +443,6 @@ public:
 
 public:
     virtual ~IWingPlugin() = default;
-
-    virtual QList<WingDependency> dependencies() const { return {}; }
 
     virtual RegisteredEvents registeredEvents() const {
         return RegisteredEvent::None;
