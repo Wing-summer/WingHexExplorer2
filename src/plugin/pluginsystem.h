@@ -44,11 +44,11 @@ private:
     public:
         class UniqueId : public QSharedData {
         public:
-            UniqueId() : _id(-1), _gen(nullptr) {}
+            UniqueId() : _id(0), _gen(nullptr) {}
 
             UniqueId(UniqueIdGenerator *gen, int id) : _id(id), _gen(gen) {
                 Q_ASSERT(gen);
-                Q_ASSERT(id >= 0);
+                Q_ASSERT(id > 0);
             }
 
             ~UniqueId() {
@@ -65,7 +65,7 @@ private:
         };
 
     public:
-        UniqueIdGenerator() : currentId(0) {}
+        UniqueIdGenerator() : currentId(1) {}
 
         QExplicitlySharedDataPointer<UniqueId> get() {
             if (!releasedIds.isEmpty()) {
@@ -135,6 +135,8 @@ public:
     bool dispatchEvent(IWingPlugin::RegisteredEvent event,
                        const QVariantList &params);
 
+    IWingDevice *ext2Device(const QString &ext);
+
 public:
     PluginInfo getPluginInfo(IWingPluginBase *plg) const;
 
@@ -152,6 +154,8 @@ private:
                                          const QDir &setdir);
 
     bool closeEditor(IWingPlugin *plg, int handle, bool force);
+
+    bool closeHandle(IWingPlugin *plg, int handle);
 
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
@@ -242,16 +246,17 @@ private:
     bool insertBasicTypeContent(IWingPlugin *plg, qsizetype offset,
                                 const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = pluginCurrentEditor(plg);
+        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
+        auto mapitem = m_plgviewMap.value(plg, empty);
+        auto e = mapitem.first;
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
 
-            auto cmd =
-                doc->MakeInsert(m_plgviewMap[plg].second, editor->cursor(),
-                                offset, QByteArray(buffer, sizeof(T)));
-            if (cmd) {
+            auto cmd = doc->MakeInsert(mapitem.second, editor->cursor(), offset,
+                                       QByteArray(buffer, sizeof(T)));
+            if (mapitem.second == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();
@@ -265,16 +270,17 @@ private:
     bool writeBasicTypeContent(IWingPlugin *plg, qsizetype offset,
                                const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = pluginCurrentEditor(plg);
+        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
+        auto mapitem = m_plgviewMap.value(plg, empty);
+        auto e = mapitem.first;
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
 
-            auto cmd =
-                doc->MakeReplace(m_plgviewMap[plg].second, editor->cursor(),
-                                 offset, QByteArray(buffer, sizeof(T)));
-            if (cmd) {
+            auto cmd = doc->MakeReplace(mapitem.second, editor->cursor(),
+                                        offset, QByteArray(buffer, sizeof(T)));
+            if (mapitem.second == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();
@@ -287,17 +293,17 @@ private:
     template <typename T>
     bool appendBasicTypeContent(IWingPlugin *plg, const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = pluginCurrentEditor(plg);
+        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
+        auto mapitem = m_plgviewMap.value(plg, empty);
+        auto e = mapitem.first;
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-            auto offset = doc->length();
 
-            auto cmd =
-                doc->MakeInsert(m_plgviewMap[plg].second, editor->cursor(),
-                                offset, QByteArray(buffer, sizeof(T)));
-            if (cmd) {
+            auto cmd = doc->MakeAppend(mapitem.second, editor->cursor(),
+                                       QByteArray(buffer, sizeof(T)));
+            if (mapitem.second == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();

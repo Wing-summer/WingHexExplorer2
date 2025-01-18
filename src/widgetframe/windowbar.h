@@ -57,9 +57,6 @@ Q_SIGNALS:
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
-    virtual void titleChanged(const QString &text);
-    virtual void iconChanged(const QIcon &icon);
-
 protected:
     WindowBar(WindowBarPrivate &d, QWidget *parent = nullptr);
 

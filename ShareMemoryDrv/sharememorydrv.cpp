@@ -50,20 +50,12 @@ QList<WingHex::PluginPage *> SharedMemoryDriver::registeredPages() const {
     return _plgps;
 }
 
-std::optional<WingHex::IWingDevice::DeviceInfo>
-SharedMemoryDriver::onOpenFile(const QString &path, bool readOnly,
-                               const QVariantList &params) {
+QIODevice *SharedMemoryDriver::onOpenFile(const QString &path, bool readOnly,
+                                          const QVariantList &params) {
     Q_UNUSED(params);
-
-    auto dev = new SharedMemory(
+    return new SharedMemory(
         path, readOnly ? SharedMemory::ReadOnly : SharedMemory::ReadWrite,
         this);
-
-    WingHex::IWingDevice::DeviceInfo info;
-    info.dev = dev;
-    info.needLargeBuffer = true;
-
-    return info;
 }
 
 bool SharedMemoryDriver::onCloseFile(QIODevice *dev) {

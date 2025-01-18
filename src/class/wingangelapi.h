@@ -45,6 +45,13 @@ public:
     virtual const QString pluginName() const override;
     virtual const QString pluginComment() const override;
 
+    virtual RegisteredEvents registeredEvents() const override;
+
+private:
+    virtual void eventPluginFile(PluginFileEvent e, FileType type,
+                                 const QString &newfileName, int handle,
+                                 const QString &oldfileName) override;
+
 public:
     void
     registerScriptFns(const QString &ns,
@@ -134,11 +141,17 @@ private:
 
     QString getSenderHeader(const WingHex::SenderInfo &sender);
 
+    void cleanUpHandles(const QVector<int> &handles);
+
 private:
     QString _InputBox_getItem(int stringID, const QString &title,
                               const QString &label, const CScriptArray &items,
                               int current, bool editable, bool *ok,
                               Qt::InputMethodHints inputMethodHints);
+
+    WingHex::ErrFile _HexCtl_OpenExtFile(const QString &ext,
+                                         const QString &file,
+                                         const CScriptArray &params);
 
     CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
                                                const QString &dir,
@@ -188,6 +201,8 @@ private:
 
     QHash<QString, QHash<QString, qsizetype>> _rfns;
     QHash<QString, QHash<QString, QList<QPair<QString, int>>>> _objs;
+
+    QVector<int> _handles;
 };
 
 #endif // WINGANGELAPI_H

@@ -316,30 +316,30 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="84"/>
+        <location filename="../testplugin.cpp" line="83"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="96"/>
-        <location filename="../testplugin.cpp" line="105"/>
-        <location filename="../testplugin.cpp" line="110"/>
-        <location filename="../testplugin.cpp" line="191"/>
+        <location filename="../testplugin.cpp" line="95"/>
+        <location filename="../testplugin.cpp" line="104"/>
+        <location filename="../testplugin.cpp" line="109"/>
+        <location filename="../testplugin.cpp" line="190"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="114"/>
+        <location filename="../testplugin.cpp" line="113"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="118"/>
+        <location filename="../testplugin.cpp" line="117"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="194"/>
+        <location filename="../testplugin.cpp" line="193"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
     </message>

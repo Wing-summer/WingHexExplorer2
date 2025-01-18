@@ -25,6 +25,8 @@ add_library(
     document/commands/hex/hexcommand.h
     document/commands/hex/insertcommand.cpp
     document/commands/hex/insertcommand.h
+    document/commands/hex/appendcommand.h
+    document/commands/hex/appendcommand.cpp
     document/commands/hex/removecommand.cpp
     document/commands/hex/removecommand.h
     document/commands/hex/replacecommand.cpp

@@ -6,27 +6,27 @@
     <message>
         <location filename="../sharememorydrv.cpp" line="42"/>
         <source>SharedMemoryDriver</source>
-        <translation type="unfinished"></translation>
+        <translation>共享内存驱动</translation>
     </message>
     <message>
         <location filename="../sharememorydrv.cpp" line="46"/>
         <source>An extension for opening sshared memory in WingHexExplorer2.</source>
-        <translation type="unfinished"></translation>
+        <translation>一个提供羽云十六进制编辑器2的插件打开共享内存的驱动</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="78"/>
+        <location filename="../sharememorydrv.cpp" line="70"/>
         <source>ShareMemory</source>
-        <translation type="unfinished"></translation>
+        <translation>共享内存</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="89"/>
+        <location filename="../sharememorydrv.cpp" line="81"/>
         <source>SharedMemory</source>
-        <translation type="unfinished"></translation>
+        <translation>共享内存</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="89"/>
+        <location filename="../sharememorydrv.cpp" line="81"/>
         <source>PleaseInputID:</source>
-        <translation type="unfinished"></translation>
+        <translation>请输入标识：</translation>
     </message>
 </context>
 </TS>

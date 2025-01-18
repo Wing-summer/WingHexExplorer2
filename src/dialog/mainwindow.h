@@ -211,6 +211,8 @@ private slots:
 
 public:
     ErrFile openFile(const QString &file, EditorView **editor);
+    ErrFile openExtFile(const QString &ext, const QString &file,
+                        const QVariantList &params, EditorView **editor);
     ErrFile openDriver(const QString &driver, EditorView **editor);
     ErrFile openWorkSpace(const QString &file, EditorView **editor);
     ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
@@ -219,6 +221,8 @@ public:
     ErrFile saveEditor(EditorView *editor, const QString &filename,
                        bool ignoreMd5, bool isExport = false);
     ErrFile closeEditor(EditorView *editor, bool force);
+
+    IWingPlugin::FileType getEditorViewFileType(EditorView *view);
 
 private:
     QString saveLog();

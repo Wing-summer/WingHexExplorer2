@@ -65,8 +65,6 @@ public:
     virtual void eventReady() override;
 
 private:
-    QString getPuid() const;
-
     QVariant test_a(const QVariantList &);
     QVariant test_b(const QVariantList &params);
 
@@ -77,7 +75,6 @@ private:
 private:
     QDialog *_tform = nullptr;
     QMenu *_tmenu = nullptr;
-    const QString puid;
 
     QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
     QList<WingHex::WingDockWidgetInfo> _winfo;

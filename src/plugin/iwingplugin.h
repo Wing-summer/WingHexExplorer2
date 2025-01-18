@@ -176,7 +176,7 @@ signals:
     Q_REQUIRED_RESULT bool setHeaderVisible(bool b);
     Q_REQUIRED_RESULT bool setAddressBase(quintptr base);
 
-    Q_REQUIRED_RESULT bool beginMarco(const QString &txt);
+    Q_REQUIRED_RESULT bool beginMarco(const QString &txt = {});
     Q_REQUIRED_RESULT bool endMarco();
 
     Q_REQUIRED_RESULT bool writeInt8(qsizetype offset, qint8 value);
@@ -249,19 +249,27 @@ signals:
     Q_REQUIRED_RESULT WingHex::ErrFile openRegionFile(const QString &filename,
                                                       qsizetype start = 0,
                                                       qsizetype length = 1024);
-    Q_REQUIRED_RESULT WingHex::ErrFile openExtFile(const QString &file,
-                                                   const QVariantList &params);
+    Q_REQUIRED_RESULT WingHex::ErrFile
+    openExtFile(const QString &ext, const QString &file,
+                const QVariantList &params = {});
 
-    Q_REQUIRED_RESULT WingHex::ErrFile closeFile(int handle,
-                                                 bool force = false);
+    WingHex::ErrFile closeHandle(int handle);
+    WingHex::ErrFile closeFile(int handle, bool force = false);
+
     Q_REQUIRED_RESULT WingHex::ErrFile saveFile(int handle,
                                                 bool ignoreMd5 = false);
     Q_REQUIRED_RESULT WingHex::ErrFile
     exportFile(int handle, const QString &savename, bool ignoreMd5 = false);
     Q_REQUIRED_RESULT WingHex::ErrFile
     saveAsFile(int handle, const QString &savename, bool ignoreMd5 = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile closeCurrentFile(bool force = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile saveCurrentFile(bool ignoreMd5 = false);
+
+    Q_REQUIRED_RESULT WingHex::ErrFile openCurrent();
+    Q_REQUIRED_RESULT WingHex::ErrFile closeCurrent(bool force = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveCurrent(bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile exportCurrent(const QString &savename,
+                                                     bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveAsCurrent(const QString &savename,
+                                                     bool ignoreMd5 = false);
 
     // bookmark
     Q_REQUIRED_RESULT bool addBookMark(qsizetype pos, const QString &comment);
@@ -274,7 +282,7 @@ signals:
     Q_REQUIRED_RESULT bool setCurrentEncoding(const QString &encoding);
 
     // extension
-    bool closeAllPluginFiles();
+    bool closeAll();
 };
 
 class DataVisual : public QObject {
@@ -435,11 +443,23 @@ public:
         FileSaved = 1u << 4,
         FileSwitched = 1u << 5,
         FileClosed = 1u << 6,
-        ScriptPragma = 1u << 7
+        ScriptPragma = 1u << 7,
+        PluginFileOpened = 1u << 8,
+        PluginFileClosed = 1u << 9,
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
-    enum class PluginFileEvent { Opened, Saved, Switched, Closed };
+    enum class PluginFileEvent {
+        Opened,
+        Saved,
+        Switched,
+        Closed,
+        PluginOpened,
+        PluginClosed
+    };
+
+    enum class FileType { Invalid, File, RegionFile, Driver, Extension };
+    Q_ENUM(FileType)
 
 public:
     virtual ~IWingPlugin() = default;
@@ -486,11 +506,14 @@ public:
         Q_UNUSED(pos);
     }
 
-    virtual void eventPluginFile(PluginFileEvent e, const QString &newfileName,
+    virtual void eventPluginFile(PluginFileEvent e, FileType type,
+                                 const QString &newfileName, int handle,
                                  const QString &oldfileName) {
         Q_UNUSED(e);
         Q_UNUSED(newfileName);
         Q_UNUSED(oldfileName);
+        Q_UNUSED(handle);
+        Q_UNUSED(type);
     }
 
     virtual void eventReady() {}

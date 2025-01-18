@@ -38,7 +38,14 @@ class EditorView : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    enum class DocumentType { InValid, File, RegionFile, Driver, Cloned };
+    enum class DocumentType {
+        InValid,
+        File,
+        RegionFile,
+        Driver,
+        Extension,
+        Cloned
+    };
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
@@ -47,6 +54,11 @@ public:
         AutoWorkSpace,
         ForceWorkSpace
     };
+
+public:
+    static EditorView *fromDevice(QIODevice *dev, const QString &file,
+                                  const QString &encoding, bool readonly,
+                                  const QIcon &icon, QWidget *parent = nullptr);
 
 public:
     explicit EditorView(QWidget *parent = nullptr);
@@ -59,6 +71,7 @@ public:
     bool isBigFile() const;
     bool isCloneFile() const;
     bool isDriver() const;
+    bool isExtensionFile() const;
 
     FindResultModel *findResultModel() const;
 

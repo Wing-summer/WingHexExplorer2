@@ -32,8 +32,47 @@
 #include <QFileInfo>
 #include <QVBoxLayout>
 
-constexpr qsizetype FILEMAXBUFFER = 0x6400000; // 100MB
+constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
+
+EditorView *EditorView::fromDevice(QIODevice *dev, const QString &file,
+                                   const QString &encoding, bool readonly,
+                                   const QIcon &icon, QWidget *parent) {
+    if (dev == nullptr || file.isEmpty()) {
+        return nullptr;
+    }
+
+    auto ev = new EditorView(parent);
+
+    auto *p = (dev->size() > FILE_MAX_BUFFER || dev->size() < 0)
+                  ? QHexDocument::fromDevice<QFileBuffer>(dev, readonly)
+                  : QHexDocument::fromDevice<QMemoryBuffer>(dev, readonly);
+
+    if (Q_UNLIKELY(p == nullptr)) {
+        return nullptr;
+    }
+
+    ev->m_hex->setDocument(QSharedPointer<QHexDocument>(p));
+    ev->m_hex->setLockedFile(readonly);
+    ev->m_hex->setKeepSize(true);
+
+    if (!encoding.isEmpty()) {
+        ev->m_hex->renderer()->setEncoding(encoding);
+    }
+
+    ev->m_docType = DocumentType::Extension;
+    ev->m_fileName = file;
+    ev->m_isNewFile = false;
+    p->setDocSaved();
+
+    ev->setWindowTitle(file);
+    ev->connectDocSavedFlag(ev);
+
+    auto tab = ev->tabWidget();
+    tab->setIcon(icon);
+    tab->setToolTip(file);
+    return ev;
+}
 
 EditorView::EditorView(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
@@ -265,7 +304,7 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         auto readonly = !Utilities::fileCanWrite(filename);
 
         auto *p =
-            info.size() > FILEMAXBUFFER
+            info.size() > FILE_MAX_BUFFER
                 ? QHexDocument::fromLargeFile(filename, readonly)
                 : QHexDocument::fromFile<QMemoryBuffer>(filename, readonly);
 
@@ -539,11 +578,13 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                 QString fileName;
                 if (editor->isNewFile() || editor->isDriver()) {
                     fileName = m_fileName;
+                } else if (editor->isExtensionFile()) {
+                    auto idx = m_fileName.indexOf('}');
+                    fileName = m_fileName.mid(idx);
                 } else {
                     fileName = QFileInfo(m_fileName).fileName();
                 }
                 if (b) {
-
                     editor->setWindowTitle(fileName);
                 } else {
                     editor->setWindowTitle(QStringLiteral("* ") + fileName);
@@ -701,6 +742,13 @@ bool EditorView::isDriver() const {
         return this->cloneParent()->isDriver();
     }
     return m_docType == EditorView::DocumentType::Driver;
+}
+
+bool EditorView::isExtensionFile() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isExtensionFile();
+    }
+    return m_docType == EditorView::DocumentType::Extension;
 }
 
 FindResultModel *EditorView::findResultModel() const {

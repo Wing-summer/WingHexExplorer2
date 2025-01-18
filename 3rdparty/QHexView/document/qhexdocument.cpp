@@ -9,6 +9,7 @@
 #include "commands/hex/insertcommand.h"
 #include "commands/hex/removecommand.h"
 #include "commands/hex/replacecommand.h"
+#include "document/commands/hex/appendcommand.h"
 
 #include <QApplication>
 #include <QBuffer>
@@ -458,7 +459,6 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
     m_buffer->insert(offset, data);
-    auto len = data.size();
     setDocSaved(false);
     emit documentChanged();
     return true;
@@ -578,15 +578,11 @@ void QHexDocument::endMarco() { m_undostack->endMacro(); }
 
 void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset, uchar b,
                           int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked)
-        return;
     this->Insert(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
 void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                            int nibbleindex) {
-    if (m_readonly || m_islocked)
-        return;
     this->Replace(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
@@ -600,6 +596,21 @@ void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
         m_undostack->push(cmd);
     }
 
+    emit documentChanged();
+}
+
+void QHexDocument::Append(QHexCursor *cursor, uchar b, int nibbleindex) {
+    this->Append(cursor, QByteArray(1, char(b)), nibbleindex);
+}
+
+void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
+                          int nibbleindex) {
+    if (m_keepsize || m_readonly || m_islocked)
+        return;
+    auto cmd = MakeAppend(nullptr, cursor, data, nibbleindex);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
     emit documentChanged();
 }
 
@@ -640,6 +651,17 @@ QUndoCommand *QHexDocument::MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
         return nullptr;
     }
     return new InsertCommand(this, cursor, offset, data, nibbleindex, parent);
+}
+
+QUndoCommand *QHexDocument::MakeAppend(QUndoCommand *parent, QHexCursor *cursor,
+                                       uchar b, int nibbleindex) {
+    return MakeAppend(parent, cursor, QByteArray(1, char(b)), nibbleindex);
+}
+
+QUndoCommand *QHexDocument::MakeAppend(QUndoCommand *parent, QHexCursor *cursor,
+                                       const QByteArray &data,
+                                       int nibbleindex) {
+    return new AppendCommand(this, cursor, data, nibbleindex, parent);
 }
 
 QUndoCommand *QHexDocument::MakeReplace(QUndoCommand *parent,

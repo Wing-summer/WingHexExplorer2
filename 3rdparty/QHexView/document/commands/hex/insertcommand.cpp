@@ -10,17 +10,15 @@ InsertCommand::InsertCommand(QHexDocument *doc, QHexCursor *cursor,
 }
 
 void InsertCommand::undo() {
-    auto len = m_data.length();
-    m_doc->_remove(m_offset, len);
-    m_doc->insertBookMarkAdjustRevert(m_offset, len);
-    m_doc->metadata()->insertAdjustRevert(m_offset, len);
+    m_doc->_remove(m_offset, m_length);
+    m_doc->insertBookMarkAdjustRevert(m_offset, m_length);
+    m_doc->metadata()->insertAdjustRevert(m_offset, m_length);
     m_cursor->setPos(m_offset, m_nibbleindex);
 }
 void InsertCommand::redo() {
     m_doc->_insert(m_offset, m_data);
-    auto len = m_data.length();
-    m_doc->insertBookMarkAdjust(m_offset, len);
-    m_doc->metadata()->insertAdjust(m_offset, len);
+    m_doc->insertBookMarkAdjust(m_offset, m_length);
+    m_doc->metadata()->insertAdjust(m_offset, m_length);
     if (m_data.length() == 1 && m_nibbleindex) {
         m_cursor->setPos(m_offset, 0);
     } else {

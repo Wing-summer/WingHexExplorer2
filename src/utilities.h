@@ -245,15 +245,11 @@ public:
     static inline void addSpecialMark(T *w) {
         if (w) {
             if constexpr (std::is_same_v<T, QLabel> ||
-                          std::is_base_of_v<QLabel, T>) {
+                          std::is_base_of_v<QLabel, T> ||
+                          std::is_same_v<T, QAbstractButton> ||
+                          std::is_base_of_v<QAbstractButton, T>) {
                 w->setText(w->text() + QStringLiteral(" (*)"));
                 w->setToolTip(QApplication::tr("OptionNeedRestart"));
-            } else if constexpr (std::is_same_v<T, QAbstractButton> ||
-                                 std::is_base_of_v<QAbstractButton, T>) {
-                if (w) {
-                    w->setText(w->text() + QStringLiteral(" (*)"));
-                    w->setToolTip(QApplication::tr("OptionNeedRestart"));
-                }
             }
         }
     }

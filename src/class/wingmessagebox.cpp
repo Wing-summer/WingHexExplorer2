@@ -19,7 +19,9 @@
 #include "class/eventfilter.h"
 #include "dialog/framelessdialogbase.h"
 #include "utilities.h"
+
 #include <QApplication>
+#include <QResizeEvent>
 
 WingMessageBox::WingMessageBox() {}
 
@@ -142,14 +144,18 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
 
     FramelessDialogBase d(parent);
     d.buildUpContent(msgbox);
-    d.setMaximumSize(0, 0);
     d.setWindowTitle(title.isEmpty() ? qAppName() : title);
+    d.setMaximumSize(0, 0);
+    msgbox->findChild<QLabel *>("qt_msgbox_label")
+        ->setMinimumWidth(d.sizeHint().width());
 
     // when a new dialog is shown, the QEvent::Resize will be
     // triggered before the window showing
     auto e = new EventFilter(QEvent::Resize, &d);
-    QObject::connect(e, &EventFilter::eventTriggered, &d,
-                     [&d] { Utilities::moveToCenter(&d); });
+    QObject::connect(e, &EventFilter::eventTriggered, &d, [&d, e] {
+        Utilities::moveToCenter(&d);
+        e->deleteLater();
+    });
     d.installEventFilter(e);
 
     QObject::connect(msgbox, &QMessageBox::finished, &d,

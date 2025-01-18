@@ -41,6 +41,7 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     Utilities::addSpecialMark(ui->cbDontShowSplash);
     Utilities::addSpecialMark(ui->cbNativeTitile);
     Utilities::addSpecialMark(ui->lblLevel);
+    Utilities::addSpecialMark(ui->lblCount);
     Utilities::addSpecialMark(ui->cbCheckWhenStartup);
 
     connect(ui->cbNativeTitile,

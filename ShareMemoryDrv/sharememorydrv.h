@@ -50,9 +50,8 @@ public:
     onOpenFileBegin() override;
     virtual QString supportedFileExtDisplayName() const override;
     virtual QIcon supportedFileIcon() const override;
-    virtual std::optional<DeviceInfo>
-    onOpenFile(const QString &path, bool readOnly,
-               const QVariantList &params) override;
+    virtual QIODevice *onOpenFile(const QString &path, bool readOnly,
+                                  const QVariantList &params) override;
     virtual bool onCloseFile(QIODevice *dev) override;
 
 private:

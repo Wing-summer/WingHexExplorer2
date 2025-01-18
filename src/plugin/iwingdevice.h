@@ -29,13 +29,6 @@ namespace WingHex {
 
 class IWingDevice : public IWingPluginBase {
     Q_OBJECT
-
-public:
-    struct DeviceInfo {
-        QIODevice *dev;
-        bool needLargeBuffer;
-    };
-
 public:
     virtual QString supportedFileExtDisplayName() const = 0;
 
@@ -46,9 +39,8 @@ public:
         return std::nullopt;
     }
 
-    virtual std::optional<DeviceInfo>
-    onOpenFile(const QString &path, bool readOnly,
-               const QVariantList &params) = 0;
+    virtual QIODevice *onOpenFile(const QString &path, bool readOnly,
+                                  const QVariantList &params) = 0;
 
     virtual bool onCloseFile(QIODevice *dev) = 0;
 };

@@ -17,6 +17,7 @@
 
 #include "wingangelapi.h"
 
+#include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/angelscripthelper.h"
 #include "class/logger.h"
@@ -74,6 +75,26 @@ const QString WingAngelAPI::pluginName() const {
 const QString WingAngelAPI::pluginComment() const {
     return tr("A internal plugin that provides AngelScript scripts with the "
               "ability to call the host API.");
+}
+
+WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {
+    RegisteredEvents evs;
+    evs.setFlag(RegisteredEvent::PluginFileOpened);
+    evs.setFlag(RegisteredEvent::PluginFileClosed);
+    return evs;
+}
+
+void WingAngelAPI::eventPluginFile(PluginFileEvent e, FileType type,
+                                   const QString &newfileName, int handle,
+                                   const QString &oldfileName) {
+    Q_UNUSED(type);
+    Q_UNUSED(newfileName);
+    Q_UNUSED(oldfileName);
+    if (e == PluginFileEvent::PluginOpened) {
+        _handles.append(handle);
+    } else if (e == PluginFileEvent::PluginClosed) {
+        _handles.removeOne(handle);
+    }
 }
 
 void WingAngelAPI::registerScriptEnums(
@@ -743,6 +764,16 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "bool setAddressBase(" QPTR " base)");
 
+    registerAPI<bool(const QString)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::beginMarco, ctl,
+                  std::placeholders::_1),
+        "bool beginMarco(string &in name = \"\")");
+
+    registerAPI<bool()>(
+        engine, std::bind(&WingHex::WingPlugin::Controller::endMarco, ctl),
+        "bool endMarco()");
+
     registerAPI<bool(qsizetype, qint8)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::writeInt8, ctl,
@@ -1002,15 +1033,24 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "bool setMetaCommentVisible(bool b)");
 
-    registerAPI<bool()>(
+    registerAPI<WingHex::ErrFile()>(
         engine, std::bind(&WingHex::WingPlugin::Controller::newFile, ctl),
-        "bool newFile()");
+        "ErrFile newFile()");
 
     registerAPI<WingHex::ErrFile(const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::openFile, ctl,
                   std::placeholders::_1),
         "ErrFile openFile(string &in filename)");
+
+    registerAPI<WingHex::ErrFile(const QString &, const QString &,
+                                 const CScriptArray &)>(
+        engine,
+        std::bind(&WingAngelAPI::_HexCtl_OpenExtFile, this,
+                  std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3),
+        "ErrFile openExtFile(string &in ext, string &in file, "
+        "array<any> &in params = array<any>())");
 
     registerAPI<WingHex::ErrFile(const QString &, qsizetype, qsizetype)>(
         engine,
@@ -1032,6 +1072,12 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "ErrFile closeFile(int handle, bool force = false)");
 
+    registerAPI<WingHex::ErrFile(int)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::closeHandle, ctl,
+                  std::placeholders::_1),
+        "ErrFile closeHandle(int handle)");
+
     registerAPI<WingHex::ErrFile(int, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveFile, ctl,
@@ -1051,20 +1097,36 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::WingPlugin::Controller::saveAsFile, ctl,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "ErrFile saveasFile(int handle, string &in savename, "
+        "ErrFile saveAsFile(int handle, string &in savename, "
         "bool ignoreMd5 = false)");
 
-    registerAPI<WingHex::ErrFile(bool)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::closeCurrentFile, ctl,
-                  std::placeholders::_1),
-        "bool closeCurrentFile(bool force = false)");
+    registerAPI<WingHex::ErrFile()>(
+        engine, std::bind(&WingHex::WingPlugin::Controller::openCurrent, ctl),
+        "ErrFile openCurrent()");
 
     registerAPI<WingHex::ErrFile(bool)>(
         engine,
-        std::bind(&WingHex::WingPlugin::Controller::saveCurrentFile, ctl,
+        std::bind(&WingHex::WingPlugin::Controller::closeCurrent, ctl,
                   std::placeholders::_1),
-        "bool saveCurrentFile(bool ignoreMd5 = false)");
+        "ErrFile closeCurrent(bool force = false)");
+
+    registerAPI<WingHex::ErrFile(bool)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::saveCurrent, ctl,
+                  std::placeholders::_1),
+        "ErrFile saveCurrent(bool ignoreMd5 = false)");
+
+    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::saveAsCurrent, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "ErrFile saveAsCurrent(string &in savename, bool ignoreMd5 = false)");
+
+    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Controller::exportCurrent, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "ErrFile exportCurrent(string &in savename, bool ignoreMd5 = false)");
 
     registerAPI<bool(qsizetype, const QString &)>(
         engine,
@@ -1101,9 +1163,8 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         "bool setCurrentEncoding(string &in encoding)");
 
     registerAPI<void()>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::closeAllPluginFiles, ctl),
-        "bool closeAllPluginFiles()");
+        engine, std::bind(&WingHex::WingPlugin::Controller::closeAll, ctl),
+        "bool closeAll()");
 
     engine->SetDefaultNamespace("");
 }
@@ -1711,7 +1772,9 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
 
         _console->setMode(ScriptingConsole::Output);
         _console->write(getSenderHeader(sender));
+        auto handles = _handles;
         _console->machine()->executeScript(f.fileName());
+        cleanUpHandles(handles);
         _console->appendCommandPrompt();
         _console->setMode(ScriptingConsole::Input);
     }
@@ -1723,7 +1786,9 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
     _console->setMode(ScriptingConsole::Output);
     _console->write(getSenderHeader(sender));
+    auto handles = _handles;
     auto ret = _console->machine()->executeScript(fileName);
+    cleanUpHandles(handles);
     _console->appendCommandPrompt();
     _console->setMode(ScriptingConsole::Input);
     return ret;
@@ -1744,6 +1809,15 @@ QString WingAngelAPI::getSenderHeader(const WingHex::SenderInfo &sender) {
            sender.plgcls % QStringLiteral(") ");
 }
 
+void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {
+    for (auto &h : _handles) {
+        if (!handles.contains(h)) {
+            emit controller.closeHandle(h);
+        }
+    }
+    _handles = handles;
+}
+
 QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
                                         const QString &label,
                                         const CScriptArray &items, int current,
@@ -1758,6 +1832,22 @@ QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
         *ok = false;
         return {};
     }
+}
+
+WingHex::ErrFile WingAngelAPI::_HexCtl_OpenExtFile(const QString &ext,
+                                                   const QString &file,
+                                                   const CScriptArray &params) {
+    QVariantList bparams;
+    for (asUINT i = 0; i < params.GetSize(); ++i) {
+        auto item = reinterpret_cast<const CScriptAny *>(params.At(i));
+        int typeID = item->GetTypeId();
+        auto engine = _console->consoleMachine()->engine();
+        auto bSizes = engine->GetSizeOfPrimitiveType(typeID);
+        auto data = malloc(bSizes);
+        bparams << qvariantGet(engine, data, typeID);
+        free(data);
+    }
+    return emit controller.openExtFile(ext, file, bparams);
 }
 
 CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(

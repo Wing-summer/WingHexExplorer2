@@ -117,6 +117,8 @@ public slots:
     void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
     void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);
+    void Append(QHexCursor *cursor, uchar b, int nibbleindex);
+    void Append(QHexCursor *cursor, const QByteArray &data, int nibbleindex);
     void Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                  int nibbleindex);
     void Replace(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
@@ -129,6 +131,10 @@ public slots:
     QUndoCommand *MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
                              qsizetype offset, const QByteArray &data,
                              int nibbleindex = 0);
+    QUndoCommand *MakeAppend(QUndoCommand *parent, QHexCursor *cursor, uchar b,
+                             int nibbleindex = 0);
+    QUndoCommand *MakeAppend(QUndoCommand *parent, QHexCursor *cursor,
+                             const QByteArray &data, int nibbleindex = 0);
     QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,
                               qsizetype offset, uchar b, int nibbleindex = 0);
     QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,

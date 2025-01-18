@@ -248,14 +248,29 @@ bool WindowBar::eventFilter(QObject *obj, QEvent *event) {
         case QEvent::WindowIconChange: {
             if (d_ptr->autoIcon && iconBtn) {
                 iconBtn->setIcon(w->windowIcon());
-                iconChanged(w->windowIcon());
             }
             break;
         }
         case QEvent::WindowTitleChange: {
             if (d_ptr->autoTitle && label) {
                 label->setText(w->windowTitle());
-                titleChanged(w->windowTitle());
+                constexpr auto padding = 5;
+                auto width =
+                    QFontMetrics(font()).horizontalAdvance(w->windowTitle()) +
+                    padding + padding;
+                if (iconBtn) {
+                    width += iconBtn->iconSize().width();
+                }
+                if (maxBtn) {
+                    width += maxBtn->sizeHint().width();
+                }
+                if (minButton()) {
+                    width += minButton()->sizeHint().width();
+                }
+                if (closeButton()) {
+                    width += closeButton()->sizeHint().width();
+                }
+                this->setMinimumWidth(width);
             }
             break;
         }
@@ -271,10 +286,6 @@ bool WindowBar::eventFilter(QObject *obj, QEvent *event) {
     }
     return QWidget::eventFilter(obj, event);
 }
-
-void WindowBar::titleChanged(const QString &text) { Q_UNUSED(text) }
-
-void WindowBar::iconChanged(const QIcon &icon) { Q_UNUSED(icon) }
 
 WindowBar::WindowBar(WindowBarPrivate &d, QWidget *parent)
     : QLabel(parent), d_ptr(&d) {

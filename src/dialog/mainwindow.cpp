@@ -2986,7 +2986,9 @@ void MainWindow::registerEditorView(EditorView *editor) {
     ev->setEnabled(true);
 
     PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileOpened, {editor->fileName()});
+        IWingPlugin::RegisteredEvent::FileOpened,
+        {editor->fileName(),
+         QVariant::fromValue(getEditorViewFileType(editor))});
 }
 
 void MainWindow::connectEditorView(EditorView *editor) {
@@ -3229,6 +3231,21 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
     return ErrFile::Success;
 }
 
+ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
+                                const QVariantList &params,
+                                EditorView **editor) {
+    auto plgsys = PluginSystem::instance().ext2Device(ext);
+    if (plgsys == nullptr) {
+        return ErrFile::Error;
+    }
+
+    auto fileName = QStringLiteral("{%1}%2").arg(ext, file);
+
+    // TODO
+
+    return ErrFile::Success;
+}
+
 ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
     auto e = findEditorView(driver);
     if (e) {
@@ -3357,7 +3374,8 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
 
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
-            {filename.isEmpty() ? oldName : filename, oldName});
+            {filename.isEmpty() ? oldName : filename, oldName,
+             QVariant::fromValue(getEditorViewFileType(editor))});
     }
     return ret;
 }
@@ -3383,10 +3401,12 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     }
 
     auto fileName = editor->fileName();
-    PluginSystem::instance().cleanUpEditorViewHandle(editor);
+    auto &plgsys = PluginSystem::instance();
+    plgsys.cleanUpEditorViewHandle(editor);
+    plgsys.dispatchEvent(
+        IWingPlugin::RegisteredEvent::FileClosed,
+        {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
     editor->deleteDockWidget();
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileClosed, {fileName});
 
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
         ->setEnabled(m_views.size() != 0);
@@ -3402,6 +3422,29 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         }
     }
     return ErrFile::Success;
+}
+
+IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
+    Q_ASSERT(view);
+
+    switch (view->documentType()) {
+    case EditorView::DocumentType::File:
+        return IWingPlugin::FileType::File;
+    case EditorView::DocumentType::RegionFile:
+        return IWingPlugin::FileType::RegionFile;
+    case EditorView::DocumentType::Driver:
+        return IWingPlugin::FileType::Driver;
+    case EditorView::DocumentType::Extension:
+        return IWingPlugin::FileType::Extension;
+    case EditorView::DocumentType::Cloned:
+        return getEditorViewFileType(view->cloneParent());
+        break;
+    default:
+        Q_ASSERT(false);
+        break;
+    }
+
+    return IWingPlugin::FileType::Invalid;
 }
 
 void MainWindow::updateEditModeEnabled() {
