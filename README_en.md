@@ -14,7 +14,6 @@
 - [Related Repository](#related-repository)
 - [WIKI](#wiki)
 - [Plugins](#plugins)
-- [App Store](#app-store)
 
 ---
 
@@ -33,7 +32,6 @@
 <p align="center">
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
 </p>
 
 - Not easy to open source, please Star or [Donate](#donate)
@@ -95,6 +93,10 @@ Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contrib
 
 > For Qt 5, only version 5.15.2 or higher is supported, and for Qt 6, only version 6.6.2 or higher is supported. Other lower versions are not supported due to missing APIs of key libraries and some bugs of their own.
 
+And also:
+
+> Active compilation support for QT5 will be discontinued on 2025/05/26, and the related GitAction automated tests will be revoked at that time. If you need QT5 version for special purposes, please consult me ​​for commercial cooperation and paid technical support.
+
 The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of Windows and Ubuntu: ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
@@ -107,7 +109,7 @@ This software complies with the `AGPL-3.0` agreement. Please do not use it for p
 
 If you want to use the code of this software for closed-source commercial code and want to lift the restriction of the `GPL` series that it must be open source, please consult me ​​in person to discuss commercial licensing matters.
 
-For plugin development, the corresponding open source agreements are different. Only `src/plugin/iwingplugin.h` and `src/plugin/settingpage.h` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source and commercial development. The code of `TestPlugin` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
+For plugin development, the corresponding open source agreements are different. Only `src/plugin/iwingplugin.h`, `src/plugin/iwingpluginbase.h`, `src/plugin/iwingdevice.h` and `src/plugin/settingpage.h` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source and commercial development. The code of `TestPlugin` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
 
 ### Usage Statement
 
@@ -169,7 +171,7 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 
 - Gitee：<https://gitee.com/wing-cloud/WingHexExplorer2>
 - Gitlink：<https://www.gitlink.org.cn/wingsummer/WingHexExplorer2>
-- GitCode：I don't consider it, because "stealing code".
+- GitCode：I don't consider it, because of "stealing code".
 
 ## WIKI
 
@@ -177,8 +179,5 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 
 ## Plugins
 
-> Stay tuned
-
-## App Store
-
-> Stay tuned
+- [WingAsm](https://github.com/Wing-summer/WingAsm) : A plugin that provides assembly and disassembly features. Author: **wingsummer**. License: **APGL-v3.0**.
+- [WingCStruct](https://github.com/Wing-summer/WingCStruct) : A plugin that provides basic support for analyzing file structures. Author: **wingsummer**. License: **APGL-v3.0**.

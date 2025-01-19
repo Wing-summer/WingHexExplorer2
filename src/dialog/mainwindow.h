@@ -87,6 +87,7 @@ private:
         UNDO_ACTION,
         REDO_ACTION,
         OPEN_EXT,
+        LAYOUT_ACTION,
     };
 
 private:
@@ -222,9 +223,11 @@ public:
                        bool ignoreMd5, bool isExport = false);
     ErrFile closeEditor(EditorView *editor, bool force);
 
-    IWingPlugin::FileType getEditorViewFileType(EditorView *view);
+    EditorView *currentEditor();
 
 private:
+    IWingPlugin::FileType getEditorViewFileType(EditorView *view);
+
     QString saveLog();
 
     ads::CDockWidget *buildDockWidget(ads::CDockManager *dock,
@@ -250,7 +253,6 @@ private:
 
     void setCurrentHexEditorScale(qreal rate);
 
-    EditorView *currentEditor();
     QHexView *currentHexView();
 
     bool writeSafeCheck(bool isNewFile, const QString &savePath);

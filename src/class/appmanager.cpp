@@ -23,6 +23,7 @@
 #include "QConsoleWidget/commandhistorymanager.h"
 #include "angelscript.h"
 #include "clangformatmanager.h"
+#include "control/toast.h"
 #include "dbghelper.h"
 #include "define.h"
 #include "dialog/mainwindow.h"
@@ -157,12 +158,23 @@ void AppManager::openFile(const QString &file, bool autoDetect, qsizetype start,
             }
             if (ret == ErrFile::AlreadyOpened) {
                 Q_ASSERT(editor);
-                editor->raise();
+                if (_w->currentEditor() == editor) {
+                    Toast::toast(_w, NAMEICONRES("openapp"),
+                                 tr("AlreadyOpened"));
+                } else {
+                    editor->raise();
+                }
+
                 editor->setFocus();
             }
         } else if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
-            editor->raise();
+            if (_w->currentEditor() == editor) {
+                Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+            } else {
+                editor->raise();
+            }
+
             editor->setFocus();
         }
     }
@@ -174,7 +186,12 @@ void AppManager::openRawFile(const QString &file) {
     auto ret = _w->openFile(file, &editor);
     if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
-        editor->raise();
+        if (_w->currentEditor() == editor) {
+            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+        } else {
+            editor->raise();
+        }
+
         editor->setFocus();
     }
 }
@@ -185,7 +202,12 @@ void AppManager::openDriver(const QString &driver) {
         auto ret = _w->openDriver(driver, &editor);
         if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
-            editor->raise();
+            if (_w->currentEditor() == editor) {
+                Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+            } else {
+                editor->raise();
+            }
+
             editor->setFocus();
         }
     }
@@ -198,7 +220,12 @@ void AppManager::openRegionFile(const QString &region, qsizetype start,
     auto ret = _w->openRegionFile(region, &editor, start, length);
     if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
-        editor->raise();
+        if (_w->currentEditor() == editor) {
+            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+        } else {
+            editor->raise();
+        }
+
         editor->setFocus();
     }
 }
@@ -209,7 +236,12 @@ void AppManager::openWorkSpace(const QString &ws) {
     auto ret = _w->openWorkSpace(ws, &editor);
     if (ret == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
-        editor->raise();
+        if (_w->currentEditor() == editor) {
+            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+        } else {
+            editor->raise();
+        }
+
         editor->setFocus();
     }
 }

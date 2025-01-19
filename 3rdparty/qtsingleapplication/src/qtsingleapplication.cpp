@@ -121,31 +121,12 @@ void QtSingleApplication::sysInit(const QString &appId) {
 }
 
 /*!
-    Creates a QtSingleApplication object. The application identifier
-    will be QCoreApplication::applicationFilePath(). \a argc, \a
-    argv, and \a GUIenabled are passed on to the QAppliation constructor.
-
-    If you are creating a console application (i.e. setting \a
-    GUIenabled to false), you may consider using
-    QtSingleCoreApplication instead.
+    Creates a QtSingleApplication object.
 */
 
-QtSingleApplication::QtSingleApplication(int &argc, char **argv,
-                                         bool GUIenabled)
-    : QApplication(argc, argv, GUIenabled) {
-    sysInit(genBlockServerName());
-}
-
-/*!
-    Creates a QtSingleApplication object with the application
-    identifier \a appId. \a argc and \a argv are passed on to the
-    QAppliation constructor.
-*/
-
-QtSingleApplication::QtSingleApplication(const QString &appId, int &argc,
-                                         char **argv)
+QtSingleApplication::QtSingleApplication(int &argc, char **argv)
     : QApplication(argc, argv) {
-    sysInit(appId);
+    sysInit(genBlockServerName());
 }
 
 /*!

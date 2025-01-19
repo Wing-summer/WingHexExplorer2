@@ -14,7 +14,6 @@
 - [有关仓库](#有关仓库)
 - [WIKI](#wiki)
 - [插件库](#插件库)
-- [应用商店](#应用商店)
 
 ---
 
@@ -33,7 +32,6 @@
 <p align="center">
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/clang-format-check.yml/badge.svg" />
 <img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/cmake-format-check.yml/badge.svg" />
-<img src="https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/conventional-commit-check-push.yml/badge.svg" />
 </p>
 
 - 开源不易，给个 Star 或者 [捐助](#捐助) 吧
@@ -95,6 +93,10 @@
 
 > 对于 Qt 5 版本，仅支持 5.15.2 或更高版本，Qt 6 的话 6.6.2 或更高的版本，其他低版本由于关键库的 API 缺失和自身的一些 Bug，所以不提供支持。
 
+另外：
+
+> QT5 版本主动编译支持将会在 2025/05/26 停止，届时相关 GitAction 自动化测试将会撤销。如果因特殊需要 QT5 版本，请咨询我商业合作和付费技术支持。
+
 &emsp;&emsp;该仓库代码使用 Qt 5.15.2 和 6.6.2 在最新版 Windows 和 Ubuntu 编译情况： ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
@@ -107,7 +109,7 @@
 
 &emsp;&emsp;如果你想将本软件的代码用于闭源的商业代码，想要解除`GPL`系列的必须开源的限制，请必须亲自咨询我，商讨商业授权相关事宜。
 
-&emsp;&emsp;对于插件开发相关的，对应的开源协议就不一样了。只针对本仓库下的`src/plugin/iwingplugin.h`和`src/plugin/settingpage.h`遵守`BSD 3-Clause`协议，以允许想要做闭源和商业开发。对于本仓库下的`TestPlugin`的代码（除`TranslationUtils.cmake`这一个文件遵守`BSD 3-Clause`）遵守`MIT`协议。
+&emsp;&emsp;对于插件开发相关的，对应的开源协议就不一样了。只针对本仓库下的`src/plugin/iwingplugin.h`、`src/plugin/iwingpluginbase.h`、`src/plugin/iwingdevice.h`和`src/plugin/settingpage.h`遵守`BSD 3-Clause`协议，以允许想要做闭源和商业开发。对于本仓库下的`TestPlugin`的代码（除`TranslationUtils.cmake`这一个文件遵守`BSD 3-Clause`）遵守`MIT`协议。
 
 ### 使用声明
 
@@ -176,8 +178,5 @@
 
 ## 插件库
 
-> 敬请期待
-
-## 应用商店
-
-> 敬请期待
+- [WingAsm](https://github.com/Wing-summer/WingAsm) : 一个提供汇编和反汇编的插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。
+- [WingCStruct](https://github.com/Wing-summer/WingCStruct) : 一个提供分析文件结构基础支持的插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。

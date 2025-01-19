@@ -53,6 +53,8 @@ TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
     initFileDialogOps();
     initFileHandleListWidget();
 
+    ui->sbposition->setRange(0, INT_MAX);
+
     _click = std::bind(&TestForm::onDVClicked, this, std::placeholders::_1);
     _dblclick =
         std::bind(&TestForm::onDVDoubleClicked, this, std::placeholders::_1);
@@ -530,5 +532,15 @@ void TestForm::on_btnCloseFile_clicked() {
         auto e = QMetaEnum::fromType<WingHex::ErrFile>();
         emit _plg->msgbox.critical(this, QStringLiteral("Error"),
                                    e.valueToKey(ret));
+    }
+}
+
+void TestForm::on_btnApplyBookMark_clicked() {
+    if (emit _plg->reader.existBookMark(ui->sbposition->value())) {
+        Q_UNUSED(emit _plg->controller.modBookMark(ui->sbposition->value(),
+                                                   ui->lecomment->text()));
+    } else {
+        Q_UNUSED(emit _plg->controller.addBookMark(ui->sbposition->value(),
+                                                   ui->lecomment->text()));
     }
 }

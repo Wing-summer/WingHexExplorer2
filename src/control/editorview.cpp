@@ -286,6 +286,7 @@ ErrFile EditorView::newFile(size_t index) {
     auto p = QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false);
     p->setDocSaved();
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
+    m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
     connectDocSavedFlag(this);
     return ErrFile::Success;
 }

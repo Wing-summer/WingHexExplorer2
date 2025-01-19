@@ -54,8 +54,7 @@ signals:
     void log(const QString &message);
 
 public slots:
-    // internal use only
-    static void _log(const QString &message);
+    static void newLine();
 
     // external use
     static void trace(const QString &message);
@@ -70,6 +69,8 @@ private:
     explicit Logger(QObject *parent = nullptr);
 
     virtual ~Logger();
+
+    static void _log(const QString &message);
 
     Q_DISABLE_COPY_MOVE(Logger)
 

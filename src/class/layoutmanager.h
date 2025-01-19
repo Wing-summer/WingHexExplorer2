@@ -36,6 +36,11 @@ public:
 
     qsizetype layoutCount() const;
 
+    static QDir layoutDir();
+
+    // only for exporting layout
+    QString getSavedLayoutName(const QString &id);
+
 private:
     LayoutManager();
 

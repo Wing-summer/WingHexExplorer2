@@ -12,9 +12,7 @@ class QtSingleApplication : public QApplication {
     Q_OBJECT
 
 public:
-    explicit QtSingleApplication(int &argc, char **argv,
-                                 bool GUIenabled = true);
-    explicit QtSingleApplication(const QString &id, int &argc, char **argv);
+    explicit QtSingleApplication(int &argc, char **argv);
 
 public:
     bool isRunning();

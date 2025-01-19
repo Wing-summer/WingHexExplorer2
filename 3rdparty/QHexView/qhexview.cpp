@@ -176,7 +176,7 @@ QHexView::QHexView(QWidget *parent)
         QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false)));
 }
 
-QHexView::~QHexView() {}
+QHexView::~QHexView() { m_blinktimer->stop(); }
 
 QSharedPointer<QHexDocument> QHexView::document() { return m_document; }
 

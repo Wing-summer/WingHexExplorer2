@@ -88,6 +88,8 @@ Logger::Level Logger::logLevel() const { return _level; }
 
 void Logger::_log(const QString &message) { emit instance().log(message); }
 
+void Logger::newLine() { _log({}); }
+
 void Logger::trace(const QString &message) {
     if (instance()._level >= q5TRACE) {
         QString str = message;

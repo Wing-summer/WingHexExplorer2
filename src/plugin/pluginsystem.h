@@ -44,17 +44,23 @@ private:
     public:
         class UniqueId : public QSharedData {
         public:
-            UniqueId() : _id(0), _gen(nullptr) {}
+            UniqueId() : _id(-1), _gen(nullptr) {}
 
             UniqueId(UniqueIdGenerator *gen, int id) : _id(id), _gen(gen) {
                 Q_ASSERT(gen);
-                Q_ASSERT(id > 0);
+                Q_ASSERT(id >= 0);
+#ifdef QT_DEBUG
+                qDebug() << "[UniqueId] alloced: " << id;
+#endif
             }
 
             ~UniqueId() {
                 if (_gen) {
                     _gen->release(_id);
                 }
+#ifdef QT_DEBUG
+                qDebug() << "[UniqueId] freed: " << _id;
+#endif
             }
 
             operator int() { return _id; }
@@ -65,7 +71,7 @@ private:
         };
 
     public:
-        UniqueIdGenerator() : currentId(1) {}
+        UniqueIdGenerator() : currentId(0) {}
 
         QExplicitlySharedDataPointer<UniqueId> get() {
             if (!releasedIds.isEmpty()) {
@@ -112,6 +118,20 @@ public:
         LackDependencies
     };
     Q_ENUM(PluginStatus)
+
+private:
+    struct PluginFileContext {
+        SharedUniqueId fid;
+        EditorView *view = nullptr;
+        IWingPlugin *linkedplg = nullptr;
+        QUndoCommand *cmd = nullptr;
+
+        ~PluginFileContext() {
+            if (cmd) {
+                delete cmd;
+            }
+        }
+    };
 
 public:
     static PluginSystem &instance();
@@ -194,7 +214,15 @@ private:
 
     static QString packLogMessage(const char *header, const QString &msg);
 
-    EditorView *pluginCurrentEditor(IWingPlugin *sender) const;
+    EditorView *pluginCurrentEditor(IWingPlugin *plg) const;
+
+    std::optional<PluginSystem::PluginFileContext>
+    pluginContextById(IWingPlugin *plg, int fid) const;
+
+    std::optional<QVector<PluginFileContext>::iterator>
+    pluginContextByIdIt(IWingPlugin *plg, int fid);
+
+    QUndoCommand *pluginCurrentUndoCmd(IWingPlugin *plg) const;
 
 private:
     void loadPlugin(IWingPlugin *p, PluginInfo &meta,
@@ -246,17 +274,15 @@ private:
     bool insertBasicTypeContent(IWingPlugin *plg, qsizetype offset,
                                 const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
-        auto mapitem = m_plgviewMap.value(plg, empty);
-        auto e = mapitem.first;
+        auto e = getCurrentPluginView(plg);
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-
-            auto cmd = doc->MakeInsert(mapitem.second, editor->cursor(), offset,
+            auto uc = pluginCurrentUndoCmd(plg);
+            auto cmd = doc->MakeInsert(uc, editor->cursor(), offset,
                                        QByteArray(buffer, sizeof(T)));
-            if (mapitem.second == nullptr && cmd) {
+            if (uc == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();
@@ -270,17 +296,15 @@ private:
     bool writeBasicTypeContent(IWingPlugin *plg, qsizetype offset,
                                const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
-        auto mapitem = m_plgviewMap.value(plg, empty);
-        auto e = mapitem.first;
+        auto e = getCurrentPluginView(plg);
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-
-            auto cmd = doc->MakeReplace(mapitem.second, editor->cursor(),
-                                        offset, QByteArray(buffer, sizeof(T)));
-            if (mapitem.second == nullptr && cmd) {
+            auto uc = pluginCurrentUndoCmd(plg);
+            auto cmd = doc->MakeReplace(uc, editor->cursor(), offset,
+                                        QByteArray(buffer, sizeof(T)));
+            if (uc == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();
@@ -293,17 +317,15 @@ private:
     template <typename T>
     bool appendBasicTypeContent(IWingPlugin *plg, const T &value) {
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
-        auto mapitem = m_plgviewMap.value(plg, empty);
-        auto e = mapitem.first;
+        auto e = getCurrentPluginView(plg);
         if (e) {
             auto editor = e->hexEditor();
             auto doc = editor->document();
             auto buffer = reinterpret_cast<const char *>(&value);
-
-            auto cmd = doc->MakeAppend(mapitem.second, editor->cursor(),
+            auto uc = pluginCurrentUndoCmd(plg);
+            auto cmd = doc->MakeAppend(uc, editor->cursor(),
                                        QByteArray(buffer, sizeof(T)));
-            if (mapitem.second == nullptr && cmd) {
+            if (uc == nullptr && cmd) {
                 _rwlock.lockForWrite();
                 doc->pushMakeUndo(cmd);
                 _rwlock.unlock();
@@ -331,9 +353,8 @@ private:
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
-    QHash<IWingPlugin *, QPair<EditorView *, QUndoCommand *>> m_plgviewMap;
-    QHash<IWingPlugin *, QList<QPair<SharedUniqueId, EditorView *>>>
-        m_plgHandles;
+    QHash<IWingPlugin *, QVector<PluginFileContext>> m_plgviewMap;
+    QHash<IWingPlugin *, int> m_plgCurrentfid; // fid
     QHash<EditorView *, QList<IWingPlugin *>> m_viewBindings;
 
     UniqueIdGenerator m_idGen;

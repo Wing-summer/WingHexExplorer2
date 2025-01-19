@@ -1556,8 +1556,10 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 p->first, [this, layout]() { m_dock->restoreState(layout); }));
         }
 
-        addPannelAction(pannel, QStringLiteral("layout"), tr("RestoreLayout"),
-                        EMPTY_FUNC, {}, menu);
+        m_toolBtneditors.insert(
+            ToolButtonIndex::LAYOUT_ACTION,
+            addPannelAction(pannel, QStringLiteral("layout"),
+                            tr("RestoreLayout"), EMPTY_FUNC, {}, menu));
 
         addPannelAction(pannel, QStringLiteral("layoutexport"),
                         tr("SaveLayout"), &MainWindow::on_saveLayout);
@@ -2807,14 +2809,27 @@ void MainWindow::on_fullScreen() {
 }
 
 void MainWindow::on_saveLayout() {
-    auto filename = WingFileDialog::getSaveFileName(
-        this, tr("SaveLayout"), m_lastusedpath,
-        QStringLiteral("Layout (*.wing-layout)"));
-    if (!filename.isEmpty()) {
-        QFile f(filename);
+    static auto suffix = QStringLiteral(".wing-layout");
+    bool ok;
+    auto fileID = WingInputDialog::getText(
+        this, tr("SaveLayout"), tr("PleaseInput"), QLineEdit::Normal, {}, &ok);
+    if (ok) {
+        auto layoutDir = LayoutManager::layoutDir();
+        QFile f(layoutDir.absoluteFilePath(fileID + suffix));
         if (f.open(QFile::WriteOnly)) {
-            f.write(m_dock->saveState());
+            auto layout = m_dock->saveState();
+            f.write(layout);
             f.close();
+
+            // append saved layout
+            auto &lm = LayoutManager::instance();
+            auto menu =
+                m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
+            Q_ASSERT(menu);
+            menu->addAction(
+                newAction(lm.getSavedLayoutName(fileID),
+                          [this, layout]() { m_dock->restoreState(layout); }));
+
             Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
                          tr("SaveLayoutSuccess"));
         } else {

@@ -36,6 +36,28 @@ QByteArray LayoutManager::layout(const QString &v) const {
 
 qsizetype LayoutManager::layoutCount() const { return _layouts.size(); }
 
+QDir LayoutManager::layoutDir() {
+    QDir pdir(Utilities::getAppDataPath());
+    auto lname = QStringLiteral("layouts");
+    return pdir.absoluteFilePath(lname);
+}
+
+QString LayoutManager::getSavedLayoutName(const QString &id) {
+    auto pdir = layoutDir();
+    auto trf = QStringLiteral("metatr.ini");
+    auto sep = QStringLiteral("/");
+    auto lid = id;
+
+    QSettings set(pdir.absoluteFilePath(trf), QSettings::IniFormat);
+    auto name = LanguageManager::instance().defaultLocale().name();
+    QString k = set.value(name + sep + id).toString().trimmed();
+    if (!k.isEmpty()) {
+        lid = k;
+    }
+
+    return lid;
+}
+
 LayoutManager::LayoutManager() {
     ASSERT_SINGLETON;
     QDir pdir(Utilities::getAppDataPath());
@@ -66,7 +88,7 @@ void LayoutManager::process(const QDir &dir,
     for (auto &l : dir.entryInfoList({"*.wing-layout"}, QDir::Files)) {
         QString k;
         if (set) {
-            k = set->value(name + sep + l.baseName()).toString();
+            k = set->value(name + sep + l.baseName()).toString().trimmed();
         }
 
         if (k.isEmpty()) {

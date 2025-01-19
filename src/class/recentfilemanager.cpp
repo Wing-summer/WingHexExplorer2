@@ -144,16 +144,35 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         }
         auto a = new QAction(m_menu);
         a->setData(QVariant::fromValue(info));
-        a->setText(getDisplayFileName(info));
+
+        QMimeDatabase db;
+        auto mt = db.mimeTypeForFile(info.fileName);
+
+        a->setText(getDisplayFileName(info) + QStringLiteral(" (") + mt.name() +
+                   QStringLiteral(")"));
         a->setToolTip(getDisplayTooltip(info));
         if (info.isWorkSpace) {
             a->setIcon(ICONRES(QStringLiteral("pro")));
+        } else {
+            a->setIcon(
+                Utilities::getIconFromFile(qApp->style(), info.fileName));
         }
         connect(a, &QAction::triggered, this, [=] {
             auto send = qobject_cast<QAction *>(sender());
             if (send) {
                 auto f = send->data().value<RecentInfo>();
                 if (existsPath(f)) {
+                    auto idx = hitems.indexOf(a);
+                    if (idx > 0) {
+                        m_menu->removeAction(a);
+
+                        if (hitems.count())
+                            m_menu->insertAction(hitems.first(), a);
+                        else
+                            m_menu->addAction(a);
+
+                        hitems.move(idx, 0);
+                    }
                     emit triggered(f);
                 } else {
                     auto index = hitems.indexOf(send);

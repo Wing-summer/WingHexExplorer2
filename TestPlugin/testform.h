@@ -125,6 +125,8 @@ private slots:
 
     void on_btnCloseFile_clicked();
 
+    void on_btnApplyBookMark_clicked();
+
 private:
     void initLogCombo();
 
