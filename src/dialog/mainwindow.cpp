@@ -3600,7 +3600,17 @@ QJsonObject MainWindow::extractModelData(const QAbstractItemModel *model,
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     m_isOnClosing = true;
-    // first checking the scripting dialog
+
+    // plugin first checking
+    auto closing = PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::AppClosing, {});
+    if (!closing) {
+        event->ignore();
+        m_isOnClosing = false;
+        return;
+    }
+
+    // then checking the scripting dialog
     if (!m_scriptDialog->about2Close()) {
         event->ignore();
         m_isOnClosing = false;
@@ -3662,6 +3672,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     set.save();
 
     LangService::instance().saveSnippets();
+    PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);
 }

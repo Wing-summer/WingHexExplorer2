@@ -107,6 +107,7 @@ signals:
 
     // document
     Q_REQUIRED_RESULT bool isReadOnly();
+    Q_REQUIRED_RESULT bool isInsertionMode();
     Q_REQUIRED_RESULT bool isKeepSize();
     Q_REQUIRED_RESULT bool isLocked();
     Q_REQUIRED_RESULT qsizetype documentLines();
@@ -437,15 +438,16 @@ public:
     enum class RegisteredEvent : uint {
         None,
         AppReady = 1u,
-        SelectionChanged = 1u << 1,
-        CursorPositionChanged = 1u << 2,
-        FileOpened = 1u << 3,
-        FileSaved = 1u << 4,
-        FileSwitched = 1u << 5,
-        FileClosed = 1u << 6,
-        ScriptPragma = 1u << 7,
-        PluginFileOpened = 1u << 8,
-        PluginFileClosed = 1u << 9,
+        AppClosing = 1u << 1,
+        SelectionChanged = 1u << 2,
+        CursorPositionChanged = 1u << 3,
+        FileOpened = 1u << 4,
+        FileSaved = 1u << 5,
+        FileSwitched = 1u << 6,
+        FileClosed = 1u << 7,
+        ScriptPragma = 1u << 8,
+        PluginFileOpened = 1u << 9,
+        PluginFileClosed = 1u << 10,
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
@@ -517,6 +519,8 @@ public:
     }
 
     virtual void eventReady() {}
+
+    virtual bool eventClosing() { return true; }
 
 public:
     virtual bool eventOnScriptPragma(const QStringList &comments) {

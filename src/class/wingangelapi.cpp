@@ -510,6 +510,11 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         "string currentDocFilename()");
 
     registerAPI<bool(void)>(
+        engine,
+        std::bind(&WingHex::WingPlugin::Reader::isInsertionMode, reader),
+        "bool isInsertionMode()");
+
+    registerAPI<bool(void)>(
         engine, std::bind(&WingHex::WingPlugin::Reader::isReadOnly, reader),
         "bool isReadOnly()");
 

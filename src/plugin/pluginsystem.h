@@ -142,6 +142,8 @@ public:
     void loadAllPlugin();
     void unloadAllPlugin();
 
+    void destory();
+
     const QList<IWingPlugin *> &plugins() const;
     IWingPlugin *plugin(qsizetype index) const;
 
@@ -187,6 +189,10 @@ private:
 
     SharedUniqueId assginHandleForPluginView(IWingPlugin *plg,
                                              EditorView *view);
+
+    static bool equalCompareHandle(const SharedUniqueId &id, int handle);
+
+    static int getUIDHandle(const SharedUniqueId &id);
 
 private:
     PluginInfo parsePluginMetadata(const QJsonObject &meta);
