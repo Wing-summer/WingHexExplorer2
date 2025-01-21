@@ -94,12 +94,15 @@ Q_DECL_UNUSED static QStringList getEncodings() {
 Q_DECL_UNUSED static QString convertString(const QString &encoding,
                                            const QByteArray &data) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    auto enc = QStringConverter::encodingForName(encoding.toUtf8());
+    auto en = encoding;
+    if (en.isEmpty() ||
+        en.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive) == 0) {
+        en = QStringLiteral("ISO-8859-1");
+    }
+    auto enc = QStringConverter::encodingForName(en.toUtf8());
     if (enc) {
         QStringDecoder decoder(enc.value());
-        auto unicode = decoder.decode(data);
-        QString data = unicode.data;
-        return data;
+        return decoder(data);
     } else {
         // Handle the case where the encoding is not recognized
         auto unicode = QString::fromUtf8(data); // Fallback to UTF-8

@@ -1,11 +1,10 @@
 #include "qhexrenderer.h"
-#include "document/commands/encodingchangecommand.h"
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
+#include <QTextCharFormat>
 #include <QTextCursor>
 #include <QWidget>
 #include <cctype>
-#include <cwctype>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
@@ -41,51 +40,17 @@ void QHexRenderer::setAddressVisible(bool b) {
     emit m_document->documentChanged();
 }
 
-QString QHexRenderer::encoding() {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    if (m_encoding.compare(QStringLiteral("ISO-8859-1"), Qt::CaseInsensitive))
-        return m_encoding;
-    return QStringLiteral("ASCII");
-#else
-    return m_encoding;
-#endif
-}
-
-void QHexRenderer::SetEncoding(QString encoding) {
-    m_document->addUndoCommand(
-        new EncodingChangeCommand(this, m_encoding, encoding));
-}
-
 void QHexRenderer::switchDoc(QHexDocument *doc) {
     if (doc)
         m_document = doc;
 }
 
-bool QHexRenderer::setEncoding(const QString &encoding) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    auto enc = encoding;
-    if (encoding.compare(QStringLiteral("ISO-8859-1"), Qt::CaseInsensitive) ==
-        0) {
-        m_encoding = QStringLiteral("ASCII");
-        emit m_document->documentChanged();
-        return true;
-    }
-    if (QStringConverter::encodingForName(enc.toUtf8())) {
-#else
-    if (QTextCodec::codecForName(encoding.toUtf8())) {
-#endif
-        m_encoding = encoding;
-        emit m_document->documentChanged();
-        return true;
-    }
-    return false;
-}
 /*===================================*/
 
 QHexRenderer::QHexRenderer(QHexDocument *document, QHexCursor *cursor,
                            const QFontMetricsF &fontmetrics, QObject *parent)
     : QObject(parent), m_document(document), m_cursor(cursor),
-      m_fontmetrics(fontmetrics), m_encoding("ASCII") {
+      m_fontmetrics(fontmetrics) {
     m_selectedarea = QHexRenderer::HexArea;
     m_cursorenabled = false;
 
@@ -143,7 +108,7 @@ void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
         this->drawHex(painter, linerect, line);
 
         if (m_asciiVisible)
-            this->drawString(painter, linerect, line, m_encoding);
+            this->drawString(painter, linerect, line);
     }
 }
 
@@ -258,40 +223,14 @@ QString QHexRenderer::hexString(qsizetype line, QByteArray *rawline) const {
 }
 
 // modified by wingsummer
-QString QHexRenderer::decodeString(qsizetype line, QString encoding,
-                                   QByteArray *rawline) const {
+QString QHexRenderer::decodeString(qsizetype line, QByteArray *rawline) const {
     QByteArray lrawline = this->getLine(line);
     if (rawline)
         *rawline = lrawline;
 
-    if (encoding.toLower() == "ascii") {
-        QByteArray ascii = lrawline;
-        this->unprintableChars(ascii);
-        return ascii;
-    } else {
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        auto enc = QStringConverter::encodingForName(encoding.toUtf8());
-        if (enc) {
-            QStringDecoder decoder(enc.value());
-            auto unicode = decoder.decode(lrawline);
-            QString data = unicode.data;
-            this->unprintableWChars(data);
-            return data;
-        } else {
-            // Handle the case where the encoding is not recognized
-            auto unicode = QString::fromUtf8(lrawline); // Fallback to UTF-8
-            this->unprintableWChars(unicode);
-            return unicode;
-        }
-#else
-        auto enc = QTextCodec::codecForName(encoding.toUtf8());
-        auto d = enc->makeDecoder();
-        auto unicode = d->toUnicode(lrawline);
-        this->unprintableWChars(unicode);
-        return unicode;
-#endif
-    }
+    QByteArray ascii = lrawline;
+    this->unprintableChars(ascii);
+    return ascii;
 }
 
 QByteArray QHexRenderer::getLine(qsizetype line) const {
@@ -352,15 +291,6 @@ void QHexRenderer::unprintableChars(QByteArray &ascii) const {
         if (std::isprint(static_cast<unsigned char>(ch)))
             continue;
 
-        ch = HEX_UNPRINTABLE_CHAR;
-    }
-}
-
-// added by wingsummer
-void QHexRenderer::unprintableWChars(QString &unicode) const {
-    for (QChar &ch : unicode) {
-        if (std::iswprint(ch.unicode()))
-            continue;
         ch = HEX_UNPRINTABLE_CHAR;
     }
 }
@@ -776,12 +706,12 @@ void QHexRenderer::applyBookMark(QTextCursor &textcursor, qsizetype line,
 }
 
 void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
-                              qsizetype line, QString encoding) {
+                              qsizetype line) {
     QTextDocument textdocument;
     QTextCursor textcursor(&textdocument);
     QByteArray rawline;
     // modified by wingsummer
-    textcursor.insertText(this->decodeString(line, encoding, &rawline));
+    textcursor.insertText(this->decodeString(line, &rawline));
 
     if (line == this->documentLastLine())
         textcursor.insertText(" ");
@@ -847,7 +777,7 @@ void QHexRenderer::drawHeader(QPainter *painter) {
 
     if (m_asciiVisible)
         painter->drawText(asciirect, Qt::AlignHCenter | Qt::AlignVCenter,
-                          m_encoding);
+                          QStringLiteral("ASCII"));
     painter->restore();
 }
 

@@ -2424,9 +2424,17 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
 
         // default shortcuts
         if (e->matches(QKeySequence::Undo)) {
+            if (flag(ReadOnly)) {
+                e->ignore();
+                return;
+            }
             undo();
             break;
         } else if (e->matches(QKeySequence::Redo)) {
+            if (flag(ReadOnly)) {
+                e->ignore();
+                return;
+            }
             redo();
             break;
         } else if (e->matches(QKeySequence::Copy)) {
@@ -2459,6 +2467,10 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
             findNext();
             break;
         } else if (e->matches(QKeySequence::Replace)) {
+            if (flag(ReadOnly)) {
+                e->ignore();
+                return;
+            }
             replace();
             break;
         }
@@ -3611,6 +3623,10 @@ bool QEditor::isProcessingKeyEvent(QKeyEvent *e, int *offset) {
 bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
     if (!b)
         return false;
+
+    if (flag(ReadOnly)) {
+        return false;
+    }
 
     bool hasSelection = c.hasSelection();
 

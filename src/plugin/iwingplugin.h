@@ -161,7 +161,6 @@ signals:
     // extension
     Q_REQUIRED_RESULT QStringList getSupportedEncodings();
     Q_REQUIRED_RESULT QStringList getStorageDrivers();
-    Q_REQUIRED_RESULT QString currentEncoding();
 };
 
 class Controller : public QObject {
@@ -280,7 +279,6 @@ signals:
 
     // workspace
     Q_REQUIRED_RESULT WingHex::ErrFile openWorkSpace(const QString &filename);
-    Q_REQUIRED_RESULT bool setCurrentEncoding(const QString &encoding);
 
     // extension
     bool closeAll();

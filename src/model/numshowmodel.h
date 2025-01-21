@@ -33,7 +33,11 @@ public:
         Uint64,
         Int64,
         Float32,
-        Double64
+        Double64,
+        ASCII_STR,
+        UTF8_STR,
+        UTF16_STR,
+        UTF32_STR
     };
 
 public:

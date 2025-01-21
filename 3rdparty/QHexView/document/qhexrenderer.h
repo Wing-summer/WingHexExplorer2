@@ -39,10 +39,6 @@ public:
     void setHeaderVisible(bool b);
     bool headerVisible();
 
-    QString encoding();
-    bool setEncoding(const QString &encoding);
-    void SetEncoding(QString encoding);
-
     void switchDoc(QHexDocument *doc);
 
     /*==============================*/
@@ -91,14 +87,7 @@ public:
 private:
     QString hexString(qsizetype line, QByteArray *rawline = nullptr) const;
 
-    /*======================================*/
-    // added by wingsummer
-
-    QString decodeString(qsizetype line, QString encoding,
-                         QByteArray *rawline = nullptr) const;
-    void unprintableWChars(QString &unicode) const;
-
-    /*======================================*/
+    QString decodeString(qsizetype line, QByteArray *rawline = nullptr) const;
 
     QByteArray getLine(qsizetype line) const;
     qsizetype rendererLength() const;
@@ -137,8 +126,7 @@ private:
     void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHex(QPainter *painter, const QRect &linerect, qsizetype line);
-    void drawString(QPainter *painter, const QRect &linerect, qsizetype line,
-                    QString encoding);
+    void drawString(QPainter *painter, const QRect &linerect, qsizetype line);
     void drawHeader(QPainter *painter);
 
 private:
@@ -155,7 +143,6 @@ private:
     bool m_asciiVisible;
     bool m_addressVisible;
     bool m_headerVisible;
-    QString m_encoding;
 
     // color
     QColor m_headerColor = Qt::cyan;

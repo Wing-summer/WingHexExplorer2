@@ -49,11 +49,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                                    ? fi
                                    : QFileInfo(filename).absolutePath() +
                                          QDir::separator() + fi;
-                        auto values = jobj.value("encoding");
-                        if (!values.isUndefined() && values.isString()) {
-                            infos.encoding = values.toString();
-                        }
-                        values = jobj.value("base");
+                        auto values = jobj.value("base");
                         if (!values.isUndefined() && values.isString()) {
                             auto ba = values.toString();
                             auto nbase = ba.toULongLong(&b);
@@ -186,7 +182,6 @@ bool WorkSpaceManager::saveWorkSpace(
         }
 
         jobj.insert("file", ff);
-        jobj.insert("encoding", infos.encoding);
         jobj.insert("base", QString::number(infos.base));
 
         QJsonArray metas;

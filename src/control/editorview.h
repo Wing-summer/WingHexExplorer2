@@ -57,8 +57,8 @@ public:
 
 public:
     static EditorView *fromDevice(QIODevice *dev, const QString &file,
-                                  const QString &encoding, bool readonly,
-                                  const QIcon &icon, QWidget *parent = nullptr);
+                                  bool readonly, const QIcon &icon,
+                                  QWidget *parent = nullptr);
 
 public:
     explicit EditorView(QWidget *parent = nullptr);
@@ -109,14 +109,10 @@ public slots:
     void triggerGoto();
 
     ErrFile newFile(size_t index);
-    ErrFile openFile(const QString &filename,
-                     const QString &encoding = QString());
-    ErrFile openWorkSpace(const QString &filename,
-                          const QString &encoding = QString());
-    ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length,
-                           const QString &encoding = QString());
-    ErrFile openDriver(const QString &driver,
-                       const QString &encoding = QString());
+    ErrFile openFile(const QString &filename);
+    ErrFile openWorkSpace(const QString &filename);
+    ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length);
+    ErrFile openDriver(const QString &driver);
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
          bool ignoreMd5 = false, bool isExport = false,
@@ -173,7 +169,6 @@ signals:
     void sigOnFill();
     void sigOnMetadata();
     void sigOnBookMark();
-    void sigOnEncoding();
 
 private:
     QStackedWidget *m_stack = nullptr;

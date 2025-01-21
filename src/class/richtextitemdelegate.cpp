@@ -71,9 +71,12 @@ void RichTextItemDelegate::paint(QPainter *painter,
     }
 
     // Render the document in the adjusted rectangle
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    ctx.palette = option.widget->palette();
+
     painter->translate(rect.topLeft());
     doc.setTextWidth(option.rect.width());
-    doc.drawContents(painter);
+    doc.documentLayout()->draw(painter, ctx);
 
     painter->restore();
 }

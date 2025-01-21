@@ -126,6 +126,57 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_lblsellen = new QLabel(QStringLiteral("0 - 0x0"), this);
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
+
+        auto disableStyle =
+            QStringLiteral("border:none;background:transparent;");
+
+        m_sSaved = new QToolButton(this);
+        m_sSaved->setStyleSheet(disableStyle);
+        m_sSaved->setToolTip(tr("InfoSave"));
+        m_sSaved->setIcon(_infoSaved);
+        m_sSaved->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        m_status->addPermanentWidget(m_sSaved);
+        m_editStateWidgets << m_sSaved;
+
+        m_sReadWrite = new QToolButton(this);
+        m_sReadWrite->setStyleSheet(disableStyle);
+        m_sReadWrite->setToolTip(tr("ReadOnly"));
+        m_sReadWrite->setIcon(_infoWriteable);
+        m_sReadWrite->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        m_status->addPermanentWidget(m_sReadWrite);
+        m_editStateWidgets << m_sReadWrite;
+
+        auto ev = new EventFilter(QEvent::MouseButtonDblClick, m_status);
+        connect(ev, &EventFilter::eventTriggered, this,
+                [this](QObject *obj, QEvent *) {
+                    if (obj == m_sLocked) {
+                        if (m_sLocked->isEnabled()) {
+                            m_iLocked->click();
+                        }
+                    } else if (obj == m_sCanOver) {
+                        if (m_sCanOver->isEnabled()) {
+                            m_iCanOver->click();
+                        }
+                    }
+                });
+
+        m_sLocked = new QToolButton(this);
+        m_sLocked->setStyleSheet(disableStyle);
+        m_sLocked->setToolTip(tr("SetLocked"));
+        m_sLocked->setIcon(_infoUnLock);
+        m_sLocked->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        m_sLocked->installEventFilter(ev);
+        m_status->addPermanentWidget(m_sLocked);
+        m_editStateWidgets << m_sLocked;
+
+        m_sCanOver = new QToolButton(this);
+        m_sCanOver->setStyleSheet(disableStyle);
+        m_sCanOver->setToolTip(tr("SetOver"));
+        m_sCanOver->setIcon(_infoCannotOver);
+        m_sCanOver->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        m_sCanOver->installEventFilter(ev);
+        m_status->addPermanentWidget(m_sCanOver);
+        m_editStateWidgets << m_sCanOver;
     }
 
     layout->addWidget(m_status);
@@ -262,8 +313,7 @@ void MainWindow::buildUpRibbonBar() {
 
     m_ribbonMaps[catagories.FILE] = buildFilePage(m_ribbon->addTab(tr("File")));
     qApp->processEvents();
-    m_editStateWidgets << (m_ribbonMaps[catagories.EDIT] =
-                               buildEditPage(m_ribbon->addTab(tr("Edit"))));
+    m_ribbonMaps[catagories.EDIT] = buildEditPage(m_ribbon->addTab(tr("Edit")));
     qApp->processEvents();
     m_ribbonMaps[catagories.VIEW] = buildViewPage(m_ribbon->addTab(tr("View")));
     qApp->processEvents();
@@ -803,9 +853,12 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                                        ads::CDockAreaWidget *areaw) {
     m_txtDecode = new QTextBrowser(this);
     m_txtDecode->setUndoRedoEnabled(false);
-
+    m_txtDecode->setProperty("__NAME__", tr("DecodeText"));
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
-                              tr("DecodeText"), m_txtDecode);
+                              tr("DecodeText") + QStringLiteral(" (ASCII)"),
+                              m_txtDecode);
+    connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
+            &QDockWidget::setWindowTitle);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1240,91 +1293,109 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
-        m_toolBtneditors.insert(
-            ToolButtonIndex::UNDO_ACTION,
-            addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
-                            &MainWindow::on_undofile, QKeySequence::Undo));
-        m_toolBtneditors.insert(
-            ToolButtonIndex::REDO_ACTION,
-            addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
+
+        auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
+                                 &MainWindow::on_undofile, QKeySequence::Undo);
+        m_toolBtneditors.insert(ToolButtonIndex::UNDO_ACTION, a);
+        m_editStateWidgets << a;
+
+        a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
                             &MainWindow::on_redofile,
-                            shortcuts.keySequence(QKeySequences::Key::REDO)));
-        addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
-                        &MainWindow::on_cutfile, QKeySequence::Cut);
-        addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
-                        &MainWindow::on_copyfile, QKeySequence::Copy);
-        addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
-                        &MainWindow::on_pastefile, QKeySequence::Paste);
-        addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
-                        &MainWindow::on_delete, QKeySequence::Delete);
-        addPannelAction(pannel, QStringLiteral("clone"), tr("Clone"),
-                        &MainWindow::on_clone);
+                            shortcuts.keySequence(QKeySequences::Key::REDO));
+        m_toolBtneditors.insert(ToolButtonIndex::REDO_ACTION, a);
+        m_editStateWidgets << a;
+
+        a = addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
+                            &MainWindow::on_cutfile, QKeySequence::Cut);
+        m_editStateWidgets << a;
+        a = addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
+                            &MainWindow::on_copyfile, QKeySequence::Copy);
+        m_editStateWidgets << a;
+        a = addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
+                            &MainWindow::on_pastefile, QKeySequence::Paste);
+        m_editStateWidgets << a;
+        a = addPannelAction(pannel, QStringLiteral("del"), tr("Delete"),
+                            &MainWindow::on_delete, QKeySequence::Delete);
+        m_editStateWidgets << a;
+        a = addPannelAction(pannel, QStringLiteral("clone"), tr("Clone"),
+                            &MainWindow::on_clone);
+        m_editStateWidgets << a;
     }
 
     {
         auto pannel = tab->addGroup(tr("Lookup"));
-        addPannelAction(pannel, QStringLiteral("find"), tr("Find"),
-                        &MainWindow::on_findfile, QKeySequence::Find);
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("find"), tr("Find"),
+            &MainWindow::on_findfile, QKeySequence::Find);
 
-        addPannelAction(pannel, QStringLiteral("jmp"), tr("Goto"),
-                        &MainWindow::on_gotoline,
-                        shortcuts.keySequence(QKeySequences::Key::GOTO));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("jmp"), tr("Goto"), &MainWindow::on_gotoline,
+            shortcuts.keySequence(QKeySequences::Key::GOTO));
 
         addPannelAction(pannel, QStringLiteral("encoding"), tr("Encoding"),
                         &MainWindow::on_encoding,
                         shortcuts.keySequence(QKeySequences::Key::ENCODING));
-        addPannelAction(pannel, QStringLiteral("sum"), tr("CheckSum"),
-                        &MainWindow::on_checksum);
-        addPannelAction(pannel, QStringLiteral("info"), tr("FileInfo"),
-                        &MainWindow::on_fileInfo,
-                        shortcuts.keySequence(QKeySequences::Key::FILE_INFO));
+
+        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("sum"),
+                                              tr("CheckSum"),
+                                              &MainWindow::on_checksum);
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("info"), tr("FileInfo"),
+            &MainWindow::on_fileInfo,
+            shortcuts.keySequence(QKeySequences::Key::FILE_INFO));
     }
 
     {
         auto pannel = tab->addGroup(tr("Hex"));
-        addPannelAction(pannel, QStringLiteral("cuthex"), tr("CutHex"),
-                        &MainWindow::on_cuthex,
-                        shortcuts.keySequence(QKeySequences::Key::CUT_HEX));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("cuthex"), tr("CutHex"),
+            &MainWindow::on_cuthex,
+            shortcuts.keySequence(QKeySequences::Key::CUT_HEX));
 
-        addPannelAction(pannel, QStringLiteral("copyhex"), tr("CopyHex"),
-                        &MainWindow::on_copyhex,
-                        shortcuts.keySequence(QKeySequences::Key::COPY_HEX));
-        addPannelAction(pannel, QStringLiteral("pastehex"), tr("PasteHex"),
-                        &MainWindow::on_pastehex,
-                        shortcuts.keySequence(QKeySequences::Key::PASTE_HEX));
-        addPannelAction(pannel, QStringLiteral("fill"), tr("Fill"),
-                        &MainWindow::on_fill,
-                        shortcuts.keySequence(QKeySequences::Key::HEX_FILL));
-        addPannelAction(pannel, QStringLiteral("fillZero"), tr("FillZero"),
-                        &MainWindow::on_fillzero,
-                        shortcuts.keySequence(QKeySequences::Key::HEX_FILL0));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("copyhex"), tr("CopyHex"),
+            &MainWindow::on_copyhex,
+            shortcuts.keySequence(QKeySequences::Key::COPY_HEX));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("pastehex"), tr("PasteHex"),
+            &MainWindow::on_pastehex,
+            shortcuts.keySequence(QKeySequences::Key::PASTE_HEX));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("fill"), tr("Fill"), &MainWindow::on_fill,
+            shortcuts.keySequence(QKeySequences::Key::HEX_FILL));
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("fillZero"), tr("FillZero"),
+            &MainWindow::on_fillzero,
+            shortcuts.keySequence(QKeySequences::Key::HEX_FILL0));
     }
 
     {
         auto pannel = tab->addGroup(tr("MetaData"));
-        addPannelAction(pannel, QStringLiteral("bookmark"), tr("BookMark"),
-                        &MainWindow::on_bookmark,
-                        shortcuts.keySequence(QKeySequences::Key::BOOKMARK));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("bookmark"), tr("BookMark"),
+            &MainWindow::on_bookmark,
+            shortcuts.keySequence(QKeySequences::Key::BOOKMARK));
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("bookmarkdel"), tr("DeleteBookMark"),
             &MainWindow::on_bookmarkdel,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK_DEL));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("bookmarkcls"), tr("ClearBookMark"),
             &MainWindow::on_bookmarkcls,
             shortcuts.keySequence(QKeySequences::Key::BOOKMARK_CLS));
-        addPannelAction(pannel, QStringLiteral("metadata"), tr("MetaData"),
-                        &MainWindow::on_metadata,
-                        shortcuts.keySequence(QKeySequences::Key::METADATA));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("metadata"), tr("MetaData"),
+            &MainWindow::on_metadata,
+            shortcuts.keySequence(QKeySequences::Key::METADATA));
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("metadataedit"), tr("MetaDataEdit"),
             &MainWindow::on_metadataedit,
             shortcuts.keySequence(QKeySequences::Key::METADATA_EDIT));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("metadatadel"), tr("DeleteMetaData"),
             &MainWindow::on_metadatadel,
             shortcuts.keySequence(QKeySequences::Key::METADATA_DEL));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("metadatacls"), tr("ClearMetaData"),
             &MainWindow::on_metadatacls,
             shortcuts.keySequence(QKeySequences::Key::METADATA_CLS));
@@ -1364,13 +1435,14 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         menu->addAction(newAction(QStringLiteral("300%"), [this] {
             this->setCurrentHexEditorScale(3.0);
         }));
-        addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
-                        EMPTY_FUNC, {}, menu);
-        addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
-                        [this] { this->setCurrentHexEditorScale(1.0); });
-        addPannelAction(pannel, QStringLiteral("viewtxt"), tr("ViewText"),
-                        &MainWindow::on_viewtxt);
-        m_editStateWidgets << pannel;
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("scale"), tr("Scale"), EMPTY_FUNC, {}, menu);
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("scalereset"), tr("ResetScale"),
+            [this] { this->setCurrentHexEditorScale(1.0); });
+        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("viewtxt"),
+                                              tr("ViewText"),
+                                              &MainWindow::on_viewtxt);
     }
 
     {
@@ -1390,18 +1462,18 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 menu, tr("ShowMetaComment"), &MainWindow::on_metadatacomment,
                 shortcuts.keySequence(QKeySequences::Key::METADATA_COMMENT)));
 
-        addPannelAction(pannel, QStringLiteral("metadata"), tr("MetaData"),
-                        EMPTY_FUNC, {}, menu);
+        m_editStateWidgets << addPannelAction(
+            pannel, QStringLiteral("metadata"), tr("MetaData"), EMPTY_FUNC, {},
+            menu);
 
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("metashow"), tr("MetaShowAll"),
             &MainWindow::on_metashowall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_SHOW));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("metahide"), tr("MetaHideAll"),
             &MainWindow::on_metahideall,
             shortcuts.keySequence(QKeySequences::Key::METADATA_HIDE));
-        m_editStateWidgets << pannel;
     }
 
     {
@@ -1411,9 +1483,13 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_iSaved =
             addPannelAction(pannel, _infoSaved, tr("InfoSave"), EMPTY_FUNC);
         m_iSaved->setStyleSheet(disableStyle);
+        m_editStateWidgets << m_iSaved;
+
         m_iReadWrite =
             addPannelAction(pannel, _infoReadonly, tr("ReadOnly"), EMPTY_FUNC);
         m_iReadWrite->setStyleSheet(disableStyle);
+        m_editStateWidgets << m_iReadWrite;
+
         m_iLocked =
             addPannelAction(pannel, _infoLock, tr("SetLocked"), [this]() {
                 auto hexeditor = currentHexView();
@@ -1424,6 +1500,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                     Toast::toast(this, _pixLock, tr("ErrUnLock"));
                 }
             });
+        m_editStateWidgets << m_iLocked;
+
         m_iCanOver =
             addPannelAction(pannel, _infoCanOver, tr("SetOver"), [this]() {
                 auto editor = currentEditor();
@@ -1438,14 +1516,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                                EditorView::DocumentType::RegionFile) ||
                     !hexeditor->setKeepSize(b)) {
                     Toast::toast(this, _pixCannotOver, tr("ErrUnOver"));
-                } else {
-                    if (b) {
-                        Toast::toast(this, _pixCannotOver,
-                                     tr("InfoCanOverLimit"));
-                    }
                 }
             });
-        m_editStateWidgets << pannel;
+        m_editStateWidgets << m_iCanOver;
     }
 
     {
@@ -1481,7 +1554,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("HexEditorLayout"));
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("mAddr"), tr("SetBaseAddr"), [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -1508,7 +1581,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                     }
                 }
             });
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("mColInfo"), tr("SetColInfo"), [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -1516,7 +1589,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 }
                 hexeditor->setAddressVisible(!hexeditor->addressVisible());
             });
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("mLineInfo"), tr("SetHeaderInfo"), [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -1524,7 +1597,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 }
                 hexeditor->setHeaderVisible(!hexeditor->headerVisible());
             });
-        addPannelAction(
+        m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("mStr"), tr("SetAsciiString"), [this]() {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -1532,7 +1605,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 }
                 hexeditor->setAsciiVisible(!hexeditor->asciiVisible());
             });
-        m_editStateWidgets << pannel;
     }
 
     {
@@ -2228,14 +2300,13 @@ void MainWindow::on_gotoline() {
 }
 
 void MainWindow::on_encoding() {
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
-        return;
-    }
     EncodingDialog d;
     if (d.exec()) {
-        auto res = d.getResult();
-        hexeditor->renderer()->SetEncoding(res);
+        m_encoding = d.getResult();
+        m_txtDecode->setWindowTitle(
+            m_txtDecode->property("__NAME__").toString() +
+            QStringLiteral(" (") + m_encoding + QStringLiteral(")"));
+        on_selectionChanged();
     }
 }
 
@@ -2665,12 +2736,14 @@ void MainWindow::on_locChanged() {
     auto off = hexeditor->currentOffset();
     auto d = hexeditor->document();
 
-    auto tmp = d->read(off, sizeof(quint64));
+    constexpr auto maxlen = 32;
+
+    auto tmp = d->read(off, maxlen);
     quint64 n = *reinterpret_cast<const quint64 *>(tmp.constData());
 
     auto len = size_t(tmp.length());
 
-    if (len == sizeof(quint64)) {
+    if (len >= sizeof(quint64)) {
         auto s = processEndian(n);
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint64,
@@ -2689,7 +2762,7 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Double64, QString());
     }
 
-    if (len > sizeof(quint32)) {
+    if (len >= sizeof(quint32)) {
         auto s = processEndian(quint32(n));
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint32,
@@ -2708,7 +2781,7 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
     }
 
-    if (len > sizeof(quint16)) {
+    if (len >= sizeof(quint16)) {
         auto s = processEndian(quint16(n));
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Ushort,
@@ -2720,7 +2793,7 @@ void MainWindow::on_locChanged() {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
     }
-    if (len > sizeof(uchar)) {
+    if (len >= sizeof(uchar)) {
         auto s1 = tmp.at(0);
         auto s = uchar(s1);
         _numsitem->setNumData(
@@ -2731,6 +2804,31 @@ void MainWindow::on_locChanged() {
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
         _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
+    }
+
+    // str
+    if (len > 0) {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                              QString::fromLatin1(tmp));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
+                              QString::fromUtf8(tmp));
+        auto re = processEndian(tmp);
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::UTF16_STR,
+            QString::fromUtf16(reinterpret_cast<const char16_t *>(re.data()),
+                               re.length() / sizeof(char16_t)));
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::UTF32_STR,
+            QString::fromUcs4(reinterpret_cast<const char32_t *>(re.data()),
+                              re.length() / sizeof(char32_t)));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                              QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                              QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                              QString());
     }
 
     auto cursor = hexeditor->cursor();
@@ -2777,8 +2875,8 @@ void MainWindow::on_selectionChanged() {
 
         // 如果不超过 10KB （默认）那么解码，防止太多卡死
         if (buffer.length() <= 1024 * _decstrlim) {
-            m_txtDecode->insertPlainText(Utilities::decodingString(
-                b, hexeditor->renderer()->encoding()));
+            m_txtDecode->insertPlainText(
+                Utilities::decodingString(b, m_encoding));
             m_txtDecode->insertPlainText(QStringLiteral("\n"));
         } else {
             m_txtDecode->insertHtml(
@@ -3015,7 +3113,6 @@ void MainWindow::connectEditorView(EditorView *editor) {
     connect(editor, &EditorView::sigOnCutFile, this, &MainWindow::on_cutfile);
     connect(editor, &EditorView::sigOnBookMark, this, &MainWindow::on_bookmark);
     connect(editor, &EditorView::sigOnCopyFile, this, &MainWindow::on_copyfile);
-    connect(editor, &EditorView::sigOnEncoding, this, &MainWindow::on_encoding);
     connect(editor, &EditorView::sigOnFindFile, this, &MainWindow::on_findfile);
     connect(editor, &EditorView::sigOnGoToLine, this, &MainWindow::on_gotoline);
     connect(editor, &EditorView::sigOnMetadata, this, [=] {
@@ -3088,6 +3185,10 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 closeEditor(editor, true);
             }
         }
+
+        if (m_views.isEmpty()) {
+            updateEditModeEnabled();
+        }
     });
 }
 
@@ -3124,12 +3225,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     });
     connect(hexeditor, &QHexView::documentSaved, this, [this](bool b) {
         m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);
+        m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
     });
     connect(hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
         m_iCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
+        m_sCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
     });
     connect(hexeditor, &QHexView::documentLockedFile, this, [this](bool b) {
         m_iLocked->setIcon(b ? _infoLock : _infoUnLock);
+        m_sLocked->setIcon(b ? _infoLock : _infoUnLock);
     });
     connect(hexeditor, &QHexView::copyLimitRaised, this, [this] {
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
@@ -3154,8 +3258,9 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     connect(doc, &QHexDocument::metaCommentVisibleChanged, m_aShowMetaComment,
             &QAction::setChecked);
 
-    m_iReadWrite->setIcon(hexeditor->isReadOnly() ? _infoReadonly
-                                                  : _infoWriteable);
+    auto icon = hexeditor->isReadOnly() ? _infoReadonly : _infoWriteable;
+    m_iReadWrite->setIcon(icon);
+    m_sReadWrite->setIcon(icon);
 
     loadFindResult(cur);
 

@@ -1552,7 +1552,6 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                     _rwlock.lockForRead();
                     auto hexeditor = e->hexEditor();
                     auto doc = hexeditor->document();
-                    auto render = hexeditor->renderer();
                     auto pos = doc->searchForward(offset, QByteArray(1, 0));
                     if (pos < 0) {
                         pos = doc->searchForward(offset, QByteArray(1, '\n'));
@@ -1561,14 +1560,8 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                         }
                     }
                     auto buffer = doc->read(offset, int(pos - offset));
-
-                    QString enco = encoding;
-                    if (!enco.length()) {
-                        enco = render->encoding();
-                    }
-
                     _rwlock.unlock();
-                    return Utilities::decodingString(buffer, enco);
+                    return Utilities::decodingString(buffer, encoding);
                 }
                 return QString();
             });
@@ -1654,14 +1647,6 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                     drivers.append(item.device());
                 }
                 return drivers;
-            });
-    connect(preader, &WingPlugin::Reader::currentEncoding, _win,
-            [=]() -> QString {
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    return e->hexEditor()->renderer()->encoding();
-                }
-                return {};
             });
 }
 
@@ -1871,14 +1856,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 if (e) {
                     auto editor = e->hexEditor();
                     auto doc = editor->document();
-                    auto render = editor->renderer();
 
-                    QString enco = encoding;
-                    if (!enco.length()) {
-                        enco = render->encoding();
-                    }
-
-                    auto unicode = Utilities::encodingString(value, enco);
+                    auto unicode = Utilities::encodingString(value, encoding);
                     auto uc = pluginCurrentUndoCmd(plg);
                     auto cmd =
                         doc->MakeInsert(uc, editor->cursor(), offset, unicode);
@@ -1924,14 +1903,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 if (e) {
                     auto editor = e->hexEditor();
                     auto doc = editor->document();
-                    auto render = editor->renderer();
 
-                    QString enco = encoding;
-                    if (!enco.length()) {
-                        enco = render->encoding();
-                    }
-
-                    auto unicode = Utilities::encodingString(value, enco);
+                    auto unicode = Utilities::encodingString(value, encoding);
                     auto uc = pluginCurrentUndoCmd(plg);
                     auto cmd =
                         doc->MakeReplace(uc, editor->cursor(), offset, unicode);
@@ -1975,15 +1948,9 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 if (e) {
                     auto editor = e->hexEditor();
                     auto doc = editor->document();
-                    auto render = editor->renderer();
                     auto offset = doc->length();
 
-                    QString enco = encoding;
-                    if (!enco.length()) {
-                        enco = render->encoding();
-                    }
-
-                    auto unicode = Utilities::encodingString(value, enco);
+                    auto unicode = Utilities::encodingString(value, encoding);
                     auto uc = pluginCurrentUndoCmd(plg);
                     auto cmd =
                         doc->MakeInsert(uc, editor->cursor(), offset, unicode);
@@ -2269,17 +2236,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     auto doc = e->hexEditor()->document();
                     doc->setMetaCommentVisible(b);
                     return true;
-                }
-                return false;
-            });
-    connect(pctl, &WingPlugin::Controller::setCurrentEncoding, _win,
-            [=](const QString &encoding) -> bool {
-                if (!checkThreadAff()) {
-                    return false;
-                }
-                auto e = pluginCurrentEditor(plg);
-                if (e) {
-                    return e->hexEditor()->renderer()->setEncoding(encoding);
                 }
                 return false;
             });

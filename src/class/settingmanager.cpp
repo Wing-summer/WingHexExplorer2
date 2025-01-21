@@ -50,7 +50,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_ADDR, ("editor.showaddr"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_COL, ("editor.showcol"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_TEXT, ("editor.showtext"))
 
-Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_ENCODING, ("editor.encoding"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FIND_MAXCOUNT,
                           ("editor.findmaxcount"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_COPY_LIMIT, ("editor.copylimit"))
@@ -152,12 +151,6 @@ void SettingManager::load() {
     READ_CONFIG_INT_POSITIVE(m_logCount, OTHER_LOG_COUNT, 20);
     m_logCount = qBound(qsizetype(20), m_logCount, qsizetype(100));
 
-    m_editorEncoding =
-        READ_CONFIG(EDITOR_ENCODING, QStringLiteral("ASCII")).toString();
-    auto encodings = Utilities::getEncodings();
-    if (!encodings.contains(m_editorEncoding)) {
-        m_editorEncoding = QStringLiteral("ASCII");
-    }
     READ_CONFIG_QSIZETYPE(m_copylimit, EDITOR_COPY_LIMIT, 100);
     m_copylimit = qBound(qsizetype(100), m_copylimit, qsizetype(1024));
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 100);
@@ -493,7 +486,6 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, m_editorShowHeader);
         WRITE_CONFIG_SET(EDITOR_SHOW_COL, m_editorShowcol);
         WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, m_editorShowtext);
-        WRITE_CONFIG_SET(EDITOR_ENCODING, m_editorEncoding);
         WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, m_copylimit);
         WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
     }
@@ -536,7 +528,6 @@ void SettingManager::reset(SETTINGS cat) {
         WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, true);
         WRITE_CONFIG_SET(EDITOR_SHOW_COL, true);
         WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, true);
-        WRITE_CONFIG_SET(EDITOR_ENCODING, QStringLiteral("ASCII"));
         WRITE_CONFIG_SET(EDITOR_FIND_MAXCOUNT, 100);
         WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, 100);
         WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, 10);
@@ -580,15 +571,6 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
         m_copylimit = newCopylimit;
         _setUnsaved.setFlag(SETTING_ITEM::EDITOR_COPY_LIMIT);
         emit sigDecodeStrlimitChanged(m_copylimit);
-    }
-}
-
-QString SettingManager::editorEncoding() const { return m_editorEncoding; }
-
-void SettingManager::setEditorEncoding(const QString &newEditorEncoding) {
-    if (m_editorEncoding != newEditorEncoding) {
-        m_editorEncoding = newEditorEncoding;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_ENCODING);
     }
 }
 

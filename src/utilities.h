@@ -22,6 +22,7 @@
 #include <QApplication>
 #include <QCryptographicHash>
 #include <QFile>
+#include <QFileIconProvider>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QLabel>
@@ -42,7 +43,7 @@
 #endif
 
 #ifdef Q_OS_WIN
-#include <windows.h>
+#include <qt_windows.h>
 #undef MessageBox // because of IWingPlugin
 #else
 #include <unistd.h>
@@ -180,13 +181,12 @@ public:
     }
 
     static QIcon getIconFromFile(QStyle *style, const QString &filename) {
-        QMimeDatabase db;
-        auto t = db.mimeTypeForFile(filename);
-        auto ico = t.iconName();
-        auto qicon = QIcon::fromTheme(ico, QIcon(ico));
-        return qicon.availableSizes().count()
-                   ? qicon
-                   : style->standardIcon(QStyle::SP_FileIcon);
+        QFileIconProvider prov;
+        auto qicon = prov.icon(QFileInfo(filename));
+        if (qicon.availableSizes().isEmpty()) {
+            return style->standardIcon(QStyle::SP_FileIcon);
+        }
+        return qicon;
     }
 
     static bool fileCanWrite(QString path) {

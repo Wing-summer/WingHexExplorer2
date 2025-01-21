@@ -133,6 +133,10 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
         m_sels.clear();
     }
 
+    if (clearSelection) {
+        emit selectionChanged();
+    }
+
     emit positionChanged();
 }
 

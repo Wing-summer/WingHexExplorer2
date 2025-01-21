@@ -31,7 +31,6 @@
 #include <QVector>
 
 struct WorkSpaceInfo {
-    QString encoding = QStringLiteral("ASCII");
     qulonglong base = 0;
     QHash<QString, QByteArray> pluginData;
 };

@@ -55,8 +55,6 @@ add_library(
     document/commands/bookmark/bookmarkreplacecommand.h
     document/commands/baseaddrcommand.cpp
     document/commands/baseaddrcommand.h
-    document/commands/encodingchangecommand.cpp
-    document/commands/encodingchangecommand.h
     document/qstoragedevice.h
     document/qstoragedevice.cpp
     document/qhexcursor.cpp

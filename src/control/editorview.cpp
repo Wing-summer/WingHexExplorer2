@@ -36,8 +36,8 @@ constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
 EditorView *EditorView::fromDevice(QIODevice *dev, const QString &file,
-                                   const QString &encoding, bool readonly,
-                                   const QIcon &icon, QWidget *parent) {
+                                   bool readonly, const QIcon &icon,
+                                   QWidget *parent) {
     if (dev == nullptr || file.isEmpty()) {
         return nullptr;
     }
@@ -55,10 +55,6 @@ EditorView *EditorView::fromDevice(QIODevice *dev, const QString &file,
     ev->m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     ev->m_hex->setLockedFile(readonly);
     ev->m_hex->setKeepSize(true);
-
-    if (!encoding.isEmpty()) {
-        ev->m_hex->renderer()->setEncoding(encoding);
-    }
 
     ev->m_docType = DocumentType::Extension;
     ev->m_fileName = file;
@@ -147,8 +143,6 @@ EditorView::EditorView(QWidget *parent)
               shortcut.keySequence(QKeySequences::Key::METADATA));
     newAction(m_menu, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
-    newAction(m_menu, "encoding", tr("Encoding"), &EditorView::sigOnEncoding,
-              shortcut.keySequence(QKeySequences::Key::ENCODING));
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_hex, &QHexView::customContextMenuRequested, this,
             [=](const QPoint &pos) { m_menu->popup(mapToGlobal(pos)); });
@@ -291,7 +285,7 @@ ErrFile EditorView::newFile(size_t index) {
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
+ErrFile EditorView::openFile(const QString &filename) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -317,10 +311,6 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
         m_hex->setLockedFile(readonly);
         m_hex->setKeepSize(true);
 
-        if (!encoding.isEmpty()) {
-            m_hex->renderer()->setEncoding(encoding);
-        }
-
         m_docType = DocumentType::File;
         m_fileName = info.absoluteFilePath();
         m_isNewFile = false;
@@ -337,8 +327,7 @@ ErrFile EditorView::openFile(const QString &filename, const QString &encoding) {
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openWorkSpace(const QString &filename,
-                                  const QString &encoding) {
+ErrFile EditorView::openWorkSpace(const QString &filename) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -357,14 +346,12 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
     if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas,
                                         infos)) {
         // it's a workspace project
-        auto ret = openFile(file, encoding);
+        auto ret = openFile(file);
 
         // apply the content
         auto doc = m_hex->document();
-        auto render = m_hex->renderer();
         doc->applyBookMarks(bookmarks);
         doc->setBaseAddress(infos.base);
-        render->setEncoding(infos.encoding);
         doc->metadata()->applyMetas(metas);
         applyPluginData(infos.pluginData);
         doc->setDocSaved();
@@ -380,7 +367,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
 }
 
 ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
-                                   qsizetype length, const QString &encoding) {
+                                   qsizetype length) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -405,10 +392,6 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
         m_hex->setLockedFile(readonly);
         m_hex->setKeepSize(true);
 
-        if (!encoding.isEmpty()) {
-            m_hex->renderer()->setEncoding(encoding);
-        }
-
         p->setDocSaved();
         m_fileName = info.absoluteFilePath();
         m_isNewFile = false;
@@ -424,7 +407,7 @@ ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
+ErrFile EditorView::openDriver(const QString &driver) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -445,10 +428,6 @@ ErrFile EditorView::openDriver(const QString &driver, const QString &encoding) {
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->setLockedFile(true);
     m_hex->setKeepSize(true);
-
-    if (!encoding.isEmpty()) {
-        m_hex->renderer()->setEncoding(encoding);
-    }
 
     p->setDocSaved();
     m_fileName = driver;
@@ -545,16 +524,15 @@ ErrFile EditorView::reload() {
 
     switch (documentType()) {
     case DocumentType::File:
-        return openFile(m_fileName, m_hex->renderer()->encoding());
+        return openFile(m_fileName);
     case DocumentType::RegionFile: {
         auto doc = qobject_cast<QFileRegionBuffer *>(m_hex->document());
         Q_ASSERT(doc);
         return openRegionFile(m_fileName, doc->readOffset(),
-                              doc->readMaxBytes(),
-                              m_hex->renderer()->encoding());
+                              doc->readMaxBytes());
     }
     case DocumentType::Driver:
-        return openDriver(m_fileName, m_hex->renderer()->encoding());
+        return openDriver(m_fileName);
     default:
         break;
     }
@@ -603,7 +581,6 @@ void EditorView::applySettings() {
     m_hex->setAddressVisible(set.editorShowcol());
     m_hex->setAsciiVisible(set.editorShowtext());
     m_hex->setFontSize(set.editorfontSize());
-    m_hex->renderer()->SetEncoding(set.editorEncoding());
 }
 
 qsizetype EditorView::findAvailCloneIndex() {

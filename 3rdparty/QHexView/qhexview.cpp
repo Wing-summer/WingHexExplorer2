@@ -25,9 +25,6 @@ bool QHexView::isKeepSize() { return m_document->isKeepSize(); }
 bool QHexView::isLocked() { return m_document->isLocked(); }
 bool QHexView::setLockedFile(bool b) {
     auto ret = m_document->setLockedFile(b);
-    if (b) {
-        m_cursor->setInsertionMode(QHexCursor::OverwriteMode);
-    }
     return ret;
 }
 bool QHexView::setKeepSize(bool b) {
@@ -931,9 +928,11 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
             this->RemoveSelection();
         }
 
-    } else if (e->key() == Qt::Key_Insert)
-        cur->switchInsertionMode();
-    else
+    } else if (e->key() == Qt::Key_Insert) {
+        if (!isKeepSize()) {
+            cur->switchInsertionMode();
+        }
+    } else
         return false;
 
     return true;

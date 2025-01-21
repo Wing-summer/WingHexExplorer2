@@ -712,11 +712,6 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine, std::bind(&WingAngelAPI::_HexReader_getStorageDrivers, this),
         "array<string>@ getStorageDrivers()");
 
-    registerAPI<QString()>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Reader::currentEncoding, reader),
-        "string currentEncoding()");
-
     engine->SetDefaultNamespace("");
 }
 
@@ -1160,12 +1155,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::WingPlugin::Controller::openWorkSpace, ctl,
                   std::placeholders::_1),
         "ErrFile openWorkSpace(string &in filename)");
-
-    registerAPI<bool(const QString &)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::setCurrentEncoding, ctl,
-                  std::placeholders::_1),
-        "bool setCurrentEncoding(string &in encoding)");
 
     registerAPI<void()>(
         engine, std::bind(&WingHex::WingPlugin::Controller::closeAll, ctl),

@@ -60,7 +60,7 @@ private:
         EDITOR_SHOW_ADDR = 1u << 11,
         EDITOR_SHOW_COL = 1u << 12,
         EDITOR_SHOW_TEXT = 1u << 13,
-        EDITOR_ENCODING = 1u << 14,
+        // EDITOR_ENCODING = 1u << 14, // Reserved
         EDITOR_FIND_MAXCOUNT = 1u << 15,
         EDITOR_COPY_LIMIT = 1u << 16,
         EDITOR_DECSTRLIMIT = 1u << 17,
@@ -107,9 +107,6 @@ public:
 
     bool editorShowtext() const;
     void setEditorShowtext(bool newEditorShowtext);
-
-    QString editorEncoding() const;
-    void setEditorEncoding(const QString &newEditorEncoding);
 
     qsizetype copylimit() const;
     void setCopylimit(qsizetype newCopylimit);
@@ -212,7 +209,6 @@ private:
     bool m_editorShowHeader = true;
     bool m_editorShowcol = true;
     bool m_editorShowtext = true;
-    QString m_editorEncoding;
 
     qsizetype m_copylimit = 100;
     qsizetype m_decodeStrlimit = 10;

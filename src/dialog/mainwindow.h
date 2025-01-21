@@ -389,6 +389,38 @@ private:
     }
 
     template <typename T>
+    inline T qToBigEndian(T source) {
+        return ::qToBigEndian(source);
+    }
+
+    template <typename T>
+    inline T qToLittleEndian(T source) {
+        return ::qToLittleEndian(source);
+    }
+
+    inline QByteArray qToBigEndian(QByteArray source) {
+        QByteArray result;
+        QBuffer buffer(&result);
+        buffer.open(QIODevice::WriteOnly);
+
+        QDataStream stream(&buffer);
+        stream.setByteOrder(QDataStream::BigEndian);
+        stream.writeRawData(source.constData(), source.size());
+        return result;
+    }
+
+    inline QByteArray qToLittleEndian(QByteArray source) {
+        QByteArray result;
+        QBuffer buffer(&result);
+        buffer.open(QIODevice::WriteOnly);
+
+        QDataStream stream(&buffer);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream.writeRawData(source.constData(), source.size());
+        return result;
+    }
+
+    template <typename T>
     inline T processEndian(T source) {
         if (Utilities::checkIsLittleEndian()) {
             if (!m_islittle) {
@@ -465,6 +497,8 @@ private:
 private:
     Ribbon *m_ribbon = nullptr;
     ads::CDockManager *m_dock = nullptr;
+
+    QString m_encoding;
 
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
@@ -553,6 +587,11 @@ private:
     QToolButton *m_iReadWrite = nullptr;
     QToolButton *m_iLocked = nullptr;
     QToolButton *m_iCanOver = nullptr;
+
+    QToolButton *m_sSaved = nullptr;
+    QToolButton *m_sReadWrite = nullptr;
+    QToolButton *m_sLocked = nullptr;
+    QToolButton *m_sCanOver = nullptr;
 
     // cache icon
     QIcon _infoSaved, _infoUnsaved;

@@ -81,8 +81,6 @@ void ReaderTestForm::on_btnStatus_clicked() {
     _br->append(QStringLiteral("[Status]") % lf %
                 QStringLiteral("getSupportedEncodings: ") %
                 (emit _plg->reader.getSupportedEncodings().join(';')) % lf %
-                QStringLiteral("currentEncoding: ") %
-                emit _plg->reader.currentEncoding() % lf %
                 QStringLiteral("isCurrentDocEditing: ") %
                 (emit _plg->reader.isCurrentDocEditing() ? strue : sfalse) %
                 lf % QStringLiteral("currentDocFilename: ") %
