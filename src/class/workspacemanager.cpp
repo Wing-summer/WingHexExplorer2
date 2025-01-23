@@ -85,25 +85,26 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                                     auto nend = end.toString().toLongLong(&b);
                                     if (!b || nend >= maxbytes || nend < 0)
                                         continue;
-                                    auto nf = fgcolor.toString().toUInt(&b, 16);
-                                    if (!b)
-                                        continue;
-                                    auto nb = bgcolor.toString().toUInt(&b, 16);
-                                    if (!b)
-                                        continue;
-                                    auto fcolor = QColor::fromRgba(nf);
-                                    auto bcolor = QColor::fromRgba(nb);
+
+                                    static auto NO_COLOR = QStringLiteral("-");
+
+                                    QColor fcolor, bcolor;
+                                    auto fgn = fgcolor.toString();
+                                    if (fgn != NO_COLOR) {
+                                        fcolor = QColor(fgn);
+                                    }
+
+                                    auto bgn = bgcolor.toString();
+                                    if (bgn != NO_COLOR) {
+                                        bcolor = QColor(bgn);
+                                    }
 
                                     QHexMetadataItem metaitem;
                                     metaitem.begin = nbegin;
                                     metaitem.end = nend;
                                     metaitem.comment = comment.toString();
-                                    metaitem.foreground = fcolor.alpha() > 0
-                                                              ? fcolor.toHsv()
-                                                              : fcolor;
-                                    metaitem.background = bcolor.alpha() > 0
-                                                              ? fcolor.toHsv()
-                                                              : bcolor;
+                                    metaitem.foreground = fcolor;
+                                    metaitem.background = bcolor;
                                     metas.append(metaitem);
                                 }
                             }
@@ -164,6 +165,14 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
     return false;
 }
 
+QString WorkSpaceManager::getColorString(const QColor &color) {
+    static auto NO_COLOR = QStringLiteral("-");
+    if (color.isValid()) {
+        return color.name();
+    }
+    return NO_COLOR;
+}
+
 bool WorkSpaceManager::saveWorkSpace(
     const QString &filename, const QString &file,
     const QMap<qsizetype, QString> &bookmarklist,
@@ -190,8 +199,8 @@ bool WorkSpaceManager::saveWorkSpace(
             obj.insert("begin", QString::number(meta.begin));
             obj.insert("end", QString::number(meta.end));
             obj.insert("comment", meta.comment);
-            obj.insert("fgcolor", QString::number(meta.foreground.rgba(), 16));
-            obj.insert("bgcolor", QString::number(meta.background.rgba(), 16));
+            obj.insert("fgcolor", getColorString(meta.foreground));
+            obj.insert("bgcolor", getColorString(meta.background));
             metas.append(obj);
         }
         jobj.insert("metas", metas);

@@ -122,14 +122,14 @@ QColor MetaDialog::foreGroundColor() {
     if (cforeground->isChecked())
         return _foreground;
     else
-        return QColor(qRgba(0, 0, 0, 0));
+        return QColor();
 }
 
 QColor MetaDialog::backGroundColor() {
     if (cbackground->isChecked())
         return _background;
     else
-        return QColor::fromRgba(qRgba(0, 0, 0, 0));
+        return QColor();
 }
 
 void MetaDialog::setComment(QString comment) {

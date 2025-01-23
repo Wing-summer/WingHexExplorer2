@@ -47,6 +47,9 @@ public:
                               QMap<qsizetype, QString> &bookmarks,
                               QVector<QHexMetadataItem> &metas,
                               WorkSpaceInfo &infos);
+
+private:
+    QString static getColorString(const QColor &color);
 };
 
 #endif // WORKSPACEMANAGER_H

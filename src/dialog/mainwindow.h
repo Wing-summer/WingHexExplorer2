@@ -138,6 +138,8 @@ private:
     void buildUpSettingDialog();
     void installPluginEditorWidgets();
 
+    void showStatus(const QString &status);
+
 private:
     EditorView *newfileGUI();
 
@@ -238,7 +240,7 @@ private:
     EditorView *findEditorView(const QString &filename);
 
     bool newOpenFileSafeCheck();
-    void registerEditorView(EditorView *editor);
+    void registerEditorView(EditorView *editor, const QString &ws = {});
 
     void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
@@ -497,6 +499,7 @@ private:
 private:
     Ribbon *m_ribbon = nullptr;
     ads::CDockManager *m_dock = nullptr;
+    QLabel *_status = nullptr;
 
     QString m_encoding;
 

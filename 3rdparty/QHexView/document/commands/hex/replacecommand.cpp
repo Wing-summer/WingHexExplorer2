@@ -5,7 +5,6 @@ ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
                                const QByteArray &data, QHexCursor *cursor,
                                int nibbleindex, QUndoCommand *parent)
     : HexCommand(doc, cursor, nibbleindex, parent) {
-
     m_offset = offset;
     m_data = data;
     m_length = data.length();
@@ -15,6 +14,7 @@ ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
 void ReplaceCommand::undo() {
     m_doc->_replace(m_offset, m_olddata);
     m_cursor->setPos(m_offset, m_nibbleindex);
+    HexCommand::undo();
 }
 
 void ReplaceCommand::redo() {
@@ -24,4 +24,5 @@ void ReplaceCommand::redo() {
     } else {
         m_cursor->setPos(m_offset + m_length, !m_nibbleindex);
     }
+    HexCommand::redo();
 }

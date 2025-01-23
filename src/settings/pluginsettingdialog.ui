@@ -118,7 +118,11 @@
            </item>
           </layout>
          </widget>
-         <widget class="QTextBrowser" name="txtc"/>
+         <widget class="QTextBrowser" name="txtc">
+          <property name="openExternalLinks">
+           <bool>true</bool>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -154,7 +158,11 @@
            </item>
           </layout>
          </widget>
-         <widget class="QTextBrowser" name="txtd"/>
+         <widget class="QTextBrowser" name="txtd">
+          <property name="openExternalLinks">
+           <bool>true</bool>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>

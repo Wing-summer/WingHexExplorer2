@@ -272,6 +272,10 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
     for (auto &meta : metas) {
         m_metadata.mergeAdd(meta);
     }
+    for (auto &meta : m_metadata) {
+        addMetaLines(meta);
+    }
+    emit metadataChanged();
 }
 
 bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }

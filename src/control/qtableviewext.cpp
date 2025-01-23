@@ -49,4 +49,6 @@ void QTableViewExt::setModel(QAbstractItemModel *model) {
     vbar->blockSignals(false);
 
     QTableView::setModel(model);
+
+    emit modelChanged();
 }

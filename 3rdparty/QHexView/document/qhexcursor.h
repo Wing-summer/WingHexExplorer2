@@ -115,8 +115,6 @@ public:
 
     qsizetype currentSelectionLength() const;
 
-    bool atEnd() const;
-
     bool isLineSelected(qsizetype line) const;
     bool isSelected(const QHexPosition &pos) const;
     bool hasSelection() const;

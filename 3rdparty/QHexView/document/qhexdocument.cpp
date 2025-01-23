@@ -205,6 +205,8 @@ void QHexDocument::removeBookMarkAdjustRevert(
 
 bool QHexDocument::isDocSaved() { return m_isSaved; }
 
+bool QHexDocument::isUndoByteModified() { return m_bytesModFlag > 0; }
+
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();

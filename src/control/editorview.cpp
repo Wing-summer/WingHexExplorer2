@@ -465,24 +465,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    QFile file(fileName);
-
-    switch (m_docType) {
-    case DocumentType::RegionFile: {
-        if (!ignoreMd5 && Utilities::getMd5(m_fileName) != m_md5) {
-            return ErrFile::SourceFileChanged;
-        }
-        if (!file.open(QFile::ReadWrite)) {
-            return ErrFile::Permission;
-        }
-    } break;
-    default: {
-        if (!file.open(QFile::WriteOnly)) {
-            return ErrFile::Permission;
-        }
-    } break;
-    }
-
     if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace ||
         (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
          (m_isWorkSpace || hasMeta()))) {
@@ -499,18 +481,43 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    if (doc->saveTo(&file, true)) {
-        file.close();
+    if (doc->isUndoByteModified()) {
+        QFile file(fileName);
 
-        if (!isExport) {
-            m_fileName = QFileInfo(fileName).absoluteFilePath();
-            doc->setDocSaved();
+        switch (m_docType) {
+        case DocumentType::RegionFile: {
+            if (!ignoreMd5 && Utilities::getMd5(m_fileName) != m_md5) {
+                return ErrFile::SourceFileChanged;
+            }
+            if (!file.open(QFile::ReadWrite)) {
+                return ErrFile::Permission;
+            }
+        } break;
+        default: {
+            if (!file.open(QFile::WriteOnly)) {
+                return ErrFile::Permission;
+            }
+        } break;
         }
 
-        return ErrFile::Success;
+        if (doc->saveTo(&file, true)) {
+            file.close();
+
+            if (!isExport) {
+                m_fileName = QFileInfo(fileName).absoluteFilePath();
+                doc->setDocSaved();
+            }
+
+            return ErrFile::Success;
+        }
+
+        return ErrFile::Permission;
+
+    } else {
+        doc->setDocSaved();
     }
 
-    return ErrFile::Permission;
+    return ErrFile::Success;
 }
 
 ErrFile EditorView::reload() {

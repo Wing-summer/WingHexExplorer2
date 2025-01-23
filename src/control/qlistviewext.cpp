@@ -49,4 +49,6 @@ void QListViewExt::setModel(QAbstractItemModel *model) {
     vbar->blockSignals(false);
 
     QListView::setModel(model);
+
+    emit modelChanged();
 }

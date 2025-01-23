@@ -26,6 +26,9 @@ public:
     explicit QTableViewExt(QWidget *parent = nullptr);
 
     void setModel(QAbstractItemModel *model) override;
+
+signals:
+    void modelChanged();
 };
 
 #endif // QTABLEVIEWEXT_H

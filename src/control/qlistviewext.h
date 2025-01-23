@@ -26,6 +26,9 @@ public:
     explicit QListViewExt(QWidget *parent = nullptr);
 
     void setModel(QAbstractItemModel *model) override;
+
+signals:
+    void modelChanged();
 };
 
 #endif // QLISTVIEWEXT_H

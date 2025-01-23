@@ -14,6 +14,7 @@ void InsertCommand::undo() {
     m_doc->insertBookMarkAdjustRevert(m_offset, m_length);
     m_doc->metadata()->insertAdjustRevert(m_offset, m_length);
     m_cursor->setPos(m_offset, m_nibbleindex);
+    HexCommand::undo();
 }
 void InsertCommand::redo() {
     m_doc->_insert(m_offset, m_data);
@@ -24,4 +25,5 @@ void InsertCommand::redo() {
     } else {
         m_cursor->setPos(m_offset + m_length, m_nibbleindex);
     }
+    HexCommand::redo();
 }

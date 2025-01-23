@@ -112,14 +112,18 @@ void PluginSettingDialog::on_devlist_currentRowChanged(int currentRow) {
 
     auto info = plgsys.getPluginInfo(plg);
     ui->txtd->clear();
-    ui->txtd->append(tr("ID") + " : " + info.id);
-    ui->txtd->append(tr("Name") + " : " + plg->pluginName());
-    ui->txtd->append(tr("License") + " : " + info.license);
-    ui->txtd->append(tr("Author") + " : " + info.author);
-    ui->txtd->append(tr("Vendor") + " : " + info.vendor);
-    ui->txtd->append(tr("Version") + " : " + info.version.toString());
-    ui->txtd->append(tr("Comment") + " : " + plg->pluginComment());
-    ui->txtd->append(tr("URL") + " : " + info.url);
+    ui->txtd->append(getWrappedText(tr("ID") + " : " + info.id));
+    ui->txtd->append(getWrappedText(tr("Name") + " : " + plg->pluginName()));
+    ui->txtd->append(getWrappedText(tr("License") + " : " + info.license));
+    ui->txtd->append(getWrappedText(tr("Author") + " : " + info.author));
+    ui->txtd->append(getWrappedText(tr("Vendor") + " : " + info.vendor));
+    ui->txtd->append(
+        getWrappedText(tr("Version") + " : " + info.version.toString()));
+    ui->txtd->append(
+        getWrappedText(tr("Comment") + " : " + plg->pluginComment()));
+    ui->txtd->append(getWrappedText(
+        tr("URL") + " : " + QStringLiteral("<a href=\"") + info.url +
+        QStringLiteral("\">") + info.url + QStringLiteral("</a>")));
 }
 
 void PluginSettingDialog::on_plglist_currentRowChanged(int currentRow) {
@@ -132,20 +136,30 @@ void PluginSettingDialog::on_plglist_currentRowChanged(int currentRow) {
 
     auto info = plgsys.getPluginInfo(plg);
     ui->txtc->clear();
-    ui->txtc->append(tr("ID") + " : " + info.id);
-    ui->txtc->append(tr("Name") + " : " + plg->pluginName());
-    ui->txtc->append(tr("License") + " : " + info.license);
-    ui->txtc->append(tr("Author") + " : " + info.author);
-    ui->txtc->append(tr("Vendor") + " : " + info.vendor);
-    ui->txtc->append(tr("Version") + " : " + info.version.toString());
-    ui->txtc->append(tr("Comment") + " : " + plg->pluginComment());
+
+    ui->txtc->append(getWrappedText(tr("ID") + " : " + info.id));
+    ui->txtc->append(getWrappedText(tr("Name") + " : " + plg->pluginName()));
+    ui->txtc->append(getWrappedText(tr("License") + " : " + info.license));
+    ui->txtc->append(getWrappedText(tr("Author") + " : " + info.author));
+    ui->txtc->append(getWrappedText(tr("Vendor") + " : " + info.vendor));
+    ui->txtc->append(
+        getWrappedText(tr("Version") + " : " + info.version.toString()));
+    ui->txtc->append(
+        getWrappedText(tr("Comment") + " : " + plg->pluginComment()));
     if (!info.dependencies.isEmpty()) {
-        ui->txtc->append(tr("pluginDependencies:"));
+        ui->txtc->append(getWrappedText(tr("pluginDependencies:")));
         for (auto &d : info.dependencies) {
-            ui->txtc->append(QString(4, ' ') + tr("PUID:") + d.puid);
-            ui->txtc->append(QString(4, ' ') + tr("Version:") +
-                             d.version.toString());
+            ui->txtc->append(
+                getWrappedText(QString(4, ' ') + tr("PUID:") + d.puid));
+            ui->txtc->append(getWrappedText(QString(4, ' ') + tr("Version:") +
+                                            d.version.toString()));
         }
     }
-    ui->txtc->append(tr("URL") + " : " + info.url);
+    ui->txtc->append(getWrappedText(
+        tr("URL") + " : " + QStringLiteral("<a href=\"") + info.url +
+        QStringLiteral("\">") + info.url + QStringLiteral("</a> ")));
+}
+
+QString PluginSettingDialog::getWrappedText(const QString &str) {
+    return QStringLiteral("<a>") + str + QStringLiteral("</a>");
 }

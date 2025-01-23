@@ -22,6 +22,7 @@ void RemoveCommand::undo() {
             m_cursor->setPos(m_offset, 0);
         }
     }
+    HexCommand::undo();
 }
 
 void RemoveCommand::redo() {
@@ -29,4 +30,5 @@ void RemoveCommand::redo() {
     m_doc->_remove(m_offset, m_length);
     _rmbms = m_doc->removeBookMarkAdjust(m_offset, m_length);
     _rmMetas = m_doc->metadata()->removeAdjust(m_offset, m_length);
+    HexCommand::redo();
 }

@@ -11,6 +11,9 @@ public:
     HexCommand(QHexDocument *doc, QHexCursor *cursor, int nibbleindex,
                QUndoCommand *parent = nullptr);
 
+    void undo() override;
+    void redo() override;
+
 protected:
     QHexDocument *m_doc;
     QHexCursor *m_cursor;

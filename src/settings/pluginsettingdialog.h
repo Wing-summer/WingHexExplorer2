@@ -51,6 +51,9 @@ public:
 private slots:
     void on_devlist_currentRowChanged(int currentRow);
     void on_plglist_currentRowChanged(int currentRow);
+
+private:
+    QString getWrappedText(const QString &str);
 };
 
 #endif // PLUGINSETTINGDIALOG_H

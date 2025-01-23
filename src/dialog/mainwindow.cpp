@@ -127,6 +127,14 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
 
+        _status = new QLabel(m_status);
+        m_status->addPermanentWidget(_status);
+
+        auto separator = new QFrame(m_status);
+        separator->setFrameShape(QFrame::VLine);
+        separator->setFrameShadow(QFrame::Sunken);
+        m_status->addPermanentWidget(separator);
+
         auto disableStyle =
             QStringLiteral("border:none;background:transparent;");
 
@@ -547,6 +555,14 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::CustomContextMenu);
 
+    auto se = [=]() {
+        auto model = qobject_cast<FindResultModel *>(m_findresult->model());
+        if (model) {
+            m_find->setWindowTitle(tr("FindResult") + QStringLiteral(" (") +
+                                   model->encoding() + QStringLiteral(")"));
+        }
+    };
+
     auto menu = new QMenu(tr("Encoding"), this);
     menu->setIcon(ICONRES(QStringLiteral("encoding")));
     auto aGroup = new QActionGroup(this);
@@ -556,6 +572,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             auto model = qobject_cast<FindResultModel *>(m_findresult->model());
             if (model) {
                 model->setEncoding(l);
+                se();
             }
         });
         aGroup->addAction(a);
@@ -620,8 +637,10 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             });
 
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
-                              tr("FindResult"), m_findresult);
+                              tr("FindResult") + QStringLiteral(" (ASCII)"),
+                              m_findresult);
     m_find = dw;
+    connect(m_findresult, &QTableViewExt::modelChanged, this, se);
 
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -857,6 +876,20 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
                               tr("DecodeText") + QStringLiteral(" (ASCII)"),
                               m_txtDecode);
+
+    auto menu = m_txtDecode->createStandardContextMenu();
+    menu->addSeparator();
+    auto a = new QAction(tr("Encoding"), this);
+    a->setIcon(ICONRES(QStringLiteral("encoding")));
+    connect(a, &QAction::triggered, this, &MainWindow::on_encoding);
+    menu->addAction(a);
+
+    m_txtDecode->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_txtDecode, &QTextBrowser::customContextMenuRequested, this,
+            [=](const QPoint &pos) {
+                menu->popup(m_txtDecode->viewport()->mapToGlobal(pos));
+            });
+
     connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
             &QDockWidget::setWindowTitle);
     return dock->addDockWidget(area, dw, areaw);
@@ -1331,10 +1364,6 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("jmp"), tr("Goto"), &MainWindow::on_gotoline,
             shortcuts.keySequence(QKeySequences::Key::GOTO));
-
-        addPannelAction(pannel, QStringLiteral("encoding"), tr("Encoding"),
-                        &MainWindow::on_encoding,
-                        shortcuts.keySequence(QKeySequences::Key::ENCODING));
 
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("sum"),
                                               tr("CheckSum"),
@@ -1873,6 +1902,8 @@ void MainWindow::installPluginEditorWidgets() {
     m_editorViewWidgets.clear();
 }
 
+void MainWindow::showStatus(const QString &status) { _status->setText(status); }
+
 EditorView *MainWindow::newfileGUI() {
     if (!newOpenFileSafeCheck()) {
         return nullptr;
@@ -2263,6 +2294,7 @@ void MainWindow::on_findfile() {
 
         ExecAsync<EditorView::FindError>(
             [this, r]() -> EditorView::FindError {
+                this->showStatus(tr("Finding..."));
                 return currentEditor()->find(r);
             },
             [this](EditorView::FindError err) {
@@ -2287,6 +2319,8 @@ void MainWindow::on_findfile() {
                     m_findEncoding.value(result->encoding())->setChecked(true);
                 }
                 m_find->raise();
+
+                this->showStatus({});
             });
     }
 }
@@ -3077,7 +3111,7 @@ bool MainWindow::newOpenFileSafeCheck() {
     return true;
 }
 
-void MainWindow::registerEditorView(EditorView *editor) {
+void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto &w : m_editorViewWidgetsBuffer) {
         editor->registerView(w->id(), w->create(editor));
     }
@@ -3090,7 +3124,7 @@ void MainWindow::registerEditorView(EditorView *editor) {
     editor->setFontSize(set.editorfontSize());
 
     connectEditorView(editor);
-    m_views.insert(editor, {});
+    m_views.insert(editor, ws);
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
     Q_ASSERT(menu);
@@ -3155,7 +3189,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                         o.foreground = m.foreGroundColor();
                         o.background = m.backGroundColor();
                         o.comment = m.comment();
-                        mi->ModifyMetadata(meta, o);
+                        mi->ModifyMetadata(o, meta);
                     }
                 } else {
                     Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
@@ -3178,8 +3212,47 @@ void MainWindow::connectEditorView(EditorView *editor) {
             if (ret == QMessageBox::Cancel) {
                 return;
             } else if (ret == QMessageBox::Yes) {
-                if (saveEditor(editor, {}, false) == ErrFile::Success) {
+                auto ret = saveEditor(editor, {}, false);
+                switch (ret) {
+                case WingHex::Success:
+                    // ok, no need to report
                     closeEditor(editor, m_isOnClosing);
+                    break;
+                case WingHex::Permission: {
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("FilePermissionSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
+                case WingHex::Error:
+                case WingHex::UnSaved:
+                case WingHex::NotExist:
+                case WingHex::AlreadyOpened:
+                case WingHex::IsNewFile:
+                case WingHex::IsDirver:
+                case WingHex::SourceFileChanged:
+                case WingHex::ClonedFile:
+                case WingHex::InvalidFormat:
+                case WingHex::TooManyOpenedFile:
+                case WingHex::NotAllowedInNoneGUIThread: {
+                    // unknown error
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("UnknownErrorSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
+                case WingHex::WorkSpaceUnSaved: {
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("WorkSpaceUnSavedSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
                 }
             } else {
                 closeEditor(editor, true);
@@ -3423,8 +3496,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
         return res;
     }
 
-    m_views.insert(ev, file);
-    registerEditorView(ev);
+    registerEditorView(ev, file);
     if (editor) {
         *editor = ev;
     }

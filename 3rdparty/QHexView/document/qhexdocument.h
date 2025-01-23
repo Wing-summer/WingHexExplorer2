@@ -12,6 +12,8 @@
 class QHexDocument : public QObject {
     Q_OBJECT
 
+    friend class HexCommand;
+
 private:
     explicit QHexDocument(QHexBuffer *buffer,
                           bool readonly = false); // modified by wingsummer
@@ -79,7 +81,9 @@ public:
     void findAllBytes(
         qsizetype begin, qsizetype end, QByteArray b, QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
+
     bool isDocSaved();
+    bool isUndoByteModified();
     void setDocSaved(bool b = true);
 
     void setMetafgVisible(bool b);
@@ -222,7 +226,10 @@ signals:
 private:
     QHexBuffer *m_buffer;
     QHexMetadata *m_metadata;
+
     QUndoStack *m_undostack;
+    size_t m_bytesModFlag = 0;
+
     quintptr m_baseaddress;
     quint8 m_areaindent;
     quint8 m_hexlinewidth;
