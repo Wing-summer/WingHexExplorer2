@@ -45,13 +45,13 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
             return QString::number(d.end) + QStringLiteral(" - 0x") +
                    QString::number(d.end, 16).toUpper();
         case 2: {
-            if (d.foreground.alpha() == 0) {
+            if (!d.foreground.isValid()) {
                 return QStringLiteral("-");
             }
             return d.foreground.name();
         }
         case 3:
-            if (d.background.alpha() == 0) {
+            if (!d.background.isValid()) {
                 return QStringLiteral("-");
             }
             return d.background.name();
@@ -65,10 +65,10 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         auto d = b.at(r);
         switch (index.column()) {
         case 2:
-            if (d.foreground.alpha() > 0)
+            if (d.foreground.isValid())
                 return d.foreground;
         case 3:
-            if (d.background.alpha() > 0)
+            if (d.background.isValid())
                 return d.background;
         default:
             break;

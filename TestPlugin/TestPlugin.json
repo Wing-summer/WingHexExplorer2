@@ -1,6 +1,5 @@
 {
-    "Id": "testplugin2",
-    "Name": "TestPlugin",
+    "Id": "TestPlugin",
     "Version": "0.0.1",
     "Vendor": "WingCloudStudio",
     "Dependencies": [

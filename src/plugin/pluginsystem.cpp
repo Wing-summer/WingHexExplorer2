@@ -22,6 +22,7 @@
 #include "class/logger.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
+#include "class/wingcstruct.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
@@ -180,7 +181,6 @@ PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
     info.version =
         QVersionNumber::fromString(meta["Version"].toString().trimmed());
 
-    info.name = meta["Name"].toString().trimmed();
     info.vendor = meta["Vendor"].toString().trimmed();
     info.author = meta["Author"].toString().trimmed();
     info.license = meta["License"].toString().trimmed();
@@ -580,7 +580,7 @@ void PluginSystem::loadExtPlugin() {
         Logger::newLine();
 
         for (auto &lplg : errorplg) {
-            Logger::critical(tr("- PluginName:") + lplg.name);
+            Logger::critical(tr("- PluginID:") + lplg.id);
             Logger::critical(tr("- Dependencies:"));
             for (auto &d : lplg.dependencies) {
                 Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
@@ -660,7 +660,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     }
 
     Q_ASSERT(_angelplg);
-    _angelplg->registerScriptFns(plg->metaObject()->className(), rfns);
+    _angelplg->registerScriptFns(_pinfos.value(plg).id, rfns);
 }
 
 void PluginSystem::registerEnums(IWingPlugin *plg) {
@@ -882,11 +882,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
         emit pluginLoading(p->pluginName());
 
-        if (meta.name.isEmpty()) {
-            meta.name = p->metaObject()->className();
-        }
-
-        p_tr = LanguageManager::instance().try2LoadPluginLang(meta.name);
+        p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
         connectLoadingInterface(p);
 
@@ -894,7 +890,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
             std::unique_ptr<QSettings> setp(nullptr);
             if (setdir.has_value()) {
                 setp = std::make_unique<QSettings>(
-                    setdir->absoluteFilePath(p->metaObject()->className()),
+                    setdir->absoluteFilePath(meta.id),
                     QSettings::Format::IniFormat);
             }
 
@@ -1020,18 +1016,10 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
             throw tr("ErrLoadExtPluginSDKVersion");
         }
 
-        if (meta.name.isEmpty()) {
-            throw tr("ErrLoadExtPluginNoName");
-        }
-
-        Logger::warning(tr("ExtPluginName :") + meta.name);
         Logger::warning(tr("ExtPluginAuthor :") + meta.author);
         Logger::warning(tr("ExtPluginWidgetRegister"));
 
-        if (meta.name.isEmpty()) {
-            meta.name = p->metaObject()->className();
-        }
-        p_tr = LanguageManager::instance().try2LoadPluginLang(meta.name);
+        p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
         connectLoadingInterface(p);
 
@@ -2833,6 +2821,26 @@ void PluginSystem::loadAllPlugin() {
         auto meta = parsePluginMetadata(doc.object());
 
         loadPlugin(_angelplg, meta, std::nullopt);
+    }
+
+    {
+        auto cstructplg = new WingCStruct;
+        QFile cstructjson(QStringLiteral(
+            ":/com.wingsummer.winghex/src/class/WingCStruct.json"));
+        auto ret = cstructjson.open(QFile::ReadOnly);
+        Q_ASSERT(ret);
+        Q_UNUSED(ret);
+        auto cstruct = cstructjson.readAll();
+        cstructjson.close();
+
+        QJsonDocument doc = QJsonDocument::fromJson(cstruct);
+        auto meta = parsePluginMetadata(doc.object());
+
+        QDir setd(Utilities::getAppDataPath());
+        auto plgset = QStringLiteral("plgset");
+        setd.mkdir(plgset);
+
+        loadPlugin(cstructplg, meta, setd);
     }
 
     bool ok;

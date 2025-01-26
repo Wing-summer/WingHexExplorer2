@@ -71,8 +71,8 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
 
     m_menu->addSeparator();
 
-    for (auto &item : files) {
-        addRecentFile(item);
+    for (auto pitem = files.rbegin(); pitem != files.rend(); ++pitem) {
+        addRecentFile(*pitem);
     }
 }
 
@@ -153,6 +153,9 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         a->setToolTip(getDisplayTooltip(info));
         if (info.isWorkSpace) {
             a->setIcon(ICONRES(QStringLiteral("pro")));
+            auto font = a->font();
+            font.setUnderline(true);
+            a->setFont(font);
         } else {
             a->setIcon(
                 Utilities::getIconFromFile(qApp->style(), info.fileName));

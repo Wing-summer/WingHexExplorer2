@@ -177,7 +177,7 @@ signals:
     Q_REQUIRED_RESULT bool setAddressBase(quintptr base);
 
     Q_REQUIRED_RESULT bool beginMarco(const QString &txt = {});
-    Q_REQUIRED_RESULT bool endMarco();
+    bool endMarco();
 
     Q_REQUIRED_RESULT bool writeInt8(qsizetype offset, qint8 value);
     Q_REQUIRED_RESULT bool writeInt16(qsizetype offset, qint16 value);
@@ -461,6 +461,21 @@ public:
     enum class FileType { Invalid, File, RegionFile, Driver, Extension };
     Q_ENUM(FileType)
 
+    struct ScriptCallError {
+        int errorCode;
+        QString errmsg;
+    };
+
+public:
+    QVariant getScriptCallError(int errCode, const QString &msg) {
+        ScriptCallError err;
+
+        err.errorCode = errCode;
+        err.errmsg = msg;
+
+        return QVariant::fromValue(err);
+    }
+
 public:
     virtual ~IWingPlugin() = default;
 
@@ -558,7 +573,7 @@ public:
                               QGenericArgument val6 = QGenericArgument(),
                               QGenericArgument val7 = QGenericArgument(),
                               QGenericArgument val8 = QGenericArgument()) {
-        return emit invokeService(puid, member, Qt::AutoConnection, ret, val0,
+        return emit invokeService(puid, member, Qt::DirectConnection, ret, val0,
                                   val1, val2, val3, val4, val5, val6, val7,
                                   val8);
     }
@@ -588,7 +603,7 @@ public:
                               QGenericArgument val6 = QGenericArgument(),
                               QGenericArgument val7 = QGenericArgument(),
                               QGenericArgument val8 = QGenericArgument()) {
-        return emit invokeService(puid, member, Qt::AutoConnection,
+        return emit invokeService(puid, member, Qt::DirectConnection,
                                   QGenericReturnArgument(), val0, val1, val2,
                                   val3, val4, val5, val6, val7, val8);
     }
@@ -602,6 +617,7 @@ public:
 } // namespace WingHex
 
 Q_DECLARE_METATYPE(WingHex::SenderInfo)
+Q_DECLARE_METATYPE(WingHex::IWingPlugin::ScriptCallError)
 Q_DECLARE_INTERFACE(WingHex::IWingPlugin, "com.wingsummer.iwingplugin")
 
 #endif // IWINGPLUGIN_H

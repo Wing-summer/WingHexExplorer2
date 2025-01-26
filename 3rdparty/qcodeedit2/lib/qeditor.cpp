@@ -20,8 +20,6 @@
         \brief Implementation of the QEditor class
 */
 
-#include "qeditorinputbindinginterface.h"
-
 #include "qdocument.h"
 #include "qdocument_p.h"
 #include "qdocumentcursor.h"
@@ -176,67 +174,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 QList<QEditor *> QEditor::m_editors;
-QEditorInputBindingInterface *QEditor::m_defaultBinding = 0;
-QHash<QString, QEditorInputBindingInterface *> QEditor::m_registeredBindings;
-
-/*!
-        \return A list of available input bindings
-*/
-QStringList QEditor::registeredInputBindingIds() {
-    return m_registeredBindings.keys();
-}
-
-/*!
-        \return the name of the default input binding
-
-        \note The "Default" name (or its translation, obtained via
-   QEditor::tr()) is used to indicate that no default input binding has been
-   set.
-*/
-QString QEditor::defaultInputBindingId() {
-    return m_defaultBinding ? m_defaultBinding->name() : tr("Default");
-}
-
-/*!
-        \brief Add an input binding to make it available for all editors
-*/
-void QEditor::registerInputBinding(QEditorInputBindingInterface *b) {
-    m_registeredBindings[b->id()] = b;
-
-    for (auto &e : m_editors)
-        e->updateBindingsMenu();
-}
-
-/*!
-        \brief Remove an input binding from the pool of publicly available ones
-*/
-void QEditor::unregisterInputBinding(QEditorInputBindingInterface *b) {
-    m_registeredBindings.remove(b->id());
-
-    for (auto &e : m_editors)
-        e->updateBindingsMenu();
-}
-
-/*!
-        \brief Set the default input binding
-
-        \note This does not change the current input binding of existing editors
-*/
-void QEditor::setDefaultInputBinding(QEditorInputBindingInterface *b) {
-    m_defaultBinding = b;
-}
-
-/*!
-        \brief Set the default input binding
-
-        \note If no binding of the given name is available the default (null)
-        binding will be set back as default binding.
-
-        \note This does not change the current input binding of existing editors
-*/
-void QEditor::setDefaultInputBinding(const QString &b) {
-    m_defaultBinding = m_registeredBindings.value(b);
-}
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -390,8 +327,7 @@ void QEditor::setDefaultCodec(const QString &name, int update) {
         \note Creates builtin menus/actions
 */
 QEditor::QEditor(QWidget *p)
-    : QAbstractScrollArea(p), pMenu(nullptr), m_bindingsMenu(nullptr),
-      aDefaultBinding(nullptr), m_bindingsActions(nullptr), m_doc(nullptr),
+    : QAbstractScrollArea(p), pMenu(nullptr), m_doc(nullptr),
       m_codec(m_defaultCodecName), m_definition(nullptr), m_curPlaceHolder(-1),
       m_state(defaultFlags()) {
     m_editors << this;
@@ -406,8 +342,7 @@ QEditor::QEditor(QWidget *p)
         \param actions Whether builtin actions and menus should be created
 */
 QEditor::QEditor(bool actions, QWidget *p)
-    : QAbstractScrollArea(p), pMenu(nullptr), m_bindingsMenu(nullptr),
-      aDefaultBinding(nullptr), m_bindingsActions(nullptr), m_doc(nullptr),
+    : QAbstractScrollArea(p), pMenu(nullptr), m_doc(nullptr),
       m_codec(m_defaultCodecName), m_definition(nullptr), m_curPlaceHolder(-1),
       m_state(defaultFlags()) {
     m_editors << this;
@@ -486,10 +421,6 @@ void QEditor::init(bool actions) {
 
     m_cursor = QDocumentCursor(m_doc);
     m_cursor.setAutoUpdated(true);
-
-    if (m_defaultBinding) {
-        m_bindings << m_defaultBinding;
-    }
 
     pMenu = new QMenu;
 
@@ -605,13 +536,6 @@ void QEditor::init(bool actions) {
 
         addAction(a, "&Search", "Search");
 
-        a = new QAction(tr("Fin&d next"), pMenu);
-        a->setObjectName("findNext");
-        Q_SHORTCUT(a, "F3", "Search");
-        connect(a, SIGNAL(triggered()), this, SLOT(findNext()));
-
-        addAction(a, "&Search", "Search");
-
         a = new QAction(QIcon(":/qeditor/replace.png"), tr("&Replace"), this);
         a->setObjectName("replace");
         Q_SHORTCUT(a, "Ctrl+R", "Search");
@@ -632,48 +556,7 @@ void QEditor::init(bool actions) {
 
         sep = new QAction(this);
         sep->setSeparator(true);
-        addAction(sep, "&Edit", "");
-
-        a = new QAction(tr("Dynamic line wrapping"), this);
-        a->setObjectName("wrap");
-        a->setCheckable(true);
-        a->setChecked(flag(LineWrap));
-
-        addAction(a, "&Edit", "");
-
-        Q_SHORTCUT(a, "F10", "Edit");
-        connect(a, SIGNAL(toggled(bool)), this, SLOT(setLineWrapping(bool)));
-
-        m_bindingsMenu = new QMenu(tr("Input binding"), this);
-        m_bindingsActions = new QActionGroup(m_bindingsMenu);
-        // m_bindingsActions->setExclusive(true);
-
-        connect(m_bindingsActions, &QActionGroup::triggered, this,
-                &QEditor::bindingSelected);
-
-        aDefaultBinding = new QAction(tr("Default"), m_bindingsMenu);
-        aDefaultBinding->setCheckable(true);
-        aDefaultBinding->setData("default");
-
-        m_bindingsMenu->addAction(aDefaultBinding);
-        m_bindingsMenu->addSeparator();
-        m_bindingsActions->addAction(aDefaultBinding);
-        m_registeredBindings["default"] = 0;
-
-        updateBindingsMenu();
-
-        m_bindingsMenu->menuAction()->setObjectName("bindings");
-        addAction(m_bindingsMenu->menuAction(), "&Edit", "");
-
-        sep = new QAction(this);
-        sep->setSeparator(true);
         addAction(sep, QString());
-
-        /*
-        sep = new QAction(this);
-        sep->setSeparator(true);
-        addAction(sep, QString());
-        */
     }
 }
 
@@ -1083,12 +966,6 @@ void QEditor::retranslate() {
 
     if (m_completionEngine)
         m_completionEngine->retranslate();
-
-    if (m_bindingsMenu)
-        m_bindingsMenu->setTitle(tr("Input binding"));
-
-    if (aDefaultBinding)
-        aDefaultBinding->setText(tr("Default"));
 }
 
 /*!
@@ -1274,154 +1151,6 @@ void QEditor::setCodec(const QString &c) {
 void QEditor::highlight() {
     m_doc->highlight();
     // updateContent(0, m_doc->lines());
-}
-
-/*!
-        \return the current InputBinding
-*/
-QList<QEditorInputBindingInterface *> QEditor::inputBindings() const {
-    return m_bindings;
-}
-
-/*!
-        \brief Set the current input binding
-*/
-void QEditor::addInputBinding(QEditorInputBindingInterface *b) {
-    if (b)
-        m_bindings << b;
-
-    if (!aDefaultBinding || !m_bindingsActions)
-        return;
-
-    QString id = b ? b->id() : QString();
-    aDefaultBinding->setChecked(!b);
-
-    if (!b)
-        return;
-
-    QList<QAction *> actions = m_bindingsActions->actions();
-
-    for (auto &a : actions) {
-        if (a->data().toString() != id)
-            a->setChecked(true);
-    }
-}
-
-/*!
-        \brief Set the current input binding
-*/
-void QEditor::removeInputBinding(QEditorInputBindingInterface *b) {
-    int n = m_bindings.removeAll(b);
-
-    if (!aDefaultBinding || !m_bindingsActions || !n)
-        return;
-
-    QString id = b ? b->id() : QString();
-    aDefaultBinding->setChecked(!b);
-
-    if (!b)
-        return;
-
-    QList<QAction *> actions = m_bindingsActions->actions();
-
-    for (auto &a : actions) {
-        if (a->data().toString() != id)
-            a->setChecked(false);
-    }
-}
-
-/*!
-        \brief Set the current input binding
-*/
-void QEditor::setInputBinding(QEditorInputBindingInterface *b) {
-    m_bindings.clear();
-
-    if (b)
-        m_bindings << b;
-
-    if (!aDefaultBinding || !m_bindingsActions)
-        return;
-
-    QString id = b ? b->id() : QString();
-    aDefaultBinding->setChecked(!b);
-
-    if (!b)
-        return;
-
-    QList<QAction *> actions = m_bindingsActions->actions();
-
-    for (auto &a : actions) {
-        if (a)
-            a->setChecked(a->data().toString() != id);
-    }
-}
-
-/*!
-        \internal
-*/
-void QEditor::updateBindingsMenu() {
-    if (!aDefaultBinding || !m_bindingsMenu || !m_bindingsActions)
-        return;
-
-    QStringList bindings = registeredInputBindingIds();
-    QList<QAction *> actions = m_bindingsActions->actions();
-
-    aDefaultBinding->setChecked(m_bindings.contains(m_defaultBinding));
-
-    for (auto &a : actions) {
-        int idx = bindings.indexOf(a->data().toString());
-
-        if (idx == -1) {
-            m_bindingsMenu->removeAction(a);
-            m_bindingsActions->removeAction(a);
-            delete a;
-        } else {
-            bindings.removeAt(idx);
-
-            for (auto &b : m_bindings)
-                if (a->data().toString() == b->id())
-                    a->setChecked(true);
-        }
-    }
-
-    bindings.removeAll("default");
-
-    for (auto &s : bindings) {
-        QEditorInputBindingInterface *b = m_registeredBindings.value(s);
-
-        if (!b)
-            continue;
-
-        QAction *a = new QAction(b->name(), m_bindingsMenu);
-        a->setData(b->id());
-        a->setCheckable(true);
-
-        m_bindingsActions->addAction(a);
-        m_bindingsMenu->addAction(a);
-    }
-}
-
-/*!
-        \internal
-*/
-void QEditor::bindingSelected(QAction *a) {
-    // a = m_bindingsActions->checkedAction();
-
-    if (!a)
-        return;
-
-    QEditorInputBindingInterface *b =
-        m_registeredBindings.value(a->data().toString());
-
-    if (a->isChecked())
-        addInputBinding(b);
-    else
-        removeInputBinding(b);
-
-    // qDebug("setting binding to %s [0x%x]", qPrintable(a->data().toString()),
-    // m_binding);
-
-    updateMicroFocus();
 }
 
 /*!
@@ -2368,10 +2097,6 @@ void QEditor::createSimpleBasicContextMenu(bool shortcut, bool extTool) {
         \internal
 */
 void QEditor::keyPressEvent(QKeyEvent *e) {
-    for (auto &b : m_bindings)
-        if (b->keyPressEvent(e, this))
-            return;
-
     forever {
         bool leave = false;
 
@@ -2585,19 +2310,12 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
 
         break;
     }
-
-    for (auto &b : m_bindings)
-        b->postKeyPressEvent(e, this);
 }
 
 /*!
         \internal
 */
 void QEditor::inputMethodEvent(QInputMethodEvent *e) {
-    for (auto &b : m_bindings)
-        if (b->inputMethodEvent(e, this))
-            return;
-
     if (flag(ReadOnly)) {
         e->ignore();
         return;
@@ -2609,19 +2327,12 @@ void QEditor::inputMethodEvent(QInputMethodEvent *e) {
         m_cursor.insertText(e->commitString());
 
     m_cursor.endEditBlock();
-
-    for (auto &b : m_bindings)
-        b->postInputMethodEvent(e, this);
 }
 
 /*!
         \internal
 */
 void QEditor::mouseMoveEvent(QMouseEvent *e) {
-    for (auto &b : m_bindings)
-        if (b->mouseMoveEvent(e, this))
-            return;
-
     forever {
         if (!(e->buttons() & Qt::LeftButton))
             break;
@@ -2702,19 +2413,12 @@ void QEditor::mouseMoveEvent(QMouseEvent *e) {
         repaintCursor();
         break;
     }
-
-    for (auto &b : m_bindings)
-        b->postMouseMoveEvent(e, this);
 }
 
 /*!
         \internal
 */
 void QEditor::mousePressEvent(QMouseEvent *e) {
-    for (auto &b : m_bindings)
-        if (b->mousePressEvent(e, this))
-            return;
-
     forever {
         if (!(e->buttons() & Qt::LeftButton))
             break;
@@ -2831,19 +2535,12 @@ void QEditor::mousePressEvent(QMouseEvent *e) {
 
         break;
     }
-
-    foreach (QEditorInputBindingInterface *b, m_bindings)
-        b->postMousePressEvent(e, this);
 }
 
 /*!
         \internal
 */
 void QEditor::mouseReleaseEvent(QMouseEvent *e) {
-    foreach (QEditorInputBindingInterface *b, m_bindings)
-        if (b->mouseReleaseEvent(e, this))
-            return;
-
     m_scroll.stop();
 
     repaintCursor();
@@ -2875,19 +2572,12 @@ void QEditor::mouseReleaseEvent(QMouseEvent *e) {
 
     if (m_drag.isActive())
         m_drag.stop();
-
-    for (auto &b : m_bindings)
-        b->postMouseReleaseEvent(e, this);
 }
 
 /*!
         \internal
 */
 void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
-    for (auto &b : m_bindings)
-        if (b->mouseDoubleClickEvent(e, this))
-            return;
-
     forever {
         if (e->button() != Qt::LeftButton) {
             e->ignore();
@@ -2928,9 +2618,6 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
         m_click.start(qApp->doubleClickInterval(), this);
         break;
     }
-
-    foreach (QEditorInputBindingInterface *b, m_bindings)
-        b->postMouseDoubleClickEvent(e, this);
 }
 
 /*!
@@ -3171,10 +2858,6 @@ void QEditor::focusOutEvent(QFocusEvent *e) {
    default.
 */
 void QEditor::contextMenuEvent(QContextMenuEvent *e) {
-    foreach (QEditorInputBindingInterface *b, m_bindings)
-        if (b->contextMenuEvent(e, this))
-            return;
-
     if (!pMenu) {
         e->ignore();
         return;
@@ -3716,6 +3399,7 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
                     text + m_cursor.selectedText() + getPairedCloseChar(text);
                 c.replaceSelectedText(content);
                 c.clearSelection();
+                c.movePosition(-1);
             } else {
                 if (text == QStringLiteral("\"") ||
                     text == QStringLiteral("'")) {
@@ -3729,7 +3413,13 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
                         } else {
                             auto ch = c.nextChar();
                             if (ch == QChar('"') || ch == QChar('\'')) {
-                                c.movePosition(1);
+                                if (c.previousChar() == QChar('\\')) {
+                                    c.beginEditBlock();
+                                    insertText(c, text);
+                                    c.endEditBlock();
+                                } else {
+                                    c.movePosition(1);
+                                }
                             } else {
                                 c.beginEditBlock();
                                 insertText(c, text + text);
@@ -3739,6 +3429,13 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
                         }
                     }
                 } else {
+                    if (isPairedCloseChar(text)) {
+                        if (c.previousChar() == getPairedBeginChar(text)) {
+                            c.movePosition(1);
+                            break;
+                        }
+                    }
+
                     c.beginEditBlock();
                     insertText(c, text);
                     c.endEditBlock();
@@ -4320,6 +4017,25 @@ bool QEditor::isAutoCloseChar(const QString &ch) {
     // auto close: {} [] ()
     return ch == QStringLiteral("{") || ch == QStringLiteral("[") ||
            ch == QStringLiteral("(");
+}
+
+bool QEditor::isPairedCloseChar(const QString &ch) {
+    // auto close: {} [] ()
+    return ch == QStringLiteral("}") || ch == QStringLiteral("]") ||
+           ch == QStringLiteral(")");
+}
+
+QString QEditor::getPairedBeginChar(const QString &ch) {
+    // auto close: {} [] ()
+    if (ch == QStringLiteral("}")) {
+        return QStringLiteral("{");
+    } else if (ch == QStringLiteral("]")) {
+        return QStringLiteral("[");
+    } else if (ch == QStringLiteral(")")) {
+        return QStringLiteral("(");
+    } else {
+        return {};
+    }
 }
 
 QString QEditor::getPairedCloseChar(const QString &ch) {

@@ -227,8 +227,6 @@ set(CLASS_SRC
     src/class/asdebugger.cpp
     src/class/scriptconsolemachine.h
     src/class/scriptconsolemachine.cpp
-    src/class/wingangelapi.h
-    src/class/wingangelapi.cpp
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp
     src/class/scripteditortheme.h
@@ -238,6 +236,8 @@ set(CLASS_SRC
     src/class/angelscripthelper.h
     src/class/qasparser.cpp
     src/class/qasparser.h
+    src/class/qascodeparser.h
+    src/class/qascodeparser.cpp
     src/class/ascompletion.cpp
     src/class/ascompletion.h
     src/class/asbuilder.h
@@ -260,6 +260,11 @@ set(CLASS_SRC
     src/class/wingupdater.cpp
     src/class/richtextitemdelegate.h
     src/class/richtextitemdelegate.cpp)
+
+set(INTERNAL_PLG_SRC
+    src/class/wingangelapi.h src/class/wingangelapi.cpp
+    src/class/ctypeparser.cpp src/class/ctypeparser.h src/class/wingcstruct.h
+    src/class/wingcstruct.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -444,6 +449,7 @@ set(PROJECT_SOURCES
     ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
     ${CLASS_SRC}
+    ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}
     ${DIALOG_SRC}
     ${PLUGIN_SRC}

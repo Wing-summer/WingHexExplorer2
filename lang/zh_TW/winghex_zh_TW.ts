@@ -785,7 +785,7 @@
 <context>
     <name>LangService</name>
     <message>
-        <location filename="../../src/class/langservice.cpp" line="86"/>
+        <location filename="../../src/class/langservice.cpp" line="82"/>
         <source>Default</source>
         <translation>默認</translation>
     </message>
@@ -2185,12 +2185,12 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="72"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="73"/>
         <source>LoadingPlugin</source>
         <translation>加載插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="90"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="91"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>加載插件失敗：損壞的插件數據</translation>
     </message>
@@ -2198,6 +2198,11 @@
         <location filename="../../src/plugin/pluginsystem.cpp" line="499"/>
         <source>AppClosingCanceled:</source>
         <translation>程式關閉被取消：</translation>
+    </message>
+    <message>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="583"/>
+        <source>- PluginID:</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/plugin/pluginsystem.cpp" line="616"/>
@@ -2225,82 +2230,72 @@
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="903"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="899"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="910"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="906"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="911"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="907"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="912"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="908"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1016"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1012"/>
         <source>ErrLoadExtPluginSign</source>
         <translation>設備拓展插件加載失敗：非法插件簽名！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1020"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1016"/>
         <source>ErrLoadExtPluginSDKVersion</source>
         <translation>設備拓展插件加載失敗：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1024"/>
-        <source>ErrLoadExtPluginNoName</source>
-        <translation>設備拓展插件加載失敗：非法插件名稱！</translation>
-    </message>
-    <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1027"/>
-        <source>ExtPluginName :</source>
-        <translation>設備拓展插件名：</translation>
-    </message>
-    <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1028"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1019"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1029"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1020"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1048"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1036"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1115"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1103"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1125"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1113"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1133"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1121"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1273"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1261"/>
         <source>[EvilCall]</source>
         <translation>【惡意調用】</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="2798"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="2786"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2310,12 +2305,12 @@
         <translation>不安全的插件目錄，請將插件目錄設置為僅管理員帳戶可寫</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="97"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="98"/>
         <source>InvalidPluginID</source>
         <translation>加載插件失敗：非法插件識別字</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="100"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="101"/>
         <source>InvalidDupPlugin</source>
         <translation>加載插件失敗：重複的插件識別字</translation>
     </message>
@@ -2328,11 +2323,6 @@
         <location filename="../../src/plugin/pluginsystem.cpp" line="579"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依賴插件加載失敗總結</translation>
-    </message>
-    <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="583"/>
-        <source>- PluginName:</source>
-        <translation>- 插件名：</translation>
     </message>
     <message>
         <location filename="../../src/plugin/pluginsystem.cpp" line="584"/>
@@ -2517,123 +2507,104 @@ Restart from the begining ?</source>
         <translation>視圖（&amp;V）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="197"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="654"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1091"/>
-        <source>Default</source>
-        <translation>默認</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="499"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1064"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2265"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="430"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="947"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1994"/>
         <source>&amp;Undo</source>
         <translation>撤銷（&amp;U）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="508"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1065"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2275"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="439"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="948"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2004"/>
         <source>&amp;Redo</source>
         <translation>恢復（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="521"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1067"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2291"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="452"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="950"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2020"/>
         <source>Cu&amp;t</source>
         <translation>剪切（&amp;T）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="530"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1068"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2302"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="461"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="951"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2031"/>
         <source>&amp;Copy</source>
         <translation>複製（&amp;C）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="539"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1069"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2313"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="470"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="952"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2042"/>
         <source>&amp;Paste</source>
         <translation>粘貼（&amp;P）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="554"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1071"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="485"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="954"/>
         <source>&amp;Indent</source>
         <translation>縮進（&amp;I）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="561"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1072"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="492"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="955"/>
         <source>&amp;Unindent</source>
         <translation>取消縮進（&amp;U）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="572"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1073"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="503"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="956"/>
         <source>Co&amp;mment</source>
         <translation>批註（&amp;M）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="579"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1074"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="510"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="957"/>
         <source>Unc&amp;omment</source>
         <translation>取消批註（&amp;O）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="590"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1076"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="521"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="959"/>
         <source>&amp;Select all</source>
         <translation>全選（&amp;S）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="601"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1078"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2330"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="532"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="961"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2059"/>
         <source>&amp;Find</source>
         <translation>查找（&amp;F）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="608"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1079"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2338"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="962"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2067"/>
         <source>Fin&amp;d next</source>
         <translation>查找下一個（&amp;D）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="615"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1080"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2346"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="539"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="963"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2075"/>
         <source>&amp;Replace</source>
         <translation>替換（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="626"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1082"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2357"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="550"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="965"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2086"/>
         <source>&amp;Goto line...</source>
         <translation>跳轉到行（&amp;G）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="637"/>
-        <source>Dynamic line wrapping</source>
-        <translation>自動換行</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="647"/>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="1088"/>
-        <source>Input binding</source>
-        <translation>輸入綁定</translation>
-    </message>
-    <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="801"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="684"/>
         <source>Conflict!</source>
         <translation>衝突！</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="802"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="685"/>
         <source>%1
 has been modified by another application.
 Press &quot;Save&quot; to overwrite the file on disk
@@ -2647,12 +2618,12 @@ Press &quot;Discard&quot; to ignore this warning.
 按“放棄”忽略此警告。</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="939"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="822"/>
         <source>File changed</source>
         <translation>檔被修改</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="940"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="823"/>
         <source>%1
 has been modified by another application.
 
@@ -2665,7 +2636,7 @@ Do you wish to keep up to date by reloading the file?</source>
 您是否希望通過重新加載檔來保持最新狀態？</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="3242"/>
+        <location filename="../../3rdparty/qcodeedit2/lib/qeditor.cpp" line="2925"/>
         <source>untitled</source>
         <translation>未命名</translation>
     </message>
@@ -3028,7 +2999,7 @@ Do you wish to keep up to date by reloading the file?</source>
     </message>
     <message>
         <location filename="../../src/class/recentfilemanager.cpp" line="50"/>
-        <location filename="../../src/class/recentfilemanager.cpp" line="209"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="212"/>
         <source>NoHistoryDel</source>
         <translation>無打開歷史專案可刪除！</translation>
     </message>
@@ -3073,12 +3044,12 @@ Do you wish to keep up to date by reloading the file?</source>
         <translation>【結束】</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="185"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="188"/>
         <source>FileNotExistClean</source>
         <translation>檔不存在，該選項已被清除！</translation>
     </message>
     <message>
-        <location filename="../../src/class/recentfilemanager.cpp" line="219"/>
+        <location filename="../../src/class/recentfilemanager.cpp" line="222"/>
         <source>HistoryClearFinished</source>
         <translation>打開歷史記錄完成！</translation>
     </message>
@@ -5367,6 +5338,69 @@ Do you wish to keep up to date by reloading the file?</source>
         <location filename="../../src/class/wingangelapi.cpp" line="1523"/>
         <source>NotSupportedQMetaType:</source>
         <translation>不支持的 QT 數據元類型：</translation>
+    </message>
+    <message>
+        <location filename="../../src/class/wingangelapi.cpp" line="1755"/>
+        <source>Get Exception While ScriptCall: (%1) %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/class/wingangelapi.cpp" line="1763"/>
+        <source>InvalidRetType: need </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WingCStruct</name>
+    <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="47"/>
+        <source>WingCStruct</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="50"/>
+        <source>Providing basic support for analyzing file structures</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="292"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="304"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="317"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="326"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="339"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="347"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="359"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="367"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="374"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="386"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="398"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="423"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="443"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="463"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="483"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="499"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="519"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="539"/>
+        <source>InvalidParamsCount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="296"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="308"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="330"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="351"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="378"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="390"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="410"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="432"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="452"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="472"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="489"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="508"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="528"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="547"/>
+        <source>InvalidParam</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

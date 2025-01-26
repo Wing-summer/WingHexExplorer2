@@ -1,9 +1,8 @@
 {
-    "Id" : "shmem",
+    "Id" : "WingCStruct",
     "Version" : "0.0.1",
     "Vendor" : "WingCloudStudio",
     "Author" : "wingsummer",
-    "License" : "AGPL-3.0",
-    "Description" : "An extension for opening sshared memory in WingHexExplorer2.",
+    "License" : "AGPL-v3.0",
     "Url" : "https://github.com/Wing-summer/WingHexExplorer2"
 }

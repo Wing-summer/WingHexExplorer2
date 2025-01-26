@@ -690,17 +690,7 @@ void QHexRenderer::applyBookMark(QTextCursor &textcursor, qsizetype line,
         auto charformat = textcursor.charFormat();
         textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
                                 factor - 1);
-        charformat.setFontOverline(true);
-
-        if (charformat.underlineStyle() ==
-            QTextCharFormat::UnderlineStyle::NoUnderline) {
-            charformat.setUnderlineStyle(
-                QTextCharFormat::UnderlineStyle::DashUnderline);
-        } else {
-            charformat.setUnderlineStyle(
-                QTextCharFormat::UnderlineStyle::WaveUnderline);
-        }
-
+        charformat.setFontWeight(QFont::Bold);
         textcursor.setCharFormat(charformat);
     }
 }

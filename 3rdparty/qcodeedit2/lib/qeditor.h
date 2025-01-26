@@ -45,8 +45,6 @@ class QDocumentLineHandle;
 class QLanguageDefinition;
 class QCodeCompletionEngine;
 
-class QEditorInputBindingInterface;
-
 class QCE_EXPORT QEditor : public QAbstractScrollArea {
     friend class QEditConfig;
     friend class QEditorFactory;
@@ -135,8 +133,6 @@ public:
     QString codecName() const;
     QDocument *document() const;
 
-    QList<QEditorInputBindingInterface *> inputBindings() const;
-
     bool isCursorVisible() const;
     QDocumentCursor cursor() const;
 
@@ -207,15 +203,6 @@ public:
     static QString defaultCodecName();
     static void setDefaultCodec(const QString &name, int update);
 
-    static QEditorInputBindingInterface *
-    registeredInputBinding(const QString &n);
-    static QString defaultInputBindingId();
-    static QStringList registeredInputBindingIds();
-    static void registerInputBinding(QEditorInputBindingInterface *b);
-    static void unregisterInputBinding(QEditorInputBindingInterface *b);
-    static void setDefaultInputBinding(QEditorInputBindingInterface *b);
-    static void setDefaultInputBinding(const QString &b);
-
     static inline const QList<QEditor *> &editors() { return m_editors; }
 
 public slots:
@@ -264,10 +251,6 @@ public slots:
     void setCodec(const QString &name);
 
     void setDocument(QDocument *d);
-
-    void addInputBinding(QEditorInputBindingInterface *b);
-    void removeInputBinding(QEditorInputBindingInterface *b);
-    void setInputBinding(QEditorInputBindingInterface *b);
 
     void setCursor(const QDocumentCursor &c);
 
@@ -413,6 +396,9 @@ private:
 
     bool isAutoCloseChar(const QString &ch);
 
+    bool isPairedCloseChar(const QString &ch);
+
+    QString getPairedBeginChar(const QString &ch);
     QString getPairedCloseChar(const QString &ch);
 
 protected slots:
@@ -424,29 +410,21 @@ protected slots:
 
     void emitMarkChanged(QDocumentLineHandle *l, int mark, bool on);
 
-    void bindingSelected(QAction *a);
-
 protected:
     enum SaveState { Undefined, Saving, Saved, Conflict };
 
     void init(bool actions = true);
-    void updateBindingsMenu();
 
     QString m_name, m_fileName;
 
     QMenu *pMenu;
     QHash<QString, QAction *> m_actions;
 
-    QMenu *m_bindingsMenu;
-    QAction *aDefaultBinding;
-    QActionGroup *m_bindingsActions;
-
     char m_saveState;
     quint16 m_checksum;
 
     QDocument *m_doc;
     QString m_codec;
-    QList<QEditorInputBindingInterface *> m_bindings;
 
     QLanguageDefinition *m_definition;
     QPointer<QCodeCompletionEngine> m_completionEngine;
@@ -476,8 +454,6 @@ protected:
     static QString m_defaultCodecName;
 
     static QList<QEditor *> m_editors;
-    static QEditorInputBindingInterface *m_defaultBinding;
-    static QHash<QString, QEditorInputBindingInterface *> m_registeredBindings;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QEditor::State);

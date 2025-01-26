@@ -1702,7 +1702,8 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         params.append(obj);
     }
 
-    auto ret = p->_sfns.at(id).fn(params);
+    auto &fns = p->_sfns.at(id);
+    auto ret = fns.fn(params);
     auto op = [](asIScriptGeneric *gen, void *addr, QMetaType::Type type) {
         auto b = isTempBuffered(type);
         if (b) {
@@ -1745,6 +1746,49 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
             gen->SetReturnObject(addr);
         }
     };
+
+    // Check return type
+    auto ctx = asGetActiveContext();
+    if (ret.canConvert<WingHex::IWingPlugin::ScriptCallError>()) {
+        auto err = ret.value<WingHex::IWingPlugin::ScriptCallError>();
+
+        auto errmsg = tr("Get Exception While ScriptCall: (%1) %2")
+                          .arg(err.errorCode)
+                          .arg(err.errmsg);
+        ctx->SetException(errmsg.toUtf8());
+        return;
+    }
+
+    auto rettype = fns.ret;
+    auto msg = tr("InvalidRetType: need ");
+    switch (rettype) {
+    case WingHex::IWingPlugin::Void: {
+        if (!ret.isNull()) {
+            auto e = msg.arg("void");
+            ctx->SetException(e.toUtf8());
+        }
+    } break;
+    case WingHex::IWingPlugin::Bool:
+    case WingHex::IWingPlugin::Int:
+    case WingHex::IWingPlugin::UInt:
+    case WingHex::IWingPlugin::Int8:
+    case WingHex::IWingPlugin::UInt8:
+    case WingHex::IWingPlugin::Int16:
+    case WingHex::IWingPlugin::UInt16:
+    case WingHex::IWingPlugin::Int64:
+    case WingHex::IWingPlugin::UInt64:
+    case WingHex::IWingPlugin::Float:
+    case WingHex::IWingPlugin::Double:
+    case WingHex::IWingPlugin::String:
+    case WingHex::IWingPlugin::Char:
+    case WingHex::IWingPlugin::Color:
+    case WingHex::IWingPlugin::MetaMax:
+    case WingHex::IWingPlugin::MetaTypeMask:
+
+        break;
+    default:
+        return;
+    }
 
     qvariantCastOp(
         engine, ret,

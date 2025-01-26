@@ -1,10 +1,8 @@
 {
     "Id": "WingAngelAPI",
-    "Name": "WingAngelAPI",
     "Author": "wingsummer",
     "Version": "2.1.0",
     "Vendor": "WingCloudStudio",
-    "Copyright": "wingsummer",
     "License": "AGPL-3.0",
     "Url": "https://github.com/Wing-summer/WingHexExplorer2"
 }

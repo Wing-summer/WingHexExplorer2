@@ -86,18 +86,12 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                                     if (!b || nend >= maxbytes || nend < 0)
                                         continue;
 
-                                    static auto NO_COLOR = QStringLiteral("-");
-
                                     QColor fcolor, bcolor;
                                     auto fgn = fgcolor.toString();
-                                    if (fgn != NO_COLOR) {
-                                        fcolor = QColor(fgn);
-                                    }
+                                    fcolor = QColor(fgn);
 
                                     auto bgn = bgcolor.toString();
-                                    if (bgn != NO_COLOR) {
-                                        bcolor = QColor(bgn);
-                                    }
+                                    bcolor = QColor(bgn);
 
                                     QHexMetadataItem metaitem;
                                     metaitem.begin = nbegin;
@@ -166,11 +160,10 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
 }
 
 QString WorkSpaceManager::getColorString(const QColor &color) {
-    static auto NO_COLOR = QStringLiteral("-");
     if (color.isValid()) {
         return color.name();
     }
-    return NO_COLOR;
+    return {};
 }
 
 bool WorkSpaceManager::saveWorkSpace(

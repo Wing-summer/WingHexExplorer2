@@ -3,9 +3,9 @@
 
 #include "class/ascompletion.h"
 #include "qlanguagefactory.h"
-#include "qsnippetbinding.h"
 
 #include "angelscript.h"
+#include "qsnippetmanager.h"
 
 #include <QObject>
 
@@ -16,8 +16,6 @@ public:
     static LangService &instance();
 
     void init(asIScriptEngine *engine);
-
-    QSnippetBinding *snippetBinding() const;
 
     QLanguageFactory *languageFactory() const;
 
@@ -41,7 +39,6 @@ private:
     void initAdditionalFormatScheme();
 
 private:
-    QSnippetBinding *m_snipbind = nullptr;
     QLanguageFactory *m_language = nullptr;
     QSnippetManager *m_snippetManager = nullptr;
 

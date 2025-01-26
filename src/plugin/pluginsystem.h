@@ -101,7 +101,6 @@ private:
 public:
     struct PluginInfo {
         QString id;
-        QString name;
         QVersionNumber version;
         QString vendor;
         QList<WingDependency> dependencies;

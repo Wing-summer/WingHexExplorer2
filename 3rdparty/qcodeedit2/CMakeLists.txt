@@ -47,13 +47,8 @@ set(QNFA_SRC
     lib/qnfa/xml2qnfa.cpp lib/qnfa/qnfa.cpp lib/qnfa/qnfadefinition.cpp)
 
 set(SNIPPET_SRC
-    lib/snippets/qsnippet.cpp
-    lib/snippets/qsnippet.h
-    lib/snippets/qsnippet_p.h
-    lib/snippets/qsnippetbinding.cpp
-    lib/snippets/qsnippetbinding.h
-    lib/snippets/qsnippetmanager.cpp
-    lib/snippets/qsnippetmanager.h
+    lib/snippets/qsnippet.cpp lib/snippets/qsnippet.h lib/snippets/qsnippet_p.h
+    lib/snippets/qsnippetmanager.cpp lib/snippets/qsnippetmanager.h
     lib/snippets/qsnippetpatternloader.h)
 
 set(SOURCE_FILES
@@ -61,8 +56,6 @@ set(SOURCE_FILES
     lib/qcodecompletionengine.h
     lib/qcodeedit.h
     lib/qeditor.h
-    lib/qeditorinputbinding.h
-    lib/qeditorinputbindinginterface.h
     lib/qeditsession.h
     lib/qformat.h
     lib/qformatfactory.h
@@ -75,7 +68,6 @@ set(SOURCE_FILES
     lib/qcodecompletionengine.cpp
     lib/qcodeedit.cpp
     lib/qeditor.cpp
-    lib/qeditorinputbinding.cpp
     lib/qeditsession.cpp
     lib/qformatscheme.cpp
     lib/qlanguagedefinition.cpp

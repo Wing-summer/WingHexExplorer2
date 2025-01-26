@@ -34,8 +34,10 @@ void LangService::init(asIScriptEngine *engine) {
 
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
-    _completion = new AsCompletion(engine, this);
-    m_language->addCompletionEngine(_completion);
+
+    // TODO: disable COMPLETION for it's werid, fix later
+    // _completion = new AsCompletion(engine, this);
+    // m_language->addCompletionEngine(_completion);
 
     m_snippetManager = new QSnippetManager(this);
     QDir snippetDir(Utilities::getAppDataPath());
@@ -47,18 +49,12 @@ void LangService::init(asIScriptEngine *engine) {
         m_snippetManager->loadSnippetsFromDirectory(snippetDir.absolutePath());
     }
 
-    m_snipbind = new QSnippetBinding(m_snippetManager);
-
     initAdditionalFormatScheme();
 }
 
 LangService::LangService() : QObject(nullptr) {}
 
-LangService::~LangService() {
-    delete m_snipbind;
-    m_snipbind = nullptr;
-    qDeleteAll(_formatSchemes);
-}
+LangService::~LangService() { qDeleteAll(_formatSchemes); }
 
 void LangService::initAdditionalFormatScheme() {
     QDir appDataDir(Utilities::getAppDataPath());
@@ -117,7 +113,4 @@ QLanguageFactory *LangService::languageFactory() const { return m_language; }
 void LangService::applyLanguageSerivce(QEditor *editor) {
     Q_ASSERT(editor);
     m_language->setLanguage(editor, QStringLiteral("AngelScript"));
-    editor->addInputBinding(m_snipbind);
 }
-
-QSnippetBinding *LangService::snippetBinding() const { return m_snipbind; }
