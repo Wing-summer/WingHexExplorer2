@@ -24,6 +24,8 @@
 #include "testsettingpage.h"
 #include "testwingeditorviewwidget.h"
 
+#include <QApplication>
+
 TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
     // 在构造函数中，所有的 API 都无法调用。插件的翻译文件也不会自动加载。
     // 在构造函数中，仅适合做一些为初始化准备的操作。
@@ -191,6 +193,10 @@ const QString TestPlugin::pluginName() const { return tr("TestPlugin"); }
 
 const QString TestPlugin::pluginComment() const {
     return tr("A Test Plugin for WingHexExplorer2.");
+}
+
+QString TestPlugin::retranslate(const QString &str) {
+    return QApplication::tr(str.toLatin1());
 }
 
 QList<WingHex::WingDockWidgetInfo> TestPlugin::registeredDockWidgets() const {

@@ -56,9 +56,7 @@ public:
     };
 
 public:
-    static EditorView *fromDevice(QIODevice *dev, const QString &file,
-                                  bool readonly, const QIcon &icon,
-                                  QWidget *parent = nullptr);
+    static QString getDeviceFileName(const QString &ext, const QString &file);
 
 public:
     explicit EditorView(QWidget *parent = nullptr);
@@ -110,6 +108,8 @@ public slots:
 
     ErrFile newFile(size_t index);
     ErrFile openFile(const QString &filename);
+    ErrFile openExtFile(const QString &ext, const QString &file,
+                        const QVariantList &params);
     ErrFile openWorkSpace(const QString &filename);
     ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length);
     ErrFile openDriver(const QString &driver);
@@ -118,6 +118,7 @@ public slots:
          bool ignoreMd5 = false, bool isExport = false,
          SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace);
     ErrFile reload();
+    ErrFile closeFile();
 
     void setCopyLimit(qsizetype sizeMB);
 
@@ -194,6 +195,12 @@ private:
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;
+
+    // only for extension use
+    QString _ext;
+    QIODevice *_dev = nullptr;
+    QString _file;
+    QVariantList _params;
 };
 
 #endif // EDITORVIEW_H

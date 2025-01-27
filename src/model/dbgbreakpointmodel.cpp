@@ -17,15 +17,17 @@
 
 #include "dbgbreakpointmodel.h"
 
+#include <QFileInfo>
+
 DbgBreakpointModel::DbgBreakpointModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
 int DbgBreakpointModel::rowCount(const QModelIndex &parent) const {
-    return _bps.size();
+    return _dbg ? _dbg->breakPoints().size() : 0;
 }
 
 int DbgBreakpointModel::columnCount(const QModelIndex &parent) const {
-    return 3;
+    return 2;
 }
 
 QVariant DbgBreakpointModel::data(const QModelIndex &index, int role) const {
@@ -33,14 +35,13 @@ QVariant DbgBreakpointModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        auto d = _bps.at(r);
+        auto d = _dbg->breakPoints().at(r);
         switch (index.column()) {
         case 0: // line
             return d.lineNbr;
         case 1: // file
-            return d.name;
-        case 2: // decl
-            return d.func;
+            return role == Qt::ToolTipRole ? d.name
+                                           : QFileInfo(d.name).fileName();
         }
     }
     case Qt::TextAlignmentRole:
@@ -58,13 +59,18 @@ QVariant DbgBreakpointModel::headerData(int section,
             case 0:
                 return tr("line");
             case 1:
-                return tr("name");
-            case 2:
-                return tr("func");
+                return tr("file");
             }
         } else {
             return section + 1;
         }
     }
     return QVariant();
+}
+
+void DbgBreakpointModel::setDebugger(asDebugger *dbg) {
+    Q_ASSERT(dbg);
+    connect(dbg, &asDebugger::breakPointChanged, this,
+            [=]() { emit layoutChanged(); });
+    _dbg = dbg;
 }

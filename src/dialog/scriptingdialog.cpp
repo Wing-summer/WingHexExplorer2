@@ -29,7 +29,6 @@
 #include "control/toast.h"
 #include "qcodeeditwidget/qeditconfig.h"
 #include "qcodeeditwidget/qformatconfig.h"
-#include "qcodeeditwidget/qsnippetedit.h"
 #include "qdocumentline.h"
 #include "qeditor.h"
 #include "qformatscheme.h"
@@ -117,8 +116,6 @@ void ScriptingDialog::initConsole() {
     m_consoleout->init();
     auto machine = m_consoleout->machine();
     connect(machine, &ScriptMachine::onDebugFinished, this, [=] {
-        _DebugingScript.clear();
-
         this->updateRunDebugMode();
         m_callstack->updateData({});
         m_varshow->updateData({});
@@ -148,6 +145,13 @@ void ScriptingDialog::initConsole() {
         }
         _lastCurLine.first.clear();
         _lastCurLine.second = -1;
+
+        if (_needRestart) {
+            _needRestart = false;
+            startDebugScript(_DebugingScript);
+        } else {
+            _DebugingScript.clear();
+        }
     });
     auto dbg = machine->debugger();
     Q_ASSERT(dbg);
@@ -204,8 +208,10 @@ void ScriptingDialog::initConsole() {
                 }
             }
 
+            auto editor = e->editor();
+
             // add the new mark
-            auto doc = e->editor()->document();
+            auto doc = editor->document();
             auto line = doc->line(lineNr - 1);
             if (line.hasMark(bpMark)) {
                 line.removeMark(bpMark);
@@ -214,13 +220,14 @@ void ScriptingDialog::initConsole() {
                 line.addMark(curMark);
             }
 
-            _lastCurLine = {file, lineNr};
+            editor->ensureVisible(lineNr - 1);
 
+            _lastCurLine = {file, lineNr};
             updateRunDebugMode();
         });
     connect(dbg, &asDebugger::onDebugActionExec, this,
             [this]() { updateRunDebugMode(); });
-
+    m_breakpoints->setDebugger(dbg);
     m_sym->setEngine(machine->engine());
 }
 
@@ -465,52 +472,58 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
+    auto dbgkey = QKeySequence(Qt::Key_F5);
+
     {
         auto pannel = tab->addGroup(tr("Debug"));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_RUN_ACTION,
-            addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
-                            &ScriptingDialog::on_runscript,
-                            QKeySequence(Qt::CTRL | Qt::Key_F5)));
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_RUN_DBG_ACTION,
-                             addPannelAction(pannel, QStringLiteral("dbgdebug"),
-                                             tr("RunWithDbg"),
-                                             &ScriptingDialog::on_rundbgscript,
-                                             QKeySequence(Qt::Key_F5)));
+
+        auto a = addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
+                                 &ScriptingDialog::on_runscript);
+        addPerformClickShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_F5));
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_RUN_ACTION, a);
+
+        a = addPannelAction(pannel, QStringLiteral("dbgdebug"),
+                            tr("RunWithDbg"),
+                            &ScriptingDialog::on_rundbgscript);
+        setPannelActionToolTip(a, dbgkey);
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_RUN_DBG_ACTION, a);
 
         m_Tbtneditors.insert(ToolButtonIndex::DBG_PAUSE_ACTION,
                              addPannelAction(pannel, QStringLiteral("dbgpause"),
                                              tr("Pause"),
                                              &ScriptingDialog::on_pausescript));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_CONTINUE_ACTION,
-            addPannelAction(pannel, QStringLiteral("dbgcontinue"),
+
+        a = addPannelAction(pannel, QStringLiteral("dbgcontinue"),
                             tr("Continue"),
-                            &ScriptingDialog::on_continuescript));
+                            &ScriptingDialog::on_continuescript);
+        setPannelActionToolTip(a, dbgkey);
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_CONTINUE_ACTION, a);
 
         m_Tbtneditors.insert(ToolButtonIndex::DBG_STOP_ACTION,
                              addPannelAction(pannel, QStringLiteral("dbgstop"),
                                              tr("Stop"),
                                              &ScriptingDialog::on_stopscript));
+
         m_Tbtneditors.insert(
             ToolButtonIndex::DBG_RESTART_ACTION,
             addPannelAction(pannel, QStringLiteral("dbgrestart"), tr("Restart"),
                             &ScriptingDialog::on_restartscript));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_STEPINTO_ACTION,
-            addPannelAction(pannel, QStringLiteral("dbgstepinto"),
-                            tr("StepInto"), &ScriptingDialog::on_stepinscript,
-                            QKeySequence(Qt::Key_F11)));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_STEPOVER_ACTION,
-            addPannelAction(pannel, QStringLiteral("dbgstepover"),
-                            tr("StepOver"), &ScriptingDialog::on_stepoverscript,
-                            QKeySequence(Qt::Key_F10)));
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_STEPOUT_ACTION,
-            addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
-                            &ScriptingDialog::on_stepoutscript,
-                            QKeySequence(Qt::SHIFT | Qt::Key_F11)));
+
+        a = addPannelAction(pannel, QStringLiteral("dbgstepinto"),
+                            tr("StepInto"), &ScriptingDialog::on_stepinscript);
+        addPerformClickShortcut(a, QKeySequence(Qt::Key_F11));
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPINTO_ACTION, a);
+
+        a = addPannelAction(pannel, QStringLiteral("dbgstepover"),
+                            tr("StepOver"),
+                            &ScriptingDialog::on_stepoverscript);
+        addPerformClickShortcut(a, QKeySequence(Qt::Key_F10));
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPOVER_ACTION, a);
+
+        a = addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
+                            &ScriptingDialog::on_stepoutscript);
+        addPerformClickShortcut(a, QKeySequence(Qt::SHIFT | Qt::Key_F11));
+        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPOUT_ACTION, a);
 
         m_editStateWidgets << pannel;
     }
@@ -527,6 +540,27 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
                         tr("RemoveBreakPoint"),
                         &ScriptingDialog::on_removebreakpoint);
     }
+
+    auto dbgShortCut = new QShortcut(dbgkey, this);
+    connect(dbgShortCut, &QShortcut::activated, this, [this]() {
+        auto runner = m_consoleout->machine();
+        bool isRun = false;
+        bool isDbg = false;
+        bool isPaused = false;
+        if (runner) {
+            isRun = runner->isRunning();
+            isDbg = runner->isInDebugMode();
+            auto dbg = runner->debugger();
+            isPaused = dbg->currentState() == asDebugger::PAUSE;
+        }
+
+        if (isRun && isDbg && isPaused) {
+            m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
+        } else {
+            m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->animateClick();
+        }
+    });
+
     return tab;
 }
 
@@ -535,9 +569,6 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
 
     addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
                     [=] { m_setdialog->showConfig(QStringLiteral("Edit")); });
-    addPannelAction(pannel, QStringLiteral("snippt"), tr("Snippets"), [=] {
-        m_setdialog->showConfig(QStringLiteral("Snippets"));
-    });
     addPannelAction(
         pannel, QStringLiteral("codeformat"), tr("ClangFormat"),
         [=] { m_setdialog->showConfig(QStringLiteral("ClangFormat")); });
@@ -995,10 +1026,6 @@ void ScriptingDialog::buildUpSettingDialog() {
     auto clang = new ClangFormatSetDialog(m_setdialog);
     m_setdialog->addPage(clang);
 
-    auto snip =
-        new QSnippetEdit(LangService::instance().snippetManager(), m_setdialog);
-    m_setdialog->addPage(snip);
-
     auto &langsev = LangService::instance();
     auto scheme = new QFormatConfig(langsev.formatSchemes(),
                                     langsev.defaultSchemeName(), m_setdialog);
@@ -1008,16 +1035,13 @@ void ScriptingDialog::buildUpSettingDialog() {
 }
 
 void ScriptingDialog::startDebugScript(const QString &fileName) {
+    m_ribbon->setCurrentIndex(3);
+
     m_consoleout->clear();
 
-    // add breakpoints
-    auto marks = QLineMarksInfoCenter::instance()->marks(
-        fileName, m_symID.value(Symbols::BreakPoint));
-    auto dbg = m_consoleout->machine()->debugger();
-    for (auto &bp : marks) {
-        dbg->addFileBreakPoint(bp.file, bp.line);
-    }
+    _DebugingScript = fileName;
     m_consoleout->machine()->executeScript(fileName, true);
+
     updateRunDebugMode();
 }
 
@@ -1025,13 +1049,13 @@ void ScriptingDialog::addBreakPoint(QEditor *editor, int lineIndex) {
     Q_ASSERT(editor);
     auto bpMark = m_symID.value(Symbols::BreakPoint);
     auto curLine = lineIndex + 1;
+    auto dbg = m_consoleout->machine()->debugger();
 
     if (m_consoleout->machine()->isInDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
 
-        auto dbg = m_consoleout->machine()->debugger();
         if (line.hasMark(curSym)) {
             line.removeMark(curSym);
             line.addMark(hitCur);
@@ -1046,6 +1070,7 @@ void ScriptingDialog::addBreakPoint(QEditor *editor, int lineIndex) {
         auto line = editor->document()->line(lineIndex);
         if (!line.hasMark(bpMark)) {
             line.addMark(bpMark);
+            dbg->addFileBreakPoint(editor->fileName(), curLine);
         }
     }
 }
@@ -1055,12 +1080,12 @@ void ScriptingDialog::removeBreakPoint(QEditor *editor, int lineIndex) {
     auto bpMark = m_symID.value(Symbols::BreakPoint);
     auto curLine = lineIndex + 1;
 
+    auto dbg = m_consoleout->machine()->debugger();
     if (m_consoleout->machine()->isInDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
 
-        auto dbg = m_consoleout->machine()->debugger();
         if (line.hasMark(hitCur)) {
             line.removeMark(hitCur);
             line.addMark(curSym);
@@ -1075,6 +1100,7 @@ void ScriptingDialog::removeBreakPoint(QEditor *editor, int lineIndex) {
         auto line = editor->document()->line(lineIndex);
         if (line.hasMark(bpMark)) {
             line.removeMark(bpMark);
+            dbg->removeFileBreakPoint(editor->fileName(), curLine);
         }
     }
 }
@@ -1083,13 +1109,13 @@ void ScriptingDialog::toggleBreakPoint(QEditor *editor, int lineIndex) {
     Q_ASSERT(editor);
     auto curLine = lineIndex + 1;
 
+    auto dbg = m_consoleout->machine()->debugger();
     if (m_consoleout->machine()->isInDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto bpMark = m_symID.value(Symbols::BreakPoint);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
 
-        auto dbg = m_consoleout->machine()->debugger();
         if (line.hasMark(hitCur)) {
             line.removeMark(hitCur);
             line.addMark(curSym);
@@ -1108,9 +1134,15 @@ void ScriptingDialog::toggleBreakPoint(QEditor *editor, int lineIndex) {
             }
         }
     } else {
-        QLineMark mrk(editor->fileName(), curLine,
-                      m_symID.value(Symbols::BreakPoint));
+        auto bpMark = m_symID.value(Symbols::BreakPoint);
+        QLineMark mrk(editor->fileName(), curLine, bpMark);
         QLineMarksInfoCenter::instance()->toggleLineMark(mrk);
+        auto line = editor->document()->line(lineIndex);
+        if (line.hasMark(bpMark)) {
+            dbg->addFileBreakPoint(editor->fileName(), curLine);
+        } else {
+            dbg->removeFileBreakPoint(editor->fileName(), curLine);
+        }
     }
 }
 
@@ -1372,7 +1404,7 @@ void ScriptingDialog::on_stopscript() { runDbgCommand(asDebugger::ABORT); }
 
 void ScriptingDialog::on_restartscript() {
     on_stopscript();
-    startDebugScript(_DebugingScript);
+    _needRestart = true;
 }
 
 void ScriptingDialog::on_stepinscript() {

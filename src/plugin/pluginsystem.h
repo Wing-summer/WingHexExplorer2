@@ -199,6 +199,8 @@ private:
 
     PluginStatus checkPluginMetadata(const PluginInfo &meta, bool isPlg);
 
+    void retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta);
+
 private:
     void registerFns(IWingPlugin *plg);
     void registerEnums(IWingPlugin *plg);

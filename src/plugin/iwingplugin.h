@@ -59,7 +59,8 @@ enum ErrFile : int {
     ClonedFile = -10,
     InvalidFormat = -11,
     TooManyOpenedFile = -12,
-    NotAllowedInNoneGUIThread = -13
+    NotAllowedInNoneGUIThread = -13,
+    DevNotFound = -14,
 };
 Q_ENUM_NS(ErrFile)
 
@@ -422,8 +423,10 @@ public:
         MetaMax, // reserved
         MetaTypeMask = 0xFFFFF,
         Ref = 0x10000000,
-        Array = 0x100000,
-        Map = 0x200000
+        Array = 0x100000, // QVector<?> -> array<?>
+        List = 0x200000,  // QList<?> -> array<?>
+        Map = 0x400000,   // QMap<QString, ? > -> dictionary<?>
+        Hash = 0x800000   // QHash<QString, ? > -> dictionary<?>
     };
 
     static_assert(MetaType::MetaMax < MetaType::Array);

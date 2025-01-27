@@ -28,6 +28,7 @@
 #include "define.h"
 #include "scriptaddon/scriptqdictionary.h"
 
+#include <QApplication>
 #include <QJsonDocument>
 
 #ifdef Q_OS_WIN
@@ -75,6 +76,10 @@ const QString WingAngelAPI::pluginName() const {
 const QString WingAngelAPI::pluginComment() const {
     return tr("A internal plugin that provides AngelScript scripts with the "
               "ability to call the host API.");
+}
+
+QString WingAngelAPI::retranslate(const QString &str) {
+    return QApplication::tr(str.toLatin1());
 }
 
 WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {

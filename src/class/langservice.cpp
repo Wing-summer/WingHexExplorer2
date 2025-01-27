@@ -6,7 +6,6 @@
 #include "qeditor.h"
 #include "qformat.h"
 #include "qformatscheme.h"
-#include "qsnippetmanager.h"
 #include "utilities.h"
 
 LangService &LangService::instance() {
@@ -39,16 +38,6 @@ void LangService::init(asIScriptEngine *engine) {
     // _completion = new AsCompletion(engine, this);
     // m_language->addCompletionEngine(_completion);
 
-    m_snippetManager = new QSnippetManager(this);
-    QDir snippetDir(Utilities::getAppDataPath());
-    const auto snippetName = QStringLiteral("snippets");
-    if (!snippetDir.exists(snippetName)) {
-        snippetDir.mkdir(snippetName);
-    }
-    if (snippetDir.cd(snippetName)) {
-        m_snippetManager->loadSnippetsFromDirectory(snippetDir.absolutePath());
-    }
-
     initAdditionalFormatScheme();
 }
 
@@ -80,21 +69,6 @@ QHash<QString, QFormatScheme *> LangService::formatSchemes() const {
 }
 
 const QString LangService::defaultSchemeName() const { return tr("Default"); }
-
-void LangService::saveSnippets() {
-    QDir snippetDir(Utilities::getAppDataPath());
-    const auto snippetName = QStringLiteral("snippets");
-    if (!snippetDir.exists(snippetName)) {
-        snippetDir.mkdir(snippetName);
-    }
-    if (snippetDir.cd(snippetName)) {
-        m_snippetManager->saveSnippetsToDirectory(snippetDir.absolutePath());
-    }
-}
-
-QSnippetManager *LangService::snippetManager() const {
-    return m_snippetManager;
-}
 
 void LangService::addAdditionalFormat(QFormatScheme *scheme) {
     if (scheme) {

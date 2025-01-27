@@ -39,7 +39,7 @@ public:
         return std::nullopt;
     }
 
-    virtual QIODevice *onOpenFile(const QString &path, bool readOnly,
+    virtual QIODevice *onOpenFile(const QString &path,
                                   const QVariantList &params) = 0;
 
     virtual bool onCloseFile(QIODevice *dev) = 0;

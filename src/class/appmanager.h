@@ -31,6 +31,11 @@ public:
 
     MainWindow *mainWindow() const;
 
+    void translation() {
+        QApplication::tr("wingsummer");
+        QApplication::tr("WingCloudStudio");
+    }
+
 public slots:
     void openFile(const QString &file, bool autoDetect = true,
                   qsizetype start = -1, qsizetype stop = -1);

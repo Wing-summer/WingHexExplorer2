@@ -47,6 +47,8 @@ public:
 
     virtual RegisteredEvents registeredEvents() const override;
 
+    virtual QString retranslate(const QString &str) override;
+
 private:
     virtual void eventPluginFile(PluginFileEvent e, FileType type,
                                  const QString &newfileName, int handle,

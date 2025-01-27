@@ -22,7 +22,6 @@
 #include <QList>
 #include <QMap>
 #include <QObject>
-#include <atomic>
 
 // from AngelScript CDebugger, I modify it for Qt intergration and
 // and add some TODO features that easy to implement
@@ -137,6 +136,7 @@ private:
     bool interpretCommand(const QString &cmd, asIScriptContext *ctx);
 
 signals:
+    void breakPointChanged();
     void onAdjustBreakPointLine(const BreakPoint &old, int newLineNr);
     void onPullVariables(const QVector<VariablesInfo> &globalvars,
                          const QVector<VariablesInfo> &localvars);

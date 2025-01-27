@@ -45,6 +45,8 @@ public:
     virtual const QString pluginName() const override;
     virtual const QString pluginComment() const override;
 
+    virtual QString retranslate(const QString &str) override;
+
     // IWingPlugin interface (可选)
 public:
     // 有关注册开头（register 开头）的函数，插件系统不保证有且只调用一次

@@ -192,6 +192,8 @@ public:
     virtual QIcon pluginIcon() const { return {}; }
     virtual const QString pluginComment() const = 0;
 
+    virtual QString retranslate(const QString &str) { return str; }
+
 public:
     virtual QList<WingDockWidgetInfo> registeredDockWidgets() const {
         return {};

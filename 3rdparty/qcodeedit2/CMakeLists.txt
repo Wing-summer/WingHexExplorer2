@@ -46,11 +46,6 @@ set(QNFA_SRC
     lib/qnfa/light_vector.h lib/qnfa/qnfadefinition.h lib/qnfa/qnfa.h
     lib/qnfa/xml2qnfa.cpp lib/qnfa/qnfa.cpp lib/qnfa/qnfadefinition.cpp)
 
-set(SNIPPET_SRC
-    lib/snippets/qsnippet.cpp lib/snippets/qsnippet.h lib/snippets/qsnippet_p.h
-    lib/snippets/qsnippetmanager.cpp lib/snippets/qsnippetmanager.h
-    lib/snippets/qsnippetpatternloader.h)
-
 set(SOURCE_FILES
     lib/qce-config.h
     lib/qcodecompletionengine.h
@@ -77,7 +72,7 @@ set(SOURCE_FILES
     lib/qreliablefilewatch.cpp)
 
 add_library(QCodeEditor2 STATIC ${SOURCE_FILES} ${DOCUMENT_SRC} ${WIDGETS_SRC}
-                                ${QNFA_SRC} ${SNIPPET_SRC})
+                                ${QNFA_SRC})
 
 target_compile_definitions(QCodeEditor2 PUBLIC _QCODE_EDIT_BUILD_
                                                _QCODE_EDIT_EMBED_)

@@ -27,8 +27,6 @@ class DbgBreakpointModel : public QAbstractTableModel {
 public:
     explicit DbgBreakpointModel(QObject *parent = nullptr);
 
-signals:
-
     // QAbstractItemModel interface
 public:
     virtual int rowCount(const QModelIndex &parent) const override;
@@ -37,8 +35,11 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation orientation,
                                 int role) const override;
 
+public:
+    void setDebugger(asDebugger *dbg);
+
 private:
-    QList<asDebugger::BreakPoint> _bps;
+    asDebugger *_dbg = nullptr;
 };
 
 #endif // DBGBREAKPOINTMODEL_H

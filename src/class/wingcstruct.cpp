@@ -23,6 +23,100 @@ WingCStruct::WingCStruct()
     : WingHex::IWingPlugin(),
       _colortable({Qt::red, Qt::green, Qt::yellow, Qt::cyan}) {
     qRegisterMetaType<QVector<QColor>>();
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::addStruct), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(MetaType::String, QStringLiteral("header")));
+
+        _scriptInfo.insert(QStringLiteral("addStruct"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &WingCStruct::addStructFromFile),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(MetaType::String, QStringLiteral("fileName")));
+
+        _scriptInfo.insert(QStringLiteral("addStructFromFile"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::resetEnv), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Void;
+
+        _scriptInfo.insert(QStringLiteral("resetEnv"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::setColorTable),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(MetaType(MetaType::Array | MetaType::Color),
+                      QStringLiteral("table")));
+
+        _scriptInfo.insert(QStringLiteral("setColorTable"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::colorTable), this,
+            std::placeholders::_1);
+        info.ret = MetaType(MetaType::Array | MetaType::Color);
+
+        _scriptInfo.insert(QStringLiteral("colorTable"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::setStructPadding),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(qMakePair(MetaType::Int, QStringLiteral("padding")));
+
+        _scriptInfo.insert(QStringLiteral("setStructPadding"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::structPadding),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Int;
+
+        _scriptInfo.insert(QStringLiteral("structPadding"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::structPadding),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Int;
+
+        _scriptInfo.insert(QStringLiteral("structPadding"), info);
+    }
+
+    // TODO
 }
 
 WingCStruct::~WingCStruct() {}
@@ -52,6 +146,10 @@ const QString WingCStruct::pluginComment() const {
 
 QIcon WingCStruct::pluginIcon() const { return ICONRES("structure"); }
 
+QString WingCStruct::retranslate(const QString &str) {
+    return QApplication::tr(str.toLatin1());
+}
+
 WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
     return RegisteredEvent::ScriptPragma;
 }
@@ -63,7 +161,7 @@ WingCStruct::registeredSettingPages() const {
 
 QHash<QString, WingCStruct::ScriptFnInfo>
 WingCStruct::registeredScriptFns() const {
-    return _scriptfns;
+    return _scriptInfo;
 }
 
 bool WingCStruct::eventOnScriptPragma(const QStringList &comments) {

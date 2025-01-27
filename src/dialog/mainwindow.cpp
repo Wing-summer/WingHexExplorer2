@@ -3245,6 +3245,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 case WingHex::ClonedFile:
                 case WingHex::InvalidFormat:
                 case WingHex::TooManyOpenedFile:
+                case WingHex::DevNotFound:
                 case WingHex::NotAllowedInNoneGUIThread: {
                     // unknown error
                     auto btn = WingMessageBox::critical(
@@ -3262,6 +3263,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                         closeEditor(editor, true);
                     }
                 } break;
+                    break;
                 }
             } else {
                 closeEditor(editor, true);
@@ -3424,7 +3426,6 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
         return res;
     }
 
-    m_views.insert(ev, QString());
     registerEditorView(ev);
     if (editor) {
         *editor = ev;
@@ -3436,15 +3437,29 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
 ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
                                 const QVariantList &params,
                                 EditorView **editor) {
-    auto plgsys = PluginSystem::instance().ext2Device(ext);
-    if (plgsys == nullptr) {
-        return ErrFile::Error;
+    auto e = findEditorView(EditorView::getDeviceFileName(ext, file));
+    if (e) {
+        if (editor) {
+            *editor = e;
+        }
+        return ErrFile::AlreadyOpened;
     }
 
-    auto fileName = QStringLiteral("{%1}%2").arg(ext, file);
+    auto dev = PluginSystem::instance().ext2Device(ext);
+    auto ev = new EditorView(this);
+    auto res = ev->openExtFile(ext, file, params);
 
-    // TODO
+    if (res != ErrFile::Success) {
+        delete ev;
+        return res;
+    }
 
+    registerEditorView(ev);
+    if (editor) {
+        *editor = ev;
+    }
+
+    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     return ErrFile::Success;
 }
 
@@ -3470,7 +3485,6 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
         return res;
     }
 
-    m_views.insert(ev, QString());
     registerEditorView(ev);
     if (editor) {
         *editor = ev;
@@ -3592,6 +3606,11 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
                 return ErrFile::UnSaved;
             }
         }
+    }
+
+    auto cret = editor->closeFile();
+    if (cret != ErrFile::Success) {
+        return cret;
     }
 
     m_views.remove(editor);
@@ -3941,7 +3960,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     set.setRecentFiles(m_recentmanager->saveRecent());
     set.save();
 
-    LangService::instance().saveSnippets();
     PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);

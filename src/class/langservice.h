@@ -5,7 +5,6 @@
 #include "qlanguagefactory.h"
 
 #include "angelscript.h"
-#include "qsnippetmanager.h"
 
 #include <QObject>
 
@@ -21,15 +20,11 @@ public:
 
     void applyLanguageSerivce(QEditor *editor);
 
-    QSnippetManager *snippetManager() const;
-
     static void addAdditionalFormat(QFormatScheme *scheme);
 
     QHash<QString, QFormatScheme *> formatSchemes() const;
 
     const QString defaultSchemeName() const;
-
-    void saveSnippets();
 
 private:
     LangService();
@@ -40,7 +35,6 @@ private:
 
 private:
     QLanguageFactory *m_language = nullptr;
-    QSnippetManager *m_snippetManager = nullptr;
 
     AsCompletion *_completion = nullptr;
 

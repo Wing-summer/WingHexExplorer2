@@ -26,6 +26,7 @@
 #include "class/settingmanager.h"
 #include "class/workspacemanager.h"
 #include "dialog/fileinfodialog.h"
+#include "plugin/pluginsystem.h"
 #include "utilities.h"
 
 #include <QFile>
@@ -39,39 +40,8 @@
 constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
-EditorView *EditorView::fromDevice(QIODevice *dev, const QString &file,
-                                   bool readonly, const QIcon &icon,
-                                   QWidget *parent) {
-    if (dev == nullptr || file.isEmpty()) {
-        return nullptr;
-    }
-
-    auto ev = new EditorView(parent);
-
-    auto *p = (dev->size() > FILE_MAX_BUFFER || dev->size() < 0)
-                  ? QHexDocument::fromDevice<QFileBuffer>(dev, readonly)
-                  : QHexDocument::fromDevice<QMemoryBuffer>(dev, readonly);
-
-    if (Q_UNLIKELY(p == nullptr)) {
-        return nullptr;
-    }
-
-    ev->m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-    ev->m_hex->setLockedFile(readonly);
-    ev->m_hex->setKeepSize(true);
-
-    ev->m_docType = DocumentType::Extension;
-    ev->m_fileName = file;
-    ev->m_isNewFile = false;
-    p->setDocSaved();
-
-    ev->setWindowTitle(file);
-    ev->connectDocSavedFlag(ev);
-
-    auto tab = ev->tabWidget();
-    tab->setIcon(icon);
-    tab->setToolTip(file);
-    return ev;
+QString EditorView::getDeviceFileName(const QString &ext, const QString &file) {
+    return QStringLiteral("://") + ext + QStringLiteral("/") + file;
 }
 
 EditorView::EditorView(QWidget *parent)
@@ -331,6 +301,62 @@ ErrFile EditorView::openFile(const QString &filename) {
     return ErrFile::Success;
 }
 
+ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
+                                const QVariantList &params) {
+    auto dev = PluginSystem::instance().ext2Device(ext);
+    if (dev == nullptr) {
+        return ErrFile::Error;
+    }
+
+    auto d = dev->onOpenFile(file, params);
+
+    bool readonly = true;
+    if (d->open(QIODevice::ReadWrite)) {
+        // ok
+        readonly = false;
+        d->close();
+    } else {
+        if (d->open(QIODevice::ReadOnly)) {
+            d->close();
+        } else {
+            return ErrFile::Permission;
+        }
+    }
+
+    auto *p = (d->size() > FILE_MAX_BUFFER || d->size() < 0)
+                  ? QHexDocument::fromDevice<QFileBuffer>(d, readonly)
+                  : QHexDocument::fromDevice<QMemoryBuffer>(d, readonly);
+
+    if (Q_UNLIKELY(p == nullptr)) {
+        return ErrFile::Error;
+    }
+
+    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
+    m_hex->setLockedFile(readonly);
+    m_hex->setKeepSize(true);
+
+    auto fileName = getDeviceFileName(ext, file);
+
+    // store the additional info to reload
+    _ext = ext;
+    _dev = d;
+    _file = file;
+    _params = params;
+
+    m_docType = DocumentType::Extension;
+    m_fileName = fileName;
+    m_isNewFile = false;
+    p->setDocSaved();
+
+    setWindowTitle(fileName);
+    connectDocSavedFlag(this);
+
+    auto tab = this->tabWidget();
+    tab->setIcon(dev->pluginIcon());
+    tab->setToolTip(fileName);
+    return ErrFile::Success;
+}
+
 ErrFile EditorView::openWorkSpace(const QString &filename) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
@@ -568,6 +594,11 @@ ErrFile EditorView::reload() {
         return ErrFile::IsNewFile;
     }
 
+    auto cret = closeFile();
+    if (cret != ErrFile::Success) {
+        return cret;
+    }
+
     switch (documentType()) {
     case DocumentType::File:
         return openFile(m_fileName);
@@ -579,10 +610,26 @@ ErrFile EditorView::reload() {
     }
     case DocumentType::Driver:
         return openDriver(m_fileName);
+    case DocumentType::Extension:
+        return openExtFile(_ext, _file, _params);
     default:
         break;
     }
     return ErrFile::Error;
+}
+
+ErrFile EditorView::closeFile() {
+    // only extension file type need additional close
+    if (m_docType == DocumentType::Extension) {
+        auto dev = PluginSystem::instance().ext2Device(_ext);
+        if (dev == nullptr) {
+            return ErrFile::Error;
+        }
+        if (!dev->onCloseFile(_dev)) {
+            return ErrFile::Permission;
+        }
+    }
+    return ErrFile::Success;
 }
 
 bool EditorView::change2WorkSpace() const {

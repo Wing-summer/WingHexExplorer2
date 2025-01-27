@@ -118,7 +118,9 @@ PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
-            loadPlugin(p, meta.value(), setdir);
+            auto m = meta.value();
+            retranslateMetadata(p, m);
+            loadPlugin(p, m, setdir);
         }
         Logger::newLine();
     }
@@ -165,6 +167,12 @@ bool PluginSystem::equalCompareHandle(const SharedUniqueId &id, int handle) {
 int PluginSystem::getUIDHandle(const SharedUniqueId &id) {
     Q_ASSERT(id.data());
     return int(*id);
+}
+
+void PluginSystem::retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta) {
+    meta.author = plg->retranslate(meta.author);
+    meta.vendor = plg->retranslate(meta.vendor);
+    meta.license = plg->retranslate(meta.license);
 }
 
 PluginSystem::SharedUniqueId
@@ -563,6 +571,10 @@ void PluginSystem::loadExtPlugin() {
     auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 
+    if (!plgs.isEmpty()) {
+        Logger::newLine();
+    }
+
     QDir udir(Utilities::getAppDataPath());
     auto plgset = QStringLiteral("plgset");
     udir.mkdir(plgset);
@@ -626,6 +638,9 @@ void PluginSystem::loadDevicePlugin() {
 
     auto plgs = devdir.entryInfoList();
     Logger::info(tr("FoundDrvPluginCount") + QString::number(plgs.count()));
+    if (!plgs.isEmpty()) {
+        Logger::newLine();
+    }
 
     QDir udir(Utilities::getAppDataPath());
     auto plgset = QStringLiteral("drvset");
@@ -665,7 +680,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     auto id = getPluginID(plg);
     auto rawID = id.toUtf8();
 
-    QList<QSharedPointer<asCScriptFunction>> fnlist;
+    QList<asCScriptFunction *> fnlist;
 
     auto r = _engine->SetDefaultNamespace(rawID);
     if (Q_UNLIKELY(r < 0)) {
@@ -676,17 +691,17 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     // <signatures, std::function>
     QHash<QString, IWingPlugin::ScriptFnInfo> rfns;
     for (auto p = fns.constKeyValueBegin(); p != fns.constKeyValueEnd(); ++p) {
-        auto func = QSharedPointer<asCScriptFunction>(
-            new asCScriptFunction(_engine, nullptr, asFUNC_SYSTEM));
+        auto func = new asCScriptFunction(_engine, nullptr, asFUNC_SYSTEM);
 
         auto &fn = p->second;
         auto sig = getScriptFnSig(p->first, fn);
 
-        auto r = c.ParseFunctionDeclaration(nullptr, sig.toLatin1(),
-                                            func.data(), true, nullptr, nullptr,
+        auto r = c.ParseFunctionDeclaration(nullptr, sig.toLatin1(), func, true,
+                                            nullptr, nullptr,
                                             _engine->defaultNamespace);
         if (r < 0) {
             Logger::critical(tr("RegisterScriptFnInvalidSig:") + sig);
+            func->funcType = asFUNC_DUMMY;
             continue;
         }
 
@@ -694,26 +709,24 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
                                 _engine->defaultNamespace, false, false, false);
         if (r < 0) {
             Logger::critical(tr("RegisterScriptFnConflitSig:") + sig);
+            func->funcType = asFUNC_DUMMY;
             continue;
         }
 
         fnlist.append(func);
 
         // register functions with internal hacking
-        auto &efnlist = _engine->scriptFunctions;
-        func->id = efnlist.GetLength();
-        efnlist.PushLast(func.data());
-
+        func->id = _engine->GetNextScriptFunctionId();
+        _engine->AddScriptFunction(func);
         rfns.insert(sig, p->second);
     }
 
     // clear the internal hacking functions
     auto len = fnlist.size();
-    for (decltype(fnlist)::size_type i = 0; i < len; ++i) {
-        fnlist[i]->funcType = asFUNC_DUMMY; // mark as invalid function
-        _engine->scriptFunctions.PopLast();
+    for (auto &fn : fnlist) {
+        _engine->RemoveScriptFunction(fn);
+        fn->Release();
     }
-
     _engine->SetDefaultNamespace("");
 
     fnlist.clear();
@@ -903,17 +916,18 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
         retype.prepend(QStringLiteral("dictionary<"))
             .append(QStringLiteral(">"));
     }
-
-    if (isRef) {
-        if (isArg) {
+    if (isArg) {
+        if (isRef) {
             retype.append(QStringLiteral(" &out"));
         } else {
-            retype.append(QStringLiteral("@"));
+            if (isArray || isMap) {
+                retype.append(QStringLiteral(" &in"))
+                    .prepend(QStringLiteral("const "));
+            }
         }
     } else {
-        if (isArg && (isArray || isMap)) {
-            retype.append(QStringLiteral(" &in"))
-                .prepend(QStringLiteral("const "));
+        if (isArray || isMap) {
+            retype.append(QStringLiteral("@"));
         }
     }
 
@@ -2929,9 +2943,11 @@ void PluginSystem::loadAllPlugin() {
 
         QJsonDocument doc = QJsonDocument::fromJson(angelapi);
         auto meta = parsePluginMetadata(doc.object());
-
+        retranslateMetadata(_angelplg, meta);
         loadPlugin(_angelplg, meta, std::nullopt);
     }
+
+    Logger::newLine();
 
     // ok, setup checking engine
     initCheckingEngine();
@@ -2952,7 +2968,7 @@ void PluginSystem::loadAllPlugin() {
         QDir setd(Utilities::getAppDataPath());
         auto plgset = QStringLiteral("plgset");
         setd.mkdir(plgset);
-
+        retranslateMetadata(cstructplg, meta);
         loadPlugin(cstructplg, meta, setd);
     }
 

@@ -38,6 +38,8 @@ public:
     virtual const QString pluginComment() const override;
     virtual QIcon pluginIcon() const override;
 
+    virtual QString retranslate(const QString &str) override;
+
     // IWingPlugin interface
 public:
     virtual RegisteredEvents registeredEvents() const override;
@@ -122,7 +124,7 @@ private:
     QVector<QColor>::const_iterator _curColor;
 
     QHash<WingHex::SettingPage *, bool> _setpgs;
-    QHash<QString, WingCStruct::ScriptFnInfo> _scriptfns;
+    QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
 };
 
 #endif // WINGCSTRUCT_H

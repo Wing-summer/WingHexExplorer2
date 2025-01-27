@@ -345,9 +345,6 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qformatconfig.h
     src/qcodeeditwidget/qformatconfig.cpp
     src/qcodeeditwidget/qformatconfig.ui
-    src/qcodeeditwidget/qsnippetedit.cpp
-    src/qcodeeditwidget/qsnippetedit.h
-    src/qcodeeditwidget/qsnippetedit.ui
     src/qcodeeditwidget/qdocumentswaptextcommand.h
     src/qcodeeditwidget/qdocumentswaptextcommand.cpp
     src/qcodeeditwidget/formatconfigmodel.h

@@ -119,6 +119,16 @@ private:
     QMessageBox::StandardButton saveRequest();
 
 private:
+    void addPerformClickShortcut(QToolButton *btn,
+                                 const QKeySequence &shortcut) {
+        Q_ASSERT(btn && !shortcut.isEmpty());
+        auto shortCut = new QShortcut(shortcut, this);
+        shortCut->setContext(Qt::WindowShortcut);
+        connect(shortCut, &QShortcut::activated, btn,
+                [btn]() { btn->animateClick(); });
+        setPannelActionToolTip(btn, shortcut);
+    }
+
     template <typename Func>
     inline QToolButton *
     addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,
@@ -286,6 +296,7 @@ private:
 
     size_t m_newIndex = 1;
     QPair<QString, int> _lastCurLine = {QString(), -1};
+    bool _needRestart = false;
 
     QList<ScriptEditor *> m_views;
     QMap<Symbols, int> m_symID;

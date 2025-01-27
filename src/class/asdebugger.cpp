@@ -165,6 +165,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
 void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
     BreakPoint bp(file, lineNbr, false);
     m_breakPoints.push_back(bp);
+    emit breakPointChanged();
 }
 
 void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
@@ -176,6 +177,7 @@ void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
         return;
     }
     m_breakPoints.erase(r);
+    emit breakPointChanged();
 }
 
 void asDebugger::addFuncBreakPoint(const QString &func) {
@@ -184,6 +186,7 @@ void asDebugger::addFuncBreakPoint(const QString &func) {
 
     BreakPoint bp(actual, 0, true);
     m_breakPoints.push_back(bp);
+    emit breakPointChanged();
 }
 
 void asDebugger::removeFuncBreakPoint(const QString &func) {
@@ -192,9 +195,13 @@ void asDebugger::removeFuncBreakPoint(const QString &func) {
         m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
             return bp.name == actual && bp.func == true;
         }));
+    emit breakPointChanged();
 }
 
-void asDebugger::clearBreakPoint() { m_breakPoints.clear(); }
+void asDebugger::clearBreakPoint() {
+    m_breakPoints.clear();
+    emit breakPointChanged();
+}
 
 const QVector<asDebugger::BreakPoint> &asDebugger::breakPoints() {
     return m_breakPoints;
