@@ -30,7 +30,7 @@ public:
         QString fileName;
         bool isWorkSpace = false;
         qsizetype start = -1;
-        qsizetype stop = -1;
+        qsizetype length = -1;
 
         bool operator==(const RecentInfo &info) const {
             return
@@ -40,7 +40,7 @@ public:
                 this->fileName == info.fileName
 #endif
                 && this->isWorkSpace == info.isWorkSpace &&
-                this->start == info.start && this->stop == info.stop;
+                this->start == info.start && this->length == info.length;
         }
         bool operator!=(const RecentInfo &info) const {
             return
@@ -50,7 +50,7 @@ public:
                 this->fileName != info.fileName
 #endif
                 || this->isWorkSpace != info.isWorkSpace ||
-                this->start != info.start || this->stop != info.stop;
+                this->start != info.start || this->length != info.length;
         }
 
         friend QDataStream &operator<<(QDataStream &arch,
@@ -58,7 +58,7 @@ public:
             arch << object.fileName;
             arch << object.isWorkSpace;
             arch << object.start;
-            arch << object.stop;
+            arch << object.length;
             return arch;
         }
 
@@ -66,7 +66,7 @@ public:
             arch >> object.fileName;
             arch >> object.isWorkSpace;
             arch >> object.start;
-            arch >> object.stop;
+            arch >> object.length;
             return arch;
         }
     };

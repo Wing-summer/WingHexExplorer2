@@ -64,6 +64,8 @@ void asDebugger::takeCommands(asIScriptContext *ctx) {
     case STEP_INTO:
         break;
     }
+
+    emit onDebugActionExec();
 }
 
 void asDebugger::lineCallback(asIScriptContext *ctx) {
@@ -87,10 +89,12 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     } else {
         auto dbgContext =
             reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
-        if (dbgContext->line == lineNbr && dbgContext->file == file &&
-            dbgContext->stackCount == ctx->GetCallstackSize() &&
-            dbgContext->col < col) {
-            return;
+        if (m_action != CONTINUE) {
+            if (dbgContext->line == lineNbr && dbgContext->file == file &&
+                dbgContext->stackCount == ctx->GetCallstackSize() &&
+                dbgContext->col != col) {
+                return;
+            }
         }
     }
 
@@ -100,35 +104,58 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     if (ctx->GetState() != asEXECUTION_ACTIVE)
         return;
 
+    auto dbgContext = reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
+    Q_ASSERT(dbgContext);
+
+    auto rc = [](ContextDbgInfo *dbgContext, const QString &file, int lineNbr,
+                 int col, asUINT stackCount) {
+        if (dbgContext->line != lineNbr) {
+            dbgContext->file = file;
+            dbgContext->line = lineNbr;
+            dbgContext->col = col;
+            dbgContext->stackCount = stackCount;
+        }
+    };
+
     switch (m_action) {
     case ABORT:
         return;
     case PAUSE:
-        return;
+        break;
     case CONTINUE:
-        if (!checkBreakPoint(ctx))
+        if (!checkBreakPoint(ctx)) {
+            rc(dbgContext, file, lineNbr, col, ctx->GetCallstackSize());
             return;
+        }
         break;
     case STEP_INTO:
         m_action = PAUSE;
         break;
-    case STEP_OVER:
-    case STEP_OUT:
+    case STEP_OVER: {
         auto s = ctx->GetCallstackSize();
         if (s > m_lastCommandAtStackLevel) {
-            if (!checkBreakPoint(ctx))
+            if (!checkBreakPoint(ctx)) {
+                rc(dbgContext, file, lineNbr, col, ctx->GetCallstackSize());
                 return;
+            }
         }
         m_action = PAUSE;
         break;
     }
+    case STEP_OUT: {
+        auto s = ctx->GetCallstackSize();
+        if (s >= m_lastCommandAtStackLevel) {
+            if (!checkBreakPoint(ctx)) {
+                rc(dbgContext, file, lineNbr, col, ctx->GetCallstackSize());
+                return;
+            }
+        }
+        m_action = PAUSE;
+        break;
+    }
+    }
 
-    auto dbgContext = reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
-    Q_ASSERT(dbgContext);
-    dbgContext->file = file;
-    dbgContext->line = lineNbr;
-    dbgContext->col = col;
-    dbgContext->stackCount = ctx->GetCallstackSize();
+    rc(dbgContext, file, lineNbr, col, ctx->GetCallstackSize());
 
     emit onRunCurrentLine(file, lineNbr);
 
@@ -141,10 +168,14 @@ void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
 }
 
 void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
-    m_breakPoints.erase(std::remove_if(
+    auto r = std::remove_if(
         m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
             return bp.name == file && bp.lineNbr == lineNbr && bp.func == false;
-        }));
+        });
+    if (r == m_breakPoints.end()) {
+        return;
+    }
+    m_breakPoints.erase(r);
 }
 
 void asDebugger::addFuncBreakPoint(const QString &func) {

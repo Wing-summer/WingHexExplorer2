@@ -43,19 +43,27 @@ CTypeParser::~CTypeParser() {}
 CTypeParser::CTypeParser() { initialize(); }
 
 void CTypeParser::initialize() {
-#define ADD_TYPE(T) type_maps_.insert(#T, sizeof(T));
-#define ADD_TYPE_S(T, S) type_maps_.insert(#T, S);
+
+#define ADD_TYPE(T) type_maps_.insert(#T, sizeof(T))
+
+#define ADD_TYPE_U(T)                                                          \
+    ADD_TYPE(T);                                                               \
+    unsigned_types_.append(#T);
+
+#define ADD_TYPE_S(T, S) type_maps_.insert(#T, S)
 
     // qualifiers to ignore in parsing
-    qualifiers_ = QStringList{"static",   "const",  "signed",       "unsigned",
-                              "far",      "extern", "volatile",     "auto",
-                              "register", "inline", "__attribute__"};
+    qualifiers_ =
+        QStringList{"static", "const",    "far",    "extern",       "volatile",
+                    "auto",   "register", "inline", "__attribute__"};
 
     // keywords that we care
     keywords_["struct"] = kStructKeyword;
     keywords_["union"] = kUnionKeyword;
     keywords_["enum"] = kEnumKeyword;
     keywords_["typedef"] = kTypedefKeyword;
+    keywords_["signed"] = kSignedKeyword;
+    keywords_["unsigned"] = KUnsignedKeyword;
 
     using byte = unsigned char;
     using char8_t = unsigned char;
@@ -79,21 +87,24 @@ void CTypeParser::initialize() {
     using uint32_be = quint32_be;
     using uint64_le = quint64_le;
     using uint64_be = quint64_be;
+    using longlong = qlonglong;
+    using ulonglong = qulonglong;
 
-    ADD_TYPE(bool);
+    ADD_TYPE_U(bool);
     ADD_TYPE(char);
     ADD_TYPE(short);
     ADD_TYPE(int);
     ADD_TYPE(long);
     ADD_TYPE(float);
     ADD_TYPE(double);
-    ADD_TYPE(wchar_t);
+    ADD_TYPE_U(wchar_t);
 
     ADD_TYPE(char8_t);
     ADD_TYPE(char16_t);
     ADD_TYPE(char32_t);
     ADD_TYPE_S(void, 0);
-    ADD_TYPE(byte);
+
+    ADD_TYPE_U(byte);
 
     ADD_TYPE(int8);
     ADD_TYPE(int16);
@@ -106,16 +117,93 @@ void CTypeParser::initialize() {
     ADD_TYPE(int64_le);
     ADD_TYPE(int64_be);
 
-    ADD_TYPE(uint8);
-    ADD_TYPE(uint16);
-    ADD_TYPE(uint16_le);
-    ADD_TYPE(uint16_be);
-    ADD_TYPE(uint32);
-    ADD_TYPE(uint32_le);
-    ADD_TYPE(uint32_be);
-    ADD_TYPE(uint64);
-    ADD_TYPE(uint64_le);
-    ADD_TYPE(uint64_be);
+    ADD_TYPE_U(uint8);
+    ADD_TYPE_U(uint16);
+    ADD_TYPE_U(uint16_le);
+    ADD_TYPE_U(uint16_be);
+    ADD_TYPE_U(uint32);
+    ADD_TYPE_U(uint32_le);
+    ADD_TYPE_U(uint32_be);
+    ADD_TYPE_U(uint64);
+    ADD_TYPE_U(uint64_le);
+    ADD_TYPE_U(uint64_be);
+
+    ADD_TYPE(longlong);
+    ADD_TYPE_U(ulonglong);
+
+    using BOOL = bool;
+    using BYTE = byte;
+    using WORD = uint16;
+    using DWORD = uint32;
+    using QWORD = uint64;
+    using DWORDLONG = QWORD;
+    using FLOAT = float;
+    using DOUBLE = double;
+    using DWORD32 = uint32;
+    using DWORD64 = uint64;
+
+    ADD_TYPE_U(BOOL);
+    ADD_TYPE_U(BYTE);
+    ADD_TYPE_U(WORD);
+    ADD_TYPE_U(DWORD);
+    ADD_TYPE_U(QWORD);
+    ADD_TYPE_U(DWORDLONG);
+
+    using INT8 = qint8;
+    using INT16 = qint16;
+    using INT32 = qint32;
+    using INT64 = qint64;
+
+    ADD_TYPE(INT8);
+    ADD_TYPE(INT16);
+    ADD_TYPE(INT32);
+    ADD_TYPE(INT64);
+
+    using UINT8 = quint8;
+    using UINT16 = quint16;
+    using UINT32 = quint32;
+    using UINT64 = quint64;
+
+    ADD_TYPE_U(UINT8);
+    ADD_TYPE_U(UINT16);
+    ADD_TYPE_U(UINT32);
+    ADD_TYPE_U(UINT64);
+
+    using SHORT = short;
+    using INT = int;
+    using LONG = long;
+    using WCHAR = wchar_t;
+
+    ADD_TYPE(SHORT);
+    ADD_TYPE(INT);
+    ADD_TYPE(LONG);
+    ADD_TYPE_U(WCHAR);
+
+    using LONGLONG = longlong;
+    using ULONGLONG = ulonglong;
+
+    ADD_TYPE(LONGLONG);
+    ADD_TYPE_U(ULONGLONG);
+
+    using LONG32 = qint32;
+    using LONG64 = qint64;
+
+    ADD_TYPE(LONG32);
+    ADD_TYPE(LONG64);
+
+    using SIZE_T = size_t;
+    ADD_TYPE_U(size_t);
+    ADD_TYPE_U(SIZE_T);
+
+    ADD_TYPE(int8_t);
+    ADD_TYPE(int16_t);
+    ADD_TYPE(int32_t);
+    ADD_TYPE(int64_t);
+
+    ADD_TYPE_U(uint8_t);
+    ADD_TYPE_U(uint16_t);
+    ADD_TYPE_U(uint32_t);
+    ADD_TYPE_U(uint64_t);
 
 #undef ADD_TYPE
 #undef ADD_TYPE_S
@@ -135,17 +223,17 @@ void CTypeParser::parseFiles() {
     }
 }
 
-void CTypeParser::parseFile(const QString &file) {
+bool CTypeParser::parseFile(const QString &file) {
     // parse a file only when it's not yet parsed
     if (header_files_.contains(file) && header_files_[file]) {
         qDebug() << "File is already processed:" << file;
-        return;
+        return true;
     }
 
     QFile ifs(file);
     if (!ifs.open(QIODevice::ReadOnly)) {
         qWarning() << "Failed to open file -" << file;
-        return;
+        return false;
     }
 
     // flag to true before parsing the file so that it won't be parsed
@@ -153,12 +241,10 @@ void CTypeParser::parseFile(const QString &file) {
     header_files_[file] = true;
     qDebug() << "Parsing file -" << file;
 
-    parseSource(preprocess(ifs));
-
-    dumpTypeDefs(); // TODO: remove it
+    return parseSource(preprocess(ifs));
 }
 
-void CTypeParser::parseSource(const QString &src) {
+bool CTypeParser::parseSource(const QString &src) {
     qsizetype pos = 0;
     QString token, line;
     bool is_typedef = false;
@@ -171,13 +257,16 @@ void CTypeParser::parseSource(const QString &src) {
         if (token.length() == 1) {
             switch (token.at(0).toLatin1()) {
             case kPoundSign:
-                parsePreProcDirective(src, pos);
+                if (!parsePreProcDirective(src, pos)) {
+                    return false;
+                }
                 break;
 
             // below characters can be ignored silently
             case kBlockStart:
             case kBlockEnd:
             case kSemicolon:
+                decl.is_unsigned = false;
                 break;
 
             default:
@@ -190,9 +279,14 @@ void CTypeParser::parseSource(const QString &src) {
             switch (type) {
             case kStructKeyword:
             case kUnionKeyword:
-                assert(parseStructUnion((kStructKeyword == type) ? true : false,
-                                        is_typedef, src, pos, decl, is_decl) &&
-                       !is_decl);
+                if (!parseStructUnion((kStructKeyword == type) ? true : false,
+                                      is_typedef, src, pos, decl, is_decl) ||
+                    is_decl) {
+                    // error occurred
+                    qCritical()
+                        << "Bad syntax for nested struct variable declaration";
+                    return false;
+                }
 
                 // reset is_typedef
                 is_typedef = false;
@@ -203,7 +297,7 @@ void CTypeParser::parseSource(const QString &src) {
                     is_decl) {
                     qCritical()
                         << "Bad syntax for nested enum variable declaration";
-                    return;
+                    return false;
                 }
 
                 // reset is_typedef
@@ -216,17 +310,25 @@ void CTypeParser::parseSource(const QString &src) {
 
             case kBasicDataType:
                 // only (const) global variable are supported
-                assert(getRestLine(src, pos, line));
+                if (!getRestLine(src, pos, line)) {
+                    return false;
+                }
                 if (!parseAssignExpression(line)) {
                     qDebug() << "Expression not supported - " + line;
                 }
                 break;
 
+            case kSignedKeyword: // ignore
+                break;
+            case KUnsignedKeyword:
+                decl.is_unsigned = true;
+                break;
             default:
                 break;
             }
         }
     }
+    return true;
 }
 
 void CTypeParser::findHeaderFiles(const QString &folder) {
@@ -417,7 +519,10 @@ void CTypeParser::wrapLines(QStringList &lines) const {
 #endif
         auto first = it;
         line = *it;
-        assert(!line.isEmpty());
+        if (line.isEmpty()) {
+            it++;
+            continue;
+        }
 
         while ('\\' == line.at(line.length() - 1) && ++it != lines.end()) {
             line = line.left(line.length() - 1);
@@ -684,7 +789,10 @@ QString CTypeParser::mergeAllLines(const QStringList &lines) const {
     QStringList::const_iterator it = lines.begin();
     while (it != lines.end()) {
         line = *it;
-        Q_ASSERT(!line.isEmpty());
+        if (line.isEmpty()) {
+            it++;
+            continue;
+        }
 
         if ('#' == line.at(0)) { // don't  split pre-processing line
             src += line + EOL;
@@ -794,12 +902,17 @@ bool CTypeParser::getNextLine(QString src, qsizetype &pos,
         line = src.mid(start);
         pos = src.length();
     } else {
-        Q_ASSERT(end != start); // assert fail only when it's an empty line
+        // assert fail only when it's an empty line
+        if (end == start) {
+            return false;
+        }
         line = src.mid(start, end - start);
         pos = end;
     }
 
-    Q_ASSERT(!line.trimmed().isEmpty());
+    if (line.trimmed().isEmpty()) {
+        return false;
+    }
     return true;
 }
 
@@ -892,14 +1005,18 @@ qsizetype CTypeParser::splitLineIntoTokens(QString line,
 /// @note can be improved with consideration of multiple demension array
 bool CTypeParser::parseDeclaration(const QString &line,
                                    VariableDeclaration &decl) const {
-    assert(!line.isEmpty());
+    if (line.isEmpty()) {
+        return false;
+    }
     if (line[line.length() - 1] != kSemicolon)
         return false;
 
     QStringList tokens;
     qsizetype size = splitLineIntoTokens(line, tokens);
-    assert(size >=
-           3); // even the simplest declaration contains 3 tokens: type var ;
+    // even the simplest declaration contains 3 tokens: type var ;
+    if (size < 3) {
+        return false;
+    }
 
     qsizetype index = 0;
     decl.data_type = tokens[index];
@@ -969,12 +1086,16 @@ bool CTypeParser::parseEnumDeclaration(const QString &line, int &last_value,
         break;
 
     case 2:
-        assert(kComma == tokens[1].at(0));
+        if (kComma != tokens[1].at(0)) {
+            return false;
+        }
         decl.second = ++last_value;
         break;
 
     case 3:
-        assert(kEqual == tokens[1].at(0));
+        if (kEqual != tokens[1].at(0)) {
+            return false;
+        }
 
         if (!isNumericToken(tokens[2], number)) {
             qCritical() << QStringLiteral(
@@ -988,7 +1109,9 @@ bool CTypeParser::parseEnumDeclaration(const QString &line, int &last_value,
         break;
 
     case 4:
-        assert(kEqual == tokens[1].at(0) && kComma == tokens[3].at(0));
+        if (!(kEqual == tokens[1].at(0) && kComma == tokens[3].at(0))) {
+            return false;
+        }
 
         if (!isNumericToken(tokens[2], number)) {
             qCritical() << QStringLiteral(
@@ -1048,18 +1171,22 @@ bool CTypeParser::parseAssignExpression(const QString &line) {
 /// @note when a header file inclusion directive is met, the header file is
 /// parsed immediately to ensure the correct parsing sequence
 ///
-void CTypeParser::parsePreProcDirective(const QString &src, qsizetype &pos) {
+bool CTypeParser::parsePreProcDirective(const QString &src, qsizetype &pos) {
     QString token, last_token, line;
     long number;
 
     getNextToken(src, pos, token);
     if (0 == token.compare("include")) {
-        assert(getNextToken(src, pos, token, false));
+        if (!getNextToken(src, pos, token, false)) {
+            return false;
+        }
 
         // only handle header file included with ""
         if (kQuotation == token[token.length() - 1]) {
             // get included header file name
-            assert(getNextToken(src, pos, token, false));
+            if (!getNextToken(src, pos, token, false)) {
+                return false;
+            }
 
             // parse the header file immediately
             parseFile(token);
@@ -1073,7 +1200,9 @@ void CTypeParser::parsePreProcDirective(const QString &src, qsizetype &pos) {
                            line;
         }
     } else if (0 == token.compare("define")) {
-        assert(getNextToken(src, pos, last_token, false));
+        if (!getNextToken(src, pos, last_token, false)) {
+            return false;
+        }
 
         if (getNextToken(src, pos, token, false) &&
             isNumericToken(token, number)) {
@@ -1087,6 +1216,7 @@ void CTypeParser::parsePreProcDirective(const QString &src, qsizetype &pos) {
         qInfo() << QStringLiteral("Skip unsupported pre-processing line - ") +
                        line;
     }
+    return true;
 }
 
 /// Parse struct/union definition or declaration
@@ -1135,13 +1265,17 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
     QString line, token, next_token;
     QString type_name, type_alias;
 
-    Q_ASSERT(!src.isEmpty() && pos < qsizetype(src.length()));
+    if (src.isEmpty() || pos >= qsizetype(src.length())) {
+        return false;
+    }
 
     qsizetype start = pos; // store the original position for next guess
 
     // peek rest of current line starting from "pos"
     if (!getRestLine(src, pos, line)) {
-        assert(getNextLine(src, pos, line));
+        if (!getNextLine(src, pos, line)) {
+            return false;
+        }
     }
 
     // it might be just a simple struct/union variable declaration as format 5
@@ -1151,10 +1285,14 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
 
     // else, next token should be either '{' or a typename followed by '{'
     pos = start; // reset the position
-    assert(getNextToken(src, pos, token));
+    if (!getNextToken(src, pos, token)) {
+        return false;
+    }
     if ('{' != token.at(0)) {
         type_name = token;
-        assert(getNextToken(src, pos, token) && '{' == token.at(0));
+        if (!(getNextToken(src, pos, token) && '{' == token.at(0))) {
+            return false;
+        }
     }
 
     // the following part should be:
@@ -1164,12 +1302,16 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
         if ('}' == token.at(0)) { // reach block end
             // process rest part after block end
             // start = 1;
-            assert(getNextToken(src, pos, token));
+            if (!getNextToken(src, pos, token)) {
+                return false;
+            }
 
             if (is_typedef) {
                 // format 1
-                assert(getNextToken(src, pos, next_token) &&
-                       kSemicolon == next_token.at(0));
+                if (!(getNextToken(src, pos, next_token) &&
+                      kSemicolon == next_token.at(0))) {
+                    return false;
+                }
 
                 is_decl = false;
                 type_alias = token; // token is actually type alias
@@ -1191,7 +1333,9 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
                 if (kSemicolon == token.at(0)) {
                     // format 2
                     is_decl = false;
-                    assert(!type_name.isEmpty());
+                    if (type_name.isEmpty()) {
+                        return false;
+                    }
                     storeStructUnionDef(is_struct, type_name, members);
                 } else {
                     // token must be part of a variable declaration
@@ -1212,7 +1356,9 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
                     storeStructUnionDef(is_struct, type_name, members);
 
                     if (!getRestLine(src, pos, line)) {
-                        assert(getNextLine(src, pos, line));
+                        if (!getNextLine(src, pos, line)) {
+                            return false;
+                        }
                     }
 
                     // for easier parsing, make a declaration by adding the
@@ -1244,7 +1390,9 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
                 }
 
                 // TODO: also check position here
-                assert(is_decl);
+                if (!is_decl) {
+                    return false;
+                }
                 members.push_back(member);
             } else if (kEnumKeyword == type) {
                 if (!parseEnum(false, src, pos, member, is_decl)) {
@@ -1254,12 +1402,16 @@ bool CTypeParser::parseStructUnion(const bool is_struct, const bool is_typedef,
                 }
 
                 // TODO: also check position here
-                assert(is_decl);
+                if (!is_decl) {
+                    return false;
+                }
                 members.push_back(member);
             } else {
                 // regular struct/union member declaration, including format 5
                 if (!getRestLine(src, pos, line)) {
-                    assert(getNextLine(src, pos, line));
+                    if (!getNextLine(src, pos, line)) {
+                        return false;
+                    }
                 }
 
                 line = token + " " + line;
@@ -1289,13 +1441,17 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
     int last_value = -1;
     bool is_last_member = false;
 
-    Q_ASSERT(!src.isEmpty() && pos < qsizetype(src.length()));
+    if (src.isEmpty() || pos >= qsizetype(src.length())) {
+        return false;
+    }
 
     qsizetype start = pos; // store the original position for next guess
 
     // peek rest of current line starting from "pos"
     if (!getRestLine(src, pos, line)) {
-        assert(getNextLine(src, pos, line));
+        if (!getNextLine(src, pos, line)) {
+            return false;
+        }
     }
 
     // it might be just a simple enum variable declaration like: enum Home home;
@@ -1305,10 +1461,14 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
 
     // else, next token should be either '{' or a typename followed by '{'
     pos = start; // reset the position
-    assert(getNextToken(src, pos, token));
+    if (!getNextToken(src, pos, token)) {
+        return false;
+    }
     if ('{' != token.at(0)) {
         type_name = token;
-        assert(getNextToken(src, pos, token) && '{' == token.at(0));
+        if (!(getNextToken(src, pos, token) && '{' == token.at(0))) {
+            return false;
+        }
     }
 
     // the following part should be:
@@ -1318,12 +1478,16 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
         if ('}' == token.at(0)) { // reach block end
             // process rest part after block end
             // start = 1;
-            assert(getNextToken(src, pos, token));
+            if (!getNextToken(src, pos, token)) {
+                return false;
+            }
 
             if (is_typedef) {
                 // format 1
-                assert(getNextToken(src, pos, next_token) &&
-                       kSemicolon == next_token.at(0));
+                if (!(getNextToken(src, pos, next_token) &&
+                      kSemicolon == next_token.at(0))) {
+                    return false;
+                }
 
                 is_decl = false;
                 enum_defs_[token] = members; // type alias
@@ -1338,7 +1502,9 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
                 if (kSemicolon == token.at(0)) {
                     // format 2
                     is_decl = false;
-                    assert(!type_name.isEmpty());
+                    if (type_name.isEmpty()) {
+                        return false;
+                    }
                     enum_defs_[type_name] = members;
                     type_maps_[type_name] = sizeof(int);
                 } else {
@@ -1362,7 +1528,9 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
                     type_maps_[type_name] = sizeof(int);
 
                     if (!getRestLine(src, pos, line)) {
-                        assert(getNextLine(src, pos, line));
+                        if (!getNextLine(src, pos, line)) {
+                            return false;
+                        }
                     }
 
                     // for easier parsing, make a declaration by adding the
@@ -1496,7 +1664,9 @@ qsizetype CTypeParser::padStructMembers(QList<VariableDeclaration> &members) {
                     return 0;
                 }
             } else if (2 == last_size) {
-                assert(1 == size);
+                if (1 != size) {
+                    return 0;
+                }
                 members.insert(++it, makePadField(1));
                 total += kAlignment_;
                 last_size = 0;

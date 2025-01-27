@@ -85,8 +85,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
-                AppManager::instance()->openFile(
-                    rinfo.fileName, rinfo.isWorkSpace, rinfo.start, rinfo.stop);
+                AppManager::instance()->openFile(rinfo.fileName,
+                                                 rinfo.isWorkSpace, rinfo.start,
+                                                 rinfo.length);
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
@@ -657,6 +658,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
 
     auto a = new QAction(this);
     a->setText(tr("Copy"));
+    a->setIcon(ICONRES("copy"));
     connect(a, &QAction::triggered, this, [=] {
         auto r = m_numshowtable->currentIndex().row();
         qApp->clipboard()->setText(
@@ -750,6 +752,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
     m_bookmarks = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_bookmarks);
+    m_bookmarks->setSelectionMode(QTableViewExt::ExtendedSelection);
 
     m_bookmarks->setModel(_bookMarkEmpty);
 
@@ -767,6 +770,16 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                 auto offset = model->data(offIndex).value<qsizetype>();
                 hexeditor->cursor()->moveTo(offset);
             });
+
+    m_bookmarks->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto model = m_bookmarks->model();
+            saveTableContent(model);
+        }));
+
+    auto sep = new QAction(m_bookmarks);
+    sep->setSeparator(true);
+    m_bookmarks->addAction(sep);
 
     m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
                                  tr("DeleteBookMark"), m_bookmarks);
@@ -787,7 +800,9 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
             pos.append(offset);
         }
 
+        m_bookmarks->clearSelection();
         doc->RemoveBookMarks(pos);
+        emit model->layoutChanged();
     });
     m_aDelBookMark->setEnabled(false);
     m_bookmarks->addAction(m_aDelBookMark);
@@ -813,6 +828,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
     m_metadatas = new QTableViewExt(this);
     Utilities::applyTableViewProperty(m_metadatas);
+    m_metadatas->setSelectionMode(QTableViewExt::ExtendedSelection);
 
     m_metadatas->setModel(_metadataEmpty);
 
@@ -831,6 +847,16 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                 hexeditor->cursor()->moveTo(offset);
             });
 
+    m_metadatas->addAction(
+        newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
+            auto model = m_metadatas->model();
+            saveTableContent(model);
+        }));
+
+    auto sep = new QAction(m_metadatas);
+    sep->setSeparator(true);
+    m_metadatas->addAction(sep);
+
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
                                  tr("DeleteMetadata"), m_metadatas);
     connect(m_aDelMetaData, &QAction::triggered, this, [=] {
@@ -848,7 +874,9 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
             pmetas.push_back(mds.at(item.row()));
         }
 
+        m_metadatas->clearSelection();
         hexeditor->document()->metadata()->RemoveMetadatas(pmetas);
+        emit m_metadatas->model()->layoutChanged();
     });
     m_aDelMetaData->setEnabled(false);
     m_metadatas->addAction(m_aDelMetaData);
@@ -1123,91 +1151,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
     m_infotable->addAction(
         newAction(QStringLiteral("export"), tr("ExportResult"), [this]() {
             auto model = m_infotable->model();
-            if (!model) {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                             tr("NothingToSave"));
-                return;
-            }
-
-            QString selFilter;
-            auto filename = WingFileDialog::getSaveFileName(
-                this, tr("ChooseSaveFile"), m_lastusedpath,
-                QStringLiteral("Json (*.json);;CSV (*.csv)"), &selFilter);
-            if (filename.isEmpty()) {
-                return;
-            }
-
-            if (selFilter.startsWith(QStringLiteral("Json"))) {
-                QJsonArray tableData;
-
-                // Add header row
-                QJsonArray headers;
-                for (int col = 0; col < model->columnCount(); ++col) {
-                    headers.append(
-                        model->headerData(col, Qt::Horizontal).toString());
-                }
-                tableData.append(headers);
-
-                // Add data rows
-                for (int row = 0; row < model->rowCount(); ++row) {
-                    QJsonArray rowData;
-                    for (int col = 0; col < model->columnCount(); ++col) {
-                        QModelIndex index = model->index(row, col);
-                        rowData.append(model->data(index).toString());
-                    }
-                    tableData.append(rowData);
-                }
-
-                // Create JSON document
-                QJsonDocument jsonDocument(tableData);
-
-                // Write to file
-                QFile file(filename);
-                if (!file.open(QFile::WriteOnly | QFile::Text)) {
-                    WingMessageBox::critical(this, tr("Error"),
-                                             tr("FilePermission"));
-                    return;
-                }
-
-                file.write(jsonDocument.toJson(QJsonDocument::Indented));
-                file.close();
-            } else {
-                QFile file(filename);
-                if (!file.open(QFile::WriteOnly | QFile::Text)) {
-                    WingMessageBox::critical(this, tr("Error"),
-                                             tr("FilePermission"));
-                    return;
-                }
-
-                QTextStream stream(&file);
-
-                // Write headers
-                QStringList headers;
-                for (int col = 0; col < model->columnCount(); ++col) {
-                    auto content =
-                        model->headerData(col, Qt::Horizontal).toString();
-                    content.prepend('"').append('"');
-                    headers << content;
-                }
-                stream << headers.join(',') << Qt::endl;
-
-                // Write data rows
-                for (int row = 0; row < model->rowCount(); ++row) {
-                    QStringList rowData;
-                    for (int col = 0; col < model->columnCount(); ++col) {
-                        QModelIndex index = model->index(row, col);
-                        auto content = model->data(index).toString();
-                        content.prepend('"').append('"');
-                        rowData << content;
-                    }
-                    stream << rowData.join(',') << Qt::endl;
-                }
-
-                file.close();
-            }
-
-            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                         tr("SaveSuccessfully"));
+            saveTableContent(model);
         }));
     m_infotable->addAction(
         newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
@@ -1644,8 +1588,12 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto &l = LayoutManager::instance().layouts();
 
         auto menu = new QMenu(this);
-        menu->addAction(newAction(
-            tr("Default"), [this]() { m_dock->restoreState(_defaultLayout); }));
+        menu->addAction(newAction(tr("Default"), [this]() {
+            showStatus(tr("LayoutRestoring..."));
+            qApp->processEvents();
+            m_dock->restoreState(_defaultLayout);
+            showStatus({});
+        }));
 
         if (!l.isEmpty()) {
             menu->addSeparator();
@@ -1653,8 +1601,12 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
         for (auto p = l.constKeyValueBegin(); p != l.constKeyValueEnd(); ++p) {
             auto layout = p->second;
-            menu->addAction(newAction(
-                p->first, [this, layout]() { m_dock->restoreState(layout); }));
+            menu->addAction(newAction(p->first, [this, layout]() {
+                showStatus(tr("LayoutRestoring..."));
+                qApp->processEvents();
+                m_dock->restoreState(layout);
+                showStatus({});
+            }));
         }
 
         m_toolBtneditors.insert(
@@ -1902,7 +1854,13 @@ void MainWindow::installPluginEditorWidgets() {
     m_editorViewWidgets.clear();
 }
 
-void MainWindow::showStatus(const QString &status) { _status->setText(status); }
+void MainWindow::showStatus(const QString &status) {
+    if (status.isEmpty() && m_isfinding) {
+        _status->setText(tr("Finding..."));
+    } else {
+        _status->setText(status);
+    }
+}
 
 EditorView *MainWindow::newfileGUI() {
     if (!newOpenFileSafeCheck()) {
@@ -1919,6 +1877,9 @@ EditorView *MainWindow::newfileGUI() {
 void MainWindow::on_newfile() { newfileGUI(); }
 
 void MainWindow::on_openfile() {
+    ScopeGuard g([this]() { showStatus(tr("Opening...")); },
+                 [this]() { showStatus({}); });
+
     auto filename =
         WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath);
     if (!filename.isEmpty()) {
@@ -1939,14 +1900,17 @@ void MainWindow::on_openfile() {
             editor->setFocus();
             return;
         }
-    }
 
-    RecentFileManager::RecentInfo info;
-    info.fileName = filename;
-    m_recentmanager->addRecentFile(info);
+        RecentFileManager::RecentInfo info;
+        info.fileName = filename;
+        m_recentmanager->addRecentFile(info);
+    }
 }
 
 void MainWindow::on_openregion() {
+    ScopeGuard g([this]() { showStatus(tr("RegionOpening...")); },
+                 [this]() { showStatus({}); });
+
     OpenRegionDialog d(m_lastusedpath);
     if (d.exec()) {
         auto res = d.getResult();
@@ -1966,14 +1930,25 @@ void MainWindow::on_openregion() {
             editor->setFocus();
             return;
         }
+
+        RecentFileManager::RecentInfo info;
+        info.fileName = res.filename;
+        info.start = res.start;
+        info.length = res.length;
+        m_recentmanager->addRecentFile(info);
     }
 }
 
 void MainWindow::on_openworkspace() {
+    ScopeGuard g([this]() { showStatus(tr("WorkSpaceOpening...")); },
+                 [this]() { showStatus({}); });
+
     auto filename = WingFileDialog::getOpenFileName(
         this, tr("ChooseFile"), m_lastusedpath, tr("ProjectFile (*.wingpro)"));
-    if (filename.isEmpty())
+    if (filename.isEmpty()) {
         return;
+    }
+
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
@@ -1996,9 +1971,14 @@ void MainWindow::on_openworkspace() {
     info.fileName = filename;
     info.isWorkSpace = true;
     m_recentmanager->addRecentFile(info);
+
+    showStatus({});
 }
 
 void MainWindow::on_opendriver() {
+    ScopeGuard g([this]() { showStatus(tr("DriverOpening...")); },
+                 [this]() { showStatus({}); });
+
     DriverSelectorDialog ds;
     if (ds.exec()) {
         if (!Utilities::isRoot()) {
@@ -2025,6 +2005,9 @@ void MainWindow::on_opendriver() {
 }
 
 void MainWindow::on_reload() {
+    ScopeGuard g([this]() { showStatus(tr("Reloading...")); },
+                 [this]() { showStatus({}); });
+
     auto editor = currentEditor();
     if (editor == nullptr) {
         return;
@@ -2044,6 +2027,9 @@ void MainWindow::on_reload() {
 }
 
 void MainWindow::on_save() {
+    ScopeGuard g([this]() { showStatus(tr("Saving...")); },
+                 [this]() { showStatus({}); });
+
     auto editor = currentEditor();
     if (editor == nullptr) {
         return;
@@ -2088,6 +2074,9 @@ restart:
 }
 
 void MainWindow::on_saveas() {
+    ScopeGuard g([this]() { showStatus(tr("SavingAs...")); },
+                 [this]() { showStatus({}); });
+
     auto editor = currentEditor();
     if (editor == nullptr) {
         return;
@@ -2133,6 +2122,9 @@ restart:
 }
 
 void MainWindow::on_exportfile() {
+    ScopeGuard g([this]() { showStatus(tr("Exporting...")); },
+                 [this]() { showStatus({}); });
+
     auto editor = currentEditor();
     if (editor == nullptr) {
         return;
@@ -2172,6 +2164,9 @@ restart:
 }
 
 void MainWindow::on_savesel() {
+    ScopeGuard g([this]() { showStatus(tr("SavingSel...")); },
+                 [this]() { showStatus({}); });
+
     auto hexeditor = currentHexView();
     if (hexeditor == nullptr) {
         return;
@@ -2294,6 +2289,7 @@ void MainWindow::on_findfile() {
 
         ExecAsync<EditorView::FindError>(
             [this, r]() -> EditorView::FindError {
+                m_isfinding = true;
                 this->showStatus(tr("Finding..."));
                 return currentEditor()->find(r);
             },
@@ -2320,6 +2316,7 @@ void MainWindow::on_findfile() {
                 }
                 m_find->raise();
 
+                m_isfinding = false;
                 this->showStatus({});
             });
     }
@@ -2688,6 +2685,9 @@ void MainWindow::on_clearfindresult() {
 }
 
 void MainWindow::on_exportfindresult() {
+    ScopeGuard g([this]() { showStatus(tr("FindResultExporting...")); },
+                 [this]() { showStatus({}); });
+
     auto editor = currentEditor();
     if (editor == nullptr) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
@@ -2941,6 +2941,9 @@ void MainWindow::on_fullScreen() {
 }
 
 void MainWindow::on_saveLayout() {
+    ScopeGuard g([this]() { showStatus(tr("LayoutSaving...")); },
+                 [this]() { showStatus({}); });
+
     static auto suffix = QStringLiteral(".wing-layout");
     bool ok;
     auto fileID = WingInputDialog::getText(
@@ -2959,8 +2962,12 @@ void MainWindow::on_saveLayout() {
                 m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
             Q_ASSERT(menu);
             menu->addAction(
-                newAction(lm.getSavedLayoutName(fileID),
-                          [this, layout]() { m_dock->restoreState(layout); }));
+                newAction(lm.getSavedLayoutName(fileID), [this, layout]() {
+                    showStatus(tr("LayoutRestoring..."));
+                    qApp->processEvents();
+                    m_dock->restoreState(layout);
+                    showStatus({});
+                }));
 
             Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
                          tr("SaveLayoutSuccess"));
@@ -2972,6 +2979,8 @@ void MainWindow::on_saveLayout() {
 }
 
 void MainWindow::on_exportlog() {
+    ScopeGuard g([this]() { showStatus(tr("LogExporting...")); },
+                 [this]() { showStatus({}); });
     auto nfile = saveLog();
     if (nfile.isEmpty()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
@@ -2995,7 +3004,7 @@ void MainWindow::on_scriptwindow() {
     m_scriptDialog->raise();
 }
 
-void MainWindow::on_setting_general() { m_setdialog->showConfig(); }
+void MainWindow::on_setting_general() { m_setdialog->showConfig(0); }
 
 void MainWindow::on_setting_script() {
     m_scriptDialog->settingDialog()->showConfig();
@@ -3691,6 +3700,90 @@ EditorView *MainWindow::currentEditor() {
         return ret;
     }
     return m_curEditor;
+}
+
+void MainWindow::saveTableContent(QAbstractItemModel *model) {
+    if (!model || model->rowCount() == 0) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                     tr("NothingToSave"));
+        return;
+    }
+
+    QString selFilter;
+    auto filename = WingFileDialog::getSaveFileName(
+        this, tr("ChooseSaveFile"), m_lastusedpath,
+        QStringLiteral("Json (*.json);;CSV (*.csv)"), &selFilter);
+    if (filename.isEmpty()) {
+        return;
+    }
+
+    if (selFilter.startsWith(QStringLiteral("Json"))) {
+        QJsonArray tableData;
+
+        // Add header row
+        QJsonArray headers;
+        for (int col = 0; col < model->columnCount(); ++col) {
+            headers.append(model->headerData(col, Qt::Horizontal).toString());
+        }
+        tableData.append(headers);
+
+        // Add data rows
+        for (int row = 0; row < model->rowCount(); ++row) {
+            QJsonArray rowData;
+            for (int col = 0; col < model->columnCount(); ++col) {
+                QModelIndex index = model->index(row, col);
+                rowData.append(model->data(index).toString());
+            }
+            tableData.append(rowData);
+        }
+
+        // Create JSON document
+        QJsonDocument jsonDocument(tableData);
+
+        // Write to file
+        QFile file(filename);
+        if (!file.open(QFile::WriteOnly | QFile::Text)) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+            return;
+        }
+
+        file.write(jsonDocument.toJson(QJsonDocument::Indented));
+        file.close();
+    } else {
+        QFile file(filename);
+        if (!file.open(QFile::WriteOnly | QFile::Text)) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+            return;
+        }
+
+        QTextStream stream(&file);
+
+        // Write headers
+        QStringList headers;
+        for (int col = 0; col < model->columnCount(); ++col) {
+            auto content = model->headerData(col, Qt::Horizontal).toString();
+            content.prepend('"').append('"');
+            headers << content;
+        }
+        stream << headers.join(',') << Qt::endl;
+
+        // Write data rows
+        for (int row = 0; row < model->rowCount(); ++row) {
+            QStringList rowData;
+            for (int col = 0; col < model->columnCount(); ++col) {
+                QModelIndex index = model->index(row, col);
+                auto content = model->data(index).toString();
+                content.prepend('"').append('"');
+                rowData << content;
+            }
+            stream << rowData.join(',') << Qt::endl;
+        }
+
+        file.close();
+    }
+
+    Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                 tr("SaveSuccessfully"));
 }
 
 QHexView *MainWindow::currentHexView() {

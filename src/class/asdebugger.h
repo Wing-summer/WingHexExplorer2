@@ -143,6 +143,8 @@ signals:
     void onPullCallStack(const QList<CallStackItem> &callstacks);
     void onRunCurrentLine(const QString &file, int lineNr);
 
+    void onDebugActionExec();
+
 private:
     struct ContextDbgInfo {
         QString file;
@@ -152,7 +154,7 @@ private:
     };
 
 private:
-    std::atomic<DebugAction> m_action;
+    DebugAction m_action;
 
     asUINT m_lastCommandAtStackLevel;
     asIScriptFunction *m_lastFunction;

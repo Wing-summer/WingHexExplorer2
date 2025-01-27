@@ -77,7 +77,7 @@ public:
     Q_ENUM(asEContextState)
 
 public:
-    explicit ScriptMachine(std::function<QString()> &getInputFn,
+    explicit ScriptMachine(const std::function<QString()> &getInputFn,
                            QObject *parent = nullptr);
 
     virtual ~ScriptMachine();
@@ -96,6 +96,8 @@ public:
 
     bool insteadFoundDisabled() const;
     void setInsteadFoundDisabled(bool newInsteadFoundDisabled);
+
+    static void registerEngineAddon(asIScriptEngine *engine);
 
 public slots:
     virtual bool executeCode(const QString &code);

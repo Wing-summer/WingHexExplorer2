@@ -130,6 +130,7 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
     auto engine = machine->engine();
     auto stringTypeID = machine->typeInfo(ScriptMachine::tString)->GetTypeId();
 
+    installBasicTypes(engine);
     installExtAPI(engine);
     installLogAPI(engine);
     installMsgboxAPI(engine);
@@ -137,13 +138,36 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
     installFileDialogAPI(engine);
     installColorDialogAPI(engine);
 
-    installHexBaseType(engine);
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
     installDataVisualAPI(engine, stringTypeID);
 
-    installScriptFns(engine);
     installScriptEnums(engine);
+    installScriptFns(engine);
+}
+
+void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("msgbox");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
+    registerAngelType<QMessageBox::Icon>(engine, "icon");
+
+    r = engine->SetDefaultNamespace("inputbox");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
+    registerAngelType<Qt::InputMethodHints>(engine, "InputMethodHints");
+
+    r = engine->SetDefaultNamespace("filedlg");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    registerAngelType<QFileDialog::Options>(engine, "options");
+
+    engine->SetDefaultNamespace("");
+
+    installHexBaseType(engine);
 }
 
 void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
@@ -188,8 +212,6 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    registerAngelType<QMessageBox::StandardButtons>(engine, "buttons");
-    registerAngelType<QMessageBox::Icon>(engine, "icon");
     auto msgbox = &this->msgbox;
 
     registerAPI<void(const QString &)>(
@@ -270,9 +292,6 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    registerAngelType<QLineEdit::EchoMode>(engine, "EchoMode");
-    registerAngelType<Qt::InputMethodHints>(engine, "InputMethodHints");
-
     auto inputbox = &this->inputbox;
 
     registerAPI<QString(const QString &, const QString &, QLineEdit::EchoMode,
@@ -346,8 +365,6 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("filedlg");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-
-    registerAngelType<QFileDialog::Options>(engine, "options");
 
     auto filedlg = &this->filedlg;
 
@@ -1218,17 +1235,15 @@ void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
             auto id = p->second;
             auto r = engine->RegisterGlobalFunction(
                 sig.toUtf8(), asFUNCTION(script_call), asCALL_GENERIC);
-            if (r >= 0) {
-                // r is the AngelScript function ID
-                auto fn = engine->GetFunctionById(r);
-                fn->SetUserData(this, AsUserDataType::UserData_API);
-                fn->SetUserData(reinterpret_cast<void *>(id),
-                                AsUserDataType::UserData_PluginFn);
-            } else {
-                emit warn(tr("RegisterScriptFnInvalidSig:") + sig);
-            }
-        }
+            Q_ASSERT(r >= 0);
+            Q_UNUSED(r);
 
+            // r is the AngelScript function ID
+            auto fn = engine->GetFunctionById(r);
+            fn->SetUserData(this, AsUserDataType::UserData_API);
+            fn->SetUserData(reinterpret_cast<void *>(id),
+                            AsUserDataType::UserData_PluginFn);
+        }
         engine->SetDefaultNamespace("");
     }
 }
@@ -1246,21 +1261,14 @@ void WingAngelAPI::installScriptEnums(asIScriptEngine *engine) {
              p++) {
             auto en = p->first.toUtf8();
             r = engine->RegisterEnum(en.data());
-            if (r < 0) {
-                emit warn(tr("InvalidEnumName:") + p->first);
-                continue;
-            }
+            Q_ASSERT(r >= 0);
+            Q_UNUSED(r);
 
             for (auto &e : p->second) {
                 auto ev = e.first.toUtf8();
                 r = engine->RegisterEnumValue(en.data(), ev.data(), e.second);
-                if (r < 0) {
-                    emit warn(tr("InvalidEnumValue:") % p->first %
-                              QStringLiteral("::") % e.first %
-                              QStringLiteral(" (") % QString::number(e.second) %
-                              QStringLiteral(")"));
-                    continue;
-                }
+                Q_ASSERT(r >= 0);
+                Q_UNUSED(r);
             }
         }
         engine->SetDefaultNamespace("");

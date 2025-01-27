@@ -3156,6 +3156,10 @@ bool QDocumentCursorHandle::movePosition(int count,
     if (!m_doc)
         return false;
 
+    if (count == 0) {
+        return true;
+    }
+
     QDocumentLine l, l1 = m_doc->line(m_begLine), l2 = m_doc->line(m_endLine);
 
     int &line = m_begLine;
@@ -3173,8 +3177,13 @@ bool QDocumentCursorHandle::movePosition(int count,
 
     switch (op) {
     case QDocumentCursor::Left: {
-        if (atStart())
-            return false;
+        if (count > 0) {
+            if (atStart())
+                return false;
+        } else {
+            if (atEnd())
+                return false;
+        }
 
         int remaining = offset;
 
@@ -3204,8 +3213,13 @@ bool QDocumentCursorHandle::movePosition(int count,
     }
 
     case QDocumentCursor::Right: {
-        if (atEnd())
-            return false;
+        if (count > 0) {
+            if (atEnd())
+                return false;
+        } else {
+            if (atStart())
+                return false;
+        }
 
         int remaining = m_doc->line(line).length() - offset;
 
@@ -3612,6 +3626,9 @@ bool QDocumentCursorHandle::movePosition(int count,
         auto txt = m_doc->line(line).text().mid(offset);
         qsizetype index = 0;
         auto len = txt.length();
+        if (txt.isEmpty()) {
+            break;
+        }
         if (txt.front().isSpace()) {
             for (qsizetype i = 0; i < len; ++i) {
                 if (!txt.at(i).isSpace()) {

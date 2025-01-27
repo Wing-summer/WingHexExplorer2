@@ -200,7 +200,7 @@ private:
     ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
 
-    void updateRunDebugMode();
+    void updateRunDebugMode(bool disable = false);
 
     ScriptEditor *findEditorView(const QString &filename);
 

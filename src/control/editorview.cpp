@@ -32,6 +32,10 @@
 #include <QFileInfo>
 #include <QVBoxLayout>
 
+#ifdef Q_OS_LINUX
+#include <unistd.h>
+#endif
+
 constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
@@ -453,6 +457,11 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
 
+#ifdef Q_OS_LINUX
+    bool needAdjustFile = !QFile::exists(fileName);
+    bool needAdjustWs = false;
+#endif
+
     if (isNewFile()) {
         if (fileName.isEmpty()) {
             return ErrFile::IsNewFile;
@@ -468,11 +477,17 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace ||
         (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
          (m_isWorkSpace || hasMeta()))) {
+
+#ifdef Q_OS_LINUX
+        Q_ASSERT(!workSpaceName.isEmpty());
+        needAdjustWs = !QFile::exists(workSpaceName);
+#endif
+
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
 
         auto b = WorkSpaceManager::saveWorkSpace(
-            workSpaceName, m_fileName, doc->bookMarks(),
+            workSpaceName, fileName, doc->bookMarks(),
             doc->metadata()->getAllMetadata(), infos);
         if (!b)
             return ErrFile::WorkSpaceUnSaved;
@@ -516,6 +531,30 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     } else {
         doc->setDocSaved();
     }
+
+#ifdef Q_OS_LINUX
+    if (Utilities::isRoot()) {
+        // a trick off when root under linux OS
+        // When new file created, change file's permission to 666.
+
+        // Because you cannot open it when you use it in common user
+        // after saving under root user.
+
+        // It's a workaround and not eligent for permission system
+
+        if (needAdjustFile) {
+            if (Utilities::isFileOwnerRoot(fileName)) {
+                Utilities::fixUpFilePermissions(fileName);
+            }
+        }
+
+        if (needAdjustWs) {
+            if (Utilities::isFileOwnerRoot(workSpaceName)) {
+                Utilities::fixUpFilePermissions(workSpaceName);
+            }
+        }
+    }
+#endif
 
     return ErrFile::Success;
 }

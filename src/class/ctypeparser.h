@@ -42,8 +42,10 @@
 /// with this awareness
 ///
 typedef struct {
-    QString data_type;    ///< name of a data type, either basic type or
-                          ///< user-defined type
+    QString data_type; ///< name of a data type, either basic type or
+                       ///< user-defined type
+
+    bool is_unsigned;
     QString var_name;     ///< variable name
     qsizetype offset;     ///< member offset in struct: 0 for non-struct
     qsizetype array_size; ///< array size: 0 for non-array
@@ -60,6 +62,8 @@ enum TokenTypes {
     kUnionKeyword,
     kEnumKeyword,
     kTypedefKeyword,
+    kSignedKeyword,
+    KUnsignedKeyword,
 
     kBasicDataType,
     kAbstractType,
@@ -96,8 +100,8 @@ public:
 
 public:
     void parseFiles();
-    void parseFile(const QString &file);
-    void parseSource(const QString &src);
+    bool parseFile(const QString &file);
+    bool parseSource(const QString &src);
 
     QStringList includePaths() const;
     void setIncludePaths(const QStringList &newInclude_paths);
@@ -140,7 +144,7 @@ private:
                               bool &is_last_member) const;
     bool parseAssignExpression(const QString &line);
 
-    void parsePreProcDirective(const QString &src, qsizetype &pos);
+    bool parsePreProcDirective(const QString &src, qsizetype &pos);
     bool parseStructUnion(const bool is_struct, const bool is_typedef,
                           const QString &src, qsizetype &pos,
                           VariableDeclaration &var_decl, bool &is_decl);
@@ -202,6 +206,9 @@ private:
     /// Size of C data types and also user-defined struct/union types
     /// @note All enum types have fixed size, so they're not stored
     QHash<QString, qsizetype> type_maps_;
+
+    /// unsigned types
+    QStringList unsigned_types_;
 
     /// Parsing result - extracted type definitions
     /// for below 3 maps:

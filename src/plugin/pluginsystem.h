@@ -36,6 +36,7 @@
 using namespace WingHex;
 
 class MainWindow;
+class asCScriptEngine;
 
 class PluginSystem : public QObject {
     Q_OBJECT
@@ -347,6 +348,10 @@ private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();
 
+    void initCheckingEngine();
+
+    void finalizeCheckingEngine();
+
 private:
     MainWindow *_win = nullptr;
     QHash<IWingPluginBase *, PluginInfo> _pinfos;
@@ -367,6 +372,7 @@ private:
     QHash<QString, QHash<QString, WingAngelAPI::ScriptFnInfo>> _scfns;
 
     WingAngelAPI *_angelplg = nullptr;
+    asCScriptEngine *_engine = nullptr;
 
     QReadWriteLock _rwlock;
 };

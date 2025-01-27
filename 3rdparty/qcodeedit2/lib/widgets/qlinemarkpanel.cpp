@@ -157,8 +157,9 @@ void QLineMarkPanel::mouseReleaseEvent(QMouseEvent *e) {
 
     for (int i = 0; i < m_rects.count(); ++i) {
         if (m_rects.at(i).contains(e->pos())) {
-            auto l = editor()->document()->line(m_lines.at(i));
-            emit onToggleMark(i);
+            auto ln = m_lines.at(i);
+            auto l = editor()->document()->line(ln);
+            emit onToggleMark(ln);
             break;
         }
     }

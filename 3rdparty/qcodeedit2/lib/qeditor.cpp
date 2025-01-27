@@ -3395,11 +3395,17 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
         if (flag(AutoCloseChars)) {
             // auto close: {} [] () "" ''
             if (isAutoCloseChar(text)) {
-                QString content =
-                    text + m_cursor.selectedText() + getPairedCloseChar(text);
-                c.replaceSelectedText(content);
-                c.clearSelection();
-                c.movePosition(-1);
+                if (m_cursor.hasSelection()) {
+                    QString content = text + m_cursor.selectedText() +
+                                      getPairedCloseChar(text);
+                    c.replaceSelectedText(content);
+                    c.clearSelection();
+                } else {
+                    c.beginEditBlock();
+                    insertText(c, text + getPairedCloseChar(text));
+                    c.endEditBlock();
+                    c.movePosition(-1);
+                }
             } else {
                 if (text == QStringLiteral("\"") ||
                     text == QStringLiteral("'")) {

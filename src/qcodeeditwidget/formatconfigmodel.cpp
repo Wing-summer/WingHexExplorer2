@@ -47,11 +47,20 @@ QVariant FormatConfigModel::data(const QModelIndex &index, int role) const {
         case 6: // WaveUnderline
             return fmt.waveUnderline;
         case 7: // Textcolor
-            return fmt.foreground.name();
+            if (fmt.foreground.isValid()) {
+                return fmt.foreground.name();
+            }
+            return QStringLiteral("-");
         case 8: // Fillcolor
-            return fmt.background.name();
+            if (fmt.background.isValid()) {
+                return fmt.background.name();
+            }
+            return QStringLiteral("-");
         case 9: // Strokecolor
-            return fmt.linescolor.name();
+            if (fmt.linescolor.isValid()) {
+                return fmt.linescolor.name();
+            }
+            return QStringLiteral("-");
         }
     } break;
     case Qt::DecorationRole: {
@@ -59,11 +68,20 @@ QVariant FormatConfigModel::data(const QModelIndex &index, int role) const {
         auto fmt = _scheme->format(r);
         switch (index.column()) {
         case 7: // Textcolor
-            return fmt.foreground;
+            if (fmt.foreground.isValid()) {
+                return fmt.foreground;
+            }
+            break;
         case 8: // Fillcolor
-            return fmt.background;
+            if (fmt.background.isValid()) {
+                return fmt.background;
+            }
+            break;
         case 9: // Strokecolor
-            return fmt.linescolor;
+            if (fmt.linescolor.isValid()) {
+                return fmt.linescolor;
+            }
+            break;
         default:
             break;
         }

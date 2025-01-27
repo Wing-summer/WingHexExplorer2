@@ -62,6 +62,7 @@ public:
                         const QHash<QString, QList<QPair<QString, int>>> &objs);
 
     void installAPI(ScriptMachine *machine);
+    void installBasicTypes(asIScriptEngine *engine);
 
     ScriptingConsole *bindingConsole() const;
     void setBindingConsole(ScriptingConsole *console);

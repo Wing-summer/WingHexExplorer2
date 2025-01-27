@@ -18,6 +18,7 @@
 #include "scripteditor.h"
 #include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qeditor.h"
+#include "utilities.h"
 
 #include <QAction>
 #include <QFile>
@@ -64,6 +65,9 @@ bool ScriptEditor::openFile(const QString &filename) {
 
 bool ScriptEditor::save(const QString &path) {
     auto e = editor();
+
+    auto needAdjustFile = !QFile::exists(path);
+
     auto clang = ClangFormatManager::instance();
     if (clang.exists() && clang.autoFormat()) {
         formatCode();
@@ -72,7 +76,28 @@ bool ScriptEditor::save(const QString &path) {
     if (path.isEmpty()) {
         return e->save();
     }
-    return e->save(path);
+
+    auto ret = e->save(path);
+    if (ret) {
+#ifdef Q_OS_LINUX
+        if (Utilities::isRoot()) {
+            // a trick off when root under linux OS
+            // When new file created, change file's permission to 666.
+
+            // Because you cannot open it when you use it in common user
+            // after saving under root user.
+
+            // It's a workaround and not eligent for permission system
+
+            if (needAdjustFile) {
+                if (Utilities::isFileOwnerRoot(path)) {
+                    Utilities::fixUpFilePermissions(path);
+                }
+            }
+        }
+#endif
+    }
+    return ret;
 }
 
 bool ScriptEditor::reload() {

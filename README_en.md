@@ -180,4 +180,3 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 ## Plugins
 
 - [WingAsm](https://github.com/Wing-summer/WingAsm) : A plugin that provides assembly and disassembly features. Author: **wingsummer**. License: **APGL-v3.0**.
-- [WingCStruct](https://github.com/Wing-summer/WingCStruct) : A plugin that provides basic support for analyzing file structures. Author: **wingsummer**. License: **APGL-v3.0**.

@@ -104,9 +104,9 @@ QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
         displayName = finfo.fileName();
     }
 
-    if (info.start >= 0 && info.stop > 0) {
+    if (info.start >= 0 && info.length > 0) {
         displayName +=
-            QStringLiteral(" [%1, %2]").arg(info.start).arg(info.stop);
+            QStringLiteral(" [%1, %2]").arg(info.start).arg(info.length);
     }
 
     return displayName;
@@ -124,11 +124,11 @@ QString RecentFileManager::getDisplayTooltip(const RecentInfo &info) {
               (info.isWorkSpace ? tr("True") : tr("False")) +
               QStringLiteral("</p>");
 
-        if (info.start >= 0 && info.stop > 0) {
+        if (info.start >= 0 && info.length > 0) {
             tt += QStringLiteral("<p>") + tr("[start]") +
                   QString::number(info.start) + QStringLiteral("</p>");
             tt += QStringLiteral("<p>") + tr("[stop]") +
-                  QString::number(info.stop) + QStringLiteral("</p>");
+                  QString::number(info.length) + QStringLiteral("</p>");
         }
     }
     return tt;

@@ -227,6 +227,8 @@ public:
 
     EditorView *currentEditor();
 
+    void saveTableContent(QAbstractItemModel *model);
+
 private:
     IWingPlugin::FileType getEditorViewFileType(EditorView *view);
 
@@ -274,6 +276,19 @@ protected:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    template <typename CtorFn, typename DctorFn>
+    class ScopeGuard {
+        const DctorFn &dctorfn;
+
+        Q_DISABLE_COPY_MOVE(ScopeGuard)
+
+    public:
+        ScopeGuard(CtorFn &&ctorfn, DctorFn &&dctorfn) : dctorfn(dctorfn) {
+            ctorfn();
+        }
+        ~ScopeGuard() { dctorfn(); }
+    };
+
     template <typename Func>
     inline QToolButton *
     addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,
@@ -507,6 +522,7 @@ private:
     ScriptingConsole *m_scriptConsole = nullptr;
     QTableViewExt *m_varshowtable = nullptr;
 
+    bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;
     QMenu *m_menuFind = nullptr;
     QHash<QString, QAction *> m_findEncoding;

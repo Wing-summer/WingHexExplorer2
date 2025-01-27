@@ -416,6 +416,7 @@ public:
 
         String,
         Char,
+        Byte,
         Color,
 
         MetaMax, // reserved

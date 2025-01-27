@@ -218,6 +218,8 @@ void ScriptingDialog::initConsole() {
 
             updateRunDebugMode();
         });
+    connect(dbg, &asDebugger::onDebugActionExec, this,
+            [this]() { updateRunDebugMode(); });
 
     m_sym->setEngine(machine->engine());
 }
@@ -885,8 +887,9 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     m_curEditor = cur;
 }
 
-void ScriptingDialog::updateRunDebugMode() {
+void ScriptingDialog::updateRunDebugMode(bool disable) {
     auto runner = m_consoleout->machine();
+    auto enable = !disable;
     bool isRun = false;
     bool isDbg = false;
     bool isPaused = false;
@@ -905,7 +908,7 @@ void ScriptingDialog::updateRunDebugMode() {
     m_Tbtneditors.value(ToolButtonIndex::DBG_PAUSE_ACTION)
         ->setEnabled(isRun && isDbg && !isPaused);
 
-    auto dbgop = isRun && isDbg && isPaused;
+    auto dbgop = isRun && isDbg && isPaused && enable;
     m_Tbtneditors.value(ToolButtonIndex::DBG_CONTINUE_ACTION)
         ->setEnabled(dbgop);
     m_Tbtneditors.value(ToolButtonIndex::DBG_STEPINTO_ACTION)
@@ -913,6 +916,18 @@ void ScriptingDialog::updateRunDebugMode() {
     m_Tbtneditors.value(ToolButtonIndex::DBG_STEPOVER_ACTION)
         ->setEnabled(dbgop);
     m_Tbtneditors.value(ToolButtonIndex::DBG_STEPOUT_ACTION)->setEnabled(dbgop);
+
+    if (isRun) {
+        if (isDbg) {
+            m_status->setStyleSheet(QStringLiteral("color:gold"));
+            m_status->showMessage(tr("Debuging..."));
+        } else {
+            m_status->setStyleSheet(QStringLiteral("color:green"));
+            m_status->showMessage(tr("Running..."));
+        }
+    } else {
+        m_status->clearMessage();
+    }
 }
 
 ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
@@ -963,6 +978,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
 }
 
 void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
+    updateRunDebugMode(true);
     auto machine = m_consoleout->machine();
     if (machine->isInDebugMode()) {
         auto dbg = machine->debugger();

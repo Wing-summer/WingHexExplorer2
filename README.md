@@ -179,4 +179,3 @@
 ## 插件库
 
 - [WingAsm](https://github.com/Wing-summer/WingAsm) : 一个提供汇编和反汇编的插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。
-- [WingCStruct](https://github.com/Wing-summer/WingCStruct) : 一个提供分析文件结构基础支持的插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。

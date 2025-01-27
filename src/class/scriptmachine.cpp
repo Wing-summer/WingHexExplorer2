@@ -80,45 +80,31 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         &ScriptMachine::cleanUpPluginSysIDFunction,
         AsUserDataType::UserData_PluginFn);
 
-    RegisterScriptArray(engine, false);
-    RegisterQString(engine);
-    RegisterScriptRegex(engine);
-    RegisterQStringUtils(engine);
-    RegisterQStringRegExSupport(engine);
-    RegisterScriptMath(engine);
-    RegisterScriptMathComplex(engine);
-    RegisterScriptWeakRef(engine);
-    RegisterScriptAny(engine);
-    RegisterScriptDictionary(engine);
-    RegisterScriptGrid(engine);
-    RegisterScriptHandle(engine);
-    RegisterColor(engine);
-    RegisterScriptJson(engine);
-    RegisterExceptionRoutines(engine);
+    registerEngineAddon(engine);
 
     _rtypes.resize(RegisteredType::tMAXCOUNT);
     _rtypes[RegisteredType::tString] =
-        q_check_ptr(_engine->GetTypeInfoByName("string"));
+        q_check_ptr(engine->GetTypeInfoByName("string"));
     _rtypes[RegisteredType::tChar] =
-        q_check_ptr(_engine->GetTypeInfoByName("char"));
+        q_check_ptr(engine->GetTypeInfoByName("char"));
     _rtypes[RegisteredType::tArray] =
-        q_check_ptr(_engine->GetTypeInfoByName("array"));
+        q_check_ptr(engine->GetTypeInfoByName("array"));
     _rtypes[RegisteredType::tComplex] =
-        q_check_ptr(_engine->GetTypeInfoByName("complex"));
+        q_check_ptr(engine->GetTypeInfoByName("complex"));
     _rtypes[RegisteredType::tWeakref] =
-        q_check_ptr(_engine->GetTypeInfoByName("weakref"));
+        q_check_ptr(engine->GetTypeInfoByName("weakref"));
     _rtypes[RegisteredType::tConstWeakref] =
-        q_check_ptr(_engine->GetTypeInfoByName("const_weakref"));
+        q_check_ptr(engine->GetTypeInfoByName("const_weakref"));
     _rtypes[RegisteredType::tAny] =
-        q_check_ptr(_engine->GetTypeInfoByName("any"));
+        q_check_ptr(engine->GetTypeInfoByName("any"));
     _rtypes[RegisteredType::tDictionary] =
-        q_check_ptr(_engine->GetTypeInfoByName("dictionary"));
+        q_check_ptr(engine->GetTypeInfoByName("dictionary"));
     _rtypes[RegisteredType::tDictionaryValue] =
-        q_check_ptr(_engine->GetTypeInfoByName("dictionaryValue"));
+        q_check_ptr(engine->GetTypeInfoByName("dictionaryValue"));
     _rtypes[RegisteredType::tGrid] =
-        q_check_ptr(_engine->GetTypeInfoByName("grid"));
+        q_check_ptr(engine->GetTypeInfoByName("grid"));
     _rtypes[RegisteredType::tRef] =
-        q_check_ptr(_engine->GetTypeInfoByName("ref"));
+        q_check_ptr(engine->GetTypeInfoByName("ref"));
 
     // Register a couple of extra functions for the scripts
     _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
@@ -458,7 +444,7 @@ asITypeInfo *ScriptMachine::typeInfo(RegisteredType type) const {
     return nullptr;
 }
 
-ScriptMachine::ScriptMachine(std::function<QString()> &getInputFn,
+ScriptMachine::ScriptMachine(const std::function<QString()> &getInputFn,
                              QObject *parent)
     : QObject(parent), _getInputFn(getInputFn) {
     Q_ASSERT(getInputFn);
@@ -1592,6 +1578,24 @@ bool ScriptMachine::insteadFoundDisabled() const {
 
 void ScriptMachine::setInsteadFoundDisabled(bool newInsteadFoundDisabled) {
     m_insteadFoundDisabled = newInsteadFoundDisabled;
+}
+
+void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
+    RegisterScriptArray(engine, false);
+    RegisterQString(engine);
+    RegisterScriptRegex(engine);
+    RegisterQStringUtils(engine);
+    RegisterQStringRegExSupport(engine);
+    RegisterScriptMath(engine);
+    RegisterScriptMathComplex(engine);
+    RegisterScriptWeakRef(engine);
+    RegisterScriptAny(engine);
+    RegisterScriptDictionary(engine);
+    RegisterScriptGrid(engine);
+    RegisterScriptHandle(engine);
+    RegisterColor(engine);
+    RegisterScriptJson(engine);
+    RegisterExceptionRoutines(engine);
 }
 
 asIScriptEngine *ScriptMachine::engine() const { return _engine; }

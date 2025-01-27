@@ -46,6 +46,7 @@
 #include <qt_windows.h>
 #undef MessageBox // because of IWingPlugin
 #else
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -85,6 +86,27 @@ public:
         return getuid() == 0;
 #endif
     }
+
+#ifdef Q_OS_LINUX
+    static bool isFileOwnerRoot(const QString &filePath) {
+        struct stat fileStat;
+        if (stat(filePath.toUtf8(), &fileStat) != 0) {
+            return false;
+        }
+
+        // Check if the owner UID is 0 (root)
+        return fileStat.st_uid == 0;
+    }
+
+    static bool fixUpFilePermissions(const QString &filePath) {
+        // Set permissions to 666 (rw-rw-rw-)
+        if (chmod(filePath.toUtf8(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+                                         S_IROTH | S_IWOTH) != 0) {
+            return false;
+        }
+        return true;
+    }
+#endif
 
     static QString processBytesCount(qint64 bytescount) {
         QStringList B{"B", "KB", "MB", "GB", "TB"};
