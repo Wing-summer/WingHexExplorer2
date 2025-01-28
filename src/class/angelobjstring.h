@@ -37,6 +37,8 @@ public:
 
     static QString dictionaryToString(void *obj, asDebugger *dbg);
 
+    static QString colorToString(void *obj, asDebugger *dbg);
+
 public:
     // ==================================================
     // the following codes are from QT offical code (LGPL)

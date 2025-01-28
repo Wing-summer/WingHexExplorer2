@@ -58,6 +58,9 @@ public:
     void
     registerScriptFns(const QString &ns,
                       const QHash<QString, IWingPlugin::ScriptFnInfo> &rfns);
+    void registerUnSafeScriptFns(
+        const QString &ns,
+        const QHash<QString, IWingPlugin::UNSAFE_SCFNPTR> &rfns);
 
     void
     registerScriptEnums(const QString &ns,
@@ -81,6 +84,7 @@ private:
     void installHexControllerAPI(asIScriptEngine *engine);
     void installDataVisualAPI(asIScriptEngine *engine, int stringID);
     void installScriptFns(asIScriptEngine *engine);
+    void installScriptUnSafeFns(asIScriptEngine *engine);
     void installScriptEnums(asIScriptEngine *engine);
 
 private:
@@ -124,15 +128,33 @@ private:
     qvariantCastOp(asIScriptEngine *engine, const QVariant &var,
                    const std::function<void(void *, QMetaType::Type)> &fn);
 
+    // flag = true: QList or QHash, otherwise QVector or QMap
     static QVariant qvariantGet(asIScriptEngine *engine, const void *raw,
-                                int typeID);
+                                int typeID, bool flag);
+
+    static bool
+    getQVariantGetFlag(const WingHex::IWingPlugin::ScriptFnInfo &info,
+                       int index);
+
+    template <typename T>
+    static const T *getDereferencePointer(const void *value, bool isHandle) {
+        if (isHandle) {
+            return *reinterpret_cast<const T *const *>(value);
+        } else {
+            return reinterpret_cast<const T *>(value);
+        }
+    }
 
     static int qvariantCastASID(asIScriptEngine *engine,
                                 const QMetaType::Type &id);
 
+    static QString qvariantCastASString(const QMetaType::Type &id);
+
     static bool isTempBuffered(QMetaType::Type type);
 
     static void script_call(asIScriptGeneric *gen);
+
+    static void script_unsafe_call(asIScriptGeneric *gen);
 
 private:
     WING_SERVICE bool execScriptCode(const WingHex::SenderInfo &sender,
@@ -141,6 +163,30 @@ private:
                                  const QString &fileName);
     WING_SERVICE bool execCode(const WingHex::SenderInfo &sender,
                                const QString &code);
+
+    // =========================================================
+    // Some neccessary services for AngelScript's array and dictionary.
+    WING_SERVICE QVector<void *>
+    retriveAsCArray(const WingHex::SenderInfo &sender, void *array);
+    WING_SERVICE QHash<QString, QPair<QString, const void *>>
+    retriveAsDictionary(const WingHex::SenderInfo &sender, void *dic);
+
+    WING_SERVICE void *vector2AsArray(const WingHex::SenderInfo &sender,
+                                      MetaType type,
+                                      const QVector<void *> &content);
+    WING_SERVICE void *list2AsArray(const WingHex::SenderInfo &sender,
+                                    MetaType type,
+                                    const QList<void *> &content);
+    WING_SERVICE void deleteAsArray(const WingHex::SenderInfo &sender,
+                                    void *array);
+
+    WING_SERVICE void *
+    newAsDictionary(const WingHex::SenderInfo &sender,
+                    const QHash<QString, QPair<MetaType, void *>> &content);
+    WING_SERVICE void deleteAsDictionary(const WingHex::SenderInfo &sender,
+                                         void *dic);
+
+    // =========================================================
 
     QString getSenderHeader(const WingHex::SenderInfo &sender);
 
@@ -198,11 +244,15 @@ private:
 
 private:
     std::vector<std::any> _fnbuffer;
+
     QVector<IWingPlugin::ScriptFnInfo> _sfns;
+    QHash<QString, QHash<QString, qsizetype>> _rfns;
+
+    QVector<IWingPlugin::UNSAFE_SCFNPTR> _usfns;
+    QHash<QString, QHash<QString, qsizetype>> _urfns;
 
     ScriptingConsole *_console = nullptr;
 
-    QHash<QString, QHash<QString, qsizetype>> _rfns;
     QHash<QString, QHash<QString, QList<QPair<QString, int>>>> _objs;
 
     QVector<int> _handles;

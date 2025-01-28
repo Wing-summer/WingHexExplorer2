@@ -19,6 +19,7 @@
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "scriptaddon/scriptqdictionary.h"
 
+#include <QColor>
 #include <QString>
 #include <QTextStream>
 
@@ -78,7 +79,6 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
 
     QString str;
     QTextStream s(&str);
-    s << tr("(len=") << dic->GetSize() << ")";
 
     s << " [";
     asUINT n = 0;
@@ -104,6 +104,14 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
     }
     s << "]";
 
+    return str;
+}
+
+QString AngelObjString::colorToString(void *obj, asDebugger *dbg) {
+    auto color = reinterpret_cast<QColor *>(obj);
+    QString str;
+    QTextStream s(&str);
+    s << QStringLiteral("QColor(") << color->name() << QStringLiteral(")");
     return str;
 }
 

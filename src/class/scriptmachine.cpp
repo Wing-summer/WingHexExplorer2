@@ -105,6 +105,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         q_check_ptr(engine->GetTypeInfoByName("grid"));
     _rtypes[RegisteredType::tRef] =
         q_check_ptr(engine->GetTypeInfoByName("ref"));
+    _rtypes[RegisteredType::tColor] =
+        q_check_ptr(engine->GetTypeInfoByName("color"));
 
     // Register a couple of extra functions for the scripts
     _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
@@ -172,6 +174,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
                                         &AngelObjString::arrayToString);
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tDictionary],
                                         &AngelObjString::dictionaryToString);
+    _debugger->registerToStringCallback(_rtypes[RegisteredType::tColor],
+                                        &AngelObjString::colorToString);
 
     PluginSystem::instance().angelApi()->installAPI(this);
 

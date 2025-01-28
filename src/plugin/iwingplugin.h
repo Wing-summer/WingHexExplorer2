@@ -24,6 +24,7 @@
 #include "iwingpluginbase.h"
 
 #include <functional>
+#include <variant>
 
 #include <QCryptographicHash>
 #include <QDockWidget>
@@ -397,7 +398,17 @@ struct SenderInfo {
 class IWingPlugin : public IWingPluginBase {
     Q_OBJECT
 public:
-    typedef std::function<QVariant(const QVariantList &)> ScriptFn;
+    struct ScriptCallError {
+        int errorCode;
+        QString errmsg;
+    };
+
+    using ScriptFn = std::function<QVariant(const QVariantList &)>;
+
+    using UNSAFE_RET =
+        std::variant<std::monostate, bool, quint8, quint16, quint32, quint64,
+                     float, double, void *, ScriptCallError>;
+    using UNSAFE_SCFNPTR = std::function<UNSAFE_RET(const QList<void *> &)>;
 
     enum MetaType : uint {
         Void,
@@ -420,13 +431,13 @@ public:
         Byte,
         Color,
 
+        Map,  // QVariantMap -> dictionary
+        Hash, // QVariantHash -> dictionary
+
         MetaMax, // reserved
         MetaTypeMask = 0xFFFFF,
-        Ref = 0x10000000,
         Array = 0x100000, // QVector<?> -> array<?>
         List = 0x200000,  // QList<?> -> array<?>
-        Map = 0x400000,   // QMap<QString, ? > -> dictionary<?>
-        Hash = 0x800000   // QHash<QString, ? > -> dictionary<?>
     };
 
     static_assert(MetaType::MetaMax < MetaType::Array);
@@ -450,6 +461,7 @@ public:
         ScriptPragma = 1u << 8,
         PluginFileOpened = 1u << 9,
         PluginFileClosed = 1u << 10,
+        ScriptUnSafeFnRegistering = 1u << 11,
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
@@ -465,12 +477,16 @@ public:
     enum class FileType { Invalid, File, RegionFile, Driver, Extension };
     Q_ENUM(FileType)
 
-    struct ScriptCallError {
-        int errorCode;
-        QString errmsg;
-    };
-
 public:
+    ScriptCallError generateScriptCallError(int errCode, const QString &msg) {
+        ScriptCallError err;
+
+        err.errorCode = errCode;
+        err.errmsg = msg;
+
+        return err;
+    }
+
     QVariant getScriptCallError(int errCode, const QString &msg) {
         ScriptCallError err;
 
@@ -505,6 +521,18 @@ public:
 public:
     // QHash< function-name, fn >
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const {
+        return {};
+    }
+
+    // A hacking way to register script function (Generic_Call)
+    // This registering way is not safe. There is no
+    // other checking except function's signature.
+    // You should handle your all the types and pay yourself.
+
+    // You should set RegisteredEvent::ScriptFnRegistering ON to enable it.
+
+    // QHash< function-name, fn >
+    virtual QHash<QString, UNSAFE_SCFNPTR> registeredScriptUnsafeFns() const {
         return {};
     }
 
@@ -553,6 +581,8 @@ public:
     virtual void eventScriptPragmaFinished() {}
 
 signals:
+    bool existsServiceHost(const QString &puid);
+
     bool invokeService(const QString &puid, const char *method,
                        Qt::ConnectionType type, QGenericReturnArgument ret,
                        QGenericArgument val0 = QGenericArgument(nullptr),

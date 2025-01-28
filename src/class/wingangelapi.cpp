@@ -26,6 +26,7 @@
 #include "class/winginputdialog.h"
 #include "control/scriptingconsole.h"
 #include "define.h"
+#include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptqdictionary.h"
 
 #include <QApplication>
@@ -36,6 +37,10 @@
 #endif
 
 WingAngelAPI::WingAngelAPI() {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    qRegisterMetaType<QVector<QVariant>>();
+#endif
+
     qsizetype signalCount = 0;
     const QMetaObject *objs[]{
         WingAngelAPI::metaObject(),    this->reader.metaObject(),
@@ -102,6 +107,22 @@ void WingAngelAPI::eventPluginFile(PluginFileEvent e, FileType type,
     }
 }
 
+void WingAngelAPI::registerUnSafeScriptFns(
+    const QString &ns, const QHash<QString, UNSAFE_SCFNPTR> &rfns) {
+    Q_ASSERT(!ns.isEmpty());
+    if (rfns.isEmpty()) {
+        return;
+    }
+
+    auto id = _usfns.size();
+    for (auto p = rfns.constKeyValueBegin(); p != rfns.constKeyValueEnd();
+         p++) {
+        _urfns[ns][p->first] = id;
+        id++;
+        _usfns.append(p->second);
+    }
+}
+
 void WingAngelAPI::registerScriptEnums(
     const QString &ns, const QHash<QString, QList<QPair<QString, int>>> &objs) {
     Q_ASSERT(!ns.isEmpty());
@@ -109,7 +130,6 @@ void WingAngelAPI::registerScriptEnums(
         return;
     }
 
-    // check it later
     _objs.insert(ns, objs);
 }
 
@@ -149,6 +169,7 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
 
     installScriptEnums(engine);
     installScriptFns(engine);
+    installScriptUnSafeFns(engine);
 }
 
 void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
@@ -1253,6 +1274,34 @@ void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
     }
 }
 
+void WingAngelAPI::installScriptUnSafeFns(asIScriptEngine *engine) {
+    for (auto pfns = _urfns.constKeyValueBegin();
+         pfns != _urfns.constKeyValueEnd(); pfns++) {
+        auto ns = pfns->first;
+        int r = engine->SetDefaultNamespace(ns.toUtf8());
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        auto &pfn = pfns->second;
+        for (auto p = pfn.constKeyValueBegin(); p != pfn.constKeyValueEnd();
+             p++) {
+            auto sig = p->first;
+            auto id = p->second;
+            auto r = engine->RegisterGlobalFunction(
+                sig.toUtf8(), asFUNCTION(script_unsafe_call), asCALL_GENERIC);
+            Q_ASSERT(r >= 0);
+            Q_UNUSED(r);
+
+            // r is the AngelScript function ID
+            auto fn = engine->GetFunctionById(r);
+            fn->SetUserData(this, AsUserDataType::UserData_API);
+            fn->SetUserData(reinterpret_cast<void *>(id),
+                            AsUserDataType::UserData_PluginFn);
+        }
+        engine->SetDefaultNamespace("");
+    }
+}
+
 void WingAngelAPI::installScriptEnums(asIScriptEngine *engine) {
     for (auto pobjs = _objs.constKeyValueBegin();
          pobjs != _objs.constKeyValueEnd(); ++pobjs) {
@@ -1362,6 +1411,7 @@ qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
 void WingAngelAPI::qvariantCastOp(
     asIScriptEngine *engine, const QVariant &var,
     const std::function<void(void *, QMetaType::Type)> &fn) {
+
     static asQWORD buffer;
     buffer = 0;
 
@@ -1539,7 +1589,7 @@ void WingAngelAPI::qvariantCastOp(
 }
 
 QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
-                                   int typeID) {
+                                   int typeID, bool flag) {
     switch (typeID) {
     case asTYPEID_BOOL:
         return *reinterpret_cast<const bool *>(raw);
@@ -1564,18 +1614,27 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
     case asTYPEID_DOUBLE:
         return *reinterpret_cast<const double *>(raw);
     default: {
+        bool isHandle = !!(typeID & asTYPEID_OBJHANDLE);
         typeID &= ~asTYPEID_OBJHANDLE;
+
         auto id = engine->GetTypeIdByDecl("char");
         if (id == typeID) {
-            return *reinterpret_cast<const QChar *>(raw);
+            return **getDereferencePointer<QChar *>(raw, isHandle);
         }
+
+        id = engine->GetTypeIdByDecl("color");
+        if (id == typeID) {
+            return **getDereferencePointer<QColor *>(raw, isHandle);
+        }
+
         id = engine->GetTypeIdByDecl("string");
         if (id == typeID) {
-            return *reinterpret_cast<const QString *>(raw);
+            return **getDereferencePointer<QString *>(raw, isHandle);
         }
+
         id = engine->GetTypeIdByDecl("array<byte>");
         if (id == typeID) {
-            auto values = reinterpret_cast<const CScriptArray *>(raw);
+            auto values = *getDereferencePointer<CScriptArray *>(raw, isHandle);
             auto len = values->GetSize();
             QByteArray arr;
             arr.resize(len);
@@ -1584,37 +1643,89 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
             }
             return arr;
         }
-        id = engine->GetTypeIdByDecl("dictionary");
-        if (id == typeID) {
-            auto values = reinterpret_cast<const CScriptDictionary *>(raw);
 
-            QVariantHash map;
-            for (auto p = values->begin(); p != values->end(); ++p) {
-                auto id = p.GetTypeId();
-                auto value = qvariantGet(engine, p.GetAddressOfValue(), id);
-                map.insert(p.GetKey(), value);
+        // ok, checking template type
+        // no nested supported
+        auto info = engine->GetTypeInfoById(typeID);
+
+        {
+            auto tname = info->GetName();
+            if (qstrcmp(tname, "array") == 0) {
+                auto values =
+                    *getDereferencePointer<CScriptArray *>(raw, isHandle);
+                auto len = values->GetSize();
+
+                // QVector or QList ?
+                // though are the same on QT6
+                if (flag) {
+                    QVariantList list;
+                    for (asUINT i = 0; i < len; ++i) {
+                        auto v = values->At(i);
+                        auto item = qvariantGet(
+                            engine, v, values->GetElementTypeId(), false);
+                        list.append(item);
+                    }
+                    return list;
+                } else {
+                    QVector<QVariant> vector;
+                    for (asUINT i = 0; i < len; ++i) {
+                        auto v = values->At(i);
+                        auto item = qvariantGet(
+                            engine, v, values->GetElementTypeId(), false);
+                        vector.append(item);
+                    }
+                    return QVariant::fromValue(vector);
+                }
             }
-            return map;
-        }
 
-        id = engine->GetTypeIdByDecl("array<string>");
-        if (id == typeID) {
-            auto values = reinterpret_cast<const CScriptArray *>(raw);
-            auto len = values->GetSize();
-            QStringList arr;
-            for (auto i = 0u; i < len; ++i) {
-                arr.append(*reinterpret_cast<const QString *>(values->At(i)));
+            if (qstrcmp(tname, "dictionary") == 0) {
+                auto values =
+                    *getDereferencePointer<CScriptDictionary *>(raw, isHandle);
+                auto len = values->GetSize();
+                auto keys = values->GetKeys();
+
+                // QMap or QHash ?
+                if (flag) {
+                    QVariantHash hash;
+                    for (auto it : *values) {
+                        // Determine the name of the key
+                        auto key = it.GetKey();
+
+                        // Get the type and address of the value
+                        int cid = it.GetTypeId();
+                        const void *v = it.GetAddressOfValue();
+                        auto item = qvariantGet(engine, v, cid, false);
+                        hash.insert(key, item);
+                    }
+                    return hash;
+                } else {
+                    QVariantMap map;
+                    for (auto it : *values) {
+                        // Determine the name of the key
+                        auto key = it.GetKey();
+
+                        // Get the type and address of the value
+                        int cid = it.GetTypeId();
+                        const void *v = it.GetAddressOfValue();
+                        auto item = qvariantGet(engine, v, cid, false);
+                        map.insert(key, item);
+                    }
+                    return map;
+                }
             }
-            return arr;
         }
 
-        id = engine->GetTypeIdByDecl("color");
-        if (id == typeID) {
-            return *reinterpret_cast<const QColor *>(raw);
-        }
     } break;
     }
     return {};
+}
+
+bool WingAngelAPI::getQVariantGetFlag(const ScriptFnInfo &info, int index) {
+    auto &params = info.params;
+    Q_ASSERT(index >= 0 && index < params.size());
+
+    auto minfo = params.at(index).first;
+    return !!(minfo & MetaType::List) || !!(minfo & MetaType::Hash);
 }
 
 int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
@@ -1669,6 +1780,57 @@ int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
     }
 }
 
+QString WingAngelAPI::qvariantCastASString(const QMetaType::Type &id) {
+    switch (id) {
+    case QMetaType::Type::Bool:
+        return QStringLiteral("bool");
+    case QMetaType::Short:
+        return QStringLiteral("int16");
+    case QMetaType::UShort:
+        return QStringLiteral("uint16");
+    case QMetaType::Int:
+    case QMetaType::Long:
+        return QStringLiteral("int32");
+    case QMetaType::UInt:
+    case QMetaType::ULong:
+        return QStringLiteral("uint32");
+    case QMetaType::LongLong:
+        return QStringLiteral("int64");
+    case QMetaType::ULongLong:
+        return QStringLiteral("uint64");
+    case QMetaType::Float:
+        return QStringLiteral("float");
+    case QMetaType::Double:
+        return QStringLiteral("double");
+    case QMetaType::QChar:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    case QMetaType::Char16:
+    case QMetaType::Char32:
+#endif
+        return QStringLiteral("char");
+    case QMetaType::UChar:
+        return QStringLiteral("uint8");
+    case QMetaType::SChar:
+    case QMetaType::Char:
+        return QStringLiteral("int8");
+    case QMetaType::QString:
+        return QStringLiteral("string");
+    case QMetaType::QByteArray:
+        return QStringLiteral("array<byte>");
+    case QMetaType::QVariantMap:
+    case QMetaType::QVariantHash:
+        return QStringLiteral("dictionary");
+    case QMetaType::QStringList:
+        return QStringLiteral("array<string>");
+    case QMetaType::QColor:
+        return QStringLiteral("color");
+    case QMetaType::Void:
+        return QStringLiteral("void");
+    default:
+        return {};
+    }
+}
+
 bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
     switch (type) {
     case QMetaType::Bool:
@@ -1706,16 +1868,18 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         return;
     }
 
+    auto &fns = p->_sfns.at(id);
+
     QVariantList params;
     auto total = gen->GetArgCount();
-    for (int i = 0; i < total; ++i) {
+    for (decltype(total) i = 0; i < total; ++i) {
         auto raw = gen->GetAddressOfArg(i);
         auto id = gen->GetArgTypeId(i);
-        auto obj = qvariantGet(engine, raw, id);
+
+        auto obj = qvariantGet(engine, raw, id, getQVariantGetFlag(fns, i));
         params.append(obj);
     }
 
-    auto &fns = p->_sfns.at(id);
     auto ret = fns.fn(params);
     auto op = [](asIScriptGeneric *gen, void *addr, QMetaType::Type type) {
         auto b = isTempBuffered(type);
@@ -1760,7 +1924,7 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
         }
     };
 
-    // Check return type
+    // Checking return type
     auto ctx = asGetActiveContext();
     if (ret.canConvert<WingHex::IWingPlugin::ScriptCallError>()) {
         auto err = ret.value<WingHex::IWingPlugin::ScriptCallError>();
@@ -1773,39 +1937,84 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     }
 
     auto rettype = fns.ret;
-    auto msg = tr("InvalidRetType: need ");
-    switch (rettype) {
-    case WingHex::IWingPlugin::Void: {
-        if (!ret.isNull()) {
-            auto e = msg.arg("void");
-            ctx->SetException(e.toUtf8());
-        }
-    } break;
-    case WingHex::IWingPlugin::Bool:
-    case WingHex::IWingPlugin::Int:
-    case WingHex::IWingPlugin::UInt:
-    case WingHex::IWingPlugin::Int8:
-    case WingHex::IWingPlugin::UInt8:
-    case WingHex::IWingPlugin::Int16:
-    case WingHex::IWingPlugin::UInt16:
-    case WingHex::IWingPlugin::Int64:
-    case WingHex::IWingPlugin::UInt64:
-    case WingHex::IWingPlugin::Float:
-    case WingHex::IWingPlugin::Double:
-    case WingHex::IWingPlugin::String:
-    case WingHex::IWingPlugin::Char:
-    case WingHex::IWingPlugin::Color:
-    case WingHex::IWingPlugin::MetaMax:
-    case WingHex::IWingPlugin::MetaTypeMask:
+    auto r = PluginSystem::type2AngelScriptString(rettype, false);
 
-        break;
-    default:
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    auto type =
+        ret.isNull() ? QMetaType::Type::Void : QMetaType::Type(ret.userType());
+#else
+    auto type =
+        ret.isNull() ? QMetaType::Type::Void : QMetaType::Type(ret.typeId());
+#endif
+
+    auto rr = qvariantCastASString(type);
+
+    if (r != rr) {
+        auto msg = tr("InvalidRetType: need ") + r;
+        ctx->SetException(msg.toUtf8());
         return;
     }
 
     qvariantCastOp(
         engine, ret,
         std::bind(op, gen, std::placeholders::_1, std::placeholders::_2));
+}
+
+void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
+    auto fn = gen->GetFunction();
+
+    auto p = reinterpret_cast<WingAngelAPI *>(
+        fn->GetUserData(AsUserDataType::UserData_API));
+    auto id = reinterpret_cast<qsizetype>(
+        fn->GetUserData(AsUserDataType::UserData_PluginFn));
+    auto engine = fn->GetEngine();
+
+    Q_ASSERT(p);
+    Q_ASSERT(id >= 0 && id < p->_usfns.size());
+    if (id < 0 || id >= p->_usfns.size()) {
+        return;
+    }
+
+    // haha, so much simpler than script_call. Pay yourself and
+    // have a good time!!!
+
+    auto &fns = p->_usfns.at(id);
+
+    QList<void *> params;
+    auto total = gen->GetArgCount();
+    WingHex::IWingPlugin::UNSAFE_RET ret;
+    for (decltype(total) i = 0; i < total; ++i) {
+        auto raw = gen->GetAddressOfArg(i);
+        params.append(raw);
+    }
+
+    ret = fns(params);
+
+    if (std::holds_alternative<bool>(ret)) {
+        gen->SetReturnByte(std::get<bool>(ret));
+    } else if (std::holds_alternative<quint8>(ret)) {
+        gen->SetReturnByte(std::get<quint8>(ret));
+    } else if (std::holds_alternative<quint16>(ret)) {
+        gen->SetReturnWord(std::get<quint16>(ret));
+    } else if (std::holds_alternative<quint32>(ret)) {
+        gen->SetReturnDWord(std::get<quint32>(ret));
+    } else if (std::holds_alternative<quint64>(ret)) {
+        gen->SetReturnQWord(std::get<quint64>(ret));
+    } else if (std::holds_alternative<float>(ret)) {
+        gen->SetReturnFloat(std::get<float>(ret));
+    } else if (std::holds_alternative<double>(ret)) {
+        gen->SetReturnFloat(std::get<double>(ret));
+    } else if (std::holds_alternative<void *>(ret)) {
+        gen->SetReturnAddress(std::get<void *>(ret));
+    } else if (std::holds_alternative<WingHex::IWingPlugin::ScriptCallError>(
+                   ret)) {
+        auto ctx = asGetActiveContext();
+        auto err = std::get<WingHex::IWingPlugin::ScriptCallError>(ret);
+        auto errmsg = tr("Get Exception While ScriptCall: (%1) %2")
+                          .arg(err.errorCode)
+                          .arg(err.errmsg);
+        ctx->SetException(errmsg.toUtf8());
+    }
 }
 
 bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
@@ -1855,6 +2064,135 @@ bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
     return ret;
 }
 
+QVector<void *> WingAngelAPI::retriveAsCArray(const WingHex::SenderInfo &sender,
+                                              void *array) {
+    Q_UNUSED(sender);
+    if (array == nullptr) {
+        return {};
+    }
+
+    QVector<void *> ret;
+    auto arr = reinterpret_cast<CScriptArray *>(array);
+    auto len = arr->GetSize();
+    for (asUINT i = 0; i < len; ++i) {
+        ret.append(arr->At(i));
+    }
+    return ret;
+}
+
+QHash<QString, QPair<QString, const void *>>
+WingAngelAPI::retriveAsDictionary(const WingHex::SenderInfo &sender,
+                                  void *dic) {
+    Q_UNUSED(sender);
+    if (dic == nullptr) {
+        return {};
+    }
+
+    // a hacking class
+    class ScriptDictionary : public CScriptDictionary {
+    public:
+        asIScriptEngine *getEngine() const { return engine; }
+    };
+
+    QHash<QString, QPair<QString, const void *>> ret;
+    auto dictionary = reinterpret_cast<ScriptDictionary *>(dic);
+    auto engine = dictionary->getEngine();
+
+    for (auto &it : *dictionary) {
+        auto info = engine->GetTypeInfoById(it.GetTypeId());
+        QString type;
+        if (info) {
+            type =
+                info->GetNamespace() + QStringLiteral("::") + info->GetName();
+        }
+        ret.insert(it.GetKey(), qMakePair(type, it.GetAddressOfValue()));
+    }
+    return ret;
+}
+
+void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
+                                   MetaType type,
+                                   const QVector<void *> &content) {
+    Q_UNUSED(sender);
+    auto typeStr = PluginSystem::type2AngelScriptString(
+        MetaType(type | MetaType::Array), false, true);
+    if (typeStr.isEmpty()) {
+        return nullptr;
+    }
+
+    auto engine = _console->machine()->engine();
+    auto info = engine->GetTypeInfoByDecl(typeStr.toUtf8());
+    if (info) {
+        auto len = content.length();
+        auto arr = CScriptArray::Create(info, len);
+        for (decltype(len) i = 0; i < len; ++i) {
+            arr->SetValue(i, content.at(i));
+        }
+        return arr;
+    }
+    return nullptr;
+}
+
+void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
+                                 MetaType type, const QList<void *> &content) {
+    Q_UNUSED(sender);
+    auto typeStr = PluginSystem::type2AngelScriptString(
+        MetaType(type | MetaType::Array), false, true);
+    if (typeStr.isEmpty()) {
+        return nullptr;
+    }
+
+    auto engine = _console->machine()->engine();
+    auto info = engine->GetTypeInfoByDecl(typeStr.toUtf8());
+    if (info) {
+        auto len = content.length();
+        auto arr = CScriptArray::Create(info, len);
+        for (decltype(len) i = 0; i < len; ++i) {
+            arr->SetValue(i, content.at(i));
+        }
+        return arr;
+    }
+    return nullptr;
+}
+
+void WingAngelAPI::deleteAsArray(const WingHex::SenderInfo &sender,
+                                 void *array) {
+    Q_UNUSED(sender);
+    if (array) {
+        reinterpret_cast<CScriptArray *>(array)->Release();
+    }
+}
+
+void *WingAngelAPI::newAsDictionary(
+    const WingHex::SenderInfo &sender,
+    const QHash<QString, QPair<MetaType, void *>> &content) {
+    Q_UNUSED(sender);
+    auto engine = _console->machine()->engine();
+    auto dic = CScriptDictionary::Create(engine);
+
+    for (auto p = content.constKeyValueBegin(); p != content.constKeyValueEnd();
+         ++p) {
+        auto key = p->first;
+        auto typeStr =
+            PluginSystem::type2AngelScriptString(p->second.first, false, true);
+        auto id = engine->GetTypeIdByDecl(typeStr.toUtf8());
+        if (id < 0) {
+            continue;
+        }
+        dic->Set(key, p->second.second, id);
+    }
+
+    return dic;
+}
+
+void WingAngelAPI::deleteAsDictionary(const WingHex::SenderInfo &sender,
+                                      void *dic) {
+    Q_UNUSED(sender);
+    if (dic) {
+        reinterpret_cast<CScriptDictionary *>(dic)->Release();
+    }
+}
+
 QString WingAngelAPI::getSenderHeader(const WingHex::SenderInfo &sender) {
     return QStringLiteral("(") % sender.puid % QStringLiteral("::") %
            sender.plgcls % QStringLiteral(") ");
@@ -1895,7 +2233,7 @@ WingHex::ErrFile WingAngelAPI::_HexCtl_OpenExtFile(const QString &ext,
         auto engine = _console->consoleMachine()->engine();
         auto bSizes = engine->GetSizeOfPrimitiveType(typeID);
         auto data = malloc(bSizes);
-        bparams << qvariantGet(engine, data, typeID);
+        bparams << qvariantGet(engine, data, typeID, true); // a list
         free(data);
     }
     return emit controller.openExtFile(ext, file, bparams);

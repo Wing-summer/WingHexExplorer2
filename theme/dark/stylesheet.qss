@@ -2967,6 +2967,8 @@ Toast
 
 QStatusBar::item { border: 0px solid black; }
 
+SplashDialog { border: 1px solid #626568; }
+
 /* style sheet for ScriptEditor */
 QEditor
 {

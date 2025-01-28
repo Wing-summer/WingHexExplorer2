@@ -50,6 +50,9 @@ public:
     virtual bool eventScriptPragmaLineStep(const QString &codes) override;
     virtual void eventScriptPragmaFinished() override;
 
+    virtual QHash<QString, UNSAFE_SCFNPTR>
+    registeredScriptUnsafeFns() const override;
+
 private:
     // basic
     WING_SERVICE bool addStruct(const QString &header);
@@ -98,7 +101,7 @@ private:
     QVariant resetEnv(const QVariantList &params);
 
     QVariant setColorTable(const QVariantList &params);
-    QVariant colorTable(const QVariantList &params);
+    UNSAFE_RET colorTable(const QList<void *> &params);
 
     QVariant setStructPadding(const QVariantList &params);
     QVariant structPadding(const QVariantList &params);
@@ -125,6 +128,8 @@ private:
 
     QHash<WingHex::SettingPage *, bool> _setpgs;
     QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
+
+    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // WINGCSTRUCT_H

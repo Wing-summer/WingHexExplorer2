@@ -75,13 +75,10 @@ WingCStruct::WingCStruct()
     }
 
     {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::colorTable), this,
-            std::placeholders::_1);
-        info.ret = MetaType(MetaType::Array | MetaType::Color);
-
-        _scriptInfo.insert(QStringLiteral("colorTable"), info);
+        _scriptUnsafe.insert(QStringLiteral("array<color>@ colorTable()"),
+                             std::bind(QOverload<const QList<void *> &>::of(
+                                           &WingCStruct::colorTable),
+                                       this, std::placeholders::_1));
     }
 
     {
@@ -151,7 +148,10 @@ QString WingCStruct::retranslate(const QString &str) {
 }
 
 WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
-    return RegisteredEvent::ScriptPragma;
+    RegisteredEvents evs;
+    evs.setFlag(RegisteredEvent::ScriptPragma);
+    evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
+    return evs;
 }
 
 QHash<WingHex::SettingPage *, bool>
@@ -432,12 +432,32 @@ QVariant WingCStruct::setColorTable(const QVariantList &params) {
     return setColorTable(table);
 }
 
-QVariant WingCStruct::colorTable(const QVariantList &params) {
+WingHex::IWingPlugin::UNSAFE_RET
+WingCStruct::colorTable(const QList<void *> &params) {
     if (!params.isEmpty()) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
-    return QVariant::fromValue(colorTable());
+    void *array;
+    QVector<void *> colors;
+    for (auto &c : _colortable) {
+        colors.append(new QColor(c));
+    }
+
+    auto invoked =
+        emit invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
+                           WINGAPI_RETURN_ARG(void *, array),
+                           WINGAPI_ARG(MetaType, MetaType::Color),
+                           WINGAPI_ARG(QVector<void *>, colors));
+    if (invoked) {
+        if (array) {
+            qDeleteAll(colors);
+            return array;
+        }
+    }
+
+    qDeleteAll(colors);
+    return generateScriptCallError(-2, tr("AllocArrayFailed"));
 }
 
 QVariant WingCStruct::setStructPadding(const QVariantList &params) {
@@ -648,4 +668,9 @@ QVariant WingCStruct::append(const QVariantList &params) {
     auto type = type_v.toString();
     auto content = content_v.toHash();
     return append(type, content);
+}
+
+QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
+WingCStruct::registeredScriptUnsafeFns() const {
+    return _scriptUnsafe;
 }

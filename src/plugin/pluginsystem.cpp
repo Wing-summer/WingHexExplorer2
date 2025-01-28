@@ -695,6 +695,11 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
 
         auto &fn = p->second;
         auto sig = getScriptFnSig(p->first, fn);
+        if (sig.isEmpty()) {
+            Logger::critical(tr("RegisterScriptFnUnSupportedTypes:") + id +
+                             QStringLiteral("::") + p->first);
+            continue;
+        }
 
         auto r = c.ParseFunctionDeclaration(nullptr, sig.toLatin1(), func, true,
                                             nullptr, nullptr,
@@ -733,6 +738,74 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
 
     Q_ASSERT(_angelplg);
     _angelplg->registerScriptFns(_pinfos.value(plg).id, rfns);
+}
+
+void PluginSystem::registerUnSafeFns(IWingPlugin *plg) {
+    Q_ASSERT(plg);
+
+    auto fns = plg->registeredScriptUnsafeFns();
+    if (fns.isEmpty()) {
+        return;
+    }
+
+    // checking functions
+    asCBuilder c(_engine, nullptr);
+
+    auto id = getPluginID(plg);
+    auto rawID = id.toUtf8();
+
+    QList<asCScriptFunction *> fnlist;
+
+    auto r = _engine->SetDefaultNamespace(rawID);
+    if (Q_UNLIKELY(r < 0)) {
+        _engine->configFailed = false;
+        return;
+    }
+
+    // <signatures, std::function>
+    QHash<QString, IWingPlugin::UNSAFE_SCFNPTR> rfns;
+    for (auto p = fns.constKeyValueBegin(); p != fns.constKeyValueEnd(); ++p) {
+        auto func = new asCScriptFunction(_engine, nullptr, asFUNC_SYSTEM);
+
+        auto &fn = p->second;
+        auto sig = p->first;
+        auto r = c.ParseFunctionDeclaration(nullptr, sig.toLatin1(), func, true,
+                                            nullptr, nullptr,
+                                            _engine->defaultNamespace);
+        if (r < 0) {
+            Logger::critical(tr("RegisterScriptFnInvalidSig:") + sig);
+            func->funcType = asFUNC_DUMMY;
+            continue;
+        }
+
+        r = c.CheckNameConflict(func->name.AddressOf(), 0, 0,
+                                _engine->defaultNamespace, false, false, false);
+        if (r < 0) {
+            Logger::critical(tr("RegisterScriptFnConflitSig:") + sig);
+            func->funcType = asFUNC_DUMMY;
+            continue;
+        }
+
+        fnlist.append(func);
+
+        // register functions with internal hacking
+        func->id = _engine->GetNextScriptFunctionId();
+        _engine->AddScriptFunction(func);
+        rfns.insert(sig, p->second);
+    }
+
+    // clear the internal hacking functions
+    auto len = fnlist.size();
+    for (auto &fn : fnlist) {
+        _engine->RemoveScriptFunction(fn);
+        fn->Release();
+    }
+    _engine->SetDefaultNamespace("");
+
+    fnlist.clear();
+
+    Q_ASSERT(_angelplg);
+    _angelplg->registerUnSafeScriptFns(_pinfos.value(plg).id, rfns);
 }
 
 void PluginSystem::registerEnums(IWingPlugin *plg) {
@@ -840,15 +913,25 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
     if (evs.testFlag(IWingPlugin::RegisteredEvent::PluginFileClosed)) {
         _evplgs[IWingPlugin::RegisteredEvent::PluginFileClosed].append(plg);
     }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptUnSafeFnRegistering)) {
+        registerUnSafeFns(plg);
+    }
 }
 
 QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
-                                             bool isArg) {
-    bool isArray = type & WingHex::IWingPlugin::Array;
-    bool isMap = type & WingHex::IWingPlugin::Map;
-    bool isRef = type & WingHex::IWingPlugin::Ref;
+                                             bool isArg, bool noModifier) {
+    auto isArray = !!(type & WingHex::IWingPlugin::Array);
+    auto isList = !!(type & WingHex::IWingPlugin::List);
+    auto isContainer = isArray || isList;
+    if (isContainer) {
+        if (isArray && isList) {
+            return {};
+        }
+    }
 
     QString retype;
+    bool complexType = false;
 
     type = IWingPlugin::MetaType(type & WingHex::IWingPlugin::MetaTypeMask);
     switch (type) {
@@ -899,35 +982,49 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
         break;
     case WingHex::IWingPlugin::Color:
         retype = QStringLiteral("color");
+        complexType = true;
+        break;
+    case WingHex::IWingPlugin::Map:
+    case WingHex::IWingPlugin::Hash:
+        retype = QStringLiteral("dictionary");
+        complexType = true;
         break;
     default:
         return {};
     }
 
-    if (isMap && isArray) {
-        return {};
-    }
-
-    if (isArray) {
+    if (isArray || isList) {
         retype.prepend(QStringLiteral("array<")).append(QStringLiteral(">"));
     }
 
-    if (isMap) {
-        retype.prepend(QStringLiteral("dictionary<"))
-            .append(QStringLiteral(">"));
-    }
     if (isArg) {
-        if (isRef) {
-            retype.append(QStringLiteral(" &out"));
-        } else {
-            if (isArray || isMap) {
-                retype.append(QStringLiteral(" &in"))
-                    .prepend(QStringLiteral("const "));
-            }
+        if (!noModifier && (isContainer || complexType)) {
+            retype.append(QStringLiteral(" &in"))
+                .prepend(QStringLiteral("const "));
         }
     } else {
-        if (isArray || isMap) {
-            retype.append(QStringLiteral("@"));
+        if (!noModifier) {
+            // if it's a return type, only array<byte> and array<string> are
+            // supported in AngelScript
+            // ( array<byte> -> QByteArray , array<string> -> QStringList ),
+            // other array types are not suported. PRs are welcomed !!!
+            // IT'S TOO COMPLEX TO SUPPORT QVARIANTLIST !!!
+
+            // You can use unsafe registering to support
+            // extensive scripting system.
+            // It will be faster and flexible but not easy to implement.
+            if (isContainer) {
+                if (type != WingHex::IWingPlugin::Byte &&
+                    type != WingHex::IWingPlugin::String) {
+                    return {};
+                }
+
+                retype.append(QStringLiteral("@"));
+            }
+
+            if (complexType) {
+                retype.append(QStringLiteral("@"));
+            }
         }
     }
 
@@ -951,8 +1048,12 @@ QString PluginSystem::getScriptFnSig(const QString &fnName,
 
     QStringList params;
     for (auto &param : fninfo.params) {
-        params << type2AngelScriptString(param.first, true) +
-                      QStringLiteral(" ") + param.second;
+        auto ret = type2AngelScriptString(param.first, true);
+        if (ret.isEmpty()) {
+            return {};
+        }
+
+        params << ret + QStringLiteral(" ") + param.second;
     }
 
     return sig + params.join(',') + QStringLiteral(")");
@@ -1313,6 +1414,13 @@ void PluginSystem::connectLoadingInterface(IWingPlugin *plg) {
 
 void PluginSystem::connectBaseInterface(IWingPlugin *plg) {
     connectBaseInterface(dynamic_cast<IWingPluginBase *>(plg));
+    connect(plg, &IWingPlugin::existsServiceHost, this,
+            [this](const QString &puid) {
+                return std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
+                                    [puid, this](IWingPlugin *plg) {
+                                        return getPluginID(plg) == puid;
+                                    }) != _loadedplgs.end();
+            });
     connect(
         plg,
         QOverload<const QString &, const char *, Qt::ConnectionType,

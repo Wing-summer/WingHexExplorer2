@@ -54,6 +54,7 @@ public:
         tDictionaryValue,
         tGrid,
         tRef,
+        tColor,
         tMAXCOUNT
     };
 

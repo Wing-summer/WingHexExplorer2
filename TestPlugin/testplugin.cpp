@@ -52,6 +52,63 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
         info.params.append(qMakePair(MetaType::String, QStringLiteral("info")));
         _scriptInfo.insert(QStringLiteral("test_b"), info);
     }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_c),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        info.params.append(qMakePair(MetaType(MetaType::Int | MetaType::Array),
+                                     QStringLiteral("c")));
+        _scriptInfo.insert(QStringLiteral("test_c"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_d),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        info.params.append(qMakePair(MetaType::Hash, QStringLiteral("d")));
+        _scriptInfo.insert(QStringLiteral("test_d"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_e),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+        _scriptInfo.insert(QStringLiteral("test_e"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_f),
+                      this, std::placeholders::_1);
+        info.ret = MetaType(MetaType::Byte | MetaType::Array);
+        _scriptInfo.insert(QStringLiteral("test_f"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_g),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::String;
+        _scriptInfo.insert(QStringLiteral("test_g"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_h),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Hash;
+        _scriptInfo.insert(QStringLiteral("test_h"), info);
+    }
 }
 
 TestPlugin::~TestPlugin() {}
@@ -237,10 +294,125 @@ QVariant TestPlugin::test_b(const QVariantList &params) {
     return {};
 }
 
+QVariant TestPlugin::test_c(const QVariantList &params) {
+    if (params.isEmpty()) {
+        return {};
+    }
+
+    auto arg0 = params.first();
+
+    // note: passed QVector<QVariant>
+    if (arg0.canConvert<QVector<QVariant>>()) {
+        QVector<int> param;
+        for (auto &v : arg0.value<QVector<QVariant>>()) {
+            param.append(v.toInt()); // must be int
+        }
+
+        test_c(param);
+    }
+    return {};
+}
+
+QVariant TestPlugin::test_d(const QVariantList &params) {
+    if (params.isEmpty()) {
+        return {};
+    }
+
+    auto arg0 = params.first();
+
+    // note: passed QVariantHash
+    if (arg0.canConvert<QVariantHash>()) {
+        test_d(arg0.value<QVariantHash>());
+    }
+    return {};
+}
+
+QVariant TestPlugin::test_e(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return {};
+    }
+    return test_e();
+}
+
+QVariant TestPlugin::test_f(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return {};
+    }
+    return test_f();
+}
+
+QVariant TestPlugin::test_g(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return {};
+    }
+    return test_g();
+}
+
+QVariant TestPlugin::test_h(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return {};
+    }
+    return test_h();
+}
+
 void TestPlugin::test_a() { emit debug(__FUNCTION__); }
 
-void TestPlugin::test_b(const QString &a) {
-    emit warn(__FUNCTION__ + QStringLiteral(" : ") % a);
+void TestPlugin::test_b(const QString &b) {
+    emit warn(__FUNCTION__ + QStringLiteral(" : ") % b);
+}
+
+void TestPlugin::test_c(const QVector<int> &c) {
+    auto content = __FUNCTION__ + QStringLiteral(" : { ");
+    if (!c.isEmpty()) {
+        content += QString::number(c.first());
+
+        for (QVector<int>::size_type i = 1; i < c.size(); ++i) {
+            content += (QStringLiteral(", ") + QString::number(c.at(i)));
+        }
+    }
+
+    content += QStringLiteral(" }");
+
+    emit warn(content);
+}
+
+void TestPlugin::test_d(const QVariantHash &d) {
+    auto content = __FUNCTION__ + QStringLiteral(" : { ");
+    if (!d.isEmpty()) {
+        QStringList hash;
+        for (auto p = d.constKeyValueBegin(); p != d.constKeyValueEnd(); p++) {
+            hash.append(QStringLiteral("{ ") + p->first + QStringLiteral(", ") +
+                        p->second.toString() + QStringLiteral(" }"));
+        }
+
+        content += hash.join(", ");
+    }
+    content += QStringLiteral(" }");
+    emit warn(content);
+}
+
+bool TestPlugin::test_e() {
+    emit warn(__FUNCTION__);
+    return true;
+}
+
+QByteArray TestPlugin::test_f() {
+    emit warn(__FUNCTION__);
+    return WingHex::WINGSUMMER.toLatin1();
+}
+
+QString TestPlugin::test_g() {
+    emit warn(__FUNCTION__);
+    return WingHex::WINGSUMMER;
+}
+
+QVariantHash TestPlugin::test_h() {
+    QVariantHash hash;
+    auto t = WingHex::WINGSUMMER.length();
+    for (int i = 0; i < t; ++i) {
+        hash.insert(WingHex::WINGSUMMER.at(i), i);
+    }
+    return hash;
 }
 
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>

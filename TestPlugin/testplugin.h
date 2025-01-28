@@ -69,10 +69,24 @@ public:
 private:
     QVariant test_a(const QVariantList &);
     QVariant test_b(const QVariantList &params);
+    QVariant test_c(const QVariantList &params);
+    QVariant test_d(const QVariantList &params);
+
+    QVariant test_e(const QVariantList &params);
+    QVariant test_f(const QVariantList &params);
+    QVariant test_g(const QVariantList &params);
+    QVariant test_h(const QVariantList &params);
 
 private:
     void test_a();
-    void test_b(const QString &a);
+    void test_b(const QString &b);
+    void test_c(const QVector<int> &c);
+    void test_d(const QVariantHash &d);
+
+    bool test_e();
+    QByteArray test_f();
+    QString test_g();
+    QVariantHash test_h();
 
 private:
     QDialog *_tform = nullptr;

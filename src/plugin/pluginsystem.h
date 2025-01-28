@@ -164,6 +164,9 @@ public:
 
     QString getPluginID(IWingPluginBase *plg) const;
 
+    static QString type2AngelScriptString(IWingPlugin::MetaType type,
+                                          bool isArg, bool noModifier = false);
+
 private:
     void loadExtPlugin();
 
@@ -203,11 +206,9 @@ private:
 
 private:
     void registerFns(IWingPlugin *plg);
+    void registerUnSafeFns(IWingPlugin *plg);
     void registerEnums(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
-
-    static QString type2AngelScriptString(IWingPlugin::MetaType type,
-                                          bool isArg);
 
     static QString getScriptFnSig(const QString &fnName,
                                   const IWingPlugin::ScriptFnInfo &fninfo);

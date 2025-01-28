@@ -471,6 +471,8 @@ QString asDebugger::toString(void *value, asUINT typeId,
                     // Invoke the callback to get the string representation of
                     // this type
                     s << it.value()(value, this);
+                } else {
+                    s << tr("NoPrintSupportFor:") << type->GetName();
                 }
             }
         } else
