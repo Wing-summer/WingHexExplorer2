@@ -50,9 +50,9 @@ public:
     onOpenFileBegin() override;
     virtual QString supportedFileExtDisplayName() const override;
     virtual QIcon supportedFileIcon() const override;
-    virtual QIODevice *onOpenFile(const QString &path, bool readOnly,
-                                  const QVariantList &params) override;
-    virtual bool onCloseFile(QIODevice *dev) override;
+    virtual WingHex::WingIODevice *
+    onOpenFile(const QString &path, const QVariantList &params) override;
+    virtual bool onCloseFile(WingHex::WingIODevice *dev) override;
 
 private:
     QList<WingHex::PluginPage *> _plgps;

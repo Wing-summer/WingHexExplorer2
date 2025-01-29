@@ -27,6 +27,16 @@
 
 namespace WingHex {
 
+class WingIODevice : public QIODevice {
+    Q_OBJECT
+
+public:
+    WingIODevice(QObject *parent = nullptr) : QIODevice(parent) {}
+
+    // can not change size during editing (default: changing-abled)
+    virtual bool keepSize() const { return false; };
+};
+
 class IWingDevice : public IWingPluginBase {
     Q_OBJECT
 public:
@@ -39,10 +49,10 @@ public:
         return std::nullopt;
     }
 
-    virtual QIODevice *onOpenFile(const QString &path,
-                                  const QVariantList &params) = 0;
+    virtual WingIODevice *onOpenFile(const QString &path,
+                                     const QVariantList &params) = 0;
 
-    virtual bool onCloseFile(QIODevice *dev) = 0;
+    virtual bool onCloseFile(WingIODevice *dev) = 0;
 };
 
 } // namespace WingHex

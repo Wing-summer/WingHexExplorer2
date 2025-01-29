@@ -2361,27 +2361,48 @@
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1328"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1289"/>
+        <source>ChooseFile</source>
+        <translation>選擇檔</translation>
+    </message>
+    <message>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1305"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1310"/>
+        <source>Error</source>
+        <translation>錯誤</translation>
+    </message>
+    <message>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1306"/>
+        <source>FileNotExist</source>
+        <translation>檔不存在！</translation>
+    </message>
+    <message>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1311"/>
+        <source>FilePermission</source>
+        <translation>因檔許可權無法繼續！</translation>
+    </message>
+    <message>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1341"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1338"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1351"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1346"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1359"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="1493"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="1506"/>
         <source>[EvilCall]</source>
         <translation>【惡意調用】</translation>
     </message>
     <message>
-        <location filename="../../src/plugin/pluginsystem.cpp" line="3018"/>
+        <location filename="../../src/plugin/pluginsystem.cpp" line="3031"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2774,17 +2795,17 @@ Do you wish to keep up to date by reloading the file?</source>
 <context>
     <name>QHexView</name>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="243"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="247"/>
         <source>Foreground:</source>
         <translation>前景色：</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="254"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="258"/>
         <source>Background:</source>
         <translation>背景色：</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="261"/>
+        <location filename="../../3rdparty/QHexView/qhexview.cpp" line="265"/>
         <source>Comment:</source>
         <translation>說明：</translation>
     </message>

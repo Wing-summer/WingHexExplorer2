@@ -20,8 +20,8 @@
 #include <QDebug>
 
 SharedMemory::SharedMemory(const QString &key, OpenMode mode, QObject *parent)
-    : QIODevice(parent), m_key(key), m_mode(mode), m_sharedMemory(key) {
-
+    : WingHex::WingIODevice(parent), m_key(key), m_mode(mode),
+      m_sharedMemory(key) {
     if (m_mode == WriteOnly) {
         if (!m_sharedMemory.create(1024)) {
             qWarning() << "Unable to create shared memory segment.";
@@ -47,16 +47,27 @@ bool SharedMemory::open(OpenMode mode) {
         return false;
     }
 
-    m_sharedMemory.lock(); // Lock memory for reading or writing safely
+    QSharedMemory::AccessMode m;
+    if (mode == ReadOnly) {
+        m = QSharedMemory::AccessMode::ReadOnly;
+    } else {
+        m = QSharedMemory::AccessMode::ReadWrite;
+    }
 
-    return true;
+    if (m_sharedMemory.attach(m)) {
+        m_sharedMemory.lock(); // Lock memory for reading or writing safely
+        return QIODevice::open(mode);
+    }
+
+    return false;
 }
+
+bool SharedMemory::keepSize() const { return true; }
 
 void SharedMemory::close() {
     m_sharedMemory.unlock();
-    if (m_mode == ReadOnly) {
-        m_sharedMemory.detach();
-    }
+    m_sharedMemory.detach();
+    QIODevice::close();
 }
 
 qint64 SharedMemory::readData(char *data, qint64 maxSize) {
@@ -99,3 +110,5 @@ qint64 SharedMemory::writeData(const char *data, qint64 maxSize) {
 
     return maxSize;
 }
+
+qint64 SharedMemory::size() const { return m_sharedMemory.size(); }

@@ -18,11 +18,12 @@
 #ifndef SHAREDMEMORY_H
 #define SHAREDMEMORY_H
 
+#include "iwingdevice.h"
+
 #include <QByteArray>
-#include <QIODevice>
 #include <QSharedMemory>
 
-class SharedMemory : public QIODevice {
+class SharedMemory : public WingHex::WingIODevice {
     Q_OBJECT
 
 public:
@@ -33,12 +34,15 @@ public:
 
 public:
     bool open(OpenMode mode) override;
+    virtual bool keepSize() const override;
 
     void close() override;
 
     qint64 readData(char *data, qint64 maxSize) override;
 
     qint64 writeData(const char *data, qint64 maxSize) override;
+
+    virtual qint64 size() const override;
 
 private:
     QString m_key;

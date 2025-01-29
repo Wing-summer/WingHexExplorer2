@@ -43,6 +43,10 @@ public:
     // added by wingsummer
     bool setLockedFile(bool b);
     bool setKeepSize(bool b);
+
+    void setLockKeepSize(bool b);
+    bool lockKeepSize() const;
+
     bool isReadOnly();
     bool isKeepSize();
     bool isLocked();

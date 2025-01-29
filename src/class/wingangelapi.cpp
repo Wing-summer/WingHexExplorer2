@@ -1619,17 +1619,17 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 
         auto id = engine->GetTypeIdByDecl("char");
         if (id == typeID) {
-            return **getDereferencePointer<QChar *>(raw, isHandle);
+            return *getDereferencePointer<QChar>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("color");
         if (id == typeID) {
-            return **getDereferencePointer<QColor *>(raw, isHandle);
+            return *getDereferencePointer<QColor>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("string");
         if (id == typeID) {
-            return **getDereferencePointer<QString *>(raw, isHandle);
+            return *getDereferencePointer<QString>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("array<byte>");

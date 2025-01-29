@@ -35,6 +35,10 @@ bool QHexView::setKeepSize(bool b) {
     return ret;
 }
 
+void QHexView::setLockKeepSize(bool b) { m_document->setLockKeepSize(b); }
+
+bool QHexView::lockKeepSize() const { return m_document->lockKeepSize(); }
+
 qsizetype QHexView::documentLines() { return m_renderer->documentLines(); }
 qsizetype QHexView::documentBytes() { return m_document->length(); }
 qsizetype QHexView::currentRow() { return m_cursor->currentLine(); }

@@ -44,6 +44,9 @@ public:
     bool isKeepSize();
     bool isLocked();
 
+    void setLockKeepSize(bool b);
+    bool lockKeepSize() const;
+
     //----------------------------------
     bool AddBookMark(qsizetype pos, const QString &comment);
     bool RemoveBookMark(qsizetype pos);
@@ -242,6 +245,7 @@ private:
     bool m_readonly;
     bool m_keepsize;
     bool m_islocked;
+    bool m_lockKeepSize = false;
     QMap<qsizetype, QString> _bookmarks;
 
     bool m_metafg = true;

@@ -41,7 +41,7 @@ constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 5;
 
 QString EditorView::getDeviceFileName(const QString &ext, const QString &file) {
-    return QStringLiteral("://") + ext + QStringLiteral("/") + file;
+    return QStringLiteral("wdrv:///") + ext + QStringLiteral("/") + file;
 }
 
 EditorView::EditorView(QWidget *parent)
@@ -305,10 +305,13 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
                                 const QVariantList &params) {
     auto dev = PluginSystem::instance().ext2Device(ext);
     if (dev == nullptr) {
-        return ErrFile::Error;
+        return ErrFile::NotExist;
     }
 
     auto d = dev->onOpenFile(file, params);
+    if (d == nullptr) {
+        return ErrFile::NotExist;
+    }
 
     bool readonly = true;
     if (d->open(QIODevice::ReadWrite)) {
@@ -334,6 +337,9 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->setLockedFile(readonly);
     m_hex->setKeepSize(true);
+    if (d->keepSize()) {
+        m_hex->setLockKeepSize(true);
+    }
 
     auto fileName = getDeviceFileName(ext, file);
 
@@ -352,7 +358,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     connectDocSavedFlag(this);
 
     auto tab = this->tabWidget();
-    tab->setIcon(dev->pluginIcon());
+    tab->setIcon(dev->supportedFileIcon());
     tab->setToolTip(fileName);
     return ErrFile::Success;
 }
@@ -389,7 +395,10 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         m_docType = DocumentType::File;
         m_isWorkSpace = true;
 
-        this->tabWidget()->setIcon(ICONRES(QStringLiteral("pro")));
+        auto tab = this->tabWidget();
+        tab->setIcon(ICONRES(QStringLiteral("pro")));
+        tab->setStyleSheet(
+            QStringLiteral("QLabel {text-decoration: underline;}"));
 
         return ret;
     }
@@ -458,6 +467,7 @@ ErrFile EditorView::openDriver(const QString &driver) {
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->setLockedFile(true);
     m_hex->setKeepSize(true);
+    m_hex->setLockKeepSize(true);
 
     p->setDocSaved();
     m_fileName = driver;
@@ -523,37 +533,47 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     }
 
     if (doc->isUndoByteModified()) {
-        QFile file(fileName);
-
-        switch (m_docType) {
-        case DocumentType::RegionFile: {
-            if (!ignoreMd5 && Utilities::getMd5(m_fileName) != m_md5) {
-                return ErrFile::SourceFileChanged;
+        if (m_docType == DocumentType::Extension) {
+            if (_dev->isOpen()) {
+                _dev->close();
             }
-            if (!file.open(QFile::ReadWrite)) {
-                return ErrFile::Permission;
-            }
-        } break;
-        default: {
-            if (!file.open(QFile::WriteOnly)) {
-                return ErrFile::Permission;
-            }
-        } break;
-        }
-
-        if (doc->saveTo(&file, true)) {
-            file.close();
-
-            if (!isExport) {
-                m_fileName = QFileInfo(fileName).absoluteFilePath();
+            _dev->open(QIODevice::WriteOnly);
+            if (doc->saveTo(_dev, true)) {
                 doc->setDocSaved();
+                return ErrFile::Success;
+            }
+            _dev->close();
+        } else {
+            QFile file(fileName);
+
+            switch (m_docType) {
+            case DocumentType::RegionFile: {
+                if (!ignoreMd5 && Utilities::getMd5(m_fileName) != m_md5) {
+                    return ErrFile::SourceFileChanged;
+                }
+                if (!file.open(QFile::ReadWrite)) {
+                    return ErrFile::Permission;
+                }
+            } break;
+            default: {
+                if (!file.open(QFile::WriteOnly)) {
+                    return ErrFile::Permission;
+                }
+            } break;
             }
 
-            return ErrFile::Success;
+            if (doc->saveTo(&file, true)) {
+                file.close();
+
+                if (!isExport) {
+                    m_fileName = QFileInfo(fileName).absoluteFilePath();
+                    doc->setDocSaved();
+                }
+
+                return ErrFile::Success;
+            }
         }
-
         return ErrFile::Permission;
-
     } else {
         doc->setDocSaved();
     }

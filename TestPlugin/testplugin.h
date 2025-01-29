@@ -23,6 +23,8 @@
 
 #include "iwingplugin.h"
 
+#include <QSharedMemory>
+
 class TestPlugin final : public WingHex::IWingPlugin {
     Q_OBJECT
 
@@ -67,7 +69,7 @@ public:
     virtual void eventReady() override;
 
 private:
-    QVariant test_a(const QVariantList &);
+    QVariant test_a(const QVariantList &params);
     QVariant test_b(const QVariantList &params);
     QVariant test_c(const QVariantList &params);
     QVariant test_d(const QVariantList &params);
@@ -76,6 +78,10 @@ private:
     QVariant test_f(const QVariantList &params);
     QVariant test_g(const QVariantList &params);
     QVariant test_h(const QVariantList &params);
+
+    QVariant createTestShareMem(const QVariantList &params);
+    QVariant destoryTestShareMem(const QVariantList &params);
+    QVariant printLogTestSharedMemData(const QVariantList &params);
 
 private:
     void test_a();
@@ -88,9 +94,15 @@ private:
     QString test_g();
     QVariantHash test_h();
 
+    bool createTestShareMem(const QString &nameID);
+    void destoryTestShareMem();
+    void printLogTestSharedMemData();
+
 private:
     QDialog *_tform = nullptr;
     QMenu *_tmenu = nullptr;
+
+    QSharedMemory *_tsharemem = nullptr;
 
     QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
     QList<WingHex::WingDockWidgetInfo> _winfo;

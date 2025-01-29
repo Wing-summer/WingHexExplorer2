@@ -58,7 +58,7 @@ find_package(
     COMPONENTS Widgets LinguistTools
     REQUIRED)
 
-set(TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lang/ShareMemoryDrv_zh_CN.ts")
+set(TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lang/shmem_zh_CN.ts")
 
 set(TRANSLATION_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -77,7 +77,7 @@ if(NOT TARGET TestPlugin)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/TranslationUtils.cmake)
 endif()
 
-add_plugin_translations_resource(QM_RES ShareMemoryDrv ${QM_FILES})
+add_plugin_translations_resource(QM_RES shmem ${QM_FILES})
 
 add_library(
     ShareMemoryDrv SHARED

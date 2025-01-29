@@ -26,6 +26,8 @@
 
 #include <QApplication>
 
+// 注意：所有提供的脚本接口函数都不是线程安全的，只是测试
+
 TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
     // 在构造函数中，所有的 API 都无法调用。插件的翻译文件也不会自动加载。
     // 在构造函数中，仅适合做一些为初始化准备的操作。
@@ -109,9 +111,38 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
         info.ret = MetaType::Hash;
         _scriptInfo.insert(QStringLiteral("test_h"), info);
     }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &TestPlugin::createTestShareMem),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+        info.params.append(
+            qMakePair(MetaType::String, QStringLiteral("nameID")));
+        _scriptInfo.insert(QStringLiteral("createTestShareMem"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &TestPlugin::destoryTestShareMem),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        _scriptInfo.insert(QStringLiteral("destoryTestShareMem"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &TestPlugin::printLogTestSharedMemData),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        _scriptInfo.insert(QStringLiteral("printLogTestSharedMemData"), info);
+    }
 }
 
-TestPlugin::~TestPlugin() {}
+TestPlugin::~TestPlugin() { destoryTestShareMem(); }
 
 int TestPlugin::sdkVersion() const { return WingHex::SDKVERSION; }
 
@@ -280,14 +311,17 @@ TestPlugin::registeredEditorViewWidgets() const {
     return _evws;
 }
 
-QVariant TestPlugin::test_a(const QVariantList &) {
+QVariant TestPlugin::test_a(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
     test_a();
     return {};
 }
 
 QVariant TestPlugin::test_b(const QVariantList &params) {
     if (params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     auto arg0 = params.first().toString();
     test_b(arg0);
@@ -296,7 +330,7 @@ QVariant TestPlugin::test_b(const QVariantList &params) {
 
 QVariant TestPlugin::test_c(const QVariantList &params) {
     if (params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
     auto arg0 = params.first();
@@ -309,13 +343,15 @@ QVariant TestPlugin::test_c(const QVariantList &params) {
         }
 
         test_c(param);
+    } else {
+        return getScriptCallError(-2, tr("InvalidParam"));
     }
     return {};
 }
 
 QVariant TestPlugin::test_d(const QVariantList &params) {
     if (params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
     auto arg0 = params.first();
@@ -323,36 +359,62 @@ QVariant TestPlugin::test_d(const QVariantList &params) {
     // note: passed QVariantHash
     if (arg0.canConvert<QVariantHash>()) {
         test_d(arg0.value<QVariantHash>());
+    } else {
+        return getScriptCallError(-2, tr("InvalidParam"));
     }
     return {};
 }
 
 QVariant TestPlugin::test_e(const QVariantList &params) {
     if (!params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return test_e();
 }
 
 QVariant TestPlugin::test_f(const QVariantList &params) {
     if (!params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return test_f();
 }
 
 QVariant TestPlugin::test_g(const QVariantList &params) {
     if (!params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return test_g();
 }
 
 QVariant TestPlugin::test_h(const QVariantList &params) {
     if (!params.isEmpty()) {
-        return {};
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return test_h();
+}
+
+QVariant TestPlugin::createTestShareMem(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto arg0 = params.first().toString();
+    return createTestShareMem(arg0);
+}
+
+QVariant TestPlugin::destoryTestShareMem(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    destoryTestShareMem();
+    return {};
+}
+
+QVariant TestPlugin::printLogTestSharedMemData(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    printLogTestSharedMemData();
+    return {};
 }
 
 void TestPlugin::test_a() { emit debug(__FUNCTION__); }
@@ -413,6 +475,42 @@ QVariantHash TestPlugin::test_h() {
         hash.insert(WingHex::WINGSUMMER.at(i), i);
     }
     return hash;
+}
+
+bool TestPlugin::createTestShareMem(const QString &nameID) {
+    if (_tsharemem) {
+        return false;
+    }
+
+    if (nameID.isEmpty()) {
+        return false;
+    }
+
+    _tsharemem = new QSharedMemory(nameID, this);
+
+    if (!_tsharemem->create(20)) {
+        return false;
+    }
+
+    auto buffer = _tsharemem->data();
+    std::memset(buffer, 0, 20);
+    const char data[] = "WingSummer";
+    std::memcpy(buffer, data, sizeof(data));
+
+    return true;
+}
+
+void TestPlugin::destoryTestShareMem() {
+    if (_tsharemem) {
+        _tsharemem->detach();
+        _tsharemem->deleteLater();
+        _tsharemem = nullptr;
+    }
+}
+
+void TestPlugin::printLogTestSharedMemData() {
+    emit warn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
+                  .toHex(' '));
 }
 
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>

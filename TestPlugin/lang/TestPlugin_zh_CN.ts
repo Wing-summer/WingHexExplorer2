@@ -357,32 +357,53 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="142"/>
+        <location filename="../testplugin.cpp" line="173"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="154"/>
-        <location filename="../testplugin.cpp" line="163"/>
-        <location filename="../testplugin.cpp" line="168"/>
-        <location filename="../testplugin.cpp" line="249"/>
+        <location filename="../testplugin.cpp" line="185"/>
+        <location filename="../testplugin.cpp" line="194"/>
+        <location filename="../testplugin.cpp" line="199"/>
+        <location filename="../testplugin.cpp" line="280"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="172"/>
+        <location filename="../testplugin.cpp" line="203"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="176"/>
+        <location filename="../testplugin.cpp" line="207"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="252"/>
+        <location filename="../testplugin.cpp" line="283"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
+    </message>
+    <message>
+        <location filename="../testplugin.cpp" line="316"/>
+        <location filename="../testplugin.cpp" line="324"/>
+        <location filename="../testplugin.cpp" line="333"/>
+        <location filename="../testplugin.cpp" line="354"/>
+        <location filename="../testplugin.cpp" line="370"/>
+        <location filename="../testplugin.cpp" line="377"/>
+        <location filename="../testplugin.cpp" line="384"/>
+        <location filename="../testplugin.cpp" line="391"/>
+        <location filename="../testplugin.cpp" line="398"/>
+        <location filename="../testplugin.cpp" line="406"/>
+        <location filename="../testplugin.cpp" line="414"/>
+        <source>InvalidParamsCount</source>
+        <translation>无效参数个数</translation>
+    </message>
+    <message>
+        <location filename="../testplugin.cpp" line="347"/>
+        <location filename="../testplugin.cpp" line="363"/>
+        <source>InvalidParam</source>
+        <translation>非法参数</translation>
     </message>
 </context>
 <context>

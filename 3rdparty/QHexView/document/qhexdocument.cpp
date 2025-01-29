@@ -219,6 +219,10 @@ bool QHexDocument::isReadOnly() { return m_readonly; }
 bool QHexDocument::isKeepSize() { return m_keepsize; }
 bool QHexDocument::isLocked() { return m_islocked; }
 
+void QHexDocument::setLockKeepSize(bool b) { m_lockKeepSize = b; }
+
+bool QHexDocument::lockKeepSize() const { return m_lockKeepSize; }
+
 bool QHexDocument::setLockedFile(bool b) {
     if (m_readonly)
         return false;
@@ -227,7 +231,7 @@ bool QHexDocument::setLockedFile(bool b) {
     return true;
 }
 bool QHexDocument::setKeepSize(bool b) {
-    if (m_readonly)
+    if (m_readonly || m_lockKeepSize)
         return false;
 
     m_keepsize = b;

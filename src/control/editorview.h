@@ -26,11 +26,11 @@
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/bookmarksmodel.h"
+#include "model/findresultmodel.h"
 #include "model/metadatamodel.h"
+#include "plugin/iwingdevice.h"
 #include "plugin/iwingplugin.h"
 #include "utilities.h"
-
-#include "model/findresultmodel.h"
 
 using namespace WingHex;
 
@@ -198,7 +198,7 @@ private:
 
     // only for extension use
     QString _ext;
-    QIODevice *_dev = nullptr;
+    WingHex::WingIODevice *_dev = nullptr;
     QString _file;
     QVariantList _params;
 };

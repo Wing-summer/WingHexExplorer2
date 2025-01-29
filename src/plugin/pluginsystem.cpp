@@ -1285,8 +1285,8 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                     params = ob.second;
                 } else {
                     // common dialog
-                    auto ob =
-                        WingFileDialog::getOpenFileName(_win, tr(""), tr(""));
+                    auto ob = WingFileDialog::getOpenFileName(
+                        _win, tr("ChooseFile"), _win->m_lastusedpath);
                     if (ob.isEmpty()) {
                         return;
                     }
@@ -1298,12 +1298,25 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 }
 
                 EditorView *view = nullptr;
-                auto r = _win->openExtFile(getPluginID(p), file, params, &view);
-                if (view) {
-                    if (r == ErrFile::AlreadyOpened) {
-                        // TODO
-                        return;
-                    }
+                auto res =
+                    _win->openExtFile(getPluginID(p), file, params, &view);
+
+                if (res == ErrFile::NotExist) {
+                    WingMessageBox::critical(_win, tr("Error"),
+                                             tr("FileNotExist"));
+                    return;
+                }
+                if (res == ErrFile::Permission) {
+                    WingMessageBox::critical(_win, tr("Error"),
+                                             tr("FilePermission"));
+                    return;
+                }
+
+                if (res == ErrFile::AlreadyOpened) {
+                    Q_ASSERT(view);
+                    view->raise();
+                    view->setFocus();
+                    return;
                 }
             }));
 
