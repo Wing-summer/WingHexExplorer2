@@ -112,14 +112,6 @@ void QHexView::establishSignal(QHexDocument *doc) {
         this->viewport()->update();
     });
 
-    connect(m_cursor, &QHexCursor::positionChanged, this,
-            &QHexView::moveToSelection);
-    connect(m_cursor, &QHexCursor::selectionChanged, this, [this]() {
-        this->viewport()->update();
-        emit cursorSelectionChanged();
-    });
-    connect(m_cursor, &QHexCursor::insertionModeChanged, this,
-            &QHexView::renderCurrentLine);
     connect(doc, &QHexDocument::canUndoChanged, this,
             &QHexView::canUndoChanged);
     connect(doc, &QHexDocument::canRedoChanged, this,
@@ -192,7 +184,7 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
     }
 
     if (m_document) {
-        m_document->disconnect();
+        m_document->disconnect(this);
         m_document.clear();
     }
 
@@ -215,6 +207,16 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
     }
 
     establishSignal(m_document.data());
+
+    connect(m_cursor, &QHexCursor::positionChanged, this,
+            &QHexView::moveToSelection);
+    connect(m_cursor, &QHexCursor::selectionChanged, this, [this]() {
+        this->viewport()->update();
+        emit cursorSelectionChanged();
+    });
+    connect(m_cursor, &QHexCursor::insertionModeChanged, this,
+            &QHexView::renderCurrentLine);
+
     emit documentChanged(document.data());
 
     this->adjustScrollBars();

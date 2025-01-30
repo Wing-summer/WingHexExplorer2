@@ -45,12 +45,9 @@ public:
     virtual QIcon supportedFileIcon() const { return {}; };
 
 public:
-    virtual std::optional<QPair<QString, QVariantList>> onOpenFileBegin() {
-        return std::nullopt;
-    }
+    virtual QString onOpenFileBegin() { return {}; }
 
-    virtual WingIODevice *onOpenFile(const QString &path,
-                                     const QVariantList &params) = 0;
+    virtual WingIODevice *onOpenFile(const QString &path) = 0;
 
     virtual bool onCloseFile(WingIODevice *dev) = 0;
 };

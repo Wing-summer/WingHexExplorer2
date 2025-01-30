@@ -17,7 +17,6 @@
 
 #include "wingangelapi.h"
 
-#include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 #include "class/angelscripthelper.h"
 #include "class/logger.h"
@@ -1086,14 +1085,11 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "ErrFile openFile(string &in filename)");
 
-    registerAPI<WingHex::ErrFile(const QString &, const QString &,
-                                 const CScriptArray &)>(
+    registerAPI<WingHex::ErrFile(const QString &, const QString &)>(
         engine,
-        std::bind(&WingAngelAPI::_HexCtl_OpenExtFile, this,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
-        "ErrFile openExtFile(string &in ext, string &in file, "
-        "array<any> &in params = array<any>())");
+        std::bind(&WingHex::WingPlugin::Controller::openExtFile, ctl,
+                  std::placeholders::_1, std::placeholders::_2),
+        "ErrFile openExtFile(string &in ext, string &in file)");
 
     registerAPI<WingHex::ErrFile(const QString &, qsizetype, qsizetype)>(
         engine,
@@ -1937,7 +1933,7 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     }
 
     auto rettype = fns.ret;
-    auto r = PluginSystem::type2AngelScriptString(rettype, false);
+    auto r = PluginSystem::type2AngelScriptString(rettype, false, true);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto type =
@@ -2221,22 +2217,6 @@ QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
         *ok = false;
         return {};
     }
-}
-
-WingHex::ErrFile WingAngelAPI::_HexCtl_OpenExtFile(const QString &ext,
-                                                   const QString &file,
-                                                   const CScriptArray &params) {
-    QVariantList bparams;
-    for (asUINT i = 0; i < params.GetSize(); ++i) {
-        auto item = reinterpret_cast<const CScriptAny *>(params.At(i));
-        int typeID = item->GetTypeId();
-        auto engine = _console->consoleMachine()->engine();
-        auto bSizes = engine->GetSizeOfPrimitiveType(typeID);
-        auto data = malloc(bSizes);
-        bparams << qvariantGet(engine, data, typeID, true); // a list
-        free(data);
-    }
-    return emit controller.openExtFile(ext, file, bparams);
 }
 
 CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(

@@ -46,12 +46,10 @@ public:
 
     // IWingDevice interface
 public:
-    virtual std::optional<QPair<QString, QVariantList>>
-    onOpenFileBegin() override;
+    virtual QString onOpenFileBegin() override;
     virtual QString supportedFileExtDisplayName() const override;
     virtual QIcon supportedFileIcon() const override;
-    virtual WingHex::WingIODevice *
-    onOpenFile(const QString &path, const QVariantList &params) override;
+    virtual WingHex::WingIODevice *onOpenFile(const QString &path) override;
     virtual bool onCloseFile(WingHex::WingIODevice *dev) override;
 
 private:

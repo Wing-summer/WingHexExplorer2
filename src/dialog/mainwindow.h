@@ -152,6 +152,7 @@ private slots:
     void on_reload();
 
     void on_save();
+    void on_convpro();
     void on_saveas();
     void on_exportfile();
     void on_savesel();
@@ -215,17 +216,20 @@ private slots:
 public:
     ErrFile openFile(const QString &file, EditorView **editor);
     ErrFile openExtFile(const QString &ext, const QString &file,
-                        const QVariantList &params, EditorView **editor);
+                        EditorView **editor);
     ErrFile openDriver(const QString &driver, EditorView **editor);
     ErrFile openWorkSpace(const QString &file, EditorView **editor);
     ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
                            qsizetype length);
 
     ErrFile saveEditor(EditorView *editor, const QString &filename,
-                       bool ignoreMd5, bool isExport = false);
+                       bool ignoreMd5, bool isExport = false,
+                       bool forceWorkspace = false, QString *ws = nullptr);
     ErrFile closeEditor(EditorView *editor, bool force);
 
     EditorView *currentEditor();
+
+    QString getWorkSpaceFileName(const QString &curFile);
 
     void saveTableContent(QAbstractItemModel *model);
 
@@ -243,6 +247,7 @@ private:
 
     bool newOpenFileSafeCheck();
     void registerEditorView(EditorView *editor, const QString &ws = {});
+    void registerClonedEditorView(EditorView *editor);
 
     void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
@@ -253,7 +258,6 @@ private:
 
     void updateEditModeEnabled();
     void enableDirverLimit(bool isdriver);
-    void enableCloneFileLimit(bool isCloneFile);
 
     void setCurrentHexEditorScale(qreal rate);
 
@@ -570,7 +574,6 @@ private:
 
     QList<QWidget *> m_editStateWidgets;
     QList<QWidget *> m_driverStateWidgets;
-    QList<QWidget *> m_cloneFileStateWidgets;
 
     qsizetype _decstrlim = 10;
 

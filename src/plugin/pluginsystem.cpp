@@ -424,14 +424,17 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         }
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::FileSaved: {
-        Q_ASSERT(params.size() == 3);
+        Q_ASSERT(params.size() == 4);
         auto newFileName = params.at(0).toString();
         auto oldFileName = params.at(1).toString();
-        auto fileType = params.at(2).value<WingHex::IWingPlugin::FileType>();
+        auto isExported = params.at(2).toBool();
+        auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
         Q_ASSERT(!newFileName.isEmpty() && !oldFileName.isEmpty());
         for (auto &plg : _evplgs[event]) {
-            plg->eventPluginFile(IWingPlugin::PluginFileEvent::Saved, fileType,
-                                 oldFileName, -1, newFileName);
+            plg->eventPluginFile(isExported
+                                     ? IWingPlugin::PluginFileEvent::Exported
+                                     : IWingPlugin::PluginFileEvent::Saved,
+                                 fileType, oldFileName, -1, newFileName);
         }
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::FileSwitched: {
@@ -1275,22 +1278,11 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
         menu->addAction(_win->newAction(
             p->supportedFileIcon(), p->supportedFileExtDisplayName(),
             [p, this]() {
-                QString file;
-                QVariantList params;
-
-                auto ret = p->onOpenFileBegin();
-                if (ret.has_value()) {
-                    auto ob = ret.value();
-                    file = ob.first;
-                    params = ob.second;
-                } else {
+                auto file = p->onOpenFileBegin();
+                if (file.isEmpty()) {
                     // common dialog
-                    auto ob = WingFileDialog::getOpenFileName(
+                    file = WingFileDialog::getOpenFileName(
                         _win, tr("ChooseFile"), _win->m_lastusedpath);
-                    if (ob.isEmpty()) {
-                        return;
-                    }
-                    file = ob;
                 }
 
                 if (file.isEmpty()) {
@@ -1298,8 +1290,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 }
 
                 EditorView *view = nullptr;
-                auto res =
-                    _win->openExtFile(getPluginID(p), file, params, &view);
+                auto res = _win->openExtFile(getPluginID(p), file, &view);
 
                 if (res == ErrFile::NotExist) {
                     WingMessageBox::critical(_win, tr("Error"),
@@ -2628,8 +2619,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
         });
     connect(
         pctl, &WingPlugin::Controller::openExtFile, _win,
-        [=](const QString &ext, const QString &file,
-            const QVariantList &params) {
+        [=](const QString &ext, const QString &file) {
             if (!checkThreadAff()) {
                 return ErrFile::NotAllowedInNoneGUIThread;
             }
@@ -2637,7 +2627,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             if (!checkPluginCanOpenedFile(plg)) {
                 return ErrFile::TooManyOpenedFile;
             }
-            auto ret = _win->openExtFile(ext, file, params, &view);
+            auto ret = _win->openExtFile(ext, file, &view);
             if (view) {
                 if (ret == ErrFile::AlreadyOpened &&
                     checkPluginHasAlreadyOpened(plg, view)) {
@@ -3094,19 +3084,35 @@ void PluginSystem::loadAllPlugin() {
     }
 
     bool ok;
-    auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
-    if (displg > 0 || !set.enablePlugin()) {
-        return;
-    }
 
-    if (Utilities::isRoot()) {
-        if (!set.enablePlgInRoot()) {
-            return;
+    auto disAll =
+        qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
+    if (!ok || (ok && disAll == 0)) {
+        bool enabledrv = true, enableplg = true;
+        auto disdrv = qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
+        if (ok && disdrv != 0) {
+            enabledrv = false;
+        }
+
+        if (enabledrv) {
+            loadDevicePlugin();
+        }
+
+        auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
+        if ((ok && displg != 0) || !set.enablePlugin()) {
+            enableplg = false;
+        }
+
+        if (Utilities::isRoot()) {
+            if (!set.enablePlgInRoot()) {
+                enableplg = false;
+            }
+        }
+
+        if (enableplg) {
+            loadExtPlugin();
         }
     }
-
-    loadDevicePlugin();
-    loadExtPlugin();
 
     // loading finished, delete the checking engine
     finalizeCheckingEngine();

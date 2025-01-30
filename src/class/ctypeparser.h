@@ -117,7 +117,7 @@ public:
 
     QHash<QString, QList<QPair<QString, int>>> enumDefs() const;
 
-    QHash<QString, qsizetype> typeSizes() const;
+    QHash<QString, QPair<QMetaType::Type, qsizetype>> types() const;
 
     QHash<QString, long> constDefs() const;
 
@@ -205,7 +205,7 @@ private:
 
     /// Size of C data types and also user-defined struct/union types
     /// @note All enum types have fixed size, so they're not stored
-    QHash<QString, qsizetype> type_maps_;
+    QHash<QString, QPair<QMetaType::Type, qsizetype>> type_maps_;
 
     /// unsigned types
     QStringList unsigned_types_;

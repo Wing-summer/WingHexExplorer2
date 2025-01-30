@@ -50,10 +50,7 @@ QList<WingHex::PluginPage *> SharedMemoryDriver::registeredPages() const {
     return _plgps;
 }
 
-WingHex::WingIODevice *
-SharedMemoryDriver::onOpenFile(const QString &path,
-                               const QVariantList &params) {
-    Q_UNUSED(params);
+WingHex::WingIODevice *SharedMemoryDriver::onOpenFile(const QString &path) {
     return new SharedMemory(path, SharedMemory::ReadWrite, this);
 }
 
@@ -73,15 +70,14 @@ QIcon SharedMemoryDriver::supportedFileIcon() const {
     return QIcon(QStringLiteral(":/images/ShareMemDrv/images/shmem.png"));
 }
 
-std::optional<QPair<QString, QVariantList>>
-SharedMemoryDriver::onOpenFileBegin() {
+QString SharedMemoryDriver::onOpenFileBegin() {
     bool ok;
     auto id =
         emit inputbox.getText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
                               QLineEdit::Normal, {}, &ok);
     if (!ok) {
-        return std::make_optional<QPair<QString, QVariantList>>();
+        return {};
     }
 
-    return qMakePair(id, QVariantList());
+    return id;
 }

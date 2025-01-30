@@ -198,10 +198,6 @@ private:
                               int current, bool editable, bool *ok,
                               Qt::InputMethodHints inputMethodHints);
 
-    WingHex::ErrFile _HexCtl_OpenExtFile(const QString &ext,
-                                         const QString &file,
-                                         const CScriptArray &params);
-
     CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
                                                const QString &dir,
                                                const QString &filter,

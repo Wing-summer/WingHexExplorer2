@@ -251,9 +251,8 @@ signals:
     Q_REQUIRED_RESULT WingHex::ErrFile openRegionFile(const QString &filename,
                                                       qsizetype start = 0,
                                                       qsizetype length = 1024);
-    Q_REQUIRED_RESULT WingHex::ErrFile
-    openExtFile(const QString &ext, const QString &file,
-                const QVariantList &params = {});
+    Q_REQUIRED_RESULT WingHex::ErrFile openExtFile(const QString &ext,
+                                                   const QString &file);
 
     WingHex::ErrFile closeHandle(int handle);
     WingHex::ErrFile closeFile(int handle, bool force = false);
@@ -377,9 +376,16 @@ public slots:
 
     virtual void loadState(const QByteArray &state) { Q_UNUSED(state); }
 
+    virtual bool hasUnsavedState() { return false; }
+
     virtual QByteArray saveState() { return {}; }
 
     virtual WingEditorViewWidget *clone() = 0;
+
+    // return false then stop closing and swith the view
+    virtual bool onClosing() { return true; }
+
+    virtual void onWorkSpaceNotify(bool isWorkSpace) { Q_UNUSED(isWorkSpace); }
 
 signals:
     void raiseView();
@@ -415,7 +421,9 @@ public:
 
         Bool,
         Int,
+        Int32 = Int,
         UInt,
+        UInt32 = UInt,
         Int8,
         UInt8,
         Int16,
@@ -468,6 +476,7 @@ public:
     enum class PluginFileEvent {
         Opened,
         Saved,
+        Exported,
         Switched,
         Closed,
         PluginOpened,

@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>TestForm</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_22">
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
@@ -448,330 +448,6 @@
           </layout>
          </widget>
         </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_9">
-      <attribute name="title">
-       <string>MutiFile</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_24">
-       <item>
-        <widget class="QSplitter" name="splitter_3">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <widget class="QWidget" name="layoutWidget">
-          <layout class="QVBoxLayout" name="verticalLayout_23">
-           <item>
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>Handle</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListWidget" name="lwHandle"/>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QGroupBox" name="groupBox_7">
-          <property name="title">
-           <string>Operation</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_22">
-           <item>
-            <widget class="QPushButton" name="btnSwitch">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">Switch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnNewFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">NewFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnOpenFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">OpenFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnOpenRegionFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">OpenRegionFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnOpenWorkSpace">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">OpenWorkSpace</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnOpenDriver">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">OpenDriver</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnSaveFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">SaveFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnSaveAsFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">SaveAsFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnExportFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">ExportFile</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnCloseFile">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">Close</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_10">
-      <attribute name="title">
-       <string>Metadata</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_26">
-       <item>
-        <layout class="QFormLayout" name="formLayout_8">
-         <property name="horizontalSpacing">
-          <number>8</number>
-         </property>
-         <property name="verticalSpacing">
-          <number>8</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="beginLabel">
-           <property name="text">
-            <string>begin</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QSpinBox" name="sbbegin"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lengthLabel">
-           <property name="text">
-            <string>length</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QSpinBox" name="sbmlength"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="foregroundLabel">
-           <property name="text">
-            <string>foreground</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QWidget" name="wforeground" native="true"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="backgroundLabel">
-           <property name="text">
-            <string>background</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QWidget" name="wbackground" native="true"/>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="commentLabel_2">
-           <property name="text">
-            <string>comment</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="lemcomment"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnApplyMeta">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Apply</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_6">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>169</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_11">
-      <attribute name="title">
-       <string>BookMark</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_25">
-       <property name="spacing">
-        <number>8</number>
-       </property>
-       <item>
-        <layout class="QFormLayout" name="formLayout_4">
-         <property name="horizontalSpacing">
-          <number>8</number>
-         </property>
-         <property name="verticalSpacing">
-          <number>8</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="positionLabel">
-           <property name="text">
-            <string>Position</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QSpinBox" name="sbposition"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="commentLabel">
-           <property name="text">
-            <string>Comment</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="lecomment"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnApplyBookMark">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Apply</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>245</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
@@ -1308,10 +984,10 @@
        <item>
         <layout class="QFormLayout" name="formLayout_7">
          <property name="horizontalSpacing">
-          <number>5</number>
+          <number>8</number>
          </property>
          <property name="verticalSpacing">
-          <number>5</number>
+          <number>8</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_20">
@@ -1339,7 +1015,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>20</height>
+             <height>25</height>
             </size>
            </property>
           </widget>
@@ -1503,6 +1179,91 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_9">
+      <attribute name="title">
+       <string>Others</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>10</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblauthor">
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_14">
+         <property name="text">
+          <string>Other APIs should be Test With Script</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>
@@ -1517,6 +1278,22 @@
  <resources/>
  <connections>
   <connection>
+   <sender>btnClearCtl</sender>
+   <signal>clicked()</signal>
+   <receiver>tbCtlLogger</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>271</x>
+     <y>387</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>318</x>
+     <y>264</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>btnClearSend</sender>
    <signal>clicked()</signal>
    <receiver>leLogText</receiver>
@@ -1529,38 +1306,6 @@
     <hint type="destinationlabel">
      <x>422</x>
      <y>127</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>btnClearText</sender>
-   <signal>clicked()</signal>
-   <receiver>leToastText</receiver>
-   <slot>clear()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>569</x>
-     <y>271</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>468</x>
-     <y>229</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>btnClearReader</sender>
-   <signal>clicked()</signal>
-   <receiver>tbReaderLogger</receiver>
-   <slot>clear()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>255</x>
-     <y>395</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>288</x>
-     <y>307</y>
     </hint>
    </hints>
   </connection>
@@ -1597,18 +1342,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>btnClearCtl</sender>
+   <sender>btnClearReader</sender>
    <signal>clicked()</signal>
-   <receiver>tbCtlLogger</receiver>
+   <receiver>tbReaderLogger</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>387</y>
+     <x>255</x>
+     <y>395</y>
     </hint>
     <hint type="destinationlabel">
-     <x>318</x>
-     <y>264</y>
+     <x>288</x>
+     <y>307</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnClearText</sender>
+   <signal>clicked()</signal>
+   <receiver>leToastText</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>569</x>
+     <y>271</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>468</x>
+     <y>229</y>
     </hint>
    </hints>
   </connection>

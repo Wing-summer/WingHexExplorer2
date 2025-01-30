@@ -50,17 +50,11 @@ public:
     virtual bool eventScriptPragmaLineStep(const QString &codes) override;
     virtual void eventScriptPragmaFinished() override;
 
-    virtual QHash<QString, UNSAFE_SCFNPTR>
-    registeredScriptUnsafeFns() const override;
-
 private:
     // basic
     WING_SERVICE bool addStruct(const QString &header);
     WING_SERVICE bool addStructFromFile(const QString &fileName);
     WING_SERVICE void resetEnv();
-
-    WING_SERVICE bool setColorTable(const QVector<QColor> &table);
-    WING_SERVICE QVector<QColor> colorTable();
 
     WING_SERVICE bool setStructPadding(int padding); // [1,8]
     WING_SERVICE int structPadding();
@@ -81,27 +75,19 @@ private:
     WING_SERVICE bool comment(qsizetype offset, const QString &type,
                               const QString &comment);
 
-    // read / write
     WING_SERVICE QVariantHash read(qsizetype offset, const QString &type);
-    WING_SERVICE bool write(qsizetype offset, const QString &type,
-                            const QVariantHash &content);
-    WING_SERVICE bool insert(qsizetype offset, const QString &type,
-                             const QVariantHash &content);
-    WING_SERVICE bool append(const QString &type, const QVariantHash &content);
+    WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
 
 private:
     QByteArray getRawData(const QString &type, const QVariantHash &content);
 
-    QColor getNextColor();
+    MetaType getqsizetypeMetaType() const;
 
 private:
     // wrapper for WingAngelApi
     QVariant addStruct(const QVariantList &params);
     QVariant addStructFromFile(const QVariantList &params);
     QVariant resetEnv(const QVariantList &params);
-
-    QVariant setColorTable(const QVariantList &params);
-    UNSAFE_RET colorTable(const QList<void *> &params);
 
     QVariant setStructPadding(const QVariantList &params);
     QVariant structPadding(const QVariantList &params);
@@ -116,20 +102,13 @@ private:
     QVariant comment(const QVariantList &params);
 
     QVariant read(const QVariantList &params);
-    QVariant write(const QVariantList &params);
-    QVariant insert(const QVariantList &params);
-    QVariant append(const QVariantList &params);
+    QVariant readRaw(const QVariantList &params);
 
 private:
     CTypeParser _parser;
 
-    QVector<QColor> _colortable;
-    QVector<QColor>::const_iterator _curColor;
-
     QHash<WingHex::SettingPage *, bool> _setpgs;
     QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
-
-    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // WINGCSTRUCT_H

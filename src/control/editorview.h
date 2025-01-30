@@ -70,12 +70,15 @@ public:
     bool isCloneFile() const;
     bool isDriver() const;
     bool isExtensionFile() const;
+    bool isRegionFile() const;
 
     FindResultModel *findResultModel() const;
 
     BookMarksModel *bookmarksModel() const;
 
     MetaDataModel *metadataModel() const;
+
+    bool hasCloneChildren() const;
 
     void setFontSize(qreal size);
 
@@ -108,8 +111,7 @@ public slots:
 
     ErrFile newFile(size_t index);
     ErrFile openFile(const QString &filename);
-    ErrFile openExtFile(const QString &ext, const QString &file,
-                        const QVariantList &params);
+    ErrFile openExtFile(const QString &ext, const QString &file);
     ErrFile openWorkSpace(const QString &filename);
     ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length);
     ErrFile openDriver(const QString &driver);
@@ -131,6 +133,7 @@ private:
 
     void applyPluginData(const QHash<QString, QByteArray> &data);
     QHash<QString, QByteArray> savePluginData();
+    bool checkHasUnsavedState() const;
 
     FindResultModel::FindInfo readContextFinding(qsizetype offset,
                                                  qsizetype findSize,
@@ -200,7 +203,6 @@ private:
     QString _ext;
     WingHex::WingIODevice *_dev = nullptr;
     QString _file;
-    QVariantList _params;
 };
 
 #endif // EDITORVIEW_H

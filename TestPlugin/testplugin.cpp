@@ -140,6 +140,32 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
         info.ret = MetaType::Void;
         _scriptInfo.insert(QStringLiteral("printLogTestSharedMemData"), info);
     }
+
+    {
+        _scriptUnsafe.insert(QStringLiteral("array<color>@ colorTable()"),
+                             std::bind(QOverload<const QList<void *> &>::of(
+                                           &TestPlugin::colorTable),
+                                       this, std::placeholders::_1));
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &TestPlugin::setPluginMetaTestEnabled),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Void;
+        info.params.append(qMakePair(MetaType::Bool, QStringLiteral("b")));
+        _scriptInfo.insert(QStringLiteral("setPluginMetaTestEnabled"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(QOverload<const QVariantList &>::of(
+                                &TestPlugin::pluginMetaTestEnabled),
+                            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+        _scriptInfo.insert(QStringLiteral("pluginMetaTestEnabled"), info);
+    }
 }
 
 TestPlugin::~TestPlugin() { destoryTestShareMem(); }
@@ -311,6 +337,11 @@ TestPlugin::registeredEditorViewWidgets() const {
     return _evws;
 }
 
+QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
+TestPlugin::registeredScriptUnsafeFns() const {
+    return _scriptUnsafe;
+}
+
 QVariant TestPlugin::test_a(const QVariantList &params) {
     if (!params.isEmpty()) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -393,6 +424,38 @@ QVariant TestPlugin::test_h(const QVariantList &params) {
     return test_h();
 }
 
+WingHex::IWingPlugin::UNSAFE_RET
+TestPlugin::colorTable(const QList<void *> &params) {
+    if (!params.isEmpty()) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    void *array;
+    QVector<void *> colors;
+    for (auto &c : colorTable()) {
+        colors.append(new QColor(c));
+    }
+
+    auto invoked =
+        emit invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
+                           WINGAPI_RETURN_ARG(void *, array),
+                           WINGAPI_ARG(MetaType, MetaType::Color),
+                           WINGAPI_ARG(QVector<void *>, colors));
+    if (invoked) {
+        if (array) {
+            qDeleteAll(colors);
+            return array;
+        }
+    }
+
+    qDeleteAll(colors);
+    return generateScriptCallError(-2, tr("AllocArrayFailed"));
+}
+
+QVector<QColor> TestPlugin::colorTable() {
+    return {Qt::red, Qt::green, Qt::blue};
+}
+
 QVariant TestPlugin::createTestShareMem(const QVariantList &params) {
     if (params.size() != 1) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -415,6 +478,22 @@ QVariant TestPlugin::printLogTestSharedMemData(const QVariantList &params) {
     }
     printLogTestSharedMemData();
     return {};
+}
+
+QVariant TestPlugin::setPluginMetaTestEnabled(const QVariantList &params) {
+    if (params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto arg0 = params.first().toBool();
+    setPluginMetaTestEnabled(arg0);
+    return {};
+}
+
+QVariant TestPlugin::pluginMetaTestEnabled(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return pluginMetaTestEnabled();
 }
 
 void TestPlugin::test_a() { emit debug(__FUNCTION__); }
@@ -513,13 +592,24 @@ void TestPlugin::printLogTestSharedMemData() {
                   .toHex(' '));
 }
 
+void TestPlugin::setPluginMetaTestEnabled(bool b) {
+    TestWingEditorViewWidget::ENABLE_META = b;
+}
+
+bool TestPlugin::pluginMetaTestEnabled() {
+    return TestWingEditorViewWidget::ENABLE_META;
+}
+
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
 TestPlugin::registeredScriptFns() const {
     return _scriptInfo;
 }
 
 WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
-    return RegisteredEvent::AppReady;
+    RegisteredEvents evs;
+    evs.setFlag(RegisteredEvent::AppReady);
+    evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
+    return evs;
 }
 
 void TestPlugin::eventReady() {

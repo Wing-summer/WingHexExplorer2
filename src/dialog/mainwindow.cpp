@@ -1237,7 +1237,6 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         auto a = addPannelAction(pannel, QStringLiteral("reload"), tr("Reload"),
                                  &MainWindow::on_reload);
         m_editStateWidgets << a;
-        m_cloneFileStateWidgets << a;
     }
 
     {
@@ -1256,6 +1255,10 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
         a = addPannelAction(pannel, QStringLiteral("export"), tr("Export"),
                             &MainWindow::on_exportfile,
                             shortcuts.keySequence(QKeySequences::Key::EXPORT));
+        m_editStateWidgets << a;
+
+        a = addPannelAction(pannel, QStringLiteral("convpro"), tr("ConvertWS"),
+                            &MainWindow::on_convpro);
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("savesel"), tr("SaveSel"),
@@ -2064,13 +2067,51 @@ restart:
         }
     }
     if (res == ErrFile::WorkSpaceUnSaved) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                     tr("SaveWSError"));
+        WingMessageBox::critical(this, NAMEICONRES(QStringLiteral("save")),
+                                 tr("SaveWSError"));
         return;
     }
 
     Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                  tr("SaveSuccessfully"));
+}
+
+void MainWindow::on_convpro() {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
+        return;
+    }
+
+    if (editor->isNewFile()) {
+        Toast::toast(this, NAMEICONRES("convpro"), tr("SaveNewFirst"));
+        return;
+    }
+
+    if (editor->isRegionFile()) {
+        Toast::toast(this, NAMEICONRES("convpro"), tr("UnsupportedProConv"));
+        return;
+    }
+
+    if (editor->isOriginWorkSpace()) {
+        Toast::toast(this, NAMEICONRES("convpro"), tr("AlreadyWorkSpace"));
+        return;
+    }
+
+    QString workspace;
+    auto ret = saveEditor(editor, {}, false, false, true, &workspace);
+    if (ret == ErrFile::WorkSpaceUnSaved) {
+        WingMessageBox::critical(this, tr("Error"), tr("ConvWorkSpaceFailed"));
+    } else if (ret == ErrFile::Success) {
+        // add to history
+        RecentFileManager::RecentInfo info;
+        info.fileName = workspace;
+        info.isWorkSpace = true;
+        m_recentmanager->addRecentFile(info);
+        Toast::toast(this, NAMEICONRES("convpro"), tr("ConvWorkSpaceSuccess"));
+    } else {
+        // should not go there
+        Q_ASSERT(false);
+    }
 }
 
 void MainWindow::on_saveas() {
@@ -2098,8 +2139,7 @@ restart:
         break;
     }
     case ErrFile::WorkSpaceUnSaved: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
-                     tr("SaveWSError"));
+        WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
         break;
     }
     case ErrFile::SourceFileChanged: {
@@ -2151,8 +2191,8 @@ restart:
             res = saveEditor(editor, filename, true, true);
             goto restart;
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
-                         tr("ExportSourceFileError"));
+            WingMessageBox::critical(this, tr("Error"),
+                                     tr("ExportSourceFileError"));
         }
         break;
     }
@@ -2184,8 +2224,7 @@ void MainWindow::on_savesel() {
         Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
                      tr("SaveSelSuccess"));
     } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
-                     tr("SaveSelError"));
+        WingMessageBox::critical(this, tr("Error"), tr("SaveSelError"));
     }
 }
 
@@ -2261,7 +2300,7 @@ void MainWindow::on_clone() {
         return;
     }
 
-    registerEditorView(hexeditor);
+    registerClonedEditorView(hexeditor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, hexeditor,
                           editorViewArea());
 }
@@ -3122,7 +3161,13 @@ bool MainWindow::newOpenFileSafeCheck() {
 
 void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto &w : m_editorViewWidgetsBuffer) {
-        editor->registerView(w->id(), w->create(editor));
+        auto v = w->create(editor);
+        auto id = w->id();
+        editor->registerView(id, v);
+        connect(v, &WingEditorViewWidget::raiseView, this, [editor, id]() {
+            editor->raise();
+            editor->switchView(id);
+        });
     }
     for (auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
@@ -3133,6 +3178,70 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     editor->setFontSize(set.editorfontSize());
 
     connectEditorView(editor);
+    connect(editor, &EditorView::closeRequested, this, [this] {
+        auto editor = qobject_cast<EditorView *>(sender());
+        Q_ASSERT(editor);
+        Q_ASSERT(m_views.contains(editor));
+
+        if (closeEditor(editor, m_isOnClosing) == ErrFile::UnSaved) {
+            auto ret = this->saveRequest();
+            if (ret == QMessageBox::Cancel) {
+                return;
+            } else if (ret == QMessageBox::Yes) {
+                auto ret = saveEditor(editor, {}, false);
+                switch (ret) {
+                case WingHex::Success:
+                    // ok, no need to report
+                    closeEditor(editor, m_isOnClosing);
+                    break;
+                case WingHex::Permission: {
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("FilePermissionSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
+                case WingHex::Error:
+                case WingHex::UnSaved:
+                case WingHex::NotExist:
+                case WingHex::AlreadyOpened:
+                case WingHex::IsNewFile:
+                case WingHex::IsDirver:
+                case WingHex::SourceFileChanged:
+                case WingHex::ClonedFile:
+                case WingHex::InvalidFormat:
+                case WingHex::TooManyOpenedFile:
+                case WingHex::DevNotFound:
+                case WingHex::NotAllowedInNoneGUIThread: {
+                    // unknown error
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("UnknownErrorSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
+                case WingHex::WorkSpaceUnSaved: {
+                    auto btn = WingMessageBox::critical(
+                        this, tr("Error"), tr("WorkSpaceUnSavedSure2Quit"),
+                        QMessageBox::Yes | QMessageBox::No);
+                    if (btn == QMessageBox::Yes) {
+                        closeEditor(editor, true);
+                    }
+                } break;
+                    break;
+                }
+            } else {
+                closeEditor(editor, true);
+            }
+        }
+
+        if (m_views.isEmpty()) {
+            updateEditModeEnabled();
+        }
+    });
+
     m_views.insert(editor, ws);
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
@@ -3145,6 +3254,15 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         IWingPlugin::RegisteredEvent::FileOpened,
         {editor->fileName(),
          QVariant::fromValue(getEditorViewFileType(editor))});
+}
+
+void MainWindow::registerClonedEditorView(EditorView *editor) {
+    for (auto &m : m_hexContextMenu) {
+        editor->registerQMenu(m);
+    }
+
+    auto p = editor->cloneParent();
+    Q_ASSERT(p);
 }
 
 void MainWindow::connectEditorView(EditorView *editor) {
@@ -3210,70 +3328,6 @@ void MainWindow::connectEditorView(EditorView *editor) {
     connect(editor, &EditorView::sigOnPasteHex, this, &MainWindow::on_pastehex);
     connect(editor, &EditorView::sigOnPasteFile, this,
             &MainWindow::on_pastefile);
-
-    connect(editor, &EditorView::closeRequested, this, [this] {
-        auto editor = qobject_cast<EditorView *>(sender());
-        Q_ASSERT(editor);
-        Q_ASSERT(m_views.contains(editor));
-
-        if (closeEditor(editor, m_isOnClosing) == ErrFile::UnSaved) {
-            auto ret = this->saveRequest();
-            if (ret == QMessageBox::Cancel) {
-                return;
-            } else if (ret == QMessageBox::Yes) {
-                auto ret = saveEditor(editor, {}, false);
-                switch (ret) {
-                case WingHex::Success:
-                    // ok, no need to report
-                    closeEditor(editor, m_isOnClosing);
-                    break;
-                case WingHex::Permission: {
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("FilePermissionSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
-                    }
-                } break;
-                case WingHex::Error:
-                case WingHex::UnSaved:
-                case WingHex::NotExist:
-                case WingHex::AlreadyOpened:
-                case WingHex::IsNewFile:
-                case WingHex::IsDirver:
-                case WingHex::SourceFileChanged:
-                case WingHex::ClonedFile:
-                case WingHex::InvalidFormat:
-                case WingHex::TooManyOpenedFile:
-                case WingHex::DevNotFound:
-                case WingHex::NotAllowedInNoneGUIThread: {
-                    // unknown error
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("UnknownErrorSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
-                    }
-                } break;
-                case WingHex::WorkSpaceUnSaved: {
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("WorkSpaceUnSavedSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
-                    }
-                } break;
-                    break;
-                }
-            } else {
-                closeEditor(editor, true);
-            }
-        }
-
-        if (m_views.isEmpty()) {
-            updateEditModeEnabled();
-        }
-    });
 }
 
 void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
@@ -3283,16 +3337,19 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     if (old != nullptr) {
         auto hexeditor = old->hexEditor();
-        hexeditor->disconnect(SIGNAL(cursorLocationChanged()));
-        hexeditor->disconnect(SIGNAL(cursorSelectionChanged()));
-        hexeditor->disconnect(SIGNAL(canUndoChanged(bool)));
-        hexeditor->disconnect(SIGNAL(canRedoChanged(bool)));
-        hexeditor->disconnect(SIGNAL(documentSaved(bool)));
-        hexeditor->disconnect(SIGNAL(documentKeepSize(bool)));
-        hexeditor->disconnect(SIGNAL(documentLockedFile(bool)));
-        hexeditor->disconnect(SIGNAL(copyLimitRaised()));
-        hexeditor->disconnect(SIGNAL(scaleRateChanged()));
-        hexeditor->document()->disconnect();
+        hexeditor->disconnect(SIGNAL(cursorLocationChanged()), this);
+        hexeditor->disconnect(SIGNAL(cursorSelectionChanged()), this);
+        hexeditor->disconnect(SIGNAL(canUndoChanged(bool)), this);
+        hexeditor->disconnect(SIGNAL(canRedoChanged(bool)), this);
+        hexeditor->disconnect(SIGNAL(documentSaved(bool)), this);
+        hexeditor->disconnect(SIGNAL(documentKeepSize(bool)), this);
+        hexeditor->disconnect(SIGNAL(documentLockedFile(bool)), this);
+        hexeditor->disconnect(SIGNAL(copyLimitRaised()), this);
+        hexeditor->disconnect(SIGNAL(scaleRateChanged()), this);
+        auto doc = hexeditor->document();
+        doc->disconnect(m_aShowMetabg);
+        doc->disconnect(m_aShowMetafg);
+        doc->disconnect(m_aShowMetaComment);
     }
 
     Q_ASSERT(cur);
@@ -3435,7 +3492,6 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
 }
 
 ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
-                                const QVariantList &params,
                                 EditorView **editor) {
     auto e = findEditorView(EditorView::getDeviceFileName(ext, file));
     if (e) {
@@ -3447,7 +3503,7 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
 
     auto dev = PluginSystem::instance().ext2Device(ext);
     auto ev = new EditorView(this);
-    auto res = ev->openExtFile(ext, file, params);
+    auto res = ev->openExtFile(ext, file);
 
     if (res != ErrFile::Success) {
         delete ev;
@@ -3494,13 +3550,19 @@ ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
 }
 
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
-    auto e = findEditorView(file);
-
-    if (e) {
-        if (editor) {
-            *editor = e;
+    // different from other common files
+    for (auto p = m_views.constKeyValueBegin(); p != m_views.constKeyValueEnd();
+         ++p) {
+#ifdef Q_OS_WIN
+        if (p->second.compare(file, Qt::CaseInsensitive) == 0) {
+#else
+        if (p->second == file) {
+#endif
+            if (editor) {
+                *editor = p->first;
+            }
+            return ErrFile::AlreadyOpened;
         }
-        return ErrFile::AlreadyOpened;
     }
 
     // ok, going on
@@ -3562,7 +3624,8 @@ ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
 }
 
 ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
-                               bool ignoreMd5, bool isExport) {
+                               bool ignoreMd5, bool isExport,
+                               bool forceWorkspace, QString *ws) {
     if (editor == nullptr) {
         return ErrFile::Error;
     }
@@ -3579,17 +3642,35 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     auto oldName = editor->fileName();
 
     QString workspace = m_views.value(editor);
-    if (editor->change2WorkSpace()) {
-        workspace = editor->fileName() + PROEXT;
+    if (workspace.isEmpty()) {
+        if (forceWorkspace || editor->change2WorkSpace()) {
+            QString curFile;
+            if (!editor->isDriver() && !editor->isExtensionFile()) {
+                curFile = editor->fileName() + PROEXT;
+            }
+
+            auto wsfile = getWorkSpaceFileName(curFile);
+            if (wsfile.isEmpty()) {
+                return ErrFile::WorkSpaceUnSaved;
+            }
+            workspace = wsfile;
+        }
     }
 
-    auto ret = editor->save(workspace, filename, ignoreMd5, isExport);
+    if (ws) {
+        *ws = workspace;
+    }
+
+    auto ret = editor->save(workspace, filename, ignoreMd5, isExport,
+                            forceWorkspace
+                                ? EditorView::SaveWorkSpaceAttr::ForceWorkSpace
+                                : EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     if (ret == ErrFile::Success) {
         m_views[editor] = workspace;
 
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
-            {filename.isEmpty() ? oldName : filename, oldName,
+            {filename.isEmpty() ? oldName : filename, oldName, isExport,
              QVariant::fromValue(getEditorViewFileType(editor))});
     }
     return ret;
@@ -3678,10 +3759,11 @@ void MainWindow::updateEditModeEnabled() {
     if (b) {
         auto hexeditor = editor->hexEditor();
         enableDirverLimit(editor->isDriver());
-        enableCloneFileLimit(editor->isCloneFile());
         auto doc = hexeditor->document();
-        emit doc->canRedoChanged(doc->canRedo());
-        emit doc->canUndoChanged(doc->canUndo());
+        m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(
+            doc->canRedo());
+        m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
+            doc->canUndo());
     } else {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
@@ -3692,13 +3774,6 @@ void MainWindow::updateEditModeEnabled() {
 void MainWindow::enableDirverLimit(bool isDriver) {
     auto e = !isDriver;
     for (auto &item : m_driverStateWidgets) {
-        item->setEnabled(e);
-    }
-}
-
-void MainWindow::enableCloneFileLimit(bool isCloneFile) {
-    auto e = !isCloneFile;
-    for (auto &item : m_cloneFileStateWidgets) {
         item->setEnabled(e);
     }
 }
@@ -3719,6 +3794,11 @@ EditorView *MainWindow::currentEditor() {
         return ret;
     }
     return m_curEditor;
+}
+
+QString MainWindow::getWorkSpaceFileName(const QString &curFile) {
+    return WingFileDialog::getSaveFileName(this, tr("SaveWorkSpace"), curFile,
+                                           tr("WingHexWorkSpace (*.wingpro)"));
 }
 
 void MainWindow::saveTableContent(QAbstractItemModel *model) {

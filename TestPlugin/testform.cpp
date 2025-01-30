@@ -51,9 +51,9 @@ TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
     initMsgBoxCheckedBtnCombo();
     initMsgBoxIconCombo();
     initFileDialogOps();
-    initFileHandleListWidget();
 
-    ui->sbposition->setRange(0, INT_MAX);
+    ui->lblauthor->setPixmap(
+        WingHex::HOSTRESPIMG(QStringLiteral("author"), QStringLiteral(".jpg")));
 
     _click = std::bind(&TestForm::onDVClicked, this, std::placeholders::_1);
     _dblclick =
@@ -124,12 +124,6 @@ void TestForm::initFileDialogOps() {
         ui->cbFileDialogOptions->addCheckItem(e.key(i), e.value(i),
                                               Qt::Unchecked);
     }
-}
-
-void TestForm::initFileHandleListWidget() {
-    auto item = new QListWidgetItem(QStringLiteral("HexEditor_Current (-1)"));
-    item->setData(Qt::UserRole, int(-1));
-    ui->lwHandle->addItem(item);
 }
 
 QMessageBox::StandardButtons TestForm::getMsgButtons() const {
@@ -423,124 +417,5 @@ void TestForm::on_btnStatusInvisible_clicked() {
         Q_UNUSED(emit _plg->controller.setKeepSize(false));
     } else if (ui->rbStringVisible->isChecked()) {
         Q_UNUSED(emit _plg->controller.setStringVisible(false));
-    }
-}
-
-void TestForm::on_btnSwitch_clicked() {
-    auto item = ui->lwHandle->currentItem();
-    auto handle = item->data(Qt::UserRole).toInt();
-    auto ret = emit _plg->controller.switchDocument(handle);
-    if (!ret) {
-    }
-}
-
-void TestForm::on_btnNewFile_clicked() {
-    auto h = emit _plg->controller.newFile();
-    if (h < 0) {
-        auto e = QMetaEnum::fromType<WingHex::ErrFile>();
-        emit _plg->msgbox.critical(this, QStringLiteral("Error"),
-                                   e.valueToKey(h));
-    } else {
-        auto item = new QListWidgetItem(QStringLiteral("NewFile (%1)").arg(h));
-        item->setData(Qt::UserRole, h);
-        ui->lwHandle->addItem(item);
-    }
-}
-
-void TestForm::on_btnOpenFile_clicked() {
-    auto filename =
-        emit _plg->filedlg.getOpenFileName(this, QStringLiteral("Test"));
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    auto h = emit _plg->controller.openFile(filename);
-    if (h < 0) {
-        auto e = QMetaEnum::fromType<WingHex::ErrFile>();
-        emit _plg->msgbox.critical(this, QStringLiteral("Error"),
-                                   e.valueToKey(h));
-    } else {
-        auto item = new QListWidgetItem(QStringLiteral("%1 (%2)")
-                                            .arg(QFileInfo(filename).fileName())
-                                            .arg(h));
-        item->setData(Qt::UserRole, h);
-        ui->lwHandle->addItem(item);
-    }
-}
-
-void TestForm::on_btnOpenRegionFile_clicked() {
-    auto filename =
-        emit _plg->filedlg.getOpenFileName(this, QStringLiteral("Test"));
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    auto h = emit _plg->controller.openWorkSpace(filename);
-    if (h < 0) {
-        auto e = QMetaEnum::fromType<WingHex::ErrFile>();
-        emit _plg->msgbox.critical(this, QStringLiteral("Error"),
-                                   e.valueToKey(h));
-    } else {
-        auto item = new QListWidgetItem(QStringLiteral("WS - %1 (%2)")
-                                            .arg(QFileInfo(filename).fileName())
-                                            .arg(h));
-        item->setData(Qt::UserRole, h);
-        ui->lwHandle->addItem(item);
-    }
-}
-
-void TestForm::on_btnOpenWorkSpace_clicked() {}
-
-void TestForm::on_btnOpenDriver_clicked() {
-    auto drivers = emit _plg->reader.getStorageDrivers();
-    bool ok;
-    auto dr = emit _plg->inputbox.getItem(this, QStringLiteral("Test"),
-                                          tr("Choose"), drivers, 0, false, &ok);
-    if (!ok) {
-        return;
-    }
-    auto h = emit _plg->controller.openDriver(dr);
-    if (h < 0) {
-        auto e = QMetaEnum::fromType<WingHex::ErrFile>();
-        emit _plg->msgbox.critical(this, QStringLiteral("Error"),
-                                   e.valueToKey(h));
-    } else {
-        auto item =
-            new QListWidgetItem(QStringLiteral("%1 (%2)").arg(dr).arg(h));
-        item->setData(Qt::UserRole, h);
-        ui->lwHandle->addItem(item);
-    }
-}
-
-void TestForm::on_btnSaveFile_clicked() {}
-
-void TestForm::on_btnSaveAsFile_clicked() {}
-
-void TestForm::on_btnExportFile_clicked() {}
-
-void TestForm::on_btnCloseFile_clicked() {
-    auto item = ui->lwHandle->currentItem();
-    auto handle = item->data(Qt::UserRole).toInt();
-    auto ret = emit _plg->controller.closeFile(handle);
-
-    if (ret == WingHex::ErrFile::Success) {
-        if (handle >= 0) {
-            ui->lwHandle->removeItemWidget(item);
-            delete item;
-        }
-    } else {
-        auto e = QMetaEnum::fromType<WingHex::ErrFile>();
-        emit _plg->msgbox.critical(this, QStringLiteral("Error"),
-                                   e.valueToKey(ret));
-    }
-}
-
-void TestForm::on_btnApplyBookMark_clicked() {
-    if (emit _plg->reader.existBookMark(ui->sbposition->value())) {
-        Q_UNUSED(emit _plg->controller.modBookMark(ui->sbposition->value(),
-                                                   ui->lecomment->text()));
-    } else {
-        Q_UNUSED(emit _plg->controller.addBookMark(ui->sbposition->value(),
-                                                   ui->lecomment->text()));
     }
 }

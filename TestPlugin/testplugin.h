@@ -65,6 +65,9 @@ public:
     registeredEditorViewWidgets() const override;
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
 
+    virtual QHash<QString, UNSAFE_SCFNPTR>
+    registeredScriptUnsafeFns() const override;
+
     virtual RegisteredEvents registeredEvents() const override;
     virtual void eventReady() override;
 
@@ -79,9 +82,14 @@ private:
     QVariant test_g(const QVariantList &params);
     QVariant test_h(const QVariantList &params);
 
+    UNSAFE_RET colorTable(const QList<void *> &params);
+
     QVariant createTestShareMem(const QVariantList &params);
     QVariant destoryTestShareMem(const QVariantList &params);
     QVariant printLogTestSharedMemData(const QVariantList &params);
+
+    QVariant setPluginMetaTestEnabled(const QVariantList &params);
+    QVariant pluginMetaTestEnabled(const QVariantList &params);
 
 private:
     void test_a();
@@ -94,9 +102,13 @@ private:
     QString test_g();
     QVariantHash test_h();
 
+    QVector<QColor> colorTable();
     bool createTestShareMem(const QString &nameID);
     void destoryTestShareMem();
     void printLogTestSharedMemData();
+
+    void setPluginMetaTestEnabled(bool b);
+    bool pluginMetaTestEnabled();
 
 private:
     QDialog *_tform = nullptr;
@@ -110,6 +122,8 @@ private:
     QHash<WingHex::SettingPage *, bool> _setpages;
     QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
     QList<WingHex::PluginPage *> _plgps;
+
+    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // TESTPLUGIN_H

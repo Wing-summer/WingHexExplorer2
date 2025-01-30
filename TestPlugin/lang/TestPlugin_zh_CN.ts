@@ -128,7 +128,7 @@
     <message>
         <location filename="../testform.ui" line="97"/>
         <location filename="../testform.ui" line="194"/>
-        <location filename="../testform.ui" line="842"/>
+        <location filename="../testform.ui" line="518"/>
         <source>Text</source>
         <translation>文本 </translation>
     </message>
@@ -143,8 +143,8 @@
         <location filename="../testform.ui" line="228"/>
         <location filename="../testform.ui" line="293"/>
         <location filename="../testform.ui" line="444"/>
-        <location filename="../testform.ui" line="1132"/>
-        <location filename="../testform.ui" line="1293"/>
+        <location filename="../testform.ui" line="808"/>
+        <location filename="../testform.ui" line="969"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
@@ -155,7 +155,7 @@
     </message>
     <message>
         <location filename="../testform.ui" line="184"/>
-        <location filename="../testform.ui" line="879"/>
+        <location filename="../testform.ui" line="555"/>
         <source>Icon</source>
         <translation>图标</translation>
     </message>
@@ -185,225 +185,172 @@
         <translation>控制器</translation>
     </message>
     <message>
+        <location filename="../testform.ui" line="1184"/>
+        <source>Others</source>
+        <translation>其他</translation>
+    </message>
+    <message>
+        <location filename="../testform.ui" line="1245"/>
+        <source>Other APIs should be Test With Script</source>
+        <translation>其他 API 应该用脚本测试，不提供可视化方式</translation>
+    </message>
+    <message>
         <location filename="../testform.ui" line="456"/>
-        <source>MutiFile</source>
-        <translation>多文件</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="480"/>
-        <source>Operation</source>
-        <translation>操作</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="621"/>
-        <source>Metadata</source>
-        <translation>元数据</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="635"/>
-        <source>begin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="645"/>
-        <source>length</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="655"/>
-        <source>foreground</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="665"/>
-        <source>background</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="675"/>
-        <source>comment</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="693"/>
-        <location filename="../testform.ui" line="759"/>
-        <source>Apply</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="714"/>
-        <source>BookMark</source>
-        <translation>书签</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="731"/>
-        <source>Position</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="741"/>
-        <source>Comment</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="780"/>
-        <location filename="../testform.ui" line="811"/>
+        <location filename="../testform.ui" line="487"/>
         <source>MessageBox</source>
         <translation>信息框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="788"/>
-        <location filename="../testform.ui" line="825"/>
-        <location filename="../testform.ui" line="1002"/>
+        <location filename="../testform.ui" line="464"/>
+        <location filename="../testform.ui" line="501"/>
+        <location filename="../testform.ui" line="678"/>
         <source>Title</source>
         <translation>标题</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="859"/>
+        <location filename="../testform.ui" line="535"/>
         <source>Buttons</source>
         <translation>按钮组</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="869"/>
+        <location filename="../testform.ui" line="545"/>
         <source>DefaultButton</source>
         <translation>默认按钮</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="980"/>
+        <location filename="../testform.ui" line="656"/>
         <source>InputBox</source>
         <translation>输入框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="995"/>
+        <location filename="../testform.ui" line="671"/>
         <source>Label</source>
         <translation>标签内容</translation>
     </message>
     <message>
         <location filename="../testform.ui" line="311"/>
-        <location filename="../testform.ui" line="1031"/>
-        <location filename="../testform.ui" line="1205"/>
-        <location filename="../testform.ui" line="1394"/>
+        <location filename="../testform.ui" line="707"/>
+        <location filename="../testform.ui" line="881"/>
+        <location filename="../testform.ui" line="1070"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="469"/>
-        <source>Handle</source>
-        <translation>句柄</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="1144"/>
+        <location filename="../testform.ui" line="820"/>
         <source>FileDialog</source>
         <translation>文件框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1159"/>
+        <location filename="../testform.ui" line="835"/>
         <source>Filter</source>
         <translation>过滤器</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1166"/>
-        <location filename="../testform.ui" line="1319"/>
+        <location filename="../testform.ui" line="842"/>
+        <location filename="../testform.ui" line="995"/>
         <source>Caption</source>
         <translation>标题</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1187"/>
+        <location filename="../testform.ui" line="863"/>
         <source>Options</source>
         <translation>选项组</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1305"/>
+        <location filename="../testform.ui" line="981"/>
         <source>ColorDialog</source>
         <translation>颜色框</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1333"/>
+        <location filename="../testform.ui" line="1009"/>
         <source>Color</source>
         <translation>颜色</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1379"/>
+        <location filename="../testform.ui" line="1055"/>
         <source>DataVisual</source>
         <translation>数据可视化</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="350"/>
-        <location filename="../testform.cpp" line="361"/>
+        <location filename="../testform.cpp" line="344"/>
+        <location filename="../testform.cpp" line="355"/>
         <source>UpdateTextTreeError</source>
         <translation>更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="376"/>
+        <location filename="../testform.cpp" line="370"/>
         <source>UpdateTextListByModelError</source>
         <translation>通过模型更新文本列表失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="386"/>
+        <location filename="../testform.cpp" line="380"/>
         <source>UpdateTextTableByModelError</source>
         <translation>通过模型更新文本表格失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="397"/>
+        <location filename="../testform.cpp" line="391"/>
         <source>UpdateTextTreeByModelError</source>
         <translation>通过模型更新文本树失败</translation>
-    </message>
-    <message>
-        <location filename="../testform.cpp" line="498"/>
-        <source>Choose</source>
-        <translation>选择</translation>
     </message>
 </context>
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="173"/>
+        <location filename="../testplugin.cpp" line="199"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="185"/>
-        <location filename="../testplugin.cpp" line="194"/>
-        <location filename="../testplugin.cpp" line="199"/>
-        <location filename="../testplugin.cpp" line="280"/>
+        <location filename="../testplugin.cpp" line="211"/>
+        <location filename="../testplugin.cpp" line="220"/>
+        <location filename="../testplugin.cpp" line="225"/>
+        <location filename="../testplugin.cpp" line="306"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="203"/>
+        <location filename="../testplugin.cpp" line="229"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="207"/>
+        <location filename="../testplugin.cpp" line="233"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="283"/>
+        <location filename="../testplugin.cpp" line="309"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="316"/>
-        <location filename="../testplugin.cpp" line="324"/>
-        <location filename="../testplugin.cpp" line="333"/>
-        <location filename="../testplugin.cpp" line="354"/>
-        <location filename="../testplugin.cpp" line="370"/>
-        <location filename="../testplugin.cpp" line="377"/>
-        <location filename="../testplugin.cpp" line="384"/>
-        <location filename="../testplugin.cpp" line="391"/>
-        <location filename="../testplugin.cpp" line="398"/>
-        <location filename="../testplugin.cpp" line="406"/>
-        <location filename="../testplugin.cpp" line="414"/>
+        <location filename="../testplugin.cpp" line="347"/>
+        <location filename="../testplugin.cpp" line="355"/>
+        <location filename="../testplugin.cpp" line="364"/>
+        <location filename="../testplugin.cpp" line="385"/>
+        <location filename="../testplugin.cpp" line="401"/>
+        <location filename="../testplugin.cpp" line="408"/>
+        <location filename="../testplugin.cpp" line="415"/>
+        <location filename="../testplugin.cpp" line="422"/>
+        <location filename="../testplugin.cpp" line="430"/>
+        <location filename="../testplugin.cpp" line="461"/>
+        <location filename="../testplugin.cpp" line="469"/>
+        <location filename="../testplugin.cpp" line="477"/>
+        <location filename="../testplugin.cpp" line="485"/>
+        <location filename="../testplugin.cpp" line="494"/>
         <source>InvalidParamsCount</source>
         <translation>无效参数个数</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="347"/>
-        <location filename="../testplugin.cpp" line="363"/>
+        <location filename="../testplugin.cpp" line="378"/>
+        <location filename="../testplugin.cpp" line="394"/>
         <source>InvalidParam</source>
         <translation>非法参数</translation>
+    </message>
+    <message>
+        <location filename="../testplugin.cpp" line="452"/>
+        <source>AllocArrayFailed</source>
+        <translation>分配数组失败</translation>
     </message>
 </context>
 <context>
@@ -417,7 +364,7 @@
 <context>
     <name>TestWingEditorViewWidget</name>
     <message>
-        <location filename="../testwingeditorviewwidget.cpp" line="18"/>
+        <location filename="../testwingeditorviewwidget.cpp" line="20"/>
         <source>TestWingEditorView</source>
         <translation>测试插件编辑视图</translation>
     </message>

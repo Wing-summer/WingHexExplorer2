@@ -44,13 +44,13 @@ CTypeParser::CTypeParser() { initialize(); }
 
 void CTypeParser::initialize() {
 
-#define ADD_TYPE(T) type_maps_.insert(#T, sizeof(T))
+#define ADD_TYPE(T, MT) type_maps_.insert(#T, qMakePair(MT, sizeof(T)))
 
-#define ADD_TYPE_U(T)                                                          \
-    ADD_TYPE(T);                                                               \
+#define ADD_TYPE_U(T, MT)                                                      \
+    ADD_TYPE(T, MT);                                                           \
     unsigned_types_.append(#T);
 
-#define ADD_TYPE_S(T, S) type_maps_.insert(#T, S)
+#define ADD_TYPE_S(T, MT, S) type_maps_.insert(#T, qMakePair(MT, S))
 
     // qualifiers to ignore in parsing
     qualifiers_ =
@@ -90,46 +90,55 @@ void CTypeParser::initialize() {
     using longlong = qlonglong;
     using ulonglong = qulonglong;
 
-    ADD_TYPE_U(bool);
-    ADD_TYPE(char);
-    ADD_TYPE(short);
-    ADD_TYPE(int);
-    ADD_TYPE(long);
-    ADD_TYPE(float);
-    ADD_TYPE(double);
-    ADD_TYPE_U(wchar_t);
+    ADD_TYPE_U(bool, QMetaType::Bool);
+    ADD_TYPE(char, QMetaType::Char);
+    ADD_TYPE(short, QMetaType::Short);
+    ADD_TYPE(int, QMetaType::Int);
+    ADD_TYPE(long, QMetaType::Long);
+    ADD_TYPE(float, QMetaType::Float);
+    ADD_TYPE(double, QMetaType::Double);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    ADD_TYPE_U(wchar_t, QMetaType::Char16);
+#else
+    ADD_TYPE_U(wchar_t, QMetaType::QChar);
+#endif
 
-    ADD_TYPE(char8_t);
-    ADD_TYPE(char16_t);
-    ADD_TYPE(char32_t);
-    ADD_TYPE_S(void, 0);
+    ADD_TYPE(char8_t, QMetaType::Char);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    ADD_TYPE(char16_t, QMetaType::Char16);
+    ADD_TYPE(char32_t, QMetaType::Char32);
+#else
+    ADD_TYPE(char16_t, QMetaType::QChar);
+    ADD_TYPE(char32_t, QMetaType::QChar);
+#endif
+    ADD_TYPE_S(void, QMetaType::Void, 0);
 
-    ADD_TYPE_U(byte);
+    ADD_TYPE_U(byte, QMetaType::UChar);
 
-    ADD_TYPE(int8);
-    ADD_TYPE(int16);
-    ADD_TYPE(int16_le);
-    ADD_TYPE(int16_be);
-    ADD_TYPE(int32);
-    ADD_TYPE(int32_le);
-    ADD_TYPE(int32_be);
-    ADD_TYPE(int64);
-    ADD_TYPE(int64_le);
-    ADD_TYPE(int64_be);
+    ADD_TYPE(int8, QMetaType::SChar);
+    ADD_TYPE(int16, QMetaType::Short);
+    ADD_TYPE(int16_le, QMetaType::Short);
+    ADD_TYPE(int16_be, QMetaType::Short);
+    ADD_TYPE(int32, QMetaType::Int);
+    ADD_TYPE(int32_le, QMetaType::Int);
+    ADD_TYPE(int32_be, QMetaType::Int);
+    ADD_TYPE(int64, QMetaType::LongLong);
+    ADD_TYPE(int64_le, QMetaType::LongLong);
+    ADD_TYPE(int64_be, QMetaType::LongLong);
 
-    ADD_TYPE_U(uint8);
-    ADD_TYPE_U(uint16);
-    ADD_TYPE_U(uint16_le);
-    ADD_TYPE_U(uint16_be);
-    ADD_TYPE_U(uint32);
-    ADD_TYPE_U(uint32_le);
-    ADD_TYPE_U(uint32_be);
-    ADD_TYPE_U(uint64);
-    ADD_TYPE_U(uint64_le);
-    ADD_TYPE_U(uint64_be);
+    ADD_TYPE_U(uint8, QMetaType::UChar);
+    ADD_TYPE_U(uint16, QMetaType::UShort);
+    ADD_TYPE_U(uint16_le, QMetaType::UShort);
+    ADD_TYPE_U(uint16_be, QMetaType::UShort);
+    ADD_TYPE_U(uint32, QMetaType::UInt);
+    ADD_TYPE_U(uint32_le, QMetaType::UInt);
+    ADD_TYPE_U(uint32_be, QMetaType::UInt);
+    ADD_TYPE_U(uint64, QMetaType::ULongLong);
+    ADD_TYPE_U(uint64_le, QMetaType::ULongLong);
+    ADD_TYPE_U(uint64_be, QMetaType::ULongLong);
 
-    ADD_TYPE(longlong);
-    ADD_TYPE_U(ulonglong);
+    ADD_TYPE(longlong, QMetaType::LongLong);
+    ADD_TYPE_U(ulonglong, QMetaType::ULongLong);
 
     using BOOL = bool;
     using BYTE = byte;
@@ -142,68 +151,77 @@ void CTypeParser::initialize() {
     using DWORD32 = uint32;
     using DWORD64 = uint64;
 
-    ADD_TYPE_U(BOOL);
-    ADD_TYPE_U(BYTE);
-    ADD_TYPE_U(WORD);
-    ADD_TYPE_U(DWORD);
-    ADD_TYPE_U(QWORD);
-    ADD_TYPE_U(DWORDLONG);
+    ADD_TYPE_U(BOOL, QMetaType::Bool);
+    ADD_TYPE_U(BYTE, QMetaType::UChar);
+    ADD_TYPE_U(WORD, QMetaType::UShort);
+    ADD_TYPE_U(DWORD, QMetaType::UInt);
+    ADD_TYPE_U(QWORD, QMetaType::ULongLong);
+    ADD_TYPE_U(DWORDLONG, QMetaType::ULongLong);
 
     using INT8 = qint8;
     using INT16 = qint16;
     using INT32 = qint32;
     using INT64 = qint64;
 
-    ADD_TYPE(INT8);
-    ADD_TYPE(INT16);
-    ADD_TYPE(INT32);
-    ADD_TYPE(INT64);
+    ADD_TYPE(INT8, QMetaType::SChar);
+    ADD_TYPE(INT16, QMetaType::Short);
+    ADD_TYPE(INT32, QMetaType::Int);
+    ADD_TYPE(INT64, QMetaType::LongLong);
 
     using UINT8 = quint8;
     using UINT16 = quint16;
     using UINT32 = quint32;
     using UINT64 = quint64;
 
-    ADD_TYPE_U(UINT8);
-    ADD_TYPE_U(UINT16);
-    ADD_TYPE_U(UINT32);
-    ADD_TYPE_U(UINT64);
+    ADD_TYPE_U(UINT8, QMetaType::UChar);
+    ADD_TYPE_U(UINT16, QMetaType::UShort);
+    ADD_TYPE_U(UINT32, QMetaType::UInt);
+    ADD_TYPE_U(UINT64, QMetaType::ULongLong);
 
     using SHORT = short;
     using INT = int;
     using LONG = long;
     using WCHAR = wchar_t;
 
-    ADD_TYPE(SHORT);
-    ADD_TYPE(INT);
-    ADD_TYPE(LONG);
-    ADD_TYPE_U(WCHAR);
+    ADD_TYPE(SHORT, QMetaType::Short);
+    ADD_TYPE(INT, QMetaType::Int);
+    ADD_TYPE(LONG, QMetaType::Long);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    ADD_TYPE_U(WCHAR, QMetaType::Char16);
+#else
+    ADD_TYPE_U(WCHAR, QMetaType::QChar);
+#endif
 
     using LONGLONG = longlong;
     using ULONGLONG = ulonglong;
 
-    ADD_TYPE(LONGLONG);
-    ADD_TYPE_U(ULONGLONG);
+    ADD_TYPE(LONGLONG, QMetaType::LongLong);
+    ADD_TYPE_U(ULONGLONG, QMetaType::ULongLong);
 
     using LONG32 = qint32;
     using LONG64 = qint64;
 
-    ADD_TYPE(LONG32);
-    ADD_TYPE(LONG64);
+    ADD_TYPE(LONG32, QMetaType::Long);
+    ADD_TYPE(LONG64, QMetaType::LongLong);
 
     using SIZE_T = size_t;
-    ADD_TYPE_U(size_t);
-    ADD_TYPE_U(SIZE_T);
+    if (sizeof(size_t) == sizeof(quint64)) {
+        ADD_TYPE_U(size_t, QMetaType::ULongLong);
+        ADD_TYPE_U(SIZE_T, QMetaType::ULongLong);
+    } else {
+        ADD_TYPE_U(size_t, QMetaType::ULong);
+        ADD_TYPE_U(SIZE_T, QMetaType::ULong);
+    }
 
-    ADD_TYPE(int8_t);
-    ADD_TYPE(int16_t);
-    ADD_TYPE(int32_t);
-    ADD_TYPE(int64_t);
+    ADD_TYPE(int8_t, QMetaType::SChar);
+    ADD_TYPE(int16_t, QMetaType::Short);
+    ADD_TYPE(int32_t, QMetaType::Int);
+    ADD_TYPE(int64_t, QMetaType::LongLong);
 
-    ADD_TYPE_U(uint8_t);
-    ADD_TYPE_U(uint16_t);
-    ADD_TYPE_U(uint32_t);
-    ADD_TYPE_U(uint64_t);
+    ADD_TYPE_U(uint8_t, QMetaType::UChar);
+    ADD_TYPE_U(uint16_t, QMetaType::UShort);
+    ADD_TYPE_U(uint32_t, QMetaType::UInt);
+    ADD_TYPE_U(uint64_t, QMetaType::ULongLong);
 
 #undef ADD_TYPE
 #undef ADD_TYPE_S
@@ -653,7 +671,7 @@ bool CTypeParser::isNumericToken(const QString &token, long &number) const {
 ///
 int CTypeParser::getTypeSize(const QString &data_type) const {
     if (type_maps_.contains(data_type)) {
-        return type_maps_.value(data_type);
+        return type_maps_.value(data_type).second;
     } else if (enum_defs_.contains(data_type)) {
         return sizeof(int);
     } else {
@@ -666,7 +684,9 @@ PointerMode CTypeParser::pointerMode() const { return _pmode; }
 
 void CTypeParser::setPointerMode(PointerMode newPmode) { _pmode = newPmode; }
 
-QHash<QString, qsizetype> CTypeParser::typeSizes() const { return type_maps_; }
+QHash<QString, QPair<QMetaType::Type, qsizetype>> CTypeParser::types() const {
+    return type_maps_;
+}
 
 QHash<QString, QList<VariableDeclaration>> CTypeParser::unionDefs() const {
     return union_defs_;
@@ -731,7 +751,8 @@ void CTypeParser::dumpTypeDefs() const {
         }
 
         auto type = it->first;
-        qout << "\t(size = " << type_maps_.value(type) << ")\n" << Qt::endl;
+        qout << "\t(size = " << type_maps_.value(type).second << ")\n"
+             << Qt::endl;
     }
 
     // dump union definitions
@@ -759,7 +780,7 @@ void CTypeParser::dumpTypeDefs() const {
 
             members.pop_front();
         }
-        qout << "\t(size = " << type_maps_.value(itu->first) << ")\n"
+        qout << "\t(size = " << type_maps_.value(itu->first).second << ")\n"
              << Qt::endl;
     }
 
@@ -1491,12 +1512,15 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
 
                 is_decl = false;
                 enum_defs_[token] = members; // type alias
-                type_maps_[token] =
-                    sizeof(int); // sizeof a enum variable = sizeof(int)
+                type_maps_[token] = qMakePair(
+                    QMetaType::Int,
+                    sizeof(int)); // sizeof a enum variable = sizeof(int)
 
                 if (!type_name.isEmpty() && token.compare(type_name) != 0) {
                     enum_defs_[type_name] = members; // type name
-                    type_maps_[type_name] = sizeof(int);
+                    type_maps_[type_name] =
+                        qMakePair(QMetaType::Int, sizeof(int));
+                    ;
                 }
             } else { // non-typedef
                 if (kSemicolon == token.at(0)) {
@@ -1506,7 +1530,9 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
                         return false;
                     }
                     enum_defs_[type_name] = members;
-                    type_maps_[type_name] = sizeof(int);
+                    type_maps_[type_name] =
+                        qMakePair(QMetaType::Int, sizeof(int));
+                    ;
                 } else {
                     // token must be part of a variable declaration
                     // so it must be format 3 or 4
@@ -1525,7 +1551,8 @@ bool CTypeParser::parseEnum(const bool is_typedef, const QString &src,
 
                     is_decl = true;
                     enum_defs_[type_name] = members;
-                    type_maps_[type_name] = sizeof(int);
+                    type_maps_[type_name] =
+                        qMakePair(QMetaType::Int, sizeof(int));
 
                     if (!getRestLine(src, pos, line)) {
                         if (!getNextLine(src, pos, line)) {
@@ -1712,5 +1739,5 @@ void CTypeParser::storeStructUnionDef(const bool is_struct,
         union_defs_[type_name] = members;
     }
 
-    type_maps_[type_name] = size;
+    type_maps_[type_name] = qMakePair(QMetaType::User, size);
 }

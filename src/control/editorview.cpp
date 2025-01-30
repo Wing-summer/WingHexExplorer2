@@ -301,14 +301,13 @@ ErrFile EditorView::openFile(const QString &filename) {
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
-                                const QVariantList &params) {
+ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     auto dev = PluginSystem::instance().ext2Device(ext);
     if (dev == nullptr) {
         return ErrFile::NotExist;
     }
 
-    auto d = dev->onOpenFile(file, params);
+    auto d = dev->onOpenFile(file);
     if (d == nullptr) {
         return ErrFile::NotExist;
     }
@@ -347,7 +346,6 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     _ext = ext;
     _dev = d;
     _file = file;
-    _params = params;
 
     m_docType = DocumentType::Extension;
     m_fileName = fileName;
@@ -382,7 +380,27 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
     if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas,
                                         infos)) {
         // it's a workspace project
-        auto ret = openFile(file);
+        // we should check the type of "file"
+        ErrFile ret;
+        auto extPrefix = QStringLiteral("wdrv:///");
+
+        if (Utilities::isStorageDevice(file)) {
+            ret = openDriver(file);
+        } else if (file.startsWith(extPrefix)) {
+            // extension file
+            auto c = file.mid(extPrefix.length());
+            auto ci = c.indexOf('/');
+            auto ext = c.left(ci);
+            auto path = c.mid(ci + 1);
+            ret = openExtFile(ext, file);
+        } else {
+            // regard as regular files
+            ret = openFile(file);
+        }
+
+        if (ret != ErrFile::Success) {
+            return ret;
+        }
 
         // apply the content
         auto doc = m_hex->document();
@@ -521,6 +539,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
+        infos.pluginData = savePluginData();
 
         auto b = WorkSpaceManager::saveWorkSpace(
             workSpaceName, fileName, doc->bookMarks(),
@@ -529,6 +548,11 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         if (!isExport) {
             m_isWorkSpace = true;
+
+            auto tab = this->tabWidget();
+            tab->setIcon(ICONRES(QStringLiteral("pro")));
+            tab->setStyleSheet(
+                QStringLiteral("QLabel {text-decoration: underline;}"));
         }
     }
 
@@ -631,7 +655,7 @@ ErrFile EditorView::reload() {
     case DocumentType::Driver:
         return openDriver(m_fileName);
     case DocumentType::Extension:
-        return openExtFile(_ext, _file, _params);
+        return openExtFile(_ext, _file);
     default:
         break;
     }
@@ -639,7 +663,18 @@ ErrFile EditorView::reload() {
 }
 
 ErrFile EditorView::closeFile() {
-    // only extension file type need additional close
+    if (isCloneFile()) {
+        // it will be removed after destoried
+        return ErrFile::Success;
+    }
+
+    if (m_isWorkSpace) {
+        // check whether having plugin metadata
+        if (checkHasUnsavedState()) {
+            return ErrFile::WorkSpaceUnSaved;
+        }
+    }
+
     if (m_docType == DocumentType::Extension) {
         auto dev = PluginSystem::instance().ext2Device(_ext);
         if (dev == nullptr) {
@@ -649,6 +684,13 @@ ErrFile EditorView::closeFile() {
             return ErrFile::Permission;
         }
     }
+
+    for (auto &c : m_cloneChildren) {
+        if (c) {
+            c->closeDockWidget();
+        }
+    }
+
     return ErrFile::Success;
 }
 
@@ -676,10 +718,21 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                 } else {
                     fileName = QFileInfo(m_fileName).fileName();
                 }
+                QString content;
+
                 if (b) {
-                    editor->setWindowTitle(fileName);
+                    content = fileName;
                 } else {
-                    editor->setWindowTitle(QStringLiteral("* ") + fileName);
+                    content = QStringLiteral("* ") + fileName;
+                }
+
+                editor->setWindowTitle(content);
+                for (int i = 0; i < m_cloneChildren.size(); ++i) {
+                    auto c = m_cloneChildren.at(i);
+                    if (c) {
+                        c->setWindowTitle(content + QStringLiteral(" : ") +
+                                          QString::number(i + 1));
+                    }
                 }
             });
 }
@@ -687,6 +740,8 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
 BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
 
 MetaDataModel *EditorView::metadataModel() const { return m_metadata; }
+
+bool EditorView::hasCloneChildren() const { return !m_cloneChildren.isEmpty(); }
 
 void EditorView::applySettings() {
     auto &set = SettingManager::instance();
@@ -721,9 +776,28 @@ QHash<QString, QByteArray> EditorView::savePluginData() {
     QHash<QString, QByteArray> ret;
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
-        ret.insert(p->first, p->second->saveState());
+        if (p->second->hasUnsavedState()) {
+            auto data = p->second->saveState();
+            if (data.isEmpty()) {
+                continue;
+            }
+            ret.insert(p->first, data);
+        }
     }
     return ret;
+}
+
+bool EditorView::checkHasUnsavedState() const {
+    for (auto item : m_others) {
+        if (item->hasUnsavedState()) {
+            auto data = item->saveState();
+            if (data.isEmpty()) {
+                continue;
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
@@ -773,6 +847,7 @@ EditorView *EditorView::clone() {
     }
 
     auto ev = new EditorView(this->parentWidget());
+    ev->setFeature(CDockWidget::CustomCloseHandling, false);
     connect(ev, &EditorView::destroyed, this, [=] {
         this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
     });
@@ -783,17 +858,15 @@ EditorView *EditorView::clone() {
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
 
     ev->m_fileName = this->m_fileName;
+    ev->setWindowTitle(this->windowTitle() + QStringLiteral(" : ") +
+                       QString::number(cloneIndex + 1));
 
-    if (doc->isDocSaved()) {
-        ev->setWindowTitle(QFileInfo(ev->m_fileName).fileName() +
-                           QStringLiteral(" : ") +
-                           QString::number(cloneIndex + 1));
-    } else {
-        ev->setWindowTitle(QStringLiteral("* ") +
-                           QFileInfo(m_fileName).fileName());
+    auto tab = ev->tabWidget();
+    tab->setIcon(this->icon());
+    if (m_isWorkSpace) {
+        tab->setStyleSheet(
+            QStringLiteral("QLabel {text-decoration: underline;}"));
     }
-
-    ev->setIcon(this->icon());
 
     ev->m_docType = DocumentType::Cloned;
 
@@ -803,8 +876,6 @@ EditorView *EditorView::clone() {
     }
 
     this->m_cloneChildren[cloneIndex] = ev;
-
-    connectDocSavedFlag(ev);
 
     return ev;
 }
@@ -840,6 +911,13 @@ bool EditorView::isExtensionFile() const {
         return this->cloneParent()->isExtensionFile();
     }
     return m_docType == EditorView::DocumentType::Extension;
+}
+
+bool EditorView::isRegionFile() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isRegionFile();
+    }
+    return m_docType == EditorView::DocumentType::RegionFile;
 }
 
 FindResultModel *EditorView::findResultModel() const {

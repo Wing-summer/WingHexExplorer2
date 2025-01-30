@@ -27,11 +27,17 @@ public:
 public:
     explicit TestWingEditorViewWidget(QWidget *parent = nullptr);
 
-    // WingEditorViewWidget interface
+    static bool ENABLE_META;
 
+    // WingEditorViewWidget interface
 public slots:
     virtual void toggled(bool isVisible) override;
     virtual WingHex::WingEditorViewWidget *clone() override;
+
+    virtual bool hasUnsavedState() override;
+    virtual QByteArray saveState() override;
+
+    virtual void onWorkSpaceNotify(bool isWorkSpace) override;
 
 private:
     QLabel *_lbl = nullptr;

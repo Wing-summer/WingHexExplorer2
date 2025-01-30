@@ -42,9 +42,10 @@ Q_DECL_UNUSED static QString PLUGINDIR() {
     return QCoreApplication::applicationDirPath() + QStringLiteral("/plugin");
 }
 
-Q_DECL_UNUSED static QString HOSTRESPIMG(const QString &name) {
-    return QStringLiteral(":/com.wingsummer.winghex/images/") + name +
-           QStringLiteral(".png");
+Q_DECL_UNUSED static QString
+HOSTRESPIMG(const QString &name,
+            const QString &suffix = QStringLiteral(".png")) {
+    return QStringLiteral(":/com.wingsummer.winghex/images/") + name + suffix;
 }
 
 namespace WingPlugin {

@@ -19,11 +19,7 @@
 
 #include "utilities.h"
 
-WingCStruct::WingCStruct()
-    : WingHex::IWingPlugin(),
-      _colortable({Qt::red, Qt::green, Qt::yellow, Qt::cyan}) {
-    qRegisterMetaType<QVector<QColor>>();
-
+WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
     {
         WingHex::IWingPlugin::ScriptFnInfo info;
         info.fn = std::bind(
@@ -63,27 +59,6 @@ WingCStruct::WingCStruct()
     {
         WingHex::IWingPlugin::ScriptFnInfo info;
         info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::setColorTable),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(MetaType(MetaType::Array | MetaType::Color),
-                      QStringLiteral("table")));
-
-        _scriptInfo.insert(QStringLiteral("setColorTable"), info);
-    }
-
-    {
-        _scriptUnsafe.insert(QStringLiteral("array<color>@ colorTable()"),
-                             std::bind(QOverload<const QList<void *> &>::of(
-                                           &WingCStruct::colorTable),
-                                       this, std::placeholders::_1));
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
             QOverload<const QVariantList &>::of(&WingCStruct::setStructPadding),
             this, std::placeholders::_1);
         info.ret = MetaType::Bool;
@@ -113,7 +88,127 @@ WingCStruct::WingCStruct()
         _scriptInfo.insert(QStringLiteral("structPadding"), info);
     }
 
-    // TODO
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::structTypes),
+            this, std::placeholders::_1);
+        info.ret = MetaType(MetaType::String | MetaType::Array);
+
+        _scriptInfo.insert(QStringLiteral("structTypes"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::sizeofStruct),
+            this, std::placeholders::_1);
+        info.ret = getqsizetypeMetaType();
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        _scriptInfo.insert(QStringLiteral("sizeofStruct"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::existStruct),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        _scriptInfo.insert(QStringLiteral("existStruct"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::metadata), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        info.params.append(qMakePair(MetaType::Color, QStringLiteral("fg")));
+        info.params.append(qMakePair(MetaType::Color, QStringLiteral("bg")));
+        info.params.append(
+            qMakePair(MetaType::String, QStringLiteral("comment")));
+
+        _scriptInfo.insert(QStringLiteral("metadata"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::foreground), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        info.params.append(qMakePair(MetaType::Color, QStringLiteral("color")));
+
+        _scriptInfo.insert(QStringLiteral("foreground"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::background), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        info.params.append(qMakePair(MetaType::Color, QStringLiteral("color")));
+
+        _scriptInfo.insert(QStringLiteral("background"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::comment), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Bool;
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+        info.params.append(
+            qMakePair(MetaType::String, QStringLiteral("comment")));
+
+        _scriptInfo.insert(QStringLiteral("comment"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn =
+            std::bind(QOverload<const QVariantList &>::of(&WingCStruct::read),
+                      this, std::placeholders::_1);
+        info.ret = MetaType::Hash;
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+
+        _scriptInfo.insert(QStringLiteral("read"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::readRaw), this,
+            std::placeholders::_1);
+        info.ret = MetaType(MetaType::Byte | MetaType::Array);
+
+        info.params.append(
+            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+
+        _scriptInfo.insert(QStringLiteral("readRaw"), info);
+    }
 }
 
 WingCStruct::~WingCStruct() {}
@@ -123,16 +218,12 @@ int WingCStruct::sdkVersion() const { return WingHex::SDKVERSION; }
 const QString WingCStruct::signature() const { return WingHex::WINGSUMMER; }
 
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
-    // load color table
-
-    _curColor = _colortable.cbegin();
     resetEnv();
-
     return true;
 }
 
 void WingCStruct::unload(std::unique_ptr<QSettings> &set) {
-    // save color table
+    // nothing
 }
 
 const QString WingCStruct::pluginName() const { return tr("WingCStruct"); }
@@ -148,10 +239,7 @@ QString WingCStruct::retranslate(const QString &str) {
 }
 
 WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
-    RegisteredEvents evs;
-    evs.setFlag(RegisteredEvent::ScriptPragma);
-    evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
-    return evs;
+    return RegisteredEvent::ScriptPragma;
 }
 
 QHash<WingHex::SettingPage *, bool>
@@ -182,31 +270,6 @@ bool WingCStruct::addStructFromFile(const QString &fileName) { return true; }
 
 void WingCStruct::resetEnv() { _parser = CTypeParser(); }
 
-bool WingCStruct::setColorTable(const QVector<QColor> &table) {
-    // only main thread can modified it
-    if (QThread::currentThread() != qApp->thread()) {
-        return false;
-    }
-
-    if (table.isEmpty()) {
-        return false;
-    }
-
-    auto r = std::find_if_not(table.begin(), table.end(), [](const QColor &c) {
-        return c.isValid() && c.alpha() == 255;
-    });
-
-    if (r != table.end()) {
-        return false;
-    }
-
-    _colortable = table;
-
-    return true;
-}
-
-QVector<QColor> WingCStruct::colorTable() { return _colortable; }
-
 bool WingCStruct::setStructPadding(int padding) {
     if (padding < 1 || padding > 8) {
         return false;
@@ -220,7 +283,11 @@ int WingCStruct::structPadding() { return _parser.padAlignment(); }
 QStringList WingCStruct::structTypes() { return _parser.structDefs().keys(); }
 
 qsizetype WingCStruct::sizeofStruct(const QString &type) {
-    return _parser.typeSizes().value(type, -1);
+    auto types = _parser.types();
+    if (types.contains(type)) {
+        return types.value(type).second;
+    }
+    return -1;
 }
 
 bool WingCStruct::existStruct(const QString &type) {
@@ -316,7 +383,7 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
     auto raw = emit reader.readBytes(offset, len);
 
     // then slice and parse
-
+    // TODO
     for (auto &m : struc) {
         auto t = _parser.getTokenType(m.data_type);
         if (t == kBasicDataType) {
@@ -329,45 +396,17 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
     return content;
 }
 
-bool WingCStruct::write(qsizetype offset, const QString &type,
-                        const QVariantHash &content) {
+QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
     auto len = sizeofStruct(type);
     if (len < 0) {
-        return false;
+        return {};
     }
 
     if (!emit reader.isCurrentDocEditing()) {
-        return false;
+        return {};
     }
 
-    return emit controller.writeBytes(offset, getRawData(type, content));
-}
-
-bool WingCStruct::insert(qsizetype offset, const QString &type,
-                         const QVariantHash &content) {
-    auto len = sizeofStruct(type);
-    if (len < 0) {
-        return false;
-    }
-
-    if (!emit reader.isCurrentDocEditing()) {
-        return false;
-    }
-
-    return emit controller.insertBytes(offset, getRawData(type, content));
-}
-
-bool WingCStruct::append(const QString &type, const QVariantHash &content) {
-    auto len = sizeofStruct(type);
-    if (len < 0) {
-        return false;
-    }
-
-    if (!emit reader.isCurrentDocEditing()) {
-        return false;
-    }
-
-    return emit controller.appendBytes(getRawData(type, content));
+    return {};
 }
 
 QByteArray WingCStruct::getRawData(const QString &type,
@@ -376,13 +415,9 @@ QByteArray WingCStruct::getRawData(const QString &type,
     return {};
 }
 
-QColor WingCStruct::getNextColor() {
-    auto color = *_curColor;
-    _curColor++;
-    if (_curColor == _colortable.end()) {
-        _curColor = _colortable.begin();
-    }
-    return color;
+WingHex::IWingPlugin::MetaType WingCStruct::getqsizetypeMetaType() const {
+    return sizeof(qsizetype) == sizeof(quint64) ? MetaType::Int64
+                                                : MetaType::Int32;
 }
 
 QVariant WingCStruct::addStruct(const QVariantList &params) {
@@ -417,47 +452,6 @@ QVariant WingCStruct::resetEnv(const QVariantList &params) {
 
     resetEnv();
     return {};
-}
-
-QVariant WingCStruct::setColorTable(const QVariantList &params) {
-    if (params.size() != 1) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-    auto table_v = params.at(0);
-    if (!table_v.canConvert<QVector<QColor>>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto table = table_v.value<QVector<QColor>>();
-    return setColorTable(table);
-}
-
-WingHex::IWingPlugin::UNSAFE_RET
-WingCStruct::colorTable(const QList<void *> &params) {
-    if (!params.isEmpty()) {
-        return generateScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    void *array;
-    QVector<void *> colors;
-    for (auto &c : _colortable) {
-        colors.append(new QColor(c));
-    }
-
-    auto invoked =
-        emit invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-                           WINGAPI_RETURN_ARG(void *, array),
-                           WINGAPI_ARG(MetaType, MetaType::Color),
-                           WINGAPI_ARG(QVector<void *>, colors));
-    if (invoked) {
-        if (array) {
-            qDeleteAll(colors);
-            return array;
-        }
-    }
-
-    qDeleteAll(colors);
-    return generateScriptCallError(-2, tr("AllocArrayFailed"));
 }
 
 QVariant WingCStruct::setStructPadding(const QVariantList &params) {
@@ -612,65 +606,18 @@ QVariant WingCStruct::read(const QVariantList &params) {
     return read(offset, type);
 }
 
-QVariant WingCStruct::write(const QVariantList &params) {
-    if (params.size() != 3) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto content_v = params.at(2);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !content_v.canConvert<QVariantHash>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto content = content_v.toHash();
-    return write(offset, type, content);
-}
-
-QVariant WingCStruct::insert(const QVariantList &params) {
-    if (params.size() != 3) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto content_v = params.at(2);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !content_v.canConvert<QVariantHash>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto content = content_v.toHash();
-    return insert(offset, type, content);
-}
-
-QVariant WingCStruct::append(const QVariantList &params) {
+QVariant WingCStruct::readRaw(const QVariantList &params) {
     if (params.size() != 2) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
-    auto type_v = params.at(0);
-    auto content_v = params.at(1);
-
-    if (!type_v.canConvert<QString>() ||
-        !content_v.canConvert<QVariantHash>()) {
+    auto offset_v = params.at(0);
+    auto type_v = params.at(1);
+    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>()) {
         return getScriptCallError(-2, tr("InvalidParam"));
     }
 
+    auto offset = offset_v.value<qsizetype>();
     auto type = type_v.toString();
-    auto content = content_v.toHash();
-    return append(type, content);
-}
-
-QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
-WingCStruct::registeredScriptUnsafeFns() const {
-    return _scriptUnsafe;
+    return readRaw(offset, type);
 }

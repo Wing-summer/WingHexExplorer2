@@ -2,6 +2,8 @@
 
 #include <QVBoxLayout>
 
+bool TestWingEditorViewWidget::ENABLE_META = false;
+
 TestWingEditorViewWidget::TestWingEditorViewWidget(QWidget *parent)
     : WingHex::WingEditorViewWidget(parent) {
     auto layout = new QVBoxLayout(this);
@@ -27,3 +29,11 @@ void TestWingEditorViewWidget::toggled(bool isVisible) { Q_UNUSED(isVisible); }
 WingHex::WingEditorViewWidget *TestWingEditorViewWidget::clone() {
     return nullptr;
 }
+
+bool TestWingEditorViewWidget::hasUnsavedState() { return ENABLE_META; }
+
+QByteArray TestWingEditorViewWidget::saveState() {
+    return WingHex::WINGSUMMER.toUtf8();
+}
+
+void TestWingEditorViewWidget::onWorkSpaceNotify(bool isWorkSpace) {}
