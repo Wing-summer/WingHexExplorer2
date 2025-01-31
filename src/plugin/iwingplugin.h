@@ -361,15 +361,20 @@ public:
         virtual QString id() const = 0;
 
     public:
-        virtual WingEditorViewWidget *create(QWidget *parent) const = 0;
+        virtual WingEditorViewWidget *create(WingHex::IWingPlugin *plg,
+                                             QWidget *parent) const = 0;
     };
 
 public:
-    explicit WingEditorViewWidget(QWidget *parent = nullptr)
-        : QWidget(parent) {}
+    explicit WingEditorViewWidget(WingHex::IWingPlugin *plg,
+                                  QWidget *parent = nullptr)
+        : QWidget(parent), _plg(plg) {}
+
+    WingHex::IWingPlugin *plugin() const { return _plg; }
 
 signals:
     void docSaved(bool saved);
+    void raiseView();
 
 public slots:
     virtual void toggled(bool isVisible) = 0;
@@ -383,12 +388,14 @@ public slots:
     virtual WingEditorViewWidget *clone() = 0;
 
     // return false then stop closing and swith the view
+    // but you cannot prevent closing the cloned view
     virtual bool onClosing() { return true; }
 
+    // cloned view will never call it
     virtual void onWorkSpaceNotify(bool isWorkSpace) { Q_UNUSED(isWorkSpace); }
 
-signals:
-    void raiseView();
+private:
+    WingHex::IWingPlugin *_plg;
 };
 
 struct SenderInfo {

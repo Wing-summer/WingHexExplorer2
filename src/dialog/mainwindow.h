@@ -633,8 +633,6 @@ private:
         m_editorViewWidgets;
     QHash<SettingPage *, bool> m_settingPages;
     QList<PluginPage *> m_plgPages;
-    QList<QSharedPointer<WingEditorViewWidget::Creator>>
-        m_editorViewWidgetsBuffer;
 
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空

@@ -19,21 +19,27 @@ public:
         virtual QString id() const override;
 
     public:
-        virtual WingEditorViewWidget *create(QWidget *parent) const override {
-            return new TestWingEditorViewWidget(parent);
+        virtual WingEditorViewWidget *create(WingHex::IWingPlugin *plg,
+                                             QWidget *parent) const override {
+            return new TestWingEditorViewWidget(plg, parent);
         }
     };
 
 public:
-    explicit TestWingEditorViewWidget(QWidget *parent = nullptr);
+    explicit TestWingEditorViewWidget(WingHex::IWingPlugin *plg,
+                                      QWidget *parent = nullptr);
+    virtual ~TestWingEditorViewWidget();
 
-    static bool ENABLE_META;
+    void setEnableMeta(bool b);
 
     // WingEditorViewWidget interface
+    static QList<TestWingEditorViewWidget *> instances();
+
 public slots:
     virtual void toggled(bool isVisible) override;
     virtual WingHex::WingEditorViewWidget *clone() override;
 
+    virtual void loadState(const QByteArray &state) override;
     virtual bool hasUnsavedState() override;
     virtual QByteArray saveState() override;
 
@@ -41,6 +47,9 @@ public slots:
 
 private:
     QLabel *_lbl = nullptr;
+
+    bool m_unSaved = false;
+    static QList<TestWingEditorViewWidget *> m_instances;
 };
 
 #endif // TESTWINGEDITORVIEWWIDGET_H

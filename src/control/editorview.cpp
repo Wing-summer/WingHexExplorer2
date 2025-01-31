@@ -38,7 +38,7 @@
 #endif
 
 constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
-constexpr auto CLONE_LIMIT = 5;
+constexpr auto CLONE_LIMIT = 3;
 
 QString EditorView::getDeviceFileName(const QString &ext, const QString &file) {
     return QStringLiteral("wdrv:///") + ext + QStringLiteral("/") + file;
@@ -143,14 +143,43 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
     Q_ASSERT(view);
     m_others.insert(id, view);
     m_stack->addWidget(view);
+    if (!isCloneFile()) {
+        if (_pluginData.contains(id)) {
+            view->loadState(_pluginData.value(id));
+        }
+        view->onWorkSpaceNotify(m_isWorkSpace);
+    }
 }
 
 void EditorView::switchView(const QString &id) {
+    // Dont use qobject_cast because
+    // each plugin source code has its own WingEditorViewWidget class
+    // implement though they should be the same.
+    auto curWidget = m_stack->currentWidget();
     if (id.isEmpty()) {
-        m_stack->setCurrentWidget(m_hexContainer);
+        if (curWidget != m_hexContainer) {
+            m_stack->setCurrentWidget(m_hexContainer);
+            if (curWidget->inherits("WingHex::WingEditorViewWidget")) {
+                auto o = static_cast<WingEditorViewWidget *>(curWidget);
+                if (o) {
+                    o->toggled(false);
+                }
+            }
+        }
     } else {
         if (m_others.contains(id)) {
-            m_stack->setCurrentWidget(m_others.value(id));
+            auto sw = m_others.value(id);
+            if (curWidget != sw) {
+                m_stack->setCurrentWidget(sw);
+                if (curWidget->inherits("WingHex::WingEditorViewWidget")) {
+                    auto o = static_cast<WingEditorViewWidget *>(curWidget);
+                    if (o) {
+                        o->toggled(false);
+                    }
+                }
+
+                sw->toggled(true);
+            }
         }
     }
 }
@@ -407,7 +436,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         doc->applyBookMarks(bookmarks);
         doc->setBaseAddress(infos.base);
         doc->metadata()->applyMetas(metas);
-        applyPluginData(infos.pluginData);
+        _pluginData = infos.pluginData;
         doc->setDocSaved();
 
         m_docType = DocumentType::File;
@@ -548,6 +577,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         if (!isExport) {
             m_isWorkSpace = true;
+            notifyOnWorkSpace(true);
 
             auto tab = this->tabWidget();
             tab->setIcon(ICONRES(QStringLiteral("pro")));
@@ -706,6 +736,25 @@ void EditorView::setCopyLimit(qsizetype sizeMB) { m_hex->setCopyLimit(sizeMB); }
 
 qsizetype EditorView::copyLimit() const { return m_hex->copyLimit(); }
 
+bool EditorView::isWingEditorViewEnabled(const QString &id) const {
+    return m_others.value(id, nullptr) != nullptr;
+}
+
+bool EditorView::processWingEditorViewClosing() {
+    for (auto &o : m_others) {
+        if (!o->onClosing()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void EditorView::notifyOnWorkSpace(bool b) {
+    for (auto &o : m_others) {
+        o->onWorkSpaceNotify(b);
+    }
+}
+
 void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
@@ -741,7 +790,22 @@ BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
 
 MetaDataModel *EditorView::metadataModel() const { return m_metadata; }
 
-bool EditorView::hasCloneChildren() const { return !m_cloneChildren.isEmpty(); }
+bool EditorView::hasCloneChildren() const {
+    for (auto &c : m_cloneChildren) {
+        if (c) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void EditorView::closeAllClonedChildren() {
+    for (auto &c : m_cloneChildren) {
+        if (c) {
+            c->deleteDockWidget();
+        }
+    }
+}
 
 void EditorView::applySettings() {
     auto &set = SettingManager::instance();
@@ -758,18 +822,6 @@ qsizetype EditorView::findAvailCloneIndex() {
 bool EditorView::hasMeta() const {
     auto doc = m_hex->document();
     return doc->metadata()->hasMetadata() || doc->bookMarksCount() > 0;
-}
-
-void EditorView::applyPluginData(const QHash<QString, QByteArray> &data) {
-    for (auto p = data.begin(); p != data.end(); p++) {
-        for (auto pw = m_others.constKeyValueBegin();
-             pw != m_others.constKeyValueEnd(); ++pw) {
-            if (pw->first == p.key()) {
-                pw->second->loadState(p.value());
-                break;
-            }
-        }
-    }
 }
 
 QHash<QString, QByteArray> EditorView::savePluginData() {

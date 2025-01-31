@@ -116,6 +116,8 @@ private:
 
     QSharedMemory *_tsharemem = nullptr;
 
+    bool ENABLE_META = false;
+
     QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
     QList<WingHex::WingDockWidgetInfo> _winfo;
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;

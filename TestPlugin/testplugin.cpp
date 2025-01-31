@@ -593,12 +593,16 @@ void TestPlugin::printLogTestSharedMemData() {
 }
 
 void TestPlugin::setPluginMetaTestEnabled(bool b) {
-    TestWingEditorViewWidget::ENABLE_META = b;
+    if (b != ENABLE_META) {
+        ENABLE_META = b;
+        for (auto &i : TestWingEditorViewWidget::instances()) {
+            i->setEnableMeta(b);
+            emit i->docSaved(false);
+        }
+    }
 }
 
-bool TestPlugin::pluginMetaTestEnabled() {
-    return TestWingEditorViewWidget::ENABLE_META;
-}
+bool TestPlugin::pluginMetaTestEnabled() { return ENABLE_META; }
 
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
 TestPlugin::registeredScriptFns() const {

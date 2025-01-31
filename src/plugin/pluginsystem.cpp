@@ -1279,7 +1279,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
             p->supportedFileIcon(), p->supportedFileExtDisplayName(),
             [p, this]() {
                 auto file = p->onOpenFileBegin();
-                if (file.isEmpty()) {
+                if (file.isNull()) {
                     // common dialog
                     file = WingFileDialog::getOpenFileName(
                         _win, tr("ChooseFile"), _win->m_lastusedpath);

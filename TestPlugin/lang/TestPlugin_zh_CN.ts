@@ -364,7 +364,7 @@
 <context>
     <name>TestWingEditorViewWidget</name>
     <message>
-        <location filename="../testwingeditorviewwidget.cpp" line="20"/>
+        <location filename="../testwingeditorviewwidget.cpp" line="28"/>
         <source>TestWingEditorView</source>
         <translation>测试插件编辑视图</translation>
     </message>

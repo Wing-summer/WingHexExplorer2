@@ -1826,35 +1826,41 @@ void MainWindow::installPluginEditorWidgets() {
     auto &log = Logger::instance();
 
     auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
-    for (auto p = m_editorViewWidgets.begin(); p != m_editorViewWidgets.end();
-         ++p) {
-        for (auto &wctor : p.value()) {
+
+    decltype(m_editorViewWidgets) newEditorViewWidgets;
+    for (auto p = m_editorViewWidgets.constKeyValueBegin();
+         p != m_editorViewWidgets.constKeyValueEnd(); ++p) {
+        decltype(newEditorViewWidgets)::mapped_type newCreatorList;
+        for (auto &wctor : p->second) {
             qApp->processEvents();
-            if (names.contains(wctor->id())) {
+
+            auto id = wctor->id();
+            if (names.contains(id)) {
                 log.critical(tr("Plugin %1 contains a duplicate ID (%2) that "
                                 "is already registered by plugin %3")
-                                 .arg(p.key()->pluginName(), wctor->id(),
-                                      names.value(wctor->id())->pluginName()));
+                                 .arg(p->first->pluginName(), id,
+                                      names.value(id)->pluginName()));
                 continue;
             }
 
-            menu->addAction(
-                newAction(wctor->icon(), wctor->name(), [this, wctor] {
-                    auto editor = currentEditor();
-                    if (editor == nullptr) {
-                        return;
-                    }
-                    editor->switchView(wctor->id());
-                }));
+            auto a = newAction(wctor->icon(), wctor->name(), [this, id] {
+                auto editor = currentEditor();
+                if (editor == nullptr) {
+                    return;
+                }
+                editor->switchView(id);
+            });
+            a->setProperty("__ID__", id);
+            menu->addAction(a);
 
-            names.insert(wctor->id(), p.key());
-            m_editorViewWidgetsBuffer.append(wctor);
+            names.insert(id, p->first);
+            newCreatorList.append(wctor);
         }
+        newEditorViewWidgets.insert(p->first, newCreatorList);
         qApp->processEvents();
     }
 
-    // clear for no using
-    m_editorViewWidgets.clear();
+    m_editorViewWidgets = newEditorViewWidgets;
 }
 
 void MainWindow::showStatus(const QString &status) {
@@ -3160,14 +3166,21 @@ bool MainWindow::newOpenFileSafeCheck() {
 }
 
 void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
-    for (auto &w : m_editorViewWidgetsBuffer) {
-        auto v = w->create(editor);
-        auto id = w->id();
-        editor->registerView(id, v);
-        connect(v, &WingEditorViewWidget::raiseView, this, [editor, id]() {
-            editor->raise();
-            editor->switchView(id);
-        });
+    for (auto p = m_editorViewWidgets.constKeyValueBegin();
+         p != m_editorViewWidgets.constKeyValueEnd(); p++) {
+        for (auto &w : p->second) {
+            auto v = w->create(p->first, editor);
+            auto id = w->id();
+            editor->registerView(id, v);
+            connect(v, &WingEditorViewWidget::docSaved, this,
+                    [editor](bool saved) {
+                        editor->hexEditor()->document()->setDocSaved(saved);
+                    });
+            connect(v, &WingEditorViewWidget::raiseView, this, [editor, id]() {
+                editor->raise();
+                editor->switchView(id);
+            });
+        }
     }
     for (auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
@@ -3183,7 +3196,23 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
 
-        if (closeEditor(editor, m_isOnClosing) == ErrFile::UnSaved) {
+        // the plugin view should explain itself why preventing closing
+        if (!editor->processWingEditorViewClosing()) {
+            return;
+        }
+
+        if (editor->hasCloneChildren()) {
+            auto ret =
+                WingMessageBox::question(this, tr("Warn"), tr("HasClonedView"));
+            if (ret == QMessageBox::Yes) {
+                editor->closeAllClonedChildren();
+            } else {
+                return;
+            }
+        }
+
+        auto ret = closeEditor(editor, m_isOnClosing);
+        if (ret == ErrFile::UnSaved || ret == ErrFile::WorkSpaceUnSaved) {
             auto ret = this->saveRequest();
             if (ret == QMessageBox::Cancel) {
                 return;
@@ -3261,8 +3290,12 @@ void MainWindow::registerClonedEditorView(EditorView *editor) {
         editor->registerQMenu(m);
     }
 
-    auto p = editor->cloneParent();
-    Q_ASSERT(p);
+    auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto menu = ev->menu();
+    Q_ASSERT(menu);
+    auto ta = editor->toggleViewAction();
+    menu->addAction(ta);
+    ev->setEnabled(true);
 }
 
 void MainWindow::connectEditorView(EditorView *editor) {
@@ -3387,6 +3420,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                      QString::number(hexeditor->scaleRate() * 100) +
                          QStringLiteral("%"));
     });
+
+    auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
+    for (auto &a : menu->actions()) {
+        auto id = a->property("__ID__").toString();
+        if (id.isEmpty()) {
+            continue;
+        }
+        a->setEnabled(cur->isWingEditorViewEnabled(id));
+    }
 
     auto doc = hexeditor->document().get();
     m_aShowMetabg->setChecked(doc->metabgVisible());

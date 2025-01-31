@@ -80,6 +80,8 @@ public:
 
     bool hasCloneChildren() const;
 
+    void closeAllClonedChildren();
+
     void setFontSize(qreal size);
 
     int findResultCount() const;
@@ -96,10 +98,17 @@ public:
 
     qsizetype copyLimit() const;
 
+    bool isWingEditorViewEnabled(const QString &id) const;
+
+    bool processWingEditorViewClosing();
+
+    void notifyOnWorkSpace(bool b);
+
 public slots:
     EditorView *clone();
 
     void registerView(const QString &id, WingHex::WingEditorViewWidget *view);
+
     void switchView(const QString &id);
     void registerQMenu(QMenu *menu);
 
@@ -131,7 +140,6 @@ private:
 
     bool hasMeta() const;
 
-    void applyPluginData(const QHash<QString, QByteArray> &data);
     QHash<QString, QByteArray> savePluginData();
     bool checkHasUnsavedState() const;
 
@@ -198,6 +206,7 @@ private:
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;
+    QHash<QString, QByteArray> _pluginData;
 
     // only for extension use
     QString _ext;

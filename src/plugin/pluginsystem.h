@@ -164,6 +164,8 @@ public:
 
     QString getPluginID(IWingPluginBase *plg) const;
 
+    static QString getPUID(IWingPluginBase *p);
+
     static QString type2AngelScriptString(IWingPlugin::MetaType type,
                                           bool isArg, bool noModifier = false);
 
@@ -212,8 +214,6 @@ private:
 
     static QString getScriptFnSig(const QString &fnName,
                                   const IWingPlugin::ScriptFnInfo &fninfo);
-
-    static QString getPUID(IWingPluginBase *p);
 
     bool isPluginLoaded(const WingDependency &d);
 
