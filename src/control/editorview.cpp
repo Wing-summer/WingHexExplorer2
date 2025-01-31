@@ -73,22 +73,6 @@ EditorView::EditorView(QWidget *parent)
 
     m_stack->addWidget(m_hexContainer);
 
-    auto efilter = new EventFilter(QEvent::MouseButtonPress, this->tabWidget());
-    connect(efilter, &EventFilter::eventTriggered, this,
-            [this](QObject *obj, QEvent *event) {
-                Q_UNUSED(obj);
-                auto e = reinterpret_cast<QMouseEvent *>(event);
-                if (e->modifiers() == Qt::NoModifier &&
-                    e->button() == Qt::MiddleButton) {
-                    FileInfoDialog fd(m_fileName, this->documentType() ==
-                                                      DocumentType::RegionFile);
-                    fd.exec();
-                }
-            });
-
-    auto tabWidget = this->tabWidget();
-    tabWidget->installEventFilter(efilter);
-
     m_menu = new QMenu(m_hex);
     auto &shortcut = QKeySequences::instance();
 
@@ -970,6 +954,13 @@ bool EditorView::isRegionFile() const {
         return this->cloneParent()->isRegionFile();
     }
     return m_docType == EditorView::DocumentType::RegionFile;
+}
+
+bool EditorView::isCommonFile() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isCommonFile();
+    }
+    return m_docType == EditorView::DocumentType::File;
 }
 
 FindResultModel *EditorView::findResultModel() const {

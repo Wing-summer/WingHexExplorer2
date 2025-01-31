@@ -38,6 +38,8 @@ option(WINGHEX_USE_FRAMELESS "Use borderless windows to ensure UI uniformity"
        TRUE)
 
 if(WIN32)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED AxContainer)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED AxContainer)
     add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
@@ -193,7 +195,9 @@ set(CONTROL_SRC
     src/control/asobjtreewidget.h
     src/control/asobjtreewidget.cpp
     src/control/qtlonglongspinbox.cpp
-    src/control/qtlonglongspinbox.h)
+    src/control/qtlonglongspinbox.h
+    src/control/dockwidgettab.h
+    src/control/dockwidgettab.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -259,7 +263,11 @@ set(CLASS_SRC
     src/class/wingupdater.h
     src/class/wingupdater.cpp
     src/class/richtextitemdelegate.h
-    src/class/richtextitemdelegate.cpp)
+    src/class/richtextitemdelegate.cpp
+    src/class/showinshell.h
+    src/class/showinshell.cpp
+    src/class/dockcomponentsfactory.h
+    src/class/dockcomponentsfactory.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
@@ -490,42 +498,30 @@ else()
     endif()
 endif()
 
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Network
+            Qt${QT_VERSION_MAJOR}::Concurrent
+            Qt${QT_VERSION_MAJOR}::PrintSupport
+            Qt${QT_VERSION_MAJOR}::GuiPrivate
+            Qt${QT_VERSION_MAJOR}::CorePrivate
+            Qt${QT_VERSION_MAJOR}::Xml
+            QtSingleApplication::QtSingleApplication
+            QHexView
+            QCodeEditor2
+            QJsonModel
+            angelscript
+            nlohmann_json::nlohmann_json
+            qtadvanceddocking-qt${QT_VERSION_MAJOR})
+
 if(WINGHEX_USE_FRAMELESS)
-    target_link_libraries(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-                Qt${QT_VERSION_MAJOR}::Network
-                Qt${QT_VERSION_MAJOR}::Concurrent
-                Qt${QT_VERSION_MAJOR}::PrintSupport
-                Qt${QT_VERSION_MAJOR}::GuiPrivate
-                Qt${QT_VERSION_MAJOR}::CorePrivate
-                Qt${QT_VERSION_MAJOR}::Xml
-                QtSingleApplication::QtSingleApplication
-                QWKCore
-                QWKWidgets
-                QHexView
-                QCodeEditor2
-                QJsonModel
-                angelscript
-                nlohmann_json::nlohmann_json
-                qtadvanceddocking-qt${QT_VERSION_MAJOR})
-else()
-    target_link_libraries(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-                Qt${QT_VERSION_MAJOR}::Network
-                Qt${QT_VERSION_MAJOR}::Concurrent
-                Qt${QT_VERSION_MAJOR}::PrintSupport
-                Qt${QT_VERSION_MAJOR}::GuiPrivate
-                Qt${QT_VERSION_MAJOR}::CorePrivate
-                Qt${QT_VERSION_MAJOR}::Xml
-                QtSingleApplication::QtSingleApplication
-                QHexView
-                QCodeEditor2
-                QJsonModel
-                angelscript
-                nlohmann_json::nlohmann_json
-                qtadvanceddocking-qt${QT_VERSION_MAJOR})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QWKCore QWKWidgets)
+endif()
+
+if(WIN32)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+                          PRIVATE Qt${QT_VERSION_MAJOR}::AxContainer)
 endif()
 
 target_include_directories(

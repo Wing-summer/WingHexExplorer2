@@ -71,6 +71,7 @@ public:
     bool isDriver() const;
     bool isExtensionFile() const;
     bool isRegionFile() const;
+    bool isCommonFile() const;
 
     FindResultModel *findResultModel() const;
 

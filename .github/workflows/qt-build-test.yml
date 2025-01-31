@@ -39,6 +39,7 @@ jobs:
         host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
         target: 'desktop'
         arch: ${{ matrix.arch }}
+        modules: ${{ matrix.os == 'windows-latest' && matrix.qt_version == '6.6.2' && 'qtactiveqt' || '' }}
         cache: true
 
     - name: Configure CMake

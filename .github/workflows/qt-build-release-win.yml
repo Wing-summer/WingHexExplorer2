@@ -25,6 +25,7 @@ jobs:
         host: 'windows'
         target: 'desktop'
         arch: 'win64_msvc2019_64'
+        modules: 'qtactiveqt'
         cache: true
     - name: Add Chinese support file for InnoSetup
       run: |

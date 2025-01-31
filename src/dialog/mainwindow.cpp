@@ -24,6 +24,7 @@
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
 #include "class/appmanager.h"
+#include "class/dockcomponentsfactory.h"
 #include "class/eventfilter.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
@@ -393,6 +394,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
     qApp->processEvents();
+
+    ads::CDockComponentsFactory::setFactory(new DockComponentsFactory);
 
     m_dock = new CDockManager;
     m_dock->setStyleSheet(QString());
