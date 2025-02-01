@@ -45,12 +45,6 @@
 	<sequence parenthesis="square:open">\[</sequence>
 	<sequence parenthesis="square:close">\]</sequence>
 	
-	<list id="keywords/visibility" format="keyword">
-		<word parenthesis="visibility:boundary" fold="1" indent="1">public</word>
-		<word parenthesis="visibility:boundary" fold="1" indent="1">protected</word>
-		<word parenthesis="visibility:boundary" fold="1" indent="1">private</word>
-	</list>
-	
 	<list id="keywords/storage" format="keyword">
 		<word>const</word>
 		<word>in</word>
@@ -60,6 +54,9 @@
 	</list>
 	
 	<list id="keywords/data" format="keyword">
+		<word>public</word>
+		<word>protected</word>
+		<word>private</word>
 		<word>void</word>
 		<word>int8</word>
 		<word>int16</word>
@@ -74,6 +71,8 @@
 		<word>bool</word>
 		<word>enum</word>
 		<word>string</word>
+		<word>array</word>
+		<word>any</word>
 	</list>
 	
 	<list id="keywords/blocks" format="keyword">

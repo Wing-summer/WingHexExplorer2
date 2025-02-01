@@ -88,9 +88,9 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             off = cur.columnNumber();
         }
     } else {
-        // TODO parse current code
-        auto codes = c.document()->text(true, false);
-        parser.parse(codes, this->editor()->fileName());
+        // parse current code
+        // auto codes = c.document()->text(true, false);
+        // parser.parse(codes, this->editor()->fileName());
 
         // QList<QCodeNode *> nodes = parser.codeNodes();
     }

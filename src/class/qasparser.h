@@ -72,8 +72,7 @@ private:
     QByteArray getFnRetTypeString(asIScriptFunction *fn, bool includeNamespace);
 
 public:
-    bool parse(const QString &filename);
-    bool parse(const QString &code, const QString &section);
+    bool parse(qsizetype offset, const QString &code, const QString &section);
 
     QList<QCodeNode *> codeNodes() const;
 

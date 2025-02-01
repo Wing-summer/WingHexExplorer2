@@ -601,8 +601,8 @@ bool QHexMetadata::checkValidMetadata(qsizetype begin, qsizetype end,
     if (begin > end)
         return false;
 
-    if (!fgcolor.isValid() || fgcolor.alpha() == 0) {
-        if (!bgcolor.isValid() || bgcolor.alpha() == 0) {
+    if (!fgcolor.isValid() || fgcolor.alpha() != 255) {
+        if (!bgcolor.isValid() || bgcolor.alpha() != 255) {
             if (comment.isEmpty()) {
                 return false;
             }

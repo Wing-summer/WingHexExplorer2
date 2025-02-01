@@ -84,35 +84,6 @@ QString AsPreprocesser::GetSectionName(unsigned int idx) const {
     return includedScripts.at(idx);
 }
 
-std::optional<QString>
-AsPreprocesser::ReadLineAndSkip(const QString &sectionName) {
-    if (_currentScripts.contains(sectionName)) {
-        auto &scriptInfo = _currentScripts[sectionName];
-        auto begin = *scriptInfo.first;
-        if (begin < 0) {
-            return std::nullopt;
-        }
-
-        auto strpos = scriptInfo.second->indexOf('\n', begin);
-        QString ret;
-
-        int overLen = 0;
-        if (strpos < 0) {
-            ret = scriptInfo.second->mid(*scriptInfo.first);
-            overLen = scriptInfo.second->length() - strpos;
-        } else {
-            overLen = strpos - begin + 1;
-            ret = scriptInfo.second->mid(*scriptInfo.first, overLen);
-        }
-
-        OverwriteCode(*scriptInfo.second, begin, overLen);
-
-        *scriptInfo.first = strpos;
-        return ret;
-    }
-    return std::nullopt;
-}
-
 void AsPreprocesser::ClearAll() { includedScripts.clear(); }
 
 int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
@@ -131,10 +102,6 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
     // First perform the checks for #if directives to exclude code that
     // shouldn't be compiled
     QByteArray::size_type pos = 0;
-
-    _currentScripts.insert(sectionname, qMakePair(&pos, &modifiedScript));
-    LocalGuardHelper guard(
-        [this, sectionname]() { _currentScripts.remove(sectionname); });
 
     int nested = 0;
     while (pos < modifiedScript.size()) {
@@ -467,10 +434,6 @@ int AsPreprocesser::SkipStatement(const QByteArray &modifiedScript, int pos) {
         pos += 1;
 
     return pos;
-}
-
-int AsPreprocesser::ReadLine(const QByteArray &modifiedScript, int pos) {
-    return modifiedScript.indexOf('\n', pos);
 }
 
 int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {

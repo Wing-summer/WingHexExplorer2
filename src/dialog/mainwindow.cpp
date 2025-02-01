@@ -219,10 +219,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 if (splash)
                     splash->setInfoText(tr("LoadingPlg:") + plgName);
             });
-    plg.setMainWindow(this);
-    plg.loadAllPlugin();
-
-    if (set.scriptEnabled()) {
+    connect(&plg, &PluginSystem::scriptBaseInited, this, [=, &plg]() {
         // At this time, AngelScript service plugin has started
         if (splash)
             splash->setInfoText(tr("SetupConsole"));
@@ -240,17 +237,20 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_scriptConsole->initOutput();
         m_scriptConsole->machine()->setInsteadFoundDisabled(true);
 
-        if (splash)
-            splash->setInfoText(tr("SetupScriptEditor"));
-        m_scriptDialog = new ScriptingDialog(this);
-        m_scriptDialog->initConsole();
-
-        // load the model
-        Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
-        m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
-
         plg.angelApi()->setBindingConsole(m_scriptConsole);
-    }
+    });
+
+    plg.setMainWindow(this);
+    plg.loadAllPlugin();
+
+    if (splash)
+        splash->setInfoText(tr("SetupScriptEditor"));
+    m_scriptDialog = new ScriptingDialog(this);
+    m_scriptDialog->initConsole();
+
+    // load the model
+    Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
+    m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
 
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
@@ -2145,6 +2145,9 @@ restart:
     case ErrFile::Success: {
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
+        RecentFileManager::RecentInfo info;
+        info.fileName = filename;
+        m_recentmanager->addRecentFile(info);
         break;
     }
     case ErrFile::WorkSpaceUnSaved: {

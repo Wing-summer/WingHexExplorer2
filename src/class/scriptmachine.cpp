@@ -64,6 +64,18 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
         return false;
     }
 
+    // we need utf8, the default is what we want
+    engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
+    engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, true);
+    engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, false);
+    engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, false);
+    engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false);
+    engine->SetEngineProperty(asEP_DISABLE_INTEGER_DIVISION, false);
+    engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, false);
+    engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 0);
+    engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
+    engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, true); // enum class like
+
     // The script compiler will send any compiler messages to the callback
     auto r = engine->SetMessageCallback(asFUNCTION(messageCallback), this,
                                         asCALL_CDECL);
@@ -1585,7 +1597,7 @@ void ScriptMachine::setInsteadFoundDisabled(bool newInsteadFoundDisabled) {
 }
 
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
-    RegisterScriptArray(engine, false);
+    RegisterScriptArray(engine, true);
     RegisterQString(engine);
     RegisterScriptRegex(engine);
     RegisterQStringUtils(engine);

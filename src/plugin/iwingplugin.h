@@ -584,17 +584,12 @@ public:
     virtual bool eventClosing() { return true; }
 
 public:
-    virtual bool eventOnScriptPragma(const QStringList &comments) {
+    virtual bool eventOnScriptPragma(const QString &script,
+                                     const QStringList &comments) {
+        Q_UNUSED(script);
         Q_UNUSED(comments);
         return false;
     }
-
-    virtual bool eventScriptPragmaLineStep(const QString &codes) {
-        Q_UNUSED(codes);
-        return false;
-    }
-
-    virtual void eventScriptPragmaFinished() {}
 
 signals:
     bool existsServiceHost(const QString &puid);

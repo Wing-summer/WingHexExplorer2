@@ -18,20 +18,11 @@
 #include "qasparser.h"
 
 #include "AngelScript/sdk/angelscript/source/as_objecttype.h"
-#include "AngelScript/sdk/angelscript/source/as_scriptcode.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptfunction.h"
 #include "class/qcodenode.h"
 
 #include <QDebug>
-
-/*
- * Completion only support: Internal classes, enums and methods,
- *                          Standard libraries and included headers,
- *                          global classes, enums and methods in opened codes
- *
- * If you want to make it more powerful, PR will be welcomed.
- */
 
 QAsParser::QAsParser(asIScriptEngine *engine)
     : AsPreprocesser(engine), _engine(engine) {
@@ -171,33 +162,8 @@ QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
     return {};
 }
 
-bool QAsParser::parse(const QString &filename) {
-    // if (StartNewModule("as_parser") != 0) {
-    //     return false;
-    // }
-
-    ClearAll();
-
-    auto ret = LoadScriptSection(filename);
-    if (ret != 0) {
-        return false;
-    }
-
-    // auto mod = dynamic_cast<asCModule *>(GetModule());
-    // Q_ASSERT(mod);
-    // asCParser parser(mod->m_builder);
-
-    // m_code.reset(new asCScriptCode);
-    // m_code->SetCode("as_parser", modifiedScript.data(), true);
-
-    // parser.ParseScript(m_code.get());
-
-    // auto pnodes = parser.GetScriptNode();
-
-    return true;
-}
-
-bool QAsParser::parse(const QString &code, const QString &section) {
+bool QAsParser::parse(qsizetype offset, const QString &code,
+                      const QString &section) {
     return ProcessScriptSection(code.toUtf8(), code.length(), section, 0);
 }
 

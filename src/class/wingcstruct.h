@@ -21,6 +21,10 @@
 #include "ctypeparser.h"
 #include "plugin/iwingplugin.h"
 
+class CScriptDictionary;
+class asIScriptEngine;
+class CScriptArray;
+
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
 
@@ -46,9 +50,10 @@ public:
     virtual QHash<WingHex::SettingPage *, bool>
     registeredSettingPages() const override;
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
-    virtual bool eventOnScriptPragma(const QStringList &comments) override;
-    virtual bool eventScriptPragmaLineStep(const QString &codes) override;
-    virtual void eventScriptPragmaFinished() override;
+    virtual bool eventOnScriptPragma(const QString &script,
+                                     const QStringList &comments) override;
+    virtual QHash<QString, UNSAFE_SCFNPTR>
+    registeredScriptUnsafeFns() const override;
 
 private:
     // basic
@@ -79,9 +84,20 @@ private:
     WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
 
 private:
-    QByteArray getRawData(const QString &type, const QVariantHash &content);
-
     MetaType getqsizetypeMetaType() const;
+
+    QMetaType::Type correctTypeSign(QMetaType::Type type, bool forceUnsigned);
+
+    QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
+                     qsizetype size);
+
+    QVariantHash readStruct(const char *&ptr, const char *end,
+                            const QString &type);
+
+    bool isValidCStructMetaType(QMetaType::Type type);
+    CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);
+    CScriptArray *convert2AsArray(const QVariantList &array,
+                                  QMetaType::Type type, int id);
 
 private:
     // wrapper for WingAngelApi
@@ -101,14 +117,17 @@ private:
     QVariant background(const QVariantList &params);
     QVariant comment(const QVariantList &params);
 
-    QVariant read(const QVariantList &params);
+    UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
 
 private:
     CTypeParser _parser;
 
+    asIScriptEngine *_engine;
+
     QHash<WingHex::SettingPage *, bool> _setpgs;
     QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
+    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // WINGCSTRUCT_H

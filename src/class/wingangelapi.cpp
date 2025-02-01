@@ -379,7 +379,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
                   std::placeholders::_5, std::placeholders::_6,
                   std::placeholders::_7),
         "string getItem(const string &in title, const string &in label, "
-        "const array<string> &in items, int current = 0, "
+        "const string[] &in items, int current = 0, "
         "bool editable = true, bool &out ok = false, "
         "inputbox::InputMethodHints inputMethodHints = inputbox::ImhNone)");
 
@@ -433,7 +433,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
-        "array<string>@ getOpenFileNames(const string &in caption = \"\", "
+        "string[]@ getOpenFileNames(const string &in caption = \"\", "
         "const string &in dir = \"\", const string &in filter = \"\", "
         "string &out selectedFilter = \"\", filedlg::options &in options = 0)");
 
@@ -616,11 +616,11 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexReader_selectedBytes, this,
                   std::placeholders::_1),
-        "array<byte>@ selectedBytes(" QSIZETYPE " index)");
+        "byte[]@ selectedBytes(" QSIZETYPE " index)");
 
     registerAPI<CScriptArray *()>(
         engine, std::bind(&WingAngelAPI::_HexReader_selectionBytes, this),
-        "array<array<byte>>@ selectionBytes()");
+        "byte[][]@ selectionBytes()");
     registerAPI<WingHex::HexPosition(qsizetype)>(
         engine,
         std::bind(&WingHex::WingPlugin::Reader::selectionStart, reader,
@@ -649,7 +649,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexReader_readBytes, this,
                   std::placeholders::_1, std::placeholders::_2),
-        "array<byte>@ readBytes(" QSIZETYPE " offset," QSIZETYPE " len)");
+        "byte[]@ readBytes(" QSIZETYPE " offset," QSIZETYPE " len)");
 
     registerAPI<qint8(qsizetype)>(
         engine,
@@ -697,23 +697,21 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexReader_searchForward, this,
                   std::placeholders::_1, std::placeholders::_2),
-        QSIZETYPE_WRAP("searchForward(" QSIZETYPE
-                       " begin, array<byte> &in ba)"));
+        QSIZETYPE_WRAP("searchForward(" QSIZETYPE " begin, byte[] &in ba)"));
 
     registerAPI<qsizetype(qsizetype, const CScriptArray &)>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_searchBackward, this,
                   std::placeholders::_1, std::placeholders::_2),
-        QSIZETYPE_WRAP("searchBackward(" QSIZETYPE
-                       " begin, array<byte> &in ba)"));
+        QSIZETYPE_WRAP("searchBackward(" QSIZETYPE " begin, byte[] &in ba)"));
 
     registerAPI<CScriptArray *(qsizetype, qsizetype, const CScriptArray &)>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_findAllBytes, this,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
-        "array<" QSIZETYPE ">@ findAllBytes(" QSIZETYPE " begin, " QSIZETYPE
-        " end, array<byte> &in b)");
+        QSIZETYPE "[]@ findAllBytes(" QSIZETYPE " begin, " QSIZETYPE
+                  " end, byte[] &in b)");
 
     registerAPI<bool(qsizetype)>(
         engine,
@@ -731,7 +729,7 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexReader_getsBookmarkPos, this,
                   std::placeholders::_1),
-        "array<" QSIZETYPE ">@ getsBookmarkPos(" QSIZETYPE " pos)");
+        QSIZETYPE "[]@ getsBookmarkPos(" QSIZETYPE " pos)");
 
     registerAPI<QString(qsizetype)>(
         engine,
@@ -748,11 +746,11 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
     registerAPI<CScriptArray *()>(
         engine,
         std::bind(&WingAngelAPI::_HexReader_getSupportedEncodings, this),
-        "array<string>@ getSupportedEncodings()");
+        "string[]@ getSupportedEncodings()");
 
     registerAPI<CScriptArray *()>(
         engine, std::bind(&WingAngelAPI::_HexReader_getStorageDrivers, this),
-        "array<string>@ getStorageDrivers()");
+        "string[]@ getStorageDrivers()");
 
     engine->SetDefaultNamespace("");
 }
@@ -856,7 +854,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexController_writeBytes, this,
                   std::placeholders::_1, std::placeholders::_2),
-        "bool writeBytes(" QSIZETYPE " offset, array<byte>&in data)");
+        "bool writeBytes(" QSIZETYPE " offset, byte[] &in data)");
 
     registerAPI<bool(qsizetype, const QString &, const QString &)>(
         engine,
@@ -906,7 +904,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexController_insertBytes, this,
                   std::placeholders::_1, std::placeholders::_2),
-        "bool insertBytes(" QSIZETYPE " offset, array<byte>&in data)");
+        "bool insertBytes(" QSIZETYPE " offset, byte[] &in data)");
 
     registerAPI<bool(qsizetype, const QString &, const QString &)>(
         engine,
@@ -956,7 +954,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         engine,
         std::bind(&WingAngelAPI::_HexController_appendBytes, this,
                   std::placeholders::_1),
-        "bool appendBytes(array<byte>&in data)");
+        "bool appendBytes(byte[] &in data)");
 
     registerAPI<bool(const QString &, const QString &)>(
         engine,
@@ -1219,7 +1217,7 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
         engine,
         std::bind(&WingAngelAPI::_DataVisual_updateTextList, this, stringID,
                   std::placeholders::_1, std::placeholders::_2),
-        "bool updateTextList(array<string> &in data, string &in title=\"\")");
+        "bool updateTextList(string[] &in data, string &in title=\"\")");
 
     registerAPI<bool(const QString &, const QString &)>(
         engine,
@@ -1235,9 +1233,8 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
         std::bind(&WingAngelAPI::_DataVisual_updateTextTable, this, stringID,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
-        "bool updateTextTable(string &in json, array<string> &in headers, "
-        "array<string> &in headerNames = array<string>(), string &in "
-        "title=\"\")");
+        "bool updateTextTable(string &in json, string[] &in headers, "
+        "string[] &in headerNames = {}, string &in title=\"\")");
 
     engine->SetDefaultNamespace("");
 }
@@ -1453,8 +1450,7 @@ void WingAngelAPI::qvariantCastOp(
                 dic->Set(key, addr, asTYPEID_INT8);
                 break;
             default:
-                // should not go here
-                Q_ASSERT(false);
+                // ignore
                 break;
             }
         } else {
@@ -1615,12 +1611,12 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
 
         auto id = engine->GetTypeIdByDecl("char");
         if (id == typeID) {
-            return *getDereferencePointer<QChar>(raw, isHandle);
+            return **getDereferencePointer<QChar *>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("color");
         if (id == typeID) {
-            return *getDereferencePointer<QColor>(raw, isHandle);
+            return **getDereferencePointer<QColor *>(raw, isHandle);
         }
 
         id = engine->GetTypeIdByDecl("string");

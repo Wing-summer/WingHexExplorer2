@@ -23,7 +23,9 @@
 
 ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
     setColumnCount(2);
-    header()->setDefaultAlignment(Qt::AlignCenter);
+    auto header = this->header();
+    header->setDefaultAlignment(Qt::AlignCenter);
+    header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
     setHeaderLabels({tr("Symbol"), tr("Decl")});
 }
 
@@ -52,6 +54,8 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
         createObjNodes(node->children(), item);
         addTopLevelItem(item);
     }
+
+    setSortingEnabled(true);
 }
 
 QTreeWidgetItem *ASObjTreeWidget::createObjNode(QCodeNode *node,
