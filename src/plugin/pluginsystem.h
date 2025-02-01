@@ -347,6 +347,8 @@ private:
 signals:
     void pluginLoading(const QString &plgName);
 
+    void scriptBaseInited();
+
 private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();

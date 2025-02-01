@@ -284,7 +284,7 @@ bool CTypeParser::parseSource(const QString &src) {
             case kBlockStart:
             case kBlockEnd:
             case kSemicolon:
-                decl.is_unsigned = false;
+                decl.force_unsigned = false;
                 break;
 
             default:
@@ -339,7 +339,7 @@ bool CTypeParser::parseSource(const QString &src) {
             case kSignedKeyword: // ignore
                 break;
             case KUnsignedKeyword:
-                decl.is_unsigned = true;
+                decl.force_unsigned = true;
                 break;
             default:
                 break;
@@ -684,21 +684,31 @@ PointerMode CTypeParser::pointerMode() const { return _pmode; }
 
 void CTypeParser::setPointerMode(PointerMode newPmode) { _pmode = newPmode; }
 
-QHash<QString, QPair<QMetaType::Type, qsizetype>> CTypeParser::types() const {
+const QHash<QString, QPair<QMetaType::Type, qsizetype>> &
+CTypeParser::types() const {
     return type_maps_;
 }
 
-QHash<QString, QList<VariableDeclaration>> CTypeParser::unionDefs() const {
+QPair<QMetaType::Type, qsizetype> CTypeParser::type(const QString &t) const {
+    return type_maps_.value(t);
+}
+
+const QHash<QString, QList<VariableDeclaration>> &
+CTypeParser::unionDefs() const {
     return union_defs_;
 }
 
-QHash<QString, long> CTypeParser::constDefs() const { return const_defs_; }
+const QHash<QString, long> &CTypeParser::constDefs() const {
+    return const_defs_;
+}
 
-QHash<QString, QList<QPair<QString, int>>> CTypeParser::enumDefs() const {
+const QHash<QString, QList<QPair<QString, int>>> &
+CTypeParser::enumDefs() const {
     return enum_defs_;
 }
 
-QHash<QString, QList<VariableDeclaration>> CTypeParser::structDefs() const {
+const QHash<QString, QList<VariableDeclaration>> &
+CTypeParser::structDefs() const {
     return struct_defs_;
 }
 

@@ -39,8 +39,6 @@
 #include <QSet>
 #include <QVector>
 
-#include <optional>
-
 class AsPreprocesser;
 class asCScriptCode;
 
@@ -61,8 +59,10 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
                                 AsPreprocesser *builder,
                                 const QString &sectionname, void *userParam);
 
+#include "class/qascodeparser.h"
+
 // Helper class for loading and pre-processing script files to
-// support include directives and metadata declarations
+// support include directives declarations
 
 class AsPreprocesser {
 public:
@@ -74,16 +74,6 @@ public:
         QString section;
         int lineOffset = -1;
         QByteArray script;
-    };
-
-private:
-    class LocalGuardHelper {
-        std::function<void()> _dctorfn;
-
-    public:
-        LocalGuardHelper(const std::function<void()> &dctorfn)
-            : _dctorfn(dctorfn) {}
-        ~LocalGuardHelper() { _dctorfn(); }
     };
 
 public:
@@ -112,8 +102,6 @@ public:
 
     QString GetSectionName(unsigned int idx) const;
 
-    std::optional<QString> ReadLineAndSkip(const QString &sectionName);
-
 protected:
     void ClearAll();
     int ProcessScriptSection(const QByteArray &script, int length,
@@ -122,8 +110,6 @@ protected:
     bool IncludeIfNotAlreadyIncluded(const QString &filename);
 
     int SkipStatement(const QByteArray &modifiedScript, int pos);
-
-    int ReadLine(const QByteArray &modifiedScript, int pos);
 
     int ExcludeCode(QByteArray &modifiedScript, int pos);
     void OverwriteCode(QByteArray &modifiedScript, int start, int len);
@@ -143,9 +129,6 @@ protected:
     QVector<QString> includedScripts;
 
     QVector<QString> definedWords;
-
-    QHash<QString, QPair<QByteArray::size_type *, QByteArray *>>
-        _currentScripts;
 };
 
 #endif // ASPREPROCESSER_H

@@ -72,6 +72,20 @@ public:
     ScriptingConsole *bindingConsole() const;
     void setBindingConsole(ScriptingConsole *console);
 
+    static QString qvariantCastASString(const QMetaType::Type &id);
+
+    static int qvariantCastASID(asIScriptEngine *engine,
+                                const QMetaType::Type &id);
+
+    static bool isTempBuffered(QMetaType::Type type);
+
+    template <typename T>
+    static void assignTmpBuffer(asQWORD &buffer, const T &v) {
+        static_assert(std::is_pod<T>());
+        static_assert(sizeof(T) <= sizeof(asQWORD));
+        *reinterpret_cast<T *>(&buffer) = v;
+    }
+
 private:
     void installLogAPI(asIScriptEngine *engine);
     void installExtAPI(asIScriptEngine *engine);
@@ -111,13 +125,6 @@ private:
     qsizetype getAsTypeSize(int typeId, void *data);
 
     template <typename T>
-    static void assignTmpBuffer(asQWORD &buffer, const T &v) {
-        static_assert(std::is_pod<T>());
-        static_assert(sizeof(T) <= sizeof(asQWORD));
-        *reinterpret_cast<T *>(&buffer) = v;
-    }
-
-    template <typename T>
     static T qvariantCastGetValue(void *buffer) {
         static_assert(std::is_pod<T>());
         static_assert(sizeof(T) <= sizeof(asQWORD));
@@ -144,13 +151,6 @@ private:
             return reinterpret_cast<const T *>(value);
         }
     }
-
-    static int qvariantCastASID(asIScriptEngine *engine,
-                                const QMetaType::Type &id);
-
-    static QString qvariantCastASString(const QMetaType::Type &id);
-
-    static bool isTempBuffered(QMetaType::Type type);
 
     static void script_call(asIScriptGeneric *gen);
 

@@ -417,7 +417,6 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.at(0).toString();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        Q_ASSERT(!fileName.isEmpty());
         for (auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Opened, fileType,
                                  fileName, -1, {});
@@ -429,7 +428,6 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto oldFileName = params.at(1).toString();
         auto isExported = params.at(2).toBool();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
-        Q_ASSERT(!newFileName.isEmpty() && !oldFileName.isEmpty());
         for (auto &plg : _evplgs[event]) {
             plg->eventPluginFile(isExported
                                      ? IWingPlugin::PluginFileEvent::Exported
@@ -457,7 +455,6 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.first().toString();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        Q_ASSERT(!fileName.isEmpty());
         for (auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Closed, fileType,
                                  fileName, -1, {});
@@ -476,18 +473,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         if (r == es.constEnd()) {
             return false;
         }
-        auto plg = *r;
-        if (plg->eventOnScriptPragma(params.at(3).toStringList())) {
-            auto codes = pproc->ReadLineAndSkip(section);
-            while (true) {
-                if (codes.has_value()) {
-                    plg->eventScriptPragmaLineStep(codes.value());
-                } else {
-                    break;
-                }
-            }
-            plg->eventScriptPragmaFinished();
-        }
+        return (*r)->eventOnScriptPragma(section, params.at(3).toStringList());
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::PluginFileOpened: {
         Q_ASSERT(params.size() == 4);
@@ -496,7 +482,6 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto fileName = params.at(1).toString();
         auto id = params.at(2).toInt();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
-        Q_ASSERT(!fileName.isEmpty());
         if (_evplgs[event].contains(plg)) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::PluginOpened,
                                  fileType, fileName, id, {});
@@ -509,7 +494,6 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto fileName = params.at(1).toString();
         auto id = params.at(2).toInt();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
-        Q_ASSERT(!fileName.isEmpty());
         if (_evplgs[event].contains(plg)) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::PluginClosed,
                                  fileType, fileName, id, {});
@@ -997,7 +981,7 @@ QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
     }
 
     if (isArray || isList) {
-        retype.prepend(QStringLiteral("array<")).append(QStringLiteral(">"));
+        retype.append(QStringLiteral("[]"));
     }
 
     if (isArg) {
@@ -3056,6 +3040,8 @@ void PluginSystem::loadAllPlugin() {
         auto meta = parsePluginMetadata(doc.object());
         retranslateMetadata(_angelplg, meta);
         loadPlugin(_angelplg, meta, std::nullopt);
+
+        emit scriptBaseInited();
     }
 
     Logger::newLine();

@@ -570,7 +570,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    if (doc->isUndoByteModified()) {
+    if (doc->isUndoByteModified() || isNewFile()) {
         if (m_docType == DocumentType::Extension) {
             if (_dev->isOpen()) {
                 _dev->close();
@@ -605,6 +605,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
                 if (!isExport) {
                     m_fileName = QFileInfo(fileName).absoluteFilePath();
+                    m_isNewFile = false;
+                    m_docType = DocumentType::File;
                     doc->setDocSaved();
                 }
 
@@ -765,6 +767,14 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                     if (c) {
                         c->setWindowTitle(content + QStringLiteral(" : ") +
                                           QString::number(i + 1));
+                    }
+                }
+
+                if (!isNewFile()) {
+                    auto tab = this->tabWidget();
+                    if (tab->icon().isNull()) {
+                        tab->setIcon(
+                            Utilities::getIconFromFile(style(), m_fileName));
                     }
                 }
             });

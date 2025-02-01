@@ -34,9 +34,8 @@ void LangService::init(asIScriptEngine *engine) {
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
 
-    // TODO: disable COMPLETION for it's werid, fix later
-    // _completion = new AsCompletion(engine, this);
-    // m_language->addCompletionEngine(_completion);
+    _completion = new AsCompletion(engine, this);
+    m_language->addCompletionEngine(_completion);
 
     initAdditionalFormatScheme();
 }

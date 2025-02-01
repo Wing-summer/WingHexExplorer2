@@ -45,7 +45,7 @@ typedef struct {
     QString data_type; ///< name of a data type, either basic type or
                        ///< user-defined type
 
-    bool is_unsigned;
+    bool force_unsigned;
     QString var_name;     ///< variable name
     qsizetype offset;     ///< member offset in struct: 0 for non-struct
     qsizetype array_size; ///< array size: 0 for non-array
@@ -113,15 +113,17 @@ public:
     PointerMode pointerMode() const;
     void setPointerMode(PointerMode newPmode);
 
-    QHash<QString, QList<VariableDeclaration>> structDefs() const;
+    const QHash<QString, QList<VariableDeclaration>> &structDefs() const;
 
-    QHash<QString, QList<QPair<QString, int>>> enumDefs() const;
+    const QHash<QString, QList<QPair<QString, int>>> &enumDefs() const;
 
-    QHash<QString, QPair<QMetaType::Type, qsizetype>> types() const;
+    const QHash<QString, QPair<QMetaType::Type, qsizetype>> &types() const;
 
-    QHash<QString, long> constDefs() const;
+    QPair<QMetaType::Type, qsizetype> type(const QString &t) const;
 
-    QHash<QString, QList<VariableDeclaration>> unionDefs() const;
+    const QHash<QString, long> &constDefs() const;
+
+    const QHash<QString, QList<VariableDeclaration>> &unionDefs() const;
 
     TokenTypes getTokenType(const QString &token) const;
 

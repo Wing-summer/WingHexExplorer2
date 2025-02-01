@@ -1252,6 +1252,10 @@ void ScriptingDialog::on_saveas() {
     } else {
         WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
     }
+
+    RecentFileManager::RecentInfo info;
+    info.fileName = filename;
+    m_recentmanager->addRecentFile(info);
 }
 
 void ScriptingDialog::on_undofile() {
