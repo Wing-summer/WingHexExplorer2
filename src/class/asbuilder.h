@@ -27,6 +27,7 @@
 class asBuilder : public AsPreprocesser {
 public:
     explicit asBuilder(asIScriptEngine *engine);
+    virtual ~asBuilder();
 
     // Start a new module
     virtual int StartNewModule(const char *moduleName);

@@ -52,6 +52,7 @@ public:
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
     virtual bool eventOnScriptPragma(const QString &script,
                                      const QStringList &comments) override;
+    virtual void eventOnScriptPragmaInit() override;
     virtual QHash<QString, UNSAFE_SCFNPTR>
     registeredScriptUnsafeFns() const override;
 

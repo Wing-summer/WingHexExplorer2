@@ -24,7 +24,17 @@
 
 asBuilder::asBuilder(asIScriptEngine *engine) : AsPreprocesser(engine) {}
 
+asBuilder::~asBuilder() {
+    if (module) {
+        module->Discard();
+    }
+}
+
 int asBuilder::StartNewModule(const char *moduleName) {
+    if (module) {
+        module->Discard();
+    }
+
     module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);
     if (module == nullptr)
         return -1;

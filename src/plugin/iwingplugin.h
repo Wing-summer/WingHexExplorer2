@@ -477,6 +477,7 @@ public:
         PluginFileOpened = 1u << 9,
         PluginFileClosed = 1u << 10,
         ScriptUnSafeFnRegistering = 1u << 11,
+        ScriptPragmaInit = 1u << 12
     };
     Q_DECLARE_FLAGS(RegisteredEvents, RegisteredEvent)
 
@@ -590,6 +591,8 @@ public:
         Q_UNUSED(comments);
         return false;
     }
+
+    virtual void eventOnScriptPragmaInit() {}
 
 signals:
     bool existsServiceHost(const QString &puid);

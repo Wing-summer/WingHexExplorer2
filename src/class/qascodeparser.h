@@ -43,6 +43,7 @@
 class QAsCodeParser {
 public:
     QAsCodeParser(asCScriptEngine *engine);
+    QAsCodeParser(asIScriptEngine *engine);
     ~QAsCodeParser();
 
 public:
@@ -100,9 +101,9 @@ private:
     QMap<qsizetype, CodeSegment> m_segs; // global functions
 
 public:
-    SymbolTable preParse(const QByteArray &codes);
+    SymbolTable parse(const QByteArray &codes);
 
-    SymbolTable parse(qsizetype offset, const QByteArray &codes);
+    SymbolTable parseIntell(qsizetype offset, const QByteArray &codes);
 
 private:
     void ParseScript(bool inBlock);

@@ -2146,13 +2146,22 @@ void MainWindow::on_saveas() {
         return;
     }
 
-    auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
-                                                    m_lastusedpath);
+    QString lastpath;
+    if (editor->isNewFile() || editor->isExtensionFile() ||
+        editor->isDriver()) {
+        lastpath = m_lastusedpath;
+    } else {
+        lastpath = editor->fileName();
+    }
+
+    auto filename =
+        WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto res = saveEditor(editor, filename, false);
+    bool isWorkspace = editor->isOriginWorkSpace();
+    auto res = saveEditor(editor, filename, false, false, isWorkspace);
 
 restart:
     switch (res) {
@@ -2161,6 +2170,7 @@ restart:
                      tr("SaveSuccessfully"));
         RecentFileManager::RecentInfo info;
         info.fileName = filename;
+        info.isWorkSpace = isWorkspace;
         m_recentmanager->addRecentFile(info);
         break;
     }
@@ -3704,7 +3714,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     auto oldName = editor->fileName();
 
     QString workspace = m_views.value(editor);
-    if (workspace.isEmpty()) {
+    if (forceWorkspace || workspace.isEmpty()) {
         if (forceWorkspace || editor->change2WorkSpace()) {
             QString curFile;
             if (!editor->isDriver() && !editor->isExtensionFile()) {
@@ -4046,6 +4056,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         event->ignore();
         m_isOnClosing = false;
         return;
+    }
+
+    // then checking the scripting console
+    auto sm = m_scriptConsole->consoleMachine();
+    if (sm->isRunning()) {
+        sm->abortScript();
     }
 
     // then checking itself

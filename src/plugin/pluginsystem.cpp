@@ -475,6 +475,12 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         }
         return (*r)->eventOnScriptPragma(section, params.at(3).toStringList());
     } break;
+    case WingHex::IWingPlugin::RegisteredEvent::ScriptPragmaInit: {
+        Q_ASSERT(params.isEmpty());
+        for (auto &plg : _evplgs[event]) {
+            plg->eventOnScriptPragmaInit();
+        }
+    } break;
     case WingHex::IWingPlugin::RegisteredEvent::PluginFileOpened: {
         Q_ASSERT(params.size() == 4);
         auto plg =
@@ -891,6 +897,10 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptPragma)) {
         _evplgs[IWingPlugin::RegisteredEvent::ScriptPragma].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::ScriptPragmaInit)) {
+        _evplgs[IWingPlugin::RegisteredEvent::ScriptPragmaInit].append(plg);
     }
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::PluginFileOpened)) {

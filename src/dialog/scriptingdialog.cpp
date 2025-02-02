@@ -27,6 +27,7 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "plugin/pluginsystem.h"
 #include "qcodeeditwidget/qeditconfig.h"
 #include "qcodeeditwidget/qformatconfig.h"
 #include "qdocumentline.h"
@@ -552,7 +553,7 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         bool isPaused = false;
         if (runner) {
             isRun = runner->isRunning();
-            isDbg = runner->isInDebugMode();
+            isDbg = runner->isDebugMode();
             auto dbg = runner->debugger();
             isPaused = dbg->currentState() == asDebugger::PAUSE;
         }
@@ -792,7 +793,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(m_views.contains(editor));
 
         auto m = m_consoleout->machine();
-        if (m->isInDebugMode() && _DebugingScript == editor->fileName()) {
+        if (m->isDebugMode() && _DebugingScript == editor->fileName()) {
             if (WingMessageBox::warning(
                     this, this->windowTitle(), tr("ScriptStillRunning"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -836,6 +837,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         }
 
         editor->deleteDockWidget();
+        updateEditModeEnabled();
     });
 
     LangService::instance().applyLanguageSerivce(editor->editor());
@@ -929,7 +931,7 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
     bool isPaused = false;
     if (runner) {
         isRun = runner->isRunning();
-        isDbg = runner->isInDebugMode();
+        isDbg = runner->isDebugMode();
         auto dbg = runner->debugger();
         isPaused = dbg->currentState() == asDebugger::PAUSE;
     }
@@ -987,7 +989,7 @@ void ScriptingDialog::setCurrentEditorScale(qreal rate) {
 
 bool ScriptingDialog::isCurrentDebugging() const {
     auto m = m_consoleout->machine();
-    return m && m->isInDebugMode();
+    return m && m->isDebugMode();
 }
 
 ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
@@ -1014,7 +1016,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
 void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
     updateRunDebugMode(true);
     auto machine = m_consoleout->machine();
-    if (machine->isInDebugMode()) {
+    if (machine->isDebugMode()) {
         auto dbg = machine->debugger();
         dbg->runDebugAction(action);
     }
@@ -1043,6 +1045,8 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_consoleout->clear();
 
     _DebugingScript = fileName;
+    PluginSystem::instance().dispatchEvent(
+        IWingPlugin::RegisteredEvent::ScriptPragmaInit, {});
     m_consoleout->machine()->executeScript(fileName, true);
 
     updateRunDebugMode();
@@ -1054,7 +1058,7 @@ void ScriptingDialog::addBreakPoint(QEditor *editor, int lineIndex) {
     auto curLine = lineIndex + 1;
     auto dbg = m_consoleout->machine()->debugger();
 
-    if (m_consoleout->machine()->isInDebugMode()) {
+    if (m_consoleout->machine()->isDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
@@ -1084,7 +1088,7 @@ void ScriptingDialog::removeBreakPoint(QEditor *editor, int lineIndex) {
     auto curLine = lineIndex + 1;
 
     auto dbg = m_consoleout->machine()->debugger();
-    if (m_consoleout->machine()->isInDebugMode()) {
+    if (m_consoleout->machine()->isDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
         auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
@@ -1113,7 +1117,7 @@ void ScriptingDialog::toggleBreakPoint(QEditor *editor, int lineIndex) {
     auto curLine = lineIndex + 1;
 
     auto dbg = m_consoleout->machine()->debugger();
-    if (m_consoleout->machine()->isInDebugMode()) {
+    if (m_consoleout->machine()->isDebugMode()) {
         auto line = editor->document()->line(lineIndex);
         auto bpMark = m_symID.value(Symbols::BreakPoint);
         auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
@@ -1225,6 +1229,11 @@ void ScriptingDialog::on_save() {
         return;
     }
 
+    if (editor->fileName().isEmpty()) {
+        on_saveas();
+        return;
+    }
+
     auto res = editor->save();
     if (res) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
@@ -1239,6 +1248,11 @@ void ScriptingDialog::on_saveas() {
     auto editor = currentEditor();
     if (editor == nullptr) {
         return;
+    }
+
+    QString lastPath = editor->fileName();
+    if (lastPath.isEmpty()) {
+        lastPath = m_lastusedpath;
     }
 
     auto filename = WingFileDialog::getSaveFileName(
@@ -1383,6 +1397,8 @@ void ScriptingDialog::on_runscript() {
             return;
         }
         m_consoleout->clear();
+        PluginSystem::instance().dispatchEvent(
+            IWingPlugin::RegisteredEvent::ScriptPragmaInit, {});
         m_consoleout->machine()->executeScript(e->fileName());
         updateRunDebugMode();
     }

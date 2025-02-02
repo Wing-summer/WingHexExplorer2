@@ -26,7 +26,10 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
+
+#include "angelobjstring.h"
 #include "class/asbuilder.h"
+#include "class/qascodeparser.h"
 #include "define.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
@@ -34,16 +37,9 @@
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
 
-#include "angelobjstring.h"
-
 #include <QProcess>
 
 ScriptMachine::~ScriptMachine() {
-    if (_immediateContext) {
-        _immediateContext->Release();
-        _immediateContext = nullptr;
-    }
-
     if (_ctxMgr) {
         delete _ctxMgr;
     }
@@ -54,10 +50,6 @@ ScriptMachine::~ScriptMachine() {
 bool ScriptMachine::inited() { return _engine != nullptr; }
 
 bool ScriptMachine::isRunning() const { return _ctxMgr->isRunning(); }
-
-bool ScriptMachine::isInDebugMode() const {
-    return _debugger->getEngine() != nullptr;
-}
 
 bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     if (engine == nullptr) {
@@ -75,6 +67,7 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 0);
     engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
     engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, true); // enum class like
+    setDebugMode(false);
 
     // The script compiler will send any compiler messages to the callback
     auto r = engine->SetMessageCallback(asFUNCTION(messageCallback), this,
@@ -191,10 +184,6 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     PluginSystem::instance().angelApi()->installAPI(this);
 
-    _immediateContext = engine->CreateContext();
-    _immediateContext->SetExceptionCallback(
-        asMETHOD(ScriptMachine, exceptionCallback), this, asCALL_THISCALL);
-
     return true;
 }
 
@@ -277,6 +266,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // We will only initialize the global variables once we're
     // ready to execute, so disable the automatic initialization
     _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+    setDebugMode(isInDebug);
 
     asBuilder builder(_engine);
 
@@ -348,6 +338,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
     asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
+                              asCALL_THISCALL);
 
     // Execute the script until completion
     // The script may create co-routines. These will automatically
@@ -404,14 +396,21 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     _ctxPool.clear();
 
     // Detach debugger
+    Q_ASSERT(_debugger);
+    _debugger->setEngine(nullptr);
+
     if (isInDebug) {
-        Q_ASSERT(_debugger);
-        _debugger->setEngine(nullptr);
         _debugger->clearBreakPoint();
+        setDebugMode(false);
         emit onDebugFinished();
     }
-
     return r >= 0;
+}
+
+void ScriptMachine::abortScript() {
+    if (_debugger->getEngine()) {
+        _debugger->runDebugAction(asDebugger::ABORT);
+    }
 }
 
 void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
@@ -1614,17 +1613,141 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterExceptionRoutines(engine);
 }
 
-asIScriptEngine *ScriptMachine::engine() const { return _engine; }
-
-asIScriptContext *ScriptMachine::immediateContext() const {
-    return _immediateContext;
+bool ScriptMachine::isDebugMode() const {
+    return !_engine->GetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES);
 }
+
+void ScriptMachine::setDebugMode(bool isDbg) {
+    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, !isDbg);
+}
+
+asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 bool ScriptMachine::executeCode(const QString &code) {
-    return ExecuteString(
-               _engine, code.toUtf8(),
-               _engine->GetModule("Console", asGM_CREATE_IF_NOT_EXISTS),
-               _immediateContext) >= 0;
+    // We will only initialize the global variables once we're
+    // ready to execute, so disable the automatic initialization
+    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+    setDebugMode(false);
+
+    asIScriptModule *mod = _engine->GetModule("Console", asGM_ONLY_IF_EXISTS);
+    if (!mod) {
+        return false;
+    }
+
+    // first, preparse the code
+    QAsCodeParser parser(_engine);
+    auto ccode = code.toUtf8();
+
+    asIScriptFunction *func = nullptr;
+
+    auto ret = parser.parse(ccode);
+    // check whether there is any enum/class
+    if (ret.isEmpty()) {
+        // ok, wrap the codes
+        ccode.prepend("void main(){").append("}");
+        // start to compile
+        auto r = mod->CompileFunction(nullptr, ccode, -1, 0, &func);
+        if (r < 0) {
+            MessageInfo info;
+            info.message = tr("Script failed to build");
+            emit onOutput(MessageType::Error, info);
+            mod->Discard();
+            return false;
+        }
+    } else {
+        mod->AddScriptSection("Runner", ccode, ccode.size(), 0);
+
+        auto r = mod->Build();
+        if (r < 0) {
+            MessageInfo info;
+            info.message = tr("Script failed to build");
+            emit onOutput(MessageType::Error, info);
+            mod->Discard();
+            return false;
+        }
+
+        // Find the main function
+        func = mod->GetFunctionByDecl("void main()");
+        if (func == nullptr) {
+            // Try again with "int main()"
+            func = mod->GetFunctionByDecl("int main()");
+        }
+
+        if (func == nullptr) {
+            MessageInfo info;
+            info.message = tr("Cannot find 'int main()' or 'void main()'");
+            emit onOutput(MessageType::Error, info);
+            mod->Discard();
+            return false;
+        }
+    }
+
+    // Let the debugger hold an engine pointer that can be used by the
+    // callbacks
+    _debugger->setEngine(_engine);
+
+    // Set up a context to execute the script
+    // The context manager will request the context from the
+    // pool, which will automatically attach the debugger
+    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
+                              asCALL_THISCALL);
+
+    // Execute the script until completion
+    // The script may create co-routines. These will automatically
+    // be managed by the context manager
+    while (_ctxMgr->ExecuteScripts())
+        ;
+
+    // Check if the main script finished normally
+    int r = ctx->GetState();
+    if (r != asEXECUTION_FINISHED) {
+        if (r == asEXECUTION_EXCEPTION) {
+            MessageInfo info;
+            info.message = tr("The script failed with an exception") +
+                           QStringLiteral("\n") +
+                           QString::fromStdString(GetExceptionInfo(ctx, true));
+            emit onOutput(MessageType::Error, info);
+            r = -1;
+        } else if (r == asEXECUTION_ABORTED) {
+            MessageInfo info;
+            info.message = tr("The script was aborted");
+            emit onOutput(MessageType::Error, info);
+            r = -1;
+        } else {
+            auto e = QMetaEnum::fromType<asEContextState>();
+            MessageInfo info;
+            info.message = tr("The script terminated unexpectedly") +
+                           QStringLiteral(" (") + e.valueToKey(r) +
+                           QStringLiteral(")");
+            emit onOutput(MessageType::Error, info);
+            r = -1;
+        }
+    } else {
+        r = 0;
+    }
+
+    // Return the context after retrieving the return value
+    _ctxMgr->DoneWithContext(ctx);
+
+    // Before leaving, allow the engine to clean up remaining objects by
+    // discarding the module and doing a full garbage collection so that
+    // this can also be debugged if desired
+    mod->Discard();
+    _engine->GarbageCollect();
+
+    // Release all contexts that have been allocated
+    for (auto ctx : _ctxPool) {
+        ctx->Release();
+    }
+
+    _ctxPool.clear();
+
+    // Detach debugger
+    Q_ASSERT(_debugger);
+    _debugger->setEngine(nullptr);
+
+    return r >= 0;
 }

@@ -21,13 +21,9 @@
 
 #include <QApplication>
 #include <QColor>
-#include <QShortcut>
+#include <QKeyEvent>
 
-ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
-    auto shortCut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), this);
-    connect(shortCut, &QShortcut::activated, this,
-            &ScriptingConsole::clearConsole);
-}
+ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {}
 
 ScriptingConsole::~ScriptingConsole() {}
 
@@ -49,6 +45,8 @@ void ScriptingConsole::init() {
     _sp = new ScriptConsoleMachine(_getInputFn, this);
     connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
             &ScriptingConsole::clear);
+    connect(this, &ScriptingConsole::abortEvaluation, _sp,
+            &ScriptConsoleMachine::abortScript);
 
     connect(_sp, &ScriptConsoleMachine::onOutput, this,
             [=](ScriptConsoleMachine::MessageType type,
@@ -157,6 +155,14 @@ QString ScriptingConsole::getInput() {
     return instr;
 }
 
+void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
+    if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_L) {
+        clearConsole();
+    } else {
+        QConsoleWidget::keyPressEvent(e);
+    }
+}
+
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
 
@@ -167,7 +173,7 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
         if (!cursor.atBlockStart()) {
             commandPrompt = QStringLiteral("\n");
         }
-        if (_sp && _sp->isInDebugMode()) {
+        if (_sp && _sp->isDebugMode()) {
             commandPrompt += QStringLiteral("[dbg] > ");
         } else {
             commandPrompt += QStringLiteral("as > ");

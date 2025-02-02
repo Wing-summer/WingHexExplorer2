@@ -117,8 +117,11 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         }
     };
 
+    qApp->processEvents();
+
     switch (m_action) {
     case ABORT:
+        ctx->Abort();
         return;
     case PAUSE:
         break;

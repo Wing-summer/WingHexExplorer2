@@ -1841,7 +1841,7 @@ void QEditor::paintEvent(QPaintEvent *e) {
     if (!m_doc)
         return;
 
-    auto p = new QPainter(viewport());
+    QPainter p(viewport());
     const int yOffset = verticalOffset();
     const int xOffset = horizontalOffset();
 
@@ -1855,7 +1855,7 @@ void QEditor::paintEvent(QPaintEvent *e) {
     // qDebug() << r;
 
     // p.setClipping(false);
-    p->translate(-xOffset, -yOffset);
+    p.translate(-xOffset, -yOffset);
 
     QDocument::PaintContext ctx;
     ctx.xoffset = xOffset;
@@ -1890,30 +1890,29 @@ void QEditor::paintEvent(QPaintEvent *e) {
         ctx.extra << m_dragAndDrop.handle();
     }
 
-    p->save();
-    m_doc->draw(p, ctx);
-    p->restore();
+    p.save();
+    m_doc->draw(&p, ctx);
+    p.restore();
 
     if (m_curPlaceHolder >= 0 && m_curPlaceHolder < m_placeHolders.count()) {
         const PlaceHolder &ph = m_placeHolders.at(m_curPlaceHolder);
 
-        p->setPen(Qt::red);
-        p->drawConvexPolygon(ph.cursor.documentRegion());
+        p.setPen(Qt::red);
+        p.drawConvexPolygon(ph.cursor.documentRegion());
 
-        p->setPen(Qt::yellow);
+        p.setPen(Qt::yellow);
         for (const QDocumentCursor &m : ph.mirrors) {
             if (m.isValid())
-                p->drawConvexPolygon(m.documentRegion());
+                p.drawConvexPolygon(m.documentRegion());
         }
     }
 
     if (viewport()->height() > m_doc->height()) {
-        p->fillRect(0, m_doc->height(), viewport()->width(),
-                    viewport()->height() - m_doc->height(), palette().base());
+        p.fillRect(0, m_doc->height(), viewport()->width(),
+                   viewport()->height() - m_doc->height(), palette().base());
     }
 
-    p->end();
-    delete p;
+    p.end();
 }
 
 /*!
@@ -2252,7 +2251,7 @@ void QEditor::keyPressEvent(QKeyEvent *e) {
                 // remanence of matches
                 if (m_definition) {
                     m_definition->clearMatches(m_doc);
-                    viewport()->repaint(); // force repaint in case of crash
+                    viewport()->update();
                 }
 
                 bool hasPH = m_placeHolders.count() && m_curPlaceHolder != -1;
@@ -2610,7 +2609,7 @@ void QEditor::mouseDoubleClickEvent(QMouseEvent *e) {
 
             repaintCursor();
 
-            viewport()->repaint();
+            viewport()->update();
         } else {
             // qDebug("invalid cursor");
         }

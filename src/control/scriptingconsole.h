@@ -58,6 +58,9 @@ private:
 
     QString getInput();
 
+protected:
+    void keyPressEvent(QKeyEvent *e) override;
+
 private:
     ScriptConsoleMachine *_sp = nullptr;
     QTextStream _s;

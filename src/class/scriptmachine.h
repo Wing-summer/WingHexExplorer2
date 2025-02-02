@@ -87,11 +87,7 @@ public:
 
     bool isRunning() const;
 
-    bool isInDebugMode() const;
-
     asDebugger *debugger() const;
-
-    asIScriptContext *immediateContext() const;
 
     asIScriptEngine *engine() const;
 
@@ -100,9 +96,18 @@ public:
 
     static void registerEngineAddon(asIScriptEngine *engine);
 
+    // debug or release?
+    bool isDebugMode() const;
+    void setDebugMode(bool isDbg);
+
 public slots:
     virtual bool executeCode(const QString &code);
     virtual bool executeScript(const QString &script, bool isInDebug = false);
+
+    void abortScript();
+
+private:
+    bool execute(const QString &code, bool isInDebug = false);
 
 protected:
     virtual bool configureEngine(asIScriptEngine *engine);
@@ -164,8 +169,6 @@ private:
 
     QVector<asITypeInfo *> _rtypes;
     std::function<QString(void)> _getInputFn;
-
-    asIScriptContext *_immediateContext = nullptr;
 
     bool m_insteadFoundDisabled = false;
 };

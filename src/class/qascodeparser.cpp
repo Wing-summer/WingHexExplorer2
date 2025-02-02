@@ -21,22 +21,52 @@
 #include "AngelScript/sdk/angelscript/source/as_tokenizer.h"
 
 QAsCodeParser::QAsCodeParser(asCScriptEngine *engine) : engine(engine) {
+    Q_ASSERT(engine);
+    checkValidTypes = false;
+    isParsingAppInterface = false;
+}
+
+QAsCodeParser::QAsCodeParser(asIScriptEngine *engine) {
+    this->engine = dynamic_cast<asCScriptEngine *>(engine);
+    Q_ASSERT(engine);
     checkValidTypes = false;
     isParsingAppInterface = false;
 }
 
 QAsCodeParser::~QAsCodeParser() {}
 
-QAsCodeParser::SymbolTable QAsCodeParser::preParse(const QByteArray &codes) {
+QAsCodeParser::SymbolTable QAsCodeParser::parse(const QByteArray &codes) {
     Reset();
     code = codes;
     ParseScript(false);
-    return _symtable;
+
+    SymbolTable ret = _symtable;
+
+    if (!m_segs.isEmpty()) {
+        // only add function signature as symbol
+        // you can extend it with more features
+        // PRS are welcomed.
+        for (auto p = m_segs.constKeyValueBegin();
+             p != m_segs.constKeyValueEnd(); ++p) {
+            auto v = p->second;
+
+            Symbol fn;
+            fn.type = SymbolType::Function;
+            fn.name = v.name;
+            fn.nameInSrc = v.nameInSrc;
+            fn.content = v.args;
+            fn.ns = v.ns;
+            fn.typeStr = v.ret;
+            ret.insert(p->first, fn);
+        }
+    }
+
+    return ret;
 }
 
-QAsCodeParser::SymbolTable QAsCodeParser::parse(qsizetype offset,
-                                                const QByteArray &codes) {
-    preParse(codes);
+QAsCodeParser::SymbolTable QAsCodeParser::parseIntell(qsizetype offset,
+                                                      const QByteArray &codes) {
+    parse(codes);
     // then we will parse the symbols we want
 
     SymbolTable ret;

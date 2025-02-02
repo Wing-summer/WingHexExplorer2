@@ -246,6 +246,7 @@ WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
     RegisteredEvents evs;
     evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
     evs.setFlag(RegisteredEvent::ScriptPragma);
+    evs.setFlag(RegisteredEvent::ScriptPragmaInit);
     return evs;
 }
 
@@ -317,6 +318,8 @@ bool WingCStruct::eventOnScriptPragma(const QString &script,
 
     return false;
 }
+
+void WingCStruct::eventOnScriptPragmaInit() { resetEnv(); }
 
 QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
 WingCStruct::registeredScriptUnsafeFns() const {
