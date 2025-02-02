@@ -101,6 +101,9 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_dock->restoreState(set.scriptDockLayout());
     _savedLayout = set.scriptDockLayout();
 
+    connect(&LangService::instance(), &LangService::onScriptEditorTip, m_status,
+            [this](const QString &message) { m_status->showMessage(message); });
+
     this->setUpdatesEnabled(true);
 }
 

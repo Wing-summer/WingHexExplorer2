@@ -13,7 +13,7 @@ LangService &LangService::instance() {
     return ins;
 }
 
-void LangService::init(asIScriptEngine *engine) {
+void LangService::init(ScriptingConsole *console) {
     QFormatScheme *format = nullptr;
 
     switch (SkinManager::instance().currentTheme()) {
@@ -34,7 +34,25 @@ void LangService::init(asIScriptEngine *engine) {
     m_language = new QLanguageFactory(format, this);
     m_language->addDefinitionPath(QStringLiteral(":/qcodeedit"));
 
+    auto engine = console->machine()->engine();
+
     _completion = new AsCompletion(engine, this);
+    connect(_completion, &AsCompletion::onFunctionTip, this,
+            [this, console](AsCompletion *cp, const QString &fn) {
+                QString header;
+                if (!fn.isEmpty()) {
+                    header = QStringLiteral("<font color=\"gold\">") +
+                             tr("AutoComplete:") + QStringLiteral("</font>");
+                }
+                auto editor = cp->editor();
+                if (editor == console) {
+                    emit onConsoleTip(header + QStringLiteral("<b>") + fn +
+                                      QStringLiteral("</b>"));
+                } else {
+                    emit onScriptEditorTip(header + QStringLiteral("<b>") + fn +
+                                           QStringLiteral("</b>"));
+                }
+            });
     m_language->addCompletionEngine(_completion);
 
     initAdditionalFormatScheme();

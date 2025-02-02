@@ -222,7 +222,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             cut();
         else {
             // cursor must be in edit zone
-            if (textCursor <= inpos_)
+            if (textCursor.selectionStart() <= inpos_)
                 QApplication::beep();
             else
                 QEditor::keyPressEvent(e);
@@ -264,7 +264,7 @@ bool QConsoleWidget::isSelectionInEditZone() const {
     auto selectionStart = textCursor.selectionStart();
     auto selectionEnd = textCursor.selectionEnd();
 
-    return selectionStart > inpos_ && selectionEnd >= inpos_;
+    return selectionStart >= inpos_ && selectionEnd > inpos_;
 }
 
 bool QConsoleWidget::isCursorInEditZone() const { return cursor() >= inpos_; }

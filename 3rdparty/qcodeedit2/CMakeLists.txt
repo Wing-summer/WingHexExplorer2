@@ -29,8 +29,6 @@ set(DOCUMENT_SRC
     lib/document/qdocument.cpp)
 
 set(WIDGETS_SRC
-    lib/widgets/qcalltip.cpp
-    lib/widgets/qcalltip.h
     lib/widgets/qfoldpanel.cpp
     lib/widgets/qfoldpanel.h
     lib/widgets/qlinechangepanel.cpp

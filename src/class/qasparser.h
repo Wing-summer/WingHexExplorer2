@@ -92,7 +92,6 @@ private:
 
 private:
     asIScriptEngine *_engine;
-    // QScopedPointer<asCScriptCode> m_code;
     QList<QCodeNode *> _nodes;
 
     QHash<QString, QCodeNode *> _buffer;

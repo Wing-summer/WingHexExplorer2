@@ -1938,6 +1938,11 @@ void QEditor::timerEvent(QTimerEvent *e) {
         // startDrag();
     } else if (id == m_click.timerId()) {
         m_click.stop();
+    } else if (id == m_inputto.timerId()) {
+        m_inputto.stop();
+        if (!m_blink.isActive()) {
+            emit inputTimeOuted();
+        }
     }
 }
 
@@ -2850,7 +2855,7 @@ void QEditor::focusInEvent(QFocusEvent *e) {
 void QEditor::focusOutEvent(QFocusEvent *e) {
     setFlag(CursorOn, false);
     m_blink.stop();
-
+    m_inputto.start(3000, this);
     QAbstractScrollArea::focusOutEvent(e);
 }
 
@@ -3439,7 +3444,8 @@ bool QEditor::processCursor(QDocumentCursor &c, QKeyEvent *e, bool &b) {
                     }
                 } else {
                     if (isPairedCloseChar(text)) {
-                        if (c.previousChar() == getPairedBeginChar(text)) {
+                        if (c.previousChar() == getPairedBeginChar(text) &&
+                            c.nextChar() == text) {
                             c.movePosition(1);
                             break;
                         }

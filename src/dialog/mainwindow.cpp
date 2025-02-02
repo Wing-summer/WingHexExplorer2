@@ -38,6 +38,7 @@
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "class/wingupdater.h"
+#include "control/qcodecompletionwidget.h"
 #include "control/toast.h"
 #include "driverselectordialog.h"
 #include "encodingdialog.h"
@@ -231,8 +232,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         if (splash)
             splash->setInfoText(tr("SetupScriptService"));
         auto &langins = LangService::instance();
-        langins.init(m_scriptConsole->machine()->engine());
+        langins.init(m_scriptConsole);
         langins.applyLanguageSerivce(m_scriptConsole);
+        connect(&langins, &LangService::onConsoleTip, this,
+                &MainWindow::showStatus);
 
         m_scriptConsole->initOutput();
         m_scriptConsole->machine()->setInsteadFoundDisabled(true);
@@ -931,6 +934,17 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
     m_scriptConsole = new ScriptingConsole(this);
+
+    connect(m_scriptConsole, &ScriptingConsole::consoleCommand, this,
+            [this] { showStatus({}); });
+    connect(m_scriptConsole, &ScriptingConsole::inputTimeOuted, this, [this] {
+        auto e =
+            qobject_cast<AsCompletion *>(m_scriptConsole->completionEngine());
+        if (e && e->codeCompletionWidget()->isVisible()) {
+            return;
+        }
+        showStatus({});
+    });
 
     auto dw = buildDockWidget(dock, QStringLiteral("ScriptConsole"),
                               tr("ScriptConsole"), m_scriptConsole);

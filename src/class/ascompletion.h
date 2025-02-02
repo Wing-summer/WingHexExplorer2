@@ -40,6 +40,9 @@ public:
 
     QCodeCompletionWidget *codeCompletionWidget() const;
 
+signals:
+    void onFunctionTip(AsCompletion *cp, const QString &content);
+
 protected:
     virtual void complete(const QDocumentCursor &c,
                           const QString &trigger) override;

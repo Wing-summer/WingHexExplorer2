@@ -68,14 +68,15 @@ signals:
     void completionTriggered(const QString &s);
 
 public slots:
-    void complete();
+    void complete(const QString &trigger = {});
+    // make it public
+    virtual void complete(const QDocumentCursor &c, const QString &trigger);
+
     void textEdited(QKeyEvent *e);
 
 protected:
     virtual void run();
     virtual bool eventFilter(QObject *o, QEvent *e);
-
-    virtual void complete(const QDocumentCursor &c, const QString &trigger);
 
 private:
     void triggerWordLenComplete();

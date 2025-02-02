@@ -2,19 +2,18 @@
 #define LANGSERVICE_H
 
 #include "class/ascompletion.h"
+#include "control/scriptingconsole.h"
 #include "qlanguagefactory.h"
-
-#include "angelscript.h"
 
 #include <QObject>
 
-class LangService : QObject {
+class LangService : public QObject {
     Q_OBJECT
 
 public:
     static LangService &instance();
 
-    void init(asIScriptEngine *engine);
+    void init(ScriptingConsole *console);
 
     QLanguageFactory *languageFactory() const;
 
@@ -25,6 +24,10 @@ public:
     QHash<QString, QFormatScheme *> formatSchemes() const;
 
     const QString defaultSchemeName() const;
+
+signals:
+    void onConsoleTip(const QString &tip);
+    void onScriptEditorTip(const QString &tip);
 
 private:
     LangService();

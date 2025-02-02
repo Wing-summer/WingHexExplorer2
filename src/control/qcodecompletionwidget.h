@@ -80,6 +80,9 @@ public:
 
     bool isCompleting() const;
 
+    QDocumentCursor cursor() const;
+    void setCursor(const QDocumentCursor &newCur);
+
 public slots:
     void popup();
     void clear();
@@ -104,6 +107,7 @@ private:
     QCodeCompletionModel *pModel;
     QPointer<QObject> pEditor;
     QList<QCodeNode *> m_temps;
+    QDocumentCursor _cur;
     bool _completing = false;
 };
 

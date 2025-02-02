@@ -18,7 +18,6 @@
 #include "ascompletion.h"
 
 #include "qasparser.h"
-#include "qcalltip.h"
 #include "qdocumentcursor.h"
 #include "qdocumentline.h"
 
@@ -33,8 +32,9 @@
 #include "control/qcodecompletionwidget.h"
 
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, DOT_TRIGGER, ("."))
-Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, ("::"))
+Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, DBL_COLON_TRIGGER, ("::"))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
+Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
 
 AsCompletion::AsCompletion(asIScriptEngine *engine, QObject *p)
     : QCodeCompletionEngine(p), parser(engine), _engine(engine),
@@ -42,10 +42,12 @@ AsCompletion::AsCompletion(asIScriptEngine *engine, QObject *p)
     Q_ASSERT(engine);
 
     addTrigger(*DOT_TRIGGER);
-    addTrigger(*SEMI_COLON_TRIGGER);
+    addTrigger(*DBL_COLON_TRIGGER);
 
     // unleash the power of call tips
     addTrigger(*LEFT_PARE_TRIGGER);
+    // clear the tips
+    addTrigger(*SEMI_COLON_TRIGGER);
 
     setTrigWordLen(3);
 }
@@ -57,6 +59,9 @@ QCodeCompletionEngine *AsCompletion::clone() {
 
     for (auto &t : triggers())
         e->addTrigger(t);
+
+    connect(e, &AsCompletion::onFunctionTip, this,
+            &AsCompletion::onFunctionTip);
 
     emit cloned(e);
 
@@ -77,6 +82,12 @@ QStringList AsCompletion::extensions() const {
 void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     auto txt = c.line().text();
     if (txt.isEmpty()) {
+        emit onFunctionTip(this, {});
+        return;
+    }
+
+    if (trigger == *SEMI_COLON_TRIGGER) {
+        emit onFunctionTip(this, {});
         return;
     }
 
@@ -97,8 +108,14 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
 
     auto code = txt.mid(off, c.columnNumber() - off).toUtf8();
 
-    auto p = code.data();
     auto len = code.length();
+    if (len < trigWordLen()) {
+        emit onFunctionTip(this, {});
+        pPopup->hide();
+        return;
+    }
+
+    auto p = code.data();
     auto end = p + len;
 
     struct Token {
@@ -113,6 +130,11 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     for (; p < end;) {
         asUINT tokenLen = 0;
         auto tt = _engine->ParseToken(p, len, &tokenLen);
+        if (tt == asTC_WHITESPACE) {
+            p += tokenLen;
+            pos += tokenLen;
+            continue;
+        }
         Token token;
         token.pos = pos;
         token.type = tt;
@@ -122,143 +144,121 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
         pos += tokenLen;
     }
 
-    auto r =
-        std::find_if(tokens.rbegin(), tokens.rend(), [](const Token &token) {
-            return token.type != asTC_WHITESPACE;
-        });
-    if (r == tokens.rend()) {
-        return;
-    }
+    auto getNamespace = [](const QVector<Token> &tokens) -> QByteArrayList {
+        auto rbegin = tokens.rbegin();
+        auto rend = tokens.rend();
+
+        QByteArrayList nss;
+        bool semiFlag = true;
+        auto p = rbegin;
+        for (; p != rend; ++p) {
+            if (semiFlag) {
+                if (p->type != asTC_IDENTIFIER) {
+                    break;
+                } else {
+                    nss.prepend(p->content);
+                    semiFlag = false;
+                }
+            } else {
+                if (p->content != *DBL_COLON_TRIGGER) {
+                    break;
+                }
+                semiFlag = true;
+            }
+        }
+        return nss;
+    };
 
     QByteArray fn;
     QList<QCodeNode *> nodes;
 
-    QCodeCompletionWidget::Filter filter =
-        QCodeCompletionWidget::FilterFlag::KeepAll;
-    auto &_headerNodes = parser.headerNodes();
+    QFlags<QCodeCompletionWidget::FilterFlag> filter(
+        QCodeCompletionWidget::FilterFlag::Public |
+        QCodeCompletionWidget::FilterFlag::KeepAllFunctions |
+        QCodeCompletionWidget::FilterFlag::KeepAllSub);
 
-    if (trigger.isEmpty() && trigWordLen() <= r->content.length()) {
-        auto eb = tokens.back();
-        if (eb.type == asTC_KEYWORD) {
+    if (tokens.isEmpty()) {
+        pPopup->hide();
+        return;
+    }
+
+    QString prefix;
+    auto etoken = tokens.back();
+
+    // if trigger is empty, it's making editing
+    if (trigger.isEmpty()) {
+        // it can not be any trigger, so take the last as prefix
+        prefix = etoken.content;
+        tokens.removeLast();
+        if (tokens.isEmpty()) {
+            applyEmptyNsNode(nodes);
+        } else {
+            etoken = tokens.back(); // checking later
+        }
+    }
+
+    if (nodes.isEmpty()) {
+        if (etoken.type == asTC_KEYWORD) {
             // only support these
-            if (eb.content == *SEMI_COLON_TRIGGER) {
-                complete(c, *SEMI_COLON_TRIGGER);
-            } else if (eb.content == *DOT_TRIGGER) {
-                complete(c, *DOT_TRIGGER);
+            auto cur = c;
+            cur.setColumnNumber(off + etoken.pos);
+            if (etoken.content == *DBL_COLON_TRIGGER) {
+                complete(cur, *DBL_COLON_TRIGGER);
+                pPopup->setCursor(c);
+                pPopup->setPrefix(prefix);
+                return;
+            } else if (etoken.content == *DOT_TRIGGER) {
+                complete(cur, *DOT_TRIGGER);
+                pPopup->setCursor(c);
+                pPopup->setPrefix(prefix);
+                return;
             } else {
-                pPopup->hide();
-            }
-            return;
-        } else if (eb.type == asTC_IDENTIFIER) {
-            fn = eb.content;
-
-            // completion for a.b.c or a::b.c or a::b::c.d or ::a::b.c
-            // first validate
-            auto rbegin = tokens.rbegin();
-            auto rend = tokens.rend();
-
-            rbegin++;
-            if (rbegin == rend) {
                 applyEmptyNsNode(nodes);
-            } else {
-                if (rbegin->content == SEMI_COLON_TRIGGER) {
-                    QByteArrayList nss;
-                    bool semiFlag = true;
-                    auto p = rbegin;
-                    for (; p != rend; ++p) {
-                        if (semiFlag) {
-                            if (p->type != asTC_IDENTIFIER) {
-                                break;
-                            } else {
-                                nss.prepend(p->content);
-                                semiFlag = false;
-                            }
-                        } else {
-                            if (p->content != SEMI_COLON_TRIGGER) {
-                                break;
-                            }
-                            semiFlag = true;
-                        }
-                    }
+            }
+        } else if (etoken.type != asTC_IDENTIFIER) {
+            pPopup->hide();
+            return;
+        }
 
-                    nodes = lookupNamespace(nss);
-                    if (nodes.isEmpty()) {
+        auto &_headerNodes = parser.headerNodes();
+
+        if (etoken.content.length() >= trigWordLen()) {
+            // completion for a.b.c or a::b.c or a::b::c.d or ::a::b.c
+            if (trigger == *DBL_COLON_TRIGGER) {
+                auto ns = getNamespace(tokens);
+                auto idx = tokens.length() - ns.length() * 2;
+                if (idx >= 0) {
+                    if (tokens.at(idx).content == *DOT_TRIGGER) {
+                        pPopup->hide();
                         return;
                     }
-                } else if (rbegin->content == DOT_TRIGGER) {
-                    // TODO only PR
-                } else {
+                }
+                nodes = lookupNamespace(ns);
+                if (nodes.isEmpty()) {
+                    return;
+                }
+            } else if (trigger == *LEFT_PARE_TRIGGER) {
+                // the first is function name, an identifier
+                fn = etoken.content;
+                tokens.removeLast();
+                if (!tokens.isEmpty()) {
+                    if (tokens.back().content == *DBL_COLON_TRIGGER) {
+                        tokens.removeLast();
+                    }
+                }
+                auto ns = getNamespace(tokens);
+                auto idx = tokens.length() - ns.length() * 2 + 1;
+                if (idx >= 0 && idx < tokens.length()) {
+                    if (tokens.at(idx).content == *DOT_TRIGGER) {
+                        pPopup->hide();
+                        return;
+                    }
+                }
+                nodes = lookupNamespace(ns);
+                if (nodes.isEmpty()) {
                     applyEmptyNsNode(nodes);
                 }
-            }
-        } else {
-            return;
-        }
-
-        // pPopup->setTemporaryNodes(temp);
-        pPopup->setPrefix(fn);
-        pPopup->setFilter(filter);
-        pPopup->setCompletions(nodes);
-        pPopup->popup();
-    } else {
-        if (trigger == *SEMI_COLON_TRIGGER) {
-            auto rbegin = tokens.rbegin();
-            auto rend = tokens.rend();
-
-            QByteArrayList nss;
-            bool semiFlag = true;
-            auto p = rbegin;
-            for (; p != rend; ++p) {
-                if (semiFlag) {
-                    if (p->type != asTC_IDENTIFIER) {
-                        break;
-                    } else {
-                        nss.prepend(p->content);
-                        semiFlag = false;
-                    }
-                } else {
-                    if (p->content != *SEMI_COLON_TRIGGER) {
-                        break;
-                    }
-                    semiFlag = true;
-                }
-            }
-
-            nodes = lookupNamespace(nss);
-            if (nodes.isEmpty()) {
-                return;
-            }
-        } else if (trigger == *LEFT_PARE_TRIGGER) {
-            if (r != tokens.rend()) {
-                auto pr = std::next(r);
-                if (pr != tokens.rend()) {
-                    if (pr->content == *SEMI_COLON_TRIGGER) {
-                        if (pr != tokens.rend()) {
-                            auto prr = std::next(pr);
-                            auto ns = prr->content;
-                            if (prr->type == asTC_IDENTIFIER) {
-                                for (auto &n : _headerNodes) {
-                                    auto name = n->qualifiedName();
-                                    if (name == ns) {
-                                        nodes << n;
-                                        break;
-                                    }
-                                }
-                            } else {
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (nodes.count()) {
-            if (trigger == *LEFT_PARE_TRIGGER) {
-                QStringList tips;
-
-                // qDebug("fn %s", fn.constData());
-
+                QString tip;
                 for (auto &n : nodes) {
                     for (auto &f : n->children()) {
                         if (f->type() != QCodeNode::Function ||
@@ -266,54 +266,33 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
                             continue;
                         }
 
-                        auto tip =
-                            QString::fromUtf8(f->role(QCodeNode::Arguments))
-                                .prepend('(')
-                                .append(')');
-
-                        if (!tips.contains(tip))
-                            tips << tip;
+                        tip = QString::fromUtf8(f->role(QCodeNode::Return)) +
+                              QLatin1Char(' ') +
+                              QString::fromUtf8(f->role(QCodeNode::Name)) +
+                              QString::fromUtf8(f->role(QCodeNode::Arguments))
+                                  .prepend('(')
+                                  .append(')');
+                        break;
+                    }
+                    if (!tip.isEmpty()) {
+                        break;
                     }
                 }
 
-                if (!tips.isEmpty()) {
-                    QRect r = editor()->cursorRect();
-                    QDocumentCursor cursor = editor()->cursor();
-                    QDocumentLine line = cursor.line();
-
-                    int hx = editor()->horizontalOffset(),
-                        cx = line.cursorToX(cursor.columnNumber());
-
-                    auto ct = new QCallTip(editor()->viewport());
-                    ct->move(cx - hx, r.y() + r.height());
-                    ct->setTips(tips);
-                    ct->show();
-                    ct->setFocus();
-
-#ifdef TRACE_COMPLETION
-                    qDebug("parsing + scoping + search + pre-display : elapsed "
-                           "%i ms",
-                           time.elapsed());
-#endif
-                }
-            } else {
-                // pPopup->setTemporaryNodes(temp);
-                pPopup->setPrefix({});
-                pPopup->setFilter(QCodeCompletionWidget::Filter(filter));
-                pPopup->setCompletions(nodes);
-
-#ifdef TRACE_COMPLETION
-                qDebug(
-                    "parsing + scoping + search + pre-display : elapsed %i ms",
-                    time.elapsed());
-#endif
-
-                pPopup->popup();
+                emit onFunctionTip(this, tip);
             }
-        } else {
-            // qDeleteAll(temp);
-            // qDebug("completion failed");
         }
+    }
+
+    auto cur = c;
+    cur.movePosition(trigger.length());
+    pPopup->setCursor(cur);
+    pPopup->setPrefix(prefix);
+    pPopup->setFilter(filter);
+    pPopup->setCompletions(nodes);
+
+    if (!pPopup->isCompleting()) {
+        pPopup->popup();
     }
 }
 

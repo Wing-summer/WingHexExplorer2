@@ -31,8 +31,10 @@
 #include <QRegularExpression>
 #include <QScrollBar>
 
+constexpr auto PADDING = 3;
+
 QCodeCompletionWidget::QCodeCompletionWidget(QEditor *p)
-    : QListView(nullptr), offset(0) {
+    : QListView(nullptr), offset(PADDING) {
     // setWindowFlags(Qt::FramelessWindowHint | Qt::SubWindow);
     setBatchSize(10);
     setMovement(Static);
@@ -111,7 +113,13 @@ void QCodeCompletionWidget::adjustGeometry() {
             setGeometry(x, y + lrect.height() - h, w, h);
     }
 
-    offset = 0;
+    offset = PADDING;
+}
+
+QDocumentCursor QCodeCompletionWidget::cursor() const { return _cur; }
+
+void QCodeCompletionWidget::setCursor(const QDocumentCursor &newCur) {
+    _cur = newCur;
 }
 
 QEditor *QCodeCompletionWidget::editor() const {
@@ -123,7 +131,6 @@ void QCodeCompletionWidget::setEditor(QEditor *e) {
     if (e) {
         setParent(e->viewport());
     }
-    // QObject::setParent(pEditor);
 }
 
 bool QCodeCompletionWidget::hasEntries() const { return pModel->rowCount(); }
@@ -219,8 +226,15 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
     static QRegularExpression re("(\\bconst\\s*)?(=\\s*0)?$");
     txt.remove(re);
 
-    if (prefix.length() && txt.startsWith(prefix))
-        txt.remove(0, prefix.length());
+    if (prefix.length() &&
+        prefix.compare(txt.left(prefix.length()), Qt::CaseInsensitive) == 0) {
+        if (_cur.isValid()) {
+            _cur.movePosition(prefix.length(),
+                              QDocumentCursor::PreviousCharacter,
+                              QDocumentCursor::KeepAnchor);
+            _cur.removeSelectedText();
+        }
+    }
 
     e->write(txt);
 
@@ -228,6 +242,9 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
         auto c = e->cursor();
         c.movePosition(1, QDocumentCursor::PreviousCharacter);
         e->setCursor(c);
+        auto cc = c;
+        cc.movePosition(1, QDocumentCursor::PreviousCharacter);
+        e->completionEngine()->complete(cc, QStringLiteral("("));
     }
 
     e->setFocus();
@@ -330,7 +347,7 @@ void QCodeCompletionWidget::keyPressEvent(QKeyEvent *e) {
         if (prefix.length()) {
             prefix.chop(1);
             pModel->setPrefix(prefix);
-            offset = -1;
+            offset = -1 + PADDING;
             changed();
         } else {
             hide();
@@ -353,7 +370,7 @@ void QCodeCompletionWidget::keyPressEvent(QKeyEvent *e) {
 
         if (text.length() && text.at(0).isPrint() && pModel->rowCount()) {
             pModel->setPrefix(prefix + text);
-            offset = text.length();
+            offset = text.length() + PADDING;
             changed();
         } else {
             hide();
@@ -384,11 +401,11 @@ void QCodeCompletionModel::clear() {
 }
 
 QString QCodeCompletionModel::prefix() const {
-    return QString::fromLocal8Bit(m_prefix);
+    return QString::fromUtf8(m_prefix);
 }
 
 void QCodeCompletionModel::setPrefix(const QString &prefix) {
-    m_prefix = prefix.toLocal8Bit();
+    m_prefix = prefix.toUtf8();
     emit prefixChanged(prefix);
     update();
 }
@@ -486,9 +503,9 @@ bool QCodeCompletionModel::match(QCodeNode *n,
     QByteArray bcxt = n->parent()->qualifiedName(),
                bnn = n->role(QCodeNode::Name);
 
-    if (!n || (prefix.length() && (!bnn.startsWith(prefix)))) {
-        // qDebug("prefix mismatch : %s not found in %s", qPrintable(prefix),
-        // bnn.constData());
+    if (!n ||
+        (!prefix.isEmpty() && (prefix.compare(bnn.left(prefix.length()),
+                                              Qt::CaseInsensitive) != 0))) {
         return false;
     }
 
@@ -503,17 +520,6 @@ bool QCodeCompletionModel::match(QCodeNode *n,
     const char *ctxt = bcxt.constData(), *name = bnn.constData();
 
     int cxt_off = qMax(0, bcxt.lastIndexOf("::"));
-
-    /*
-    qDebug("filtering %s (in %s) according to %s (v:%i, s:%i, q:%i)",
-                    name,
-                    ctxt,
-                    qPrintable(QString::number(filter, 2)),
-                    visibility,
-                    specifiers,
-                    qualifiers
-                    );
-    */
 
     if ((((type == QCodeNode::Class) || (type == QCodeNode::Typedef)) &&
          !(filter & QCodeCompletionWidget::KeepSubTypes)) ||
@@ -546,12 +552,8 @@ bool QCodeCompletionModel::match(QCodeNode *n,
            !(filter & QCodeCompletionWidget::KeepCtor)) ||
           ((*name == '~') && !qstrcmp(name + 1, ctxt) &&
            !(filter & QCodeCompletionWidget::KeepDtor))))) {
-        // qDebug("node %s mismatched display conditions [Ox%x]", name,
-        // int(filter));
         return false;
     }
-
-    // qDebug("node %s matched display conditions", name);
 
     return true;
 }

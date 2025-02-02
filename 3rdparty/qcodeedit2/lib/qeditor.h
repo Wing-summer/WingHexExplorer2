@@ -307,6 +307,8 @@ signals:
 
     void zoomed();
 
+    void inputTimeOuted();
+
 public slots:
     void checkClipboard();
     void reconnectWatcher();
@@ -443,7 +445,7 @@ protected:
     bool m_selection;
     QRect m_crect, m_margins;
     QPoint m_clickPoint, m_dragPoint;
-    QBasicTimer m_blink, m_scroll, m_click, m_drag;
+    QBasicTimer m_blink, m_scroll, m_click, m_drag, m_inputto;
 
     QFont _docfont;
     qreal _scaleRate = 1.0;

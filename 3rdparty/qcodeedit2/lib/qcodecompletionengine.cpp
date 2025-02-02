@@ -123,8 +123,8 @@ void QCodeCompletionEngine::run() {
 /*!
         \brief Forced completion trigger
 */
-void QCodeCompletionEngine::complete() {
-    complete(editor()->cursor(), QString());
+void QCodeCompletionEngine::complete(const QString &trigger) {
+    complete(editor()->cursor(), trigger);
 }
 
 /*!
