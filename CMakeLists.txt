@@ -270,7 +270,9 @@ set(CLASS_SRC
     src/class/showinshell.h
     src/class/showinshell.cpp
     src/class/dockcomponentsfactory.h
-    src/class/dockcomponentsfactory.cpp)
+    src/class/dockcomponentsfactory.cpp
+    src/class/diffutil.h
+    src/class/diffutil.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

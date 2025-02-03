@@ -12,25 +12,9 @@
 **
 ** You should have received a copy of the GNU Affero General Public License
 ** along with this program. If not, see <https://www.gnu.org/licenses/>.
-**
-** The original License is MIT from Dax89/QHexView. I have modified a lot so I
-** decide to change the Open Source License. You can use the original library
-** under MIT. Thanks for Dax89's efforts.
 ** =============================================================================
 */
 
-#ifndef INSERTCOMMAND_H
-#define INSERTCOMMAND_H
+#include "diffutil.h"
 
-#include "hexcommand.h"
-
-class InsertCommand : public HexCommand {
-public:
-    InsertCommand(QHexDocument *doc, QHexCursor *cursor, qsizetype offset,
-                  const QByteArray &data, int nibbleindex,
-                  QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
-};
-
-#endif // INSERTCOMMAND_H
+DiffUtil::DiffUtil() {}

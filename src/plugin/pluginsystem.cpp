@@ -3050,8 +3050,6 @@ void PluginSystem::loadAllPlugin() {
         auto meta = parsePluginMetadata(doc.object());
         retranslateMetadata(_angelplg, meta);
         loadPlugin(_angelplg, meta, std::nullopt);
-
-        emit scriptBaseInited();
     }
 
     Logger::newLine();

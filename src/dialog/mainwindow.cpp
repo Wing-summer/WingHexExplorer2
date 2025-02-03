@@ -220,14 +220,23 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 if (splash)
                     splash->setInfoText(tr("LoadingPlg:") + plgName);
             });
-    connect(&plg, &PluginSystem::scriptBaseInited, this, [=, &plg]() {
+
+    plg.setMainWindow(this);
+    plg.loadAllPlugin();
+
+    // Don't setup it too early, because the plugin can register script
+    // functions. Code completions of them will be not worked out.
+    if (set.scriptEnabled()) {
         // At this time, AngelScript service plugin has started
         if (splash)
             splash->setInfoText(tr("SetupConsole"));
+
         m_scriptConsole->init();
         if (splash)
             splash->setInfoText(tr("SetupScriptManager"));
         ScriptManager::instance().attach(m_scriptConsole);
+
+        plg.angelApi()->setBindingConsole(m_scriptConsole);
 
         if (splash)
             splash->setInfoText(tr("SetupScriptService"));
@@ -240,20 +249,15 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_scriptConsole->initOutput();
         m_scriptConsole->machine()->setInsteadFoundDisabled(true);
 
-        plg.angelApi()->setBindingConsole(m_scriptConsole);
-    });
+        if (splash)
+            splash->setInfoText(tr("SetupScriptEditor"));
+        m_scriptDialog = new ScriptingDialog(this);
+        m_scriptDialog->initConsole();
 
-    plg.setMainWindow(this);
-    plg.loadAllPlugin();
-
-    if (splash)
-        splash->setInfoText(tr("SetupScriptEditor"));
-    m_scriptDialog = new ScriptingDialog(this);
-    m_scriptDialog->initConsole();
-
-    // load the model
-    Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
-    m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
+        // load the model
+        Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
+        m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
+    }
 
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
