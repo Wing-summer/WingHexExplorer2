@@ -87,6 +87,8 @@ private:
 private:
     MetaType getqsizetypeMetaType() const;
 
+    QString getqsizeTypeAsString() const;
+
     QMetaType::Type correctTypeSign(QMetaType::Type type, bool forceUnsigned);
 
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
@@ -123,8 +125,6 @@ private:
 
 private:
     CTypeParser _parser;
-
-    asIScriptEngine *_engine;
 
     QHash<WingHex::SettingPage *, bool> _setpgs;
     QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;

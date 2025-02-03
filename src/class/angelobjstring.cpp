@@ -80,6 +80,8 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
     QString str;
     QTextStream s(&str);
 
+    auto engine = dic->GetEngine();
+
     s << " [";
     asUINT n = 0;
     for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
@@ -96,8 +98,7 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
         // might not be the correct instance).
         asIScriptContext *ctx = asGetActiveContext();
 
-        s << dbg->toString(const_cast<void *>(val), typeId,
-                           ctx ? ctx->GetEngine() : 0);
+        s << dbg->toString(const_cast<void *>(val), typeId, engine);
 
         if (n < dic->GetSize() - 1)
             s << ", ";

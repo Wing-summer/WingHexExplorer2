@@ -80,13 +80,14 @@ public:
 
     const QList<RecentInfo> &saveRecent() const;
 
+    static QString getDisplayFileName(const RecentInfo &info);
+    static QString getDisplayTooltip(const RecentInfo &info, bool fileNameOnly);
+
 signals:
     void triggered(const RecentFileManager::RecentInfo &rinfo);
 
 private:
     bool existsPath(const RecentInfo &info);
-    QString getDisplayFileName(const RecentInfo &info);
-    QString getDisplayTooltip(const RecentInfo &info);
 
 private:
     QMenu *m_menu;

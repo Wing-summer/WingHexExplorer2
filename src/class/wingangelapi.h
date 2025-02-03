@@ -69,7 +69,6 @@ public:
     void installAPI(ScriptMachine *machine);
     void installBasicTypes(asIScriptEngine *engine);
 
-    ScriptingConsole *bindingConsole() const;
     void setBindingConsole(ScriptingConsole *console);
 
     static QString qvariantCastASString(const QMetaType::Type &id);

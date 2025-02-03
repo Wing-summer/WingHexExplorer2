@@ -385,7 +385,6 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // Before leaving, allow the engine to clean up remaining objects by
     // discarding the module and doing a full garbage collection so that
     // this can also be debugged if desired
-    mod->Discard();
     _engine->GarbageCollect();
 
     // Release all contexts that have been allocated

@@ -2080,15 +2080,9 @@ WingAngelAPI::retriveAsDictionary(const WingHex::SenderInfo &sender,
         return {};
     }
 
-    // a hacking class
-    class ScriptDictionary : public CScriptDictionary {
-    public:
-        asIScriptEngine *getEngine() const { return engine; }
-    };
-
     QHash<QString, QPair<QString, const void *>> ret;
-    auto dictionary = reinterpret_cast<ScriptDictionary *>(dic);
-    auto engine = dictionary->getEngine();
+    auto dictionary = reinterpret_cast<CScriptDictionary *>(dic);
+    auto engine = dictionary->GetEngine();
 
     for (auto &it : *dictionary) {
         auto info = engine->GetTypeInfoById(it.GetTypeId());
@@ -2452,8 +2446,6 @@ bool WingAngelAPI::_DataVisual_updateTextTable(int stringID,
         return false;
     }
 }
-
-ScriptingConsole *WingAngelAPI::bindingConsole() const { return _console; }
 
 void WingAngelAPI::setBindingConsole(ScriptingConsole *console) {
     _console = console;

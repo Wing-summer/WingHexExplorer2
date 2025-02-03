@@ -154,6 +154,8 @@ public:
     // Get an array of all keys
     CScriptArray *GetKeys() const;
 
+    asIScriptEngine *GetEngine() const;
+
     // STL style iterator
     class CIterator {
     public:

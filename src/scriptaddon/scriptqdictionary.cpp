@@ -429,6 +429,8 @@ CScriptArray *CScriptDictionary::GetKeys() const {
     return array;
 }
 
+asIScriptEngine *CScriptDictionary::GetEngine() const { return engine; }
+
 //--------------------------------------------------------------------------
 // Generic wrappers
 

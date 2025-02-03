@@ -17,8 +17,8 @@
 
 #include "recentfilemanager.h"
 #include "control/toast.h"
+#include "dialog/historydeldialog.h"
 #include "utilities.h"
-#include "winginputdialog.h"
 
 #include <QFile>
 #include <QMenu>
@@ -50,21 +50,26 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
                          tr("NoHistoryDel"));
             return;
         }
-        QStringList binfos;
-        for (auto &info : m_recents) {
-            binfos.append(getDisplayFileName(info));
-        }
-        bool ok;
-        auto ret = WingInputDialog::getItem(m_parent, tr("PleaseChoose"),
-                                            tr("Select to remove:"), binfos, 0,
-                                            false, &ok);
-        if (ok) {
-            auto ind = binfos.indexOf(ret);
-            Q_ASSERT(ind >= 0);
-            m_recents.removeAt(ind);
-            auto action = hitems.takeAt(ind);
-            m_menu->removeAction(action);
-            action->deleteLater();
+
+        HistoryDelDialog hisdlg(m_recents, _fileNameOnly);
+        if (hisdlg.exec()) {
+            auto idxs = hisdlg.getResult();
+
+            if (idxs.isEmpty()) {
+                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                             tr("NoHistoryDel"));
+            } else {
+                // indices are already ordered
+                for (auto pidx = idxs.rbegin(); pidx != idxs.rend(); ++pidx) {
+                    auto ind = *pidx;
+                    m_recents.removeAt(ind);
+                    auto action = hitems.takeAt(ind);
+                    m_menu->removeAction(action);
+                    action->deleteLater();
+                }
+                Toast::toast(m_parent, NAMEICONRES(QStringLiteral("clearhis")),
+                             tr("HistoryDelSuccess"));
+            }
         }
     });
     m_menu->addAction(a);
@@ -112,9 +117,10 @@ QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
     return displayName;
 }
 
-QString RecentFileManager::getDisplayTooltip(const RecentInfo &info) {
+QString RecentFileManager::getDisplayTooltip(const RecentInfo &info,
+                                             bool fileNameOnly) {
     QString tt;
-    if (_fileNameOnly) {
+    if (fileNameOnly) {
         tt = info.fileName;
     } else {
         tt = QStringLiteral("<p>") + tr("[file]") + info.fileName +
@@ -150,7 +156,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
 
         a->setText(getDisplayFileName(info) + QStringLiteral(" (") + mt.name() +
                    QStringLiteral(")"));
-        a->setToolTip(getDisplayTooltip(info));
+        a->setToolTip(getDisplayTooltip(info, _fileNameOnly));
         if (info.isWorkSpace) {
             a->setIcon(ICONRES(QStringLiteral("pro")));
             auto font = a->font();

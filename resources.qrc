@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/com.wingsummer.winghex">
-        <file>LICENSE</file>
         <file>images/author.jpg</file>
         <file>images/author.png</file>
         <file>images/bookmark.png</file>
@@ -113,6 +112,7 @@
         <file>images/win.png</file>
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
+        <file>src/LICENSE.md</file>
         <file>src/TESTCODE.as</file>
         <file>src/class/WingAngelAPI.json</file>
         <file>src/class/WingCStruct.json</file>
@@ -149,15 +149,12 @@
         <file>images/completion/CVpackage_meth.png</file>
         <file>images/completion/CVpackage_var.png</file>
         <file>images/completion/CVprivate_meth.png</file>
-        <file>images/completion/CVprivate_signal.png</file>
         <file>images/completion/CVprivate_slot.png</file>
         <file>images/completion/CVprivate_var.png</file>
         <file>images/completion/CVprotected_meth.png</file>
-        <file>images/completion/CVprotected_signal.png</file>
         <file>images/completion/CVprotected_slot.png</file>
         <file>images/completion/CVprotected_var.png</file>
         <file>images/completion/CVpublic_meth.png</file>
-        <file>images/completion/CVpublic_signal.png</file>
         <file>images/completion/CVpublic_slot.png</file>
         <file>images/completion/CVpublic_var.png</file>
         <file>images/completion/CVstruct.png</file>

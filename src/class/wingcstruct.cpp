@@ -17,10 +17,9 @@
 
 #include "wingcstruct.h"
 
-#include "control/scriptingconsole.h"
-#include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptqdictionary.h"
 #include "utilities.h"
+#include "wingangelapi.h"
 
 WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
     {
@@ -188,7 +187,8 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
     // nested dictionary is not supported, so unsafe registering will help
     {
         _scriptUnsafe.insert(
-            QStringLiteral("dictionary@ read()"),
+            QStringLiteral("dictionary@ read(") + getqsizeTypeAsString() +
+                (" offset, const string &in type)"),
             std::bind(QOverload<const QList<void *> &>::of(&WingCStruct::read),
                       this, std::placeholders::_1));
     }
@@ -216,13 +216,6 @@ const QString WingCStruct::signature() const { return WingHex::WINGSUMMER; }
 
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     resetEnv();
-
-    // It's a internal plugin, we need engine for UNSAFE SCRIPT REGISTERING.
-    // But we can do a trick, perfect !!!
-    auto angel = PluginSystem::instance().angelApi();
-    if (angel) {
-        _engine = angel->bindingConsole()->machine()->engine();
-    }
     return true;
 }
 
@@ -422,7 +415,7 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
     }
 
     auto doclen = emit reader.documentBytes();
-    if (doclen < 0 || offset + len >= doclen) {
+    if (doclen < 0 || offset + len > doclen) {
         return {};
     }
 
@@ -447,6 +440,11 @@ QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
     }
 
     return emit reader.readBytes(offset, len);
+}
+
+QString WingCStruct::getqsizeTypeAsString() const {
+    return sizeof(qsizetype) == sizeof(quint64) ? QStringLiteral("int64")
+                                                : QStringLiteral("int32");
 }
 
 QMetaType::Type WingCStruct::correctTypeSign(QMetaType::Type type,
@@ -619,7 +617,15 @@ bool WingCStruct::isValidCStructMetaType(QMetaType::Type type) {
 }
 
 CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
-    auto dic = CScriptDictionary::Create(_engine);
+    auto ctx = asGetActiveContext();
+    if (ctx == nullptr) {
+        return nullptr;
+    }
+
+    auto engine = ctx->GetEngine();
+    Q_ASSERT(engine);
+
+    auto dic = CScriptDictionary::Create(engine);
     for (auto p = hash.constKeyValueBegin(); p != hash.constKeyValueEnd();
          ++p) {
         auto var = p->second;
@@ -676,14 +682,14 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
         case QMetaType::Char16: {
             auto v = var.value<char16_t>();
             auto ch = new QChar(v);
-            auto id = _engine->GetTypeIdByDecl("char");
+            auto id = engine->GetTypeIdByDecl("char");
             dic->Set(p->first, ch, id);
             break;
         }
         case QMetaType::Char32: {
             auto v = var.value<char32_t>();
             auto ch = new QChar(v);
-            auto id = _engine->GetTypeIdByDecl("char");
+            auto id = engine->GetTypeIdByDecl("char");
             dic->Set(p->first, ch, id);
             break;
         }
@@ -732,7 +738,7 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
 
                 auto arrType =
                     QStringLiteral("array<") + idStr + QStringLiteral(">");
-                auto arrTypeID = _engine->GetTypeIdByDecl(arrType.toUtf8());
+                auto arrTypeID = engine->GetTypeIdByDecl(arrType.toUtf8());
                 if (arrTypeID < 0) {
                     // ignore
                     break;
@@ -744,7 +750,7 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
             break;
         }
         case QMetaType::QVariantHash: {
-            auto id = _engine->GetTypeIdByDecl("dictionary");
+            auto id = engine->GetTypeIdByDecl("dictionary");
             dic->Set(p->first, convert2AsDictionary(var.toHash()), id);
             break;
         }
@@ -759,7 +765,15 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
 CScriptArray *WingCStruct::convert2AsArray(const QVariantList &array,
                                            QMetaType::Type type, int id) {
     Q_ASSERT(!array.isEmpty());
-    auto arr = CScriptArray::Create(_engine->GetTypeInfoById(id), array.size());
+    auto ctx = asGetActiveContext();
+    if (ctx == nullptr) {
+        return nullptr;
+    }
+
+    auto engine = ctx->GetEngine();
+    Q_ASSERT(engine);
+
+    auto arr = CScriptArray::Create(engine->GetTypeInfoById(id), array.size());
 
     static asQWORD buffer;
     buffer = 0;
@@ -1005,7 +1019,7 @@ WingCStruct::read(const QList<void *> &params) {
     }
 
     auto offset = *reinterpret_cast<qsizetype *>(params.at(0));
-    auto type = *reinterpret_cast<QString *>(params.at(1));
+    auto type = **reinterpret_cast<QString **>(params.at(1));
 
     auto ret = read(offset, type);
     return static_cast<void *>(convert2AsDictionary(ret));

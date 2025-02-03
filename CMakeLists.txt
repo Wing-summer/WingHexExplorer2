@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.0.0")
+set(PROJECT_VERSION "2.1.0")
 
 find_package(
     QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
@@ -165,7 +165,10 @@ set(DIALOG_SRC
     src/dialog/showtextdialog.cpp
     src/dialog/splashdialog.ui
     src/dialog/splashdialog.cpp
-    src/dialog/splashdialog.h)
+    src/dialog/splashdialog.h
+    src/dialog/historydeldialog.h
+    src/dialog/historydeldialog.cpp
+    src/dialog/historydeldialog.ui)
 
 set(CONTROL_SRC
     src/control/editorview.h

@@ -69,9 +69,6 @@ static QIcon icon(int cacheIndex) {
         (*q_icon_cache)[ICON_FUNCTION + QCodeNode::VISIBILITY_PRIVATE] =
             getIcon(QStringLiteral("CVprivate_meth"));
 
-        // q_icon_cache[ICON_FUNCTION + QCodeNode::VISIBILITY_SIGNAL] =
-        //     QIcon(":/completion/CVprotected_signal.png");
-
         (*q_icon_cache)[ICON_VARIABLE + QCodeNode::VISIBILITY_DEFAULT] =
             getIcon(QStringLiteral("CVglobal_var"));
 

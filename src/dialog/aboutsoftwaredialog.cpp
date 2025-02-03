@@ -34,15 +34,15 @@ AboutSoftwareDialog::AboutSoftwareDialog(QWidget *parent)
     ui->lblVersion->setText(qApp->applicationVersion());
     ui->lblBuildDate->setText(QStringLiteral(__DATE__));
 
-    ui->tbLicense->setText(
-        readContent(QStringLiteral(":/com.wingsummer.winghex/LICENSE")));
+    ui->tbLicense->setMarkdown(
+        readContent(QStringLiteral(":/com.wingsummer.winghex/src/LICENSE.md")));
 
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());
     _dialog->setMinimumSize(800, 600);
 
-    Utilities::moveToCenter(this);
+    Utilities::moveToCenter(_dialog);
 }
 
 AboutSoftwareDialog::~AboutSoftwareDialog() {
