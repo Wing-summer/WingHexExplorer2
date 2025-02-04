@@ -312,7 +312,7 @@ private:
 
     QString _DebugingScript;
 
-    QStatusBar *m_status = nullptr;
+    QLabel *m_status = nullptr;
 };
 
 #endif // SCRIPTINGDIALOG_H

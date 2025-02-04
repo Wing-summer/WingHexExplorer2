@@ -192,6 +192,69 @@ QDocument::QDocument(QObject *p)
 */
 QDocument::~QDocument() { delete m_impl; }
 
+QStringList QDocument::textLines(int mode) const {
+    QStringList s;
+
+    if (!m_impl || m_impl->m_lines.isEmpty())
+        return s;
+
+    int line = 0;
+    int prevIndent = 0, curIndent = 0,
+        nextIndent = m_impl->m_lines.at(0)->nextNonSpaceChar(0);
+
+    if (nextIndent < 0)
+        nextIndent = 0;
+
+    foreach (QDocumentLineHandle *l, m_impl->m_lines) {
+        prevIndent = curIndent;
+        curIndent = nextIndent;
+        nextIndent = ++line < m_impl->m_lines.count()
+                         ? m_impl->m_lines.at(line)->nextNonSpaceChar(0)
+                         : 0;
+
+        if (nextIndent < 0)
+            nextIndent = 0;
+
+        QString buf = l->text();
+        int avgIndent = qMax(prevIndent, nextIndent);
+
+        if ((mode & RestoreTrailingIndent) && buf.isEmpty() && avgIndent) {
+            buf = QString(avgIndent, '\t');
+        } else if (mode & RemoveTrailingWS) {
+
+            int len = 0, idx = buf.length();
+
+            while (--idx >= 0) {
+                if (!buf.at(idx).isSpace())
+                    break;
+
+                ++len;
+            }
+
+            ++idx;
+
+            if (len && (idx || !(mode & PreserveIndent)))
+                buf.remove(idx, len);
+        }
+
+        s.append(buf);
+    }
+
+    return s;
+}
+
+QStringList QDocument::textLines(bool removeTrailing,
+                                 bool preserveIndent) const {
+    int mode = 0;
+
+    if (removeTrailing)
+        mode |= RemoveTrailingWS;
+
+    if (preserveIndent)
+        mode |= PreserveIndent;
+    return textLines(mode);
+}
+
 /*!
         \brief Clear the content of the document
 */
@@ -236,55 +299,7 @@ void QDocument::redo() {
         \param mode extra processing to perform on text
 */
 QString QDocument::text(int mode) const {
-    QString s;
-
-    if (!m_impl || m_impl->m_lines.isEmpty())
-        return s;
-
-    int line = 0;
-    int prevIndent = 0, curIndent = 0,
-        nextIndent = m_impl->m_lines.at(0)->nextNonSpaceChar(0);
-
-    if (nextIndent < 0)
-        nextIndent = 0;
-
-    foreach (QDocumentLineHandle *l, m_impl->m_lines) {
-        prevIndent = curIndent;
-        curIndent = nextIndent;
-        nextIndent = ++line < m_impl->m_lines.count()
-                         ? m_impl->m_lines.at(line)->nextNonSpaceChar(0)
-                         : 0;
-
-        if (nextIndent < 0)
-            nextIndent = 0;
-
-        QString buf = l->text();
-        int avgIndent = qMax(prevIndent, nextIndent);
-
-        if ((mode & RestoreTrailingIndent) && buf.isEmpty() && avgIndent) {
-            buf = QString(avgIndent, '\t');
-        } else if (mode & RemoveTrailingWS) {
-
-            int len = 0, idx = buf.length();
-
-            while (--idx >= 0) {
-                if (!buf.at(idx).isSpace())
-                    break;
-
-                ++len;
-            }
-
-            ++idx;
-
-            if (len && (idx || !(mode & PreserveIndent)))
-                buf.remove(idx, len);
-        }
-
-        s += buf + m_impl->m_lineEndingString;
-    }
-
-    // s.chop(m_impl->m_lineEndingString.count());
-    return s;
+    return textLines(mode).join(m_impl->m_lineEndingString);
 }
 
 /*!

@@ -18,9 +18,30 @@
 #ifndef DIFFUTIL_H
 #define DIFFUTIL_H
 
+#include <QString>
+#include <QStringList>
+#include <QVector>
+
 class DiffUtil {
 public:
-    DiffUtil();
+    struct DiffEntry {
+        QString lineContent;
+        enum ChangeType { UNCHANGED, ADDED, REMOVED } changeType;
+        qsizetype lineNumberA; // Line number in file1 (original)
+        qsizetype lineNumberB; // Line number in file2 (new)
+    };
+
+public:
+    static QVector<DiffEntry> compareFiles(const QStringList &lines1,
+                                           const QStringList &lines2);
+
+private:
+    // LCS algorithm to find longest common subsequence of lines
+    static QVector<QVector<int>> computeLCSMatrix(const QStringList &A,
+                                                  const QStringList &B);
+
+    static QVector<DiffEntry> generateOrderedDiff(const QStringList &A,
+                                                  const QStringList &B);
 };
 
 #endif // DIFFUTIL_H

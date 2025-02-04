@@ -22,21 +22,67 @@
 QDocumentSwapTextCommand::QDocumentSwapTextCommand(const QString &text,
                                                    QDocument *doc,
                                                    QDocumentCommand *p)
-    : QDocumentCommand(Command::Custom, doc, p), oldtext(m_doc->text()),
-      newtext(text) {}
+    : QDocumentCommand(Command::Custom, doc, p) {
+    auto textl = text.split('\n');
+    diffs = DiffUtil::compareFiles(doc->textLines(), textl);
+    auto r = std::find_if(
+        diffs.begin(), diffs.end(), [](const DiffUtil::DiffEntry &diff) {
+            return diff.changeType != DiffUtil::DiffEntry::UNCHANGED;
+        });
+    if (r == diffs.end()) {
+        setObsolete(true);
+        return;
+    }
+
+    header = textl.takeFirst();
+    oldheader = doc->line(0).text();
+    for (auto &s : textl) {
+        auto lh = new QDocumentLineHandle(s, m_doc);
+        _handles.append(lh);
+    }
+
+    for (auto p = std::next(doc->begin()); p != doc->end(); ++p) {
+        _oldhandles.append(*p);
+    }
+
+    auto cursor = doc->editCursor();
+    _line = cursor->lineNumber();
+    _column = cursor->columnNumber();
+    setTargetCursor(cursor->handle());
+}
 
 void QDocumentSwapTextCommand::undo() {
-    m_doc->setText(oldtext);
-    for (int i = 0; i < m_doc->lineCount(); ++i) {
-        auto line = m_doc->line(i);
-        markUndone(line.handle());
+    removeLines(0, m_doc->lineCount() - 1);
+    removeText(0, 0, header.length());
+    insertText(0, 0, oldheader);
+    insertLines(0, _oldhandles);
+
+    m_doc->impl()->emitContentsChange(0, _oldhandles.count() + 1);
+    for (auto &item : diffs) {
+        if (item.changeType == DiffUtil::DiffEntry::REMOVED) {
+            auto line = m_doc->line(item.lineNumberA - 1);
+            markUndone(line.handle());
+        } else if (item.changeType == DiffUtil::DiffEntry::ADDED) {
+            auto line = m_doc->line(item.lineNumberB - 1);
+            markUndone(line.handle());
+        }
     }
 }
 
 void QDocumentSwapTextCommand::redo() {
-    m_doc->setText(newtext);
-    for (int i = 0; i < m_doc->lineCount(); ++i) {
-        auto line = m_doc->line(i);
-        markRedone(line.handle(), m_first);
+    removeLines(0, m_doc->lineCount() - 1);
+    removeText(0, 0, oldheader.length());
+    insertText(0, 0, header);
+    insertLines(0, _handles);
+
+    m_doc->impl()->emitContentsChange(0, _handles.count() + 1);
+    for (auto &item : diffs) {
+        if (item.changeType == DiffUtil::DiffEntry::REMOVED) {
+            auto line = m_doc->line(item.lineNumberA - 1);
+            markRedone(line.handle(), m_first);
+        } else if (item.changeType == DiffUtil::DiffEntry::ADDED) {
+            auto line = m_doc->line(item.lineNumberB - 1);
+            markRedone(line.handle(), m_first);
+        }
     }
 }

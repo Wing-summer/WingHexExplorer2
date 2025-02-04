@@ -74,8 +74,10 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     _defaultLayout = m_dock->saveState();
     layout->addWidget(m_dock, 1);
 
-    m_status = new QStatusBar(this);
-    layout->addWidget(m_status);
+    auto status = new QStatusBar(this);
+    m_status = new QLabel(this);
+    status->addWidget(m_status);
+    layout->addWidget(status);
     buildUpContent(cw);
 
     buildUpSettingDialog();
@@ -103,7 +105,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     _savedLayout = set.scriptDockLayout();
 
     connect(&LangService::instance(), &LangService::onScriptEditorTip, m_status,
-            [this](const QString &message) { m_status->showMessage(message); });
+            [this](const QString &message) { m_status->setText(message); });
 
     this->setUpdatesEnabled(true);
 }
@@ -955,14 +957,14 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 
     if (isRun) {
         if (isDbg) {
-            m_status->setStyleSheet(QStringLiteral("color:gold"));
-            m_status->showMessage(tr("Debuging..."));
+            m_status->setText(QStringLiteral("<font color=\"gold\">") +
+                              tr("Debuging...") + QStringLiteral("</font>"));
         } else {
-            m_status->setStyleSheet(QStringLiteral("color:green"));
-            m_status->showMessage(tr("Running..."));
+            m_status->setText(QStringLiteral("<font color=\"green\">") +
+                              tr("Running...") + QStringLiteral("</font>"));
         }
     } else {
-        m_status->clearMessage();
+        m_status->setText({});
     }
 }
 

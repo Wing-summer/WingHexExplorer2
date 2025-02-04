@@ -222,7 +222,13 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             cut();
         else {
             // cursor must be in edit zone
-            if (textCursor.selectionStart() <= inpos_)
+            QDocumentCursor pos;
+            if (textCursor.hasSelection()) {
+                pos = textCursor.selectionStart();
+            } else {
+                pos = textCursor;
+            }
+            if (pos <= inpos_)
                 QApplication::beep();
             else
                 QEditor::keyPressEvent(e);

@@ -18,6 +18,7 @@
 #ifndef QDOCUMENTSWAPTEXTCOMMAND_H
 #define QDOCUMENTSWAPTEXTCOMMAND_H
 
+#include "class/diffutil.h"
 #include "qdocumentcommand.h"
 
 class QDocumentSwapTextCommand : public QDocumentCommand {
@@ -31,8 +32,12 @@ public:
     void redo();
 
 private:
-    QString oldtext;
-    QString newtext;
+    QString header, oldheader;
+    QList<QDocumentLineHandle *> _handles;
+    QList<QDocumentLineHandle *> _oldhandles;
+    QVector<DiffUtil::DiffEntry> diffs;
+
+    int _line, _column;
 };
 
 #endif // QDOCUMENTSWAPTEXTCOMMAND_H

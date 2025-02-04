@@ -106,6 +106,9 @@ public:
     explicit QDocument(QObject *p = nullptr);
     virtual ~QDocument();
 
+    QStringList textLines(int mode) const;
+    QStringList textLines(bool removeTrailing = false,
+                          bool preserveIndent = true) const;
     QString text(int mode) const;
     QString text(bool removeTrailing = false, bool preserveIndent = true) const;
     void setText(const QString &s);
