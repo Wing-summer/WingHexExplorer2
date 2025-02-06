@@ -18,16 +18,14 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     auto dw = dockWidget();
     auto v = qobject_cast<EditorView *>(dw);
     if (v) {
-        if (v->isRegionFile() || v->isCommonFile()) {
+        if (v->isCommonFile()) {
             initMenuItems(menu, v->fileName());
         }
         auto a = new QAction(ICONRES("info"), tr("FileInfo"), menu);
         connect(a, &QAction::triggered, this, [this]() {
             auto editor = qobject_cast<EditorView *>(dockWidget());
             if (editor) {
-                FileInfoDialog d(editor->fileName(),
-                                 editor->documentType() ==
-                                     EditorView::DocumentType::RegionFile);
+                FileInfoDialog d(editor->fileName());
                 d.exec();
             }
         });
@@ -47,7 +45,7 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
 void DockWidgetTab::initMenuItems(QMenu *menu, const QString &path) {
     Q_ASSERT(menu);
     auto a = new QAction(ICONRES("shell"), tr("ShowInShell"), menu);
-    connect(a, &QAction::triggered, this, [this, path]() {
+    connect(a, &QAction::triggered, this, [path]() {
         ShowInShell::showInGraphicalShell(AppManager::instance()->mainWindow(),
                                           path, false);
     });

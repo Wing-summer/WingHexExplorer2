@@ -29,8 +29,6 @@ public:
     struct RecentInfo {
         QString fileName;
         bool isWorkSpace = false;
-        qsizetype start = -1;
-        qsizetype length = -1;
 
         bool operator==(const RecentInfo &info) const {
             return
@@ -39,8 +37,7 @@ public:
 #else
                 this->fileName == info.fileName
 #endif
-                && this->isWorkSpace == info.isWorkSpace &&
-                this->start == info.start && this->length == info.length;
+                && this->isWorkSpace == info.isWorkSpace;
         }
         bool operator!=(const RecentInfo &info) const {
             return
@@ -49,24 +46,19 @@ public:
 #else
                 this->fileName != info.fileName
 #endif
-                || this->isWorkSpace != info.isWorkSpace ||
-                this->start != info.start || this->length != info.length;
+                || this->isWorkSpace != info.isWorkSpace;
         }
 
         friend QDataStream &operator<<(QDataStream &arch,
                                        const RecentInfo &object) {
             arch << object.fileName;
             arch << object.isWorkSpace;
-            arch << object.start;
-            arch << object.length;
             return arch;
         }
 
         friend QDataStream &operator>>(QDataStream &arch, RecentInfo &object) {
             arch >> object.fileName;
             arch >> object.isWorkSpace;
-            arch >> object.start;
-            arch >> object.length;
             return arch;
         }
     };

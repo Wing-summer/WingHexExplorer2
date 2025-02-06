@@ -70,7 +70,8 @@ public:
 
         Namespace = 'n',
 
-        Typedef = 't'
+        Typedef = 't',
+        KeyWord = 'k'
     };
 
     enum NodeContent {

@@ -233,7 +233,6 @@ void ScriptingDialog::initConsole() {
         });
     connect(dbg, &asDebugger::onDebugActionExec, this,
             [this]() { updateRunDebugMode(); });
-    m_breakpoints->setDebugger(dbg);
     m_sym->setEngine(machine->engine());
 }
 
@@ -625,19 +624,6 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
 }
 
 ads::CDockAreaWidget *
-ScriptingDialog::buildUpBreakpointShowDock(ads::CDockManager *dock,
-                                           ads::DockWidgetArea area,
-                                           ads::CDockAreaWidget *areaw) {
-    auto bpview = new QTableView(this);
-    Utilities::applyTableViewProperty(bpview);
-    m_breakpoints = new DbgBreakpointModel(bpview);
-    bpview->setModel(m_breakpoints);
-    auto dw = buildDockWidget(dock, QStringLiteral("BreakPoints"),
-                              tr("BreakPoints"), bpview);
-    return dock->addDockWidget(area, dw, areaw);
-}
-
-ads::CDockAreaWidget *
 ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
                                        ads::DockWidgetArea area,
                                        ads::CDockAreaWidget *areaw) {
@@ -736,9 +722,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     }
 
     buildUpStackShowDock(m_dock, ads::RightDockWidgetArea, bottomArea);
-    auto rightArea = buildUpBreakpointShowDock(m_dock, ads::RightDockWidgetArea,
-                                               m_editorViewArea);
-    buildUpVarShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    auto rightArea =
+        buildUpVarShowDock(m_dock, ads::RightDockWidgetArea, m_editorViewArea);
     buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
@@ -1045,6 +1030,14 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_ribbon->setCurrentIndex(3);
 
     m_consoleout->clear();
+
+    // add breakpoints
+    auto marks = QLineMarksInfoCenter::instance()->marks(
+        fileName, m_symID.value(Symbols::BreakPoint));
+    auto dbg = m_consoleout->machine()->debugger();
+    for (auto &bp : marks) {
+        dbg->addFileBreakPoint(bp.file, bp.line);
+    }
 
     _DebugingScript = fileName;
     PluginSystem::instance().dispatchEvent(

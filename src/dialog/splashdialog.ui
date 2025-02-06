@@ -10,6 +10,9 @@
     <height>200</height>
    </rect>
   </property>
+  <property name="cursor">
+   <cursorShape>WaitCursor</cursorShape>
+  </property>
   <property name="windowTitle">
    <string notr="true"/>
   </property>

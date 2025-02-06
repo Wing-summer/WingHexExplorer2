@@ -172,11 +172,11 @@ public:
     void beginMarco(const QString &text);
     void endMarco();
 
-    void ModifyMetadata(const QHexMetadataItem &newmeta,
+    bool ModifyMetadata(const QHexMetadataItem &newmeta,
                         const QHexMetadataItem &oldmeta);
     void RemoveMetadatas(const QList<QHexMetadataItem> &items);
-    void RemoveMetadata(const QHexMetadataItem &item);
-    void RemoveMetadata(qsizetype offset);
+    bool RemoveMetadata(const QHexMetadataItem &item);
+    bool RemoveMetadata(qsizetype offset);
     void Metadata(qsizetype begin, qsizetype end, const QColor &fgcolor,
                   const QColor &bgcolor, const QString &comment);
     void Clear();

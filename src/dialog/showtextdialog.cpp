@@ -21,6 +21,7 @@
 #include "class/wingmessagebox.h"
 #include "class/wingprogressdialog.h"
 #include "control/codeedit.h"
+#include "control/toast.h"
 #include "dialog/encodingdialog.h"
 #include "qeditor.h"
 
@@ -224,7 +225,11 @@ void ShowTextDialog::setCurrentEditorScale(qreal rate) {
     m_edit->editor()->setScaleRate(rate);
 }
 
-void ShowTextDialog::on_copyfile() { m_edit->editor()->copy(); }
+void ShowTextDialog::on_copyfile() {
+    m_edit->editor()->copy();
+    Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                 tr("CopyToClipBoard"));
+}
 
 void ShowTextDialog::on_findfile() { m_edit->editor()->find(); }
 

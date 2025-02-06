@@ -8,7 +8,6 @@ The following components are all third-party components used by the software. Th
 * [QCodeEditor2](https://sourceforge.net/projects/edyuk) (GPL, **FORK**)
 * [QWingRibbon](https://github.com/martijnkoopman/Qt-Ribbon-Widget) (LGPL, **FORK**)
 * [QtSingleApplication](https://github.com/qtproject/qt-solutions/tree/master/qtsingleapplication) (BSD-3-Clause)
-* [QPathEdit](https://github.com/Skycoder42/QPathEdit) (MIT)
 * [QWindowKit](https://github.com/stdware/qwindowkit) (Apache v2.0)
 * [AngelScript](https://github.com/codecat/angelscript-mirror) (zlib license)
 * [QConsoleWidget](https://github.com/gapost/qconsolewidget) (MIT, **FORK** -> AGPL-3.0)

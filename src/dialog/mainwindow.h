@@ -146,7 +146,6 @@ private:
 private slots:
     void on_newfile();
     void on_openfile();
-    void on_openregion();
     void on_openworkspace();
     void on_opendriver();
     void on_reload();
@@ -219,15 +218,14 @@ public:
                         EditorView **editor);
     ErrFile openDriver(const QString &driver, EditorView **editor);
     ErrFile openWorkSpace(const QString &file, EditorView **editor);
-    ErrFile openRegionFile(QString file, EditorView **editor, qsizetype start,
-                           qsizetype length);
 
     ErrFile saveEditor(EditorView *editor, const QString &filename,
-                       bool ignoreMd5, bool isExport = false,
-                       bool forceWorkspace = false, QString *ws = nullptr);
+                       bool isExport = false, bool forceWorkspace = false,
+                       QString *ws = nullptr);
     ErrFile closeEditor(EditorView *editor, bool force);
 
     EditorView *currentEditor();
+    void adjustEditorFocus(EditorView *closedEditor);
 
     QString getWorkSpaceFileName(const QString &curFile);
 
@@ -629,7 +627,7 @@ private:
     // for plugin system use
     QHash<QString, RibbonTabContent *> m_ribbonMaps;
     QList<QMenu *> m_hexContextMenu;
-    QMap<IWingPlugin *, QList<QSharedPointer<WingEditorViewWidget::Creator>>>
+    QHash<IWingPlugin *, QList<QSharedPointer<WingEditorViewWidget::Creator>>>
         m_editorViewWidgets;
     QHash<SettingPage *, bool> m_settingPages;
     QList<PluginPage *> m_plgPages;
@@ -644,7 +642,6 @@ private:
     QString m_lastusedpath;
     bool m_islittle = true;
     bool m_enablePlugin = true;
-    bool m_isOnClosing = false;
 
     ShowTextDialog *_showtxt = nullptr;
 

@@ -118,9 +118,6 @@ set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbontabcontent.h
     3rdparty/QWingRibbon/ribbontabcontent.ui)
 
-set(QPATHEDIT_SRC 3rdparty/QPathEdit/qpathedit.cpp
-                  3rdparty/QPathEdit/qpathedit.h)
-
 set(QCONSOLEWIDGET_SRC
     3rdparty/QConsoleWidget/QConsoleIODevice.cpp
     3rdparty/QConsoleWidget/QConsoleIODevice.h
@@ -150,8 +147,6 @@ set(DIALOG_SRC
     src/dialog/metadialog.h
     src/dialog/driverselectordialog.cpp
     src/dialog/driverselectordialog.h
-    src/dialog/openregiondialog.cpp
-    src/dialog/openregiondialog.h
     src/dialog/scriptingdialog.h
     src/dialog/scriptingdialog.cpp
     src/dialog/finddialog.cpp
@@ -308,9 +303,7 @@ set(MODEL_SRC
     src/model/dbgcallstackmodel.h
     src/model/dbgcallstackmodel.cpp
     src/model/dbgvarshowmodel.h
-    src/model/dbgvarshowmodel.cpp
-    src/model/dbgbreakpointmodel.h
-    src/model/dbgbreakpointmodel.cpp)
+    src/model/dbgvarshowmodel.cpp)
 
 set(SETTING_SRC
     src/settings/settings.h
@@ -387,7 +380,6 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QPathEdit
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
@@ -455,7 +447,6 @@ set(PROJECT_SOURCES
     src/dbghelper.h
     src/define.h
     ${QCONSOLEWIDGET_SRC}
-    ${QPATHEDIT_SRC}
     ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
     ${CLASS_SRC}

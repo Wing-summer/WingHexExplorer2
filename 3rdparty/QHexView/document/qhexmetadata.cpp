@@ -52,12 +52,14 @@ QHexLineMetadata QHexMetadata::get(qsizetype line) const {
 
 //----------undo redo wrapper----------
 
-void QHexMetadata::ModifyMetadata(const QHexMetadataItem &newmeta,
+bool QHexMetadata::ModifyMetadata(const QHexMetadataItem &newmeta,
                                   const QHexMetadataItem &oldmeta) {
     auto cmd = MakeModifyMetadata(nullptr, newmeta, oldmeta);
     if (cmd) {
         m_undo->push(cmd);
+        return true;
     }
+    return false;
 }
 
 void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
@@ -68,18 +70,22 @@ void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
     m_undo->endMacro();
 }
 
-void QHexMetadata::RemoveMetadata(const QHexMetadataItem &item) {
+bool QHexMetadata::RemoveMetadata(const QHexMetadataItem &item) {
     auto cmd = MakeRemoveMetadata(nullptr, item);
     if (cmd) {
         m_undo->push(cmd);
+        return true;
     }
+    return false;
 }
 
-void QHexMetadata::RemoveMetadata(qsizetype offset) {
+bool QHexMetadata::RemoveMetadata(qsizetype offset) {
     auto cmd = MakeRemoveMetadata(nullptr, offset);
     if (cmd) {
         m_undo->push(cmd);
+        return true;
     }
+    return false;
 }
 
 void QHexMetadata::Metadata(qsizetype begin, qsizetype end,

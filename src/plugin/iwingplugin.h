@@ -56,12 +56,11 @@ enum ErrFile : int {
     IsNewFile = -6,
     IsDirver = -7,
     WorkSpaceUnSaved = -8,
-    SourceFileChanged = -9,
-    ClonedFile = -10,
-    InvalidFormat = -11,
-    TooManyOpenedFile = -12,
-    NotAllowedInNoneGUIThread = -13,
-    DevNotFound = -14,
+    ClonedFile = -9,
+    InvalidFormat = -10,
+    TooManyOpenedFile = -11,
+    NotAllowedInNoneGUIThread = -12,
+    DevNotFound = -13,
 };
 Q_ENUM_NS(ErrFile)
 
@@ -248,29 +247,23 @@ signals:
     Q_REQUIRED_RESULT WingHex::ErrFile newFile();
     Q_REQUIRED_RESULT WingHex::ErrFile openFile(const QString &filename);
     Q_REQUIRED_RESULT WingHex::ErrFile openDriver(const QString &driver);
-    Q_REQUIRED_RESULT WingHex::ErrFile openRegionFile(const QString &filename,
-                                                      qsizetype start = 0,
-                                                      qsizetype length = 1024);
     Q_REQUIRED_RESULT WingHex::ErrFile openExtFile(const QString &ext,
                                                    const QString &file);
 
     WingHex::ErrFile closeHandle(int handle);
     WingHex::ErrFile closeFile(int handle, bool force = false);
 
-    Q_REQUIRED_RESULT WingHex::ErrFile saveFile(int handle,
-                                                bool ignoreMd5 = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile
-    exportFile(int handle, const QString &savename, bool ignoreMd5 = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile
-    saveAsFile(int handle, const QString &savename, bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveFile(int handle);
+    Q_REQUIRED_RESULT WingHex::ErrFile exportFile(int handle,
+                                                  const QString &savename);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveAsFile(int handle,
+                                                  const QString &savename);
 
     Q_REQUIRED_RESULT WingHex::ErrFile openCurrent();
     Q_REQUIRED_RESULT WingHex::ErrFile closeCurrent(bool force = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile saveCurrent(bool ignoreMd5 = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile exportCurrent(const QString &savename,
-                                                     bool ignoreMd5 = false);
-    Q_REQUIRED_RESULT WingHex::ErrFile saveAsCurrent(const QString &savename,
-                                                     bool ignoreMd5 = false);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveCurrent();
+    Q_REQUIRED_RESULT WingHex::ErrFile exportCurrent(const QString &savename);
+    Q_REQUIRED_RESULT WingHex::ErrFile saveAsCurrent(const QString &savename);
 
     // bookmark
     Q_REQUIRED_RESULT bool addBookMark(qsizetype pos, const QString &comment);
@@ -491,7 +484,7 @@ public:
         PluginClosed
     };
 
-    enum class FileType { Invalid, File, RegionFile, Driver, Extension };
+    enum class FileType { Invalid, File, Driver, Extension };
     Q_ENUM(FileType)
 
 public:

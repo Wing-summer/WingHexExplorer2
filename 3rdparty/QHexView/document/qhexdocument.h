@@ -88,6 +88,7 @@ public:
 
     QString bookMark(qsizetype pos);
     bool bookMarkExists(qsizetype pos);
+    QList<qsizetype> bookMarkRange(qsizetype begin, qsizetype end);
 
     // note: maybe changed when bookmarks are chaged
     qsizetype bookMarkPos(qsizetype index);
@@ -203,10 +204,6 @@ public:
     static QHexDocument *fromDevice(QIODevice *iodevice, bool readonly = false);
     template <typename T>
     static QHexDocument *fromFile(QString filename, bool readonly = false);
-
-    static QHexDocument *fromRegionFile(QString filename, qsizetype start,
-                                        qsizetype length,
-                                        bool readonly = false);
 
     template <typename T>
     static QHexDocument *fromMemory(char *data, int size,

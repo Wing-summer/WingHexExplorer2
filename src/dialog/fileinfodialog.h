@@ -23,8 +23,7 @@
 class FileInfoDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
-    FileInfoDialog(QString filename, bool isRegionFile,
-                   QWidget *parent = nullptr);
+    FileInfoDialog(QString filename, QWidget *parent = nullptr);
     virtual ~FileInfoDialog();
 };
 

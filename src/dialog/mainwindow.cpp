@@ -45,7 +45,6 @@
 #include "fileinfodialog.h"
 #include "finddialog.h"
 #include "metadialog.h"
-#include "openregiondialog.h"
 #include "plugin/pluginsystem.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
@@ -88,8 +87,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
                 AppManager::instance()->openFile(rinfo.fileName,
-                                                 rinfo.isWorkSpace, rinfo.start,
-                                                 rinfo.length);
+                                                 rinfo.isWorkSpace);
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
@@ -1234,11 +1232,6 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
                         &MainWindow::on_openfile, QKeySequence::Open);
 
         addPannelAction(
-            pannel, QStringLiteral("openr"), tr("OpenFR"),
-            &MainWindow::on_openregion,
-            shortcuts.keySequence(QKeySequences::Key::OPEN_REGION_FILE));
-
-        addPannelAction(
             pannel, QStringLiteral("workspace"), tr("OpenWorkSpace"),
             &MainWindow::on_openworkspace,
             shortcuts.keySequence(QKeySequences::Key::OPEN_WORKSPACE));
@@ -1509,9 +1502,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                 auto doc = hexeditor->document();
 
                 auto b = !hexeditor->isKeepSize();
-                if ((!b && editor->documentType() ==
-                               EditorView::DocumentType::RegionFile) ||
-                    !hexeditor->setKeepSize(b)) {
+                if (!hexeditor->setKeepSize(b)) {
                     Toast::toast(this, _pixCannotOver, tr("ErrUnOver"));
                 }
             });
@@ -1937,38 +1928,6 @@ void MainWindow::on_openfile() {
     }
 }
 
-void MainWindow::on_openregion() {
-    ScopeGuard g([this]() { showStatus(tr("RegionOpening...")); },
-                 [this]() { showStatus({}); });
-
-    OpenRegionDialog d(m_lastusedpath);
-    if (d.exec()) {
-        auto res = d.getResult();
-        EditorView *editor = nullptr;
-        auto ret = openRegionFile(res.filename, &editor, res.start, res.length);
-        if (ret == ErrFile::NotExist) {
-            QMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-            return;
-        }
-        if (ret == ErrFile::Permission) {
-            QMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-            return;
-        }
-        if (ret == ErrFile::AlreadyOpened) {
-            Q_ASSERT(editor);
-            editor->raise();
-            editor->setFocus();
-            return;
-        }
-
-        RecentFileManager::RecentInfo info;
-        info.fileName = res.filename;
-        info.start = res.start;
-        info.length = res.length;
-        m_recentmanager->addRecentFile(info);
-    }
-}
-
 void MainWindow::on_openworkspace() {
     ScopeGuard g([this]() { showStatus(tr("WorkSpaceOpening...")); },
                  [this]() { showStatus({}); });
@@ -2065,7 +2024,9 @@ void MainWindow::on_save() {
         return;
     }
 
-    auto res = saveEditor(editor, {}, false);
+    auto changedTo = editor->change2WorkSpace();
+    QString ws;
+    auto res = saveEditor(editor, {}, false, false, &ws);
 
     auto isNewFile = editor->isNewFile();
     if (isNewFile) {
@@ -2073,32 +2034,21 @@ void MainWindow::on_save() {
         return;
     }
 
-restart:
-    if (res == ErrFile::IsNewFile) {
-        on_saveas();
-        return;
-    }
     if (res == ErrFile::Permission) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
         return;
     }
-    if (res == ErrFile::SourceFileChanged) {
-        if (WingMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
-                                    QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::Yes) {
-            res = saveEditor(editor, {}, true);
-            goto restart;
-        } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                         tr("SaveSourceFileError"));
-        }
-    }
     if (res == ErrFile::WorkSpaceUnSaved) {
-        WingMessageBox::critical(this, NAMEICONRES(QStringLiteral("save")),
-                                 tr("SaveWSError"));
+        WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
         return;
     }
 
+    if (changedTo) {
+        RecentFileManager::RecentInfo info;
+        info.fileName = ws;
+        info.isWorkSpace = true;
+        m_recentmanager->addRecentFile(info);
+    }
     Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                  tr("SaveSuccessfully"));
 }
@@ -2114,18 +2064,13 @@ void MainWindow::on_convpro() {
         return;
     }
 
-    if (editor->isRegionFile()) {
-        Toast::toast(this, NAMEICONRES("convpro"), tr("UnsupportedProConv"));
-        return;
-    }
-
     if (editor->isOriginWorkSpace()) {
         Toast::toast(this, NAMEICONRES("convpro"), tr("AlreadyWorkSpace"));
         return;
     }
 
     QString workspace;
-    auto ret = saveEditor(editor, {}, false, false, true, &workspace);
+    auto ret = saveEditor(editor, {}, false, true, &workspace);
     if (ret == ErrFile::WorkSpaceUnSaved) {
         WingMessageBox::critical(this, tr("Error"), tr("ConvWorkSpaceFailed"));
     } else if (ret == ErrFile::Success) {
@@ -2165,9 +2110,8 @@ void MainWindow::on_saveas() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
     bool isWorkspace = editor->isOriginWorkSpace();
-    auto res = saveEditor(editor, filename, false, false, isWorkspace);
+    auto res = saveEditor(editor, filename, false, isWorkspace);
 
-restart:
     switch (res) {
     case ErrFile::Success: {
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
@@ -2180,18 +2124,6 @@ restart:
     }
     case ErrFile::WorkSpaceUnSaved: {
         WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
-        break;
-    }
-    case ErrFile::SourceFileChanged: {
-        if (WingMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
-                                    QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::Yes) {
-            res = saveEditor(editor, filename, true);
-            goto restart;
-        } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                         tr("SaveSourceFileError"));
-        }
         break;
     }
     default: {
@@ -2216,24 +2148,12 @@ void MainWindow::on_exportfile() {
         return;
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
 
-    auto res = saveEditor(editor, filename, false, true);
-restart:
+    bool isWorkspace = editor->isOriginWorkSpace();
+    auto res = saveEditor(editor, filename, true, isWorkspace);
     switch (res) {
     case ErrFile::Success: {
         Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
                      tr("ExportSuccessfully"));
-        break;
-    }
-    case ErrFile::SourceFileChanged: {
-        if (QMessageBox::warning(this, tr("Warn"), tr("SourceChanged"),
-                                 QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::Yes) {
-            res = saveEditor(editor, filename, true, true);
-            goto restart;
-        } else {
-            WingMessageBox::critical(this, tr("Error"),
-                                     tr("ExportSourceFileError"));
-        }
         break;
     }
     default: {
@@ -2325,7 +2245,13 @@ void MainWindow::on_delete() {
     if (hexeditor == nullptr) {
         return;
     }
-    hexeditor->RemoveSelection();
+    if (hexeditor->RemoveSelection()) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("del")),
+                     tr("DeleteSuccess"));
+    } else {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("del")),
+                     tr("DeleteFailed"));
+    }
 }
 
 void MainWindow::on_clone() {
@@ -2467,9 +2393,7 @@ void MainWindow::on_fileInfo() {
     if (editor == nullptr) {
         return;
     }
-    FileInfoDialog d(editor->fileName(),
-                     editor->documentType() ==
-                         EditorView::DocumentType::RegionFile);
+    FileInfoDialog d(editor->fileName());
     d.exec();
 }
 
@@ -2506,7 +2430,7 @@ void MainWindow::on_pastehex() {
     if (hexeditor == nullptr) {
         return;
     }
-    hexeditor->Paste();
+    hexeditor->Paste(true);
 }
 
 void MainWindow::on_fill() {
@@ -2518,7 +2442,13 @@ void MainWindow::on_fill() {
     auto in = WingInputDialog::getText(this, tr("Fill"), tr("PleaseInputFill"),
                                        QLineEdit::Normal, QString(), &b);
     if (b) {
-        auto ch = char(in.toULongLong(&b, 0));
+        auto v = in.toUInt(&b, 0);
+        auto limit = std::numeric_limits<uchar>().max();
+        if (v > limit) {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("fill")),
+                         tr("FillInputTruncWarn"));
+        }
+        auto ch = uchar(v);
         if (b) {
             auto doc = hexeditor->document();
             if (doc->isEmpty() || !hexeditor->hasSelection())
@@ -2527,9 +2457,10 @@ void MainWindow::on_fill() {
             auto total = hexeditor->selectionCount();
             doc->beginMarco(QStringLiteral("FillBytes"));
             for (int i = 0; i < total; ++i) {
-                auto pos = hexeditor->cursor()->selectionStart(i).offset();
+                auto cursor = hexeditor->cursor();
+                auto pos = cursor->selectionStart(i).offset();
                 hexeditor->Replace(
-                    pos, QByteArray(int(hexeditor->hasSelection()), char(ch)));
+                    pos, QByteArray(cursor->selectionLength(i), char(ch)));
             }
             doc->endMarco();
         } else {
@@ -2553,8 +2484,7 @@ void MainWindow::on_fillzero() {
     doc->beginMarco(QStringLiteral("FillZero"));
     for (int i = 0; i < total; ++i) {
         auto pos = cur->selectionStart(i).offset();
-        hexeditor->Replace(pos,
-                           QByteArray(int(hexeditor->hasSelection()), char(0)));
+        hexeditor->Replace(pos, QByteArray(cur->selectionLength(i), char(0)));
     }
     doc->endMarco();
 }
@@ -2594,11 +2524,38 @@ void MainWindow::on_bookmarkdel() {
         return;
     }
     auto doc = hexeditor->document();
-    auto pos = hexeditor->currentOffset();
+    auto cursor = hexeditor->cursor();
+    if (cursor->hasSelection()) {
+        QList<qsizetype> rmOff;
 
-    if (doc->bookMarkExists(pos)) {
-        doc->RemoveBookMark(pos);
+        auto total = cursor->selectionCount();
+        for (int i = 0; i < total; ++i) {
+            rmOff.append(doc->bookMarkRange(cursor->selectionStart(i).offset(),
+                                            cursor->selectionEnd(i).offset()));
+        }
+
+        if (!rmOff.isEmpty()) {
+            doc->beginMarco(QStringLiteral("BookMarkRmRange"));
+            for (auto &pos : rmOff) {
+                doc->RemoveBookMark(pos);
+            }
+            doc->endMarco();
+            Toast::toast(this, NAMEICONRES("bookmarkdel"),
+                         tr("BookmarkDelSuccess"));
+            return;
+        }
+    } else {
+        auto pos = cursor->position().offset();
+        if (doc->bookMarkExists(pos)) {
+            if (doc->RemoveBookMark(pos)) {
+                Toast::toast(this, NAMEICONRES("bookmarkdel"),
+                             tr("BookmarkDelSuccess"));
+                return;
+            }
+        }
     }
+
+    Toast::toast(this, NAMEICONRES("bookmarkdel"), tr("BookmarkDelNoItem"));
 }
 
 void MainWindow::on_bookmarkcls() {
@@ -2608,6 +2565,7 @@ void MainWindow::on_bookmarkcls() {
     }
     auto doc = hexeditor->document();
     doc->ClearBookMark();
+    Toast::toast(this, NAMEICONRES("bookmarkdel"), tr("BookmarkClearSuccess"));
 }
 
 void MainWindow::on_metadata() {
@@ -2688,8 +2646,17 @@ void MainWindow::on_metadatadel() {
     }
     auto doc = hexeditor->document();
     auto meta = doc->metadata();
-    auto pos = hexeditor->cursor()->position().offset();
-    meta->RemoveMetadata(pos);
+    auto cursor = hexeditor->cursor();
+    if (cursor->hasSelection()) {
+        Toast::toast(this, NAMEICONRES("metadatadel"), tr("PleaseClearSel"));
+        return;
+    }
+    auto pos = cursor->position().offset();
+    if (meta->RemoveMetadata(pos)) {
+        Toast::toast(this, NAMEICONRES("metadatadel"), tr("MetaDelSuccess"));
+    } else {
+        Toast::toast(this, NAMEICONRES("metadatadel"), tr("MetaDelNoItem"));
+    }
 }
 
 void MainWindow::on_metadatacls() {
@@ -2699,6 +2666,7 @@ void MainWindow::on_metadatacls() {
     }
     auto doc = hexeditor->document();
     doc->metadata()->Clear();
+    Toast::toast(this, NAMEICONRES("metadatacls"), tr("MetaClearSuccess"));
 }
 
 void MainWindow::on_metadatafg(bool checked) {
@@ -3245,17 +3213,17 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             }
         }
 
-        auto ret = closeEditor(editor, m_isOnClosing);
+        auto ret = closeEditor(editor, false);
         if (ret == ErrFile::UnSaved || ret == ErrFile::WorkSpaceUnSaved) {
             auto ret = this->saveRequest();
             if (ret == QMessageBox::Cancel) {
                 return;
             } else if (ret == QMessageBox::Yes) {
-                auto ret = saveEditor(editor, {}, false);
+                auto ret = saveEditor(editor, {});
                 switch (ret) {
                 case WingHex::Success:
                     // ok, no need to report
-                    closeEditor(editor, m_isOnClosing);
+                    closeEditor(editor, false);
                     break;
                 case WingHex::Permission: {
                     auto btn = WingMessageBox::critical(
@@ -3271,7 +3239,6 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
                 case WingHex::AlreadyOpened:
                 case WingHex::IsNewFile:
                 case WingHex::IsDirver:
-                case WingHex::SourceFileChanged:
                 case WingHex::ClonedFile:
                 case WingHex::InvalidFormat:
                 case WingHex::TooManyOpenedFile:
@@ -3330,6 +3297,11 @@ void MainWindow::registerClonedEditorView(EditorView *editor) {
     auto ta = editor->toggleViewAction();
     menu->addAction(ta);
     ev->setEnabled(true);
+
+    connect(editor, &EditorView::closeRequested, this, [=]() {
+        adjustEditorFocus(editor);
+        editor->closeDockWidget();
+    });
 }
 
 void MainWindow::connectEditorView(EditorView *editor) {
@@ -3577,7 +3549,6 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
         return ErrFile::AlreadyOpened;
     }
 
-    auto dev = PluginSystem::instance().ext2Device(ext);
     auto ev = new EditorView(this);
     auto res = ev->openExtFile(ext, file);
 
@@ -3665,49 +3636,15 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     return ErrFile::Success;
 }
 
-ErrFile MainWindow::openRegionFile(QString file, EditorView **editor,
-                                   qsizetype start, qsizetype length) {
-    auto e = findEditorView(file);
-    if (e) {
-        if (editor) {
-            *editor = e;
-        }
-        return ErrFile::AlreadyOpened;
-    }
-
-    // ok, going on
-    if (!newOpenFileSafeCheck()) {
-        return ErrFile::Error;
-    }
-
-    QFileInfo finfo(file);
-    auto filename = finfo.absoluteFilePath();
-
-    auto ev = new EditorView(this);
-    auto res = ev->openRegionFile(filename, start, length);
-
-    if (res != ErrFile::Success) {
-        delete ev;
-        return res;
-    }
-
-    registerEditorView(ev);
-    if (editor) {
-        *editor = ev;
-    }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
-    return ErrFile::Success;
-}
-
 ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
-                               bool ignoreMd5, bool isExport,
-                               bool forceWorkspace, QString *ws) {
+                               bool isExport, bool forceWorkspace,
+                               QString *ws) {
     if (editor == nullptr) {
         return ErrFile::Error;
     }
 
     auto isNewFile = editor->isNewFile();
-    if (isNewFile && filename.isEmpty()) {
+    if (isNewFile) {
         return ErrFile::IsNewFile;
     }
 
@@ -3716,13 +3653,14 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     }
 
     auto oldName = editor->fileName();
+    auto newName = filename.isEmpty() ? oldName : filename;
 
     QString workspace = m_views.value(editor);
     if (forceWorkspace || workspace.isEmpty()) {
         if (forceWorkspace || editor->change2WorkSpace()) {
             QString curFile;
             if (!editor->isDriver() && !editor->isExtensionFile()) {
-                curFile = editor->fileName() + PROEXT;
+                curFile = newName + PROEXT;
             }
 
             auto wsfile = getWorkSpaceFileName(curFile);
@@ -3737,7 +3675,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
         *ws = workspace;
     }
 
-    auto ret = editor->save(workspace, filename, ignoreMd5, isExport,
+    auto ret = editor->save(workspace, filename, isExport,
                             forceWorkspace
                                 ? EditorView::SaveWorkSpaceAttr::ForceWorkSpace
                                 : EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
@@ -3746,7 +3684,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
 
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
-            {filename.isEmpty() ? oldName : filename, oldName, isExport,
+            {newName, oldName, isExport,
              QVariant::fromValue(getEditorViewFileType(editor))});
     }
     return ret;
@@ -3783,21 +3721,12 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     plgsys.dispatchEvent(
         IWingPlugin::RegisteredEvent::FileClosed,
         {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
-    editor->deleteDockWidget();
+    editor->closeDockWidget();
 
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
         ->setEnabled(m_views.size() != 0);
 
-    if (m_dock->focusedDockWidget() == editor) {
-        if (!m_views.isEmpty()) {
-            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
-                auto ev = *p;
-                if (ev != editor && ev->isCurrentTab()) {
-                    ev->setFocus();
-                }
-            }
-        }
-    }
+    adjustEditorFocus(editor);
     return ErrFile::Success;
 }
 
@@ -3807,8 +3736,6 @@ IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
     switch (view->documentType()) {
     case EditorView::DocumentType::File:
         return IWingPlugin::FileType::File;
-    case EditorView::DocumentType::RegionFile:
-        return IWingPlugin::FileType::RegionFile;
     case EditorView::DocumentType::Driver:
         return IWingPlugin::FileType::Driver;
     case EditorView::DocumentType::Extension:
@@ -3870,6 +3797,19 @@ EditorView *MainWindow::currentEditor() {
         return ret;
     }
     return m_curEditor;
+}
+
+void MainWindow::adjustEditorFocus(EditorView *closedEditor) {
+    if (m_dock->focusedDockWidget() == closedEditor) {
+        if (!m_views.isEmpty()) {
+            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
+                auto ev = *p;
+                if (ev != closedEditor && ev->isCurrentTab()) {
+                    ev->setFocus();
+                }
+            }
+        }
+    }
 }
 
 QString MainWindow::getWorkSpaceFileName(const QString &curFile) {
@@ -4044,21 +3984,18 @@ QJsonObject MainWindow::extractModelData(const QAbstractItemModel *model,
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    m_isOnClosing = true;
 
     // plugin first checking
     auto closing = PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::AppClosing, {});
     if (!closing) {
         event->ignore();
-        m_isOnClosing = false;
         return;
     }
 
     // then checking the scripting dialog
     if (!m_scriptDialog->about2Close()) {
         event->ignore();
-        m_isOnClosing = false;
         return;
     }
 
@@ -4083,7 +4020,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         }
 
         for (auto &view : need2CloseView) {
-            emit view->closeRequested();
+            view->requestCloseDockWidget();
         }
 
         auto ret =
@@ -4093,11 +4030,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                       this, qAppName(), tr("ConfirmAPPSave"),
                       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
         if (ret == QMessageBox::Yes) {
-            auto views = m_views.keys();
-            for (auto &p : views) {
-                emit p->closeRequested();
+            for (auto pview = m_views.constKeyValueBegin();
+                 pview != m_views.constKeyValueEnd(); ++pview) {
+                pview->first->save(pview->second, {});
+                pview->first->requestCloseDockWidget();
             }
-            m_isOnClosing = false;
+
             if (!m_views.isEmpty()) {
                 event->ignore();
                 return;
@@ -4107,10 +4045,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             for (auto &p : views) {
                 p->closeDockWidget(); // force close
             }
-            m_isOnClosing = false;
         } else {
             event->ignore();
-            m_isOnClosing = false;
             return;
         }
     }

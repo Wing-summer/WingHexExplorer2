@@ -545,7 +545,7 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
     auto pn = tokens.takeFirst();
     if (PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::ScriptPragma,
-            {quintptr(builder), sectionname, pn, tokens})) {
+            {sectionname, pn, tokens})) {
         return 0;
     }
 

@@ -29,11 +29,11 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
-#include "model/dbgbreakpointmodel.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
 #include "utilities.h"
 
+#include <QKeySequence>
 #include <QMessageBox>
 #include <QShortcut>
 #include <QStatusBar>
@@ -93,9 +93,6 @@ private:
     ads::CDockAreaWidget *
     buildUpVarShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                        ads::CDockAreaWidget *areaw = nullptr);
-    ads::CDockAreaWidget *
-    buildUpBreakpointShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
-                              ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpOutputShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                           ads::CDockAreaWidget *areaw = nullptr);
@@ -306,7 +303,6 @@ private:
     ScriptingConsole *m_consoleout = nullptr;
     DbgVarShowModel *m_varshow = nullptr;
     DbgVarShowModel *m_gvarshow = nullptr;
-    DbgBreakpointModel *m_breakpoints = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
     ASObjTreeWidget *m_sym = nullptr;
 

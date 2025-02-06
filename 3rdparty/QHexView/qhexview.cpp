@@ -358,17 +358,19 @@ bool QHexView::RemoveSelection(int nibbleindex) {
         return false;
 
     auto total = m_cursor->selectionCount();
-    bool res = true;
-    m_document->beginMarco(QStringLiteral(""));
+    m_document->beginMarco(QStringLiteral("RemoveSelection"));
     for (int i = 0; i < total; ++i) {
-        res &=
+        auto res =
             m_document->Remove(m_cursor, m_cursor->selectionStart(i).offset(),
                                m_cursor->selectionLength(i), nibbleindex);
+        if (!res) {
+            break;
+        }
     }
     m_document->endMarco();
     m_cursor->clearSelection();
 
-    return res;
+    return true;
 }
 
 bool QHexView::removeSelection() {
@@ -417,15 +419,19 @@ QByteArrayList QHexView::selectedBytes() const {
 
 void QHexView::paste(bool hex) {
     QClipboard *c = qApp->clipboard();
-    QByteArray data = c->text().toUtf8();
+
+    QByteArray data;
+    if (hex) {
+        data = QByteArray::fromHex(c->text().toUtf8());
+    } else {
+        auto d = c->mimeData();
+        data = d->data(QStringLiteral("application/octet-stream"));
+    }
 
     if (data.isEmpty())
         return;
 
     this->removeSelection();
-
-    if (hex)
-        data = QByteArray::fromHex(data);
 
     auto pos = m_cursor->position().offset();
     if (!m_document->isKeepSize()) {
@@ -451,18 +457,21 @@ bool QHexView::Cut(bool hex, int nibbleindex) {
     }
 }
 
-void QHexView::Paste(int nibbleindex, bool hex) {
+void QHexView::Paste(bool hex, int nibbleindex) {
     QClipboard *c = qApp->clipboard();
-    QByteArray data = c->mimeData()->data(
-        QStringLiteral("application/octet-stream")); // don't use getText()
+
+    QByteArray data;
+    if (hex) {
+        data = QByteArray::fromHex(c->text().toUtf8());
+    } else {
+        auto d = c->mimeData();
+        data = d->data(QStringLiteral("application/octet-stream"));
+    }
 
     if (data.isEmpty())
         return;
 
     this->RemoveSelection(nibbleindex);
-
-    if (hex)
-        data = QByteArray::fromHex(data);
 
     auto pos = m_cursor->position().offset();
     if (m_cursor->insertionMode() == QHexCursor::InsertionMode::InsertMode) {
@@ -511,13 +520,15 @@ bool QHexView::copy(bool hex) {
 
     QByteArray bytes = this->selectedBytes().join();
 
-    if (hex)
+    if (hex) {
         bytes = bytes.toHex(' ').toUpper();
-
-    auto mime = new QMimeData;
-    mime->setData(QStringLiteral("application/octet-stream"),
-                  bytes); // don't use setText()
-    c->setMimeData(mime);
+        c->setText(bytes);
+    } else {
+        auto mime = new QMimeData;
+        mime->setData(QStringLiteral("application/octet-stream"),
+                      bytes); // don't use setText()
+        c->setMimeData(mime);
+    }
 
     // fix the bug by wingsummer
     return true;

@@ -21,7 +21,6 @@
 
 #include "qhexdocument.h"
 #include "buffer/qfilebuffer.h"
-#include "buffer/qfileregionbuffer.h"
 #include "commands/baseaddrcommand.h"
 #include "commands/bookmark/bookmarkaddcommand.h"
 #include "commands/bookmark/bookmarkclearcommand.h"
@@ -53,7 +52,10 @@ QList<qsizetype> QHexDocument::getLineBookmarksPos(qsizetype line) {
     auto ubound = _bookmarks.upperBound(end);
 
     for (auto p = lbound; p != ubound; ++p) {
-        pos.append(p.key());
+        auto off = p.key();
+        if (off >= begin && off < end) {
+            pos.append(off);
+        }
     }
 
     return pos;
@@ -66,7 +68,14 @@ bool QHexDocument::lineHasBookMark(qsizetype line) {
     auto lbound = _bookmarks.lowerBound(begin);
     auto ubound = _bookmarks.upperBound(end);
 
-    return lbound != ubound;
+    for (auto p = lbound; p != ubound; ++p) {
+        auto off = p.key();
+        if (off >= begin && off < end) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void QHexDocument::addUndoCommand(QUndoCommand *command) {
@@ -345,6 +354,19 @@ bool QHexDocument::bookMarkExists(qsizetype pos) {
     return _bookmarks.contains(pos);
 }
 
+QList<qsizetype> QHexDocument::bookMarkRange(qsizetype begin, qsizetype end) {
+    Q_ASSERT(end >= begin && begin >= 0);
+    auto it = _bookmarks.lowerBound(begin);
+    auto pend = _bookmarks.upperBound(end);
+
+    QList<qsizetype> ret;
+    while (it != pend) {
+        ret.append(it.key());
+        it++;
+    }
+    return ret;
+}
+
 qsizetype QHexDocument::bookMarkPos(qsizetype index) {
     Q_ASSERT(index >= 0 && index < _bookmarks.size());
     return *(std::next(_bookmarks.keyBegin(), index));
@@ -429,23 +451,6 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
         results.append(p);
         p += offset + 1;
     }
-}
-
-QHexDocument *QHexDocument::fromRegionFile(QString filename, qsizetype start,
-                                           qsizetype length, bool readonly) {
-
-    QFile iodevice(filename);
-    auto hexbuffer = new QFileRegionBuffer;
-    hexbuffer->setReadOffset(start);
-    hexbuffer->setReadMaxBytes(length);
-
-    if (hexbuffer->read(&iodevice)) {
-        return new QHexDocument(hexbuffer, readonly);
-    } else {
-        delete hexbuffer;
-    }
-
-    return nullptr;
 }
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {
@@ -654,7 +659,7 @@ void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
 
 bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                           int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked || m_metadata->hasMetadata())
+    if (m_keepsize || m_readonly || m_islocked)
         return false;
     auto cmd = MakeRemove(nullptr, cursor, offset, len, nibbleindex);
     if (cmd) {

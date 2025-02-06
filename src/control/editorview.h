@@ -38,14 +38,7 @@ class EditorView : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    enum class DocumentType {
-        InValid,
-        File,
-        RegionFile,
-        Driver,
-        Extension,
-        Cloned
-    };
+    enum class DocumentType { InValid, File, Driver, Extension, Cloned };
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
@@ -70,7 +63,6 @@ public:
     bool isCloneFile() const;
     bool isDriver() const;
     bool isExtensionFile() const;
-    bool isRegionFile() const;
     bool isCommonFile() const;
 
     FindResultModel *findResultModel() const;
@@ -123,11 +115,10 @@ public slots:
     ErrFile openFile(const QString &filename);
     ErrFile openExtFile(const QString &ext, const QString &file);
     ErrFile openWorkSpace(const QString &filename);
-    ErrFile openRegionFile(QString filename, qsizetype start, qsizetype length);
     ErrFile openDriver(const QString &driver);
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
-         bool ignoreMd5 = false, bool isExport = false,
+         bool isExport = false,
          SaveWorkSpaceAttr workSpaceAttr = SaveWorkSpaceAttr::AutoWorkSpace);
     ErrFile reload();
     ErrFile closeFile();

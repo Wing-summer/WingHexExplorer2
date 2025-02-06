@@ -13,8 +13,6 @@ add_library(
     QHexView STATIC
     document/buffer/qfilebuffer.cpp
     document/buffer/qfilebuffer.h
-    document/buffer/qfileregionbuffer.cpp
-    document/buffer/qfileregionbuffer.h
     document/buffer/qhexbuffer.cpp
     document/buffer/qhexbuffer.h
     document/buffer/qmemorybuffer.cpp

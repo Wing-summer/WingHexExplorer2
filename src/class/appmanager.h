@@ -37,12 +37,9 @@ public:
     }
 
 public slots:
-    void openFile(const QString &file, bool autoDetect = true,
-                  qsizetype start = -1, qsizetype stop = -1);
+    void openFile(const QString &file, bool autoDetect = true);
     void openRawFile(const QString &file);
     void openDriver(const QString &driver);
-    void openRegionFile(const QString &region, qsizetype start = -1,
-                        qsizetype length = -1);
     void openWorkSpace(const QString &ws);
 
 private:

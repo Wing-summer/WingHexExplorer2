@@ -18,7 +18,10 @@
 #include "scripteditor.h"
 #include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qeditor.h"
+
+#ifdef Q_OS_LINUX
 #include "utilities.h"
+#endif
 
 #include <QAction>
 #include <QFile>
@@ -52,8 +55,8 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 
 ScriptEditor::~ScriptEditor() {
     auto e = editor();
-    e->disconnect();
     e->document()->disconnect();
+    e->disconnect();
 }
 
 QString ScriptEditor::fileName() const { return editor()->fileName(); }
@@ -66,7 +69,9 @@ bool ScriptEditor::openFile(const QString &filename) {
 bool ScriptEditor::save(const QString &path) {
     auto e = editor();
 
+#ifdef Q_OS_LINUX
     auto needAdjustFile = !QFile::exists(path);
+#endif
 
     auto clang = ClangFormatManager::instance();
     if (clang.exists() && clang.autoFormat()) {

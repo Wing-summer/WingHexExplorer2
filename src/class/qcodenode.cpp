@@ -24,6 +24,7 @@ enum CacheIndex {
     // ICON_UNION,
     ICON_CLASS,
     // ICON_STRUCT,
+    ICON_KEYWORD,
     ICON_TYPEDEF,
     ICON_NAMESPACE,
     ICON_FUNCTION = ICON_NAMESPACE + 2,

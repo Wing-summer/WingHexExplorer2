@@ -139,7 +139,6 @@ EditorView *PluginSystem::getCurrentPluginView(IWingPlugin *plg) {
     }
 
     auto fid = m_plgCurrentfid[plg];
-    auto &plgview = m_plgviewMap[plg];
     auto ctx = pluginContextById(plg, fid);
     if (ctx) {
         return ctx->view;
@@ -462,10 +461,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::ScriptPragma: {
         Q_ASSERT(params.size() == 4);
-        auto pproc =
-            reinterpret_cast<AsPreprocesser *>(params.at(0).value<quintptr>());
-        auto section = params.at(1).toString();
-        auto plgID = params.at(2).toString();
+        auto section = params.at(0).toString();
+        auto plgID = params.at(1).toString();
         auto &es = _evplgs[event];
         auto r = std::find_if(
             es.constBegin(), es.constEnd(),
@@ -691,6 +688,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
         if (sig.isEmpty()) {
             Logger::critical(tr("RegisterScriptFnUnSupportedTypes:") + id +
                              QStringLiteral("::") + p->first);
+            func->Release();
             continue;
         }
 
@@ -699,7 +697,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
                                             _engine->defaultNamespace);
         if (r < 0) {
             Logger::critical(tr("RegisterScriptFnInvalidSig:") + sig);
-            func->funcType = asFUNC_DUMMY;
+            func->Release();
             continue;
         }
 
@@ -707,7 +705,7 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
                                 _engine->defaultNamespace, false, false, false);
         if (r < 0) {
             Logger::critical(tr("RegisterScriptFnConflitSig:") + sig);
-            func->funcType = asFUNC_DUMMY;
+            func->Release();
             continue;
         }
 
@@ -720,10 +718,8 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
     }
 
     // clear the internal hacking functions
-    auto len = fnlist.size();
     for (auto &fn : fnlist) {
         _engine->RemoveScriptFunction(fn);
-        fn->Release();
     }
     _engine->SetDefaultNamespace("");
 
@@ -759,8 +755,6 @@ void PluginSystem::registerUnSafeFns(IWingPlugin *plg) {
     QHash<QString, IWingPlugin::UNSAFE_SCFNPTR> rfns;
     for (auto p = fns.constKeyValueBegin(); p != fns.constKeyValueEnd(); ++p) {
         auto func = new asCScriptFunction(_engine, nullptr, asFUNC_SYSTEM);
-
-        auto &fn = p->second;
         auto sig = p->first;
         auto r = c.ParseFunctionDeclaration(nullptr, sig.toLatin1(), func, true,
                                             nullptr, nullptr,
@@ -788,10 +782,8 @@ void PluginSystem::registerUnSafeFns(IWingPlugin *plg) {
     }
 
     // clear the internal hacking functions
-    auto len = fnlist.size();
     for (auto &fn : fnlist) {
         _engine->RemoveScriptFunction(fn);
-        fn->Release();
     }
     _engine->SetDefaultNamespace("");
 
@@ -1987,7 +1979,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
                 auto r = pluginContextByIdIt(plg, fid);
                 if (r) {
-                    (*r)->cmd = new QUndoCommand;
+                    (*r)->cmd = new QUndoCommand(txt);
                 }
                 return true;
             });
@@ -2024,7 +2016,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             });
     connect(pctl, &WingPlugin::Controller::writeBytes, _win,
             [=](qsizetype offset, const QByteArray &data) -> bool {
-                QPair<EditorView *, QUndoCommand *> empty{nullptr, nullptr};
                 auto e = getCurrentPluginView(plg);
                 if (e) {
                     auto editor = e->hexEditor();
@@ -2642,36 +2633,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             }
         });
     connect(
-        pctl, &WingPlugin::Controller::openRegionFile, _win,
-        [=](const QString &filename, qsizetype start,
-            qsizetype length) -> ErrFile {
-            if (!checkThreadAff()) {
-                return ErrFile::NotAllowedInNoneGUIThread;
-            }
-            EditorView *view = nullptr;
-            if (!checkPluginCanOpenedFile(plg)) {
-                return ErrFile::TooManyOpenedFile;
-            }
-            auto ret = _win->openRegionFile(filename, &view, start, length);
-            if (view) {
-                if (ret == ErrFile::AlreadyOpened &&
-                    checkPluginHasAlreadyOpened(plg, view)) {
-                    return ErrFile::AlreadyOpened;
-                }
-                auto id = assginHandleForPluginView(plg, view);
-                m_plgCurrentfid[plg] = id;
-                auto handle = getUIDHandle(id);
-                PluginSystem::instance().dispatchEvent(
-                    IWingPlugin::RegisteredEvent::PluginFileOpened,
-                    {quintptr(plg), filename, handle,
-                     QVariant::fromValue(_win->getEditorViewFileType(view))});
-
-                return ErrFile(handle);
-            } else {
-                return ret;
-            }
-        });
-    connect(
         pctl, &WingPlugin::Controller::openDriver, _win,
         [=](const QString &driver) -> ErrFile {
             if (!checkThreadAff()) {
@@ -2718,7 +2679,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return ErrFile::NotExist;
             });
     connect(pctl, &WingPlugin::Controller::saveFile, _win,
-            [=](int handle, bool ignoreMd5) -> ErrFile {
+            [=](int handle) -> ErrFile {
                 if (!checkThreadAff()) {
                     return ErrFile::NotAllowedInNoneGUIThread;
                 }
@@ -2728,47 +2689,45 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
 
                 if (view) {
-                    _win->saveEditor(view, {}, ignoreMd5);
+                    _win->saveEditor(view, {});
                     return ErrFile::Success;
                 }
                 return ErrFile::NotExist;
             });
-    connect(
-        pctl, &WingPlugin::Controller::exportFile, _win,
-        [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
-            if (!checkThreadAff()) {
-                return ErrFile::NotAllowedInNoneGUIThread;
-            }
+    connect(pctl, &WingPlugin::Controller::exportFile, _win,
+            [=](int handle, const QString &savename) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
 
-            auto view = handle2EditorView(plg, handle);
-            if (!checkPluginHasAlreadyOpened(plg, view)) {
-                return ErrFile::Error;
-            }
+                auto view = handle2EditorView(plg, handle);
+                if (!checkPluginHasAlreadyOpened(plg, view)) {
+                    return ErrFile::Error;
+                }
 
-            if (view) {
-                _win->saveEditor(view, savename, ignoreMd5, true);
-                return ErrFile::Success;
-            }
-            return ErrFile::NotExist;
-        });
+                if (view) {
+                    _win->saveEditor(view, savename, true);
+                    return ErrFile::Success;
+                }
+                return ErrFile::NotExist;
+            });
 
-    connect(
-        pctl, &WingPlugin::Controller::saveAsFile, _win,
-        [=](int handle, const QString &savename, bool ignoreMd5) -> ErrFile {
-            if (!checkThreadAff()) {
-                return ErrFile::NotAllowedInNoneGUIThread;
-            }
-            auto view = handle2EditorView(plg, handle);
-            if (!checkPluginHasAlreadyOpened(plg, view)) {
-                return ErrFile::Error;
-            }
+    connect(pctl, &WingPlugin::Controller::saveAsFile, _win,
+            [=](int handle, const QString &savename) -> ErrFile {
+                if (!checkThreadAff()) {
+                    return ErrFile::NotAllowedInNoneGUIThread;
+                }
+                auto view = handle2EditorView(plg, handle);
+                if (!checkPluginHasAlreadyOpened(plg, view)) {
+                    return ErrFile::Error;
+                }
 
-            if (view) {
-                _win->saveEditor(view, savename, ignoreMd5);
-                return ErrFile::Success;
-            }
-            return ErrFile::NotExist;
-        });
+                if (view) {
+                    _win->saveEditor(view, savename);
+                    return ErrFile::Success;
+                }
+                return ErrFile::NotExist;
+            });
     connect(pctl, &WingPlugin::Controller::openCurrent, _win, [=]() -> ErrFile {
         if (!checkThreadAff()) {
             return ErrFile::NotAllowedInNoneGUIThread;
@@ -2807,26 +2766,24 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
                 return _win->closeEditor(view, force);
             });
-    connect(pctl, &WingPlugin::Controller::saveCurrent, _win,
-            [=](bool ignoreMd5) -> ErrFile {
-                if (!checkThreadAff()) {
-                    return ErrFile::NotAllowedInNoneGUIThread;
-                }
-                auto view = getCurrentPluginView(plg);
-                if (!checkPluginHasAlreadyOpened(plg, view)) {
-                    return ErrFile::Error;
-                }
+    connect(pctl, &WingPlugin::Controller::saveCurrent, _win, [=]() -> ErrFile {
+        if (!checkThreadAff()) {
+            return ErrFile::NotAllowedInNoneGUIThread;
+        }
+        auto view = getCurrentPluginView(plg);
+        if (!checkPluginHasAlreadyOpened(plg, view)) {
+            return ErrFile::Error;
+        }
 
-                if (view) {
-                    auto ws = _win->m_views.value(view);
-                    return view->save(
-                        ws, {}, ignoreMd5, false,
-                        EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
-                }
-                return ErrFile::Error;
-            });
+        if (view) {
+            auto ws = _win->m_views.value(view);
+            return view->save(ws, {}, false,
+                              EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
+        }
+        return ErrFile::Error;
+    });
     connect(pctl, &WingPlugin::Controller::saveAsCurrent, _win,
-            [=](const QString &savename, bool ignoreMd5) -> ErrFile {
+            [=](const QString &savename) -> ErrFile {
                 if (!checkThreadAff()) {
                     return ErrFile::NotAllowedInNoneGUIThread;
                 }
@@ -2836,7 +2793,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 }
 
                 if (view) {
-                    _win->saveEditor(view, savename, ignoreMd5, true);
+                    _win->saveEditor(view, savename, true);
                     return ErrFile::Success;
                 }
                 return ErrFile::Error;

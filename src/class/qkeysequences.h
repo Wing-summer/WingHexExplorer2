@@ -24,7 +24,6 @@
 class QKeySequences {
 public:
     enum class Key {
-        OPEN_REGION_FILE,
         OPEN_WORKSPACE,
         REDO,
         SAVE_AS,

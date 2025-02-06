@@ -132,9 +132,6 @@ private:
     bool checkBreakPoint(asIScriptContext *ctx);
     void listMemberProperties(asIScriptContext *ctx);
 
-    // Helpers
-    bool interpretCommand(const QString &cmd, asIScriptContext *ctx);
-
 signals:
     void breakPointChanged();
     void onAdjustBreakPointLine(const BreakPoint &old, int newLineNr);

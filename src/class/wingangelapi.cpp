@@ -1089,14 +1089,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "ErrFile openExtFile(string &in ext, string &in file)");
 
-    registerAPI<WingHex::ErrFile(const QString &, qsizetype, qsizetype)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::openRegionFile, ctl,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
-        "ErrFile openRegionFile(string &in filename, " QSIZETYPE
-        " start = 0, " QSIZETYPE " length = 1024)");
-
     registerAPI<WingHex::ErrFile(const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::openDriver, ctl,
@@ -1115,27 +1107,23 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "ErrFile closeHandle(int handle)");
 
-    registerAPI<WingHex::ErrFile(int, bool)>(
+    registerAPI<WingHex::ErrFile(int)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveFile, ctl,
-                  std::placeholders::_1, std::placeholders::_2),
-        "ErrFile saveFile(int handle, bool ignoreMd5 = false)");
+                  std::placeholders::_1),
+        "ErrFile saveFile(int handle)");
 
-    registerAPI<WingHex::ErrFile(int, const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::exportFile, ctl,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
-        "ErrFile exportFile(int handle, string &in savename, "
-        "bool ignoreMd5 = false)");
+                  std::placeholders::_1, std::placeholders::_2),
+        "ErrFile exportFile(int handle, string &in savename)");
 
-    registerAPI<WingHex::ErrFile(int, const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(int, const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveAsFile, ctl,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3),
-        "ErrFile saveAsFile(int handle, string &in savename, "
-        "bool ignoreMd5 = false)");
+                  std::placeholders::_1, std::placeholders::_2),
+        "ErrFile saveAsFile(int handle, string &in savename)");
 
     registerAPI<WingHex::ErrFile()>(
         engine, std::bind(&WingHex::WingPlugin::Controller::openCurrent, ctl),
@@ -1147,23 +1135,21 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1),
         "ErrFile closeCurrent(bool force = false)");
 
-    registerAPI<WingHex::ErrFile(bool)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::saveCurrent, ctl,
-                  std::placeholders::_1),
-        "ErrFile saveCurrent(bool ignoreMd5 = false)");
+    registerAPI<WingHex::ErrFile()>(
+        engine, std::bind(&WingHex::WingPlugin::Controller::saveCurrent, ctl),
+        "ErrFile saveCurrent()");
 
-    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::saveAsCurrent, ctl,
-                  std::placeholders::_1, std::placeholders::_2),
-        "ErrFile saveAsCurrent(string &in savename, bool ignoreMd5 = false)");
+                  std::placeholders::_1),
+        "ErrFile saveAsCurrent(string &in savename)");
 
-    registerAPI<WingHex::ErrFile(const QString &, bool)>(
+    registerAPI<WingHex::ErrFile(const QString &)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::exportCurrent, ctl,
-                  std::placeholders::_1, std::placeholders::_2),
-        "ErrFile exportCurrent(string &in savename, bool ignoreMd5 = false)");
+                  std::placeholders::_1),
+        "ErrFile exportCurrent(string &in savename)");
 
     registerAPI<bool(qsizetype, const QString &)>(
         engine,
@@ -1673,13 +1659,11 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
             if (qstrcmp(tname, "dictionary") == 0) {
                 auto values =
                     *getDereferencePointer<CScriptDictionary *>(raw, isHandle);
-                auto len = values->GetSize();
-                auto keys = values->GetKeys();
 
                 // QMap or QHash ?
                 if (flag) {
                     QVariantHash hash;
-                    for (auto it : *values) {
+                    for (auto &it : *values) {
                         // Determine the name of the key
                         auto key = it.GetKey();
 
@@ -1692,7 +1676,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
                     return hash;
                 } else {
                     QVariantMap map;
-                    for (auto it : *values) {
+                    for (auto &it : *values) {
                         // Determine the name of the key
                         auto key = it.GetKey();
 
@@ -1959,7 +1943,6 @@ void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
         fn->GetUserData(AsUserDataType::UserData_API));
     auto id = reinterpret_cast<qsizetype>(
         fn->GetUserData(AsUserDataType::UserData_PluginFn));
-    auto engine = fn->GetEngine();
 
     Q_ASSERT(p);
     Q_ASSERT(id >= 0 && id < p->_usfns.size());

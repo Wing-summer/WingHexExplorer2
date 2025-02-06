@@ -26,8 +26,7 @@
 #include <QTextBrowser>
 #include <QVBoxLayout>
 
-FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
-                               QWidget *parent)
+FileInfoDialog::FileInfoDialog(QString filename, QWidget *parent)
     : FramelessDialogBase(parent) {
     static const QString dfmt("yyyy/MM/dd hh:mm:ss ddd");
 
@@ -69,8 +68,6 @@ FileInfoDialog::FileInfoDialog(QString filename, bool isRegionFile,
                       .toString(dfmt));
         b->append(tr("LastRead:") + finfo.lastRead().toString(dfmt));
         b->append(tr("LastMod:") + finfo.lastModified().toString(dfmt));
-        b->append(tr("IsRegionFile:") +
-                  (isRegionFile ? tr("True") : tr("False")));
     }
 
     auto availSizes = icon.availableSizes();

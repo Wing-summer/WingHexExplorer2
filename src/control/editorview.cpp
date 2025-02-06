@@ -18,14 +18,11 @@
 #include "editorview.h"
 
 #include "QHexView/document/buffer/qfilebuffer.h"
-#include "QHexView/document/buffer/qfileregionbuffer.h"
 #include "QHexView/document/buffer/qmemorybuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
-#include "class/eventfilter.h"
 #include "class/qkeysequences.h"
 #include "class/settingmanager.h"
 #include "class/workspacemanager.h"
-#include "dialog/fileinfodialog.h"
 #include "plugin/pluginsystem.h"
 #include "utilities.h"
 
@@ -49,7 +46,8 @@ EditorView::EditorView(QWidget *parent)
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
         CDockWidget::DockWidgetClosable | CDockWidget::DockWidgetPinnable |
-        CDockWidget::CustomCloseHandling);
+        CDockWidget::CustomCloseHandling |
+        CDockWidget::DockWidgetDeleteOnClose);
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("EditorView"));
 
@@ -436,47 +434,6 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
     return ErrFile::Error;
 }
 
-ErrFile EditorView::openRegionFile(QString filename, qsizetype start,
-                                   qsizetype length) {
-    if (isCloneFile()) {
-        return ErrFile::ClonedFile;
-    }
-
-    QFileInfo info(filename);
-    if (info.exists()) {
-        if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
-            return ErrFile::Permission;
-        }
-
-        auto readonly = !Utilities::fileCanWrite(filename);
-
-        auto *p =
-            QHexDocument::fromRegionFile(filename, start, length, readonly);
-        if (Q_UNLIKELY(p == nullptr)) {
-            return ErrFile::Permission;
-        }
-
-        m_docType = DocumentType::RegionFile;
-
-        m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-        m_hex->setLockedFile(readonly);
-        m_hex->setKeepSize(true);
-
-        p->setDocSaved();
-        m_fileName = info.absoluteFilePath();
-        m_isNewFile = false;
-
-        this->setWindowTitle(info.fileName());
-        connectDocSavedFlag(this);
-
-        auto tab = this->tabWidget();
-        tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
-        tab->setToolTip(m_fileName);
-    }
-
-    return ErrFile::Success;
-}
-
 ErrFile EditorView::openDriver(const QString &driver) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
@@ -515,11 +472,10 @@ ErrFile EditorView::openDriver(const QString &driver) {
 }
 
 ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
-                         bool ignoreMd5, bool isExport,
-                         SaveWorkSpaceAttr workSpaceAttr) {
+                         bool isExport, SaveWorkSpaceAttr workSpaceAttr) {
     if (isCloneFile()) {
-        return this->cloneParent()->save(workSpaceName, path, ignoreMd5,
-                                         isExport, workSpaceAttr);
+        return this->cloneParent()->save(workSpaceName, path, isExport,
+                                         workSpaceAttr);
     }
     auto fileName = path.isEmpty() ? m_fileName : path;
     auto doc = m_hex->document();
@@ -583,24 +539,11 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             _dev->close();
         } else {
             QFile file(fileName);
-
-            switch (m_docType) {
-            case DocumentType::RegionFile: {
-                if (!ignoreMd5 && Utilities::getMd5(m_fileName) != m_md5) {
-                    return ErrFile::SourceFileChanged;
-                }
-                if (!file.open(QFile::ReadWrite)) {
-                    return ErrFile::Permission;
-                }
-            } break;
-            default: {
-                if (!file.open(QFile::WriteOnly)) {
-                    return ErrFile::Permission;
-                }
-            } break;
+            if (!file.open(QFile::WriteOnly)) {
+                return ErrFile::Permission;
             }
 
-            if (doc->saveTo(&file, true)) {
+            if (doc->saveTo(&file, !isExport)) {
                 file.close();
 
                 if (!isExport) {
@@ -615,7 +558,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
         return ErrFile::Permission;
     } else {
-        doc->setDocSaved();
+        if (!isExport) {
+            doc->setDocSaved();
+        }
     }
 
 #ifdef Q_OS_LINUX
@@ -662,12 +607,6 @@ ErrFile EditorView::reload() {
     switch (documentType()) {
     case DocumentType::File:
         return openFile(m_fileName);
-    case DocumentType::RegionFile: {
-        auto doc = qobject_cast<QFileRegionBuffer *>(m_hex->document());
-        Q_ASSERT(doc);
-        return openRegionFile(m_fileName, doc->readOffset(),
-                              doc->readMaxBytes());
-    }
     case DocumentType::Driver:
         return openDriver(m_fileName);
     case DocumentType::Extension:
@@ -893,7 +832,6 @@ EditorView *EditorView::clone() {
     }
 
     auto ev = new EditorView(this->parentWidget());
-    ev->setFeature(CDockWidget::CustomCloseHandling, false);
     connect(ev, &EditorView::destroyed, this, [=] {
         this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
     });
@@ -957,13 +895,6 @@ bool EditorView::isExtensionFile() const {
         return this->cloneParent()->isExtensionFile();
     }
     return m_docType == EditorView::DocumentType::Extension;
-}
-
-bool EditorView::isRegionFile() const {
-    if (isCloneFile()) {
-        return this->cloneParent()->isRegionFile();
-    }
-    return m_docType == EditorView::DocumentType::RegionFile;
 }
 
 bool EditorView::isCommonFile() const {

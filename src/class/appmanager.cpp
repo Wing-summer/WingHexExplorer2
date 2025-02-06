@@ -139,8 +139,7 @@ AppManager *AppManager::instance() { return _instance; }
 
 MainWindow *AppManager::mainWindow() const { return _w; }
 
-void AppManager::openFile(const QString &file, bool autoDetect, qsizetype start,
-                          qsizetype stop) {
+void AppManager::openFile(const QString &file, bool autoDetect) {
     EditorView *editor = nullptr;
     Q_ASSERT(_w);
     if (Utilities::isStorageDevice(file)) {
@@ -151,11 +150,8 @@ void AppManager::openFile(const QString &file, bool autoDetect, qsizetype start,
             ret = _w->openWorkSpace(file, &editor);
         }
         if (ret == ErrFile::Error) {
-            if (start >= 0 && stop > 0) {
-                ret = _w->openRegionFile(file, &editor, start, stop);
-            } else {
-                ret = _w->openFile(file, &editor);
-            }
+            ret = _w->openFile(file, &editor);
+
             if (ret == ErrFile::AlreadyOpened) {
                 Q_ASSERT(editor);
                 if (_w->currentEditor() == editor) {
@@ -210,23 +206,6 @@ void AppManager::openDriver(const QString &driver) {
 
             editor->setFocus();
         }
-    }
-}
-
-void AppManager::openRegionFile(const QString &region, qsizetype start,
-                                qsizetype length) {
-    EditorView *editor = nullptr;
-    Q_ASSERT(_w);
-    auto ret = _w->openRegionFile(region, &editor, start, length);
-    if (ret == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
-        if (_w->currentEditor() == editor) {
-            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
-        } else {
-            editor->raise();
-        }
-
-        editor->setFocus();
     }
 }
 

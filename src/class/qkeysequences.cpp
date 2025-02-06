@@ -19,9 +19,6 @@
 
 QKeySequences::QKeySequences() {
     _kseqs = {
-        {Key::OPEN_REGION_FILE,
-         QKeySequence(Qt::KeyboardModifier::ControlModifier |
-                      Qt::KeyboardModifier::ShiftModifier | Qt::Key_O)},
         {Key::OPEN_WORKSPACE,
          QKeySequence(Qt::KeyboardModifier::ControlModifier | Qt::Key_W)},
         {Key::REDO,
