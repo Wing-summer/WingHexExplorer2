@@ -1392,6 +1392,77 @@ void PluginSystem::registerPluginPages(IWingPluginBase *p) {
     }
 }
 
+bool PluginSystem::updateTextList_API(const QStringList &data,
+                                      const QString &title,
+                                      const ClickCallBack &click,
+                                      const ClickCallBack &dblclick) {
+    auto oldmodel = _win->m_infolist->model();
+    if (oldmodel) {
+        oldmodel->deleteLater();
+    }
+    _win->m_infolist->setProperty("__TITLE__", title);
+    auto model = new QStringListModel(data);
+    _win->m_infolist->setModel(model);
+    _win->m_infoclickfn = click;
+    _win->m_infodblclickfn = dblclick;
+    return true;
+}
+
+bool PluginSystem::updateTextTree_API(const QString &json, const QString &title,
+                                      const ClickCallBack &click,
+                                      const ClickCallBack &dblclick) {
+    auto oldmodel = _win->m_infotree->model();
+    if (oldmodel) {
+        oldmodel->deleteLater();
+    }
+    _win->m_infotree->setProperty("__TITLE__", title);
+    auto model = new QJsonModel;
+    if (model->loadJson(json.toUtf8())) {
+        _win->m_infotree->setModel(model);
+        _win->m_infotreeclickfn = click;
+        _win->m_infotreedblclickfn = dblclick;
+        return true;
+    }
+    return false;
+}
+
+bool PluginSystem::updateTextTable_API(const QString &json,
+                                       const QStringList &headers,
+                                       const QStringList &headerNames,
+                                       const QString &title,
+                                       const ClickCallBack &click,
+                                       const ClickCallBack &dblclick) {
+    auto oldmodel = _win->m_infotable->model();
+    if (oldmodel) {
+        oldmodel->deleteLater();
+    }
+
+    QJsonTableModel::Header header;
+    if (headers.size() > headerNames.size()) {
+        for (auto &name : headers) {
+            QJsonTableModel::Heading heading;
+            heading["index"] = name;
+            heading["title"] = name;
+            header.append(heading);
+        }
+    } else {
+        auto np = headerNames.cbegin();
+        for (auto p = headers.cbegin(); p != headers.cend(); ++p, ++np) {
+            QJsonTableModel::Heading heading;
+            heading["index"] = *p;
+            heading["title"] = *np;
+            header.append(heading);
+        }
+    }
+    _win->m_infotable->setProperty("__TITLE__", title);
+    auto model = new QJsonTableModel(header);
+    model->setJson(QJsonDocument::fromJson(json.toUtf8()));
+    _win->m_infotable->setModel(model);
+    _win->m_infotableclickfn = click;
+    _win->m_infotabledblclickfn = dblclick;
+    return true;
+}
+
 void PluginSystem::connectInterface(IWingPlugin *plg) {
     connectReaderInterface(plg);
     connectControllerInterface(plg);
@@ -2829,16 +2900,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
-            auto oldmodel = _win->m_infolist->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-            _win->m_infolist->setProperty("__TITLE__", title);
-            auto model = new QStringListModel(data);
-            _win->m_infolist->setModel(model);
-            _win->m_infoclickfn = clicked;
-            _win->m_infodblclickfn = dblClicked;
-            return true;
+            return updateTextList_API(data, title, clicked, dblClicked);
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextListByModel, _win,
@@ -2865,19 +2927,7 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
-            auto oldmodel = _win->m_infotree->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-            _win->m_infotree->setProperty("__TITLE__", title);
-            auto model = new QJsonModel;
-            if (model->loadJson(json.toUtf8())) {
-                _win->m_infotree->setModel(model);
-                _win->m_infotreeclickfn = clicked;
-                _win->m_infotreedblclickfn = dblClicked;
-                return true;
-            }
-            return false;
+            return updateTextTree_API(json, title, clicked, dblClicked);
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextTreeByModel, _win,
@@ -2905,36 +2955,8 @@ void PluginSystem::connectUIInterface(IWingPlugin *plg) {
             WingHex::WingPlugin::DataVisual::ClickedCallBack clicked,
             WingHex::WingPlugin::DataVisual::DoubleClickedCallBack dblClicked)
             -> bool {
-            auto oldmodel = _win->m_infotable->model();
-            if (oldmodel) {
-                oldmodel->deleteLater();
-            }
-
-            QJsonTableModel::Header header;
-            if (headers.size() > headerNames.size()) {
-                for (auto &name : headers) {
-                    QJsonTableModel::Heading heading;
-                    heading["index"] = name;
-                    heading["title"] = name;
-                    header.append(heading);
-                }
-            } else {
-                auto np = headerNames.cbegin();
-                for (auto p = headers.cbegin(); p != headers.cend();
-                     ++p, ++np) {
-                    QJsonTableModel::Heading heading;
-                    heading["index"] = *p;
-                    heading["title"] = *np;
-                    header.append(heading);
-                }
-            }
-            _win->m_infotable->setProperty("__TITLE__", title);
-            auto model = new QJsonTableModel(header);
-            model->setJson(QJsonDocument::fromJson(json.toUtf8()));
-            _win->m_infotable->setModel(model);
-            _win->m_infotableclickfn = clicked;
-            _win->m_infotabledblclickfn = dblClicked;
-            return true;
+            return updateTextTable_API(json, headers, headerNames, title,
+                                       clicked, dblClicked);
         });
     connect(
         visual, &WingPlugin::DataVisual::updateTextTableByModel, _win,

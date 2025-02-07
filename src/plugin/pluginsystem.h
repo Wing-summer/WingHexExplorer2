@@ -29,6 +29,7 @@
 #include <QToolButton>
 #include <QVariant>
 
+#include "class/clickcallback.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 #include "plugin/iwingdevice.h"
@@ -256,6 +257,18 @@ private:
     void connectUIInterface(IWingPluginBase *plg);
     void registerPluginDockWidgets(IWingPluginBase *p);
     void registerPluginPages(IWingPluginBase *p);
+
+public:
+    bool updateTextList_API(const QStringList &data, const QString &title,
+                            const ClickCallBack &click,
+                            const ClickCallBack &dblclick);
+    bool updateTextTree_API(const QString &json, const QString &title,
+                            const ClickCallBack &click,
+                            const ClickCallBack &dblclick);
+    bool updateTextTable_API(const QString &json, const QStringList &headers,
+                             const QStringList &headerNames,
+                             const QString &title, const ClickCallBack &click,
+                             const ClickCallBack &dblclick);
 
 private:
     template <typename T>

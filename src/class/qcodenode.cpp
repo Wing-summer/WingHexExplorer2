@@ -52,6 +52,7 @@ static QIcon icon(int cacheIndex) {
         (*q_icon_cache)[ICON_CLASS] = getIcon(QStringLiteral("CVclass"));
 
         // q_icon_cache[ICON_STRUCT] = QIcon(":/completion/CVstruct.png");
+        (*q_icon_cache)[ICON_KEYWORD] = getIcon(QStringLiteral("CVKeyword"));
 
         (*q_icon_cache)[ICON_TYPEDEF] = getIcon(QStringLiteral("CVtypedef"));
 
@@ -365,6 +366,9 @@ QVariant QCodeNode::data(int r) const {
 
             // case Struct:
             //     return icon(ICON_STRUCT);
+
+        case KeyWord:
+            return icon(ICON_KEYWORD);
 
         case Enum:
             return icon(ICON_ENUM);

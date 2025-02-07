@@ -58,6 +58,8 @@ private:
 
     QString getInput();
 
+    QString packUpLoggingStr(const QString &message);
+
 protected:
     void keyPressEvent(QKeyEvent *e) override;
 

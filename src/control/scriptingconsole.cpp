@@ -16,6 +16,7 @@
 */
 
 #include "scriptingconsole.h"
+#include "class/logger.h"
 #include "class/scriptconsolemachine.h"
 #include "qregularexpression.h"
 
@@ -51,25 +52,48 @@ void ScriptingConsole::init() {
     connect(_sp, &ScriptConsoleMachine::onOutput, this,
             [=](ScriptConsoleMachine::MessageType type,
                 const ScriptConsoleMachine::MessageInfo &message) {
-                switch (type) {
-                case ScriptMachine::MessageType::Info:
-                    stdOut(tr("[Info]") + message.message);
-                    _s << Qt::flush;
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Warn:
-                    stdWarn(tr("[Warn]") + message.message);
-                    _s << Qt::flush;
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Error:
-                    stdErr(tr("[Error]") + message.message);
-                    _s << Qt::flush;
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Print:
-                    stdOut(message.message);
-                    break;
+                // If running ouput in the console,
+                // otherwise logging.
+                if (_sp->isRunning()) {
+                    switch (type) {
+                    case ScriptMachine::MessageType::Info:
+                        stdOut(tr("[Info]") + message.message);
+                        _s << Qt::flush;
+                        newLine();
+                        break;
+                    case ScriptMachine::MessageType::Warn:
+                        stdWarn(tr("[Warn]") + message.message);
+                        _s << Qt::flush;
+                        newLine();
+                        break;
+                    case ScriptMachine::MessageType::Error:
+                        stdErr(tr("[Error]") + message.message);
+                        _s << Qt::flush;
+                        newLine();
+                        break;
+                    case ScriptMachine::MessageType::Print:
+                        stdOut(message.message);
+                        break;
+                    }
+                } else {
+                    switch (type) {
+                    case ScriptMachine::MessageType::Info:
+                        Logger::logPrint(Logger::packInfoStr(
+                            packUpLoggingStr(message.message)));
+                        break;
+                    case ScriptMachine::MessageType::Warn:
+                        Logger::logPrint(Logger::packWarnStr(
+                            packUpLoggingStr(message.message)));
+                        break;
+                    case ScriptMachine::MessageType::Error:
+                        Logger::logPrint(Logger::packErrorStr(
+                            packUpLoggingStr(message.message)));
+                        break;
+                    case ScriptMachine::MessageType::Print:
+                        Logger::logPrint(Logger::packDebugStr(
+                            packUpLoggingStr(message.message)));
+                        break;
+                    }
                 }
             });
 
@@ -153,6 +177,10 @@ QString ScriptingConsole::getInput() {
     setMode(Output);
 
     return instr;
+}
+
+QString ScriptingConsole::packUpLoggingStr(const QString &message) {
+    return tr("[Console]") + message;
 }
 
 void ScriptingConsole::keyPressEvent(QKeyEvent *e) {

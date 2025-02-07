@@ -70,6 +70,7 @@ public:
     void installBasicTypes(asIScriptEngine *engine);
 
     void setBindingConsole(ScriptingConsole *console);
+    void unBindConsole();
 
     static QString qvariantCastASString(const QMetaType::Type &id);
 
@@ -89,13 +90,13 @@ private:
     void installLogAPI(asIScriptEngine *engine);
     void installExtAPI(asIScriptEngine *engine);
     void installMsgboxAPI(asIScriptEngine *engine);
-    void installInputboxAPI(asIScriptEngine *engine, int stringID);
+    void installInputboxAPI(asIScriptEngine *engine);
     void installFileDialogAPI(asIScriptEngine *engine);
     void installColorDialogAPI(asIScriptEngine *engine);
     void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
-    void installDataVisualAPI(asIScriptEngine *engine, int stringID);
+    void installDataVisualAPI(asIScriptEngine *engine);
     void installScriptFns(asIScriptEngine *engine);
     void installScriptUnSafeFns(asIScriptEngine *engine);
     void installScriptEnums(asIScriptEngine *engine);
@@ -156,6 +157,16 @@ private:
     static void script_unsafe_call(asIScriptGeneric *gen);
 
 private:
+    static QString QModelIndex_dataString(const QModelIndex &idx);
+    static QString QModelIndex_dataChar(const QModelIndex &idx);
+    static uint QModelIndex_dataUInt(const QModelIndex &idx);
+    static int QModelIndex_dataInt(const QModelIndex &idx);
+    static qlonglong QModelIndex_dataLongLong(const QModelIndex &idx);
+    static qlonglong QModelIndex_dataULongLong(const QModelIndex &idx);
+    static float QModelIndex_dataFloat(const QModelIndex &idx);
+    static double QModelIndex_dataDouble(const QModelIndex &idx);
+
+private:
     WING_SERVICE bool execScriptCode(const WingHex::SenderInfo &sender,
                                      const QString &code);
     WING_SERVICE bool execScript(const WingHex::SenderInfo &sender,
@@ -192,9 +203,9 @@ private:
     void cleanUpHandles(const QVector<int> &handles);
 
 private:
-    QString _InputBox_getItem(int stringID, const QString &title,
-                              const QString &label, const CScriptArray &items,
-                              int current, bool editable, bool *ok,
+    QString _InputBox_getItem(const QString &title, const QString &label,
+                              const CScriptArray &items, int current,
+                              bool editable, bool *ok,
                               Qt::InputMethodHints inputMethodHints);
 
     CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
@@ -229,13 +240,22 @@ private:
 
     bool _HexController_appendBytes(const CScriptArray &ba);
 
-    bool _DataVisual_updateTextList(int stringID, const CScriptArray &data,
-                                    const QString &title);
+private:
+    bool _DataVisual_updateTextList(const CScriptArray &data,
+                                    const QString &title,
+                                    asIScriptFunction *click,
+                                    asIScriptFunction *dblclick);
 
-    bool _DataVisual_updateTextTable(int stringID, const QString &json,
+    bool _DataVisual_updateTextTree(const QString &json, const QString &title,
+                                    asIScriptFunction *click,
+                                    asIScriptFunction *dblclick);
+
+    bool _DataVisual_updateTextTable(const QString &json,
                                      const CScriptArray &headers,
                                      const CScriptArray &headerNames,
-                                     const QString &title);
+                                     const QString &title,
+                                     asIScriptFunction *click,
+                                     asIScriptFunction *dblclick);
 
 private:
     std::vector<std::any> _fnbuffer;

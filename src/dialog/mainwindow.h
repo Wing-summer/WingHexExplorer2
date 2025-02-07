@@ -38,6 +38,7 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "class/clickcallback.h"
 #include "class/recentfilemanager.h"
 #include "class/scriptmanager.h"
 #include "class/wingprogressdialog.h"
@@ -61,9 +62,8 @@ class MainWindow : public FramelessMainWindow {
 
     friend class PluginSystem;
 
-    using ClickedCallBack = WingHex::WingPlugin::DataVisual::ClickedCallBack;
-    using DblClickedCallBack =
-        WingHex::WingPlugin::DataVisual::DoubleClickedCallBack;
+    using ClickedCallBack = ClickCallBack;
+    using DblClickedCallBack = ClickCallBack;
 
 public:
     explicit MainWindow(SplashDialog *splash);

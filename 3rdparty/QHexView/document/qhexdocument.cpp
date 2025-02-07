@@ -46,16 +46,13 @@
 QList<qsizetype> QHexDocument::getLineBookmarksPos(qsizetype line) {
     QList<qsizetype> pos;
     auto begin = m_hexlinewidth * line;
-    auto end = m_hexlinewidth + begin;
+    auto end = m_hexlinewidth + begin - 1;
 
     auto lbound = _bookmarks.lowerBound(begin);
     auto ubound = _bookmarks.upperBound(end);
 
     for (auto p = lbound; p != ubound; ++p) {
-        auto off = p.key();
-        if (off >= begin && off < end) {
-            pos.append(off);
-        }
+        pos.append(p.key());
     }
 
     return pos;
@@ -63,19 +60,12 @@ QList<qsizetype> QHexDocument::getLineBookmarksPos(qsizetype line) {
 
 bool QHexDocument::lineHasBookMark(qsizetype line) {
     auto begin = m_hexlinewidth * line;
-    auto end = m_hexlinewidth + begin;
+    auto end = m_hexlinewidth + begin - 1;
 
     auto lbound = _bookmarks.lowerBound(begin);
     auto ubound = _bookmarks.upperBound(end);
 
-    for (auto p = lbound; p != ubound; ++p) {
-        auto off = p.key();
-        if (off >= begin && off < end) {
-            return true;
-        }
-    }
-
-    return false;
+    return lbound != ubound;
 }
 
 void QHexDocument::addUndoCommand(QUndoCommand *command) {

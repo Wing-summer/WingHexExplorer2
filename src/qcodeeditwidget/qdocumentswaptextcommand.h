@@ -36,8 +36,6 @@ private:
     QList<QDocumentLineHandle *> _handles;
     QList<QDocumentLineHandle *> _oldhandles;
     QVector<DiffUtil::DiffEntry> diffs;
-
-    int _line, _column;
 };
 
 #endif // QDOCUMENTSWAPTEXTCOMMAND_H

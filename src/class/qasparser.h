@@ -72,11 +72,14 @@ private:
     QByteArray getFnRetTypeString(asIScriptFunction *fn, bool includeNamespace);
 
 public:
-    bool parse(qsizetype offset, const QString &code, const QString &section);
+    // bool parse(qsizetype offset, const QString &code, const QString
+    // &section);
 
     QList<QCodeNode *> codeNodes() const;
 
     const QList<QCodeNode *> &headerNodes() const;
+
+    QCodeNode *keywordNode() const;
 
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine);
@@ -96,6 +99,7 @@ private:
 
     QHash<QString, QCodeNode *> _buffer;
     QList<QCodeNode *> _headerNodes;
+    QCodeNode *_keywordNode;
 };
 
 #endif // !_QCPP_PARSER_H_

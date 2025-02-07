@@ -267,7 +267,8 @@ set(CLASS_SRC
     src/class/dockcomponentsfactory.h
     src/class/dockcomponentsfactory.cpp
     src/class/diffutil.h
-    src/class/diffutil.cpp)
+    src/class/diffutil.cpp
+    src/class/clickcallback.h)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

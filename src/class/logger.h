@@ -62,15 +62,19 @@ public slots:
     static void info(const QString &message);
     static void debug(const QString &message);
     static void critical(const QString &message);
+    static void logPrint(const QString &message);
 
     void setLogLevel(Level level);
+
+    static QString packInfoStr(QString msg);
+    static QString packDebugStr(QString msg);
+    static QString packErrorStr(QString msg);
+    static QString packWarnStr(QString msg);
 
 private:
     explicit Logger(QObject *parent = nullptr);
 
     virtual ~Logger();
-
-    static void _log(const QString &message);
 
     Q_DISABLE_COPY_MOVE(Logger)
 

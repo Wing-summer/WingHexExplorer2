@@ -46,8 +46,6 @@ QDocumentSwapTextCommand::QDocumentSwapTextCommand(const QString &text,
     }
 
     auto cursor = doc->editCursor();
-    _line = cursor->lineNumber();
-    _column = cursor->columnNumber();
     setTargetCursor(cursor->handle());
 }
 

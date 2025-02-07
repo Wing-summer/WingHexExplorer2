@@ -50,7 +50,7 @@ protected:
 private:
     void applyEmptyNsNode(QList<QCodeNode *> &nodes);
 
-    void parse(const QDocumentCursor &c);
+    // void parse(const QDocumentCursor &c);
 
     QList<QCodeNode *> lookupNamespace(const QByteArrayList &ns);
 

@@ -86,49 +86,62 @@ Logger &Logger::instance() {
 
 Logger::Level Logger::logLevel() const { return _level; }
 
-void Logger::_log(const QString &message) { emit instance().log(message); }
+void Logger::logPrint(const QString &message) { emit instance().log(message); }
 
-void Logger::newLine() { _log({}); }
+void Logger::newLine() { logPrint({}); }
 
 void Logger::trace(const QString &message) {
     if (instance()._level >= q5TRACE) {
         QString str = message;
-        emit instance().log(tr("[Trace]") + str.replace("\n", "<br />"));
+        emit instance().log(packDebugStr(tr("[Trace]") + str));
     }
 }
 
 void Logger::warning(const QString &message) {
     if (instance()._level >= q2WARN) {
         QString str = message;
-        emit instance().log(
-            WARNLOG(tr("[Warn]") + str.replace("\n", "<br />")));
+        emit instance().log(packWarnStr(tr("[Warn]") + str));
     }
 }
 
 void Logger::info(const QString &message) {
     if (instance()._level >= q3INFO) {
         QString str = message;
-        emit instance().log(
-            INFOLOG(tr("[Info]") + str.replace("\n", "<br />")));
+        emit instance().log(packInfoStr(tr("[Info]") + str));
     }
 }
 
 void Logger::debug(const QString &message) {
     if (instance()._level >= q4DEBUG) {
         QString str = message;
-        emit instance().log(tr("[Debug]") + str.replace("\n", "<br />"));
+        emit instance().log(packDebugStr(tr("[Debug]") + str));
     }
 }
 
 void Logger::critical(const QString &message) {
     if (instance()._level >= q0FATAL) {
         QString str = message;
-        emit instance().log(
-            ERRLOG(tr("[Error]") + str.replace("\n", "<br />")));
+        emit instance().log(packErrorStr(tr("[Error]") + str));
     }
 }
 
 void Logger::setLogLevel(Level level) { _level = level; }
+
+QString Logger::packInfoStr(QString msg) {
+    return INFOLOG(msg.replace("\n", "<br />"));
+}
+
+QString Logger::packDebugStr(QString msg) {
+    return msg.replace("\n", "<br />");
+}
+
+QString Logger::packErrorStr(QString msg) {
+    return ERRLOG(msg.replace("\n", "<br />"));
+}
+
+QString Logger::packWarnStr(QString msg) {
+    return WARNLOG(msg.replace("\n", "<br />"));
+}
 
 QString Logger::getString(Level level) {
     switch (level) {

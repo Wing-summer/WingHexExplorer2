@@ -220,8 +220,6 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             return;
         }
 
-        auto &_headerNodes = parser.headerNodes();
-
         if (etoken.content.length() >= trigWordLen()) {
             // completion for a.b.c or a::b.c or a::b::c.d or ::a::b.c
             if (trigger == *DBL_COLON_TRIGGER) {
@@ -284,6 +282,7 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
         }
     }
 
+    nodes.append(parser.keywordNode());
     auto cur = c;
     cur.movePosition(trigger.length());
     pPopup->setCursor(cur);
@@ -311,10 +310,10 @@ void AsCompletion::applyEmptyNsNode(QList<QCodeNode *> &nodes) {
     nodes = _emptyNsNodes;
 }
 
-void AsCompletion::parse(const QDocumentCursor &c) {
-    auto codes = c.document()->text();
-    // asBuilder builder;
-}
+// void AsCompletion::parse(const QDocumentCursor &c) {
+//     auto codes = c.document()->text();
+//     // asBuilder builder;
+// }
 
 QList<QCodeNode *> AsCompletion::lookupNamespace(const QByteArrayList &ns) {
     QList<QCodeNode *> nodes;

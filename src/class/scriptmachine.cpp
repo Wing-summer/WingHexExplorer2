@@ -17,6 +17,7 @@
 
 #include "scriptmachine.h"
 
+#include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/sdk/add_on/scriptdictionary/scriptdictionary.h"
@@ -49,7 +50,7 @@ ScriptMachine::~ScriptMachine() {
 
 bool ScriptMachine::inited() { return _engine != nullptr; }
 
-bool ScriptMachine::isRunning() const { return _ctxMgr->isRunning(); }
+bool ScriptMachine::isRunning() const { return _debugger->getEngine(); }
 
 bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     if (engine == nullptr) {
@@ -1609,7 +1610,71 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptHandle(engine);
     RegisterColor(engine);
     RegisterScriptJson(engine);
-    RegisterExceptionRoutines(engine);
+    registerExceptionRoutines(engine);
+    registerEngineAssert(engine);
+}
+
+void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
+    int r;
+
+    // The string type must be available
+    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+
+    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
+        r = engine->RegisterGlobalFunction("void assert(bool expression)",
+                                           asFUNCTION(scriptAssert),
+                                           asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        r = engine->RegisterGlobalFunction(
+            "void assert_x(bool expression, const string &in msg)",
+            asFUNCTION(scriptAssert_X), asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+    } else {
+        r = engine->RegisterGlobalFunction("void assert(bool expression)",
+                                           WRAP_FN(scriptAssert),
+                                           asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        r = engine->RegisterGlobalFunction(
+            "void assert_x(bool expression, const string &in msg)",
+            WRAP_FN(scriptAssert_X), asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+    }
+}
+
+void ScriptMachine::scriptAssert(bool b) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        if (!b) {
+            QString buffer = tr("Assert failed");
+            ctx->SetException(buffer.toUtf8(), false);
+        }
+    }
+}
+
+void ScriptMachine::scriptAssert_X(bool b, const QString &msg) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        if (!b) {
+            auto m = msg;
+            if (m.isEmpty()) {
+                m = tr("Assert failed");
+            }
+            ctx->SetException(m.toUtf8(), false);
+        }
+    }
+}
+
+void ScriptMachine::scriptThrow(const QString &msg) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        ctx->SetException(msg.toUtf8());
+    }
 }
 
 bool ScriptMachine::isDebugMode() const {
@@ -1749,4 +1814,50 @@ bool ScriptMachine::executeCode(const QString &code) {
     _debugger->setEngine(nullptr);
 
     return r >= 0;
+}
+
+QString ScriptMachine::scriptGetExceptionInfo() {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (!ctx)
+        return {};
+
+    const char *msg = ctx->GetExceptionString();
+    if (msg == 0)
+        return {};
+
+    return QString(msg);
+}
+
+void ScriptMachine::registerExceptionRoutines(asIScriptEngine *engine) {
+    int r;
+
+    // The string type must be available
+    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+
+    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
+        r = engine->RegisterGlobalFunction("void throw(const string &in)",
+                                           asFUNCTION(scriptThrow),
+                                           asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        r = engine->RegisterGlobalFunction("string getExceptionInfo()",
+                                           asFUNCTION(scriptGetExceptionInfo),
+                                           asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+    } else {
+        r = engine->RegisterGlobalFunction("void throw(const string &in)",
+                                           WRAP_FN(scriptThrow),
+                                           asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+
+        r = engine->RegisterGlobalFunction("string getExceptionInfo()",
+                                           WRAP_FN(scriptGetExceptionInfo),
+                                           asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+    }
 }

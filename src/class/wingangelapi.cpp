@@ -150,21 +150,19 @@ void WingAngelAPI::registerScriptFns(const QString &ns,
 
 void WingAngelAPI::installAPI(ScriptMachine *machine) {
     Q_ASSERT(machine);
-
     auto engine = machine->engine();
-    auto stringTypeID = machine->typeInfo(ScriptMachine::tString)->GetTypeId();
 
     installBasicTypes(engine);
     installExtAPI(engine);
     installLogAPI(engine);
     installMsgboxAPI(engine);
-    installInputboxAPI(engine, stringTypeID);
+    installInputboxAPI(engine);
     installFileDialogAPI(engine);
     installColorDialogAPI(engine);
 
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
-    installDataVisualAPI(engine, stringTypeID);
+    installDataVisualAPI(engine);
 
     installScriptEnums(engine);
     installScriptFns(engine);
@@ -191,6 +189,85 @@ void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
     registerAngelType<QFileDialog::Options>(engine, "options");
 
     engine->SetDefaultNamespace("");
+
+    // QModelIndex
+    r = engine->RegisterObjectType("ModelIndex", sizeof(QModelIndex),
+                                   asOBJ_VALUE | asOBJ_POD |
+                                       asGetTypeTraits<QModelIndex>());
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "ModelIndex parent() const",
+                                     asMETHOD(QModelIndex, parent),
+                                     asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "int row() const",
+                                     asMETHOD(QModelIndex, row),
+                                     asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "int column() const",
+                                     asMETHOD(QModelIndex, column),
+                                     asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // extension function for data, we dont want to register QVariant to it
+    r = engine->RegisterObjectMethod("ModelIndex", "string dataString() const",
+                                     asFUNCTION(QModelIndex_dataString),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "char dataChar() const",
+                                     asFUNCTION(QModelIndex_dataChar),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "uint dataUInt() const",
+                                     asFUNCTION(QModelIndex_dataUInt),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "int dataInt() const",
+                                     asFUNCTION(QModelIndex_dataInt),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "int64 dataLongLong() const",
+                                     asFUNCTION(QModelIndex_dataLongLong),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "ModelIndex", "uint64 dataULongLong() const",
+        asFUNCTION(QModelIndex_dataULongLong), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "float dataFloat() const",
+                                     asFUNCTION(QModelIndex_dataFloat),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("ModelIndex", "double dataDouble() const",
+                                     asFUNCTION(QModelIndex_dataDouble),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterFuncdef(
+        "void ClickCallBack(const ModelIndex &in index)");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     installHexBaseType(engine);
 }
@@ -312,7 +389,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
+void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("inputbox");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -373,11 +450,10 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine, int stringID) {
     registerAPI<QString(const QString &, const QString &, const CScriptArray &,
                         int, bool, bool *, Qt::InputMethodHints)>(
         engine,
-        std::bind(&WingAngelAPI::_InputBox_getItem, this, stringID,
-                  std::placeholders::_1, std::placeholders::_2,
-                  std::placeholders::_3, std::placeholders::_4,
-                  std::placeholders::_5, std::placeholders::_6,
-                  std::placeholders::_7),
+        std::bind(&WingAngelAPI::_InputBox_getItem, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3,
+                  std::placeholders::_4, std::placeholders::_5,
+                  std::placeholders::_6, std::placeholders::_7),
         "string getItem(const string &in title, const string &in label, "
         "const string[] &in items, int current = 0, "
         "bool editable = true, bool &out ok = false, "
@@ -1186,7 +1262,7 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
+void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("visual");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -1199,28 +1275,35 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine, int stringID) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool updateText(string &in data, string &in title=\"\")");
 
-    registerAPI<bool(const CScriptArray &, const QString &)>(
+    registerAPI<bool(const CScriptArray &, const QString &, asIScriptFunction *,
+                     asIScriptFunction *)>(
         engine,
-        std::bind(&WingAngelAPI::_DataVisual_updateTextList, this, stringID,
-                  std::placeholders::_1, std::placeholders::_2),
-        "bool updateTextList(string[] &in data, string &in title=\"\")");
-
-    registerAPI<bool(const QString &, const QString &)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::DataVisual::updateTextTree, datavis,
-                  std::placeholders::_1, std::placeholders::_2,
-                  WingHex::WingPlugin::DataVisual::ClickedCallBack(),
-                  WingHex::WingPlugin::DataVisual::DoubleClickedCallBack()),
-        "bool updateTextTree(string &in json, string &in title=\"\")");
-
-    registerAPI<bool(const QString &, const CScriptArray &,
-                     const CScriptArray &, const QString &)>(
-        engine,
-        std::bind(&WingAngelAPI::_DataVisual_updateTextTable, this, stringID,
+        std::bind(&WingAngelAPI::_DataVisual_updateTextList, this,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
+        "bool updateTextList(string[] &in data, string &in title=\"\", "
+        "ClickCallBack @clickfn = null, ClickCallBack @dblclick = null)");
+
+    registerAPI<bool(const QString &, const QString &, asIScriptFunction *,
+                     asIScriptFunction *)>(
+        engine,
+        std::bind(&WingAngelAPI::_DataVisual_updateTextTree, this,
+                  std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3, std::placeholders::_4),
+        "bool updateTextTree(string &in json, string &in title=\"\", "
+        "ClickCallBack @clickfn = null, ClickCallBack @dblclick = null)");
+
+    registerAPI<bool(const QString &, const CScriptArray &,
+                     const CScriptArray &, const QString &, asIScriptFunction *,
+                     asIScriptFunction *)>(
+        engine,
+        std::bind(&WingAngelAPI::_DataVisual_updateTextTable, this,
+                  std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3, std::placeholders::_4,
+                  std::placeholders::_5, std::placeholders::_6),
         "bool updateTextTable(string &in json, string[] &in headers, "
-        "string[] &in headerNames = {}, string &in title=\"\")");
+        "string[] &in headerNames = {}, string &in title=\"\", "
+        "ClickCallBack @clickfn = null, ClickCallBack @dblclick = null)");
 
     engine->SetDefaultNamespace("");
 }
@@ -1992,6 +2075,38 @@ void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
     }
 }
 
+QString WingAngelAPI::QModelIndex_dataString(const QModelIndex &idx) {
+    return idx.data().toString();
+}
+
+QString WingAngelAPI::QModelIndex_dataChar(const QModelIndex &idx) {
+    return idx.data().toChar();
+}
+
+uint WingAngelAPI::QModelIndex_dataUInt(const QModelIndex &idx) {
+    return idx.data().toUInt();
+}
+
+int WingAngelAPI::QModelIndex_dataInt(const QModelIndex &idx) {
+    return idx.data().toInt();
+}
+
+qlonglong WingAngelAPI::QModelIndex_dataLongLong(const QModelIndex &idx) {
+    return idx.data().toLongLong();
+}
+
+qlonglong WingAngelAPI::QModelIndex_dataULongLong(const QModelIndex &idx) {
+    return idx.data().toULongLong();
+}
+
+float WingAngelAPI::QModelIndex_dataFloat(const QModelIndex &idx) {
+    return idx.data().toFloat();
+}
+
+double WingAngelAPI::QModelIndex_dataDouble(const QModelIndex &idx) {
+    return idx.data().toDouble();
+}
+
 bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
                                   const QString &code) {
     if (code.isEmpty()) {
@@ -2176,20 +2291,29 @@ void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {
     _handles = handles;
 }
 
-QString WingAngelAPI::_InputBox_getItem(int stringID, const QString &title,
+QString WingAngelAPI::_InputBox_getItem(const QString &title,
                                         const QString &label,
                                         const CScriptArray &items, int current,
                                         bool editable, bool *ok,
                                         Qt::InputMethodHints inputMethodHints) {
-    bool o = false;
-    auto ret = cArray2QStringList(items, stringID, &o);
-    if (o) {
-        return WingInputDialog::getItem(nullptr, title, label, ret, current,
-                                        editable, ok, inputMethodHints);
-    } else {
-        *ok = false;
-        return {};
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+        auto stringID = engine->GetTypeIdByDecl("string");
+        Q_ASSERT(stringID >= 0);
+
+        bool o = false;
+        auto ret = cArray2QStringList(items, stringID, &o);
+        if (o) {
+            return WingInputDialog::getItem(nullptr, title, label, ret, current,
+                                            editable, ok, inputMethodHints);
+        } else {
+            *ok = false;
+            return {};
+        }
     }
+    return {};
 }
 
 CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
@@ -2394,40 +2518,82 @@ bool WingAngelAPI::_HexController_appendBytes(const CScriptArray &ba) {
             return false;
         }
         return emit controller.appendBytes(bab);
-    } else {
-        return false;
     }
+    return false;
 }
 
-bool WingAngelAPI::_DataVisual_updateTextList(int stringID,
-                                              const CScriptArray &data,
-                                              const QString &title) {
-    bool o = false;
-    auto ret = cArray2QStringList(data, stringID, &o);
-    if (o) {
-        return emit visual.updateTextList(ret, title);
-    } else {
-        return false;
+bool WingAngelAPI::_DataVisual_updateTextList(const CScriptArray &data,
+                                              const QString &title,
+                                              asIScriptFunction *click,
+                                              asIScriptFunction *dblclick) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+        auto stringID = engine->GetTypeIdByDecl("string");
+        Q_ASSERT(stringID >= 0);
+
+        // we dont call visual.updateTextList
+        bool o = false;
+        auto ret = cArray2QStringList(data, stringID, &o);
+        if (o) {
+            ClickCallBack c(engine, click);
+            ClickCallBack dblc(engine, dblclick);
+
+            return PluginSystem::instance().updateTextList_API(ret, title, c,
+                                                               dblc);
+        }
     }
+    return false;
 }
 
-bool WingAngelAPI::_DataVisual_updateTextTable(int stringID,
-                                               const QString &json,
+bool WingAngelAPI::_DataVisual_updateTextTree(const QString &json,
+                                              const QString &title,
+                                              asIScriptFunction *click,
+                                              asIScriptFunction *dblclick) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+
+        // we dont call visual.updateTextTree
+        ClickCallBack c(engine, click);
+        ClickCallBack dblc(engine, dblclick);
+
+        return PluginSystem::instance().updateTextTree_API(json, title, c,
+                                                           dblc);
+    }
+    return false;
+}
+
+bool WingAngelAPI::_DataVisual_updateTextTable(const QString &json,
                                                const CScriptArray &headers,
                                                const CScriptArray &headerNames,
-                                               const QString &title) {
-    bool o = false;
-    auto h = cArray2QStringList(headers, stringID, &o);
-    if (o) {
-        auto hn = cArray2QStringList(headerNames, stringID, &o);
+                                               const QString &title,
+                                               asIScriptFunction *click,
+                                               asIScriptFunction *dblclick) {
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+        auto stringID = engine->GetTypeIdByDecl("string");
+        Q_ASSERT(stringID >= 0);
+
+        // we dont call visual.updateTextTable
+        bool o = false;
+        auto h = cArray2QStringList(headers, stringID, &o);
         if (o) {
-            return emit visual.updateTextTable(json, h, hn, title);
-        } else {
-            return false;
+            auto hn = cArray2QStringList(headerNames, stringID, &o);
+            if (o) {
+                ClickCallBack c(engine, click);
+                ClickCallBack dblc(engine, dblclick);
+
+                return PluginSystem::instance().updateTextTable_API(
+                    json, h, hn, title, c, dblc);
+            }
         }
-    } else {
-        return false;
     }
+    return false;
 }
 
 void WingAngelAPI::setBindingConsole(ScriptingConsole *console) {

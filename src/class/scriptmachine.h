@@ -95,7 +95,19 @@ public:
     void setInsteadFoundDisabled(bool newInsteadFoundDisabled);
 
     static void registerEngineAddon(asIScriptEngine *engine);
+    static void registerEngineAssert(asIScriptEngine *engine);
 
+public:
+    static void scriptAssert(bool b);
+    static void scriptAssert_X(bool b, const QString &msg);
+
+    static void scriptThrow(const QString &msg);
+
+    static QString scriptGetExceptionInfo();
+
+    static void registerExceptionRoutines(asIScriptEngine *engine);
+
+public:
     // debug or release?
     bool isDebugMode() const;
     void setDebugMode(bool isDbg);

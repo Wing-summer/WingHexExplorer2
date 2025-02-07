@@ -31,6 +31,29 @@ QAsParser::QAsParser(asIScriptEngine *engine)
     addEnumCompletion(engine);
     _buffer.clear();
     _buffer.squeeze();
+
+    // generate keyword completion
+    _keywordNode = new QCodeNode;
+    _keywordNode->setNodeType(QCodeNode::Group);
+    QStringList kws{
+        "const",     "in",        "inout",    "out",    "auto",     "public",
+        "protected", "private",   "void",     "int8",   "int16",    "int",
+        "int64",     "uint8",     "uint16",   "uint",   "uint64",   "float",
+        "double",    "bool",      "enum",     "string", "array",    "any",
+        "for",       "while",     "do",       "if",     "else",     "switch",
+        "break",     "continue",  "try",      "catch",  "throw",    "abstract",
+        "delete",    "cast",      "class",    "final",  "property", "external",
+        "function",  "interface", "shared",   "this",   "explicit", "override",
+        "namespace", "get",       "set",      "super",  "mixin",    "false",
+        "true",      "null",      "typename", "return", "typedef",  "funcdef",
+        "from",      "import",    "not",      "xor",    "or",       "is"};
+    for (auto &k : kws) {
+        auto knode = new QCodeNode;
+        knode->setParent(_keywordNode);
+        knode->setNodeType(QCodeNode::KeyWord);
+        knode->setRole(QCodeNode::Name, k.toUtf8());
+        _keywordNode->children().append(knode);
+    }
 }
 
 QAsParser::~QAsParser() {
@@ -38,6 +61,7 @@ QAsParser::~QAsParser() {
     _headerNodes.clear();
     qDeleteAll(_nodes);
     _nodes.clear();
+    delete _keywordNode;
 }
 
 QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
@@ -162,10 +186,10 @@ QByteArray QAsParser::getFnRetTypeString(asIScriptFunction *fn,
     return {};
 }
 
-bool QAsParser::parse(qsizetype offset, const QString &code,
-                      const QString &section) {
-    return ProcessScriptSection(code.toUtf8(), code.length(), section, 0);
-}
+// bool QAsParser::parse(qsizetype offset, const QString &code,
+//                       const QString &section) {
+//     return ProcessScriptSection(code.toUtf8(), code.length(), section, 0);
+// }
 
 const QList<QCodeNode *> &QAsParser::headerNodes() const {
     return _headerNodes;
@@ -409,5 +433,7 @@ QCodeNode *QAsParser::newEnumCodeNode(const EnumInfo &info) {
     }
     return enode;
 }
+
+QCodeNode *QAsParser::keywordNode() const { return _keywordNode; }
 
 QList<QCodeNode *> QAsParser::codeNodes() const { return _nodes; }
