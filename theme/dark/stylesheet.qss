@@ -2259,7 +2259,7 @@ QHeaderView::section::horizontal
     border-left: transparent;
 }
 
-QHeaderView[showSortIndicator="true"]::section::horizontal
+QHeaderView::section::horizontal
 {
     /* Same as the width of the arrow subcontrols below. */
     padding-right: 0.8em;
@@ -2281,7 +2281,7 @@ QHeaderView::section::vertical::only-one:hover
     border: 0.04em solid #3daee9;
 }
 
-QHeaderView[showSortIndicator="true"]::down-arrow
+QHeaderView::down-arrow
 {
     image: url(:/dark/down_arrow.svg);
     /**
@@ -2304,7 +2304,7 @@ QHeaderView[showSortIndicator="true"]::down-arrow
     padding-left: -0.8em;
 }
 
-QHeaderView[showSortIndicator="true"]::up-arrow
+QHeaderView::up-arrow
 {
     image: url(:/dark/up_arrow.svg);
     subcontrol-origin: content;

@@ -226,8 +226,9 @@ void QCodeCompletionWidget::complete(const QModelIndex &index) {
     static QRegularExpression re("(\\bconst\\s*)?(=\\s*0)?$");
     txt.remove(re);
 
+    QStringView view(txt);
     if (prefix.length() &&
-        prefix.compare(txt.left(prefix.length()), Qt::CaseInsensitive) == 0) {
+        prefix.compare(view.left(prefix.length()), Qt::CaseInsensitive) == 0) {
         if (_cur.isValid()) {
             _cur.movePosition(prefix.length(),
                               QDocumentCursor::PreviousCharacter,
@@ -472,9 +473,22 @@ QVariant QCodeCompletionModel::data(const QModelIndex &index, int role) const {
     QCodeNode *n = m_visibles.at(row);
     int type = n->type();
 
-    if ((role == Qt::DisplayRole) && (type == QCodeNode::Enumerator))
-        return n->parent()->data(role).toString() +
-               "::" + n->data(role).toString();
+    if (role == Qt::DisplayRole) {
+        if (type == QCodeNode::Enumerator) {
+            return n->parent()->data(role).toString() +
+                   "::" + n->data(role).toString();
+        }
+
+        if (type == QCodeNode::Function || type == QCodeNode::Variable) {
+            auto p = n->parent();
+            if (p) {
+                if (p->type() == QCodeNode::Class) {
+                    return p->role(QCodeNode::Name) + QStringLiteral("::") +
+                           n->data(role).toString();
+                }
+            }
+        }
+    }
 
     if (role == Qt::UserRole)
         role = Qt::DisplayRole;

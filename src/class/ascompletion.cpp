@@ -107,9 +107,11 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     }
 
     auto code = txt.mid(off, c.columnNumber() - off).toUtf8();
-
     auto len = code.length();
-    if (len < trigWordLen()) {
+
+    QList<QCodeNode *> nodes;
+
+    if (len < trigWordLen() && trigger != *DOT_TRIGGER) {
         emit onFunctionTip(this, {});
         pPopup->hide();
         return;
@@ -170,7 +172,6 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
     };
 
     QByteArray fn;
-    QList<QCodeNode *> nodes;
 
     QFlags<QCodeCompletionWidget::FilterFlag> filter(
         QCodeCompletionWidget::FilterFlag::Public |
@@ -220,7 +221,9 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             return;
         }
 
-        if (etoken.content.length() >= trigWordLen()) {
+        if (trigger == *DOT_TRIGGER) {
+            nodes = parser.classNodes();
+        } else if (etoken.content.length() >= trigWordLen()) {
             // completion for a.b.c or a::b.c or a::b::c.d or ::a::b.c
             if (trigger == *DBL_COLON_TRIGGER) {
                 auto ns = getNamespace(tokens);
@@ -282,7 +285,6 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
         }
     }
 
-    nodes.append(parser.keywordNode());
     auto cur = c;
     cur.movePosition(trigger.length());
     pPopup->setCursor(cur);
@@ -305,6 +307,7 @@ void AsCompletion::applyEmptyNsNode(QList<QCodeNode *> &nodes) {
                 break;
             }
         }
+        _emptyNsNodes.append(parser.keywordNode());
     }
 
     nodes = _emptyNsNodes;

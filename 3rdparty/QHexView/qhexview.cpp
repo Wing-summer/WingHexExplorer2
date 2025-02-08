@@ -1103,7 +1103,7 @@ bool QHexView::processTextInput(QHexCursor *cur, QKeyEvent *e) {
             return true;
         }
 
-        uchar ch = uchar(m_document->at(int(cur->position().offset())));
+        uchar ch = uchar(m_document->at(cur->position().offset()));
 
         if (cur->currentNibble()) // X0
             val = uchar((ch & 0x0F) | (val << 4));

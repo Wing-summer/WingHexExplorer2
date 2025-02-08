@@ -59,8 +59,6 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
                                 AsPreprocesser *builder,
                                 const QString &sectionname, void *userParam);
 
-#include "class/qascodeparser.h"
-
 // Helper class for loading and pre-processing script files to
 // support include directives declarations
 

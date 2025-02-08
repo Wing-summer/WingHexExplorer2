@@ -632,6 +632,7 @@ private:
     QHash<SettingPage *, bool> m_settingPages;
     QList<PluginPage *> m_plgPages;
 
+    // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空
     ads::CDockAreaWidget *m_topViewArea = nullptr;

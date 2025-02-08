@@ -62,6 +62,8 @@ QAsParser::~QAsParser() {
     qDeleteAll(_nodes);
     _nodes.clear();
     delete _keywordNode;
+    qDeleteAll(_classNodes);
+    _classNodes.clear();
 }
 
 QByteArray QAsParser::getFnParamDeclString(asIScriptFunction *fn,
@@ -348,21 +350,28 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
         _maps[ns] << cls;
     }
 
-    for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
-        auto node = getNewHeadNodePointer(p->first);
-        if (p->first.isEmpty()) {
-            node->setNodeType(QCodeNode::Group);
-        } else {
-            node->setNodeType(QCodeNode::Namespace);
-        }
+    auto applyClsNode = [](const QList<ClassInfo> &clsinfos,
+                           bool isComplete) -> QList<QCodeNode *> {
+        QList<QCodeNode *> ret;
 
-        for (auto &cls : p->second) {
-            auto clsnode = new QCodeNode;
+        for (auto &cls : clsinfos) {
+            QCodeNode *clsnode = new QCodeNode;
             clsnode->setNodeType(QCodeNode::Class);
             clsnode->setRole(QCodeNode::Name, cls.name);
-            clsnode->attach(node);
 
             for (auto &m : cls.methods) {
+                if (isComplete) {
+                    if (m.fnName == cls.name) {
+                        continue;
+                    }
+                    if (m.fnName.startsWith('~')) {
+                        continue;
+                    }
+                    if (m.fnName.startsWith("op")) {
+                        continue;
+                    }
+                }
+
                 auto node = newFnCodeNode(m);
                 node->attach(clsnode);
             }
@@ -386,7 +395,25 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
                 node->setParent(clsnode);
                 clsnode->children().append(node);
             }
+            ret.append(clsnode);
         }
+
+        return ret;
+    };
+
+    for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
+        auto node = getNewHeadNodePointer(p->first);
+        if (p->first.isEmpty()) {
+            node->setNodeType(QCodeNode::Group);
+        } else {
+            node->setNodeType(QCodeNode::Namespace);
+        }
+        auto nodes = applyClsNode(p->second, false);
+        for (auto &n : nodes) {
+            n->attach(node);
+        }
+
+        _classNodes.append(applyClsNode(p->second, true));
     }
 }
 
@@ -433,6 +460,8 @@ QCodeNode *QAsParser::newEnumCodeNode(const EnumInfo &info) {
     }
     return enode;
 }
+
+QList<QCodeNode *> QAsParser::classNodes() const { return _classNodes; }
 
 QCodeNode *QAsParser::keywordNode() const { return _keywordNode; }
 

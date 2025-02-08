@@ -81,6 +81,8 @@ public:
 
     QCodeNode *keywordNode() const;
 
+    QList<QCodeNode *> classNodes() const;
+
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine);
     void addEnumCompletion(asIScriptEngine *engine);
@@ -89,9 +91,9 @@ private:
     QCodeNode *getNewHeadNodePointer(const QByteArray &name);
 
 private:
-    QCodeNode *newFnCodeNode(const FnInfo &info);
+    static QCodeNode *newFnCodeNode(const FnInfo &info);
 
-    QCodeNode *newEnumCodeNode(const EnumInfo &info);
+    static QCodeNode *newEnumCodeNode(const EnumInfo &info);
 
 private:
     asIScriptEngine *_engine;
@@ -99,6 +101,7 @@ private:
 
     QHash<QString, QCodeNode *> _buffer;
     QList<QCodeNode *> _headerNodes;
+    QList<QCodeNode *> _classNodes;
     QCodeNode *_keywordNode;
 };
 

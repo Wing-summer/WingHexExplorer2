@@ -334,10 +334,15 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
 bool PluginSystem::closeEditor(IWingPlugin *plg, int handle, bool force) {
     if (handle >= 0) {
         auto &handles = m_plgviewMap[plg];
-        auto r = std::find_if(handles.begin(), handles.end(),
-                              [handle](const PluginFileContext &d) {
-                                  return equalCompareHandle(d.fid, handle);
-                              });
+        auto r = std::find_if(
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            handles.cbegin(), handles.cend(),
+#else
+            handles.begin(), handles.end(),
+#endif
+            [handle](const PluginFileContext &d) {
+                return equalCompareHandle(d.fid, handle);
+            });
         if (r == handles.end()) {
             return false;
         }
@@ -366,10 +371,15 @@ bool PluginSystem::closeHandle(IWingPlugin *plg, int handle) {
         return false;
     }
     auto &handles = m_plgviewMap[plg];
-    auto r = std::find_if(handles.begin(), handles.end(),
-                          [handle](const PluginFileContext &d) {
-                              return equalCompareHandle(d.fid, handle);
-                          });
+    auto r = std::find_if(
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        handles.cbegin(), handles.cend(),
+#else
+        handles.begin(), handles.end(),
+#endif
+        [handle](const PluginFileContext &d) {
+            return equalCompareHandle(d.fid, handle);
+        });
     if (r == handles.end()) {
         return false;
     }

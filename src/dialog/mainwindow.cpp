@@ -293,6 +293,11 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         splash->setInfoText(tr("SetupDockingLayout"));
 
     _defaultLayout = m_dock->saveState();
+
+    m_leftViewArea = nullptr;
+    m_rightViewArea = nullptr;
+    m_topViewArea = nullptr;
+    m_bottomViewArea = nullptr;
     m_dock->restoreState(set.dockLayout());
 
     m_lastusedpath = set.lastUsedPath();
@@ -422,6 +427,38 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                 }
                 updateEditModeEnabled();
             });
+    connect(m_dock, &CDockManager::stateRestored, this, [this]() {
+        // no allowing floating widgets
+        QList<CDockWidget *> _dws;
+        for (auto &dw : m_dock->dockWidgetsMap()) {
+            if (dw->dockAreaWidget() == nullptr) {
+                _dws.append(dw);
+            }
+        }
+
+        if (_dws.isEmpty()) {
+            return;
+        }
+
+        auto replaceDW = [this](CDockWidget *dw,
+                                CDockAreaWidget *darea) -> CDockAreaWidget * {
+            m_dock->blockSignals(true);
+            m_dock->removeDockWidget(dw);
+
+            auto area =
+                m_dock->addDockWidget(ads::BottomDockWidgetArea, dw, darea);
+            m_dock->blockSignals(false);
+            dw->toggleView(false);
+            return area;
+        };
+
+        auto darea = m_dock->centralWidget()->dockAreaWidget();
+        auto dw = _dws.takeFirst();
+        darea = replaceDW(dw, darea);
+        for (auto &dw : _dws) {
+            replaceDW(dw, darea);
+        }
+    });
 
     qApp->processEvents();
 
@@ -1062,6 +1099,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
         newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
             auto model = m_infolist->model();
             model->removeRows(0, model->rowCount());
+            m_infolist->setProperty("__TITLE__", {});
         }));
     auto ar = dock->addDockWidget(area, dw, areaw);
 
@@ -1134,6 +1172,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
         newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
             auto model = m_infotree->model();
             model->removeRows(0, model->rowCount());
+            m_infotree->setProperty("__TITLE__", {});
         }));
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
@@ -1176,6 +1215,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
         newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
             auto model = m_infotable->model();
             model->removeRows(0, model->rowCount());
+            m_infotable->setProperty("__TITLE__", {});
         }));
     dock->addDockWidget(CenterDockWidgetArea, dw, ar);
 
@@ -1209,8 +1249,11 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
             Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                          tr("SaveSuccessfully"));
         }));
-    menu->addAction(newAction(QStringLiteral("del"), tr("ClearResult"),
-                              [this]() { m_infotxt->clear(); }));
+    menu->addAction(
+        newAction(QStringLiteral("del"), tr("ClearResult"), [this]() {
+            m_infotxt->clear();
+            m_infotxt->setProperty("__TITLE__", {});
+        }));
     connect(m_infotxt, &QTextBrowser::customContextMenuRequested, this,
             [=](const QPoint &pos) {
                 menu->popup(m_infotxt->viewport()->mapToGlobal(pos));
