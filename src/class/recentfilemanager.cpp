@@ -87,27 +87,15 @@ RecentFileManager::saveRecent() const {
 }
 
 bool RecentFileManager::existsPath(const RecentInfo &info) {
-    if (Utilities::isStorageDevice(info.fileName)) {
-        return true;
-    } else {
-        return QFile::exists(info.fileName);
-    }
+    return QFile::exists(info.fileName);
 }
 
 QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
     auto fileName = info.fileName;
     QString displayName;
 
-    auto driver = Utilities::getStorageDevice(fileName);
-    if (driver.isValid()) {
-        displayName = driver.displayName();
-        if (displayName.isEmpty()) {
-            displayName = driver.device();
-        }
-    } else {
-        QFileInfo finfo(fileName);
-        displayName = finfo.fileName();
-    }
+    QFileInfo finfo(fileName);
+    displayName = finfo.fileName();
 
     return displayName;
 }

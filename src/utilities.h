@@ -229,25 +229,6 @@ public:
         return t.inherits(QStringLiteral("text/plain"));
     }
 
-    static bool isStorageDevice(const QString &path) {
-        auto sdns = QStorageInfo::mountedVolumes();
-        return std::find_if(sdns.begin(), sdns.end(),
-                            [path](const QStorageInfo &info) {
-                                return info.device() == path;
-                            }) != sdns.end();
-    }
-
-    static QStorageInfo getStorageDevice(const QString &path) {
-        auto sdns = QStorageInfo::mountedVolumes();
-        auto r = std::find_if(
-            sdns.begin(), sdns.end(),
-            [path](const QStorageInfo &info) { return info.device() == path; });
-        if (r != sdns.end()) {
-            return *r;
-        }
-        return QStorageInfo();
-    }
-
     static QString getAppDataPath() {
         return QStandardPaths::writableLocation(
             QStandardPaths::AppDataLocation);

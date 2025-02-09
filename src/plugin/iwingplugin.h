@@ -54,13 +54,12 @@ enum ErrFile : int {
     NotExist = -4,
     AlreadyOpened = -5,
     IsNewFile = -6,
-    IsDirver = -7,
-    WorkSpaceUnSaved = -8,
-    ClonedFile = -9,
-    InvalidFormat = -10,
-    TooManyOpenedFile = -11,
-    NotAllowedInNoneGUIThread = -12,
-    DevNotFound = -13,
+    WorkSpaceUnSaved = -7,
+    ClonedFile = -8,
+    InvalidFormat = -9,
+    TooManyOpenedFile = -10,
+    NotAllowedInNoneGUIThread = -11,
+    DevNotFound = -12,
 };
 Q_ENUM_NS(ErrFile)
 
@@ -246,7 +245,6 @@ signals:
     // mainwindow
     Q_REQUIRED_RESULT WingHex::ErrFile newFile();
     Q_REQUIRED_RESULT WingHex::ErrFile openFile(const QString &filename);
-    Q_REQUIRED_RESULT WingHex::ErrFile openDriver(const QString &driver);
     Q_REQUIRED_RESULT WingHex::ErrFile openExtFile(const QString &ext,
                                                    const QString &file);
 
@@ -484,7 +482,7 @@ public:
         PluginClosed
     };
 
-    enum class FileType { Invalid, File, Driver, Extension };
+    enum class FileType { Invalid, File, Extension };
     Q_ENUM(FileType)
 
 public:

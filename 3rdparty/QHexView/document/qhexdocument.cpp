@@ -36,10 +36,6 @@
 #include <QClipboard>
 #include <QFile>
 
-#ifdef Q_OS_WIN
-#include "qstoragedevice.h"
-#endif
-
 /*======================*/
 // added by wingsummer
 
@@ -767,25 +763,6 @@ QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
     }
 
     return nullptr;
-}
-
-QHexDocument *QHexDocument::fromStorageDriver(const QStorageInfo &storage,
-                                              bool readonly) {
-#ifdef Q_OS_WIN
-    auto f = new QStorageDevice;
-    f->setStorage(storage);
-    auto hexbuffer = new QFileBuffer();
-    if (f->open(readonly ? QStorageDevice::ReadOnly
-                         : QStorageDevice::ReadWrite) &&
-        hexbuffer->read(f)) {
-        return new QHexDocument(hexbuffer, readonly);
-    } else {
-        delete hexbuffer;
-    }
-    return nullptr;
-#else
-    return fromLargeFile(storage.device(), readonly);
-#endif
 }
 
 QHexBuffer *QHexDocument::buffer() const { return m_buffer; }

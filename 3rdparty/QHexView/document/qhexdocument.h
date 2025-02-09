@@ -213,8 +213,6 @@ public:
                                     bool readonly = false);
     static QHexDocument *fromLargeFile(const QString &filename,
                                        bool readonly = false);
-    static QHexDocument *fromStorageDriver(const QStorageInfo &storage,
-                                           bool readonly = false);
 
     QHexBuffer *buffer() const;
 

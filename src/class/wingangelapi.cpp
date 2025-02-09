@@ -1165,12 +1165,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "ErrFile openExtFile(string &in ext, string &in file)");
 
-    registerAPI<WingHex::ErrFile(const QString &)>(
-        engine,
-        std::bind(&WingHex::WingPlugin::Controller::openDriver, ctl,
-                  std::placeholders::_1),
-        "ErrFile openDriver(string &in driver)");
-
     registerAPI<WingHex::ErrFile(int, bool)>(
         engine,
         std::bind(&WingHex::WingPlugin::Controller::closeFile, ctl,

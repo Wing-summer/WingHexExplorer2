@@ -147,7 +147,6 @@ private slots:
     void on_newfile();
     void on_openfile();
     void on_openworkspace();
-    void on_opendriver();
     void on_reload();
 
     void on_save();
@@ -216,7 +215,6 @@ public:
     ErrFile openFile(const QString &file, EditorView **editor);
     ErrFile openExtFile(const QString &ext, const QString &file,
                         EditorView **editor);
-    ErrFile openDriver(const QString &driver, EditorView **editor);
     ErrFile openWorkSpace(const QString &file, EditorView **editor);
 
     ErrFile saveEditor(EditorView *editor, const QString &filename,
@@ -255,7 +253,6 @@ private:
     void openFiles(const QStringList &files);
 
     void updateEditModeEnabled();
-    void enableDirverLimit(bool isdriver);
 
     void setCurrentHexEditorScale(qreal rate);
 

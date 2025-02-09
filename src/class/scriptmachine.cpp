@@ -50,7 +50,9 @@ ScriptMachine::~ScriptMachine() {
 
 bool ScriptMachine::inited() { return _engine != nullptr; }
 
-bool ScriptMachine::isRunning() const { return _debugger->getEngine(); }
+bool ScriptMachine::isRunning() const {
+    return _debugger->getEngine() || _ctxMgr->isRunning();
+}
 
 bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     if (engine == nullptr) {

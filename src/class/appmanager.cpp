@@ -142,28 +142,15 @@ MainWindow *AppManager::mainWindow() const { return _w; }
 void AppManager::openFile(const QString &file, bool autoDetect) {
     EditorView *editor = nullptr;
     Q_ASSERT(_w);
-    if (Utilities::isStorageDevice(file)) {
-        openDriver(file);
-    } else {
-        ErrFile ret = ErrFile::Error;
-        if (autoDetect) {
-            ret = _w->openWorkSpace(file, &editor);
-        }
-        if (ret == ErrFile::Error) {
-            ret = _w->openFile(file, &editor);
 
-            if (ret == ErrFile::AlreadyOpened) {
-                Q_ASSERT(editor);
-                if (_w->currentEditor() == editor) {
-                    Toast::toast(_w, NAMEICONRES("openapp"),
-                                 tr("AlreadyOpened"));
-                } else {
-                    editor->raise();
-                }
+    ErrFile ret = ErrFile::Error;
+    if (autoDetect) {
+        ret = _w->openWorkSpace(file, &editor);
+    }
+    if (ret == ErrFile::Error) {
+        ret = _w->openFile(file, &editor);
 
-                editor->setFocus();
-            }
-        } else if (ret == ErrFile::AlreadyOpened) {
+        if (ret == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
             if (_w->currentEditor() == editor) {
                 Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
@@ -173,6 +160,15 @@ void AppManager::openFile(const QString &file, bool autoDetect) {
 
             editor->setFocus();
         }
+    } else if (ret == ErrFile::AlreadyOpened) {
+        Q_ASSERT(editor);
+        if (_w->currentEditor() == editor) {
+            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
+        } else {
+            editor->raise();
+        }
+
+        editor->setFocus();
     }
 }
 
@@ -189,23 +185,6 @@ void AppManager::openRawFile(const QString &file) {
         }
 
         editor->setFocus();
-    }
-}
-
-void AppManager::openDriver(const QString &driver) {
-    EditorView *editor = nullptr;
-    if (Utilities::isStorageDevice(driver)) {
-        auto ret = _w->openDriver(driver, &editor);
-        if (ret == ErrFile::AlreadyOpened) {
-            Q_ASSERT(editor);
-            if (_w->currentEditor() == editor) {
-                Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
-            } else {
-                editor->raise();
-            }
-
-            editor->setFocus();
-        }
     }
 }
 

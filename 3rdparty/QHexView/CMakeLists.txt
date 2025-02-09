@@ -53,8 +53,6 @@ add_library(
     document/commands/bookmark/bookmarkreplacecommand.h
     document/commands/baseaddrcommand.cpp
     document/commands/baseaddrcommand.h
-    document/qstoragedevice.h
-    document/qstoragedevice.cpp
     document/qhexcursor.cpp
     document/qhexcursor.h
     document/qhexdocument.cpp
@@ -67,7 +65,8 @@ add_library(
     QHexEdit2/chunks.cpp
     QHexEdit2/chunks.h
     qhexview.h
-    qhexview.cpp)
+    qhexview.cpp
+)
 
 set_target_properties(
     QHexView

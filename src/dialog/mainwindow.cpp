@@ -40,7 +40,6 @@
 #include "class/wingupdater.h"
 #include "control/qcodecompletionwidget.h"
 #include "control/toast.h"
-#include "driverselectordialog.h"
 #include "encodingdialog.h"
 #include "fileinfodialog.h"
 #include "finddialog.h"
@@ -1279,9 +1278,6 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
             &MainWindow::on_openworkspace,
             shortcuts.keySequence(QKeySequences::Key::OPEN_WORKSPACE));
 
-        addPannelAction(pannel, QStringLiteral("opendriver"), tr("OpenD"),
-                        &MainWindow::on_opendriver);
-
         auto menu = new QMenu(this);
         m_toolBtneditors.insert(
             ToolButtonIndex::OPEN_EXT,
@@ -2007,35 +2003,6 @@ void MainWindow::on_openworkspace() {
     showStatus({});
 }
 
-void MainWindow::on_opendriver() {
-    ScopeGuard g([this]() { showStatus(tr("DriverOpening...")); },
-                 [this]() { showStatus({}); });
-
-    DriverSelectorDialog ds;
-    if (ds.exec()) {
-        if (!Utilities::isRoot()) {
-            WingMessageBox::critical(this, tr("Error"), tr("Root Required!"));
-            return;
-        }
-        EditorView *editor = nullptr;
-        auto res = openDriver(ds.GetResult().device(), &editor);
-        if (res == ErrFile::NotExist) {
-            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-            return;
-        }
-        if (res == ErrFile::Permission) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-            return;
-        }
-        if (res == ErrFile::AlreadyOpened) {
-            Q_ASSERT(editor);
-            editor->raise();
-            editor->setFocus();
-            return;
-        }
-    }
-}
-
 void MainWindow::on_reload() {
     ScopeGuard g([this]() { showStatus(tr("Reloading...")); },
                  [this]() { showStatus({}); });
@@ -2139,8 +2106,7 @@ void MainWindow::on_saveas() {
     }
 
     QString lastpath;
-    if (editor->isNewFile() || editor->isExtensionFile() ||
-        editor->isDriver()) {
+    if (editor->isNewFile() || editor->isExtensionFile()) {
         lastpath = m_lastusedpath;
     } else {
         lastpath = editor->fileName();
@@ -3281,7 +3247,6 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
                 case WingHex::NotExist:
                 case WingHex::AlreadyOpened:
                 case WingHex::IsNewFile:
-                case WingHex::IsDirver:
                 case WingHex::ClonedFile:
                 case WingHex::InvalidFormat:
                 case WingHex::TooManyOpenedFile:
@@ -3609,36 +3574,6 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
     return ErrFile::Success;
 }
 
-ErrFile MainWindow::openDriver(const QString &driver, EditorView **editor) {
-    auto e = findEditorView(driver);
-    if (e) {
-        if (editor) {
-            *editor = e;
-        }
-        return ErrFile::AlreadyOpened;
-    }
-
-    // ok, going on
-    if (!newOpenFileSafeCheck()) {
-        return ErrFile::Error;
-    }
-
-    auto ev = new EditorView(this);
-    auto res = ev->openDriver(driver);
-
-    if (res != ErrFile::Success) {
-        delete ev;
-        return res;
-    }
-
-    registerEditorView(ev);
-    if (editor) {
-        *editor = ev;
-    }
-    m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
-    return ErrFile::Success;
-}
-
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     // different from other common files
     for (auto p = m_views.constKeyValueBegin(); p != m_views.constKeyValueEnd();
@@ -3702,7 +3637,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     if (forceWorkspace || workspace.isEmpty()) {
         if (forceWorkspace || editor->change2WorkSpace()) {
             QString curFile;
-            if (!editor->isDriver() && !editor->isExtensionFile()) {
+            if (!editor->isExtensionFile()) {
                 curFile = newName + PROEXT;
             }
 
@@ -3779,8 +3714,6 @@ IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
     switch (view->documentType()) {
     case EditorView::DocumentType::File:
         return IWingPlugin::FileType::File;
-    case EditorView::DocumentType::Driver:
-        return IWingPlugin::FileType::Driver;
     case EditorView::DocumentType::Extension:
         return IWingPlugin::FileType::Extension;
     case EditorView::DocumentType::Cloned:
@@ -3804,7 +3737,6 @@ void MainWindow::updateEditModeEnabled() {
 
     if (b) {
         auto hexeditor = editor->hexEditor();
-        enableDirverLimit(editor->isDriver());
         auto doc = hexeditor->document();
         m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(
             doc->canRedo());
@@ -3814,13 +3746,6 @@ void MainWindow::updateEditModeEnabled() {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
-    }
-}
-
-void MainWindow::enableDirverLimit(bool isDriver) {
-    auto e = !isDriver;
-    for (auto &item : m_driverStateWidgets) {
-        item->setEnabled(e);
     }
 }
 
@@ -3955,10 +3880,6 @@ QHexView *MainWindow::currentHexView() {
 bool MainWindow::writeSafeCheck(bool isNewFile, const QString &savePath) {
     if (Utilities::isRoot()) {
         if (isNewFile || savePath.isEmpty()) {
-            return false;
-        }
-
-        if (Utilities::isStorageDevice(savePath)) {
             return false;
         }
 

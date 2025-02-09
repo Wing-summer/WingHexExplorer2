@@ -2713,35 +2713,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 return ret;
             }
         });
-    connect(
-        pctl, &WingPlugin::Controller::openDriver, _win,
-        [=](const QString &driver) -> ErrFile {
-            if (!checkThreadAff()) {
-                return ErrFile::NotAllowedInNoneGUIThread;
-            }
-            EditorView *view = nullptr;
-            auto ret = _win->openDriver(driver, &view);
-            if (!checkPluginCanOpenedFile(plg)) {
-                return ErrFile::TooManyOpenedFile;
-            }
-            if (view) {
-                if (ret == ErrFile::AlreadyOpened &&
-                    checkPluginHasAlreadyOpened(plg, view)) {
-                    return ErrFile::AlreadyOpened;
-                }
-                auto id = assginHandleForPluginView(plg, view);
-                m_plgCurrentfid[plg] = id;
-                auto handle = getUIDHandle(id);
-                PluginSystem::instance().dispatchEvent(
-                    IWingPlugin::RegisteredEvent::PluginFileOpened,
-                    {quintptr(plg), driver, handle,
-                     QVariant::fromValue(_win->getEditorViewFileType(view))});
-
-                return ErrFile(handle);
-            } else {
-                return ret;
-            }
-        });
     connect(pctl, &WingPlugin::Controller::closeHandle, _win,
             [=](int handle) -> WingHex::ErrFile {
                 if (closeHandle(plg, handle)) {

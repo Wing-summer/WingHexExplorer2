@@ -491,7 +491,8 @@ void RegisterQString_Native(asIScriptEngine *engine) {
 
     // register the char type
     r = engine->RegisterObjectType("char", sizeof(QChar),
-                                   asOBJ_VALUE | asGetTypeTraits<QChar>());
+                                   asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS |
+                                       asGetTypeTraits<QChar>());
     Q_ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour("char", asBEHAVE_CONSTRUCT, "void f()",
                                         asFUNCTION(ConstructChar),

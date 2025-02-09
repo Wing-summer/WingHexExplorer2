@@ -38,7 +38,7 @@ class EditorView : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    enum class DocumentType { InValid, File, Driver, Extension, Cloned };
+    enum class DocumentType { InValid, File, Extension, Cloned };
 
     enum class FindError { Success, Busy, MayOutOfRange };
 
@@ -61,7 +61,6 @@ public:
     bool isNewFile() const;
     bool isBigFile() const;
     bool isCloneFile() const;
-    bool isDriver() const;
     bool isExtensionFile() const;
     bool isCommonFile() const;
 
@@ -115,7 +114,6 @@ public slots:
     ErrFile openFile(const QString &filename);
     ErrFile openExtFile(const QString &ext, const QString &file);
     ErrFile openWorkSpace(const QString &filename);
-    ErrFile openDriver(const QString &driver);
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
          bool isExport = false,

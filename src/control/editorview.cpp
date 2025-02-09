@@ -395,9 +395,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         ErrFile ret;
         auto extPrefix = QStringLiteral("wdrv:///");
 
-        if (Utilities::isStorageDevice(file)) {
-            ret = openDriver(file);
-        } else if (file.startsWith(extPrefix)) {
+        if (file.startsWith(extPrefix)) {
             // extension file
             auto c = file.mid(extPrefix.length());
             auto ci = c.indexOf('/');
@@ -434,43 +432,6 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
     return ErrFile::Error;
 }
 
-ErrFile EditorView::openDriver(const QString &driver) {
-    if (isCloneFile()) {
-        return ErrFile::ClonedFile;
-    }
-
-    auto sdriver = Utilities::getStorageDevice(driver);
-    if (!sdriver.isValid()) {
-        return ErrFile::NotExist;
-    }
-
-    auto *p = QHexDocument::fromStorageDriver(sdriver);
-
-    if (Q_UNLIKELY(p == nullptr)) {
-        return ErrFile::Permission;
-    }
-
-    m_docType = DocumentType::Driver;
-
-    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-    m_hex->setLockedFile(true);
-    m_hex->setKeepSize(true);
-    m_hex->setLockKeepSize(true);
-
-    p->setDocSaved();
-    m_fileName = driver;
-    m_isNewFile = false;
-
-    this->setWindowTitle(m_fileName);
-    connectDocSavedFlag(this);
-
-    auto tab = this->tabWidget();
-    tab->setIcon(ICONRES(QStringLiteral("opendriver")));
-    tab->setToolTip(driver);
-
-    return ErrFile::Success;
-}
-
 ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                          bool isExport, SaveWorkSpaceAttr workSpaceAttr) {
     if (isCloneFile()) {
@@ -488,12 +449,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     if (isNewFile()) {
         if (fileName.isEmpty()) {
             return ErrFile::IsNewFile;
-        }
-    }
-
-    if (isDriver()) {
-        if (!fileName.isEmpty()) {
-            return ErrFile::IsDirver;
         }
     }
 
@@ -607,8 +562,6 @@ ErrFile EditorView::reload() {
     switch (documentType()) {
     case DocumentType::File:
         return openFile(m_fileName);
-    case DocumentType::Driver:
-        return openDriver(m_fileName);
     case DocumentType::Extension:
         return openExtFile(_ext, _file);
     default:
@@ -684,7 +637,7 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
                 QString fileName;
-                if (editor->isNewFile() || editor->isDriver()) {
+                if (editor->isNewFile()) {
                     fileName = m_fileName;
                 } else if (editor->isExtensionFile()) {
                     auto idx = m_fileName.indexOf('}');
@@ -881,13 +834,6 @@ bool EditorView::isBigFile() const {
 
 bool EditorView::isCloneFile() const {
     return m_docType == EditorView::DocumentType::Cloned;
-}
-
-bool EditorView::isDriver() const {
-    if (isCloneFile()) {
-        return this->cloneParent()->isDriver();
-    }
-    return m_docType == EditorView::DocumentType::Driver;
 }
 
 bool EditorView::isExtensionFile() const {
