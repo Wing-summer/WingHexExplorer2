@@ -300,8 +300,7 @@ void QAsParser::addClassCompletion(asIScriptEngine *engine) {
             auto b = obj->GetBehaviourByIndex(i, &bv);
 
             switch (bv) {
-            case asBEHAVE_CONSTRUCT:
-            case asBEHAVE_DESTRUCT: {
+            case asBEHAVE_CONSTRUCT: {
                 // only these are supported
                 b->AddRef();
                 FnInfo fn;

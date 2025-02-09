@@ -21,6 +21,7 @@
 #include "QHexView/document/buffer/qmemorybuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "class/qkeysequences.h"
+
 #include "class/settingmanager.h"
 #include "class/workspacemanager.h"
 #include "plugin/pluginsystem.h"
@@ -31,6 +32,7 @@
 #include <QVBoxLayout>
 
 #ifdef Q_OS_LINUX
+#include "class/scopeguard.h"
 #include <unistd.h>
 #endif
 
@@ -400,7 +402,6 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
             auto c = file.mid(extPrefix.length());
             auto ci = c.indexOf('/');
             auto ext = c.left(ci);
-            auto path = c.mid(ci + 1);
             ret = openExtFile(ext, file);
         } else {
             // regard as regular files
@@ -444,6 +445,33 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 #ifdef Q_OS_LINUX
     bool needAdjustFile = !QFile::exists(fileName);
     bool needAdjustWs = false;
+
+    ScopeGuard guard(
+        [] {},
+        [&] {
+            if (Utilities::isRoot()) {
+                // a trick off when root under linux OS
+                // When new file created, change file's permission to 666.
+
+                // Because you cannot open it when you use it in common user
+                // after saving under root user.
+
+                // It's a workaround and not eligent for permission system
+
+                if (needAdjustFile) {
+                    if (Utilities::isFileOwnerRoot(fileName)) {
+                        Utilities::fixUpFilePermissions(fileName);
+                    }
+                }
+
+                if (needAdjustWs) {
+                    if (Utilities::isFileOwnerRoot(workSpaceName)) {
+                        Utilities::fixUpFilePermissions(workSpaceName);
+                    }
+                }
+            }
+        });
+
 #endif
 
     if (isNewFile()) {
@@ -517,30 +545,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             doc->setDocSaved();
         }
     }
-
-#ifdef Q_OS_LINUX
-    if (Utilities::isRoot()) {
-        // a trick off when root under linux OS
-        // When new file created, change file's permission to 666.
-
-        // Because you cannot open it when you use it in common user
-        // after saving under root user.
-
-        // It's a workaround and not eligent for permission system
-
-        if (needAdjustFile) {
-            if (Utilities::isFileOwnerRoot(fileName)) {
-                Utilities::fixUpFilePermissions(fileName);
-            }
-        }
-
-        if (needAdjustWs) {
-            if (Utilities::isFileOwnerRoot(workSpaceName)) {
-                Utilities::fixUpFilePermissions(workSpaceName);
-            }
-        }
-    }
-#endif
 
     return ErrFile::Success;
 }

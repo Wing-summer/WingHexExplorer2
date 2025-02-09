@@ -32,6 +32,7 @@
 #include "class/logger.h"
 #include "class/qkeysequences.h"
 #include "class/richtextitemdelegate.h"
+#include "class/scopeguard.h"
 #include "class/scriptconsolemachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
@@ -3622,12 +3623,8 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
     }
 
     auto isNewFile = editor->isNewFile();
-    if (isNewFile) {
+    if (isNewFile && filename.isEmpty()) {
         return ErrFile::IsNewFile;
-    }
-
-    if (!writeSafeCheck(false, {})) {
-        return ErrFile::Permission;
     }
 
     auto oldName = editor->fileName();
@@ -3875,20 +3872,6 @@ QHexView *MainWindow::currentHexView() {
         return nullptr;
     }
     return editor->hexEditor();
-}
-
-bool MainWindow::writeSafeCheck(bool isNewFile, const QString &savePath) {
-    if (Utilities::isRoot()) {
-        if (isNewFile || savePath.isEmpty()) {
-            return false;
-        }
-
-        QFileInfo finfo(savePath);
-        if (!finfo.exists()) {
-            return false;
-        }
-    }
-    return true;
 }
 
 void MainWindow::loadCacheIcon() {

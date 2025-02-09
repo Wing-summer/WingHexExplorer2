@@ -391,7 +391,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     _engine->GarbageCollect();
 
     // Release all contexts that have been allocated
-    for (auto ctx : _ctxPool) {
+    for (auto &ctx : _ctxPool) {
         ctx->Release();
     }
 
@@ -1611,7 +1611,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptGrid(engine);
     RegisterScriptHandle(engine);
     RegisterColor(engine);
-    RegisterScriptJson(engine);
+    RegisterQJson(engine);
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
 }

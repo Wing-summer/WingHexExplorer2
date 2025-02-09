@@ -258,8 +258,6 @@ private:
 
     QHexView *currentHexView();
 
-    bool writeSafeCheck(bool isNewFile, const QString &savePath);
-
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
 
@@ -275,19 +273,6 @@ protected:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    template <typename CtorFn, typename DctorFn>
-    class ScopeGuard {
-        const DctorFn &dctorfn;
-
-        Q_DISABLE_COPY_MOVE(ScopeGuard)
-
-    public:
-        ScopeGuard(CtorFn &&ctorfn, DctorFn &&dctorfn) : dctorfn(dctorfn) {
-            ctorfn();
-        }
-        ~ScopeGuard() { dctorfn(); }
-    };
-
     template <typename Func>
     inline QToolButton *
     addPannelAction(RibbonButtonGroup *pannel, const QString &iconName,

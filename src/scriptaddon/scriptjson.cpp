@@ -1,920 +1,733 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "scriptjson.h"
 
-#include <assert.h> // assert()
-#include <fstream>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
 
-#include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
-#include "scriptjson.h"
+// ------------------------------
+// QJsonDocument Wrappers
+// ------------------------------
 
-BEGIN_AS_NAMESPACE
-
-CScriptJson *CScriptJson::Create(asIScriptEngine *engine) {
-    // Use the custom memory routine from AngelScript to allow application to
-    // better control how much memory is used
-    CScriptJson *obj = (CScriptJson *)asAllocMem(sizeof(CScriptJson));
-    new (obj) CScriptJson(engine);
-    return obj;
+static void QJsonDocument_DefaultConstruct(void *memory) {
+    new (memory) QJsonDocument();
 }
 
-CScriptJson *CScriptJson::Create(asIScriptEngine *engine, json js) {
-    // Use the custom memory routine from AngelScript to allow application to
-    // better control how much memory is used
-    CScriptJson *obj = (CScriptJson *)asAllocMem(sizeof(CScriptJson));
-    new (obj) CScriptJson(engine);
-    *(obj->js_info) = js;
-    return obj;
+static void QJsonDocument_CopyConstruct(void *memory,
+                                        const QJsonDocument &other) {
+    new (memory) QJsonDocument(other);
 }
 
-void CScriptJson::AddRef() const { asAtomicInc(refCount); }
-
-void CScriptJson::Release() const {
-    if (asAtomicDec(refCount) == 0) {
-        this->~CScriptJson();
-        asFreeMem(const_cast<CScriptJson *>(this));
-    }
+static void QJsonDocument_Destruct(QJsonDocument *doc) {
+    doc->~QJsonDocument();
 }
 
-CScriptJson &CScriptJson::operator=(bool other) {
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = other;
-
-    return *this;
+// Global function
+static QJsonDocument QJsonDocument_FromJson(const QString &jsonStr) {
+    return QJsonDocument::fromJson(jsonStr.toUtf8());
 }
 
-CScriptJson &CScriptJson::operator=(asINT64 other) {
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = other;
-
-    return *this;
+static QString QJsonDocument_ToJson(const QJsonDocument &doc,
+                                    QJsonDocument::JsonFormat format) {
+    return QString::fromUtf8(doc.toJson(format));
 }
 
-CScriptJson &CScriptJson::operator=(double other) {
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = other;
-
-    return *this;
+static QJsonObject QJsonDocument_Object(const QJsonDocument &doc) {
+    return doc.object();
 }
 
-CScriptJson &CScriptJson::operator=(const std::string &other) {
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = other;
-
-    return *this;
+static QJsonArray QJsonDocument_Array(const QJsonDocument &doc) {
+    return doc.array();
 }
 
-CScriptJson &CScriptJson::operator=(const CScriptArray &other) {
-    json js_temp = json::array({});
-    for (asUINT i = 0; i < other.GetSize(); i++) {
-        CScriptJson **node = (CScriptJson **)other.At(i);
-        if (node && *node) {
-            js_temp += *(*node)->js_info;
-        }
-    }
-
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = js_temp;
-
-    return *this;
+static bool QJsonDocument_IsArray(const QJsonDocument &doc) {
+    return doc.isArray();
 }
 
-CScriptJson &CScriptJson::operator=(const CScriptJson &other) {
-    // Clear everything we had before
-    js_info->clear();
-
-    *js_info = *other.js_info;
-
-    return *this;
+static bool QJsonDocument_IsNull(const QJsonDocument &doc) {
+    return doc.isNull();
 }
 
-void CScriptJson::Set(const jsonKey_t &key, const bool &value) {
-    (*js_info)[key] = value;
+static bool QJsonDocument_IsObject(const QJsonDocument &doc) {
+    return doc.isObject();
 }
 
-void CScriptJson::Set(const jsonKey_t &key, const asINT64 &value) {
-    (*js_info)[key] = value;
+static bool QJsonDocument_IsEmpty(const QJsonDocument &doc) {
+    return doc.isEmpty();
 }
 
-void CScriptJson::Set(const jsonKey_t &key, const double &value) {
-    (*js_info)[key] = value;
+static void QJsonDocument_SetArray(QJsonDocument &doc,
+                                   const QJsonArray &array) {
+    doc.setArray(array);
 }
 
-void CScriptJson::Set(const jsonKey_t &key, const std::string &value) {
-    (*js_info)[key] = value;
+static void QJsonDocument_SetObject(QJsonDocument &doc,
+                                    const QJsonObject &obj) {
+    doc.setObject(obj);
 }
 
-void CScriptJson::Set(const jsonKey_t &key, const CScriptArray &value) {
-    json js_temp = json::array({});
-    for (asUINT i = 0; i < value.GetSize(); i++) {
-        CScriptJson **node = (CScriptJson **)value.At(i);
-        if (node && *node) {
-            js_temp += *(*node)->js_info;
-        }
-    }
-    (*js_info)[key] = js_temp;
+static QJsonValue QJsonDocument_opIndex(const QJsonDocument &doc,
+                                        const QString &key) {
+    return doc[key];
 }
 
-bool CScriptJson::Get(const jsonKey_t &key, bool &value) const {
-    if (js_info->contains(key)) {
-        if (js_info->is_boolean()) {
-            value = (*js_info)[key];
-            return true;
-        }
-    }
-    return false;
+static QJsonValue QJsonDocument_opIndexInt(const QJsonDocument &doc, int i) {
+    return doc[i];
 }
 
-bool CScriptJson::Get(const jsonKey_t &key, asINT64 &value) const {
-    if (js_info->contains(key)) {
-        if (js_info->is_number()) {
-            value = (*js_info)[key];
-            return true;
-        }
-    }
-    return false;
+// ------------------------------
+// QJsonValue Wrappers
+// ------------------------------
+
+static void QJsonValue_DefaultConstruct(void *memory) {
+    new (memory) QJsonValue();
 }
 
-bool CScriptJson::Get(const jsonKey_t &key, double &value) const {
-    if (js_info->contains(key)) {
-        if (js_info->is_number()) {
-            value = (*js_info)[key];
-            return true;
-        }
-    }
-    return false;
+static void QJsonValue_CopyConstruct(void *memory, const QJsonValue &other) {
+    new (memory) QJsonValue(other);
 }
 
-bool CScriptJson::Get(const jsonKey_t &key, std::string &value) const {
-    if (js_info->contains(key)) {
-        if (js_info->is_string()) {
-            value = (*js_info)[key];
-            return true;
-        }
-    }
-    return false;
+static void QJsonValue_Destruct(QJsonValue *val) { val->~QJsonValue(); }
+
+static void QJsonValue_ConstructBool(QJsonValue *self, bool b) {
+    new (self) QJsonValue(b);
 }
 
-bool CScriptJson::Get(const jsonKey_t &key, CScriptArray &value) const {
-    if (!js_info->contains(key) || !(*js_info)[key].is_array())
-        return false;
-
-    json js_temp = (*js_info)[key];
-    value.Resize(asUINT(js_temp.size()));
-
-    for (asUINT i = 0; i < js_temp.size(); ++i) {
-        CScriptJson *childNode = Create(engine);
-        *(childNode->js_info) = js_temp[i];
-        value.SetValue(i, &childNode);
-        childNode->Release();
-    }
-    return true;
+static void QJsonValue_ConstructString(QJsonValue *self, const QString &str) {
+    new (self) QJsonValue(str);
 }
 
-bool CScriptJson::GetBool() { return *js_info; }
-
-int CScriptJson::GetNumber() { return *js_info; }
-
-double CScriptJson::GetReal() { return *js_info; }
-
-std::string CScriptJson::GetString() { return *js_info; }
-
-CScriptArray *CScriptJson::GetArray() {
-    CScriptArray *retVal =
-        CScriptArray::Create(engine->GetTypeInfoByDecl("array<JsonValue@>"));
-    for (json::iterator it = js_info->begin(); it != js_info->end(); ++it) {
-        CScriptJson *childNode = CScriptJson::Create(engine, *it);
-
-        retVal->InsertLast(childNode);
-        childNode->Release();
-    }
-    return retVal;
+static void QJsonValue_ConstructQJsonArray(QJsonValue *self,
+                                           const QJsonArray &array) {
+    new (self) QJsonValue(array);
 }
 
-CScriptJson *CScriptJson::operator[](const jsonKey_t &key) {
-    CScriptJson *retVal = Create(engine);
-    retVal->js_info = &(*js_info)[key];
-    // Return the existing value if it exists, else insert an empty value
-    return retVal;
+static void QJsonValue_ConstructQJsonObject(QJsonValue *self,
+                                            const QJsonObject &obj) {
+    new (self) QJsonValue(obj);
 }
 
-const CScriptJson *CScriptJson::operator[](const jsonKey_t &key) const {
-    if (js_info->contains(key)) {
-        CScriptJson *retVal = Create(engine);
-        *(retVal->js_info) = (*js_info)[key];
-        return retVal;
-    }
-
-    // Else raise an exception
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx)
-        ctx->SetException("Invalid access to non-existing value");
-
-    return 0;
+static void QJsonValue_ConstructDouble(QJsonValue *self, double v) {
+    new (self) QJsonValue(v);
 }
 
-bool CScriptJson::Exists(const jsonKey_t &key) const {
-    return js_info->contains(key);
+static void QJsonValue_ConstructInt(QJsonValue *self, int v) {
+    new (self) QJsonValue(v);
 }
 
-bool CScriptJson::IsEmpty() const { return js_info->empty(); }
+static bool QJsonValue_IsNull(const QJsonValue &val) { return val.isNull(); }
 
-asUINT CScriptJson::GetSize() const { return asUINT(js_info->size()); }
+static bool QJsonValue_IsBool(const QJsonValue &val) { return val.isBool(); }
 
-void CScriptJson::Clear() { js_info->clear(); }
-
-CScriptJsonType CScriptJson::Type() {
-    switch (js_info->type()) {
-    case json::value_t::object:
-        return OBJECT_VALUE;
-    case json::value_t::array:
-        return ARRAY_VALUE;
-    case json::value_t::string:
-        return STRING_VALUE;
-    case json::value_t::boolean:
-        return BOOLEAN_VALUE;
-    case json::value_t::number_integer:
-    case json::value_t::number_unsigned:
-        return NUMBER_VALUE;
-    case json::value_t::number_float:
-        return REAL_VALUE;
-    default:
-        return NULL_VALUE;
-    }
+static bool QJsonValue_IsDouble(const QJsonValue &val) {
+    return val.isDouble();
 }
 
-int CScriptJson::GetRefCount() { return refCount; }
+static bool QJsonValue_IsArray(const QJsonValue &val) { return val.isArray(); }
 
-CScriptJson::CScriptJson(asIScriptEngine *e) {
-    js_info = new json();
-    // We start with one reference
-    refCount = 1;
-
-    engine = e;
+static bool QJsonValue_IsObject(const QJsonValue &val) {
+    return val.isObject();
 }
 
-CScriptJson::~CScriptJson() {
-    Clear();
-    delete js_info;
+static bool QJsonValue_IsString(const QJsonValue &val) {
+    return val.isString();
 }
 
-void ScriptJsonFactory_Generic(asIScriptGeneric *gen) {
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() =
-        CScriptJson::Create(gen->GetEngine());
+static bool QJsonValue_IsUndefined(const QJsonValue &val) {
+    return val.isUndefined();
 }
 
-void ScriptJsonAddRef_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    json->AddRef();
+static QJsonArray QJsonValue_ToArray(const QJsonValue &val) {
+    return val.toArray();
 }
 
-void ScriptJsonRelease_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    json->Release();
+static bool QJsonValue_ToBool(const QJsonValue &val) { return val.toBool(); }
+
+static double QJsonValue_ToDouble(const QJsonValue &val) {
+    return val.toDouble();
 }
 
-void ScriptJsonAssignBool_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    *json = (bool)gen->GetArgByte(0);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+static int QJsonValue_ToInt(const QJsonValue &val) { return val.toInt(); }
+
+static QJsonObject QJsonValue_ToQJsonObject(const QJsonValue &val) {
+    return val.toObject();
 }
 
-void ScriptJsonAssignInt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    *json = (asINT64)gen->GetArgQWord(0);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+static QString QJsonValue_ToString(const QJsonValue &val) {
+    return val.toString();
 }
 
-void ScriptJsonAssignFlt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    *json = (asINT64)gen->GetArgDouble(0);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+static QJsonValue QJsonValue_opIndex(const QJsonValue &obj,
+                                     const QString &key) {
+    return obj[key];
 }
 
-void ScriptJsonAssignStr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    std::string *other = *(std::string **)gen->GetAddressOfArg(0);
-    *json = *other;
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+static QJsonValue QJsonValue_opIndexInt(const QJsonValue &obj, int i) {
+    return obj[i];
 }
 
-void ScriptJsonAssignArr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    CScriptArray *other = *(CScriptArray **)gen->GetAddressOfArg(0);
-    *json = *other;
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+// ------------------------------
+// QJsonArray Wrappers
+// ------------------------------
+
+static void QJsonArray_DefaultConstruct(void *memory) {
+    new (memory) QJsonArray();
 }
 
-void ScriptJsonAssign_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    CScriptJson *other = *(CScriptJson **)gen->GetAddressOfArg(0);
-    *json = *other;
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = json;
+static void QJsonArray_CopyConstruct(void *memory, const QJsonArray &other) {
+    new (memory) QJsonArray(other);
 }
 
-void ScriptJsonSetBool_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    json->Set(*key, *(bool *)ref);
+static void QJsonArray_Destruct(QJsonArray *arr) { arr->~QJsonArray(); }
+
+static int QJsonArray_Size(const QJsonArray &arr) { return arr.size(); }
+
+static QJsonValue QJsonArray_At(const QJsonArray &arr, int index) {
+    return arr.at(index);
 }
 
-void ScriptJsonSetInt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    json->Set(*key, *(asINT64 *)ref);
+static bool QJsonArray_IsEmpty(const QJsonArray &val) { return val.isEmpty(); }
+
+static void QJsonArray_Append(QJsonArray &arr, const QJsonValue &val) {
+    arr.append(val);
 }
 
-void ScriptJsonSetFlt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    json->Set(*key, *(double *)ref);
+static void QJsonArray_Prepend(QJsonArray &arr, const QJsonValue &val) {
+    arr.prepend(val);
 }
 
-void ScriptJsonSetStr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    json->Set(*key, *(std::string *)ref);
+static void QJsonArray_Insert(QJsonArray &arr, int i, const QJsonValue &val) {
+    arr.insert(i, val);
 }
 
-void ScriptJsonSetArr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    json->Set(*key, *(CScriptArray *)ref);
+static void QJsonArray_Replace(QJsonArray &arr, int i, const QJsonValue &val) {
+    arr.replace(i, val);
 }
 
-void ScriptJsonGetBool_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    *(bool *)gen->GetAddressOfReturnLocation() = json->Get(*key, *(bool *)ref);
+static void QJsonArray_RemoveAt(QJsonArray &arr, int i) { arr.removeAt(i); }
+
+static void QJsonArray_RemoveFirst(QJsonArray &arr) { arr.removeFirst(); }
+
+static void QJsonArray_RemoveLast(QJsonArray &arr) { arr.removeLast(); }
+
+static QJsonArray QJsonArray_opAdd(const QJsonArray &arr,
+                                   const QJsonValue &value) {
+    return arr + value;
 }
 
-void ScriptJsonGetInt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    *(bool *)gen->GetAddressOfReturnLocation() =
-        json->Get(*key, *(asINT64 *)ref);
+static QJsonArray &QJsonArray_opAddAssign(QJsonArray &arr,
+                                          const QJsonValue &value) {
+    arr += value;
+    return arr;
 }
 
-void ScriptJsonGetFlt_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    *(bool *)gen->GetAddressOfReturnLocation() =
-        json->Get(*key, *(double *)ref);
+// ------------------------------
+// QJsonObject Wrappers
+// ------------------------------
+
+static void QJsonObject_Construct(QJsonObject *self) {
+    new (self) QJsonObject();
 }
 
-void ScriptJsonGetStr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    *(bool *)gen->GetAddressOfReturnLocation() =
-        json->Get(*key, *(std::string *)ref);
+static void QJsonObject_CopyConstruct(QJsonObject *self,
+                                      const QJsonObject &other) {
+    new (self) QJsonObject(other);
 }
 
-void ScriptJsonGetArr_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    void *ref = *(void **)gen->GetAddressOfArg(1);
-    *(bool *)gen->GetAddressOfReturnLocation() =
-        json->Get(*key, *(CScriptArray *)ref);
+static void QJsonObject_Destruct(QJsonObject *self) { self->~QJsonObject(); }
+
+static QJsonValue QJsonObject_opIndex(const QJsonObject &obj,
+                                      const QString &key) {
+    return obj[key];
 }
 
-void ScriptJsonExists_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    bool ret = json->Exists(*key);
-    *(bool *)gen->GetAddressOfReturnLocation() = ret;
+static bool QJsonObject_HasKey(const QJsonObject &obj, const QString &key) {
+    return obj.contains(key);
 }
 
-void ScriptJsonIsEmpty_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    bool ret = json->IsEmpty();
-    *(bool *)gen->GetAddressOfReturnLocation() = ret;
+static void QJsonObject_SetValue(QJsonObject &obj, const QString &key,
+                                 const QJsonValue &val) {
+    obj.insert(key, val);
 }
 
-void ScriptJsonGetSize_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    asUINT ret = json->GetSize();
-    *(asUINT *)gen->GetAddressOfReturnLocation() = ret;
+static void QJsonObject_Remove(QJsonObject &obj, const QString &key) {
+    obj.remove(key);
 }
 
-void ScriptJsonClear_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    json->Clear();
+static bool QJsonObject_IsEmpty(const QJsonObject &obj) {
+    return obj.isEmpty();
 }
 
-void ScriptJsonGetType_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetObject();
-    CScriptJsonType ret = json->Type();
-    *(CScriptJsonType *)gen->GetAddressOfReturnLocation() = ret;
-}
+static int QJsonObject_Size(const QJsonObject &obj) { return obj.size(); }
 
-static void CScriptJson_opIndex_Generic(asIScriptGeneric *gen) {
-    CScriptJson *self = (CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = self->operator[](*key);
-}
+// ------------------------------
+// Register functions
+// ------------------------------
 
-static void CScriptJson_opIndex_const_Generic(asIScriptGeneric *gen) {
-    const CScriptJson *self = (const CScriptJson *)gen->GetObject();
-    jsonKey_t *key = *(jsonKey_t **)gen->GetAddressOfArg(0);
-    *(const CScriptJson **)gen->GetAddressOfReturnLocation() =
-        self->operator[](*key);
-}
-
-static CScriptJson *JsonParseFile(const std::string &file) {
-    std::ifstream inputFile(file.c_str());
-
-    asIScriptContext *currentContext = asGetActiveContext();
-    if (currentContext) {
-        asIScriptEngine *engine = currentContext->GetEngine();
-        if (engine) {
-            CScriptJson *newNode = CScriptJson::Create(engine);
-            *(newNode->js_info) = json::parse(inputFile);
-            return newNode;
-        }
-    }
-    return NULL;
-}
-
-static CScriptJson *JsonParse(const std::string &str) {
-    asIScriptContext *currentContext = asGetActiveContext();
-    if (currentContext) {
-        asIScriptEngine *engine = currentContext->GetEngine();
-        if (engine) {
-            CScriptJson *newNode = CScriptJson::Create(engine);
-            *(newNode->js_info) = json::parse(str.c_str());
-            return newNode;
-        }
-    }
-    return NULL;
-}
-
-// Json to text
-static bool JsonWriteFile(const CScriptJson &node, const std::string &file) {
-    FILE *outputFile = NULL;
-    if ((outputFile = fopen(file.c_str(), "w")) == NULL) {
-        return false;
-    }
-    char *data_str;
-    std::string dump_str = node.js_info->dump(1, '\t');
-    data_str = (char *)malloc(dump_str.length() + 1);
-    strcpy(data_str, dump_str.c_str());
-
-    fwrite(data_str, strlen(data_str), 1, outputFile);
-    fclose(outputFile);
-    free(data_str);
-    return true;
-}
-
-static bool JsonWrite(const CScriptJson &node, std::string &content) {
-    content = node.js_info->dump(1, '\t');
-    return true;
-}
-
-static void ScriptJson_ParseFile_Generic(asIScriptGeneric *gen) {
-    std::string *file = (std::string *)gen->GetArgAddress(0);
-
-    CScriptJson *ret = JsonParseFile(*file);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = ret;
-}
-
-static void ScriptJson_Parse_Generic(asIScriptGeneric *gen) {
-    std::string *file = (std::string *)gen->GetArgAddress(0);
-
-    CScriptJson *ret = JsonParse(*file);
-    *(CScriptJson **)gen->GetAddressOfReturnLocation() = ret;
-}
-
-static void ScriptJson_WriteFile_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetArgAddress(0);
-    std::string *file = (std::string *)gen->GetArgAddress(1);
-
-    bool ret = JsonWriteFile(*json, *file);
-    *(bool *)gen->GetAddressOfReturnLocation() = ret;
-}
-
-static void ScriptJson_Write_Generic(asIScriptGeneric *gen) {
-    CScriptJson *json = (CScriptJson *)gen->GetArgAddress(0);
-    std::string *content = (std::string *)gen->GetArgAddress(1);
-
-    bool ret = JsonWrite(*json, *content);
-    *(bool *)gen->GetAddressOfReturnLocation() = ret;
-}
-
-//--------------------------------------------------------------------------
-// Register the type
-
-void RegisterScriptJson_Native(asIScriptEngine *engine) {
+void RegisterQJsonDocument(asIScriptEngine *engine) {
     int r;
 
-    // The array<string> type must be available
-    assert(engine->GetTypeInfoByDecl("array<string>"));
+    // Register QJsonDocument as a value type.
+    // The flag asOBJ_APP_CLASS_CDAK is used for types with a Constructor,
+    // Destructor, Assignment operator, and Copy constructor.
+    r = engine->RegisterObjectType("JsonDocument", sizeof(QJsonDocument),
+                                   asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
+                                       asGetTypeTraits<QJsonDocument>());
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterEnum("jsonType");
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "OBJECT_VALUE", OBJECT_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "ARRAY_VALUE", ARRAY_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "BOOLEAN_VALUE", BOOLEAN_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "STRING_VALUE", STRING_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "NUMBER_VALUE", NUMBER_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "REAL_VALUE", REAL_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "NULL_VALUE", NULL_VALUE);
-    assert(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "JsonDocument", asBEHAVE_CONSTRUCT, "void f()",
+        asFUNCTION(QJsonDocument_DefaultConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectType("json", sizeof(CScriptJson), asOBJ_REF);
-    assert(r >= 0);
-    // Use the generic interface to construct the object since we need the
-    // engine pointer, we could also have retrieved the engine pointer from the
-    // active context
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_FACTORY, "json@ f()",
-                                        asFUNCTION(ScriptJsonFactory_Generic),
-                                        asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_ADDREF, "void f()",
-                                        asMETHOD(CScriptJson, AddRef),
-                                        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_RELEASE, "void f()",
-                                        asMETHOD(CScriptJson, Release),
-                                        asCALL_THISCALL);
-    assert(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "JsonDocument", asBEHAVE_CONSTRUCT, "void f(const JsonDocument &in)",
+        asFUNCTION(QJsonDocument_CopyConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod(
-        "json", "json &opAssign(bool)",
-        asMETHODPR(CScriptJson, operator=, (bool), CScriptJson &),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "json &opAssign(int64)",
-        asMETHODPR(CScriptJson, operator=, (asINT64), CScriptJson &),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "json &opAssign(double)",
-        asMETHODPR(CScriptJson, operator=, (double), CScriptJson &),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(const string& in)",
-                                     asMETHODPR(CScriptJson, operator=,
-                                                (const std::string &),
-                                                CScriptJson &),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "json &opAssign(const array<json@> &in)",
-        asMETHODPR(CScriptJson, operator=, (const CScriptArray &),
-                   CScriptJson &),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(const json &in)",
-                                     asMETHODPR(CScriptJson, operator=,
-                                                (const CScriptJson &),
-                                                CScriptJson &),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "JsonDocument", asBEHAVE_DESTRUCT, "void f()",
+        asFUNCTION(QJsonDocument_Destruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterEnum("JsonFormat");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("JsonFormat", "Indented",
+                                  QJsonDocument::Indented);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("JsonFormat", "Compact",
+                                  QJsonDocument::Compact);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const bool&in)",
-        asMETHODPR(CScriptJson, Set, (const std::string &, const bool &), void),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, bool &out) const",
-        asMETHODPR(CScriptJson, Get, (const std::string &, bool &) const, bool),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument",
+        "string toJson(JsonFormat format = Json::JsonFormat::Indented) const",
+        asFUNCTION(QJsonDocument_ToJson), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonDocument", "bool isArray() const",
+                                     asFUNCTION(QJsonDocument_IsArray),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonDocument", "bool isEmpty() const",
+                                     asFUNCTION(QJsonDocument_IsEmpty),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonDocument", "bool isNull() const",
+                                     asFUNCTION(QJsonDocument_IsNull),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonDocument", "bool isObject() const",
+                                     asFUNCTION(QJsonDocument_IsObject),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const int64&in)",
-        asMETHODPR(CScriptJson, Set, (const std::string &, const asINT64 &),
-                   void),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, int64 &out) const",
-        asMETHODPR(CScriptJson, Get, (const std::string &, asINT64 &) const,
-                   bool),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument", "JsonObject object() const",
+        asFUNCTION(QJsonDocument_Object), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const double&in)",
-        asMETHODPR(CScriptJson, Set, (const std::string &, const double &),
-                   void),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, double &out) const",
-        asMETHODPR(CScriptJson, Get, (const std::string &, double &) const,
-                   bool),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument", "void setArray(const JsonArray &in array)",
+        asFUNCTION(QJsonDocument_SetArray), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const string&in)",
-        asMETHODPR(CScriptJson, Set, (const std::string &, const std::string &),
-                   void),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument", "void setObject(const JsonObject &in obj)",
+        asFUNCTION(QJsonDocument_SetObject), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // opIndex for getting values
     r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, string &out) const",
-        asMETHODPR(CScriptJson, Get, (const std::string &, std::string &) const,
-                   bool),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument", "JsonValue opIndex(const string &in key) const",
+        asFUNCTION(QJsonDocument_opIndex), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const array<json@>&in)",
-        asMETHODPR(CScriptJson, Set,
-                   (const std::string &, const CScriptArray &), void),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, array<json@> &out) const",
-        asMETHODPR(CScriptJson, Get,
-                   (const std::string &, CScriptArray &) const, bool),
-        asCALL_THISCALL);
-    assert(r >= 0);
+        "JsonDocument", "JsonValue opIndex(int index) const",
+        asFUNCTION(QJsonDocument_opIndexInt), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod(
-        "json", "bool exists(const string &in) const",
-        asMETHOD(CScriptJson, Exists), asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "bool isEmpty() const",
-                                     asMETHOD(CScriptJson, IsEmpty),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "uint getSize() const",
-                                     asMETHOD(CScriptJson, GetSize),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "void clear()", asMETHOD(CScriptJson, Clear), asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "jsonType getType()",
-                                     asMETHOD(CScriptJson, Type),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-
-    r = engine->RegisterObjectMethod(
-        "json", "json &opIndex(const string &in)",
-        asMETHODPR(CScriptJson, operator[], (const jsonKey_t &), CScriptJson *),
-        asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "const json &opIndex(const string &in) const",
-        asMETHODPR(CScriptJson, operator[], (const jsonKey_t &) const,
-                   const CScriptJson *),
-        asCALL_THISCALL);
-    assert(r >= 0);
-
-    r = engine->RegisterObjectMethod("json", "bool opConv()",
-                                     asMETHOD(CScriptJson, GetBool),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "string opConv()",
-                                     asMETHOD(CScriptJson, GetString),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "int opConv()",
-                                     asMETHOD(CScriptJson, GetNumber),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "double opConv()",
-                                     asMETHOD(CScriptJson, GetReal),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "array<json@>& opConv()",
-                                     asMETHOD(CScriptJson, GetArray),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-
-    // Json functions
+    // global function
     r = engine->RegisterGlobalFunction(
-        "json@ jsonParseFile(const string& in)",
-        asFUNCTIONPR(JsonParseFile, (const std::string &), CScriptJson *),
-        asCALL_CDECL);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "json@ jsonParse(const string& in)",
-        asFUNCTIONPR(JsonParse, (const std::string &), CScriptJson *),
-        asCALL_CDECL);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "bool jsonWriteFile(const json& in json,const string& in)",
-        asFUNCTIONPR(JsonWriteFile,
-                     (const CScriptJson &node, const std::string &), bool),
-        asCALL_CDECL);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "bool jsonWrite(const json& in json,string& out)",
-        asFUNCTIONPR(JsonWrite, (const CScriptJson &node, std::string &), bool),
-        asCALL_CDECL);
-    assert(r >= 0);
+        "JsonDocument fromJson(const string &in)",
+        asFUNCTION(QJsonDocument_FromJson), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 }
 
-void RegisterScriptJson_Generic(asIScriptEngine *engine) {
+// Register QJsonValue with AngelScript
+void RegisterQJsonValue(asIScriptEngine *engine) {
+    int r;
+    r = engine->RegisterObjectType("JsonValue", sizeof(QJsonValue),
+                                   asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
+                                       asGetTypeTraits<QJsonValue>());
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Constructors / Destructor
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f()",
+        asFUNCTION(QJsonValue_DefaultConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonValue &in)",
+        asFUNCTION(QJsonValue_CopyConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(bool)",
+        asFUNCTION(QJsonValue_ConstructBool), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(int)",
+        asFUNCTION(QJsonValue_ConstructInt), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(double)",
+        asFUNCTION(QJsonValue_ConstructDouble), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const string &in)",
+        asFUNCTION(QJsonValue_ConstructString), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_DESTRUCT, "void f()",
+        asFUNCTION(QJsonValue_Destruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Methods
+    r = engine->RegisterObjectMethod("JsonValue", "bool isNull() const",
+                                     asFUNCTION(QJsonValue_IsNull),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isBool() const",
+                                     asFUNCTION(QJsonValue_IsBool),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isDouble() const",
+                                     asFUNCTION(QJsonValue_IsDouble),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isString() const",
+                                     asFUNCTION(QJsonValue_IsString),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isUndefined() const",
+                                     asFUNCTION(QJsonValue_IsUndefined),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "string toString() const",
+                                     asFUNCTION(QJsonValue_ToString),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool toBool() const",
+                                     asFUNCTION(QJsonValue_ToBool),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "double toDouble() const",
+                                     asFUNCTION(QJsonValue_ToDouble),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "int toInt() const",
+                                     asFUNCTION(QJsonValue_ToInt),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // opIndex for getting values
+    r = engine->RegisterObjectMethod(
+        "JsonValue", "JsonValue opIndex(const string &in key) const",
+        asFUNCTION(QJsonValue_opIndex), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonValue", "JsonValue opIndex(int index) const",
+        asFUNCTION(QJsonValue_opIndexInt), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+}
+
+void RegisterQJsonValue_End(asIScriptEngine *engine) {
+    auto r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonArray &in)",
+        asFUNCTION(QJsonValue_ConstructQJsonArray), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonObject &in)",
+        asFUNCTION(QJsonValue_ConstructQJsonObject), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isArray() const",
+                                     asFUNCTION(QJsonValue_IsArray),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "bool isObject() const",
+                                     asFUNCTION(QJsonValue_IsObject),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "JsonArray toArray() const",
+                                     asFUNCTION(QJsonValue_ToArray),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonValue", "JsonObject toObject() const",
+                                     asFUNCTION(QJsonValue_ToQJsonObject),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+}
+
+// Register QJsonArray with AngelScript
+void RegisterQJsonArray(asIScriptEngine *engine) {
+    int r;
+    r = engine->RegisterObjectType("JsonArray", sizeof(QJsonArray),
+                                   asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
+                                       asGetTypeTraits<QJsonArray>());
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Constructors / Destructor
+    r = engine->RegisterObjectBehaviour(
+        "JsonArray", asBEHAVE_CONSTRUCT, "void f()",
+        asFUNCTION(QJsonArray_DefaultConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonArray", asBEHAVE_CONSTRUCT, "void f(const JsonArray &in)",
+        asFUNCTION(QJsonArray_CopyConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonArray", asBEHAVE_DESTRUCT, "void f()",
+        asFUNCTION(QJsonArray_Destruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Methods
+    r = engine->RegisterObjectMethod("JsonArray", "int size() const",
+                                     asFUNCTION(QJsonArray_Size),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonArray", "bool isEmpty() const",
+                                     asFUNCTION(QJsonArray_IsEmpty),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonArray", "JsonValue at(int) const",
+                                     asFUNCTION(QJsonArray_At),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "void append(const JsonValue &in val)",
+        asFUNCTION(QJsonArray_Append), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "void prepend(const JsonValue &in val)",
+        asFUNCTION(QJsonArray_Prepend), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "void insert(int index, const JsonValue &in val)",
+        asFUNCTION(QJsonArray_Insert), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "void replace(int index, const JsonValue &in val)",
+        asFUNCTION(QJsonArray_Replace), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonArray", "void removeAt(int index)",
+                                     asFUNCTION(QJsonArray_RemoveAt),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonArray", "void removeFirst()",
+                                     asFUNCTION(QJsonArray_RemoveFirst),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonArray", "void removeLast()",
+                                     asFUNCTION(QJsonArray_RemoveLast),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "JsonArray opAdd(const JsonValue &in) const",
+        asFUNCTION(QJsonArray_opAdd), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "JsonArray &opAddAssign(const JsonValue &in)",
+        asFUNCTION(QJsonArray_opAddAssign), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+}
+
+void RegisterQJsonObject(asIScriptEngine *engine) {
     int r;
 
-    r = engine->RegisterEnum("jsonType");
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "OBJECT_VALUE", OBJECT_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "ARRAY_VALUE", ARRAY_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "BOOLEAN_VALUE", BOOLEAN_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "STRING_VALUE", STRING_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "NUMBER_VALUE", NUMBER_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "REAL_VALUE", REAL_VALUE);
-    assert(r >= 0);
-    r = engine->RegisterEnumValue("jsonType", "NULL_VALUE", NULL_VALUE);
-    assert(r >= 0);
+    r = engine->RegisterObjectType("JsonObject", sizeof(QJsonObject),
+                                   asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
+                                       asGetTypeTraits<QJsonObject>());
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectType("json", sizeof(CScriptJson), asOBJ_REF);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_FACTORY, "json@ f()",
-                                        asFUNCTION(ScriptJsonFactory_Generic),
-                                        asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_ADDREF, "void f()",
-                                        asFUNCTION(ScriptJsonAddRef_Generic),
-                                        asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour("json", asBEHAVE_RELEASE, "void f()",
-                                        asFUNCTION(ScriptJsonRelease_Generic),
-                                        asCALL_GENERIC);
-    assert(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "JsonObject", asBEHAVE_CONSTRUCT, "void f()",
+        asFUNCTION(QJsonObject_Construct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod("json", "json &opAssign(bool)",
-                                     asFUNCTION(ScriptJsonAssignBool_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(int64)",
-                                     asFUNCTION(ScriptJsonAssignInt_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(double)",
-                                     asFUNCTION(ScriptJsonAssignFlt_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(const string &in)",
-                                     asFUNCTION(ScriptJsonAssignStr_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "json &opAssign(const array<json@> &in)",
-        asFUNCTION(ScriptJsonAssignArr_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "json &opAssign(const json &in)",
-                                     asFUNCTION(ScriptJsonAssign_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "JsonObject", asBEHAVE_CONSTRUCT, "void f(const JsonObject &in)",
+        asFUNCTION(QJsonObject_CopyConstruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectBehaviour(
+        "JsonObject", asBEHAVE_DESTRUCT, "void f()",
+        asFUNCTION(QJsonObject_Destruct), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const bool&in)",
-        asFUNCTION(ScriptJsonSetBool_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, bool&out) const",
-        asFUNCTION(ScriptJsonGetBool_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+        "JsonObject", "bool hasKey(const string &in key) const",
+        asFUNCTION(QJsonObject_HasKey), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const int64&in)",
-        asFUNCTION(ScriptJsonSetInt_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, int64&out) const",
-        asFUNCTION(ScriptJsonGetInt_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+        "JsonObject",
+        "void set(const string &in key, const JsonValue &in value)",
+        asFUNCTION(QJsonObject_SetValue), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const double&in)",
-        asFUNCTION(ScriptJsonSetFlt_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, double&out) const",
-        asFUNCTION(ScriptJsonGetFlt_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+        "JsonObject", "void remove(const string &in key)",
+        asFUNCTION(QJsonObject_Remove), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const string&in)",
-        asFUNCTION(ScriptJsonSetStr_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, string&out) const",
-        asFUNCTION(ScriptJsonGetStr_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+    r = engine->RegisterObjectMethod("JsonObject", "bool isEmpty() const",
+                                     asFUNCTION(QJsonObject_IsEmpty),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod(
-        "json", "void set(const string &in, const array<json@>&in)",
-        asFUNCTION(ScriptJsonSetArr_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "bool get(const string &in, array<json@>&out) const",
-        asFUNCTION(ScriptJsonGetArr_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+    r = engine->RegisterObjectMethod("JsonObject", "int size() const",
+                                     asFUNCTION(QJsonObject_Size),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
+    // opIndex for getting values
     r = engine->RegisterObjectMethod(
-        "json", "bool exists(const string &in) const",
-        asFUNCTION(ScriptJsonExists_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "bool isEmpty() const",
-                                     asFUNCTION(ScriptJsonIsEmpty_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "uint getSize() const",
-                                     asFUNCTION(ScriptJsonGetSize_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "void clear()",
-                                     asFUNCTION(ScriptJsonClear_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "void jsonType getType()",
-                                     asFUNCTION(ScriptJsonGetType_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-
-    r = engine->RegisterObjectMethod("json", "json &opIndex(const string &in)",
-                                     asFUNCTION(CScriptJson_opIndex_Generic),
-                                     asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "json", "const json &opIndex(const string &in) const",
-        asFUNCTION(CScriptJson_opIndex_const_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-
-    r = engine->RegisterObjectMethod("json", "bool opConv()",
-                                     asFUNCTION(ScriptJsonGetBool_Generic),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "string opConv()",
-                                     asFUNCTION(ScriptJsonGetStr_Generic),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "int opConv()",
-                                     asFUNCTION(ScriptJsonGetInt_Generic),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "double opConv()",
-                                     asFUNCTION(ScriptJsonGetFlt_Generic),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod("json", "array<json@>& opConv()",
-                                     asFUNCTION(ScriptJsonGetArr_Generic),
-                                     asCALL_THISCALL);
-    assert(r >= 0);
-
-    // Json functions
-    r = engine->RegisterGlobalFunction(
-        "json@ JsonParseFile(const string& file)",
-        asFUNCTION(ScriptJson_ParseFile_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction("json@ JsonParse(const string& str)",
-                                       asFUNCTION(ScriptJson_Parse_Generic),
-                                       asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "bool JsonWriteFile(const json& in json,const string& file)",
-        asFUNCTION(ScriptJson_WriteFile_Generic), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterGlobalFunction(
-        "bool JsonWrite(const json& in json,string& out str)",
-        asFUNCTION(ScriptJson_Write_Generic), asCALL_GENERIC);
-    assert(r >= 0);
+        "JsonObject", "JsonValue opIndex(const string &in key) const",
+        asFUNCTION(QJsonObject_opIndex), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 }
 
-void RegisterScriptJson(asIScriptEngine *engine) {
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
-        RegisterScriptJson_Generic(engine);
-    else
-        RegisterScriptJson_Native(engine);
+void RegisterQJson(asIScriptEngine *engine) {
+    auto r = engine->SetDefaultNamespace("Json");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    RegisterQJsonValue(engine);
+    RegisterQJsonArray(engine);
+    RegisterQJsonObject(engine);
+    RegisterQJsonValue_End(engine);
+    RegisterQJsonDocument(engine);
+    engine->SetDefaultNamespace("");
 }
-
-END_AS_NAMESPACE

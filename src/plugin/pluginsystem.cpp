@@ -551,21 +551,10 @@ QString PluginSystem::getPluginID(IWingPluginBase *plg) const {
 }
 
 void PluginSystem::loadExtPlugin() {
-#ifdef QT_DEBUG
-    QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
-                   QStringLiteral("plugin"));
-#ifdef Q_OS_WIN
-    plugindir.setNameFilters({"*.dll", "*.wingplg"});
-#else
-    plugindir.setNameFilters({"*.so", "*.wingplg"});
-#endif
-#else
     QDir plugindir(QCoreApplication::applicationDirPath() + QDir::separator() +
                    QStringLiteral("plugin"));
     plugindir.setNameFilters({"*.wingplg"});
-#endif
 
-    Logger::newLine();
     checkDirRootSafe(plugindir);
 
     auto plgs = plugindir.entryInfoList();
@@ -619,21 +608,10 @@ void PluginSystem::loadExtPlugin() {
 }
 
 void PluginSystem::loadDevicePlugin() {
-#ifdef QT_DEBUG
-    QDir devdir(QCoreApplication::applicationDirPath() + QDir::separator() +
-                QStringLiteral("devdrv"));
-#ifdef Q_OS_WIN
-    devdir.setNameFilters({"*.dll", "*.wingdrv"});
-#else
-    devdir.setNameFilters({"*.so", "*.wingdrv"});
-#endif
-#else
     QDir devdir(QCoreApplication::applicationDirPath() + QDir::separator() +
                 QStringLiteral("devdrv"));
     devdir.setNameFilters({"*.wingdrv"});
-#endif
 
-    Logger::newLine();
     checkDirRootSafe(devdir);
 
     auto plgs = devdir.entryInfoList();
@@ -655,15 +633,17 @@ void PluginSystem::loadDevicePlugin() {
 }
 
 void PluginSystem::checkDirRootSafe(const QDir &dir) {
-    auto testFileName =
-        dir.absoluteFilePath(QUuid::createUuid().toString(QUuid::Id128));
+    if (!Utilities::isRoot()) {
+        auto testFileName =
+            dir.absoluteFilePath(QUuid::createUuid().toString(QUuid::Id128));
 
-    QFile f(testFileName);
-    if (f.open(QFile::WriteOnly)) {
-        f.close();
-        f.remove();
-        Logger::warning(QStringLiteral("<i><u>") % tr("UnsafePluginDir") %
-                        QStringLiteral("</u></i>"));
+        QFile f(testFileName);
+        if (f.open(QFile::WriteOnly)) {
+            f.close();
+            f.remove();
+            Logger::warning(QStringLiteral("<i><u>") % tr("UnsafePluginDir") %
+                            QStringLiteral("</u></i>"));
+        }
     }
 }
 
@@ -3036,6 +3016,8 @@ void PluginSystem::loadAllPlugin() {
         retranslateMetadata(cstructplg, meta);
         loadPlugin(cstructplg, meta, setd);
     }
+
+    Logger::newLine();
 
     bool ok;
 

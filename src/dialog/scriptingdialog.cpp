@@ -1163,6 +1163,7 @@ void ScriptingDialog::on_newfile() {
         // create an empty file
         QFile f(filename);
         f.open(QFile::WriteOnly | QFile::Text);
+        f.write("int main() {\n    return 0;\n}\n");
         f.close();
 
         if (e) {
@@ -1477,7 +1478,6 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setRecentScriptFiles(m_recentmanager->saveRecent());
-    set.save(SettingManager::NONE);
 
     FramelessMainWindow::closeEvent(event);
 }

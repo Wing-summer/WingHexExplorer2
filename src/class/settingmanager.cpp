@@ -21,8 +21,8 @@
 #include "class/skinmanager.h"
 #include "qeditor.h"
 #include "settings/settings.h"
-#include "utilities.h"
 
+#include <QApplication>
 #include <QFileInfo>
 #include <QMetaEnum>
 
@@ -108,6 +108,11 @@ void SettingManager::load() {
     auto defaultFontSize = _defaultFont.pointSize();
     Q_ASSERT(defaultFontSize > 0);
     HANDLE_CONFIG;
+
+    if (!CONFIG.isWritable()) {
+        Logger::warning(tr("ConfigUnableSave"));
+    }
+
     READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
     m_themeID = qBound(0, m_themeID,
                        QMetaEnum::fromType<SkinManager::Theme>().keyCount());

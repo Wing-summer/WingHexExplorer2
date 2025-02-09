@@ -30,20 +30,7 @@ QString AngelObjString::stringToString(void *obj, asDebugger *dbg) {
 
     // We know the received object is a string
     QString *val = reinterpret_cast<QString *>(obj);
-
-    constexpr auto limit = 100;
-
-    // Format the output string
-    if (val->length() < limit) {
-        return *val;
-    } else {
-        QString str;
-        QTextStream s(&str);
-        s << tr("(len=") << val->length() << QStringLiteral(") \"") << *val
-          << QStringLiteral("...");
-
-        return str;
-    }
+    return *val;
 }
 
 QString AngelObjString::arrayToString(void *obj, asDebugger *dbg) {
@@ -96,8 +83,6 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
         // active, the debugger will use the engine held inside it by
         // default, but in an environment where there multiple engines this
         // might not be the correct instance).
-        asIScriptContext *ctx = asGetActiveContext();
-
         s << dbg->toString(const_cast<void *>(val), typeId, engine);
 
         if (n < dic->GetSize() - 1)
@@ -112,7 +97,7 @@ QString AngelObjString::colorToString(void *obj, asDebugger *dbg) {
     auto color = reinterpret_cast<QColor *>(obj);
     QString str;
     QTextStream s(&str);
-    s << QStringLiteral("QColor(") << color->name() << QStringLiteral(")");
+    s << QStringLiteral("color(") << color->name() << QStringLiteral(")");
     return str;
 }
 

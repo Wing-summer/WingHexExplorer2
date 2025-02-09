@@ -475,7 +475,8 @@ QString asDebugger::toString(void *value, asUINT typeId,
                     // this type
                     s << it.value()(value, this);
                 } else {
-                    s << tr("NoPrintSupportFor:") << type->GetName();
+                    // Unknown type: type + address
+                    s << type->GetName() << '(' << value << ')';
                 }
             }
         } else
