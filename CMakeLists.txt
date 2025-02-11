@@ -88,8 +88,6 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scripthandle/scripthandle.cpp
@@ -334,7 +332,10 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptregex.cpp
     src/scriptaddon/scriptcolor.h
     src/scriptaddon/scriptcolor.cpp
-    src/scriptaddon/scriptjson.h src/scriptaddon/scriptjson.cpp)
+    src/scriptaddon/scriptjson.h
+    src/scriptaddon/scriptjson.cpp
+    src/scriptaddon/scriptfile.cpp
+    src/scriptaddon/scriptfile.h)
 
 set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qgotolinepanel.h

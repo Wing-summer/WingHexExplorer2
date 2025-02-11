@@ -68,9 +68,8 @@ AppManager::AppManager(int &argc, char *argv[])
         throw CrashCode::GenericCallNotSupported;
     }
 
-    Logger::instance();
-
     auto &set = SettingManager::instance();
+    Logger::instance();
     QFont font(set.appFontFamily(), set.appfontSize());
     setFont(font);
 

@@ -550,6 +550,9 @@ public:
         return {};
     }
 
+    // Note: must be valid identifier
+    virtual QStringList registerScriptMarcos() const { return {}; }
+
 public:
     virtual void eventSelectionChanged(const QByteArrayList &selections,
                                        bool isPreview) {

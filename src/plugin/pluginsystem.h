@@ -160,6 +160,8 @@ public:
 
     IWingDevice *ext2Device(const QString &ext);
 
+    QStringList scriptMarcos() const;
+
 public:
     PluginInfo getPluginInfo(IWingPluginBase *plg) const;
 
@@ -205,12 +207,15 @@ private:
 
     PluginStatus checkPluginMetadata(const PluginInfo &meta, bool isPlg);
 
+    static bool isValidIdentifier(const QString &str);
+
     void retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta);
 
 private:
     void registerFns(IWingPlugin *plg);
     void registerUnSafeFns(IWingPlugin *plg);
     void registerEnums(IWingPlugin *plg);
+    void registerMarcos(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
 
     static QString getScriptFnSig(const QString &fnName,
@@ -389,6 +394,8 @@ private:
 
     WingAngelAPI *_angelplg = nullptr;
     asCScriptEngine *_engine = nullptr;
+
+    QStringList _scriptMarcos;
 
     QReadWriteLock _rwlock;
 };

@@ -86,6 +86,10 @@ QString WingAngelAPI::retranslate(const QString &str) {
     return QApplication::tr(str.toLatin1());
 }
 
+QStringList WingAngelAPI::registerScriptMarcos() const {
+    return {"EXEC_BASE", "AS_ARRAY_EXT", "AS_DICTIONARY_EXT"};
+}
+
 WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {
     RegisteredEvents evs;
     evs.setFlag(RegisteredEvent::PluginFileOpened);

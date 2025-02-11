@@ -124,9 +124,9 @@ protected:
     PRAGMACALLBACK_t pragmaCallback;
     void *pragmaParam;
 
-    QVector<QString> includedScripts;
+    QStringList includedScripts;
 
-    QVector<QString> definedWords;
+    QStringList definedWords;
 };
 
 #endif // ASPREPROCESSER_H

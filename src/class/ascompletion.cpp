@@ -99,6 +99,10 @@ void AsCompletion::complete(const QDocumentCursor &c, const QString &trigger) {
             off = cur.columnNumber();
         }
     } else {
+        // TODO: PRs are welcomed !!!
+        //       If this software is well-known or brings me lots of
+        //       financial support, I will implement it myself.
+
         // parse current code
         // auto codes = c.document()->text(true, false);
         // parser.parse(codes, this->editor()->fileName());

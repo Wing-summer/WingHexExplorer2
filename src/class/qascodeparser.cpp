@@ -55,7 +55,7 @@ QAsCodeParser::SymbolTable QAsCodeParser::parse(const QByteArray &codes) {
             fn.name = v.name;
             fn.nameInSrc = v.nameInSrc;
             fn.content = v.args;
-            fn.ns = v.ns;
+            // fn.ns = v.ns;
             fn.typeStr = v.ret;
             ret.insert(p->first, fn);
         }
@@ -71,7 +71,7 @@ QAsCodeParser::SymbolTable QAsCodeParser::parseIntell(qsizetype offset,
 
     SymbolTable ret;
     auto pend = _symtable.lowerBound(offset);
-    for (auto p = _symtable.cbegin(); p != pend; p++) {
+    for (auto p = _symtable.begin(); p != pend; p++) {
         ret.insert(p.key(), p.value());
     }
 
@@ -80,7 +80,7 @@ QAsCodeParser::SymbolTable QAsCodeParser::parseIntell(qsizetype offset,
         // you can extend it with more features
         // PRS are welcomed.
         auto pend = m_segs.lowerBound(offset);
-        for (auto p = m_segs.cbegin(); p != pend; ++p) {
+        for (auto p = m_segs.begin(); p != pend; ++p) {
             auto v = p.value();
 
             Symbol fn;
@@ -88,7 +88,7 @@ QAsCodeParser::SymbolTable QAsCodeParser::parseIntell(qsizetype offset,
             fn.name = v.name;
             fn.nameInSrc = v.nameInSrc;
             fn.content = v.args;
-            fn.ns = v.ns;
+            // fn.ns = v.ns;
             fn.typeStr = v.ret;
             ret.insert(p.key(), fn);
         }
@@ -192,7 +192,7 @@ QAsCodeParser::Symbol QAsCodeParser::ParseFunctionDefinition() {
     se.name = getSymbolString(id);
     se.nameInSrc = id.pos;
     se.content = params;
-    se.ns = getRealNamespace(ns);
+    // se.ns = getRealNamespace(ns);
 
     // Parse an optional 'const' after the function definition (used for
     // object methods)
@@ -1481,11 +1481,11 @@ QByteArray QAsCodeParser::getSymbolString(const sToken &t) {
 }
 
 QByteArrayList QAsCodeParser::getRealNamespace(const QByteArrayList &ns) {
-    if (ns.isEmpty()) {
-        return _curns + ns;
-    } else {
-        return ns;
-    }
+    // if (ns.isEmpty()) {
+    //     return _curns + ns;
+    // } else {
+    return ns;
+    // }
 }
 
 void QAsCodeParser::ParseNamespace() {
@@ -1496,15 +1496,14 @@ void QAsCodeParser::ParseNamespace() {
         RewindErrorTo(&t1);
     }
 
-    auto iden = ParseIdentifier();
+    ParseIdentifier();
     if (isSyntaxError)
         return;
 
     GetToken(&t1);
     while (t1.type == ttScope) {
+        ParseIdentifier();
 
-        // NOTE
-        auto id = ParseIdentifier();
         if (isSyntaxError)
             return;
 
@@ -1517,8 +1516,6 @@ void QAsCodeParser::ParseNamespace() {
     }
 
     sToken start = t1;
-
-    _curns.append(QByteArray(t1.pos, t1.length));
 
     ParseScript(true);
 
@@ -1537,8 +1534,6 @@ QAsCodeParser::CodeSegment QAsCodeParser::ParseFunction(bool isMethod) {
     // TODO: Why isn't ParseFunctionDefinition used?
     sToken t1;
     GetToken(&t1);
-
-    auto tstart = t1;
 
     if (!isMethod) {
         // A global function can be marked as shared and external
@@ -1624,14 +1619,14 @@ QAsCodeParser::CodeSegment QAsCodeParser::ParseFunction(bool isMethod) {
     RewindTo(&t1);
     if (t1.type == ttEndStatement) {
         ParseToken(ttEndStatement);
-        fn.ns = _curns;
+        // fn.ns = _curns;
         return fn;
     }
 
     // We should just find the end of the statement block here. The statements
     // will be parsed on request by the compiler once it starts the compilation.
     SuperficiallyParseStatementBlock();
-    fn.ns = _curns;
+    // fn.ns = _curns;
     fn.code = code.mid(t1.pos, sourcePos - t1.pos);
     fn.valid = true;
     return fn;
@@ -1639,7 +1634,6 @@ QAsCodeParser::CodeSegment QAsCodeParser::ParseFunction(bool isMethod) {
 
 QAsCodeParser::Symbol QAsCodeParser::ParseFuncDef() {
     Symbol sym;
-    size_t eoff;
 
     // Allow keywords 'external' and 'shared' before 'interface'
     sToken t1;
@@ -1718,6 +1712,7 @@ void QAsCodeParser::ParseClass() {
     auto cls = ParseIdentifier();
     clssym.name = getSymbolString(cls);
     clssym.nameInSrc = cls.pos;
+    clssym.type = SymbolType::Class;
 
     // External shared declarations are ended with ';'
     GetToken(&t);
@@ -1789,6 +1784,8 @@ void QAsCodeParser::ParseClass() {
         RewindErrorTo(&t);
         return;
     }
+
+    _symtable.insert(cls.pos, clssym);
 }
 
 void QAsCodeParser::ParseMixin() {
@@ -1877,7 +1874,7 @@ void QAsCodeParser::ParseInitList() {
 
 void QAsCodeParser::ParseInterface() {
     Symbol sym;
-    size_t eoff;
+
     sToken t;
 
     // Allow keywords 'external' and 'shared' before 'interface'
@@ -2149,7 +2146,7 @@ void QAsCodeParser::ParseEnumeration() {
     sym.name = getSymbolString(token);
     sym.nameInSrc = token.pos;
     sym.type = SymbolType::Enum;
-    sym.ns = _curns;
+    // sym.ns = _curns;
 
     // External shared declarations are ended with ';'
     GetToken(&token);
@@ -2254,7 +2251,7 @@ void QAsCodeParser::ParseTypedef() {
     st.name = getSymbolString(r);
 
     sym.content.append(st);
-    sym.ns = _curns;
+    // sym.ns = _curns;
 
     _symtable.insert(eoff, sym);
 }
@@ -3251,6 +3248,7 @@ bool QAsCodeParser::IsAssignOperator(int tokenType) {
 }
 
 bool QAsCodeParser::DoesTypeExist(const QString &t) {
+    Q_UNUSED(t);
     // TODO: don't check
     return true;
 }

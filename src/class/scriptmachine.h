@@ -135,10 +135,8 @@ private:
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);
 
-    static int execSystemCmd(const std::string &exe, const std::string &params,
-                             std::string &out);
-
-    static int execSystemCmd(const std::string &exe, const std::string &params);
+    static int execSystemCmd(QString &out, const QString &exe,
+                             const QString &params, int timeout);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);

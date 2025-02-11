@@ -109,10 +109,6 @@ void SettingManager::load() {
     Q_ASSERT(defaultFontSize > 0);
     HANDLE_CONFIG;
 
-    if (!CONFIG.isWritable()) {
-        Logger::warning(tr("ConfigUnableSave"));
-    }
-
     READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
     m_themeID = qBound(0, m_themeID,
                        QMetaEnum::fromType<SkinManager::Theme>().keyCount());
@@ -212,6 +208,13 @@ qsizetype SettingManager::logCount() const { return m_logCount; }
 
 void SettingManager::setLogCount(qsizetype newLogCount) {
     m_logCount = newLogCount;
+}
+
+void SettingManager::checkWriteableAndWarn() {
+    HANDLE_CONFIG;
+    if (!CONFIG.isWritable()) {
+        Logger::warning(tr("ConfigUnableSave"));
+    }
 }
 
 bool SettingManager::checkUpdate() const { return m_checkUpdate; }

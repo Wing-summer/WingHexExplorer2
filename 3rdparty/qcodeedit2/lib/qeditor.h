@@ -310,7 +310,6 @@ signals:
     void inputTimeOuted();
 
 public slots:
-    void checkClipboard();
     void reconnectWatcher();
     void fileChanged(const QString &f);
 

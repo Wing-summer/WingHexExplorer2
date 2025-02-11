@@ -20,6 +20,13 @@
 #include <QDir>
 #include <QFileInfo>
 
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QStringList, DEFAULT_MARCO,
+    ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
+      "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
+      "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
+      "__WING_DICTIONARY__"}));
+
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
 
@@ -28,6 +35,8 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
 
     pragmaCallback = nullptr;
     pragmaParam = nullptr;
+
+    definedWords = *DEFAULT_MARCO;
 }
 
 AsPreprocesser::~AsPreprocesser() { void ClearAll(); }

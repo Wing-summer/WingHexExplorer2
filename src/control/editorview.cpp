@@ -446,32 +446,29 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     bool needAdjustFile = !QFile::exists(fileName);
     bool needAdjustWs = false;
 
-    ScopeGuard guard(
-        [] {},
-        [&] {
-            if (Utilities::isRoot()) {
-                // a trick off when root under linux OS
-                // When new file created, change file's permission to 666.
+    auto adjustPermission = [&]() {
+        if (Utilities::isRoot()) {
+            // a trick off when root under linux OS
+            // When new file created, change file's permission to 666.
 
-                // Because you cannot open it when you use it in common user
-                // after saving under root user.
+            // Because you cannot open it when you use it in common user
+            // after saving under root user.
 
-                // It's a workaround and not eligent for permission system
+            // It's a workaround and not eligent for permission system
 
-                if (needAdjustFile) {
-                    if (Utilities::isFileOwnerRoot(fileName)) {
-                        Utilities::fixUpFilePermissions(fileName);
-                    }
-                }
-
-                if (needAdjustWs) {
-                    if (Utilities::isFileOwnerRoot(workSpaceName)) {
-                        Utilities::fixUpFilePermissions(workSpaceName);
-                    }
+            if (needAdjustFile) {
+                if (Utilities::isFileOwnerRoot(fileName)) {
+                    Utilities::fixUpFilePermissions(fileName);
                 }
             }
-        });
 
+            if (needAdjustWs) {
+                if (Utilities::isFileOwnerRoot(workSpaceName)) {
+                    Utilities::fixUpFilePermissions(workSpaceName);
+                }
+            }
+        }
+    };
 #endif
 
     if (isNewFile()) {
@@ -535,7 +532,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
                 }
-
+#ifdef Q_OS_LINUX
+                adjustPermission();
+#endif
                 return ErrFile::Success;
             }
         }
@@ -545,7 +544,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             doc->setDocSaved();
         }
     }
-
+#ifdef Q_OS_LINUX
+    adjustPermission();
+#endif
     return ErrFile::Success;
 }
 

@@ -51,15 +51,14 @@ public:
         Invalid,
         FnDecl,
         Import,
-        Value,     // a common value
-        Variable,  // a variable
-        Enum,      // an enum
-        Class,     // a class type
-        Namespace, // a namespace
-        Function,  // a function
-        TypeDef,   // a typedef
-        FnDef,     // a funcdef
-        Property,  // a property
+        Value,    // a common value
+        Variable, // a variable
+        Enum,     // an enum
+        Class,    // a class type
+        Function, // a function
+        TypeDef,  // a typedef
+        FnDef,    // a funcdef
+        Property, // a property
     };
 
     enum class Visiblity { Public, Private, Protected };
@@ -68,7 +67,7 @@ public:
 
     struct CodeSegment {
         bool valid = false;
-        QByteArrayList ns;
+        // QByteArrayList ns;
         QByteArray ret;
         QByteArray name;
         qsizetype nameInSrc = -1;
@@ -86,7 +85,7 @@ public:
         Visiblity vis = Visiblity::Public;
         QList<Symbol> content;
 
-        QByteArrayList ns;                     // namespaces
+        // QByteArrayList ns; // namespaces
         QMap<qsizetype, CodeSegment> codesegs; // used in class
 
         // size_t scope = 0; // 0 for all
@@ -231,7 +230,6 @@ private:
 
     asCScriptEngine *engine;
 
-    QByteArrayList _curns; // current namespaces
     // size_t _curscope = 0;
     SymbolTable _symtable;
 

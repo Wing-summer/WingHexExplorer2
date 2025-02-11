@@ -780,19 +780,6 @@ bool QEditor::save(const QString &fn) {
 /*!
         \internal
 */
-void QEditor::checkClipboard() {
-    // LOOKS LIKE THIS FUNCTION NEVER GETS CALLED DESPITE THE CONNECTION...
-
-    // const QMimeData *d = QApplication::clipboard()->mimeData();
-
-    // qDebug("checking clipboard : %s", d);
-
-    // QCE_ENABLE_ACTION("paste", d && d->hasText())
-}
-
-/*!
-        \internal
-*/
 void QEditor::reconnectWatcher() { watcher()->addWatch(fileName(), this); }
 
 /*!

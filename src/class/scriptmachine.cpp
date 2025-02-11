@@ -34,6 +34,7 @@
 #include "define.h"
 #include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
+#include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
@@ -136,22 +137,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
     }
 
     r = engine->RegisterGlobalFunction(
-        "int exec(const string &in exe, const string &in params)",
-        asFUNCTIONPR(execSystemCmd, (const std::string &, const std::string &),
-                     int),
-        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = engine->RegisterGlobalFunction(
-        "int exec(const string &in exe, const string &in params, "
-        "string &out output)",
-        asFUNCTIONPR(execSystemCmd,
-                     (const std::string &, const std::string &, std::string &),
-                     int),
-        asCALL_CDECL);
+        "int exec(string &out output, const string &in exe, "
+        "const string &in params = \"\", int timeout = 3000)",
+        asFUNCTION(execSystemCmd), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
@@ -246,23 +234,27 @@ bool ScriptMachine::isType(asITypeInfo *tinfo, RegisteredType type) {
     return tinfo->DerivesFrom(t) || tinfo->Implements(t);
 }
 
-int ScriptMachine::execSystemCmd(const std::string &exe,
-                                 const std::string &params, std::string &out) {
+int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
+                                 const QString &params, int timeout) {
+    if (Utilities::isRoot()) {
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            auto err = tr("ExecNotAllowedInRoot");
+            ctx->SetException(err.toUtf8());
+        }
+        return -1;
+    }
     QProcess ps;
-    ps.setProgram(QString::fromStdString(exe));
-    ps.setArguments(QProcess::splitCommand(QString::fromStdString(params)));
+    ps.setProgram(exe);
+    ps.setArguments(QProcess::splitCommand(params));
     ps.start();
-    ps.waitForFinished(-1);
-    auto r = ps.readAllStandardOutput();
-    out = r.toStdString();
-    return ps.exitCode();
-}
-
-int ScriptMachine::execSystemCmd(const std::string &exe,
-                                 const std::string &params) {
-    return QProcess::execute(
-        QString::fromStdString(exe),
-        QProcess::splitCommand(QString::fromStdString(params)));
+    if (ps.waitForFinished(timeout)) {
+        out = ps.readAllStandardOutput();
+        return ps.exitCode();
+    } else {
+        ps.kill();
+        return -1;
+    }
 }
 
 bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
@@ -272,6 +264,9 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     setDebugMode(isInDebug);
 
     asBuilder builder(_engine);
+    for (auto &m : PluginSystem::instance().scriptMarcos()) {
+        builder.DefineWord(m);
+    }
 
     // Set the pragma callback so we can detect
     builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, this);
@@ -315,11 +310,11 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    if (isInDebug) {
-        // Let the debugger hold an engine pointer that can be used by the
-        // callbacks
-        _debugger->setEngine(_engine);
+    // Let the debugger hold an engine pointer that can be used by the
+    // callbacks
+    _debugger->setEngine(_engine);
 
+    if (isInDebug) {
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.message = tr("Debugging, waiting for commands.");
@@ -381,6 +376,10 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         } else
             r = 0;
     }
+
+    MessageInfo info;
+    info.message = tr("The script exited with ") + QString::number(r);
+    emit onOutput(MessageType::Info, info);
 
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
@@ -569,7 +568,7 @@ int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
         if (isAbsolute) {
             inc = include;
         } else {
-            auto pwd = QDir(QFileInfo(from).filePath());
+            auto pwd = QFileInfo(from).absoluteDir();
             inc = pwd.absoluteFilePath(include);
         }
     } else {
@@ -1612,6 +1611,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptHandle(engine);
     RegisterColor(engine);
     RegisterQJson(engine);
+    RegisterScriptFile(engine);
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
 }

@@ -58,6 +58,8 @@ void PluginSystem::initCheckingEngine() {
 
 void PluginSystem::finalizeCheckingEngine() { _engine->ShutDownAndRelease(); }
 
+QStringList PluginSystem::scriptMarcos() const { return _scriptMarcos; }
+
 const QList<IWingPlugin *> &PluginSystem::plugins() const {
     return _loadedplgs;
 }
@@ -234,17 +236,11 @@ PluginSystem::PluginStatus
 PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
     constexpr auto puid_limit = 36; // same as uuid length, so enough
 
-    if (meta.id.isEmpty() && meta.id.length() > puid_limit) {
+    if (meta.id.length() > puid_limit) {
         return PluginStatus::InvalidID;
     }
 
-    if (meta.id.front().isDigit()) {
-        return PluginStatus::InvalidID;
-    }
-    auto r = std::find_if(meta.id.begin(), meta.id.end(), [](const QChar &ch) {
-        return !ch.isLetterOrNumber() && ch != '_';
-    });
-    if (r != meta.id.end()) {
+    if (!isValidIdentifier(meta.id)) {
         return PluginStatus::InvalidID;
     }
 
@@ -262,6 +258,23 @@ PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
         }
     }
     return PluginStatus::Valid;
+}
+
+bool PluginSystem::isValidIdentifier(const QString &str) {
+    if (str.isEmpty()) {
+        return false;
+    }
+    auto pch = str.cbegin();
+    if (pch->isDigit()) {
+        return false;
+    }
+    pch++;
+    for (; pch != str.cend(); pch++) {
+        if (!pch->isLetterOrNumber() && *pch != '_') {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
@@ -836,6 +849,27 @@ void PluginSystem::registerEnums(IWingPlugin *plg) {
     _angelplg->registerScriptEnums(id, passedEnums);
 }
 
+void PluginSystem::registerMarcos(IWingPlugin *plg) {
+    Q_ASSERT(plg);
+
+    auto id = getPUID(plg).toUpper();
+    auto sep = QStringLiteral("_");
+    _scriptMarcos.append(sep + id + sep);
+
+    QStringList invalidMarco;
+    for (auto &m : plg->registerScriptMarcos()) {
+        if (isValidIdentifier(m)) {
+            _scriptMarcos.append(sep + id + sep + m + sep);
+        } else {
+            invalidMarco.append(m);
+        }
+    }
+
+    if (!invalidMarco.isEmpty()) {
+        Logger::warning(tr("InvalidMarcosRegister:") + invalidMarco.join(", "));
+    }
+}
+
 void PluginSystem::registerEvents(IWingPlugin *plg) {
     Q_ASSERT(plg);
     auto evs = plg->registeredEvents();
@@ -1193,6 +1227,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
         registerFns(p);
         registerEnums(p);
+        registerMarcos(p);
         registerEvents(p);
         connectInterface(p);
 

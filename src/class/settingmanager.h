@@ -173,6 +173,9 @@ public:
     qsizetype logCount() const;
     void setLogCount(qsizetype newLogCount);
 
+public:
+    void checkWriteableAndWarn();
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);

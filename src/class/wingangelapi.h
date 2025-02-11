@@ -49,6 +49,8 @@ public:
 
     virtual QString retranslate(const QString &str) override;
 
+    virtual QStringList registerScriptMarcos() const override;
+
 private:
     virtual void eventPluginFile(PluginFileEvent e, FileType type,
                                  const QString &newfileName, int handle,
@@ -167,6 +169,7 @@ private:
     static double QModelIndex_dataDouble(const QModelIndex &idx);
 
 private:
+    // for EXEC_BASE marco
     WING_SERVICE bool execScriptCode(const WingHex::SenderInfo &sender,
                                      const QString &code);
     WING_SERVICE bool execScript(const WingHex::SenderInfo &sender,

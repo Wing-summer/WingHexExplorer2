@@ -209,6 +209,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     log.setLogLevel(Logger::Level(set.logLevel()));
     connect(&log, &Logger::log, m_logbrowser, &QTextBrowser::append);
 
+    // check config writable
+    set.checkWriteableAndWarn();
+
     // launch plugin system
     if (splash)
         splash->setInfoText(tr("SetupPluginSystem"));
