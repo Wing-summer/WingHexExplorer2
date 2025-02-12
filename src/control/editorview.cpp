@@ -32,7 +32,6 @@
 #include <QVBoxLayout>
 
 #ifdef Q_OS_LINUX
-#include "class/scopeguard.h"
 #include <unistd.h>
 #endif
 

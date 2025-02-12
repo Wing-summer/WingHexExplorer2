@@ -91,6 +91,8 @@ private:
     QVariant setPluginMetaTestEnabled(const QVariantList &params);
     QVariant pluginMetaTestEnabled(const QVariantList &params);
 
+    QVariant testCrash(const QVariantList &params);
+
 private:
     void test_a();
     void test_b(const QString &b);
@@ -109,6 +111,8 @@ private:
 
     void setPluginMetaTestEnabled(bool b);
     bool pluginMetaTestEnabled();
+
+    void testCrash();
 
 private:
     QDialog *_tform = nullptr;

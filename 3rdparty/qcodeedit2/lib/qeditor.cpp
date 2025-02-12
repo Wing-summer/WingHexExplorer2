@@ -2037,8 +2037,6 @@ void QEditor::createSimpleBasicContextMenu(bool shortcut, bool extTool) {
         a->setObjectName("paste");
         if (shortcut)
             Q_SHORTCUT(a, "Ctrl+V", "Edit");
-        connect(QApplication::clipboard(), SIGNAL(dataChanged()), this,
-                SLOT(checkClipboard()));
 
         connect(a, SIGNAL(triggered()), this, SLOT(paste()));
 

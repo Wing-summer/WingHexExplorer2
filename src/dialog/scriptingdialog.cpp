@@ -1040,8 +1040,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     }
 
     _DebugingScript = fileName;
-    PluginSystem::instance().dispatchEvent(
-        IWingPlugin::RegisteredEvent::ScriptPragmaInit, {});
+    PluginSystem::instance().scriptPragmaBegin();
     m_consoleout->machine()->executeScript(fileName, true);
 
     updateRunDebugMode();
@@ -1393,8 +1392,7 @@ void ScriptingDialog::on_runscript() {
             return;
         }
         m_consoleout->clear();
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::ScriptPragmaInit, {});
+        PluginSystem::instance().scriptPragmaBegin();
         m_consoleout->machine()->executeScript(e->fileName());
         updateRunDebugMode();
     }

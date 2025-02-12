@@ -8,3 +8,6 @@
 	path = 3rdparty/AngelScript
 	url = git@github.com:Wing-summer/AngelScript.git
 	branch=stable
+[submodule "3rdparty/cpptrace"]
+	path = 3rdparty/cpptrace
+	url = git@github.com:Wing-summer/cpptrace.git

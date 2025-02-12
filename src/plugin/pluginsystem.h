@@ -163,6 +163,9 @@ public:
     QStringList scriptMarcos() const;
 
 public:
+    void scriptPragmaBegin();
+
+public:
     PluginInfo getPluginInfo(IWingPluginBase *plg) const;
 
     QString getPluginID(IWingPluginBase *plg) const;
@@ -256,6 +259,7 @@ private:
 private:
     void connectInterface(IWingDevice *plg);
     void connectLoadingInterface(IWingDevice *plg);
+    void registerMarcoDevice(IWingDevice *plg);
 
 private:
     void connectBaseInterface(IWingPluginBase *plg);
@@ -274,6 +278,10 @@ public:
                              const QStringList &headerNames,
                              const QString &title, const ClickCallBack &click,
                              const ClickCallBack &dblclick);
+
+public:
+    // fpr crash checking
+    QString currentLoadingPlugin() const;
 
 private:
     template <typename T>
@@ -396,8 +404,12 @@ private:
     asCScriptEngine *_engine = nullptr;
 
     QStringList _scriptMarcos;
+    QList<IWingPlugin *> _pragmaedPlg;
 
     QReadWriteLock _rwlock;
+
+private:
+    QString _curLoadingPlg;
 };
 
 #endif // PLUGINSYSTEM_H

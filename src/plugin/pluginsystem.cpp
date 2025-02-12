@@ -38,14 +38,10 @@
 #include <QFileInfoList>
 #include <QMessageBox>
 #include <QPluginLoader>
-#include <QtCore>
 
 PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {}
 
-PluginSystem::~PluginSystem() {
-    Q_ASSERT(_loadedplgs.isEmpty());
-    Q_ASSERT(_loadeddevs.isEmpty());
-}
+PluginSystem::~PluginSystem() {}
 
 void PluginSystem::initCheckingEngine() {
     _engine = dynamic_cast<asCScriptEngine *>(asCreateScriptEngine());
@@ -58,7 +54,11 @@ void PluginSystem::initCheckingEngine() {
 
 void PluginSystem::finalizeCheckingEngine() { _engine->ShutDownAndRelease(); }
 
+QString PluginSystem::currentLoadingPlugin() const { return _curLoadingPlg; }
+
 QStringList PluginSystem::scriptMarcos() const { return _scriptMarcos; }
+
+void PluginSystem::scriptPragmaBegin() { _pragmaedPlg.clear(); }
 
 const QList<IWingPlugin *> &PluginSystem::plugins() const {
     return _loadedplgs;
@@ -83,6 +83,10 @@ PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
 
     if (fileinfo.exists()) {
         auto fileName = fileinfo.absoluteFilePath();
+        _curLoadingPlg =
+            QDir(qApp->applicationDirPath()).relativeFilePath(fileName);
+
+        QScopeGuard g([this]() { _curLoadingPlg.clear(); });
         QPluginLoader loader(fileName, this);
         Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
 
@@ -493,13 +497,15 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         if (r == es.constEnd()) {
             return false;
         }
-        return (*r)->eventOnScriptPragma(section, params.at(3).toStringList());
-    } break;
-    case WingHex::IWingPlugin::RegisteredEvent::ScriptPragmaInit: {
-        Q_ASSERT(params.isEmpty());
-        for (auto &plg : _evplgs[event]) {
+        auto plg = *r;
+        if (!_pragmaedPlg.contains(plg)) {
             plg->eventOnScriptPragmaInit();
         }
+        return plg->eventOnScriptPragma(section, params.at(3).toStringList());
+    } break;
+    case WingHex::IWingPlugin::RegisteredEvent::ScriptPragmaInit: {
+        Q_ASSERT(false);
+        // should not go there, lazy calling instead
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::PluginFileOpened: {
         Q_ASSERT(params.size() == 4);
@@ -1281,6 +1287,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 
         registerPluginPages(p);
         connectInterface(p);
+        registerMarcoDevice(p);
 
         // ok register into menu open
         auto menu =
@@ -1415,6 +1422,12 @@ void PluginSystem::registerPluginPages(IWingPluginBase *p) {
         }
         _win->m_plgPages.append(rp);
     }
+}
+
+void PluginSystem::registerMarcoDevice(IWingDevice *plg) {
+    auto id = getPUID(plg).toUpper();
+    auto sep = QStringLiteral("_");
+    _scriptMarcos.append(sep + id + sep);
 }
 
 bool PluginSystem::updateTextList_API(const QStringList &data,

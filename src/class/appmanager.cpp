@@ -24,6 +24,7 @@
 #include "angelscript.h"
 #include "clangformatmanager.h"
 #include "control/toast.h"
+#include "crashhandler.h"
 #include "dbghelper.h"
 #include "define.h"
 #include "dialog/mainwindow.h"
@@ -40,6 +41,8 @@ AppManager *AppManager::_instance = nullptr;
 AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
     ASSERT_SINGLETON;
+
+    CrashHandler::instance().init();
 
     auto args = arguments();
     if (this->isRunning()) {

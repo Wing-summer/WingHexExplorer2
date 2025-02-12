@@ -17,6 +17,19 @@ find_package(
     Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network Concurrent
                                               PrintSupport Xml LinguistTools)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(
+        WARNING
+            "${PROJECT_NAME}'s stacktrace won't work built with ${CMAKE_BUILD_TYPE}."
+    )
+else()
+    message(FATAL_ERROR "Unsupported build type!")
+endif()
+
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
 option(BUILD_TEST_PLUGIN OFF)
@@ -72,6 +85,7 @@ set(ADS_VERSION 4.3.1)
 option(BUILD_EXAMPLES "Build the examples" FALSE)
 option(BUILD_STATIC "Build the static library" TRUE)
 
+add_subdirectory(3rdparty/cpptrace)
 add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/qcodeedit2)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
@@ -158,7 +172,10 @@ set(DIALOG_SRC
     src/dialog/splashdialog.h
     src/dialog/historydeldialog.h
     src/dialog/historydeldialog.cpp
-    src/dialog/historydeldialog.ui)
+    src/dialog/historydeldialog.ui
+    src/dialog/crashreport.h
+    src/dialog/crashreport.cpp
+    src/dialog/crashreport.ui)
 
 set(CONTROL_SRC
     src/control/editorview.h
@@ -195,7 +212,6 @@ set(CONTROL_SRC
 set(CLASS_SRC
     src/class/logger.cpp
     src/class/logger.h
-    src/class/scopeguard.h
     src/class/skinmanager.cpp
     src/class/skinmanager.h
     src/class/workspacemanager.cpp
@@ -264,7 +280,9 @@ set(CLASS_SRC
     src/class/dockcomponentsfactory.cpp
     src/class/diffutil.h
     src/class/diffutil.cpp
-    src/class/clickcallback.h)
+    src/class/clickcallback.h
+    src/class/crashhandler.h
+    src/class/crashhandler.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
@@ -502,6 +520,7 @@ target_link_libraries(
             Qt${QT_VERSION_MAJOR}::GuiPrivate
             Qt${QT_VERSION_MAJOR}::CorePrivate
             Qt${QT_VERSION_MAJOR}::Xml
+            cpptrace::cpptrace
             QtSingleApplication::QtSingleApplication
             QHexView
             QCodeEditor2

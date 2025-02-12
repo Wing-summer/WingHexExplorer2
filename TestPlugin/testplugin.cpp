@@ -166,6 +166,15 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
         info.ret = MetaType::Bool;
         _scriptInfo.insert(QStringLiteral("pluginMetaTestEnabled"), info);
     }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&TestPlugin::testCrash), this,
+            std::placeholders::_1);
+        info.ret = MetaType::Void;
+        _scriptInfo.insert(QStringLiteral("testCrash"), info);
+    }
 }
 
 TestPlugin::~TestPlugin() { destoryTestShareMem(); }
@@ -437,10 +446,10 @@ TestPlugin::colorTable(const QList<void *> &params) {
     }
 
     auto invoked =
-        emit invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-                           WINGAPI_RETURN_ARG(void *, array),
-                           WINGAPI_ARG(MetaType, MetaType::Color),
-                           WINGAPI_ARG(QVector<void *>, colors));
+        invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
+                      WINGAPI_RETURN_ARG(void *, array),
+                      WINGAPI_ARG(MetaType, MetaType::Color),
+                      WINGAPI_ARG(QVector<void *>, colors));
     if (invoked) {
         if (array) {
             qDeleteAll(colors);
@@ -494,6 +503,14 @@ QVariant TestPlugin::pluginMetaTestEnabled(const QVariantList &params) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return pluginMetaTestEnabled();
+}
+
+QVariant TestPlugin::testCrash(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    testCrash();
+    return {};
 }
 
 void TestPlugin::test_a() { emit debug(__FUNCTION__); }
@@ -603,6 +620,15 @@ void TestPlugin::setPluginMetaTestEnabled(bool b) {
 }
 
 bool TestPlugin::pluginMetaTestEnabled() { return ENABLE_META; }
+
+void TestPlugin::testCrash() {
+    // if you want to reproduce nullptr deferenced,
+    // you can use this example. 'volatile' is important in release mode
+    // volatile int *a = nullptr;
+    // (*a)++;
+
+    abort();
+}
 
 QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
 TestPlugin::registeredScriptFns() const {

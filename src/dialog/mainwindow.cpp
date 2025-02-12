@@ -32,7 +32,6 @@
 #include "class/logger.h"
 #include "class/qkeysequences.h"
 #include "class/richtextitemdelegate.h"
-#include "class/scopeguard.h"
 #include "class/scriptconsolemachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
@@ -1941,8 +1940,8 @@ EditorView *MainWindow::newfileGUI() {
 void MainWindow::on_newfile() { newfileGUI(); }
 
 void MainWindow::on_openfile() {
-    ScopeGuard g([this]() { showStatus(tr("Opening...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("Opening..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto filename =
         WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath);
@@ -1972,8 +1971,8 @@ void MainWindow::on_openfile() {
 }
 
 void MainWindow::on_openworkspace() {
-    ScopeGuard g([this]() { showStatus(tr("WorkSpaceOpening...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("WorkSpaceOpening..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto filename = WingFileDialog::getOpenFileName(
         this, tr("ChooseFile"), m_lastusedpath, tr("ProjectFile (*.wingpro)"));
@@ -2008,8 +2007,8 @@ void MainWindow::on_openworkspace() {
 }
 
 void MainWindow::on_reload() {
-    ScopeGuard g([this]() { showStatus(tr("Reloading...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("Reloading..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -2030,8 +2029,8 @@ void MainWindow::on_reload() {
 }
 
 void MainWindow::on_save() {
-    ScopeGuard g([this]() { showStatus(tr("Saving...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("Saving..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -2101,8 +2100,8 @@ void MainWindow::on_convpro() {
 }
 
 void MainWindow::on_saveas() {
-    ScopeGuard g([this]() { showStatus(tr("SavingAs...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("SavingAs..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -2147,8 +2146,8 @@ void MainWindow::on_saveas() {
 }
 
 void MainWindow::on_exportfile() {
-    ScopeGuard g([this]() { showStatus(tr("Exporting...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("Exporting..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -2177,8 +2176,8 @@ void MainWindow::on_exportfile() {
 }
 
 void MainWindow::on_savesel() {
-    ScopeGuard g([this]() { showStatus(tr("SavingSel...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("SavingSel..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto hexeditor = currentHexView();
     if (hexeditor == nullptr) {
@@ -2745,8 +2744,8 @@ void MainWindow::on_clearfindresult() {
 }
 
 void MainWindow::on_exportfindresult() {
-    ScopeGuard g([this]() { showStatus(tr("FindResultExporting...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("FindResultExporting..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -3001,8 +3000,8 @@ void MainWindow::on_fullScreen() {
 }
 
 void MainWindow::on_saveLayout() {
-    ScopeGuard g([this]() { showStatus(tr("LayoutSaving...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("LayoutSaving..."));
+    QScopeGuard g([this]() { showStatus({}); });
 
     static auto suffix = QStringLiteral(".wing-layout");
     bool ok;
@@ -3039,8 +3038,8 @@ void MainWindow::on_saveLayout() {
 }
 
 void MainWindow::on_exportlog() {
-    ScopeGuard g([this]() { showStatus(tr("LogExporting...")); },
-                 [this]() { showStatus({}); });
+    showStatus(tr("LogExporting..."));
+    QScopeGuard g([this]() { showStatus({}); });
     auto nfile = saveLog();
     if (nfile.isEmpty()) {
         Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
