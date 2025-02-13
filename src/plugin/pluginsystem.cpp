@@ -487,7 +487,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         }
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::ScriptPragma: {
-        Q_ASSERT(params.size() == 4);
+        Q_ASSERT(params.size() == 3);
         auto section = params.at(0).toString();
         auto plgID = params.at(1).toString();
         auto &es = _evplgs[event];
@@ -501,7 +501,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         if (!_pragmaedPlg.contains(plg)) {
             plg->eventOnScriptPragmaInit();
         }
-        return plg->eventOnScriptPragma(section, params.at(3).toStringList());
+        return plg->eventOnScriptPragma(section, params.at(2).toStringList());
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::ScriptPragmaInit: {
         Q_ASSERT(false);

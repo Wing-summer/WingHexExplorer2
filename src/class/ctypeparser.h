@@ -121,7 +121,7 @@ public:
 
     QPair<QMetaType::Type, qsizetype> type(const QString &t) const;
 
-    const QHash<QString, long> &constDefs() const;
+    const QHash<QString, int> &constDefs() const;
 
     const QHash<QString, QList<VariableDeclaration>> &unionDefs() const;
 
@@ -230,7 +230,7 @@ private:
     /// key     - constant/macro name
     /// value   - an integer (all types of number are cast to long type for
     /// convenience)
-    QHash<QString, long> const_defs_;
+    QHash<QString, int> const_defs_;
 };
 
 #endif // _TYPE_PARSER_H_

@@ -70,6 +70,11 @@ private:
     WING_SERVICE qsizetype sizeofStruct(const QString &type);
     WING_SERVICE bool existStruct(const QString &type);
 
+    // defines
+    WING_SERVICE QStringList constDefines();
+    WING_SERVICE bool existDefineValue(const QString &type);
+    WING_SERVICE int defineValue(const QString &type);
+
     // metadata
     WING_SERVICE bool metadata(qsizetype offset, const QString &type,
                                const QColor &fg, const QColor &bg,
@@ -114,6 +119,11 @@ private:
     QVariant structTypes(const QVariantList &params);
     QVariant sizeofStruct(const QVariantList &params);
     QVariant existStruct(const QVariantList &params);
+
+    // defines
+    QVariant constDefines(const QVariantList &params);
+    QVariant existDefineValue(const QVariantList &params);
+    QVariant defineValue(const QVariantList &params);
 
     QVariant metadata(const QVariantList &params);
     QVariant foreground(const QVariantList &params);

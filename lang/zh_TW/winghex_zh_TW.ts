@@ -224,17 +224,17 @@
     <message>
         <location filename="../../src/dialog/crashreport.ui" line="14"/>
         <source>CrashReport</source>
-        <translation type="unfinished"></translation>
+        <translation>崩潰報告</translation>
     </message>
     <message>
         <location filename="../../src/dialog/crashreport.ui" line="65"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Opps! The software has crashed! Please send the information below to the dev:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;哎呀！程式崩潰了。請將下麵的資訊發送給開發者尋求幫助：&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../../src/dialog/crashreport.cpp" line="36"/>
         <source>CopyToClipBoard</source>
-        <translation type="unfinished">數據已拷貝到粘貼板</translation>
+        <translation>數據已拷貝到粘貼板</translation>
     </message>
 </context>
 <context>
@@ -5366,12 +5366,12 @@ Do you wish to keep up to date by reloading the file?</source>
     </message>
     <message>
         <location filename="../../src/class/wingangelapi.cpp" line="1989"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="2069"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="2074"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>腳本調用發生異常：（%1）%2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="2010"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="2015"/>
         <source>InvalidRetType: need </source>
         <translation>無效返回值：需要 </translation>
     </message>
@@ -5379,44 +5379,49 @@ Do you wish to keep up to date by reloading the file?</source>
 <context>
     <name>WingCStruct</name>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="226"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="260"/>
         <source>WingCStruct</source>
         <translation>羽雲檔結構分析器</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="229"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="263"/>
         <source>Providing basic support for analyzing file structures</source>
         <translation>提供基礎的檔結構分析支持</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="847"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="859"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="872"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="881"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="893"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="901"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="908"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="920"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="932"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="957"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="977"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="997"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1018"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1030"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="891"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="903"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="916"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="925"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="937"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="945"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="952"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="964"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="976"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="983"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="995"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1007"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1032"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1052"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1072"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1093"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1105"/>
         <source>InvalidParamsCount</source>
         <translation>非法參數個數</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="851"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="863"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="885"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="912"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="924"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="944"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="966"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="986"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1006"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1036"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="895"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="907"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="929"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="956"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="968"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="987"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="999"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1019"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1041"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1061"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1081"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1111"/>
         <source>InvalidParam</source>
         <translation>非法參數</translation>
     </message>

@@ -643,7 +643,7 @@ bool CTypeParser::isNumericToken(const QString &token, long &number) const {
     }
 
     bool ret = true;
-    number = token.toLong(&ret);
+    number = token.toInt(&ret, 0);
 
     if (!ret) {
         // the token is not a number, then check whether it can be translated
@@ -698,7 +698,7 @@ CTypeParser::unionDefs() const {
     return union_defs_;
 }
 
-const QHash<QString, long> &CTypeParser::constDefs() const {
+const QHash<QString, int> &CTypeParser::constDefs() const {
     return const_defs_;
 }
 

@@ -1995,6 +1995,11 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
 
     auto rettype = fns.ret;
     auto r = PluginSystem::type2AngelScriptString(rettype, false, true);
+    if (r == QStringLiteral("int")) {
+        r = QStringLiteral("int32");
+    } else if (r == QStringLiteral("uint")) {
+        r = QStringLiteral("uint32");
+    }
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     auto type =

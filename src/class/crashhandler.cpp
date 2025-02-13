@@ -9,6 +9,8 @@
 
 #include <cpptrace/cpptrace.hpp>
 
+#include <csignal>
+
 #ifdef Q_OS_WIN
 #include <Windows.h>
 
@@ -21,13 +23,10 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS *) {
 }
 
 #else
-#include <csignal>
-#include <execinfo.h>
 #include <unistd.h>
+#endif
 
 void signalHandler(int) { CrashHandler::reportCrashAndExit(); }
-
-#endif
 
 CrashHandler &CrashHandler::instance() {
     static CrashHandler ins;
@@ -37,6 +36,11 @@ CrashHandler &CrashHandler::instance() {
 void CrashHandler::init() {
 #ifdef Q_OS_WIN
     ::SetUnhandledExceptionFilter(ExceptionFilter);
+    std::signal(SIGABRT, signalHandler);
+    std::signal(SIGSEGV, signalHandler);
+    std::signal(SIGILL, signalHandler);
+    std::signal(SIGABRT, signalHandler);
+    std::signal(SIGFPE, signalHandler);
 #else
     ::signal(SIGSEGV, signalHandler);
     ::signal(SIGILL, signalHandler);
@@ -126,8 +130,10 @@ void CrashHandler::reportCrashAndExit() {
     r.setInfomation(buffer);
     r.exec();
 
-#ifdef Q_OS_LINUX
     // because abort() will also trigger it
+#ifdef Q_OS_WIN
+    std::signal(SIGABRT, nullptr);
+#else
     ::signal(SIGABRT, nullptr);
 #endif
 

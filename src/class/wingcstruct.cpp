@@ -123,6 +123,38 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
     {
         WingHex::IWingPlugin::ScriptFnInfo info;
         info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::constDefines),
+            this, std::placeholders::_1);
+        info.ret = MetaType(MetaType::String | MetaType::Array);
+
+        _scriptInfo.insert(QStringLiteral("constDefines"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::existDefineValue),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Bool;
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+
+        _scriptInfo.insert(QStringLiteral("existDefineValue"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::defineValue),
+            this, std::placeholders::_1);
+        info.ret = MetaType::Int;
+        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
+
+        _scriptInfo.insert(QStringLiteral("defineValue"), info);
+    }
+
+    {
+        WingHex::IWingPlugin::ScriptFnInfo info;
+        info.fn = std::bind(
             QOverload<const QVariantList &>::of(&WingCStruct::metadata), this,
             std::placeholders::_1);
         info.ret = MetaType::Bool;
@@ -215,12 +247,14 @@ int WingCStruct::sdkVersion() const { return WingHex::SDKVERSION; }
 const QString WingCStruct::signature() const { return WingHex::WINGSUMMER; }
 
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
+    Q_UNUSED(set);
     resetEnv();
     return true;
 }
 
 void WingCStruct::unload(std::unique_ptr<QSettings> &set) {
     // nothing
+    Q_UNUSED(set);
 }
 
 const QString WingCStruct::pluginName() const { return tr("WingCStruct"); }
@@ -351,6 +385,16 @@ qsizetype WingCStruct::sizeofStruct(const QString &type) {
 
 bool WingCStruct::existStruct(const QString &type) {
     return _parser.structDefs().contains(type);
+}
+
+QStringList WingCStruct::constDefines() { return _parser.constDefs().keys(); }
+
+bool WingCStruct::existDefineValue(const QString &type) {
+    return _parser.constDefs().contains(type);
+}
+
+int WingCStruct::defineValue(const QString &type) {
+    return _parser.constDefs().value(type, 0);
 }
 
 bool WingCStruct::metadata(qsizetype offset, const QString &type,
@@ -925,6 +969,37 @@ QVariant WingCStruct::existStruct(const QVariantList &params) {
     }
     auto type = type_v.toString();
     return existStruct(type);
+}
+
+QVariant WingCStruct::constDefines(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return constDefines();
+}
+
+QVariant WingCStruct::existDefineValue(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return existDefineValue(type);
+}
+
+QVariant WingCStruct::defineValue(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return defineValue(type);
 }
 
 QVariant WingCStruct::metadata(const QVariantList &params) {
