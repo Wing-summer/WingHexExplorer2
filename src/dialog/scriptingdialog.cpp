@@ -156,6 +156,10 @@ void ScriptingDialog::initConsole() {
             _needRestart = false;
             startDebugScript(_DebugingScript);
         } else {
+            auto view = findEditorView(_DebugingScript);
+            if (view) {
+                view->setReadOnly(false);
+            }
             _DebugingScript.clear();
         }
     });
@@ -1041,6 +1045,12 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
 
     _DebugingScript = fileName;
     PluginSystem::instance().scriptPragmaBegin();
+
+    auto view = findEditorView(fileName);
+    if (view) {
+        view->setReadOnly(true);
+    }
+
     m_consoleout->machine()->executeScript(fileName, true);
 
     updateRunDebugMode();

@@ -120,6 +120,7 @@ public:
     LineEnding lineEnding() const;
     LineEnding originalLineEnding() const;
     void setLineEnding(LineEnding le);
+    QString lineEndingString() const;
 
     QDateTime lastModified() const;
     void setLastModified(const QDateTime &d);

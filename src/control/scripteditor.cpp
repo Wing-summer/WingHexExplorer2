@@ -16,8 +16,10 @@
 */
 
 #include "scripteditor.h"
+#include "DockWidgetTab.h"
 #include "qcodeeditwidget/qdocumentswaptextcommand.h"
 #include "qeditor.h"
+#include "utilities.h"
 
 #ifdef Q_OS_LINUX
 #include "utilities.h"
@@ -110,6 +112,11 @@ bool ScriptEditor::reload() {
     return e->load(e->fileName());
 }
 
+void ScriptEditor::setReadOnly(bool b) {
+    m_editor->editor()->setFlag(QEditor::ReadOnly, b);
+    this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());
+}
+
 void ScriptEditor::processTitle() {
     auto e = m_editor->editor();
     if (e->isContentModified()) {
@@ -127,7 +134,7 @@ bool ScriptEditor::formatCode() {
     auto fmtcodes = ClangFormatManager::instance().formatCode(e->text(), ok);
     if (ok) {
         auto doc = e->document();
-        doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc));
+        doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc, e));
         return true;
     }
     return false;

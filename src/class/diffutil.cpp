@@ -18,8 +18,9 @@
 #include "diffutil.h"
 
 QVector<DiffUtil::DiffEntry> DiffUtil::compareFiles(const QStringList &lines1,
-                                                    const QStringList &lines2) {
-    return generateOrderedDiff(lines1, lines2);
+                                                    const QStringList &lines2,
+                                                    bool keepUnchanged) {
+    return generateOrderedDiff(lines1, lines2, keepUnchanged);
 }
 
 QVector<QVector<int>> DiffUtil::computeLCSMatrix(const QStringList &A,
@@ -40,8 +41,9 @@ QVector<QVector<int>> DiffUtil::computeLCSMatrix(const QStringList &A,
     return lcs;
 }
 
-QVector<DiffUtil::DiffEntry>
-DiffUtil::generateOrderedDiff(const QStringList &A, const QStringList &B) {
+QVector<DiffUtil::DiffEntry> DiffUtil::generateOrderedDiff(const QStringList &A,
+                                                           const QStringList &B,
+                                                           bool keepUnchanged) {
     auto lcs = computeLCSMatrix(A, B);
     auto i = A.size();
     auto j = B.size();
@@ -49,7 +51,9 @@ DiffUtil::generateOrderedDiff(const QStringList &A, const QStringList &B) {
 
     while (i > 0 && j > 0) {
         if (A[i - 1] == B[j - 1]) {
-            diffEntries.prepend({B[j - 1], DiffEntry::UNCHANGED, i, j});
+            if (keepUnchanged) {
+                diffEntries.prepend({B[j - 1], DiffEntry::UNCHANGED, i, j});
+            }
             --i;
             --j;
         } else if (lcs[i - 1][j] >= lcs[i][j - 1]) {

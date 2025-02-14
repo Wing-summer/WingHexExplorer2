@@ -44,6 +44,8 @@ public slots:
     bool save(const QString &path = QString());
     bool reload();
 
+    void setReadOnly(bool b);
+
 private:
     void processTitle();
 

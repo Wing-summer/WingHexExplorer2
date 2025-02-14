@@ -740,6 +740,10 @@ void QDocument::setLineEnding(LineEnding le) {
     emit lineEndingChanged(le);
 }
 
+QString QDocument::lineEndingString() const {
+    return m_impl->m_lineEndingString;
+}
+
 /*!
         \return the font used by ALL documents to render their content
 

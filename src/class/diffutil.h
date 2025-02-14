@@ -33,7 +33,8 @@ public:
 
 public:
     static QVector<DiffEntry> compareFiles(const QStringList &lines1,
-                                           const QStringList &lines2);
+                                           const QStringList &lines2,
+                                           bool keepUnchanged);
 
 private:
     // LCS algorithm to find longest common subsequence of lines
@@ -41,7 +42,8 @@ private:
                                                   const QStringList &B);
 
     static QVector<DiffEntry> generateOrderedDiff(const QStringList &A,
-                                                  const QStringList &B);
+                                                  const QStringList &B,
+                                                  bool keepUnchanged);
 };
 
 #endif // DIFFUTIL_H

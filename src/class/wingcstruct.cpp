@@ -681,47 +681,30 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
                                  : QMetaType::Type(var.typeId());
 #endif
         switch (type) {
-        case QMetaType::Bool: {
-            auto v = var.toBool();
-            dic->Set(p->first, &v, asTYPEID_BOOL);
-            break;
-        }
+        case QMetaType::Bool:
+        case QMetaType::UChar:
+        case QMetaType::Char:
         case QMetaType::Int:
-        case QMetaType::Long: {
-            auto v = var.toInt();
-            dic->Set(p->first, &v, asTYPEID_INT32);
+        case QMetaType::Long:
+        case QMetaType::LongLong:
+        case QMetaType::SChar:
+        case QMetaType::Short: {
+            auto v = var.toLongLong();
+            dic->Set(p->first, asINT64(v));
             break;
         }
         case QMetaType::UInt:
-        case QMetaType::ULong: {
-            auto v = var.toUInt();
-            dic->Set(p->first, &v, asTYPEID_UINT32);
-            break;
-        }
-        case QMetaType::LongLong: {
-            auto v = var.toLongLong();
-            dic->Set(p->first, &v, asTYPEID_INT64);
-            break;
-        }
+        case QMetaType::ULong:
+        case QMetaType::UShort:
         case QMetaType::ULongLong: {
             auto v = var.toULongLong();
-            dic->Set(p->first, &v, asTYPEID_UINT64);
+            dic->Set(p->first, asQWORD(v));
             break;
         }
         case QMetaType::Double:
+        case QMetaType::Float:
             dic->Set(p->first, var.toDouble());
             break;
-        case QMetaType::Short: {
-            auto v = var.value<short>();
-            dic->Set(p->first, &v, asTYPEID_INT16);
-            break;
-        }
-        case QMetaType::Char:
-        case QMetaType::SChar: {
-            auto v = var.value<char>();
-            dic->Set(p->first, &v, asTYPEID_INT8);
-            break;
-        }
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         case QMetaType::Char16: {
             auto v = var.value<char16_t>();
@@ -738,19 +721,6 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
             break;
         }
 #endif
-        case QMetaType::UShort: {
-            auto v = var.value<unsigned short>();
-            dic->Set(p->first, &v, asTYPEID_UINT16);
-            break;
-        }
-        case QMetaType::UChar: {
-            auto v = var.value<unsigned char>();
-            dic->Set(p->first, &v, asTYPEID_UINT8);
-            break;
-        }
-        case QMetaType::Float:
-            dic->Set(p->first, var.toFloat());
-            break;
         case QMetaType::QVariantList: {
             // note: empty list is not allowed!
             // If empty, it will be ignored

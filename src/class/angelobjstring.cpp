@@ -94,6 +94,8 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
 }
 
 QString AngelObjString::colorToString(void *obj, asDebugger *dbg) {
+    Q_UNUSED(dbg);
+
     auto color = reinterpret_cast<QColor *>(obj);
     QString str;
     QTextStream s(&str);

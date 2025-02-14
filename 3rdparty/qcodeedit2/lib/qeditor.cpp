@@ -469,10 +469,7 @@ void QEditor::init(bool actions) {
 
         a = new QAction(QIcon(":/qeditor/paste.png"), tr("&Paste"), this);
         a->setObjectName("paste");
-        // aPaste->setEnabled(QApplication::clipboard()->text().count());
         Q_SHORTCUT(a, "Ctrl+V", "Edit");
-        connect(QApplication::clipboard(), SIGNAL(dataChanged()), this,
-                SLOT(checkClipboard()));
 
         connect(a, SIGNAL(triggered()), this, SLOT(paste()));
 
