@@ -84,6 +84,9 @@ private:
     QString m_customStyleString;
 
     int m_timeout = 5000;
+
+private:
+    Q_DISABLE_COPY_MOVE(ClangFormatManager)
 };
 
 #endif // CLANGFORMATMANAGER_H

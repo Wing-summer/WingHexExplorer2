@@ -75,7 +75,7 @@ bool ScriptEditor::save(const QString &path) {
     auto needAdjustFile = !QFile::exists(path);
 #endif
 
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     if (clang.exists() && clang.autoFormat()) {
         formatCode();
     }

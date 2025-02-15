@@ -197,7 +197,7 @@ private:
     QVariantList
     getVarList(const QList<RecentFileManager::RecentInfo> &infos) const;
 
-    Q_DISABLE_COPY(SettingManager)
+    Q_DISABLE_COPY_MOVE(SettingManager)
 private:
     int m_themeID = 0;
     int m_appfontSize = 18;

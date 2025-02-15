@@ -68,6 +68,7 @@ def main():
 
     package_name = "WingHexExplorer2"
     exe_name = package_name + ".exe"
+    sym_name = package_name + ".pdb"
 
     # start parsing build directory
     projectdeb = os.path.abspath(args.folder)
@@ -123,17 +124,20 @@ def main():
 
     # check
     exemain_src = ""
-    
+    exesym_src = ""   
+        
     if(os.path.exists(os.path.join(projectdeb, "WingHexExplorer2.sln"))):
-        exemain_src = os.path.join(projectdeb, "Release", exe_name)  # only support Release for MSVC sln build (GitAction)
+        exemain_src = os.path.join(projectdeb, "RelWithDebInfo", exe_name)  
+        exesym_src = os.path.join(projectdeb, "RelWithDebInfo", sym_name)
     else:
         exemain_src = os.path.join(projectdeb, exe_name)
+        exesym_src = os.path.join(projectdeb, sym_name)
     
     if (os.path.exists(exemain_src) == False):
         print(
             Fore.RED + "[Error] WingHexExplorer2.exe is not found!" + Style.RESET_ALL)
         exit(-3)
-
+        
     # calculate the md5 checksum
     with open(exemain_src, 'rb') as file_to_check:
         data = file_to_check.read()
@@ -150,6 +154,7 @@ def main():
     os.mkdir(os.path.join(exeDebPath, "aslib"))
 
     shutil.copy2(exemain_src, os.path.join(exeDebPath, exe_name))
+    shutil.copy2(exesym_src, os.path.join(exeDebPath, sym_name))
 
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeDebPath, "share"))

@@ -45,7 +45,7 @@ private:
 
     explicit SkinManager(QObject *parent = nullptr);
 
-    Q_DISABLE_COPY(SkinManager)
+    Q_DISABLE_COPY_MOVE(SkinManager)
 };
 
 #endif // SKINMANAGER_H

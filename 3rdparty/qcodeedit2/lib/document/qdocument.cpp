@@ -1258,14 +1258,9 @@ bool QDocument::isClean() const {
 void QDocument::setClean() {
     if (m_impl) {
         m_impl->m_commands.setClean();
-        // m_impl->m_status.clear();
 
-        QHash<QDocumentLineHandle *, QPair<int, int>>::iterator it =
-            m_impl->m_status.begin();
-
-        while (it != m_impl->m_status.end()) {
-            it->second = it->first;
-            ++it;
+        for (auto &item : m_impl->m_status) {
+            item.first = item.second;
         }
     }
 }

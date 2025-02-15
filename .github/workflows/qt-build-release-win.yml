@@ -6,7 +6,7 @@ on:
     - release
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: RelWithDebInfo
 
 jobs:
   build-release:

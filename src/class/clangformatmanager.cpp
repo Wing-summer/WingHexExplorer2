@@ -18,6 +18,8 @@
 #include "clangformatmanager.h"
 #include "settings/settings.h"
 
+#include "dbghelper.h"
+
 #include <QDir>
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -31,6 +33,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_DEFAULT_CUSTOM,
                           ("BasedOnStyle: llvm, IndentWidth: 4"))
 
 ClangFormatManager::ClangFormatManager() {
+    ASSERT_SINGLETON;
+
     // load config
     HANDLE_CONFIG;
 

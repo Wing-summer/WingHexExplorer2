@@ -727,8 +727,8 @@ bool QEditor::save() {
 
     m_doc->setClean();
 
-    emit saved(this, fileName());
     m_saveState = Saved;
+    emit saved(this, fileName());
 
     QTimer::singleShot(100, this, SLOT(reconnectWatcher()));
 

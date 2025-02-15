@@ -410,6 +410,8 @@ private:
 
 private:
     QString _curLoadingPlg;
+
+    Q_DISABLE_COPY_MOVE(PluginSystem)
 };
 
 #endif // PLUGINSYSTEM_H

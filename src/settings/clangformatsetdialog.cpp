@@ -10,7 +10,7 @@ ClangFormatSetDialog::ClangFormatSetDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::ClangFormatSetDialog) {
     ui->setupUi(this);
 
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     ui->cbStyle->addItems(clang.supportedStyles());
 
     ui->leLocation->setText(ClangFormatManager::getProgramName());
@@ -29,7 +29,7 @@ ClangFormatSetDialog::ClangFormatSetDialog(QWidget *parent)
 ClangFormatSetDialog::~ClangFormatSetDialog() { delete ui; }
 
 QStringList ClangFormatSetDialog::getEditableStyleTextLines() {
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     auto styles = clang.customStyleString().split(',');
     for (auto &style : styles) {
         style = style.simplified();
@@ -42,7 +42,7 @@ QString ClangFormatSetDialog::getEditableStyleTexts() {
 }
 
 void ClangFormatSetDialog::reload() {
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     ui->cbEnabled->setChecked(clang.enabled());
     ui->cbAutoFmt->setChecked(clang.autoFormat());
     ui->cbStyle->setCurrentIndex(clang.clangCurrentStyleIndex());
@@ -60,14 +60,14 @@ QString ClangFormatSetDialog::id() const {
 }
 
 void ClangFormatSetDialog::apply() {
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     clang.setEnabled(ui->cbEnabled->isChecked());
     clang.setAutoFormat(ui->cbAutoFmt->isChecked());
     clang.setClangStyle(ui->cbStyle->currentText());
 }
 
 void ClangFormatSetDialog::reset() {
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     clang.reset();
     reload();
 }
@@ -79,7 +79,7 @@ void ClangFormatSetDialog::on_cbStyle_currentTextChanged(const QString &arg1) {
 }
 
 void ClangFormatSetDialog::on_btnStyleCustom_clicked() {
-    auto clang = ClangFormatManager::instance();
+    auto &clang = ClangFormatManager::instance();
     bool ok = false;
     while (true) {
         auto style = WingInputDialog::getMultiLineText(
