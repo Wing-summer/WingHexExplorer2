@@ -291,7 +291,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    asIScriptModule *mod = _engine->GetModule("script", asGM_ONLY_IF_EXISTS);
+    asIScriptModule *mod = builder.GetModule();
     if (!mod) {
         return false;
     }

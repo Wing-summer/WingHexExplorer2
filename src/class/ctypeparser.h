@@ -42,10 +42,8 @@
 /// with this awareness
 ///
 typedef struct {
-    QString data_type; ///< name of a data type, either basic type or
-                       ///< user-defined type
-
-    bool force_unsigned;
+    QString data_type;    ///< name of a data type, either basic type or
+                          ///< user-defined type
     QString var_name;     ///< variable name
     qsizetype offset;     ///< member offset in struct: 0 for non-struct
     qsizetype array_size; ///< array size: 0 for non-array
@@ -62,8 +60,6 @@ enum TokenTypes {
     kUnionKeyword,
     kEnumKeyword,
     kTypedefKeyword,
-    kSignedKeyword,
-    KUnsignedKeyword,
 
     kBasicDataType,
     kAbstractType,

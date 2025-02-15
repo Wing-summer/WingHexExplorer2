@@ -2098,10 +2098,13 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             return false;
         }
 
-        auto &info = m_plgviewMap[plg];
-        auto &e = info[fid];
-        if (e.cmd) {
-            return true;
+        auto r = pluginContextByIdIt(plg, fid);
+        if (r) {
+            auto v = *r;
+            if (v->cmd) {
+                (*r)->cmd = nullptr;
+                return true;
+            }
         }
         return false;
     });
@@ -2405,7 +2408,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
 
                     auto uc = pluginCurrentUndoCmd(plg);
                     auto cmd = doc->metadata()->MakeMetadata(
-                        uc, begin, begin + length, fgcolor, bgcolor, comment);
+                        uc, begin, begin + length - 1, fgcolor, bgcolor,
+                        comment);
                     if (uc == nullptr && cmd) {
                         doc->pushMakeUndo(cmd);
                         return true;
@@ -2457,7 +2461,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     auto doc = e->hexEditor()->document();
                     auto uc = pluginCurrentUndoCmd(plg);
                     auto cmd = doc->metadata()->MakeComment(
-                        uc, begin, begin + length, comment);
+                        uc, begin, begin + length - 1, comment);
                     if (uc == nullptr && cmd) {
                         doc->pushMakeUndo(cmd);
                         return true;
@@ -2476,7 +2480,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto doc = e->hexEditor()->document();
                 auto uc = pluginCurrentUndoCmd(plg);
                 auto cmd = doc->metadata()->MakeForeground(
-                    uc, begin, begin + length, fgcolor);
+                    uc, begin, begin + length - 1, fgcolor);
                 if (uc == nullptr && cmd) {
                     doc->pushMakeUndo(cmd);
                     return true;
@@ -2495,7 +2499,7 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                 auto doc = e->hexEditor()->document();
                 auto uc = pluginCurrentUndoCmd(plg);
                 auto cmd = doc->metadata()->MakeBackground(
-                    uc, begin, begin + length, bgcolor);
+                    uc, begin, begin + length - 1, bgcolor);
                 if (uc == nullptr && cmd) {
                     doc->pushMakeUndo(cmd);
                     return true;
@@ -2699,7 +2703,6 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
                     return ErrFile::AlreadyOpened;
                 }
                 auto id = assginHandleForPluginView(plg, view);
-                m_plgCurrentfid[plg] = id;
                 auto handle = getUIDHandle(id);
                 PluginSystem::instance().dispatchEvent(
                     IWingPlugin::RegisteredEvent::PluginFileOpened,
@@ -2820,9 +2823,8 @@ void PluginSystem::connectControllerInterface(IWingPlugin *plg) {
             }
 
             auto id = assginHandleForPluginView(plg, view);
-            m_plgCurrentfid[plg] = id;
-
-            return ErrFile(int(*id));
+            auto handle = getUIDHandle(id);
+            return ErrFile(handle);
         }
         return ErrFile::Error;
     });

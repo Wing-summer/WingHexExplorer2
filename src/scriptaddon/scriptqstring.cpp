@@ -43,7 +43,7 @@ public:
         // threads, so it is necessary to use a mutex.
         asAcquireExclusiveLock();
 
-        QString str = QString::fromUtf8(data, length);
+        QString str = QString::fromUtf8(QByteArray(data, length));
 
         Map_t::iterator it = stringCache.find(str);
         if (it != stringCache.end())
@@ -68,9 +68,11 @@ public:
         auto strv = *reinterpret_cast<const QString *>(str);
 
         Map_t::iterator it = stringCache.find(strv);
-        if (it == stringCache.end())
-            ret = asERROR;
-        else {
+        if (it == stringCache.end()) {
+            // ret = asERROR;
+            // TODO: I don't know why invalid string pointer passed to it
+            // just ignore it.
+        } else {
             it->second--;
             if (it->second == 0)
                 stringCache.erase(it);

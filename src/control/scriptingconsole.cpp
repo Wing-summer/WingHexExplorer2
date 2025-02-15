@@ -18,6 +18,7 @@
 #include "scriptingconsole.h"
 #include "class/logger.h"
 #include "class/scriptconsolemachine.h"
+#include "qdocumentline.h"
 #include "qregularexpression.h"
 
 #include <QApplication>
@@ -52,18 +53,29 @@ void ScriptingConsole::init() {
     connect(_sp, &ScriptConsoleMachine::onOutput, this,
             [=](ScriptConsoleMachine::MessageType type,
                 const ScriptConsoleMachine::MessageInfo &message) {
+                auto doc = this->document();
+                auto lastLine = doc->line(doc->lineCount() - 1);
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
+                    if (lastLine.length()) {
+                        _s << Qt::endl;
+                    }
                     stdOut(tr("[Info]") + message.message);
                     _s << Qt::flush;
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Warn:
+                    if (lastLine.length()) {
+                        _s << Qt::endl;
+                    }
                     stdWarn(tr("[Warn]") + message.message);
                     _s << Qt::flush;
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Error:
+                    if (lastLine.length()) {
+                        _s << Qt::endl;
+                    }
                     stdErr(tr("[Error]") + message.message);
                     _s << Qt::flush;
                     newLine();

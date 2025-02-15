@@ -94,8 +94,6 @@ private:
 
     QString getqsizeTypeAsString() const;
 
-    QMetaType::Type correctTypeSign(QMetaType::Type type, bool forceUnsigned);
-
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
                      qsizetype size);
 

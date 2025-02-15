@@ -491,39 +491,6 @@ QString WingCStruct::getqsizeTypeAsString() const {
                                                 : QStringLiteral("int32");
 }
 
-QMetaType::Type WingCStruct::correctTypeSign(QMetaType::Type type,
-                                             bool forceUnsigned) {
-    if (forceUnsigned) {
-        switch (type) {
-        case QMetaType::Int:
-            return QMetaType::UInt;
-        case QMetaType::UInt:
-            return QMetaType::Int;
-        case QMetaType::LongLong:
-            return QMetaType::ULongLong;
-        case QMetaType::ULongLong:
-            return QMetaType::LongLong;
-        case QMetaType::Long:
-            return QMetaType::ULong;
-        case QMetaType::Short:
-            return QMetaType::UShort;
-        case QMetaType::Char:
-            return QMetaType::UChar;
-        case QMetaType::ULong:
-            return QMetaType::Long;
-        case QMetaType::UShort:
-            return QMetaType::Short;
-        case QMetaType::UChar:
-            return QMetaType::SChar;
-        case QMetaType::SChar:
-            return QMetaType::Char;
-        default:
-            break;
-        }
-    }
-    return type;
-}
-
 QVariant WingCStruct::getData(const char *ptr, const char *end,
                               QMetaType::Type type, qsizetype size) {
     if (ptr + size > end) {
@@ -594,9 +561,7 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
             if (m.array_size) {
                 QVariantList l;
                 for (qsizetype i = 0; i < m.array_size; ++i) {
-                    auto data = getData(
-                        ptr, end, correctTypeSign(t.first, m.force_unsigned),
-                        t.second);
+                    auto data = getData(ptr, end, t.first, t.second);
                     if (data.isNull()) {
                         return content;
                     }
@@ -605,9 +570,7 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
                 }
                 content.insert(m.var_name, l);
             } else {
-                auto data = getData(ptr, end,
-                                    correctTypeSign(t.first, m.force_unsigned),
-                                    t.second);
+                auto data = getData(ptr, end, t.first, t.second);
                 if (data.isNull()) {
                     return content;
                 }

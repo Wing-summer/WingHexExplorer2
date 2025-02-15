@@ -128,29 +128,26 @@ void ScriptingDialog::initConsole() {
         m_gvarshow->updateData({});
 
         // clean up
-        if (_lastCurLine.first.isEmpty() || _lastCurLine.second < 0) {
-            // no need
-            return;
-        }
+        if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
+            auto bpMark = m_symID.value(Symbols::BreakPoint);
+            auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
+            auto curHitMark = m_symID.value(Symbols::DbgRunHitBreakPoint);
 
-        auto bpMark = m_symID.value(Symbols::BreakPoint);
-        auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
-        auto curHitMark = m_symID.value(Symbols::DbgRunHitBreakPoint);
-
-        // remove the last mark
-        if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-            auto lastCur = QCodeEdit::managed(_lastCurLine.first);
-            auto doc = lastCur->document();
-            auto line = doc->line(_lastCurLine.second - 1);
-            if (line.hasMark(curMark)) {
-                line.removeMark(curMark);
-            } else if (line.hasMark(curHitMark)) {
-                line.removeMark(curHitMark);
-                line.addMark(bpMark);
+            // remove the last mark
+            if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
+                auto lastCur = QCodeEdit::managed(_lastCurLine.first);
+                auto doc = lastCur->document();
+                auto line = doc->line(_lastCurLine.second - 1);
+                if (line.hasMark(curMark)) {
+                    line.removeMark(curMark);
+                } else if (line.hasMark(curHitMark)) {
+                    line.removeMark(curHitMark);
+                    line.addMark(bpMark);
+                }
             }
+            _lastCurLine.first.clear();
+            _lastCurLine.second = -1;
         }
-        _lastCurLine.first.clear();
-        _lastCurLine.second = -1;
 
         if (_needRestart) {
             _needRestart = false;

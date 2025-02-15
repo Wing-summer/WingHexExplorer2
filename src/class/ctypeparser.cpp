@@ -53,17 +53,15 @@ void CTypeParser::initialize() {
 #define ADD_TYPE_S(T, MT, S) type_maps_.insert(#T, qMakePair(MT, S))
 
     // qualifiers to ignore in parsing
-    qualifiers_ =
-        QStringList{"static", "const",    "far",    "extern",       "volatile",
-                    "auto",   "register", "inline", "__attribute__"};
+    qualifiers_ = QStringList{"static",   "const",    "far",          "extern",
+                              "signed",   "unsigned", "volatile",     "auto",
+                              "register", "inline",   "__attribute__"};
 
     // keywords that we care
     keywords_["struct"] = kStructKeyword;
     keywords_["union"] = kUnionKeyword;
     keywords_["enum"] = kEnumKeyword;
     keywords_["typedef"] = kTypedefKeyword;
-    keywords_["signed"] = kSignedKeyword;
-    keywords_["unsigned"] = KUnsignedKeyword;
 
     using byte = unsigned char;
     using char8_t = unsigned char;
@@ -157,6 +155,10 @@ void CTypeParser::initialize() {
     ADD_TYPE_U(DWORD, QMetaType::UInt);
     ADD_TYPE_U(QWORD, QMetaType::ULongLong);
     ADD_TYPE_U(DWORDLONG, QMetaType::ULongLong);
+    ADD_TYPE(FLOAT, QMetaType::Float);
+    ADD_TYPE(DOUBLE, QMetaType::Double);
+    ADD_TYPE_U(DWORD32, QMetaType::UInt);
+    ADD_TYPE_U(DWORD64, QMetaType::UInt);
 
     using INT8 = qint8;
     using INT16 = qint16;
@@ -284,7 +286,6 @@ bool CTypeParser::parseSource(const QString &src) {
             case kBlockStart:
             case kBlockEnd:
             case kSemicolon:
-                decl.force_unsigned = false;
                 break;
 
             default:
@@ -336,11 +337,6 @@ bool CTypeParser::parseSource(const QString &src) {
                 }
                 break;
 
-            case kSignedKeyword: // ignore
-                break;
-            case KUnsignedKeyword:
-                decl.force_unsigned = true;
-                break;
             default:
                 break;
             }
