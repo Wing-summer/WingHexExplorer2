@@ -219,7 +219,7 @@ void QHexDocument::removeBookMarkAdjustRevert(
     _bookmarks.insert(rmbms);
 }
 
-bool QHexDocument::isDocSaved() { return m_isSaved; }
+bool QHexDocument::isDocSaved() { return m_undostack->isClean(); }
 
 bool QHexDocument::isUndoByteModified() { return m_bytesModFlag > 0; }
 
@@ -227,7 +227,6 @@ void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();
     }
-    m_isSaved = b;
     emit documentSaved(b);
 }
 

@@ -96,6 +96,7 @@ struct QHexRegionObject {
 private:
     bool _valid = true;
 
+protected:
     T next(const T &obj) const {
         T ret(obj);
         ++ret;

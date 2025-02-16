@@ -89,6 +89,8 @@ enum SingleToken : char {
 
 enum class PointerMode { X86, X64 };
 
+enum class LongMode { LLP64, LP64 };
+
 class CTypeParser {
 public:
     explicit CTypeParser();
@@ -108,6 +110,9 @@ public:
 
     PointerMode pointerMode() const;
     void setPointerMode(PointerMode newPmode);
+
+    LongMode longMode() const;
+    void setLongmode(LongMode newLmode);
 
     const QHash<QString, QList<VariableDeclaration>> &structDefs() const;
 
@@ -195,6 +200,7 @@ private:
     QHash<QString, TokenTypes> keywords_;
 
     PointerMode _pmode;
+    LongMode _lmode;
 
     /// header files to parse
     /// key     - filename with relative/absolute path

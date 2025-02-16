@@ -498,10 +498,17 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             m_isWorkSpace = true;
             notifyOnWorkSpace(true);
 
-            auto tab = this->tabWidget();
-            tab->setIcon(ICONRES(QStringLiteral("pro")));
-            tab->setStyleSheet(
-                QStringLiteral("QLabel {text-decoration: underline;}"));
+            auto convertTabW = [](EditorView *view) {
+                auto tab = view->tabWidget();
+                tab->setIcon(ICONRES(QStringLiteral("pro")));
+                tab->setStyleSheet(
+                    QStringLiteral("QLabel {text-decoration: underline;}"));
+            };
+
+            convertTabW(this);
+            for (auto &c : m_cloneChildren) {
+                convertTabW(c);
+            }
         }
     }
 

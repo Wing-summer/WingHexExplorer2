@@ -78,7 +78,8 @@ QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
     auto menu = new QMenu(parent);
     for (auto &file : files) {
         menu->addAction(
-            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(), [=] {
+            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(),
+            parent, [=] {
                 if (Utilities::isRoot() && !isSys &&
                     !SettingManager::instance().allowUsrScriptInRoot()) {
                     WingMessageBox::critical(nullptr, tr("RunScript"),
@@ -236,7 +237,8 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
             continue;
         }
         maps.sysList << addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolder")), cat,
+            group, ICONRES(QStringLiteral("scriptfolder")),
+            sm.sysDirMeta(cat).name,
             buildUpScriptDirMenu(group, sm.getSysScriptFileNames(cat), true));
     }
 
@@ -246,7 +248,8 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
             continue;
         }
         maps.usrList << addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolderusr")), cat,
+            group, ICONRES(QStringLiteral("scriptfolderusr")),
+            sm.usrDirMeta(cat).name,
             buildUpScriptDirMenu(group, sm.getUsrScriptFileNames(cat), false));
     }
 

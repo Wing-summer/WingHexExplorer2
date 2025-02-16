@@ -96,8 +96,24 @@ public:
         if (sel.foreground == this->foreground &&
             sel.background == this->background &&
             sel.comment == this->comment) {
-            auto ret = Super::mergeRegion(sel, locker);
-            if (std::get<bool>(ret)) {
+            if (canMerge(sel)) {
+                if (locker) {
+                    locker->lock();
+                }
+
+                if (!this->contains(sel)) {
+                    if (this->begin < sel.end) {
+                        this->begin = qMin(this->begin, next(sel.begin));
+                        this->end = qMax(next(this->end), sel.end);
+                    } else {
+                        this->begin = qMin(next(this->begin), sel.begin);
+                        this->end = qMax(this->end, next(sel.end));
+                    }
+                }
+
+                if (locker) {
+                    locker->unlock();
+                }
                 return std::nullopt;
             }
             return false;

@@ -40,7 +40,16 @@ const QString CTypeParser::kPaddingFieldName = "_padding_field_";
 
 CTypeParser::~CTypeParser() {}
 
-CTypeParser::CTypeParser() { initialize(); }
+CTypeParser::CTypeParser()
+    : _pmode(PointerMode::X64),
+#ifdef Q_OS_WIN
+      _lmode(LongMode::LLP64)
+#else
+      _lmode(LongMode::LP64)
+#endif
+{
+    initialize();
+}
 
 void CTypeParser::initialize() {
 
@@ -92,7 +101,11 @@ void CTypeParser::initialize() {
     ADD_TYPE(char, QMetaType::Char);
     ADD_TYPE(short, QMetaType::Short);
     ADD_TYPE(int, QMetaType::Int);
+
+    // LLP64: sizeof(long) = 4
+    // LP64: sizeof(long) = 8
     ADD_TYPE(long, QMetaType::Long);
+
     ADD_TYPE(float, QMetaType::Float);
     ADD_TYPE(double, QMetaType::Double);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -182,12 +195,14 @@ void CTypeParser::initialize() {
 
     using SHORT = short;
     using INT = int;
-    using LONG = long;
+    using LONG = int; // on windows, just keep LLP64
     using WCHAR = wchar_t;
 
     ADD_TYPE(SHORT, QMetaType::Short);
     ADD_TYPE(INT, QMetaType::Int);
-    ADD_TYPE(LONG, QMetaType::Long);
+
+    ADD_TYPE(LONG, QMetaType::Int);
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     ADD_TYPE_U(WCHAR, QMetaType::Char16);
 #else
@@ -234,7 +249,7 @@ void CTypeParser::setIncludePaths(const QStringList &paths) {
 }
 
 void CTypeParser::parseFiles() {
-    for (const QString &path : include_paths_) {
+    for (auto &path : include_paths_) {
         findHeaderFiles(path);
 
         for (auto it = header_files_.begin(); it != header_files_.end(); ++it) {
@@ -355,7 +370,7 @@ void CTypeParser::findHeaderFiles(const QString &folder) {
 
     QFileInfoList files =
         dir.entryInfoList(QStringList() << "*.h", QDir::Files);
-    for (const QFileInfo &fileInfo : files) {
+    for (auto &fileInfo : files) {
         header_files_[fileInfo.absoluteFilePath()] =
             false; // "false" means not yet parsed
         qDebug() << "Found header file:" << fileInfo.absoluteFilePath();
@@ -363,7 +378,7 @@ void CTypeParser::findHeaderFiles(const QString &folder) {
 
     QFileInfoList subDirs =
         dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &subDirInfo : subDirs) {
+    for (auto &subDirInfo : subDirs) {
         qDebug() << "Searching folder:" << subDirInfo.absoluteFilePath();
         findHeaderFiles(subDirInfo.absoluteFilePath());
     }
@@ -674,6 +689,21 @@ int CTypeParser::getTypeSize(const QString &data_type) const {
         qCritical() << QStringLiteral("Unknown data type - ") + data_type;
         return -1;
     }
+}
+
+LongMode CTypeParser::longMode() const { return _lmode; }
+
+void CTypeParser::setLongmode(LongMode newLmode) {
+    // correct the size of long
+    switch (newLmode) {
+    case LongMode::LLP64:
+        type_maps_["long"] = qMakePair(QMetaType::Int, sizeof(int));
+        break;
+    case LongMode::LP64:
+        type_maps_["long"] = qMakePair(QMetaType::LongLong, sizeof(qlonglong));
+        break;
+    }
+    _lmode = newLmode;
 }
 
 PointerMode CTypeParser::pointerMode() const { return _pmode; }

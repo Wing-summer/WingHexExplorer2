@@ -109,6 +109,15 @@ void QDocumentSwapTextCommand::redo() {
     insertLines(0, _handles);
 
     m_doc->impl()->emitContentsChange(0, _handles.count() + 1);
+    for (auto &item : diffs) {
+        if (item.changeType == DiffUtil::DiffEntry::REMOVED) {
+            auto line = m_doc->line(item.lineNumberA - 1);
+            markUndone(line.handle());
+        } else if (item.changeType == DiffUtil::DiffEntry::ADDED) {
+            auto line = m_doc->line(item.lineNumberB - 1);
+            markUndone(line.handle());
+        }
+    }
 
     // so reapply is nessary
     applyLineMarks(marks);

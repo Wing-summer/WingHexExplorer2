@@ -152,70 +152,6 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
         _scriptInfo.insert(QStringLiteral("defineValue"), info);
     }
 
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::metadata), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        info.params.append(qMakePair(MetaType::Color, QStringLiteral("fg")));
-        info.params.append(qMakePair(MetaType::Color, QStringLiteral("bg")));
-        info.params.append(
-            qMakePair(MetaType::String, QStringLiteral("comment")));
-
-        _scriptInfo.insert(QStringLiteral("metadata"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::foreground), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        info.params.append(qMakePair(MetaType::Color, QStringLiteral("color")));
-
-        _scriptInfo.insert(QStringLiteral("foreground"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::background), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        info.params.append(qMakePair(MetaType::Color, QStringLiteral("color")));
-
-        _scriptInfo.insert(QStringLiteral("background"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::comment), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        info.params.append(
-            qMakePair(MetaType::String, QStringLiteral("comment")));
-
-        _scriptInfo.insert(QStringLiteral("comment"), info);
-    }
-
     // nested dictionary is not supported, so unsafe registering will help
     {
         _scriptUnsafe.insert(
@@ -293,6 +229,7 @@ bool WingCStruct::eventOnScriptPragma(const QString &script,
     // #pragma WingCStruct Env reset
     // #pragma WingCStruct Pak [1-8]
     // #pragma WingCStruct Inc [fileName]
+    // #pragma WingCStruct Long [ LLP64 | LP64 ]
     if (comments.size() != 2) {
         return false;
     }
@@ -340,6 +277,14 @@ bool WingCStruct::eventOnScriptPragma(const QString &script,
         } else {
             QFileInfo finfo(script);
             return addStructFromFile(finfo.absoluteDir().filePath(param));
+        }
+    } else if (cmd == QStringLiteral("Long")) {
+        if (param == QStringLiteral("LLP64")) {
+            _parser.setLongmode(LongMode::LLP64);
+            return true;
+        } else if (param == QStringLiteral("LP64")) {
+            _parser.setLongmode(LongMode::LP64);
+            return true;
         }
     }
 
@@ -395,53 +340,6 @@ bool WingCStruct::existDefineValue(const QString &type) {
 
 int WingCStruct::defineValue(const QString &type) {
     return _parser.constDefs().value(type, 0);
-}
-
-bool WingCStruct::metadata(qsizetype offset, const QString &type,
-                           const QColor &fg, const QColor &bg,
-                           const QString &comment) {
-    if (!fg.isValid() || fg.alpha() != 255) {
-        if (!bg.isValid() || bg.alpha() != 255) {
-            if (comment.isEmpty()) {
-                return false;
-            }
-        }
-    }
-
-    auto len = sizeofStruct(type);
-    if (len < 0) {
-        return false;
-    }
-
-    if (!emit reader.isCurrentDocEditing()) {
-        return false;
-    }
-
-    if (offset < 0) {
-        return false;
-    }
-
-    auto doclen = emit reader.documentBytes();
-    if (doclen < 0 || offset + len > doclen) {
-        return false;
-    }
-
-    return emit controller.metadata(offset, len, fg, bg, comment);
-}
-
-bool WingCStruct::foreground(qsizetype offset, const QString &type,
-                             const QColor &color) {
-    return metadata(offset, type, color, QColor(), QString());
-}
-
-bool WingCStruct::background(qsizetype offset, const QString &type,
-                             const QColor &color) {
-    return metadata(offset, type, QColor(), color, QString());
-}
-
-bool WingCStruct::comment(qsizetype offset, const QString &type,
-                          const QString &comment) {
-    return metadata(offset, type, QColor(), QColor(), comment);
 }
 
 QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
@@ -933,91 +831,6 @@ QVariant WingCStruct::defineValue(const QVariantList &params) {
     }
     auto type = type_v.toString();
     return defineValue(type);
-}
-
-QVariant WingCStruct::metadata(const QVariantList &params) {
-    if (params.size() != 5) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto fg_v = params.at(2);
-    auto bg_v = params.at(3);
-    auto comment_v = params.at(4);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !fg_v.canConvert<QColor>() || !bg_v.canConvert<QColor>() ||
-        !comment_v.canConvert<QString>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto fg = fg_v.value<QColor>();
-    auto bg = bg_v.value<QColor>();
-    auto comment = comment_v.toString();
-    return metadata(offset, type, fg, bg, comment);
-}
-
-QVariant WingCStruct::foreground(const QVariantList &params) {
-    if (params.size() != 3) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto color_v = params.at(2);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !color_v.canConvert<QColor>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto color = color_v.value<QColor>();
-    return foreground(offset, type, color);
-}
-
-QVariant WingCStruct::background(const QVariantList &params) {
-    if (params.size() != 3) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto color_v = params.at(2);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !color_v.canConvert<QColor>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto color = color_v.value<QColor>();
-    return background(offset, type, color);
-}
-
-QVariant WingCStruct::comment(const QVariantList &params) {
-    if (params.size() != 3) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-
-    auto offset_v = params.at(0);
-    auto type_v = params.at(1);
-    auto comment_v = params.at(2);
-
-    if (!offset_v.canConvert<qsizetype>() || !type_v.canConvert<QString>() ||
-        !comment_v.canConvert<QString>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto offset = offset_v.value<qsizetype>();
-    auto type = type_v.toString();
-    auto comment = comment_v.toString();
-    return this->comment(offset, type, comment);
 }
 
 WingHex::IWingPlugin::UNSAFE_RET

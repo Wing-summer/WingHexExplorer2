@@ -75,17 +75,6 @@ private:
     WING_SERVICE bool existDefineValue(const QString &type);
     WING_SERVICE int defineValue(const QString &type);
 
-    // metadata
-    WING_SERVICE bool metadata(qsizetype offset, const QString &type,
-                               const QColor &fg, const QColor &bg,
-                               const QString &comment);
-    WING_SERVICE bool foreground(qsizetype offset, const QString &type,
-                                 const QColor &color);
-    WING_SERVICE bool background(qsizetype offset, const QString &type,
-                                 const QColor &color);
-    WING_SERVICE bool comment(qsizetype offset, const QString &type,
-                              const QString &comment);
-
     WING_SERVICE QVariantHash read(qsizetype offset, const QString &type);
     WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
 
@@ -122,11 +111,6 @@ private:
     QVariant constDefines(const QVariantList &params);
     QVariant existDefineValue(const QVariantList &params);
     QVariant defineValue(const QVariantList &params);
-
-    QVariant metadata(const QVariantList &params);
-    QVariant foreground(const QVariantList &params);
-    QVariant background(const QVariantList &params);
-    QVariant comment(const QVariantList &params);
 
     UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);

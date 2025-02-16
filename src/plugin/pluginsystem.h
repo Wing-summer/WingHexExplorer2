@@ -234,11 +234,8 @@ private:
 
     EditorView *pluginCurrentEditor(IWingPlugin *plg) const;
 
-    std::optional<PluginSystem::PluginFileContext>
-    pluginContextById(IWingPlugin *plg, int fid) const;
-
-    std::optional<QVector<PluginFileContext>::iterator>
-    pluginContextByIdIt(IWingPlugin *plg, int fid);
+    QSharedPointer<PluginFileContext> pluginContextById(IWingPlugin *plg,
+                                                        int fid) const;
 
     QUndoCommand *pluginCurrentUndoCmd(IWingPlugin *plg) const;
 
@@ -392,7 +389,8 @@ private:
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
-    QHash<IWingPlugin *, QVector<PluginFileContext>> m_plgviewMap;
+    QHash<IWingPlugin *, QVector<QSharedPointer<PluginFileContext>>>
+        m_plgviewMap;
     QHash<IWingPlugin *, int> m_plgCurrentfid; // fid
     QHash<EditorView *, QList<IWingPlugin *>> m_viewBindings;
 

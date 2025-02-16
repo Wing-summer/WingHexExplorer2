@@ -86,10 +86,21 @@ private:
                                         QMenu *menu = nullptr) {
         Q_ASSERT(pannel);
         auto a = new QToolButton(pannel);
-        a->setText(title);
+#if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
+        if (menu) {
+            a->setText(title + QStringLiteral(" ▼"));
+        } else
+#endif
+        {
+            a->setText(title);
+        }
+
         a->setIcon(icon);
         a->setMenu(menu);
         if (menu) {
+#if QT_VERSION > QT_VERSION_CHECK(6, 6, 0)
+            a->setArrowType(Qt::DownArrow);
+#endif
             a->setPopupMode(QToolButton::InstantPopup);
         }
         pannel->addButton(a);
