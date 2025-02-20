@@ -142,7 +142,7 @@ void MetaDialog::setComment(QString comment) {
 }
 
 void MetaDialog::setBackGroundColor(QColor color) {
-    if (color.rgba()) {
+    if (color.isValid()) {
         cbackground->setChecked(true);
         emit cbackground->clicked(true);
         _background = color;
@@ -151,7 +151,7 @@ void MetaDialog::setBackGroundColor(QColor color) {
 }
 
 void MetaDialog::setForeGroundColor(QColor color) {
-    if (color.rgba()) {
+    if (color.isValid()) {
         cforeground->setChecked(true);
         emit cforeground->clicked(true);
         _foreground = color;

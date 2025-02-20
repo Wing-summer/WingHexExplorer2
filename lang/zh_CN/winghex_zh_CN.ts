@@ -1993,27 +1993,27 @@
 <context>
     <name>MetaDataModel</name>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="99"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="102"/>
         <source>Begin</source>
         <translation>开始</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="101"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="104"/>
         <source>End</source>
         <translation>结束</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="103"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="106"/>
         <source>Foreground</source>
         <translation>前景色</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="105"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="108"/>
         <source>Background</source>
         <translation>背景色</translation>
     </message>
     <message>
-        <location filename="../../src/model/metadatamodel.cpp" line="107"/>
+        <location filename="../../src/model/metadatamodel.cpp" line="110"/>
         <source>Comment</source>
         <translation>批注</translation>
     </message>

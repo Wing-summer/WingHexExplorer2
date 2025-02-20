@@ -39,7 +39,6 @@ void CrashHandler::init() {
     std::signal(SIGABRT, signalHandler);
     std::signal(SIGSEGV, signalHandler);
     std::signal(SIGILL, signalHandler);
-    std::signal(SIGABRT, signalHandler);
     std::signal(SIGFPE, signalHandler);
 #else
     ::signal(SIGSEGV, signalHandler);

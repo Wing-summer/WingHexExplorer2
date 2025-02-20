@@ -58,7 +58,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         case 4:
             return d.comment;
         }
-    }
+    } break;
     case Qt::DecorationRole: {
         auto r = index.row();
         const auto &b = _doc->metadata()->getAllMetadata();
@@ -67,9 +67,11 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         case 2:
             if (d.foreground.isValid())
                 return d.foreground;
+            break;
         case 3:
             if (d.background.isValid())
                 return d.background;
+            break;
         default:
             break;
         }
@@ -86,6 +88,7 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         case 1: // end
             return d.end;
         }
+        break;
     }
     return QVariant();
 }
