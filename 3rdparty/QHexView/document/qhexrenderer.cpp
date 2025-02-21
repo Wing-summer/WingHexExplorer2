@@ -157,14 +157,18 @@ bool QHexRenderer::hitTest(const QPoint &pt, QHexPosition *position,
                  this->documentLastLine());
     position->lineWidth = quint8(this->hexLineWidth());
 
+    auto hspace = m_fontmetrics.horizontalAdvance(' ') / 2;
+
     if (area == QHexRenderer::HexArea) {
-        int relx = pt.x() - this->getHexColumnX() - this->borderSize();
+        auto relx =
+            pt.x() - hspace - this->getHexColumnX() - this->borderSize();
         int column = int(relx / this->getCellWidth());
         position->column = column / 3;
         // first char is nibble 1, 2nd and space are 0
         position->nibbleindex = (column % 3 == 0) ? 1 : 0;
     } else {
-        int relx = pt.x() - this->getAsciiColumnX() - this->borderSize();
+        auto relx =
+            pt.x() - hspace - this->getAsciiColumnX() - this->borderSize();
         position->column = int(relx / this->getCellWidth());
         position->nibbleindex = 1;
     }
@@ -240,7 +244,7 @@ QString QHexRenderer::hexString(qsizetype line, QByteArray *rawline) const {
     if (rawline)
         *rawline = lrawline;
 
-    return lrawline.toHex(' ').toUpper() + QStringLiteral(" ");
+    return toHexSequence(lrawline);
 }
 
 // modified by wingsummer
@@ -316,11 +320,39 @@ void QHexRenderer::unprintableChars(QByteArray &ascii) const {
     }
 }
 
+QByteArray QHexRenderer::toHexSequence(const QByteArray &arr) {
+    const int length = arr.size() * 4;
+    QByteArray hex(length, Qt::Uninitialized);
+    char *hexData = hex.data();
+    const uchar *data = (const uchar *)arr.data();
+    for (int i = 0, o = 1; i < arr.size(); ++i) {
+        hexData[o++] = toHexUpper(data[i] >> 4);
+        hexData[o++] = toHexUpper(data[i] & 0xf);
+        if (o < length) {
+            hexData[o++] = '\t';
+        }
+        if (o < length) {
+            hexData[o++] = '\t';
+        }
+    }
+
+    hex.front() = '\t';
+    return hex;
+}
+
+char QHexRenderer::toHexUpper(uint value) noexcept {
+    return "0123456789ABCDEF"[value & 0xF];
+}
+
 void QHexRenderer::applyDocumentStyles(QPainter *painter,
                                        QTextDocument *textdocument) const {
     textdocument->setDocumentMargin(0);
     textdocument->setUndoRedoEnabled(false);
-    textdocument->setDefaultFont(painter->font());
+    auto font = painter->font();
+    textdocument->setDefaultFont(font);
+    auto textopt = textdocument->defaultTextOption();
+    textopt.setTabStopDistance(QFontMetricsF(font).horizontalAdvance(' ') / 2);
+    textdocument->setDefaultTextOption(textopt);
 }
 
 void QHexRenderer::applyBasicStyle(QTextCursor &textcursor,
@@ -392,9 +424,8 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
         }
 
         textcursor.setPosition(int(mi.start * factor));
-        textcursor.movePosition(
-            QTextCursor::Right, QTextCursor::KeepAnchor,
-            int((mi.length * factor) - (factor > 1 ? 1 : 0)));
+        textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                int((mi.length * factor)));
         textcursor.mergeCharFormat(charformat);
     }
 }
@@ -522,10 +553,6 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
                                     mlen * factor);
 
-            if (factor == Hex)
-                textcursor.movePosition(QTextCursor::Left,
-                                        QTextCursor::KeepAnchor, 1);
-
             if (!strikeOut) {
                 QColor fg, bg = charfmt.background().color();
 
@@ -555,26 +582,12 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
             textcursor.mergeCharFormat(charfmt_meta);
             textcursor.clearSelection();
             totallen -= mlen;
-
-            if (totallen > 0) {
-                if (factor == Hex) {
-                    textcursor.movePosition(QTextCursor::Right,
-                                            QTextCursor::KeepAnchor, 1);
-                    textcursor.mergeCharFormat(charfmt);
-                    textcursor.clearSelection();
-                }
-            }
-
             fmtBegin = mi.end - startLineOffset + 1;
         }
 
         if (totallen > 0) {
             textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
                                     totallen * factor);
-            if (factor == Hex)
-                textcursor.movePosition(QTextCursor::Left,
-                                        QTextCursor::KeepAnchor, 1);
-
             textcursor.mergeCharFormat(charfmt);
             textcursor.clearSelection();
         }
@@ -582,9 +595,6 @@ void QHexRenderer::applySelection(const QVector<QHexMetadata::MetaInfo> &metas,
         textcursor.setPosition(lineStart * factor);
         textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
                                 totallen * factor);
-        if (factor == Hex)
-            textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
-                                    1);
         textcursor.mergeCharFormat(charfmt);
     }
 }
@@ -620,10 +630,19 @@ void QHexRenderer::applyCursorHex(QTextCursor &textcursor,
         return;
 
     textcursor.clearSelection();
-    textcursor.setPosition(m_cursor->currentColumn() * 3);
 
-    if ((m_selectedarea == QHexRenderer::HexArea) && !m_cursor->currentNibble())
-        textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor);
+    auto col = m_cursor->currentColumn();
+    textcursor.setPosition(col * Factor::Hex);
+
+    if (m_selectedarea == QHexRenderer::HexArea) {
+        if (m_cursor->currentNibble()) {
+            textcursor.movePosition(QTextCursor::Right,
+                                    QTextCursor::MoveAnchor);
+        } else {
+            textcursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
+                                    2);
+        }
+    }
 
     textcursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
 
@@ -706,7 +725,7 @@ void QHexRenderer::applyBookMark(QTextCursor &textcursor, qsizetype line,
         return;
 
     auto pos = m_document->getLineBookmarksPos(line);
-    for (auto item : pos) {
+    for (auto &item : pos) {
         textcursor.setPosition(int((item % hexLineWidth()) * factor) + 2);
         auto charformat = textcursor.charFormat();
         textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
@@ -754,21 +773,27 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
 void QHexRenderer::drawHeader(QPainter *painter) {
     QRect rect = QRect(0, 0, this->getEndColumnX(),
                        this->headerLineCount() * this->lineHeight());
-    QString hexheader;
 
-    for (quint8 i = 0; i < this->hexLineWidth(); i++)
-        hexheader.append(
-            QString("%1 ")
-                .arg(QString::number(i, 16).rightJustified(2, QChar('0')))
-                .toUpper());
+    auto len = this->hexLineWidth();
+    QString hexheader;
+    hexheader.reserve(len * 3);
+    for (quint8 i = 0; i < len; i++) {
+        hexheader.append(toHexUpper(i >> 4));
+        hexheader.append(toHexUpper(i & 0xf));
+        hexheader.append(' ');
+    }
+
+    auto font = painter->font();
+    auto space = QFontMetricsF(font).horizontalAdvance(' ') / 2;
 
     QRect addressrect = rect;
     addressrect.setWidth(this->getHexColumnX());
 
     QRect hexrect = rect;
 
-    hexrect.setX(m_addressVisible ? this->getHexColumnX() + this->borderSize()
-                                  : this->borderSize());
+    hexrect.setX(m_addressVisible
+                     ? (this->getHexColumnX() + this->borderSize() + space)
+                     : this->borderSize());
     hexrect.setWidth(this->getNCellsWidth(hexLineWidth() * 3));
 
     QRect asciirect = rect;

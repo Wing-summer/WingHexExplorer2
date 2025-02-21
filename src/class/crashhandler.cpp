@@ -9,6 +9,7 @@
 
 #include <cpptrace/cpptrace.hpp>
 
+#include <cpptrace/formatting.hpp>
 #include <csignal>
 
 #ifdef Q_OS_WIN
@@ -122,7 +123,9 @@ void CrashHandler::reportCrashAndExit() {
         ss << Qt::endl;
     }
 
-    auto str = cpptrace::generate_trace().to_string();
+    auto formatter =
+        cpptrace::formatter{}.paths(cpptrace::formatter::path_mode::basename);
+    auto str = formatter.format(cpptrace::generate_trace());
     ss << QString::fromStdString(str) << Qt::endl;
 
     CrashReport r;

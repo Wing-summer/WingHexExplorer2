@@ -120,8 +120,12 @@ private:
     void unprintableChars(QByteArray &ascii) const;
 
 private:
+    static QByteArray toHexSequence(const QByteArray &arr);
+    static char toHexUpper(uint value) noexcept;
+
+private:
     // modified by wingsummer
-    enum Factor { String = 1, Hex = 3 };
+    enum Factor { String = 1, Hex = 4 };
 
     void applyDocumentStyles(QPainter *painter,
                              QTextDocument *textdocument) const;
