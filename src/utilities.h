@@ -149,6 +149,7 @@ public:
                 }
             }
 #endif
+            encodings.sort();
         }
 
         return encodings;

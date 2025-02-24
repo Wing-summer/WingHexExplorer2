@@ -336,21 +336,21 @@ void QHexView::setCopyLimit(qsizetype newCopylimit) {
 
 qreal QHexView::scaleRate() const { return m_scaleRate; }
 
-qsizetype QHexView::searchForward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexView::findNext(qsizetype begin, const QByteArray &ba) {
     if (begin < 0) {
         begin = m_cursor->position().offset();
     }
-    return m_document->searchForward(begin, ba);
+    return m_document->findNext(begin, ba);
 }
 
-qsizetype QHexView::searchBackward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexView::findPrevious(qsizetype begin, const QByteArray &ba) {
     qsizetype startPos;
     if (begin < 0) {
         startPos = m_cursor->position().offset() - 1;
     } else {
         startPos = begin;
     }
-    return m_document->searchBackward(startPos, ba);
+    return m_document->findPrevious(startPos, ba);
 }
 
 bool QHexView::RemoveSelection(int nibbleindex) {

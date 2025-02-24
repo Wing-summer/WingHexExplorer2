@@ -1875,9 +1875,9 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                     _rwlock.lockForRead();
                     auto hexeditor = e->hexEditor();
                     auto doc = hexeditor->document();
-                    auto pos = doc->searchForward(offset, QByteArray(1, 0));
+                    auto pos = doc->findNext(offset, QByteArray(1, 0));
                     if (pos < 0) {
-                        pos = doc->searchForward(offset, QByteArray(1, '\n'));
+                        pos = doc->findNext(offset, QByteArray(1, '\n'));
                         if (pos < 0) {
                             return QString();
                         }
@@ -1900,20 +1900,19 @@ void PluginSystem::connectReaderInterface(IWingPlugin *plg) {
                 }
                 return results;
             });
-    connect(preader, &WingPlugin::Reader::searchForward, _win,
+    connect(preader, &WingPlugin::Reader::findNext, _win,
             [=](qsizetype begin, const QByteArray &ba) -> qsizetype {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->searchForward(begin, ba);
+                    return e->hexEditor()->document()->findNext(begin, ba);
                 }
                 return qsizetype(-1);
             });
-    connect(preader, &WingPlugin::Reader::searchBackward, _win,
+    connect(preader, &WingPlugin::Reader::findPrevious, _win,
             [=](qsizetype begin, const QByteArray &ba) -> qsizetype {
                 auto e = pluginCurrentEditor(plg);
                 if (e) {
-                    return e->hexEditor()->document()->searchBackward(begin,
-                                                                      ba);
+                    return e->hexEditor()->document()->findPrevious(begin, ba);
                 }
                 return qsizetype(-1);
             });

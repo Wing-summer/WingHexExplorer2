@@ -223,10 +223,9 @@ private:
 
     CScriptArray *_HexReader_readBytes(qsizetype offset, qsizetype len);
 
-    qsizetype _HexReader_searchForward(qsizetype begin, const CScriptArray &ba);
+    qsizetype _HexReader_findNext(qsizetype begin, const CScriptArray &ba);
 
-    qsizetype _HexReader_searchBackward(qsizetype begin,
-                                        const CScriptArray &ba);
+    qsizetype _HexReader_findPrevious(qsizetype begin, const CScriptArray &ba);
 
     CScriptArray *_HexReader_findAllBytes(qsizetype begin, qsizetype end,
                                           const CScriptArray &ba);

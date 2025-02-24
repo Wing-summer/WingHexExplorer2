@@ -38,7 +38,7 @@ public:
 
     QList<WingHex::FindResult> &results();
     QList<FindInfo> &findData();
-    QByteArray &lastFindData();
+    QString &lastFindData();
 
     void beginUpdate();
     void endUpdate();
@@ -63,7 +63,7 @@ public:
 private:
     QList<WingHex::FindResult> m_results;
     QList<FindInfo> m_findData;
-    QByteArray m_lastFindData;
+    QString m_lastFindData;
 
     QString m_encoding;
 };

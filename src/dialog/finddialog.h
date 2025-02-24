@@ -18,7 +18,7 @@
 #ifndef FINDDIALOG_H
 #define FINDDIALOG_H
 
-#include "QHexView/qhexview.h"
+#include "control/qhextextedit.h"
 #include "control/qtlonglongspinbox.h"
 #include "framelessdialogbase.h"
 
@@ -26,6 +26,7 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QRadioButton>
+#include <QTextEdit>
 
 enum class SearchDirection { None, Region, Foreword, Backword, Selection };
 
@@ -39,7 +40,6 @@ public:
 
         // for searching info
         bool isStringFind;
-        QByteArray buffer;
         QString encoding;
         QString str;
     };
@@ -66,11 +66,9 @@ private:
     void on_reject();
 
 private:
-    QHexView *m_hexeditor;
-    QLineEdit *m_lineeditor;
-    QRadioButton *m_string;
-    QRadioButton *m_hex;
-    QComboBox *m_encodings;
+    QHexTextEdit *m_lineeditor;
+    QComboBox *m_findMode;
+    QTextEdit *m_preview;
 
     QtLongLongSpinBox *m_regionStart;
     QtLongLongSpinBox *m_regionStop;

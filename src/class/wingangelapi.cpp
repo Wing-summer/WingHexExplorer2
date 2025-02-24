@@ -775,15 +775,15 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
 
     registerAPI<qsizetype(qsizetype, const CScriptArray &)>(
         engine,
-        std::bind(&WingAngelAPI::_HexReader_searchForward, this,
+        std::bind(&WingAngelAPI::_HexReader_findNext, this,
                   std::placeholders::_1, std::placeholders::_2),
-        QSIZETYPE_WRAP("searchForward(" QSIZETYPE " begin, byte[] &in ba)"));
+        QSIZETYPE_WRAP("findNext(" QSIZETYPE " begin, byte[] &in ba)"));
 
     registerAPI<qsizetype(qsizetype, const CScriptArray &)>(
         engine,
-        std::bind(&WingAngelAPI::_HexReader_searchBackward, this,
+        std::bind(&WingAngelAPI::_HexReader_findPrevious, this,
                   std::placeholders::_1, std::placeholders::_2),
-        QSIZETYPE_WRAP("searchBackward(" QSIZETYPE " begin, byte[] &in ba)"));
+        QSIZETYPE_WRAP("findPrevious(" QSIZETYPE " begin, byte[] &in ba)"));
 
     registerAPI<CScriptArray *(qsizetype, qsizetype, const CScriptArray &)>(
         engine,
@@ -2374,8 +2374,8 @@ CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
     });
 }
 
-qsizetype WingAngelAPI::_HexReader_searchForward(qsizetype begin,
-                                                 const CScriptArray &ba) {
+qsizetype WingAngelAPI::_HexReader_findNext(qsizetype begin,
+                                            const CScriptArray &ba) {
     // If called from the script, there will always be an active
     // context, which can be used to obtain a pointer to the engine.
     asIScriptContext *ctx = asGetActiveContext();
@@ -2386,14 +2386,14 @@ qsizetype WingAngelAPI::_HexReader_searchForward(qsizetype begin,
         auto byteID = engine->GetTypeIdByDecl("byte");
         Q_ASSERT(byteID);
         auto bab = cArray2ByteArray(ba, byteID, &ok);
-        return emit reader.searchForward(begin, bab);
+        return emit reader.findNext(begin, bab);
     } else {
         return qsizetype(-1);
     }
 }
 
-qsizetype WingAngelAPI::_HexReader_searchBackward(qsizetype begin,
-                                                  const CScriptArray &ba) {
+qsizetype WingAngelAPI::_HexReader_findPrevious(qsizetype begin,
+                                                const CScriptArray &ba) {
     // If called from the script, there will always be an active
     // context, which can be used to obtain a pointer to the engine.
     asIScriptContext *ctx = asGetActiveContext();
@@ -2404,7 +2404,7 @@ qsizetype WingAngelAPI::_HexReader_searchBackward(qsizetype begin,
         auto byteID = engine->GetTypeIdByDecl("byte");
         auto bab = cArray2ByteArray(ba, byteID, &ok);
         if (ok) {
-            return emit reader.searchBackward(begin, bab);
+            return emit reader.findPrevious(begin, bab);
         } else {
             return qsizetype(-1);
         }

@@ -207,7 +207,8 @@ set(CONTROL_SRC
     src/control/qtlonglongspinbox.cpp
     src/control/qtlonglongspinbox.h
     src/control/dockwidgettab.h
-    src/control/dockwidgettab.cpp)
+    src/control/dockwidgettab.cpp
+    src/control/qhextextedit.h src/control/qhextextedit.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp

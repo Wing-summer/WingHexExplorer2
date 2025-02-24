@@ -142,10 +142,9 @@ signals:
                                          const QString &encoding = QString());
     Q_REQUIRED_RESULT QByteArray readBytes(qsizetype offset, qsizetype count);
 
-    Q_REQUIRED_RESULT qsizetype searchForward(qsizetype begin,
-                                              const QByteArray &ba);
-    Q_REQUIRED_RESULT qsizetype searchBackward(qsizetype begin,
-                                               const QByteArray &ba);
+    Q_REQUIRED_RESULT qsizetype findNext(qsizetype begin, const QByteArray &ba);
+    Q_REQUIRED_RESULT qsizetype findPrevious(qsizetype begin,
+                                             const QByteArray &ba);
     Q_REQUIRED_RESULT QList<qsizetype>
     findAllBytes(qsizetype begin, qsizetype end, const QByteArray &b);
 

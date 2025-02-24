@@ -25,60 +25,70 @@
 #include <QShortcut>
 #include <QVBoxLayout>
 
+#include "control/toast.h"
+
 FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     : FramelessDialogBase(parent) {
+
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
-    m_string = new QRadioButton(this);
-    m_string->setText(tr("findstring"));
-    layout->addWidget(m_string);
+    layout->addWidget(new QLabel(tr("Mode:"), this));
+    m_findMode = new QComboBox(this);
+    m_findMode->addItem(QStringLiteral("HEX"));
+    m_findMode->addItems(Utilities::getEncodings());
+    m_findMode->setCurrentIndex(1);
+
+    layout->addWidget(m_findMode);
     layout->addSpacing(3);
 
-    m_encodings = new QComboBox(this);
-    m_encodings->addItems(Utilities::getEncodings());
-    m_encodings->setCurrentIndex(0);
-    m_encodings->setEnabled(false);
-    connect(m_string, &QRadioButton::toggled, m_encodings,
-            &QComboBox::setEnabled);
-    layout->addWidget(m_encodings);
-    layout->addSpacing(3);
-
-    m_lineeditor = new QLineEdit(this);
-    m_lineeditor->setEnabled(false);
-    connect(m_string, &QRadioButton::toggled, m_lineeditor,
-            &QLineEdit::setEnabled);
+    layout->addWidget(new QLabel(tr("Content:"), this));
+    m_lineeditor = new QHexTextEdit(this);
     layout->addWidget(m_lineeditor);
     layout->addSpacing(3);
 
-    m_hex = new QRadioButton(this);
-    m_hex->setText(tr("findhex"));
-    layout->addWidget(m_hex);
-    layout->addSpacing(3);
+    layout->addWidget(new QLabel(tr("EncBytes:"), this));
+    m_preview = new QTextEdit(this);
+    m_preview->setFocusPolicy(Qt::NoFocus);
+    m_preview->setReadOnly(true);
+    m_preview->setUndoRedoEnabled(false);
+    m_preview->setWordWrapMode(QTextOption::WordWrap);
+    m_preview->setAcceptRichText(false);
+    m_preview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    layout->addWidget(m_preview);
 
-    m_hexeditor = new QHexView(this);
-    m_hexeditor->setAsciiVisible(false);
-    m_hexeditor->setAddressVisible(false);
-    m_hexeditor->setEnabled(true);
-    connect(m_hex, &QRadioButton::toggled, m_hexeditor, &QHexView::setEnabled);
-    layout->addWidget(m_hexeditor);
-    layout->addSpacing(10);
+    connect(m_lineeditor, &QHexTextEdit::textChanged, this, [this]() {
+        auto text = m_lineeditor->toPlainText();
+        if (m_findMode->currentIndex()) {
+            auto encoding = m_findMode->currentText();
+            auto dbytes = Utilities::encodingString(text, encoding);
+            m_preview->setText(dbytes.toHex(' '));
+        } else {
+            m_preview->setText(text);
+        }
+    });
+    connect(m_findMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+                auto oldva = m_lineeditor->isHexMode();
+                auto newva = index == 0;
+                m_lineeditor->setIsHexMode(newva);
+                if (oldva != newva) {
+                    m_lineeditor->clear();
+                } else {
+                    // force update
+                    emit m_lineeditor->textChanged();
+                }
+            });
 
     if (info.isStringFind) {
-        m_string->setChecked(true);
-        m_lineeditor->setEnabled(true);
-        m_hexeditor->setEnabled(false);
         if (!info.encoding.isEmpty()) {
-            m_encodings->setCurrentText(info.encoding);
+            m_findMode->setCurrentText(info.encoding);
         }
     } else {
-        m_hex->setChecked(true);
-        m_lineeditor->setEnabled(false);
-        m_hexeditor->setEnabled(true);
+        m_findMode->setCurrentIndex(0);
     }
 
     m_lineeditor->setText(info.str);
-    m_hexeditor->document()->_insert(0, info.buffer);
 
     auto regionw = new QWidget(this);
     auto regionLayout = new QHBoxLayout(regionw);
@@ -106,8 +116,6 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     m_regionStop->setPrefix(QStringLiteral("0x"));
     regionLayout->addWidget(m_regionStop, 1);
 
-    layout->addWidget(regionw);
-
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
 
@@ -134,8 +142,8 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
         if (b) {
             _result.dir = SearchDirection::Region;
         }
-        m_regionStart->setEnabled(b);
-        m_regionStop->setEnabled(b);
+        regionw->setVisible(b);
+        regionw->setEnabled(b);
     });
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
@@ -177,7 +185,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     group->button(info.isBigFile ? 1 : 0)->setChecked(true);
 
     layout->addWidget(btnBox);
-    layout->addSpacing(20);
+
     auto dbbox = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(dbbox, &QDialogButtonBox::accepted, this, &FindDialog::on_accept);
@@ -185,25 +193,42 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     auto key = QKeySequence(Qt::Key_Return);
     auto s = new QShortcut(key, this);
     connect(s, &QShortcut::activated, this, &FindDialog::on_accept);
+
+    layout->addWidget(regionw);
+    regionw->hide();
+
+    layout->addSpacing(20);
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
     this->setWindowTitle(tr("find"));
+
+    m_lineeditor->setFocus();
 }
 
 FindDialog::Result FindDialog::getResult() const { return _result; }
 
 void FindDialog::on_accept() {
-    _result.start = 0;
-    _result.stop = 0;
+    _result.isStringFind = m_findMode->currentIndex() > 0;
+    _result.str = m_lineeditor->toPlainText().trimmed();
+
+    if (!_result.isStringFind) {
+        // check the last byte nibbles
+        if (std::next(_result.str.rbegin())->isSpace()) {
+            Toast::toast(this, NAMEICONRES("find"), tr("InvalidHexSeq"));
+            return;
+        }
+    }
+
     if (m_regionStart->isEnabled()) {
         _result.start = m_regionStart->value();
         _result.stop = m_regionStop->value();
+    } else {
+        _result.start = 0;
+        _result.stop = 0;
     }
-    _result.encoding = m_encodings->currentText();
-    _result.isStringFind = m_string->isChecked();
-    _result.buffer = m_hexeditor->document()->read(0);
-    _result.str = m_lineeditor->text();
+
+    _result.encoding = m_findMode->currentText();
     done(1);
 }
 

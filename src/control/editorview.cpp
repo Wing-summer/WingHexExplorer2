@@ -204,16 +204,19 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         } break;
         }
 
-        QByteArray data;
+        QString data;
+        data = result.str;
+
+        qsizetype contextLen = 0;
 
         if (result.isStringFind) {
-            data = Utilities::encodingString(result.str, result.encoding);
+            auto raw = Utilities::encodingString(data, result.encoding);
+            contextLen = raw.length();
             m_findResults->setEncoding(result.encoding);
+            d->findAllBytes(begin, end, raw, results);
         } else {
-            data = result.buffer;
+            contextLen = d->findAllBytesExt(begin, end, result.str, results);
         }
-
-        d->findAllBytes(begin, end, data, results);
 
         m_findResults->beginUpdate();
         m_findResults->clear();
@@ -226,7 +229,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             r.col = r.offset % lineWidth;
             m_findResults->results().append(r);
             m_findResults->findData().append(
-                readContextFinding(ritem, data.size(), FIND_CONTEXT_SIZE,
+                readContextFinding(ritem, contextLen, FIND_CONTEXT_SIZE,
                                    FIND_MAX_DISPLAY_FIND_CHARS));
         }
 
@@ -234,8 +237,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
 
         m_findResults->endUpdate();
 
-        if (m_findResults->size() ==
-            std::numeric_limits<QList<qsizetype>::size_type>::max()) {
+        if (m_findResults->size() >= QHEXVIEW_FIND_LIMIT) {
             return FindError::MayOutOfRange;
         } else {
             return FindError::Success;

@@ -414,8 +414,8 @@ void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
     emit documentChanged();
 }
 
-void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
-                                QList<qsizetype> &results,
+void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
+                                const QByteArray &b, QList<qsizetype> &results,
                                 const std::function<bool()> &pred) {
     results.clear();
     if (!b.length())
@@ -424,18 +424,57 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end, QByteArray b,
     qsizetype e = end > begin ? end : -1;
     auto offset = b.size();
     while (pred()) {
-        p = m_buffer->indexOf(b, p);
+        p = findNext(p, b);
         if (p < 0 || (e > 0 && p > e)) {
             break;
         }
 
-        if (results.size() ==
-            std::numeric_limits<QList<qsizetype>::size_type>::max()) {
+        if (results.size() > QHEXVIEW_FIND_LIMIT) {
             break;
         }
         results.append(p);
-        p += offset + 1;
+        p += offset;
     }
+}
+
+qsizetype QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
+                                        const QString &pattern,
+                                        QList<qsizetype> &results,
+                                        const std::function<bool()> &pred) {
+    results.clear();
+    auto patterns = parseConvertPattern(pattern);
+    if (patterns.isEmpty()) {
+        return 0;
+    }
+
+    qsizetype p = begin > 0 ? begin : 0;
+    qsizetype e = end > begin ? end : -1;
+
+    qsizetype offset = 0;
+    for (auto &p : patterns) {
+        if (std::holds_alternative<QByteArray>(p)) {
+            offset += std::get<QByteArray>(p).length();
+        } else if (std::holds_alternative<size_t>(p)) {
+            offset += std::get<size_t>(p);
+        } else if (std::holds_alternative<HexWildItem>(p)) {
+            offset += 1;
+        }
+    }
+
+    while (pred()) {
+        p = findNextExt(p, pattern);
+        if (p < 0 || (e > 0 && p > e)) {
+            break;
+        }
+
+        if (results.size() > QHEXVIEW_FIND_LIMIT) {
+            break;
+        }
+        results.append(p);
+        p += offset;
+    }
+
+    return offset;
 }
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {
@@ -497,6 +536,287 @@ bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     setDocSaved(false);
     emit documentChanged();
     return true;
+}
+
+qsizetype QHexDocument::findNextExt(qsizetype begin,
+                                    const QList<FindStep> &patterns) {
+    auto op = [this](qsizetype &pos, const FindStep &step,
+                     qsizetype *begin = nullptr) -> bool {
+        if (pos < 0 || pos >= length()) {
+            return false;
+        }
+        if (std::holds_alternative<QByteArray>(step)) {
+            auto v = std::get<QByteArray>(step);
+            auto len = v.length();
+            auto r = findNext(pos, v);
+            if (r >= 0) {
+                if (begin) {
+                    *begin = r;
+                } else {
+                    if (r != pos) {
+                        pos = -1;
+                        return false;
+                    }
+                }
+                pos = r + len;
+                return true;
+            } else {
+                pos = -1;
+                return false;
+            }
+        } else if (std::holds_alternative<HexWildItem>(step)) {
+            auto v = std::get<HexWildItem>(step);
+            auto wc = uchar(at(pos));
+            pos += 1;
+
+            if (v.higher == '?') {
+                if ((wc & 0xf) == v.lower) {
+                    return true;
+                }
+            } else {
+                if ((wc >> 4) == v.higher) {
+                    return true;
+                }
+            }
+        } else if (std::holds_alternative<size_t>(step)) {
+            auto v = std::get<size_t>(step);
+            pos += v;
+            if (v + pos < length()) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    while (begin < length()) {
+        auto pos = begin;
+
+        auto p = patterns.cbegin();
+        auto r = op(pos, *p, &begin);
+        if (!r) {
+            if (pos < 0) {
+                return -1;
+            }
+            continue;
+        }
+        ++p;
+
+        bool ok = true;
+        for (; p != patterns.cend(); ++p) {
+            auto r = op(pos, *p);
+            if (!r) {
+                ok = false;
+                if (pos < 0) {
+                    return -1;
+                }
+                begin = pos;
+                break;
+            }
+        }
+
+        if (ok) {
+            return begin;
+        }
+    }
+
+    return -1;
+}
+
+qsizetype QHexDocument::findPreviousExt(qsizetype begin,
+                                        const QList<FindStep> &patterns) {
+    auto op = [this](qsizetype &pos, const FindStep &step,
+                     qsizetype *begin = nullptr) -> bool {
+        if (pos < 0 || pos >= length()) {
+            return false;
+        }
+        if (std::holds_alternative<QByteArray>(step)) {
+            auto v = std::get<QByteArray>(step);
+            auto len = v.length();
+            auto r = findPrevious(pos, v);
+            if (r >= 0) {
+                if (begin) {
+                    *begin = r;
+                } else {
+                    if (r + len != pos) {
+                        pos = -1;
+                        return false;
+                    }
+                }
+                pos = r - len;
+                return true;
+            } else {
+                pos = -1;
+                return false;
+            }
+        } else if (std::holds_alternative<HexWildItem>(step)) {
+            auto v = std::get<HexWildItem>(step);
+            auto wc = uchar(at(pos));
+            pos -= 1;
+
+            if (v.higher == '?') {
+                if ((wc & 0xf) == v.lower) {
+                    return true;
+                }
+            } else {
+                if ((wc >> 4) == v.higher) {
+                    return true;
+                }
+            }
+        } else if (std::holds_alternative<size_t>(step)) {
+            auto v = std::get<size_t>(step);
+            pos -= v;
+            if (v - pos >= 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    while (begin >= 0) {
+        auto pos = begin;
+
+        auto p = patterns.crbegin();
+        auto r = op(pos, *p, &begin);
+        if (!r) {
+            if (pos < 0) {
+                return -1;
+            }
+            continue;
+        }
+        ++p;
+
+        bool ok = true;
+        for (; p != patterns.crend(); ++p) {
+            auto r = op(pos, *p);
+            if (!r) {
+                ok = false;
+                if (pos < 0) {
+                    return -1;
+                }
+                begin = pos;
+                break;
+            }
+        }
+
+        if (ok) {
+            return begin;
+        }
+    }
+
+    return -1;
+}
+
+QList<QHexDocument::FindStep>
+QHexDocument::parseConvertPattern(const QString &pattern) {
+    // process hex pattern
+    QList<HexWildItem> words;
+    std::optional<uchar> higher;
+    for (auto pchar = pattern.cbegin(); pchar != pattern.cend(); ++pchar) {
+        if (pchar->isSpace()) {
+            if (higher) {
+                return {};
+            } else {
+                continue;
+            }
+        }
+
+        auto c = pchar->unicode();
+        if (c >= '0' && c <= '9') {
+            if (higher) {
+                HexWildItem item;
+                item.higher = higher.value();
+                item.lower = uchar(c) - '0';
+                words.append(item);
+                higher.reset();
+            } else {
+                higher = uchar(c) - '0';
+            }
+        } else if (c >= 'A' && c <= 'F') {
+            if (higher) {
+                HexWildItem item;
+                item.higher = higher.value();
+                item.lower = uchar(c) - 'A' + 10;
+                words.append(item);
+                higher.reset();
+            } else {
+                higher = uchar(c) - 'A' + 10;
+            }
+        } else if (c >= 'a' && c <= 'f') {
+            if (higher) {
+                HexWildItem item;
+                item.higher = higher.value();
+                item.lower = uchar(c) - 'a' + 10;
+                words.append(item);
+                higher.reset();
+            } else {
+                higher = uchar(c) - 'a' + 10;
+            }
+        } else if (c == '?') {
+            if (higher) {
+                HexWildItem item;
+                item.higher = higher.value();
+                item.lower = '?';
+                words.append(item);
+                higher.reset();
+            } else {
+                higher = '?';
+            }
+        }
+    }
+
+    if (higher) {
+        return {};
+    }
+
+    if (!words.isEmpty()) {
+        QList<FindStep> steps;
+
+        // parsing...
+        QByteArray buffer;
+        size_t len = 0;
+        for (auto pw = words.cbegin(); pw != words.cend(); ++pw) {
+            auto higher = pw->higher;
+            auto lower = pw->lower;
+            if (higher == '?' || lower == '?') {
+                if (higher == '?' && lower == '?') {
+                    if (!buffer.isEmpty()) {
+                        steps.append(buffer);
+                        buffer.clear();
+                    }
+                    len++;
+                } else {
+                    if (len != 0) {
+                        steps.append(len);
+                        len = 0;
+                    }
+                    if (!buffer.isEmpty()) {
+                        steps.append(buffer);
+                        buffer.clear();
+                    }
+                    HexWildItem item;
+                    item.higher = higher;
+                    item.lower = lower;
+                    steps.append(item);
+                }
+            } else {
+                if (len != 0) {
+                    steps.append(len);
+                    len = 0;
+                }
+                buffer.append(char(pw->higher << 4 | pw->lower));
+            }
+        }
+
+        // clean up
+        if (len != 0) {
+            steps.append(len);
+        }
+        if (!buffer.isEmpty()) {
+            steps.append(buffer);
+        }
+        return steps;
+    }
+    return {};
 }
 
 /*======================*/
@@ -728,18 +1048,37 @@ bool QHexDocument::saveTo(QIODevice *device, bool cleanUndo) {
     return true;
 }
 
-qsizetype QHexDocument::searchForward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexDocument::findNext(qsizetype begin, const QByteArray &ba) {
     if (begin < 0) {
         return -1;
     }
     return m_buffer->indexOf(ba, begin);
 }
 
-qsizetype QHexDocument::searchBackward(qsizetype begin, const QByteArray &ba) {
+qsizetype QHexDocument::findPrevious(qsizetype begin, const QByteArray &ba) {
     if (begin < 0) {
         return -1;
     }
     return m_buffer->lastIndexOf(ba, begin);
+}
+
+qsizetype QHexDocument::findNextExt(qsizetype begin, const QString &pattern) {
+    auto patterns = parseConvertPattern(pattern);
+    if (patterns.isEmpty()) {
+        return -1;
+    }
+
+    return findNextExt(begin, patterns);
+}
+
+qsizetype QHexDocument::findPreviousExt(qsizetype begin,
+                                        const QString &pattern) {
+    auto patterns = parseConvertPattern(pattern);
+    if (patterns.isEmpty()) {
+        return -1;
+    }
+
+    return findPreviousExt(begin, patterns);
 }
 
 QHexDocument *QHexDocument::fromLargeFile(const QString &filename,

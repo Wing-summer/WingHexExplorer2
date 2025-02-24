@@ -65,14 +65,15 @@ add_library(
     QHexEdit2/chunks.cpp
     QHexEdit2/chunks.h
     qhexview.h
-    qhexview.cpp
-)
+    qhexview.cpp)
 
 set_target_properties(
     QHexView
     PROPERTIES AUTOMOC ON
                CXX_STANDARD 17
                CXX_STANDARD_REQUIRED ON)
+
+target_compile_definitions(QHexView PUBLIC QHEXVIEW_FIND_LIMIT=1000)
 
 target_link_libraries(
     QHexView PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Gui

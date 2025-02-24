@@ -133,7 +133,7 @@ QList<FindResultModel::FindInfo> &FindResultModel::findData() {
     return m_findData;
 }
 
-QByteArray &FindResultModel::lastFindData() { return m_lastFindData; }
+QString &FindResultModel::lastFindData() { return m_lastFindData; }
 
 void FindResultModel::beginUpdate() { this->beginResetModel(); }
 
@@ -146,6 +146,7 @@ WingHex::FindResult FindResultModel::resultAt(qsizetype index) const {
 void FindResultModel::clear() {
     m_results.clear();
     m_findData.clear();
+    emit layoutChanged();
 }
 
 QList<WingHex::FindResult>::size_type FindResultModel::size() const {

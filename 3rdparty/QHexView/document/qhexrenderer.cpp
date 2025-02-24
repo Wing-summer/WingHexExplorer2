@@ -321,6 +321,9 @@ void QHexRenderer::unprintableChars(QByteArray &ascii) const {
 }
 
 QByteArray QHexRenderer::toHexSequence(const QByteArray &arr) {
+    if (arr.isEmpty()) {
+        return QByteArray(1, '\t');
+    }
     const int length = arr.size() * 4;
     QByteArray hex(length, Qt::Uninitialized);
     char *hexData = hex.data();

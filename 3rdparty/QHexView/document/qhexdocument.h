@@ -103,7 +103,13 @@ public:
     bool existBookMark(qsizetype pos);
 
     void findAllBytes(
-        qsizetype begin, qsizetype end, QByteArray b, QList<qsizetype> &results,
+        qsizetype begin, qsizetype end, const QByteArray &b,
+        QList<qsizetype> &results,
+        const std::function<bool()> &pred = [] { return true; });
+
+    qsizetype findAllBytesExt(
+        qsizetype begin, qsizetype end, const QString &pattern,
+        QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
 
     bool isDocSaved();
@@ -179,8 +185,11 @@ public slots:
     /*================================*/
     // added by wingsummer
 
-    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
-    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
+    qsizetype findNext(qsizetype begin, const QByteArray &ba);
+    qsizetype findPrevious(qsizetype begin, const QByteArray &ba);
+
+    qsizetype findNextExt(qsizetype begin, const QString &pattern);
+    qsizetype findPreviousExt(qsizetype begin, const QString &pattern);
 
     bool insert(qsizetype offset, uchar b);
     bool insert(qsizetype offset, const QByteArray &data);
@@ -193,6 +202,20 @@ public slots:
     bool _replace(qsizetype offset, uchar b);
     bool _replace(qsizetype offset, const QByteArray &data);
     bool _remove(qsizetype offset, qsizetype len);
+
+private:
+    // AB
+    struct HexWildItem {
+        uchar higher; // A
+        uchar lower;  // B
+    };
+
+    // std::variant< find-content, hex with wildcard, all-wildcards >
+    using FindStep = std::variant<QByteArray, HexWildItem, size_t>;
+
+    QList<FindStep> parseConvertPattern(const QString &pattern);
+    qsizetype findNextExt(qsizetype begin, const QList<FindStep> &patterns);
+    qsizetype findPreviousExt(qsizetype begin, const QList<FindStep> &patterns);
 
     /*================================*/
 

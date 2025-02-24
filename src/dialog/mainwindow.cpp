@@ -661,9 +661,6 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setModel(_findEmptyResult);
     m_findEncoding.value(_findEmptyResult->encoding())->setChecked(true);
 
-    header->setSectionResizeMode(3, QHeaderView::Stretch);
-    header->setSectionResizeMode(4, QHeaderView::Stretch);
-
     connect(m_findresult, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
                 auto editor =
@@ -2301,7 +2298,6 @@ void MainWindow::on_findfile() {
         auto r = fd.getResult();
         info.isStringFind = r.isStringFind;
         info.encoding = r.encoding;
-        info.buffer = r.buffer;
         info.str = r.str;
 
         ExecAsync<EditorView::FindError>(
@@ -2775,8 +2771,7 @@ void MainWindow::on_exportfindresult() {
 
         auto d = findresitem->lastFindData();
 
-        fobj.insert(QStringLiteral("find"),
-                    QString::fromLatin1(d.toHex(' ').toUpper()));
+        fobj.insert(QStringLiteral("find"), d);
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             auto data = findresitem->resultAt(i);

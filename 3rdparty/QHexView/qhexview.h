@@ -122,8 +122,8 @@ public:
     void setScaleRate(qreal rate);
     qreal scaleRate() const;
 
-    qsizetype searchForward(qsizetype begin, const QByteArray &ba);
-    qsizetype searchBackward(qsizetype begin, const QByteArray &ba);
+    qsizetype findNext(qsizetype begin, const QByteArray &ba);
+    qsizetype findPrevious(qsizetype begin, const QByteArray &ba);
 
     bool RemoveSelection(int nibbleindex = 1);
     bool removeSelection();
