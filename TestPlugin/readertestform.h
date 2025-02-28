@@ -24,13 +24,13 @@
 #include <QTextBrowser>
 #include <QWidget>
 
-#include "iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
 
 namespace Ui {
 class ReaderTestForm;
 }
 
-class ReaderTestForm : public QWidget {
+class ReaderTestForm : public QWidget, public WingHex::IWingPluginCalls {
     Q_OBJECT
 
 public:

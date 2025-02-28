@@ -18,8 +18,6 @@
 #ifndef FINDRESULTMODEL_H
 #define FINDRESULTMODEL_H
 
-#include "plugin/iwingplugin.h"
-
 #include <QAbstractTableModel>
 
 class FindResultModel : public QAbstractTableModel {
@@ -33,19 +31,25 @@ public:
         QByteArray ctailer;
     };
 
+    struct FindResult {
+        qsizetype offset = -1;
+        qsizetype line = -1;
+        qsizetype col = -1;
+    };
+
 public:
     explicit FindResultModel(QObject *parent = nullptr);
 
-    QList<WingHex::FindResult> &results();
+    QList<FindResult> &results();
     QList<FindInfo> &findData();
     QString &lastFindData();
 
     void beginUpdate();
     void endUpdate();
 
-    WingHex::FindResult resultAt(qsizetype index) const;
+    FindResult resultAt(qsizetype index) const;
     void clear();
-    QList<WingHex::FindResult>::size_type size() const;
+    QList<FindResult>::size_type size() const;
 
     QString copyContent(const QModelIndex &index) const;
 
@@ -61,7 +65,7 @@ public:
     void setEncoding(const QString &newEncoding);
 
 private:
-    QList<WingHex::FindResult> m_results;
+    QList<FindResult> m_results;
     QList<FindInfo> m_findData;
     QString m_lastFindData;
 

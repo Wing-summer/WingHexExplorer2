@@ -16,9 +16,9 @@
 */
 
 #include "pluginsettingdialog.h"
+#include "class/pluginsystem.h"
 #include "class/settingmanager.h"
 #include "dbghelper.h"
-#include "plugin/pluginsystem.h"
 #include "ui_pluginsettingdialog.h"
 #include "utilities.h"
 

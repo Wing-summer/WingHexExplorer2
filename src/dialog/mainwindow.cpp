@@ -30,6 +30,7 @@
 #include "class/languagemanager.h"
 #include "class/layoutmanager.h"
 #include "class/logger.h"
+#include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
 #include "class/richtextitemdelegate.h"
 #include "class/scriptconsolemachine.h"
@@ -44,7 +45,6 @@
 #include "fileinfodialog.h"
 #include "finddialog.h"
 #include "metadialog.h"
-#include "plugin/pluginsystem.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
 #include "settings/othersettingsdialog.h"
@@ -57,11 +57,15 @@
 #include <QDesktopServices>
 #include <QGridLayout>
 #include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPicture>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QScopeGuard>
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QTimer>
@@ -598,8 +602,6 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setProperty("EditorView", quintptr(0));
 
     Utilities::applyTableViewProperty(m_findresult);
-    auto header = m_findresult->horizontalHeader();
-
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::CustomContextMenu);
 
@@ -1022,7 +1024,7 @@ MainWindow::buildUpVisualDataDock(ads::CDockManager *dock,
                         obj->property("__DOCK__").value<quintptr>());
                     if (dock) {
                         if (!title.isEmpty()) {
-                            display += QStringLiteral("(") % title %
+                            display += QStringLiteral("(") + title +
                                        QStringLiteral(")");
                         }
                         dock->setWindowTitle(display);

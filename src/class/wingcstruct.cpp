@@ -180,8 +180,6 @@ WingCStruct::~WingCStruct() {}
 
 int WingCStruct::sdkVersion() const { return WingHex::SDKVERSION; }
 
-const QString WingCStruct::signature() const { return WingHex::WINGSUMMER; }
-
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     resetEnv();
@@ -348,7 +346,7 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
         return {};
     }
 
-    if (!emit reader.isCurrentDocEditing()) {
+    if (!isCurrentDocEditing()) {
         return {};
     }
 
@@ -356,13 +354,13 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
         return {};
     }
 
-    auto doclen = emit reader.documentBytes();
+    auto doclen = documentBytes();
     if (doclen < 0 || offset + len > doclen) {
         return {};
     }
 
     // first read all bytes
-    auto raw = emit reader.readBytes(offset, len);
+    auto raw = readBytes(offset, len);
 
     // then slice and parse
     const auto *pdata = raw.data();
@@ -377,11 +375,11 @@ QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
         return {};
     }
 
-    if (!emit reader.isCurrentDocEditing()) {
+    if (!isCurrentDocEditing()) {
         return {};
     }
 
-    return emit reader.readBytes(offset, len);
+    return readBytes(offset, len);
 }
 
 QString WingCStruct::getqsizeTypeAsString() const {

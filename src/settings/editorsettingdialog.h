@@ -18,7 +18,7 @@
 #ifndef EDITORSETTINGDIALOG_H
 #define EDITORSETTINGDIALOG_H
 
-#include "plugin/settingpage.h"
+#include "WingPlugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

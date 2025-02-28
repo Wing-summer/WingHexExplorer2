@@ -19,7 +19,9 @@
 #define WINGANGELAPI_H
 
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
-#include "plugin/iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
+
+#include <QFileDialog>
 
 #include <any>
 #include <functional>
@@ -31,6 +33,7 @@ class ScriptingConsole;
 
 class WingAngelAPI : public WingHex::IWingPlugin {
     Q_OBJECT
+    Q_INTERFACES(WingHex::IWingPlugin)
 
 public:
     WingAngelAPI();
@@ -39,7 +42,6 @@ public:
     // IWingPlugin interface
 public:
     virtual int sdkVersion() const override;
-    virtual const QString signature() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
@@ -226,15 +228,6 @@ private:
     qsizetype _HexReader_findNext(qsizetype begin, const CScriptArray &ba);
 
     qsizetype _HexReader_findPrevious(qsizetype begin, const CScriptArray &ba);
-
-    CScriptArray *_HexReader_findAllBytes(qsizetype begin, qsizetype end,
-                                          const CScriptArray &ba);
-
-    CScriptArray *_HexReader_getsBookmarkPos(qsizetype line);
-
-    CScriptArray *_HexReader_getSupportedEncodings();
-
-    CScriptArray *_HexReader_getStorageDrivers();
 
     bool _HexController_writeBytes(qsizetype offset, const CScriptArray &ba);
 

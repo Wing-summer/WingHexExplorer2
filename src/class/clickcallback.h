@@ -18,15 +18,14 @@
 #ifndef CLICKCALLBACK_H
 #define CLICKCALLBACK_H
 
+#include "WingPlugin/iwingplugin.h"
 #include "angelscript.h"
-#include "plugin/iwingplugin.h"
 
 class ClickCallBack {
 public:
     ClickCallBack() {}
 
-    ClickCallBack(const WingHex::WingPlugin::DataVisual::ClickedCallBack &b)
-        : _call(b) {}
+    ClickCallBack(const WingHex::ClickedCallBack &b) : _call(b) {}
 
     explicit ClickCallBack(asIScriptEngine *engine, asIScriptFunction *func)
         : _engine(engine), _func(func) {
@@ -42,14 +41,12 @@ public:
     }
 
 public:
-    ClickCallBack &
-    operator=(const WingHex::WingPlugin::DataVisual::ClickedCallBack &_Right) {
+    ClickCallBack &operator=(const WingHex::ClickedCallBack &_Right) {
         *this = ClickCallBack(_Right);
         return *this;
     }
 
-    ClickCallBack &
-    operator=(WingHex::WingPlugin::DataVisual::ClickedCallBack &&_Right) {
+    ClickCallBack &operator=(WingHex::ClickedCallBack &&_Right) {
         *this = ClickCallBack(_Right);
         return *this;
     }
@@ -79,7 +76,7 @@ public:
     }
 
 private:
-    WingHex::WingPlugin::DataVisual::ClickedCallBack _call;
+    WingHex::ClickedCallBack _call;
     asIScriptEngine *_engine = nullptr;
     asIScriptFunction *_func = nullptr;
 };

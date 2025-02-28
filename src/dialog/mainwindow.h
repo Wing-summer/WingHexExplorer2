@@ -21,6 +21,8 @@
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
+#include <QBuffer>
+#include <QFutureWatcher>
 #include <QListView>
 #include <QMainWindow>
 #include <QMap>
@@ -32,12 +34,14 @@
 #include <QToolButton>
 #include <QTreeView>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QtEndian>
 
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "WingPlugin/iwingplugin.h"
 #include "class/clickcallback.h"
 #include "class/recentfilemanager.h"
 #include "class/scriptmanager.h"
@@ -49,7 +53,6 @@
 #include "model/checksummodel.h"
 #include "model/metadatamodel.h"
 #include "model/numshowmodel.h"
-#include "plugin/iwingplugin.h"
 #include "scriptingdialog.h"
 #include "settingdialog.h"
 #include "showtextdialog.h"

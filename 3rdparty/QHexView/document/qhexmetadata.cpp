@@ -104,29 +104,6 @@ void QHexMetadata::Clear() {
     }
 }
 
-QUndoCommand *QHexMetadata::MakeColor(QUndoCommand *parent, qsizetype begin,
-                                      qsizetype end, const QColor &fgcolor,
-                                      const QColor &bgcolor) {
-    return MakeMetadata(parent, begin, end, fgcolor, bgcolor, QString());
-}
-
-QUndoCommand *QHexMetadata::MakeForeground(QUndoCommand *parent,
-                                           qsizetype begin, qsizetype end,
-                                           const QColor &fgcolor) {
-    return MakeMetadata(parent, begin, end, fgcolor, QColor(), QString());
-}
-
-QUndoCommand *QHexMetadata::MakeBackground(QUndoCommand *parent,
-                                           qsizetype begin, qsizetype end,
-                                           const QColor &bgcolor) {
-    return MakeMetadata(parent, begin, end, QColor(), bgcolor, QString());
-}
-
-QUndoCommand *QHexMetadata::MakeComment(QUndoCommand *parent, qsizetype begin,
-                                        qsizetype end, const QString &comment) {
-    return MakeMetadata(parent, begin, end, QColor(), QColor(), comment);
-}
-
 QUndoCommand *
 QHexMetadata::MakeModifyMetadata(QUndoCommand *parent,
                                  const QHexMetadataItem &newmeta,

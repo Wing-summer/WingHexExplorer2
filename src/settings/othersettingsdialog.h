@@ -18,7 +18,7 @@
 #ifndef OTHERSETTINGSDIALOG_H
 #define OTHERSETTINGSDIALOG_H
 
-#include "plugin/settingpage.h"
+#include "WingPlugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

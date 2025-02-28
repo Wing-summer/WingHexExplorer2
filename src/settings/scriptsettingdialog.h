@@ -18,8 +18,8 @@
 #ifndef SCRIPTSETTINGDIALOG_H
 #define SCRIPTSETTINGDIALOG_H
 
+#include "WingPlugin/settingpage.h"
 #include "class/scriptmanager.h"
-#include "plugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

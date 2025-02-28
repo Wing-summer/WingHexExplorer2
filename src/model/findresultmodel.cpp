@@ -48,7 +48,7 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
             // range
             auto data = m_findData.at(row);
             QString buffer =
-                data.cheader.toHex(' ').toUpper() % QStringLiteral(" <b>");
+                data.cheader.toHex(' ').toUpper() + QStringLiteral(" <b>");
             if (!data.hbuffer.isEmpty()) {
                 buffer += data.hbuffer.toHex(' ').toUpper();
                 if (!data.tbuffer.isEmpty()) {
@@ -56,8 +56,8 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
                 }
             }
 
-            buffer += data.tbuffer.toHex(' ').toUpper() %
-                      QStringLiteral("</b> ") %
+            buffer += data.tbuffer.toHex(' ').toUpper() +
+                      QStringLiteral("</b> ") +
                       data.ctailer.toHex(' ').toUpper();
 
             return buffer;
@@ -65,7 +65,7 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
         case 4: { // decoding
             auto data = m_findData.at(row);
             QString buffer =
-                Utilities::decodingString(data.cheader, m_encoding) %
+                Utilities::decodingString(data.cheader, m_encoding) +
                 QStringLiteral(" <b>");
             if (!data.hbuffer.isEmpty()) {
                 buffer += Utilities::decodingString(data.hbuffer);
@@ -74,8 +74,8 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
                 }
             }
 
-            buffer += Utilities::decodingString(data.tbuffer) %
-                      QStringLiteral("</b> ") %
+            buffer += Utilities::decodingString(data.tbuffer) +
+                      QStringLiteral("</b> ") +
                       Utilities::decodingString(data.ctailer);
 
             return buffer;
@@ -127,7 +127,9 @@ void FindResultModel::setEncoding(const QString &newEncoding) {
     }
 }
 
-QList<WingHex::FindResult> &FindResultModel::results() { return m_results; }
+QList<FindResultModel::FindResult> &FindResultModel::results() {
+    return m_results;
+}
 
 QList<FindResultModel::FindInfo> &FindResultModel::findData() {
     return m_findData;
@@ -139,7 +141,7 @@ void FindResultModel::beginUpdate() { this->beginResetModel(); }
 
 void FindResultModel::endUpdate() { this->endResetModel(); }
 
-WingHex::FindResult FindResultModel::resultAt(qsizetype index) const {
+FindResultModel::FindResult FindResultModel::resultAt(qsizetype index) const {
     return m_results.at(index);
 }
 
@@ -149,7 +151,7 @@ void FindResultModel::clear() {
     emit layoutChanged();
 }
 
-QList<WingHex::FindResult>::size_type FindResultModel::size() const {
+QList<FindResultModel::FindResult>::size_type FindResultModel::size() const {
     return m_results.size();
 }
 
@@ -176,7 +178,7 @@ QString FindResultModel::copyContent(const QModelIndex &index) const {
                 }
             }
 
-            buffer += data.tbuffer.toHex(' ').toUpper() %
+            buffer += data.tbuffer.toHex(' ').toUpper() +
                       data.ctailer.toHex(' ').toUpper();
 
             return buffer;
@@ -192,7 +194,7 @@ QString FindResultModel::copyContent(const QModelIndex &index) const {
                 }
             }
 
-            buffer += Utilities::decodingString(data.tbuffer) %
+            buffer += Utilities::decodingString(data.tbuffer) +
                       Utilities::decodingString(data.ctailer);
 
             return buffer;

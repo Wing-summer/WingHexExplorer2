@@ -1,7 +1,7 @@
 #ifndef CLANGFORMATSETDIALOG_H
 #define CLANGFORMATSETDIALOG_H
 
-#include "plugin/settingpage.h"
+#include "WingPlugin/settingpage.h"
 
 namespace Ui {
 class ClangFormatSetDialog;

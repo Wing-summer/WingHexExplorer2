@@ -23,13 +23,13 @@
 
 #include "QHexView/qhexview.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "WingPlugin/iwingdevice.h"
+#include "WingPlugin/wingeditorviewwidget.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/bookmarksmodel.h"
 #include "model/findresultmodel.h"
 #include "model/metadatamodel.h"
-#include "plugin/iwingdevice.h"
-#include "plugin/iwingplugin.h"
 #include "utilities.h"
 
 using namespace WingHex;

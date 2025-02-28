@@ -1,7 +1,7 @@
 #ifndef QEDITCONFIG_H
 #define QEDITCONFIG_H
 
-#include "plugin/settingpage.h"
+#include "WingPlugin/settingpage.h"
 #include "qeditor.h"
 #include <QWidget>
 

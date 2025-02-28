@@ -30,17 +30,18 @@
 #include <QMetaEnum>
 #include <QScrollArea>
 #include <QStandardItemModel>
+#include <QStringListModel>
 
 TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
-    : QWidget(parent), ui(new Ui::TestForm), _plg(plg) {
+    : QWidget(parent), WingHex::IWingPluginAPICalls(plg), ui(new Ui::TestForm) {
     ui->setupUi(this);
 
     ui->teDataVisual->setAcceptRichText(false);
 
     ui->saReader->widget()->layout()->addWidget(
-        new ReaderTestForm(_plg, ui->tbReaderLogger, this));
+        new ReaderTestForm(plg, ui->tbReaderLogger, this));
     ui->saCtl->widget()->layout()->addWidget(
-        new CtlTestForm(_plg, ui->tbCtlLogger, this));
+        new CtlTestForm(plg, ui->tbCtlLogger, this));
 
     ui->spltReader->setSizes({300, 150});
     ui->spltCtl->setSizes({300, 150});
@@ -152,32 +153,32 @@ QFileDialog::Options TestForm::getFileDialogOptions() const {
 }
 
 void TestForm::onDVClicked(const QModelIndex &index) {
-    emit _plg->warn(QStringLiteral("[Test - Click] ") +
-                    index.model()->data(index).toString());
+    warn(QStringLiteral("[Test - Click] ") +
+         index.model()->data(index).toString());
 }
 
 void TestForm::onDVDoubleClicked(const QModelIndex &index) {
-    emit _plg->msgbox.warning(this, QStringLiteral("Test - DoubleClick"),
-                              index.model()->data(index).toString());
+    warning(this, QStringLiteral("Test - DoubleClick"),
+            index.model()->data(index).toString());
 }
 
 void TestForm::on_btnSendLog_clicked() {
     auto txt = ui->leLogText->text();
     switch (Level(ui->cbLogLevel->currentIndex())) {
     case q1ERROR:
-        emit _plg->error(txt);
+        error(txt);
         break;
     case q2WARN:
-        emit _plg->warn(txt);
+        warn(txt);
         break;
     case q3INFO:
-        emit _plg->info(txt);
+        info(txt);
         break;
     case q4DEBUG:
-        emit _plg->debug(txt);
+        debug(txt);
         break;
     case q5TRACE:
-        emit _plg->trace(txt);
+        trace(txt);
         break;
     default:
         break;
@@ -188,38 +189,37 @@ void TestForm::on_btnSendToast_clicked() {
     auto idx = ui->cbToastIcon->currentIndex();
     Q_ASSERT(idx >= 0);
     auto icon = ui->cbToastIcon->itemData(idx).value<QPixmap>();
-    emit _plg->toast(icon, ui->leToastText->text());
+    toast(icon, ui->leToastText->text());
 }
 
 void TestForm::on_btnAboutQt_clicked() {
-    emit _plg->msgbox.aboutQt(this, ui->leAboutTitle->text());
+    aboutQt(this, ui->leAboutTitle->text());
 }
 
 void TestForm::on_btnQuestion_clicked() {
-    emit _plg->msgbox.question(
+    question(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
 
 void TestForm::on_btnWarning_clicked() {
-    emit _plg->msgbox.warning(
+    warning(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
 
 void TestForm::on_btnCritical_clicked() {
-    emit _plg->msgbox.critical(
+    critical(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
 
 void TestForm::on_btnAbout_clicked() {
-    emit _plg->msgbox.about(this, ui->leMsgTitle->text(),
-                            ui->leMsgText->text());
+    about(this, ui->leMsgTitle->text(), ui->leMsgText->text());
 }
 
 void TestForm::on_btnMsgBox_clicked() {
-    emit _plg->msgbox.msgbox(
+    msgbox(
         this, ui->cbMsgIcon->currentData().value<QMessageBox::Icon>(),
         ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
@@ -227,9 +227,8 @@ void TestForm::on_btnMsgBox_clicked() {
 
 void TestForm::on_btnText_clicked() {
     bool ok = false;
-    auto ret = emit _plg->inputbox.getText(
-        this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-        QLineEdit::Normal, __FUNCTION__, &ok);
+    auto ret = getText(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                       QLineEdit::Normal, __FUNCTION__, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getText] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -238,9 +237,8 @@ void TestForm::on_btnText_clicked() {
 
 void TestForm::on_btnMultiLineText_clicked() {
     bool ok = false;
-    auto ret = emit _plg->inputbox.getMultiLineText(
-        this, ui->leInputTitle->text(), ui->leInputLabel->text(), __FUNCTION__,
-        &ok);
+    auto ret = getMultiLineText(this, ui->leInputTitle->text(),
+                                ui->leInputLabel->text(), __FUNCTION__, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getText] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -253,9 +251,8 @@ void TestForm::on_btnItem_clicked() {
         l.append(QStringLiteral("WingSummer WingHex2 - %1").arg(i));
     }
     bool ok = false;
-    auto ret =
-        emit _plg->inputbox.getItem(this, ui->leInputTitle->text(),
-                                    ui->leInputLabel->text(), l, 0, true, &ok);
+    auto ret = getItem(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                       l, 0, true, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getItem] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -264,9 +261,8 @@ void TestForm::on_btnItem_clicked() {
 
 void TestForm::on_btnInt_clicked() {
     bool ok = false;
-    auto ret = emit _plg->inputbox.getInt(this, ui->leInputTitle->text(),
-                                          ui->leInputLabel->text(), 0, 0,
-                                          WingHex::SDKVERSION, 1, &ok);
+    auto ret = getInt(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                      0, 0, WingHex::SDKVERSION, 1, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getInt] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -275,10 +271,10 @@ void TestForm::on_btnInt_clicked() {
 
 void TestForm::on_btnDouble_clicked() {
     bool ok = false;
-    auto ret = emit _plg->inputbox.getDouble(
-        this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-        QLineEdit::Normal, -double(WingHex::SDKVERSION), 0.0,
-        double(WingHex::SDKVERSION), &ok);
+    auto ret =
+        getDouble(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                  QLineEdit::Normal, -double(WingHex::SDKVERSION), 0.0,
+                  double(WingHex::SDKVERSION), &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getDouble] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -286,21 +282,21 @@ void TestForm::on_btnDouble_clicked() {
 }
 
 void TestForm::on_btnExistingDirectory_clicked() {
-    auto ret = emit _plg->filedlg.getExistingDirectory(
-        this, ui->leFileCaption->text(), qApp->applicationDirPath(),
-        getFileDialogOptions());
+    auto ret = getExistingDirectory(this, ui->leFileCaption->text(),
+                                    qApp->applicationDirPath(),
+                                    getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getExistingDirectory] ") % ret);
 }
 
 void TestForm::on_btnOpenFileName_clicked() {
-    auto ret = emit _plg->filedlg.getOpenFileName(
+    auto ret = getOpenFileName(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getOpenFileName] ") % ret);
 }
 
 void TestForm::on_btnOpenFileNames_clicked() {
-    auto ret = emit _plg->filedlg.getOpenFileNames(
+    auto ret = getOpenFileNames(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getOpenFileName] ") %
@@ -308,14 +304,14 @@ void TestForm::on_btnOpenFileNames_clicked() {
 }
 
 void TestForm::on_btnSaveFileName_clicked() {
-    auto ret = emit _plg->filedlg.getSaveFileName(
+    auto ret = getSaveFileName(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getSaveFileName] ") % ret);
 }
 
 void TestForm::on_btnGetColor_clicked() {
-    auto ret = emit _plg->colordlg.getColor(ui->leColorCaption->text(), this);
+    auto ret = getColor(ui->leColorCaption->text(), this);
     if (ret.isValid()) {
         ui->wColor->setStyleSheet(QStringLiteral("background-color:") +
                                   ret.name());
@@ -325,34 +321,28 @@ void TestForm::on_btnGetColor_clicked() {
 }
 
 void TestForm::on_btnText_2_clicked() {
-    emit _plg->visual.updateText(ui->teDataVisual->toPlainText(),
-                                 QStringLiteral("TestForm"));
+    updateText(ui->teDataVisual->toPlainText(), QStringLiteral("TestForm"));
 }
 
 void TestForm::on_btnTextList_clicked() {
     auto txts = ui->teDataVisual->toPlainText().split('\n');
-    emit _plg->visual.updateTextList(txts, QStringLiteral("TestForm"), _click,
-                                     _dblclick);
+    updateTextList(txts, QStringLiteral("TestForm"), _click, _dblclick);
 }
 
 void TestForm::on_btnTextTree_clicked() {
-    auto ret = emit _plg->visual.updateTextTree(ui->teDataVisual->toPlainText(),
-                                                QStringLiteral("TestForm"),
-                                                _click, _dblclick);
+    auto ret = updateTextTree(ui->teDataVisual->toPlainText(),
+                              QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
-        emit _plg->msgbox.critical(this, QStringLiteral("Test"),
-                                   tr("UpdateTextTreeError"));
+        critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
 }
 
 void TestForm::on_btnTextTable_clicked() {
-    auto ret = emit _plg->visual.updateTextTable(
-        ui->teDataVisual->toPlainText(),
-        {WingHex::WINGSUMMER, WingHex::WINGSUMMER}, {},
-        QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret = updateTextTable(ui->teDataVisual->toPlainText(),
+                               {"wingsummer", "wingsummer"}, {},
+                               QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
-        emit _plg->msgbox.critical(this, QStringLiteral("Test"),
-                                   tr("UpdateTextTreeError"));
+        critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
 }
 
@@ -360,62 +350,62 @@ void TestForm::on_btnTextListByModel_clicked() {
     auto model = new QStringListModel;
     QStringList buffer;
     for (int i = 0; i < WingHex::SDKVERSION; ++i) {
-        buffer.append(WingHex::WINGSUMMER % QString::number(i));
+        buffer.append("wingsummer" % QString::number(i));
     }
     model->setStringList(buffer);
-    auto ret = emit _plg->visual.updateTextListByModel(
-        model, QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret = updateTextListByModel(model, QStringLiteral("TestForm"), _click,
+                                     _dblclick);
     if (!ret) {
-        emit _plg->msgbox.critical(this, QStringLiteral("Test"),
-                                   tr("UpdateTextListByModelError"));
+        critical(this, QStringLiteral("Test"),
+                 tr("UpdateTextListByModelError"));
     }
 }
 
 void TestForm::on_btnTextTableByModel_clicked() {
     auto model = new TestTableModel;
-    auto ret = emit _plg->visual.updateTextTableByModel(
-        model, QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret = updateTextTableByModel(model, QStringLiteral("TestForm"), _click,
+                                      _dblclick);
     if (!ret) {
-        emit _plg->msgbox.critical(this, QStringLiteral("Test"),
-                                   tr("UpdateTextTableByModelError"));
+        critical(this, QStringLiteral("Test"),
+                 tr("UpdateTextTableByModelError"));
     }
 }
 
 void TestForm::on_btnTextTreeByModel_clicked() {
     auto model = new QFileSystemModel;
     model->setRootPath(QDir::currentPath());
-    auto ret = emit _plg->visual.updateTextTreeByModel(
-        model, QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret = updateTextTreeByModel(model, QStringLiteral("TestForm"), _click,
+                                     _dblclick);
     if (!ret) {
-        emit _plg->msgbox.critical(this, QStringLiteral("Test"),
-                                   tr("UpdateTextTreeByModelError"));
+        critical(this, QStringLiteral("Test"),
+                 tr("UpdateTextTreeByModelError"));
     }
 }
 
 void TestForm::on_btnStatusVisible_clicked() {
     if (ui->rbLockedFile->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setLockedFile(true));
+        Q_UNUSED(setLockedFile(true));
     } else if (ui->rbAddressVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setAddressVisible(true));
+        Q_UNUSED(setAddressVisible(true));
     } else if (ui->rbHeaderVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setHeaderVisible(true));
+        Q_UNUSED(setHeaderVisible(true));
     } else if (ui->rbKeepSize->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setKeepSize(true));
+        Q_UNUSED(setKeepSize(true));
     } else if (ui->rbStringVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setStringVisible(true));
+        Q_UNUSED(setStringVisible(true));
     }
 }
 
 void TestForm::on_btnStatusInvisible_clicked() {
     if (ui->rbLockedFile->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setLockedFile(false));
+        Q_UNUSED(setLockedFile(false));
     } else if (ui->rbAddressVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setAddressVisible(false));
+        Q_UNUSED(setAddressVisible(false));
     } else if (ui->rbHeaderVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setHeaderVisible(false));
+        Q_UNUSED(setHeaderVisible(false));
     } else if (ui->rbKeepSize->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setKeepSize(false));
+        Q_UNUSED(setKeepSize(false));
     } else if (ui->rbStringVisible->isChecked()) {
-        Q_UNUSED(emit _plg->controller.setStringVisible(false));
+        Q_UNUSED(setStringVisible(false));
     }
 }

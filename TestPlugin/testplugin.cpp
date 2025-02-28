@@ -25,6 +25,7 @@
 #include "testwingeditorviewwidget.h"
 
 #include <QApplication>
+#include <QMenu>
 
 // 注意：所有提供的脚本接口函数都不是线程安全的，只是测试
 
@@ -181,19 +182,17 @@ TestPlugin::~TestPlugin() { destoryTestShareMem(); }
 
 int TestPlugin::sdkVersion() const { return WingHex::SDKVERSION; }
 
-const QString TestPlugin::signature() const { return WingHex::WINGSUMMER; }
-
 bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     auto v = set->value("Test", 0).toInt();
     // 如果你之前启动过且正常推出，这个值一定是 5
     qDebug() << v;
 
     // 和日志与 UI 相关的接口此时可用，剩余的 API 初始化成功才可用
-    _tform = emit createDialog(new TestForm(this));
+    _tform = createDialog(new TestForm(this));
     if (_tform == nullptr) {
         return false;
     }
-    _tform->setWindowFlag(Qt::WindowStaysOnTopHint);
+
     _tform->setMaximumHeight(500);
 
     using TBInfo = WingHex::WingRibbonToolBoxInfo;
@@ -239,7 +238,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
                             QStringLiteral("(%1, %2)").arg(i).arg(y));
                 connect(tb, &QToolButton::clicked, this, [this] {
                     auto tb = qobject_cast<QToolButton *>(sender());
-                    emit msgbox.information(nullptr, tr("Click"), tb->text());
+                    information(nullptr, tr("Click"), tb->text());
                 });
                 tbtb.tools.append(tb);
             }
@@ -287,7 +286,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         auto a = new QAction(
             micon, QStringLiteral("Test - ") + QString::number(i), _tmenu);
         connect(a, &QAction::triggered, this, [this, a]() {
-            emit msgbox.information(nullptr, QStringLiteral("Test"), a->text());
+            information(nullptr, QStringLiteral("Test"), a->text());
         });
         _tmenu->addAction(a);
     }
@@ -447,9 +446,8 @@ TestPlugin::colorTable(const QList<void *> &params) {
 
     auto invoked =
         invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-                      WINGAPI_RETURN_ARG(void *, array),
-                      WINGAPI_ARG(MetaType, MetaType::Color),
-                      WINGAPI_ARG(QVector<void *>, colors));
+                      WINGAPI_RETURN_ARG(array), WINGAPI_ARG(MetaType::Color),
+                      WINGAPI_ARG(colors));
     if (invoked) {
         if (array) {
             qDeleteAll(colors);
@@ -513,10 +511,10 @@ QVariant TestPlugin::testCrash(const QVariantList &params) {
     return {};
 }
 
-void TestPlugin::test_a() { emit debug(__FUNCTION__); }
+void TestPlugin::test_a() { debug(__FUNCTION__); }
 
 void TestPlugin::test_b(const QString &b) {
-    emit warn(__FUNCTION__ + QStringLiteral(" : ") % b);
+    warn(__FUNCTION__ + QStringLiteral(" : ") % b);
 }
 
 void TestPlugin::test_c(const QVector<int> &c) {
@@ -531,7 +529,7 @@ void TestPlugin::test_c(const QVector<int> &c) {
 
     content += QStringLiteral(" }");
 
-    emit warn(content);
+    warn(content);
 }
 
 void TestPlugin::test_d(const QVariantHash &d) {
@@ -546,29 +544,30 @@ void TestPlugin::test_d(const QVariantHash &d) {
         content += hash.join(", ");
     }
     content += QStringLiteral(" }");
-    emit warn(content);
+    warn(content);
 }
 
 bool TestPlugin::test_e() {
-    emit warn(__FUNCTION__);
+    warn(__FUNCTION__);
     return true;
 }
 
 QByteArray TestPlugin::test_f() {
-    emit warn(__FUNCTION__);
-    return WingHex::WINGSUMMER.toLatin1();
+    warn(__FUNCTION__);
+    return "wingsummer";
 }
 
 QString TestPlugin::test_g() {
-    emit warn(__FUNCTION__);
-    return WingHex::WINGSUMMER;
+    warn(__FUNCTION__);
+    return "wingsummer";
 }
 
 QVariantHash TestPlugin::test_h() {
     QVariantHash hash;
-    auto t = WingHex::WINGSUMMER.length();
+    constexpr auto str = "wingsummer";
+    auto t = qstrlen(str);
     for (int i = 0; i < t; ++i) {
-        hash.insert(WingHex::WINGSUMMER.at(i), i);
+        hash.insert(QChar(str[i]), i);
     }
     return hash;
 }
@@ -605,8 +604,8 @@ void TestPlugin::destoryTestShareMem() {
 }
 
 void TestPlugin::printLogTestSharedMemData() {
-    emit warn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
-                  .toHex(' '));
+    warn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
+             .toHex(' '));
 }
 
 void TestPlugin::setPluginMetaTestEnabled(bool b) {
@@ -614,7 +613,7 @@ void TestPlugin::setPluginMetaTestEnabled(bool b) {
         ENABLE_META = b;
         for (auto &i : TestWingEditorViewWidget::instances()) {
             i->setEnableMeta(b);
-            emit i->docSaved(false);
+            i->docSaved(false);
         }
     }
 }
@@ -644,8 +643,8 @@ WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
 
 void TestPlugin::eventReady() {
     bool ret;
-    emit invokeService(
+    invokeService(
         QStringLiteral("WingAngelAPI"), "execCode", Qt::AutoConnection,
-        WINGAPI_RETURN_ARG(bool, ret),
-        WINGAPI_ARG(QString, R"(print("Hello, this is TestPlugin!");)"));
+        WINGAPI_RETURN_ARG(ret),
+        WINGAPI_ARG(QString(R"(print("Hello, this is TestPlugin!");)")));
 }

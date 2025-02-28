@@ -208,7 +208,8 @@ set(CONTROL_SRC
     src/control/qtlonglongspinbox.h
     src/control/dockwidgettab.h
     src/control/dockwidgettab.cpp
-    src/control/qhextextedit.h src/control/qhextextedit.cpp)
+    src/control/qhextextedit.h
+    src/control/qhextextedit.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -283,7 +284,9 @@ set(CLASS_SRC
     src/class/diffutil.cpp
     src/class/clickcallback.h
     src/class/crashhandler.h
-    src/class/crashhandler.cpp)
+    src/class/crashhandler.cpp
+    src/class/pluginsystem.h
+    src/class/pluginsystem.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
@@ -373,11 +376,6 @@ set(CODEEDIT_WIDGET
     src/qcodeeditwidget/qdocumentswaptextcommand.cpp
     src/qcodeeditwidget/formatconfigmodel.h
     src/qcodeeditwidget/formatconfigmodel.cpp)
-
-set(PLUGIN_SRC
-    src/plugin/iwingplugin.h src/plugin/iwingpluginbase.h
-    src/plugin/iwingdevice.h src/plugin/pluginsystem.cpp
-    src/plugin/pluginsystem.h src/plugin/settingpage.h)
 
 # localization support
 file(
@@ -471,7 +469,6 @@ set(PROJECT_SOURCES
     ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}
     ${DIALOG_SRC}
-    ${PLUGIN_SRC}
     ${CONTROL_SRC}
     ${SETTING_SRC}
     ${SCRIPT_ADDON_SRC}
@@ -523,6 +520,7 @@ target_link_libraries(
             Qt${QT_VERSION_MAJOR}::Xml
             cpptrace::cpptrace
             QtSingleApplication::QtSingleApplication
+            WingPlugin
             QHexView
             QCodeEditor2
             QJsonModel
@@ -577,3 +575,4 @@ if(${QT_VERSION_MAJOR} EQUAL 6)
         install(SCRIPT ${deploy_script})
     endif()
 endif()
+add_subdirectory(WingPlugin)

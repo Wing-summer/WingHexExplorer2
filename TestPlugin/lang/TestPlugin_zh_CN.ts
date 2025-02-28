@@ -39,33 +39,33 @@
         <translation>请输入8位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="60"/>
+        <location filename="../ctltestform.cpp" line="59"/>
         <source>PleaseInputInt16</source>
         <translation>请输入16位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="85"/>
+        <location filename="../ctltestform.cpp" line="83"/>
         <source>PleaseInputInt32</source>
         <translation>请输入32位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="110"/>
+        <location filename="../ctltestform.cpp" line="107"/>
         <source>PleaseInputInt64</source>
         <translation>请输入64位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="138"/>
-        <location filename="../ctltestform.cpp" line="164"/>
+        <location filename="../ctltestform.cpp" line="134"/>
+        <location filename="../ctltestform.cpp" line="159"/>
         <source>PleaseInputFloat</source>
         <translation>请输入单精度浮点数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="189"/>
+        <location filename="../ctltestform.cpp" line="183"/>
         <source>PleaseInputString</source>
         <translation>请输入字符串</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="205"/>
+        <location filename="../ctltestform.cpp" line="199"/>
         <source>PleaseInputByteArray(00 23 5A)</source>
         <translation>请输入字节数组（举例：00 23 5A）</translation>
     </message>
@@ -272,23 +272,23 @@
         <translation>数据可视化</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="344"/>
-        <location filename="../testform.cpp" line="355"/>
+        <location filename="../testform.cpp" line="336"/>
+        <location filename="../testform.cpp" line="345"/>
         <source>UpdateTextTreeError</source>
         <translation>更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="370"/>
+        <location filename="../testform.cpp" line="360"/>
         <source>UpdateTextListByModelError</source>
         <translation>通过模型更新文本列表失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="380"/>
+        <location filename="../testform.cpp" line="370"/>
         <source>UpdateTextTableByModelError</source>
         <translation>通过模型更新文本表格失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="391"/>
+        <location filename="../testform.cpp" line="381"/>
         <source>UpdateTextTreeByModelError</source>
         <translation>通过模型更新文本树失败</translation>
     </message>
@@ -296,60 +296,60 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="208"/>
+        <location filename="../testplugin.cpp" line="207"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="220"/>
-        <location filename="../testplugin.cpp" line="229"/>
-        <location filename="../testplugin.cpp" line="234"/>
-        <location filename="../testplugin.cpp" line="315"/>
+        <location filename="../testplugin.cpp" line="219"/>
+        <location filename="../testplugin.cpp" line="228"/>
+        <location filename="../testplugin.cpp" line="233"/>
+        <location filename="../testplugin.cpp" line="314"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="238"/>
+        <location filename="../testplugin.cpp" line="237"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="242"/>
+        <location filename="../testplugin.cpp" line="241"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="318"/>
+        <location filename="../testplugin.cpp" line="317"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="356"/>
-        <location filename="../testplugin.cpp" line="364"/>
-        <location filename="../testplugin.cpp" line="373"/>
-        <location filename="../testplugin.cpp" line="394"/>
-        <location filename="../testplugin.cpp" line="410"/>
-        <location filename="../testplugin.cpp" line="417"/>
-        <location filename="../testplugin.cpp" line="424"/>
-        <location filename="../testplugin.cpp" line="431"/>
-        <location filename="../testplugin.cpp" line="439"/>
-        <location filename="../testplugin.cpp" line="470"/>
-        <location filename="../testplugin.cpp" line="478"/>
-        <location filename="../testplugin.cpp" line="486"/>
-        <location filename="../testplugin.cpp" line="494"/>
-        <location filename="../testplugin.cpp" line="503"/>
-        <location filename="../testplugin.cpp" line="510"/>
+        <location filename="../testplugin.cpp" line="355"/>
+        <location filename="../testplugin.cpp" line="363"/>
+        <location filename="../testplugin.cpp" line="372"/>
+        <location filename="../testplugin.cpp" line="393"/>
+        <location filename="../testplugin.cpp" line="409"/>
+        <location filename="../testplugin.cpp" line="416"/>
+        <location filename="../testplugin.cpp" line="423"/>
+        <location filename="../testplugin.cpp" line="430"/>
+        <location filename="../testplugin.cpp" line="438"/>
+        <location filename="../testplugin.cpp" line="468"/>
+        <location filename="../testplugin.cpp" line="476"/>
+        <location filename="../testplugin.cpp" line="484"/>
+        <location filename="../testplugin.cpp" line="492"/>
+        <location filename="../testplugin.cpp" line="501"/>
+        <location filename="../testplugin.cpp" line="508"/>
         <source>InvalidParamsCount</source>
         <translation>无效参数个数</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="387"/>
-        <location filename="../testplugin.cpp" line="403"/>
+        <location filename="../testplugin.cpp" line="386"/>
+        <location filename="../testplugin.cpp" line="402"/>
         <source>InvalidParam</source>
         <translation>非法参数</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="461"/>
+        <location filename="../testplugin.cpp" line="459"/>
         <source>AllocArrayFailed</source>
         <translation>分配数组失败</translation>
     </message>

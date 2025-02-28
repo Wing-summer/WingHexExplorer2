@@ -22,9 +22,9 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "class/qkeysequences.h"
 
+#include "class/pluginsystem.h"
 #include "class/settingmanager.h"
 #include "class/workspacemanager.h"
-#include "plugin/pluginsystem.h"
 #include "utilities.h"
 
 #include <QFile>
@@ -135,18 +135,13 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
 }
 
 void EditorView::switchView(const QString &id) {
-    // Dont use qobject_cast because
-    // each plugin source code has its own WingEditorViewWidget class
-    // implement though they should be the same.
     auto curWidget = m_stack->currentWidget();
     if (id.isEmpty()) {
         if (curWidget != m_hexContainer) {
             m_stack->setCurrentWidget(m_hexContainer);
-            if (curWidget->inherits("WingHex::WingEditorViewWidget")) {
-                auto o = static_cast<WingEditorViewWidget *>(curWidget);
-                if (o) {
-                    o->toggled(false);
-                }
+            auto o = qobject_cast<WingEditorViewWidget *>(curWidget);
+            if (o) {
+                o->toggled(false);
             }
         }
     } else {
@@ -223,7 +218,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
         for (auto &ritem : results) {
-            FindResult r;
+            FindResultModel::FindResult r;
             r.offset = ritem;
             r.line = r.offset / lineWidth;
             r.col = r.offset % lineWidth;

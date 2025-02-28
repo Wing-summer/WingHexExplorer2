@@ -21,7 +21,7 @@
 #ifndef TESTPLUGIN_H
 #define TESTPLUGIN_H
 
-#include "iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
 
 #include <QSharedMemory>
 
@@ -41,7 +41,6 @@ public:
     // IWingPlugin interface (必须)
 public:
     virtual int sdkVersion() const override;
-    virtual const QString signature() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;

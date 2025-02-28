@@ -18,8 +18,8 @@
 #ifndef WINGCSTRUCT_H
 #define WINGCSTRUCT_H
 
+#include "WingPlugin/iwingplugin.h"
 #include "ctypeparser.h"
-#include "plugin/iwingplugin.h"
 
 class CScriptDictionary;
 class asIScriptEngine;
@@ -27,6 +27,7 @@ class CScriptArray;
 
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
+    Q_PLUGIN_METADATA(IID "com.wingsummer.iwingplugin")
 
 public:
     explicit WingCStruct();
@@ -35,7 +36,6 @@ public:
     // IWingPluginBase interface
 public:
     virtual int sdkVersion() const override;
-    virtual const QString signature() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;

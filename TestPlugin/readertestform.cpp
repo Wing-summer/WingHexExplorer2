@@ -25,7 +25,8 @@
 
 ReaderTestForm::ReaderTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
                                QWidget *parent)
-    : QWidget(parent), ui(new Ui::ReaderTestForm), _plg(plg), _br(br) {
+    : QWidget(parent), WingHex::IWingPluginCalls(plg),
+      ui(new Ui::ReaderTestForm), _plg(plg), _br(br) {
     ui->setupUi(this);
     ui->sbOffset->setRange(0, INT_MAX);
 }
@@ -33,43 +34,42 @@ ReaderTestForm::ReaderTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
 ReaderTestForm::~ReaderTestForm() { delete ui; }
 
 void ReaderTestForm::on_btnReadInt8_clicked() {
-    auto v = emit _plg->reader.readInt8(ui->sbOffset->value());
+    auto v = readInt8(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadInt8] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt16_clicked() {
-    auto v = emit _plg->reader.readInt16(ui->sbOffset->value());
+    auto v = readInt16(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadInt16] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt32_clicked() {
-    auto v = emit _plg->reader.readInt32(ui->sbOffset->value());
+    auto v = readInt32(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadInt32] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadInt64_clicked() {
-    auto v = emit _plg->reader.readInt64(ui->sbOffset->value());
+    auto v = readInt64(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadInt64] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadFloat_clicked() {
-    auto v = emit _plg->reader.readFloat(ui->sbOffset->value());
+    auto v = readFloat(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadFloat] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadDouble_clicked() {
-    auto v = emit _plg->reader.readDouble(ui->sbOffset->value());
+    auto v = readDouble(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadDouble] ") + QString::number(v));
 }
 
 void ReaderTestForm::on_btnReadString_clicked() {
-    auto v = emit _plg->reader.readString(ui->sbOffset->value());
+    auto v = readString(ui->sbOffset->value());
     _br->append(QStringLiteral("[ReadString] ") + v);
 }
 
 void ReaderTestForm::on_btnReadByteArray_clicked() {
-    auto v =
-        emit _plg->reader.readBytes(ui->sbOffset->value(), ui->sbLen->value());
+    auto v = readBytes(ui->sbOffset->value(), ui->sbLen->value());
     _br->append(QStringLiteral("[ReadByteArray] ") + v.toHex(' '));
 }
 
@@ -78,63 +78,49 @@ void ReaderTestForm::on_btnStatus_clicked() {
     static auto strue = QStringLiteral("true");
     static auto sfalse = QStringLiteral("false");
     _br->clear();
-    _br->append(QStringLiteral("[Status]") % lf %
-                QStringLiteral("getSupportedEncodings: ") %
-                (emit _plg->reader.getSupportedEncodings().join(';')) % lf %
-                QStringLiteral("isCurrentDocEditing: ") %
-                (emit _plg->reader.isCurrentDocEditing() ? strue : sfalse) %
-                lf % QStringLiteral("currentDocFilename: ") %
-                emit _plg->reader.currentDocFilename() % lf %
-                QStringLiteral("isReadOnly: ") %
-                (emit _plg->reader.isReadOnly() ? strue : sfalse) % lf %
-                QStringLiteral("isKeepSize: ") %
-                (emit _plg->reader.isKeepSize() ? strue : sfalse) % lf %
-                QStringLiteral("isLocked: ") %
-                (emit _plg->reader.isLocked() ? strue : sfalse) % lf %
-                QStringLiteral("isModified: ") %
-                (emit _plg->reader.isModified() ? strue : sfalse) % lf %
-                QStringLiteral("stringVisible: ") %
-                (emit _plg->reader.stringVisible() ? strue : sfalse) % lf %
-                QStringLiteral("addressVisible: ") %
-                (emit _plg->reader.addressVisible() ? strue : sfalse) % lf %
-                QStringLiteral("headerVisible: ") %
-                (emit _plg->reader.headerVisible() ? strue : sfalse) % lf %
-                QStringLiteral("addressBase: ") % QStringLiteral("0x") %
-                QString::number(emit _plg->reader.addressBase(), 16).toUpper() %
-                lf % QStringLiteral("documentLines: ") %
-                QString::number(emit _plg->reader.documentLines()) % lf %
-                QStringLiteral("documentBytes: ") %
-                QString::number(emit _plg->reader.documentBytes()) % lf %
-                QStringLiteral("currentPos: ") %
-                getPrintableHexPosition(emit _plg->reader.currentPos()) % lf %
-                QStringLiteral("currentRow: ") %
-                QString::number(emit _plg->reader.currentRow()) % lf %
-                QStringLiteral("currentColumn: ") %
-                QString::number(emit _plg->reader.currentColumn()) % lf %
-                QStringLiteral("currentOffset: ") %
-                QString::number(emit _plg->reader.currentOffset()) % lf %
-                QStringLiteral("selectedLength: ") %
-                QString::number(emit _plg->reader.selectedLength()));
+    _br->append(
+        QStringLiteral("[Status]") % lf %
+        QStringLiteral("isCurrentDocEditing: ") %
+        (isCurrentDocEditing() ? strue : sfalse) % lf %
+        QStringLiteral("currentDocFilename: ") % currentDocFilename() % lf %
+        QStringLiteral("isReadOnly: ") % (isReadOnly() ? strue : sfalse) % lf %
+        QStringLiteral("isKeepSize: ") % (isKeepSize() ? strue : sfalse) % lf %
+        QStringLiteral("isLocked: ") % (isLocked() ? strue : sfalse) % lf %
+        QStringLiteral("isModified: ") % (isModified() ? strue : sfalse) % lf %
+        QStringLiteral("stringVisible: ") % (stringVisible() ? strue : sfalse) %
+        lf % QStringLiteral("addressVisible: ") %
+        (addressVisible() ? strue : sfalse) % lf %
+        QStringLiteral("headerVisible: ") % (headerVisible() ? strue : sfalse) %
+        lf % QStringLiteral("addressBase: ") % QStringLiteral("0x") %
+        QString::number(addressBase(), 16).toUpper() % lf %
+        QStringLiteral("documentLines: ") % QString::number(documentLines()) %
+        lf % QStringLiteral("documentBytes: ") %
+        QString::number(documentBytes()) % lf % QStringLiteral("currentPos: ") %
+        getPrintableHexPosition(currentPos()) % lf %
+        QStringLiteral("currentRow: ") % QString::number(currentRow()) % lf %
+        QStringLiteral("currentColumn: ") % QString::number(currentColumn()) %
+        lf % QStringLiteral("currentOffset: ") %
+        QString::number(currentOffset()) % lf %
+        QStringLiteral("selectedLength: ") % QString::number(selectedLength()));
 
     _br->append(QStringLiteral("[Selection]"));
-    auto total = emit _plg->reader.selectionCount();
+    auto total = selectionCount();
     _br->append(QStringLiteral("selectionCount: ") % QString::number(total));
     for (decltype(total) i = 0; i < total; ++i) {
         _br->append(QStringLiteral("{ ") % QString::number(i) %
                     QStringLiteral(" }"));
-        _br->append(
-            QStringLiteral("selectionStart: ") %
-            getPrintableHexPosition(emit _plg->reader.selectionStart(i)) % lf %
-            QStringLiteral("selectionEnd: ") %
-            getPrintableHexPosition(emit _plg->reader.selectionEnd(i)) % lf %
-            QStringLiteral("selectionLength: ") %
-            QString::number(emit _plg->reader.selectionLength(i)) % lf %
-            QStringLiteral("selectedBytes: ") %
-            (emit _plg->reader.selectedBytes(i)).toHex(' '));
+        _br->append(QStringLiteral("selectionStart: ") %
+                    getPrintableHexPosition(selectionStart(i)) % lf %
+                    QStringLiteral("selectionEnd: ") %
+                    getPrintableHexPosition(selectionEnd(i)) % lf %
+                    QStringLiteral("selectionLength: ") %
+                    QString::number(selectionLength(i)) % lf %
+                    QStringLiteral("selectedBytes: ") %
+                    (selectedBytes(i)).toHex(' '));
     }
 
     _br->append(QStringLiteral("[Selections]"));
-    _br->append((emit _plg->reader.selectionBytes()).join('\n').toHex(' '));
+    _br->append((selectionBytes()).join('\n').toHex(' '));
 }
 
 QString

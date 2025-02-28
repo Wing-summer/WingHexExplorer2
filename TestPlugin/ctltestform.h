@@ -24,13 +24,13 @@
 #include <QTextBrowser>
 #include <QWidget>
 
-#include "iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
 
 namespace Ui {
 class CtlTestForm;
 }
 
-class CtlTestForm : public QWidget {
+class CtlTestForm : public QWidget, public WingHex::IWingPluginAPICalls {
     Q_OBJECT
 
 public:
@@ -61,27 +61,27 @@ private:
         Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
-                return emit _plg->controller.writeInt8(offset, value);
+                return writeInt8(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint16)) {
-                return emit _plg->controller.writeInt16(offset, value);
+                return writeInt16(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint32)) {
-                return emit _plg->controller.writeInt32(offset, value);
+                return writeInt32(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint64)) {
-                return emit _plg->controller.writeInt64(offset, value);
+                return writeInt64(offset, value);
             } else {
                 static_assert(false, "unsupported writeContent");
                 return false;
             }
         } else if constexpr (std::is_floating_point_v<T>) {
             if constexpr (std::is_same_v<T, float>) {
-                return emit _plg->controller.writeFloat(offset, value);
+                return writeFloat(offset, value);
             } else {
-                return emit _plg->controller.writeDouble(offset, value);
+                return writeDouble(offset, value);
             }
         } else if constexpr (std::is_same_v<T, QString>) {
-            return emit _plg->controller.writeString(offset, value);
+            return writeString(offset, value);
         } else if constexpr (std::is_same_v<T, QByteArray>) {
-            return emit _plg->controller.writeBytes(offset, value);
+            return writeBytes(offset, value);
         } else {
             static_assert(false, "unsupported writeContent");
             return false;
@@ -93,27 +93,27 @@ private:
         Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
-                return emit _plg->controller.insertInt8(offset, value);
+                return insertInt8(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint16)) {
-                return emit _plg->controller.insertInt16(offset, value);
+                return insertInt16(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint32)) {
-                return emit _plg->controller.insertInt32(offset, value);
+                return insertInt32(offset, value);
             } else if constexpr (sizeof(T) == sizeof(qint64)) {
-                return emit _plg->controller.insertInt64(offset, value);
+                return insertInt64(offset, value);
             } else {
                 static_assert(false, "unsupported insertContent");
                 return false;
             }
         } else if constexpr (std::is_floating_point_v<T>) {
             if constexpr (std::is_same_v<T, float>) {
-                return emit _plg->controller.insertFloat(offset, value);
+                return insertFloat(offset, value);
             } else {
-                return emit _plg->controller.insertDouble(offset, value);
+                return insertDouble(offset, value);
             }
         } else if constexpr (std::is_same_v<T, QString>) {
-            return emit _plg->controller.insertString(offset, value);
+            return insertString(offset, value);
         } else if constexpr (std::is_same_v<T, QByteArray>) {
-            return emit _plg->controller.insertBytes(offset, value);
+            return insertBytes(offset, value);
         } else {
             static_assert(false, "unsupported insertContent");
             return false;
@@ -125,27 +125,27 @@ private:
         Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
-                return emit _plg->controller.appendInt8(value);
+                return appendInt8(value);
             } else if constexpr (sizeof(T) == sizeof(qint16)) {
-                return emit _plg->controller.appendInt16(value);
+                return appendInt16(value);
             } else if constexpr (sizeof(T) == sizeof(qint32)) {
-                return emit _plg->controller.appendInt32(value);
+                return appendInt32(value);
             } else if constexpr (sizeof(T) == sizeof(qint64)) {
-                return emit _plg->controller.appendInt64(value);
+                return appendInt64(value);
             } else {
                 static_assert(false, "unsupported appendContent");
                 return false;
             }
         } else if constexpr (std::is_floating_point_v<T>) {
             if constexpr (std::is_same_v<T, float>) {
-                return emit _plg->controller.appendFloat(value);
+                return appendFloat(value);
             } else {
-                return emit _plg->controller.appendDouble(value);
+                return appendDouble(value);
             }
         } else if constexpr (std::is_same_v<T, QString>) {
-            return emit _plg->controller.appendString(value);
+            return appendString(value);
         } else if constexpr (std::is_same_v<T, QByteArray>) {
-            return emit _plg->controller.appendBytes(value);
+            return appendBytes(value);
         } else {
             static_assert(false, "unsupported appendContent");
             return false;

@@ -33,9 +33,8 @@ QString TestWingEditorViewWidget::Creator::id() const {
 }
 
 void TestWingEditorViewWidget::toggled(bool isVisible) {
-    plugin()->emit warn(
-        __FUNCTION__ + QStringLiteral(": ") +
-        (isVisible ? QStringLiteral("true") : QStringLiteral("false")));
+    warn(__FUNCTION__ + QStringLiteral(": ") +
+         (isVisible ? QStringLiteral("true") : QStringLiteral("false")));
 }
 
 WingHex::WingEditorViewWidget *TestWingEditorViewWidget::clone() {
@@ -43,20 +42,16 @@ WingHex::WingEditorViewWidget *TestWingEditorViewWidget::clone() {
 }
 
 void TestWingEditorViewWidget::loadState(const QByteArray &state) {
-    plugin()->emit warn(__FUNCTION__ + QStringLiteral(": ") +
-                        QString::fromUtf8(state));
+    warn(__FUNCTION__ + QStringLiteral(": ") + QString::fromUtf8(state));
 }
 
 bool TestWingEditorViewWidget::hasUnsavedState() { return m_unSaved; }
 
-QByteArray TestWingEditorViewWidget::saveState() {
-    return WingHex::WINGSUMMER.toUtf8();
-}
+QByteArray TestWingEditorViewWidget::saveState() { return "wingsummer"; }
 
 void TestWingEditorViewWidget::onWorkSpaceNotify(bool isWorkSpace) {
-    plugin()->emit warn(
-        __FUNCTION__ + QStringLiteral(": ") +
-        (isWorkSpace ? QStringLiteral("true") : QStringLiteral("false")));
+    warn(__FUNCTION__ + QStringLiteral(": ") +
+         (isWorkSpace ? QStringLiteral("true") : QStringLiteral("false")));
 }
 
 QList<TestWingEditorViewWidget *> TestWingEditorViewWidget::instances() {

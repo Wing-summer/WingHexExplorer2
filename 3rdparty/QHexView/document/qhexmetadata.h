@@ -197,16 +197,6 @@ public:
                   const QColor &bgcolor, const QString &comment);
     void Clear();
 
-    QUndoCommand *MakeColor(QUndoCommand *parent, qsizetype begin,
-                            qsizetype end, const QColor &fgcolor,
-                            const QColor &bgcolor);
-    QUndoCommand *MakeForeground(QUndoCommand *parent, qsizetype begin,
-                                 qsizetype end, const QColor &fgcolor);
-    QUndoCommand *MakeBackground(QUndoCommand *parent, qsizetype begin,
-                                 qsizetype end, const QColor &bgcolor);
-    QUndoCommand *MakeComment(QUndoCommand *parent, qsizetype begin,
-                              qsizetype end, const QString &comment);
-
     QUndoCommand *MakeModifyMetadata(QUndoCommand *parent,
                                      const QHexMetadataItem &newmeta,
                                      const QHexMetadataItem &oldmeta);

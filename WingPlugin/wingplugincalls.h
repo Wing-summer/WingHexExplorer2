@@ -18,42 +18,54 @@
 ** =============================================================================
 */
 
-#ifndef IWINGDEVICE_H
-#define IWINGDEVICE_H
+#ifndef WINGPLUGINCALLS_H
+#define WINGPLUGINCALLS_H
 
-#include "iwingpluginbase.h"
+#include <QMetaMethod>
+#include <QObject>
 
-#include <optional>
+#include "wingplugin_global.h"
+#include "wingplugincallconvertor.h"
 
 namespace WingHex {
 
-class WingIODevice : public QIODevice {
+class WingPluginCallsCorePrivate;
+
+class WingPluginCallsCore : public QObject {
     Q_OBJECT
+    friend class WingPluginCalls;
 
 public:
-    WingIODevice(QObject *parent = nullptr) : QIODevice(parent) {}
+    WingPluginCallsCore();
+    virtual ~WingPluginCallsCore();
 
-    // can not change size during editing (default: changing-abled)
-    virtual bool keepSize() const { return false; };
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
+private:
+    WingPluginCallsCorePrivate *d_ptr;
+    Q_DECLARE_PRIVATE(WingPluginCallsCore)
+    Q_DISABLE_COPY_MOVE(WingPluginCallsCore)
 };
 
-class IWingDevice : public IWingPluginBase {
-    Q_OBJECT
+class WINGPLUGIN_EXPORT WingPluginCalls : public WingPluginCallConvertor {
 public:
-    virtual QString supportedFileExtDisplayName() const = 0;
+    explicit WingPluginCalls(QObject *coreobj);
+    virtual ~WingPluginCalls();
 
-    virtual QIcon supportedFileIcon() const { return {}; };
+    WingPluginCallsCore *core() const;
 
-public:
-    virtual QString onOpenFileBegin() { return {}; }
+protected:
+    WingHex::CallTable callTable() const;
 
-    virtual WingIODevice *onOpenFile(const QString &path) = 0;
+    QObject *callReceiver() const;
 
-    virtual bool onCloseFile(WingIODevice *dev) = 0;
+private:
+    WingPluginCallsCore *_core;
+    Q_DISABLE_COPY_MOVE(WingPluginCalls)
 };
 
 } // namespace WingHex
 
-Q_DECLARE_INTERFACE(WingHex::IWingDevice, "com.wingsummer.iwingdevice")
-
-#endif // IWINGDEVICE_H
+#endif // WINGPLUGINCALLS_H

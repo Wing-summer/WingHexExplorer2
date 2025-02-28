@@ -1,7 +1,7 @@
 #ifndef TESTWINGEDITORVIEWWIDGET_H
 #define TESTWINGEDITORVIEWWIDGET_H
 
-#include "iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
 
 #include <QLabel>
 

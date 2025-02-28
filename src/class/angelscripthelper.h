@@ -27,13 +27,11 @@
 #define QPTR_WRAP(decl) "uint " decl
 #define QPTR "uint"
 #define QSIZETYPE "int"
-#define QUSIZETYPE "uint"
 #elif Q_PROCESSOR_WORDSIZE == 8
 #define QSIZETYPE_WRAP(decl) "int64 " decl
 #define QPTR_WRAP(decl) "uint64 " decl
 #define QPTR "uint64"
 #define QSIZETYPE "int64"
-#define QUSIZETYPE "uint64"
 #else
 #error "Processor with unexpected word size"
 #endif

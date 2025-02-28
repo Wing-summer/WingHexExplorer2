@@ -21,7 +21,7 @@
 #ifndef TESTFORM_H
 #define TESTFORM_H
 
-#include "iwingplugin.h"
+#include "WingPlugin/iwingplugin.h"
 
 #include <QWidget>
 
@@ -29,7 +29,7 @@ namespace Ui {
 class TestForm;
 }
 
-class TestForm : public QWidget {
+class TestForm : public QWidget, public WingHex::IWingPluginAPICalls {
     Q_OBJECT
 
 public:
@@ -130,10 +130,8 @@ private:
 private:
     Ui::TestForm *ui;
 
-    WingHex::WingPlugin::DataVisual::ClickedCallBack _click;
-    WingHex::WingPlugin::DataVisual::DoubleClickedCallBack _dblclick;
-
-    WingHex::IWingPlugin *_plg;
+    WingHex::ClickedCallBack _click;
+    WingHex::ClickedCallBack _dblclick;
 };
 
 #endif // TESTFORM_H

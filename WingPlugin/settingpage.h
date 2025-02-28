@@ -18,13 +18,14 @@
 #ifndef SETTINGPAGE_H
 #define SETTINGPAGE_H
 
+#include "wingplugin_global.h"
 #include <QWidget>
 
 namespace WingHex {
 
-class PageBase : public QWidget {
+class WINGPLUGIN_EXPORT PageBase : public QWidget {
 public:
-    explicit PageBase(QWidget *parent = nullptr) : QWidget(parent) {}
+    explicit PageBase(QWidget *parent = nullptr);
 
 public:
     virtual QIcon categoryIcon() const = 0;
@@ -32,10 +33,10 @@ public:
     virtual QString id() const = 0;
 };
 
-class SettingPage : public PageBase {
+class WINGPLUGIN_EXPORT SettingPage : public PageBase {
     Q_OBJECT
 public:
-    explicit SettingPage(QWidget *parent = nullptr) : PageBase(parent) {}
+    explicit SettingPage(QWidget *parent = nullptr);
 
 signals:
     void optionNeedRestartChanged();
@@ -46,9 +47,9 @@ public:
     virtual void cancel() = 0;
 };
 
-class PluginPage : public PageBase {
+class WINGPLUGIN_EXPORT PluginPage : public PageBase {
 public:
-    explicit PluginPage(QWidget *parent = nullptr) : PageBase(parent) {}
+    explicit PluginPage(QWidget *parent = nullptr);
 };
 
 } // namespace WingHex

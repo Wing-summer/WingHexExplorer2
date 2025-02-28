@@ -242,7 +242,9 @@ public:
             QAbstractItemView::SelectionBehavior::SelectRows);
         view->setFocusPolicy(Qt::StrongFocus);
         view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
-        view->horizontalHeader()->setStretchLastSection(true);
+        auto hheader = view->horizontalHeader();
+        hheader->setStretchLastSection(true);
+        hheader->setHighlightSections(false);
     }
 
     template <typename T>

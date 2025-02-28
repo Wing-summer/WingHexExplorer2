@@ -30,9 +30,9 @@
 
 #include "angelobjstring.h"
 #include "class/asbuilder.h"
+#include "class/pluginsystem.h"
 #include "class/qascodeparser.h"
 #include "define.h"
-#include "plugin/pluginsystem.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptjson.h"

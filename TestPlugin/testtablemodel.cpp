@@ -1,6 +1,5 @@
 #include "testtablemodel.h"
-
-#include "iwingplugin.h"
+#include "WingPlugin/iwingpluginbase.h"
 
 TestTableModel::TestTableModel(QObject *parent) : QAbstractTableModel(parent) {}
 

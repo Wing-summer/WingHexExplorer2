@@ -18,8 +18,8 @@
 #ifndef SETTINGDIALOG_H
 #define SETTINGDIALOG_H
 
+#include "WingPlugin/settingpage.h"
 #include "framelessdialogbase.h"
-#include "plugin/settingpage.h"
 #include <QAbstractButton>
 
 namespace Ui {

@@ -1,8 +1,8 @@
 #ifndef QFORMATCONFIG_H
 #define QFORMATCONFIG_H
 
+#include "WingPlugin/settingpage.h"
 #include "formatconfigmodel.h"
-#include "plugin/settingpage.h"
 #include <QWidget>
 
 namespace Ui {

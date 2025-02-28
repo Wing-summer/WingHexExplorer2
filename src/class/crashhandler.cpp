@@ -1,7 +1,7 @@
 #include "crashhandler.h"
 #include "angelscript.h"
+#include "class/pluginsystem.h"
 #include "dialog/crashreport.h"
-#include "plugin/pluginsystem.h"
 
 #include <QApplication>
 #include <QLibraryInfo>

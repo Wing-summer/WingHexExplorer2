@@ -1,7 +1,7 @@
 #ifndef TESTPLUGINPAGE_H
 #define TESTPLUGINPAGE_H
 
-#include "settingpage.h"
+#include "WingPlugin/settingpage.h"
 
 #include <QLabel>
 
