@@ -18,7 +18,7 @@
 #ifndef SHAREDMEMORY_H
 #define SHAREDMEMORY_H
 
-#include "iwingdevice.h"
+#include "WingPlugin/iwingdevice.h"
 
 #include <QByteArray>
 #include <QSharedMemory>

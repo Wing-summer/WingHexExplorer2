@@ -27,7 +27,7 @@ class CScriptArray;
 
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "com.wingsummer.iwingplugin")
+    Q_INTERFACES(WingHex::IWingPlugin)
 
 public:
     explicit WingCStruct();

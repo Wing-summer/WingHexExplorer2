@@ -25,10 +25,6 @@ SharedMemoryDriver::~SharedMemoryDriver() {}
 
 int SharedMemoryDriver::sdkVersion() const { return WingHex::SDKVERSION; }
 
-const QString SharedMemoryDriver::signature() const {
-    return WingHex::WINGSUMMER;
-}
-
 bool SharedMemoryDriver::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     return true;
@@ -72,9 +68,8 @@ QIcon SharedMemoryDriver::supportedFileIcon() const {
 
 QString SharedMemoryDriver::onOpenFileBegin() {
     bool ok;
-    auto id =
-        emit inputbox.getText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
-                              QLineEdit::Normal, {}, &ok);
+    auto id = getText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
+                      QLineEdit::Normal, {}, &ok);
     if (!ok) {
         return {};
     }

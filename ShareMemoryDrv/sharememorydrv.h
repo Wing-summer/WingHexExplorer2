@@ -18,7 +18,7 @@
 #ifndef SHAREDMEMORYDRIVER_H
 #define SHAREDMEMORYDRIVER_H
 
-#include "iwingdevice.h"
+#include "WingPlugin/iwingdevice.h"
 
 class SharedMemoryDriver final : public WingHex::IWingDevice {
     Q_OBJECT
@@ -35,7 +35,6 @@ public:
     // IWingPlugin interface
 public:
     virtual int sdkVersion() const override;
-    virtual const QString signature() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;

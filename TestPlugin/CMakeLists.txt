@@ -44,7 +44,6 @@ add_plugin_translations_resource(QM_RES TestPlugin ${QM_FILES})
 
 add_library(
     TestPlugin SHARED
-    ${WINGHEX_SDK_HEADER}
     testplugin.h
     testplugin.cpp
     TestPlugin.json

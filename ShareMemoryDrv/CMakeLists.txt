@@ -18,39 +18,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 option(TEST_MODE TRUE)
 
-# Set the location where the SDK is stored. Only iwingplugin.h and settingpage.h
-# are required.
-
-# 设置存放 SDK 的位置，只须 iwingplugin.h 和 settingpage.h 存在
-
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-set(WINGHEX_SDK "${CMAKE_CURRENT_SOURCE_DIR}/../src/plugin")
-
-set(PLUGIN_INTERFACE_BASE_FOUND FALSE)
-set(PLUGIN_INTERFACE_FOUND FALSE)
-set(PLUGIN_SETPAGE_FOUND FALSE)
-if(EXISTS "${WINGHEX_SDK}/iwingpluginbase.h")
-    set(PLUGIN_INTERFACE_BASE_FOUND TRUE)
-endif()
-if(EXISTS "${WINGHEX_SDK}/iwingdevice.h")
-    set(PLUGIN_INTERFACE_FOUND TRUE)
-endif()
-if(EXISTS "${WINGHEX_SDK}/settingpage.h")
-    set(PLUGIN_SETPAGE_FOUND TRUE)
-endif()
-if(PLUGIN_INTERFACE_FOUND
-   AND PLUGIN_INTERFACE_BASE_FOUND
-   AND PLUGIN_SETPAGE_FOUND)
-    message(STATUS "${WINGHEX_SDK} is valid SDK path")
-else()
-    message(FATAL_ERROR "Invalid SDK path!")
-endif()
-
-set(WINGHEX_SDK_HEADER
-    "${WINGHEX_SDK}/iwingdevice.h" "${WINGHEX_SDK}/iwingpluginbase.h"
-    "${WINGHEX_SDK}/settingpage.h")
-include_directories(${WINGHEX_SDK})
-
 # For Qt
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
 find_package(
@@ -81,7 +48,6 @@ add_plugin_translations_resource(QM_RES shmem ${QM_FILES})
 
 add_library(
     ShareMemoryDrv SHARED
-    ${WINGHEX_SDK_HEADER}
     sharememorydrv.h
     sharememorydrv.cpp
     ShareMemoryDrv.json
@@ -112,4 +78,4 @@ if(TEST_MODE)
                 $<TARGET_FILE:ShareMemoryDrv> ${WINGHEX_DRV_PATH})
 endif()
 
-target_link_libraries(ShareMemoryDrv PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(ShareMemoryDrv PRIVATE Qt${QT_VERSION_MAJOR}::Widgets WingPlugin)
