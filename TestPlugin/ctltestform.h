@@ -22,15 +22,14 @@
 #define CTLTESTFORM_H
 
 #include <QTextBrowser>
-#include <QWidget>
 
-#include "WingPlugin/iwingplugin.h"
+#include "WingPlugin/wingpluginwidget.h"
 
 namespace Ui {
 class CtlTestForm;
 }
 
-class CtlTestForm : public QWidget, public WingHex::IWingPluginAPICalls {
+class CtlTestForm : public WingHex::WingPluginWidget {
     Q_OBJECT
 
 public:
@@ -58,7 +57,6 @@ private slots:
 private:
     template <typename T>
     bool writeContent(qsizetype offset, const T &value) {
-        Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
                 return writeInt8(offset, value);
@@ -90,7 +88,6 @@ private:
 
     template <typename T>
     bool insertContent(qsizetype offset, const T &value) {
-        Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
                 return insertInt8(offset, value);
@@ -122,7 +119,6 @@ private:
 
     template <typename T>
     bool appendContent(const T &value) {
-        Q_ASSERT(_plg);
         if constexpr (std::is_integral_v<T>) {
             if constexpr (sizeof(T) == sizeof(qint8)) {
                 return appendInt8(value);
@@ -155,7 +151,6 @@ private:
 private:
     Ui::CtlTestForm *ui;
 
-    WingHex::IWingPlugin *_plg;
     QTextBrowser *_br;
 };
 

@@ -45,10 +45,10 @@
 
 #define WINGAPI_ARG_SPEC(Type)                                                 \
     inline QArgument<Type> WINGAPI_ARG(const Type &t) {                        \
-        return QArgument<Type>(#Type, t);                                      \
+        return QArgument<Type>(QT_STRINGIFY(Type), t);                         \
     }                                                                          \
     inline QReturnArgument<Type> WINGAPI_RETURN_ARG(Type &t) {                 \
-        return QReturnArgument<Type>(#Type, t);                                \
+        return QReturnArgument<Type>(QT_STRINGIFY(Type), t);                   \
     }
 
 template <typename T>

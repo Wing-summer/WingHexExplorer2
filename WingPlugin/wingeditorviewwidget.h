@@ -21,6 +21,7 @@
 #ifndef WINGEDITORVIEWWIDGET_H
 #define WINGEDITORVIEWWIDGET_H
 
+#include "WingPlugin/wingpluginwidget.h"
 #include "iwingplugincalls.h"
 #include "wingplugin_global.h"
 #include <QWidget>
@@ -29,9 +30,7 @@ namespace WingHex {
 
 class IWingPlugin;
 
-class WINGPLUGIN_EXPORT WingEditorViewWidget
-    : public QWidget,
-      protected WingHex::IWingPluginAPICalls {
+class WINGPLUGIN_EXPORT WingEditorViewWidget : public WingPluginWidget {
 
     Q_OBJECT
 
@@ -58,12 +57,12 @@ public:
 
     virtual WingEditorViewWidget *clone() = 0;
 
-public slots:
-    void docSaved(bool saved);
+signals:
+    void savedStateChanged(bool b);
 
+public slots:
     void raiseView();
 
-public slots:
     virtual void toggled(bool isVisible) = 0;
 
     virtual void loadState(const QByteArray &state);

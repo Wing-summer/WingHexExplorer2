@@ -23,8 +23,7 @@
 
 CtlTestForm::CtlTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
                          QWidget *parent)
-    : QWidget(parent), WingHex::IWingPluginAPICalls(plg),
-      ui(new Ui::CtlTestForm), _plg(plg), _br(br) {
+    : WingHex::WingPluginWidget(plg, parent), ui(new Ui::CtlTestForm), _br(br) {
     ui->setupUi(this);
 }
 
@@ -32,8 +31,8 @@ CtlTestForm::~CtlTestForm() { delete ui; }
 
 void CtlTestForm::on_btnInt8_clicked() {
     bool ok;
-    auto ret = getInt(this, QStringLiteral("Test"), tr("PleaseInputInt8"), 0,
-                      INT8_MIN, UINT8_MAX, 1, &ok);
+    auto ret = dlgGetInt(this, QStringLiteral("Test"), tr("PleaseInputInt8"), 0,
+                         INT8_MIN, UINT8_MAX, 1, &ok);
     if (ok) {
         auto buffer = qint8(ret);
         if (ui->rbInsert->isChecked()) {
@@ -56,8 +55,8 @@ void CtlTestForm::on_btnInt8_clicked() {
 
 void CtlTestForm::on_btnInt16_clicked() {
     bool ok;
-    auto ret = getInt(this, QStringLiteral("Test"), tr("PleaseInputInt16"), 0,
-                      INT16_MIN, UINT16_MAX, 1, &ok);
+    auto ret = dlgGetInt(this, QStringLiteral("Test"), tr("PleaseInputInt16"),
+                         0, INT16_MIN, UINT16_MAX, 1, &ok);
     if (ok) {
         auto buffer = qint16(ret);
         if (ui->rbInsert->isChecked()) {
@@ -80,8 +79,8 @@ void CtlTestForm::on_btnInt16_clicked() {
 
 void CtlTestForm::on_btnInt32_clicked() {
     bool ok;
-    auto ret = getInt(this, QStringLiteral("Test"), tr("PleaseInputInt32"), 0,
-                      INT32_MIN, INT32_MAX, 1, &ok);
+    auto ret = dlgGetInt(this, QStringLiteral("Test"), tr("PleaseInputInt32"),
+                         0, INT32_MIN, INT32_MAX, 1, &ok);
     if (ok) {
         auto buffer = qint32(ret);
         if (ui->rbInsert->isChecked()) {
@@ -104,8 +103,8 @@ void CtlTestForm::on_btnInt32_clicked() {
 
 void CtlTestForm::on_btnInt64_clicked() {
     bool ok;
-    auto ret = getText(this, QStringLiteral("Test"), tr("PleaseInputInt64"),
-                       QLineEdit::Normal, QStringLiteral("0"), &ok);
+    auto ret = dlgGetText(this, QStringLiteral("Test"), tr("PleaseInputInt64"),
+                          QLineEdit::Normal, QStringLiteral("0"), &ok);
     if (ok) {
         auto buffer = qint64(ret.toULongLong(&ok));
         if (ok) {
@@ -131,8 +130,9 @@ void CtlTestForm::on_btnInt64_clicked() {
 void CtlTestForm::on_btnFloat_clicked() {
     bool ok;
     auto limit = std::numeric_limits<float>();
-    auto ret = getDouble(this, QStringLiteral("Test"), tr("PleaseInputFloat"),
-                         0, limit.min(), limit.max(), 0.0, &ok);
+    auto ret =
+        dlgGetDouble(this, QStringLiteral("Test"), tr("PleaseInputFloat"), 0,
+                     limit.min(), limit.max(), 0.0, &ok);
     if (ok) {
         auto buffer = float(ret);
         if (ui->rbInsert->isChecked()) {
@@ -156,8 +156,9 @@ void CtlTestForm::on_btnFloat_clicked() {
 void CtlTestForm::on_btnDouble_clicked() {
     bool ok;
     auto limit = std::numeric_limits<double>();
-    auto ret = getDouble(this, QStringLiteral("Test"), tr("PleaseInputFloat"),
-                         0, limit.min(), limit.max(), 0.0, &ok);
+    auto ret =
+        dlgGetDouble(this, QStringLiteral("Test"), tr("PleaseInputFloat"), 0,
+                     limit.min(), limit.max(), 0.0, &ok);
     if (ok) {
         auto buffer = double(ret);
         if (ui->rbInsert->isChecked()) {
@@ -180,8 +181,9 @@ void CtlTestForm::on_btnDouble_clicked() {
 
 void CtlTestForm::on_btnString_clicked() {
     bool ok;
-    auto buffer = getText(this, QStringLiteral("Test"), tr("PleaseInputString"),
-                          QLineEdit::Normal, "wingsummer", &ok);
+    auto buffer =
+        dlgGetText(this, QStringLiteral("Test"), tr("PleaseInputString"),
+                   QLineEdit::Normal, "wingsummer", &ok);
     if (ok) {
         if (ui->rbInsert->isChecked()) {
             ok = insertContent(ui->sbOffset->value(), buffer);
@@ -195,9 +197,9 @@ void CtlTestForm::on_btnString_clicked() {
 
 void CtlTestForm::on_btnByteArray_clicked() {
     bool ok;
-    auto ret = getText(this, QStringLiteral("Test"),
-                       tr("PleaseInputByteArray(00 23 5A)"), QLineEdit::Normal,
-                       QStringLiteral("00"), &ok);
+    auto ret = dlgGetText(this, QStringLiteral("Test"),
+                          tr("PleaseInputByteArray(00 23 5A)"),
+                          QLineEdit::Normal, QStringLiteral("00"), &ok);
     if (ok) {
         auto buffer = QByteArray::fromHex(ret.toUtf8());
         if (buffer.isEmpty()) {

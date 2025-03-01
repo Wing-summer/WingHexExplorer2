@@ -268,23 +268,23 @@ void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     registerAPI<void(const QString &)>(
-        engine, std::bind(&WingAngelAPI::info, this, std::placeholders::_1),
+        engine, std::bind(&WingAngelAPI::logInfo, this, std::placeholders::_1),
         "void info(const string &in message)");
 
     registerAPI<void(const QString &)>(
-        engine, std::bind(&WingAngelAPI::trace, this, std::placeholders::_1),
+        engine, std::bind(&WingAngelAPI::logTrace, this, std::placeholders::_1),
         "void trace(const string &in message)");
 
     registerAPI<void(const QString &)>(
-        engine, std::bind(&WingAngelAPI::debug, this, std::placeholders::_1),
+        engine, std::bind(&WingAngelAPI::logDebug, this, std::placeholders::_1),
         "void debug(const string &in message)");
 
     registerAPI<void(const QString &)>(
-        engine, std::bind(&WingAngelAPI::warn, this, std::placeholders::_1),
+        engine, std::bind(&WingAngelAPI::logWarn, this, std::placeholders::_1),
         "void warn(const string &in message)");
 
     registerAPI<void(const QString &)>(
-        engine, std::bind(&WingAngelAPI::error, this, std::placeholders::_1),
+        engine, std::bind(&WingAngelAPI::logError, this, std::placeholders::_1),
         "void error(const string &in message)");
 
     engine->SetDefaultNamespace("");
@@ -306,7 +306,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
 
     registerAPI<void(const QString &)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::aboutQt, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgAboutQt, this, nullptr,
                   std::placeholders::_1),
         "void aboutQt(const string &in title =\"\")");
 
@@ -314,7 +314,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                                             QMessageBox::StandardButtons,
                                             QMessageBox::StandardButton)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::information, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgInformation, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void information(const string &in title, const string &in text, "
@@ -325,7 +325,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                                             QMessageBox::StandardButtons,
                                             QMessageBox::StandardButton)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::question, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgQuestion, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void question(const string &in title, const string &in text, "
@@ -337,7 +337,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                                             QMessageBox::StandardButtons,
                                             QMessageBox::StandardButton)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::warning, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgWarning, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void warning(const string &in title, const string &in text, "
@@ -370,7 +370,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
 
     registerAPI<void(const QString &, const QString &)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::about, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgAbout, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2),
         "void about(const string &in title, const string &in text)");
 
@@ -386,7 +386,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
                         const QString &, bool *,
                         Qt::InputMethodHints inputMethodHints)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getText, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetText, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5, std::placeholders::_6),
@@ -398,7 +398,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
     registerAPI<QString(const QString &, const QString &, const QString &,
                         bool *, Qt::InputMethodHints inputMethodHints)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getMultiLineText, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetMultiLineText, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
@@ -410,7 +410,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
     registerAPI<int(const QString &, const QString &, int, int, int, int,
                     bool *)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getInt, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetInt, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5, std::placeholders::_6,
@@ -423,7 +423,7 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
     registerAPI<int(const QString &, const QString &, double, double, double,
                     int, bool *, double)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getDouble, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetDouble, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5, std::placeholders::_6,
@@ -456,7 +456,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     registerAPI<QString(const QString &, const QString &,
                         QFileDialog::Options)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getExistingDirectory, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetExistingDirectory, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3),
         "string getExistingDirectory(const string &in caption = \"\", "
@@ -466,7 +466,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     registerAPI<QString(const QString &, const QString &, const QString &,
                         QString *, QFileDialog::Options)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getOpenFileName, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetOpenFileName, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
@@ -477,7 +477,7 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
     registerAPI<QString(const QString &, const QString &, const QString &,
                         QString *, QFileDialog::Options)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getSaveFileName, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::dlgGetSaveFileName, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4,
                   std::placeholders::_5),
@@ -507,8 +507,8 @@ void WingAngelAPI::installColorDialogAPI(asIScriptEngine *engine) {
 
     registerAPI<QColor(const QString &)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::getColor, this, std::placeholders::_1,
-                  nullptr),
+        std::bind(&WingHex::IWingPlugin::dlgGetColor, this,
+                  std::placeholders::_1, nullptr),
         "color getColor(const string &in caption)");
 
     engine->SetDefaultNamespace("");
@@ -690,20 +690,40 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
         std::bind(&WingHex::IWingPlugin::readInt8, this, std::placeholders::_1),
         "int8 readInt8(" QSIZETYPE " offset)");
 
+    registerAPI<quint8(qsizetype)>(engine,
+                                   std::bind(&WingHex::IWingPlugin::readUInt8,
+                                             this, std::placeholders::_1),
+                                   "uint8 readUInt8(" QSIZETYPE " offset)");
+
     registerAPI<qint16(qsizetype)>(engine,
                                    std::bind(&WingHex::IWingPlugin::readInt16,
                                              this, std::placeholders::_1),
                                    "int16 readInt16(" QSIZETYPE " offset)");
+
+    registerAPI<quint16(qsizetype)>(engine,
+                                    std::bind(&WingHex::IWingPlugin::readUInt16,
+                                              this, std::placeholders::_1),
+                                    "uint16 readUInt16(" QSIZETYPE " offset)");
 
     registerAPI<qint32(qsizetype)>(engine,
                                    std::bind(&WingHex::IWingPlugin::readInt32,
                                              this, std::placeholders::_1),
                                    "int readInt32(" QSIZETYPE " offset)");
 
+    registerAPI<quint32(qsizetype)>(engine,
+                                    std::bind(&WingHex::IWingPlugin::readUInt32,
+                                              this, std::placeholders::_1),
+                                    "uint readUInt32(" QSIZETYPE " offset)");
+
     registerAPI<qint64(qsizetype)>(engine,
                                    std::bind(&WingHex::IWingPlugin::readInt64,
                                              this, std::placeholders::_1),
                                    "int64 readInt64(" QSIZETYPE " offset)");
+
+    registerAPI<quint64(qsizetype)>(engine,
+                                    std::bind(&WingHex::IWingPlugin::readUInt64,
+                                              this, std::placeholders::_1),
+                                    "uint64 readUInt64(" QSIZETYPE " offset)");
 
     registerAPI<float(qsizetype)>(engine,
                                   std::bind(&WingHex::IWingPlugin::readFloat,
@@ -803,11 +823,23 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_2),
         "bool writeInt8(" QSIZETYPE " offset, int8 value)");
 
+    registerAPI<bool(qsizetype, quint8)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::writeUInt8, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeUInt8(" QSIZETYPE " offset, uint8 value)");
+
     registerAPI<bool(qsizetype, qint16)>(
         engine,
         std::bind(&WingHex::IWingPlugin::writeInt16, this,
                   std::placeholders::_1, std::placeholders::_2),
         "bool writeInt16(" QSIZETYPE " offset, int16 value)");
+
+    registerAPI<bool(qsizetype, quint16)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::writeUInt16, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeUInt16(" QSIZETYPE " offset, uint16 value)");
 
     registerAPI<bool(qsizetype, qint32)>(
         engine,
@@ -815,11 +847,23 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool writeInt32(" QSIZETYPE " offset, int value)");
 
+    registerAPI<bool(qsizetype, quint32)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::writeUInt32, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeUInt32(" QSIZETYPE " offset, uint value)");
+
     registerAPI<bool(qsizetype, qint64)>(
         engine,
         std::bind(&WingHex::IWingPlugin::writeInt64, this,
                   std::placeholders::_1, std::placeholders::_2),
         "bool writeInt64(" QSIZETYPE " offset, int64 value)");
+
+    registerAPI<bool(qsizetype, quint64)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::writeUInt64, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool writeUInt64(" QSIZETYPE " offset, uint64 value)");
 
     registerAPI<bool(qsizetype, float)>(
         engine,
@@ -853,11 +897,23 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool insertInt8(" QSIZETYPE " offset, int8 value)");
 
+    registerAPI<bool(qsizetype, quint8)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::insertUInt8, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertUInt8(" QSIZETYPE " offset, uint8 value)");
+
     registerAPI<bool(qsizetype, qint16)>(
         engine,
         std::bind(&WingHex::IWingPlugin::insertInt16, this,
                   std::placeholders::_1, std::placeholders::_2),
         "bool insertInt16(" QSIZETYPE " offset, int16 value)");
+
+    registerAPI<bool(qsizetype, quint16)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::insertUInt16, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertUInt16(" QSIZETYPE " offset, uint16 value)");
 
     registerAPI<bool(qsizetype, qint32)>(
         engine,
@@ -865,11 +921,23 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                   std::placeholders::_1, std::placeholders::_2),
         "bool insertInt32(" QSIZETYPE " offset, int value)");
 
-    registerAPI<bool(qsizetype, qint32)>(
+    registerAPI<bool(qsizetype, quint32)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::insertUInt32, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertUInt32(" QSIZETYPE " offset, uint value)");
+
+    registerAPI<bool(qsizetype, qint64)>(
         engine,
         std::bind(&WingHex::IWingPlugin::insertInt64, this,
                   std::placeholders::_1, std::placeholders::_2),
         "bool insertInt64(" QSIZETYPE " offset, int64 value)");
+
+    registerAPI<bool(qsizetype, quint64)>(
+        engine,
+        std::bind(&WingHex::IWingPlugin::insertUInt64, this,
+                  std::placeholders::_1, std::placeholders::_2),
+        "bool insertUInt64(" QSIZETYPE " offset, uint64 value)");
 
     registerAPI<bool(qsizetype, float)>(
         engine,
@@ -902,20 +970,40 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                                        std::placeholders::_1),
                              "bool appendInt8(int8 value)");
 
+    registerAPI<bool(quint8)>(engine,
+                              std::bind(&WingHex::IWingPlugin::appendUInt8,
+                                        this, std::placeholders::_1),
+                              "bool appendUInt8(uint8 value)");
+
     registerAPI<bool(qint16)>(engine,
                               std::bind(&WingHex::IWingPlugin::appendInt16,
                                         this, std::placeholders::_1),
                               "bool appendInt16(int16 value)");
+
+    registerAPI<bool(quint16)>(engine,
+                               std::bind(&WingHex::IWingPlugin::appendUInt16,
+                                         this, std::placeholders::_1),
+                               "bool appendUInt16(uint16 value)");
 
     registerAPI<bool(qint32)>(engine,
                               std::bind(&WingHex::IWingPlugin::appendInt32,
                                         this, std::placeholders::_1),
                               "bool appendInt32(int value)");
 
-    registerAPI<bool(qint32)>(engine,
+    registerAPI<bool(quint32)>(engine,
+                               std::bind(&WingHex::IWingPlugin::appendUInt32,
+                                         this, std::placeholders::_1),
+                               "bool appendUInt32(uint value)");
+
+    registerAPI<bool(qint64)>(engine,
                               std::bind(&WingHex::IWingPlugin::appendInt64,
                                         this, std::placeholders::_1),
                               "bool appendInt64(int64 value)");
+
+    registerAPI<bool(quint64)>(engine,
+                               std::bind(&WingHex::IWingPlugin::appendUInt64,
+                                         this, std::placeholders::_1),
+                               "bool appendUInt64(uint64 value)");
 
     registerAPI<bool(float)>(engine,
                              std::bind(&WingHex::IWingPlugin::appendFloat, this,
@@ -1150,7 +1238,7 @@ void WingAngelAPI::installDataVisualAPI(asIScriptEngine *engine) {
 
     registerAPI<bool(const QString &, const QString &)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::updateText, this,
+        std::bind(&WingHex::IWingPlugin::dataVisualText, this,
                   std::placeholders::_1, std::placeholders::_2),
         "bool updateText(string &in data, string &in title=\"\")");
 
@@ -2305,7 +2393,7 @@ bool WingAngelAPI::_HexController_writeBytes(qsizetype offset,
         if (!ok) {
             return false;
         }
-        return emit writeBytes(offset, bab);
+        return writeBytes(offset, bab);
     } else {
         return false;
     }

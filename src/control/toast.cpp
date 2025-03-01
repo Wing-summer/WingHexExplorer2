@@ -92,7 +92,8 @@ int Toast::fontPointSize() const { return m_drawFont.pointSize(); }
 
 QSize Toast::calculateTextSize() {
     QFontMetrics metrice(m_drawFont);
-    QStringList ls = m_strContent.split(QRegularExpression("\r\n|\n"));
+    static QRegularExpression regex(QStringLiteral("\r\n|\n"));
+    QStringList ls = m_strContent.split(regex);
     int nWidthInPixel = 0;
     for (int i = 0; i < ls.size(); i++) {
         int tmpWidth = metrice.horizontalAdvance(ls.at(i));
@@ -104,7 +105,8 @@ QSize Toast::calculateTextSize() {
 
 void Toast::init() {
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
-                   Qt::WindowSystemMenuHint | Qt::BypassWindowManagerHint);
+                   Qt::WindowSystemMenuHint | Qt::BypassWindowManagerHint |
+                   Qt::WindowTransparentForInput);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
 

@@ -1,3 +1,23 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** You can redistribute this file and/or modify it under the terms of the
+** BSD 3-Clause.
+**
+** THIS FILE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+** ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+** LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+** CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+** SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+** CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+** ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+** POSSIBILITY OF SUCH DAMAGE.
+** =============================================================================
+*/
+
 #ifndef IWINGPLUGINCALLS_H
 #define IWINGPLUGINCALLS_H
 
@@ -13,6 +33,7 @@ struct WINGPLUGIN_EXPORT HexPosition {
     quint8 lineWidth;
     int nibbleindex;
 
+    HexPosition();
     Q_REQUIRED_RESULT qsizetype offset() const;
     qsizetype operator-(const HexPosition &rhs) const;
     bool operator==(const HexPosition &rhs) const;
@@ -93,6 +114,10 @@ public:
     Q_REQUIRED_RESULT qint16 readInt16(qsizetype offset);
     Q_REQUIRED_RESULT qint32 readInt32(qsizetype offset);
     Q_REQUIRED_RESULT qint64 readInt64(qsizetype offset);
+    Q_REQUIRED_RESULT quint8 readUInt8(qsizetype offset);
+    Q_REQUIRED_RESULT quint16 readUInt16(qsizetype offset);
+    Q_REQUIRED_RESULT quint32 readUInt32(qsizetype offset);
+    Q_REQUIRED_RESULT quint64 readUInt64(qsizetype offset);
     Q_REQUIRED_RESULT float readFloat(qsizetype offset);
     Q_REQUIRED_RESULT double readDouble(qsizetype offset);
     Q_REQUIRED_RESULT QString readString(qsizetype offset,
@@ -124,6 +149,10 @@ public:
     Q_REQUIRED_RESULT bool writeInt16(qsizetype offset, qint16 value);
     Q_REQUIRED_RESULT bool writeInt32(qsizetype offset, qint32 value);
     Q_REQUIRED_RESULT bool writeInt64(qsizetype offset, qint64 value);
+    Q_REQUIRED_RESULT bool writeUInt8(qsizetype offset, quint8 value);
+    Q_REQUIRED_RESULT bool writeUInt16(qsizetype offset, quint16 value);
+    Q_REQUIRED_RESULT bool writeUInt32(qsizetype offset, quint32 value);
+    Q_REQUIRED_RESULT bool writeUInt64(qsizetype offset, quint64 value);
     Q_REQUIRED_RESULT bool writeFloat(qsizetype offset, float value);
     Q_REQUIRED_RESULT bool writeDouble(qsizetype offset, double value);
     Q_REQUIRED_RESULT bool writeString(qsizetype offset, const QString &value,
@@ -134,6 +163,10 @@ public:
     Q_REQUIRED_RESULT bool insertInt16(qsizetype offset, qint16 value);
     Q_REQUIRED_RESULT bool insertInt32(qsizetype offset, qint32 value);
     Q_REQUIRED_RESULT bool insertInt64(qsizetype offset, qint64 value);
+    Q_REQUIRED_RESULT bool insertUInt8(qsizetype offset, quint8 value);
+    Q_REQUIRED_RESULT bool insertUInt16(qsizetype offset, quint16 value);
+    Q_REQUIRED_RESULT bool insertUInt32(qsizetype offset, quint32 value);
+    Q_REQUIRED_RESULT bool insertUInt64(qsizetype offset, quint64 value);
     Q_REQUIRED_RESULT bool insertFloat(qsizetype offset, float value);
     Q_REQUIRED_RESULT bool insertDouble(qsizetype offset, double value);
     Q_REQUIRED_RESULT bool insertString(qsizetype offset, const QString &value,
@@ -145,6 +178,10 @@ public:
     Q_REQUIRED_RESULT bool appendInt16(qint16 value);
     Q_REQUIRED_RESULT bool appendInt32(qint32 value);
     Q_REQUIRED_RESULT bool appendInt64(qint64 value);
+    Q_REQUIRED_RESULT bool appendUInt8(quint8 value);
+    Q_REQUIRED_RESULT bool appendUInt16(quint16 value);
+    Q_REQUIRED_RESULT bool appendUInt32(quint32 value);
+    Q_REQUIRED_RESULT bool appendUInt64(quint64 value);
     Q_REQUIRED_RESULT bool appendFloat(float value);
     Q_REQUIRED_RESULT bool appendDouble(double value);
     Q_REQUIRED_RESULT bool appendString(const QString &value,
@@ -216,35 +253,38 @@ public:
     bool closeAllFiles();
 
 public:
-    bool updateText(const QString &data, const QString &title = {});
-    bool updateTextList(const QStringList &data, const QString &title = {},
+    bool dataVisualText(const QString &data, const QString &title = {});
+    bool dataVisualTextList(const QStringList &data, const QString &title = {},
+                            WingHex::ClickedCallBack clicked = {},
+                            WingHex::ClickedCallBack dblClicked = {});
+
+    Q_REQUIRED_RESULT bool
+    dataVisualTextTree(const QString &json, const QString &title = {},
+                       WingHex::ClickedCallBack clicked = {},
+                       WingHex::ClickedCallBack dblClicked = {});
+    Q_REQUIRED_RESULT bool
+    dataVisualTextTable(const QString &json, const QStringList &headers,
+                        const QStringList &headerNames = {},
+                        const QString &title = {},
                         WingHex::ClickedCallBack clicked = {},
                         WingHex::ClickedCallBack dblClicked = {});
 
-    Q_REQUIRED_RESULT bool
-    updateTextTree(const QString &json, const QString &title = {},
-                   WingHex::ClickedCallBack clicked = {},
-                   WingHex::ClickedCallBack dblClicked = {});
-    Q_REQUIRED_RESULT bool
-    updateTextTable(const QString &json, const QStringList &headers,
-                    const QStringList &headerNames = {},
-                    const QString &title = {},
-                    WingHex::ClickedCallBack clicked = {},
-                    WingHex::ClickedCallBack dblClicked = {});
-
     // API for Qt Plugin Only
     Q_REQUIRED_RESULT bool
-    updateTextListByModel(QAbstractItemModel *model, const QString &title = {},
-                          WingHex::ClickedCallBack clicked = {},
-                          WingHex::ClickedCallBack dblClicked = {});
+    dataVisualTextListByModel(QAbstractItemModel *model,
+                              const QString &title = {},
+                              WingHex::ClickedCallBack clicked = {},
+                              WingHex::ClickedCallBack dblClicked = {});
     Q_REQUIRED_RESULT bool
-    updateTextTableByModel(QAbstractItemModel *model, const QString &title = {},
-                           WingHex::ClickedCallBack clicked = {},
-                           WingHex::ClickedCallBack dblClicked = {});
+    dataVisualTextTableByModel(QAbstractItemModel *model,
+                               const QString &title = {},
+                               WingHex::ClickedCallBack clicked = {},
+                               WingHex::ClickedCallBack dblClicked = {});
     Q_REQUIRED_RESULT bool
-    updateTextTreeByModel(QAbstractItemModel *model, const QString &title = {},
-                          WingHex::ClickedCallBack clicked = {},
-                          WingHex::ClickedCallBack dblClicked = {});
+    dataVisualTextTreeByModel(QAbstractItemModel *model,
+                              const QString &title = {},
+                              WingHex::ClickedCallBack clicked = {},
+                              WingHex::ClickedCallBack dblClicked = {});
 };
 
 class WINGPLUGIN_EXPORT IWingPluginAPICalls : public IWingPluginCalls,

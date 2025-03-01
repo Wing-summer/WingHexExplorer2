@@ -18,25 +18,29 @@
 ** =============================================================================
 */
 
-#ifndef WINGPLUGINCALLCONVERTOR_H
-#define WINGPLUGINCALLCONVERTOR_H
+#include "wingpluginwidget.h"
 
-#include <QArgument>
+using namespace WingHex;
 
-namespace WingHex {
+WingPluginWidget::WingPluginWidget(IWingPlugin *plg, QWidget *parent)
+    : QWidget(parent), WingHex::IWingPluginAPICalls(plg) {}
 
-class IWingPluginBase;
+WingPluginWidget::~WingPluginWidget() {}
 
-class WingPluginCallConvertor {
-public:
-    WingPluginCallConvertor(QObject *caller);
+WingPluginDialog::WingPluginDialog(IWingPlugin *plg, QWidget *parent)
+    : QDialog(parent), WingHex::IWingPluginAPICalls(plg) {}
 
-protected:
-    QArgument<IWingPluginBase *> getSenderObj();
+WingPluginDialog::~WingPluginDialog() {}
 
-private:
-    IWingPluginBase *_caller;
-};
-} // namespace WingHex
+WingPluginWindow::WingPluginWindow(IWingPlugin *plg, QWindow *parent)
+    : QWindow(parent), WingHex::IWingPluginAPICalls(plg) {}
 
-#endif // WINGPLUGINCALLCONVERTOR_H
+WingPluginWindow::WingPluginWindow(IWingPlugin *plg, QScreen *parent)
+    : QWindow(parent), WingHex::IWingPluginAPICalls(plg) {}
+
+WingPluginWindow::~WingPluginWindow() {}
+
+WingPluginMainWindow::WingPluginMainWindow(IWingPlugin *plg, QWidget *parent)
+    : QMainWindow(parent), WingHex::IWingPluginAPICalls(plg) {}
+
+WingPluginMainWindow::~WingPluginMainWindow() {}

@@ -1,9 +1,31 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** You can redistribute this file and/or modify it under the terms of the
+** BSD 3-Clause.
+**
+** THIS FILE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+** ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+** LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+** CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+** SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+** CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+** ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+** POSSIBILITY OF SUCH DAMAGE.
+** =============================================================================
+*/
+
 #include "iwingplugincalls.h"
 #include "WingPlugin/wingcore.h"
 
 #include "iwingplugin.h"
 
 using namespace WingHex;
+
+HexPosition::HexPosition() : line(0), column(0), lineWidth(0), nibbleindex(0) {}
 
 qsizetype HexPosition::offset() const {
     return static_cast<qsizetype>(line * lineWidth) + column;
@@ -281,6 +303,38 @@ qint64 IWingPluginCalls::readInt64(qsizetype offset) {
     return ret;
 }
 
+quint8 IWingPluginCalls::readUInt8(qsizetype offset) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::readUInt8);
+    quint8 ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset));
+    return ret;
+}
+
+quint16 IWingPluginCalls::readUInt16(qsizetype offset) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::readUInt16);
+    quint16 ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset));
+    return ret;
+}
+
+quint32 IWingPluginCalls::readUInt32(qsizetype offset) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::readUInt32);
+    quint32 ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset));
+    return ret;
+}
+
+quint64 IWingPluginCalls::readUInt64(qsizetype offset) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::readUInt64);
+    quint64 ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset));
+    return ret;
+}
+
 float IWingPluginCalls::readFloat(qsizetype offset) {
     SETUP_CALL_CONTEXT(&IWingPluginCalls::readFloat);
     float ret;
@@ -459,6 +513,38 @@ bool IWingPluginCalls::writeInt64(qsizetype offset, qint64 value) {
     return ret;
 }
 
+bool IWingPluginCalls::writeUInt8(qsizetype offset, quint8 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::writeUInt8);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::writeUInt16(qsizetype offset, quint16 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::writeInt16);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::writeUInt32(qsizetype offset, quint32 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::writeUInt32);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::writeUInt64(qsizetype offset, quint64 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::writeUInt64);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
 bool IWingPluginCalls::writeFloat(qsizetype offset, float value) {
     SETUP_CALL_CONTEXT(&IWingPluginCalls::writeFloat);
     bool ret;
@@ -525,6 +611,38 @@ bool IWingPluginCalls::insertInt64(qsizetype offset, qint64 value) {
     return ret;
 }
 
+bool IWingPluginCalls::insertUInt8(qsizetype offset, quint8 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::insertUInt8);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::insertUInt16(qsizetype offset, quint16 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::insertUInt16);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::insertUInt32(qsizetype offset, quint32 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::insertUInt32);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::insertUInt64(qsizetype offset, quint64 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::insertUInt64);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(offset), WINGAPI_ARG(value));
+    return ret;
+}
+
 bool IWingPluginCalls::insertFloat(qsizetype offset, float value) {
     SETUP_CALL_CONTEXT(&IWingPluginCalls::insertFloat);
     bool ret;
@@ -585,6 +703,38 @@ bool IWingPluginCalls::appendInt32(qint32 value) {
 
 bool IWingPluginCalls::appendInt64(qint64 value) {
     SETUP_CALL_CONTEXT(&IWingPluginCalls::appendInt64);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::appendUInt8(quint8 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::appendUInt8);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::appendUInt16(quint16 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::appendUInt16);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::appendUInt32(quint32 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::appendUInt32);
+    bool ret;
+    m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
+             getSenderObj(), WINGAPI_ARG(value));
+    return ret;
+}
+
+bool IWingPluginCalls::appendUInt64(quint64 value) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::appendUInt64);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(value));
@@ -784,19 +934,20 @@ bool IWingPluginCalls::closeAllFiles() {
     return ret;
 }
 
-bool IWingPluginCalls::updateText(const QString &data, const QString &title) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateText);
+bool IWingPluginCalls::dataVisualText(const QString &data,
+                                      const QString &title) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualText);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(data), WINGAPI_ARG(title));
     return ret;
 }
 
-bool IWingPluginCalls::updateTextList(const QStringList &data,
-                                      const QString &title,
-                                      ClickedCallBack clicked,
-                                      ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextList);
+bool IWingPluginCalls::dataVisualTextList(const QStringList &data,
+                                          const QString &title,
+                                          ClickedCallBack clicked,
+                                          ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextList);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(data), WINGAPI_ARG(title),
@@ -804,10 +955,11 @@ bool IWingPluginCalls::updateTextList(const QStringList &data,
     return ret;
 }
 
-bool IWingPluginCalls::updateTextTree(const QString &json, const QString &title,
-                                      ClickedCallBack clicked,
-                                      ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextTree);
+bool IWingPluginCalls::dataVisualTextTree(const QString &json,
+                                          const QString &title,
+                                          ClickedCallBack clicked,
+                                          ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextTree);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(json), WINGAPI_ARG(title),
@@ -815,13 +967,13 @@ bool IWingPluginCalls::updateTextTree(const QString &json, const QString &title,
     return ret;
 }
 
-bool IWingPluginCalls::updateTextTable(const QString &json,
-                                       const QStringList &headers,
-                                       const QStringList &headerNames,
-                                       const QString &title,
-                                       ClickedCallBack clicked,
-                                       ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextTable);
+bool IWingPluginCalls::dataVisualTextTable(const QString &json,
+                                           const QStringList &headers,
+                                           const QStringList &headerNames,
+                                           const QString &title,
+                                           ClickedCallBack clicked,
+                                           ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextTable);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(json), WINGAPI_ARG(headers),
@@ -830,11 +982,11 @@ bool IWingPluginCalls::updateTextTable(const QString &json,
     return ret;
 }
 
-bool IWingPluginCalls::updateTextListByModel(QAbstractItemModel *model,
-                                             const QString &title,
-                                             ClickedCallBack clicked,
-                                             ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextListByModel);
+bool IWingPluginCalls::dataVisualTextListByModel(QAbstractItemModel *model,
+                                                 const QString &title,
+                                                 ClickedCallBack clicked,
+                                                 ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextListByModel);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(model), WINGAPI_ARG(title),
@@ -842,11 +994,11 @@ bool IWingPluginCalls::updateTextListByModel(QAbstractItemModel *model,
     return ret;
 }
 
-bool IWingPluginCalls::updateTextTableByModel(QAbstractItemModel *model,
-                                              const QString &title,
-                                              ClickedCallBack clicked,
-                                              ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextTableByModel);
+bool IWingPluginCalls::dataVisualTextTableByModel(QAbstractItemModel *model,
+                                                  const QString &title,
+                                                  ClickedCallBack clicked,
+                                                  ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextTableByModel);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(model), WINGAPI_ARG(title),
@@ -854,11 +1006,11 @@ bool IWingPluginCalls::updateTextTableByModel(QAbstractItemModel *model,
     return ret;
 }
 
-bool IWingPluginCalls::updateTextTreeByModel(QAbstractItemModel *model,
-                                             const QString &title,
-                                             ClickedCallBack clicked,
-                                             ClickedCallBack dblClicked) {
-    SETUP_CALL_CONTEXT(&IWingPluginCalls::updateTextTreeByModel);
+bool IWingPluginCalls::dataVisualTextTreeByModel(QAbstractItemModel *model,
+                                                 const QString &title,
+                                                 ClickedCallBack clicked,
+                                                 ClickedCallBack dblClicked) {
+    SETUP_CALL_CONTEXT(&IWingPluginCalls::dataVisualTextTreeByModel);
     bool ret;
     m.invoke(callReceiver(), Qt::DirectConnection, WINGAPI_RETURN_ARG(ret),
              getSenderObj(), WINGAPI_ARG(model), WINGAPI_ARG(title),

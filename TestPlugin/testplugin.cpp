@@ -238,7 +238,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
                             QStringLiteral("(%1, %2)").arg(i).arg(y));
                 connect(tb, &QToolButton::clicked, this, [this] {
                     auto tb = qobject_cast<QToolButton *>(sender());
-                    information(nullptr, tr("Click"), tb->text());
+                    msgInformation(nullptr, tr("Click"), tb->text());
                 });
                 tbtb.tools.append(tb);
             }
@@ -286,7 +286,7 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         auto a = new QAction(
             micon, QStringLiteral("Test - ") + QString::number(i), _tmenu);
         connect(a, &QAction::triggered, this, [this, a]() {
-            information(nullptr, QStringLiteral("Test"), a->text());
+            msgInformation(nullptr, QStringLiteral("Test"), a->text());
         });
         _tmenu->addAction(a);
     }
@@ -511,10 +511,10 @@ QVariant TestPlugin::testCrash(const QVariantList &params) {
     return {};
 }
 
-void TestPlugin::test_a() { debug(__FUNCTION__); }
+void TestPlugin::test_a() { logDebug(__FUNCTION__); }
 
 void TestPlugin::test_b(const QString &b) {
-    warn(__FUNCTION__ + QStringLiteral(" : ") % b);
+    logWarn(__FUNCTION__ + QStringLiteral(" : ") % b);
 }
 
 void TestPlugin::test_c(const QVector<int> &c) {
@@ -529,7 +529,7 @@ void TestPlugin::test_c(const QVector<int> &c) {
 
     content += QStringLiteral(" }");
 
-    warn(content);
+    logWarn(content);
 }
 
 void TestPlugin::test_d(const QVariantHash &d) {
@@ -544,21 +544,21 @@ void TestPlugin::test_d(const QVariantHash &d) {
         content += hash.join(", ");
     }
     content += QStringLiteral(" }");
-    warn(content);
+    logWarn(content);
 }
 
 bool TestPlugin::test_e() {
-    warn(__FUNCTION__);
+    logWarn(__FUNCTION__);
     return true;
 }
 
 QByteArray TestPlugin::test_f() {
-    warn(__FUNCTION__);
+    logWarn(__FUNCTION__);
     return "wingsummer";
 }
 
 QString TestPlugin::test_g() {
-    warn(__FUNCTION__);
+    logWarn(__FUNCTION__);
     return "wingsummer";
 }
 
@@ -604,8 +604,8 @@ void TestPlugin::destoryTestShareMem() {
 }
 
 void TestPlugin::printLogTestSharedMemData() {
-    warn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
-             .toHex(' '));
+    logWarn(QByteArray(reinterpret_cast<const char *>(_tsharemem->data()), 20)
+                .toHex(' '));
 }
 
 void TestPlugin::setPluginMetaTestEnabled(bool b) {
@@ -613,7 +613,6 @@ void TestPlugin::setPluginMetaTestEnabled(bool b) {
         ENABLE_META = b;
         for (auto &i : TestWingEditorViewWidget::instances()) {
             i->setEnableMeta(b);
-            i->docSaved(false);
         }
     }
 }

@@ -25,8 +25,8 @@
 
 ReaderTestForm::ReaderTestForm(WingHex::IWingPlugin *plg, QTextBrowser *br,
                                QWidget *parent)
-    : QWidget(parent), WingHex::IWingPluginCalls(plg),
-      ui(new Ui::ReaderTestForm), _plg(plg), _br(br) {
+    : WingHex::WingPluginWidget(plg, parent), ui(new Ui::ReaderTestForm),
+      _br(br) {
     ui->setupUi(this);
     ui->sbOffset->setRange(0, INT_MAX);
 }

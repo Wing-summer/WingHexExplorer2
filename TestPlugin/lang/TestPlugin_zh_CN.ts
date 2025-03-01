@@ -34,38 +34,38 @@
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="35"/>
+        <location filename="../ctltestform.cpp" line="34"/>
         <source>PleaseInputInt8</source>
         <translation>请输入8位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="59"/>
+        <location filename="../ctltestform.cpp" line="58"/>
         <source>PleaseInputInt16</source>
         <translation>请输入16位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="83"/>
+        <location filename="../ctltestform.cpp" line="82"/>
         <source>PleaseInputInt32</source>
         <translation>请输入32位整数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="107"/>
+        <location filename="../ctltestform.cpp" line="106"/>
         <source>PleaseInputInt64</source>
         <translation>请输入64位整数</translation>
     </message>
     <message>
         <location filename="../ctltestform.cpp" line="134"/>
-        <location filename="../ctltestform.cpp" line="159"/>
+        <location filename="../ctltestform.cpp" line="160"/>
         <source>PleaseInputFloat</source>
         <translation>请输入单精度浮点数</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="183"/>
+        <location filename="../ctltestform.cpp" line="185"/>
         <source>PleaseInputString</source>
         <translation>请输入字符串</translation>
     </message>
     <message>
-        <location filename="../ctltestform.cpp" line="199"/>
+        <location filename="../ctltestform.cpp" line="201"/>
         <source>PleaseInputByteArray(00 23 5A)</source>
         <translation>请输入字节数组（举例：00 23 5A）</translation>
     </message>
@@ -272,23 +272,23 @@
         <translation>数据可视化</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="336"/>
-        <location filename="../testform.cpp" line="345"/>
+        <location filename="../testform.cpp" line="340"/>
+        <location filename="../testform.cpp" line="349"/>
         <source>UpdateTextTreeError</source>
         <translation>更新文本树失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="360"/>
+        <location filename="../testform.cpp" line="364"/>
         <source>UpdateTextListByModelError</source>
         <translation>通过模型更新文本列表失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="370"/>
+        <location filename="../testform.cpp" line="374"/>
         <source>UpdateTextTableByModelError</source>
         <translation>通过模型更新文本表格失败</translation>
     </message>
     <message>
-        <location filename="../testform.cpp" line="381"/>
+        <location filename="../testform.cpp" line="385"/>
         <source>UpdateTextTreeByModelError</source>
         <translation>通过模型更新文本树失败</translation>
     </message>
@@ -357,7 +357,7 @@
 <context>
     <name>TestPluginPage</name>
     <message>
-        <location filename="../testpluginpage.cpp" line="16"/>
+        <location filename="../testpluginpage.cpp" line="36"/>
         <source>TestPluginPage</source>
         <translation>测试插件页</translation>
     </message>
@@ -365,7 +365,7 @@
 <context>
     <name>TestWingEditorViewWidget</name>
     <message>
-        <location filename="../testwingeditorviewwidget.cpp" line="28"/>
+        <location filename="../testwingeditorviewwidget.cpp" line="48"/>
         <source>TestWingEditorView</source>
         <translation>测试插件编辑视图</translation>
     </message>

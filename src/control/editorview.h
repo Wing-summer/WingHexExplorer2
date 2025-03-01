@@ -97,6 +97,9 @@ public:
     void notifyOnWorkSpace(bool b);
 
 public slots:
+    void raiseAndSwitchView(const QString &id);
+
+public:
     EditorView *clone();
 
     void registerView(const QString &id, WingHex::WingEditorViewWidget *view);
@@ -171,6 +174,9 @@ signals:
     void sigOnFill();
     void sigOnMetadata();
     void sigOnBookMark();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     QStackedWidget *m_stack = nullptr;

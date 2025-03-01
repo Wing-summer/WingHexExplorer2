@@ -21,15 +21,13 @@
 #ifndef TESTFORM_H
 #define TESTFORM_H
 
-#include "WingPlugin/iwingplugin.h"
-
-#include <QWidget>
+#include "WingPlugin/wingpluginwidget.h"
 
 namespace Ui {
 class TestForm;
 }
 
-class TestForm : public QWidget, public WingHex::IWingPluginAPICalls {
+class TestForm : public WingHex::WingPluginWidget {
     Q_OBJECT
 
 public:

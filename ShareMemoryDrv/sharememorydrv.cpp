@@ -68,8 +68,8 @@ QIcon SharedMemoryDriver::supportedFileIcon() const {
 
 QString SharedMemoryDriver::onOpenFileBegin() {
     bool ok;
-    auto id = getText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
-                      QLineEdit::Normal, {}, &ok);
+    auto id = dlgGetText(nullptr, tr("SharedMemory"), tr("PleaseInputID:"),
+                         QLineEdit::Normal, {}, &ok);
     if (!ok) {
         return {};
     }

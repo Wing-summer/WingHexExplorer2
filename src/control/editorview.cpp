@@ -38,6 +38,9 @@
 constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
 constexpr auto CLONE_LIMIT = 3;
 
+constexpr auto VIEW_PROPERTY = "__VIEW__";
+constexpr auto VIEW_ID_PROPERTY = "__ID__";
+
 QString EditorView::getDeviceFileName(const QString &ext, const QString &file) {
     return QStringLiteral("wdrv:///") + ext + QStringLiteral("/") + file;
 }
@@ -126,6 +129,9 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
     Q_ASSERT(view);
     m_others.insert(id, view);
     m_stack->addWidget(view);
+    view->setProperty(VIEW_PROPERTY, quintptr(this));
+    view->setProperty(VIEW_ID_PROPERTY, id);
+    view->installEventFilter(this);
     if (!isCloneFile()) {
         if (_pluginData.contains(id)) {
             view->loadState(_pluginData.value(id));
@@ -641,6 +647,11 @@ void EditorView::notifyOnWorkSpace(bool b) {
     }
 }
 
+void EditorView::raiseAndSwitchView(const QString &id) {
+    raise();
+    switchView(id);
+}
+
 void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
@@ -655,7 +666,7 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                 }
                 QString content;
 
-                if (b) {
+                if (b && !checkHasUnsavedState()) {
                     content = fileName;
                 } else {
                     content = QStringLiteral("* ") + fileName;
@@ -888,4 +899,15 @@ QString EditorView::fileName() const {
         return this->cloneParent()->fileName();
     }
     return m_fileName;
+}
+
+bool EditorView::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::DynamicPropertyChange) {
+        auto e = static_cast<QDynamicPropertyChangeEvent *>(event);
+        if (e->propertyName() == VIEW_PROPERTY ||
+            e->propertyName() == VIEW_ID_PROPERTY) {
+            std::abort();
+        }
+    }
+    return ads::CDockWidget::eventFilter(watched, event);
 }

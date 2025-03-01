@@ -81,7 +81,9 @@ void PluginSystem::finalizeCheckingEngine() { _engine->ShutDownAndRelease(); }
 
 void PluginSystem::toast(IWingPluginBase *sender, const QPixmap &icon,
                          const QString &message) {
-    Q_UNUSED(sender);
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     if (!checkThreadAff()) {
         return;
     }
@@ -91,25 +93,39 @@ void PluginSystem::toast(IWingPluginBase *sender, const QPixmap &icon,
     Toast::toast(_win, icon, message);
 }
 
-void PluginSystem::trace(IWingPluginBase *sender, const QString &message) {
+void PluginSystem::logTrace(IWingPluginBase *sender, const QString &message) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     Logger::trace(packLogMessage(sender->metaObject()->className(), message));
 }
 
-void PluginSystem::debug(IWingPluginBase *sender, const QString &message) {
+void PluginSystem::logDebug(IWingPluginBase *sender, const QString &message) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     Logger::debug(packLogMessage(sender->metaObject()->className(), message));
 }
 
-void PluginSystem::info(IWingPluginBase *sender, const QString &message) {
+void PluginSystem::logInfo(IWingPluginBase *sender, const QString &message) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     Logger::info(packLogMessage(sender->metaObject()->className(), message));
 }
 
-void PluginSystem::error(IWingPluginBase *sender, const QString &message) {
+void PluginSystem::logError(IWingPluginBase *sender, const QString &message) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     Logger::critical(
         packLogMessage(sender->metaObject()->className(), message));
 }
 
 bool PluginSystem::raiseDockWidget(IWingPluginBase *sender, QWidget *w) {
-    Q_UNUSED(sender);
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return false;
+    }
     if (_raisedw.contains(w)) {
         _raisedw.value(w)->raise();
         return true;
@@ -118,7 +134,9 @@ bool PluginSystem::raiseDockWidget(IWingPluginBase *sender, QWidget *w) {
 }
 
 QDialog *PluginSystem::createDialog(IWingPluginBase *sender, QWidget *content) {
-    Q_UNUSED(sender);
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return nullptr;
+    }
     if (!checkThreadAff()) {
         return nullptr;
     }
@@ -133,18 +151,21 @@ QDialog *PluginSystem::createDialog(IWingPluginBase *sender, QWidget *content) {
     }
 }
 
-void PluginSystem::aboutQt(WingHex::IWingPluginBase *sender, QWidget *parent,
-                           const QString &title) {
+void PluginSystem::msgAboutQt(WingHex::IWingPluginBase *sender, QWidget *parent,
+                              const QString &title) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     if (checkThreadAff()) {
         WingMessageBox::aboutQt(parent, title);
     }
 }
 
 QMessageBox::StandardButton
-PluginSystem::information(IWingPluginBase *sender, QWidget *parent,
-                          const QString &title, const QString &text,
-                          QMessageBox::StandardButtons buttons,
-                          QMessageBox::StandardButton defaultButton) {
+PluginSystem::msgInformation(IWingPluginBase *sender, QWidget *parent,
+                             const QString &title, const QString &text,
+                             QMessageBox::StandardButtons buttons,
+                             QMessageBox::StandardButton defaultButton) {
     if (checkThreadAff()) {
         return WingMessageBox::information(parent, title, text, buttons,
                                            defaultButton);
@@ -153,10 +174,13 @@ PluginSystem::information(IWingPluginBase *sender, QWidget *parent,
 }
 
 QMessageBox::StandardButton
-PluginSystem::question(IWingPluginBase *sender, QWidget *parent,
-                       const QString &title, const QString &text,
-                       QMessageBox::StandardButtons buttons,
-                       QMessageBox::StandardButton defaultButton) {
+PluginSystem::msgQuestion(IWingPluginBase *sender, QWidget *parent,
+                          const QString &title, const QString &text,
+                          QMessageBox::StandardButtons buttons,
+                          QMessageBox::StandardButton defaultButton) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return QMessageBox::StandardButton::NoButton;
+    }
     if (checkThreadAff()) {
         return WingMessageBox::question(parent, title, text, buttons,
                                         defaultButton);
@@ -165,10 +189,13 @@ PluginSystem::question(IWingPluginBase *sender, QWidget *parent,
 }
 
 QMessageBox::StandardButton
-PluginSystem::warning(IWingPluginBase *sender, QWidget *parent,
-                      const QString &title, const QString &text,
-                      QMessageBox::StandardButtons buttons,
-                      QMessageBox::StandardButton defaultButton) {
+PluginSystem::msgWarning(IWingPluginBase *sender, QWidget *parent,
+                         const QString &title, const QString &text,
+                         QMessageBox::StandardButtons buttons,
+                         QMessageBox::StandardButton defaultButton) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return QMessageBox::StandardButton::NoButton;
+    }
     if (checkThreadAff()) {
         return WingMessageBox::warning(parent, title, text, buttons,
                                        defaultButton);
@@ -177,10 +204,13 @@ PluginSystem::warning(IWingPluginBase *sender, QWidget *parent,
 }
 
 QMessageBox::StandardButton
-PluginSystem::critical(IWingPluginBase *sender, QWidget *parent,
-                       const QString &title, const QString &text,
-                       QMessageBox::StandardButtons buttons,
-                       QMessageBox::StandardButton defaultButton) {
+PluginSystem::msgCritical(IWingPluginBase *sender, QWidget *parent,
+                          const QString &title, const QString &text,
+                          QMessageBox::StandardButtons buttons,
+                          QMessageBox::StandardButton defaultButton) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return QMessageBox::StandardButton::NoButton;
+    }
     if (checkThreadAff()) {
         return WingMessageBox::critical(parent, title, text, buttons,
                                         defaultButton);
@@ -188,8 +218,11 @@ PluginSystem::critical(IWingPluginBase *sender, QWidget *parent,
     return QMessageBox::StandardButton::NoButton;
 }
 
-void PluginSystem::about(IWingPluginBase *sender, QWidget *parent,
-                         const QString &title, const QString &text) {
+void PluginSystem::msgAbout(IWingPluginBase *sender, QWidget *parent,
+                            const QString &title, const QString &text) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     if (checkThreadAff()) {
         WingMessageBox::about(parent, title, text);
     }
@@ -200,6 +233,9 @@ PluginSystem::msgbox(IWingPluginBase *sender, QWidget *parent,
                      QMessageBox::Icon icon, const QString &title,
                      const QString &text, QMessageBox::StandardButtons buttons,
                      QMessageBox::StandardButton defaultButton) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return QMessageBox::StandardButton::NoButton;
+    }
     if (checkThreadAff()) {
         return WingMessageBox::msgbox(parent, icon, title, text, buttons,
                                       defaultButton);
@@ -207,10 +243,14 @@ PluginSystem::msgbox(IWingPluginBase *sender, QWidget *parent,
     return QMessageBox::StandardButton::NoButton;
 }
 
-QString PluginSystem::getText(IWingPluginBase *sender, QWidget *parent,
-                              const QString &title, const QString &label,
-                              QLineEdit::EchoMode echo, const QString &text,
-                              bool *ok, Qt::InputMethodHints inputMethodHints) {
+QString PluginSystem::dlgGetText(IWingPluginBase *sender, QWidget *parent,
+                                 const QString &title, const QString &label,
+                                 QLineEdit::EchoMode echo, const QString &text,
+                                 bool *ok,
+                                 Qt::InputMethodHints inputMethodHints) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         return WingInputDialog::getText(parent, title, label, echo, text, ok,
                                         inputMethodHints);
@@ -218,11 +258,13 @@ QString PluginSystem::getText(IWingPluginBase *sender, QWidget *parent,
     return {};
 }
 
-QString PluginSystem::getMultiLineText(WingHex::IWingPluginBase *sender,
-                                       QWidget *parent, const QString &title,
-                                       const QString &label,
-                                       const QString &text, bool *ok,
-                                       Qt::InputMethodHints inputMethodHints) {
+QString PluginSystem::dlgGetMultiLineText(
+    WingHex::IWingPluginBase *sender, QWidget *parent, const QString &title,
+    const QString &label, const QString &text, bool *ok,
+    Qt::InputMethodHints inputMethodHints) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         return WingInputDialog::getMultiLineText(parent, title, label, text, ok,
                                                  inputMethodHints);
@@ -230,11 +272,14 @@ QString PluginSystem::getMultiLineText(WingHex::IWingPluginBase *sender,
     return {};
 }
 
-QString PluginSystem::getItem(WingHex::IWingPluginBase *sender, QWidget *parent,
-                              const QString &title, const QString &label,
-                              const QStringList &items, int current,
-                              bool editable, bool *ok,
-                              Qt::InputMethodHints inputMethodHints) {
+QString PluginSystem::dlgGetItem(WingHex::IWingPluginBase *sender,
+                                 QWidget *parent, const QString &title,
+                                 const QString &label, const QStringList &items,
+                                 int current, bool editable, bool *ok,
+                                 Qt::InputMethodHints inputMethodHints) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         return WingInputDialog::getItem(parent, title, label, items, current,
                                         editable, ok, inputMethodHints);
@@ -242,9 +287,13 @@ QString PluginSystem::getItem(WingHex::IWingPluginBase *sender, QWidget *parent,
     return {};
 }
 
-int PluginSystem::getInt(IWingPluginBase *sender, QWidget *parent,
-                         const QString &title, const QString &label, int value,
-                         int minValue, int maxValue, int step, bool *ok) {
+int PluginSystem::dlgGetInt(IWingPluginBase *sender, QWidget *parent,
+                            const QString &title, const QString &label,
+                            int value, int minValue, int maxValue, int step,
+                            bool *ok) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return 0;
+    }
     if (checkThreadAff()) {
         return WingInputDialog::getInt(parent, title, label, value, minValue,
                                        maxValue, step, ok);
@@ -252,10 +301,14 @@ int PluginSystem::getInt(IWingPluginBase *sender, QWidget *parent,
     return 0;
 }
 
-double PluginSystem::getDouble(IWingPluginBase *sender, QWidget *parent,
-                               const QString &title, const QString &label,
-                               double value, double minValue, double maxValue,
-                               int decimals, bool *ok, double step) {
+double PluginSystem::dlgGetDouble(IWingPluginBase *sender, QWidget *parent,
+                                  const QString &title, const QString &label,
+                                  double value, double minValue,
+                                  double maxValue, int decimals, bool *ok,
+                                  double step) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return qQNaN();
+    }
     if (checkThreadAff()) {
         return WingInputDialog::getDouble(parent, title, label, value, minValue,
                                           maxValue, decimals, ok, step);
@@ -263,11 +316,11 @@ double PluginSystem::getDouble(IWingPluginBase *sender, QWidget *parent,
     return qQNaN();
 }
 
-QString PluginSystem::getExistingDirectory(IWingPluginBase *sender,
-                                           QWidget *parent,
-                                           const QString &caption,
-                                           const QString &dir,
-                                           QFileDialog::Options options) {
+QString PluginSystem::dlgGetExistingDirectory(IWingPluginBase *sender,
+                                              QWidget *parent,
+                                              const QString &caption,
+                                              const QString &dir,
+                                              QFileDialog::Options options) {
     if (checkThreadAff()) {
         return WingFileDialog::getExistingDirectory(parent, caption, dir,
                                                     options);
@@ -275,11 +328,14 @@ QString PluginSystem::getExistingDirectory(IWingPluginBase *sender,
     return {};
 }
 
-QString PluginSystem::getOpenFileName(IWingPluginBase *sender, QWidget *parent,
-                                      const QString &caption,
-                                      const QString &dir, const QString &filter,
-                                      QString *selectedFilter,
-                                      QFileDialog::Options options) {
+QString
+PluginSystem::dlgGetOpenFileName(IWingPluginBase *sender, QWidget *parent,
+                                 const QString &caption, const QString &dir,
+                                 const QString &filter, QString *selectedFilter,
+                                 QFileDialog::Options options) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         return WingFileDialog::getOpenFileName(parent, caption, dir, filter,
                                                selectedFilter, options);
@@ -287,11 +343,10 @@ QString PluginSystem::getOpenFileName(IWingPluginBase *sender, QWidget *parent,
     return {};
 }
 
-QStringList
-PluginSystem::getOpenFileNames(IWingPluginBase *sender, QWidget *parent,
-                               const QString &caption, const QString &dir,
-                               const QString &filter, QString *selectedFilter,
-                               QFileDialog::Options options) {
+QStringList PluginSystem::dlgGetOpenFileNames(
+    IWingPluginBase *sender, QWidget *parent, const QString &caption,
+    const QString &dir, const QString &filter, QString *selectedFilter,
+    QFileDialog::Options options) {
     if (checkThreadAff()) {
         return WingFileDialog::getOpenFileNames(parent, caption, dir, filter,
                                                 selectedFilter, options);
@@ -299,11 +354,14 @@ PluginSystem::getOpenFileNames(IWingPluginBase *sender, QWidget *parent,
     return {};
 }
 
-QString PluginSystem::getSaveFileName(IWingPluginBase *sender, QWidget *parent,
-                                      const QString &caption,
-                                      const QString &dir, const QString &filter,
-                                      QString *selectedFilter,
-                                      QFileDialog::Options options) {
+QString
+PluginSystem::dlgGetSaveFileName(IWingPluginBase *sender, QWidget *parent,
+                                 const QString &caption, const QString &dir,
+                                 const QString &filter, QString *selectedFilter,
+                                 QFileDialog::Options options) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         return WingFileDialog::getSaveFileName(parent, caption, dir, filter,
                                                selectedFilter, options);
@@ -311,8 +369,11 @@ QString PluginSystem::getSaveFileName(IWingPluginBase *sender, QWidget *parent,
     return {};
 }
 
-QColor PluginSystem::getColor(IWingPluginBase *sender, const QString &caption,
-                              QWidget *parent) {
+QColor PluginSystem::dlgGetColor(IWingPluginBase *sender,
+                                 const QString &caption, QWidget *parent) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return {};
+    }
     if (checkThreadAff()) {
         ColorPickerDialog d(parent);
         d.setWindowTitle(caption);
@@ -325,6 +386,9 @@ QColor PluginSystem::getColor(IWingPluginBase *sender, const QString &caption,
 
 bool PluginSystem::existsServiceHost(IWingPluginBase *sender,
                                      const QString &puid) {
+    if (checkPluginAndReport(sender, __func__) == nullptr) {
+        return false;
+    }
     return std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
                         [puid, this](IWingPlugin *plg) {
                             return getPluginID(plg) == puid;
@@ -337,6 +401,9 @@ bool PluginSystem::invokeService(IWingPluginBase *sender, const QString &puid,
                                  QGenericArgument val0, QGenericArgument val1,
                                  QGenericArgument val2, QGenericArgument val3,
                                  QGenericArgument val4) {
+    if (checkPluginAndReport(sender, __func__) == nullptr) {
+        return false;
+    }
     auto r =
         std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
                      [=](IWingPlugin *plg) { return getPUID(plg) == puid; });
@@ -386,8 +453,8 @@ bool PluginSystem::invokeService(IWingPluginBase *sender, const QString &puid,
     }
 
     auto m = meta->method(midx);
-
-    if (m.methodType() == QMetaMethod::Signal) {
+    auto mt = m.methodType();
+    if (mt == QMetaMethod::Signal || mt == QMetaMethod::Constructor) {
         // report
         Logger::warning(packLogMessage(
             sender->metaObject()->className(),
@@ -417,12 +484,18 @@ bool PluginSystem::invokeService(IWingPluginBase *sender, const QString &puid,
 }
 
 bool PluginSystem::isCurrentDocEditing(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return pluginCurrentEditor(plg);
 }
 
 QString PluginSystem::currentDocFilename(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->fileName();
@@ -431,7 +504,10 @@ QString PluginSystem::currentDocFilename(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::isReadOnly(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->cursor()->insertionMode() ==
@@ -441,7 +517,10 @@ bool PluginSystem::isReadOnly(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::isInsertionMode(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->isLocked();
@@ -450,7 +529,10 @@ bool PluginSystem::isInsertionMode(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::isKeepSize(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->isKeepSize();
@@ -459,7 +541,10 @@ bool PluginSystem::isKeepSize(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::isLocked(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->document()->isDocSaved();
@@ -468,7 +553,10 @@ bool PluginSystem::isLocked(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::documentLines(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->renderer()->documentLines();
@@ -477,7 +565,10 @@ qsizetype PluginSystem::documentLines(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::documentBytes(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->documentBytes();
@@ -486,7 +577,10 @@ qsizetype PluginSystem::documentBytes(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::currentRow(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->currentRow();
@@ -495,7 +589,10 @@ qsizetype PluginSystem::currentRow(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::currentColumn(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->currentColumn();
@@ -504,7 +601,10 @@ qsizetype PluginSystem::currentColumn(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::currentOffset(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->cursor()->position().offset();
@@ -513,7 +613,10 @@ qsizetype PluginSystem::currentOffset(IWingPluginBase *sender) {
 }
 
 qsizetype PluginSystem::selectedLength(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->cursor()->currentSelectionLength();
@@ -523,7 +626,10 @@ qsizetype PluginSystem::selectedLength(IWingPluginBase *sender) {
 
 QByteArray PluginSystem::selectedBytes(IWingPluginBase *sender,
                                        qsizetype index) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e && index >= 0 && index < e->hexEditor()->cursor()->selectionCount()) {
         return e->hexEditor()->selectedBytes(index);
@@ -532,7 +638,10 @@ QByteArray PluginSystem::selectedBytes(IWingPluginBase *sender,
 }
 
 QByteArrayList PluginSystem::selectionBytes(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->selectedBytes();
@@ -554,7 +663,10 @@ qsizetype PluginSystem::selectionLength(IWingPluginBase *sender,
 }
 
 qsizetype PluginSystem::selectionCount(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         auto cursor = e->hexEditor()->cursor();
@@ -564,7 +676,10 @@ qsizetype PluginSystem::selectionCount(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::stringVisible(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->asciiVisible();
@@ -573,7 +688,10 @@ bool PluginSystem::stringVisible(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::addressVisible(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->headerVisible();
@@ -582,7 +700,10 @@ bool PluginSystem::addressVisible(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::headerVisible(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->addressVisible();
@@ -591,7 +712,10 @@ bool PluginSystem::headerVisible(IWingPluginBase *sender) {
 }
 
 quintptr PluginSystem::addressBase(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->addressBase();
@@ -609,38 +733,91 @@ bool PluginSystem::isModified(IWingPluginBase *sender) {
 }
 
 qint8 PluginSystem::readInt8(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     return readBasicTypeContent<qint8>(plg, offset);
 }
 
 qint16 PluginSystem::readInt16(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     return readBasicTypeContent<qint16>(plg, offset);
 }
 
 qint32 PluginSystem::readInt32(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     return readBasicTypeContent<qint32>(plg, offset);
 }
 
 qint64 PluginSystem::readInt64(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     return readBasicTypeContent<qint64>(plg, offset);
 }
 
+quint8 PluginSystem::readUInt8(IWingPluginBase *sender, qsizetype offset) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
+    return readBasicTypeContent<quint8>(plg, offset);
+}
+
+quint16 PluginSystem::readUInt16(IWingPluginBase *sender, qsizetype offset) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
+    return readBasicTypeContent<quint16>(plg, offset);
+}
+
+quint32 PluginSystem::readUInt32(IWingPluginBase *sender, qsizetype offset) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
+    return readBasicTypeContent<quint32>(plg, offset);
+}
+
+quint64 PluginSystem::readUInt64(IWingPluginBase *sender, qsizetype offset) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
+    return readBasicTypeContent<quint64>(plg, offset);
+}
+
 float PluginSystem::readFloat(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return qQNaN();
+    }
     return readBasicTypeContent<float>(plg, offset);
 }
 
 double PluginSystem::readDouble(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return qQNaN();
+    }
     return readBasicTypeContent<double>(plg, offset);
 }
 
 QString PluginSystem::readString(IWingPluginBase *sender, qsizetype offset,
                                  const QString &encoding) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         _rwlock.lockForRead();
@@ -662,7 +839,10 @@ QString PluginSystem::readString(IWingPluginBase *sender, qsizetype offset,
 
 QByteArray PluginSystem::readBytes(IWingPluginBase *sender, qsizetype offset,
                                    qsizetype count) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         _rwlock.lockForRead();
@@ -684,7 +864,10 @@ qsizetype PluginSystem::findNext(IWingPluginBase *sender, qsizetype begin,
 
 qsizetype PluginSystem::findPrevious(IWingPluginBase *sender, qsizetype begin,
                                      const QByteArray &ba) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return 0;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->document()->findPrevious(begin, ba);
@@ -693,7 +876,10 @@ qsizetype PluginSystem::findPrevious(IWingPluginBase *sender, qsizetype begin,
 }
 
 QString PluginSystem::bookMarkComment(IWingPluginBase *sender, qsizetype pos) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->document()->bookMark(pos);
@@ -702,7 +888,10 @@ QString PluginSystem::bookMarkComment(IWingPluginBase *sender, qsizetype pos) {
 }
 
 bool PluginSystem::existBookMark(IWingPluginBase *sender, qsizetype pos) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->document()->existBookMark(pos);
@@ -711,7 +900,10 @@ bool PluginSystem::existBookMark(IWingPluginBase *sender, qsizetype pos) {
 }
 
 bool PluginSystem::switchDocument(IWingPluginBase *sender, int handle) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -727,7 +919,10 @@ bool PluginSystem::switchDocument(IWingPluginBase *sender, int handle) {
 }
 
 bool PluginSystem::raiseDocument(IWingPluginBase *sender, int handle) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -749,7 +944,10 @@ bool PluginSystem::raiseDocument(IWingPluginBase *sender, int handle) {
 }
 
 bool PluginSystem::setLockedFile(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -761,7 +959,10 @@ bool PluginSystem::setLockedFile(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setKeepSize(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -773,7 +974,10 @@ bool PluginSystem::setKeepSize(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setStringVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -786,7 +990,10 @@ bool PluginSystem::setStringVisible(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setAddressVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -799,7 +1006,10 @@ bool PluginSystem::setAddressVisible(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setHeaderVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -812,7 +1022,10 @@ bool PluginSystem::setHeaderVisible(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setAddressBase(IWingPluginBase *sender, quintptr base) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -825,7 +1038,10 @@ bool PluginSystem::setAddressBase(IWingPluginBase *sender, quintptr base) {
 }
 
 bool PluginSystem::beginMarco(IWingPluginBase *sender, const QString &txt) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto fid = m_plgCurrentfid[plg];
     if (fid < 0) {
         return false;
@@ -839,7 +1055,10 @@ bool PluginSystem::beginMarco(IWingPluginBase *sender, const QString &txt) {
 }
 
 bool PluginSystem::endMarco(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto fid = m_plgCurrentfid[plg];
     if (fid < 0) {
         return false;
@@ -862,43 +1081,100 @@ bool PluginSystem::endMarco(IWingPluginBase *sender) {
 
 bool PluginSystem::writeInt8(IWingPluginBase *sender, qsizetype offset,
                              qint8 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeInt16(IWingPluginBase *sender, qsizetype offset,
                               qint16 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeInt32(IWingPluginBase *sender, qsizetype offset,
                               qint32 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeInt64(IWingPluginBase *sender, qsizetype offset,
                               qint64 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return writeBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::writeUInt8(IWingPluginBase *sender, qsizetype offset,
+                              quint8 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return writeBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::writeUInt16(IWingPluginBase *sender, qsizetype offset,
+                               quint16 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return writeBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::writeUInt32(IWingPluginBase *sender, qsizetype offset,
+                               quint32 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return writeBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::writeUInt64(IWingPluginBase *sender, qsizetype offset,
+                               quint64 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeFloat(IWingPluginBase *sender, qsizetype offset,
                               float value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeDouble(IWingPluginBase *sender, qsizetype offset,
                                double value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return writeBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::writeString(IWingPluginBase *sender, qsizetype offset,
                                const QString &value, const QString &encoding) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -919,7 +1195,10 @@ bool PluginSystem::writeString(IWingPluginBase *sender, qsizetype offset,
 
 bool PluginSystem::writeBytes(IWingPluginBase *sender, qsizetype offset,
                               const QByteArray &data) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -938,43 +1217,100 @@ bool PluginSystem::writeBytes(IWingPluginBase *sender, qsizetype offset,
 
 bool PluginSystem::insertInt8(IWingPluginBase *sender, qsizetype offset,
                               qint8 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertInt16(IWingPluginBase *sender, qsizetype offset,
                                qint16 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertInt32(IWingPluginBase *sender, qsizetype offset,
                                qint32 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertInt64(IWingPluginBase *sender, qsizetype offset,
                                qint64 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return insertBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::insertUInt8(IWingPluginBase *sender, qsizetype offset,
+                               quint8 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return insertBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::insertUInt16(IWingPluginBase *sender, qsizetype offset,
+                                quint16 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return insertBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::insertUInt32(IWingPluginBase *sender, qsizetype offset,
+                                quint32 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return insertBasicTypeContent(plg, offset, value);
+}
+
+bool PluginSystem::insertUInt64(IWingPluginBase *sender, qsizetype offset,
+                                quint64 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertFloat(IWingPluginBase *sender, qsizetype offset,
                                float value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertDouble(IWingPluginBase *sender, qsizetype offset,
                                 double value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return insertBasicTypeContent(plg, offset, value);
 }
 
 bool PluginSystem::insertString(IWingPluginBase *sender, qsizetype offset,
                                 const QString &value, const QString &encoding) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -995,7 +1331,10 @@ bool PluginSystem::insertString(IWingPluginBase *sender, qsizetype offset,
 
 bool PluginSystem::insertBytes(IWingPluginBase *sender, qsizetype offset,
                                const QByteArray &data) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -1013,38 +1352,91 @@ bool PluginSystem::insertBytes(IWingPluginBase *sender, qsizetype offset,
 }
 
 bool PluginSystem::appendInt8(IWingPluginBase *sender, qint8 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendInt16(IWingPluginBase *sender, qint16 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendInt32(IWingPluginBase *sender, qint32 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendInt64(IWingPluginBase *sender, qint64 value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return appendBasicTypeContent(plg, value);
+}
+
+bool PluginSystem::appendUInt8(IWingPluginBase *sender, quint8 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return appendBasicTypeContent(plg, value);
+}
+
+bool PluginSystem::appendUInt16(IWingPluginBase *sender, quint16 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return appendBasicTypeContent(plg, value);
+}
+
+bool PluginSystem::appendUInt32(IWingPluginBase *sender, quint32 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
+    return appendBasicTypeContent(plg, value);
+}
+
+bool PluginSystem::appendUInt64(IWingPluginBase *sender, quint64 value) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendFloat(IWingPluginBase *sender, float value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendDouble(IWingPluginBase *sender, double value) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     return appendBasicTypeContent(plg, value);
 }
 
 bool PluginSystem::appendString(IWingPluginBase *sender, const QString &value,
                                 const QString &encoding) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -1066,7 +1458,10 @@ bool PluginSystem::appendString(IWingPluginBase *sender, const QString &value,
 
 bool PluginSystem::appendBytes(IWingPluginBase *sender,
                                const QByteArray &data) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -1085,7 +1480,10 @@ bool PluginSystem::appendBytes(IWingPluginBase *sender,
 
 bool PluginSystem::removeBytes(IWingPluginBase *sender, qsizetype offset,
                                qsizetype len) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     auto e = getCurrentPluginView(plg);
     if (e) {
         auto editor = e->hexEditor();
@@ -1106,7 +1504,10 @@ bool PluginSystem::removeBytes(IWingPluginBase *sender, qsizetype offset,
 bool PluginSystem::moveTo(IWingPluginBase *sender, qsizetype line,
                           qsizetype column, int nibbleindex,
                           bool clearSelection) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1121,7 +1522,10 @@ bool PluginSystem::moveTo(IWingPluginBase *sender, qsizetype line,
 
 bool PluginSystem::moveTo(IWingPluginBase *sender, qsizetype offset,
                           bool clearSelection) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1135,7 +1539,10 @@ bool PluginSystem::moveTo(IWingPluginBase *sender, qsizetype offset,
 
 bool PluginSystem::select(IWingPluginBase *sender, qsizetype offset,
                           qsizetype length, SelectionMode mode) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1162,7 +1569,10 @@ bool PluginSystem::select(IWingPluginBase *sender, qsizetype offset,
 }
 
 bool PluginSystem::setInsertionMode(IWingPluginBase *sender, bool isinsert) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1178,7 +1588,10 @@ bool PluginSystem::setInsertionMode(IWingPluginBase *sender, bool isinsert) {
 bool PluginSystem::metadata(IWingPluginBase *sender, qsizetype begin,
                             qsizetype length, const QColor &fgcolor,
                             const QColor &bgcolor, const QString &comment) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1198,7 +1611,10 @@ bool PluginSystem::metadata(IWingPluginBase *sender, qsizetype begin,
 }
 
 bool PluginSystem::removeMetadata(IWingPluginBase *sender, qsizetype offset) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1216,7 +1632,10 @@ bool PluginSystem::removeMetadata(IWingPluginBase *sender, qsizetype offset) {
 }
 
 bool PluginSystem::clearMetadata(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1234,7 +1653,10 @@ bool PluginSystem::clearMetadata(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::setMetaVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1250,7 +1672,10 @@ bool PluginSystem::setMetaVisible(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setMetafgVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1264,7 +1689,10 @@ bool PluginSystem::setMetafgVisible(IWingPluginBase *sender, bool b) {
 }
 
 bool PluginSystem::setMetabgVisible(IWingPluginBase *sender, bool b) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1293,7 +1721,10 @@ bool PluginSystem::setMetaCommentVisible(IWingPluginBase *sender, bool b) {
 
 bool PluginSystem::addBookMark(IWingPluginBase *sender, qsizetype pos,
                                const QString &comment) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1312,7 +1743,10 @@ bool PluginSystem::addBookMark(IWingPluginBase *sender, qsizetype pos,
 
 bool PluginSystem::modBookMark(IWingPluginBase *sender, qsizetype pos,
                                const QString &comment) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1330,7 +1764,10 @@ bool PluginSystem::modBookMark(IWingPluginBase *sender, qsizetype pos,
 }
 
 bool PluginSystem::removeBookMark(IWingPluginBase *sender, qsizetype pos) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1348,7 +1785,10 @@ bool PluginSystem::removeBookMark(IWingPluginBase *sender, qsizetype pos) {
 }
 
 bool PluginSystem::clearBookMark(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1366,7 +1806,10 @@ bool PluginSystem::clearBookMark(IWingPluginBase *sender) {
 }
 
 bool PluginSystem::closeAllFiles(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return false;
+    }
     if (!checkThreadAff()) {
         return false;
     }
@@ -1379,9 +1822,9 @@ bool PluginSystem::closeAllFiles(IWingPluginBase *sender) {
     return true;
 }
 
-bool PluginSystem::updateText(IWingPluginBase *sender, const QString &data,
-                              const QString &title) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualText(IWingPluginBase *sender, const QString &data,
+                                  const QString &title) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
@@ -1390,34 +1833,34 @@ bool PluginSystem::updateText(IWingPluginBase *sender, const QString &data,
     return true;
 }
 
-bool PluginSystem::updateTextList(IWingPluginBase *sender,
-                                  const QStringList &data, const QString &title,
-                                  ClickedCallBack clicked,
-                                  ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualTextList(IWingPluginBase *sender,
+                                      const QStringList &data,
+                                      const QString &title,
+                                      ClickedCallBack clicked,
+                                      ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
     return updateTextList_API(data, title, clicked, dblClicked);
 }
 
-bool PluginSystem::updateTextTree(IWingPluginBase *sender, const QString &json,
-                                  const QString &title, ClickedCallBack clicked,
-                                  ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualTextTree(IWingPluginBase *sender,
+                                      const QString &json, const QString &title,
+                                      ClickedCallBack clicked,
+                                      ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
     return updateTextTree_API(json, title, clicked, dblClicked);
 }
 
-bool PluginSystem::updateTextTable(IWingPluginBase *sender, const QString &json,
-                                   const QStringList &headers,
-                                   const QStringList &headerNames,
-                                   const QString &title,
-                                   ClickedCallBack clicked,
-                                   ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualTextTable(
+    IWingPluginBase *sender, const QString &json, const QStringList &headers,
+    const QStringList &headerNames, const QString &title,
+    ClickedCallBack clicked, ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
@@ -1425,12 +1868,12 @@ bool PluginSystem::updateTextTable(IWingPluginBase *sender, const QString &json,
                                dblClicked);
 }
 
-bool PluginSystem::updateTextListByModel(IWingPluginBase *sender,
-                                         QAbstractItemModel *model,
-                                         const QString &title,
-                                         ClickedCallBack clicked,
-                                         ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualTextListByModel(IWingPluginBase *sender,
+                                             QAbstractItemModel *model,
+                                             const QString &title,
+                                             ClickedCallBack clicked,
+                                             ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
@@ -1448,12 +1891,12 @@ bool PluginSystem::updateTextListByModel(IWingPluginBase *sender,
     return false;
 }
 
-bool PluginSystem::updateTextTreeByModel(IWingPluginBase *sender,
-                                         QAbstractItemModel *model,
-                                         const QString &title,
-                                         ClickedCallBack clicked,
-                                         ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::dataVisualTextTreeByModel(IWingPluginBase *sender,
+                                             QAbstractItemModel *model,
+                                             const QString &title,
+                                             ClickedCallBack clicked,
+                                             ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
@@ -1471,12 +1914,36 @@ bool PluginSystem::updateTextTreeByModel(IWingPluginBase *sender,
     return false;
 }
 
-bool PluginSystem::updateTextTableByModel(IWingPluginBase *sender,
-                                          QAbstractItemModel *model,
-                                          const QString &title,
-                                          ClickedCallBack clicked,
-                                          ClickedCallBack dblClicked) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+bool PluginSystem::checkErrAllAllowAndReport(IWingPluginBase *sender,
+                                             const char *func) {
+    auto p = qobject_cast<WingHex::IWingPlugin *>(sender);
+    if (p == nullptr) {
+        auto p = qobject_cast<WingHex::IWingDevice *>(sender);
+        if (p == nullptr) {
+            qCritical("[EvilCall] Invalid sender called '%s'", func);
+            return true;
+        }
+    }
+    return false;
+}
+
+IWingPlugin *PluginSystem::checkPluginAndReport(IWingPluginBase *sender,
+                                                const char *func) {
+    Q_ASSERT(func);
+    auto p = qobject_cast<WingHex::IWingPlugin *>(sender);
+    if (p == nullptr) {
+        qCritical("[EvilCall] Invalid sender called '%s'", func);
+        return nullptr;
+    }
+    return p;
+}
+
+bool PluginSystem::dataVisualTextTableByModel(IWingPluginBase *sender,
+                                              QAbstractItemModel *model,
+                                              const QString &title,
+                                              ClickedCallBack clicked,
+                                              ClickedCallBack dblClicked) {
+    auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr || !checkThreadAff()) {
         return false;
     }
@@ -1496,7 +1963,10 @@ bool PluginSystem::updateTextTableByModel(IWingPluginBase *sender,
 
 ErrFile PluginSystem::saveAsCurrent(IWingPluginBase *sender,
                                     const QString &savename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1514,7 +1984,10 @@ ErrFile PluginSystem::saveAsCurrent(IWingPluginBase *sender,
 
 ErrFile PluginSystem::exportCurrent(IWingPluginBase *sender,
                                     const QString &savename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1532,7 +2005,10 @@ ErrFile PluginSystem::exportCurrent(IWingPluginBase *sender,
 }
 
 ErrFile PluginSystem::saveCurrent(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1550,7 +2026,10 @@ ErrFile PluginSystem::saveCurrent(IWingPluginBase *sender) {
 }
 
 ErrFile PluginSystem::closeCurrent(IWingPluginBase *sender, bool force) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1571,7 +2050,10 @@ ErrFile PluginSystem::closeCurrent(IWingPluginBase *sender, bool force) {
 }
 
 ErrFile PluginSystem::openCurrent(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1598,7 +2080,10 @@ ErrFile PluginSystem::openCurrent(IWingPluginBase *sender) {
 
 ErrFile PluginSystem::saveAsFile(IWingPluginBase *sender, int handle,
                                  const QString &savename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1616,7 +2101,10 @@ ErrFile PluginSystem::saveAsFile(IWingPluginBase *sender, int handle,
 
 ErrFile PluginSystem::exportFile(IWingPluginBase *sender, int handle,
                                  const QString &savename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1635,7 +2123,10 @@ ErrFile PluginSystem::exportFile(IWingPluginBase *sender, int handle,
 
 ErrFile PluginSystem::openWorkSpace(IWingPluginBase *sender,
                                     const QString &filename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1665,7 +2156,10 @@ ErrFile PluginSystem::openWorkSpace(IWingPluginBase *sender,
 }
 
 ErrFile PluginSystem::saveFile(IWingPluginBase *sender, int handle) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1683,7 +2177,10 @@ ErrFile PluginSystem::saveFile(IWingPluginBase *sender, int handle) {
 
 ErrFile PluginSystem::closeFile(IWingPluginBase *sender, int handle,
                                 bool force) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1694,7 +2191,10 @@ ErrFile PluginSystem::closeFile(IWingPluginBase *sender, int handle,
 }
 
 ErrFile PluginSystem::closeHandle(IWingPluginBase *sender, int handle) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (closeHandle(plg, handle)) {
         return WingHex::ErrFile::Success;
     }
@@ -1703,7 +2203,10 @@ ErrFile PluginSystem::closeHandle(IWingPluginBase *sender, int handle) {
 
 ErrFile PluginSystem::openExtFile(IWingPluginBase *sender, const QString &ext,
                                   const QString &file) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1734,7 +2237,10 @@ ErrFile PluginSystem::openExtFile(IWingPluginBase *sender, const QString &ext,
 
 ErrFile PluginSystem::openFile(IWingPluginBase *sender,
                                const QString &filename) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1763,7 +2269,10 @@ ErrFile PluginSystem::openFile(IWingPluginBase *sender,
 }
 
 ErrFile PluginSystem::newFile(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return ErrFile::Error;
+    }
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -1791,10 +2300,12 @@ ErrFile PluginSystem::newFile(IWingPluginBase *sender) {
 
 HexPosition PluginSystem::selectionEnd(IWingPluginBase *sender,
                                        qsizetype index) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
-    HexPosition pos;
-    memset(&pos, 0, sizeof(HexPosition));
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
 
+    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
         auto cursor = e->hexEditor()->cursor();
@@ -1811,10 +2322,12 @@ HexPosition PluginSystem::selectionEnd(IWingPluginBase *sender,
 
 HexPosition PluginSystem::selectionStart(IWingPluginBase *sender,
                                          qsizetype index) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
-    HexPosition pos;
-    memset(&pos, 0, sizeof(HexPosition));
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
 
+    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
         auto cursor = e->hexEditor()->cursor();
@@ -1830,10 +2343,12 @@ HexPosition PluginSystem::selectionStart(IWingPluginBase *sender,
 }
 
 HexPosition PluginSystem::currentPos(IWingPluginBase *sender) {
-    auto plg = qobject_cast<IWingPlugin *>(sender);
-    HexPosition pos;
-    memset(&pos, 0, sizeof(HexPosition));
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
 
+    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
         auto cursor = e->hexEditor()->cursor();
@@ -1846,7 +2361,9 @@ HexPosition PluginSystem::currentPos(IWingPluginBase *sender) {
 }
 
 AppTheme PluginSystem::currentAppTheme(WingHex::IWingPluginBase *sender) {
-    Q_UNUSED(sender);
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return WingHex::AppTheme::Dark;
+    }
     auto theme = SkinManager::instance().currentTheme();
     switch (theme) {
     case SkinManager::Theme::Dark:
@@ -1857,7 +2374,10 @@ AppTheme PluginSystem::currentAppTheme(WingHex::IWingPluginBase *sender) {
     return WingHex::AppTheme::Dark; // fallback to default theme
 }
 
-void PluginSystem::warn(IWingPluginBase *sender, const QString &message) {
+void PluginSystem::logWarn(IWingPluginBase *sender, const QString &message) {
+    if (checkErrAllAllowAndReport(sender, __func__)) {
+        return;
+    }
     Logger::warning(packLogMessage(sender->metaObject()->className(), message));
 }
 
@@ -3110,13 +3630,13 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
             [p, this]() {
                 auto file = p->onOpenFileBegin();
                 if (file.isNull()) {
-                    // common dialog
-                    file = WingFileDialog::getOpenFileName(
-                        _win, tr("ChooseFile"), _win->m_lastusedpath);
+                    return;
                 }
 
                 if (file.isEmpty()) {
-                    return;
+                    // common dialog
+                    file = WingFileDialog::getOpenFileName(
+                        _win, tr("ChooseFile"), _win->m_lastusedpath);
                 }
 
                 EditorView *view = nullptr;
@@ -3488,4 +4008,16 @@ QUndoCommand *PluginSystem::pluginCurrentUndoCmd(IWingPlugin *plg) const {
         }
     }
     return nullptr;
+}
+
+IWingDevice *PluginSystem::checkBaseAndReport(IWingPluginBase *sender,
+                                              const char *func) {
+    Q_ASSERT(func);
+    // I don't trust it, try to convert again
+    auto p = qobject_cast<WingHex::IWingDevice *>(sender);
+    if (p) {
+        qCritical("[EvilCall] Invalid sender called '%s'", func);
+        return nullptr;
+    }
+    return p;
 }

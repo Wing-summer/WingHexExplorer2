@@ -22,14 +22,20 @@
 
 WingHex::WingEditorViewWidget::WingEditorViewWidget(IWingPlugin *plg,
                                                     QWidget *parent)
-    : QWidget(parent), WingHex::IWingPluginAPICalls(plg) {}
-
-void WingHex::WingEditorViewWidget::docSaved(bool saved) {
-    // TODO
-}
+    : WingPluginWidget(plg, parent) {}
 
 void WingHex::WingEditorViewWidget::raiseView() {
-    // TODO
+    constexpr auto VIEW_PROPERTY = "__VIEW__";
+    constexpr auto VIEW_ID_PROPERTY = "__ID__";
+
+    auto rawptr =
+        reinterpret_cast<QObject *>(property(VIEW_PROPERTY).value<quintptr>());
+    auto ptr = qobject_cast<QWidget *>(rawptr);
+    auto id = property(VIEW_ID_PROPERTY).toString();
+    if (ptr && !id.isEmpty()) {
+        QMetaObject::invokeMethod(ptr, "raiseAndSwitchView",
+                                  Qt::DirectConnection, WINGAPI_ARG(id));
+    }
 }
 
 void WingHex::WingEditorViewWidget::loadState(const QByteArray &state) {

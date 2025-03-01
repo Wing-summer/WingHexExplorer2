@@ -109,7 +109,7 @@ This software complies with the `AGPL-3.0` agreement. Please do not use it for p
 
 If you want to use the code of this software for closed-source commercial code and want to lift the restriction of the `GPL` series that it must be open source, please consult me ​​in person to discuss commercial licensing matters.
 
-For plugin development, the corresponding open source agreements are different. Only `src/plugin/iwingplugin.h`, `src/plugin/iwingpluginbase.h`, `src/plugin/iwingdevice.h` and `src/plugin/settingpage.h` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source and commercial development. The code of `TestPlugin` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
+For plugin development, the corresponding open source agreements are different. Only the code of  `WingPlugin` in this repository comply with the `BSD 3-Clause` agreement to allow closed-source commercial development. The code of `TestPlugin` in this repository (except the file `TranslationUtils.cmake` which complies with `BSD 3-Clause`) complies with the `MIT` agreement.
 
 ### Usage Statement
 

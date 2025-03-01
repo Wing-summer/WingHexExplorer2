@@ -55,7 +55,6 @@
 #include "model/numshowmodel.h"
 #include "scriptingdialog.h"
 #include "settingdialog.h"
-#include "showtextdialog.h"
 #include "utilities.h"
 
 class PluginSystem;
@@ -198,7 +197,6 @@ private slots:
     void on_locChanged();
     void on_selectionChanged();
 
-    void on_viewtxt();
     void on_fullScreen();
     void on_saveLayout();
     void on_exportlog();
@@ -628,8 +626,6 @@ private:
     QString m_lastusedpath;
     bool m_islittle = true;
     bool m_enablePlugin = true;
-
-    ShowTextDialog *_showtxt = nullptr;
 
     // Guard against recursion
     bool _isHandlingEvent = false;

@@ -19,6 +19,7 @@
 */
 
 #include "testform.h"
+#include "WingPlugin/iwingpluginbase.h"
 #include "ui_testform.h"
 
 #include "ctltestform.h"
@@ -33,7 +34,7 @@
 #include <QStringListModel>
 
 TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
-    : QWidget(parent), WingHex::IWingPluginAPICalls(plg), ui(new Ui::TestForm) {
+    : WingHex::WingPluginWidget(plg, parent), ui(new Ui::TestForm) {
     ui->setupUi(this);
 
     ui->teDataVisual->setAcceptRichText(false);
@@ -153,32 +154,32 @@ QFileDialog::Options TestForm::getFileDialogOptions() const {
 }
 
 void TestForm::onDVClicked(const QModelIndex &index) {
-    warn(QStringLiteral("[Test - Click] ") +
-         index.model()->data(index).toString());
+    logWarn(QStringLiteral("[Test - Click] ") +
+            index.model()->data(index).toString());
 }
 
 void TestForm::onDVDoubleClicked(const QModelIndex &index) {
-    warning(this, QStringLiteral("Test - DoubleClick"),
-            index.model()->data(index).toString());
+    msgWarning(this, QStringLiteral("Test - DoubleClick"),
+               index.model()->data(index).toString());
 }
 
 void TestForm::on_btnSendLog_clicked() {
     auto txt = ui->leLogText->text();
     switch (Level(ui->cbLogLevel->currentIndex())) {
     case q1ERROR:
-        error(txt);
+        logError(txt);
         break;
     case q2WARN:
-        warn(txt);
+        logWarn(txt);
         break;
     case q3INFO:
-        info(txt);
+        logInfo(txt);
         break;
     case q4DEBUG:
-        debug(txt);
+        logDebug(txt);
         break;
     case q5TRACE:
-        trace(txt);
+        logTrace(txt);
         break;
     default:
         break;
@@ -193,17 +194,17 @@ void TestForm::on_btnSendToast_clicked() {
 }
 
 void TestForm::on_btnAboutQt_clicked() {
-    aboutQt(this, ui->leAboutTitle->text());
+    msgAboutQt(this, ui->leAboutTitle->text());
 }
 
 void TestForm::on_btnQuestion_clicked() {
-    question(
+    msgQuestion(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
 
 void TestForm::on_btnWarning_clicked() {
-    warning(
+    msgWarning(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
@@ -215,7 +216,7 @@ void TestForm::on_btnCritical_clicked() {
 }
 
 void TestForm::on_btnAbout_clicked() {
-    about(this, ui->leMsgTitle->text(), ui->leMsgText->text());
+    msgAbout(this, ui->leMsgTitle->text(), ui->leMsgText->text());
 }
 
 void TestForm::on_btnMsgBox_clicked() {
@@ -227,8 +228,9 @@ void TestForm::on_btnMsgBox_clicked() {
 
 void TestForm::on_btnText_clicked() {
     bool ok = false;
-    auto ret = getText(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-                       QLineEdit::Normal, __FUNCTION__, &ok);
+    auto ret =
+        dlgGetText(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                   QLineEdit::Normal, __FUNCTION__, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getText] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -237,8 +239,8 @@ void TestForm::on_btnText_clicked() {
 
 void TestForm::on_btnMultiLineText_clicked() {
     bool ok = false;
-    auto ret = getMultiLineText(this, ui->leInputTitle->text(),
-                                ui->leInputLabel->text(), __FUNCTION__, &ok);
+    auto ret = dlgGetMultiLineText(this, ui->leInputTitle->text(),
+                                   ui->leInputLabel->text(), __FUNCTION__, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getText] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -251,8 +253,8 @@ void TestForm::on_btnItem_clicked() {
         l.append(QStringLiteral("WingSummer WingHex2 - %1").arg(i));
     }
     bool ok = false;
-    auto ret = getItem(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-                       l, 0, true, &ok);
+    auto ret = dlgGetItem(this, ui->leInputTitle->text(),
+                          ui->leInputLabel->text(), l, 0, true, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getItem] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -261,8 +263,9 @@ void TestForm::on_btnItem_clicked() {
 
 void TestForm::on_btnInt_clicked() {
     bool ok = false;
-    auto ret = getInt(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-                      0, 0, WingHex::SDKVERSION, 1, &ok);
+    auto ret =
+        dlgGetInt(this, ui->leInputTitle->text(), ui->leInputLabel->text(), 0,
+                  0, WingHex::SDKVERSION, 1, &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getInt] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -272,9 +275,9 @@ void TestForm::on_btnInt_clicked() {
 void TestForm::on_btnDouble_clicked() {
     bool ok = false;
     auto ret =
-        getDouble(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
-                  QLineEdit::Normal, -double(WingHex::SDKVERSION), 0.0,
-                  double(WingHex::SDKVERSION), &ok);
+        dlgGetDouble(this, ui->leInputTitle->text(), ui->leInputLabel->text(),
+                     QLineEdit::Normal, -double(WingHex::SDKVERSION), 0.0,
+                     double(WingHex::SDKVERSION), &ok);
     ui->tbInputLogger->append(
         QStringLiteral("[getDouble] ( ") %
         (ok ? QStringLiteral("true") : QStringLiteral("false")) %
@@ -282,21 +285,21 @@ void TestForm::on_btnDouble_clicked() {
 }
 
 void TestForm::on_btnExistingDirectory_clicked() {
-    auto ret = getExistingDirectory(this, ui->leFileCaption->text(),
-                                    qApp->applicationDirPath(),
-                                    getFileDialogOptions());
+    auto ret = dlgGetExistingDirectory(this, ui->leFileCaption->text(),
+                                       qApp->applicationDirPath(),
+                                       getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getExistingDirectory] ") % ret);
 }
 
 void TestForm::on_btnOpenFileName_clicked() {
-    auto ret = getOpenFileName(
+    auto ret = dlgGetOpenFileName(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getOpenFileName] ") % ret);
 }
 
 void TestForm::on_btnOpenFileNames_clicked() {
-    auto ret = getOpenFileNames(
+    auto ret = dlgGetOpenFileNames(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getOpenFileName] ") %
@@ -304,14 +307,14 @@ void TestForm::on_btnOpenFileNames_clicked() {
 }
 
 void TestForm::on_btnSaveFileName_clicked() {
-    auto ret = getSaveFileName(
+    auto ret = dlgGetSaveFileName(
         this, ui->leFileCaption->text(), qApp->applicationDirPath(),
         ui->leFileFilter->text(), nullptr, getFileDialogOptions());
     ui->tbFileLogger->append(QStringLiteral("[getSaveFileName] ") % ret);
 }
 
 void TestForm::on_btnGetColor_clicked() {
-    auto ret = getColor(ui->leColorCaption->text(), this);
+    auto ret = dlgGetColor(ui->leColorCaption->text(), this);
     if (ret.isValid()) {
         ui->wColor->setStyleSheet(QStringLiteral("background-color:") +
                                   ret.name());
@@ -321,26 +324,27 @@ void TestForm::on_btnGetColor_clicked() {
 }
 
 void TestForm::on_btnText_2_clicked() {
-    updateText(ui->teDataVisual->toPlainText(), QStringLiteral("TestForm"));
+    dataVisualText(ui->teDataVisual->toPlainText(), QStringLiteral("TestForm"));
 }
 
 void TestForm::on_btnTextList_clicked() {
     auto txts = ui->teDataVisual->toPlainText().split('\n');
-    updateTextList(txts, QStringLiteral("TestForm"), _click, _dblclick);
+    dataVisualTextList(txts, QStringLiteral("TestForm"), _click, _dblclick);
 }
 
 void TestForm::on_btnTextTree_clicked() {
-    auto ret = updateTextTree(ui->teDataVisual->toPlainText(),
-                              QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret =
+        dataVisualTextTree(ui->teDataVisual->toPlainText(),
+                           QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
 }
 
 void TestForm::on_btnTextTable_clicked() {
-    auto ret = updateTextTable(ui->teDataVisual->toPlainText(),
-                               {"wingsummer", "wingsummer"}, {},
-                               QStringLiteral("TestForm"), _click, _dblclick);
+    auto ret = dataVisualTextTable(
+        ui->teDataVisual->toPlainText(), {"wingsummer", "wingsummer"}, {},
+        QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
         critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
@@ -353,8 +357,8 @@ void TestForm::on_btnTextListByModel_clicked() {
         buffer.append("wingsummer" % QString::number(i));
     }
     model->setStringList(buffer);
-    auto ret = updateTextListByModel(model, QStringLiteral("TestForm"), _click,
-                                     _dblclick);
+    auto ret = dataVisualTextListByModel(model, QStringLiteral("TestForm"),
+                                         _click, _dblclick);
     if (!ret) {
         critical(this, QStringLiteral("Test"),
                  tr("UpdateTextListByModelError"));
@@ -363,8 +367,8 @@ void TestForm::on_btnTextListByModel_clicked() {
 
 void TestForm::on_btnTextTableByModel_clicked() {
     auto model = new TestTableModel;
-    auto ret = updateTextTableByModel(model, QStringLiteral("TestForm"), _click,
-                                      _dblclick);
+    auto ret = dataVisualTextTableByModel(model, QStringLiteral("TestForm"),
+                                          _click, _dblclick);
     if (!ret) {
         critical(this, QStringLiteral("Test"),
                  tr("UpdateTextTableByModelError"));
@@ -374,8 +378,8 @@ void TestForm::on_btnTextTableByModel_clicked() {
 void TestForm::on_btnTextTreeByModel_clicked() {
     auto model = new QFileSystemModel;
     model->setRootPath(QDir::currentPath());
-    auto ret = updateTextTreeByModel(model, QStringLiteral("TestForm"), _click,
-                                     _dblclick);
+    auto ret = dataVisualTextTreeByModel(model, QStringLiteral("TestForm"),
+                                         _click, _dblclick);
     if (!ret) {
         critical(this, QStringLiteral("Test"),
                  tr("UpdateTextTreeByModelError"));

@@ -32,7 +32,10 @@ add_library(
     iwingpluginbasecalls.cpp
     iwingplugincalls.h
     iwingplugincalls.cpp
-    wingplugincallconvertor.h wingplugincallconvertor.cpp)
+    wingplugincallconvertor.h
+    wingplugincallconvertor.cpp
+    wingpluginwidget.h
+    wingpluginwidget.cpp)
 
 target_link_libraries(WingPlugin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 

@@ -22,15 +22,14 @@
 #define READERTESTFORM_H
 
 #include <QTextBrowser>
-#include <QWidget>
 
-#include "WingPlugin/iwingplugin.h"
+#include "WingPlugin/wingpluginwidget.h"
 
 namespace Ui {
 class ReaderTestForm;
 }
 
-class ReaderTestForm : public QWidget, public WingHex::IWingPluginCalls {
+class ReaderTestForm : public WingHex::WingPluginWidget {
     Q_OBJECT
 
 public:
@@ -63,7 +62,6 @@ private:
 private:
     Ui::ReaderTestForm *ui;
 
-    WingHex::IWingPlugin *_plg;
     QTextBrowser *_br;
 };
 

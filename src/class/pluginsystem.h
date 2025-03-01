@@ -378,16 +378,16 @@ public:
                             const QPixmap &icon, const QString &message);
 
     // logging
-    WING_SERVICE void trace(WingHex::IWingPluginBase *sender,
-                            const QString &message);
-    WING_SERVICE void debug(WingHex::IWingPluginBase *sender,
-                            const QString &message);
-    WING_SERVICE void info(WingHex::IWingPluginBase *sender,
-                           const QString &message);
-    WING_SERVICE void warn(WingHex::IWingPluginBase *sender,
-                           const QString &message);
-    WING_SERVICE void error(WingHex::IWingPluginBase *sender,
-                            const QString &message);
+    WING_SERVICE void logTrace(WingHex::IWingPluginBase *sender,
+                               const QString &message);
+    WING_SERVICE void logDebug(WingHex::IWingPluginBase *sender,
+                               const QString &message);
+    WING_SERVICE void logInfo(WingHex::IWingPluginBase *sender,
+                              const QString &message);
+    WING_SERVICE void logWarn(WingHex::IWingPluginBase *sender,
+                              const QString &message);
+    WING_SERVICE void logError(WingHex::IWingPluginBase *sender,
+                               const QString &message);
     WING_SERVICE bool raiseDockWidget(WingHex::IWingPluginBase *sender,
                                       QWidget *w);
     WING_SERVICE WingHex::AppTheme
@@ -396,30 +396,31 @@ public:
                                        QWidget *content);
 
 public:
-    WING_SERVICE void aboutQt(WingHex::IWingPluginBase *sender, QWidget *parent,
-                              const QString &title);
+    WING_SERVICE void msgAboutQt(WingHex::IWingPluginBase *sender,
+                                 QWidget *parent, const QString &title);
     WING_SERVICE QMessageBox::StandardButton
-    information(WingHex::IWingPluginBase *sender, QWidget *parent,
+    msgInformation(WingHex::IWingPluginBase *sender, QWidget *parent,
+                   const QString &title, const QString &text,
+                   QMessageBox::StandardButtons buttons,
+                   QMessageBox::StandardButton defaultButton);
+    WING_SERVICE QMessageBox::StandardButton
+    msgQuestion(WingHex::IWingPluginBase *sender, QWidget *parent,
                 const QString &title, const QString &text,
                 QMessageBox::StandardButtons buttons,
                 QMessageBox::StandardButton defaultButton);
     WING_SERVICE QMessageBox::StandardButton
-    question(WingHex::IWingPluginBase *sender, QWidget *parent,
-             const QString &title, const QString &text,
-             QMessageBox::StandardButtons buttons,
-             QMessageBox::StandardButton defaultButton);
+    msgWarning(WingHex::IWingPluginBase *sender, QWidget *parent,
+               const QString &title, const QString &text,
+               QMessageBox::StandardButtons buttons,
+               QMessageBox::StandardButton defaultButton);
     WING_SERVICE QMessageBox::StandardButton
-    warning(WingHex::IWingPluginBase *sender, QWidget *parent,
-            const QString &title, const QString &text,
-            QMessageBox::StandardButtons buttons,
-            QMessageBox::StandardButton defaultButton);
-    WING_SERVICE QMessageBox::StandardButton
-    critical(WingHex::IWingPluginBase *sender, QWidget *parent,
-             const QString &title, const QString &text,
-             QMessageBox::StandardButtons buttons,
-             QMessageBox::StandardButton defaultButton);
-    WING_SERVICE void about(WingHex::IWingPluginBase *sender, QWidget *parent,
-                            const QString &title, const QString &text);
+    msgCritical(WingHex::IWingPluginBase *sender, QWidget *parent,
+                const QString &title, const QString &text,
+                QMessageBox::StandardButtons buttons,
+                QMessageBox::StandardButton defaultButton);
+    WING_SERVICE void msgAbout(WingHex::IWingPluginBase *sender,
+                               QWidget *parent, const QString &title,
+                               const QString &text);
     WING_SERVICE QMessageBox::StandardButton
     msgbox(WingHex::IWingPluginBase *sender, QWidget *parent,
            QMessageBox::Icon icon, const QString &title, const QString &text,
@@ -427,51 +428,52 @@ public:
            QMessageBox::StandardButton defaultButton);
 
 public:
-    WING_SERVICE QString getText(WingHex::IWingPluginBase *sender,
-                                 QWidget *parent, const QString &title,
-                                 const QString &label, QLineEdit::EchoMode echo,
-                                 const QString &text, bool *ok,
-                                 Qt::InputMethodHints inputMethodHints);
-    WING_SERVICE QString getMultiLineText(
+    WING_SERVICE QString dlgGetText(WingHex::IWingPluginBase *sender,
+                                    QWidget *parent, const QString &title,
+                                    const QString &label,
+                                    QLineEdit::EchoMode echo,
+                                    const QString &text, bool *ok,
+                                    Qt::InputMethodHints inputMethodHints);
+    WING_SERVICE QString dlgGetMultiLineText(
         WingHex::IWingPluginBase *sender, QWidget *parent, const QString &title,
         const QString &label, const QString &text, bool *ok,
         Qt::InputMethodHints inputMethodHints);
-    WING_SERVICE QString getItem(WingHex::IWingPluginBase *sender,
-                                 QWidget *parent, const QString &title,
-                                 const QString &label, const QStringList &items,
-                                 int current, bool editable, bool *ok,
-                                 Qt::InputMethodHints inputMethodHints);
-    WING_SERVICE int getInt(WingHex::IWingPluginBase *sender, QWidget *parent,
-                            const QString &title, const QString &label,
-                            int value, int minValue, int maxValue, int step,
-                            bool *ok);
-    WING_SERVICE double getDouble(WingHex::IWingPluginBase *sender,
-                                  QWidget *parent, const QString &title,
-                                  const QString &label, double value,
-                                  double minValue, double maxValue,
-                                  int decimals, bool *ok, double step);
+    WING_SERVICE QString dlgGetItem(WingHex::IWingPluginBase *sender,
+                                    QWidget *parent, const QString &title,
+                                    const QString &label,
+                                    const QStringList &items, int current,
+                                    bool editable, bool *ok,
+                                    Qt::InputMethodHints inputMethodHints);
+    WING_SERVICE int dlgGetInt(WingHex::IWingPluginBase *sender,
+                               QWidget *parent, const QString &title,
+                               const QString &label, int value, int minValue,
+                               int maxValue, int step, bool *ok);
+    WING_SERVICE double dlgGetDouble(WingHex::IWingPluginBase *sender,
+                                     QWidget *parent, const QString &title,
+                                     const QString &label, double value,
+                                     double minValue, double maxValue,
+                                     int decimals, bool *ok, double step);
 
 public:
-    WING_SERVICE QString getExistingDirectory(WingHex::IWingPluginBase *sender,
-                                              QWidget *parent,
-                                              const QString &caption,
-                                              const QString &dir,
-                                              QFileDialog::Options options);
-    WING_SERVICE QString getOpenFileName(
+    WING_SERVICE QString
+    dlgGetExistingDirectory(WingHex::IWingPluginBase *sender, QWidget *parent,
+                            const QString &caption, const QString &dir,
+                            QFileDialog::Options options);
+    WING_SERVICE QString dlgGetOpenFileName(
         WingHex::IWingPluginBase *sender, QWidget *parent,
         const QString &caption, const QString &dir, const QString &filter,
         QString *selectedFilter, QFileDialog::Options options);
-    WING_SERVICE QStringList getOpenFileNames(
+    WING_SERVICE QStringList dlgGetOpenFileNames(
         WingHex::IWingPluginBase *sender, QWidget *parent,
         const QString &caption, const QString &dir, const QString &filter,
         QString *selectedFilter, QFileDialog::Options options);
-    WING_SERVICE QString getSaveFileName(
+    WING_SERVICE QString dlgGetSaveFileName(
         WingHex::IWingPluginBase *sender, QWidget *parent,
         const QString &caption, const QString &dir, const QString &filter,
         QString *selectedFilter, QFileDialog::Options options);
 
-    WING_SERVICE QColor getColor(WingHex::IWingPluginBase *sender,
-                                 const QString &caption, QWidget *parent);
+    WING_SERVICE QColor dlgGetColor(WingHex::IWingPluginBase *sender,
+                                    const QString &caption, QWidget *parent);
 
     // IWingPlugin API
 public:
@@ -552,6 +554,18 @@ public:
     WING_SERVICE qint64 readInt64(WingHex::IWingPluginBase *sender,
                                   qsizetype offset);
 
+    WING_SERVICE quint8 readUInt8(WingHex::IWingPluginBase *sender,
+                                  qsizetype offset);
+
+    WING_SERVICE quint16 readUInt16(WingHex::IWingPluginBase *sender,
+                                    qsizetype offset);
+
+    WING_SERVICE quint32 readUInt32(WingHex::IWingPluginBase *sender,
+                                    qsizetype offset);
+
+    WING_SERVICE quint64 readUInt64(WingHex::IWingPluginBase *sender,
+                                    qsizetype offset);
+
     WING_SERVICE float readFloat(WingHex::IWingPluginBase *sender,
                                  qsizetype offset);
 
@@ -616,6 +630,18 @@ public:
     WING_SERVICE bool writeInt64(WingHex::IWingPluginBase *sender,
                                  qsizetype offset, qint64 value);
 
+    WING_SERVICE bool writeUInt8(WingHex::IWingPluginBase *sender,
+                                 qsizetype offset, quint8 value);
+
+    WING_SERVICE bool writeUInt16(WingHex::IWingPluginBase *sender,
+                                  qsizetype offset, quint16 value);
+
+    WING_SERVICE bool writeUInt32(WingHex::IWingPluginBase *sender,
+                                  qsizetype offset, quint32 value);
+
+    WING_SERVICE bool writeUInt64(WingHex::IWingPluginBase *sender,
+                                  qsizetype offset, quint64 value);
+
     WING_SERVICE bool writeFloat(WingHex::IWingPluginBase *sender,
                                  qsizetype offset, float value);
 
@@ -641,6 +667,18 @@ public:
     WING_SERVICE bool insertInt64(WingHex::IWingPluginBase *sender,
                                   qsizetype offset, qint64 value);
 
+    WING_SERVICE bool insertUInt8(WingHex::IWingPluginBase *sender,
+                                  qsizetype offset, quint8 value);
+
+    WING_SERVICE bool insertUInt16(WingHex::IWingPluginBase *sender,
+                                   qsizetype offset, quint16 value);
+
+    WING_SERVICE bool insertUInt32(WingHex::IWingPluginBase *sender,
+                                   qsizetype offset, quint32 value);
+
+    WING_SERVICE bool insertUInt64(WingHex::IWingPluginBase *sender,
+                                   qsizetype offset, quint64 value);
+
     WING_SERVICE bool insertFloat(WingHex::IWingPluginBase *sender,
                                   qsizetype offset, float value);
 
@@ -664,6 +702,18 @@ public:
 
     WING_SERVICE bool appendInt64(WingHex::IWingPluginBase *sender,
                                   qint64 value);
+
+    WING_SERVICE bool appendUInt8(WingHex::IWingPluginBase *sender,
+                                  quint8 value);
+
+    WING_SERVICE bool appendUInt16(WingHex::IWingPluginBase *sender,
+                                   quint16 value);
+
+    WING_SERVICE bool appendUInt32(WingHex::IWingPluginBase *sender,
+                                   quint32 value);
+
+    WING_SERVICE bool appendUInt64(WingHex::IWingPluginBase *sender,
+                                   quint64 value);
 
     WING_SERVICE bool appendFloat(WingHex::IWingPluginBase *sender,
                                   float value);
@@ -774,44 +824,58 @@ public:
     // extension
     WING_SERVICE bool closeAllFiles(WingHex::IWingPluginBase *sender);
 
-    WING_SERVICE bool updateText(WingHex::IWingPluginBase *sender,
-                                 const QString &data, const QString &title);
+public:
+    WING_SERVICE bool dataVisualText(WingHex::IWingPluginBase *sender,
+                                     const QString &data, const QString &title);
 
-    WING_SERVICE bool updateTextList(WingHex::IWingPluginBase *sender,
-                                     const QStringList &data,
-                                     const QString &title,
-                                     WingHex::ClickedCallBack clicked,
-                                     WingHex::ClickedCallBack dblClicked);
+    WING_SERVICE bool dataVisualTextList(WingHex::IWingPluginBase *sender,
+                                         const QStringList &data,
+                                         const QString &title,
+                                         WingHex::ClickedCallBack clicked,
+                                         WingHex::ClickedCallBack dblClicked);
 
-    WING_SERVICE bool updateTextTree(WingHex::IWingPluginBase *sender,
-                                     const QString &json, const QString &title,
-                                     WingHex::ClickedCallBack clicked,
-                                     WingHex::ClickedCallBack dblClicked);
+    WING_SERVICE bool dataVisualTextTree(WingHex::IWingPluginBase *sender,
+                                         const QString &json,
+                                         const QString &title,
+                                         WingHex::ClickedCallBack clicked,
+                                         WingHex::ClickedCallBack dblClicked);
 
-    WING_SERVICE bool
-    updateTextTable(WingHex::IWingPluginBase *sender, const QString &json,
-                    const QStringList &headers, const QStringList &headerNames,
-                    const QString &title, WingHex::ClickedCallBack clicked,
-                    WingHex::ClickedCallBack dblClicked);
+    WING_SERVICE bool dataVisualTextTable(WingHex::IWingPluginBase *sender,
+                                          const QString &json,
+                                          const QStringList &headers,
+                                          const QStringList &headerNames,
+                                          const QString &title,
+                                          WingHex::ClickedCallBack clicked,
+                                          WingHex::ClickedCallBack dblClicked);
 
     // API for Qt Plugin Only
     WING_SERVICE bool
-    updateTextListByModel(WingHex::IWingPluginBase *sender,
-                          QAbstractItemModel *model, const QString &title,
-                          WingHex::ClickedCallBack clicked,
-                          WingHex::ClickedCallBack dblClicked);
+    dataVisualTextListByModel(WingHex::IWingPluginBase *sender,
+                              QAbstractItemModel *model, const QString &title,
+                              WingHex::ClickedCallBack clicked,
+                              WingHex::ClickedCallBack dblClicked);
 
     WING_SERVICE bool
-    updateTextTableByModel(WingHex::IWingPluginBase *sender,
-                           QAbstractItemModel *model, const QString &title,
-                           WingHex::ClickedCallBack clicked,
-                           WingHex::ClickedCallBack dblClicked);
+    dataVisualTextTableByModel(WingHex::IWingPluginBase *sender,
+                               QAbstractItemModel *model, const QString &title,
+                               WingHex::ClickedCallBack clicked,
+                               WingHex::ClickedCallBack dblClicked);
 
     WING_SERVICE bool
-    updateTextTreeByModel(WingHex::IWingPluginBase *sender,
-                          QAbstractItemModel *model, const QString &title,
-                          WingHex::ClickedCallBack clicked,
-                          WingHex::ClickedCallBack dblClicked);
+    dataVisualTextTreeByModel(WingHex::IWingPluginBase *sender,
+                              QAbstractItemModel *model, const QString &title,
+                              WingHex::ClickedCallBack clicked,
+                              WingHex::ClickedCallBack dblClicked);
+
+private:
+    WingHex::IWingPlugin *checkPluginAndReport(WingHex::IWingPluginBase *sender,
+                                               const char *func);
+
+    WingHex::IWingDevice *checkBaseAndReport(WingHex::IWingPluginBase *sender,
+                                             const char *func);
+
+    bool checkErrAllAllowAndReport(WingHex::IWingPluginBase *sender,
+                                   const char *func);
 
 private:
     CallTable _plgFns;

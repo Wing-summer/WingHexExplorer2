@@ -310,9 +310,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     if (splash)
         splash->setInfoText(tr("SetupWaiting"));
-    // others
-    _showtxt = new ShowTextDialog(this);
-    qApp->processEvents();
 
     // update status
     updateEditModeEnabled();
@@ -1471,9 +1468,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("scalereset"), tr("ResetScale"),
             [this] { this->setCurrentHexEditorScale(1.0); });
-        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("viewtxt"),
-                                              tr("ViewText"),
-                                              &MainWindow::on_viewtxt);
     }
 
     {
@@ -2980,14 +2974,6 @@ void MainWindow::on_selectionChanged() {
         {QVariant::fromValue(buffer), isPreview});
 }
 
-void MainWindow::on_viewtxt() {
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
-        return;
-    }
-    _showtxt->load(hexeditor->document()->buffer());
-}
-
 void MainWindow::on_fullScreen() {
     if (this->isFullScreen()) {
         this->showMaximized();
@@ -3183,14 +3169,10 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             auto v = w->create(p->first, editor);
             auto id = w->id();
             editor->registerView(id, v);
-            connect(v, &WingEditorViewWidget::docSaved, this,
+            connect(v, &WingEditorViewWidget::savedStateChanged, this,
                     [editor](bool saved) {
                         editor->hexEditor()->document()->setDocSaved(saved);
                     });
-            connect(v, &WingEditorViewWidget::raiseView, this, [editor, id]() {
-                editor->raise();
-                editor->switchView(id);
-            });
         }
     }
     for (auto &m : m_hexContextMenu) {

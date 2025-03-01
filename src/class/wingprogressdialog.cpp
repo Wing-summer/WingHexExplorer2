@@ -46,7 +46,7 @@ WingProgressDialog::WingProgressDialog(const QString &labelText,
     buildUpContent(m_dialog);
 
     connect(m_dialog, &QProgressDialog::canceled, this,
-            &WingProgressDialog::canceled);
+            &WingProgressDialog::cancel);
     connect(m_dialog, &QProgressDialog::finished, this,
             &FramelessDialogBase::done);
 }
