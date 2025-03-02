@@ -117,6 +117,8 @@ def update(build_path):
     print(Fore.GREEN + ">> Installing..." + Style.RESET_ALL)
 
     shutil.copy2(exemain_src, os.path.join(INSTALL_PATH, PACKAGE_NAME))
+    shutil.copy2(os.path.join(build_path, "WingPlugin", "libWingPlugin.so"),
+                 os.path.join(INSTALL_PATH, "libWingPlugin.so"))
 
     create_dir(os.path.join(INSTALL_PATH, "plugin"))
     create_dir(os.path.join(INSTALL_PATH, "scripts"))

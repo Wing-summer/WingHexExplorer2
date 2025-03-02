@@ -161,6 +161,9 @@ def main():
     for item in deploy_files:
         shutil.copy2(os.path.join(installer_path, item),
                      os.path.join(installer_path_exec, item))
+        
+    shutil.copy2(os.path.join(build_path, "WingPlugin", "libWingPlugin.so"),
+                 os.path.join(installer_path_exec, "lib" , "libWingPlugin.so"))
 
     # finally, copy other files
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)

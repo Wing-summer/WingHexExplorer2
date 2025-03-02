@@ -56,7 +56,7 @@ private slots:
 
 private:
     void updateColor();
-
+    void updateHueSlider();
     void updateColor(QColor color);
 
 private:

@@ -33,12 +33,6 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent)
                                      {240.0 / 360.0, Qt::blue},
                                      {300.0 / 360.0, Qt::magenta},
                                      {359.0 / 360.0, Qt::red}});
-    ui->saturationSlider->setGradientStops(
-        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 0, 255)},
-         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
-    ui->brightnessSlider->setGradientStops(
-        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 0)},
-         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
 
     _oldColor.setHsv(180, 255, 255);
     updateColor(_oldColor);
@@ -74,8 +68,23 @@ void ColorPickerDialog::updateColor() {
     updateColor(_color);
 }
 
+void ColorPickerDialog::updateHueSlider() {
+    ui->saturationSlider->setGradientStops(
+        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 0, 255)},
+         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
+    ui->brightnessSlider->setGradientStops(
+        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 0)},
+         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
+}
+
 void ColorPickerDialog::updateColor(QColor color) {
     ui->hueSlider->setValue(color.hsvHue());
+    ui->saturationSlider->setGradientStops(
+        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 0, 255)},
+         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
+    ui->brightnessSlider->setGradientStops(
+        {{0.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 0)},
+         {255.0 / 255.0, QColor::fromHsv(ui->hueSlider->value(), 255, 255)}});
     ui->saturationSlider->setValue(color.hsvSaturation());
     ui->brightnessSlider->setValue(color.value());
     ui->leColor->setText(color.name());

@@ -29,6 +29,7 @@
 #include "define.h"
 #include "dialog/mainwindow.h"
 #include "dialog/splashdialog.h"
+#include "inspectqtloghelper.h"
 #include "languagemanager.h"
 #include "logger.h"
 #include "settingmanager.h"
@@ -42,6 +43,8 @@ AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
     ASSERT_SINGLETON;
 
+    LanguageManager::instance();
+    InspectQtLogHelper::instance().init();
     CrashHandler::instance().init();
 
     auto args = arguments();
@@ -77,7 +80,6 @@ AppManager::AppManager(int &argc, char *argv[])
     setFont(font);
 
     SkinManager::instance();
-    LanguageManager::instance();
 
     auto dontSplash = set.dontUseSplash();
 
@@ -123,6 +125,8 @@ AppManager::AppManager(int &argc, char *argv[])
         }
     }
 
+    connect(_w, &MainWindow::closed, this,
+            []() { AppManager::instance()->exit(); });
     _instance = this;
 
     if (splash)
@@ -130,6 +134,7 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
+    InspectQtLogHelper::instance().destory();
     ClangFormatManager::instance().save();
     CommandHistoryManager::save(QConsoleWidget::history().strings_);
 

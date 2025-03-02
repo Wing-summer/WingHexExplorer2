@@ -45,7 +45,6 @@
 #include "class/clickcallback.h"
 #include "class/recentfilemanager.h"
 #include "class/scriptmanager.h"
-#include "class/wingprogressdialog.h"
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
@@ -201,6 +200,7 @@ private slots:
     void on_saveLayout();
     void on_exportlog();
     void on_clslog();
+    void on_inspectQt();
 
     void on_scriptwindow();
     void on_setting_general();
@@ -438,8 +438,7 @@ private:
 
     /* =============== some templates for async execution ===============*/
     template <typename ReturnType, typename ExecFunc, typename FinishFunc>
-    void ExecAsync(ExecFunc &&execFunc, FinishFunc &&finishFunc,
-                   const QString &tip = QString()) {
+    void ExecAsync(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
         QFutureWatcher<ReturnType> *watcher = new QFutureWatcher<ReturnType>();
 
         QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished, this,
@@ -451,25 +450,10 @@ private:
 
         auto fu = QtConcurrent::run([=]() -> ReturnType { return execFunc(); });
         watcher->setFuture(fu);
-
-        if (!tip.isEmpty()) {
-            auto pdialog = new WingProgressDialog(tip, QString(), 0, 0);
-            pdialog->setModal(true);
-            pdialog->setValue(0);
-
-            QObject::connect(watcher, &QFutureWatcher<ReturnType>::finished,
-                             this, [pdialog]() mutable {
-                                 pdialog->cancel();
-                                 pdialog->deleteLater();
-                             });
-
-            pdialog->exec();
-        }
     }
 
     template <typename ExecFunc, typename FinishFunc>
-    void ExecAsync_VOID(ExecFunc &&execFunc, FinishFunc &&finishFunc,
-                        const QString &tip = QString()) {
+    void ExecAsync_VOID(ExecFunc &&execFunc, FinishFunc &&finishFunc) {
         QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
 
         QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
@@ -480,21 +464,10 @@ private:
 
         auto fu = QtConcurrent::run([=]() -> void { return execFunc(); });
         watcher->setFuture(fu);
-
-        if (!tip.isEmpty()) {
-            auto pdialog = new WingProgressDialog(tip, QString(), 0, 0);
-            pdialog->setModal(true);
-            pdialog->setValue(0);
-
-            QObject::connect(watcher, &QFutureWatcher<void>::finished, this,
-                             [pdialog]() mutable {
-                                 pdialog->cancel();
-                                 pdialog->deleteLater();
-                             });
-
-            pdialog->exec();
-        }
     }
+
+signals:
+    void closed();
 
 private:
     Ribbon *m_ribbon = nullptr;

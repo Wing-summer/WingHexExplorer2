@@ -187,6 +187,8 @@ Homepage: https://www.cnblogs.com/wingsummer/
     os.mkdir(os.path.join(exeBasePath, "aslib"))
 
     shutil.copy2(exemain_src, os.path.join(exeBasePath, package_name))
+    shutil.copy2(os.path.join(projectdeb, "WingPlugin", "libWingPlugin.so"),
+                 os.path.join(exeBasePath, "libWingPlugin.so"))
 
     desktopPath = os.path.join(exeDebPath, "usr", "share", "applications")
     os.makedirs(desktopPath)

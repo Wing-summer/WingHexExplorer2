@@ -510,7 +510,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
             convertTabW(this);
             for (auto &c : m_cloneChildren) {
-                convertTabW(c);
+                if (c) {
+                    convertTabW(c);
+                }
             }
         }
     }

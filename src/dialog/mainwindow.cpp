@@ -26,6 +26,7 @@
 #include "class/appmanager.h"
 #include "class/dockcomponentsfactory.h"
 #include "class/eventfilter.h"
+#include "class/inspectqtloghelper.h"
 #include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/layoutmanager.h"
@@ -1674,6 +1675,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                         &MainWindow::on_exportlog);
         addPannelAction(pannel, QStringLiteral("clearhis"), tr("ClearLog"),
                         &MainWindow::on_clslog);
+        addPannelAction(pannel, QStringLiteral("qtloginspect"), tr("InsepctQt"),
+                        &MainWindow::on_inspectQt);
     }
 
     return tab;
@@ -2296,10 +2299,11 @@ void MainWindow::on_findfile() {
         info.encoding = r.encoding;
         info.str = r.str;
 
+        showStatus(tr("Finding..."));
         ExecAsync<EditorView::FindError>(
             [this, r]() -> EditorView::FindError {
                 m_isfinding = true;
-                this->showStatus(tr("Finding..."));
+
                 return currentEditor()->find(r);
             },
             [this](EditorView::FindError err) {
@@ -3040,6 +3044,10 @@ void MainWindow::on_clslog() {
                  tr("ClearLogSuccess"));
 }
 
+void MainWindow::on_inspectQt() {
+    InspectQtLogHelper::instance().showLogWidget();
+}
+
 void MainWindow::on_scriptwindow() {
     Q_ASSERT(m_scriptDialog);
     m_scriptDialog->show();
@@ -3081,6 +3089,7 @@ void MainWindow::on_wiki() {
 }
 
 void MainWindow::on_update() {
+    showStatus(tr("CheckingUpdate"));
     ExecAsync<int>(
         []() -> int {
             bool ok = false;
@@ -3100,8 +3109,8 @@ void MainWindow::on_update() {
                 WingMessageBox::information(this, qAppName(),
                                             tr("NewestVersion"));
             }
-        },
-        tr("CheckingUpdate"));
+            this->showStatus({});
+        });
 }
 
 QString MainWindow::saveLog() {
@@ -3989,6 +3998,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);
+    emit closed();
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {

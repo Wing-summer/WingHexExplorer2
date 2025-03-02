@@ -235,8 +235,6 @@ set(CLASS_SRC
     src/class/languagemanager.cpp
     src/class/settingmanager.h
     src/class/settingmanager.cpp
-    src/class/wingprogressdialog.h
-    src/class/wingprogressdialog.cpp
     src/class/asdebugger.h
     src/class/asdebugger.cpp
     src/class/scriptconsolemachine.h
@@ -284,7 +282,9 @@ set(CLASS_SRC
     src/class/crashhandler.h
     src/class/crashhandler.cpp
     src/class/pluginsystem.h
-    src/class/pluginsystem.cpp)
+    src/class/pluginsystem.cpp
+    src/class/inspectqtloghelper.h
+    src/class/inspectqtloghelper.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
