@@ -1,17 +1,13 @@
 #ifndef _QCONSOLEWIDGET_H_
 #define _QCONSOLEWIDGET_H_
 
-#include <QIODevice>
-#include <QTextCharFormat>
+#include "WingCodeEdit/wingcodeedit.h"
 #include <QTextStream>
-
-#include "qeditor.h"
 
 class QConsoleIODevice;
 
-class QConsoleWidget : public QEditor {
+class QConsoleWidget : public WingCodeEdit {
     Q_OBJECT
-
 public:
     struct History {
         QStringList strings_;
@@ -36,30 +32,21 @@ public:
     enum ConsoleMode { Input, Output };
     Q_ENUM(ConsoleMode)
 
-    explicit QConsoleWidget(QWidget *parent = nullptr);
-    virtual ~QConsoleWidget();
+    QConsoleWidget(QWidget *parent = 0);
+    ~QConsoleWidget();
 
     ConsoleMode mode() const { return mode_; }
     void setMode(ConsoleMode m);
     QIODevice *device() const { return (QIODevice *)iodevice_; }
 
     virtual QSize sizeHint() const override { return QSize(600, 400); }
-
     // write a formatted message to the console
-    void write(const QString &message, const QString &sfmtID = {}) override;
-
-    static History &history() { return history_; }
+    void write(const QString &message);
 
     // get the current command line
     QString getCommandLine();
 
-public slots:
-    virtual void paste() override;
-
-    // write to StandardOutput
-    void writeStdOut(const QString &s);
-    // write to StandardError
-    void writeStdErr(const QString &s);
+    static History &history();
 
 signals:
 
@@ -72,9 +59,11 @@ protected:
     bool canPaste() const;
     bool canCut() const { return isSelectionInEditZone(); }
     void handleReturnKey();
+    void handleTabKey();
 
+    // reimp QPlainTextEdit functions
     void keyPressEvent(QKeyEvent *e) override;
-
+    void contextMenuEvent(QContextMenuEvent *event) override;
     // Returns true if there is a selection in edit zone
     bool isSelectionInEditZone() const;
     // Returns true if cursor is in edit zone
@@ -82,21 +71,17 @@ protected:
     // replace the command line
     void replaceCommandLine(const QString &str);
 
-    // QEditor interface
-public slots:
-    virtual void cut() override;
-
 private:
-    static History history_;
     ConsoleMode mode_;
-    QDocumentCursor inpos_;
+    int inpos_;
     QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
+
+    static History history_;
 };
 
 QTextStream &waitForInput(QTextStream &s);
 QTextStream &inputMode(QTextStream &s);
 QTextStream &outChannel(QTextStream &s);
-QTextStream &errChannel(QTextStream &s);
 
 #endif

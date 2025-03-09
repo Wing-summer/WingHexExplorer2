@@ -6,14 +6,6 @@
 
 class QConsoleWidget;
 
-#ifndef STDOUT_FILENO
-#define STDOUT_FILENO 1
-#endif
-
-#ifndef STDERR_FILENO
-#define STDERR_FILENO 2
-#endif
-
 class QConsoleIODevice : public QIODevice {
     Q_OBJECT
 

@@ -61,14 +61,6 @@ private:
         TOOL_VIEWS
     };
 
-    enum Symbols {
-        BreakPoint,
-        ConditionBreakPoint,
-        DisabledBreakPoint,
-        DbgRunCurrentLine,
-        DbgRunHitBreakPoint,
-    };
-
 public:
     explicit ScriptingDialog(QWidget *parent = nullptr);
     virtual ~ScriptingDialog();
@@ -200,6 +192,9 @@ private:
     }
 
 private:
+    void registerMark();
+    QPixmap markFromPath(const QString &name);
+
     void registerEditorView(ScriptEditor *editor);
     inline ads::CDockAreaWidget *editorViewArea() const;
 
@@ -211,8 +206,6 @@ private:
 
     ScriptEditor *findEditorView(const QString &filename);
 
-    void setCurrentEditorScale(qreal rate);
-
     bool isCurrentDebugging() const;
 
     ScriptEditor *openFile(const QString &filename);
@@ -221,13 +214,11 @@ private:
 
     void buildUpSettingDialog();
 
-    void startDebugScript(const QString &fileName);
+    void startDebugScript(ScriptEditor *editor);
 
-    void addBreakPoint(QEditor *editor, int lineIndex);
-
-    void removeBreakPoint(QEditor *editor, int lineIndex);
-
-    void toggleBreakPoint(QEditor *editor, int lineIndex);
+    void addBreakPoint(ScriptEditor *editor, int line);
+    void removeBreakPoint(ScriptEditor *editor, int line);
+    void toggleBreakPoint(ScriptEditor *editor, int line);
 
 private slots:
     void on_newfile();
@@ -296,7 +287,6 @@ private:
     bool _needRestart = false;
 
     QList<ScriptEditor *> m_views;
-    QMap<Symbols, int> m_symID;
     QString m_lastusedpath;
 
     // widgets for debugging
@@ -306,7 +296,7 @@ private:
     DbgCallStackModel *m_callstack = nullptr;
     ASObjTreeWidget *m_sym = nullptr;
 
-    QString _DebugingScript;
+    ScriptEditor *_DebugingEditor;
 
     QLabel *m_status = nullptr;
 };

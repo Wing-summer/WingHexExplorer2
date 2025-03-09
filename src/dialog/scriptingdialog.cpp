@@ -19,8 +19,8 @@
 #include "QWingRibbon/ribbontabcontent.h"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "Qt-Advanced-Docking-System/src/DockSplitter.h"
+#include "WingCodeEdit/wingsymbolcenter.h"
 #include "aboutsoftwaredialog.h"
-#include "class/langservice.h"
 #include "class/languagemanager.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
@@ -28,13 +28,8 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
-#include "qcodeeditwidget/qeditconfig.h"
-#include "qcodeeditwidget/qformatconfig.h"
-#include "qdocumentline.h"
-#include "qeditor.h"
-#include "qformatscheme.h"
-#include "qlinemarksinfocenter.h"
 #include "settings/clangformatsetdialog.h"
+#include "settings/qeditconfig.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -82,13 +77,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
 
     buildUpSettingDialog();
 
-    auto lmic = QLineMarksInfoCenter::instance();
-    lmic->loadMarkTypes(QCE::fetchDataFile(":/qcodeedit/marks.qxm"));
-    // get symbol ID
-    m_symID.insert(Symbols::BreakPoint, lmic->markTypeId("breakpoint"));
-    m_symID.insert(Symbols::DbgRunCurrentLine, lmic->markTypeId("current"));
-    m_symID.insert(Symbols::DbgRunHitBreakPoint,
-                   lmic->markTypeId("breakpoint-current"));
+    registerMark();
 
     updateEditModeEnabled();
 
@@ -104,8 +93,9 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_dock->restoreState(set.scriptDockLayout());
     _savedLayout = set.scriptDockLayout();
 
-    connect(&LangService::instance(), &LangService::onScriptEditorTip, m_status,
-            [this](const QString &message) { m_status->setText(message); });
+    // connect(&LangService::instance(), &LangService::onScriptEditorTip,
+    // m_status,
+    //         [this](const QString &message) { m_status->setText(message); });
 
     this->setUpdatesEnabled(true);
 }
@@ -114,10 +104,6 @@ ScriptingDialog::~ScriptingDialog() {}
 
 void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
-
-    auto fmt = new QFormatScheme(this);
-    LangService::addAdditionalFormat(fmt);
-    m_consoleout->document()->setFormatScheme(fmt);
 
     m_consoleout->init();
     auto machine = m_consoleout->machine();
@@ -129,21 +115,18 @@ void ScriptingDialog::initConsole() {
 
         // clean up
         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
-            auto bpMark = m_symID.value(Symbols::BreakPoint);
-            auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
-            auto curHitMark = m_symID.value(Symbols::DbgRunHitBreakPoint);
 
             // remove the last mark
             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                auto lastCur = QCodeEdit::managed(_lastCurLine.first);
-                auto doc = lastCur->document();
-                auto line = doc->line(_lastCurLine.second - 1);
-                if (line.hasMark(curMark)) {
-                    line.removeMark(curMark);
-                } else if (line.hasMark(curHitMark)) {
-                    line.removeMark(curHitMark);
-                    line.addMark(bpMark);
-                }
+                // auto lastCur = QCodeEdit::managed(_lastCurLine.first);
+                // auto doc = lastCur->document();
+                // auto line = doc->line(_lastCurLine.second - 1);
+                // if (line.hasMark(curMark)) {
+                //     line.removeMark(curMark);
+                // } else if (line.hasMark(curHitMark)) {
+                //     line.removeMark(curHitMark);
+                //     line.addMark(bpMark);
+                // }
             }
             _lastCurLine.first.clear();
             _lastCurLine.second = -1;
@@ -151,16 +134,16 @@ void ScriptingDialog::initConsole() {
 
         if (_needRestart) {
             _needRestart = false;
-            startDebugScript(_DebugingScript);
+            startDebugScript(_DebugingEditor);
         } else {
-            _DebugingScript.clear();
+            _DebugingEditor = nullptr;
         }
     });
     auto dbg = machine->debugger();
     Q_ASSERT(dbg);
     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
             [=](const asDebugger::BreakPoint &old, int newLineNr) {
-                auto editor = QCodeEdit::managed(old.name);
+                auto editor = findEditorView(old.name);
                 if (editor) {
                     removeBreakPoint(editor, old.lineNbr - 1);
                     addBreakPoint(editor, newLineNr - 1);
@@ -194,36 +177,32 @@ void ScriptingDialog::initConsole() {
                 }
             }
 
-            auto bpMark = m_symID.value(Symbols::BreakPoint);
-            auto curMark = m_symID.value(Symbols::DbgRunCurrentLine);
-            auto curHitMark = m_symID.value(Symbols::DbgRunHitBreakPoint);
-
             // remove the last mark
             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                auto lastCur = QCodeEdit::managed(_lastCurLine.first);
-                auto doc = lastCur->document();
-                auto line = doc->line(_lastCurLine.second - 1);
-                if (line.hasMark(curMark)) {
-                    line.removeMark(curMark);
-                } else if (line.hasMark(curHitMark)) {
-                    line.removeMark(curHitMark);
-                    line.addMark(bpMark);
-                }
+                // auto lastCur = QCodeEdit::managed(_lastCurLine.first);
+                // auto doc = lastCur->document();
+                // auto line = doc->line(_lastCurLine.second - 1);
+                // if (line.hasMark(curMark)) {
+                //     line.removeMark(curMark);
+                // } else if (line.hasMark(curHitMark)) {
+                //     line.removeMark(curHitMark);
+                //     line.addMark(bpMark);
+                // }
             }
 
             auto editor = e->editor();
 
             // add the new mark
-            auto doc = editor->document();
-            auto line = doc->line(lineNr - 1);
-            if (line.hasMark(bpMark)) {
-                line.removeMark(bpMark);
-                line.addMark(curHitMark);
-            } else {
-                line.addMark(curMark);
-            }
+            // auto doc = editor->document();
+            // auto line = doc->line(lineNr - 1);
+            // if (line.hasMark(bpMark)) {
+            //     line.removeMark(bpMark);
+            //     line.addMark(curHitMark);
+            // } else {
+            //     line.addMark(curMark);
+            // }
 
-            editor->ensureVisible(lineNr - 1);
+            // editor->ensureVisible(lineNr - 1);
 
             _lastCurLine = {file, lineNr};
             updateRunDebugMode();
@@ -242,7 +221,7 @@ bool ScriptingDialog::about2Close() {
     QList<ScriptEditor *> need2CloseView;
 
     for (auto &view : m_views) {
-        if (view->editor()->isContentModified()) {
+        if (view->editor()->document()->isModified()) {
             unSavedFiles << view->fileName();
         } else {
             need2CloseView << view;
@@ -414,42 +393,6 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
-    auto shortcuts = QKeySequences::instance();
-    {
-        auto pannel = tab->addGroup(tr("Display"));
-        auto menu = new QMenu(this);
-        menu->addAction(newAction(QStringLiteral("80%"), [this] {
-            this->setCurrentEditorScale(0.8);
-        }));
-        menu->addAction(newAction(QStringLiteral("90%"), [this] {
-            this->setCurrentEditorScale(0.9);
-        }));
-        menu->addAction(newAction(QStringLiteral("100%"), [this] {
-            this->setCurrentEditorScale(1.0);
-        }));
-        menu->addSeparator();
-        menu->addAction(newAction(QStringLiteral("120%"), [this] {
-            this->setCurrentEditorScale(1.2);
-        }));
-        menu->addAction(newAction(QStringLiteral("150%"), [this] {
-            this->setCurrentEditorScale(1.5);
-        }));
-        menu->addAction(newAction(QStringLiteral("200%"), [this] {
-            this->setCurrentEditorScale(2.0);
-        }));
-        menu->addAction(newAction(QStringLiteral("250%"), [this] {
-            this->setCurrentEditorScale(2.5);
-        }));
-        menu->addAction(newAction(QStringLiteral("300%"), [this] {
-            this->setCurrentEditorScale(3.0);
-        }));
-        addPannelAction(pannel, QStringLiteral("scale"), tr("Scale"),
-                        EMPTY_FUNC, {}, menu);
-        addPannelAction(pannel, QStringLiteral("scalereset"), tr("ResetScale"),
-                        [this] { this->setCurrentEditorScale(1.0); });
-        m_editStateWidgets << pannel;
-    }
-
     {
         auto pannel = tab->addGroup(tr("Window"));
         m_Tbtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
@@ -769,6 +712,13 @@ QMessageBox::StandardButton ScriptingDialog::saveRequest() {
     return ret;
 }
 
+void ScriptingDialog::registerMark() {
+    auto &sc = WingSymbolCenter::instance();
+    sc.regsiterSymbol(QStringLiteral("bp"), markFromPath("bp"));
+    sc.regsiterSymbol(QStringLiteral("cur"), markFromPath("hitcur"));
+    sc.regsiterSymbol(QStringLiteral("curbp"), markFromPath("hitbp"));
+}
+
 void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::closeRequested, this, [this] {
         auto editor = qobject_cast<ScriptEditor *>(sender());
@@ -776,7 +726,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(m_views.contains(editor));
 
         auto m = m_consoleout->machine();
-        if (m->isDebugMode() && _DebugingScript == editor->fileName()) {
+        if (m->isDebugMode() && _DebugingEditor == editor) {
             if (WingMessageBox::warning(
                     this, this->windowTitle(), tr("ScriptStillRunning"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -785,7 +735,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             on_stopscript();
         }
 
-        if (editor->editor()->isContentModified()) {
+        if (editor->editor()->document()->isModified()) {
             auto ret = saveRequest();
             if (ret == QMessageBox::Cancel) {
                 return;
@@ -823,7 +773,11 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         updateEditModeEnabled();
     });
 
-    LangService::instance().applyLanguageSerivce(editor->editor());
+    connect(editor, &ScriptEditor::onToggleMark, this, [=](int lineIndex) {
+        auto editor = qobject_cast<ScriptEditor *>(sender());
+        Q_ASSERT(editor);
+        toggleBreakPoint(editor, lineIndex);
+    });
 
     m_views.append(editor);
 
@@ -858,50 +812,44 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     if (old != nullptr) {
-        old->disconnect(SIGNAL(onToggleMark(int)));
-        auto editor = old->editor();
-        editor->disconnect(SIGNAL(copyAvailable(bool)));
-        editor->disconnect(SIGNAL(contentModified(bool)));
-        editor->disconnect(SIGNAL(undoAvailable(bool)));
-        editor->disconnect(SIGNAL(redoAvailable(bool)));
-        editor->disconnect(SIGNAL(zoomed()));
+        // auto editor = old->editor();
+        // editor->disconnect(SIGNAL(copyAvailable(bool)));
+        // editor->disconnect(SIGNAL(contentModified(bool)));
+        // editor->disconnect(SIGNAL(undoAvailable(bool)));
+        // editor->disconnect(SIGNAL(redoAvailable(bool)));
+        // editor->disconnect(SIGNAL(zoomed()));
     }
 
-    auto editor = cur->editor();
-    m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
-        ->setEnabled(editor->canUndo());
-    m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
-        ->setEnabled(editor->canRedo());
-    m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-        ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
-                     editor->isContentModified());
-    m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
-        ->setEnabled(editor->cursor().hasSelection());
+    // auto editor = cur->editor();
+    // m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
+    //     ->setEnabled(editor->canUndo());
+    // m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
+    //     ->setEnabled(editor->canRedo());
+    // m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+    //     ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
+    //                  editor->isContentModified());
+    // m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
+    //     ->setEnabled(editor->cursor().hasSelection());
 
-    connect(cur, &ScriptEditor::onToggleMark, this, [=](int lineIndex) {
-        auto editor = qobject_cast<ScriptEditor *>(sender());
-        Q_ASSERT(editor);
-        toggleBreakPoint(editor->editor(), lineIndex);
-    });
-    connect(editor, &QEditor::copyAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
-            &QToolButton::setEnabled);
-    connect(editor, &QEditor::contentModified, this, [=] {
-        m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-            ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
-                         editor->isContentModified());
-    });
-    connect(editor, &QEditor::undoAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
-            &QToolButton::setEnabled);
-    connect(editor, &QEditor::redoAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
-            &QToolButton::setEnabled);
-    connect(editor, &QEditor::zoomed, this, [=] {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
-                     QString::number(editor->scaleRate() * 100) +
-                         QStringLiteral("%"));
-    });
+    // connect(editor, &QEditor::copyAvailable,
+    //         m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
+    //         &QToolButton::setEnabled);
+    // connect(editor, &QEditor::contentModified, this, [=] {
+    //     m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+    //         ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
+    //                      editor->isContentModified());
+    // });
+    // connect(editor, &QEditor::undoAvailable,
+    //         m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
+    //         &QToolButton::setEnabled);
+    // connect(editor, &QEditor::redoAvailable,
+    //         m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
+    //         &QToolButton::setEnabled);
+    // connect(editor, &QEditor::zoomed, this, [=] {
+    //     Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
+    //                  QString::number(editor->scaleRate() * 100) +
+    //                      QStringLiteral("%"));
+    // });
 
     m_curEditor = cur;
 }
@@ -962,14 +910,6 @@ ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
     return nullptr;
 }
 
-void ScriptingDialog::setCurrentEditorScale(qreal rate) {
-    auto editor = currentEditor();
-    if (editor == nullptr) {
-        return;
-    }
-    editor->editor()->setScaleRate(rate);
-}
-
 bool ScriptingDialog::isCurrentDebugging() const {
     auto m = m_consoleout->machine();
     return m && m->isDebugMode();
@@ -1014,136 +954,121 @@ void ScriptingDialog::buildUpSettingDialog() {
     auto clang = new ClangFormatSetDialog(m_setdialog);
     m_setdialog->addPage(clang);
 
-    auto &langsev = LangService::instance();
-    auto scheme = new QFormatConfig(langsev.formatSchemes(),
-                                    langsev.defaultSchemeName(), m_setdialog);
-    m_setdialog->addPage(scheme);
-
     m_setdialog->build();
 }
 
-void ScriptingDialog::startDebugScript(const QString &fileName) {
+void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
+    Q_ASSERT(editor);
     m_ribbon->setCurrentIndex(3);
 
     m_consoleout->clear();
 
     // add breakpoints
-    auto marks = QLineMarksInfoCenter::instance()->marks(
-        fileName, m_symID.value(Symbols::BreakPoint));
     auto dbg = m_consoleout->machine()->debugger();
-    for (auto &bp : marks) {
-        dbg->addFileBreakPoint(bp.file, bp.line);
+    auto fileName = editor->fileName();
+    auto e = editor->editor();
+    auto totalblk = e->blockCount();
+    for (int i = 0; i < totalblk; ++i) {
+        if (!e->symbolMark(i).isEmpty()) {
+            dbg->addFileBreakPoint(fileName, i + 1);
+        }
     }
 
-    _DebugingScript = fileName;
+    _DebugingEditor = editor;
     PluginSystem::instance().scriptPragmaBegin();
 
-    auto view = findEditorView(fileName);
-    Q_ASSERT(view);
-    view->setReadOnly(true);
+    editor->setReadOnly(true);
     m_consoleout->machine()->executeScript(fileName, true);
-    view->setReadOnly(false);
+    editor->setReadOnly(false);
 
     updateRunDebugMode();
 }
 
-void ScriptingDialog::addBreakPoint(QEditor *editor, int lineIndex) {
+void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
     Q_ASSERT(editor);
-    auto bpMark = m_symID.value(Symbols::BreakPoint);
-    auto curLine = lineIndex + 1;
-    auto dbg = m_consoleout->machine()->debugger();
+    auto e = editor->editor();
+
+    const auto bpMark = QStringLiteral("bp");
+    const auto curSym = QStringLiteral("cur");
+    const auto hitCur = QStringLiteral("curbp");
 
     if (m_consoleout->machine()->isDebugMode()) {
-        auto line = editor->document()->line(lineIndex);
-        auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
-        auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
-
-        if (line.hasMark(curSym)) {
-            line.removeMark(curSym);
-            line.addMark(hitCur);
-            dbg->addFileBreakPoint(editor->fileName(), curLine);
+        auto dbg = m_consoleout->machine()->debugger();
+        auto symID = e->symbolMark(line);
+        if (curSym == symID) {
+            e->addSymbolMark(line, hitCur);
+            dbg->addFileBreakPoint(editor->fileName(), line);
         } else {
-            if (!line.hasMark(bpMark)) {
-                line.addMark(bpMark);
-                dbg->addFileBreakPoint(editor->fileName(), curLine);
+            if (symID.isEmpty()) {
+                e->addSymbolMark(line, curSym);
+                dbg->addFileBreakPoint(editor->fileName(), line);
             }
         }
     } else {
-        auto line = editor->document()->line(lineIndex);
-        if (!line.hasMark(bpMark)) {
-            line.addMark(bpMark);
-            dbg->addFileBreakPoint(editor->fileName(), curLine);
-        }
+        e->addSymbolMark(line, bpMark);
     }
 }
 
-void ScriptingDialog::removeBreakPoint(QEditor *editor, int lineIndex) {
+void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
     Q_ASSERT(editor);
-    auto bpMark = m_symID.value(Symbols::BreakPoint);
-    auto curLine = lineIndex + 1;
+    auto e = editor->editor();
 
-    auto dbg = m_consoleout->machine()->debugger();
     if (m_consoleout->machine()->isDebugMode()) {
-        auto line = editor->document()->line(lineIndex);
-        auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
-        auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
+        auto dbg = m_consoleout->machine()->debugger();
+        auto symID = e->symbolMark(line);
 
-        if (line.hasMark(hitCur)) {
-            line.removeMark(hitCur);
-            line.addMark(curSym);
-            dbg->removeFileBreakPoint(editor->fileName(), curLine);
+        const auto bpMark = QStringLiteral("bp");
+        const auto curSym = QStringLiteral("cur");
+        const auto hitCur = QStringLiteral("curbp");
+
+        if (hitCur == symID) {
+            e->addSymbolMark(line, curSym);
+            dbg->removeFileBreakPoint(editor->fileName(), line);
         } else {
-            if (line.hasMark(bpMark)) {
-                line.removeMark(bpMark);
-                dbg->removeFileBreakPoint(editor->fileName(), curLine);
+            if (bpMark == symID) {
+                e->removeSymbolMark(line);
+                dbg->removeFileBreakPoint(editor->fileName(), line);
             }
         }
     } else {
-        auto line = editor->document()->line(lineIndex);
-        if (line.hasMark(bpMark)) {
-            line.removeMark(bpMark);
-            dbg->removeFileBreakPoint(editor->fileName(), curLine);
-        }
+        e->removeSymbolMark(line);
     }
 }
 
-void ScriptingDialog::toggleBreakPoint(QEditor *editor, int lineIndex) {
+void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
     Q_ASSERT(editor);
-    auto curLine = lineIndex + 1;
+    auto e = editor->editor();
 
-    auto dbg = m_consoleout->machine()->debugger();
     if (m_consoleout->machine()->isDebugMode()) {
-        auto line = editor->document()->line(lineIndex);
-        auto bpMark = m_symID.value(Symbols::BreakPoint);
-        auto hitCur = m_symID.value(Symbols::DbgRunHitBreakPoint);
-        auto curSym = m_symID.value(Symbols::DbgRunCurrentLine);
+        auto dbg = m_consoleout->machine()->debugger();
+        auto symID = e->symbolMark(line);
 
-        if (line.hasMark(hitCur)) {
-            line.removeMark(hitCur);
-            line.addMark(curSym);
-            dbg->removeFileBreakPoint(editor->fileName(), curLine);
-        } else if (line.hasMark(curSym)) {
-            line.removeMark(curSym);
-            line.addMark(hitCur);
-            dbg->addFileBreakPoint(editor->fileName(), curLine);
+        const auto bpMark = QStringLiteral("bp");
+        const auto curSym = QStringLiteral("cur");
+        const auto hitCur = QStringLiteral("curbp");
+
+        auto fileName = editor->fileName();
+        if (hitCur == symID) {
+            e->addSymbolMark(line, curSym);
+            dbg->removeFileBreakPoint(fileName, line);
+        } else if (curSym == symID) {
+            e->addSymbolMark(line, hitCur);
+            dbg->removeFileBreakPoint(fileName, line);
         } else {
-            if (line.hasMark(bpMark)) {
-                line.removeMark(bpMark);
-                dbg->removeFileBreakPoint(editor->fileName(), curLine);
+            if (bpMark == symID) {
+                e->removeSymbolMark(line);
+                dbg->removeFileBreakPoint(fileName, line);
             } else {
-                line.addMark(bpMark);
-                dbg->addFileBreakPoint(editor->fileName(), curLine);
+                e->addSymbolMark(line, bpMark);
+                dbg->addFileBreakPoint(fileName, line);
             }
         }
     } else {
-        auto bpMark = m_symID.value(Symbols::BreakPoint);
-        QLineMark mrk(editor->fileName(), curLine, bpMark);
-        QLineMarksInfoCenter::instance()->toggleLineMark(mrk);
-        auto line = editor->document()->line(lineIndex);
-        if (line.hasMark(bpMark)) {
-            dbg->addFileBreakPoint(editor->fileName(), curLine);
+        auto symID = e->symbolMark(line);
+        if (symID.isEmpty()) {
+            e->addSymbolMark(line, QStringLiteral("bp"));
         } else {
-            dbg->removeFileBreakPoint(editor->fileName(), curLine);
+            e->removeSymbolMark(line);
         }
     }
 }
@@ -1167,7 +1092,7 @@ void ScriptingDialog::on_newfile() {
         f.close();
 
         if (e) {
-            if (_DebugingScript == e->fileName()) {
+            if (_DebugingEditor == e) {
                 on_stopscript();
             }
             e->reload();
@@ -1309,28 +1234,28 @@ void ScriptingDialog::on_pastefile() {
 void ScriptingDialog::on_delete() {
     auto e = currentEditor();
     if (e) {
-        e->editor()->cursor().removeSelectedText();
+        e->editor()->textCursor().removeSelectedText();
     }
 }
 
 void ScriptingDialog::on_findfile() {
     auto e = currentEditor();
     if (e) {
-        e->editor()->find();
+        // e->editor()->find();
     }
 }
 
 void ScriptingDialog::on_replace() {
     auto e = currentEditor();
     if (e) {
-        e->editor()->replace();
+        // e->editor()->replace();
     }
 }
 
 void ScriptingDialog::on_gotoline() {
     auto e = currentEditor();
     if (e) {
-        e->editor()->gotoLine();
+        // e->editor()->gotoLine();
     }
 }
 
@@ -1386,8 +1311,7 @@ void ScriptingDialog::on_restoreLayout() {
 void ScriptingDialog::on_runscript() {
     auto editor = currentEditor();
     if (editor) {
-        auto e = editor->editor();
-        if (!e->save()) {
+        if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
                                      tr("CannotSave2RunScript"));
             return;
@@ -1396,7 +1320,7 @@ void ScriptingDialog::on_runscript() {
         PluginSystem::instance().scriptPragmaBegin();
 
         editor->setReadOnly(true);
-        m_consoleout->machine()->executeScript(e->fileName());
+        m_consoleout->machine()->executeScript(editor->fileName());
         editor->setReadOnly(false);
         updateRunDebugMode();
     }
@@ -1405,13 +1329,12 @@ void ScriptingDialog::on_runscript() {
 void ScriptingDialog::on_rundbgscript() {
     auto editor = currentEditor();
     if (editor) {
-        auto e = editor->editor();
-        if (!e->save()) {
+        if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
                                      tr("CannotSave2RunScript"));
             return;
         }
-        startDebugScript(e->fileName());
+        startDebugScript(editor);
     }
 }
 
@@ -1444,7 +1367,7 @@ void ScriptingDialog::on_togglebreakpoint() {
     auto editor = currentEditor();
     if (editor) {
         auto e = editor->editor();
-        toggleBreakPoint(e, e->cursor().lineNumber());
+        toggleBreakPoint(editor, e->textCursor().blockNumber() + 1);
     }
 }
 
@@ -1452,7 +1375,7 @@ void ScriptingDialog::on_addbreakpoint() {
     auto editor = currentEditor();
     if (editor) {
         auto e = editor->editor();
-        addBreakPoint(e, e->cursor().lineNumber());
+        addBreakPoint(editor, e->textCursor().blockNumber() + 1);
     }
 }
 
@@ -1460,7 +1383,7 @@ void ScriptingDialog::on_removebreakpoint() {
     auto editor = currentEditor();
     if (editor) {
         auto e = editor->editor();
-        removeBreakPoint(e, e->cursor().lineNumber());
+        removeBreakPoint(editor, e->textCursor().blockNumber() + 1);
     }
 }
 
@@ -1485,3 +1408,9 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
 }
 
 SettingDialog *ScriptingDialog::settingDialog() const { return m_setdialog; }
+
+QPixmap ScriptingDialog::markFromPath(const QString &name) {
+    return QPixmap(
+        QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +
+        QStringLiteral(".png"));
+}

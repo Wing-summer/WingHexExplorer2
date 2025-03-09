@@ -19,8 +19,7 @@
 #define SCRIPTEDITOR_H
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "control/codeedit.h"
-#include "qcodeedit.h"
+#include "wingcodeedit.h"
 
 class ScriptEditor : public ads::CDockWidget {
     Q_OBJECT
@@ -31,12 +30,12 @@ public:
 
     QString fileName() const;
 
-    QEditor *editor() const;
+    WingCodeEdit *editor() const;
 
     bool formatCode();
 
 signals:
-    void onToggleMark(int lineIndex);
+    void onToggleMark(int line);
 
 public slots:
     bool openFile(const QString &filename);
@@ -50,7 +49,8 @@ private:
     void processTitle();
 
 private:
-    CodeEdit *m_editor = nullptr;
+    WingCodeEdit *m_editor = nullptr;
+    QString m_fileName;
 };
 
 #endif // SCRIPTEDITOR_H

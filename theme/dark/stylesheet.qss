@@ -2968,26 +2968,3 @@ Toast
 QStatusBar::item { border: 0px solid black; }
 
 SplashDialog { border: 1px solid #626568; }
-
-/* style sheet for ScriptEditor */
-QEditor
-{
-    color: #f8f8f2;
-    background-color: #282a36;
-    selection-background-color: #3daee9;
-}
-
-QCallTip
-{
-    qproperty-borderColor: #eff0f1;
-    qproperty-background: #31363b;
-    qproperty-foreground: #eff0f1;
-    qproperty-opacity: 0.8;
-}
-
-QConsoleWidget
-{
-    background-color: #1d2023;
-    color: #eff0f1;
-    selection-background-color: #3daee9;
-}

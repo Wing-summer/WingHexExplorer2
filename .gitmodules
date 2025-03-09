@@ -11,3 +11,6 @@
 [submodule "3rdparty/cpptrace"]
 	path = 3rdparty/cpptrace
 	url = git@github.com:Wing-summer/cpptrace.git
+[submodule "3rdparty/WingCodeEdit"]
+	path = 3rdparty/WingCodeEdit
+	url = git@github.com:Wing-summer/WingCodeEdit.git

@@ -85,8 +85,6 @@
         <file>images/scheme.png</file>
         <file>images/script.png</file>
         <file>images/scriptdbg/bp.png</file>
-        <file>images/scriptdbg/bpdis.png</file>
-        <file>images/scriptdbg/conbp.png</file>
         <file>images/scriptdbg/delbp.png</file>
         <file>images/scriptdbg/error.png</file>
         <file>images/scriptdbg/hitbp.png</file>
@@ -119,12 +117,6 @@
         <file>src/components.md</file>
         <file>src/translist.md</file>
     </qresource>
-    <qresource prefix="/qcodeedit">
-        <file alias="as.qnfa">src/qxs/as.qnfa</file>
-        <file alias="as_dark.qxf">src/qxs/as_dark.qxf</file>
-        <file alias="as_light.qxf">src/qxs/as_light.qxf</file>
-        <file alias="marks.qxm">src/qxs/marks.qxm</file>
-    </qresource>
     <qresource prefix="/qeditor">
         <file alias="copy.png">images/copy.png</file>
         <file alias="cut.png">images/cut.png</file>
@@ -136,7 +128,6 @@
         <file alias="undo.png">images/undo.png</file>
     </qresource>
     <qresource prefix="/completion">
-        <file>images/completion/CTvirtuals.png</file>
         <file>images/completion/CVKeyword.png</file>
         <file>images/completion/CVclass.png</file>
         <file>images/completion/CVenum.png</file>
@@ -160,4 +151,5 @@
         <file>images/completion/CVunion.png</file>
         <file>images/completion/classnew.png</file>
     </qresource>
+    <qresource prefix="/WingScript/Angelscript"/>
 </RCC>

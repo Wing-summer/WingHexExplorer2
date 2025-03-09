@@ -87,7 +87,7 @@ option(BUILD_STATIC "Build the static library" TRUE)
 
 add_subdirectory(3rdparty/cpptrace)
 add_subdirectory(3rdparty/QHexView)
-add_subdirectory(3rdparty/qcodeedit2)
+add_subdirectory(3rdparty/WingCodeEdit)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
 add_subdirectory(3rdparty/QJsonModel)
@@ -195,11 +195,6 @@ set(CONTROL_SRC
     src/control/qtableviewext.cpp
     src/control/qlistviewext.h
     src/control/qlistviewext.cpp
-    src/control/qcodecompletionwidget.h
-    src/control/qcodecompletionwidget_p.h
-    src/control/qcodecompletionwidget.cpp
-    src/control/codeedit.h
-    src/control/codeedit.cpp
     src/control/asobjtreewidget.h
     src/control/asobjtreewidget.cpp
     src/control/qtlonglongspinbox.cpp
@@ -254,14 +249,10 @@ set(CLASS_SRC
     src/class/ascompletion.h
     src/class/asbuilder.h
     src/class/asbuilder.cpp
-    src/class/qdocumentsearch.cpp
-    src/class/qdocumentsearch.h
     src/class/ascontextmgr.h
     src/class/ascontextmgr.cpp
     src/class/qcodenode.cpp
     src/class/qcodenode.h
-    src/class/langservice.h
-    src/class/langservice.cpp
     src/class/clangformatmanager.h
     src/class/clangformatmanager.cpp
     src/class/aspreprocesser.h
@@ -341,7 +332,10 @@ set(SETTING_SRC
     src/settings/othersettingsdialog.ui
     src/settings/clangformatsetdialog.h
     src/settings/clangformatsetdialog.cpp
-    src/settings/clangformatsetdialog.ui)
+    src/settings/clangformatsetdialog.ui
+    src/settings/qeditconfig.h
+    src/settings/qeditconfig.cpp
+    src/settings/qeditconfig.ui)
 
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptqstring.h
@@ -356,24 +350,6 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptjson.cpp
     src/scriptaddon/scriptfile.cpp
     src/scriptaddon/scriptfile.h)
-
-set(CODEEDIT_WIDGET
-    src/qcodeeditwidget/qgotolinepanel.h
-    src/qcodeeditwidget/qgotolinepanel.cpp
-    src/qcodeeditwidget/qgotolinepanel.ui
-    src/qcodeeditwidget/qsearchreplacepanel.h
-    src/qcodeeditwidget/qsearchreplacepanel.cpp
-    src/qcodeeditwidget/qsearchreplacepanel.ui
-    src/qcodeeditwidget/qeditconfig.h
-    src/qcodeeditwidget/qeditconfig.cpp
-    src/qcodeeditwidget/qeditconfig.ui
-    src/qcodeeditwidget/qformatconfig.h
-    src/qcodeeditwidget/qformatconfig.cpp
-    src/qcodeeditwidget/qformatconfig.ui
-    src/qcodeeditwidget/qdocumentswaptextcommand.h
-    src/qcodeeditwidget/qdocumentswaptextcommand.cpp
-    src/qcodeeditwidget/formatconfigmodel.h
-    src/qcodeeditwidget/formatconfigmodel.cpp)
 
 # localization support
 file(
@@ -394,7 +370,6 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QConsoleWidget
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QHexView
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QJsonModel
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qcodeedit2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Qt-Advanced-Docking-System/src
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -471,7 +446,6 @@ set(PROJECT_SOURCES
     ${SETTING_SRC}
     ${SCRIPT_ADDON_SRC}
     ${ANGEL_SCRIPT_ADDON}
-    ${CODEEDIT_WIDGET}
     ${QM_FILES}
     theme/breeze.qrc
     resources.qrc)
@@ -520,7 +494,7 @@ target_link_libraries(
             QtSingleApplication::QtSingleApplication
             WingPlugin
             QHexView
-            QCodeEditor2
+            WingCodeEdit
             QJsonModel
             angelscript
             qtadvanceddocking-qt${QT_VERSION_MAJOR})

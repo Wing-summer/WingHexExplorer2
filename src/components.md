@@ -5,7 +5,7 @@ The following components are all third-party components used by the software. Th
 * [QHexView](https://github.com/Dax89/QHexView/tree/master) (MIT, **FORK** -> AGPL-3.0)
 * [QHexEdit2](https://github.com/Simsys/qhexedit2) (GPL, **FORK**)
 * [Qt-Advanced-Docking-System](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System) (LGPL)
-* [QCodeEditor2](https://sourceforge.net/projects/edyuk) (GPL, **FORK**)
+* [WingCodeEdit](https://github.com/Wing-summer/WingCodeEdit) (GPL)
 * [QWingRibbon](https://github.com/martijnkoopman/Qt-Ribbon-Widget) (LGPL, **FORK**)
 * [QtSingleApplication](https://github.com/qtproject/qt-solutions/tree/master/qtsingleapplication) (BSD-3-Clause)
 * [QWindowKit](https://github.com/stdware/qwindowkit) (Apache v2.0)

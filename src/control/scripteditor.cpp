@@ -17,8 +17,6 @@
 
 #include "scripteditor.h"
 #include "DockWidgetTab.h"
-#include "qcodeeditwidget/qdocumentswaptextcommand.h"
-#include "qeditor.h"
 #include "utilities.h"
 
 #ifdef Q_OS_LINUX
@@ -29,9 +27,11 @@
 #include <QFile>
 #include <QPixmap>
 
-#include "qpanellayout.h"
+#include <KSyntaxHighlighting/Repository>
+#include <KSyntaxHighlighting/Theme>
 
 #include "class/clangformatmanager.h"
+#include "class/skinmanager.h"
 
 ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
@@ -42,17 +42,37 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
-    m_editor = new CodeEdit(true, this);
-    connect(m_editor, &CodeEdit::onToggleMark, this,
+    m_editor = new WingCodeEdit(this);
+    m_editor->setAutoIndent(true);
+    m_editor->setMatchBraces(true);
+    m_editor->setShowLongLineEdge(true);
+    m_editor->setShowIndentGuides(true);
+    m_editor->setShowLineNumbers(true);
+    m_editor->setShowFolding(true);
+    m_editor->setShowWhitespace(true);
+    m_editor->setShowSymbolMark(true);
+    m_editor->setAutoCloseChar(true);
+
+    switch (SkinManager::instance().currentTheme()) {
+    case SkinManager::Theme::Dark:
+        m_editor->setTheme(m_editor->syntaxRepo().defaultTheme(
+            KSyntaxHighlighting::Repository::DarkTheme));
+        break;
+    case SkinManager::Theme::Light:
+        m_editor->setTheme(m_editor->syntaxRepo().defaultTheme(
+            KSyntaxHighlighting::Repository::LightTheme));
+        break;
+    }
+
+    connect(m_editor, &WingCodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);
 
-    auto editor = m_editor->editor();
-    editor->setFlag(QEditor::AutoCloseChars, true);
-    connect(editor, &QEditor::titleChanged, this, &ScriptEditor::processTitle);
-    connect(editor, &QEditor::contentModified, this,
-            &ScriptEditor::processTitle);
+    // connect(editor, &QEditor::titleChanged, this,
+    // &ScriptEditor::processTitle); connect(editor, &QEditor::contentModified,
+    // this,
+    //         &ScriptEditor::processTitle);
 
-    this->setWidget(editor);
+    this->setWidget(m_editor);
 }
 
 ScriptEditor::~ScriptEditor() {
@@ -61,16 +81,19 @@ ScriptEditor::~ScriptEditor() {
     e->disconnect();
 }
 
-QString ScriptEditor::fileName() const { return editor()->fileName(); }
+QString ScriptEditor::fileName() const { return m_fileName; }
 
 bool ScriptEditor::openFile(const QString &filename) {
-    auto e = editor();
-    return e->load(filename);
+    QFile f(filename);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        return false;
+    }
+    m_editor->setPlainText(QString::fromUtf8(f.readAll()));
+    f.close();
+    return true;
 }
 
 bool ScriptEditor::save(const QString &path) {
-    auto e = editor();
-
 #ifdef Q_OS_LINUX
     auto needAdjustFile = !QFile::exists(path);
 #endif
@@ -81,60 +104,70 @@ bool ScriptEditor::save(const QString &path) {
     }
 
     if (path.isEmpty()) {
-        return e->save();
+        QFile f(m_fileName);
+        if (!f.open(QFile::WriteOnly | QFile::Text)) {
+            return false;
+        }
+        f.write(m_editor->toPlainText().toUtf8());
+        return true;
     }
 
-    auto ret = e->save(path);
-    if (ret) {
+    QFile f(path);
+    if (!f.open(QFile::WriteOnly | QFile::Text)) {
+        return false;
+    }
+    f.write(m_editor->toPlainText().toUtf8());
+
 #ifdef Q_OS_LINUX
-        if (Utilities::isRoot()) {
-            // a trick off when root under linux OS
-            // When new file created, change file's permission to 666.
+    if (Utilities::isRoot()) {
+        // a trick off when root under linux OS
+        // When new file created, change file's permission to 666.
 
-            // Because you cannot open it when you use it in common user
-            // after saving under root user.
+        // Because you cannot open it when you use it in common user
+        // after saving under root user.
 
-            // It's a workaround and not eligent for permission system
+        // It's a workaround and not eligent for permission system
 
-            if (needAdjustFile) {
-                if (Utilities::isFileOwnerRoot(path)) {
-                    Utilities::fixUpFilePermissions(path);
-                }
+        if (needAdjustFile) {
+            if (Utilities::isFileOwnerRoot(path)) {
+                Utilities::fixUpFilePermissions(path);
             }
         }
-#endif
     }
-    return ret;
+#endif
+
+    return true;
 }
 
-bool ScriptEditor::reload() {
-    auto e = m_editor->editor();
-    return e->load(e->fileName());
-}
+bool ScriptEditor::reload() { return openFile(m_fileName); }
 
 void ScriptEditor::setReadOnly(bool b) {
-    m_editor->editor()->setFlag(QEditor::ReadOnly, b);
+    m_editor->setReadOnly(b);
     this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());
 }
 
 void ScriptEditor::processTitle() {
-    auto e = m_editor->editor();
-    if (e->isContentModified()) {
-        setWindowTitle(e->windowTitle());
+    if (m_editor->document()->isModified()) {
+        // setWindowTitle(e->windowTitle());
     } else {
-        setWindowTitle(e->name());
+        // setWindowTitle(e->name());
     }
 }
 
-QEditor *ScriptEditor::editor() const { return m_editor->editor(); }
+WingCodeEdit *ScriptEditor::editor() const { return m_editor; }
 
 bool ScriptEditor::formatCode() {
     bool ok;
     auto e = editor();
-    auto fmtcodes = ClangFormatManager::instance().formatCode(e->text(), ok);
-    if (ok) {
-        auto doc = e->document();
-        doc->execute(new QDocumentSwapTextCommand(fmtcodes, doc, e));
+    auto orign = e->toPlainText();
+    auto fmtcodes = ClangFormatManager::instance().formatCode(orign, ok);
+    if (ok && fmtcodes != orign) {
+        auto cursor = e->textCursor();
+        cursor.beginEditBlock();
+        cursor.select(QTextCursor::Document);
+        cursor.removeSelectedText();
+        cursor.insertText(fmtcodes);
+        cursor.endEditBlock();
         return true;
     }
     return false;

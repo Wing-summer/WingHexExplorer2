@@ -2,7 +2,7 @@
 #define QEDITCONFIG_H
 
 #include "WingPlugin/settingpage.h"
-#include "qeditor.h"
+#include "wingcodeedit.h"
 #include <QWidget>
 
 namespace Ui {
@@ -47,7 +47,7 @@ private slots:
 private:
     Ui::QEditConfig *ui;
 
-    QEditor *_edit;
+    WingCodeEdit *_edit;
 };
 
 #endif // QEDITCONFIG_H

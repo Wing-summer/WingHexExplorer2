@@ -18,24 +18,18 @@
 #include "scriptingconsole.h"
 #include "class/logger.h"
 #include "class/scriptconsolemachine.h"
-#include "qdocumentline.h"
 #include "qregularexpression.h"
 
 #include <QApplication>
 #include <QColor>
 #include <QKeyEvent>
+#include <QTextObject>
 
-ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {}
+ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
+    _warnCharFmt.setForeground(QColorConstants::Svg::gold);
+}
 
 ScriptingConsole::~ScriptingConsole() {}
-
-void ScriptingConsole::stdOut(const QString &str) { writeStdOut(str); }
-
-void ScriptingConsole::stdErr(const QString &str) { writeStdErr(str); }
-
-void ScriptingConsole::stdWarn(const QString &str) {
-    write(str, QStringLiteral("stdwarn"));
-}
 
 void ScriptingConsole::newLine() { _s << Qt::endl; }
 
@@ -54,13 +48,14 @@ void ScriptingConsole::init() {
             [=](ScriptConsoleMachine::MessageType type,
                 const ScriptConsoleMachine::MessageInfo &message) {
                 auto doc = this->document();
-                auto lastLine = doc->line(doc->lineCount() - 1);
+                auto lastLine =
+                    doc->findBlockByLineNumber(doc->blockCount() - 1);
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
                     if (lastLine.length()) {
                         _s << Qt::endl;
                     }
-                    stdOut(tr("[Info]") + message.message);
+                    write(tr("[Info]") + message.message);
                     _s << Qt::flush;
                     newLine();
                     break;
@@ -68,7 +63,7 @@ void ScriptingConsole::init() {
                     if (lastLine.length()) {
                         _s << Qt::endl;
                     }
-                    stdWarn(tr("[Warn]") + message.message);
+                    write(tr("[Warn]") + message.message);
                     _s << Qt::flush;
                     newLine();
                     break;
@@ -76,7 +71,7 @@ void ScriptingConsole::init() {
                     if (lastLine.length()) {
                         _s << Qt::endl;
                     }
-                    stdErr(tr("[Error]") + message.message);
+                    write(tr("[Error]") + message.message);
                     _s << Qt::flush;
                     newLine();
                     break;
@@ -84,7 +79,7 @@ void ScriptingConsole::init() {
                     // If running ouput in the console,
                     // otherwise logging.
                     if (_sp->isRunning()) {
-                        stdOut(message.message);
+                        write(message.message);
                     } else {
                         Logger::logPrint(Logger::packDebugStr(
                             packUpLoggingStr(message.message)));
@@ -98,10 +93,10 @@ void ScriptingConsole::init() {
 }
 
 void ScriptingConsole::initOutput() {
-    stdWarn(tr("Scripting console for WingHexExplorer"));
+    write(tr("Scripting console for WingHexExplorer"));
 
     _s << Qt::endl;
-    stdWarn(tr(">>>> Powered by AngelScript <<<<"));
+    write(tr(">>>> Powered by AngelScript <<<<"));
     _s << Qt::endl << Qt::endl;
     appendCommandPrompt();
     setMode(Input);
@@ -160,7 +155,7 @@ QString ScriptingConsole::getInput() {
             if (!_cmdQueue.isEmpty()) {
                 instr = _cmdQueue.takeFirst();
                 setMode(Output);
-                QConsoleWidget::write(instr);
+                write(instr);
                 setMode(Input);
                 break;
             }
@@ -194,9 +189,9 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
         commandPrompt += QStringLiteral("... > ");
     } else {
         auto cursor = this->cursor();
-        if (!cursor.atBlockStart()) {
-            commandPrompt = QStringLiteral("\n");
-        }
+        // if (!cursor.atBlockStart()) {
+        //     commandPrompt = QStringLiteral("\n");
+        // }
         if (_sp && _sp->isDebugMode()) {
             commandPrompt += QStringLiteral("[dbg] > ");
         } else {
@@ -206,7 +201,7 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
 
     _lastCommandPrompt = storeOnly;
 
-    QConsoleWidget::write(commandPrompt);
+    appendPlainText(commandPrompt);
 }
 
 ScriptMachine *ScriptingConsole::machine() const { return _sp; }

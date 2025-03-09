@@ -18,34 +18,18 @@
 #ifndef _AS_COMPLETION_H_
 #define _AS_COMPLETION_H_
 
+#include "WingCodeEdit/wingcompleter.h"
 #include "class/qasparser.h"
-#include "qcodecompletionengine.h"
 
-class QCodeCompletionWidget;
-
-class AsCompletion : public QCodeCompletionEngine {
+class AsCompletion : public WingCompleter {
     Q_OBJECT
 public:
-    explicit AsCompletion(asIScriptEngine *engine, QObject *p = nullptr);
+    explicit AsCompletion(asIScriptEngine *engine, WingCodeEdit *p);
 
     virtual ~AsCompletion();
 
-    virtual QCodeCompletionEngine *clone() override;
-
-    virtual QString language() const override;
-
-    virtual QStringList extensions() const override;
-
-    virtual void setEditor(QEditor *e) override;
-
-    QCodeCompletionWidget *codeCompletionWidget() const;
-
 signals:
     void onFunctionTip(AsCompletion *cp, const QString &content);
-
-protected:
-    virtual void complete(const QDocumentCursor &c,
-                          const QString &trigger) override;
 
 private:
     void applyEmptyNsNode(QList<QCodeNode *> &nodes);
@@ -57,7 +41,6 @@ private:
 private:
     QAsParser parser;
     asIScriptEngine *_engine;
-    QCodeCompletionWidget *pPopup;
 
     QList<QCodeNode *> _emptyNsNodes;
 };
