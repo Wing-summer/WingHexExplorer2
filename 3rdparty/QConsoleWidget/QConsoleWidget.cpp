@@ -19,10 +19,6 @@
 #include <QTextCursor>
 #include <QTextDocumentFragment>
 
-#define STDIN_FILENO 0  /* Standard input.  */
-#define STDOUT_FILENO 1 /* Standard output.  */
-#define STDERR_FILENO 2 /* Standard error output.  */
-
 QConsoleWidget::QConsoleWidget(QWidget *parent)
     : WingCodeEdit(parent), mode_(Output) {
 
@@ -93,14 +89,11 @@ void QConsoleWidget::handleReturnKey() {
     if (!code.isEmpty())
         history_.add(code);
 
-    // append the newline char and
     // send signal / update iodevice
-    code += "\n";
     if (iodevice_->isOpen())
         iodevice_->consoleWidgetInput(code);
-    else {
-        emit consoleCommand(code);
-    }
+
+    emit consoleCommand(code);
 }
 
 void QConsoleWidget::handleTabKey() {
@@ -446,9 +439,4 @@ QTextStream &inputMode(QTextStream &s) {
         d->widget()->setMode(QConsoleWidget::Input);
     return s;
 }
-QTextStream &outChannel(QTextStream &s) {
-    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
-    if (d)
-        d->setCurrentWriteChannel(STDOUT_FILENO);
-    return s;
-}
+QTextStream &outChannel(QTextStream &s) { return s; }

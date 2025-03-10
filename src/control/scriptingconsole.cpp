@@ -20,13 +20,16 @@
 #include "class/scriptconsolemachine.h"
 #include "qregularexpression.h"
 
+#include <KSyntaxHighlighting/Definition>
+#include <KSyntaxHighlighting/Repository>
+
 #include <QApplication>
 #include <QColor>
 #include <QKeyEvent>
 #include <QTextObject>
 
 ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
-    _warnCharFmt.setForeground(QColorConstants::Svg::gold);
+    setSyntax(syntaxRepo().definitionForName("AngelScript"));
 }
 
 ScriptingConsole::~ScriptingConsole() {}
@@ -93,11 +96,11 @@ void ScriptingConsole::init() {
 }
 
 void ScriptingConsole::initOutput() {
+    _s << QStringLiteral(R"(""")") << Qt::endl;
     write(tr("Scripting console for WingHexExplorer"));
-
     _s << Qt::endl;
     write(tr(">>>> Powered by AngelScript <<<<"));
-    _s << Qt::endl << Qt::endl;
+    _s << Qt::endl << QStringLiteral(R"(""")") << Qt::endl;
     appendCommandPrompt();
     setMode(Input);
 }

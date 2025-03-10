@@ -15,42 +15,21 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#ifndef CODEEDIT_H
+#define CODEEDIT_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "control/codeedit.h"
+#include "WingCodeEdit/wingcodeedit.h"
 
-class ScriptEditor : public ads::CDockWidget {
+class CodeEdit : public WingCodeEdit {
     Q_OBJECT
 
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
-    virtual ~ScriptEditor();
-
-    QString fileName() const;
-
-    CodeEdit *editor() const;
-
-    bool formatCode();
+    explicit CodeEdit(QWidget *parent = nullptr);
 
 signals:
-    void onToggleMark(int line);
-
-public slots:
-    bool openFile(const QString &filename);
-
-    bool save(const QString &path = QString());
-    bool reload();
-
-    void setReadOnly(bool b);
+    void contentModified(bool b);
 
 private:
-    void processTitle();
-
-private:
-    CodeEdit *m_editor = nullptr;
-    QString m_fileName;
 };
 
-#endif // SCRIPTEDITOR_H
+#endif // CODEEDIT_H

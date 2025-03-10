@@ -177,30 +177,32 @@ void ScriptingDialog::initConsole() {
                 }
             }
 
+            const auto bpMark = QStringLiteral("bp");
+            const auto curSym = QStringLiteral("cur");
+            const auto hitCur = QStringLiteral("curbp");
+
             // remove the last mark
             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                // auto lastCur = QCodeEdit::managed(_lastCurLine.first);
-                // auto doc = lastCur->document();
-                // auto line = doc->line(_lastCurLine.second - 1);
-                // if (line.hasMark(curMark)) {
-                //     line.removeMark(curMark);
-                // } else if (line.hasMark(curHitMark)) {
-                //     line.removeMark(curHitMark);
-                //     line.addMark(bpMark);
-                // }
+                auto lastCur = findEditorView(_lastCurLine.first);
+                auto e = lastCur->editor();
+                auto symID = e->symbolMark(_lastCurLine.second);
+
+                if (symID == curSym) {
+                    e->removeSymbolMark(_lastCurLine.second);
+                } else if (symID == hitCur) {
+                    e->addSymbolMark(_lastCurLine.second, bpMark);
+                }
             }
 
             auto editor = e->editor();
 
             // add the new mark
-            // auto doc = editor->document();
-            // auto line = doc->line(lineNr - 1);
-            // if (line.hasMark(bpMark)) {
-            //     line.removeMark(bpMark);
-            //     line.addMark(curHitMark);
-            // } else {
-            //     line.addMark(curMark);
-            // }
+            auto symID = editor->symbolMark(lineNr);
+            if (symID == bpMark) {
+                editor->addSymbolMark(lineNr, hitCur);
+            } else {
+                editor->addSymbolMark(lineNr, curSym);
+            }
 
             // editor->ensureVisible(lineNr - 1);
 
@@ -812,44 +814,39 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     if (old != nullptr) {
-        // auto editor = old->editor();
-        // editor->disconnect(SIGNAL(copyAvailable(bool)));
-        // editor->disconnect(SIGNAL(contentModified(bool)));
-        // editor->disconnect(SIGNAL(undoAvailable(bool)));
-        // editor->disconnect(SIGNAL(redoAvailable(bool)));
-        // editor->disconnect(SIGNAL(zoomed()));
+        auto editor = old->editor();
+        editor->disconnect(SIGNAL(copyAvailable(bool)));
+        editor->disconnect(SIGNAL(contentModified(bool)));
+        editor->disconnect(SIGNAL(undoAvailable(bool)));
+        editor->disconnect(SIGNAL(redoAvailable(bool)));
+        editor->disconnect(SIGNAL(copyAvailable(bool)));
     }
 
-    // auto editor = cur->editor();
-    // m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
-    //     ->setEnabled(editor->canUndo());
-    // m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
-    //     ->setEnabled(editor->canRedo());
-    // m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-    //     ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
-    //                  editor->isContentModified());
-    // m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
-    //     ->setEnabled(editor->cursor().hasSelection());
+    auto editor = cur->editor();
+    m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
+        ->setEnabled(editor->document()->isUndoAvailable());
+    m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
+        ->setEnabled(editor->document()->isRedoAvailable());
+    m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+        ->setEnabled(Utilities::fileCanWrite(cur->fileName()) &&
+                     editor->document()->isModified());
+    m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
+        ->setEnabled(editor->textCursor().hasSelection());
 
-    // connect(editor, &QEditor::copyAvailable,
-    //         m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
-    //         &QToolButton::setEnabled);
-    // connect(editor, &QEditor::contentModified, this, [=] {
-    //     m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-    //         ->setEnabled(Utilities::fileCanWrite(editor->fileName()) &&
-    //                      editor->isContentModified());
-    // });
-    // connect(editor, &QEditor::undoAvailable,
-    //         m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
-    //         &QToolButton::setEnabled);
-    // connect(editor, &QEditor::redoAvailable,
-    //         m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
-    //         &QToolButton::setEnabled);
-    // connect(editor, &QEditor::zoomed, this, [=] {
-    //     Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
-    //                  QString::number(editor->scaleRate() * 100) +
-    //                      QStringLiteral("%"));
-    // });
+    connect(editor, &CodeEdit::copyAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
+            &QToolButton::setEnabled);
+    connect(editor, &CodeEdit::contentModified, this, [=] {
+        m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
+            ->setEnabled(Utilities::fileCanWrite(cur->fileName()) &&
+                         editor->document()->isModified());
+    });
+    connect(editor, &CodeEdit::undoAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
+            &QToolButton::setEnabled);
+    connect(editor, &CodeEdit::redoAvailable,
+            m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
+            &QToolButton::setEnabled);
 
     m_curEditor = cur;
 }

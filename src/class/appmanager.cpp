@@ -37,6 +37,8 @@
 #include "utilities.h"
 #include "wingmessagebox.h"
 
+#include <KSyntaxHighlighting/Repository>
+
 AppManager *AppManager::_instance = nullptr;
 
 AppManager::AppManager(int &argc, char *argv[])
@@ -80,6 +82,10 @@ AppManager::AppManager(int &argc, char *argv[])
     setFont(font);
 
     SkinManager::instance();
+
+    // add angelscript highlight support
+    auto &repo = WingCodeEdit::syntaxRepo();
+    repo.addCustomSearchPath(QStringLiteral(":/WingScript/Angelscript"));
 
     auto dontSplash = set.dontUseSplash();
 

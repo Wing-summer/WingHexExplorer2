@@ -36,15 +36,12 @@ AsCompletion::AsCompletion(asIScriptEngine *engine, WingCodeEdit *p)
     : WingCompleter(p), parser(engine), _engine(engine) {
     Q_ASSERT(engine);
 
-    // addTrigger(*DOT_TRIGGER);
-    // addTrigger(*DBL_COLON_TRIGGER);
-
-    // // unleash the power of call tips
-    // addTrigger(*LEFT_PARE_TRIGGER);
-    // // clear the tips
-    // addTrigger(*SEMI_COLON_TRIGGER);
-
-    // setTrigWordLen(3);
+    setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
+                    // unleash the power of call tips
+                    *LEFT_PARE_TRIGGER,
+                    // clear the tips
+                    *SEMI_COLON_TRIGGER});
+    setTriggerAmount(3);
 }
 
 AsCompletion::~AsCompletion() {}
