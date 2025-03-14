@@ -173,9 +173,13 @@ set(DIALOG_SRC
     src/dialog/historydeldialog.ui
     src/dialog/crashreport.h
     src/dialog/crashreport.cpp
-    src/dialog/crashreport.ui)
+    src/dialog/crashreport.ui
+    src/dialog/showtextdialog.cpp
+    src/dialog/showtextdialog.h)
 
 set(CONTROL_SRC
+    src/control/codeedit.h
+    src/control/codeedit.cpp
     src/control/editorview.h
     src/control/editorview.cpp
     src/control/toast.h
@@ -275,7 +279,8 @@ set(CLASS_SRC
     src/class/pluginsystem.h
     src/class/pluginsystem.cpp
     src/class/inspectqtloghelper.h
-    src/class/inspectqtloghelper.cpp)
+    src/class/inspectqtloghelper.cpp
+    src/class/codeinfotip.h)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

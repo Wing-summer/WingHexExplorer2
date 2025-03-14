@@ -106,6 +106,7 @@
         <file>images/unover.png</file>
         <file>images/unsaved.png</file>
         <file>images/update.png</file>
+        <file>images/viewtxt.png</file>
         <file>images/wiki.png</file>
         <file>images/win.png</file>
         <file>images/workspace.png</file>
@@ -151,5 +152,7 @@
         <file>images/completion/CVunion.png</file>
         <file>images/completion/classnew.png</file>
     </qresource>
-    <qresource prefix="/WingScript/Angelscript"/>
+    <qresource prefix="/WingScript/Angelscript/syntax">
+        <file alias="angelscript.xml">src/angelscript.xml</file>
+    </qresource>
 </RCC>

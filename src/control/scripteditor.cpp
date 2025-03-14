@@ -27,6 +27,7 @@
 #include <QFile>
 #include <QPixmap>
 
+#include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
@@ -42,7 +43,7 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
-    m_editor = new WingCodeEdit(this);
+    m_editor = new CodeEdit(this);
     m_editor->setAutoIndent(true);
     m_editor->setMatchBraces(true);
     m_editor->setShowLongLineEdge(true);
@@ -63,6 +64,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
             KSyntaxHighlighting::Repository::LightTheme));
         break;
     }
+
+    m_editor->setSyntax(
+        m_editor->syntaxRepo().definitionForName("AngelScript"));
 
     connect(m_editor, &WingCodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);
@@ -154,7 +158,7 @@ void ScriptEditor::processTitle() {
     }
 }
 
-WingCodeEdit *ScriptEditor::editor() const { return m_editor; }
+CodeEdit *ScriptEditor::editor() const { return m_editor; }
 
 bool ScriptEditor::formatCode() {
     bool ok;

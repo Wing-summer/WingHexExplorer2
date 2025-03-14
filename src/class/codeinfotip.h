@@ -15,42 +15,21 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#ifndef CODEINFOTIP_H
+#define CODEINFOTIP_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "control/codeedit.h"
+#include <QString>
 
-class ScriptEditor : public ads::CDockWidget {
-    Q_OBJECT
+class CodeInfoTip {
+public:
+    enum class Type { Class, Function, Enum, Variable };
 
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
-    virtual ~ScriptEditor();
+    QString name;
+    Type type;
+    QString nameSpace;
 
-    QString fileName() const;
-
-    CodeEdit *editor() const;
-
-    bool formatCode();
-
-signals:
-    void onToggleMark(int line);
-
-public slots:
-    bool openFile(const QString &filename);
-
-    bool save(const QString &path = QString());
-    bool reload();
-
-    void setReadOnly(bool b);
-
-private:
-    void processTitle();
-
-private:
-    CodeEdit *m_editor = nullptr;
-    QString m_fileName;
+    QString args; // only function use
 };
 
-#endif // SCRIPTEDITOR_H
+#endif // CODEINFOTIP_H

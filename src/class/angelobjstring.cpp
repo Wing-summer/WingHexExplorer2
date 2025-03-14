@@ -29,8 +29,8 @@ QString AngelObjString::stringToString(void *obj, asDebugger *dbg) {
     Q_UNUSED(dbg);
 
     // We know the received object is a string
-    QString *val = reinterpret_cast<QString *>(obj);
-    return *val;
+    QString val = *reinterpret_cast<QString *>(obj);
+    return val;
 }
 
 QString AngelObjString::arrayToString(void *obj, asDebugger *dbg) {

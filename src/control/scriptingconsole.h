@@ -71,7 +71,6 @@ private:
     QMutex _queueLocker;
     bool _waitforRead = false;
 
-    QTextCharFormat _warnCharFmt;
     std::function<QString(void)> _getInputFn;
 };
 

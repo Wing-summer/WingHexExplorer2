@@ -38,8 +38,8 @@ using qhash_result_t = uint;
 // copying from QT6 source code for supporting QT5's qHashMulti
 namespace QtPrivate {
 template <typename T>
-inline constexpr bool
-    QNothrowHashableHelper_v = noexcept(qHash(std::declval<const T &>()));
+inline constexpr bool QNothrowHashableHelper_v =
+    noexcept(qHash(std::declval<const T &>()));
 
 template <typename T, typename Enable = void>
 struct QNothrowHashable : std::false_type {};
