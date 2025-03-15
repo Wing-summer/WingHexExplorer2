@@ -38,6 +38,9 @@ public:
     void appendCommandPrompt(bool storeOnly = false);
 
 public slots:
+    void stdOut(const QString &str);
+    void stdErr(const QString &str);
+    void stdWarn(const QString &str);
     void newLine();
 
     void init();
@@ -45,8 +48,6 @@ public slots:
     void initOutput();
 
     void clearConsole();
-
-    void pushInputCmd(const QString &cmd);
 
     void processKeyEvent(QKeyEvent *e);
 
@@ -67,10 +68,7 @@ private:
     bool _lastCommandPrompt = false;
     QString _codes;
 
-    QStringList _cmdQueue;
-    QMutex _queueLocker;
-    bool _waitforRead = false;
-
+    QTextCharFormat _warnCharFmt;
     std::function<QString(void)> _getInputFn;
 };
 

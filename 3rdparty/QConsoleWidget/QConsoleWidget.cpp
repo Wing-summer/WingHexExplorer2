@@ -1,9 +1,5 @@
 #include "QConsoleWidget.h"
 #include "QConsoleIODevice.h"
-#include "class/skinmanager.h"
-
-#include <KSyntaxHighlighting/Repository>
-#include <KSyntaxHighlighting/Theme>
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -20,28 +16,23 @@
 #include <QTextDocumentFragment>
 
 QConsoleWidget::QConsoleWidget(QWidget *parent)
-    : WingCodeEdit(parent), mode_(Output) {
-
-    setAutoCloseChar(true);
-
-    switch (SkinManager::instance().currentTheme()) {
-    case SkinManager::Theme::Dark:
-        setTheme(syntaxRepo().defaultTheme(
-            KSyntaxHighlighting::Repository::DarkTheme));
-        break;
-    case SkinManager::Theme::Light:
-        setTheme(syntaxRepo().defaultTheme(
-            KSyntaxHighlighting::Repository::LightTheme));
-        break;
-    }
-
+    : QPlainTextEdit(parent), mode_(Output), completer_(0) {
     iodevice_ = new QConsoleIODevice(this, this);
+
+    QTextCharFormat fmt = currentCharFormat();
+    for (int i = 0; i < nConsoleChannels; i++)
+        chanFormat_[i] = fmt;
+
+    // chanFormat_[StandardOutput];
+    chanFormat_[StandardError].setForeground(Qt::red);
 
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setUndoRedoEnabled(false);
 }
 
 QConsoleWidget::~QConsoleWidget() {}
+
+QConsoleWidget::ConsoleMode QConsoleWidget::mode() const { return mode_; }
 
 void QConsoleWidget::setMode(ConsoleMode m) {
     if (m == mode_)
@@ -51,6 +42,7 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         QTextCursor cursor = textCursor();
         cursor.movePosition(QTextCursor::End);
         setTextCursor(cursor);
+        setCurrentCharFormat(chanFormat_[StandardInput]);
         inpos_ = cursor.position();
         mode_ = Input;
     }
@@ -59,6 +51,27 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         mode_ = Output;
     }
 }
+
+QIODevice *QConsoleWidget::device() const { return iodevice_; }
+
+QTextCharFormat QConsoleWidget::channelCharFormat(ConsoleChannel ch) const {
+    return chanFormat_[ch];
+}
+
+void QConsoleWidget::setChannelCharFormat(ConsoleChannel ch,
+                                          const QTextCharFormat &fmt) {
+    chanFormat_[ch] = fmt;
+}
+
+const QStringList &QConsoleWidget::completionTriggers() const {
+    return completion_triggers_;
+}
+
+void QConsoleWidget::setCompletionTriggers(const QStringList &l) {
+    completion_triggers_ = l;
+}
+
+QSize QConsoleWidget::sizeHint() const { return QSize(600, 400); }
 
 QString QConsoleWidget::getCommandLine() {
     if (mode_ == Output)
@@ -71,8 +84,6 @@ QString QConsoleWidget::getCommandLine() {
     code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
     return code;
 }
-
-QConsoleWidget::History &QConsoleWidget::history() { return history_; }
 
 void QConsoleWidget::handleReturnKey() {
     QString code = getCommandLine();
@@ -89,6 +100,7 @@ void QConsoleWidget::handleReturnKey() {
     if (!code.isEmpty())
         history_.add(code);
 
+    // append the newline char and
     // send signal / update iodevice
     if (iodevice_->isOpen())
         iodevice_->consoleWidgetInput(code);
@@ -108,15 +120,109 @@ void QConsoleWidget::handleTabKey() {
     if (text.isEmpty()) {
         tc.insertText("    ");
     } else {
-        // updateCompleter();
-        // if (completer_ && completer_->completionCount() == 1) {
-        //     insertCompletion(completer_->currentCompletion());
-        //     completer_->popup()->hide();
-        // }
+        updateCompleter();
+        if (completer_ && completer_->completionCount() == 1) {
+            insertCompletion(completer_->currentCompletion());
+            completer_->popup()->hide();
+        }
+    }
+}
+
+void QConsoleWidget::updateCompleter() {
+    if (!completer_)
+        return;
+
+    // if the completer is first shown, mark
+    // the text position
+    QTextCursor textCursor = this->textCursor();
+    if (!completer_->popup()->isVisible()) {
+        completion_pos_ = textCursor.position();
+        // qDebug() << "show completer, pos " << completion_pos_;
+    }
+
+    // Get the text between the current cursor position
+    // and the start of the input
+    textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    QString commandText = textCursor.selectedText();
+    // qDebug() << "code to complete: " << commandText;
+
+    // Call the completer to update the completion model
+    // Place and show the completer if there are available completions
+
+    if (completer_->updateCompletionModel(commandText)) {
+        // qDebug() << "found " << count << " completions";
+
+        // Get a QRect for the cursor at the start of the
+        // current word and then translate it down 8 pixels.
+        textCursor = this->textCursor();
+        textCursor.movePosition(QTextCursor::StartOfWord);
+        QRect cr = this->cursorRect(textCursor);
+        cr.translate(0, 8);
+        cr.setWidth(
+            completer_->popup()->sizeHintForColumn(0) +
+            completer_->popup()->verticalScrollBar()->sizeHint().width());
+        completer_->complete(cr);
+    } else {
+        // qDebug() << "no completions - hiding";
+        completer_->popup()->hide();
+    }
+}
+
+void QConsoleWidget::checkCompletionTriggers(const QString &txt) {
+    if (!completer_ || completion_triggers_.isEmpty() || txt.isEmpty())
+        return;
+
+    foreach (const QString &tr, completion_triggers_) {
+        if (tr.endsWith(txt)) {
+            QTextCursor tc = this->textCursor();
+            tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
+                            tr.length());
+            if (tc.selectedText() == tr) {
+                updateCompleter();
+                return;
+            }
+        }
+    }
+}
+
+void QConsoleWidget::insertCompletion(const QString &completion) {
+    QTextCursor tc = textCursor();
+    tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
+                    tc.position() - inpos_ - completer_->insertPos());
+    tc.insertText(completion, chanFormat_[StandardInput]);
+    setTextCursor(tc);
+}
+
+void QConsoleWidget::setCompleter(QConsoleWidgetCompleter *c) {
+    if (completer_) {
+        completer_->setWidget(0);
+        QObject::disconnect(completer_, SIGNAL(activated(const QString &)),
+                            this, SLOT(insertCompletion(const QString &)));
+    }
+    completer_ = c;
+    if (completer_) {
+        completer_->setWidget(this);
+        QObject::connect(completer_, SIGNAL(activated(const QString &)), this,
+                         SLOT(insertCompletion(const QString &)));
     }
 }
 
 void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
+    if (completer_ && completer_->popup()->isVisible()) {
+        // The following keys are forwarded by the completer to the widget
+        switch (e->key()) {
+        case Qt::Key_Tab:
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+        case Qt::Key_Escape:
+        case Qt::Key_Backtab:
+            e->ignore();
+            return; // let the completer do default behavior
+        default:
+            break;
+        }
+    }
+
     QTextCursor textCursor = this->textCursor();
     bool selectionInEditZone = isSelectionInEditZone();
 
@@ -159,7 +265,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
                 QApplication::clipboard()->mimeData();
             const QString text = clipboard->text();
             if (!text.isNull()) {
-                textCursor.insertText(text);
+                textCursor.insertText(text, channelCharFormat(StandardInput));
             }
         }
 
@@ -170,8 +276,8 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     int key = e->key();
     int shiftMod = e->modifiers() == Qt::ShiftModifier;
 
-    // if (history_.isActive() && key != Qt::Key_Up && key != Qt::Key_Down)
-    //     history_.deactivate();
+    if (history_.isActive() && key != Qt::Key_Up && key != Qt::Key_Down)
+        history_.deactivate();
 
     // Force the cursor back to the interactive area
     // for all keys except modifiers
@@ -202,7 +308,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     case Qt::Key_Left:
         if (textCursor.position() > inpos_)
-            WingCodeEdit::keyPressEvent(e);
+            QPlainTextEdit::keyPressEvent(e);
         else {
             QApplication::beep();
             e->accept();
@@ -218,7 +324,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             if (textCursor.position() < inpos_)
                 QApplication::beep();
             else
-                WingCodeEdit::keyPressEvent(e);
+                QPlainTextEdit::keyPressEvent(e);
         }
         break;
 
@@ -231,7 +337,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             if (textCursor.position() <= inpos_)
                 QApplication::beep();
             else
-                WingCodeEdit::keyPressEvent(e);
+                QPlainTextEdit::keyPressEvent(e);
         }
         break;
 
@@ -260,8 +366,19 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     default:
         e->accept();
-        WingCodeEdit::keyPressEvent(e);
+        setCurrentCharFormat(chanFormat_[StandardInput]);
+        QPlainTextEdit::keyPressEvent(e);
+        // check if the last key triggers a completion
+        checkCompletionTriggers(e->text());
         break;
+    }
+
+    if (completer_ && completer_->popup()->isVisible()) {
+        // if the completer is visible check if it should be updated
+        if (this->textCursor().position() < completion_pos_)
+            completer_->popup()->hide();
+        else
+            updateCompleter();
     }
 }
 
@@ -312,14 +429,14 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
 
     // ... and replace it with new string.
-    textCursor.insertText(str);
+    textCursor.insertText(str, chanFormat_[StandardInput]);
 
     // move to the end of the document
     textCursor.movePosition(QTextCursor::End);
     setTextCursor(textCursor);
 }
 
-void QConsoleWidget::write(const QString &message) {
+void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
     QTextCharFormat currfmt = currentCharFormat();
     QTextCursor tc = textCursor();
 
@@ -340,7 +457,7 @@ void QConsoleWidget::write(const QString &message) {
         tc.insertBlock();
         tc.movePosition(QTextCursor::PreviousBlock);
 
-        tc.insertText(message);
+        tc.insertText(message, fmt);
         tc.movePosition(QTextCursor::End);
         // restore input pos
         inpos_ = tc.position() - inpos_;
@@ -359,7 +476,7 @@ void QConsoleWidget::write(const QString &message) {
 
         // insert text
         setTextCursor(tc1);
-        textCursor().insertText(message);
+        textCursor().insertText(message, fmt);
         ensureCursorVisible();
 
         // restore cursor if needed
@@ -368,13 +485,22 @@ void QConsoleWidget::write(const QString &message) {
     }
 }
 
+QConsoleWidget::History &QConsoleWidget::history() { return history_; }
+
+void QConsoleWidget::writeStdOut(const QString &s) {
+    write(s, chanFormat_[StandardOutput]);
+}
+
+void QConsoleWidget::writeStdErr(const QString &s) {
+    write(s, chanFormat_[StandardError]);
+}
+
 /////////////////// QConsoleWidget::History /////////////////////
 
 QConsoleWidget::History QConsoleWidget::history_;
 
 QConsoleWidget::History::History(void)
     : pos_(0), active_(false), maxsize_(10000) {}
-
 QConsoleWidget::History::~History(void) {}
 
 void QConsoleWidget::History::add(const QString &str) {
@@ -439,4 +565,15 @@ QTextStream &inputMode(QTextStream &s) {
         d->widget()->setMode(QConsoleWidget::Input);
     return s;
 }
-QTextStream &outChannel(QTextStream &s) { return s; }
+QTextStream &outChannel(QTextStream &s) {
+    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
+    if (d)
+        d->setCurrentWriteChannel(QConsoleWidget::StandardOutput);
+    return s;
+}
+QTextStream &errChannel(QTextStream &s) {
+    QConsoleIODevice *d = qobject_cast<QConsoleIODevice *>(s.device());
+    if (d)
+        d->setCurrentWriteChannel(QConsoleWidget::StandardError);
+    return s;
+}

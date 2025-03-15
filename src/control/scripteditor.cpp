@@ -25,6 +25,7 @@
 
 #include <QAction>
 #include <QFile>
+#include <QFileInfo>
 #include <QPixmap>
 
 #include <KSyntaxHighlighting/Definition>
@@ -44,15 +45,6 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
     m_editor = new CodeEdit(this);
-    m_editor->setAutoIndent(true);
-    m_editor->setMatchBraces(true);
-    m_editor->setShowLongLineEdge(true);
-    m_editor->setShowIndentGuides(true);
-    m_editor->setShowLineNumbers(true);
-    m_editor->setShowFolding(true);
-    m_editor->setShowWhitespace(true);
-    m_editor->setShowSymbolMark(true);
-    m_editor->setAutoCloseChar(true);
 
     switch (SkinManager::instance().currentTheme()) {
     case SkinManager::Theme::Dark:
@@ -68,13 +60,10 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
 
-    connect(m_editor, &WingCodeEdit::symbolMarkLineMarginClicked, this,
+    connect(m_editor, &CodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);
-
-    // connect(editor, &QEditor::titleChanged, this,
-    // &ScriptEditor::processTitle); connect(editor, &QEditor::contentModified,
-    // this,
-    //         &ScriptEditor::processTitle);
+    connect(m_editor, &CodeEdit::contentModified, this,
+            [this]() { processTitle(); });
 
     this->setWidget(m_editor);
 }
@@ -94,6 +83,8 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
     m_editor->setPlainText(QString::fromUtf8(f.readAll()));
     f.close();
+    m_fileName = filename;
+    processTitle();
     return true;
 }
 
@@ -140,6 +131,8 @@ bool ScriptEditor::save(const QString &path) {
     }
 #endif
 
+    m_fileName = path;
+    processTitle();
     return true;
 }
 
@@ -151,10 +144,11 @@ void ScriptEditor::setReadOnly(bool b) {
 }
 
 void ScriptEditor::processTitle() {
+    QString filename = QFileInfo(m_fileName).fileName();
     if (m_editor->document()->isModified()) {
-        // setWindowTitle(e->windowTitle());
+        setWindowTitle(filename.prepend(QStringLiteral("* ")));
     } else {
-        // setWindowTitle(e->name());
+        setWindowTitle(filename);
     }
 }
 

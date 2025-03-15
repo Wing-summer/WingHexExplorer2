@@ -28,8 +28,6 @@ public:
 
 signals:
     void contentModified(bool b);
-
-private:
 };
 
 #endif // CODEEDIT_H

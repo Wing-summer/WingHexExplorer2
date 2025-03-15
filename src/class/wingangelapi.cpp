@@ -2092,7 +2092,7 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
         }
 
         _console->setMode(ScriptingConsole::Output);
-        _console->write(getSenderHeader(sender));
+        _console->stdOut(getSenderHeader(sender));
         auto handles = _handles;
         _console->machine()->executeScript(f.fileName());
         cleanUpHandles(handles);
@@ -2106,7 +2106,7 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
     _console->setMode(ScriptingConsole::Output);
-    _console->write(getSenderHeader(sender));
+    _console->stdOut(getSenderHeader(sender));
     auto handles = _handles;
     auto ret = _console->machine()->executeScript(fileName);
     cleanUpHandles(handles);
@@ -2118,7 +2118,7 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
     _console->setMode(ScriptingConsole::Output);
-    _console->write(getSenderHeader(sender));
+    _console->stdOut(getSenderHeader(sender));
     auto ret = _console->machine()->executeCode(code);
     _console->appendCommandPrompt();
     _console->setMode(ScriptingConsole::Input);

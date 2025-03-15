@@ -259,7 +259,7 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
 void ScriptManager::runScript(const QString &filename) {
     Q_ASSERT(_console);
     _console->setMode(ScriptingConsole::Output);
-    _console->write(tr("Excuting:") + filename);
+    _console->stdWarn(tr("Excuting:") + filename);
     _console->newLine();
     _console->machine()->executeScript(filename);
     _console->appendCommandPrompt();

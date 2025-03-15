@@ -18,6 +18,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "dialog/showtextdialog.h"
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
@@ -196,6 +197,7 @@ private slots:
     void on_locChanged();
     void on_selectionChanged();
 
+    void on_viewtxt();
     void on_fullScreen();
     void on_saveLayout();
     void on_exportlog();
@@ -294,7 +296,7 @@ private:
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
         if (menu) {
-            a->setText(title + QStringLiteral(" ▼"));
+            a->setText(title + QStringLiteral(" 闁充紮鎷�"));
         } else
 #endif
         {
@@ -569,6 +571,8 @@ private:
     QToolButton *m_sLocked = nullptr;
     QToolButton *m_sCanOver = nullptr;
 
+    ShowTextDialog *_showtxt = nullptr;
+
     // cache icon
     QIcon _infoSaved, _infoUnsaved;
     QIcon _infoWriteable, _infoReadonly;
@@ -590,9 +594,11 @@ private:
 
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
-    ads::CDockAreaWidget *m_rightViewArea = nullptr; // 该值使用时必不为空
+    ads::CDockAreaWidget *m_rightViewArea =
+        nullptr; // 閻犲洢鍎遍埀顒勬？婵炲洭鎮介妸锔筋槯闊洤鎳嶇粭澶嬬▔閾忓厜鏁�
     ads::CDockAreaWidget *m_topViewArea = nullptr;
-    ads::CDockAreaWidget *m_bottomViewArea = nullptr; // 该值使用时必不为空
+    ads::CDockAreaWidget *m_bottomViewArea =
+        nullptr; // 閻犲洢鍎遍埀顒勬？婵炲洭鎮介妸锔筋槯闊洤鎳嶇粭澶嬬▔閾忓厜鏁�
 
     //================================
 

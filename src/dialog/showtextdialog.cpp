@@ -42,11 +42,8 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
     layout->setSpacing(0);
     layout->addWidget(q_check_ptr(m_ribbon));
 
-    m_edit = new WingCodeEdit(this);
-    // auto editor = m_edit->editor();
-    // editor->setCodec(QStringLiteral("ASCII"));
-    // connect(editor, &QEditor::needLoading, this,
-    //         [this]() { load(m_last.buffer, m_last.offset, m_last.size); });
+    m_edit = new CodeEdit(this);
+    m_edit->setShowLongLineEdge(false);
 
     m_edit->setReadOnly(true);
     m_edit->setAcceptDrops(false);
@@ -94,14 +91,14 @@ void ShowTextDialog::load(QHexBuffer *buffer, qsizetype offset,
         return;
     }
 
-    // auto editor = m_edit->editor();
-    // editor->setUpdatesEnabled(false);
+    m_edit->setUpdatesEnabled(false);
 
     // auto doc = editor->document();
     // auto orign = offset;
 
-    // editor->setUpdatesEnabled(true);
+    m_edit->setUpdatesEnabled(true);
     // m_status->showMessage(editor->codecName());
+    show();
 }
 
 void ShowTextDialog::buildUpRibbonBar() {
@@ -146,7 +143,7 @@ RibbonTabContent *ShowTextDialog::buildViewPage(RibbonTabContent *tab) {
 }
 
 void ShowTextDialog::on_copyfile() {
-    // m_edit->editor()->copy();
+    m_edit->copy();
     Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                  tr("CopyToClipBoard"));
 }

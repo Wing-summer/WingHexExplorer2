@@ -17,7 +17,7 @@
 
 #include "asobjtreewidget.h"
 
-#include "class/qasparser.h"
+#include "class/asdatabase.h"
 
 #include <QHeaderView>
 
@@ -35,10 +35,11 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
         return;
     }
 
-    QAsParser parser(engine);
-    auto &nodes = parser.headerNodes();
-    for (auto &node : nodes) {
-        auto header = QString::fromUtf8(node->role(QCodeNode::Name));
+    ASDataBase db(engine);
+    auto &nodes = db.headerNodes();
+    for (auto node = nodes.constKeyValueBegin();
+         node != nodes.constKeyValueEnd(); node++) {
+        QString header = node->first.name;
 
         QTreeWidgetItem *item = nullptr;
 
@@ -48,41 +49,31 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
             item = new QTreeWidgetItem({header});
         }
 
-        item->setToolTip(0, node->qualifiedBaseName(true));
-        item->setIcon(0, node->data(Qt::DecorationRole).value<QIcon>());
-
-        createObjNodes(node->children(), item);
+        item->setToolTip(0, header);
+        item->setIcon(0, CodeInfoTip::getDisplayIcon(node->first.type));
+        createObjNodes(node->second, item);
         addTopLevelItem(item);
     }
 
     setSortingEnabled(true);
 }
 
-QTreeWidgetItem *ASObjTreeWidget::createObjNode(QCodeNode *node,
+QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
                                                 QTreeWidgetItem *parent) {
-    Q_ASSERT(node && parent);
-    QStringList contents{QString::fromUtf8(node->role(QCodeNode::Name)),
-                         node->data(Qt::ToolTipRole).toString()};
+    Q_ASSERT(node.type != CodeInfoTip::Type::Unknown && parent);
+    QStringList contents{node.name, node.getTooltip()};
     auto c = new QTreeWidgetItem(contents);
     c->setToolTip(0, contents.at(0));
     c->setToolTip(1, contents.at(1));
-    c->setIcon(0, node->data(Qt::DecorationRole).value<QIcon>());
+    c->setIcon(0, CodeInfoTip::getDisplayIcon(node.type));
     parent->addChild(c);
     return c;
 }
 
-void ASObjTreeWidget::createObjNodes(const QList<QCodeNode *> &children,
+void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
                                      QTreeWidgetItem *parent) {
-    for (auto &n : children) {
+    for (auto &n : nodes) {
         // only for code namespace completion
-        if (n->role(QCodeNode::NodeType).at(0) == QCodeNode::Namespace) {
-            if (n->children().isEmpty()) {
-                continue;
-            }
-        }
-        auto c = createObjNode(n, parent);
-        if (!n->children().isEmpty()) {
-            createObjNodes(n->children(), c);
-        }
+        createObjNode(n, parent);
     }
 }

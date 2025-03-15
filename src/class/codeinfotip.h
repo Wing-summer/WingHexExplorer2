@@ -18,18 +18,62 @@
 #ifndef CODEINFOTIP_H
 #define CODEINFOTIP_H
 
+#include <QIcon>
+#include <QMap>
 #include <QString>
 
 class CodeInfoTip {
 public:
-    enum class Type { Class, Function, Enum, Variable };
+    enum class Type {
+        Unknown,
+        KeyWord,
+        Group,
+        Class,
+        Function,
+        Enum,
+        Variable
+    };
+
+    enum CacheIndex {
+        ICON_ENUM,
+        ICON_ENUMERATOR,
+        // ICON_UNION,
+        ICON_CLASS,
+        // ICON_STRUCT,
+        ICON_KEYWORD,
+        ICON_TYPEDEF,
+        ICON_NAMESPACE,
+        ICON_FUNCTION = ICON_NAMESPACE + 2,
+        ICON_VARIABLE = ICON_FUNCTION + 5
+    };
+
+    enum CodeInfoVisibility {
+        VISIBILITY_DEFAULT = -1,
+        VISIBILITY_PUBLIC,
+        VISIBILITY_PROTECTED,
+        VISIBILITY_PRIVATE
+    };
+
+    static QIcon getDisplayIcon(Type type);
+
+    static QIcon icon(int cacheIndex);
+
+    enum ArgsIndex {
+        // for function
+        RetType,
+        Args,
+        SuffixQualifier
+    };
+
+public:
+    QString getTooltip() const;
 
 public:
     QString name;
-    Type type;
+    Type type = Type::Unknown;
     QString nameSpace;
 
-    QString args; // only function use
+    QMap<ArgsIndex, QString> args;
 };
 
 #endif // CODEINFOTIP_H

@@ -19,8 +19,9 @@
 #define QASCODEPARSER_H
 
 #include "AngelScript/sdk/angelscript/source/as_scriptnode.h"
-#include "class/qcodenode.h"
 
+#include <QList>
+#include <QMap>
 #include <QString>
 
 // This class is the modification of as_parser.
@@ -30,14 +31,6 @@
  *  variables/functions.
  ** If you are interested in implement a well-featured intellisense like
  *  Qt creator or Visual Studio, PRs are welcomed !!!
- */
-
-// 这个类基于 as_parser 这个文件进行修改得到。
-// 你可以修改该类以支持更多的功能。
-/* 完美支持 AngelScript 代码智能提示是一个很复杂的事情。
- * 我只提供基础的局部或全局变量和函数的代码填充。
- * 如果你对实现一个像 Qt creator 或者 Visual Studio 一样功能丰富的智能提示，
- * 欢迎 PR ！！！
  */
 
 class QAsCodeParser {

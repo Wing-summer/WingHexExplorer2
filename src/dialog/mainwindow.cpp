@@ -305,6 +305,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash)
         splash->setInfoText(tr("SetupWaiting"));
 
+    // others
+    _showtxt = new ShowTextDialog(this);
+    qApp->processEvents();
+
     // update status
     updateEditModeEnabled();
 
@@ -1464,6 +1468,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         m_editStateWidgets << addPannelAction(
             pannel, QStringLiteral("scalereset"), tr("ResetScale"),
             [this] { this->setCurrentHexEditorScale(1.0); });
+        m_editStateWidgets << addPannelAction(pannel, QStringLiteral("viewtxt"),
+                                              tr("ViewText"),
+                                              &MainWindow::on_viewtxt);
     }
 
     {
@@ -2927,7 +2934,6 @@ void MainWindow::on_selectionChanged() {
         return;
     }
 
-    // 解码字符串
     auto cursor = hexeditor->cursor();
     QByteArrayList buffer;
     bool isPreview = false;
@@ -2956,7 +2962,6 @@ void MainWindow::on_selectionChanged() {
                     .arg(total));
         }
 
-        // 如果不超过 10KB （默认）那么解码，防止太多卡死
         if (buffer.length() <= 1024 * _decstrlim) {
             m_txtDecode->insertPlainText(
                 Utilities::decodingString(b, m_encoding));
@@ -2971,6 +2976,14 @@ void MainWindow::on_selectionChanged() {
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::SelectionChanged,
         {QVariant::fromValue(buffer), isPreview});
+}
+
+void MainWindow::on_viewtxt() {
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+    _showtxt->load(hexeditor->document()->buffer());
 }
 
 void MainWindow::on_fullScreen() {
@@ -3110,8 +3123,7 @@ void MainWindow::on_update() {
 
 QString MainWindow::saveLog() {
     QDir ndir(Utilities::getAppDataPath());
-    ndir.mkpath(QStringLiteral("log")); // 确保日志存放目录存在
-
+    ndir.mkpath(QStringLiteral("log"));
     QFile lfile(ndir.absolutePath() + QDir::separator() +
                 QStringLiteral("log") + QDir::separator() +
                 QDateTime::currentDateTime().toString(

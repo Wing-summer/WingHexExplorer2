@@ -9,6 +9,8 @@
 QConsoleIODevice::QConsoleIODevice(QConsoleWidget *w, QObject *parent)
     : QIODevice(parent), widget_(w), readpos_(0), writtenSinceLastEmit_(0),
       readSinceLastEmit_(0) {
+    setCurrentWriteChannel(QConsoleWidget::StandardOutput);
+
     open(QIODevice::ReadWrite | QIODevice::Unbuffered);
 }
 
@@ -50,7 +52,11 @@ qint64 QConsoleIODevice::readData(char *data, qint64 len) {
 
 qint64 QConsoleIODevice::writeData(const char *data, qint64 len) {
     QByteArray ba(data, (int)len);
-    widget_->write(ba);
+    int ch = currentWriteChannel();
+    if (ch == QConsoleWidget::StandardError)
+        widget_->writeStdErr(ba);
+    else
+        widget_->writeStdOut(ba);
 
     writtenSinceLastEmit_ += len;
     if (!signalsBlocked()) {

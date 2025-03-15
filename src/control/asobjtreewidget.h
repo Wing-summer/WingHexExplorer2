@@ -19,7 +19,7 @@
 #define ASOBJTREEWIDGET_H
 
 #include "angelscript.h"
-#include "class/qcodenode.h"
+#include "class/codeinfotip.h"
 
 #include <QHash>
 #include <QTreeWidget>
@@ -33,9 +33,10 @@ public:
     void setEngine(asIScriptEngine *engine);
 
 private:
-    QTreeWidgetItem *createObjNode(QCodeNode *node, QTreeWidgetItem *parent);
+    QTreeWidgetItem *createObjNode(const CodeInfoTip &node,
+                                   QTreeWidgetItem *parent);
 
-    void createObjNodes(const QList<QCodeNode *> &children,
+    void createObjNodes(const QList<CodeInfoTip> &nodes,
                         QTreeWidgetItem *parent);
 };
 

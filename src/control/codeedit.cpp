@@ -17,4 +17,17 @@
 
 #include "codeedit.h"
 
-CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {}
+CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
+    setAutoIndent(true);
+    setAutoCloseChar(true);
+    setMatchBraces(true);
+    setShowLongLineEdge(true);
+    setShowIndentGuides(true);
+    setShowLineNumbers(true);
+    setShowFolding(true);
+    setShowWhitespace(true);
+    setShowSymbolMark(true);
+
+    connect(this->document(), &QTextDocument::modificationChanged, this,
+            &CodeEdit::contentModified);
+}

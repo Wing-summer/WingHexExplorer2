@@ -245,8 +245,8 @@ set(CLASS_SRC
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
-    src/class/qasparser.cpp
-    src/class/qasparser.h
+    src/class/asdatabase.cpp
+    src/class/asdatabase.h
     src/class/qascodeparser.h
     src/class/qascodeparser.cpp
     src/class/ascompletion.cpp
@@ -255,8 +255,6 @@ set(CLASS_SRC
     src/class/asbuilder.cpp
     src/class/ascontextmgr.h
     src/class/ascontextmgr.cpp
-    src/class/qcodenode.cpp
-    src/class/qcodenode.h
     src/class/clangformatmanager.h
     src/class/clangformatmanager.cpp
     src/class/aspreprocesser.h
@@ -280,7 +278,8 @@ set(CLASS_SRC
     src/class/pluginsystem.cpp
     src/class/inspectqtloghelper.h
     src/class/inspectqtloghelper.cpp
-    src/class/codeinfotip.h)
+    src/class/codeinfotip.h
+    src/class/codeinfotip.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

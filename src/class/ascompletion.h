@@ -19,7 +19,7 @@
 #define _AS_COMPLETION_H_
 
 #include "WingCodeEdit/wingcompleter.h"
-#include "class/qasparser.h"
+#include "class/asdatabase.h"
 
 class AsCompletion : public WingCompleter {
     Q_OBJECT
@@ -32,17 +32,15 @@ signals:
     void onFunctionTip(AsCompletion *cp, const QString &content);
 
 private:
-    void applyEmptyNsNode(QList<QCodeNode *> &nodes);
+    // void applyEmptyNsNode(QList<QCodeNode *> &nodes);
 
     // void parse(const QDocumentCursor &c);
 
-    QList<QCodeNode *> lookupNamespace(const QByteArrayList &ns);
+    // QList<QCodeNode *> lookupNamespace(const QByteArrayList &ns);
 
 private:
-    QAsParser parser;
+    ASDataBase parser;
     asIScriptEngine *_engine;
-
-    QList<QCodeNode *> _emptyNsNodes;
 };
 
 #endif // _CPP_COMPLETION_H_

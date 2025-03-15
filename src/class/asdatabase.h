@@ -19,21 +19,17 @@
 #define _QAS_PARSER_H_
 
 #include "angelscript.h"
-#include "class/aspreprocesser.h"
+#include "codeinfotip.h"
 
 #include <QByteArray>
 #include <QHash>
 #include <QList>
 #include <QScopedPointer>
 
-class asCScriptCode;
-class asCScriptNode;
-class QCodeNode;
-
-class QAsParser : protected AsPreprocesser {
+class ASDataBase {
 public:
-    explicit QAsParser(asIScriptEngine *engine);
-    virtual ~QAsParser();
+    explicit ASDataBase(asIScriptEngine *engine);
+    virtual ~ASDataBase();
 
 private:
     struct FnInfo {
@@ -62,6 +58,16 @@ private:
         QList<PropertyInfo> properties;
     };
 
+public:
+    struct HeaderType {
+        QString name;
+        CodeInfoTip::Type type = CodeInfoTip::Type::Unknown;
+
+        bool operator==(const HeaderType &other) const {
+            return name == other.name && type == other.type;
+        }
+    };
+
 private:
     QByteArray getFnParamDeclString(asIScriptFunction *fn,
                                     bool includeNamespace,
@@ -72,37 +78,18 @@ private:
     QByteArray getFnRetTypeString(asIScriptFunction *fn, bool includeNamespace);
 
 public:
-    // bool parse(qsizetype offset, const QString &code, const QString
-    // &section);
+    const QHash<HeaderType, QList<CodeInfoTip>> &headerNodes() const;
 
-    QList<QCodeNode *> codeNodes() const;
-
-    const QList<QCodeNode *> &headerNodes() const;
-
-    QCodeNode *keywordNode() const;
-
-    QList<QCodeNode *> classNodes() const;
+    const QList<CodeInfoTip> &keywordNodes() const;
 
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine);
     void addEnumCompletion(asIScriptEngine *engine);
     void addClassCompletion(asIScriptEngine *engine);
 
-    QCodeNode *getNewHeadNodePointer(const QByteArray &name);
-
 private:
-    static QCodeNode *newFnCodeNode(const FnInfo &info);
-
-    static QCodeNode *newEnumCodeNode(const EnumInfo &info);
-
-private:
-    asIScriptEngine *_engine;
-    QList<QCodeNode *> _nodes;
-
-    QHash<QString, QCodeNode *> _buffer;
-    QList<QCodeNode *> _headerNodes;
-    QList<QCodeNode *> _classNodes;
-    QCodeNode *_keywordNode;
+    QHash<HeaderType, QList<CodeInfoTip>> _headerNodes;
+    QList<CodeInfoTip> _keywordNode;
 };
 
 #endif // !_QCPP_PARSER_H_

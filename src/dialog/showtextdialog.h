@@ -25,7 +25,7 @@
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "QWingRibbon/ribbontabcontent.h"
 
-#include "WingCodeEdit/wingcodeedit.h"
+#include "control/codeedit.h"
 #include "framelessdialogbase.h"
 #include "utilities.h"
 
@@ -122,7 +122,7 @@ private slots:
 
 private:
     Ribbon *m_ribbon = nullptr;
-    WingCodeEdit *m_edit = nullptr;
+    CodeEdit *m_edit = nullptr;
     bool m_canceled = false;
 
     QStatusBar *m_status = nullptr;

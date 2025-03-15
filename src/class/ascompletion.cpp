@@ -17,7 +17,7 @@
 
 #include "ascompletion.h"
 
-#include "qasparser.h"
+#include "asdatabase.h"
 
 #include <QDir>
 #include <QLibraryInfo>
