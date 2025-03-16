@@ -115,18 +115,21 @@ void ScriptingDialog::initConsole() {
 
         // clean up
         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
-
             // remove the last mark
             if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-                // auto lastCur = QCodeEdit::managed(_lastCurLine.first);
-                // auto doc = lastCur->document();
-                // auto line = doc->line(_lastCurLine.second - 1);
-                // if (line.hasMark(curMark)) {
-                //     line.removeMark(curMark);
-                // } else if (line.hasMark(curHitMark)) {
-                //     line.removeMark(curHitMark);
-                //     line.addMark(bpMark);
-                // }
+                auto lastCur = findEditorView(_lastCurLine.first);
+                auto e = lastCur->editor();
+                auto symID = e->symbolMark(_lastCurLine.second);
+
+                const auto bpMark = QStringLiteral("bp");
+                const auto curSym = QStringLiteral("cur");
+                const auto hitCur = QStringLiteral("curbp");
+
+                if (symID == curSym) {
+                    e->removeSymbolMark(_lastCurLine.second);
+                } else if (symID == hitCur) {
+                    e->addSymbolMark(_lastCurLine.second, bpMark);
+                }
             }
             _lastCurLine.first.clear();
             _lastCurLine.second = -1;
@@ -145,8 +148,8 @@ void ScriptingDialog::initConsole() {
             [=](const asDebugger::BreakPoint &old, int newLineNr) {
                 auto editor = findEditorView(old.name);
                 if (editor) {
-                    removeBreakPoint(editor, old.lineNbr - 1);
-                    addBreakPoint(editor, newLineNr - 1);
+                    removeBreakPoint(editor, old.lineNbr);
+                    addBreakPoint(editor, newLineNr);
                 }
             });
     connect(dbg, &asDebugger::onPullVariables, this,
@@ -204,7 +207,7 @@ void ScriptingDialog::initConsole() {
                 editor->addSymbolMark(lineNr, curSym);
             }
 
-            // editor->ensureVisible(lineNr - 1);
+            editor->ensureLineVisible(lineNr);
 
             _lastCurLine = {file, lineNr};
             updateRunDebugMode();
@@ -819,7 +822,6 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
         editor->disconnect(SIGNAL(contentModified(bool)));
         editor->disconnect(SIGNAL(undoAvailable(bool)));
         editor->disconnect(SIGNAL(redoAvailable(bool)));
-        editor->disconnect(SIGNAL(copyAvailable(bool)));
     }
 
     auto editor = cur->editor();
@@ -920,7 +922,9 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
         return e;
     }
 
-    auto editor = new ScriptEditor(this);
+    auto editor =
+        new ScriptEditor(m_consoleout->consoleMachine()->engine(), this);
+
     auto res = editor->openFile(filename);
     if (!res) {
         WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
@@ -929,7 +933,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
 
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
-
+    editor->setFocus();
     return editor;
 }
 
@@ -967,7 +971,7 @@ void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
     auto totalblk = e->blockCount();
     for (int i = 0; i < totalblk; ++i) {
         if (!e->symbolMark(i).isEmpty()) {
-            dbg->addFileBreakPoint(fileName, i + 1);
+            dbg->addFileBreakPoint(fileName, i);
         }
     }
 
@@ -997,7 +1001,7 @@ void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
             dbg->addFileBreakPoint(editor->fileName(), line);
         } else {
             if (symID.isEmpty()) {
-                e->addSymbolMark(line, curSym);
+                e->addSymbolMark(line, bpMark);
                 dbg->addFileBreakPoint(editor->fileName(), line);
             }
         }
@@ -1098,7 +1102,8 @@ void ScriptingDialog::on_newfile() {
             return;
         }
 
-        auto editor = new ScriptEditor(this);
+        auto editor =
+            new ScriptEditor(m_consoleout->consoleMachine()->engine(), this);
         auto res = editor->openFile(filename);
         if (!res) {
             WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
@@ -1108,6 +1113,7 @@ void ScriptingDialog::on_newfile() {
         registerEditorView(editor);
         m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
                               editorViewArea());
+        editor->setFocus();
     }
 }
 

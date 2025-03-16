@@ -134,10 +134,11 @@ private:
 
 signals:
     void breakPointChanged();
-    void onAdjustBreakPointLine(const BreakPoint &old, int newLineNr);
-    void onPullVariables(const QVector<VariablesInfo> &globalvars,
-                         const QVector<VariablesInfo> &localvars);
-    void onPullCallStack(const QList<CallStackItem> &callstacks);
+    void onAdjustBreakPointLine(const asDebugger::BreakPoint &old,
+                                int newLineNr);
+    void onPullVariables(const QVector<asDebugger::VariablesInfo> &globalvars,
+                         const QVector<asDebugger::VariablesInfo> &localvars);
+    void onPullCallStack(const QList<asDebugger::CallStackItem> &callstacks);
     void onRunCurrentLine(const QString &file, int lineNr);
 
     void onDebugActionExec();

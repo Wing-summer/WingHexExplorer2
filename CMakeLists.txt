@@ -315,7 +315,9 @@ set(MODEL_SRC
     src/model/dbgcallstackmodel.h
     src/model/dbgcallstackmodel.cpp
     src/model/dbgvarshowmodel.h
-    src/model/dbgvarshowmodel.cpp)
+    src/model/dbgvarshowmodel.cpp
+    src/model/codecompletionmodel.h
+    src/model/codecompletionmodel.cpp)
 
 set(SETTING_SRC
     src/settings/settings.h

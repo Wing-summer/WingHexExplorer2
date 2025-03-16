@@ -32,43 +32,6 @@ public:
     virtual ~ASDataBase();
 
 private:
-    struct FnInfo {
-        QByteArray retType;
-        QByteArray fnName;
-        QByteArray params;
-        bool isConst = false;
-    };
-
-    struct EnumInfo {
-        QByteArray name;
-        QList<QPair<QByteArray, int>> enums;
-    };
-
-    struct PropertyInfo {
-        QByteArray name;
-        QByteArray type;
-        bool isProtected = false;
-        bool isPrivate = false;
-        bool isRef = false;
-    };
-
-    struct ClassInfo {
-        QByteArray name;
-        QList<FnInfo> methods;
-        QList<PropertyInfo> properties;
-    };
-
-public:
-    struct HeaderType {
-        QString name;
-        CodeInfoTip::Type type = CodeInfoTip::Type::Unknown;
-
-        bool operator==(const HeaderType &other) const {
-            return name == other.name && type == other.type;
-        }
-    };
-
-private:
     QByteArray getFnParamDeclString(asIScriptFunction *fn,
                                     bool includeNamespace,
                                     bool includeParamNames);
@@ -78,7 +41,7 @@ private:
     QByteArray getFnRetTypeString(asIScriptFunction *fn, bool includeNamespace);
 
 public:
-    const QHash<HeaderType, QList<CodeInfoTip>> &headerNodes() const;
+    const QHash<QString, QList<CodeInfoTip>> &headerNodes() const;
 
     const QList<CodeInfoTip> &keywordNodes() const;
 
@@ -87,8 +50,11 @@ private:
     void addEnumCompletion(asIScriptEngine *engine);
     void addClassCompletion(asIScriptEngine *engine);
 
+    QString getSuffixQualifier(asIScriptFunction *fn);
+
 private:
-    QHash<HeaderType, QList<CodeInfoTip>> _headerNodes;
+    // <namespace, content>
+    QHash<QString, QList<CodeInfoTip>> _headerNodes;
     QList<CodeInfoTip> _keywordNode;
 };
 

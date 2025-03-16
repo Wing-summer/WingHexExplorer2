@@ -23,43 +23,6 @@
 
 #include <QDebug>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-using qhash_result_t = uint;
-
-// copying from QT6 source code for supporting QT5's qHashMulti
-namespace QtPrivate {
-template <typename T>
-inline constexpr bool QNothrowHashableHelper_v =
-    noexcept(qHash(std::declval<const T &>()));
-
-template <typename T, typename Enable = void>
-struct QNothrowHashable : std::false_type {};
-
-template <typename T>
-struct QNothrowHashable<T, std::enable_if_t<QNothrowHashableHelper_v<T>>>
-    : std::true_type {};
-
-template <typename T>
-constexpr inline bool QNothrowHashable_v = QNothrowHashable<T>::value;
-
-} // namespace QtPrivate
-
-template <typename... T>
-constexpr qhash_result_t
-qHashMulti(qhash_result_t seed, const T &...args) noexcept(
-    std::conjunction_v<QtPrivate::QNothrowHashable<T>...>) {
-    QtPrivate::QHashCombine hash;
-    return ((seed = hash(seed, args)), ...), seed;
-}
-#else
-using qhash_result_t = size_t;
-#endif
-
-inline qhash_result_t qHash(const ASDataBase::HeaderType &c,
-                            qhash_result_t seed) noexcept {
-    return qHashMulti(seed, c.name, int(c.type));
-}
-
 ASDataBase::ASDataBase(asIScriptEngine *engine) {
     addGlobalFunctionCompletion(engine);
     addClassCompletion(engine);
@@ -210,16 +173,13 @@ QByteArray ASDataBase::getFnRetTypeString(asIScriptFunction *fn,
     return {};
 }
 
-const QHash<ASDataBase::HeaderType, QList<CodeInfoTip>> &
-ASDataBase::headerNodes() const {
+const QHash<QString, QList<CodeInfoTip>> &ASDataBase::headerNodes() const {
     return _headerNodes;
 }
 
 void ASDataBase::addGlobalFunctionCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
-    HeaderType nst;
-    nst.type = CodeInfoTip::Type::Group;
     for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); ++i) {
         auto fn = engine->GetGlobalFunctionByIndex(i);
         CodeInfoTip fnInfo;
@@ -227,39 +187,44 @@ void ASDataBase::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         fnInfo.nameSpace = ns;
         fnInfo.name = fn->GetName();
         fnInfo.type = CodeInfoTip::Type::Function;
-        fnInfo.args.insert(CodeInfoTip::RetType, getFnRetTypeString(fn, true));
-        fnInfo.args.insert(CodeInfoTip::Args,
-                           getFnParamDeclString(fn, false, true));
-        fnInfo.args.insert(CodeInfoTip::SuffixQualifier,
-                           fn->IsReadOnly() ? QStringLiteral("const")
-                                            : QString());
-        nst.name = ns;
-        _headerNodes[nst].append(fnInfo);
+        fnInfo.addinfo.insert(CodeInfoTip::RetType,
+                              getFnRetTypeString(fn, true));
+        fnInfo.addinfo.insert(CodeInfoTip::Args,
+                              getFnParamDeclString(fn, false, true));
+        fnInfo.addinfo.insert(CodeInfoTip::SuffixQualifier,
+                              getSuffixQualifier(fn));
+        _headerNodes[ns].append(fnInfo);
     }
 }
 
 void ASDataBase::addEnumCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
-    QHash<QByteArray, QList<EnumInfo>> _maps;
-
     for (asUINT i = 0; i < engine->GetEnumCount(); ++i) {
         auto etype = engine->GetEnumByIndex(i);
         etype->AddRef();
 
-        EnumInfo einfo;
+        CodeInfoTip einfo;
         auto ns = etype->GetNamespace();
+        einfo.nameSpace = ns;
         einfo.name = etype->GetName();
+        einfo.type = CodeInfoTip::Type::Enum;
 
         for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
             int v;
             auto e = etype->GetEnumValueByIndex(i, &v);
-            einfo.enums.append(qMakePair(QByteArray(e), v));
+
+            CodeInfoTip en;
+            en.type = CodeInfoTip::Type::Enumerater;
+            en.name = QString::fromLatin1(e);
+            en.addinfo.insert(CodeInfoTip::Comment, en.name +
+                                                        QStringLiteral(" = ") +
+                                                        QString::number(v));
+            einfo.children.append(en);
         }
 
         etype->Release();
-
-        _maps[ns] << einfo;
+        _headerNodes[ns].append(einfo);
     }
 }
 
@@ -267,13 +232,12 @@ void ASDataBase::addClassCompletion(asIScriptEngine *engine) {
     auto eng = dynamic_cast<asCScriptEngine *>(engine);
     Q_ASSERT(eng);
 
-    QHash<QByteArray, QList<ClassInfo>> _maps;
-
     for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
         auto obj = eng->registeredObjTypes[i];
         obj->AddRef();
 
-        ClassInfo cls;
+        CodeInfoTip cls;
+        cls.type = CodeInfoTip::Type::Class;
         cls.name = obj->GetName();
         auto ns = obj->GetNamespace();
 
@@ -285,11 +249,15 @@ void ASDataBase::addClassCompletion(asIScriptEngine *engine) {
             case asBEHAVE_CONSTRUCT: {
                 // only these are supported
                 b->AddRef();
-                FnInfo fn;
-                fn.fnName = getFnRealName(b);
-                fn.params = getFnParamDeclString(b, false, true);
-                fn.isConst = b->IsReadOnly();
-                cls.methods << fn;
+                CodeInfoTip fn;
+                fn.type = CodeInfoTip::Type::ClsFunction;
+                fn.nameSpace = cls.name;
+                fn.name = getFnRealName(b);
+                fn.addinfo.insert(CodeInfoTip::Args,
+                                  getFnParamDeclString(b, false, true));
+                fn.addinfo.insert(CodeInfoTip::SuffixQualifier,
+                                  getSuffixQualifier(b));
+                cls.children.append(fn);
                 b->Release();
             }
             default:
@@ -301,101 +269,58 @@ void ASDataBase::addClassCompletion(asIScriptEngine *engine) {
             auto m = obj->GetMethodByIndex(i, true);
 
             m->AddRef();
-            FnInfo fn;
-            fn.retType = getFnRetTypeString(m, true);
-            fn.fnName = getFnRealName(m);
-            fn.params = getFnParamDeclString(m, false, true);
-            fn.isConst = m->IsReadOnly();
-            cls.methods << fn;
+            CodeInfoTip fn;
+            fn.type = CodeInfoTip::Type::ClsFunction;
+            fn.nameSpace = cls.name;
+            fn.addinfo.insert(CodeInfoTip::RetType,
+                              getFnRetTypeString(m, true));
+            fn.name = getFnRealName(m);
+            fn.addinfo.insert(CodeInfoTip::Args,
+                              getFnParamDeclString(m, false, true));
+            fn.addinfo.insert(CodeInfoTip::SuffixQualifier,
+                              getSuffixQualifier(m));
+            cls.children.append(fn);
             m->Release();
         }
 
         for (asUINT i = 0; i < obj->GetPropertyCount(); ++i) {
             auto p = obj->properties[i];
 
-            PropertyInfo pi;
-            pi.name = QByteArray(p->name.AddressOf(),
-                                 QByteArray::size_type(p->name.GetLength()));
+            CodeInfoTip pi;
+            pi.type = CodeInfoTip::Type::Property;
+            pi.nameSpace = cls.name;
+            pi.name =
+                QString::fromLatin1(p->name.AddressOf(),
+                                    QByteArray::size_type(p->name.GetLength()));
             auto tn = p->type.Format(obj->nameSpace);
-            pi.type = QByteArray(tn.AddressOf(),
-                                 QByteArray::size_type(tn.GetLength()));
-            pi.isPrivate = pi.isPrivate;
-            pi.isProtected = pi.isProtected;
-            pi.isRef = pi.isRef;
+            auto type = QString::fromLatin1(
+                tn.AddressOf(), QByteArray::size_type(tn.GetLength()));
 
-            cls.properties << pi;
+            QString prefix;
+            if (p->isPrivate) {
+                prefix = QStringLiteral("(private) ");
+            } else if (p->isProtected) {
+                prefix = QStringLiteral("(protected) ");
+            } else {
+                prefix = QStringLiteral("(public) ");
+            }
+
+            pi.addinfo.insert(CodeInfoTip::Comment,
+                              prefix + type + QChar(' ') + pi.name);
+            cls.children.append(pi);
         }
 
         obj->Release();
 
-        _maps[ns] << cls;
+        _headerNodes[ns].append(cls);
     }
+}
 
-    // auto applyClsNode = [](const QList<ClassInfo> &clsinfos,
-    //                        bool isComplete) -> QList<QCodeNode *> {
-    //     QList<QCodeNode *> ret;
-
-    //     for (auto &cls : clsinfos) {
-    //         QCodeNode *clsnode = new QCodeNode;
-    //         clsnode->setNodeType(QCodeNode::Class);
-    //         clsnode->setRole(QCodeNode::Name, cls.name);
-
-    //         for (auto &m : cls.methods) {
-    //             if (isComplete) {
-    //                 if (m.fnName == cls.name) {
-    //                     continue;
-    //                 }
-    //                 if (m.fnName.startsWith('~')) {
-    //                     continue;
-    //                 }
-    //                 if (m.fnName.startsWith("op")) {
-    //                     continue;
-    //                 }
-    //             }
-
-    //             auto node = newFnCodeNode(m);
-    //             node->attach(clsnode);
-    //         }
-
-    //         for (auto &p : cls.properties) {
-    //             auto node = new QCodeNode;
-    //             node->setNodeType(QCodeNode::Variable);
-    //             node->setRole(QCodeNode::Name, p.name);
-    //             node->setRole(QCodeNode::Type, p.type);
-
-    //             QByteArray visibility;
-    //             if (p.isPrivate) {
-    //                 visibility.setNum(QCodeNode::VISIBILITY_PRIVATE);
-    //             } else if (p.isProtected) {
-    //                 visibility.setNum(QCodeNode::VISIBILITY_PROTECTED);
-    //             } else {
-    //                 visibility.setNum(QCodeNode::VISIBILITY_PUBLIC);
-    //             }
-
-    //             node->setRole(QCodeNode::Visibility, visibility);
-    //             node->setParent(clsnode);
-    //             clsnode->children().append(node);
-    //         }
-    //         ret.append(clsnode);
-    //     }
-
-    //     return ret;
-    // };
-
-    // for (auto p = _maps.keyValueBegin(); p != _maps.keyValueEnd(); p++) {
-    //     auto node = getNewHeadNodePointer(p->first);
-    //     if (p->first.isEmpty()) {
-    //         node->setNodeType(QCodeNode::Group);
-    //     } else {
-    //         node->setNodeType(QCodeNode::Namespace);
-    //     }
-    //     auto nodes = applyClsNode(p->second, false);
-    //     for (auto &n : nodes) {
-    //         n->attach(node);
-    //     }
-
-    //     _classNodes.append(applyClsNode(p->second, true));
-    // }
+QString ASDataBase::getSuffixQualifier(asIScriptFunction *fn) {
+    if (fn) {
+        return fn->IsReadOnly() ? QStringLiteral("const") : QString();
+    }
+    return {};
 }
 
 const QList<CodeInfoTip> &ASDataBase::keywordNodes() const {

@@ -27,7 +27,7 @@ inline static QIcon getIcon(const QString &name) {
                  QStringLiteral(".png"));
 }
 
-QIcon CodeInfoTip::getDisplayIcon(Type type) {
+QIcon CodeInfoTip::getDisplayIcon(Type type, CodeInfoVisibility vis) {
     switch (type) {
     default:
         return {};
@@ -37,12 +37,15 @@ QIcon CodeInfoTip::getDisplayIcon(Type type) {
         return icon(ICON_NAMESPACE);
     case Type::Class:
         return icon(ICON_CLASS);
+    case Type::ClsFunction:
     case Type::Function:
-        return icon(ICON_FUNCTION);
+        return icon(ICON_FUNCTION + vis);
     case Type::Enum:
         return icon(ICON_ENUM);
     case Type::Variable:
-        return icon(ICON_VARIABLE);
+        return icon(ICON_VARIABLE + vis);
+    case Type::Enumerater:
+        return icon(ICON_ENUMERATOR);
     }
 }
 
@@ -50,7 +53,7 @@ QIcon CodeInfoTip::icon(int cacheIndex) {
     static bool setup = false;
 
     if (!setup) {
-        // q_icon_cache[ICON_UNION] = QIcon(":/completion/CVunion.png");
+        // q_icon_cache[ICON_UNION] = ;
 
         (*q_icon_cache)[CodeInfoTip::ICON_ENUM] =
             getIcon(QStringLiteral("CVenum"));
@@ -60,7 +63,7 @@ QIcon CodeInfoTip::icon(int cacheIndex) {
         (*q_icon_cache)[CodeInfoTip::ICON_CLASS] =
             getIcon(QStringLiteral("CVclass"));
 
-        // q_icon_cache[ICON_STRUCT] = QIcon(":/completion/CVstruct.png");
+        // q_icon_cache[ICON_STRUCT] = ;
         (*q_icon_cache)[CodeInfoTip::ICON_KEYWORD] =
             getIcon(QStringLiteral("CVKeyword"));
 
@@ -109,22 +112,46 @@ QIcon CodeInfoTip::icon(int cacheIndex) {
 }
 
 QString CodeInfoTip::getTooltip() const {
-    QString tip = name;
+    QString tip = addinfo.value(Comment);
+    if (!tip.isEmpty()) {
+        return tip;
+    }
+
+    tip = name;
     if (!nameSpace.isEmpty()) {
         tip.prepend(QStringLiteral("::")).prepend(nameSpace);
     }
 
-    if (type == Type::Function) {
+    if (type == Type::Function || type == Type::ClsFunction) {
         tip.prepend(' ')
-            .prepend(args.value(RetType))
+            .prepend(addinfo.value(RetType))
             .append('(')
-            .append(args.value(Args))
+            .append(addinfo.value(Args))
             .append(')');
 
-        auto cq = args.value(SuffixQualifier);
+        auto cq = addinfo.value(SuffixQualifier);
         if (!cq.isEmpty()) {
             tip.append(' ').append(cq);
         }
+    }
+
+    return tip;
+}
+
+QString CodeInfoTip::getDisplayStr() const {
+    QString tip = addinfo.value(Comment);
+    if (!tip.isEmpty()) {
+        return tip;
+    }
+
+    tip = name;
+
+    if (type == Type::ClsFunction && !nameSpace.isEmpty()) {
+        tip.prepend(QStringLiteral("::")).prepend(nameSpace);
+    }
+
+    if (type == Type::Function || type == Type::ClsFunction) {
+        tip.append('(').append(addinfo.value(Args)).append(')');
     }
 
     return tip;

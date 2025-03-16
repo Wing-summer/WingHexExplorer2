@@ -55,9 +55,10 @@ void ScriptingConsole::init() {
                 const ScriptConsoleMachine::MessageInfo &message) {
                 auto doc = this->document();
                 auto lastLine = doc->lastBlock();
+                auto isNotBlockStart = !lastLine.text().isEmpty();
                 switch (type) {
                 case ScriptMachine::MessageType::Info:
-                    if (lastLine.length()) {
+                    if (isNotBlockStart) {
                         _s << Qt::endl;
                     }
                     stdOut(tr("[Info]") + message.message);
@@ -65,7 +66,7 @@ void ScriptingConsole::init() {
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Warn:
-                    if (lastLine.length()) {
+                    if (isNotBlockStart) {
                         _s << Qt::endl;
                     }
                     stdWarn(tr("[Warn]") + message.message);
@@ -73,7 +74,7 @@ void ScriptingConsole::init() {
                     newLine();
                     break;
                 case ScriptMachine::MessageType::Error:
-                    if (lastLine.length()) {
+                    if (isNotBlockStart) {
                         _s << Qt::endl;
                     }
                     stdErr(tr("[Error]") + message.message);

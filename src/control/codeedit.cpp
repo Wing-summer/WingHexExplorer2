@@ -16,6 +16,9 @@
 */
 
 #include "codeedit.h"
+#include "model/codecompletionmodel.h"
+
+#include <QModelIndex>
 
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     setAutoIndent(true);
@@ -30,4 +33,19 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
 
     connect(this->document(), &QTextDocument::modificationChanged, this,
             &CodeEdit::contentModified);
+}
+
+void CodeEdit::onCompletion(const QModelIndex &index) {
+    WingCodeEdit::onCompletion(index);
+    auto selfdata = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+    if (selfdata.type == CodeInfoTip::Type::Function ||
+        selfdata.type == CodeInfoTip::Type::ClsFunction) {
+        auto args = selfdata.addinfo.value(CodeInfoTip::Args);
+        auto cursor = textCursor();
+        cursor.insertText(QStringLiteral("()"));
+        if (!args.isEmpty()) {
+            cursor.movePosition(QTextCursor::Left);
+            setTextCursor(cursor);
+        }
+    }
 }

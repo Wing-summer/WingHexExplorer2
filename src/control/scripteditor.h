@@ -21,11 +21,13 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "control/codeedit.h"
 
+class asIScriptEngine;
+
 class ScriptEditor : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
+    explicit ScriptEditor(asIScriptEngine *engine, QWidget *parent = nullptr);
     virtual ~ScriptEditor();
 
     QString fileName() const;

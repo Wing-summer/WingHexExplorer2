@@ -32,10 +32,11 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
+#include "class/ascompletion.h"
 #include "class/clangformatmanager.h"
 #include "class/skinmanager.h"
 
-ScriptEditor::ScriptEditor(QWidget *parent)
+ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
@@ -59,6 +60,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
+
+    auto cm = new AsCompletion(engine, m_editor);
+    m_editor->setCompleter(cm);
 
     connect(m_editor, &CodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);
@@ -104,6 +108,7 @@ bool ScriptEditor::save(const QString &path) {
             return false;
         }
         f.write(m_editor->toPlainText().toUtf8());
+        m_editor->document()->setModified(false);
         return true;
     }
 
@@ -132,7 +137,7 @@ bool ScriptEditor::save(const QString &path) {
 #endif
 
     m_fileName = path;
-    processTitle();
+    m_editor->document()->setModified(false);
     return true;
 }
 
@@ -161,11 +166,26 @@ bool ScriptEditor::formatCode() {
     auto fmtcodes = ClangFormatManager::instance().formatCode(orign, ok);
     if (ok && fmtcodes != orign) {
         auto cursor = e->textCursor();
+        auto row = cursor.blockNumber();
+        auto col = cursor.columnNumber();
+
         cursor.beginEditBlock();
         cursor.select(QTextCursor::Document);
         cursor.removeSelectedText();
         cursor.insertText(fmtcodes);
         cursor.endEditBlock();
+
+        cursor = e->textCursor();
+        cursor.setPosition(0);
+        cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, row);
+
+        auto tmpcur = cursor;
+        tmpcur.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+        auto len = tmpcur.position() - cursor.position();
+        cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
+                            qMin(len, col));
+        e->setTextCursor(cursor);
+
         return true;
     }
     return false;

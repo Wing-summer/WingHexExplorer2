@@ -20,6 +20,7 @@
 
 #include <QIcon>
 #include <QMap>
+#include <QObject>
 #include <QString>
 
 class CodeInfoTip {
@@ -30,8 +31,11 @@ public:
         Group,
         Class,
         Function,
+        ClsFunction,
         Enum,
-        Variable
+        Variable,
+        Property = Variable,
+        Enumerater,
     };
 
     enum CacheIndex {
@@ -54,26 +58,34 @@ public:
         VISIBILITY_PRIVATE
     };
 
-    static QIcon getDisplayIcon(Type type);
+    static QIcon getDisplayIcon(Type type,
+                                CodeInfoVisibility vis = VISIBILITY_DEFAULT);
 
     static QIcon icon(int cacheIndex);
 
     enum ArgsIndex {
+        Comment,
+        Reserved,
         // for function
-        RetType,
+        RetType = Reserved,
         Args,
-        SuffixQualifier
+        SuffixQualifier,
     };
 
 public:
     QString getTooltip() const;
+    QString getDisplayStr() const;
 
 public:
     QString name;
     Type type = Type::Unknown;
     QString nameSpace;
+    CodeInfoVisibility visualpo = CodeInfoVisibility::VISIBILITY_DEFAULT;
 
-    QMap<ArgsIndex, QString> args;
+    QMap<ArgsIndex, QString> addinfo; // additonal info
+    QList<CodeInfoTip> children;
 };
+
+Q_DECLARE_METATYPE(CodeInfoTip);
 
 #endif // CODEINFOTIP_H

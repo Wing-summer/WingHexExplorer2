@@ -28,6 +28,9 @@ public:
 
 signals:
     void contentModified(bool b);
+
+protected slots:
+    virtual void onCompletion(const QModelIndex &index) override;
 };
 
 #endif // CODEEDIT_H

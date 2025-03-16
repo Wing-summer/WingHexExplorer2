@@ -1932,6 +1932,7 @@ EditorView *MainWindow::newfileGUI() {
     editor->newFile(index);
     registerEditorView(editor);
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
+    editor->setFocus();
     return editor;
 }
 
@@ -3542,6 +3543,7 @@ ErrFile MainWindow::openFile(const QString &file, EditorView **editor) {
         *editor = ev;
     }
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    ev->setFocus();
     return ErrFile::Success;
 }
 
@@ -3569,6 +3571,7 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
     }
 
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    ev->setFocus();
     return ErrFile::Success;
 }
 
@@ -3609,6 +3612,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
         *editor = ev;
     }
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
+    ev->setFocus();
     return ErrFile::Success;
 }
 

@@ -39,7 +39,7 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
     auto &nodes = db.headerNodes();
     for (auto node = nodes.constKeyValueBegin();
          node != nodes.constKeyValueEnd(); node++) {
-        QString header = node->first.name;
+        QString header = node->first;
 
         QTreeWidgetItem *item = nullptr;
 
@@ -50,7 +50,7 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
         }
 
         item->setToolTip(0, header);
-        item->setIcon(0, CodeInfoTip::getDisplayIcon(node->first.type));
+        item->setIcon(0, CodeInfoTip::getDisplayIcon(CodeInfoTip::Type::Group));
         createObjNodes(node->second, item);
         addTopLevelItem(item);
     }
@@ -72,8 +72,12 @@ QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
 
 void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
                                      QTreeWidgetItem *parent) {
+
     for (auto &n : nodes) {
         // only for code namespace completion
-        createObjNode(n, parent);
+        auto c = createObjNode(n, parent);
+        if (!n.children.isEmpty()) {
+            createObjNodes(n.children, c);
+        }
     }
 }

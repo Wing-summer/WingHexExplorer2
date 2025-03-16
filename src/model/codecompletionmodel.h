@@ -15,37 +15,30 @@
 ** =============================================================================
 */
 
-#ifndef _AS_COMPLETION_H_
-#define _AS_COMPLETION_H_
+#ifndef CODECOMPLETIONMODEL_H
+#define CODECOMPLETIONMODEL_H
 
-#include "WingCodeEdit/wingcompleter.h"
-#include "class/asdatabase.h"
+#include "class/codeinfotip.h"
 
-class AsCompletion : public WingCompleter {
+#include <QAbstractListModel>
+
+namespace Qt {
+constexpr int SelfDataRole = Qt::UserRole + 1;
+}
+
+class CodeCompletionModel : public QAbstractListModel {
     Q_OBJECT
 public:
-    explicit AsCompletion(asIScriptEngine *engine, WingCodeEdit *p);
+    explicit CodeCompletionModel(const QList<CodeInfoTip> &infos,
+                                 QObject *parent = nullptr);
 
-    virtual ~AsCompletion();
-
-    // WingCompleter interface
+    // QAbstractItemModel interface
 public:
-    virtual QString wordSeperators() const override;
-
-protected:
-    virtual void processTrigger(const QString &trigger,
-                                const QString &content) override;
-
-signals:
-    void onFunctionTip(const QString &content);
+    virtual int rowCount(const QModelIndex &parent) const override;
+    virtual QVariant data(const QModelIndex &index, int role) const override;
 
 private:
-    void applyEmptyNsNode(QList<CodeInfoTip> &nodes);
-    void applyClassNodes(QList<CodeInfoTip> &nodes);
-
-private:
-    ASDataBase parser;
-    asIScriptEngine *_engine;
+    QList<CodeInfoTip> _infos;
 };
 
-#endif // _CPP_COMPLETION_H_
+#endif // CODECOMPLETIONMODEL_H
