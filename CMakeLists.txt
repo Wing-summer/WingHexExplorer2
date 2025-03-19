@@ -206,7 +206,11 @@ set(CONTROL_SRC
     src/control/dockwidgettab.h
     src/control/dockwidgettab.cpp
     src/control/qhextextedit.h
-    src/control/qhextextedit.cpp)
+    src/control/qhextextedit.cpp
+    src/control/popupactionwidget.h
+    src/control/popupactionwidget.cpp
+    src/control/settingspopup.cpp
+    src/control/settingspopup.h)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -279,7 +283,13 @@ set(CLASS_SRC
     src/class/inspectqtloghelper.h
     src/class/inspectqtloghelper.cpp
     src/class/codeinfotip.h
-    src/class/codeinfotip.cpp)
+    src/class/codeinfotip.cpp
+    src/class/wingconsolehighligher.h
+    src/class/wingconsolehighligher.cpp
+    src/class/asconsolecompletion.h
+    src/class/asconsolecompletion.cpp
+    src/class/scriptsettings.h
+    src/class/scriptsettings.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

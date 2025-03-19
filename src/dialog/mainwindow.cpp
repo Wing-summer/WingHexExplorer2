@@ -972,16 +972,11 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
 
     connect(m_scriptConsole, &ScriptingConsole::consoleCommand, this,
             [this] { showStatus({}); });
-    // connect(m_scriptConsole, &ScriptingConsole::inputTimeOuted, this, [this]
-    // {
-    //     auto e =
-    //         qobject_cast<AsCompletion
-    //         *>(m_scriptConsole->completionEngine());
-    //     if (e && e->codeCompletionWidget()->isVisible()) {
-    //         return;
-    //     }
-    //     showStatus({});
-    // });
+    connect(m_scriptConsole, &ScriptingConsole::onFunctionTip, this,
+            [this](const QString &content) {
+                showStatus(QStringLiteral("<b><font color=\"gold\">") +
+                           content + QStringLiteral("</font></b>"));
+            });
 
     auto dw = buildDockWidget(dock, QStringLiteral("ScriptConsole"),
                               tr("ScriptConsole"), m_scriptConsole);

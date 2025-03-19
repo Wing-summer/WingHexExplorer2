@@ -93,10 +93,6 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_dock->restoreState(set.scriptDockLayout());
     _savedLayout = set.scriptDockLayout();
 
-    // connect(&LangService::instance(), &LangService::onScriptEditorTip,
-    // m_status,
-    //         [this](const QString &message) { m_status->setText(message); });
-
     this->setUpdatesEnabled(true);
 }
 
@@ -783,6 +779,11 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(editor);
         toggleBreakPoint(editor, lineIndex);
     });
+    connect(editor, &ScriptEditor::onFunctionTip, this,
+            [this](const QString &message) {
+                m_status->setText(QStringLiteral("<b><font color=\"gold\">") +
+                                  message + QStringLiteral("</font></b>"));
+            });
 
     m_views.append(editor);
 

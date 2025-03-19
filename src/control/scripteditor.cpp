@@ -16,7 +16,7 @@
 */
 
 #include "scripteditor.h"
-#include "DockWidgetTab.h"
+#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "utilities.h"
 
 #ifdef Q_OS_LINUX
@@ -62,7 +62,8 @@ ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
         m_editor->syntaxRepo().definitionForName("AngelScript"));
 
     auto cm = new AsCompletion(engine, m_editor);
-    m_editor->setCompleter(cm);
+    connect(cm, &AsCompletion::onFunctionTip, this,
+            &ScriptEditor::onFunctionTip);
 
     connect(m_editor, &CodeEdit::symbolMarkLineMarginClicked, this,
             &ScriptEditor::onToggleMark);

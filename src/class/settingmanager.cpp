@@ -70,23 +70,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_LEVEL, ("sys.loglevel"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_COUNT, ("sys.logCount"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_CHECK_UPDATE, ("sys.checkUpdate"))
 
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT, ("codeedit.font"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT_SIZE, ("codeedit.fontsize"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_LEADING_WHITESPACE,
-                          ("codeedit.leading_whitespace"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_TRAILING_WHITESPACE,
-                          ("codeedit.trailing_whitespace"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_TABS, ("codeedit.show_tabs"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_TABS_WIDTH, ("codeedit.tab_width"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_REPLACE_TABS,
-                          ("codeedit.replace_tabs"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_REMOVE_TRAILING,
-                          ("codeedit.remove_trailing"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_PRESERVE_TRAILING_INDENT,
-                          ("codeedit.preserve_trailing_indent"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_LINE_ENDINGS,
-                          ("codeedit.line_endings"))
-
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
     qRegisterMetaType<RecentFileManager::RecentInfo>();
@@ -94,7 +77,6 @@ SettingManager::SettingManager() {
     qRegisterMetaTypeStreamOperators<RecentFileManager::RecentInfo>();
 #endif
     load();
-    loadCodeEditorConfig();
 }
 
 QString SettingManager::lastUsedPath() const { return m_lastUsedPath; }
@@ -250,96 +232,6 @@ void SettingManager::setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot) {
         m_allowUsrScriptInRoot = newAllowUsrScriptInRoot;
         _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_ALLOW_USRSCRIPT_INROOT);
     }
-}
-
-void SettingManager::loadCodeEditorConfig() {
-    HANDLE_CONFIG;
-
-    auto dfont = qApp->font();
-    QString fontName;
-    READ_CONFIG_STRING(fontName, CODEEDIT_FONT, dfont.family());
-    int pointSize;
-    READ_CONFIG_INT_POSITIVE(pointSize, CODEEDIT_FONT_SIZE, dfont.pointSize());
-
-    dfont = QFont(fontName, pointSize);
-    // QEditor::setDefaultFont(dfont);
-
-    int tabStop;
-    READ_CONFIG_INT_POSITIVE(tabStop, CODEEDIT_TABS_WIDTH, 4);
-    // QEditor::setDefaultTabStop(tabStop);
-
-    // QDocument::WhiteSpaceMode ws = QDocument::ShowNone;
-
-    bool b;
-    READ_CONFIG_BOOL(b, CODEEDIT_SHOW_TABS, false);
-
-    // if (b)
-    //     ws |= QDocument::ShowTabs;
-
-    READ_CONFIG_BOOL(b, CODEEDIT_SHOW_LEADING_WHITESPACE, false);
-    // if (b)
-    //     ws |= QDocument::ShowLeading;
-
-    READ_CONFIG_BOOL(b, CODEEDIT_SHOW_TRAILING_WHITESPACE, false);
-    // if (b)
-    //     ws |= QDocument::ShowTrailing;
-
-    // QEditor::setDefaultShowSpaces(ws);
-
-    int enums;
-    // READ_CONFIG_INT(enums, CODEEDIT_LINE_ENDINGS,
-    //                 QDocument::LineEnding::Conservative);
-
-    // auto le =
-    //     QDocument::LineEnding(qMin(enums, int(QDocument::LineEnding::Mac)));
-    // QEditor::setDefaultLineEnding(le);
-
-    // int flags = QEditor::defaultFlags();
-
-    READ_CONFIG_BOOL(b, CODEEDIT_REPLACE_TABS, true);
-    // if (b)
-    //     flags |= QEditor::ReplaceTabs;
-    // else
-    //     flags &= ~QEditor::ReplaceTabs;
-
-    READ_CONFIG_BOOL(b, CODEEDIT_REMOVE_TRAILING, true);
-    // if (b)
-    //     flags |= QEditor::RemoveTrailing;
-    // else
-    //     flags &= ~QEditor::RemoveTrailing;
-
-    READ_CONFIG_BOOL(b, CODEEDIT_PRESERVE_TRAILING_INDENT, false);
-    // if (b)
-    //     flags |= QEditor::PreserveTrailingIndent;
-    // else
-    //     flags &= ~QEditor::PreserveTrailingIndent;
-
-    // QEditor::setDefaultFlags(flags);
-}
-
-void SettingManager::saveCodeEditorConfig() {
-    HANDLE_CONFIG;
-    // auto font = QEditor::defaultFont();
-    // WRITE_CONFIG(CODEEDIT_FONT, font.family());
-    // WRITE_CONFIG(CODEEDIT_FONT_SIZE, font.pointSize());
-
-    // WRITE_CONFIG(CODEEDIT_TABS_WIDTH, QEditor::defaultTabStop());
-
-    // auto showSpaces = QEditor::defaultShowSpaces();
-    // WRITE_CONFIG(CODEEDIT_SHOW_TABS,
-    // showSpaces.testFlag(QDocument::ShowTabs));
-    // WRITE_CONFIG(CODEEDIT_SHOW_LEADING_WHITESPACE,
-    //              showSpaces.testFlag(QDocument::ShowLeading));
-    // WRITE_CONFIG(CODEEDIT_SHOW_TRAILING_WHITESPACE,
-    //              showSpaces.testFlag(QDocument::ShowTrailing));
-
-    // WRITE_CONFIG(CODEEDIT_LINE_ENDINGS, int(QEditor::defaultLineEnding()));
-
-    // int flags = QEditor::defaultFlags();
-    // WRITE_CONFIG(CODEEDIT_REPLACE_TABS, flags & QEditor::ReplaceTabs);
-    // WRITE_CONFIG(CODEEDIT_REMOVE_TRAILING, flags & QEditor::RemoveTrailing);
-    // WRITE_CONFIG(CODEEDIT_PRESERVE_TRAILING_INDENT,
-    //              flags & QEditor::PreserveTrailingIndent);
 }
 
 void SettingManager::setUsrHideCats(const QStringList &newUsrHideCats) {
@@ -513,9 +405,6 @@ void SettingManager::save(SETTINGS cat) {
         WRITE_CONFIG_SET(OTHER_CHECK_UPDATE, m_checkUpdate);
         WRITE_CONFIG_SET(OTHER_LOG_LEVEL, m_logLevel);
         WRITE_CONFIG_SET(OTHER_LOG_COUNT, m_logCount);
-    }
-    if (cat.testFlag(SETTING::CODEEDIT)) {
-        saveCodeEditorConfig();
     }
 }
 

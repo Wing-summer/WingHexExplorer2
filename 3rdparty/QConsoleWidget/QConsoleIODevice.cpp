@@ -40,6 +40,8 @@ bool QConsoleIODevice::waitForReadyRead(int msecs) {
     return readyReadEmmited_;
 }
 
+QConsoleWidget *QConsoleIODevice::widget() const { return widget_; }
+
 qint64 QConsoleIODevice::readData(char *data, qint64 len) {
     int b = bytesAvailable();
     if (b) {

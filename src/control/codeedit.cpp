@@ -19,20 +19,21 @@
 #include "model/codecompletionmodel.h"
 
 #include <QModelIndex>
+#include <QShortcut>
 
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     setAutoIndent(true);
     setAutoCloseChar(true);
     setMatchBraces(true);
-    setShowLongLineEdge(true);
     setShowIndentGuides(true);
     setShowLineNumbers(true);
     setShowFolding(true);
-    setShowWhitespace(true);
     setShowSymbolMark(true);
 
     connect(this->document(), &QTextDocument::modificationChanged, this,
             &CodeEdit::contentModified);
+
+    addMoveLineShortCut();
 }
 
 void CodeEdit::onCompletion(const QModelIndex &index) {
@@ -48,4 +49,18 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
             setTextCursor(cursor);
         }
     }
+}
+
+void CodeEdit::addMoveLineShortCut() {
+    auto upLines = new QShortcut(
+        QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Up), this);
+    upLines->setContext(Qt::WidgetShortcut);
+    connect(upLines, &QShortcut::activated, this,
+            [this]() { moveLines(QTextCursor::PreviousBlock); });
+    auto downLines = new QShortcut(
+        QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Down),
+        this);
+    downLines->setContext(Qt::WidgetShortcut);
+    connect(downLines, &QShortcut::activated, this,
+            [this]() { moveLines(QTextCursor::NextBlock); });
 }

@@ -20,6 +20,8 @@
 #include "class/qkeysequences.h"
 #include "class/wingmessagebox.h"
 #include "control/codeedit.h"
+#include "control/popupactionwidget.h"
+#include "control/settingspopup.h"
 #include "control/toast.h"
 #include "dialog/encodingdialog.h"
 
@@ -27,6 +29,28 @@
 #include <QVBoxLayout>
 
 constexpr auto EMPTY_FUNC = [] {};
+
+class SyntaxPopupAction : public PopupActionWidget {
+public:
+    explicit SyntaxPopupAction(ShowTextDialog *parent)
+        : PopupActionWidget(parent) {}
+
+protected:
+    QWidget *createWidget(QWidget *menuParent) override {
+        auto popup = new SyntaxPopup(menuParent);
+        connect(popup, &SyntaxPopup::syntaxSelected, this,
+                [this](const KSyntaxHighlighting::Definition &syntax) {
+                    auto window = qobject_cast<ShowTextDialog *>(parent());
+                    window->setSyntax(syntax);
+
+                    // Don't close the popup right after clicking, so the user
+                    // can briefly see the visual feedback for the item they
+                    // selected.
+                    closePopUpWidget();
+                });
+        return popup;
+    }
+};
 
 ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
     this->setUpdatesEnabled(false);
@@ -64,6 +88,10 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
 }
 
 ShowTextDialog::~ShowTextDialog() {}
+
+void ShowTextDialog::setSyntax(const KSyntaxHighlighting::Definition &syntax) {
+    m_edit->setSyntax(syntax);
+}
 
 void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding,
                           qsizetype offset, qsizetype size) {

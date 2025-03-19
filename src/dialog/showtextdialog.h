@@ -40,6 +40,9 @@ public:
     virtual ~ShowTextDialog();
 
 public:
+    void setSyntax(const KSyntaxHighlighting::Definition &syntax);
+
+public:
     void load(QHexBuffer *buffer, const QString encoding, qsizetype offset = 0,
               qsizetype size = -1);
     void load(QHexBuffer *buffer, qsizetype offset = 0, qsizetype size = -1);

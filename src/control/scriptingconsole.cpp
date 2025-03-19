@@ -16,8 +16,11 @@
 */
 
 #include "scriptingconsole.h"
+#include "QConsoleWidget/QConsoleIODevice.h"
 #include "class/logger.h"
 #include "class/scriptconsolemachine.h"
+#include "class/wingconsolehighligher.h"
+#include "model/codecompletionmodel.h"
 
 #include <QApplication>
 #include <QColor>
@@ -25,19 +28,67 @@
 #include <QRegularExpression>
 #include <QTextBlock>
 
+#include <KSyntaxHighlighting/Definition>
+#include <KSyntaxHighlighting/Repository>
+#include <KSyntaxHighlighting/Theme>
+
 ScriptingConsole::ScriptingConsole(QWidget *parent) : QConsoleWidget(parent) {
     _warnCharFmt.setForeground(QColorConstants::Svg::gold);
+    setHighlighter(new WingConsoleHighligher);
+    setSyntax(syntaxRepo().definitionForName("AngelScript"));
 }
 
 ScriptingConsole::~ScriptingConsole() {}
 
-void ScriptingConsole::stdOut(const QString &str) { writeStdOut(str); }
+void ScriptingConsole::stdOut(const QString &str) {
+    writeStdOut(str);
+    dontHighlightLastLine();
+}
 
-void ScriptingConsole::stdErr(const QString &str) { writeStdErr(str); }
+void ScriptingConsole::stdErr(const QString &str) {
+    writeStdErr(str);
+    dontHighlightLastLine();
+}
 
-void ScriptingConsole::stdWarn(const QString &str) { write(str, _warnCharFmt); }
+void ScriptingConsole::stdWarn(const QString &str) {
+    write(str, _warnCharFmt);
+    dontHighlightLastLine();
+}
 
 void ScriptingConsole::newLine() { _s << Qt::endl; }
+
+void ScriptingConsole::dontHighlightLastLine() { dontHighlightLastOffset(-1); }
+
+void ScriptingConsole::dontHighlightLastOffset(int offset) {
+    auto blk = document()->lastBlock();
+    auto hl = highlighter();
+    hl->setProperty(blk, "cmdoff", offset);
+    hl->rehighlightBlock(blk);
+}
+
+void ScriptingConsole::handleReturnKey() {
+    QString code = getCommandLine();
+
+    // start new block
+    appendPlainText(QString());
+    dontHighlightLastLine();
+    setMode(Output);
+
+    QTextCursor textCursor = this->textCursor();
+    textCursor.movePosition(QTextCursor::End);
+    setTextCursor(textCursor);
+
+    // Update the history
+    if (!code.isEmpty())
+        history_.add(code);
+
+    // append the newline char and
+    // send signal / update iodevice
+    if (iodevice_->isOpen())
+        iodevice_->consoleWidgetInput(code);
+
+    emit consoleCommand(code);
+}
 
 void ScriptingConsole::init() {
     _s.setDevice(this->device());
@@ -96,11 +147,14 @@ void ScriptingConsole::init() {
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
+
+    auto cm = new AsConsoleCompletion(_sp->engine(), this);
+    connect(cm, &AsCompletion::onFunctionTip, this,
+            &ScriptingConsole::onFunctionTip);
 }
 
 void ScriptingConsole::initOutput() {
     stdWarn(tr("Scripting console for WingHexExplorer"));
-
     _s << Qt::endl;
     stdWarn(tr(">>>> Powered by AngelScript <<<<"));
     _s << Qt::endl << Qt::endl;
@@ -158,6 +212,25 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     }
 }
 
+void ScriptingConsole::onCompletion(const QModelIndex &index) {
+    WingCodeEdit::onCompletion(index);
+    auto selfdata = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+    if (selfdata.type == CodeInfoTip::Type::Function ||
+        selfdata.type == CodeInfoTip::Type::ClsFunction) {
+        auto args = selfdata.addinfo.value(CodeInfoTip::Args);
+        auto cursor = textCursor();
+        cursor.insertText(QStringLiteral("()"));
+        if (!args.isEmpty()) {
+            cursor.movePosition(QTextCursor::Left);
+            setTextCursor(cursor);
+        }
+    }
+}
+
+QString ScriptingConsole::currentCodes() const {
+    return _codes + currentCommandLine();
+}
+
 void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
 
@@ -166,7 +239,7 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
     } else {
         auto cursor = this->textCursor();
         if (!cursor.atBlockStart()) {
-            commandPrompt = QStringLiteral("\n");
+            newLine();
         }
         if (_sp && _sp->isDebugMode()) {
             commandPrompt += QStringLiteral("[dbg] > ");
@@ -177,7 +250,8 @@ void ScriptingConsole::appendCommandPrompt(bool storeOnly) {
 
     _lastCommandPrompt = storeOnly;
 
-    stdOut(commandPrompt);
+    writeStdOut(commandPrompt);
+    dontHighlightLastOffset(commandPrompt.length());
 }
 
 ScriptMachine *ScriptingConsole::machine() const { return _sp; }

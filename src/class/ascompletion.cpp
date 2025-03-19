@@ -19,10 +19,12 @@
 
 #include "asdatabase.h"
 #include "model/codecompletionmodel.h"
+#include "wingcodeedit.h"
 
 #include <QAbstractItemView>
 #include <QByteArray>
 #include <QDir>
+#include <QEvent>
 #include <QLibraryInfo>
 #include <QQueue>
 #include <QTextStream>
@@ -36,7 +38,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
 
 AsCompletion::AsCompletion(asIScriptEngine *engine, WingCodeEdit *p)
-    : WingCompleter(p), parser(engine), _engine(engine) {
+    : WingCompleter(p), parser(engine), _engine(engine),
+      m_parseDocument(false) {
     Q_ASSERT(engine);
 
     setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
@@ -45,6 +48,17 @@ AsCompletion::AsCompletion(asIScriptEngine *engine, WingCodeEdit *p)
                     // clear the tips
                     *SEMI_COLON_TRIGGER});
     setTriggerAmount(3);
+
+    connect(this, QOverload<const QModelIndex &>::of(&AsCompletion::activated),
+            this, [this](const QModelIndex &index) {
+                auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+                if (v.type == CodeInfoTip::Type::Function ||
+                    v.type == CodeInfoTip::Type::ClsFunction) {
+                    emit onFunctionTip(v.getTooltip());
+                }
+            });
+
+    p->installEventFilter(this);
 }
 
 AsCompletion::~AsCompletion() {}
@@ -91,6 +105,14 @@ void AsCompletion::applyClassNodes(QList<CodeInfoTip> &nodes) {
     nodes = clsNodes;
 }
 
+bool AsCompletion::parseDocument() const { return m_parseDocument; }
+
+void AsCompletion::setParseDocument(bool newParseDocument) {
+    m_parseDocument = newParseDocument;
+}
+
+void AsCompletion::clearFunctionTip() { emit onFunctionTip({}); }
+
 QString AsCompletion::wordSeperators() const {
     static QString eow(QStringLiteral("~!@#$%^&*()_+{}|\"<>?,/;'[]\\-="));
     return eow;
@@ -99,25 +121,29 @@ QString AsCompletion::wordSeperators() const {
 void AsCompletion::processTrigger(const QString &trigger,
                                   const QString &content) {
     if (content.isEmpty()) {
-        emit onFunctionTip({});
         return;
     }
 
     if (trigger == *SEMI_COLON_TRIGGER) {
-        emit onFunctionTip({});
+        clearFunctionTip();
         return;
     }
 
     auto len = content.length();
     auto code = content.toUtf8();
 
+    QList<CodeInfoTip> nodes;
+
     // TODO: PRs are welcomed !!!
     //       If this software is well-known or brings me lots of
     //       financial support, I will implement it myself.
     // PARSING THE DOCUMENT
+    if (m_parseDocument) {
+        nodes.append(parseDocument());
+    }
 
-    if (trigger != *DOT_TRIGGER) {
-        emit onFunctionTip({});
+    if (!trigger.isEmpty() && trigger != *DOT_TRIGGER) {
+        clearFunctionTip();
     }
 
     auto p = code.data();
@@ -182,8 +208,6 @@ void AsCompletion::processTrigger(const QString &trigger,
 
     QString prefix;
     auto etoken = tokens.back();
-
-    QList<CodeInfoTip> nodes;
 
     // if trigger is empty, it's making editing
     if (trigger.isEmpty()) {
@@ -260,4 +284,16 @@ void AsCompletion::processTrigger(const QString &trigger,
 
     setModel(new CodeCompletionModel(nodes, this));
     setCompletionPrefix(prefix);
+}
+
+QList<CodeInfoTip> AsCompletion::parseDocument() { return {}; }
+
+bool AsCompletion::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::KeyPress) {
+        auto e = static_cast<QKeyEvent *>(event);
+        if (e->key() == Qt::Key_Escape) {
+            clearFunctionTip();
+        }
+    }
+    return WingCompleter::eventFilter(watched, event);
 }

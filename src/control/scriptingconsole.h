@@ -19,6 +19,7 @@
 #define ScriptingConsole_H
 
 #include "QConsoleWidget/QConsoleWidget.h"
+#include "class/asconsolecompletion.h"
 #include "class/scriptconsolemachine.h"
 
 #include <QMutex>
@@ -36,6 +37,11 @@ public:
 
     //! Appends a newline and command prompt at the end of the document.
     void appendCommandPrompt(bool storeOnly = false);
+
+    QString currentCodes() const;
+
+signals:
+    void onFunctionTip(const QString &tip);
 
 public slots:
     void stdOut(const QString &str);
@@ -58,8 +64,16 @@ private:
 
     QString packUpLoggingStr(const QString &message);
 
+    void dontHighlightLastLine();
+
+    void dontHighlightLastOffset(int offset);
+
 protected:
+    void handleReturnKey() override;
     void keyPressEvent(QKeyEvent *e) override;
+
+protected slots:
+    virtual void onCompletion(const QModelIndex &index) override;
 
 private:
     ScriptConsoleMachine *_sp = nullptr;

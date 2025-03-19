@@ -22,11 +22,17 @@
         \see QEditConfig
 */
 
-#include "class/settingmanager.h"
+#include "control/codeedit.h"
 #include "ui_qeditconfig.h"
 #include "utilities.h"
 
+#include "class/skinmanager.h"
+
 #include <QDebug>
+
+#include <KSyntaxHighlighting/Definition>
+#include <KSyntaxHighlighting/Repository>
+#include <KSyntaxHighlighting/Theme>
 
 /*!
         \ingroup dialogs
@@ -37,9 +43,12 @@
 
 */
 
-QEditConfig::QEditConfig(QWidget *w)
+QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     : WingHex::SettingPage(w), ui(new Ui::QEditConfig()) {
     ui->setupUi(this);
+
+    loadThemes();
+    loadIndentations();
 
     QFile code(QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.as"));
     auto ret = code.open(QFile::ReadOnly);
@@ -47,13 +56,78 @@ QEditConfig::QEditConfig(QWidget *w)
     Q_UNUSED(ret);
 
     auto cbuffer = code.readAll();
-    _edit = new WingCodeEdit(this);
+    _edit = new CodeEdit(this);
     _edit->setPlainText(QString::fromUtf8(cbuffer));
 
     _edit->setReadOnly(true);
     _edit->setUndoRedoEnabled(false);
-    ui->layoutFont->addWidget(_edit, ui->layoutFont->rowCount(), 0, 1,
-                              ui->layoutFont->columnCount());
+    _edit->setSyntax(WingCodeEdit::syntaxRepo().definitionForName(
+        QStringLiteral("AngelScript")));
+    ui->layoutEdit->addWidget(_edit);
+
+    connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            _edit, [this](int index) {
+                if (index == 0) {
+                    switch (SkinManager::instance().currentTheme()) {
+                    case SkinManager::Theme::Dark:
+                        _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
+                            KSyntaxHighlighting::Repository::DarkTheme));
+                        break;
+                    case SkinManager::Theme::Light:
+                        _edit->setTheme(WingCodeEdit::syntaxRepo().defaultTheme(
+                            KSyntaxHighlighting::Repository::LightTheme));
+                        break;
+                    }
+                } else {
+                    _edit->setTheme(WingCodeEdit::syntaxRepo().theme(
+                        ui->cbTheme->itemText(index)));
+                }
+            });
+
+    auto font = _edit->font();
+    ui->cbFont->setCurrentFont(font);
+    ui->spnFontSize->setValue(font.pointSize());
+    connect(ui->cbFont, &QFontComboBox::currentFontChanged, _edit,
+            [this](const QFont &font) {
+                auto f = font;
+                f.setPointSize(ui->spnFontSize->value());
+                _edit->setFont(f);
+            });
+    connect(ui->spnFontSize, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
+            [this](int value) {
+                auto f = ui->cbFont->currentFont();
+                f.setPointSize(value);
+                _edit->setFont(f);
+            });
+    connect(ui->spnTabWidth, QOverload<int>::of(&QSpinBox::valueChanged), _edit,
+            &CodeEdit::setIndentWidth);
+    connect(ui->cbIndentation,
+            QOverload<int>::of(&QComboBox::currentIndexChanged), _edit,
+            [this](int index) {
+                bool b;
+                auto iden = WingCodeEdit::IndentationMode(
+                    ui->cbIndentation->itemData(index).toInt(&b));
+                if (b) {
+                    _edit->setIndentationMode(iden);
+                }
+            });
+    connect(ui->chkShowLineNumber, &QCheckBox::toggled, _edit,
+            &CodeEdit::setShowLineNumbers);
+    connect(ui->chkShowFolding, &QCheckBox::toggled, _edit,
+            &CodeEdit::setShowFolding);
+    connect(ui->chkShowIndentGuides, &QCheckBox::toggled, _edit,
+            &CodeEdit::setShowIndentGuides);
+    connect(ui->chkLongLineEdge, &QCheckBox::toggled, _edit,
+            &CodeEdit::setShowLongLineEdge);
+    connect(ui->chkWordWrap, &QCheckBox::toggled, _edit,
+            &CodeEdit::setWordWrap);
+    connect(ui->chkShowWhitespace, &QCheckBox::toggled, _edit,
+            &CodeEdit::setShowWhitespace);
+    connect(ui->chkMatchBraces, &QCheckBox::toggled, _edit,
+            &CodeEdit::setMatchBraces);
+    connect(ui->chkAutoCloseChar, &QCheckBox::toggled, _edit,
+            &CodeEdit::setAutoCloseChar);
+
     reload();
 }
 
@@ -65,50 +139,6 @@ QEditConfig::~QEditConfig() { delete ui; }
 void QEditConfig::apply() {
     QFont font = ui->cbFont->currentFont();
     font.setPointSize(ui->spnFontSize->value());
-
-    // QEditor::setDefaultFont(font);
-    // QEditor::setDefaultTabStop(ui->spnTabWidth->value());
-
-    // if (ui->chkDetectLE->isChecked()) {
-    //     QEditor::setDefaultLineEnding(QDocument::Conservative);
-    // } else {
-    //     QEditor::setDefaultLineEnding(
-    //         QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1));
-    // }
-
-    // QDocument::WhiteSpaceMode ws = QDocument::ShowNone;
-
-    // if (ui->chkShowLeadingWhitespace->isChecked())
-    //     ws |= QDocument::ShowLeading;
-
-    // if (ui->chkShowTrailingWhitespace->isChecked())
-    //     ws |= QDocument::ShowTrailing;
-
-    // if (ui->chkShowTabsInText->isChecked())
-    //     ws |= QDocument::ShowTabs;
-
-    // QEditor::setDefaultShowSpaces(ws);
-
-    // int flags = QEditor::defaultFlags();
-
-    // if (ui->chkReplaceTabs->isChecked())
-    //     flags |= QEditor::ReplaceTabs;
-    // else
-    //     flags &= ~QEditor::ReplaceTabs;
-
-    // if (ui->chkAutoRemoveTrailingWhitespace->isChecked())
-    //     flags |= QEditor::RemoveTrailing;
-    // else
-    //     flags &= ~QEditor::RemoveTrailing;
-
-    // if (ui->chkPreserveTrailingIndent->isChecked())
-    //     flags |= QEditor::PreserveTrailingIndent;
-    // else
-    //     flags &= ~QEditor::PreserveTrailingIndent;
-
-    // QEditor::setDefaultFlags(flags);
-
-    SettingManager::instance().save(SettingManager::CODEEDIT);
 }
 
 /*!
@@ -133,16 +163,16 @@ void QEditConfig::reset() {
 
     ui->spnTabWidth->setValue(4);
 
-    ui->chkShowTabsInText->setChecked(true);
-    ui->chkShowLeadingWhitespace->setChecked(true);
-    ui->chkShowTrailingWhitespace->setChecked(true);
+    ui->chkShowWhitespace->setChecked(true);
+    ui->chkShowIndentGuides->setChecked(true);
+    ui->chkShowLineNumber->setChecked(true);
 
-    ui->chkDetectLE->setChecked(true);
-    ui->cbLineEndings->setCurrentIndex(0);
+    // ui->chkDetectLE->setChecked(true);
+    // ui->cbLineEndings->setCurrentIndex(0);
 
-    ui->chkReplaceTabs->setChecked(true);
-    ui->chkAutoRemoveTrailingWhitespace->setChecked(true);
-    ui->chkPreserveTrailingIndent->setChecked(false);
+    // ui->chkReplaceTabs->setChecked(true);
+    // ui->chkAutoRemoveTrailingWhitespace->setChecked(true);
+    // ui->chkPreserveTrailingIndent->setChecked(false);
 
     apply();
 }
@@ -174,127 +204,26 @@ void QEditConfig::reload() {
     //                                           QEditor::PreserveTrailingIndent);
 }
 
+void QEditConfig::loadThemes() {
+    QStringList themes;
+    themes.append(tr("Default"));
+    for (auto &th : CodeEdit::syntaxRepo().themes()) {
+        themes.append(th.name());
+    }
+    ui->cbTheme->addItems(themes);
+}
+
+void QEditConfig::loadIndentations() {
+    ui->cbIndentation->addItem(tr("IndentMixed"),
+                               int(WingCodeEdit::IndentationMode::IndentMixed));
+    ui->cbIndentation->addItem(
+        tr("IndentSpaces"), int(WingCodeEdit::IndentationMode::IndentSpaces));
+    ui->cbIndentation->addItem(tr("IndentTabs"),
+                               int(WingCodeEdit::IndentationMode::IndentTabs));
+}
+
 QIcon QEditConfig::categoryIcon() const { return ICONRES("file"); }
 
 QString QEditConfig::name() const { return tr("Edit"); }
 
 QString QEditConfig::id() const { return QStringLiteral("Edit"); }
-
-/*!
-        \brief Slot used to apply font size settings
-*/
-void QEditConfig::on_spnFontSize_valueChanged(int size) {
-    QFont font = ui->cbFont->currentFont();
-    font.setPointSize(size);
-    _edit->setFont(font);
-}
-
-/*!
-        \brief Slot used to apply font family settings
-*/
-void QEditConfig::on_cbFont_currentFontChanged(QFont font) {
-    font.setPointSize(ui->spnFontSize->value());
-    _edit->setFont(font);
-}
-
-/*!
-        \brief Slot used to apply tab width settings
-*/
-void QEditConfig::on_spnTabWidth_valueChanged(int n) {
-    // _edit->document()->setTabStop(n);
-}
-
-/*!
-        \brief Slot used to apply tabs replacement settings
-*/
-void QEditConfig::on_chkReplaceTabs_toggled(bool y) {
-    // _edit->setFlag(QEditor::ReplaceTabs, y);
-}
-
-/*!
-        \brief Slot used to apply tabs display settings
-*/
-void QEditConfig::on_chkShowTabsInText_toggled(bool y) {
-    // auto &doc_ps = QDocumentPrivate::m_documents;
-    // if (y) {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() | QDocument::ShowTabs);
-    //     }
-    // } else {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() & ~QDocument::ShowTabs);
-    //     }
-    // }
-}
-
-/*!
-        \brief Slot used to apply trailing whitespace display settings
-*/
-void QEditConfig::on_chkShowLeadingWhitespace_toggled(bool y) {
-    // auto &doc_ps = QDocumentPrivate::m_documents;
-    // if (y) {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() | QDocument::ShowLeading);
-    //     }
-    // } else {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() & ~QDocument::ShowLeading);
-    //     }
-    // }
-}
-
-/*!
-        \brief Slot used to apply leading whitespace display settings
-*/
-void QEditConfig::on_chkShowTrailingWhitespace_toggled(bool y) {
-    // auto &doc_ps = QDocumentPrivate::m_documents;
-    // if (y) {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() | QDocument::ShowTrailing);
-    //     }
-    // } else {
-    //     for (auto &pdoc : doc_ps) {
-    //         auto doc = pdoc->m_doc;
-    //         doc->setShowSpaces(doc->showSpaces() & ~QDocument::ShowTrailing);
-    //     }
-    // }
-}
-
-void QEditConfig::on_cbLineEndings_currentIndexChanged(int idx) {
-    // QDocument::LineEnding le = QDocument::LineEnding(idx + 1);
-    // _edit->document()->setLineEnding(le);
-}
-
-/*!
-        \brief Slot used to apply line endings auto detectionl settings
-*/
-void QEditConfig::on_chkDetectLE_toggled(bool y) {
-    // QDocument::LineEnding le = QDocument::Conservative;
-
-    // if (!y) {
-    //     le = QDocument::LineEnding(ui->cbLineEndings->currentIndex() + 1);
-    // }
-
-    // _edit->document()->setLineEnding(le);
-}
-
-/*!
-        \brief Slot used to apply trailing space removal settings
-*/
-void QEditConfig::on_chkAutoRemoveTrailingWhitespace_toggled(bool y) {
-    // _edit->setFlag(QEditor::RemoveTrailing, y);
-}
-
-/*!
-        \brief Slot used to indent preservation settings
-*/
-void QEditConfig::on_chkPreserveTrailingIndent_toggled(bool y) {
-    // _edit->setFlag(QEditor::PreserveTrailingIndent, y);
-}
-
-/*! @} */

@@ -31,6 +31,9 @@ signals:
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;
+
+private:
+    void addMoveLineShortCut();
 };
 
 #endif // CODEEDIT_H

@@ -32,12 +32,23 @@ public:
 public:
     virtual QString wordSeperators() const override;
 
+    bool parseDocument() const;
+    void setParseDocument(bool newParseDocument);
+
+    void clearFunctionTip();
+
 protected:
     virtual void processTrigger(const QString &trigger,
                                 const QString &content) override;
 
+    virtual QList<CodeInfoTip> parseDocument();
+
 signals:
     void onFunctionTip(const QString &content);
+
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void applyEmptyNsNode(QList<CodeInfoTip> &nodes);
@@ -46,6 +57,7 @@ private:
 private:
     ASDataBase parser;
     asIScriptEngine *_engine;
+    bool m_parseDocument;
 };
 
 #endif // _CPP_COMPLETION_H_

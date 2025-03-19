@@ -2,13 +2,13 @@
 #define _QCONSOLEWIDGET_H_
 
 #include <QCompleter>
-#include <QPlainTextEdit>
 #include <QTextStream>
 
-class QConsoleIODevice;
-class QConsoleWidgetCompleter;
+#include "WingCodeEdit/wingcodeedit.h"
 
-class QConsoleWidget : public QPlainTextEdit {
+class QConsoleIODevice;
+
+class QConsoleWidget : public WingCodeEdit {
     Q_OBJECT
 
 public:
@@ -53,13 +53,11 @@ public:
     QIODevice *device() const;
     QTextCharFormat channelCharFormat(ConsoleChannel ch) const;
     void setChannelCharFormat(ConsoleChannel ch, const QTextCharFormat &fmt);
-    const QStringList &completionTriggers() const;
-    void setCompletionTriggers(const QStringList &l);
     virtual QSize sizeHint() const override;
     // write a formatted message to the console
     void write(const QString &message, const QTextCharFormat &fmt);
     static History &history();
-    void setCompleter(QConsoleWidgetCompleter *c);
+
     // get the current command line
     QString getCommandLine();
 
@@ -79,11 +77,9 @@ signals:
 
 protected:
     bool canPaste() const;
-    bool canCut() const { return isSelectionInEditZone(); }
-    void handleReturnKey();
-    void handleTabKey();
-    void updateCompleter();
-    void checkCompletionTriggers(const QString &txt);
+    bool canCut() const;
+    virtual void handleReturnKey();
+    virtual void handleTabKey();
     // reimp QPlainTextEdit functions
     void keyPressEvent(QKeyEvent *e) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
@@ -94,43 +90,20 @@ protected:
     // replace the command line
     void replaceCommandLine(const QString &str);
 
-protected slots:
+    QString currentCommandLine() const;
 
-    // insert the completion from completer
-    void insertCompletion(const QString &completion);
-
-private:
+protected:
     static History history_;
     ConsoleMode mode_;
-    int inpos_, completion_pos_;
-    QStringList completion_triggers_;
+    int inpos_;
     QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
     QTextCharFormat chanFormat_[nConsoleChannels];
-    QConsoleWidgetCompleter *completer_;
 };
 
 QTextStream &waitForInput(QTextStream &s);
 QTextStream &inputMode(QTextStream &s);
 QTextStream &outChannel(QTextStream &s);
 QTextStream &errChannel(QTextStream &s);
-
-class QConsoleWidgetCompleter : public QCompleter {
-public:
-    /*
-     * Update the completion model given a string.  The given string
-     * is the current console text between the cursor and the start of
-     * the line.
-     *
-     * Return the completion count
-     */
-    virtual int updateCompletionModel(const QString &str) = 0;
-
-    /*
-     * Return the position in the command line where the completion
-     * should be inserted
-     */
-    virtual int insertPos() = 0;
-};
 
 #endif

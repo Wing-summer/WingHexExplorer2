@@ -38,6 +38,7 @@ public:
 
 signals:
     void onToggleMark(int line);
+    void onFunctionTip(const QString &tip);
 
 public slots:
     bool openFile(const QString &filename);

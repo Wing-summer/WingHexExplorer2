@@ -14,7 +14,9 @@ public:
     ~QConsoleIODevice();
     qint64 bytesAvailable() const override;
     bool waitForReadyRead(int msecs) override;
-    QConsoleWidget *widget() const { return widget_; }
+    QConsoleWidget *widget() const;
+
+    void consoleWidgetInput(const QString &in);
 
 protected:
     qint64 readData(char *data, qint64 maxlen) override;
@@ -27,7 +29,6 @@ private:
     int readpos_;
     qint64 writtenSinceLastEmit_, readSinceLastEmit_;
     bool readyReadEmmited_;
-    void consoleWidgetInput(const QString &in);
 };
 
 #endif
