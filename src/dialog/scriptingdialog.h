@@ -139,7 +139,7 @@ private:
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
         if (menu) {
-            a->setText(title + QStringLiteral(" ▼"));
+            a->setText(title + QStringLiteral(" 闂佸厖绱幏锟�"));
         } else
 #endif
         {

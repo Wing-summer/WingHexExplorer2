@@ -16,24 +16,20 @@
 */
 
 #include "codeedit.h"
+#include "class/scriptsettings.h"
 #include "model/codecompletionmodel.h"
 
 #include <QModelIndex>
 #include <QShortcut>
 
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
-    setAutoIndent(true);
-    setAutoCloseChar(true);
-    setMatchBraces(true);
-    setShowIndentGuides(true);
-    setShowLineNumbers(true);
-    setShowFolding(true);
-    setShowSymbolMark(true);
-
     connect(this->document(), &QTextDocument::modificationChanged, this,
             &CodeEdit::contentModified);
-
     addMoveLineShortCut();
+
+    connect(&ScriptSettings::instance(), &ScriptSettings::editorSettingsUpdate,
+            this, &CodeEdit::applyEditorSetStyle);
+    applyEditorSetStyle();
 }
 
 void CodeEdit::onCompletion(const QModelIndex &index) {
@@ -63,4 +59,21 @@ void CodeEdit::addMoveLineShortCut() {
     downLines->setContext(Qt::WidgetShortcut);
     connect(downLines, &QShortcut::activated, this,
             [this]() { moveLines(QTextCursor::NextBlock); });
+}
+
+void CodeEdit::applyEditorSetStyle() {
+    auto &set = ScriptSettings::instance();
+    auto dfont = QFont(set.editorFontFamily());
+    dfont.setPointSize(set.editorFontSize());
+    this->setFont(dfont);
+    this->setTabWidth(set.editorTabWidth());
+    this->setIndentationMode(WingCodeEdit::IndentationMode(set.editorInden()));
+    this->setShowLineNumbers(set.editorShowLineNumber());
+    this->setShowFolding(set.editorFolding());
+    this->setShowIndentGuides(set.editorShowGuideLine());
+    this->setWordWrap(set.editorWordWrap());
+    this->setShowLongLineEdge(set.editorShowLineEdges());
+    this->setMatchBraces(set.editorMatchBraces());
+    this->setShowWhitespace(set.editorShowWhiteSpace());
+    this->setAutoCloseChar(set.editorAutoCloseChar());
 }

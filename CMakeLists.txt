@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.2.0")
+set(PROJECT_VERSION "2.2.1")
 
 find_package(
     QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network Concurrent
@@ -186,6 +186,8 @@ set(CONTROL_SRC
     src/control/toast.cpp
     src/control/scriptingconsole.cpp
     src/control/scriptingconsole.h
+    src/control/scriptingconsolebase.h
+    src/control/scriptingconsolebase.cpp
     src/control/gotowidget.h
     src/control/gotowidget.cpp
     src/control/gotowidget.ui

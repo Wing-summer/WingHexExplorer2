@@ -245,6 +245,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             splash->setInfoText(tr("SetupScriptService"));
 
         m_scriptConsole->initOutput();
+        m_scriptConsole->setMode(QConsoleWidget::Input);
         m_scriptConsole->machine()->setInsteadFoundDisabled(true);
 
         if (splash)

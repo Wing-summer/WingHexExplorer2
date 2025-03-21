@@ -11,6 +11,7 @@
         <file>images/closefile.png</file>
         <file>images/codefmt.png</file>
         <file>images/codeformat.png</file>
+        <file>images/console.png</file>
         <file>images/convpro.png</file>
         <file>images/copy.png</file>
         <file>images/copyhex.png</file>
@@ -82,7 +83,6 @@
         <file>images/savesel.png</file>
         <file>images/scale.png</file>
         <file>images/scalereset.png</file>
-        <file>images/scheme.png</file>
         <file>images/script.png</file>
         <file>images/scriptdbg/bp.png</file>
         <file>images/scriptdbg/delbp.png</file>

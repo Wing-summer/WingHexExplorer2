@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix: 
         os: [windows-latest, ubuntu-latest]
-        qt_version: [5.15.2, 6.6.2]
+        qt_version: [6.6.2]
         arch: [win64_msvc2019_64, gcc_64]
         exclude:
           - os: windows-latest

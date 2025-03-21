@@ -53,7 +53,6 @@ public:
     QIODevice *device() const;
     QTextCharFormat channelCharFormat(ConsoleChannel ch) const;
     void setChannelCharFormat(ConsoleChannel ch, const QTextCharFormat &fmt);
-    virtual QSize sizeHint() const override;
     // write a formatted message to the console
     void write(const QString &message, const QTextCharFormat &fmt);
     static History &history();

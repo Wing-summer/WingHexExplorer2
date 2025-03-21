@@ -18,13 +18,14 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
-#include "QConsoleWidget/QConsoleWidget.h"
+#include "scriptingconsolebase.h"
+
 #include "class/asconsolecompletion.h"
 #include "class/scriptconsolemachine.h"
 
 #include <QMutex>
 
-class ScriptingConsole : public QConsoleWidget {
+class ScriptingConsole : public ScriptingConsoleBase {
     Q_OBJECT
 
 public:
@@ -35,27 +36,20 @@ public:
     ScriptMachine *machine() const;
     ScriptConsoleMachine *consoleMachine() const;
 
-    //! Appends a newline and command prompt at the end of the document.
-    void appendCommandPrompt(bool storeOnly = false);
-
     QString currentCodes() const;
 
 signals:
     void onFunctionTip(const QString &tip);
 
 public slots:
-    void stdOut(const QString &str);
-    void stdErr(const QString &str);
-    void stdWarn(const QString &str);
-    void newLine();
-
     void init();
-
-    void initOutput();
 
     void clearConsole();
 
     void processKeyEvent(QKeyEvent *e);
+
+private slots:
+    void applyScriptSettings();
 
 private:
     void runConsoleCommand(const QString &code);
@@ -63,10 +57,6 @@ private:
     QString getInput();
 
     QString packUpLoggingStr(const QString &message);
-
-    void dontHighlightLastLine();
-
-    void dontHighlightLastOffset(int offset);
 
 protected:
     void handleReturnKey() override;
@@ -77,12 +67,9 @@ protected slots:
 
 private:
     ScriptConsoleMachine *_sp = nullptr;
-    QTextStream _s;
 
-    bool _lastCommandPrompt = false;
     QString _codes;
 
-    QTextCharFormat _warnCharFmt;
     std::function<QString(void)> _getInputFn;
 };
 

@@ -22,13 +22,15 @@
         \see QEditConfig
 */
 
+#include "class/scriptsettings.h"
 #include "control/codeedit.h"
+#include "control/scriptingconsolebase.h"
 #include "ui_qeditconfig.h"
 #include "utilities.h"
 
 #include "class/skinmanager.h"
 
-#include <QDebug>
+#include <QVBoxLayout>
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
@@ -44,25 +46,46 @@
 */
 
 QEditConfig::QEditConfig(bool isConsole, QWidget *w)
-    : WingHex::SettingPage(w), ui(new Ui::QEditConfig()) {
+    : WingHex::SettingPage(w), ui(new Ui::QEditConfig()),
+      m_isConsole(isConsole) {
     ui->setupUi(this);
 
     loadThemes();
     loadIndentations();
 
-    QFile code(QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.as"));
-    auto ret = code.open(QFile::ReadOnly);
-    Q_ASSERT(ret);
-    Q_UNUSED(ret);
-
-    auto cbuffer = code.readAll();
-    _edit = new CodeEdit(this);
-    _edit->setPlainText(QString::fromUtf8(cbuffer));
+    if (isConsole) {
+        auto console = new ScriptingConsoleBase(this);
+        console->initOutput();
+        auto outfmt =
+            console->channelCharFormat(QConsoleWidget::StandardOutput);
+        console->write(
+            QStringLiteral(R"(print("WingHexExplorer2 by wingsummer!");)"),
+            outfmt);
+        console->appendCommandPrompt();
+        console->write(QStringLiteral(R"(for(auto i = 0; i < 5; i++) { \)"),
+                       outfmt);
+        console->appendCommandPrompt(true);
+        console->write(QStringLiteral(R"(print(i); \)"), outfmt);
+        console->appendCommandPrompt(true);
+        console->write(QStringLiteral("}"), outfmt);
+        console->newLine();
+        console->stdOut(QStringLiteral("01234"));
+        _edit = console;
+    } else {
+        _edit = new WingCodeEdit(this);
+        QFile code(QStringLiteral(":/com.wingsummer.winghex/src/TESTCODE.as"));
+        auto ret = code.open(QFile::ReadOnly);
+        Q_ASSERT(ret);
+        Q_UNUSED(ret);
+        auto cbuffer = code.readAll();
+        _edit->setPlainText(QString::fromUtf8(cbuffer));
+    }
 
     _edit->setReadOnly(true);
     _edit->setUndoRedoEnabled(false);
     _edit->setSyntax(WingCodeEdit::syntaxRepo().definitionForName(
         QStringLiteral("AngelScript")));
+
     ui->layoutEdit->addWidget(_edit);
 
     connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -128,6 +151,22 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     connect(ui->chkAutoCloseChar, &QCheckBox::toggled, _edit,
             &CodeEdit::setAutoCloseChar);
 
+    if (isConsole) {
+        ui->chkShowLineNumber->setEnabled(false);
+        ui->chkShowFolding->setEnabled(false);
+        ui->chkShowIndentGuides->setEnabled(false);
+        ui->chkWordWrap->setEnabled(false);
+        ui->chkLongLineEdge->setEnabled(false);
+
+        _name = tr("Console");
+        _id = QStringLiteral("Console");
+        _icon = ICONRES("console");
+    } else {
+        _name = tr("Edit");
+        _id = QStringLiteral("Edit");
+        _icon = ICONRES("file");
+    }
+
     reload();
 }
 
@@ -137,8 +176,44 @@ QEditConfig::~QEditConfig() { delete ui; }
         \brief Apply changes
 */
 void QEditConfig::apply() {
-    QFont font = ui->cbFont->currentFont();
-    font.setPointSize(ui->spnFontSize->value());
+    auto &set = ScriptSettings::instance();
+    if (m_isConsole) {
+        if (ui->cbTheme->currentIndex() == 0) {
+            set.setConsoleTheme({});
+        } else {
+            set.setConsoleTheme(ui->cbTheme->currentText());
+        }
+
+        set.setConsoleFontFamily(ui->cbFont->currentFont().family());
+        set.setConsoleFontSize(ui->spnFontSize->value());
+        set.setConsoleTabWidth(ui->spnTabWidth->value());
+        set.setConsoleInden(ui->cbIndentation->currentData().toInt());
+
+        set.setConsoleMatchBraces(ui->chkMatchBraces->isChecked());
+        set.setConsoleShowWhiteSpace(ui->chkShowWhitespace->isChecked());
+        set.setConsoleAutoCloseChar(ui->chkAutoCloseChar->isChecked());
+    } else {
+        if (ui->cbTheme->currentIndex() == 0) {
+            set.setEditorTheme({});
+        } else {
+            set.setEditorTheme(ui->cbTheme->currentText());
+        }
+
+        set.setEditorFontFamily(ui->cbFont->currentFont().family());
+        set.setEditorFontSize(ui->spnFontSize->value());
+        set.setEditorTabWidth(ui->spnTabWidth->value());
+        set.setEditorInden(ui->cbIndentation->currentData().toInt());
+
+        set.setEditorShowLineNumber(ui->chkShowLineNumber->isChecked());
+        set.setEditorFolding(ui->chkShowFolding->isChecked());
+        set.setEditorShowGuideLine(ui->chkShowIndentGuides->isChecked());
+        set.setEditorWordWrap(ui->chkWordWrap->isChecked());
+        set.setEditorShowLineEdges(ui->chkLongLineEdge->isChecked());
+        set.setEditorMatchBraces(ui->chkMatchBraces->isChecked());
+        set.setEditorShowWhiteSpace(ui->chkShowWhitespace->isChecked());
+        set.setEditorAutoCloseChar(ui->chkAutoCloseChar->isChecked());
+    }
+    set.save(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
 }
 
 /*!
@@ -156,52 +231,57 @@ void QEditConfig::cancel() { reload(); }
         \note The widgets are changed but these changes are NOT applied.
 */
 void QEditConfig::reset() {
-    // restore default configuration
-    auto font = qApp->font();
-    ui->cbFont->setFont(font);
-    ui->spnFontSize->setValue(font.pointSize());
-
-    ui->spnTabWidth->setValue(4);
-
-    ui->chkShowWhitespace->setChecked(true);
-    ui->chkShowIndentGuides->setChecked(true);
-    ui->chkShowLineNumber->setChecked(true);
-
-    // ui->chkDetectLE->setChecked(true);
-    // ui->cbLineEndings->setCurrentIndex(0);
-
-    // ui->chkReplaceTabs->setChecked(true);
-    // ui->chkAutoRemoveTrailingWhitespace->setChecked(true);
-    // ui->chkPreserveTrailingIndent->setChecked(false);
-
-    apply();
+    auto &set = ScriptSettings::instance();
+    set.reset(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
+    reload();
 }
 
 void QEditConfig::reload() {
+    auto &set = ScriptSettings::instance();
+
+    auto e = QMetaEnum::fromType<WingCodeEdit::IndentationMode>();
+
     // reload the current config
-    // auto dfont = QEditor::defaultFont();
-    // ui->cbFont->setFont(dfont);
-    // ui->spnFontSize->setValue(dfont.pointSize());
+    if (m_isConsole) {
+        auto theme = set.consoleTheme();
+        if (theme.isEmpty()) {
+            ui->cbTheme->setCurrentIndex(0);
+        } else {
+            ui->cbTheme->setCurrentText(set.consoleTheme());
+        }
 
-    // ui->spnTabWidth->setValue(QEditor::defaultTabStop());
+        auto dfont = QFont(set.consoleFontFamily());
+        ui->cbFont->setCurrentFont(dfont);
+        ui->spnFontSize->setValue(set.consoleFontSize());
+        ui->spnTabWidth->setValue(set.consoleTabWidth());
 
-    // auto ss = QEditor::defaultShowSpaces();
-    // ui->chkShowTabsInText->setChecked(ss.testFlag(QDocument::ShowTabs));
-    // ui->chkShowLeadingWhitespace->setChecked(
-    //     ss.testFlag(QDocument::ShowLeading));
-    // ui->chkShowTrailingWhitespace->setChecked(
-    //     ss.testFlag(QDocument::ShowTrailing));
+        ui->cbIndentation->setCurrentText(e.valueToKey(set.consoleInden()));
+        ui->chkMatchBraces->setChecked(set.consoleMatchBraces());
+        ui->chkShowWhitespace->setChecked(set.consoleShowWhiteSpace());
+        ui->chkAutoCloseChar->setChecked(set.consoleAutoCloseChar());
+    } else {
+        auto theme = set.editorTheme();
+        if (theme.isEmpty()) {
+            ui->cbTheme->setCurrentIndex(0);
+        } else {
+            ui->cbTheme->setCurrentText(set.consoleTheme());
+        }
 
-    // auto le = QEditor::defaultLineEnding();
-    // ui->chkDetectLE->setChecked(le == QDocument::Conservative);
-    // ui->cbLineEndings->setCurrentIndex(le ? le - 1 : 0);
+        auto dfont = QFont(set.editorFontFamily());
+        ui->cbFont->setCurrentFont(dfont);
+        ui->spnFontSize->setValue(set.editorFontSize());
+        ui->spnTabWidth->setValue(set.editorTabWidth());
 
-    // int flag = QEditor::defaultFlags();
-    // ui->chkReplaceTabs->setChecked(flag & QEditor::ReplaceTabs);
-    // ui->chkAutoRemoveTrailingWhitespace->setChecked(flag &
-    //                                                 QEditor::RemoveTrailing);
-    // ui->chkPreserveTrailingIndent->setChecked(flag &
-    //                                           QEditor::PreserveTrailingIndent);
+        ui->cbIndentation->setCurrentText(e.valueToKey(set.editorInden()));
+        ui->chkShowLineNumber->setChecked(set.editorShowLineNumber());
+        ui->chkShowFolding->setChecked(set.editorFolding());
+        ui->chkShowIndentGuides->setChecked(set.editorShowGuideLine());
+        ui->chkWordWrap->setChecked(set.editorWordWrap());
+        ui->chkLongLineEdge->setChecked(set.editorShowLineEdges());
+        ui->chkMatchBraces->setChecked(set.editorMatchBraces());
+        ui->chkShowWhitespace->setChecked(set.editorShowWhiteSpace());
+        ui->chkAutoCloseChar->setChecked(set.editorAutoCloseChar());
+    }
 }
 
 void QEditConfig::loadThemes() {
@@ -214,16 +294,17 @@ void QEditConfig::loadThemes() {
 }
 
 void QEditConfig::loadIndentations() {
-    ui->cbIndentation->addItem(tr("IndentMixed"),
-                               int(WingCodeEdit::IndentationMode::IndentMixed));
     ui->cbIndentation->addItem(
         tr("IndentSpaces"), int(WingCodeEdit::IndentationMode::IndentSpaces));
     ui->cbIndentation->addItem(tr("IndentTabs"),
                                int(WingCodeEdit::IndentationMode::IndentTabs));
+    ui->cbIndentation->addItem(tr("IndentMixed"),
+                               int(WingCodeEdit::IndentationMode::IndentMixed));
+    ui->cbIndentation->setCurrentIndex(0);
 }
 
-QIcon QEditConfig::categoryIcon() const { return ICONRES("file"); }
+QIcon QEditConfig::categoryIcon() const { return _icon; }
 
-QString QEditConfig::name() const { return tr("Edit"); }
+QString QEditConfig::name() const { return _name; }
 
-QString QEditConfig::id() const { return QStringLiteral("Edit"); }
+QString QEditConfig::id() const { return _id; }

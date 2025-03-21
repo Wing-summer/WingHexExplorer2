@@ -34,7 +34,6 @@
 
 #include "class/ascompletion.h"
 #include "class/clangformatmanager.h"
-#include "class/skinmanager.h"
 
 ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
@@ -46,18 +45,6 @@ ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
     this->setObjectName(QStringLiteral("ScriptEditor"));
 
     m_editor = new CodeEdit(this);
-
-    switch (SkinManager::instance().currentTheme()) {
-    case SkinManager::Theme::Dark:
-        m_editor->setTheme(m_editor->syntaxRepo().defaultTheme(
-            KSyntaxHighlighting::Repository::DarkTheme));
-        break;
-    case SkinManager::Theme::Light:
-        m_editor->setTheme(m_editor->syntaxRepo().defaultTheme(
-            KSyntaxHighlighting::Repository::LightTheme));
-        break;
-    }
-
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
 

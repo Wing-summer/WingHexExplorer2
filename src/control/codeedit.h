@@ -34,6 +34,9 @@ protected slots:
 
 private:
     void addMoveLineShortCut();
+
+private slots:
+    void applyEditorSetStyle();
 };
 
 #endif // CODEEDIT_H

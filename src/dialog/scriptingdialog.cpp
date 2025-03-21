@@ -515,11 +515,13 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
 
     addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
                     [=] { m_setdialog->showConfig(QStringLiteral("Edit")); });
+    addPannelAction(pannel, QStringLiteral("console"), tr("Console"), [=] {
+        m_setdialog->showConfig(QStringLiteral("Console"));
+    });
     addPannelAction(
         pannel, QStringLiteral("codeformat"), tr("ClangFormat"),
         [=] { m_setdialog->showConfig(QStringLiteral("ClangFormat")); });
-    addPannelAction(pannel, QStringLiteral("scheme"), tr("Format"),
-                    [=] { m_setdialog->showConfig(QStringLiteral("Scheme")); });
+
     return tab;
 }
 
@@ -950,7 +952,10 @@ void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
 void ScriptingDialog::buildUpSettingDialog() {
     m_setdialog = new SettingDialog(this);
 
-    auto edit = new QEditConfig(m_setdialog);
+    auto edit = new QEditConfig(false, m_setdialog);
+    m_setdialog->addPage(edit);
+
+    edit = new QEditConfig(true, m_setdialog);
     m_setdialog->addPage(edit);
 
     auto clang = new ClangFormatSetDialog(m_setdialog);

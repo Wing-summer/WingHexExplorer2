@@ -93,8 +93,7 @@ void ShowTextDialog::setSyntax(const KSyntaxHighlighting::Definition &syntax) {
     m_edit->setSyntax(syntax);
 }
 
-void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding,
-                          qsizetype offset, qsizetype size) {
+void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding) {
     // auto editor = m_edit->editor();
     // editor->blockSignals(true);
     // editor->setCodec(encoding);
@@ -102,19 +101,9 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString encoding,
     // editor->blockSignals(false);
 }
 
-void ShowTextDialog::load(QHexBuffer *buffer, qsizetype offset,
-                          qsizetype size) {
-    if (buffer == nullptr || offset < 0) {
-        return;
-    }
-
-    m_canceled = false;
-
-    if (size < 0) {
-        size = buffer->length();
-    }
-
-    if (size >= std::numeric_limits<decltype(size)>::max()) {
+void ShowTextDialog::load(QHexBuffer *buffer) {
+    constexpr auto MAXLEN = 1024 * 1024 * 1024;
+    if (buffer->length() > MAXLEN) {
         WingMessageBox::critical(this, this->windowTitle(), tr("TooHugeFile"));
         return;
     }

@@ -1,5 +1,6 @@
 #include "QConsoleWidget.h"
 #include "QConsoleIODevice.h"
+#include "wingsyntaxhighlighter.h"
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -27,9 +28,6 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
     for (int i = 0; i < nConsoleChannels; i++)
         chanFormat_[i] = fmt;
 
-    chanFormat_[StandardOutput].setForeground(Qt::white);
-    chanFormat_[StandardError].setForeground(Qt::red);
-
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setUndoRedoEnabled(false);
 
@@ -37,6 +35,16 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
     setMatchBraces(true);
 
     setDefaultTheme();
+    auto theme = highlighter()->theme();
+    auto color = theme.textColor(KSyntaxHighlighting::Theme::Normal);
+    chanFormat_[StandardOutput].setForeground(QColor(color));
+    chanFormat_[StandardError].setForeground(Qt::red);
+
+    connect(this, &QConsoleWidget::themeChanged, this, [this]() {
+        auto theme = highlighter()->theme();
+        auto color = theme.textColor(KSyntaxHighlighting::Theme::Normal);
+        chanFormat_[StandardOutput].setForeground(QColor(color));
+    });
 }
 
 QConsoleWidget::~QConsoleWidget() {}
@@ -71,8 +79,6 @@ void QConsoleWidget::setChannelCharFormat(ConsoleChannel ch,
                                           const QTextCharFormat &fmt) {
     chanFormat_[ch] = fmt;
 }
-
-QSize QConsoleWidget::sizeHint() const { return QSize(600, 400); }
 
 QString QConsoleWidget::getCommandLine() {
     if (mode_ == Output)

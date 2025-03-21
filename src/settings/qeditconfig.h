@@ -2,7 +2,10 @@
 #define QEDITCONFIG_H
 
 #include "WingPlugin/settingpage.h"
-#include "control/codeedit.h"
+#include "wingcodeedit.h"
+
+#include <QIcon>
+#include <QString>
 #include <QWidget>
 
 namespace Ui {
@@ -32,7 +35,12 @@ private:
 private:
     Ui::QEditConfig *ui;
 
-    CodeEdit *_edit;
+    WingCodeEdit *_edit;
+    bool m_isConsole;
+
+    QString _name;
+    QString _id;
+    QIcon _icon;
 };
 
 #endif // QEDITCONFIG_H
