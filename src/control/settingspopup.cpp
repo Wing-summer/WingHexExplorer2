@@ -37,18 +37,7 @@
 #include "utilities.h"
 
 TreeFilterEdit::TreeFilterEdit(QWidget *parent) : QLineEdit(parent) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-    const bool darkTheme =
-        (QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark);
-#else
-    const bool darkTheme =
-        (palette().color(QPalette::Window).lightness() < 128);
-#endif
-
-    // TODO
-    // m_searchIcon =
-    //(QStringLiteral("search-filter"),
-    //                                             darkTheme);
+    m_searchIcon = QIcon(QStringLiteral(":/qeditor/images/search.png"));
 
     setClearButtonEnabled(true);
     recomputeIconPos();

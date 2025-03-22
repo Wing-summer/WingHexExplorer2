@@ -17,10 +17,16 @@
 
 #include "codeedit.h"
 #include "class/scriptsettings.h"
+#include "class/skinmanager.h"
 #include "model/codecompletionmodel.h"
 
+#include <QApplication>
 #include <QModelIndex>
 #include <QShortcut>
+
+#include <KSyntaxHighlighting/Definition>
+#include <KSyntaxHighlighting/Repository>
+#include <KSyntaxHighlighting/Theme>
 
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     connect(this->document(), &QTextDocument::modificationChanged, this,
@@ -30,6 +36,28 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     connect(&ScriptSettings::instance(), &ScriptSettings::editorSettingsUpdate,
             this, &CodeEdit::applyEditorSetStyle);
     applyEditorSetStyle();
+
+    m_searchWidget = new SearchWidget(this, parent);
+    showSearchBar(false);
+
+    connect(this, &CodeEdit::textChanged, this, [this] {
+        if (m_searchWidget->isVisible())
+            showSearchBar(false);
+    });
+}
+
+void CodeEdit::showSearchBar(bool show) {
+    m_searchWidget->setVisible(show);
+    m_searchWidget->setEnabled(show);
+    if (show) {
+        const QTextCursor cursor = textCursor();
+        if (cursor.hasSelection())
+            m_searchWidget->setSearchText(cursor.selectedText());
+        m_searchWidget->activate();
+    } else {
+        clearLiveSearch();
+        setFocus(Qt::OtherFocusReason);
+    }
 }
 
 void CodeEdit::onCompletion(const QModelIndex &index) {
@@ -65,6 +93,23 @@ void CodeEdit::applyEditorSetStyle() {
     auto &set = ScriptSettings::instance();
     auto dfont = QFont(set.editorFontFamily());
     dfont.setPointSize(set.editorFontSize());
+
+    auto thname = set.editorTheme();
+    if (thname.isEmpty()) {
+        switch (SkinManager::instance().currentTheme()) {
+        case SkinManager::Theme::Dark:
+            this->setTheme(syntaxRepo().defaultTheme(
+                KSyntaxHighlighting::Repository::DarkTheme));
+            break;
+        case SkinManager::Theme::Light:
+            this->setTheme(syntaxRepo().defaultTheme(
+                KSyntaxHighlighting::Repository::LightTheme));
+            break;
+        }
+    } else {
+        this->setTheme(syntaxRepo().theme(thname));
+    }
+
     this->setFont(dfont);
     this->setTabWidth(set.editorTabWidth());
     this->setIndentationMode(WingCodeEdit::IndentationMode(set.editorInden()));
@@ -76,4 +121,17 @@ void CodeEdit::applyEditorSetStyle() {
     this->setMatchBraces(set.editorMatchBraces());
     this->setShowWhitespace(set.editorShowWhiteSpace());
     this->setAutoCloseChar(set.editorAutoCloseChar());
+}
+
+void CodeEdit::resizeEvent(QResizeEvent *event) {
+    if (event)
+        WingCodeEdit::resizeEvent(event);
+
+    // Move the search widget to the upper-right corner
+    const QPoint editorPos = this->pos();
+    QSize searchSize = m_searchWidget->sizeHint();
+    m_searchWidget->resize(searchSize);
+    m_searchWidget->move(editorPos.x() + this->viewport()->width() -
+                             searchSize.width() - 16,
+                         editorPos.y());
 }

@@ -20,6 +20,7 @@
 #include "class/logger.h"
 #include "class/scriptconsolemachine.h"
 #include "class/scriptsettings.h"
+#include "class/skinmanager.h"
 #include "model/codecompletionmodel.h"
 
 #include <QApplication>
@@ -27,6 +28,10 @@
 #include <QKeyEvent>
 #include <QRegularExpression>
 #include <QTextBlock>
+
+#include <KSyntaxHighlighting/Definition>
+#include <KSyntaxHighlighting/Repository>
+#include <KSyntaxHighlighting/Theme>
 
 ScriptingConsole::ScriptingConsole(QWidget *parent)
     : ScriptingConsoleBase(parent) {
@@ -135,6 +140,23 @@ void ScriptingConsole::applyScriptSettings() {
     auto &set = ScriptSettings::instance();
     auto dfont = QFont(set.consoleFontFamily());
     dfont.setPointSize(set.consoleFontSize());
+
+    auto thname = set.editorTheme();
+    if (thname.isEmpty()) {
+        switch (SkinManager::instance().currentTheme()) {
+        case SkinManager::Theme::Dark:
+            setTheme(syntaxRepo().defaultTheme(
+                KSyntaxHighlighting::Repository::DarkTheme));
+            break;
+        case SkinManager::Theme::Light:
+            setTheme(syntaxRepo().defaultTheme(
+                KSyntaxHighlighting::Repository::LightTheme));
+            break;
+        }
+    } else {
+        setTheme(syntaxRepo().theme(thname));
+    }
+
     this->setFont(dfont);
     this->setTabWidth(set.consoleTabWidth());
     this->setIndentationMode(WingCodeEdit::IndentationMode(set.consoleInden()));

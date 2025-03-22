@@ -2976,11 +2976,14 @@ void MainWindow::on_selectionChanged() {
 }
 
 void MainWindow::on_viewtxt() {
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    _showtxt->load(hexeditor->document()->buffer());
+    auto hexeditor = editor->hexEditor();
+    QMimeDatabase db;
+    _showtxt->load(hexeditor->document()->buffer(),
+                   db.mimeTypeForFile(editor->fileName()).name());
 }
 
 void MainWindow::on_fullScreen() {

@@ -15,39 +15,39 @@
 ** =============================================================================
 */
 
-#ifndef CODEEDIT_H
-#define CODEEDIT_H
+#ifndef QTEXTPAD_DEFINITIONDOWNLOAD_H
+#define QTEXTPAD_DEFINITIONDOWNLOAD_H
 
-#include "WingCodeEdit/wingcodeedit.h"
-#include "dialog/searchdialog.h"
+#include "dialog/framelessdialogbase.h"
 
-class CodeEdit : public WingCodeEdit {
+#include <QElapsedTimer>
+
+class QPlainTextEdit;
+class QDialogButtonBox;
+
+namespace KSyntaxHighlighting {
+class Repository;
+class DefinitionDownloader;
+} // namespace KSyntaxHighlighting
+
+class DefinitionDownloadDialog : public FramelessDialogBase {
     Q_OBJECT
 
 public:
-    explicit CodeEdit(QWidget *parent = nullptr);
+    explicit DefinitionDownloadDialog(
+        KSyntaxHighlighting::Repository *repository, QWidget *parent);
 
-public:
-    void showSearchBar(bool show);
+public Q_SLOTS:
+    void downloadFinished();
 
-signals:
-    void contentModified(bool b);
-
-protected slots:
-    virtual void onCompletion(const QModelIndex &index) override;
-
-private:
-    void addMoveLineShortCut();
-
-    // QWidget interface
 protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
-
-private slots:
-    void applyEditorSetStyle();
+    void closeEvent(QCloseEvent *) override;
 
 private:
-    SearchWidget *m_searchWidget;
+    KSyntaxHighlighting::DefinitionDownloader *m_downloader;
+    QPlainTextEdit *m_status;
+    QDialogButtonBox *m_buttonBox;
+    QElapsedTimer m_timer;
 };
 
-#endif // CODEEDIT_H
+#endif // QTEXTPAD_DEFINITIONDOWNLOAD_H

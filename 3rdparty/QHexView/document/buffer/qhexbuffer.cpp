@@ -24,7 +24,10 @@
 
 QHexBuffer::QHexBuffer(QObject *parent) : QObject(parent) {}
 
-uchar QHexBuffer::at(qsizetype idx) { return uchar(this->read(idx, 1)[0]); }
+uchar QHexBuffer::at(qsizetype idx) {
+    auto data = this->read(idx, 1);
+    return uchar(data[0]);
+}
 
 bool QHexBuffer::isEmpty() const { return this->length() <= 0; }
 

@@ -175,7 +175,11 @@ set(DIALOG_SRC
     src/dialog/crashreport.cpp
     src/dialog/crashreport.ui
     src/dialog/showtextdialog.cpp
-    src/dialog/showtextdialog.h)
+    src/dialog/showtextdialog.h
+    src/dialog/definitiondownload.cpp
+    src/dialog/definitiondownload.h
+    src/dialog/searchdialog.cpp
+    src/dialog/searchdialog.h)
 
 set(CONTROL_SRC
     src/control/codeedit.h

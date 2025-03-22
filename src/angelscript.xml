@@ -109,7 +109,6 @@
             <context attribute="String" lineEndContext="#pop" name="StringEscapedChar">
                 <HlCStringChar attribute="String Char" context="#pop"/>
                 <RegExpr attribute="String Char" context="#pop" String="\\u+[0-9a-fA-F]{4}"/>
-                <RegExpr attribute="Error" context="#pop" String="\\(u+[0-9a-fA-F]*|.)?"/>
             </context>
             <context attribute="Text Block" lineEndContext="#stay" name="TextBlock">
                 <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
@@ -132,8 +131,8 @@
             </context>
             <context attribute="Decimal" lineEndContext="#pop" name="Decimal"/>
             <context attribute="Macro" lineEndContext="#pop" name="Macro">
-                <Detect2Chars attribute="Comment" context="LineComment" char="/" char1="/"/>
-                <Detect2Chars attribute="Comment" context="BlockComment" char="/" char1="*" beginRegion="Comment"/>
+                <Detect2Chars attribute="Comment" context="#pop" char="/" char1="/"/>
+                <Detect2Chars attribute="Comment" context="#pop" char="/" char1="*" beginRegion="Comment"/>
             </context>
         </contexts>
         <itemDatas>

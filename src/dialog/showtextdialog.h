@@ -43,14 +43,13 @@ public:
     void setSyntax(const KSyntaxHighlighting::Definition &syntax);
 
 public:
-    void load(QHexBuffer *buffer, const QString encoding);
-    void load(QHexBuffer *buffer);
+    void load(QHexBuffer *buffer, const QString &mime,
+              const QString &encoding = {});
 
 private:
     void buildUpRibbonBar();
 
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
-    RibbonTabContent *buildViewPage(RibbonTabContent *tab);
 
 private:
     template <typename Func>
@@ -119,21 +118,15 @@ private slots:
     void on_findfile();
     void on_gotoline();
     void on_encoding();
-
-    void on_cancel();
+    void on_updateDefs();
 
 private:
     Ribbon *m_ribbon = nullptr;
     CodeEdit *m_edit = nullptr;
-    bool m_canceled = false;
-
     QStatusBar *m_status = nullptr;
+    QToolButton *m_syntaxButton = nullptr;
 
-    struct {
-        QHexBuffer *buffer = nullptr;
-        qsizetype offset = 0;
-        qsizetype size = -1;
-    } m_last;
+    QByteArray buffer;
 };
 
 #endif // SHOWTEXTDIALOG_H
