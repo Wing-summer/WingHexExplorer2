@@ -177,9 +177,7 @@ set(DIALOG_SRC
     src/dialog/showtextdialog.cpp
     src/dialog/showtextdialog.h
     src/dialog/definitiondownload.cpp
-    src/dialog/definitiondownload.h
-    src/dialog/searchdialog.cpp
-    src/dialog/searchdialog.h)
+    src/dialog/definitiondownload.h)
 
 set(CONTROL_SRC
     src/control/codeedit.h
@@ -216,7 +214,13 @@ set(CONTROL_SRC
     src/control/popupactionwidget.h
     src/control/popupactionwidget.cpp
     src/control/settingspopup.cpp
-    src/control/settingspopup.h)
+    src/control/settingspopup.h
+    src/control/searchreplacewidget.cpp
+    src/control/searchreplacewidget.h
+    src/control/gotolinewidget.h
+    src/control/gotolinewidget.cpp
+    src/control/codeeditcontrolwidget.h
+    src/control/codeeditcontrolwidget.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp

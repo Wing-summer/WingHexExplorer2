@@ -131,6 +131,12 @@ bool ScriptEditor::save(const QString &path) {
 
 bool ScriptEditor::reload() { return openFile(m_fileName); }
 
+void ScriptEditor::find() { m_editor->showSearchReplaceBar(true, false); }
+
+void ScriptEditor::replace() { m_editor->showSearchReplaceBar(true, true); }
+
+void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
+
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
     this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());

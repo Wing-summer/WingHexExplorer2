@@ -55,7 +55,7 @@ protected:
     }
 };
 
-ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessDialogBase(parent) {
+ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessMainWindow(parent) {
     this->setUpdatesEnabled(false);
 
     // build up UI
@@ -175,11 +175,11 @@ void ShowTextDialog::on_copyfile() {
                  tr("CopyToClipBoard"));
 }
 
-void ShowTextDialog::on_findfile() { m_edit->showSearchBar(true); }
-
-void ShowTextDialog::on_gotoline() {
-    // m_edit->editor()->gotoLine();
+void ShowTextDialog::on_findfile() {
+    m_edit->showSearchReplaceBar(true, false);
 }
+
+void ShowTextDialog::on_gotoline() { m_edit->showGotoBar(true); }
 
 void ShowTextDialog::on_encoding() {
     EncodingDialog d;

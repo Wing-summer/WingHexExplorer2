@@ -16,12 +16,15 @@
 */
 
 #include "codeedit.h"
+#include "class/qkeysequences.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
+#include "control/searchreplacewidget.h"
 #include "model/codecompletionmodel.h"
 
 #include <QApplication>
 #include <QModelIndex>
+#include <QScrollBar>
 #include <QShortcut>
 
 #include <KSyntaxHighlighting/Definition>
@@ -31,33 +34,63 @@
 CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     connect(this->document(), &QTextDocument::modificationChanged, this,
             &CodeEdit::contentModified);
-    addMoveLineShortCut();
+    addEditorBasicShortcut();
+    addMoveLineShortcut();
 
     connect(&ScriptSettings::instance(), &ScriptSettings::editorSettingsUpdate,
             this, &CodeEdit::applyEditorSetStyle);
     applyEditorSetStyle();
 
-    m_searchWidget = new SearchWidget(this, parent);
-    showSearchBar(false);
-
+    m_searchWidget = new SearchReplaceWidget(this);
     connect(this, &CodeEdit::textChanged, this, [this] {
         if (m_searchWidget->isVisible())
-            showSearchBar(false);
+            showSearchReplaceBar(false, false);
     });
+
+    m_gotoWidget = new GotoLineWidget(this);
+    connect(this, &CodeEdit::blockCountChanged, m_gotoWidget,
+            &GotoLineWidget::setTotalLines);
+    connect(m_gotoWidget, &GotoLineWidget::onGotoLine, this, [this](int line) {
+        auto doc = document();
+        auto block = doc->findBlockByNumber(line - 1);
+
+        if (block.isValid()) {
+            QTextCursor cursor(block);
+            cursor.movePosition(QTextCursor::EndOfBlock);
+            setTextCursor(cursor);
+            ensureCursorVisible();
+        }
+    });
+
+    showSearchReplaceBar(false, false);
+    showGotoBar(false);
 }
 
-void CodeEdit::showSearchBar(bool show) {
+void CodeEdit::showSearchReplaceBar(bool show, bool replace) {
+    if (m_gotoWidget->isVisible()) {
+        showGotoBar(false);
+    }
     m_searchWidget->setVisible(show);
     m_searchWidget->setEnabled(show);
     if (show) {
         const QTextCursor cursor = textCursor();
         if (cursor.hasSelection())
             m_searchWidget->setSearchText(cursor.selectedText());
+        m_searchWidget->setReplaceMode(replace);
         m_searchWidget->activate();
     } else {
         clearLiveSearch();
         setFocus(Qt::OtherFocusReason);
     }
+}
+
+void CodeEdit::showGotoBar(bool show) {
+    if (m_searchWidget->isVisible()) {
+        showSearchReplaceBar(false, false);
+    }
+    m_gotoWidget->setOriginLine(textCursor().blockNumber() + 1);
+    m_gotoWidget->setVisible(show);
+    m_gotoWidget->setEnabled(show);
 }
 
 void CodeEdit::onCompletion(const QModelIndex &index) {
@@ -75,7 +108,23 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
     }
 }
 
-void CodeEdit::addMoveLineShortCut() {
+void CodeEdit::addEditorBasicShortcut() {
+    auto find = new QShortcut(QKeySequence(QKeySequence::Find), this);
+    find->setContext(Qt::WidgetShortcut);
+    connect(find, &QShortcut::activated, this,
+            [this]() { showSearchReplaceBar(true, false); });
+
+    auto replace = new QShortcut(QKeySequence(QKeySequence::Replace), this);
+    replace->setContext(Qt::WidgetShortcut);
+    connect(replace, &QShortcut::activated, this,
+            [this]() { showSearchReplaceBar(true, true); });
+
+    auto Goto = new QShortcut(
+        QKeySequences::instance().keySequence(QKeySequences::Key::GOTO), this);
+    connect(Goto, &QShortcut::activated, this, [this]() { showGotoBar(true); });
+}
+
+void CodeEdit::addMoveLineShortcut() {
     auto upLines = new QShortcut(
         QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Up), this);
     upLines->setContext(Qt::WidgetShortcut);
@@ -123,15 +172,55 @@ void CodeEdit::applyEditorSetStyle() {
     this->setAutoCloseChar(set.editorAutoCloseChar());
 }
 
+SearchReplaceWidget *CodeEdit::searchWidget() const { return m_searchWidget; }
+
 void CodeEdit::resizeEvent(QResizeEvent *event) {
     if (event)
         WingCodeEdit::resizeEvent(event);
 
     // Move the search widget to the upper-right corner
-    const QPoint editorPos = this->pos();
-    QSize searchSize = m_searchWidget->sizeHint();
-    m_searchWidget->resize(searchSize);
-    m_searchWidget->move(editorPos.x() + this->viewport()->width() -
-                             searchSize.width() - 16,
-                         editorPos.y());
+    auto margins = this->contentsMargins();
+    auto off =
+        this->width() - margins.right() - this->verticalScrollBar()->width();
+    auto top = margins.top();
+
+    auto size = m_searchWidget->sizeHint();
+    m_searchWidget->resize(size);
+    m_searchWidget->move(off - size.width(), top);
+
+    size = m_gotoWidget->sizeHint();
+    m_gotoWidget->resize(size);
+    m_gotoWidget->move(off - size.width(), top);
+}
+
+void CodeEdit::keyPressEvent(QKeyEvent *event) {
+    bool unHandled = true;
+    switch (event->key()) {
+    case Qt::Key_Escape:
+        if (m_searchWidget->isVisible()) {
+            m_searchWidget->cancel();
+            unHandled = false;
+        }
+        if (m_gotoWidget->isVisible()) {
+            m_gotoWidget->cancel();
+            unHandled = false;
+        }
+        break;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+        if (m_searchWidget->isVisible()) {
+            m_searchWidget->accept();
+            unHandled = false;
+        }
+        if (m_gotoWidget->isVisible()) {
+            m_gotoWidget->accept();
+            unHandled = false;
+        }
+        break;
+    default:
+        break;
+    }
+    if (unHandled) {
+        WingCodeEdit::keyPressEvent(event);
+    }
 }

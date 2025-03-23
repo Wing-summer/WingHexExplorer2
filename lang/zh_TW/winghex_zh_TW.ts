@@ -273,37 +273,37 @@
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="43"/>
         <source>Update Syntax Definitions</source>
-        <translation type="unfinished"></translation>
+        <translation>更新高亮定義</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="72"/>
         <source>Updating syntax definitions from online repository...</source>
-        <translation type="unfinished"></translation>
+        <translation>從線上存儲庫更新語法高亮定義...</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="85"/>
         <source>%1:%2 hours</source>
-        <translation type="unfinished"></translation>
+        <translation>%1:%2 小時</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="90"/>
         <source>%1:%2 minutes</source>
-        <translation type="unfinished"></translation>
+        <translation>%1:%2 分鐘</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="97"/>
         <source>%1.%2 seconds</source>
-        <translation type="unfinished"></translation>
+        <translation>%1:%2 秒</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="99"/>
         <source>%1 ms</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 毫秒</translation>
     </message>
     <message>
         <location filename="../../src/dialog/definitiondownload.cpp" line="102"/>
         <source>Update operation completed (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>更新操作已完成（%1）</translation>
     </message>
 </context>
 <context>
@@ -679,6 +679,14 @@
         <location filename="../../src/settings/generalsettingdialog.cpp" line="43"/>
         <source>FullScreen</source>
         <translation>全屏</translation>
+    </message>
+</context>
+<context>
+    <name>GotoLineWidget</name>
+    <message>
+        <location filename="../../src/control/gotolinewidget.cpp" line="32"/>
+        <source>Close</source>
+        <translation>關閉</translation>
     </message>
 </context>
 <context>
@@ -4874,140 +4882,87 @@
     </message>
 </context>
 <context>
-    <name>SearchDialog</name>
+    <name>SearchReplaceWidget</name>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="207"/>
-        <source>Find and Replace...</source>
-        <translation type="unfinished"></translation>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="172"/>
+        <source>Close</source>
+        <translation>關閉</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="213"/>
-        <source>Match ca&amp;se</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="215"/>
-        <source>Match &amp;whole words</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="217"/>
-        <source>Regular e&amp;xpressions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="219"/>
-        <source>&amp;Escape sequences</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="221"/>
-        <source>Wrap Aro&amp;und</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="232"/>
-        <source>Find &amp;Next</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="234"/>
-        <source>Find &amp;Previous</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="236"/>
-        <source>&amp;Replace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="238"/>
-        <source>Replace &amp;All</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="240"/>
-        <source>&amp;In Selection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="244"/>
-        <source>&amp;Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="264"/>
-        <source>&amp;Find:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="269"/>
-        <source>Replace wit&amp;h:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="520"/>
-        <location filename="../../src/dialog/searchdialog.cpp" line="581"/>
-        <source>The specified text was not found</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="588"/>
-        <source>The specified text was not found in the selection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="617"/>
-        <source>Successfully replaced %1 matches</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SearchWidget</name>
-    <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="51"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="181"/>
         <source>Search Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>搜索設置</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="56"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="186"/>
         <source>Match ca&amp;se</source>
-        <translation type="unfinished"></translation>
+        <translation>區分大小寫(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="58"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="188"/>
         <source>Match &amp;whole words</source>
-        <translation type="unfinished"></translation>
+        <translation>全詞匹配(&amp;W)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="60"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="190"/>
         <source>Regular e&amp;xpressions</source>
-        <translation type="unfinished"></translation>
+        <translation>正則運算式(&amp;X)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="62"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="192"/>
         <source>&amp;Escape sequences</source>
-        <translation type="unfinished"></translation>
+        <translation>轉義序列(&amp;E)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="64"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="194"/>
         <source>Wrap Aro&amp;und</source>
-        <translation type="unfinished"></translation>
+        <translation>環繞(&amp;U)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="86"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="197"/>
+        <source>Replace in selection</source>
+        <translation>選區替換</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="220"/>
         <source>Find Next</source>
-        <translation type="unfinished"></translation>
+        <translation>查找下一個</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="91"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="225"/>
         <source>Find Previous</source>
-        <translation type="unfinished"></translation>
+        <translation>查找上一個</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/searchdialog.cpp" line="151"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="237"/>
+        <source>Replace Current</source>
+        <translation>替換當前</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="242"/>
+        <source>Replace All</source>
+        <translation>替換所有</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="258"/>
+        <source>Replace:</source>
+        <translation>替換：</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="368"/>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="430"/>
         <source>The specified text was not found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到指定文本</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="375"/>
+        <source>The specified text was not found in the selection</source>
+        <translation>在選定內容中未找到指定的文本</translation>
+    </message>
+    <message>
+        <location filename="../../src/control/searchreplacewidget.cpp" line="404"/>
+        <source>Successfully replaced %1 matches</source>
+        <translation>已成功替換 %1 個匹配項</translation>
     </message>
 </context>
 <context>
@@ -5069,7 +5024,7 @@
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="107"/>
         <source>Plain Text</source>
-        <translation type="unfinished">純文字</translation>
+        <translation>純文字</translation>
     </message>
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="116"/>
@@ -5080,7 +5035,7 @@
         <location filename="../../src/dialog/showtextdialog.cpp" line="121"/>
         <location filename="../../src/dialog/showtextdialog.cpp" line="188"/>
         <source>Loading...</source>
-        <translation type="unfinished"></translation>
+        <translation>加載中...</translation>
     </message>
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="141"/>
@@ -5105,7 +5060,7 @@
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="165"/>
         <source>UpdateDefs</source>
-        <translation type="unfinished"></translation>
+        <translation>更新高亮定義</translation>
     </message>
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="175"/>
@@ -5116,12 +5071,12 @@
 <context>
     <name>SkinManager</name>
     <message>
-        <location filename="../../src/class/skinmanager.cpp" line="67"/>
+        <location filename="../../src/class/skinmanager.cpp" line="78"/>
         <source>Dark</source>
         <translation>暗黑</translation>
     </message>
     <message>
-        <location filename="../../src/class/skinmanager.cpp" line="68"/>
+        <location filename="../../src/class/skinmanager.cpp" line="79"/>
         <source>Light</source>
         <translation>淺色</translation>
     </message>

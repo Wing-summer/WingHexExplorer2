@@ -15,48 +15,33 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#ifndef GOTOLINEWIDGET_H
+#define GOTOLINEWIDGET_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidget.h"
-#include "control/codeedit.h"
+#include "control/codeeditcontrolwidget.h"
 
-class asIScriptEngine;
+#include <QSpinBox>
 
-class ScriptEditor : public ads::CDockWidget {
+class GotoLineWidget : public CodeEditControlWidget {
     Q_OBJECT
-
 public:
-    explicit ScriptEditor(asIScriptEngine *engine, QWidget *parent = nullptr);
-    virtual ~ScriptEditor();
+    explicit GotoLineWidget(QWidget *parent = nullptr);
 
-    QString fileName() const;
-
-    CodeEdit *editor() const;
-
-    bool formatCode();
+    void setTotalLines(int lineTotal);
 
 signals:
-    void onToggleMark(int line);
-    void onFunctionTip(const QString &tip);
+    void onGotoLine(int line);
 
-public slots:
-    void setReadOnly(bool b);
-    bool openFile(const QString &filename);
+public:
+    void setOriginLine(int line);
 
-    bool save(const QString &path = QString());
-    bool reload();
-
-    void find();
-    void replace();
-    void gotoLine();
+    // CodeEditControlWidget interface
+public:
+    virtual void cancel() override;
 
 private:
-    void processTitle();
-
-private:
-    CodeEdit *m_editor = nullptr;
-    QString m_fileName;
+    QSpinBox *m_sbline;
+    int m_line = 1;
 };
 
-#endif // SCRIPTEDITOR_H
+#endif // GOTOLINEWIDGET_H

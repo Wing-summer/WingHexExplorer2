@@ -1250,21 +1250,21 @@ void ScriptingDialog::on_delete() {
 void ScriptingDialog::on_findfile() {
     auto e = currentEditor();
     if (e) {
-        // e->editor()->find();
+        e->find();
     }
 }
 
 void ScriptingDialog::on_replace() {
     auto e = currentEditor();
     if (e) {
-        // e->editor()->replace();
+        e->replace();
     }
 }
 
 void ScriptingDialog::on_gotoline() {
     auto e = currentEditor();
     if (e) {
-        // e->editor()->gotoLine();
+        e->gotoLine();
     }
 }
 

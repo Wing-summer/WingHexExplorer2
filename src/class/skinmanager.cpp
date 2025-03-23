@@ -61,6 +61,17 @@ SkinManager &SkinManager::instance() {
 
 void SkinManager::setTheme(SkinManager::Theme theme) { m_theme = theme; }
 
+QIcon SkinManager::themeIcon(const QString &name) {
+    switch (m_theme) {
+    case Theme::Dark:
+        return QIcon(QStringLiteral("://dark/") + name +
+                     QStringLiteral(".svg"));
+    case Theme::Light:
+        return QIcon(QStringLiteral("://light/") + name +
+                     QStringLiteral(".svg"));
+    }
+}
+
 SkinManager::Theme SkinManager::currentTheme() const { return m_theme; }
 
 void SkinManager::translate() {

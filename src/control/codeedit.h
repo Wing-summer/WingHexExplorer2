@@ -19,7 +19,9 @@
 #define CODEEDIT_H
 
 #include "WingCodeEdit/wingcodeedit.h"
-#include "dialog/searchdialog.h"
+#include "control/gotolinewidget.h"
+
+class SearchReplaceWidget;
 
 class CodeEdit : public WingCodeEdit {
     Q_OBJECT
@@ -28,7 +30,10 @@ public:
     explicit CodeEdit(QWidget *parent = nullptr);
 
 public:
-    void showSearchBar(bool show);
+    void showSearchReplaceBar(bool show, bool replace);
+    void showGotoBar(bool show);
+
+    SearchReplaceWidget *searchWidget() const;
 
 signals:
     void contentModified(bool b);
@@ -37,17 +42,20 @@ protected slots:
     virtual void onCompletion(const QModelIndex &index) override;
 
 private:
-    void addMoveLineShortCut();
+    void addEditorBasicShortcut();
+    void addMoveLineShortcut();
 
     // QWidget interface
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
     void applyEditorSetStyle();
 
 private:
-    SearchWidget *m_searchWidget;
+    SearchReplaceWidget *m_searchWidget;
+    GotoLineWidget *m_gotoWidget;
 };
 
 #endif // CODEEDIT_H

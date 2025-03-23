@@ -26,14 +26,14 @@
 #include "QWingRibbon/ribbontabcontent.h"
 
 #include "control/codeedit.h"
-#include "framelessdialogbase.h"
+#include "dialog/framelessmainwindow.h"
 #include "utilities.h"
 
 #include <QShortcut>
 #include <QStatusBar>
 #include <QToolButton>
 
-class ShowTextDialog : public FramelessDialogBase {
+class ShowTextDialog : public FramelessMainWindow {
     Q_OBJECT
 public:
     explicit ShowTextDialog(QWidget *parent = nullptr);

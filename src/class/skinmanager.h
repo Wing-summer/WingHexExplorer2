@@ -37,6 +37,8 @@ public:
     void setTheme(Theme theme);
     Theme currentTheme() const;
 
+    QIcon themeIcon(const QString &name);
+
 private:
     Q_DECL_UNUSED void translate();
 
