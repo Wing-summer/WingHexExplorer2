@@ -49,6 +49,7 @@ private:
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
     void applyEditorSetStyle();

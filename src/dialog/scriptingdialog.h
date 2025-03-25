@@ -139,7 +139,7 @@ private:
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
         if (menu) {
-            a->setText(title + QStringLiteral(" 闂佸厖绱幏锟�"));
+            a->setText(title + QChar(' ') + QChar(char16_t(0x25BC)));
         } else
 #endif
         {
@@ -220,6 +220,8 @@ private:
     void removeBreakPoint(ScriptEditor *editor, int line);
     void toggleBreakPoint(ScriptEditor *editor, int line);
 
+    void updateCursorPosition();
+
 private slots:
     void on_newfile();
     void on_openfile();
@@ -268,6 +270,7 @@ protected:
 private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
+    QStatusBar *m_status = nullptr;
 
     QByteArray _defaultLayout;
     QByteArray _savedLayout;
@@ -298,7 +301,7 @@ private:
 
     ScriptEditor *_DebugingEditor;
 
-    QLabel *m_status = nullptr;
+    QLabel *_status = nullptr;
 };
 
 #endif // SCRIPTINGDIALOG_H

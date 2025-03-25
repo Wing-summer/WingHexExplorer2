@@ -59,6 +59,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_SHOW_WHITESPACE,
                           ("codeedit.whitespace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_AUTO_CLOSE_CHAR,
                           ("codeedit.auto_close_char"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_AUTO_IDEN, ("codeedit.auto_iden"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_FONT, ("console.font"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CONSOLE_FONT_SIZE, ("console.fontsize"))
@@ -125,6 +126,7 @@ void ScriptSettings::load() {
     READ_CONFIG_BOOL(m_editorFolding, CODEEDIT_SHOW_FOLDING, true);
     READ_CONFIG_BOOL(m_editorShowGuideLine, CODEEDIT_SHOW_INDENTGUIDES, true);
     READ_CONFIG_BOOL(m_editorShowLineEdges, CODEEDIT_SHOW_LONGLINEEDGE, false);
+    READ_CONFIG_BOOL(m_editorAutoIden, CODEEDIT_AUTO_IDEN, true);
 
     READ_CONFIG_BOOL(m_editorShowWhiteSpace, CODEEDIT_SHOW_WHITESPACE, false);
     READ_CONFIG_BOOL(m_consoleShowWhiteSpace, CONSOLE_SHOW_WHITESPACE, false);
@@ -168,6 +170,8 @@ void ScriptSettings::save(SETTINGS cat) {
         WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_CLOSE_CHAR,
                                 SETTING_ITEM::AUTO_CLOSE_CHAR,
                                 m_editorAutoCloseChar);
+        WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_IDEN, SETTING_ITEM::AUTO_IDEN,
+                                m_editorAutoIden);
         emit editorSettingsUpdate();
     }
 
@@ -223,6 +227,8 @@ void ScriptSettings::reset(SETTINGS cat) {
                                 SETTING_ITEM::SHOW_WHITESPACE, false);
         WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_CLOSE_CHAR,
                                 SETTING_ITEM::AUTO_CLOSE_CHAR, true);
+        WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_IDEN, SETTING_ITEM::AUTO_IDEN,
+                                true);
     }
 
     if (cat.testFlag(SETTING::CONSOLE)) {
@@ -249,6 +255,12 @@ void ScriptSettings::reset(SETTINGS cat) {
 ScriptSettings::ScriptSettings() : QObject() {
     _defaultFont = qApp->font();
     load();
+}
+
+bool ScriptSettings::editorAutoIden() const { return m_editorAutoIden; }
+
+void ScriptSettings::setEditorAutoIden(bool newEditorAutoIden) {
+    m_editorAutoIden = newEditorAutoIden;
 }
 
 bool ScriptSettings::consoleAutoCloseChar() const {

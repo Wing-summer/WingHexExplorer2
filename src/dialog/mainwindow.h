@@ -296,10 +296,11 @@ private:
         auto a = new QToolButton(pannel);
 #if QT_VERSION <= QT_VERSION_CHECK(6, 6, 0)
         if (menu) {
-            a->setText(title + QStringLiteral(" 闁充紮鎷�"));
+            a->setText(title + QChar(' ') + QChar(char16_t(0x25BC)));
         } else
 #endif
         {
+
             a->setText(title);
         }
 
@@ -595,10 +596,10 @@ private:
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;
     ads::CDockAreaWidget *m_rightViewArea =
-        nullptr; // 閻犲洢鍎遍埀顒勬？婵炲洭鎮介妸锔筋槯闊洤鎳嶇粭澶嬬▔閾忓厜鏁�
+        nullptr; // 闂傚倷娴囧畷鍨叏閺夋嚚娲閵堝懐锛熼梻渚囧墮缁夋挳鎮為崹顐犱簻闁圭儤鍨甸顏堟煥濞戞艾鏋庨柍瑙勫灴閹瑩宕ｆ径濠冪亷闂備浇顕栭崰鏇犲垝濞嗘劒绻嗛柟闂寸劍閺呮粎绱掑☉姗嗗剱鐞氀囨⒒閸屾凹鐓柛瀣鐓ら柕鍫濐槸缁犵姷鈧箍鍎卞ú銊х不閺傛鐔嗛悹杞拌閸庢垿鏌嶇紒妯活棃闁哄睙鍡欑杸闁规儳鍟挎潏鍛存⒑鏉炴壆绛忛柟鍑ゆ嫹
     ads::CDockAreaWidget *m_topViewArea = nullptr;
     ads::CDockAreaWidget *m_bottomViewArea =
-        nullptr; // 閻犲洢鍎遍埀顒勬？婵炲洭鎮介妸锔筋槯闊洤鎳嶇粭澶嬬▔閾忓厜鏁�
+        nullptr; // 闂傚倷娴囧畷鍨叏閺夋嚚娲閵堝懐锛熼梻渚囧墮缁夋挳鎮為崹顐犱簻闁圭儤鍨甸顏堟煥濞戞艾鏋庨柍瑙勫灴閹瑩宕ｆ径濠冪亷闂備浇顕栭崰鏇犲垝濞嗘劒绻嗛柟闂寸劍閺呮粎绱掑☉姗嗗剱鐞氀囨⒒閸屾凹鐓柛瀣鐓ら柕鍫濐槸缁犵姷鈧箍鍎卞ú銊х不閺傛鐔嗛悹杞拌閸庢垿鏌嶇紒妯活棃闁哄睙鍡欑杸闁规儳鍟挎潏鍛存⒑鏉炴壆绛忛柟鍑ゆ嫹
 
     //================================
 

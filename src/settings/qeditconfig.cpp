@@ -152,6 +152,8 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
             &CodeEdit::setMatchBraces);
     connect(ui->chkAutoCloseChar, &QCheckBox::toggled, _edit,
             &CodeEdit::setAutoCloseChar);
+    connect(ui->chkAutoIden, &QCheckBox::toggled, _edit,
+            &CodeEdit::setAutoIndent);
 
     if (isConsole) {
         ui->chkShowLineNumber->setEnabled(false);
@@ -159,6 +161,7 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
         ui->chkShowIndentGuides->setEnabled(false);
         ui->chkWordWrap->setEnabled(false);
         ui->chkLongLineEdge->setEnabled(false);
+        ui->chkAutoIden->setEnabled(false);
 
         _name = tr("Console");
         _id = QStringLiteral("Console");
@@ -214,6 +217,7 @@ void QEditConfig::apply() {
         set.setEditorMatchBraces(ui->chkMatchBraces->isChecked());
         set.setEditorShowWhiteSpace(ui->chkShowWhitespace->isChecked());
         set.setEditorAutoCloseChar(ui->chkAutoCloseChar->isChecked());
+        set.setEditorAutoIden(ui->chkAutoIden->isChecked());
     }
     set.save(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
 }

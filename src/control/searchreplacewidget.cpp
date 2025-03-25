@@ -278,7 +278,9 @@ SearchReplaceWidget::SearchReplaceWidget(CodeEdit *editor)
     connect(tbReplaceCur, &QToolButton::clicked, this,
             &SearchReplaceWidget::replaceCurrent);
     connect(tbReplaceAll, &QToolButton::clicked, this, [this]() {
-
+        performReplaceAll(m_replaceSel->isChecked()
+                              ? ReplaceAllMode::InSelection
+                              : ReplaceAllMode::WholeDocument);
     });
 }
 
@@ -294,8 +296,6 @@ void SearchReplaceWidget::setReplaceMode(bool b) {
 }
 
 void SearchReplaceWidget::activate() {
-    resize(sizeHint()); // readjust size (height)
-
     m_searchParams.caseSensitive = m_caseSensitive->isChecked();
     m_searchParams.wholeWord = m_wholeWord->isChecked();
     m_searchParams.regex = m_regex->isChecked();

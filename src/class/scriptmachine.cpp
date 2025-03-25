@@ -646,11 +646,11 @@ QString ScriptMachine::processTranslation(const char *content,
              return tr("Can't implicitly convert from '%1' to '%2'.")
                  .arg(contents.at(1), contents.at(2));
          }},
-        {QRegularExpression(QStringLiteral("^Compiling (.*?)")),
+        {QRegularExpression(QStringLiteral("^Compiling (.*)")),
          [](const QStringList &contents) -> QString {
              return tr("Compiling %1").arg(contents.at(1));
          }},
-        {QRegularExpression(QStringLiteral("^Compiling auto generated (.*?)")),
+        {QRegularExpression(QStringLiteral("^Compiling auto generated (.*)")),
          [](const QStringList &contents) -> QString {
              return tr("Compiling auto generated %1").arg(contents.at(1));
          }},
@@ -1805,7 +1805,7 @@ bool ScriptMachine::executeCode(const QString &code) {
     _engine->GarbageCollect();
 
     // Release all contexts that have been allocated
-    for (auto ctx : _ctxPool) {
+    for (auto ctx : std::as_const(_ctxPool)) {
         ctx->Release();
     }
 

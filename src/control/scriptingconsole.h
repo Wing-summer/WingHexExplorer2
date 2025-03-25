@@ -59,6 +59,7 @@ private:
     QString packUpLoggingStr(const QString &message);
 
 protected:
+    virtual void contextMenuEvent(QContextMenuEvent *event) override;
     void handleReturnKey() override;
     void keyPressEvent(QKeyEvent *e) override;
 

@@ -45,7 +45,8 @@ private:
         SHOW_INDENTGUIDES = 1u << 9,
         SHOW_LONGLINEEDGE = 1u << 10,
         SHOW_WHITESPACE = 1u << 11,
-        AUTO_CLOSE_CHAR = 1u << 12
+        AUTO_CLOSE_CHAR = 1u << 12,
+        AUTO_IDEN = 1u << 13
     };
     Q_DECLARE_FLAGS(SETTING_ITEMS, SETTING_ITEM)
 
@@ -120,6 +121,9 @@ public:
     bool consoleAutoCloseChar() const;
     void setConsoleAutoCloseChar(bool newConsoleAutoCloseChar);
 
+    bool editorAutoIden() const;
+    void setEditorAutoIden(bool newEditorAutoIden);
+
 private:
     explicit ScriptSettings();
 
@@ -153,6 +157,7 @@ private:
     bool m_editorFolding = true;
     bool m_editorShowGuideLine = true;
     bool m_editorShowLineEdges = false;
+    bool m_editorAutoIden = true;
 
     bool m_editorShowWhiteSpace = false;
     bool m_consoleShowWhiteSpace = false;

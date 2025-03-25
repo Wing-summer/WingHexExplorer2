@@ -70,6 +70,7 @@ QIcon SkinManager::themeIcon(const QString &name) {
         return QIcon(QStringLiteral("://light/") + name +
                      QStringLiteral(".svg"));
     }
+    return {};
 }
 
 SkinManager::Theme SkinManager::currentTheme() const { return m_theme; }

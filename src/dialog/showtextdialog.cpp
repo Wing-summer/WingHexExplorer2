@@ -70,11 +70,11 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessMainWindow(parent) {
     layout->addWidget(q_check_ptr(m_ribbon));
 
     m_edit = new CodeEdit(this);
+    m_edit->setShowSymbolMark(false);
 
     m_edit->setReadOnly(true);
     m_edit->setAcceptDrops(false);
     m_edit->setUndoRedoEnabled(false);
-    // m_edit->createSimpleBasicContextMenu(true, true);
     layout->addWidget(m_edit);
 
     m_status = new QStatusBar(this);

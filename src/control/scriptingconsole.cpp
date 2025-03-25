@@ -25,7 +25,9 @@
 
 #include <QApplication>
 #include <QColor>
+#include <QIcon>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QRegularExpression>
 #include <QTextBlock>
 
@@ -43,27 +45,47 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
 ScriptingConsole::~ScriptingConsole() {}
 
 void ScriptingConsole::handleReturnKey() {
-    QString code = getCommandLine();
+    auto cursor = this->textCursor();
+    cursor.movePosition(QTextCursor::PreviousCharacter,
+                        QTextCursor::KeepAnchor);
+    // TODO whether '\' is in a string ?
+    if (cursor.selectedText() == QStringLiteral("\\")) {
+        cursor = this->textCursor();
+        cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        auto restCode = cursor.selectedText();
+        cursor.removeSelectedText();
+        QString code = getCommandLine();
+        setMode(Output);
+        _codes += code.sliced(0, code.length() - 1);
+        appendCommandPrompt(true);
+        cursor = this->textCursor();
+        setMode(Input);
+        cursor.insertText(restCode);
+        cursor.movePosition(QTextCursor::PreviousCharacter);
+        setTextCursor(cursor);
+    } else {
+        QString code = getCommandLine();
 
-    // start new block
-    appendPlainText(QString());
-    dontHighlightLastLine();
-    setMode(Output);
+        // start new block
+        appendPlainText(QString());
+        dontHighlightLastLine();
+        setMode(Output);
 
-    QTextCursor textCursor = this->textCursor();
-    textCursor.movePosition(QTextCursor::End);
-    setTextCursor(textCursor);
+        QTextCursor textCursor = this->textCursor();
+        textCursor.movePosition(QTextCursor::End);
+        setTextCursor(textCursor);
 
-    // Update the history
-    if (!code.isEmpty())
-        history_.add(code);
+        // Update the history
+        if (!code.isEmpty())
+            history_.add(code);
 
-    // append the newline char and
-    // send signal / update iodevice
-    if (iodevice_->isOpen())
-        iodevice_->consoleWidgetInput(code);
+        // append the newline char and
+        // send signal / update iodevice
+        if (iodevice_->isOpen())
+            iodevice_->consoleWidgetInput(code);
 
-    emit consoleCommand(code);
+        emit consoleCommand(code);
+    }
 }
 
 void ScriptingConsole::init() {
@@ -75,49 +97,92 @@ void ScriptingConsole::init() {
     connect(this, &ScriptingConsole::abortEvaluation, _sp,
             &ScriptConsoleMachine::abortScript);
 
-    connect(_sp, &ScriptConsoleMachine::onOutput, this,
-            [=](ScriptConsoleMachine::MessageType type,
-                const ScriptConsoleMachine::MessageInfo &message) {
-                auto doc = this->document();
-                auto lastLine = doc->lastBlock();
-                auto isNotBlockStart = !lastLine.text().isEmpty();
-                switch (type) {
-                case ScriptMachine::MessageType::Info:
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdOut(tr("[Info]") + message.message);
-                    flush();
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Warn:
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdWarn(tr("[Warn]") + message.message);
-                    flush();
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Error:
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdErr(tr("[Error]") + message.message);
-                    flush();
-                    newLine();
-                    break;
-                case ScriptMachine::MessageType::Print:
-                    // If running ouput in the console,
-                    // otherwise logging.
-                    if (_sp->isRunning()) {
-                        stdOut(message.message);
-                    } else {
-                        Logger::logPrint(Logger::packDebugStr(
-                            packUpLoggingStr(message.message)));
-                    }
-                    break;
+    connect(
+        _sp, &ScriptConsoleMachine::onOutput, this,
+        [=](ScriptConsoleMachine::MessageType type,
+            const ScriptConsoleMachine::MessageInfo &message) {
+            // <type, <row, col>>
+            static QPair<ScriptConsoleMachine::MessageType, QPair<int, int>>
+                lastInfo{ScriptConsoleMachine::MessageType::Print, {-1, -1}};
+
+            auto doc = this->document();
+            auto lastLine = doc->lastBlock();
+            auto isNotBlockStart = !lastLine.text().isEmpty();
+
+            auto fmtMsg = [](const ScriptConsoleMachine::MessageInfo &message)
+                -> QString {
+                if (message.row <= 0 || message.col <= 0) {
+                    return message.message;
+                } else {
+                    return QStringLiteral("(") + QString::number(message.row) +
+                           QStringLiteral(", ") + QString::number(message.col) +
+                           QStringLiteral(") ") + message.message;
                 }
-            });
+            };
+
+            auto isMatchLast =
+                [](ScriptConsoleMachine::MessageType type,
+                   const ScriptConsoleMachine::MessageInfo &message) -> bool {
+                if (message.row < 0 || message.col < 0) {
+                    return false;
+                }
+                return lastInfo.first == type &&
+                       lastInfo.second.first == message.row &&
+                       lastInfo.second.second == message.col;
+            };
+
+            switch (type) {
+            case ScriptMachine::MessageType::Info:
+                if (isMatchLast(type, message)) {
+                    stdOut(message.message);
+                } else {
+                    if (isNotBlockStart) {
+                        newLine();
+                    }
+                    stdOut(tr("[Info]") + fmtMsg(message));
+                }
+                flush();
+                break;
+            case ScriptMachine::MessageType::Warn:
+                if (isMatchLast(type, message)) {
+                    stdWarn(message.message);
+                } else {
+                    if (isNotBlockStart) {
+                        newLine();
+                    }
+                    stdWarn(tr("[Warn]") + fmtMsg(message));
+                }
+                flush();
+                break;
+            case ScriptMachine::MessageType::Error:
+                if (isMatchLast(type, message)) {
+                    stdErr(message.message);
+                } else {
+                    if (isNotBlockStart) {
+                        newLine();
+                    }
+                    stdErr(tr("[Error]") + fmtMsg(message));
+                }
+                flush();
+                break;
+            case ScriptMachine::MessageType::Print:
+                if (lastInfo.first != type) {
+                    newLine();
+                }
+                // If running ouput in the console,
+                // otherwise logging.
+                if (_sp->isRunning()) {
+                    stdOut(message.message);
+                } else {
+                    Logger::logPrint(Logger::packDebugStr(
+                        packUpLoggingStr(message.message)));
+                }
+                break;
+            }
+
+            lastInfo.first = type;
+            lastInfo.second = qMakePair(message.row, message.col);
+        });
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
@@ -228,3 +293,19 @@ QString ScriptingConsole::currentCodes() const {
 ScriptMachine *ScriptingConsole::machine() const { return _sp; }
 
 ScriptConsoleMachine *ScriptingConsole::consoleMachine() const { return _sp; }
+
+void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
+    QMenu menu(this);
+
+    menu.addAction(QIcon(QStringLiteral(":/qeditor/copy.png")), tr("Copy"),
+                   QKeySequence(QKeySequence::Copy), this,
+                   &ScriptingConsole::copy);
+    menu.addAction(QIcon(QStringLiteral(":/qeditor/cut.png")), tr("Cut"),
+                   QKeySequence(QKeySequence::Cut), this,
+                   &ScriptingConsole::cut);
+    menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")), tr("Paste"),
+                   QKeySequence(QKeySequence::Paste), this,
+                   &ScriptingConsole::paste);
+
+    menu.exec(event->globalPos());
+}

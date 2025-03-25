@@ -69,10 +69,10 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     _defaultLayout = m_dock->saveState();
     layout->addWidget(m_dock, 1);
 
-    auto status = new QStatusBar(this);
-    m_status = new QLabel(this);
-    status->addWidget(m_status);
-    layout->addWidget(status);
+    m_status = new QStatusBar(this);
+    _status = new QLabel(this);
+    m_status->addPermanentWidget(_status);
+    layout->addWidget(m_status);
     buildUpContent(cw);
 
     buildUpSettingDialog();
@@ -230,7 +230,7 @@ bool ScriptingDialog::about2Close() {
     }
 
     for (auto &view : need2CloseView) {
-        emit view->closeRequested();
+        view->requestCloseDockWidget();
     }
 
     if (unSavedFiles.isEmpty()) {
@@ -248,7 +248,7 @@ bool ScriptingDialog::about2Close() {
                                           QMessageBox::Cancel);
     if (ret == QMessageBox::Yes) {
         for (auto &p : m_views) {
-            emit p->closeRequested();
+            p->requestCloseDockWidget();
         }
 
         return m_views.isEmpty();
@@ -729,7 +729,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(m_views.contains(editor));
 
         auto m = m_consoleout->machine();
-        if (m->isDebugMode() && _DebugingEditor == editor) {
+        if (m->isRunning() && _DebugingEditor == editor) {
             if (WingMessageBox::warning(
                     this, this->windowTitle(), tr("ScriptStillRunning"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -783,8 +783,8 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     });
     connect(editor, &ScriptEditor::onFunctionTip, this,
             [this](const QString &message) {
-                m_status->setText(QStringLiteral("<b><font color=\"gold\">") +
-                                  message + QStringLiteral("</font></b>"));
+                _status->setText(QStringLiteral("<b><font color=\"gold\">") +
+                                 message + QStringLiteral("</font></b>"));
             });
 
     m_views.append(editor);
@@ -825,6 +825,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
         editor->disconnect(SIGNAL(contentModified(bool)));
         editor->disconnect(SIGNAL(undoAvailable(bool)));
         editor->disconnect(SIGNAL(redoAvailable(bool)));
+        editor->disconnect(SIGNAL(cursorPositionChanged()));
     }
 
     auto editor = cur->editor();
@@ -853,7 +854,13 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
             m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
             &QToolButton::setEnabled);
 
+    connect(editor, &CodeEdit::cursorPositionChanged, this,
+            &ScriptingDialog::updateCursorPosition);
+    connect(editor, &CodeEdit::selectionChanged, this,
+            &ScriptingDialog::updateCursorPosition);
+
     m_curEditor = cur;
+    updateCursorPosition();
 }
 
 void ScriptingDialog::updateRunDebugMode(bool disable) {
@@ -888,14 +895,14 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 
     if (isRun) {
         if (isDbg) {
-            m_status->setText(QStringLiteral("<font color=\"gold\">") +
-                              tr("Debuging...") + QStringLiteral("</font>"));
+            _status->setText(QStringLiteral("<font color=\"gold\">") +
+                             tr("Debuging...") + QStringLiteral("</font>"));
         } else {
-            m_status->setText(QStringLiteral("<font color=\"green\">") +
-                              tr("Running...") + QStringLiteral("</font>"));
+            _status->setText(QStringLiteral("<font color=\"green\">") +
+                             tr("Running...") + QStringLiteral("</font>"));
         }
     } else {
-        m_status->setText({});
+        _status->setText({});
     }
 }
 
@@ -1077,6 +1084,25 @@ void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
         } else {
             e->removeSymbolMark(line);
         }
+    }
+}
+
+void ScriptingDialog::updateCursorPosition() {
+    auto editor = currentEditor();
+    if (editor) {
+        auto e = editor->editor();
+        const QTextCursor cursor = e->textCursor();
+        const int column =
+            e->textColumn(cursor.block().text(), cursor.positionInBlock());
+        const int selectedChars =
+            std::abs(cursor.selectionEnd() - cursor.selectionStart());
+        QString positionText =
+            tr("Line %1, Col %2").arg(cursor.blockNumber() + 1).arg(column + 1);
+        if (selectedChars)
+            positionText += tr(" (Selected: %1)").arg(selectedChars);
+        m_status->showMessage(positionText);
+    } else {
+        m_status->showMessage({});
     }
 }
 
