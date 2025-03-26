@@ -17,18 +17,7 @@ find_package(
     Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network Concurrent
                                               PrintSupport Xml LinguistTools)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
-elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(
-        WARNING
-            "${PROJECT_NAME}'s stacktrace won't work built with ${CMAKE_BUILD_TYPE}."
-    )
-else()
-    message(FATAL_ERROR "Unsupported build type!")
-endif()
+message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
@@ -506,6 +495,14 @@ else()
         endif()
     endif()
 endif()
+
+target_compile_options(
+    WingHexExplorer2
+    PRIVATE $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-g>
+            $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:Release>:/Zi>>)
+
+target_link_options(WingHexExplorer2 PRIVATE
+                    $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:Release>:/DEBUG>>)
 
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}

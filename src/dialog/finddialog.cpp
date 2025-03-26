@@ -44,6 +44,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     layout->addWidget(new QLabel(tr("Content:"), this));
     m_lineeditor = new QHexTextEdit(this);
+    m_lineeditor->setFixedHeight(m_findMode->height());
     layout->addWidget(m_lineeditor);
     layout->addSpacing(3);
 

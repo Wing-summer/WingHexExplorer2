@@ -97,13 +97,6 @@ void QHexTextEdit::mousePressEvent(QMouseEvent *event) {
     setTextCursor(cursor);
 }
 
-QSize QHexTextEdit::sizeHint() const {
-    QFont font = this->font();
-    QFontMetrics fontMetrics(font);
-    int lineHeight = fontMetrics.lineSpacing();
-    return QSize(0, lineHeight);
-}
-
 bool QHexTextEdit::isHexMode() const { return m_isHexMode; }
 
 void QHexTextEdit::setIsHexMode(bool newIsHexMode) {

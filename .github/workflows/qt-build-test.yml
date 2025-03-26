@@ -9,7 +9,7 @@ on:
     - main
 
 env:
-  BUILD_TYPE: RelWithDebInfo
+  BUILD_TYPE: Release
 
 jobs:
   build-test:

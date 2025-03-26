@@ -572,47 +572,47 @@
         <translation>內容：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="50"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="51"/>
         <source>EncBytes:</source>
         <translation>解碼：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="96"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="97"/>
         <source>Region:</source>
         <translation>搜索區域：</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="128"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="129"/>
         <source>None</source>
         <translation>全局搜索</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="139"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="140"/>
         <source>Region</source>
         <translation>區域</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="151"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="152"/>
         <source>BeforeCursor</source>
         <translation>游標前搜索</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="161"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="162"/>
         <source>AfterCursor</source>
         <translation>游標後搜索</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="171"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="172"/>
         <source>Selection</source>
         <translation>選區搜索</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="204"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="205"/>
         <source>find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/finddialog.cpp" line="218"/>
+        <location filename="../../src/dialog/finddialog.cpp" line="219"/>
         <source>InvalidHexSeq</source>
         <translation>無效十六進位序列</translation>
     </message>

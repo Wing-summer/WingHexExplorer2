@@ -56,6 +56,7 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
     }
 
     setSortingEnabled(true);
+    resizeColumnToContents(0);
 }
 
 QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,

@@ -128,16 +128,20 @@ def main():
     exemain_src = ""
     exesym_src = ""
     exeplg_src = ""
+    exeplg_pdb = ""
 
     if (os.path.exists(os.path.join(projectdeb, "WingHexExplorer2.sln"))):
-        exemain_src = os.path.join(projectdeb, "RelWithDebInfo", exe_name)
-        exesym_src = os.path.join(projectdeb, "RelWithDebInfo", sym_name)
+        exemain_src = os.path.join(projectdeb, "Release", exe_name)
+        exesym_src = os.path.join(projectdeb, "Release", sym_name)
         exeplg_src = os.path.join(
-            projectdeb, "WingPlugin", "RelWithDebInfo", "WingPlugin.dll")
+            projectdeb, "WingPlugin", "Release", "WingPlugin.dll")
+        exeplg_pdb = os.path.join(
+            projectdeb, "WingPlugin", "Release", "WingPlugin.pdb")
     else:
         exemain_src = os.path.join(projectdeb, exe_name)
         exesym_src = os.path.join(projectdeb, sym_name)
         exeplg_src = os.path.join(projectdeb, "WingPlugin", "WingPlugin.dll")
+        exeplg_pdb = os.path.join(projectdeb, "WingPlugin", "WingPlugin.pdb")
 
     if (os.path.exists(exemain_src) == False):
         print(
@@ -163,6 +167,7 @@ def main():
     shutil.copy2(exesym_src, os.path.join(exeDebPath, sym_name))
     shutil.copy2(exeplg_src,
                  os.path.join(exeDebPath, "WingPlugin.dll"))
+    shutil.copyfile(exeplg_pdb, os.path.join(exeDebPath, "WingPlugin.pdb"))
 
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeDebPath, "share"))

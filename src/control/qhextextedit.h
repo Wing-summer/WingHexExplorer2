@@ -32,8 +32,6 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
 
-    QSize sizeHint() const override;
-
 private:
     QString mText;
     int mCurserPositionPre;
