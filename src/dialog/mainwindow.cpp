@@ -3182,7 +3182,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
          p != m_editorViewWidgets.constKeyValueEnd(); p++) {
         for (auto &w : p->second) {
-            auto v = w->create(p->first, editor);
+            auto v = w->create(editor);
             auto id = w->id();
             editor->registerView(id, v);
             connect(v, &WingEditorViewWidget::savedStateChanged, this,

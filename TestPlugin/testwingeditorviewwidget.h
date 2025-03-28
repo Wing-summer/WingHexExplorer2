@@ -39,15 +39,13 @@ public:
         virtual QString id() const override;
 
     public:
-        virtual WingEditorViewWidget *create(WingHex::IWingPlugin *plg,
-                                             QWidget *parent) const override {
-            return new TestWingEditorViewWidget(plg, parent);
+        virtual WingEditorViewWidget *create(QWidget *parent) const override {
+            return new TestWingEditorViewWidget(parent);
         }
     };
 
 public:
-    explicit TestWingEditorViewWidget(WingHex::IWingPlugin *plg,
-                                      QWidget *parent = nullptr);
+    explicit TestWingEditorViewWidget(QWidget *parent = nullptr);
     virtual ~TestWingEditorViewWidget();
 
     void setEnableMeta(bool b);

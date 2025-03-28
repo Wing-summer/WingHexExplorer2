@@ -24,9 +24,8 @@
 
 QList<TestWingEditorViewWidget *> TestWingEditorViewWidget::m_instances;
 
-TestWingEditorViewWidget::TestWingEditorViewWidget(WingHex::IWingPlugin *plg,
-                                                   QWidget *parent)
-    : WingHex::WingEditorViewWidget(plg, parent) {
+TestWingEditorViewWidget::TestWingEditorViewWidget(QWidget *parent)
+    : WingHex::WingEditorViewWidget(parent) {
     auto layout = new QVBoxLayout(this);
     auto lbl = new QLabel(QStringLiteral("TestWingEditorView"), this);
     lbl->setAlignment(Qt::AlignCenter);

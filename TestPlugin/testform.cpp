@@ -210,7 +210,7 @@ void TestForm::on_btnWarning_clicked() {
 }
 
 void TestForm::on_btnCritical_clicked() {
-    critical(
+    msgCritical(
         this, ui->leMsgTitle->text(), ui->leMsgText->text(), getMsgButtons(),
         QMessageBox::StandardButton(ui->cbMsgDefButton->currentData().toInt()));
 }
@@ -337,7 +337,7 @@ void TestForm::on_btnTextTree_clicked() {
         dataVisualTextTree(ui->teDataVisual->toPlainText(),
                            QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
-        critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
+        msgCritical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
 }
 
@@ -346,7 +346,7 @@ void TestForm::on_btnTextTable_clicked() {
         ui->teDataVisual->toPlainText(), {"wingsummer", "wingsummer"}, {},
         QStringLiteral("TestForm"), _click, _dblclick);
     if (!ret) {
-        critical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
+        msgCritical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
     }
 }
 
@@ -360,8 +360,8 @@ void TestForm::on_btnTextListByModel_clicked() {
     auto ret = dataVisualTextListByModel(model, QStringLiteral("TestForm"),
                                          _click, _dblclick);
     if (!ret) {
-        critical(this, QStringLiteral("Test"),
-                 tr("UpdateTextListByModelError"));
+        msgCritical(this, QStringLiteral("Test"),
+                    tr("UpdateTextListByModelError"));
     }
 }
 
@@ -370,8 +370,8 @@ void TestForm::on_btnTextTableByModel_clicked() {
     auto ret = dataVisualTextTableByModel(model, QStringLiteral("TestForm"),
                                           _click, _dblclick);
     if (!ret) {
-        critical(this, QStringLiteral("Test"),
-                 tr("UpdateTextTableByModelError"));
+        msgCritical(this, QStringLiteral("Test"),
+                    tr("UpdateTextTableByModelError"));
     }
 }
 
@@ -381,8 +381,8 @@ void TestForm::on_btnTextTreeByModel_clicked() {
     auto ret = dataVisualTextTreeByModel(model, QStringLiteral("TestForm"),
                                          _click, _dblclick);
     if (!ret) {
-        critical(this, QStringLiteral("Test"),
-                 tr("UpdateTextTreeByModelError"));
+        msgCritical(this, QStringLiteral("Test"),
+                    tr("UpdateTextTreeByModelError"));
     }
 }
 

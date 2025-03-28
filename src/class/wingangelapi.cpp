@@ -348,7 +348,7 @@ void WingAngelAPI::installMsgboxAPI(asIScriptEngine *engine) {
                                             QMessageBox::StandardButtons,
                                             QMessageBox::StandardButton)>(
         engine,
-        std::bind(&WingHex::IWingPlugin::critical, this, nullptr,
+        std::bind(&WingHex::IWingPlugin::msgCritical, this, nullptr,
                   std::placeholders::_1, std::placeholders::_2,
                   std::placeholders::_3, std::placeholders::_4),
         "void critical(const string &in title, const string &in text, "
