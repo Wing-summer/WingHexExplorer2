@@ -485,7 +485,7 @@
     <message>
         <location filename="../../src/control/editorview.cpp" line="835"/>
         <source>Not allowed operation in non-UI thread</source>
-        <translation type="unfinished">该操作在非 UI 线程非法</translation>
+        <translation>该操作在非 UI 线程非法</translation>
     </message>
 </context>
 <context>
