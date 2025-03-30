@@ -29,6 +29,7 @@
 #include "dialog/framelessmainwindow.h"
 #include "utilities.h"
 
+#include <QPushButton>
 #include <QShortcut>
 #include <QStatusBar>
 #include <QToolButton>
@@ -120,11 +121,18 @@ private slots:
     void on_encoding();
     void on_updateDefs();
 
+    // QWidget interface
+protected:
+    virtual void closeEvent(QCloseEvent *event) override;
+
 private:
     Ribbon *m_ribbon = nullptr;
     CodeEdit *m_edit = nullptr;
     QStatusBar *m_status = nullptr;
     QToolButton *m_syntaxButton = nullptr;
+
+    QPushButton *m_cancelButton = nullptr;
+    bool m_continue = true;
 
     QByteArray buffer;
 };

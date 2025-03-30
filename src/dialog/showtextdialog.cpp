@@ -26,6 +26,7 @@
 #include "dialog/definitiondownload.h"
 #include "dialog/encodingdialog.h"
 
+#include <QScrollBar>
 #include <QThread>
 #include <QVBoxLayout>
 
@@ -86,6 +87,13 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessMainWindow(parent) {
     m_syntaxButton->setPopupMode(QToolButton::InstantPopup);
     m_syntaxButton->addAction(new SyntaxPopupAction(this));
 
+    m_cancelButton = new QPushButton(this);
+    m_cancelButton->setText(tr("Cancel"));
+    connect(m_cancelButton, &QPushButton::clicked, this,
+            [this]() { m_continue = false; });
+    m_status->addPermanentWidget(m_cancelButton);
+    m_cancelButton->hide();
+
     m_status->addPermanentWidget(m_syntaxButton);
 
     // ok, preparing for starting...
@@ -117,6 +125,8 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString &mime,
         return;
     }
 
+    m_syntaxButton->hide();
+    setSyntax(WingCodeEdit::nullSyntax());
     show();
     m_status->showMessage(tr("Loading..."));
 
@@ -129,7 +139,36 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString &mime,
     }
 
     this->buffer = buffer->read(qsizetype(0), buffer->length());
-    m_edit->setPlainText(Utilities::decodingString(this->buffer, enc));
+    m_cancelButton->setVisible(true);
+    m_continue = true;
+
+    auto e = Utilities::realEncodingName(enc);
+    auto en = QStringConverter::encodingForName(e.toUtf8());
+    QTextStream ss(this->buffer);
+    ss.setEncoding(en.value_or(QStringConverter::Utf8)); // fallback to UTF-8
+    ss.setAutoDetectUnicode(false);
+    auto total = this->buffer.size();
+    m_edit->clear();
+    m_edit->setEnabled(false);
+    while (m_continue && !ss.atEnd()) {
+        auto p = ss.readLine();
+        m_edit->appendPlainText(p);
+        m_edit->verticalScrollBar()->setValue(0);
+        m_status->showMessage(
+            tr("Loading...") + QStringLiteral(" (") +
+            QString::number(100.0 * ss.pos() / total, 'g', 3) +
+            QStringLiteral("%)"));
+        qApp->processEvents();
+    }
+
+    m_cancelButton->hide();
+    m_syntaxButton->setVisible(true);
+    m_edit->setEnabled(true);
+    m_continue = false;
+
+    auto cursor = m_edit->textCursor();
+    cursor.setPosition(0);
+    m_edit->setTextCursor(cursor);
     m_status->showMessage(enc);
 
     setSyntax(WingCodeEdit::syntaxRepo().definitionForMimeType(mime));
@@ -198,4 +237,10 @@ void ShowTextDialog::on_updateDefs() {
     downloadDialog->show();
     downloadDialog->raise();
     downloadDialog->activateWindow();
+}
+
+void ShowTextDialog::closeEvent(QCloseEvent *event) {
+    m_continue = false;
+    m_edit->clear();
+    FramelessMainWindow::closeEvent(event);
 }

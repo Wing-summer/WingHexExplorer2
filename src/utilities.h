@@ -224,10 +224,14 @@ public:
                      (screen.height() - window->height()) / 2);
     }
 
+    static bool isTextFile(const QMimeType &type) {
+        return type.inherits(QStringLiteral("text/plain"));
+    }
+
     static bool isTextFile(const QFileInfo &info) {
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(info);
-        return t.inherits(QStringLiteral("text/plain"));
+        return isTextFile(t);
     }
 
     static QString getAppDataPath() {
@@ -280,13 +284,17 @@ public:
 #endif
     }
 
+    static QString realEncodingName(const QString &enc = {}) {
+        if (enc.isEmpty() ||
+            enc.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive) == 0) {
+            return QStringLiteral("ISO-8859-1");
+        }
+        return enc;
+    }
+
     static QString decodingString(const QByteArray &buffer,
                                   const QString &enc = {}) {
-        auto encoding = enc;
-        if (encoding.isEmpty() || encoding.compare(QStringLiteral("ASCII"),
-                                                   Qt::CaseInsensitive) == 0) {
-            encoding = QStringLiteral("ISO-8859-1");
-        }
+        auto encoding = realEncodingName(enc);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         auto en = QStringConverter::encodingForName(encoding.toUtf8());

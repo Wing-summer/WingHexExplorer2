@@ -2983,9 +2983,19 @@ void MainWindow::on_viewtxt() {
         return;
     }
     auto hexeditor = editor->hexEditor();
+    auto filename = editor->fileName();
     QMimeDatabase db;
-    _showtxt->load(hexeditor->document()->buffer(),
-                   db.mimeTypeForFile(editor->fileName()).name());
+    auto mime = db.mimeTypeForFile(filename);
+    auto ret = Utilities::isTextFile(mime);
+    if (!ret) {
+        auto ret = WingMessageBox::warning(
+            this, tr("Warn"), tr("NoTextFileMayInvalid"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (ret == QMessageBox::No) {
+            return;
+        }
+    }
+    _showtxt->load(hexeditor->document()->buffer(), mime.name());
 }
 
 void MainWindow::on_fullScreen() {
