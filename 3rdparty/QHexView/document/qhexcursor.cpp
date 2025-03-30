@@ -61,7 +61,7 @@ qsizetype QHexCursor::selectionLength(qsizetype index) const {
 
 qsizetype QHexCursor::currentSelectionLength() const {
     if (hasPreviewSelection() && m_preMode != SelectionRemove) {
-        return qAbs(m_position - m_selection + 1);
+        return qAbs(m_position - m_selection) + 1;
     }
 
     qsizetype len = 0;

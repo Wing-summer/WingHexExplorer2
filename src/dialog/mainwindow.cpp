@@ -2931,6 +2931,8 @@ void MainWindow::on_selectionChanged() {
         return;
     }
 
+    on_locChanged();
+
     auto cursor = hexeditor->cursor();
     QByteArrayList buffer;
     bool isPreview = false;
