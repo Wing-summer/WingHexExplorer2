@@ -2033,6 +2033,19 @@ EditorView *EditorView::clone() {
         this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
     });
 
+    connect(ev, &EditorView::sigOnCutFile, this, &EditorView::sigOnCutFile);
+    connect(ev, &EditorView::sigOnCutHex, this, &EditorView::sigOnCutHex);
+    connect(ev, &EditorView::sigOnCopyFile, this, &EditorView::sigOnCopyFile);
+    connect(ev, &EditorView::sigOnCopyHex, this, &EditorView::sigOnCopyHex);
+    connect(ev, &EditorView::sigOnPasteFile, this, &EditorView::sigOnPasteFile);
+    connect(ev, &EditorView::sigOnPasteHex, this, &EditorView::sigOnPasteHex);
+    connect(ev, &EditorView::sigOnDelete, this, &EditorView::sigOnDelete);
+    connect(ev, &EditorView::sigOnFindFile, this, &EditorView::sigOnFindFile);
+    connect(ev, &EditorView::sigOnGoToLine, this, &EditorView::sigOnGoToLine);
+    connect(ev, &EditorView::sigOnFill, this, &EditorView::sigOnFill);
+    connect(ev, &EditorView::sigOnMetadata, this, &EditorView::sigOnMetadata);
+    connect(ev, &EditorView::sigOnBookMark, this, &EditorView::sigOnBookMark);
+
     auto doc = this->m_hex->document();
 
     ev->m_cloneParent = this;

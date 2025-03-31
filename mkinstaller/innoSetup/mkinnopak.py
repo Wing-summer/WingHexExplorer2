@@ -41,7 +41,7 @@ def run_command_interactive(command):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="mkdeb.py", description="A deb installer maker for WingHexExplorer2")
+        prog="mkinnopak.py", description="A InnoSetup installer maker for WingHexExplorer2")
 
     parser.add_argument(
         "folder", help="A folder that has contained the binary build", type=str
@@ -275,7 +275,7 @@ Source: {#MyAppExePath}; DestDir: "{app}"; Flags: ignoreversion
     iss_content += r'Root: HKCR; Subkey: "WingHexExplorer2\DefaultIcon"; ValueType: string; ValueName: "";  ValueData: "{app}\{#MyAppExeName},1"; Flags: noerror uninsdeletevalue; ' + '\n'
     iss_content += r'Root: HKCR; Subkey: "WingHexExplorer2\shell\open\command"; ValueType: string; ValueName: "";  ValueData: """{app}\{#MyAppExeName}"" ""%1""" ;Flags: noerror uninsdeletevalue; ' + '\n'
 
-    iss_content += """
+    iss_content += r"""
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"

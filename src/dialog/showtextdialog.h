@@ -121,6 +121,9 @@ private slots:
     void on_encoding();
     void on_updateDefs();
 
+private:
+    void setEncoding(const QString &enc);
+
     // QWidget interface
 protected:
     virtual void closeEvent(QCloseEvent *event) override;

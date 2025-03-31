@@ -20,17 +20,17 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
 
 void ScriptingConsoleBase::stdOut(const QString &str) {
     writeStdOut(str);
-    dontHighlightLastLine();
+    dontHighlightLastLine(true);
 }
 
 void ScriptingConsoleBase::stdErr(const QString &str) {
     writeStdErr(str);
-    dontHighlightLastLine();
+    dontHighlightLastLine(false);
 }
 
 void ScriptingConsoleBase::stdWarn(const QString &str) {
     write(str, _warnCharFmt);
-    dontHighlightLastLine();
+    dontHighlightLastLine(false);
 }
 
 void ScriptingConsoleBase::newLine() { _s << Qt::endl; }
@@ -65,14 +65,22 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     dontHighlightLastOffset(commandPrompt.length());
 }
 
-void ScriptingConsoleBase::dontHighlightLastLine() {
-    dontHighlightLastOffset(-1);
+void ScriptingConsoleBase::dontHighlightLastLine(bool followTheme) {
+    dontHighlightLastOffset(-1, followTheme);
 }
 
-void ScriptingConsoleBase::dontHighlightLastOffset(int offset) {
+void ScriptingConsoleBase::dontHighlightLastOffset(int offset,
+                                                   bool followTheme) {
     auto blk = document()->lastBlock();
     auto hl = highlighter();
-    hl->setProperty(blk, "cmdoff", offset);
+    if (offset < 0) {
+        offset = -1;
+    }
+    if (offset == -1 && followTheme) {
+        hl->setProperty(blk, "cmdoff", -2);
+    } else {
+        hl->setProperty(blk, "cmdoff", offset);
+    }
     hl->rehighlightBlock(blk);
 }
 

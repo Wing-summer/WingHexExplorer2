@@ -26,9 +26,9 @@ public slots:
     void appendCommandPrompt(bool storeOnly = false);
 
 protected:
-    void dontHighlightLastLine();
+    void dontHighlightLastLine(bool followTheme);
 
-    void dontHighlightLastOffset(int offset);
+    void dontHighlightLastOffset(int offset, bool followTheme = true);
 
 private:
     QTextStream _s;

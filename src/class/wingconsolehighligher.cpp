@@ -1,6 +1,8 @@
 #include "wingconsolehighligher.h"
 
 #include <KSyntaxHighlighting/FoldingRegion>
+#include <KSyntaxHighlighting/Format>
+#include <KSyntaxHighlighting/Theme>
 
 WingConsoleHighligher::WingConsoleHighligher(QTextDocument *document)
     : WingSyntaxHighlighter(document) {}
@@ -18,11 +20,15 @@ void WingConsoleHighligher::applyFormat(
     auto off = offsetv.toInt(&b);
     if (b) {
         if (off < 0) {
-            // don't highlight
-            return;
+            if (off == -2) {
+                WingSyntaxHighlighter::applyFormat(
+                    offset, length, KSyntaxHighlighting::Format());
+            }
         } else {
             if (offset <= off) {
                 auto div = off - offset;
+                WingSyntaxHighlighter::applyFormat(
+                    offset, div, KSyntaxHighlighting::Format());
                 auto rest = length - div;
                 if (rest <= 0) {
                     return;

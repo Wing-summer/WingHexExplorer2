@@ -540,8 +540,6 @@ private:
     void connectDocSavedFlag(EditorView *editor);
 
 signals:
-    void sigFileSaved(QString filename, QString oldFileName);
-
     void sigOnCutFile();
     void sigOnCutHex();
     void sigOnCopyFile();

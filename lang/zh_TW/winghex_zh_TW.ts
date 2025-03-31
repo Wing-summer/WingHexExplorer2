@@ -5096,12 +5096,12 @@
 <context>
     <name>ShowTextDialog</name>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="186"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="155"/>
         <source>General</source>
         <translation>基本</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="188"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="157"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
@@ -5127,38 +5127,37 @@
     </message>
     <message>
         <location filename="../../src/dialog/showtextdialog.cpp" line="131"/>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="158"/>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="227"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="226"/>
         <source>Loading...</source>
         <translation>加載中...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="180"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="149"/>
         <source>Edit</source>
         <translation>編輯</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="192"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="161"/>
         <source>Find</source>
         <translation>查找</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="196"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="165"/>
         <source>Goto</source>
         <translation>跳轉</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="201"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="170"/>
         <source>Encoding</source>
         <translation>編碼</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="204"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="173"/>
         <source>UpdateDefs</source>
         <translation>更新高亮定義</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/showtextdialog.cpp" line="214"/>
+        <location filename="../../src/dialog/showtextdialog.cpp" line="183"/>
         <source>CopyToClipBoard</source>
         <translation>數據已拷貝到粘貼板</translation>
     </message>

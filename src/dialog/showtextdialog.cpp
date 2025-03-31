@@ -139,38 +139,7 @@ void ShowTextDialog::load(QHexBuffer *buffer, const QString &mime,
     }
 
     this->buffer = buffer->read(qsizetype(0), buffer->length());
-    m_cancelButton->setVisible(true);
-    m_continue = true;
-
-    auto e = Utilities::realEncodingName(enc);
-    auto en = QStringConverter::encodingForName(e.toUtf8());
-    QTextStream ss(this->buffer);
-    ss.setEncoding(en.value_or(QStringConverter::Utf8)); // fallback to UTF-8
-    ss.setAutoDetectUnicode(false);
-    auto total = this->buffer.size();
-    m_edit->clear();
-    m_edit->setEnabled(false);
-    while (m_continue && !ss.atEnd()) {
-        auto p = ss.readLine();
-        m_edit->appendPlainText(p);
-        m_edit->verticalScrollBar()->setValue(0);
-        m_status->showMessage(
-            tr("Loading...") + QStringLiteral(" (") +
-            QString::number(100.0 * ss.pos() / total, 'g', 3) +
-            QStringLiteral("%)"));
-        qApp->processEvents();
-    }
-
-    m_cancelButton->hide();
-    m_syntaxButton->setVisible(true);
-    m_edit->setEnabled(true);
-    m_continue = false;
-
-    auto cursor = m_edit->textCursor();
-    cursor.setPosition(0);
-    m_edit->setTextCursor(cursor);
-    m_status->showMessage(enc);
-
+    setEncoding(enc);
     setSyntax(WingCodeEdit::syntaxRepo().definitionForMimeType(mime));
 }
 
@@ -224,9 +193,7 @@ void ShowTextDialog::on_encoding() {
     EncodingDialog d;
     if (d.exec()) {
         auto res = d.getResult();
-        m_status->showMessage(tr("Loading..."));
-        m_edit->setPlainText(Utilities::decodingString(this->buffer, res));
-        m_status->showMessage(res);
+        setEncoding(res);
     }
 }
 
@@ -239,8 +206,43 @@ void ShowTextDialog::on_updateDefs() {
     downloadDialog->activateWindow();
 }
 
+void ShowTextDialog::setEncoding(const QString &enc) {
+    m_cancelButton->setVisible(true);
+    m_continue = true;
+
+    auto e = Utilities::realEncodingName(enc);
+    auto en = QStringConverter::encodingForName(e.toUtf8());
+    QTextStream ss(this->buffer);
+    ss.setEncoding(en.value_or(QStringConverter::Utf8)); // fallback to UTF-8
+    ss.setAutoDetectUnicode(false);
+    auto total = this->buffer.size();
+    m_edit->clear();
+    m_edit->setEnabled(false);
+    while (m_continue && !ss.atEnd()) {
+        auto p = ss.readLine();
+        m_edit->appendPlainText(p);
+        m_edit->verticalScrollBar()->setValue(0);
+        m_status->showMessage(
+            tr("Loading...") + QStringLiteral(" (") +
+            QString::number(100.0 * ss.pos() / total, 'g', 3) +
+            QStringLiteral("%)"));
+        qApp->processEvents();
+    }
+
+    m_cancelButton->hide();
+    m_syntaxButton->setVisible(true);
+    m_edit->setEnabled(true);
+    m_continue = false;
+
+    auto cursor = m_edit->textCursor();
+    cursor.setPosition(0);
+    m_edit->setTextCursor(cursor);
+    m_status->showMessage(enc);
+}
+
 void ShowTextDialog::closeEvent(QCloseEvent *event) {
     m_continue = false;
     m_edit->clear();
+    buffer.clear();
     FramelessMainWindow::closeEvent(event);
 }

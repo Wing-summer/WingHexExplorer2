@@ -68,7 +68,7 @@ void ScriptingConsole::handleReturnKey() {
 
         // start new block
         appendPlainText(QString());
-        dontHighlightLastLine();
+        dontHighlightLastLine(true);
         setMode(Output);
 
         QTextCursor textCursor = this->textCursor();
