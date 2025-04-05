@@ -1,0 +1,68 @@
+---
+title: 入门
+permalink: /docs/zh/introduction
+toc: true
+---
+
+## 简介
+
+该文档提供该软件的使用说明，所有的说明都会以该图作为标注。这张图会包含了大量的信息。
+{:.info}
+
+![软件截图]({{"/assets/images/screenshot.png" | relative_url }}){: .align-center}
+羽云十六进制浏览器
+{: .text-center}
+
+<p align="center">
+<img alt="wingsummer" src="{{"/assets/images/authorband.svg" | relative_url }}" />
+<img alt="AGPL-v3.0" src="{{"/assets/images/licenseband.svg" | relative_url }}" />
+</p>
+
+一个自由的强大免费的十六进制编辑器，基于 QT C++ 进行开发，作者是 [寂静的羽夏](https://www.cnblogs.com/wingsummer) 。
+
+如有 Bug, 欢迎反馈到 [Github](https://github.com/Wing-summer/WingHexExplorer2/issues) 上，如果你访问这有困难的话，也可以反馈到 [Gitee](https://gitee.com/wing-cloud/WingHexExplorer2/issues) 上。如果实在不行，可以通过我的 [博客园](https://www.cnblogs.com/wingsummer) 上公告栏的任意一种联系方式来告诉我。不过我还是希望你反馈到 Github 上方便我写递交注释的。
+
+开源不易，也欢迎赞助或者参与代码和文档贡献，我默认会将您放入鸣谢标签的内容进行鸣谢。
+
+许可证：APGL-3.0
+
+> 该文档采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议](http://creativecommons.org/licenses/by-nc-sa/4.0/) 进行许可，请勿用于商业用途。
+
+## 如何编译
+
+### 依赖安装
+
+对于 Qt 5 版本，仅支持 5.15.2 或更高版本，Qt 6 的话 6.6.2 或更高的版本，其他低版本由于关键库的 API 缺失和自身的一些 Bug，所以不提供支持。
+
+目前 Qt5 版本已不再提供主动支持，如果特别需要，请联系我进行付费支持，非诚勿扰。如果你想通过 PR 帮忙继续 Qt5 支持，也欢迎！
+{: .notice--warning}
+
+装好对应的 QT 安装包 SDK 和 CMake 之后，还需要装个依赖，这只针对 Linux 才会需要，因为`Qt-Advanced-Docking-System`，如下是原文档里面的说明（其他发行版请自行对照，也欢迎补充）：
+
+- Qt5 on Ubuntu 18.04 or 20.04
+
+```bash
+sudo apt install qt5-default qtbase5-private-dev
+```
+
+- Qt5 on Ubuntu 22.04
+
+```bash
+sudo apt install qtbase5-dev qtbase5-private-dev qtbase5-dev-tools libqt5svg5 libqt5qml5 qtdeclarative5-dev
+```
+
+- Qt6 on Ubuntu 22.04
+
+```bash
+sudo apt install qt6-default qt6-base-dev qt6-base-private-dev qt6-tools-dev libqt6svg6 qt6-qtdeclarative
+```
+
+然后用你喜欢用的构建方式配置好项目就可以直接编译了。
+
+### 在 QtCreator 中编译
+
+<p align="center">
+<img alt="" src="{{"/assets/docs/intro/image-20241009012251972.png" | relative_url }}" />
+</p>
+
+把项目文件夹拖进去 QtCreator，点击左下角的电脑图标，选择`Debug`或者`Release`版本，然后点击最下方的锤子图标进行构建，稍等十分钟左右，即可构建完成，点击绿色三角图标运行即可。

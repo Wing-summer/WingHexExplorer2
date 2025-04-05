@@ -1,100 +1,86 @@
-header:
-  - title: GitHub
-    url: https://github.com/Wing-summer/WingHexExplorer2
-
-  - titles:
-      # @start locale config
-      en      : &EN       Docs
-      en-GB   : *EN
-      en-US   : *EN
-      en-CA   : *EN
-      en-AU   : *EN
-      zh-Hans : &ZH_HANS  文档
-      zh      : *ZH_HANS
-      zh-CN   : *ZH_HANS
-      zh-SG   : *ZH_HANS
-      zh-Hant : &ZH_HANT  文檔
-      zh-TW   : *ZH_HANT
-      zh-HK   : *ZH_HANT
-      ko      : &KO       문서
-      ko-KR   : *KO
-      fr      : &FR       Docs
-      fr-BE   : *FR
-      fr-CA   : *FR
-      fr-CH   : *FR
-      fr-FR   : *FR
-      fr-LU   : *FR
-      tr      : &TR       Belgeler
-      # @end locale config
-    url: /docs/DocsIndex.html
-
-  - titles:
-      # @start locale config
-      en      : &EN       Archive
-      en-GB   : *EN
-      en-US   : *EN
-      en-CA   : *EN
-      en-AU   : *EN
-      zh-Hans : &ZH_HANS  归档
-      zh      : *ZH_HANS
-      zh-CN   : *ZH_HANS
-      zh-SG   : *ZH_HANS
-      zh-Hant : &ZH_HANT  歸檔
-      zh-TW   : *ZH_HANT
-      zh-HK   : *ZH_HANT
-      ko      : &KO       아카이브
-      ko-KR   : *KO
-      fr      : &FR       Archives
-      fr-BE   : *FR
-      fr-CA   : *FR
-      fr-CH   : *FR
-      fr-FR   : *FR
-      fr-LU   : *FR
-      tr      : &TR       Arşivdekiler
-      # @end locale config
-    url: /archive.html
-
-  - titles:
-      # @start locale config
-      en      : &EN       About
-      en-GB   : *EN
-      en-US   : *EN
-      en-CA   : *EN
-      en-AU   : *EN
-      zh-Hans : &ZH_HANS  关于
-      zh      : *ZH_HANS
-      zh-CN   : *ZH_HANS
-      zh-SG   : *ZH_HANS
-      zh-Hant : &ZH_HANT  關於
-      zh-TW   : *ZH_HANT
-      zh-HK   : *ZH_HANT
-      ko      : &KO       소개
-      ko-KR   : *KO
-      fr      : &FR       À propos
-      fr-BE   : *FR
-      fr-CA   : *FR
-      fr-CH   : *FR
-      fr-FR   : *FR
-      fr-LU   : *FR
-      tr      : &TR       Hakkında
-      # @end locale config
-    url: /about.html
-
-
+# main links
+main:
+  - title: 主页
+    url: /
+  - title: 博客
+    url: /posts
+  - title: 文档
+    url: /docs
+  - title: 关于
+    url: /about
 
 docs-zh:
   - title: 鸣谢 
     children:
       - title: 鸣谢与说明
-        key: docs-credits
-        url: /docs/zh/credits.html
+        url: /docs/zh/credits
   - title: 入门
     children:
       - title: 简介
-        key: docs-introduction
-        url: /docs/zh/introduction.html
+        url: /docs/zh/introduction
       - title: 基础
-        key: docs-basis
-        url: /docs/zh/basis.html
+        url: /docs/zh/basis
+      - title: 工作区
+        url: /docs/zh/workspace
+      - title: 文件基本操作
+        url: /docs/zh/fileop-basis
+      - title: 查找和跳转
+        url: /docs/zh/find-replace
+      - title: 标记
+        url: /docs/zh/mark
+      - title: 窗口
+        url: /docs/zh/window
+      - title: 插件使用
+        url: /docs/zh/plugin-usage
+      - title: 设置相关
+        url: /docs/zh/settings
+  - title: 脚本开发
+    children:
+      - title: 编辑器介绍
+        url: /docs/zh/script-ide
+      - title: 设置相关
+        url: /docs/zh/script-setting
+      - title: AngelScript 简介
+        url: /docs/zh/script-angelscript
+      - title: 语言基础 - 基本语法
+        url: /docs/zh/script-grammar
+      - title: 语言基础 - 表达式
+        url: /docs/zh/script-expression
+      - title: 语言基础 - 基本数据类型
+        url: /docs/zh/script-data-type
+      - title: 语言基础 - 类和接口
+        url: /docs/zh/script-class-interface
+      - title: 语言基础 - 运算优先级
+        url: /docs/zh/script-pri-op
+      - title: 语言基础 - 句柄
+        url: /docs/zh/script-handle
+      - title: 语言基础 - 对象
+        url: /docs/zh/script-obj
+      - title: 语言基础 - 标准库
+        url: /docs/zh/script-stl
+      - title: 函数包 - reader
+        url: /docs/zh/script-reader
+      - title: 函数包 - ctl
+        url: /docs/zh/script-ctl
+      - title: 函数包 - UI 相关
+        url: /docs/zh/script-ui
+      - title: 函数包 - 其他
+        url: /docs/zh/script-other
+      - title: 脚本调试
+        url: /docs/zh/script-dbg
+      - title: 代码格式化
+        url: /docs/zh/script-clang-format
   - title: 插件开发
-  - title: 其他语言
+    children:
+      - title: 环境配置
+        url: /docs/zh/plgdev-env
+      - title: 插件系统介绍
+        url: /docs/zh/plgdev-plgsys
+      - title: 标准插件开发
+        url: /docs/zh/plgdev-stdplg
+      - title: 文件设备驱动插件开发
+        url: /docs/zh/plgdev-drvplg
+      - title: 插件调试
+        url: /docs/zh/plgdev-dbg
+      - title: 插件系统实现番外
+        url: /docs/zh/plgdev-impl

@@ -1,40 +1,26 @@
 ---
-layout: page
-titles:
-  # @start locale config
-  en      : &EN       Archive
-  en-GB   : *EN
-  en-US   : *EN
-  en-CA   : *EN
-  en-AU   : *EN
-  zh-Hans : &ZH_HANS  归档
-  zh      : *ZH_HANS
-  zh-CN   : *ZH_HANS
-  zh-SG   : *ZH_HANS
-  zh-Hant : &ZH_HANT  歸檔
-  zh-TW   : *ZH_HANT
-  zh-HK   : *ZH_HANT
-  ko      : &KO       아카이브
-  ko-KR   : *KO
-  fr      : &FR       Archives
-  fr-BE   : *FR
-  fr-CA   : *FR
-  fr-CH   : *FR
-  fr-FR   : *FR
-  fr-LU   : *FR
-  tr      : &TR       Arşivdekiler
-  # @end locale config
+layout: default
 ---
 
-<div class="layout--archive js-all">
-  {%- include tags.html -%}
-  <div class="js-result layout--archive__result d-none">
-    {%- include article-list.html articles=site.posts type='brief' show_info=true reverse=true group_by='year' -%}
+{% if page.header.overlay_color or page.header.overlay_image or page.header.image %}
+  {% include page__hero.html %}
+{% elsif page.header.video.id and page.header.video.provider %}
+  {% include page__hero_video.html %}
+{% endif %}
+
+{% if page.url != "/" and site.breadcrumbs %}
+  {% unless paginator %}
+    {% include breadcrumbs.html %}
+  {% endunless %}
+{% endif %}
+
+<div id="main" role="main">
+  {% include sidebar.html %}
+
+  <div class="archive">
+    {% unless page.header.overlay_color or page.header.overlay_image %}
+      <h1 id="page-title" class="page__title"{% if page.locale %} lang="{{ page.locale }}"{% endif %}>{{ page.title }}</h1>
+    {% endunless %}
+    {{ content }}
   </div>
 </div>
-
-<script>
-  {%- include scripts/archieve.js -%}
-</script>
-
-{{ content }}

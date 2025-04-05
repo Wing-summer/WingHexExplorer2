@@ -1,236 +1,316 @@
 # Welcome to Jekyll!
 #
-# This config file is meant for settings that affect your whole blog, values
+# This config file is meant for settings that affect your entire site, values
 # which you are expected to set up once and rarely need to edit after that.
 # For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'jekyll serve'. If you change this file, please restart the server process.
+# `jekyll serve`. If you change this file, please restart the server process.
+
+# Theme Settings
 #
-# ,--------.      ,--.   ,--. ,--.
-# '--.  .--',---.  \  `.'  /,-'  '-.
-#    |  |  | .-. :  .'    \ '-.  .-'
-#    |  |  \   --. /  .'.  \  |  |
-#    `--'   `----''--'   '--' `--'
+# Review documentation to determine if you should use `theme` or `remote_theme`
+# https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
+# theme                  : "minimal-mistakes-jekyll"
+# remote_theme           : "mmistakes/minimal-mistakes"
+minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
-
-
-## => Site Settings
-##############################
-text_skin: dark # "default" (default), "dark", "forest", "ocean", "chocolate", "orange"
-highlight_theme: tomorrow-night-eighties # "default" (default), "tomorrow", "tomorrow-night", "tomorrow-night-eighties", "tomorrow-night-blue", "tomorrow-night-bright"
-url     : https://wing-summer.github.io/WingHexExplorer2 # the base hostname & protocol for your site e.g. https://www.someone.com
-baseurl : # does not include hostname
-title   : WingHexExplorer2
-description: > # this means to ignore newlines until "Language & timezone"
-  一个自由强大跨平台的十六进制编辑器
-
-
-## => Language and Timezone
-##############################
-lang: zh-Hans # the language of your site, default as "en"
-timezone: # see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for the available values
-
-
-## => Author and Social
-##############################
-author:
-  type      : # "person" (default), "organization"
-  name      : 寂静的羽夏
-  url       : https://www.cnblogs.com/wingsummer
-  avatar    : # path or url of avatar image (square)
-  bio       : 一个热爱计算机技术的菜鸟
-  email     :
-  facebook  : # "user_name" the last part of your profile url, e.g. https://www.facebook.com/user_name
-  twitter   : # "user_name" the last part of your profile url, e.g. https://twitter.com/user_name
-  weibo     : # "user_id"   the last part of your profile url, e.g. https://www.weibo.com/user_id/profile?...
-  googleplus: # "user_id"   the last part of your profile url, e.g. https://plus.google.com/u/0/user_id
-  telegram  : # "user_name" the last part of your profile url, e.g. https://t.me/user_name
-  medium    : # "user_name" the last part of your profile url, e.g. https://medium.com/user_name
-  zhihu     : # "user_name" the last part of your profile url, e.g. https://www.zhihu.com/people/user_name
-  douban    : # "user_name" the last part of your profile url, e.g. https://www.douban.com/people/user_name
-  linkedin  : # "user_name" the last part of your profile url, e.g. https://www.linkedin.com/in/user_name
-  github    : Wing-summer
-  npm       : # "user_name" the last part of your profile url, e.g. https://www.npmjs.com/~user_name
-
-
-## => GitHub Repository (if the site is hosted by GitHub)
-##############################
-repository: wingsummer/WingHexExplorer2
-repository_tree: main
-
-
-## => Paths
-##############################
-paths:
-  root    : # title link url, "/" (default)
-  home    : # home layout url, "/" (default)
-  archive : # "/archive.html" (default)
-  rss     : # "/feed.xml" (default)
-
-
-## => Post
-##############################
-## excerpt
-excerpt_separator: <!--more-->
-
-## license
-license: BY-NC-SA-4.0 # "CC-BY-4.0", "CC-BY-SA-4.0", "CC-BY-NC-4.0", "CC-BY-ND-4.0", "BY-NC-SA-4.0"
-
-## TOC
-toc:
-  selectors: # "h1,h2,h3" (default)
-
-## => Markdown Enhancements
-##############################
-## Mathjax
-mathjax: # false (default), true
-mathjax_autoNumber: # false (default), true
-
-## Mermaid
-mermaid: true # false (default), true
-
-## Chart
-chart: # false (default), true
-
-
-## => Paginate
-##############################
-paginate: 8
-paginate_path: /page:num # don't change this unless for special need
-
-
-## => Sources
-##############################
-sources: # bootcdn (default), unpkg
-
-
-## => Sharing
-##############################
-sharing:
-  provider: false # false (default), "addtoany", "addthis", "custom"
-
-  ## AddThis
-  addthis:
-    id: # AddThis pubid, e.g. ra-5xxxxxxxxxxx
-
-
-## => Comments
-##############################
+# Site Settings
+locale                   : "zh-CN"
+rtl                      : # true, false (default) # turns direction of the page into right to left for RTL languages
+title                    : "WingHexExplorer2"
+title_separator          : "-"
+subtitle                 : "羽云十六进制编辑器2" # site tagline that appears below site title in masthead
+name                     : "寂静的羽夏"
+description              : "一个自由强大跨平台的十六进制编辑器"
+url                      : https://wing-summer.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+baseurl                  : /WingHexExplorer2 # the subpath of your site, e.g. "/blog"
+repository               : wingsummer/WingHexExplorer2 # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
+teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
+logo                     : "/assets/images/appicon.png" # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
+masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
+breadcrumbs              : # true, false (default)
+words_per_minute         : 200
+enable_copy_code_button  : true # true, false (default)
+copyright                : "寂静的羽夏 (wingsummer)" # "copyright" name, defaults to site.title
+copyright_url            : ”https://www.cnblogs.com/wingsummer“ # "copyright" URL, defaults to site.url
 comments:
-  provider: false # false (default), "disqus", "gitalk", "valine", "custom"
-
-  ## Disqus
+  provider               : # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "giscus", "custom"
   disqus:
-    shortname: # the Disqus shortname for the site
+    shortname            : # https://help.disqus.com/customer/portal/articles/466208-what-s-a-shortname-
+  discourse:
+    server               : # https://meta.discourse.org/t/embedding-discourse-comments-via-javascript/31963 , e.g.: meta.discourse.org
+  facebook:
+    # https://developers.facebook.com/docs/plugins/comments
+    appid                :
+    num_posts            : # 5 (default)
+    colorscheme          : # "light" (default), "dark"
+  utterances:
+    theme                : # "github-light" (default), "github-dark"
+    issue_term           : # "pathname" (default)
+  giscus:
+    repo_id              : # Shown during giscus setup at https://giscus.app
+    category_name        : # Full text name of the category
+    category_id          : # Shown during giscus setup at https://giscus.app
+    discussion_term      : # "pathname" (default), "url", "title", "og:title"
+    reactions_enabled    : # '1' for enabled (default), '0' for disabled
+    theme                : # "light" (default), "dark", "dark_dimmed", "transparent_dark", "preferred_color_scheme"
+    strict               : # 1 for enabled, 0 for disabled (default)
+    input_position       : # "top", "bottom" # The comment input box will be placed above or below the comments
+    emit_metadata        : # 1 for enabled, 0 for disabled (default) # https://github.com/giscus/giscus/blob/main/ADVANCED-USAGE.md#imetadatamessage
+    lang                 : # "en" (default)
+    lazy                 : # true, false # Loading of the comments will be deferred until the user scrolls near the comments container.
+  staticman:
+    branch               : # "master"
+    endpoint             : # "https://{your Staticman v3 API}/v3/entry/github/"
+reCaptcha:
+  siteKey                :
+  secret                 :
+atom_feed:
+  path                   : # blank (default) uses feed.xml
+  hide                   : # true, false (default)
+search                   : # true, false (default)
+search_full_content      : # true, false (default)
+search_provider          : # lunr (default), algolia, google
+lunr:
+  search_within_pages    : # true, false (default)
+algolia:
+  application_id         : # YOUR_APPLICATION_ID
+  index_name             : # YOUR_INDEX_NAME
+  search_only_api_key    : # YOUR_SEARCH_ONLY_API_KEY
+  powered_by             : # true (default), false
+google:
+  search_engine_id       : # YOUR_SEARCH_ENGINE_ID
+  instant_search         : # false (default), true
+# SEO Related
+google_site_verification :
+bing_site_verification   :
+naver_site_verification  :
+yandex_site_verification :
+baidu_site_verification  :
 
-  ## Gitalk
-  # please refer to https://github.com/gitalk/gitalk for more info.
-  gitalk:
-    clientID    : # GitHub Application Client ID
-    clientSecret: # GitHub Application Client Secret
-    repository  : # GitHub repo
-    owner       : # GitHub repo owner
-    admin: # GitHub repo owner and collaborators, only these guys can initialize GitHub issues, IT IS A LIST.
-      # - your GitHub Id
+# Social Sharing
+twitter:
+  username               :
+facebook:
+  username               :
+  app_id                 :
+  publisher              :
+og_image                 : # Open Graph/Twitter default site image
+# For specifying social profiles
+# - https://developers.google.com/structured-data/customize/social-profiles
+social:
+  type                   : # Person or Organization (defaults to Person)
+  name                   : # If the user or organization name differs from the site's name
+  links: # An array of links to social media profiles
 
-  ## Valine
-  # please refer to https://valine.js.org/en/ for more info.
-  valine:
-    app_id      : # LeanCloud App id
-    app_key     : # LeanCloud App key
-    placeholder : # Prompt information
-    visitor     : # false (default)
-    meta        : # "[nick, mail, link]" (default) nickname, E-mail, Personal-site
-
-
-## => Pageview
-##############################
-pageview:
-  provider: false # false (default), "leancloud", "custom"
-
-  ## Leancloud
-  leancloud:
-    app_id    : # LeanCloud App id
-    app_key   : # LeanCloud App key
-    app_class : # LeanCloud App class
-
-
-## => Search
-##############################
-search:
-  provider: default # "default" (default), false, "google", "custom"
-
-  ## Google Custom Search Engine
-  google:
-    custom_search_engine_id: # Google Custom Search Engine ID
-
-
-## => Analytics
-##############################
+# Analytics
 analytics:
-  provider: false # false (default), "google", "custom"
-
-  ## Google Analytics
+  provider               : # false (default), "google", "google-universal", "google-gtag", "custom"
   google:
-    tracking_id : # Google Analytics id for the site
-    anonymize_ip: false # Anonymize IP tracking for Analytics
+    tracking_id          :
+    anonymize_ip         : # true, false (default)
 
 
-## => Build
-##############################
-markdown    : kramdown
-highlighter : rouge
-permalink   : date
+# Site Author
+author:
+  name             : "寂静的羽夏"
+  avatar           : /assets/images/author.jpg # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  bio              : "一个热爱计算机技术的菜鸟"
+  location         : 
+  email            : 
+  links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: "mailto:wing-summer@qq.com"
+    - label: "Website"
+      icon: "fas fa-fw fa-link"
+      url: "https://www.cnblogs.com/wingsummer"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/Wing-summer"
 
+# Site Footer
+footer:
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/Wing-summer"
+
+
+# Reading Files
+include:
+  - .htaccess
+  - _pages
 exclude:
+  - "*.sublime-project"
+  - "*.sublime-workspace"
+  - vendor
+  - .asset-cache
+  - .bundle
+  - .jekyll-assets-cache
+  - .sass-cache
+  - assets/js/plugins
+  - assets/js/_main.js
+  - assets/js/vendor
+  - Capfile
+  - CHANGELOG
+  - config
   - Gemfile
-  - Gemfile.lock
-  - LICENSE
-  - README-*.md
-  - README.md
+  - Gruntfile.js
   - gulpfile.js
-  - jekyll-text-theme.gemspec
-  - package-lock.json
+  - LICENSE
+  - log
+  - minimal-mistakes-jekyll.gemspec
+  - node_modules
   - package.json
-  - /node_modules
-  - /screenshots
-  - /vendor
-  - .markdownlint.json
+  - package-lock.json
+  - Rakefile
+  - README
+  - tmp
+keep_files:
+  - .git
+  - .svn
+encoding: "utf-8"
+markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 
+
+# Conversion
+markdown: kramdown
+highlighter: rouge
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+
+
+# Markdown Processing
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  enable_coderay: false
+
+
+# Sass/SCSS
+sass:
+  sass_dir: _sass
+  style: compressed # https://sass-lang.com/documentation/file.SASS_REFERENCE.html#output_style
+
+
+# Outputting
+permalink: /:categories/:title/
+timezone: # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+
+# Pagination with jekyll-paginate
+paginate: 5 # amount of posts to show
+paginate_path: /page:num/
+
+# Pagination with jekyll-paginate-v2
+# See https://github.com/sverrirs/jekyll-paginate-v2/blob/master/README-GENERATOR.md#site-configuration
+#   for configuration details
+pagination:
+  # Set enabled to true to use paginate v2
+  # enabled: true
+  debug: false
+  collection: 'posts'
+  per_page: 10
+  permalink: '/page/:num/'
+  title: ':title - page :num'
+  limit: 0
+  sort_field: 'date'
+  sort_reverse: true
+  category: 'posts'
+  tag: ''
+  locale: ''
+  trail:
+    before: 2
+    after: 2
+
+
+# Plugins (previously gems:)
+plugins:
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-feed
+  - jekyll-include-cache
+
+# mimic GitHub Pages with --safe
+whitelist:
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-feed
+  - jekyll-include-cache
+
+
+# Archives
+#  Type
+#  - GitHub Pages compatible archive pages built with Liquid ~> type: liquid (default)
+#  - Jekyll Archives plugin archive pages ~> type: jekyll-archives
+#  Path (examples)
+#  - Archive page should exist at path when using Liquid method or you can
+#    expect broken links (especially with breadcrumbs enabled)
+#  - <base_path>/tags/my-awesome-tag/index.html ~> path: /tags/
+#  - <base_path>/categories/my-awesome-category/index.html ~> path: /categories/
+#  - <base_path>/my-awesome-category/index.html ~> path: /
+category_archive:
+  type: liquid
+  path: /categories/
+tag_archive:
+  type: liquid
+  path: /tags/
+# https://github.com/jekyll/jekyll-archives
+# jekyll-archives:
+#   enabled:
+#     - categories
+#     - tags
+#   layouts:
+#     category: archive-taxonomy
+#     tag: archive-taxonomy
+#   permalinks:
+#     category: /categories/:name/
+#     tag: /tags/:name/
+
+
+# HTML Compression
+# - https://jch.penibelst.de/
+compress_html:
+  clippings: all
+  ignore:
+    envs: development
+
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:path/
+
+# Defaults
 defaults:
+  # _posts
   - scope:
       path: ""
       type: posts
     values:
-      layout: article
-      sharing: true
-      license: true
-      aside:
-        toc: true
-      show_edit_on_github: true
-      show_subscribe: true
-      pageview: true
+      layout: single
+      author_profile: true
+      read_time: false
+      share: true
+      related: false
   - scope:
-      path: "docs/zh"
+      path: ""
+      type: docs
     values:
-      layout: article
-      sidebar:
-        nav: docs-zh
+      layout: single
+      read_time: false
+      author_profile: false
+      share: false
+      comments: false
+      toc_sticky: true
       license: true
-      aside:
-        toc: true
-      lang: zh
-      title: "文档"
-      show_edit_on_github: false
-      show_title: false
-      show_date: false
-  
-
-
-## => Plugins
-##############################
-plugins:
-  - jekyll-feed
-  - jekyll-paginate
-  - jekyll-sitemap
-  - jemoji
+      sidebar:
+        nav: "docs-zh"       

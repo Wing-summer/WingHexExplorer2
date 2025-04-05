@@ -1,74 +1,16 @@
 ---
 # Only the main Sass file needs front matter (the dashes are enough)
+search: false
 ---
 
-@import
+@charset "utf-8";
 
-    "skins/{{ site.text_skin | default: site.data.variables.default.text_skin }}",
-    // "skins/chocolate",
-    // "skins/dark",
-    // "skins/default",
-    // "skins/forest",
-    // "skins/ocean",
-    // "skins/orange",
+@import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
+@import "minimal-mistakes"; // main partials
 
-    "skins/highlight/{{ site.highlight_theme | default: site.data.variables.default.highlight_theme }}",
-    // "skins/highlight/tomorrow",
-    // "skins/highlight/tomorrow-night",
-    // "skins/highlight/tomorrow-night-eighties",
-    // "skins/highlight/tomorrow-night-blue",
-    // "skins/highlight/tomorrow-night-bright",
-
-
-    "common/variables",
-    "common/function",
-    "common/classes",
-    "common/reset",
-    "common/print",
-    "common/components/button",
-    "common/components/image",
-    "common/components/card",
-    "common/components/gallery",
-    "common/components/hero",
-    "common/components/menu",
-    "common/components/modal",
-    "common/components/toc",
-    "common/components/item",
-    "common/components/swiper",
-
-    "animate/fade-in",
-    "animate/fade-in-down",
-    "animate/fade-in-up",
-
-    "components/main",
-    "components/header",
-    "components/footer",
-    "components/article-list",
-    "components/article-info",
-    "components/article-header",
-    "components/article-content",
-    "components/article-footer",
-    "components/author-links",
-    "components/author-profile",
-    "components/tags",
-    "components/search",
-    "components/lightbox",
-    "components/extensions",
-
-
-    "additional/alert",
-    "additional/tag",
-    "additional/photo-frame",
-
-    "layout/base",
-    "layout/page",
-
-    "layout/article",
-    "layout/articles",
-    "layout/archive",
-    "layout/home",
-    "layout/landing",
-    "layout/404",
-
-    "custom"
-;
+// themed scroll bar for dark theme by wingsummer
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:gray}
+::-webkit-scrollbar-thumb:hover{background:#3671a5}
+::-webkit-scrollbar-corner{background:#179a16}
+::-webkit-scrollbar-thumb{box-shadow:inset 0 0 5px rgba(0,0,0,0.2);background:#535353}

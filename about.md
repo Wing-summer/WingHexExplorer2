@@ -1,45 +1,19 @@
 ---
-layout: article
-show_title: false
-titles:
-  # @start locale config
-  en      : &EN       About
-  en-GB   : *EN
-  en-US   : *EN
-  en-CA   : *EN
-  en-AU   : *EN
-  zh-Hans : &ZH_HANS  关于
-  zh      : *ZH_HANS
-  zh-CN   : *ZH_HANS
-  zh-SG   : *ZH_HANS
-  zh-Hant : &ZH_HANT  關於
-  zh-TW   : *ZH_HANT
-  zh-HK   : *ZH_HANT
-  ko      : &KO       소개
-  ko-KR   : *KO
-  fr      : &FR       À propos
-  fr-BE   : *FR
-  fr-CA   : *FR
-  fr-CH   : *FR
-  fr-FR   : *FR
-  fr-LU   : *FR
-  # @end locale config
-key: page-about
+layout: splash
+title: 关于
 ---
 
 ## 关于软件
 
 <p align="center">
-<img alt="" src="{{site.url}}/assets/images/appicon.png" width=200 />
+<img src="{{"/assets/images/appicon.png" | relative_url }}" width=200px />
 </p>
 
 该软件起源于`WingHexExplorer`，是它的重构翻新版本，修复了大量的 Bug，增强功能。原来的版本是基于`DTK`做的，所以仅仅支持某些`Linux`发行版。原本在`Linux`上没有发现跟`Windows`上媲美好用的开源软件，于是在 2022 年 6 月，我创建了代码仓库开始开发，最后依次更新是在 2023 年 7 月，持续了一年的时间。最后软件长这个样子：
 
-<p align="center">
-<img alt="" src="{{site.url}}/assets/images/old-screenshot.png"/>
-</p>
+![老版软件]({{"/assets/images/old-screenshot.png" | relative_url }}){: .align-center}
 
-从图上看，这其实是我现在十六进制编辑器的原型。此时软件已经具备插件系统和`Python`脚本的支持，不过仅支持单文件编辑，也没有特别强大，但已经十分够用，并且具有一定的复杂度和专业性。
+从图上看，这其实是我现在十六进制编辑器的原型。此时软件已经具备插件系统和`Python`脚本的支持，也没有特别强大，但已经十分够用，并且具有一定的复杂度和专业性。
 
 后来，我不再打算拘泥于`Deepin`这个操作系统，后面它的更新设计让我有点疲惫。在 2024 年 06 月我开启了新的项目`WingHexExplorer2`，对原有的`WingHexExplorer`的重构和功能增强。最初的目的是摆脱`DTK`，在`UI`设计上耗费了我大量的精力，后来逐步定型了，然后我在`Deepin`论坛上发布了初步代码仓库开放的帖子，一直坚持至今。
 
@@ -50,7 +24,7 @@ key: page-about
 ## 关于作者
 
 <p align="center">
-<img alt="作者" src="{{site.url}}/assets/images/author.jpg" width=200 />
+<img alt="作者" src="{{"/assets/images/author.jpg" | relative_url }}" width=200px />
 </p>
 
 网名/昵称是寂静的羽夏，英文网名有`wingsummer`、`Wing-summer`或`WingSummer`这三种。中国人，羽云系列软件发起人和目前唯一维护者，一个热爱开源的非科班专业贡献者，是一位热爱计算机技术的菜鸟。目前在维护的代表作：[WingHexExplorer2](https://github.com/Wing-summer/WingHexExplorer2)、[WingGifEditor2](https://github.com/Wing-summer/WingGifEditor2) 以及相关插件。
@@ -63,9 +37,9 @@ key: page-about
 
 > If you are not Chinese, you can use [Afadian](https://afdian.com/a/wingsummer) to support me.
 
-<p align="center"><b>您的每一份支持都将是我开源的强大动力，十分感谢您的支持</b></p>
+**您的每一份支持都将是我开源的强大动力，十分感谢您的支持**
+{: .text-center}
 
-<p align="center">
-<img alt="捐助" src="{{site.url}}/assets/images/Donate.jpg" />
-<p align="center">感谢支持</p>
-</p>
+![捐助]({{"/assets/images/Donate.jpg" | relative_url }}){: .align-center}
+感谢支持
+{: .text-center}
