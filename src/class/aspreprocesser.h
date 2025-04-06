@@ -70,7 +70,6 @@ public:
 public:
     struct ScriptData {
         QString section;
-        int lineOffset = -1;
         QByteArray script;
     };
 
@@ -79,41 +78,40 @@ public:
     // Returns  1 if the file was included
     //          0 if the file had already been included before
     //         <0 on error
-    int AddSectionFromFile(const QString &filename);
+    int loadSectionFromFile(const QString &filename);
+    int loadSectionFromMemory(const QString &section, const QByteArray &code);
 
-    QList<ScriptData> GetScriptData() const;
+    QList<ScriptData> scriptData() const;
 
     // Returns the engine
-    asIScriptEngine *GetEngine();
+    asIScriptEngine *getEngine();
 
     // Register the callback for resolving include directive
-    void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
+    void setIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
 
     // Register the callback for resolving pragma directive
-    void SetPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
+    void setPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
 
     // Add a pre-processor define for conditional compilation
-    void DefineWord(const QString &word);
+    void defineWord(const QString &word);
 
     // Enumerate included script sections
-    unsigned int GetSectionCount() const;
+    unsigned int sectionCount() const;
 
-    QString GetSectionName(unsigned int idx) const;
+    QString sectionName(unsigned int idx) const;
 
 protected:
-    void ClearAll();
-    int ProcessScriptSection(const QByteArray &script, int length,
-                             const QString &sectionname, int lineOffset);
-    int LoadScriptSection(const QString &filename);
-    bool IncludeIfNotAlreadyIncluded(const QString &filename);
+    void clearAll();
+    void addScriptSection(const QString &section, const QByteArray &code);
+    int processScriptSection(const QByteArray &script,
+                             const QString &sectionname);
+    int loadScriptSection(const QString &filename);
+    bool includeIfNotAlreadyIncluded(const QString &filename);
 
-    int SkipStatement(const QByteArray &modifiedScript, int pos);
+    int skipStatement(const QByteArray &modifiedScript, int pos);
 
-    int ExcludeCode(QByteArray &modifiedScript, int pos);
-    void OverwriteCode(QByteArray &modifiedScript, int start, int len);
-
-    void AddScriptSection(const QString &section, const QByteArray &code,
-                          int lineOffset);
+    int excludeCode(QByteArray &modifiedScript, int pos);
+    void overwriteCode(QByteArray &modifiedScript, int start, int len);
 
     asIScriptEngine *engine;
     QList<ScriptData> modifiedScripts;

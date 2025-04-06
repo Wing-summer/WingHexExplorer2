@@ -265,12 +265,12 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     asBuilder builder(_engine);
     for (auto &m : PluginSystem::instance().scriptMarcos()) {
-        builder.DefineWord(m);
+        builder.defineWord(m);
     }
 
     // Set the pragma callback so we can detect
-    builder.SetPragmaCallback(&ScriptMachine::pragmaCallback, this);
-    builder.SetIncludeCallback(&ScriptMachine::includeCallback, this);
+    builder.setPragmaCallback(&ScriptMachine::pragmaCallback, this);
+    builder.setIncludeCallback(&ScriptMachine::includeCallback, this);
 
     // Compile the script
     auto r = builder.StartNewModule("script");
@@ -278,7 +278,7 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
         return false;
     }
 
-    r = builder.AddSectionFromFile(script.toUtf8());
+    r = builder.loadSectionFromFile(script.toUtf8());
     if (r < 0) {
         return false;
     }
@@ -522,7 +522,7 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
                                   const QString &sectionname, void *userParam) {
     Q_UNUSED(userParam);
 
-    asIScriptEngine *engine = builder->GetEngine();
+    asIScriptEngine *engine = builder->getEngine();
 
     // Filter the pragmaText so only what is of interest remains
     // With this the user can add comments and use different whitespaces
@@ -589,7 +589,7 @@ int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
         inc += QStringLiteral(".as");
     }
 
-    return builder->AddSectionFromFile(inc);
+    return builder->loadSectionFromFile(inc);
 }
 
 QString ScriptMachine::processTranslation(const char *content,

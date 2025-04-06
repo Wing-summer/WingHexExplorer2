@@ -18,6 +18,8 @@
 #include "ascompletion.h"
 
 #include "asdatabase.h"
+#include "class/aspreprocesser.h"
+#include "class/qascodeparser.h"
 #include "model/codecompletionmodel.h"
 #include "wingcodeedit.h"
 
@@ -38,8 +40,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
 
 AsCompletion::AsCompletion(asIScriptEngine *engine, WingCodeEdit *p)
-    : WingCompleter(p), parser(engine), _engine(engine),
-      m_parseDocument(false) {
+    : WingCompleter(p), parser(engine), _engine(engine), m_parseDocument(true) {
     Q_ASSERT(engine);
 
     setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
@@ -80,7 +81,7 @@ void AsCompletion::applyEmptyNsNode(QList<CodeInfoTip> &nodes) {
         }
         emptyNsNodes.append(parser.keywordNodes());
     }
-    nodes = emptyNsNodes;
+    nodes.append(emptyNsNodes);
 }
 
 void AsCompletion::applyClassNodes(QList<CodeInfoTip> &nodes) {
@@ -134,10 +135,6 @@ void AsCompletion::processTrigger(const QString &trigger,
 
     QList<CodeInfoTip> nodes;
 
-    // TODO: PRs are welcomed !!!
-    //       If this software is well-known or brings me lots of
-    //       financial support, I will implement it myself.
-    // PARSING THE DOCUMENT
     if (m_parseDocument) {
         nodes.append(parseDocument());
     }
@@ -286,7 +283,64 @@ void AsCompletion::processTrigger(const QString &trigger,
     setCompletionPrefix(prefix);
 }
 
-QList<CodeInfoTip> AsCompletion::parseDocument() { return {}; }
+QList<CodeInfoTip> AsCompletion::parseDocument() {
+    auto editor = qobject_cast<WingCodeEdit *>(widget());
+    if (editor == nullptr) {
+        return {};
+    }
+
+    auto code = editor->toPlainText();
+
+    // first preprocess the code
+    AsPreprocesser prepc(_engine);
+    // TODO: set include callback
+    // prepc.setIncludeCallback();
+
+    auto r = prepc.loadSectionFromMemory(QStringLiteral("ASCOMPLETION"),
+                                         code.toUtf8());
+    if (r <= 0) {
+        return {};
+    }
+
+    auto data = prepc.scriptData();
+    QList<CodeInfoTip> ret;
+
+    for (auto &d : data) {
+        QAsCodeParser parser(_engine);
+        auto syms =
+            parser.parseAndIntell(editor->textCursor().position(), d.script);
+
+        for (auto &sym : syms) {
+            CodeInfoTip tip;
+            tip.name = sym.name;
+            tip.nameSpace = QString::fromUtf8(sym.scope.join("::"));
+
+            switch (sym.symtype) {
+            case QAsCodeParser::SymbolType::Function:
+                tip.type = CodeInfoTip::Type::Function;
+                tip.addinfo.insert(CodeInfoTip::RetType,
+                                   QString::fromUtf8(sym.type));
+                tip.addinfo.insert(CodeInfoTip::Args,
+                                   QString::fromUtf8(sym.additonalInfo));
+                break;
+            case QAsCodeParser::SymbolType::Enum:
+                tip.type = CodeInfoTip::Type::Enum;
+                break;
+            case QAsCodeParser::SymbolType::Variable:
+            case QAsCodeParser::SymbolType::Class:
+            case QAsCodeParser::SymbolType::TypeDef:
+            case QAsCodeParser::SymbolType::FnDef:
+            case QAsCodeParser::SymbolType::VarsDecl:
+            case QAsCodeParser::SymbolType::Invalid:
+                continue;
+            }
+
+            ret.append(tip);
+        }
+    }
+
+    return ret;
+}
 
 bool AsCompletion::eventFilter(QObject *watched, QEvent *event) {
     if (event->type() == QEvent::KeyPress) {

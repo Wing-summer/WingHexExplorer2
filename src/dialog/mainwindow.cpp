@@ -724,25 +724,40 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     actionGroup->setExclusive(true);
 
     auto le = Utilities::checkIsLittleEndian();
-    m_littleEndian = new QAction(actionGroup);
-    m_littleEndian->setText(tr("LittleEndian"));
-    m_littleEndian->setCheckable(true);
-    m_littleEndian->setChecked(le);
-    connect(m_littleEndian, &QAction::triggered, this, [=] {
+    auto aLittleEndian = new QAction(actionGroup);
+    aLittleEndian->setText(tr("LittleEndian"));
+    aLittleEndian->setCheckable(true);
+    aLittleEndian->setChecked(le);
+    connect(aLittleEndian, &QAction::triggered, this, [=] {
         m_islittle = true;
         this->on_locChanged();
     });
-    m_numshowtable->addAction(m_littleEndian);
+    m_numshowtable->addAction(aLittleEndian);
 
-    m_bigEndian = new QAction(actionGroup);
-    m_bigEndian->setText(tr("BigEndian"));
-    m_bigEndian->setCheckable(true);
-    m_bigEndian->setChecked(!le);
-    connect(m_bigEndian, &QAction::triggered, this, [=] {
+    auto aBigEndian = new QAction(actionGroup);
+    aBigEndian->setText(tr("BigEndian"));
+    aBigEndian->setCheckable(true);
+    aBigEndian->setChecked(!le);
+    connect(aBigEndian, &QAction::triggered, this, [=] {
         m_islittle = false;
         this->on_locChanged();
     });
-    m_numshowtable->addAction(m_bigEndian);
+    m_numshowtable->addAction(aBigEndian);
+
+    a = new QAction(this);
+    a->setSeparator(true);
+    m_numshowtable->addAction(a);
+
+    auto aUnsignedHex = new QAction(this);
+    aUnsignedHex->setText(tr("UnsignedHex"));
+    aUnsignedHex->setCheckable(true);
+    aUnsignedHex->setChecked(false);
+    connect(aUnsignedHex, &QAction::toggled, this, [=](bool b) {
+        m_unsignedHex = b;
+        this->on_locChanged();
+    });
+    m_numshowtable->addAction(aUnsignedHex);
+
     m_numshowtable->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
 
@@ -2834,7 +2849,9 @@ void MainWindow::on_locChanged() {
         auto s = processEndian(n);
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint64,
-            QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
         auto s1 = processEndian(qsizetype(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
                               QString::number(s1));
@@ -2853,7 +2870,9 @@ void MainWindow::on_locChanged() {
         auto s = processEndian(quint32(n));
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Uint32,
-            QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
         auto s1 = processEndian(qint32(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
                               QString::number(s1));
@@ -2872,7 +2891,9 @@ void MainWindow::on_locChanged() {
         auto s = processEndian(quint16(n));
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Ushort,
-            QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
         auto s1 = processEndian(qint16(n));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Short,
                               QString::number(s1));
@@ -2885,7 +2906,9 @@ void MainWindow::on_locChanged() {
         auto s = uchar(s1);
         _numsitem->setNumData(
             NumShowModel::NumTableIndex::Byte,
-            QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper()));
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
         _numsitem->setNumData(NumShowModel::NumTableIndex::Char,
                               QString::number(s1));
     } else {

@@ -41,14 +41,14 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
 
 AsPreprocesser::~AsPreprocesser() { void ClearAll(); }
 
-int AsPreprocesser::AddSectionFromFile(const QString &filename) {
+int AsPreprocesser::loadSectionFromFile(const QString &filename) {
     // The file name stored in the set should be the fully resolved name because
     // it is possible to name the same file in multiple ways using relative
     // paths.
     auto fullpath = QFileInfo(filename).absoluteFilePath();
 
-    if (IncludeIfNotAlreadyIncluded(fullpath)) {
-        int r = LoadScriptSection(fullpath);
+    if (includeIfNotAlreadyIncluded(fullpath)) {
+        int r = loadScriptSection(fullpath);
         if (r < 0)
             return r;
         else
@@ -58,55 +58,57 @@ int AsPreprocesser::AddSectionFromFile(const QString &filename) {
     return 0;
 }
 
-QList<AsPreprocesser::ScriptData> AsPreprocesser::GetScriptData() const {
+int AsPreprocesser::loadSectionFromMemory(const QString &section,
+                                          const QByteArray &code) {
+    int r = processScriptSection(code, section);
+    if (r < 0)
+        return r;
+    else
+        return 1;
+}
+
+QList<AsPreprocesser::ScriptData> AsPreprocesser::scriptData() const {
     return modifiedScripts;
 }
 
-asIScriptEngine *AsPreprocesser::GetEngine() { return engine; }
+asIScriptEngine *AsPreprocesser::getEngine() { return engine; }
 
-void AsPreprocesser::SetIncludeCallback(INCLUDECALLBACK_t callback,
+void AsPreprocesser::setIncludeCallback(INCLUDECALLBACK_t callback,
                                         void *userParam) {
     includeCallback = callback;
     includeParam = userParam;
 }
 
-void AsPreprocesser::SetPragmaCallback(PRAGMACALLBACK_t callback,
+void AsPreprocesser::setPragmaCallback(PRAGMACALLBACK_t callback,
                                        void *userParam) {
     pragmaCallback = callback;
     pragmaParam = userParam;
 }
 
-void AsPreprocesser::DefineWord(const QString &word) {
+void AsPreprocesser::defineWord(const QString &word) {
     if (!definedWords.contains(word)) {
         definedWords.append(word);
     }
 }
 
-unsigned int AsPreprocesser::GetSectionCount() const {
+unsigned int AsPreprocesser::sectionCount() const {
     return (unsigned int)(includedScripts.size());
 }
 
-QString AsPreprocesser::GetSectionName(unsigned int idx) const {
+QString AsPreprocesser::sectionName(unsigned int idx) const {
     if (qsizetype(idx) >= qsizetype(includedScripts.size()))
         return {};
 
     return includedScripts.at(idx);
 }
 
-void AsPreprocesser::ClearAll() { includedScripts.clear(); }
+void AsPreprocesser::clearAll() { includedScripts.clear(); }
 
-int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
-                                         const QString &sectionname,
-                                         int lineOffset) {
+int AsPreprocesser::processScriptSection(const QByteArray &script,
+                                         const QString &sectionname) {
     QVector<QPair<QString, bool>> includes;
 
-    QByteArray modifiedScript;
-
-    // Perform a superficial parsing of the script first to store the metadata
-    if (length)
-        modifiedScript = script.left(length);
-    else
-        modifiedScript = script;
+    QByteArray modifiedScript = script;
 
     // First perform the checks for #if directives to exclude code that
     // shouldn't be compiled
@@ -144,13 +146,13 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                     // Overwrite the #if directive with space characters to
                     // avoid compiler error
                     pos += len;
-                    OverwriteCode(modifiedScript, start, pos - start);
+                    overwriteCode(modifiedScript, start, pos - start);
 
                     // Has this identifier been defined by the application or
                     // not?
                     if (!definedWords.contains(word)) {
                         // Exclude all the code until and including the #endif
-                        pos = ExcludeCode(modifiedScript, pos);
+                        pos = excludeCode(modifiedScript, pos);
                     } else {
                         nested++;
                     }
@@ -158,7 +160,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
             } else if (token == "endif") {
                 // Only remove the #endif if there was a matching #if
                 if (nested > 0) {
-                    OverwriteCode(modifiedScript, start, pos - start);
+                    overwriteCode(modifiedScript, start, pos - start);
                     nested--;
                 }
             }
@@ -231,7 +233,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
 
                             // Overwrite the include directive with space
                             // characters to avoid compiler error
-                            OverwriteCode(modifiedScript, start, pos - start);
+                            overwriteCode(modifiedScript, start, pos - start);
                         }
                     }
 
@@ -279,7 +281,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
 
                                 // Overwrite the include directive with
                                 // space characters to avoid compiler error
-                                OverwriteCode(modifiedScript, start,
+                                overwriteCode(modifiedScript, start,
                                               pos - start);
                             }
                         } else {
@@ -305,7 +307,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
 
                     // Overwrite the pragma directive with space characters
                     // to avoid compiler error
-                    OverwriteCode(modifiedScript, start, pos - start);
+                    overwriteCode(modifiedScript, start, pos - start);
 
                     int r = pragmaCallback
                                 ? pragmaCallback(pragmaText, this, sectionname,
@@ -324,14 +326,14 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
         // Don't search for includes within statement blocks or
         // between tokens in statements
         else {
-            pos = SkipStatement(modifiedScript, pos);
+            pos = skipStatement(modifiedScript, pos);
         }
     }
 
     // Build the actual script
     engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
 
-    AddScriptSection(sectionname, modifiedScript, lineOffset);
+    addScriptSection(sectionname, modifiedScript);
 
     if (includes.size() > 0) {
         // If the callback has been set, then call it for each included file
@@ -362,7 +364,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
                 }
 
                 // Include the script section
-                int r = AddSectionFromFile(includes[n].first);
+                int r = loadSectionFromFile(includes[n].first);
                 if (r < 0)
                     return r;
             }
@@ -372,7 +374,7 @@ int AsPreprocesser::ProcessScriptSection(const QByteArray &script, int length,
     return 0;
 }
 
-int AsPreprocesser::LoadScriptSection(const QString &filename) {
+int AsPreprocesser::loadScriptSection(const QString &filename) {
     // Open the script file
 
     QFile f(filename);
@@ -396,10 +398,10 @@ int AsPreprocesser::LoadScriptSection(const QString &filename) {
 
     // Process the script section even if it is zero length so that the name is
     // registered
-    return ProcessScriptSection(code, code.length(), filename, 0);
+    return processScriptSection(code, filename);
 }
 
-bool AsPreprocesser::IncludeIfNotAlreadyIncluded(const QString &filename) {
+bool AsPreprocesser::includeIfNotAlreadyIncluded(const QString &filename) {
     if (includedScripts.contains(filename)) {
         // Already included
         return false;
@@ -410,7 +412,7 @@ bool AsPreprocesser::IncludeIfNotAlreadyIncluded(const QString &filename) {
     return true;
 }
 
-int AsPreprocesser::SkipStatement(const QByteArray &modifiedScript, int pos) {
+int AsPreprocesser::skipStatement(const QByteArray &modifiedScript, int pos) {
     asUINT len = 0;
 
     // Skip until ; or { whichever comes first
@@ -445,7 +447,7 @@ int AsPreprocesser::SkipStatement(const QByteArray &modifiedScript, int pos) {
     return pos;
 }
 
-int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {
+int AsPreprocesser::excludeCode(QByteArray &modifiedScript, int pos) {
     asUINT len = 0;
     int nested = 0;
     while (pos < (int)modifiedScript.size()) {
@@ -459,7 +461,7 @@ int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {
             engine->ParseToken(modifiedScript.data() + pos,
                                modifiedScript.size() - pos, &len);
             QString token = modifiedScript.mid(pos, len);
-            OverwriteCode(modifiedScript, pos, len);
+            overwriteCode(modifiedScript, pos, len);
 
             if (token == "if") {
                 nested++;
@@ -470,7 +472,7 @@ int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {
                 }
             }
         } else if (modifiedScript[pos] != '\n') {
-            OverwriteCode(modifiedScript, pos, len);
+            overwriteCode(modifiedScript, pos, len);
         }
         pos += len;
     }
@@ -478,7 +480,7 @@ int AsPreprocesser::ExcludeCode(QByteArray &modifiedScript, int pos) {
     return pos;
 }
 
-void AsPreprocesser::OverwriteCode(QByteArray &modifiedScript, int start,
+void AsPreprocesser::overwriteCode(QByteArray &modifiedScript, int start,
                                    int len) {
     auto code = modifiedScript.data() + start;
     for (int n = 0; n < len; n++) {
@@ -488,11 +490,10 @@ void AsPreprocesser::OverwriteCode(QByteArray &modifiedScript, int start,
     }
 }
 
-void AsPreprocesser::AddScriptSection(const QString &section,
-                                      const QByteArray &code, int lineOffset) {
+void AsPreprocesser::addScriptSection(const QString &section,
+                                      const QByteArray &code) {
     ScriptData data;
     data.section = section;
-    data.lineOffset = lineOffset;
     data.script = code;
     modifiedScripts.append(data);
 }

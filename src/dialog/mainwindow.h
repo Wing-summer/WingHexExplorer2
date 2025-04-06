@@ -555,9 +555,6 @@ private:
     QLabel *m_lblsellen = nullptr;
     QStatusBar *m_status = nullptr;
 
-    QAction *m_littleEndian = nullptr;
-    QAction *m_bigEndian = nullptr;
-
     QAction *m_aShowMetafg = nullptr;
     QAction *m_aShowMetabg = nullptr;
     QAction *m_aShowMetaComment = nullptr;
@@ -603,9 +600,6 @@ private:
 
     QString m_lastusedpath;
     bool m_islittle = true;
-    bool m_enablePlugin = true;
-
-    // Guard against recursion
-    bool _isHandlingEvent = false;
+    bool m_unsignedHex = false;
 };
 #endif // MAINWINDOW_H

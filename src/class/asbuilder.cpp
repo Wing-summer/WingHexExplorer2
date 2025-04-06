@@ -39,7 +39,7 @@ int asBuilder::StartNewModule(const char *moduleName) {
     if (module == nullptr)
         return -1;
 
-    ClearAll();
+    clearAll();
     return 0;
 }
 
@@ -53,7 +53,7 @@ int asBuilder::Build() {
 
     for (auto &mod : modifiedScripts) {
         module->AddScriptSection(mod.section.toUtf8(), mod.script.data(),
-                                 mod.script.size(), mod.lineOffset);
+                                 mod.script.size());
     }
 
     int r = module->Build();
