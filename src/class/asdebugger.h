@@ -116,6 +116,7 @@ public:
     void runDebugAction(DebugAction action);
 
     DebugAction currentState() const;
+    void resetState();
 
     static void deleteDbgContextInfo(void *info);
 

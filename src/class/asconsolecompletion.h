@@ -25,7 +25,7 @@ class ScriptingConsole;
 class AsConsoleCompletion : public AsCompletion {
     Q_OBJECT
 public:
-    explicit AsConsoleCompletion(asIScriptEngine *engine, ScriptingConsole *p);
+    explicit AsConsoleCompletion(ScriptingConsole *p);
     virtual ~AsConsoleCompletion() = default;
 
 private:

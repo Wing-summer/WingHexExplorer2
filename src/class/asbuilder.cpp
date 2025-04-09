@@ -24,32 +24,13 @@
 
 asBuilder::asBuilder(asIScriptEngine *engine) : AsPreprocesser(engine) {}
 
-asBuilder::~asBuilder() {
-    if (module) {
-        module->Discard();
-    }
-}
-
-int asBuilder::StartNewModule(const char *moduleName) {
-    if (module) {
-        module->Discard();
-    }
-
-    module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);
-    if (module == nullptr)
-        return -1;
-
-    clearAll();
-    return 0;
-}
-
-asIScriptModule *asBuilder::GetModule() { return module; }
-
-int asBuilder::Build() {
+int asBuilder::build(asIScriptModule *module) {
     Q_ASSERT(module);
     if (module == nullptr) {
         return -1;
     }
+
+    module->ResetGlobalVars();
 
     for (auto &mod : modifiedScripts) {
         module->AddScriptSection(mod.section.toUtf8(), mod.script.data(),

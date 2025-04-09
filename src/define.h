@@ -13,6 +13,8 @@ enum AsUserDataType {
     UserData_ContextDbgInfo,
     UserData_API,
     UserData_PluginFn,
+    UserData_isDbg,
+    UserData_ContextMode,
 };
 }
 

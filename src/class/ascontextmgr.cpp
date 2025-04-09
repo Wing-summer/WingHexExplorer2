@@ -17,6 +17,25 @@
 
 #include "ascontextmgr.h"
 
+// copy from base class
+struct SContextInfo {
+    asUINT sleepUntil;
+    std::vector<asIScriptContext *> coRoutines;
+    asUINT currentCoRoutine;
+    asIScriptContext *keepCtxAfterExecution;
+};
+
 asContextMgr::asContextMgr() : CContextMgr() {}
 
-bool asContextMgr::isRunning() const { return !m_threads.empty(); }
+bool asContextMgr::findThreadWithUserData(asPWORD index, void *data) const {
+    for (auto &th : m_threads) {
+        auto ctx = th->keepCtxAfterExecution;
+        if (ctx) {
+            auto user = ctx->GetUserData(index);
+            if (user == data) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

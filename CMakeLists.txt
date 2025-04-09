@@ -42,7 +42,7 @@ option(WINGHEX_USE_FRAMELESS "Use borderless windows to ensure UI uniformity"
 if(WIN32)
     find_package(QT NAMES Qt6 Qt5 REQUIRED AxContainer)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED AxContainer)
-    add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-DNOMINMAX)
 endif()
 
 if(${QT_VERSION_MAJOR} EQUAL 5)
@@ -239,8 +239,6 @@ set(CLASS_SRC
     src/class/settingmanager.cpp
     src/class/asdebugger.h
     src/class/asdebugger.cpp
-    src/class/scriptconsolemachine.h
-    src/class/scriptconsolemachine.cpp
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp
     src/class/scripteditortheme.h
@@ -319,8 +317,6 @@ set(MODEL_SRC
     src/model/checksummodel.cpp
     src/model/qjsontablemodel.h
     src/model/qjsontablemodel.cpp
-    src/model/scriptobjmodel.h
-    src/model/scriptobjmodel.cpp
     src/model/dbgcallstackmodel.h
     src/model/dbgcallstackmodel.cpp
     src/model/dbgvarshowmodel.h

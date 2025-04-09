@@ -123,8 +123,8 @@ private:
     buildUpScriptConsoleDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                              ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
-    buildUpScriptObjShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
-                             ads::CDockAreaWidget *areaw = nullptr);
+    buildUpScriptBgOutputDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                              ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpVisualDataDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                           ads::CDockAreaWidget *areaw = nullptr);
@@ -205,9 +205,9 @@ private slots:
     void on_inspectQt();
 
     void on_scriptwindow();
-    void on_setting_general();
-    void on_setting_script();
-    void on_setting_plugin();
+    void on_settingGeneral();
+    void on_settingScript();
+    void on_settingPlugin();
 
     void on_about();
     void on_sponsor();
@@ -265,6 +265,8 @@ private:
     QMessageBox::StandardButton saveRequest();
 
     inline ads::CDockAreaWidget *editorViewArea() const;
+
+    void onOutputBgScriptOutput(const ScriptMachine::MessageInfo &message);
 
 private:
     QJsonObject extractModelData(const QAbstractItemModel *model,
@@ -481,7 +483,7 @@ private:
 
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
-    QTableViewExt *m_varshowtable = nullptr;
+    QPlainTextEdit *m_bgScriptOutput = nullptr;
 
     bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;

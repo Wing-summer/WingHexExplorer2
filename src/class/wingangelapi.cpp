@@ -24,7 +24,6 @@
 #include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
-#include "control/scriptingconsole.h"
 #include "define.h"
 #include "scriptaddon/scriptqdictionary.h"
 
@@ -2084,44 +2083,35 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
         return true;
     }
 
-    if (_console) {
-        QTemporaryFile f;
-        if (f.open()) {
-            f.write(code.toUtf8());
-            f.close();
-        }
-
-        _console->setMode(ScriptingConsole::Output);
-        _console->stdOut(getSenderHeader(sender));
-        auto handles = _handles;
-        _console->machine()->executeScript(f.fileName());
-        cleanUpHandles(handles);
-        _console->appendCommandPrompt();
-        _console->setMode(ScriptingConsole::Input);
+    QTemporaryFile f;
+    if (f.open()) {
+        f.write(code.toUtf8());
+        f.close();
     }
+
+    auto handles = _handles;
+    ScriptMachine::instance().executeScript(ScriptMachine::Background,
+                                            f.fileName());
+    cleanUpHandles(handles);
 
     return false;
 }
 
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
-    _console->setMode(ScriptingConsole::Output);
-    _console->stdOut(getSenderHeader(sender));
     auto handles = _handles;
-    auto ret = _console->machine()->executeScript(fileName);
+    auto ret = ScriptMachine::instance().executeScript(
+        ScriptMachine::Background, fileName);
     cleanUpHandles(handles);
-    _console->appendCommandPrompt();
-    _console->setMode(ScriptingConsole::Input);
     return ret;
 }
 
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
-    _console->setMode(ScriptingConsole::Output);
-    _console->stdOut(getSenderHeader(sender));
-    auto ret = _console->machine()->executeCode(code);
-    _console->appendCommandPrompt();
-    _console->setMode(ScriptingConsole::Input);
+    auto handles = _handles;
+    auto ret =
+        ScriptMachine::instance().executeCode(ScriptMachine::Background, code);
+    cleanUpHandles(handles);
     return ret;
 }
 
@@ -2175,7 +2165,7 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
         return nullptr;
     }
 
-    auto engine = _console->machine()->engine();
+    auto engine = ScriptMachine::instance().engine();
     auto info = engine->GetTypeInfoByDecl(typeStr.toUtf8());
     if (info) {
         auto len = content.length();
@@ -2197,7 +2187,7 @@ void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
         return nullptr;
     }
 
-    auto engine = _console->machine()->engine();
+    auto engine = ScriptMachine::instance().engine();
     auto info = engine->GetTypeInfoByDecl(typeStr.toUtf8());
     if (info) {
         auto len = content.length();
@@ -2222,7 +2212,7 @@ void *WingAngelAPI::newAsDictionary(
     const WingHex::SenderInfo &sender,
     const QHash<QString, QPair<MetaType, void *>> &content) {
     Q_UNUSED(sender);
-    auto engine = _console->machine()->engine();
+    auto engine = ScriptMachine::instance().engine();
     auto dic = CScriptDictionary::Create(engine);
 
     for (auto p = content.constKeyValueBegin(); p != content.constKeyValueEnd();
@@ -2246,11 +2236,6 @@ void WingAngelAPI::deleteAsDictionary(const WingHex::SenderInfo &sender,
     if (dic) {
         reinterpret_cast<CScriptDictionary *>(dic)->Release();
     }
-}
-
-QString WingAngelAPI::getSenderHeader(const WingHex::SenderInfo &sender) {
-    return QStringLiteral("(") + sender.puid + QStringLiteral("::") +
-           sender.plgcls + QStringLiteral(") ");
 }
 
 void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {
@@ -2509,8 +2494,4 @@ bool WingAngelAPI::_DataVisual_updateTextTable(const QString &json,
         }
     }
     return false;
-}
-
-void WingAngelAPI::setBindingConsole(ScriptingConsole *console) {
-    _console = console;
 }

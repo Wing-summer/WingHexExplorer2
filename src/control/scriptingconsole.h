@@ -18,10 +18,9 @@
 #ifndef ScriptingConsole_H
 #define ScriptingConsole_H
 
-#include "scriptingconsolebase.h"
-
 #include "class/asconsolecompletion.h"
-#include "class/scriptconsolemachine.h"
+#include "class/scriptmachine.h"
+#include "scriptingconsolebase.h"
 
 #include <QMutex>
 
@@ -33,13 +32,13 @@ public:
 
     virtual ~ScriptingConsole();
 
-    ScriptMachine *machine() const;
-    ScriptConsoleMachine *consoleMachine() const;
-
     QString currentCodes() const;
 
 signals:
     void onFunctionTip(const QString &tip);
+
+public:
+    QString getInput();
 
 public slots:
     void init();
@@ -48,13 +47,13 @@ public slots:
 
     void processKeyEvent(QKeyEvent *e);
 
+    void onOutput(const ScriptMachine::MessageInfo &message);
+
 private slots:
     void applyScriptSettings();
 
 private:
     void runConsoleCommand(const QString &code);
-
-    QString getInput();
 
     QString packUpLoggingStr(const QString &message);
 
@@ -67,8 +66,6 @@ protected slots:
     virtual void onCompletion(const QModelIndex &index) override;
 
 private:
-    ScriptConsoleMachine *_sp = nullptr;
-
     QString _codes;
 
     std::function<QString(void)> _getInputFn;

@@ -75,6 +75,12 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     if (ctx == nullptr)
         return;
 
+    auto isDbg = reinterpret_cast<asPWORD>(
+        ctx->GetUserData(AsUserDataType::UserData_isDbg));
+    if (!isDbg) {
+        return;
+    }
+
     const char *file = 0;
     int col = 0;
     int lineNbr = ctx->GetLineNumber(0, &col, &file);
@@ -499,6 +505,8 @@ asDebugger::GCStatistic asDebugger::gcStatistics() {
 }
 
 void asDebugger::runDebugAction(DebugAction action) { m_action = action; }
+
+void asDebugger::resetState() { m_action = CONTINUE; }
 
 void asDebugger::deleteDbgContextInfo(void *info) {
     if (info) {

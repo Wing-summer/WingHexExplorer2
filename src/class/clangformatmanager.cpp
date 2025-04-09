@@ -133,7 +133,7 @@ QString ClangFormatManager::formatCode(const QString &codes, bool &ok) {
                 .arg(m_clangStyle)
                 .arg(m_identWidth);
         auto ret = runClangFormat(
-            {style, QStringLiteral("--assume-filename=wing.cpp")}, codes, ok);
+            {style, QStringLiteral("--assume-filename=wing.cs")}, codes, ok);
         return ret;
     } else {
         return runClangFormat({}, codes, ok);

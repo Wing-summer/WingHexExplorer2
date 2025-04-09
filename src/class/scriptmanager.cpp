@@ -25,6 +25,7 @@
 #include <QJsonObject>
 #include <QMenu>
 
+#include "scriptmachine.h"
 #include "settingmanager.h"
 #include "utilities.h"
 #include "wingmessagebox.h"
@@ -50,7 +51,7 @@ ScriptManager::ScriptManager() : QObject() {
     refresh();
 }
 
-ScriptManager::~ScriptManager() { detach(); }
+ScriptManager::~ScriptManager() {}
 
 QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
     if (!dir.exists()) {
@@ -206,14 +207,6 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
     return meta;
 }
 
-void ScriptManager::attach(ScriptingConsole *console) {
-    if (console) {
-        _console = console;
-    }
-}
-
-void ScriptManager::detach() { _console = nullptr; }
-
 ScriptManager::ScriptDirMeta
 ScriptManager::usrDirMeta(const QString &cat) const {
     return _usrDirMetas.value(cat);
@@ -257,13 +250,16 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
 }
 
 void ScriptManager::runScript(const QString &filename) {
-    Q_ASSERT(_console);
-    _console->setMode(ScriptingConsole::Output);
-    _console->stdWarn(tr("Excuting:") + filename);
-    _console->newLine();
-    _console->machine()->executeScript(filename);
-    _console->appendCommandPrompt();
-    _console->setMode(ScriptingConsole::Input);
+    // ScriptMachine::instance().executeScript(filename);
+
+    // Q_ASSERT(_console);
+    // _console->setMode(ScriptingConsole::Output);
+    // _console->stdWarn(tr("Excuting:") + filename);
+    // _console->newLine();
+    // // TODO
+    // //  _console->machine()->executeScript(filename);
+    // _console->appendCommandPrompt();
+    // _console->setMode(ScriptingConsole::Input);
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {

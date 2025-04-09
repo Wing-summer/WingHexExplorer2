@@ -32,13 +32,22 @@ private:
     using TranslateFunc = std::function<QString(const QStringList &)>;
 
 public:
+    // we have three console modes
+    enum ConsoleMode {
+        Interactive, // in a shell
+        Scripting,   // in scripting dialog
+        Background   // run codes from other way
+    };
+
+public:
     enum class MessageType { Info, Warn, Error, Print };
 
     struct MessageInfo {
+        ConsoleMode mode = ConsoleMode::Background;
         QString section;
         int row = -1;
         int col = -1;
-        asEMsgType type = asEMsgType::asMSGTYPE_INFORMATION;
+        MessageType type = MessageType::Info;
         QString message;
     };
 
@@ -78,24 +87,41 @@ public:
     Q_ENUM(asEContextState)
 
 public:
-    explicit ScriptMachine(const std::function<QString()> &getInputFn,
-                           QObject *parent = nullptr);
+    struct RegCallBacks {
+        std::function<QString()> getInputFn;
+        std::function<void()> clearFn;
+        std::function<void(const ScriptMachine::MessageInfo &)> printMsgFn;
+    };
+
+private:
+    explicit ScriptMachine();
+    Q_DISABLE_COPY_MOVE(ScriptMachine)
+
+public:
+    asIScriptModule *createModule(ConsoleMode mode);
+    asIScriptModule *createModuleIfNotExist(ConsoleMode mode);
+    asIScriptModule *module(ConsoleMode mode);
+    bool isModuleExists(ConsoleMode mode);
+
+public:
+    static ScriptMachine &instance();
 
     virtual ~ScriptMachine();
 
-    bool inited();
-
-    bool isRunning() const;
-
-    asDebugger *debugger() const;
-
-    asIScriptEngine *engine() const;
-
-    bool insteadFoundDisabled() const;
-    void setInsteadFoundDisabled(bool newInsteadFoundDisabled);
+public:
+    bool init();
+    bool isInited() const;
+    bool isRunning(ConsoleMode mode = Scripting) const;
 
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
+
+    void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
+
+public:
+    asDebugger *debugger() const;
+
+    asIScriptEngine *engine() const;
 
 public:
     static void scriptAssert(bool b);
@@ -109,20 +135,19 @@ public:
 
 public:
     // debug or release?
-    bool isDebugMode() const;
-    void setDebugMode(bool isDbg);
+    bool isDebugMode(ConsoleMode mode = Scripting);
 
 public slots:
-    virtual bool executeCode(const QString &code);
-    virtual bool executeScript(const QString &script, bool isInDebug = false);
+    bool executeCode(ConsoleMode mode, const QString &code);
+    // only scripting mode can be debugged
+    bool executeScript(ConsoleMode mode, const QString &script,
+                       bool isInDebug = false);
 
+    void abortDbgScript(ConsoleMode mode);
     void abortScript();
 
-private:
-    bool execute(const QString &code, bool isInDebug = false);
-
 protected:
-    virtual bool configureEngine(asIScriptEngine *engine);
+    bool configureEngine();
 
     QString getCallStack(asIScriptContext *context);
 
@@ -130,8 +155,8 @@ protected:
 
 private:
     void print(void *ref, int typeId);
-
     QString getInput();
+    void outputMessage(ConsoleMode mode, const MessageInfo &info);
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);
 
@@ -166,8 +191,6 @@ private:
     Q_DECL_UNUSED void translation();
 
 signals:
-    void onOutput(MessageType type, const MessageInfo &message);
-
     void onDebugFinished();
 
 private:
@@ -175,12 +198,10 @@ private:
     asDebugger *_debugger = nullptr;
     asContextMgr *_ctxMgr = nullptr;
     QVector<asIScriptContext *> _ctxPool;
-    std::function<void(void *ref, int typeId)> _printFn;
 
     QVector<asITypeInfo *> _rtypes;
-    std::function<QString(void)> _getInputFn;
-
-    bool m_insteadFoundDisabled = false;
+    QMap<ConsoleMode, RegCallBacks> _regcalls;
+    ConsoleMode _curMode = ConsoleMode::Background;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

@@ -21,6 +21,7 @@
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
+#include "class/scriptmachine.h"
 #include "class/settingmanager.h"
 #include "class/skinmanager.h"
 #include "class/wingcstruct.h"
@@ -3885,6 +3886,8 @@ void PluginSystem::loadAllPlugin() {
             loadExtPlugin();
         }
     }
+
+    Logger::newLine();
 
     // loading finished, delete the checking engine
     finalizeCheckingEngine();

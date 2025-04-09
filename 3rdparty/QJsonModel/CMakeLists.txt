@@ -15,7 +15,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /utf-8")
     string(APPEND CMAKE_C_FLAGS " /utf-8")
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

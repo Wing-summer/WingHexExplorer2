@@ -24,6 +24,7 @@
 #include "class/languagemanager.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
+#include "class/scriptmachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
@@ -93,6 +94,17 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_dock->restoreState(set.scriptDockLayout());
     _savedLayout = set.scriptDockLayout();
 
+    ScriptMachine::RegCallBacks callbacks;
+    callbacks.getInputFn = [this]() -> QString {
+        return m_consoleout->getInput();
+    };
+    callbacks.clearFn = [this]() { m_consoleout->clearConsole(); };
+    callbacks.printMsgFn = [this](const ScriptMachine::MessageInfo &message) {
+        m_consoleout->onOutput(message);
+    };
+    ScriptMachine::instance().registerCallBack(ScriptMachine::Scripting,
+                                               callbacks);
+
     this->setUpdatesEnabled(true);
 }
 
@@ -102,8 +114,8 @@ void ScriptingDialog::initConsole() {
     Q_ASSERT(m_consoleout);
 
     m_consoleout->init();
-    auto machine = m_consoleout->machine();
-    connect(machine, &ScriptMachine::onDebugFinished, this, [=] {
+    auto &machine = ScriptMachine::instance();
+    connect(&machine, &ScriptMachine::onDebugFinished, this, [=] {
         this->updateRunDebugMode();
         m_callstack->updateData({});
         m_varshow->updateData({});
@@ -138,7 +150,7 @@ void ScriptingDialog::initConsole() {
             _DebugingEditor = nullptr;
         }
     });
-    auto dbg = machine->debugger();
+    auto dbg = machine.debugger();
     Q_ASSERT(dbg);
     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
             [=](const asDebugger::BreakPoint &old, int newLineNr) {
@@ -210,7 +222,7 @@ void ScriptingDialog::initConsole() {
         });
     connect(dbg, &asDebugger::onDebugActionExec, this,
             [this]() { updateRunDebugMode(); });
-    m_sym->setEngine(machine->engine());
+    m_sym->setEngine(machine.engine());
 }
 
 bool ScriptingDialog::about2Close() {
@@ -489,16 +501,15 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
 
     auto dbgShortCut = new QShortcut(dbgkey, this);
     connect(dbgShortCut, &QShortcut::activated, this, [this]() {
-        auto runner = m_consoleout->machine();
+        auto &runner = ScriptMachine::instance();
         bool isRun = false;
         bool isDbg = false;
         bool isPaused = false;
-        if (runner) {
-            isRun = runner->isRunning();
-            isDbg = runner->isDebugMode();
-            auto dbg = runner->debugger();
-            isPaused = dbg->currentState() == asDebugger::PAUSE;
-        }
+
+        isRun = runner.isRunning();
+        isDbg = runner.isDebugMode();
+        auto dbg = runner.debugger();
+        isPaused = dbg->currentState() == asDebugger::PAUSE;
 
         if (isRun && isDbg && isPaused) {
             m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
@@ -728,8 +739,8 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(editor);
         Q_ASSERT(m_views.contains(editor));
 
-        auto m = m_consoleout->machine();
-        if (m->isRunning() && _DebugingEditor == editor) {
+        auto &m = ScriptMachine::instance();
+        if (m.isRunning() && _DebugingEditor == editor) {
             if (WingMessageBox::warning(
                     this, this->windowTitle(), tr("ScriptStillRunning"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -864,17 +875,17 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
 }
 
 void ScriptingDialog::updateRunDebugMode(bool disable) {
-    auto runner = m_consoleout->machine();
+    auto &runner = ScriptMachine::instance();
     auto enable = !disable;
     bool isRun = false;
     bool isDbg = false;
     bool isPaused = false;
-    if (runner) {
-        isRun = runner->isRunning();
-        isDbg = runner->isDebugMode();
-        auto dbg = runner->debugger();
-        isPaused = dbg->currentState() == asDebugger::PAUSE;
-    }
+
+    isRun = runner.isRunning();
+    isDbg = runner.isDebugMode();
+    auto dbg = runner.debugger();
+    isPaused = dbg->currentState() == asDebugger::PAUSE;
+
     m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_ACTION)->setEnabled(!isRun);
     m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_DBG_ACTION)
         ->setEnabled(!isRun);
@@ -920,8 +931,8 @@ ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
 }
 
 bool ScriptingDialog::isCurrentDebugging() const {
-    auto m = m_consoleout->machine();
-    return m && m->isDebugMode();
+    auto &m = ScriptMachine::instance();
+    return m.isDebugMode();
 }
 
 ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
@@ -932,8 +943,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
         return e;
     }
 
-    auto editor =
-        new ScriptEditor(m_consoleout->consoleMachine()->engine(), this);
+    auto editor = new ScriptEditor(this);
 
     auto res = editor->openFile(filename);
     if (!res) {
@@ -949,9 +959,9 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
 
 void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
     updateRunDebugMode(true);
-    auto machine = m_consoleout->machine();
-    if (machine->isDebugMode()) {
-        auto dbg = machine->debugger();
+    auto &machine = ScriptMachine::instance();
+    if (machine.isDebugMode()) {
+        auto dbg = machine.debugger();
         dbg->runDebugAction(action);
     }
 }
@@ -978,7 +988,7 @@ void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
     m_consoleout->clear();
 
     // add breakpoints
-    auto dbg = m_consoleout->machine()->debugger();
+    auto dbg = ScriptMachine::instance().debugger();
     auto fileName = editor->fileName();
     auto e = editor->editor();
     auto totalblk = e->blockCount();
@@ -992,7 +1002,8 @@ void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
     PluginSystem::instance().scriptPragmaBegin();
 
     editor->setReadOnly(true);
-    m_consoleout->machine()->executeScript(fileName, true);
+    ScriptMachine::instance().executeScript(ScriptMachine::Scripting, fileName,
+                                            true);
     editor->setReadOnly(false);
 
     updateRunDebugMode();
@@ -1006,8 +1017,9 @@ void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
     const auto curSym = QStringLiteral("cur");
     const auto hitCur = QStringLiteral("curbp");
 
-    if (m_consoleout->machine()->isDebugMode()) {
-        auto dbg = m_consoleout->machine()->debugger();
+    auto &m = ScriptMachine::instance();
+    if (m.isDebugMode()) {
+        auto dbg = m.debugger();
         auto symID = e->symbolMark(line);
         if (curSym == symID) {
             e->addSymbolMark(line, hitCur);
@@ -1027,8 +1039,9 @@ void ScriptingDialog::removeBreakPoint(ScriptEditor *editor, int line) {
     Q_ASSERT(editor);
     auto e = editor->editor();
 
-    if (m_consoleout->machine()->isDebugMode()) {
-        auto dbg = m_consoleout->machine()->debugger();
+    auto &m = ScriptMachine::instance();
+    if (m.isDebugMode()) {
+        auto dbg = m.debugger();
         auto symID = e->symbolMark(line);
 
         const auto bpMark = QStringLiteral("bp");
@@ -1053,8 +1066,9 @@ void ScriptingDialog::toggleBreakPoint(ScriptEditor *editor, int line) {
     Q_ASSERT(editor);
     auto e = editor->editor();
 
-    if (m_consoleout->machine()->isDebugMode()) {
-        auto dbg = m_consoleout->machine()->debugger();
+    auto &m = ScriptMachine::instance();
+    if (m.isDebugMode()) {
+        auto dbg = m.debugger();
         auto symID = e->symbolMark(line);
 
         const auto bpMark = QStringLiteral("bp");
@@ -1134,8 +1148,7 @@ void ScriptingDialog::on_newfile() {
             return;
         }
 
-        auto editor =
-            new ScriptEditor(m_consoleout->consoleMachine()->engine(), this);
+        auto editor = new ScriptEditor(this);
         auto res = editor->openFile(filename);
         if (!res) {
             WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
@@ -1355,7 +1368,7 @@ void ScriptingDialog::on_runscript() {
         PluginSystem::instance().scriptPragmaBegin();
 
         editor->setReadOnly(true);
-        m_consoleout->machine()->executeScript(editor->fileName());
+        // ScriptMachine::instance().executeScript(editor->fileName());
         editor->setReadOnly(false);
         updateRunDebugMode();
     }
@@ -1423,8 +1436,8 @@ void ScriptingDialog::on_removebreakpoint() {
 }
 
 void ScriptingDialog::closeEvent(QCloseEvent *event) {
-    auto runner = m_consoleout->machine();
-    if (runner->isRunning()) {
+    auto &runner = ScriptMachine::instance();
+    if (runner.isRunning()) {
         if (WingMessageBox::warning(
                 this, this->windowTitle(), tr("ScriptStillRunning"),
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {

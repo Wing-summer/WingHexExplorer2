@@ -24,7 +24,7 @@ class asContextMgr : public CContextMgr {
 public:
     asContextMgr();
 
-    bool isRunning() const;
+    bool findThreadWithUserData(asPWORD index, void *data) const;
 };
 
 #endif // ASCONTEXTMGR_H

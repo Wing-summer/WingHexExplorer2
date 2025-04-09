@@ -27,19 +27,10 @@
 class asBuilder : public AsPreprocesser {
 public:
     explicit asBuilder(asIScriptEngine *engine);
-    virtual ~asBuilder();
 
-    // Start a new module
-    virtual int StartNewModule(const char *moduleName);
-
-    // Build the added script sections
-    virtual int Build();
-
-    // Returns the current module
-    asIScriptModule *GetModule();
-
-protected:
-    asIScriptModule *module = nullptr;
+public:
+    // build the added script sections
+    int build(asIScriptModule *module);
 };
 
 #endif // ASBUILDER_H

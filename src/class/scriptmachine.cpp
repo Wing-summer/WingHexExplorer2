@@ -40,6 +40,7 @@
 #include "scriptaddon/scriptregex.h"
 
 #include <QProcess>
+#include <QScopeGuard>
 
 ScriptMachine::~ScriptMachine() {
     if (_ctxMgr) {
@@ -49,94 +50,119 @@ ScriptMachine::~ScriptMachine() {
     destoryMachine();
 }
 
-bool ScriptMachine::inited() { return _engine != nullptr; }
+bool ScriptMachine::init() {
+    if (isInited()) {
+        return true;
+    }
 
-bool ScriptMachine::isRunning() const {
-    return _debugger->getEngine() || _ctxMgr->isRunning();
+    qRegisterMetaType<MessageInfo>();
+
+    _engine = asCreateScriptEngine();
+    if (!ScriptMachine::configureEngine()) {
+        _engine->ShutDownAndRelease();
+        _engine = nullptr;
+        return false;
+    }
+
+    // Let the debugger hold an engine pointer that can be used by the
+    // callbacks
+    _debugger->setEngine(_engine);
+
+    return true;
 }
 
-bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
-    if (engine == nullptr) {
+bool ScriptMachine::isInited() const { return _engine != nullptr; }
+
+bool ScriptMachine::isRunning(ConsoleMode mode) const {
+    return _ctxMgr->findThreadWithUserData(
+        AsUserDataType::UserData_ContextMode,
+        reinterpret_cast<void *>(asPWORD(mode)));
+}
+
+bool ScriptMachine::configureEngine() {
+    if (_engine == nullptr) {
         return false;
     }
 
     // we need utf8, the default is what we want
-    engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
-    engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, true);
-    engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, false);
-    engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, false);
-    engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false);
-    engine->SetEngineProperty(asEP_DISABLE_INTEGER_DIVISION, false);
-    engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, false);
-    engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 0);
-    engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
-    engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, true); // enum class like
-    setDebugMode(false);
+    _engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
+    _engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, true);
+    _engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, false);
+    _engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, false);
+    _engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false);
+    _engine->SetEngineProperty(asEP_DISABLE_INTEGER_DIVISION, false);
+    _engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, false);
+    _engine->SetEngineProperty(asEP_ALTER_SYNTAX_NAMED_ARGS, 0);
+    _engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
+    _engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE,
+                               true); // enum class like
+
+    // We will only initialize the global variables once we're
+    // ready to execute, so disable the automatic initialization
+    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
     // The script compiler will send any compiler messages to the callback
-    auto r = engine->SetMessageCallback(asFUNCTION(messageCallback), this,
-                                        asCALL_CDECL);
+    auto r = _engine->SetMessageCallback(asFUNCTION(messageCallback), this,
+                                         asCALL_CDECL);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
 
-    engine->SetContextUserDataCleanupCallback(
+    _engine->SetContextUserDataCleanupCallback(
         &ScriptMachine::cleanUpDbgContext,
         AsUserDataType::UserData_ContextDbgInfo);
 
-    engine->SetFunctionUserDataCleanupCallback(
+    _engine->SetFunctionUserDataCleanupCallback(
         &ScriptMachine::cleanUpPluginSysIDFunction,
         AsUserDataType::UserData_PluginFn);
 
-    registerEngineAddon(engine);
+    registerEngineAddon(_engine);
 
     _rtypes.resize(RegisteredType::tMAXCOUNT);
     _rtypes[RegisteredType::tString] =
-        q_check_ptr(engine->GetTypeInfoByName("string"));
+        q_check_ptr(_engine->GetTypeInfoByName("string"));
     _rtypes[RegisteredType::tChar] =
-        q_check_ptr(engine->GetTypeInfoByName("char"));
+        q_check_ptr(_engine->GetTypeInfoByName("char"));
     _rtypes[RegisteredType::tArray] =
-        q_check_ptr(engine->GetTypeInfoByName("array"));
+        q_check_ptr(_engine->GetTypeInfoByName("array"));
     _rtypes[RegisteredType::tComplex] =
-        q_check_ptr(engine->GetTypeInfoByName("complex"));
+        q_check_ptr(_engine->GetTypeInfoByName("complex"));
     _rtypes[RegisteredType::tWeakref] =
-        q_check_ptr(engine->GetTypeInfoByName("weakref"));
+        q_check_ptr(_engine->GetTypeInfoByName("weakref"));
     _rtypes[RegisteredType::tConstWeakref] =
-        q_check_ptr(engine->GetTypeInfoByName("const_weakref"));
+        q_check_ptr(_engine->GetTypeInfoByName("const_weakref"));
     _rtypes[RegisteredType::tAny] =
-        q_check_ptr(engine->GetTypeInfoByName("any"));
+        q_check_ptr(_engine->GetTypeInfoByName("any"));
     _rtypes[RegisteredType::tDictionary] =
-        q_check_ptr(engine->GetTypeInfoByName("dictionary"));
+        q_check_ptr(_engine->GetTypeInfoByName("dictionary"));
     _rtypes[RegisteredType::tDictionaryValue] =
-        q_check_ptr(engine->GetTypeInfoByName("dictionaryValue"));
+        q_check_ptr(_engine->GetTypeInfoByName("dictionaryValue"));
     _rtypes[RegisteredType::tGrid] =
-        q_check_ptr(engine->GetTypeInfoByName("grid"));
+        q_check_ptr(_engine->GetTypeInfoByName("grid"));
     _rtypes[RegisteredType::tRef] =
-        q_check_ptr(engine->GetTypeInfoByName("ref"));
+        q_check_ptr(_engine->GetTypeInfoByName("ref"));
     _rtypes[RegisteredType::tColor] =
-        q_check_ptr(engine->GetTypeInfoByName("color"));
+        q_check_ptr(_engine->GetTypeInfoByName("color"));
 
     // Register a couple of extra functions for the scripts
-    _printFn = std::bind(&ScriptMachine::print, this, std::placeholders::_1,
-                         std::placeholders::_2);
-    r = engine->RegisterGlobalFunction("void print(? &in obj)",
-                                       asMETHOD(decltype(_printFn), operator()),
-                                       asCALL_THISCALL_ASGLOBAL, &_printFn);
+    r = _engine->RegisterGlobalFunction("void print(? &in obj)",
+                                        asMETHOD(ScriptMachine, print),
+                                        asCALL_THISCALL_ASGLOBAL, this);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
 
-    r = engine->RegisterGlobalFunction(
-        "string getInput()", asMETHOD(decltype(_getInputFn), operator()),
-        asCALL_THISCALL_ASGLOBAL, &_getInputFn);
-    assert(r >= 0);
+    r = _engine->RegisterGlobalFunction("string getInput()",
+                                        asMETHOD(ScriptMachine, getInput),
+                                        asCALL_THISCALL_ASGLOBAL, this);
+    Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
 
-    r = engine->RegisterGlobalFunction(
+    r = _engine->RegisterGlobalFunction(
         "int exec(string &out output, const string &in exe, "
         "const string &in params = \"\", int timeout = 3000)",
         asFUNCTION(execSystemCmd), asCALL_CDECL);
@@ -147,12 +173,12 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     // Setup the context manager and register the support for co-routines
     _ctxMgr = new asContextMgr();
-    _ctxMgr->RegisterCoRoutineSupport(engine);
+    _ctxMgr->RegisterCoRoutineSupport(_engine);
 
     // Tell the engine to use our context pool. This will also
     // allow us to debug internal script calls made by the engine
-    r = engine->SetContextCallbacks(requestContextCallback,
-                                    returnContextCallback, this);
+    r = _engine->SetContextCallbacks(requestContextCallback,
+                                     returnContextCallback, this);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
@@ -160,8 +186,8 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
 
     _debugger = new asDebugger(this);
 
-    // Register the to-string callbacks so the user can see the contents of
-    // strings
+    // Register the to-string callbacks so the user can see
+    // the contents of strings
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tString],
                                         &AngelObjString::stringToString);
     _debugger->registerToStringCallback(_rtypes[RegisteredType::tChar],
@@ -174,6 +200,9 @@ bool ScriptMachine::configureEngine(asIScriptEngine *engine) {
                                         &AngelObjString::colorToString);
 
     PluginSystem::instance().angelApi()->installAPI(this);
+
+    // create module for Console
+    _engine->GetModule("WINGCONSOLE", asGM_ALWAYS_CREATE);
 
     return true;
 }
@@ -198,34 +227,64 @@ QString ScriptMachine::getCallStack(asIScriptContext *context) {
 }
 
 void ScriptMachine::destoryMachine() {
+    _debugger->setEngine(nullptr);
     _engine->ShutDownAndRelease();
     _engine = nullptr;
 }
 
 void ScriptMachine::exceptionCallback(asIScriptContext *context) {
-    QString message =
-        tr("- Exception '%1' in '%2'\n")
-            .arg(context->GetExceptionString(),
-                 context->GetExceptionFunction()->GetDeclaration()) +
-        QStringLiteral("\n") + getCallStack(context);
+    if (context) {
+        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            context->GetUserData(AsUserDataType::UserData_ContextMode)));
+        QString message =
+            tr("- Exception '%1' in '%2'\n")
+                .arg(context->GetExceptionString(),
+                     context->GetExceptionFunction()->GetDeclaration()) +
+            QStringLiteral("\n") + getCallStack(context);
 
-    const char *section;
-    MessageInfo msg;
-    msg.row = context->GetExceptionLineNumber(&msg.col, &section);
-    msg.type = asMSGTYPE_ERROR;
-    msg.message = message;
-    emit onOutput(MessageType::Error, msg);
+        const char *section;
+        MessageInfo msg;
+        msg.row = context->GetExceptionLineNumber(&msg.col, &section);
+        msg.type = MessageType::Error;
+        msg.message = message;
+
+        outputMessage(mode, msg);
+    }
 }
 
 void ScriptMachine::print(void *ref, int typeId) {
-    MessageInfo info;
-    info.message = _debugger->toString(ref, typeId, _engine);
-    emit onOutput(MessageType::Print, info);
+    auto context = asGetActiveContext();
+    if (context) {
+        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            context->GetUserData(AsUserDataType::UserData_ContextMode)));
+
+        MessageInfo info;
+        info.type = MessageType::Print;
+        info.message = _debugger->toString(ref, typeId, _engine);
+
+        outputMessage(mode, info);
+    }
 }
 
 QString ScriptMachine::getInput() {
-    Q_ASSERT(_getInputFn);
-    return _getInputFn();
+    auto context = asGetActiveContext();
+    if (context) {
+        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            context->GetUserData(AsUserDataType::UserData_ContextMode)));
+
+        auto cbs = _regcalls.value(mode);
+        if (cbs.getInputFn) {
+            return cbs.getInputFn();
+        }
+    }
+    return {};
+}
+
+void ScriptMachine::outputMessage(ConsoleMode mode, const MessageInfo &info) {
+    auto cbs = _regcalls.value(mode);
+    if (cbs.printMsgFn) {
+        cbs.printMsgFn(info);
+    }
 }
 
 bool ScriptMachine::isType(asITypeInfo *tinfo, RegisteredType type) {
@@ -257,11 +316,32 @@ int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
     }
 }
 
-bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
-    // We will only initialize the global variables once we're
-    // ready to execute, so disable the automatic initialization
-    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-    setDebugMode(isInDebug);
+bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
+                                  bool isInDebug) {
+    // Compile the script
+    auto mod = createModule(mode);
+    // script-running is not allowed in interactive mode
+    if (mod == nullptr) {
+        return false;
+    }
+
+    QScopeGuard guard([mod, mode]() {
+        if (mode != ConsoleMode::Interactive) {
+            // Before leaving, allow the engine to clean up remaining objects by
+            // discarding the module and doing a full garbage collection so that
+            // this can also be debugged if desired
+            mod->Discard();
+        }
+    });
+
+    asPWORD isDbg = 0;
+    if (mode == Scripting) {
+        if (isInDebug) {
+            isDbg = 1;
+            _debugger->resetState();
+        }
+    }
+    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, isDbg == 0);
 
     asBuilder builder(_engine);
     for (auto &m : PluginSystem::instance().scriptMarcos()) {
@@ -272,27 +352,17 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     builder.setPragmaCallback(&ScriptMachine::pragmaCallback, this);
     builder.setIncludeCallback(&ScriptMachine::includeCallback, this);
 
-    // Compile the script
-    auto r = builder.StartNewModule("script");
+    auto r = builder.loadSectionFromFile(script.toUtf8());
     if (r < 0) {
         return false;
     }
 
-    r = builder.loadSectionFromFile(script.toUtf8());
-    if (r < 0) {
-        return false;
-    }
-
-    r = builder.Build();
+    r = builder.build(mod);
     if (r < 0) {
         MessageInfo info;
         info.message = tr("Script failed to build");
-        emit onOutput(MessageType::Error, info);
-        return false;
-    }
-
-    asIScriptModule *mod = builder.GetModule();
-    if (!mod) {
+        info.type = MessageType::Error;
+        outputMessage(mode, info);
         return false;
     }
 
@@ -306,19 +376,17 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     if (func == nullptr) {
         MessageInfo info;
         info.message = tr("Cannot find 'int main()' or 'void main()'");
-        emit onOutput(MessageType::Error, info);
+        info.type = MessageType::Error;
+        outputMessage(mode, info);
         return false;
     }
-
-    // Let the debugger hold an engine pointer that can be used by the
-    // callbacks
-    _debugger->setEngine(_engine);
 
     if (isInDebug) {
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.message = tr("Debugging, waiting for commands.");
-        emit onOutput(MessageType::Info, info);
+        info.type = MessageType::Info;
+        outputMessage(mode, info);
     }
 
     // Once we have the main function, we first need to initialize the global
@@ -328,7 +396,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     if (r < 0) {
         MessageInfo info;
         info.message = tr("Failed while initializing global variables");
-        emit onOutput(MessageType::Error, info);
+        info.type = MessageType::Error;
+        outputMessage(mode, info);
         return false;
     }
 
@@ -336,6 +405,16 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
     asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+
+    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+    mod->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+
+    asPWORD umode = asPWORD(mode);
+    ctx->SetUserData(reinterpret_cast<void *>(umode),
+                     AsUserDataType::UserData_ContextMode);
+
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
 
@@ -353,12 +432,14 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
             info.message = tr("The script failed with an exception") +
                            QStringLiteral("\n") +
                            QString::fromStdString(GetExceptionInfo(ctx, true));
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         } else if (r == asEXECUTION_ABORTED) {
             MessageInfo info;
             info.message = tr("The script was aborted");
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         } else {
             auto e = QMetaEnum::fromType<asEContextState>();
@@ -366,7 +447,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
             info.message = tr("The script terminated unexpectedly") +
                            QStringLiteral(" (") + e.valueToKey(r) +
                            QStringLiteral(")");
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         }
     } else {
@@ -379,7 +461,8 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
 
     MessageInfo info;
     info.message = tr("The script exited with ") + QString::number(r);
-    emit onOutput(MessageType::Info, info);
+    info.type = MessageType::Info;
+    outputMessage(mode, info);
 
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
@@ -389,30 +472,20 @@ bool ScriptMachine::executeScript(const QString &script, bool isInDebug) {
     // this can also be debugged if desired
     _engine->GarbageCollect();
 
-    // Release all contexts that have been allocated
-    for (auto &ctx : _ctxPool) {
-        ctx->Release();
-    }
-
-    _ctxPool.clear();
-
-    // Detach debugger
-    Q_ASSERT(_debugger);
-    _debugger->setEngine(nullptr);
-
-    if (isInDebug) {
+    if (isDbg) {
         _debugger->clearBreakPoint();
-        setDebugMode(false);
         emit onDebugFinished();
     }
     return r >= 0;
 }
 
-void ScriptMachine::abortScript() {
+void ScriptMachine::abortDbgScript(ConsoleMode mode) {
     if (_debugger->getEngine()) {
         _debugger->runDebugAction(asDebugger::ABORT);
     }
 }
+
+void ScriptMachine::abortScript() { _ctxMgr->AbortAll(); }
 
 void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     MessageType t = MessageType::Print;
@@ -438,7 +511,8 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     info.col = msg->col;
     info.section = msg->section;
     info.message = m;
-    emit ins->onOutput(t, info);
+    info.type = t;
+    ins->outputMessage(ins->_curMode, info);
 }
 
 void ScriptMachine::cleanUpDbgContext(asIScriptContext *context) {
@@ -460,17 +534,56 @@ asITypeInfo *ScriptMachine::typeInfo(RegisteredType type) const {
     return nullptr;
 }
 
-ScriptMachine::ScriptMachine(const std::function<QString()> &getInputFn,
-                             QObject *parent)
-    : QObject(parent), _getInputFn(getInputFn) {
-    Q_ASSERT(getInputFn);
-    qRegisterMetaType<MessageInfo>();
+ScriptMachine &ScriptMachine::instance() {
+    static ScriptMachine ins;
+    return ins;
+}
 
-    _engine = asCreateScriptEngine();
-    if (!ScriptMachine::configureEngine(_engine)) {
-        _engine->ShutDownAndRelease();
-        _engine = nullptr;
+ScriptMachine::ScriptMachine() : QObject() {}
+
+asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
+    if (isModuleExists(mode)) {
+        return nullptr;
     }
+    switch (mode) {
+    case Interactive:
+        return nullptr;
+    case Scripting:
+        return _engine->GetModule("WINGSCRIPT", asGM_ALWAYS_CREATE);
+    case Background:
+        return _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
+    }
+    // should not go there
+    return nullptr;
+}
+
+asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
+    switch (mode) {
+    case Interactive:
+        return _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
+    case Scripting:
+        return _engine->GetModule("WINGSCRIPT", asGM_CREATE_IF_NOT_EXISTS);
+    case Background:
+        return _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
+    }
+    // should not go there
+    return nullptr;
+}
+
+asIScriptModule *ScriptMachine::module(ConsoleMode mode) {
+    switch (mode) {
+    case Interactive:
+        return _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
+    case Scripting:
+        return _engine->GetModule("WINGSCRIPT", asGM_ONLY_IF_EXISTS);
+    case Background:
+        return _engine->GetModule("WINGSRV", asGM_ONLY_IF_EXISTS);
+    }
+    return nullptr;
+}
+
+bool ScriptMachine::isModuleExists(ConsoleMode mode) {
+    return module(mode) != nullptr;
 }
 
 asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
@@ -808,8 +921,6 @@ QString ScriptMachine::processTranslation(const char *content,
          }},
         {QRegularExpression(QStringLiteral("^Instead found '(.*?)'")),
          [machine](const QStringList &contents) -> QString {
-             if (machine->m_insteadFoundDisabled)
-                 return {};
              return tr("Instead found '%1'").arg(contents.at(1));
          }},
         {QRegularExpression(
@@ -1588,14 +1699,6 @@ void ScriptMachine::translation() {
     tr("Too many nested calls");
 }
 
-bool ScriptMachine::insteadFoundDisabled() const {
-    return m_insteadFoundDisabled;
-}
-
-void ScriptMachine::setInsteadFoundDisabled(bool newInsteadFoundDisabled) {
-    m_insteadFoundDisabled = newInsteadFoundDisabled;
-}
-
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptArray(engine, true);
     RegisterQString(engine);
@@ -1649,6 +1752,11 @@ void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
     }
 }
 
+void ScriptMachine::registerCallBack(ConsoleMode mode,
+                                     const RegCallBacks &callbacks) {
+    _regcalls.insert(mode, callbacks);
+}
+
 void ScriptMachine::scriptAssert(bool b) {
     auto ctx = asGetActiveContext();
     if (ctx) {
@@ -1679,28 +1787,35 @@ void ScriptMachine::scriptThrow(const QString &msg) {
     }
 }
 
-bool ScriptMachine::isDebugMode() const {
-    return !_engine->GetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES);
-}
+bool ScriptMachine::isDebugMode(ConsoleMode mode) {
+    if (mode == Scripting) {
+        auto mod = module(mode);
+        if (mod) {
+            return reinterpret_cast<asPWORD>(
+                mod->GetUserData(AsUserDataType::UserData_isDbg));
+        }
+    }
 
-void ScriptMachine::setDebugMode(bool isDbg) {
-    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, !isDbg);
+    return false;
 }
 
 asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
-bool ScriptMachine::executeCode(const QString &code) {
-    // We will only initialize the global variables once we're
-    // ready to execute, so disable the automatic initialization
-    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-    setDebugMode(false);
+bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
+    asIScriptModule *mod = createModuleIfNotExist(mode);
 
-    asIScriptModule *mod = _engine->GetModule("Console", asGM_ONLY_IF_EXISTS);
-    if (!mod) {
-        return false;
-    }
+    QScopeGuard guard([mod, mode]() {
+        if (mode != ConsoleMode::Interactive) {
+            // Before leaving, allow the engine to clean up remaining objects by
+            // discarding the module and doing a full garbage collection so that
+            // this can also be debugged if desired
+            mod->Discard();
+        }
+    });
+
+    _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
 
     // first, preparse the code
     QAsCodeParser parser(_engine);
@@ -1717,9 +1832,10 @@ bool ScriptMachine::executeCode(const QString &code) {
         auto r = mod->CompileFunction(nullptr, ccode, -1, 0, &func);
         if (r < 0) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("Script failed to build");
-            emit onOutput(MessageType::Error, info);
-            mod->Discard();
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             return false;
         }
     } else {
@@ -1728,9 +1844,10 @@ bool ScriptMachine::executeCode(const QString &code) {
         auto r = mod->Build();
         if (r < 0) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("Script failed to build");
-            emit onOutput(MessageType::Error, info);
-            mod->Discard();
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             return false;
         }
 
@@ -1743,21 +1860,29 @@ bool ScriptMachine::executeCode(const QString &code) {
 
         if (func == nullptr) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("Cannot find 'int main()' or 'void main()'");
-            emit onOutput(MessageType::Error, info);
-            mod->Discard();
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             return false;
         }
     }
-
-    // Let the debugger hold an engine pointer that can be used by the
-    // callbacks
-    _debugger->setEngine(_engine);
 
     // Set up a context to execute the script
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
     asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+
+    asPWORD isDbg = 0;
+    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+    mod->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+
+    asPWORD umode = asPWORD(mode);
+    ctx->SetUserData(reinterpret_cast<void *>(umode),
+                     AsUserDataType::UserData_ContextMode);
+
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
 
@@ -1772,15 +1897,19 @@ bool ScriptMachine::executeCode(const QString &code) {
     if (r != asEXECUTION_FINISHED) {
         if (r == asEXECUTION_EXCEPTION) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("The script failed with an exception") +
                            QStringLiteral("\n") +
                            QString::fromStdString(GetExceptionInfo(ctx, true));
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         } else if (r == asEXECUTION_ABORTED) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("The script was aborted");
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         } else {
             auto e = QMetaEnum::fromType<asEContextState>();
@@ -1788,7 +1917,8 @@ bool ScriptMachine::executeCode(const QString &code) {
             info.message = tr("The script terminated unexpectedly") +
                            QStringLiteral(" (") + e.valueToKey(r) +
                            QStringLiteral(")");
-            emit onOutput(MessageType::Error, info);
+            info.type = MessageType::Error;
+            outputMessage(mode, info);
             r = -1;
         }
     } else {
@@ -1797,23 +1927,7 @@ bool ScriptMachine::executeCode(const QString &code) {
 
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
-
-    // Before leaving, allow the engine to clean up remaining objects by
-    // discarding the module and doing a full garbage collection so that
-    // this can also be debugged if desired
-    mod->Discard();
     _engine->GarbageCollect();
-
-    // Release all contexts that have been allocated
-    for (auto ctx : std::as_const(_ctxPool)) {
-        ctx->Release();
-    }
-
-    _ctxPool.clear();
-
-    // Detach debugger
-    Q_ASSERT(_debugger);
-    _debugger->setEngine(nullptr);
 
     return r >= 0;
 }

@@ -20,6 +20,7 @@
 #include "asdatabase.h"
 #include "class/aspreprocesser.h"
 #include "class/qascodeparser.h"
+#include "class/scriptmachine.h"
 #include "model/codecompletionmodel.h"
 #include "wingcodeedit.h"
 
@@ -39,10 +40,9 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, DBL_COLON_TRIGGER, ("::"))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
 
-AsCompletion::AsCompletion(asIScriptEngine *engine, WingCodeEdit *p)
-    : WingCompleter(p), parser(engine), _engine(engine), m_parseDocument(true) {
-    Q_ASSERT(engine);
-
+AsCompletion::AsCompletion(WingCodeEdit *p)
+    : WingCompleter(p), parser(ScriptMachine::instance().engine()),
+      m_parseDocument(true) {
     setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
                     // unleash the power of call tips
                     *LEFT_PARE_TRIGGER,
@@ -157,7 +157,8 @@ void AsCompletion::processTrigger(const QString &trigger,
     qsizetype pos = 0;
     for (; p < end;) {
         asUINT tokenLen = 0;
-        auto tt = _engine->ParseToken(p, len, &tokenLen);
+        auto tt =
+            ScriptMachine::instance().engine()->ParseToken(p, len, &tokenLen);
         if (tt == asTC_WHITESPACE) {
             p += tokenLen;
             pos += tokenLen;
@@ -292,7 +293,7 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     auto code = editor->toPlainText();
 
     // first preprocess the code
-    AsPreprocesser prepc(_engine);
+    AsPreprocesser prepc(ScriptMachine::instance().engine());
     // TODO: set include callback
     // prepc.setIncludeCallback();
 
@@ -306,7 +307,7 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     QList<CodeInfoTip> ret;
 
     for (auto &d : data) {
-        QAsCodeParser parser(_engine);
+        QAsCodeParser parser(ScriptMachine::instance().engine());
         auto syms =
             parser.parseAndIntell(editor->textCursor().position(), d.script);
 

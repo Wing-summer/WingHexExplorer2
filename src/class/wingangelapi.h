@@ -73,9 +73,6 @@ public:
     void installAPI(ScriptMachine *machine);
     void installBasicTypes(asIScriptEngine *engine);
 
-    void setBindingConsole(ScriptingConsole *console);
-    void unBindConsole();
-
     static QString qvariantCastASString(const QMetaType::Type &id);
 
     static int qvariantCastASID(asIScriptEngine *engine,
@@ -203,8 +200,6 @@ private:
 
     // =========================================================
 
-    QString getSenderHeader(const WingHex::SenderInfo &sender);
-
     void cleanUpHandles(const QVector<int> &handles);
 
 private:
@@ -260,8 +255,6 @@ private:
 
     QVector<IWingPlugin::UNSAFE_SCFNPTR> _usfns;
     QHash<QString, QHash<QString, qsizetype>> _urfns;
-
-    ScriptingConsole *_console = nullptr;
 
     QHash<QString, QHash<QString, QList<QPair<QString, int>>>> _objs;
 

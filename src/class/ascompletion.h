@@ -24,7 +24,7 @@
 class AsCompletion : public WingCompleter {
     Q_OBJECT
 public:
-    explicit AsCompletion(asIScriptEngine *engine, WingCodeEdit *p);
+    explicit AsCompletion(WingCodeEdit *p);
 
     virtual ~AsCompletion();
 
@@ -56,7 +56,6 @@ private:
 
 private:
     ASDataBase parser;
-    asIScriptEngine *_engine;
     bool m_parseDocument;
 };
 

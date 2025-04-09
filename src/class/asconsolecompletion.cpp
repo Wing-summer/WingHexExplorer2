@@ -19,8 +19,7 @@
 
 #include "control/scriptingconsole.h"
 
-AsConsoleCompletion::AsConsoleCompletion(asIScriptEngine *engine,
-                                         ScriptingConsole *p)
-    : AsCompletion(engine, p), _console(p) {
+AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
+    : AsCompletion(p), _console(p) {
     setParseDocument(false);
 }

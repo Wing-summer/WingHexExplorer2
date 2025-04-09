@@ -65,9 +65,6 @@ public:
     void refreshUsrScriptsDbCats();
     void refreshSysScriptsDbCats();
 
-    void attach(ScriptingConsole *console);
-    void detach();
-
     ScriptDirMeta usrDirMeta(const QString &cat) const;
     ScriptDirMeta sysDirMeta(const QString &cat) const;
 
@@ -133,8 +130,6 @@ private:
 
     QHash<QString, ScriptDirMeta> _usrDirMetas;
     QHash<QString, ScriptDirMeta> _sysDirMetas;
-
-    ScriptingConsole *_console = nullptr;
 };
 
 Q_DECLARE_METATYPE(ScriptManager::ScriptDirMeta)

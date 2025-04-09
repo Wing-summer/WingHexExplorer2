@@ -27,7 +27,7 @@ class ScriptEditor : public ads::CDockWidget {
     Q_OBJECT
 
 public:
-    explicit ScriptEditor(asIScriptEngine *engine, QWidget *parent = nullptr);
+    explicit ScriptEditor(QWidget *parent = nullptr);
     virtual ~ScriptEditor();
 
     QString fileName() const;

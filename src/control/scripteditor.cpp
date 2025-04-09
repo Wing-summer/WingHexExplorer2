@@ -35,7 +35,7 @@
 #include "class/ascompletion.h"
 #include "class/clangformatmanager.h"
 
-ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
+ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
         CDockWidget::DockWidgetFocusable | CDockWidget::DockWidgetMovable |
@@ -48,7 +48,7 @@ ScriptEditor::ScriptEditor(asIScriptEngine *engine, QWidget *parent)
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
 
-    auto cm = new AsCompletion(engine, m_editor);
+    auto cm = new AsCompletion(m_editor);
     connect(cm, &AsCompletion::onFunctionTip, this,
             &ScriptEditor::onFunctionTip);
 

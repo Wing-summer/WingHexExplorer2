@@ -18,7 +18,7 @@
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
 #include "class/logger.h"
-#include "class/scriptconsolemachine.h"
+#include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
 #include "model/codecompletionmodel.h"
@@ -91,103 +91,16 @@ void ScriptingConsole::handleReturnKey() {
 void ScriptingConsole::init() {
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
 
-    _sp = new ScriptConsoleMachine(_getInputFn, this);
-    connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
-            &ScriptingConsole::clear);
-    connect(this, &ScriptingConsole::abortEvaluation, _sp,
-            &ScriptConsoleMachine::abortScript);
-
-    connect(
-        _sp, &ScriptConsoleMachine::onOutput, this,
-        [=](ScriptConsoleMachine::MessageType type,
-            const ScriptConsoleMachine::MessageInfo &message) {
-            // <type, <row, col>>
-            static QPair<ScriptConsoleMachine::MessageType, QPair<int, int>>
-                lastInfo{ScriptConsoleMachine::MessageType::Print, {-1, -1}};
-
-            auto doc = this->document();
-            auto lastLine = doc->lastBlock();
-            auto isNotBlockStart = !lastLine.text().isEmpty();
-
-            auto fmtMsg = [](const ScriptConsoleMachine::MessageInfo &message)
-                -> QString {
-                if (message.row <= 0 || message.col <= 0) {
-                    return message.message;
-                } else {
-                    return QStringLiteral("(") + QString::number(message.row) +
-                           QStringLiteral(", ") + QString::number(message.col) +
-                           QStringLiteral(") ") + message.message;
-                }
-            };
-
-            auto isMatchLast =
-                [](ScriptConsoleMachine::MessageType type,
-                   const ScriptConsoleMachine::MessageInfo &message) -> bool {
-                if (message.row < 0 || message.col < 0) {
-                    return false;
-                }
-                return lastInfo.first == type &&
-                       lastInfo.second.first == message.row &&
-                       lastInfo.second.second == message.col;
-            };
-
-            switch (type) {
-            case ScriptMachine::MessageType::Info:
-                if (isMatchLast(type, message)) {
-                    stdOut(message.message);
-                } else {
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdOut(tr("[Info]") + fmtMsg(message));
-                }
-                flush();
-                break;
-            case ScriptMachine::MessageType::Warn:
-                if (isMatchLast(type, message)) {
-                    stdWarn(message.message);
-                } else {
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdWarn(tr("[Warn]") + fmtMsg(message));
-                }
-                flush();
-                break;
-            case ScriptMachine::MessageType::Error:
-                if (isMatchLast(type, message)) {
-                    stdErr(message.message);
-                } else {
-                    if (isNotBlockStart) {
-                        newLine();
-                    }
-                    stdErr(tr("[Error]") + fmtMsg(message));
-                }
-                flush();
-                break;
-            case ScriptMachine::MessageType::Print:
-                if (lastInfo.first != type) {
-                    newLine();
-                }
-                // If running ouput in the console,
-                // otherwise logging.
-                if (_sp->isRunning()) {
-                    stdOut(message.message);
-                } else {
-                    Logger::logPrint(Logger::packDebugStr(
-                        packUpLoggingStr(message.message)));
-                }
-                break;
-            }
-
-            lastInfo.first = type;
-            lastInfo.second = qMakePair(message.row, message.col);
-        });
+    // _sp = new ScriptConsoleMachine(_getInputFn, this);
+    // connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
+    //         &ScriptingConsole::clear);
+    // connect(this, &ScriptingConsole::abortEvaluation, _sp,
+    //         &ScriptConsoleMachine::abortScript);
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
 
-    auto cm = new AsConsoleCompletion(_sp->engine(), this);
+    auto cm = new AsConsoleCompletion(this);
     connect(cm, &AsCompletion::onFunctionTip, this,
             &ScriptingConsole::onFunctionTip);
 }
@@ -200,6 +113,80 @@ void ScriptingConsole::clearConsole() {
 }
 
 void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
+
+void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
+    // <type, <row, col>>
+    static QPair<ScriptMachine::MessageType, QPair<int, int>> lastInfo{
+        ScriptMachine::MessageType::Print, {-1, -1}};
+
+    auto doc = this->document();
+    auto lastLine = doc->lastBlock();
+    auto isNotBlockStart = !lastLine.text().isEmpty();
+
+    auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
+        if (message.row <= 0 || message.col <= 0) {
+            return message.message;
+        } else {
+            return QStringLiteral("(") + QString::number(message.row) +
+                   QStringLiteral(", ") + QString::number(message.col) +
+                   QStringLiteral(")") + message.message;
+        }
+    };
+
+    auto isMatchLast = [](const ScriptMachine::MessageInfo &message) -> bool {
+        if (message.row < 0 || message.col < 0) {
+            return false;
+        }
+        return lastInfo.first == message.type &&
+               lastInfo.second.first == message.row &&
+               lastInfo.second.second == message.col;
+    };
+
+    switch (message.type) {
+    case ScriptMachine::MessageType::Info:
+        if (isMatchLast(message)) {
+            stdOut(message.message);
+        } else {
+            if (isNotBlockStart) {
+                newLine();
+            }
+            stdOut(tr("[Info]") + fmtMsg(message));
+        }
+        flush();
+        break;
+    case ScriptMachine::MessageType::Warn:
+        if (isMatchLast(message)) {
+            stdWarn(message.message);
+        } else {
+            if (isNotBlockStart) {
+                newLine();
+            }
+            stdWarn(tr("[Warn]") + fmtMsg(message));
+        }
+        flush();
+        break;
+    case ScriptMachine::MessageType::Error:
+        if (isMatchLast(message)) {
+            stdErr(message.message);
+        } else {
+            if (isNotBlockStart) {
+                newLine();
+            }
+            stdErr(tr("[Error]") + fmtMsg(message));
+        }
+        flush();
+        break;
+    case ScriptMachine::MessageType::Print:
+        if (lastInfo.first != message.type) {
+            newLine();
+        }
+        stdOut(message.message);
+        break;
+    }
+
+    lastInfo.first = message.type;
+    lastInfo.second = qMakePair(message.row, message.col);
+}
 
 void ScriptingConsole::applyScriptSettings() {
     auto &set = ScriptSettings::instance();
@@ -241,7 +228,9 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
     } else {
         setMode(Output);
         _codes += exec;
-        if (!_sp->executeCode(_codes)) {
+        if (!ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
+                                                   _codes)) {
+            // WingMessageBox::
         }
         _codes.clear();
         appendCommandPrompt();
@@ -289,10 +278,6 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
 QString ScriptingConsole::currentCodes() const {
     return _codes + currentCommandLine();
 }
-
-ScriptMachine *ScriptingConsole::machine() const { return _sp; }
-
-ScriptConsoleMachine *ScriptingConsole::consoleMachine() const { return _sp; }
 
 void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);

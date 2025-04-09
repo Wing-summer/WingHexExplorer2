@@ -33,7 +33,7 @@
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
 #include "class/richtextitemdelegate.h"
-#include "class/scriptconsolemachine.h"
+#include "class/scriptmachine.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
@@ -230,6 +230,32 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     // Don't setup it too early, because the plugin can register script
     // functions. Code completions of them will be not worked out.
     if (set.scriptEnabled()) {
+        auto &sm = ScriptMachine::instance();
+        auto smr = sm.init();
+        if (smr) {
+            ScriptMachine::RegCallBacks callbacks;
+            callbacks.getInputFn = [this]() -> QString {
+                return m_scriptConsole->getInput();
+            };
+            callbacks.clearFn = [this]() { m_scriptConsole->clearConsole(); };
+            callbacks.printMsgFn =
+                [this](const ScriptMachine::MessageInfo &message) {
+                    m_scriptConsole->onOutput(message);
+                };
+            sm.registerCallBack(ScriptMachine::Interactive, callbacks);
+
+            callbacks.getInputFn = [this]() -> QString {
+                return WingInputDialog::getText(this, tr(""), tr(""));
+            };
+            callbacks.clearFn = [this]() { m_bgScriptOutput->clear(); };
+            callbacks.printMsgFn =
+                std::bind(&MainWindow::onOutputBgScriptOutput, this,
+                          std::placeholders::_1);
+            sm.registerCallBack(ScriptMachine::Background, callbacks);
+        } else {
+            // TODO
+        }
+
         // At this time, AngelScript service plugin has started
         if (splash)
             splash->setInfoText(tr("SetupConsole"));
@@ -237,25 +263,17 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_scriptConsole->init();
         if (splash)
             splash->setInfoText(tr("SetupScriptManager"));
-        ScriptManager::instance().attach(m_scriptConsole);
-
-        plg.angelApi()->setBindingConsole(m_scriptConsole);
 
         if (splash)
             splash->setInfoText(tr("SetupScriptService"));
 
         m_scriptConsole->initOutput();
         m_scriptConsole->setMode(QConsoleWidget::Input);
-        m_scriptConsole->machine()->setInsteadFoundDisabled(true);
 
         if (splash)
             splash->setInfoText(tr("SetupScriptEditor"));
         m_scriptDialog = new ScriptingDialog(this);
         m_scriptDialog->initConsole();
-
-        // load the model
-        Q_ASSERT(m_scriptConsole && m_scriptConsole->machine());
-        m_varshowtable->setModel(m_scriptConsole->consoleMachine()->model());
     }
 
     // connect settings signals
@@ -535,8 +553,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         bottomRightArea = buildUpScriptConsoleDock(
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
         qApp->processEvents();
-        buildUpScriptObjShowDock(m_dock, ads::CenterDockWidgetArea,
-                                 bottomRightArea);
+        buildUpScriptBgOutputDock(m_dock, ads::CenterDockWidgetArea,
+                                  bottomRightArea);
         qApp->processEvents();
         buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea,
                               bottomRightArea);
@@ -1000,17 +1018,14 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
 }
 
 ads::CDockAreaWidget *
-MainWindow::buildUpScriptObjShowDock(ads::CDockManager *dock,
-                                     ads::DockWidgetArea area,
-                                     ads::CDockAreaWidget *areaw) {
-    m_varshowtable = new QTableViewExt(this);
-    m_varshowtable->setEditTriggers(QTableView::EditTrigger::DoubleClicked);
-    m_varshowtable->setSelectionBehavior(
-        QAbstractItemView::SelectionBehavior::SelectRows);
-    m_varshowtable->horizontalHeader()->setStretchLastSection(true);
+MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
+                                      ads::DockWidgetArea area,
+                                      ads::CDockAreaWidget *areaw) {
+    m_bgScriptOutput = new QPlainTextEdit(this);
+    m_bgScriptOutput->setReadOnly(true);
 
-    auto dw = buildDockWidget(dock, QStringLiteral("ScriptObjShow"),
-                              tr("ScriptObjShow"), m_varshowtable);
+    auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
+                              tr("BgScriptOutput"), m_bgScriptOutput);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1720,7 +1735,7 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
             pannel, QStringLiteral("settingplugin"), tr("Plugin"),
-            &MainWindow::on_setting_plugin,
+            &MainWindow::on_settingPlugin,
             shortcuts.keySequence(QKeySequences::Key::SETTING_PLUGIN));
     }
 
@@ -1743,13 +1758,12 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
             pannel, QStringLiteral("general"), tr("General"),
-            &MainWindow::on_setting_general,
+            &MainWindow::on_settingGeneral,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
 
         if (set.scriptEnabled()) {
             addPannelAction(pannel, QStringLiteral("scriptset"),
-                            tr("ScriptSetting"),
-                            &MainWindow::on_setting_script);
+                            tr("ScriptSetting"), &MainWindow::on_settingScript);
         }
     }
 
@@ -3097,13 +3111,13 @@ void MainWindow::on_scriptwindow() {
     m_scriptDialog->raise();
 }
 
-void MainWindow::on_setting_general() { m_setdialog->showConfig(0); }
+void MainWindow::on_settingGeneral() { m_setdialog->showConfig(0); }
 
-void MainWindow::on_setting_script() {
+void MainWindow::on_settingScript() {
     m_scriptDialog->settingDialog()->showConfig();
 }
 
-void MainWindow::on_setting_plugin() { m_setdialog->showConfig(2); }
+void MainWindow::on_settingPlugin() { m_setdialog->showConfig(2); }
 
 void MainWindow::on_about() { AboutSoftwareDialog().exec(); }
 
@@ -3939,6 +3953,88 @@ ads::CDockAreaWidget *MainWindow::editorViewArea() const {
     return m_dock->centralWidget()->dockAreaWidget();
 }
 
+void MainWindow::onOutputBgScriptOutput(
+    const ScriptMachine::MessageInfo &message) {
+    static QPair<ScriptMachine::MessageType, QPair<int, int>> lastInfo{
+        ScriptMachine::MessageType::Print, {-1, -1}};
+
+    auto doc = m_bgScriptOutput->document();
+    auto lastLine = doc->lastBlock();
+    auto isNotBlockStart = !lastLine.text().isEmpty();
+
+    auto cursor = m_bgScriptOutput->textCursor();
+    cursor.movePosition(QTextCursor::End);
+
+    auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
+        if (message.row <= 0 || message.col <= 0) {
+            return message.message;
+        } else {
+            return QStringLiteral("(") + QString::number(message.row) +
+                   QStringLiteral(", ") + QString::number(message.col) +
+                   QStringLiteral(")") + message.message;
+        }
+    };
+
+    auto isMatchLast = [](const ScriptMachine::MessageInfo &message) -> bool {
+        if (message.row < 0 || message.col < 0) {
+            return false;
+        }
+        return lastInfo.first == message.type &&
+               lastInfo.second.first == message.row &&
+               lastInfo.second.second == message.col;
+    };
+
+    switch (message.type) {
+    case ScriptMachine::MessageType::Info:
+        if (isMatchLast(message)) {
+            cursor.insertText(message.message);
+        } else {
+            if (isNotBlockStart) {
+                cursor.insertBlock();
+            }
+            cursor.insertText(tr("[Info]") + fmtMsg(message));
+        }
+        break;
+    case ScriptMachine::MessageType::Warn:
+        if (isMatchLast(message)) {
+            auto fmt = cursor.charFormat();
+            fmt.setForeground(QColorConstants::Svg::gold);
+            cursor.insertText(message.message, fmt);
+        } else {
+            if (isNotBlockStart) {
+                m_bgScriptOutput->appendPlainText({});
+            }
+            auto fmt = cursor.charFormat();
+            fmt.setForeground(QColorConstants::Svg::gold);
+            cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
+        }
+        break;
+    case ScriptMachine::MessageType::Error:
+        if (isMatchLast(message)) {
+            auto fmt = cursor.charFormat();
+            fmt.setForeground(Qt::red);
+            cursor.insertText(message.message, fmt);
+        } else {
+            if (isNotBlockStart) {
+                cursor.insertBlock();
+            }
+            auto fmt = cursor.charFormat();
+            fmt.setForeground(Qt::red);
+            cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
+        }
+        break;
+    case ScriptMachine::MessageType::Print:
+        if (lastInfo.first != message.type) {
+            cursor.insertBlock();
+        }
+        cursor.insertText(message.message);
+        break;
+    }
+
+    lastInfo.first = message.type;
+    lastInfo.second = qMakePair(message.row, message.col);
+}
+
 QJsonObject MainWindow::extractModelData(const QAbstractItemModel *model,
                                          const QModelIndex &parent) {
     QJsonObject jsonObject;
@@ -3981,11 +4077,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         return;
     }
 
-    // then checking the scripting console
-    auto sm = m_scriptConsole->consoleMachine();
-    if (sm->isRunning()) {
-        sm->abortScript();
-    }
+    // then abort all script running
+    ScriptMachine::instance().abortScript();
 
     // then checking itself
     if (!m_views.isEmpty()) {
