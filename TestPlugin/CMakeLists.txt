@@ -61,8 +61,6 @@ add_library(
     ctltestform.h
     ctltestform.cpp
     ctltestform.ui
-    testtablemodel.h
-    testtablemodel.cpp
     testsettingpage.h
     testsettingpage.cpp
     testwingeditorviewwidget.h
@@ -91,4 +89,5 @@ if(TEST_MODE)
                 ${WINGHEX_PLUGIN_PATH})
 endif()
 
-target_link_libraries(TestPlugin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets WingPlugin)
+target_link_libraries(TestPlugin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+                                         WingPlugin)

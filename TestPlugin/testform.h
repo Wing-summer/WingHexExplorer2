@@ -85,20 +85,6 @@ private slots:
 
     void on_btnGetColor_clicked();
 
-    void on_btnText_2_clicked();
-
-    void on_btnTextList_clicked();
-
-    void on_btnTextTree_clicked();
-
-    void on_btnTextTable_clicked();
-
-    void on_btnTextListByModel_clicked();
-
-    void on_btnTextTableByModel_clicked();
-
-    void on_btnTextTreeByModel_clicked();
-
     void on_btnStatusVisible_clicked();
 
     void on_btnStatusInvisible_clicked();
@@ -121,15 +107,8 @@ private:
 
     QFileDialog::Options getFileDialogOptions() const;
 
-    void onDVClicked(const QModelIndex &index);
-
-    void onDVDoubleClicked(const QModelIndex &index);
-
 private:
     Ui::TestForm *ui;
-
-    WingHex::ClickedCallBack _click;
-    WingHex::ClickedCallBack _dblclick;
 };
 
 #endif // TESTFORM_H

@@ -23,9 +23,7 @@
 
 #include <QFileDialog>
 
-#include <any>
 #include <functional>
-#include <vector>
 
 class asIScriptEngine;
 class ScriptMachine;
@@ -97,25 +95,13 @@ private:
     void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
-    void installDataVisualAPI(asIScriptEngine *engine);
     void installScriptFns(asIScriptEngine *engine);
     void installScriptUnSafeFns(asIScriptEngine *engine);
     void installScriptEnums(asIScriptEngine *engine);
 
 private:
-    template <class T>
-    void registerAPI(asIScriptEngine *engine, const std::function<T> &fn,
-                     const char *sig) {
-        _fnbuffer.push_back(fn);
-        auto r = engine->RegisterGlobalFunction(
-            sig, asMETHOD(std::function<T>, operator()),
-            asCALL_THISCALL_ASGLOBAL,
-            std::any_cast<std::function<T>>(&_fnbuffer.back()));
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-    }
-
-    using WrapperFn = std::function<void(asIScriptGeneric *)>;
+    void registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
+                     const char *sig);
 
 private:
     QStringList cArray2QStringList(const CScriptArray &array, int stringID,
@@ -203,17 +189,6 @@ private:
     void cleanUpHandles(const QVector<int> &handles);
 
 private:
-    QString _InputBox_getItem(const QString &title, const QString &label,
-                              const CScriptArray &items, int current,
-                              bool editable, bool *ok,
-                              Qt::InputMethodHints inputMethodHints);
-
-    CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
-                                               const QString &dir,
-                                               const QString &filter,
-                                               QString *selectedFilter,
-                                               QFileDialog::Options options);
-
     CScriptArray *_HexReader_selectedBytes(qsizetype index);
 
     CScriptArray *_HexReader_selectionBytes();
@@ -230,26 +205,86 @@ private:
 
     bool _HexController_appendBytes(const CScriptArray &ba);
 
-private:
-    bool _DataVisual_updateTextList(const CScriptArray &data,
-                                    const QString &title,
-                                    asIScriptFunction *click,
-                                    asIScriptFunction *dblclick);
+    void _UI_Toast(const QString &message, const QString &icon);
 
-    bool _DataVisual_updateTextTree(const QString &json, const QString &title,
-                                    asIScriptFunction *click,
-                                    asIScriptFunction *dblclick);
-
-    bool _DataVisual_updateTextTable(const QString &json,
-                                     const CScriptArray &headers,
-                                     const CScriptArray &headerNames,
-                                     const QString &title,
-                                     asIScriptFunction *click,
-                                     asIScriptFunction *dblclick);
+    QColor _Color_get(const QString &caption);
 
 private:
-    std::vector<std::any> _fnbuffer;
+    void _MSG_AboutQt(const QString &title);
 
+    QMessageBox::StandardButton
+    _MSG_Information(const QString &title, const QString &text,
+                     QMessageBox::StandardButtons buttons,
+                     QMessageBox::StandardButton defaultButton);
+
+    QMessageBox::StandardButton
+    _MSG_Question(const QString &title, const QString &text,
+                  QMessageBox::StandardButtons buttons,
+                  QMessageBox::StandardButton defaultButton);
+
+    QMessageBox::StandardButton
+    _MSG_Warning(const QString &title, const QString &text,
+                 QMessageBox::StandardButtons buttons,
+                 QMessageBox::StandardButton defaultButton);
+
+    QMessageBox::StandardButton
+    _MSG_Critical(const QString &title, const QString &text,
+                  QMessageBox::StandardButtons buttons,
+                  QMessageBox::StandardButton defaultButton);
+
+    void _MSG_About(const QString &title, const QString &text);
+
+    QMessageBox::StandardButton
+    _MSG_msgbox(QMessageBox::Icon icon, const QString &title,
+                const QString &text, QMessageBox::StandardButtons buttons,
+                QMessageBox::StandardButton defaultButton);
+
+private:
+    QString _InputBox_GetText(const QString &title, const QString &label,
+                              QLineEdit::EchoMode echo, const QString &text,
+                              bool *ok, Qt::InputMethodHints inputMethodHints);
+
+    QString _InputBox_GetMultiLineText(const QString &title,
+                                       const QString &label,
+                                       const QString &text, bool *ok,
+                                       Qt::InputMethodHints inputMethodHints);
+
+    QString _InputBox_getItem(const QString &title, const QString &label,
+                              const CScriptArray &items, int current,
+                              bool editable, bool *ok,
+                              Qt::InputMethodHints inputMethodHints);
+
+    int _InputBox_GetInt(const QString &title, const QString &label, int value,
+                         int minValue, int maxValue, int step, bool *ok);
+
+    double _InputBox_GetDouble(const QString &title, const QString &label,
+                               double value, double minValue, double maxValue,
+                               int decimals, bool *ok, double step);
+
+private:
+    QString _FileDialog_GetExistingDirectory(const QString &caption,
+                                             const QString &dir,
+                                             QFileDialog::Options options);
+
+    QString _FileDialog_GetOpenFileName(const QString &caption,
+                                        const QString &dir,
+                                        const QString &filter,
+                                        QString *selectedFilter,
+                                        QFileDialog::Options options);
+
+    CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
+                                               const QString &dir,
+                                               const QString &filter,
+                                               QString *selectedFilter,
+                                               QFileDialog::Options options);
+
+    QString _FileDialog_GetSaveFileName(const QString &caption,
+                                        const QString &dir,
+                                        const QString &filter,
+                                        QString *selectedFilter,
+                                        QFileDialog::Options options);
+
+private:
     QVector<IWingPlugin::ScriptFnInfo> _sfns;
     QHash<QString, QHash<QString, qsizetype>> _rfns;
 

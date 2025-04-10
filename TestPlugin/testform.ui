@@ -1050,135 +1050,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_8">
-      <attribute name="title">
-       <string>DataVisual</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_20">
-       <item>
-        <widget class="QTextEdit" name="teDataVisual"/>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_6">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>150</height>
-          </size>
-         </property>
-         <property name="title">
-          <string>Type</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <property name="sizeConstraint">
-           <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
-          </property>
-          <item row="0" column="1">
-           <widget class="QPushButton" name="btnTextList">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextList (LineByLine)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="btnTextTree">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextTree (Json)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="btnTextTable">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextTable (Json)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="btnTextListByModel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextListByModel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="btnText_2">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateText</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QPushButton" name="btnTextTableByModel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextTableByModel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QPushButton" name="btnTextTreeByModel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">updateTextTreeByModel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" rowspan="2">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string notr="true">WingSummer</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="tab_9">
       <attribute name="title">
        <string>Others</string>
@@ -1278,18 +1149,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>btnClearCtl</sender>
+   <sender>btnClearFile</sender>
    <signal>clicked()</signal>
-   <receiver>tbCtlLogger</receiver>
+   <receiver>tbFileLogger</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>387</y>
+     <x>239</x>
+     <y>388</y>
     </hint>
     <hint type="destinationlabel">
-     <x>318</x>
-     <y>264</y>
+     <x>290</x>
+     <y>328</y>
     </hint>
    </hints>
   </connection>
@@ -1310,34 +1181,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>btnClearInput</sender>
+   <sender>btnClearCtl</sender>
    <signal>clicked()</signal>
-   <receiver>tbInputLogger</receiver>
+   <receiver>tbCtlLogger</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>210</x>
-     <y>388</y>
+     <x>271</x>
+     <y>387</y>
     </hint>
     <hint type="destinationlabel">
-     <x>236</x>
-     <y>332</y>
+     <x>318</x>
+     <y>264</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>btnClearFile</sender>
+   <sender>btnClearText</sender>
    <signal>clicked()</signal>
-   <receiver>tbFileLogger</receiver>
+   <receiver>leToastText</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>239</x>
-     <y>388</y>
+     <x>569</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
-     <x>290</x>
-     <y>328</y>
+     <x>468</x>
+     <y>229</y>
     </hint>
    </hints>
   </connection>
@@ -1358,18 +1229,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>btnClearText</sender>
+   <sender>btnClearInput</sender>
    <signal>clicked()</signal>
-   <receiver>leToastText</receiver>
+   <receiver>tbInputLogger</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>569</x>
-     <y>271</y>
+     <x>210</x>
+     <y>388</y>
     </hint>
     <hint type="destinationlabel">
-     <x>468</x>
-     <y>229</y>
+     <x>236</x>
+     <y>332</y>
     </hint>
    </hints>
   </connection>

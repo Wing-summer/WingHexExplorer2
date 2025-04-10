@@ -24,7 +24,6 @@
 
 #include "ctltestform.h"
 #include "readertestform.h"
-#include "testtablemodel.h"
 
 #include <QAbstractTableModel>
 #include <QFileSystemModel>
@@ -36,8 +35,6 @@
 TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
     : WingHex::WingPluginWidget(plg, parent), ui(new Ui::TestForm) {
     ui->setupUi(this);
-
-    ui->teDataVisual->setAcceptRichText(false);
 
     ui->saReader->widget()->layout()->addWidget(
         new ReaderTestForm(plg, ui->tbReaderLogger, this));
@@ -56,10 +53,6 @@ TestForm::TestForm(WingHex::IWingPlugin *plg, QWidget *parent)
 
     ui->lblauthor->setPixmap(
         WingHex::HOSTRESPIMG(QStringLiteral("author"), QStringLiteral(".jpg")));
-
-    _click = std::bind(&TestForm::onDVClicked, this, std::placeholders::_1);
-    _dblclick =
-        std::bind(&TestForm::onDVDoubleClicked, this, std::placeholders::_1);
 }
 
 TestForm::~TestForm() { delete ui; }
@@ -151,16 +144,6 @@ QFileDialog::Options TestForm::getFileDialogOptions() const {
         }
     }
     return options;
-}
-
-void TestForm::onDVClicked(const QModelIndex &index) {
-    logWarn(QStringLiteral("[Test - Click] ") +
-            index.model()->data(index).toString());
-}
-
-void TestForm::onDVDoubleClicked(const QModelIndex &index) {
-    msgWarning(this, QStringLiteral("Test - DoubleClick"),
-               index.model()->data(index).toString());
 }
 
 void TestForm::on_btnSendLog_clicked() {
@@ -320,69 +303,6 @@ void TestForm::on_btnGetColor_clicked() {
                                   ret.name());
     } else {
         ui->wColor->setStyleSheet({});
-    }
-}
-
-void TestForm::on_btnText_2_clicked() {
-    dataVisualText(ui->teDataVisual->toPlainText(), QStringLiteral("TestForm"));
-}
-
-void TestForm::on_btnTextList_clicked() {
-    auto txts = ui->teDataVisual->toPlainText().split('\n');
-    dataVisualTextList(txts, QStringLiteral("TestForm"), _click, _dblclick);
-}
-
-void TestForm::on_btnTextTree_clicked() {
-    auto ret =
-        dataVisualTextTree(ui->teDataVisual->toPlainText(),
-                           QStringLiteral("TestForm"), _click, _dblclick);
-    if (!ret) {
-        msgCritical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
-    }
-}
-
-void TestForm::on_btnTextTable_clicked() {
-    auto ret = dataVisualTextTable(
-        ui->teDataVisual->toPlainText(), {"wingsummer", "wingsummer"}, {},
-        QStringLiteral("TestForm"), _click, _dblclick);
-    if (!ret) {
-        msgCritical(this, QStringLiteral("Test"), tr("UpdateTextTreeError"));
-    }
-}
-
-void TestForm::on_btnTextListByModel_clicked() {
-    auto model = new QStringListModel;
-    QStringList buffer;
-    for (int i = 0; i < WingHex::SDKVERSION; ++i) {
-        buffer.append("wingsummer" % QString::number(i));
-    }
-    model->setStringList(buffer);
-    auto ret = dataVisualTextListByModel(model, QStringLiteral("TestForm"),
-                                         _click, _dblclick);
-    if (!ret) {
-        msgCritical(this, QStringLiteral("Test"),
-                    tr("UpdateTextListByModelError"));
-    }
-}
-
-void TestForm::on_btnTextTableByModel_clicked() {
-    auto model = new TestTableModel;
-    auto ret = dataVisualTextTableByModel(model, QStringLiteral("TestForm"),
-                                          _click, _dblclick);
-    if (!ret) {
-        msgCritical(this, QStringLiteral("Test"),
-                    tr("UpdateTextTableByModelError"));
-    }
-}
-
-void TestForm::on_btnTextTreeByModel_clicked() {
-    auto model = new QFileSystemModel;
-    model->setRootPath(QDir::currentPath());
-    auto ret = dataVisualTextTreeByModel(model, QStringLiteral("TestForm"),
-                                         _click, _dblclick);
-    if (!ret) {
-        msgCritical(this, QStringLiteral("Test"),
-                    tr("UpdateTextTreeByModelError"));
     }
 }
 

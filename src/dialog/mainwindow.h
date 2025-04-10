@@ -43,7 +43,6 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingplugin.h"
-#include "class/clickcallback.h"
 #include "class/recentfilemanager.h"
 #include "class/scriptmanager.h"
 #include "control/editorview.h"
@@ -63,9 +62,6 @@ class MainWindow : public FramelessMainWindow {
     Q_OBJECT
 
     friend class PluginSystem;
-
-    using ClickedCallBack = ClickCallBack;
-    using DblClickedCallBack = ClickCallBack;
 
 public:
     explicit MainWindow(SplashDialog *splash);
@@ -125,9 +121,6 @@ private:
     ads::CDockAreaWidget *
     buildUpScriptBgOutputDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                               ads::CDockAreaWidget *areaw = nullptr);
-    ads::CDockAreaWidget *
-    buildUpVisualDataDock(ads::CDockManager *dock, ads::DockWidgetArea area,
-                          ads::CDockAreaWidget *areaw = nullptr);
 
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
@@ -267,10 +260,6 @@ private:
     inline ads::CDockAreaWidget *editorViewArea() const;
 
     void onOutputBgScriptOutput(const ScriptMachine::MessageInfo &message);
-
-private:
-    QJsonObject extractModelData(const QAbstractItemModel *model,
-                                 const QModelIndex &parent = QModelIndex());
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
@@ -506,20 +495,6 @@ private:
 
     QTableViewExt *m_metadatas = nullptr;
     MetaDataModel *_metadataEmpty = nullptr;
-
-    // data visualization widgets
-    QListView *m_infolist = nullptr;
-    ClickedCallBack m_infoclickfn;
-    DblClickedCallBack m_infodblclickfn;
-
-    QTreeView *m_infotree = nullptr;
-    ClickedCallBack m_infotreeclickfn;
-    DblClickedCallBack m_infotreedblclickfn;
-
-    QTableView *m_infotable = nullptr;
-    QTextBrowser *m_infotxt = nullptr;
-    ClickedCallBack m_infotableclickfn;
-    DblClickedCallBack m_infotabledblclickfn;
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 

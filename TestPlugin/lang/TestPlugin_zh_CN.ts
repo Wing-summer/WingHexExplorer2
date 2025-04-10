@@ -185,12 +185,12 @@
         <translation>控制器</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1184"/>
+        <location filename="../testform.ui" line="1055"/>
         <source>Others</source>
         <translation>其他</translation>
     </message>
     <message>
-        <location filename="../testform.ui" line="1245"/>
+        <location filename="../testform.ui" line="1116"/>
         <source>Other APIs should be Test With Script</source>
         <translation>其他 API 应该用脚本测试，不提供可视化方式</translation>
     </message>
@@ -231,7 +231,6 @@
         <location filename="../testform.ui" line="311"/>
         <location filename="../testform.ui" line="707"/>
         <location filename="../testform.ui" line="881"/>
-        <location filename="../testform.ui" line="1070"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
@@ -265,32 +264,6 @@
         <location filename="../testform.ui" line="1009"/>
         <source>Color</source>
         <translation>颜色</translation>
-    </message>
-    <message>
-        <location filename="../testform.ui" line="1055"/>
-        <source>DataVisual</source>
-        <translation>数据可视化</translation>
-    </message>
-    <message>
-        <location filename="../testform.cpp" line="340"/>
-        <location filename="../testform.cpp" line="349"/>
-        <source>UpdateTextTreeError</source>
-        <translation>更新文本树失败</translation>
-    </message>
-    <message>
-        <location filename="../testform.cpp" line="364"/>
-        <source>UpdateTextListByModelError</source>
-        <translation>通过模型更新文本列表失败</translation>
-    </message>
-    <message>
-        <location filename="../testform.cpp" line="374"/>
-        <source>UpdateTextTableByModelError</source>
-        <translation>通过模型更新文本表格失败</translation>
-    </message>
-    <message>
-        <location filename="../testform.cpp" line="385"/>
-        <source>UpdateTextTreeByModelError</source>
-        <translation>通过模型更新文本树失败</translation>
     </message>
 </context>
 <context>

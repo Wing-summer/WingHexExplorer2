@@ -32,7 +32,6 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
-#include "class/clickcallback.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 
@@ -257,18 +256,6 @@ private:
 private:
     void registerPluginDockWidgets(IWingPluginBase *p);
     void registerPluginPages(IWingPluginBase *p);
-
-public:
-    bool updateTextList_API(const QStringList &data, const QString &title,
-                            const ClickCallBack &click,
-                            const ClickCallBack &dblclick);
-    bool updateTextTree_API(const QString &json, const QString &title,
-                            const ClickCallBack &click,
-                            const ClickCallBack &dblclick);
-    bool updateTextTable_API(const QString &json, const QStringList &headers,
-                             const QStringList &headerNames,
-                             const QString &title, const ClickCallBack &click,
-                             const ClickCallBack &dblclick);
 
 public:
     // fpr crash checking
@@ -734,41 +721,6 @@ public:
 
     // extension
     WING_SERVICE bool closeAllFiles(QObject *sender);
-
-public:
-    WING_SERVICE bool dataVisualText(QObject *sender, const QString &data,
-                                     const QString &title);
-
-    WING_SERVICE bool dataVisualTextList(QObject *sender,
-                                         const QStringList &data,
-                                         const QString &title,
-                                         WingHex::ClickedCallBack clicked,
-                                         WingHex::ClickedCallBack dblClicked);
-
-    WING_SERVICE bool dataVisualTextTree(QObject *sender, const QString &json,
-                                         const QString &title,
-                                         WingHex::ClickedCallBack clicked,
-                                         WingHex::ClickedCallBack dblClicked);
-
-    WING_SERVICE bool dataVisualTextTable(QObject *sender, const QString &json,
-                                          const QStringList &headers,
-                                          const QStringList &headerNames,
-                                          const QString &title,
-                                          WingHex::ClickedCallBack clicked,
-                                          WingHex::ClickedCallBack dblClicked);
-
-    // API for Qt Plugin Only
-    WING_SERVICE bool dataVisualTextListByModel(
-        QObject *sender, QAbstractItemModel *model, const QString &title,
-        WingHex::ClickedCallBack clicked, WingHex::ClickedCallBack dblClicked);
-
-    WING_SERVICE bool dataVisualTextTableByModel(
-        QObject *sender, QAbstractItemModel *model, const QString &title,
-        WingHex::ClickedCallBack clicked, WingHex::ClickedCallBack dblClicked);
-
-    WING_SERVICE bool dataVisualTextTreeByModel(
-        QObject *sender, QAbstractItemModel *model, const QString &title,
-        WingHex::ClickedCallBack clicked, WingHex::ClickedCallBack dblClicked);
 
 private:
     WingHex::IWingPlugin *checkPluginAndReport(QObject *sender,

@@ -13,5 +13,4 @@ The following components are all third-party components used by the software. Th
 * [cpptrace](https://github.com/jeremy-rifkin/cpptrace) (MIT)
 * [QConsoleWidget](https://github.com/gapost/qconsolewidget) (MIT, **FORK** -> AGPL-3.0)
 * [QColorPicker](https://github.com/arsdever/qcolorpicker) (MIT)
-* [QtJsonModel](https://github.com/dridk/QJsonmodel) (MIT)
 * [Qt](https://www.qt.io/) (LGPL)

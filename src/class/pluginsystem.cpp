@@ -17,7 +17,6 @@
 
 #include "pluginsystem.h"
 #include "AngelScript/sdk/angelscript/source/as_builder.h"
-#include "QJsonModel/include/QJsonModel.hpp"
 #include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
@@ -33,10 +32,11 @@
 #include "dialog/colorpickerdialog.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
-#include "model/qjsontablemodel.h"
 
 #include <QDir>
 #include <QFileInfoList>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QMessageBox>
 #include <QPluginLoader>
 #include <QScopeGuard>
@@ -1787,99 +1787,6 @@ bool PluginSystem::closeAllFiles(QObject *sender) {
     return true;
 }
 
-bool PluginSystem::dataVisualText(QObject *sender, const QString &data,
-                                  const QString &title) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    _win->m_infotxt->setProperty("__TITLE__", title);
-    _win->m_infotxt->setText(data);
-    return true;
-}
-
-bool PluginSystem::dataVisualTextList(QObject *sender, const QStringList &data,
-                                      const QString &title,
-                                      ClickedCallBack clicked,
-                                      ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    return updateTextList_API(data, title, clicked, dblClicked);
-}
-
-bool PluginSystem::dataVisualTextTree(QObject *sender, const QString &json,
-                                      const QString &title,
-                                      ClickedCallBack clicked,
-                                      ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    return updateTextTree_API(json, title, clicked, dblClicked);
-}
-
-bool PluginSystem::dataVisualTextTable(QObject *sender, const QString &json,
-                                       const QStringList &headers,
-                                       const QStringList &headerNames,
-                                       const QString &title,
-                                       ClickedCallBack clicked,
-                                       ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    return updateTextTable_API(json, headers, headerNames, title, clicked,
-                               dblClicked);
-}
-
-bool PluginSystem::dataVisualTextListByModel(QObject *sender,
-                                             QAbstractItemModel *model,
-                                             const QString &title,
-                                             ClickedCallBack clicked,
-                                             ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    if (model) {
-        auto oldmodel = _win->m_infolist->model();
-        if (oldmodel) {
-            oldmodel->deleteLater();
-        }
-        _win->m_infolist->setProperty("__TITLE__", title);
-        _win->m_infolist->setModel(model);
-        _win->m_infoclickfn = clicked;
-        _win->m_infodblclickfn = dblClicked;
-        return true;
-    }
-    return false;
-}
-
-bool PluginSystem::dataVisualTextTreeByModel(QObject *sender,
-                                             QAbstractItemModel *model,
-                                             const QString &title,
-                                             ClickedCallBack clicked,
-                                             ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    if (model) {
-        auto oldmodel = _win->m_infotree->model();
-        if (oldmodel) {
-            oldmodel->deleteLater();
-        }
-        _win->m_infotree->setProperty("__TITLE__", title);
-        _win->m_infotree->setModel(model);
-        _win->m_infotreeclickfn = clicked;
-        _win->m_infotreedblclickfn = dblClicked;
-        return true;
-    }
-    return false;
-}
-
 bool PluginSystem::checkErrAllAllowAndReport(QObject *sender,
                                              const char *func) {
     auto p = qobject_cast<WingHex::IWingPlugin *>(sender);
@@ -1902,29 +1809,6 @@ IWingPlugin *PluginSystem::checkPluginAndReport(QObject *sender,
         return nullptr;
     }
     return p;
-}
-
-bool PluginSystem::dataVisualTextTableByModel(QObject *sender,
-                                              QAbstractItemModel *model,
-                                              const QString &title,
-                                              ClickedCallBack clicked,
-                                              ClickedCallBack dblClicked) {
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr || !checkThreadAff()) {
-        return false;
-    }
-    if (model) {
-        auto oldmodel = _win->m_infotable->model();
-        if (oldmodel) {
-            oldmodel->deleteLater();
-        }
-        _win->m_infotable->setProperty("__TITLE__", title);
-        _win->m_infotable->setModel(model);
-        _win->m_infotableclickfn = clicked;
-        _win->m_infotabledblclickfn = dblClicked;
-        return true;
-    }
-    return false;
 }
 
 ErrFile PluginSystem::saveAsCurrent(QObject *sender, const QString &savename) {
@@ -3714,77 +3598,6 @@ void PluginSystem::registerMarcoDevice(IWingDevice *plg) {
     auto id = getPUID(plg).toUpper();
     auto sep = QStringLiteral("_");
     _scriptMarcos.append(sep + id + sep);
-}
-
-bool PluginSystem::updateTextList_API(const QStringList &data,
-                                      const QString &title,
-                                      const ClickCallBack &click,
-                                      const ClickCallBack &dblclick) {
-    auto oldmodel = _win->m_infolist->model();
-    if (oldmodel) {
-        oldmodel->deleteLater();
-    }
-    _win->m_infolist->setProperty("__TITLE__", title);
-    auto model = new QStringListModel(data);
-    _win->m_infolist->setModel(model);
-    _win->m_infoclickfn = click;
-    _win->m_infodblclickfn = dblclick;
-    return true;
-}
-
-bool PluginSystem::updateTextTree_API(const QString &json, const QString &title,
-                                      const ClickCallBack &click,
-                                      const ClickCallBack &dblclick) {
-    auto oldmodel = _win->m_infotree->model();
-    if (oldmodel) {
-        oldmodel->deleteLater();
-    }
-    _win->m_infotree->setProperty("__TITLE__", title);
-    auto model = new QJsonModel;
-    if (model->loadJson(json.toUtf8())) {
-        _win->m_infotree->setModel(model);
-        _win->m_infotreeclickfn = click;
-        _win->m_infotreedblclickfn = dblclick;
-        return true;
-    }
-    return false;
-}
-
-bool PluginSystem::updateTextTable_API(const QString &json,
-                                       const QStringList &headers,
-                                       const QStringList &headerNames,
-                                       const QString &title,
-                                       const ClickCallBack &click,
-                                       const ClickCallBack &dblclick) {
-    auto oldmodel = _win->m_infotable->model();
-    if (oldmodel) {
-        oldmodel->deleteLater();
-    }
-
-    QJsonTableModel::Header header;
-    if (headers.size() > headerNames.size()) {
-        for (auto &name : headers) {
-            QJsonTableModel::Heading heading;
-            heading["index"] = name;
-            heading["title"] = name;
-            header.append(heading);
-        }
-    } else {
-        auto np = headerNames.cbegin();
-        for (auto p = headers.cbegin(); p != headers.cend(); ++p, ++np) {
-            QJsonTableModel::Heading heading;
-            heading["index"] = *p;
-            heading["title"] = *np;
-            header.append(heading);
-        }
-    }
-    _win->m_infotable->setProperty("__TITLE__", title);
-    auto model = new QJsonTableModel(header);
-    model->setJson(QJsonDocument::fromJson(json.toUtf8()));
-    _win->m_infotable->setModel(model);
-    _win->m_infotableclickfn = click;
-    _win->m_infotabledblclickfn = dblclick;
-    return true;
 }
 
 bool PluginSystem::checkThreadAff() {
