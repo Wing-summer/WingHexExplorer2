@@ -78,6 +78,7 @@ public:
 
 public:
     QString name;
+    bool dontAddGlobal = false;
     Type type = Type::Unknown;
     QString nameSpace;
     CodeInfoVisibility visualpo = CodeInfoVisibility::VISIBILITY_DEFAULT;

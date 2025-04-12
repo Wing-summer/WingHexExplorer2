@@ -51,7 +51,8 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    void applyEmptyNsNode(QList<CodeInfoTip> &nodes);
+    void applyEmptyNsNode(QList<CodeInfoTip> &nodes,
+                          const QList<CodeInfoTip> &docNodes);
     void applyClassNodes(QList<CodeInfoTip> &nodes);
 
 private:

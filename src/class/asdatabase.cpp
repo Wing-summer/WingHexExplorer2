@@ -177,6 +177,10 @@ const QHash<QString, QList<CodeInfoTip>> &ASDataBase::headerNodes() const {
     return _headerNodes;
 }
 
+const QHash<QString, QList<CodeInfoTip>> &ASDataBase::enumsNodes() const {
+    return _enumsNodes;
+}
+
 void ASDataBase::addGlobalFunctionCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
@@ -210,6 +214,13 @@ void ASDataBase::addEnumCompletion(asIScriptEngine *engine) {
         einfo.name = etype->GetName();
         einfo.type = CodeInfoTip::Type::Enum;
 
+        auto ens = einfo.nameSpace;
+        if (ens.isEmpty()) {
+            ens = einfo.name;
+        } else {
+            ens += QStringLiteral("::") + einfo.name;
+        }
+
         for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
             int v;
             auto e = etype->GetEnumValueByIndex(i, &v);
@@ -221,6 +232,7 @@ void ASDataBase::addEnumCompletion(asIScriptEngine *engine) {
                                                         QStringLiteral(" = ") +
                                                         QString::number(v));
             einfo.children.append(en);
+            _enumsNodes[ens].append(en);
         }
 
         etype->Release();

@@ -47,7 +47,6 @@ public:
         Function, // a function
         TypeDef,  // a typedef
         FnDef,    // a funcdef
-        VarsDecl, // global variable decalration
     };
 
     enum class Visiblity { Public, Private, Protected };
@@ -57,22 +56,34 @@ public:
      */
     struct CodeSegment {
         QByteArrayList scope;
-        QString name;
+        QByteArray name;
         SymbolType type = QAsCodeParser::SymbolType::Invalid;
-        int offset = -1;
-        QString codes;
+        qsizetype offset = -1;
+        QByteArray codes;
 
         QByteArrayList additonalInfos; // for other additonal infos
 
     public:
-        bool isValid() const { return type != SymbolType::Invalid; }
-        bool hasCodes() const { return !codes.isEmpty(); }
+        inline bool isValid() const {
+            return offset >= 0 && type != SymbolType::Invalid;
+        }
+
+        inline qsizetype end() const {
+            if (offset < 0) {
+                return -1;
+            }
+            return offset + codes.length();
+        }
+
+        inline qsizetype length() const { return codes.length(); }
+
+        inline bool hasCodes() const { return !codes.isEmpty(); }
     };
 
     struct Symbol {
         SymbolType symtype = QAsCodeParser::SymbolType::Invalid;
         QByteArrayList scope;
-        QString name;
+        QByteArray name;
         QByteArray type;
         int offset = -1;
         Visiblity vis = QAsCodeParser::Visiblity::Public;
@@ -95,16 +106,15 @@ public:
 private:
     QList<QAsCodeParser::CodeSegment> parseScript(bool inBlock);
 
-    void appendValidSeg(QList<QAsCodeParser::CodeSegment> &container,
-                        QAsCodeParser::CodeSegment seg);
-
     void skipCodeBlock();
     QByteArray getSymbolString(const sToken &t);
-    QByteArrayList getRealNamespace(const QByteArrayList &ns);
 
     // Statements
-    sToken superficiallyParseVarInit();
+    void superficiallyParseVarInit();
     sToken superficiallyParseStatementBlock();
+    void superficiallyParseExpression();
+    void superficiallyParseTemplateList();
+
     void parseMethodAttributes();
 
 private:
@@ -131,12 +141,24 @@ private:
 
 private:
     // deep parsing
-    void parseStatementBlock();
-    void parseStatement();
+    QList<Symbol> parseEnumerationContent(const QByteArrayList &ns,
+                                          const QByteArray &name,
+                                          const QByteArray &code);
+    Symbol parseTypedefContent(const QByteArrayList &ns,
+                               const QByteArray &code);
+
+    QList<Symbol> parseGlobalVarDecls(const QByteArrayList &ns,
+                                      const QByteArray &code);
+
+    QByteArrayList parseOptionalScope();
+
+    QList<Symbol> parseDeclaration(const QByteArrayList &ns,
+                                   bool isClassProp = false,
+                                   bool isGlobalVar = false);
 
 private:
-    void parseEnumerationContent();
-    void parseTypedefContent();
+    void parseStatementBlock();
+    void parseStatement();
     void parseClassContent();
     void parseMixinContent();
     void parseInterfaceContent();
@@ -166,8 +188,6 @@ private:
     void ParseExprPostOp();
     void ParseExprValue();
 
-    QByteArrayList ParseOptionalScope();
-
     Symbol parseVirtualPropertyDecl(bool isMethod, bool isInterface);
     QList<Symbol> parseParameterListContent();
 
@@ -192,19 +212,16 @@ private:
     void getToken(sToken *token);
     void rewindTo(const sToken *token);
     void rewindErrorTo(sToken *token);
-    void SetPos(size_t pos);
+    void setPos(size_t pos);
 
-    bool isRealType(int tokenType);
+    bool isPrimType(int tokenType);
     bool identifierIs(const sToken &t, const char *str);
     bool isDataType(const sToken &token);
 
 private:
     bool checkTemplateType(const sToken &t);
-    bool parseTemplTypeList(bool required = true);
 
     void parseArgList(bool withParenthesis = true);
-
-    void superficiallyParseExpression();
 
 private:
     bool findTokenAfterType(sToken &nextToken);
@@ -219,28 +236,25 @@ private:
 
     Symbol parseFunctionDefinition();
 
-    QList<Symbol> parseDeclaration(bool isClassProp = false,
-                                   bool isGlobalVar = false);
-
     Symbol parseInterfaceMethod();
 
     void ParseStringConstant();
 
 private:
-    bool errorWhileParsing;
-    bool isSyntaxError;
-    bool checkValidTypes;
-    bool isParsingAppInterface;
+    bool _errorWhileParsing;
+    bool _isSyntaxError;
+    bool _checkValidTypes;
+    bool _isParsingAppInterface;
 
     asCScriptEngine *engine;
 
     // size_t _curscope = 0;
 
-    QByteArray code;
+    QByteArray _code;
     QByteArray tempString; // Used for reduzing amount of dynamic allocations
 
-    sToken lastToken;
-    size_t sourcePos;
+    sToken _lastToken;
+    size_t _sourcePos;
 
     QByteArrayList currentNs;
 };

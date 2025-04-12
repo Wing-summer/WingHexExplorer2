@@ -64,8 +64,10 @@ AsCompletion::AsCompletion(WingCodeEdit *p)
 
 AsCompletion::~AsCompletion() {}
 
-void AsCompletion::applyEmptyNsNode(QList<CodeInfoTip> &nodes) {
+void AsCompletion::applyEmptyNsNode(QList<CodeInfoTip> &nodes,
+                                    const QList<CodeInfoTip> &docNodes) {
     static QList<CodeInfoTip> emptyNsNodes;
+
     if (emptyNsNodes.isEmpty()) {
         auto &hn = parser.headerNodes();
         for (auto p = hn.constKeyValueBegin(); p != hn.constKeyValueEnd();
@@ -81,6 +83,24 @@ void AsCompletion::applyEmptyNsNode(QList<CodeInfoTip> &nodes) {
         }
         emptyNsNodes.append(parser.keywordNodes());
     }
+
+    nodes.clear();
+
+    for (auto &p : docNodes) {
+        if (p.nameSpace.isEmpty()) {
+            nodes.append(p);
+        } else {
+            if (p.dontAddGlobal) {
+                continue;
+            }
+
+            CodeInfoTip tip;
+            tip.type = CodeInfoTip::Type::Group;
+            tip.name = p.nameSpace;
+            nodes.append(tip);
+        }
+    }
+
     nodes.append(emptyNsNodes);
 }
 
@@ -134,9 +154,10 @@ void AsCompletion::processTrigger(const QString &trigger,
     auto code = content.toUtf8();
 
     QList<CodeInfoTip> nodes;
+    QList<CodeInfoTip> docNodes;
 
     if (m_parseDocument) {
-        nodes.append(parseDocument());
+        docNodes = parseDocument();
     }
 
     if (!trigger.isEmpty() && trigger != *DOT_TRIGGER) {
@@ -213,7 +234,7 @@ void AsCompletion::processTrigger(const QString &trigger,
         prefix = etoken.content;
         tokens.removeLast();
         if (tokens.isEmpty()) {
-            applyEmptyNsNode(nodes);
+            applyEmptyNsNode(nodes, docNodes);
         } else {
             etoken = tokens.back(); // checking later
         }
@@ -231,7 +252,7 @@ void AsCompletion::processTrigger(const QString &trigger,
                 setCompletionPrefix(prefix);
                 return;
             } else {
-                applyEmptyNsNode(nodes);
+                applyEmptyNsNode(nodes, docNodes);
             }
         } else if (etoken.type != asTC_IDENTIFIER) {
             popup()->hide();
@@ -251,7 +272,14 @@ void AsCompletion::processTrigger(const QString &trigger,
                         return;
                     }
                 }
-                nodes = parser.headerNodes().value(ns);
+                nodes = parser.headerNodes().value(ns) +
+                        parser.enumsNodes().value(ns);
+                for (auto &n : docNodes) {
+                    if (n.nameSpace == ns) {
+                        nodes.append(n);
+                    }
+                }
+
                 if (nodes.isEmpty()) {
                     return;
                 }
@@ -272,9 +300,11 @@ void AsCompletion::processTrigger(const QString &trigger,
                         return;
                     }
                 }
+
                 nodes = parser.headerNodes().value(ns);
+
                 if (nodes.isEmpty()) {
-                    applyEmptyNsNode(nodes);
+                    applyEmptyNsNode(nodes, docNodes);
                 }
             }
         }
@@ -291,9 +321,10 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     }
 
     auto code = editor->toPlainText();
+    auto engine = ScriptMachine::instance().engine();
 
     // first preprocess the code
-    AsPreprocesser prepc(ScriptMachine::instance().engine());
+    AsPreprocesser prepc(engine);
     // TODO: set include callback
     // prepc.setIncludeCallback();
 
@@ -307,7 +338,7 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     QList<CodeInfoTip> ret;
 
     for (auto &d : data) {
-        QAsCodeParser parser(ScriptMachine::instance().engine());
+        QAsCodeParser parser(engine);
         auto syms =
             parser.parseAndIntell(editor->textCursor().position(), d.script);
 
@@ -326,12 +357,28 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
                 break;
             case QAsCodeParser::SymbolType::Enum:
                 tip.type = CodeInfoTip::Type::Enum;
+                for (auto &e : sym.children) {
+                    CodeInfoTip en;
+                    en.dontAddGlobal = true;
+                    en.name = e.name;
+                    en.nameSpace = QString::fromUtf8(e.scope.join("::"));
+                    en.type = CodeInfoTip::Type::Enumerater;
+                    if (!e.additonalInfo.isEmpty()) {
+                        en.addinfo.insert(CodeInfoTip::Comment,
+                                          en.name + QStringLiteral(" = ") +
+                                              e.additonalInfo);
+                    }
+                    ret.append(en);
+                }
+                break;
+            case QAsCodeParser::SymbolType::TypeDef:
+                tip.type = CodeInfoTip::Type::KeyWord;
                 break;
             case QAsCodeParser::SymbolType::Variable:
+                tip.type = CodeInfoTip::Type::Variable;
+                break;
             case QAsCodeParser::SymbolType::Class:
-            case QAsCodeParser::SymbolType::TypeDef:
             case QAsCodeParser::SymbolType::FnDef:
-            case QAsCodeParser::SymbolType::VarsDecl:
             case QAsCodeParser::SymbolType::Invalid:
                 continue;
             }
