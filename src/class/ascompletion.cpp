@@ -349,11 +349,20 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 
             switch (sym.symtype) {
             case QAsCodeParser::SymbolType::Function:
+            case QAsCodeParser::SymbolType::FnDef:
                 tip.type = CodeInfoTip::Type::Function;
                 tip.addinfo.insert(CodeInfoTip::RetType,
                                    QString::fromUtf8(sym.type));
                 tip.addinfo.insert(CodeInfoTip::Args,
                                    QString::fromUtf8(sym.additonalInfo));
+                for (auto &var : sym.children) {
+                    CodeInfoTip va;
+                    va.dontAddGlobal = true;
+                    va.name = var.name;
+                    va.nameSpace = QString::fromUtf8(var.scope.join("::"));
+                    va.type = CodeInfoTip::Type::Variable;
+                    ret.append(va);
+                }
                 break;
             case QAsCodeParser::SymbolType::Enum:
                 tip.type = CodeInfoTip::Type::Enum;
@@ -378,7 +387,6 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
                 tip.type = CodeInfoTip::Type::Variable;
                 break;
             case QAsCodeParser::SymbolType::Class:
-            case QAsCodeParser::SymbolType::FnDef:
             case QAsCodeParser::SymbolType::Invalid:
                 continue;
             }

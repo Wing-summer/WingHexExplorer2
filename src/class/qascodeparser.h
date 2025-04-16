@@ -103,6 +103,14 @@ public:
     // so, a helper function?
     QList<Symbol> parseAndIntell(qsizetype offset, const QByteArray &codes);
 
+public:
+    // utilities
+    static bool isConstant(int tokenType);
+    static bool isOperator(int tokenType);
+    static bool isPreOperator(int tokenType);
+    static bool isPostOperator(int tokenType);
+    static bool isAssignOperator(int tokenType);
+
 private:
     QList<QAsCodeParser::CodeSegment> parseScript(bool inBlock);
 
@@ -134,8 +142,6 @@ private:
     sToken parseDataType(bool allowVariableType = false,
                          bool allowAuto = false);
     sToken parseOneOf(int *tokens, int count);
-    sToken parseType(bool allowConst, bool allowVariableType = false,
-                     bool allowAuto = false);
 
     void parseNamespace();
 
@@ -156,49 +162,29 @@ private:
                                    bool isClassProp = false,
                                    bool isGlobalVar = false);
 
+    QByteArray parseType(bool allowConst, bool allowVariableType = false,
+                         bool allowAuto = false);
+
+    Symbol parseFuncDefContent(const QByteArrayList &ns,
+                               const QByteArray &code);
+
+    QList<Symbol> parseClassContent(const QByteArrayList &ns,
+                                    const QByteArray &code);
+
+    QList<Symbol> parseStatementBlock(const QByteArrayList &ns,
+                                      const QByteArray &code, qsizetype end);
+
 private:
-    void parseStatementBlock();
     void parseStatement();
-    void parseClassContent();
     void parseMixinContent();
     void parseInterfaceContent();
-    Symbol parseFuncDefContent();
-    void ParseReturn();
-    void ParseBreak();
-    void ParseContinue();
-    void ParseTryCatch();
-    void ParseIf();
-    void ParseLambda();
     CodeSegment parseFunction(bool isMethod);
-    void ParseExpressionStatement();
-    void ParseListPattern();
-
-    void ParseAssignment();
-    void ParseAssignOperator();
-    void ParseSwitch();
-    void ParseCase();
-    void ParseFor();
-    void ParseWhile();
-    void ParseDoWhile();
-    void ParseCondition();
-    void ParseExpression();
-    void ParseExprTerm();
-    void ParseExprOperator();
-    void ParseExprPreOp();
-    void ParseExprPostOp();
-    void ParseExprValue();
 
     Symbol parseVirtualPropertyDecl(bool isMethod, bool isInterface);
     QList<Symbol> parseParameterListContent();
 
     // parse but not get symbols
-    void ParseTypeMod(bool isParam);
-    void ParseFunctionCall();
-    void ParseInitList();
-    void ParseCast();
-    void ParseVariableAccess();
-    void ParseConstructCall();
-    void ParseConstant();
+    void parseTypeMod(bool isParam);
 
 private:
     void reset();
@@ -221,20 +207,11 @@ private:
 private:
     bool checkTemplateType(const sToken &t);
 
-    void parseArgList(bool withParenthesis = true);
-
 private:
     bool findTokenAfterType(sToken &nextToken);
     bool findIdentifierAfterScope(sToken &nextToken);
-    bool isConstant(int tokenType);
-    bool isOperator(int tokenType);
-    bool isPreOperator(int tokenType);
-    bool isPostOperator(int tokenType);
-    bool isAssignOperator(int tokenType);
 
     bool typeExist(const QString &t);
-
-    Symbol parseFunctionDefinition();
 
     Symbol parseInterfaceMethod();
 
@@ -248,10 +225,7 @@ private:
 
     asCScriptEngine *engine;
 
-    // size_t _curscope = 0;
-
     QByteArray _code;
-    QByteArray tempString; // Used for reduzing amount of dynamic allocations
 
     sToken _lastToken;
     size_t _sourcePos;
