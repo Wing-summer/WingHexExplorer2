@@ -2840,6 +2840,10 @@ void PluginSystem::checkDirRootSafe(const QDir &dir) {
 }
 
 void PluginSystem::registerFns(IWingPlugin *plg) {
+    if (_angelplg == nullptr) {
+        return;
+    }
+
     Q_ASSERT(plg);
     auto fns = plg->registeredScriptFns();
     if (fns.isEmpty()) {
@@ -2912,6 +2916,10 @@ void PluginSystem::registerFns(IWingPlugin *plg) {
 }
 
 void PluginSystem::registerUnSafeFns(IWingPlugin *plg) {
+    if (_angelplg == nullptr) {
+        return;
+    }
+
     Q_ASSERT(plg);
 
     auto fns = plg->registeredScriptUnsafeFns();

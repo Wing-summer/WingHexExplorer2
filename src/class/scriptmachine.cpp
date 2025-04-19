@@ -1825,7 +1825,10 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
 
     auto ret = parser.parse(ccode);
     // check whether there is any enum/class
-    if (ret.isEmpty()) {
+    if (std::find_if(ret.begin(), ret.end(),
+                     [](const QAsCodeParser::CodeSegment &seg) {
+                         return seg.isValid();
+                     }) == ret.end()) {
         // ok, wrap the codes
         ccode.prepend("void main(){").append("}");
         // start to compile

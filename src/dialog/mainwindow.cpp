@@ -3786,13 +3786,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     // then checking the scripting dialog
-    if (!m_scriptDialog->about2Close()) {
-        event->ignore();
-        return;
-    }
+    if (m_scriptDialog) {
+        if (!m_scriptDialog->about2Close()) {
+            event->ignore();
+            return;
+        }
 
-    // then abort all script running
-    ScriptMachine::instance().abortScript();
+        // then abort all script running
+        ScriptMachine::instance().abortScript();
+    }
 
     // then checking itself
     if (!m_views.isEmpty()) {
@@ -3843,9 +3845,11 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
 
-    m_scriptDialog->saveDockLayout();
-    set.setRecentFiles(m_recentmanager->saveRecent());
-    set.save();
+    if (m_scriptDialog) {
+        m_scriptDialog->saveDockLayout();
+        set.setRecentFiles(m_recentmanager->saveRecent());
+        set.save();
+    }
 
     PluginSystem::instance().destory();
 

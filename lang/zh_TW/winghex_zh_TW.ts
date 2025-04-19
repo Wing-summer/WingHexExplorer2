@@ -1692,7 +1692,7 @@
         <translation>【錯誤】</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3819"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3821"/>
         <source>ConfirmAPPSave</source>
         <translation>你嘗試關閉程式，但仍存在未保存的檔或工作區，你確定保存這些更改嗎？</translation>
     </message>
@@ -2272,125 +2272,125 @@
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2871"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2875"/>
         <source>RegisterScriptFnUnSupportedTypes:</source>
         <translation>因腳本函數含有未支持的類型而註冊失敗：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2881"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="2945"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2885"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2953"/>
         <source>RegisterScriptFnInvalidSig:</source>
         <translation>因腳本函數簽名非法而註冊失敗：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2889"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="2953"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2893"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2961"/>
         <source>RegisterScriptFnConflitSig:</source>
         <translation>因腳本函數簽名衝突而註冊失敗：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3004"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3012"/>
         <source>InvalidEnumName:</source>
         <translation>非法枚舉名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3014"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3022"/>
         <source>InvalidEnumValue:</source>
         <translation>非法枚舉值：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3049"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3057"/>
         <source>InvalidMarcosRegister:</source>
         <translation>非法宏註冊：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3294"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3302"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加載失敗：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3298"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3306"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3319"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3327"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3326"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3334"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3327"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3335"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3328"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3336"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3432"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3440"/>
         <source>ErrLoadExtPluginSDKVersion</source>
         <translation>設備拓展插件加載失敗：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3435"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3443"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3436"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3444"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3452"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3460"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3477"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3485"/>
         <source>ChooseFile</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3484"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3489"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3492"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3497"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3485"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3493"/>
         <source>FileNotExist</source>
         <translation>檔不存在！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3490"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3498"/>
         <source>FilePermission</source>
         <translation>因檔許可權無法繼續！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3520"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3528"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3530"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3538"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3538"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3546"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3605"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3613"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2754,14 +2754,14 @@
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="363"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1836"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1848"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1839"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1851"/>
         <source>Script failed to build</source>
         <translation>腳本編譯失敗</translation>
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="378"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1864"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1867"/>
         <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
         <translation>無法找到程式入口點： &quot;int main()&quot; 或者 &quot;void main()&quot;</translation>
     </message>
@@ -2777,19 +2777,19 @@
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="432"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1901"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1904"/>
         <source>The script failed with an exception</source>
         <translation>異常被拋出，腳本執行失敗</translation>
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="440"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1910"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1913"/>
         <source>The script was aborted</source>
         <translation>腳本被終止</translation>
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="447"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1917"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1920"/>
         <source>The script terminated unexpectedly</source>
         <translation>腳本異常退出</translation>
     </message>

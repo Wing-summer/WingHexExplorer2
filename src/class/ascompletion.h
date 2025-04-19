@@ -38,7 +38,7 @@ public:
     void clearFunctionTip();
 
 protected:
-    virtual void processTrigger(const QString &trigger,
+    virtual bool processTrigger(const QString &trigger,
                                 const QString &content) override;
 
     virtual QList<CodeInfoTip> parseDocument();

@@ -24,7 +24,7 @@
 #include <QMap>
 #include <QString>
 
-// This class is the modification of as_parser.
+// This class comes from as_parser.h .
 // You can modified it to support more features.
 /** It's a complex thing to fully support AngelScript code intellisense.
  ** I just support basic code completion.
@@ -41,16 +41,17 @@ public:
 public:
     enum class SymbolType {
         Invalid,
-        Variable, // variable or property in class
-        Enum,     // an enum
-        Class,    // a class type
-        Function, // a function
-        TypeDef,  // a typedef
-        FnDef,    // a funcdef
+        Variable,  // variable or property in class
+        Enum,      // an enum
+        Class,     // a class type
+        Function,  // a function
+        TypeDef,   // a typedef
+        FnDef,     // a funcdef
+        Interface, // an interface
+        Import,    // import but not supported
     };
 
     enum class Visiblity { Public, Private, Protected };
-
     /**
      * @brief The CodeSegment class
      */
@@ -133,6 +134,7 @@ private:
     CodeSegment parseInterface();
     CodeSegment parseFuncDef();
     CodeSegment parseFunction();
+    CodeSegment parseFunctionMethod();
 
 private:
     // parse tokens
@@ -168,18 +170,19 @@ private:
     Symbol parseFuncDefContent(const QByteArrayList &ns,
                                const QByteArray &code);
 
-    QList<Symbol> parseClassContent(const QByteArrayList &ns,
+    Symbol parseFuncDefContent(const QByteArrayList &ns);
+
+    QList<Symbol> parseClassContent(qsizetype offset, const QByteArrayList &ns,
                                     const QByteArray &code);
+
+    QList<Symbol> parseInterfaceContent(qsizetype offset,
+                                        const QByteArrayList &ns,
+                                        const QByteArray &code);
 
     QList<Symbol> parseStatementBlock(const QByteArrayList &ns,
                                       const QByteArray &code, qsizetype end);
 
 private:
-    void parseStatement();
-    void parseMixinContent();
-    void parseInterfaceContent();
-    CodeSegment parseFunction(bool isMethod);
-
     Symbol parseVirtualPropertyDecl(bool isMethod, bool isInterface);
     QList<Symbol> parseParameterListContent();
 
@@ -192,8 +195,6 @@ private:
     bool isVarDecl();
     bool isVirtualPropertyDecl();
     bool isFuncDecl(bool isMethod);
-    bool isLambda();
-    bool isFunctionCall();
 
     void getToken(sToken *token);
     void rewindTo(const sToken *token);
@@ -209,13 +210,10 @@ private:
 
 private:
     bool findTokenAfterType(sToken &nextToken);
-    bool findIdentifierAfterScope(sToken &nextToken);
 
     bool typeExist(const QString &t);
 
     Symbol parseInterfaceMethod();
-
-    void ParseStringConstant();
 
 private:
     bool _errorWhileParsing;
