@@ -211,6 +211,9 @@ private:
     /// @note All enum types have fixed size, so they're not stored
     QHash<QString, QPair<QMetaType::Type, qsizetype>> type_maps_;
 
+    /// basic types
+    QStringList base_types_;
+
     /// unsigned types
     QStringList unsigned_types_;
 

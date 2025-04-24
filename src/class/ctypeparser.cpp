@@ -151,6 +151,9 @@ void CTypeParser::initialize() {
     ADD_TYPE(longlong, QMetaType::LongLong);
     ADD_TYPE_U(ulonglong, QMetaType::ULongLong);
 
+    using uint = unsigned int;
+    ADD_TYPE_U(uint, QMetaType::UInt);
+
     using BOOL = bool;
     using BYTE = byte;
     using WORD = uint16;
@@ -242,6 +245,8 @@ void CTypeParser::initialize() {
 
 #undef ADD_TYPE
 #undef ADD_TYPE_S
+
+    base_types_ = type_maps_.keys();
 }
 
 void CTypeParser::setIncludePaths(const QStringList &paths) {
@@ -627,7 +632,7 @@ TokenTypes CTypeParser::getTokenType(const QString &token) const {
         return keywords_.value(token);
     } else if (qualifiers_.contains(token)) {
         return kQualifier;
-    } else if (type_maps_.contains(token)) {
+    } else if (base_types_.contains(token)) {
         return kBasicDataType;
     } else if (struct_defs_.contains(token)) {
         return kStructName;

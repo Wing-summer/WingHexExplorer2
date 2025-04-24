@@ -245,7 +245,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             sm.registerCallBack(ScriptMachine::Interactive, callbacks);
 
             callbacks.getInputFn = [this]() -> QString {
-                return WingInputDialog::getText(this, tr(""), tr(""));
+                return WingInputDialog::getText(this, tr("InputRequest"),
+                                                tr("PleaseInput"));
             };
             callbacks.clearFn = [this]() { m_bgScriptOutput->clear(); };
             callbacks.printMsgFn =
@@ -3162,6 +3163,22 @@ void MainWindow::connectEditorView(EditorView *editor) {
     connect(editor, &EditorView::sigOnPasteHex, this, &MainWindow::on_pastehex);
     connect(editor, &EditorView::sigOnPasteFile, this,
             &MainWindow::on_pastefile);
+
+    editor->setProperty("__RELOAD__", false);
+    connect(editor, &EditorView::need2Reload, this, [editor, this]() {
+        if (editor->isBigFile()) {
+            editor->reload();
+        }
+        if (currentEditor() == editor) {
+            auto ret = WingMessageBox::question(this, tr("Reload"),
+                                                tr("ReloadNeededYesOrNo"));
+            if (ret == QMessageBox::Yes) {
+                editor->reload();
+            }
+        } else {
+            editor->setProperty("__RELOAD__", true);
+        }
+    });
 }
 
 void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
@@ -3188,6 +3205,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     Q_ASSERT(cur);
     auto hexeditor = cur->hexEditor();
+    auto needReload = cur->property("__RELOAD__").toBool();
+    if (needReload) {
+        auto ret = WingMessageBox::question(this, tr("Reload"),
+                                            tr("ReloadNeededYesOrNo"));
+        if (ret == QMessageBox::Yes) {
+            cur->reload();
+        }
+        cur->setProperty("__RELOAD__", false);
+    }
     connect(hexeditor, &QHexView::cursorLocationChanged, this,
             &MainWindow::on_locChanged);
     connect(hexeditor, &QHexView::cursorSelectionChanged, this,

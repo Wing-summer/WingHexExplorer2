@@ -36,6 +36,7 @@ QIcon CodeInfoTip::getDisplayIcon(Type type, CodeInfoVisibility vis) {
     case Type::Group:
         return icon(ICON_NAMESPACE);
     case Type::Class:
+    case Type::TypeDef:
         return icon(ICON_CLASS);
     case Type::ClsFunction:
     case Type::Function:

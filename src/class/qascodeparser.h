@@ -90,6 +90,7 @@ public:
         Visiblity vis = QAsCodeParser::Visiblity::Public;
         QByteArray additonalInfo; // for other additonal info
 
+        QByteArrayList inherit;
         QList<Symbol> children;
     };
 
@@ -134,7 +135,7 @@ private:
     CodeSegment parseInterface();
     CodeSegment parseFuncDef();
     CodeSegment parseFunction();
-    CodeSegment parseFunctionMethod();
+    CodeSegment parseFunctionMethod(Visiblity &vis);
 
 private:
     // parse tokens
@@ -172,12 +173,13 @@ private:
 
     Symbol parseFuncDefContent(const QByteArrayList &ns);
 
-    QList<Symbol> parseClassContent(qsizetype offset, const QByteArrayList &ns,
-                                    const QByteArray &code);
+    QPair<QByteArrayList, QList<Symbol>>
+    parseClassContent(qsizetype offset, const QByteArrayList &ns,
+                      const QByteArray &code);
 
-    QList<Symbol> parseInterfaceContent(qsizetype offset,
-                                        const QByteArrayList &ns,
-                                        const QByteArray &code);
+    QPair<QByteArrayList, QList<Symbol>>
+    parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
+                          const QByteArray &code);
 
     QList<Symbol> parseStatementBlock(const QByteArrayList &ns,
                                       const QByteArray &code, qsizetype end);

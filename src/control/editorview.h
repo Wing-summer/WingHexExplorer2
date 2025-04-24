@@ -18,6 +18,7 @@
 #ifndef EDITORVIEW_H
 #define EDITORVIEW_H
 
+#include <QFileSystemWatcher>
 #include <QReadWriteLock>
 #include <QStackedWidget>
 
@@ -553,6 +554,8 @@ signals:
     void sigOnMetadata();
     void sigOnBookMark();
 
+    void need2Reload();
+
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -589,6 +592,7 @@ private:
 
     QReadWriteLock _rwlock;
     CallTable _viewFns;
+    QFileSystemWatcher _watcher;
 };
 
 #endif // EDITORVIEW_H

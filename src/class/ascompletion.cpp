@@ -154,11 +154,6 @@ bool AsCompletion::processTrigger(const QString &trigger,
     auto code = content.toUtf8();
 
     QList<CodeInfoTip> nodes;
-    QList<CodeInfoTip> docNodes;
-
-    if (m_parseDocument) {
-        docNodes = parseDocument();
-    }
 
     if (!trigger.isEmpty() && trigger != *DOT_TRIGGER) {
         clearFunctionTip();
@@ -226,24 +221,35 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return false;
     }
 
-    QString prefix;
     auto etoken = tokens.back();
+    // it can not be any trigger, so take the last as prefix
+    QString prefix = etoken.content;
     if (etoken.type == asTC_VALUE || etoken.type == asTC_COMMENT ||
         etoken.type == asTC_UNKNOWN) {
         popup()->hide();
         return false;
     }
 
+    if (trigger.isEmpty() && popup()->isVisible()) {
+        setCompletionPrefix(prefix);
+        return true;
+    }
+
+    QList<CodeInfoTip> docNodes;
+    if (m_parseDocument) {
+        docNodes = parseDocument();
+    }
+
     // if trigger is empty, it's making editing
     if (trigger.isEmpty()) {
-        // it can not be any trigger, so take the last as prefix
-        prefix = etoken.content;
         tokens.removeLast();
         if (tokens.isEmpty()) {
             applyEmptyNsNode(nodes, docNodes);
         } else {
             etoken = tokens.back(); // checking later
         }
+    } else {
+        prefix.clear();
     }
 
     if (nodes.isEmpty()) {
@@ -266,8 +272,52 @@ bool AsCompletion::processTrigger(const QString &trigger,
         }
 
         if (trigger == *DOT_TRIGGER) {
-            // member guessing ?
-            applyClassNodes(nodes);
+            // member type guessing ? basic match is enough. (>n<)
+            auto isBasicType = [](const QString &type) {
+                static QStringList basicType{
+                    "int",   "int8",   "int16",  "int32",  "int64",
+                    "uint",  "uint8",  "uint16", "uint32", "uint64",
+                    "float", "double", "byte"};
+
+                return basicType.contains(type);
+            };
+
+            auto clsNodes = parser.headerNodes();
+
+            // filter the type we can use to auto-complete in docNodes
+            for (auto &item : docNodes) {
+                if (item.type == CodeInfoTip::Type::Class) {
+                    auto name = item.nameSpace;
+                    if (name.isEmpty()) {
+                        name = item.name;
+                    }
+                    clsNodes.insert(name, item.children);
+                }
+                // a typedef can only be used to define an alias
+                // for primitive types, so NO NEED for auto-completing
+            }
+
+            tokens.removeLast();
+            auto ns = getNamespace(tokens);
+            for (auto &item : docNodes) {
+                if (etoken.content == item.name && ns == item.nameSpace) {
+                    auto retType = item.addinfo.value(CodeInfoTip::RetType);
+
+                    // auto type inference is not supported.
+                    // PRs will be welcomed !!!
+                    if (isBasicType(retType)) {
+                        popup()->hide();
+                        return false;
+                    }
+
+                    nodes.append(clsNodes.value(retType));
+                    break;
+                }
+            }
+
+            if (nodes.isEmpty()) {
+                applyClassNodes(nodes);
+            }
         } else if (etoken.content.length() >= triggerAmount()) {
             // completion for a.b.c or a::b.c or a::b::c.d or ::a::b.c
             if (trigger == *DBL_COLON_TRIGGER) {
@@ -368,6 +418,7 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
                     va.dontAddGlobal = true;
                     va.name = var.name;
                     va.nameSpace = QString::fromUtf8(var.scope.join("::"));
+                    va.addinfo.insert(CodeInfoTip::RetType, var.type);
                     va.type = CodeInfoTip::Type::Variable;
                     ret.append(va);
                 }
@@ -389,17 +440,47 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
                 }
                 break;
             case QAsCodeParser::SymbolType::TypeDef:
-                tip.type = CodeInfoTip::Type::KeyWord;
+                tip.type = CodeInfoTip::Type::TypeDef;
                 break;
             case QAsCodeParser::SymbolType::Variable:
+                tip.addinfo.insert(CodeInfoTip::RetType, sym.type);
                 tip.type = CodeInfoTip::Type::Variable;
                 break;
             case QAsCodeParser::SymbolType::Class:
             case QAsCodeParser::SymbolType::Interface:
-                tip.type = CodeInfoTip::Type::Class;
                 for (auto &mem : sym.children) {
-                    // TODO
+                    if (mem.vis != QAsCodeParser::Visiblity::Public) {
+                        continue;
+                    }
+                    CodeInfoTip ctip;
+                    ctip.name = mem.name;
+                    ctip.nameSpace = QString::fromUtf8(mem.scope.join("::"));
+                    if (mem.symtype == QAsCodeParser::SymbolType::Function) {
+                        ctip.type = CodeInfoTip::Type::Function;
+                        ctip.addinfo.insert(CodeInfoTip::RetType,
+                                            QString::fromUtf8(mem.type));
+                        ctip.addinfo.insert(
+                            CodeInfoTip::Args,
+                            QString::fromUtf8(mem.additonalInfo));
+                        for (auto &var : mem.children) {
+                            CodeInfoTip va;
+                            va.dontAddGlobal = true;
+                            va.name = var.name;
+                            va.nameSpace =
+                                QString::fromUtf8(var.scope.join("::"));
+                            va.addinfo.insert(CodeInfoTip::RetType, var.type);
+                            va.type = CodeInfoTip::Type::Variable;
+                            tip.children.append(va);
+                        }
+                        tip.children.append(ctip);
+                    } else if (mem.symtype ==
+                               QAsCodeParser::SymbolType::Variable) {
+                        ctip.addinfo.insert(CodeInfoTip::RetType, mem.type);
+                        ctip.type = CodeInfoTip::Type::Variable;
+                        tip.children.append(ctip);
+                    }
                 }
+                tip.type = CodeInfoTip::Type::Class;
                 break;
             case QAsCodeParser::SymbolType::Invalid:
             case QAsCodeParser::SymbolType::Import:

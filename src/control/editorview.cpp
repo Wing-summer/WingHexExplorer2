@@ -121,6 +121,9 @@ EditorView::EditorView(QWidget *parent)
         m_metadata->setDocument(doc);
     });
 
+    connect(&_watcher, &QFileSystemWatcher::fileChanged, this,
+            &EditorView::need2Reload);
+
     applySettings();
 
     // build up call tables
@@ -284,6 +287,9 @@ ErrFile EditorView::newFile(size_t index) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
+    if (!m_fileName.isEmpty()) {
+        _watcher.removePath(m_fileName);
+    }
     auto istr = QString::number(index);
     m_fileName = tr("Untitled") + istr;
     this->setWindowTitle(m_fileName);
@@ -320,6 +326,10 @@ ErrFile EditorView::openFile(const QString &filename) {
             return ErrFile::Permission;
         }
 
+        if (!m_fileName.isEmpty()) {
+            _watcher.removePath(m_fileName);
+        }
+
         m_hex->setDocument(QSharedPointer<QHexDocument>(p));
         m_hex->setLockedFile(readonly);
         m_hex->setKeepSize(true);
@@ -335,6 +345,8 @@ ErrFile EditorView::openFile(const QString &filename) {
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
         tab->setToolTip(m_fileName);
+
+        _watcher.addPath(m_fileName);
     }
 
     return ErrFile::Success;
@@ -370,6 +382,10 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
 
     if (Q_UNLIKELY(p == nullptr)) {
         return ErrFile::Error;
+    }
+
+    if (!m_fileName.isEmpty()) {
+        _watcher.removePath(m_fileName);
     }
 
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
@@ -562,10 +578,14 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                 file.close();
 
                 if (!isExport) {
+                    if (!m_fileName.isEmpty()) {
+                        _watcher.removePath(m_fileName);
+                    }
                     m_fileName = QFileInfo(fileName).absoluteFilePath();
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
+                    _watcher.addPath(m_fileName);
                 }
 #ifdef Q_OS_LINUX
                 adjustPermission();

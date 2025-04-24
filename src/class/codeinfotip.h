@@ -36,6 +36,7 @@ public:
         Variable,
         Property = Variable,
         Enumerater,
+        TypeDef
     };
 
     enum CacheIndex {

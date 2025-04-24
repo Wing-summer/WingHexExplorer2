@@ -69,7 +69,7 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
 
     auto engine = dic->GetEngine();
 
-    s << " [";
+    s << " {";
     asUINT n = 0;
     for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
          it++, n++) {
@@ -88,7 +88,7 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
         if (n < dic->GetSize() - 1)
             s << ", ";
     }
-    s << "]";
+    s << "}";
 
     return str;
 }

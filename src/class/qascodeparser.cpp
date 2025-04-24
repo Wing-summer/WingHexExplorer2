@@ -119,12 +119,26 @@ QAsCodeParser::parseIntell(qsizetype offset,
                 continue;
             }
             break;
-        case SymbolType::Class:
-            sym.children = parseClassContent(offset, sym.scope, seg.codes);
-            break;
-        case SymbolType::Interface:
-            sym.children = parseInterfaceContent(offset, sym.scope, seg.codes);
-            break;
+        case SymbolType::Class: {
+            auto syms =
+                parseClassContent(offset - seg.offset, sym.scope, seg.codes);
+            // TODO: PRS, 'cause i have no need to code-complete a class
+            sym.inherit = syms.first;
+            sym.children = syms.second;
+            if (offset > seg.offset && offset < seg.end()) {
+                ret.append(syms.second);
+            }
+        } break;
+        case SymbolType::Interface: {
+            auto syms = parseInterfaceContent(offset - seg.offset, sym.scope,
+                                              seg.codes);
+            // TODO: PRS, 'cause i have no need to code-complete an interface
+            sym.inherit = syms.first;
+            sym.children = syms.second;
+            if (offset > seg.offset && offset < seg.end()) {
+                ret.append(syms.second);
+            }
+        } break;
         case SymbolType::Invalid:
         case SymbolType::Import:
             continue;
@@ -510,7 +524,8 @@ QAsCodeParser::parseStatementBlock(const QByteArrayList &ns,
         QList<QAsCodeParser::Symbol> ret;
         for (auto &symlist : syms) {
             for (auto &sym : symlist) {
-                if (sym.symtype == SymbolType::Variable) {
+                if (sym.symtype == SymbolType::Variable &&
+                    !sym.type.isEmpty()) {
                     auto var = sym.name;
                     auto n = std::find_if(
                         ret.begin(), ret.end(),
@@ -940,13 +955,14 @@ QAsCodeParser::CodeSegment QAsCodeParser::parseFuncDef() {
     auto begin = t1.pos;
     skipCodeBlock();
     getToken(&t1);
+    rewindTo(&t1);
     auto end = t1.pos;
 
     // seg.name is empty
     seg.scope = currentNs;
     seg.offset = begin;
     seg.type = SymbolType::FnDef;
-    seg.codes = _code.sliced(begin, end - begin + 1);
+    seg.codes = _code.sliced(begin, end - begin);
     return seg;
 }
 
@@ -1027,6 +1043,7 @@ void QAsCodeParser::superficiallyParseVarInit() {
         } while (indentParan || indentBrace ||
                  (t.type != ttListSeparator && t.type != ttEndStatement &&
                   t.type != ttEndStatementBlock));
+        rewindTo(&t);
     } else if (t.type == ttOpenParenthesis) {
         sToken start = t;
 
@@ -1308,6 +1325,7 @@ QAsCodeParser::CodeSegment QAsCodeParser::parseTypedef() {
     auto begin = token.pos;
     skipCodeBlock();
     getToken(&token);
+    rewindTo(&token);
     auto end = token.pos;
 
     // seg.name is empty
@@ -1423,22 +1441,27 @@ QAsCodeParser::parseGlobalVarDecls(const QByteArrayList &ns,
     return parseDeclaration(ns, false, true);
 }
 
-QAsCodeParser::CodeSegment QAsCodeParser::parseFunctionMethod() {
+QAsCodeParser::CodeSegment QAsCodeParser::parseFunctionMethod(Visiblity &vis) {
     CodeSegment seg;
 
     sToken t1;
     getToken(&t1);
+
+    vis = Visiblity::Public;
 
     // A class method can start with 'private' or 'protected'
     if (t1.type == ttPrivate) {
         rewindTo(&t1);
         parseToken(ttPrivate);
         getToken(&t1);
+        vis = Visiblity::Private;
     } else if (t1.type == ttProtected) {
         rewindTo(&t1);
         parseToken(ttProtected);
         getToken(&t1);
+        vis = Visiblity::Protected;
     }
+
     if (_isSyntaxError)
         return seg;
 
@@ -1530,12 +1553,13 @@ QAsCodeParser::parseFuncDefContent(const QByteArrayList &ns,
     return parseFuncDefContent(ns);
 }
 
-QList<QAsCodeParser::Symbol>
+QPair<QByteArrayList, QList<QAsCodeParser::Symbol>>
 QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
                                  const QByteArray &code) {
     reset();
     _code = code;
 
+    QByteArrayList inhertSyms;
     QList<Symbol> syms;
 
     sToken t;
@@ -1544,32 +1568,30 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
     // Optional list of interfaces that are being implemented and classes that
     // are being inherited
     if (t.type == ttColon) {
-        Symbol inhertSym;
+        QByteArray inhertSym;
 
         // assuming it as an interface
-        inhertSym.symtype = SymbolType::Interface;
-
-        Symbol isym;
-        isym.scope = parseOptionalScope();
-        isym.name = getSymbolString(parseIdentifier());
-        isym.symtype = SymbolType::Class; // assuming it as a class
-
-        inhertSym.children.append(isym);
-
+        inhertSym = parseOptionalScope().join("::");
+        if (!inhertSym.isEmpty()) {
+            inhertSym += "::";
+        }
+        inhertSym += getSymbolString(parseIdentifier());
+        inhertSyms.append(inhertSym);
         getToken(&t);
         while (t.type == ttListSeparator) {
-            isym.scope = parseOptionalScope();
-            isym.name = getSymbolString(parseIdentifier());
-            inhertSym.children.append(isym);
+            inhertSym = parseOptionalScope().join("::");
+            if (!inhertSym.isEmpty()) {
+                inhertSym += "::";
+            }
+            inhertSym += getSymbolString(parseIdentifier());
+            inhertSyms.append(inhertSym);
             getToken(&t);
         }
-
-        syms.append(inhertSym);
     }
 
     if (t.type != ttStartStatementBlock) {
         rewindErrorTo(&t);
-        return syms;
+        return {inhertSyms, syms};
     }
 
     // Parse properties
@@ -1581,11 +1603,11 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
             auto fndef = parseFuncDefContent(ns);
             syms.append(fndef);
         } else if (isFuncDecl(true)) {
-            auto fn = parseFunctionMethod();
+            Symbol sym;
+            auto fn = parseFunctionMethod(sym.vis);
 
             // add function symbols
-            Symbol sym;
-            sym.symtype = fn.type;
+            sym.symtype = SymbolType::Function;
             sym.scope = fn.scope;
             sym.offset = fn.offset;
             sym.name = fn.name;
@@ -1595,7 +1617,8 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
 
             // deep parsing
             if (offset >= fn.offset && offset < fn.end()) {
-                auto ss = parseStatementBlock(fn.scope, fn.codes, offset);
+                auto ss =
+                    parseStatementBlock(fn.scope, fn.codes, offset - fn.offset);
                 syms.append(ss);
             }
         } else if (isVirtualPropertyDecl()) {
@@ -1609,11 +1632,11 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
             getToken(&t);
         else {
             rewindErrorTo(&t);
-            return syms;
+            return {inhertSyms, syms};
         }
 
         if (_isSyntaxError)
-            return syms;
+            return {inhertSyms, syms};
 
         getToken(&t);
         rewindTo(&t);
@@ -1622,15 +1645,16 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
     getToken(&t);
     if (t.type != ttEndStatementBlock) {
         rewindErrorTo(&t);
-        return syms;
+        return {inhertSyms, syms};
     }
 
-    return syms;
+    return {inhertSyms, syms};
 }
 
-QList<QAsCodeParser::Symbol>
+QPair<QByteArrayList, QList<QAsCodeParser::Symbol>>
 QAsCodeParser::parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
                                      const QByteArray &code) {
+    QByteArrayList inhertSyms;
     QList<Symbol> syms;
 
     sToken t;
@@ -1638,12 +1662,22 @@ QAsCodeParser::parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
     getToken(&t);
     // Can optionally have a list of interfaces that are inherited
     if (t.type == ttColon) {
-        parseOptionalScope();
-        parseIdentifier();
+        QByteArray inhertSym;
+
+        inhertSym = parseOptionalScope().join("::");
+        if (!inhertSym.isEmpty()) {
+            inhertSym += "::";
+        }
+        inhertSym += getSymbolString(parseIdentifier());
+        inhertSyms.append(inhertSym);
         getToken(&t);
         while (t.type == ttListSeparator) {
-            parseOptionalScope();
-            parseIdentifier();
+            inhertSym = parseOptionalScope().join("::");
+            if (!inhertSym.isEmpty()) {
+                inhertSym += "::";
+            }
+            inhertSym += getSymbolString(parseIdentifier());
+            inhertSyms.append(inhertSym);
             getToken(&t);
         }
     }
@@ -1670,7 +1704,7 @@ QAsCodeParser::parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
         }
 
         if (_isSyntaxError)
-            return syms;
+            return {inhertSyms, syms};
 
         getToken(&t);
         rewindTo(&t);
@@ -1679,10 +1713,10 @@ QAsCodeParser::parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
     getToken(&t);
     if (t.type != ttEndStatementBlock) {
         rewindErrorTo(&t);
-        return syms;
+        return {inhertSyms, syms};
     }
 
-    return syms;
+    return {inhertSyms, syms};
 }
 
 QAsCodeParser::Symbol QAsCodeParser::parseInterfaceMethod() {
