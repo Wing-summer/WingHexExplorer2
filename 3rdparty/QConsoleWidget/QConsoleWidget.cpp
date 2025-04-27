@@ -109,6 +109,15 @@ QString QConsoleWidget::getCommandLine() {
     return code;
 }
 
+void QConsoleWidget::paste() {
+    QTextCursor textCursor = this->textCursor();
+    const QMimeData *const clipboard = QApplication::clipboard()->mimeData();
+    const QString text = clipboard->text();
+    if (!text.isNull()) {
+        textCursor.insertText(text, channelCharFormat(StandardInput));
+    }
+}
+
 void QConsoleWidget::handleReturnKey() {
     QString code = getCommandLine();
 
@@ -189,12 +198,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     // Allow paste only if the selection is in the interactive area ...
     if (e->key() == Qt::Key_V && e->modifiers() == Qt::ControlModifier) {
         if (selectionInEditZone || isCursorInEditZone()) {
-            const QMimeData *const clipboard =
-                QApplication::clipboard()->mimeData();
-            const QString text = clipboard->text();
-            if (!text.isNull()) {
-                textCursor.insertText(text, channelCharFormat(StandardInput));
-            }
+            paste();
         }
 
         e->accept();

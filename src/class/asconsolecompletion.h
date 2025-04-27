@@ -28,6 +28,9 @@ public:
     explicit AsConsoleCompletion(ScriptingConsole *p);
     virtual ~AsConsoleCompletion() = default;
 
+protected:
+    virtual QList<CodeInfoTip> parseDocument();
+
 private:
     ScriptingConsole *_console;
 };

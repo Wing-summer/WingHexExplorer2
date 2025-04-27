@@ -71,6 +71,9 @@ void asDebugger::takeCommands(asIScriptContext *ctx) {
 void asDebugger::lineCallback(asIScriptContext *ctx) {
     Q_ASSERT(ctx);
 
+    // prevent UI freezing
+    qApp->processEvents();
+
     // This should never happen, but it doesn't hurt to validate it
     if (ctx == nullptr)
         return;

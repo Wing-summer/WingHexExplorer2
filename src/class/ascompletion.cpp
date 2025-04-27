@@ -25,6 +25,7 @@
 #include "wingcodeedit.h"
 
 #include <QAbstractItemView>
+#include <QApplication>
 #include <QByteArray>
 #include <QDir>
 #include <QEvent>
@@ -41,8 +42,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
 
 AsCompletion::AsCompletion(WingCodeEdit *p)
-    : WingCompleter(p), parser(ScriptMachine::instance().engine()),
-      m_parseDocument(true) {
+    : WingCompleter(p), parser(ScriptMachine::instance().engine()) {
     setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
                     // unleash the power of call tips
                     *LEFT_PARE_TRIGGER,
@@ -126,10 +126,43 @@ void AsCompletion::applyClassNodes(QList<CodeInfoTip> &nodes) {
     nodes = clsNodes;
 }
 
-bool AsCompletion::parseDocument() const { return m_parseDocument; }
+int AsCompletion::includeCallBack(const QString &include, bool quotedInclude,
+                                  const QString &from, AsPreprocesser *builder,
+                                  void *userParam) {
+    Q_UNUSED(userParam);
 
-void AsCompletion::setParseDocument(bool newParseDocument) {
-    m_parseDocument = newParseDocument;
+    QFileInfo info(include);
+    bool isAbsolute = info.isAbsolute();
+    bool hasNoExt = info.suffix().isEmpty();
+    QString inc;
+    if (quotedInclude) {
+        if (isAbsolute) {
+            inc = include;
+        } else {
+            auto pwd = QFileInfo(from).absoluteDir();
+            inc = pwd.absoluteFilePath(include);
+        }
+    } else {
+        // absolute include is not allowed in #include<>
+        if (isAbsolute) {
+            // ignored in code completion
+            return asSUCCESS;
+        }
+
+        QDir dir(qApp->applicationDirPath());
+        if (!dir.cd(QStringLiteral("aslib"))) {
+            // someone crash the software, ignored
+            return asSUCCESS;
+        }
+        inc = dir.absoluteFilePath(include);
+    }
+
+    if (hasNoExt) {
+        inc += QStringLiteral(".as");
+    }
+
+    builder->loadSectionFromFile(inc);
+    return asSUCCESS;
 }
 
 void AsCompletion::clearFunctionTip() { emit onFunctionTip({}); }
@@ -235,10 +268,7 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return true;
     }
 
-    QList<CodeInfoTip> docNodes;
-    if (m_parseDocument) {
-        docNodes = parseDocument();
-    }
+    QList<CodeInfoTip> docNodes = parseDocument();
 
     // if trigger is empty, it's making editing
     if (trigger.isEmpty()) {
@@ -383,8 +413,7 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 
     // first preprocess the code
     AsPreprocesser prepc(engine);
-    // TODO: set include callback
-    // prepc.setIncludeCallback();
+    prepc.setIncludeCallback(&AsCompletion::includeCallBack, this);
 
     auto r = prepc.loadSectionFromMemory(QStringLiteral("ASCOMPLETION"),
                                          code.toUtf8());
@@ -396,99 +425,109 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     QList<CodeInfoTip> ret;
 
     for (auto &d : data) {
-        QAsCodeParser parser(engine);
-        auto syms =
-            parser.parseAndIntell(editor->textCursor().position(), d.script);
-
-        for (auto &sym : syms) {
-            CodeInfoTip tip;
-            tip.name = sym.name;
-            tip.nameSpace = QString::fromUtf8(sym.scope.join("::"));
-
-            switch (sym.symtype) {
-            case QAsCodeParser::SymbolType::Function:
-            case QAsCodeParser::SymbolType::FnDef:
-                tip.type = CodeInfoTip::Type::Function;
-                tip.addinfo.insert(CodeInfoTip::RetType,
-                                   QString::fromUtf8(sym.type));
-                tip.addinfo.insert(CodeInfoTip::Args,
-                                   QString::fromUtf8(sym.additonalInfo));
-                for (auto &var : sym.children) {
-                    CodeInfoTip va;
-                    va.dontAddGlobal = true;
-                    va.name = var.name;
-                    va.nameSpace = QString::fromUtf8(var.scope.join("::"));
-                    va.addinfo.insert(CodeInfoTip::RetType, var.type);
-                    va.type = CodeInfoTip::Type::Variable;
-                    ret.append(va);
-                }
-                break;
-            case QAsCodeParser::SymbolType::Enum:
-                tip.type = CodeInfoTip::Type::Enum;
-                for (auto &e : sym.children) {
-                    CodeInfoTip en;
-                    en.dontAddGlobal = true;
-                    en.name = e.name;
-                    en.nameSpace = QString::fromUtf8(e.scope.join("::"));
-                    en.type = CodeInfoTip::Type::Enumerater;
-                    if (!e.additonalInfo.isEmpty()) {
-                        en.addinfo.insert(CodeInfoTip::Comment,
-                                          en.name + QStringLiteral(" = ") +
-                                              e.additonalInfo);
-                    }
-                    ret.append(en);
-                }
-                break;
-            case QAsCodeParser::SymbolType::TypeDef:
-                tip.type = CodeInfoTip::Type::TypeDef;
-                break;
-            case QAsCodeParser::SymbolType::Variable:
-                tip.addinfo.insert(CodeInfoTip::RetType, sym.type);
-                tip.type = CodeInfoTip::Type::Variable;
-                break;
-            case QAsCodeParser::SymbolType::Class:
-            case QAsCodeParser::SymbolType::Interface:
-                for (auto &mem : sym.children) {
-                    if (mem.vis != QAsCodeParser::Visiblity::Public) {
-                        continue;
-                    }
-                    CodeInfoTip ctip;
-                    ctip.name = mem.name;
-                    ctip.nameSpace = QString::fromUtf8(mem.scope.join("::"));
-                    if (mem.symtype == QAsCodeParser::SymbolType::Function) {
-                        ctip.type = CodeInfoTip::Type::Function;
-                        ctip.addinfo.insert(CodeInfoTip::RetType,
-                                            QString::fromUtf8(mem.type));
-                        ctip.addinfo.insert(
-                            CodeInfoTip::Args,
-                            QString::fromUtf8(mem.additonalInfo));
-                        for (auto &var : mem.children) {
-                            CodeInfoTip va;
-                            va.dontAddGlobal = true;
-                            va.name = var.name;
-                            va.nameSpace =
-                                QString::fromUtf8(var.scope.join("::"));
-                            va.addinfo.insert(CodeInfoTip::RetType, var.type);
-                            va.type = CodeInfoTip::Type::Variable;
-                            tip.children.append(va);
-                        }
-                        tip.children.append(ctip);
-                    } else if (mem.symtype ==
-                               QAsCodeParser::SymbolType::Variable) {
-                        ctip.addinfo.insert(CodeInfoTip::RetType, mem.type);
-                        ctip.type = CodeInfoTip::Type::Variable;
-                        tip.children.append(ctip);
-                    }
-                }
-                tip.type = CodeInfoTip::Type::Class;
-                break;
-            case QAsCodeParser::SymbolType::Invalid:
-            case QAsCodeParser::SymbolType::Import:
-                continue;
-            }
-
-            ret.append(tip);
+        qsizetype offset = -1;
+        if (d.section == QStringLiteral("ASCOMPLETION")) {
+            offset = editor->textCursor().position();
         }
+        ret.append(parseScriptData(offset, d.script));
+    }
+
+    return ret;
+}
+
+QList<CodeInfoTip> AsCompletion::parseScriptData(qsizetype offset,
+                                                 const QByteArray &code) {
+    QList<CodeInfoTip> ret;
+
+    auto engine = ScriptMachine::instance().engine();
+    QAsCodeParser parser(engine);
+    auto syms = parser.parseAndIntell(offset, code);
+
+    for (auto &sym : syms) {
+        CodeInfoTip tip;
+        tip.name = sym.name;
+        tip.nameSpace = QString::fromUtf8(sym.scope.join("::"));
+
+        switch (sym.symtype) {
+        case QAsCodeParser::SymbolType::Function:
+        case QAsCodeParser::SymbolType::FnDef:
+            tip.type = CodeInfoTip::Type::Function;
+            tip.addinfo.insert(CodeInfoTip::RetType,
+                               QString::fromUtf8(sym.type));
+            tip.addinfo.insert(CodeInfoTip::Args,
+                               QString::fromUtf8(sym.additonalInfo));
+            for (auto &var : sym.children) {
+                CodeInfoTip va;
+                va.dontAddGlobal = true;
+                va.name = var.name;
+                va.nameSpace = QString::fromUtf8(var.scope.join("::"));
+                va.addinfo.insert(CodeInfoTip::RetType, var.type);
+                va.type = CodeInfoTip::Type::Variable;
+                ret.append(va);
+            }
+            break;
+        case QAsCodeParser::SymbolType::Enum:
+            tip.type = CodeInfoTip::Type::Enum;
+            for (auto &e : sym.children) {
+                CodeInfoTip en;
+                en.dontAddGlobal = true;
+                en.name = e.name;
+                en.nameSpace = QString::fromUtf8(e.scope.join("::"));
+                en.type = CodeInfoTip::Type::Enumerater;
+                if (!e.additonalInfo.isEmpty()) {
+                    en.addinfo.insert(CodeInfoTip::Comment,
+                                      en.name + QStringLiteral(" = ") +
+                                          e.additonalInfo);
+                }
+                ret.append(en);
+            }
+            break;
+        case QAsCodeParser::SymbolType::TypeDef:
+            tip.type = CodeInfoTip::Type::TypeDef;
+            break;
+        case QAsCodeParser::SymbolType::Variable:
+            tip.addinfo.insert(CodeInfoTip::RetType, sym.type);
+            tip.type = CodeInfoTip::Type::Variable;
+            break;
+        case QAsCodeParser::SymbolType::Class:
+        case QAsCodeParser::SymbolType::Interface:
+            for (auto &mem : sym.children) {
+                if (mem.vis != QAsCodeParser::Visiblity::Public) {
+                    continue;
+                }
+                CodeInfoTip ctip;
+                ctip.name = mem.name;
+                ctip.nameSpace = QString::fromUtf8(mem.scope.join("::"));
+                if (mem.symtype == QAsCodeParser::SymbolType::Function) {
+                    ctip.type = CodeInfoTip::Type::Function;
+                    ctip.addinfo.insert(CodeInfoTip::RetType,
+                                        QString::fromUtf8(mem.type));
+                    ctip.addinfo.insert(CodeInfoTip::Args,
+                                        QString::fromUtf8(mem.additonalInfo));
+                    for (auto &var : mem.children) {
+                        CodeInfoTip va;
+                        va.dontAddGlobal = true;
+                        va.name = var.name;
+                        va.nameSpace = QString::fromUtf8(var.scope.join("::"));
+                        va.addinfo.insert(CodeInfoTip::RetType, var.type);
+                        va.type = CodeInfoTip::Type::Variable;
+                        tip.children.append(va);
+                    }
+                    tip.children.append(ctip);
+                } else if (mem.symtype == QAsCodeParser::SymbolType::Variable) {
+                    ctip.addinfo.insert(CodeInfoTip::RetType, mem.type);
+                    ctip.type = CodeInfoTip::Type::Variable;
+                    tip.children.append(ctip);
+                }
+            }
+            tip.type = CodeInfoTip::Type::Class;
+            break;
+        case QAsCodeParser::SymbolType::Invalid:
+        case QAsCodeParser::SymbolType::Import:
+            continue;
+        }
+
+        ret.append(tip);
     }
 
     return ret;

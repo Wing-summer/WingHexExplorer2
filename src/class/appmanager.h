@@ -21,6 +21,8 @@
 #include "dialog/mainwindow.h"
 #include "qtsingleapplication/src/qtsingleapplication.h"
 
+#include <QElapsedTimer>
+
 class AppManager : public QtSingleApplication {
     Q_OBJECT
 public:
@@ -36,6 +38,8 @@ public:
         QApplication::tr("WingCloudStudio");
     }
 
+    uint currentMSecsSinceEpoch();
+
 public slots:
     void openFile(const QString &file, bool autoDetect = true);
     void openRawFile(const QString &file);
@@ -43,6 +47,8 @@ public slots:
 
 private:
     MainWindow *_w = nullptr;
+    QElapsedTimer _timer;
+
     static AppManager *_instance;
 };
 

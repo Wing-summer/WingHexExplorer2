@@ -40,6 +40,7 @@
 #include "class/wingmessagebox.h"
 #include "class/wingupdater.h"
 #include "control/toast.h"
+#include "define.h"
 #include "encodingdialog.h"
 #include "fileinfodialog.h"
 #include "finddialog.h"
@@ -254,7 +255,11 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                           std::placeholders::_1);
             sm.registerCallBack(ScriptMachine::Background, callbacks);
         } else {
-            // TODO
+            QMessageBox::critical(this, qAppName(),
+                                  tr("ScriptEngineInitFailed"));
+            set.setScriptEnabled(false);
+            set.save(SettingManager::SCRIPT);
+            throw CrashCode::ScriptInitFailed;
         }
 
         // At this time, AngelScript service plugin has started
@@ -1011,6 +1016,10 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                 showStatus(QStringLiteral("<b><font color=\"gold\">") +
                            content + QStringLiteral("</font></b>"));
             });
+    connect(
+        m_scriptConsole, &ScriptingConsole::abortEvaluation, this, [this]() {
+            ScriptMachine::instance().abortScript(ScriptMachine::Interactive);
+        });
 
     auto dw = buildDockWidget(dock, QStringLiteral("ScriptConsole"),
                               tr("ScriptConsole"), m_scriptConsole);
@@ -3167,16 +3176,29 @@ void MainWindow::connectEditorView(EditorView *editor) {
     editor->setProperty("__RELOAD__", false);
     connect(editor, &EditorView::need2Reload, this, [editor, this]() {
         if (editor->isBigFile()) {
-            editor->reload();
-        }
-        if (currentEditor() == editor) {
-            auto ret = WingMessageBox::question(this, tr("Reload"),
-                                                tr("ReloadNeededYesOrNo"));
-            if (ret == QMessageBox::Yes) {
+            auto fileName = editor->fileName();
+            if (!QFile::exists(fileName)) {
+                editor->raise();
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("FileCloseBigFile"));
+                closeEditor(editor, true);
+            }
+            if (currentEditor() == editor) {
                 editor->reload();
+            } else {
+                editor->setProperty("__RELOAD__", true);
             }
         } else {
-            editor->setProperty("__RELOAD__", true);
+            editor->hexEditor()->document()->setDocSaved(false);
+            if (currentEditor() == editor) {
+                auto ret = WingMessageBox::question(this, tr("Reload"),
+                                                    tr("ReloadNeededYesOrNo"));
+                if (ret == QMessageBox::Yes) {
+                    editor->reload();
+                }
+            } else {
+                editor->setProperty("__RELOAD__", true);
+            }
         }
     });
 }
@@ -3207,10 +3229,14 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     auto hexeditor = cur->hexEditor();
     auto needReload = cur->property("__RELOAD__").toBool();
     if (needReload) {
-        auto ret = WingMessageBox::question(this, tr("Reload"),
-                                            tr("ReloadNeededYesOrNo"));
-        if (ret == QMessageBox::Yes) {
+        if (cur->isBigFile()) {
             cur->reload();
+        } else {
+            auto ret = WingMessageBox::question(this, tr("Reload"),
+                                                tr("ReloadNeededYesOrNo"));
+            if (ret == QMessageBox::Yes) {
+                cur->reload();
+            }
         }
         cur->setProperty("__RELOAD__", false);
     }

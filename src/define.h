@@ -5,6 +5,7 @@ enum class CrashCode : int {
     AlreadyStart,
     LanguageFile,
     PluginSetting,
+    ScriptInitFailed,
     GenericCallNotSupported
 };
 

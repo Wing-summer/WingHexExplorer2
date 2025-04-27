@@ -68,6 +68,7 @@ protected slots:
 private:
     QString _codes;
 
+    bool _isWaitingRead = false;
     std::function<QString(void)> _getInputFn;
 };
 

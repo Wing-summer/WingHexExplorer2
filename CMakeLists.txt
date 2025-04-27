@@ -253,8 +253,6 @@ set(CLASS_SRC
     src/class/ascompletion.h
     src/class/asbuilder.h
     src/class/asbuilder.cpp
-    src/class/ascontextmgr.h
-    src/class/ascontextmgr.cpp
     src/class/clangformatmanager.h
     src/class/clangformatmanager.cpp
     src/class/aspreprocesser.h

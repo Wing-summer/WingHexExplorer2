@@ -17,9 +17,46 @@
 
 #include "asconsolecompletion.h"
 
+#include "class/qascodeparser.h"
 #include "control/scriptingconsole.h"
 
 AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
-    : AsCompletion(p), _console(p) {
-    setParseDocument(false);
+    : AsCompletion(p), _console(p) {}
+
+QList<CodeInfoTip> AsConsoleCompletion::parseDocument() {
+    auto editor = _console;
+    if (editor == nullptr) {
+        return {};
+    }
+
+    auto code = editor->currentCodes();
+    auto engine = ScriptMachine::instance().engine();
+
+    QAsCodeParser parser(engine);
+    auto seg = parser.parse(code.toUtf8());
+    if (std::find_if(seg.begin(), seg.end(),
+                     [](const QAsCodeParser::CodeSegment &seg) {
+                         return seg.isValid();
+                     }) == seg.end()) {
+        // wrap it to let code-completion work
+        code.prepend("void main(){").append('}');
+    }
+
+    // first preprocess the code
+    AsPreprocesser prepc(engine);
+
+    // including is not supported in console
+    auto r = prepc.loadSectionFromMemory(QStringLiteral("ASConCOMPLETION"),
+                                         code.toUtf8());
+    if (r <= 0) {
+        return {};
+    }
+
+    auto data = prepc.scriptData();
+    if (data.size() == 1) {
+        auto d = data[0];
+        return parseScriptData(d.script.length() - 1, d.script);
+    } else {
+        return {};
+    }
 }

@@ -45,6 +45,8 @@ AppManager::AppManager(int &argc, char *argv[])
     : QtSingleApplication(argc, argv) {
     ASSERT_SINGLETON;
 
+    _instance = this;
+
     LanguageManager::instance();
     InspectQtLogHelper::instance().init();
     CrashHandler::instance().init();
@@ -102,6 +104,8 @@ AppManager::AppManager(int &argc, char *argv[])
         his.add(cmd);
     }
 
+    _timer.start();
+
     _w = new MainWindow(splash);
 
     setActivationWindow(_w);
@@ -133,7 +137,6 @@ AppManager::AppManager(int &argc, char *argv[])
 
     connect(_w, &MainWindow::closed, this,
             []() { AppManager::instance()->exit(); });
-    _instance = this;
 
     if (splash)
         splash->close();
@@ -151,6 +154,8 @@ AppManager::~AppManager() {
 AppManager *AppManager::instance() { return _instance; }
 
 MainWindow *AppManager::mainWindow() const { return _w; }
+
+uint AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
 
 void AppManager::openFile(const QString &file, bool autoDetect) {
     EditorView *editor = nullptr;

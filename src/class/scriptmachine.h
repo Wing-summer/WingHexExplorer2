@@ -18,13 +18,15 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
+#include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
+
 #include "class/aspreprocesser.h"
 
 #include "asdebugger.h"
-#include "class/ascontextmgr.h"
 
 #include <QObject>
+#include <QQueue>
 
 class ScriptMachine : public QObject {
     Q_OBJECT
@@ -97,7 +99,7 @@ private:
     explicit ScriptMachine();
     Q_DISABLE_COPY_MOVE(ScriptMachine)
 
-public:
+private:
     asIScriptModule *createModule(ConsoleMode mode);
     asIScriptModule *createModuleIfNotExist(ConsoleMode mode);
     asIScriptModule *module(ConsoleMode mode);
@@ -143,7 +145,8 @@ public slots:
     bool executeScript(ConsoleMode mode, const QString &script,
                        bool isInDebug = false);
 
-    void abortDbgScript(ConsoleMode mode);
+    void abortDbgScript();
+    void abortScript(ConsoleMode mode);
     void abortScript();
 
 protected:
@@ -196,11 +199,13 @@ signals:
 private:
     asIScriptEngine *_engine = nullptr;
     asDebugger *_debugger = nullptr;
-    asContextMgr *_ctxMgr = nullptr;
-    QVector<asIScriptContext *> _ctxPool;
+    CContextMgr *_ctxMgr = nullptr;
+
+    QQueue<asIScriptContext *> _ctxPool;
 
     QVector<asITypeInfo *> _rtypes;
     QMap<ConsoleMode, RegCallBacks> _regcalls;
+    QMap<ConsoleMode, asIScriptContext *> _ctx;
     ConsoleMode _curMode = ConsoleMode::Background;
 };
 

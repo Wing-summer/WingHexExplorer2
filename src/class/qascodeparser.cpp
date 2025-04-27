@@ -1194,7 +1194,7 @@ QList<QAsCodeParser::CodeSegment> QAsCodeParser::parseScript(bool inBlock) {
                     seg.offset = begin;
                     seg.scope = currentNs;
                     seg.type = SymbolType::Variable;
-                    seg.codes = _code.sliced(begin, end - begin + 1);
+                    seg.codes = _code.sliced(begin, end - begin);
                     rewindTo(&t1);
 
                     segs.append(seg);

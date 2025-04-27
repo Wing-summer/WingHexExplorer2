@@ -36,7 +36,7 @@
 #include <unistd.h>
 #endif
 
-constexpr qsizetype FILE_MAX_BUFFER = 0x6400000; // 100MB
+constexpr qsizetype FILE_MAX_BUFFER = 0x32000000; // 800MB
 constexpr auto CLONE_LIMIT = 3;
 
 constexpr auto VIEW_PROPERTY = "__VIEW__";

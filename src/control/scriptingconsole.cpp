@@ -17,7 +17,6 @@
 
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
-#include "class/logger.h"
 #include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
@@ -84,18 +83,14 @@ void ScriptingConsole::handleReturnKey() {
         if (iodevice_->isOpen())
             iodevice_->consoleWidgetInput(code);
 
-        emit consoleCommand(code);
+        if (!_isWaitingRead) {
+            emit consoleCommand(code);
+        }
     }
 }
 
 void ScriptingConsole::init() {
     _getInputFn = std::bind(&ScriptingConsole::getInput, this);
-
-    // _sp = new ScriptConsoleMachine(_getInputFn, this);
-    // connect(_sp, &ScriptConsoleMachine::onClearConsole, this,
-    //         &ScriptingConsole::clear);
-    // connect(this, &ScriptingConsole::abortEvaluation, _sp,
-    //         &ScriptConsoleMachine::abortScript);
 
     connect(this, &QConsoleWidget::consoleCommand, this,
             &ScriptingConsole::runConsoleCommand);
@@ -177,7 +172,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         flush();
         break;
     case ScriptMachine::MessageType::Print:
-        if (lastInfo.first != message.type) {
+        if (lastInfo.first != message.type && isNotBlockStart) {
             newLine();
         }
         stdOut(message.message);
@@ -219,7 +214,13 @@ void ScriptingConsole::applyScriptSettings() {
 
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     auto exec = code.trimmed();
-    if (exec.endsWith('\\')) {
+    if (exec == QStringLiteral("#ls")) {
+
+    } else if (exec == QStringLiteral("#del")) {
+
+    } else if (exec == QStringLiteral("#cls")) {
+
+    } else if (exec.endsWith('\\')) {
         static QRegularExpression ex(QStringLiteral("[\\\\\\s]+$"));
         _codes += exec.remove(ex);
         setMode(Output);
@@ -228,10 +229,8 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
     } else {
         setMode(Output);
         _codes += exec;
-        if (!ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
-                                                   _codes)) {
-            // WingMessageBox::
-        }
+        ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
+                                              _codes);
         _codes.clear();
         appendCommandPrompt();
         setMode(Input);
@@ -239,11 +238,18 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
 }
 
 QString ScriptingConsole::getInput() {
+    auto &s = consoleStream();
     appendCommandPrompt(true);
     setMode(Input);
-    consoleStream().device()->waitForReadyRead(-1);
+    s.status();
+    auto d = s.device();
+    auto ba = d->bytesAvailable();
+    d->skip(ba);
+    _isWaitingRead = true;
+    d->waitForReadyRead(-1);
     QString instr;
-    consoleStream() >> instr;
+    s >> instr;
+    _isWaitingRead = false;
     setMode(Output);
     return instr;
 }

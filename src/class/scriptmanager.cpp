@@ -250,16 +250,18 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
 }
 
 void ScriptManager::runScript(const QString &filename) {
-    // ScriptMachine::instance().executeScript(filename);
+    auto &ins = ScriptMachine::instance();
+    if (ins.isRunning(ScriptMachine::Background)) {
+        auto ret = QMessageBox::question(nullptr, tr("ScriptRunning"),
+                                         tr("ScriptRunningRequestLastStop?"));
+        if (ret == QMessageBox::Yes) {
+            ins.abortScript(ScriptMachine::Background);
+        } else {
+            return;
+        }
+    }
 
-    // Q_ASSERT(_console);
-    // _console->setMode(ScriptingConsole::Output);
-    // _console->stdWarn(tr("Excuting:") + filename);
-    // _console->newLine();
-    // // TODO
-    // //  _console->machine()->executeScript(filename);
-    // _console->appendCommandPrompt();
-    // _console->setMode(ScriptingConsole::Input);
+    ins.executeScript(ScriptMachine::Background, filename);
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {
