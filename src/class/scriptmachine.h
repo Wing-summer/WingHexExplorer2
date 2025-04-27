@@ -102,10 +102,11 @@ private:
 private:
     asIScriptModule *createModule(ConsoleMode mode);
     asIScriptModule *createModuleIfNotExist(ConsoleMode mode);
-    asIScriptModule *module(ConsoleMode mode);
     bool isModuleExists(ConsoleMode mode);
 
 public:
+    asIScriptModule *module(ConsoleMode mode);
+
     static ScriptMachine &instance();
 
     virtual ~ScriptMachine();
@@ -113,7 +114,7 @@ public:
 public:
     bool init();
     bool isInited() const;
-    bool isRunning(ConsoleMode mode = Scripting) const;
+    bool isRunning(ConsoleMode mode) const;
 
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
@@ -159,7 +160,8 @@ protected:
 private:
     void print(void *ref, int typeId);
     QString getInput();
-    void outputMessage(ConsoleMode mode, const MessageInfo &info);
+
+    void outputMessage(const MessageInfo &info);
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);
 

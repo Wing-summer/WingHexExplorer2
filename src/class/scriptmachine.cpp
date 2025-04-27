@@ -243,11 +243,12 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
 
         const char *section;
         MessageInfo msg;
+        msg.mode = mode;
         msg.row = context->GetExceptionLineNumber(&msg.col, &section);
         msg.type = MessageType::Error;
         msg.message = message;
 
-        outputMessage(mode, msg);
+        outputMessage(msg);
     }
 }
 
@@ -258,10 +259,11 @@ void ScriptMachine::print(void *ref, int typeId) {
             context->GetUserData(AsUserDataType::UserData_ContextMode)));
 
         MessageInfo info;
+        info.mode = mode;
         info.type = MessageType::Print;
         info.message = _debugger->toString(ref, typeId, _engine);
 
-        outputMessage(mode, info);
+        outputMessage(info);
     }
 }
 
@@ -279,8 +281,8 @@ QString ScriptMachine::getInput() {
     return {};
 }
 
-void ScriptMachine::outputMessage(ConsoleMode mode, const MessageInfo &info) {
-    auto cbs = _regcalls.value(mode);
+void ScriptMachine::outputMessage(const MessageInfo &info) {
+    auto cbs = _regcalls.value(info.mode);
     if (cbs.printMsgFn) {
         cbs.printMsgFn(info);
     }
@@ -356,12 +358,14 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         return false;
     }
 
+    _curMode = mode;
     r = builder.build(mod);
     if (r < 0) {
         MessageInfo info;
+        info.mode = mode;
         info.message = tr("Script failed to build");
         info.type = MessageType::Error;
-        outputMessage(mode, info);
+        outputMessage(info);
         return false;
     }
 
@@ -374,18 +378,20 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     if (func == nullptr) {
         MessageInfo info;
+        info.mode = mode;
         info.message = tr("Cannot find 'int main()' or 'void main()'");
         info.type = MessageType::Error;
-        outputMessage(mode, info);
+        outputMessage(info);
         return false;
     }
 
     if (isInDebug) {
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
+        info.mode = mode;
         info.message = tr("Debugging, waiting for commands.");
         info.type = MessageType::Info;
-        outputMessage(mode, info);
+        outputMessage(info);
     }
 
     // Once we have the main function, we first need to initialize the
@@ -395,9 +401,10 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     r = mod->ResetGlobalVars(0);
     if (r < 0) {
         MessageInfo info;
+        info.mode = mode;
         info.message = tr("Failed while initializing global variables");
         info.type = MessageType::Error;
-        outputMessage(mode, info);
+        outputMessage(info);
         return false;
     }
 
@@ -434,26 +441,29 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (r != asEXECUTION_FINISHED) {
         if (r == asEXECUTION_EXCEPTION) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("The script failed with an exception") +
                            QStringLiteral("\n") +
                            QString::fromStdString(GetExceptionInfo(ctx, true));
             info.type = MessageType::Error;
-            outputMessage(mode, info);
+            outputMessage(info);
             r = -1;
         } else if (r == asEXECUTION_ABORTED) {
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("The script was aborted");
             info.type = MessageType::Error;
-            outputMessage(mode, info);
+            outputMessage(info);
             r = -1;
         } else {
             auto e = QMetaEnum::fromType<asEContextState>();
             MessageInfo info;
+            info.mode = mode;
             info.message = tr("The script terminated unexpectedly") +
                            QStringLiteral(" (") + e.valueToKey(r) +
                            QStringLiteral(")");
             info.type = MessageType::Error;
-            outputMessage(mode, info);
+            outputMessage(info);
             r = -1;
         }
     } else {
@@ -465,9 +475,10 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     }
 
     MessageInfo info;
+    info.mode = mode;
     info.message = tr("The script exited with ") + QString::number(r);
     info.type = MessageType::Info;
-    outputMessage(mode, info);
+    outputMessage(info);
 
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
@@ -523,12 +534,13 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
         return;
     }
     MessageInfo info;
+    info.mode = ins->_curMode;
     info.row = msg->row;
     info.col = msg->col;
     info.section = msg->section;
     info.message = m;
     info.type = t;
-    ins->outputMessage(ins->_curMode, info);
+    ins->outputMessage(info);
 }
 
 void ScriptMachine::cleanUpDbgContext(asIScriptContext *context) {
@@ -1852,13 +1864,14 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         // ok, wrap the codes
         ccode.prepend("void f(){").append("}");
         // start to compile
+        _curMode = mode;
         auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
         if (cr < 0) {
             MessageInfo info;
             info.mode = mode;
             info.message = tr("Script failed to build");
             info.type = MessageType::Error;
-            outputMessage(mode, info);
+            outputMessage(info);
             return false;
         }
 
@@ -1901,23 +1914,24 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                     QStringLiteral("\n") +
                     QString::fromStdString(GetExceptionInfo(ctx, true));
                 info.type = MessageType::Error;
-                outputMessage(mode, info);
+                outputMessage(info);
                 r = -1;
             } else if (r == asEXECUTION_ABORTED) {
                 MessageInfo info;
                 info.mode = mode;
                 info.message = tr("The script was aborted");
                 info.type = MessageType::Error;
-                outputMessage(mode, info);
+                outputMessage(info);
                 r = -1;
             } else {
                 auto e = QMetaEnum::fromType<asEContextState>();
                 MessageInfo info;
+                info.mode = mode;
                 info.message = tr("The script terminated unexpectedly") +
                                QStringLiteral(" (") + e.valueToKey(r) +
                                QStringLiteral(")");
                 info.type = MessageType::Error;
-                outputMessage(mode, info);
+                outputMessage(info);
                 r = -1;
             }
         } else {
@@ -1932,26 +1946,39 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
 
         return r >= 0;
     } else {
-        if (ret.length() == 1) {
-            auto s = ret.first();
-            if (s.type == QAsCodeParser::SymbolType::Variable) {
-                auto r = mod->CompileGlobalVar(nullptr, ccode, 0);
-                if (r < 0 || mod->ResetGlobalVars() < 0) {
+        if (std::all_of(ret.begin(), ret.end(),
+                        [](const QAsCodeParser::CodeSegment &seg) {
+                            return seg.type ==
+                                   QAsCodeParser::SymbolType::Variable;
+                        })) {
+            _curMode = mode;
+
+            for (auto &s : ret) {
+                auto r = mod->CompileGlobalVar(nullptr, s.codes, 0);
+                if (r < 0) {
                     MessageInfo info;
                     info.mode = mode;
-                    info.message = tr("GlobalBadDecl");
+                    info.message = tr("BadDecl:") + s.codes;
                     info.type = MessageType::Error;
-                    outputMessage(mode, info);
-                    return false;
+                    outputMessage(info);
                 }
-                return true;
             }
+
+            if (mod->ResetGlobalVars() < 0) {
+                MessageInfo info;
+                info.mode = mode;
+                info.message = tr("GlobalBadDecl");
+                info.type = MessageType::Error;
+                outputMessage(info);
+            }
+            return true;
         }
+
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("ScriptRunUnsupported");
+        info.message = tr("Script failed to build");
         info.type = MessageType::Error;
-        outputMessage(mode, info);
+        outputMessage(info);
     }
     return false;
 }

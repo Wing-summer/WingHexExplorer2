@@ -1016,10 +1016,15 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                 showStatus(QStringLiteral("<b><font color=\"gold\">") +
                            content + QStringLiteral("</font></b>"));
             });
-    connect(
-        m_scriptConsole, &ScriptingConsole::abortEvaluation, this, [this]() {
-            ScriptMachine::instance().abortScript(ScriptMachine::Interactive);
-        });
+    connect(m_scriptConsole, &ScriptingConsole::abortEvaluation, this,
+            [this]() {
+                auto &sm = ScriptMachine::instance();
+                if (sm.isRunning(ScriptMachine::Interactive)) {
+                    sm.abortScript(ScriptMachine::Interactive);
+                } else {
+                    m_scriptConsole->abortCurrentCode();
+                }
+            });
 
     auto dw = buildDockWidget(dock, QStringLiteral("ScriptConsole"),
                               tr("ScriptConsole"), m_scriptConsole);
@@ -1031,7 +1036,31 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
                                       ads::CDockAreaWidget *areaw) {
     m_bgScriptOutput = new QPlainTextEdit(this);
+    m_bgScriptOutput->setPlaceholderText(tr("BgScriptOutputHere"));
     m_bgScriptOutput->setReadOnly(true);
+
+    auto a = newAction(
+        ICONRES(QStringLiteral("mStr")), tr("SelectAll"),
+        [this]() { m_bgScriptOutput->selectAll(); }, QKeySequence::SelectAll);
+    m_bgScriptOutput->addAction(a);
+    a = newAction(
+        ICONRES(QStringLiteral("copy")), tr("Copy"),
+        [this]() { m_bgScriptOutput->copy(); }, QKeySequence::Copy);
+    m_bgScriptOutput->addAction(a);
+    a = newAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                  [this]() { m_bgScriptOutput->clear(); });
+    m_bgScriptOutput->addAction(a);
+    a = new QAction(this);
+    a->setSeparator(true);
+    m_bgScriptOutput->addAction(a);
+    a = newAction(
+        ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+        []() {
+            ScriptMachine::instance().abortScript(ScriptMachine::Background);
+        },
+        QKeySequence(Qt::ControlModifier | Qt::Key_Q));
+    m_bgScriptOutput->addAction(a);
+    m_bgScriptOutput->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
                               tr("BgScriptOutput"), m_bgScriptOutput);

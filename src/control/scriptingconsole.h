@@ -49,6 +49,8 @@ public slots:
 
     void onOutput(const ScriptMachine::MessageInfo &message);
 
+    void abortCurrentCode();
+
 private slots:
     void applyScriptSettings();
 
@@ -64,6 +66,7 @@ protected:
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;
+    virtual void paste() override;
 
 private:
     QString _codes;

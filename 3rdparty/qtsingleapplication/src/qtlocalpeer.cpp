@@ -33,7 +33,8 @@ QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
 #endif
         prefix = id.section(QLatin1Char('/'), -1);
     }
-    prefix.remove(QRegularExpression("[^a-zA-Z]"));
+    static QRegularExpression regex("[^a-zA-Z]");
+    prefix.remove(regex);
     prefix.truncate(6);
 
     QByteArray idc = id.toUtf8();
@@ -68,6 +69,8 @@ QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
     lockFile.setFileName(lockName);
     lockFile.open(QIODevice::ReadWrite);
 }
+
+QtLocalPeer::~QtLocalPeer() { server->close(); }
 
 bool QtLocalPeer::isClient() {
     if (lockFile.isLocked())

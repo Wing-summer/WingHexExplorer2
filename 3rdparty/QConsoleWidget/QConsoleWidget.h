@@ -79,6 +79,8 @@ public:
 
     virtual void paste();
 
+    int currentHeaderPos() const;
+
 public slots:
 
     // write to StandardOutput
@@ -115,7 +117,6 @@ protected:
     static History history_;
     ConsoleMode mode_;
     int inpos_;
-    QString currentMultiLineCode_;
     QConsoleIODevice *iodevice_;
     QTextCharFormat chanFormat_[nConsoleChannels];
 };

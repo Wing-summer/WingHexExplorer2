@@ -506,7 +506,7 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         bool isDbg = false;
         bool isPaused = false;
 
-        isRun = runner.isRunning();
+        isRun = runner.isRunning(ScriptMachine::Scripting);
         isDbg = runner.isDebugMode();
         auto dbg = runner.debugger();
         isPaused = dbg->currentState() == asDebugger::PAUSE;
@@ -740,7 +740,8 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(m_views.contains(editor));
 
         auto &m = ScriptMachine::instance();
-        if (m.isRunning() && _DebugingEditor == editor) {
+        if (m.isRunning(ScriptMachine::Scripting) &&
+            _DebugingEditor == editor) {
             if (WingMessageBox::warning(
                     this, this->windowTitle(), tr("ScriptStillRunning"),
                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -881,7 +882,7 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
     bool isDbg = false;
     bool isPaused = false;
 
-    isRun = runner.isRunning();
+    isRun = runner.isRunning(ScriptMachine::Scripting);
     isDbg = runner.isDebugMode();
     auto dbg = runner.debugger();
     isPaused = dbg->currentState() == asDebugger::PAUSE;
@@ -1437,7 +1438,7 @@ void ScriptingDialog::on_removebreakpoint() {
 
 void ScriptingDialog::closeEvent(QCloseEvent *event) {
     auto &runner = ScriptMachine::instance();
-    if (runner.isRunning()) {
+    if (runner.isRunning(ScriptMachine::Scripting)) {
         if (WingMessageBox::warning(
                 this, this->windowTitle(), tr("ScriptStillRunning"),
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {

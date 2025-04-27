@@ -365,13 +365,13 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
 }
 
 QString QConsoleWidget::currentCommandLine() const {
-    // Select the text after the last command prompt ...
     QTextCursor textCursor = this->textCursor();
     textCursor.movePosition(QTextCursor::End);
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
-
     return textCursor.selectedText();
 }
+
+int QConsoleWidget::currentHeaderPos() const { return inpos_; }
 
 void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
     QTextCharFormat currfmt = currentCharFormat();

@@ -20,13 +20,17 @@
 #include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
+#include "class/wingmessagebox.h"
 #include "model/codecompletionmodel.h"
+#include "utilities.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QColor>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QMimeData>
 #include <QRegularExpression>
 #include <QTextBlock>
 
@@ -102,9 +106,35 @@ void ScriptingConsole::init() {
 
 void ScriptingConsole::clearConsole() {
     setMode(Output);
+
+    auto cur = this->textCursor();
+    auto off = cur.position() - this->currentHeaderPos();
+    auto lastCmd = this->currentCommandLine();
+    auto dis = lastCmd.length() - off;
+
     clear();
-    appendCommandPrompt(lastCommandPrompt());
+
+    if (lastCommandPrompt()) {
+        auto lines = _codes.split('\n');
+        auto pl = lines.begin();
+        appendCommandPrompt(false);
+        writeStdOut(*pl);
+        pl++;
+        for (; pl != lines.end(); pl++) {
+            appendCommandPrompt(true);
+            writeStdOut(*pl);
+        }
+        appendCommandPrompt(true);
+    } else {
+        appendCommandPrompt(false);
+    }
+
     setMode(Input);
+    replaceCommandLine(lastCmd);
+    cur = this->textCursor();
+    cur.movePosition(QTextCursor::EndOfBlock);
+    cur.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, dis);
+    setTextCursor(cur);
 }
 
 void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
@@ -183,6 +213,13 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     lastInfo.second = qMakePair(message.row, message.col);
 }
 
+void ScriptingConsole::abortCurrentCode() {
+    setMode(Output);
+    _codes.clear();
+    appendCommandPrompt();
+    setMode(Input);
+}
+
 void ScriptingConsole::applyScriptSettings() {
     auto &set = ScriptSettings::instance();
     auto dfont = QFont(set.consoleFontFamily());
@@ -215,13 +252,95 @@ void ScriptingConsole::applyScriptSettings() {
 void ScriptingConsole::runConsoleCommand(const QString &code) {
     auto exec = code.trimmed();
     if (exec == QStringLiteral("#ls")) {
+        auto &ins = ScriptMachine::instance();
+        auto mod = ins.module(ScriptMachine::Interactive);
+        if (mod) {
+            QList<QPair<QByteArray, QByteArray>> vars;
+            auto total = mod->GetGlobalVarCount();
 
-    } else if (exec == QStringLiteral("#del")) {
+            // generate codes to print
+            QString codes;
+            if (total == 0) {
+                codes = QStringLiteral("print(\"<none>\");");
+            } else {
+                for (asUINT i = 0; i < total; ++i) {
+                    const char *name;
+                    int typeId;
+                    auto decl = mod->GetGlobalVarDeclaration(i);
+                    if (decl && mod->GetGlobalVar(i, &name) == asSUCCESS) {
+                        vars.emplaceBack(decl, name);
+                    }
+                }
 
+                for (auto &var : vars) {
+                    codes.append("print(\"" + var.first + " = \");print(" +
+                                 var.second + ");print(\";\\n\");");
+                }
+            }
+
+            setMode(Output);
+            ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
+                                                  codes);
+            _codes.clear();
+            appendCommandPrompt();
+            setMode(Input);
+        }
+    } else if (exec.startsWith(QStringLiteral("#del"))) {
+        // this is special command
+        auto &ins = ScriptMachine::instance();
+        auto mod = ins.module(ScriptMachine::Interactive);
+        if (mod) {
+            // first check whether contains \n
+            auto idx = exec.indexOf('\n');
+            if (idx >= 0) {
+                setMode(Output);
+                stdErr(tr("InvalidDelCmd"));
+            } else {
+                // ok, then tokens should be devided by the space
+                exec.remove(0, 4);
+                auto vars = exec.split(' ', Qt::SkipEmptyParts);
+
+                QList<asUINT> indices;
+
+                // then check
+                setMode(Output);
+                for (auto &v : vars) {
+                    auto idx = mod->GetGlobalVarIndexByName(v.toUtf8());
+                    if (idx >= 0) {
+                        indices.append(idx);
+                    } else {
+                        stdWarn(tr("NotFoundIgnore:") + v);
+                    }
+                }
+
+                std::sort(indices.begin(), indices.end(), std::greater<int>());
+
+                // ok, remove
+                for (auto &i : indices) {
+                    mod->RemoveGlobalVar(i);
+                }
+            }
+        }
+        _codes.clear();
+        appendCommandPrompt();
+        setMode(Input);
     } else if (exec == QStringLiteral("#cls")) {
-
+        auto &ins = ScriptMachine::instance();
+        auto mod = ins.module(ScriptMachine::Interactive);
+        if (mod) {
+            auto total = mod->GetGlobalVarCount();
+            asUINT i = total;
+            do {
+                --i;
+                mod->RemoveGlobalVar(i);
+            } while (i);
+        }
+        _codes.clear();
+        appendCommandPrompt();
+        setMode(Input);
     } else if (exec.endsWith('\\')) {
         static QRegularExpression ex(QStringLiteral("[\\\\\\s]+$"));
+        _codes.append('\n');
         _codes += exec.remove(ex);
         setMode(Output);
         appendCommandPrompt(true);
@@ -281,8 +400,49 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
     }
 }
 
+void ScriptingConsole::paste() {
+    if (ScriptMachine::instance().isRunning(ScriptMachine::Interactive)) {
+        return;
+    }
+
+    const QMimeData *const clipboard = QApplication::clipboard()->mimeData();
+    const QString text = clipboard->text();
+    if (!text.isEmpty()) {
+        if (text.indexOf('\n') < 0) {
+            replaceCommandLine(text);
+        } else {
+            auto ret = WingMessageBox::question(
+                nullptr, tr("MultiCodeCanNotUndo"), text);
+            if (ret == QMessageBox::No) {
+                return;
+            }
+            auto lines = text.split('\n');
+            if (lines.isEmpty()) {
+                return;
+            }
+
+            setMode(Output);
+            auto pl = lines.begin();
+            auto pend = std::prev(lines.end());
+            writeStdOut(*pl);
+            pl++;
+            for (; pl != pend; pl++) {
+                appendCommandPrompt(true);
+                writeStdOut(*pl);
+            }
+            appendCommandPrompt(true);
+            setMode(Input);
+            replaceCommandLine(*pl);
+            lines.removeLast();
+            _codes = lines.join('\n');
+        }
+    }
+}
+
 QString ScriptingConsole::currentCodes() const {
-    return _codes + currentCommandLine();
+    QTextCursor textCursor = this->textCursor();
+    textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
+    return _codes + textCursor.selectedText();
 }
 
 void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
@@ -297,6 +457,15 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")), tr("Paste"),
                    QKeySequence(QKeySequence::Paste), this,
                    &ScriptingConsole::paste);
+    menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                   QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+                   &ScriptingConsole::clearConsole);
+    menu.addSeparator();
+    menu.addAction(ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+                   QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
+                       ScriptMachine::instance().abortScript(
+                           ScriptMachine::Background);
+                   });
 
     menu.exec(event->globalPos());
 }

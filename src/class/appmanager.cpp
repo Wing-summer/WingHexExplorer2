@@ -145,9 +145,9 @@ AppManager::AppManager(int &argc, char *argv[])
 AppManager::~AppManager() {
     InspectQtLogHelper::instance().destory();
     ClangFormatManager::instance().save();
-    // CommandHistoryManager::save(QConsoleWidget::history().strings_);
+    CommandHistoryManager::save(QConsoleWidget::history().strings_);
 
-    _w->deleteLater();
+    delete _w;
     _w = nullptr;
 }
 

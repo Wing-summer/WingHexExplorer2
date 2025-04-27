@@ -17,6 +17,7 @@
 
 #include "asconsolecompletion.h"
 
+#include "AngelScript/sdk/angelscript/source/as_module.h"
 #include "class/qascodeparser.h"
 #include "control/scriptingconsole.h"
 
@@ -39,7 +40,7 @@ QList<CodeInfoTip> AsConsoleCompletion::parseDocument() {
                          return seg.isValid();
                      }) == seg.end()) {
         // wrap it to let code-completion work
-        code.prepend("void main(){").append('}');
+        code.prepend("void f(){").append('}');
     }
 
     // first preprocess the code
@@ -52,11 +53,37 @@ QList<CodeInfoTip> AsConsoleCompletion::parseDocument() {
         return {};
     }
 
+    QList<CodeInfoTip> citips;
+    // first, global variables should be added into
+    auto rmod = ScriptMachine::instance().module(ScriptMachine::Interactive);
+    // I think hijack the internal will do the better
+    auto mod = dynamic_cast<asCModule *>(rmod);
+    if (mod) {
+        auto it = mod->m_scriptGlobals.List();
+        while (it) {
+            // lamda expression is great!
+            auto CString2ByteArray = [](const asCString &str) -> QByteArray {
+                return QByteArray(str.AddressOf(), str.GetLength());
+            };
+
+            CodeInfoTip tip;
+            tip.type = CodeInfoTip::Type::Variable;
+            tip.addinfo.insert(
+                CodeInfoTip::RetType,
+                CString2ByteArray(it->type.Format(mod->m_defaultNamespace)));
+            tip.nameSpace = CString2ByteArray(it->nameSpace->name);
+            tip.name = CString2ByteArray(it->name);
+            citips.append(tip);
+
+            it++;
+        }
+    }
+
     auto data = prepc.scriptData();
     if (data.size() == 1) {
         auto d = data[0];
-        return parseScriptData(d.script.length() - 1, d.script);
+        return citips + parseScriptData(d.script.length() - 1, d.script);
     } else {
-        return {};
+        return citips;
     }
 }

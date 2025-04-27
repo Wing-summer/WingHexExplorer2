@@ -21,6 +21,7 @@
 #include "utilities.h"
 
 #include <QApplication>
+#include <QPushButton>
 #include <QResizeEvent>
 
 WingMessageBox::WingMessageBox() {}
@@ -161,5 +162,10 @@ WingMessageBox::msgbox(QWidget *parent, QMessageBox::Icon icon,
     QObject::connect(msgbox, &QMessageBox::finished, &d,
                      &FramelessDialogBase::done);
 
-    return static_cast<QMessageBox::StandardButton>(d.exec());
+    auto ret = d.exec();
+    if (ret == 0) {
+        return msgbox->standardButton(msgbox->defaultButton());
+    }
+
+    return static_cast<QMessageBox::StandardButton>(ret);
 }
