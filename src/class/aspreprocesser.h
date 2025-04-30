@@ -35,6 +35,7 @@
 #pragma warning(disable : 4786)
 #endif
 
+#include <QEventLoop>
 #include <QMap>
 #include <QSet>
 #include <QVector>
@@ -62,6 +63,16 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
 // Helper class for loading and pre-processing script files to
 // support include directives declarations
 
+/** for macros, we support:
+ *      * #if <conditions>
+ *      * #else
+ *      * #endif
+ *      * #define <word>
+ *      * #define <word> <string|int64|double>
+ *      * #undef <word>
+ *      * #ifdef <word>
+ *      * #ifundef <word>
+ */
 class AsPreprocesser {
 public:
     explicit AsPreprocesser(asIScriptEngine *engine);
@@ -72,6 +83,9 @@ public:
         QString section;
         QByteArray script;
     };
+
+    using DefineValueType =
+        std::variant<std::monostate, QString, qint64, double>;
 
 public:
     // Load a script section from a file on disk
@@ -93,7 +107,7 @@ public:
     void setPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
 
     // Add a pre-processor define for conditional compilation
-    void defineWord(const QString &word);
+    void defineWord(const QString &word, const DefineValueType &value = {});
 
     // Enumerate included script sections
     unsigned int sectionCount() const;
@@ -124,7 +138,8 @@ protected:
 
     QStringList includedScripts;
 
-    QStringList definedWords;
+    QEventLoop waitLoop;
+    QHash<QString, DefineValueType> definedWords;
 };
 
 #endif // ASPREPROCESSER_H

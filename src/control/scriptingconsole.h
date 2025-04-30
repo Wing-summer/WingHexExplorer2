@@ -40,6 +40,10 @@ signals:
 public:
     QString getInput();
 
+    bool isTerminal() const;
+
+    void setIsTerminal(bool newIsTerminal);
+
 public slots:
     void init();
 
@@ -71,6 +75,7 @@ protected slots:
 private:
     QString _codes;
 
+    bool _isTerminal = true;
     bool _isWaitingRead = false;
     std::function<QString(void)> _getInputFn;
 };

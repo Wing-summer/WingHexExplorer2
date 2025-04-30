@@ -414,6 +414,10 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     // first preprocess the code
     AsPreprocesser prepc(engine);
     prepc.setIncludeCallback(&AsCompletion::includeCallBack, this);
+    prepc.setPragmaCallback([](const QByteArray &, AsPreprocesser *,
+                               const QString &,
+                               void *) -> int { return asSUCCESS; },
+                            nullptr);
 
     auto r = prepc.loadSectionFromMemory(QStringLiteral("ASCOMPLETION"),
                                          code.toUtf8());

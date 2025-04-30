@@ -439,6 +439,12 @@ void ScriptingConsole::paste() {
     }
 }
 
+bool ScriptingConsole::isTerminal() const { return _isTerminal; }
+
+void ScriptingConsole::setIsTerminal(bool newIsTerminal) {
+    _isTerminal = newIsTerminal;
+}
+
 QString ScriptingConsole::currentCodes() const {
     QTextCursor textCursor = this->textCursor();
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
@@ -457,15 +463,18 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")), tr("Paste"),
                    QKeySequence(QKeySequence::Paste), this,
                    &ScriptingConsole::paste);
-    menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                   QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
-                   &ScriptingConsole::clearConsole);
-    menu.addSeparator();
-    menu.addAction(ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
-                   QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
-                       ScriptMachine::instance().abortScript(
-                           ScriptMachine::Background);
-                   });
+
+    if (_isTerminal) {
+        menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                       QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+                       &ScriptingConsole::clearConsole);
+        menu.addSeparator();
+        menu.addAction(ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+                       QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
+                           ScriptMachine::instance().abortScript(
+                               ScriptMachine::Background);
+                       });
+    }
 
     menu.exec(event->globalPos());
 }

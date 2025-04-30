@@ -170,7 +170,7 @@ private:
     template <typename Func>
     inline QAction *newAction(const QString &title, Func &&slot,
                               const QKeySequence &shortcut = QKeySequence()) {
-        auto a = new QAction;
+        auto a = new QAction(this);
         a->setText(title);
         a->setShortcutVisibleInContextMenu(true);
         a->setShortcut(shortcut);

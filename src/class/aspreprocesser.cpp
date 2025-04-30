@@ -16,9 +16,11 @@
 */
 
 #include "aspreprocesser.h"
+#include "class/scriptmachine.h"
 
 #include <QDir>
 #include <QFileInfo>
+#include <QStack>
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QStringList, DEFAULT_MARCO,
@@ -36,7 +38,9 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     pragmaCallback = nullptr;
     pragmaParam = nullptr;
 
-    definedWords = *DEFAULT_MARCO;
+    for (auto &m : *DEFAULT_MARCO) {
+        definedWords.insert(m, {});
+    }
 }
 
 AsPreprocesser::~AsPreprocesser() { void ClearAll(); }
@@ -85,9 +89,10 @@ void AsPreprocesser::setPragmaCallback(PRAGMACALLBACK_t callback,
     pragmaParam = userParam;
 }
 
-void AsPreprocesser::defineWord(const QString &word) {
+void AsPreprocesser::defineWord(const QString &word,
+                                const DefineValueType &value) {
     if (!definedWords.contains(word)) {
-        definedWords.append(word);
+        definedWords.insert(word, value);
     }
 }
 
@@ -114,7 +119,8 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
     // shouldn't be compiled
     QByteArray::size_type pos = 0;
 
-    int nested = 0;
+    QStack<std::optional<bool>> m_condtionStack;
+
     while (pos < modifiedScript.size()) {
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
@@ -128,10 +134,14 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                    modifiedScript.size() - pos, &len);
             Q_UNUSED(t);
 
-            QByteArray token = modifiedScript.mid(pos, len);
+            QByteArray token = modifiedScript.sliced(pos, len);
             pos += len;
 
-            if (token == "if") {
+            bool isIf = token == QStringLiteral("if");
+            bool isIfDef = token == QStringLiteral("ifdef");
+            bool isIfnDef = token == QStringLiteral("ifndef");
+
+            if (isIf || isIfDef || isIfnDef) {
                 t = engine->ParseToken(modifiedScript.data() + pos,
                                        modifiedScript.size() - pos, &len);
                 if (t == asTC_WHITESPACE) {
@@ -140,33 +150,86 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                            modifiedScript.size() - pos, &len);
                 }
 
-                if (t == asTC_IDENTIFIER) {
-                    QByteArray word = modifiedScript.mid(pos, len);
+                if (isIfDef || isIfnDef) {
+                    if (t == asTC_IDENTIFIER) {
+                        QByteArray word = modifiedScript.sliced(pos, len);
 
-                    // Overwrite the #if directive with space characters to
-                    // avoid compiler error
-                    pos += len;
-                    overwriteCode(modifiedScript, start, pos - start);
+                        // Overwrite the directive with space characters to
+                        // avoid compiler error
+                        pos += len;
+                        overwriteCode(modifiedScript, start, pos - start);
 
-                    // Has this identifier been defined by the application or
-                    // not?
-                    if (!definedWords.contains(word)) {
-                        // Exclude all the code until and including the #endif
-                        pos = excludeCode(modifiedScript, pos);
+                        // Has this identifier been defined by the application
+                        // or not?
+                        if ((isIfDef && !definedWords.contains(word)) ||
+                            (isIfnDef && definedWords.contains(word))) {
+                            // Exclude all the code until and including the
+                            // #endif
+                            pos = excludeCode(modifiedScript, pos);
+                            m_condtionStack.push(false);
+                        } else {
+                            m_condtionStack.push(true);
+                        }
+                        qDebug().noquote() << modifiedScript;
+                    }
+                } else {
+                    // evalutate the string
+                    auto npos = modifiedScript.indexOf('\n', pos);
+                    auto codes = modifiedScript.sliced(pos, npos - pos);
+                    overwriteCode(modifiedScript, start, npos - start);
+
+                    auto &sm = ScriptMachine::instance();
+                    bool ok = false;
+                    auto ret = sm.evaluateDefine(codes, ok);
+
+                    if (ret < 0) {
+                        return asERROR;
                     } else {
-                        nested++;
+                        if (ok) {
+                            m_condtionStack.push(true);
+                        } else {
+                            pos = excludeCode(modifiedScript, npos);
+                            m_condtionStack.push(false);
+                        }
+                    }
+
+                    qDebug().noquote() << modifiedScript;
+                }
+            } else if (token == "else") {
+                if (m_condtionStack.isEmpty()) {
+                    // TODO
+                    return asERROR;
+                } else {
+                    overwriteCode(modifiedScript, start, pos - start);
+                    auto opBool = m_condtionStack.top();
+                    if (opBool) {
+                        if (opBool.value()) {
+                            pos = excludeCode(modifiedScript, pos);
+                            m_condtionStack.top().reset();
+                        }
+                    } else {
+                        // TODO
+                        return asERROR;
                     }
                 }
+                qDebug().noquote() << modifiedScript;
             } else if (token == "endif") {
                 // Only remove the #endif if there was a matching #if
-                if (nested > 0) {
+                if (m_condtionStack.isEmpty()) {
+                    // TODO
+                    return asERROR;
+                } else {
                     overwriteCode(modifiedScript, start, pos - start);
-                    nested--;
+                    m_condtionStack.pop();
                 }
+                qDebug().noquote() << modifiedScript;
             }
-        } else
+        } else {
             pos += len;
+        }
     }
+
+    qDebug().noquote() << modifiedScript;
 
     // Then check for pre-processor directives
     pos = 0;
@@ -178,7 +241,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
             pos += len;
             continue;
         }
-        QString token = modifiedScript.mid(pos, len);
+        QString token = modifiedScript.sliced(pos, len);
 
         // Skip possible decorators before class and interface declarations
         if (token == "shared" || token == "abstract" || token == "mixin" ||
@@ -194,7 +257,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
             t = engine->ParseToken(modifiedScript.data() + pos,
                                    modifiedScript.size() - pos, &len);
             if (t == asTC_IDENTIFIER) {
-                token = modifiedScript.mid(pos, len);
+                token = modifiedScript.sliced(pos, len);
                 if (token == "include") {
                     pos += len;
                     t = engine->ParseToken(modifiedScript.data() + pos,
@@ -211,7 +274,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                          modifiedScript[pos] == '\'')) {
                         // Get the include file
                         QString includefile =
-                            modifiedScript.mid(pos + 1, len - 2);
+                            modifiedScript.sliced(pos + 1, len - 2);
                         pos += len;
 
                         // Make sure the includeFile doesn't contain any
@@ -255,7 +318,8 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                         if (found) {
                             QString includefile =
-                                modifiedScript.mid(pos, rpos - pos).trimmed();
+                                modifiedScript.sliced(pos, rpos - pos)
+                                    .trimmed();
 
                             pos = rpos + 1;
 
@@ -303,7 +367,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                     // Call the pragma callback
                     auto pragmaText =
-                        modifiedScript.mid(start + 7, pos - start - 7);
+                        modifiedScript.sliced(start + 7, pos - start - 7);
 
                     // Overwrite the pragma directive with space characters
                     // to avoid compiler error
@@ -449,27 +513,32 @@ int AsPreprocesser::skipStatement(const QByteArray &modifiedScript, int pos) {
 
 int AsPreprocesser::excludeCode(QByteArray &modifiedScript, int pos) {
     asUINT len = 0;
-    int nested = 0;
+    int nested = 1;
     while (pos < (int)modifiedScript.size()) {
         engine->ParseToken(modifiedScript.data() + pos,
                            modifiedScript.size() - pos, &len);
         if (modifiedScript[pos] == '#') {
-            modifiedScript[pos] = ' ';
+            auto sharpPos = pos;
             pos++;
-
             // Is it an #if or #endif directive?
             engine->ParseToken(modifiedScript.data() + pos,
                                modifiedScript.size() - pos, &len);
-            QString token = modifiedScript.mid(pos, len);
-            overwriteCode(modifiedScript, pos, len);
+            QString token = modifiedScript.sliced(pos, len);
 
-            if (token == "if") {
+            if (token == "if" || token == "ifdef" || token == "ifndef") {
+                modifiedScript[sharpPos] = ' ';
+                overwriteCode(modifiedScript, pos, len);
                 nested++;
-            } else if (token == "endif") {
+            } else if (token == "endif" || token == "else") {
                 if (nested-- == 0) {
-                    pos += len;
+                    pos = sharpPos - 1;
                     break;
                 }
+                modifiedScript[sharpPos] = ' ';
+                overwriteCode(modifiedScript, pos, len);
+            } else {
+                modifiedScript[sharpPos] = ' ';
+                overwriteCode(modifiedScript, pos, len);
             }
         } else if (modifiedScript[pos] != '\n') {
             overwriteCode(modifiedScript, pos, len);

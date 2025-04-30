@@ -607,6 +607,22 @@ ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
     m_logbrowser->setOpenExternalLinks(true);
     m_logbrowser->setUndoRedoEnabled(false);
 
+    m_logbrowser->addAction(newAction(
+        ICONRES("copy"), tr("Copy"), [=]() { m_logbrowser->copy(); },
+        QKeySequence::Copy));
+
+    auto a = new QAction(this);
+    a->setSeparator(true);
+    m_logbrowser->addAction(a);
+
+    m_logbrowser->addAction(newAction(ICONRES(QStringLiteral("log")),
+                                      tr("ExportLog"),
+                                      &MainWindow::on_exportlog));
+    m_logbrowser->addAction(newAction(ICONRES(QStringLiteral("clearhis")),
+                                      tr("ClearLog"), &MainWindow::on_clslog));
+
+    m_logbrowser->setContextMenuPolicy(Qt::ActionsContextMenu);
+
     auto dw =
         buildDockWidget(dock, QStringLiteral("Log"), tr("Log"), m_logbrowser);
     return dock->addDockWidget(area, dw, areaw);
@@ -803,15 +819,16 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
     m_hashtable->setContextMenuPolicy(
         Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    auto a = new QAction(m_hashtable);
-    a->setText(tr("Copy"));
-    connect(a, &QAction::triggered, this, [=] {
+    auto a = newAction(ICONRES(QStringLiteral("copy")), tr("Copy"), [=] {
         auto r = m_hashtable->currentIndex();
         qApp->clipboard()->setText(
             _hashModel->checkSumData(QCryptographicHash::Algorithm(r.row())));
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     });
+    m_hashtable->addAction(a);
+    a = newAction(QStringLiteral("del"), tr("Clear"),
+                  [=]() { _hashModel->clearData(); });
     m_hashtable->addAction(a);
     connect(m_hashtable->selectionModel(),
             &QItemSelectionModel::currentRowChanged, a,

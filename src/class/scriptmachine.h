@@ -36,9 +36,10 @@ private:
 public:
     // we have three console modes
     enum ConsoleMode {
-        Interactive, // in a shell
-        Scripting,   // in scripting dialog
-        Background   // run codes from other way
+        Interactive,    // in a shell
+        Scripting,      // in scripting dialog
+        Background,     // run codes from other way
+        DefineEvaluator // define result calculator
     };
 
 public:
@@ -108,8 +109,7 @@ public:
     asIScriptModule *module(ConsoleMode mode);
 
     static ScriptMachine &instance();
-
-    virtual ~ScriptMachine();
+    void destoryMachine();
 
 public:
     bool init();
@@ -125,6 +125,8 @@ public:
     asDebugger *debugger() const;
 
     asIScriptEngine *engine() const;
+
+    void outputMessage(const MessageInfo &info);
 
 public:
     static void scriptAssert(bool b);
@@ -144,7 +146,9 @@ public slots:
     bool executeCode(ConsoleMode mode, const QString &code);
     // only scripting mode can be debugged
     bool executeScript(ConsoleMode mode, const QString &script,
-                       bool isInDebug = false);
+                       bool isInDebug = false, int *retCode = nullptr);
+
+    int evaluateDefine(const QString &code, bool &result);
 
     void abortDbgScript();
     void abortScript(ConsoleMode mode);
@@ -155,18 +159,18 @@ protected:
 
     QString getCallStack(asIScriptContext *context);
 
-    void destoryMachine();
-
 private:
     void print(void *ref, int typeId);
     QString getInput();
-
-    void outputMessage(const MessageInfo &info);
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);
 
     static int execSystemCmd(QString &out, const QString &exe,
                              const QString &params, int timeout);
+
+    static QString beautify(const QString &str, uint indent);
+
+    QString stringify(void *ref, int typeId);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);

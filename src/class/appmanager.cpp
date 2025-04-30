@@ -143,8 +143,9 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
-    InspectQtLogHelper::instance().destory();
     ClangFormatManager::instance().save();
+    ScriptMachine::instance().deleteLater();
+    InspectQtLogHelper::instance().destory();
     CommandHistoryManager::save(QConsoleWidget::history().strings_);
 
     delete _w;
@@ -155,7 +156,7 @@ AppManager *AppManager::instance() { return _instance; }
 
 MainWindow *AppManager::mainWindow() const { return _w; }
 
-uint AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
+quint64 AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
 
 void AppManager::openFile(const QString &file, bool autoDetect) {
     EditorView *editor = nullptr;

@@ -38,7 +38,7 @@ public:
         QApplication::tr("WingCloudStudio");
     }
 
-    uint currentMSecsSinceEpoch();
+    quint64 currentMSecsSinceEpoch();
 
 public slots:
     void openFile(const QString &file, bool autoDetect = true);

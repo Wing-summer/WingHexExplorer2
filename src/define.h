@@ -16,6 +16,8 @@ enum AsUserDataType {
     UserData_PluginFn,
     UserData_isDbg,
     UserData_ContextMode,
+    UserData_Timer,
+    UserData_TimeOut
 };
 }
 

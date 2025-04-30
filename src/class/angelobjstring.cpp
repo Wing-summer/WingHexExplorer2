@@ -25,43 +25,49 @@
 
 AngelObjString::AngelObjString() {}
 
-QString AngelObjString::stringToString(void *obj, asDebugger *dbg) {
+QString AngelObjString::stringToString(void *obj, asDebugger *dbg, asUINT tag) {
     Q_UNUSED(dbg);
 
     // We know the received object is a string
     QString val = *reinterpret_cast<QString *>(obj);
+    if (tag == 1) {
+        val.prepend('"').append('"');
+    }
     return val;
 }
 
-QString AngelObjString::arrayToString(void *obj, asDebugger *dbg) {
+QString AngelObjString::arrayToString(void *obj, asDebugger *dbg, asUINT tag) {
     CScriptArray *arr = reinterpret_cast<CScriptArray *>(obj);
 
     QString str;
     QTextStream s(&str);
-    s << tr("(len=") << arr->GetSize() << QStringLiteral(")");
-
-    s << QStringLiteral(" [");
+    s << QStringLiteral("{");
     for (asUINT n = 0; n < arr->GetSize(); n++) {
         s << dbg->toString(arr->At(n), arr->GetElementTypeId(),
-                           arr->GetArrayObjectType()->GetEngine());
+                           arr->GetArrayObjectType()->GetEngine(), 1);
         if (n < arr->GetSize() - 1)
             s << ", ";
     }
-    s << QStringLiteral("]");
+    s << QStringLiteral("}");
 
     return str;
 }
 
-QString AngelObjString::charToString(void *obj, asDebugger *dbg) {
+QString AngelObjString::charToString(void *obj, asDebugger *dbg, asUINT tag) {
 
     Q_UNUSED(dbg);
 
     // We know the received object is a char
     QChar *val = reinterpret_cast<QChar *>(obj);
-    return QString(*val);
+    auto ret = QString(*val);
+    if (tag == 1) {
+        ret.prepend('\'').append('\'');
+    }
+    return ret;
 }
 
-QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
+QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg,
+                                           asUINT tag) {
     CScriptDictionary *dic = reinterpret_cast<CScriptDictionary *>(obj);
 
     QString str;
@@ -69,11 +75,11 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
 
     auto engine = dic->GetEngine();
 
-    s << " {";
+    s << QStringLiteral("{");
     asUINT n = 0;
     for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end();
          it++, n++) {
-        s << "[" << it.GetKey() << "] = ";
+        s << QStringLiteral("[") << it.GetKey() << QStringLiteral("] = ");
 
         // Get the type and address of the value
         const void *val = it.GetAddressOfValue();
@@ -83,17 +89,17 @@ QString AngelObjString::dictionaryToString(void *obj, asDebugger *dbg) {
         // active, the debugger will use the engine held inside it by
         // default, but in an environment where there multiple engines this
         // might not be the correct instance).
-        s << dbg->toString(const_cast<void *>(val), typeId, engine);
+        s << dbg->toString(const_cast<void *>(val), typeId, engine, 1);
 
         if (n < dic->GetSize() - 1)
-            s << ", ";
+            s << QStringLiteral(", ");
     }
-    s << "}";
+    s << QStringLiteral("}");
 
     return str;
 }
 
-QString AngelObjString::colorToString(void *obj, asDebugger *dbg) {
+QString AngelObjString::colorToString(void *obj, asDebugger *dbg, asUINT tag) {
     Q_UNUSED(dbg);
 
     auto color = reinterpret_cast<QColor *>(obj);

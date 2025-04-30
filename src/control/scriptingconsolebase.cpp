@@ -19,18 +19,47 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
 }
 
 void ScriptingConsoleBase::stdOut(const QString &str) {
-    writeStdOut(str);
-    dontHighlightLastLine(true);
+    auto lines = str.split('\n');
+    if (lines.isEmpty()) {
+        return;
+    }
+    writeStdOut(lines.takeFirst());
+    dontHighlightLastLine(false);
+    for (auto &l : lines) {
+        newLine();
+        writeStdOut(l);
+        dontHighlightLastLine(true);
+    }
 }
 
 void ScriptingConsoleBase::stdErr(const QString &str) {
-    writeStdErr(str);
+    auto lines = str.split('\n');
+    if (lines.isEmpty()) {
+        return;
+    }
+
+    writeStdErr(lines.takeFirst());
     dontHighlightLastLine(false);
+    for (auto &l : lines) {
+        newLine();
+        writeStdErr(l);
+        dontHighlightLastLine(false);
+    }
 }
 
 void ScriptingConsoleBase::stdWarn(const QString &str) {
-    write(str, _warnCharFmt);
+    auto lines = str.split('\n');
+    if (lines.isEmpty()) {
+        return;
+    }
+
+    write(lines.takeFirst(), _warnCharFmt);
     dontHighlightLastLine(false);
+    for (auto &l : lines) {
+        newLine();
+        write(l, _warnCharFmt);
+        dontHighlightLastLine(false);
+    }
 }
 
 void ScriptingConsoleBase::newLine() { _s << Qt::endl; }

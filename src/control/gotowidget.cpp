@@ -57,7 +57,7 @@ void GotoWidget::handleLineChanged() {
         ui->lineEdit->setStyleSheet(QString());
         emit jumpToLine(p, isline);
     } else {
-        ui->lineEdit->setStyleSheet(QStringLiteral("color: red;"));
+        ui->lineEdit->setStyleSheet(QStringLiteral("QLineEdit{color: red}"));
     }
 }
 

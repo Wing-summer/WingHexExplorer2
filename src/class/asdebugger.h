@@ -84,7 +84,7 @@ public:
     virtual ~asDebugger();
 
     // Register callbacks to handle to-string conversions of application types
-    typedef QString (*ToStringCallback)(void *obj, asDebugger *dbg);
+    typedef QString (*ToStringCallback)(void *obj, asDebugger *dbg, asUINT tag);
 
     void registerToStringCallback(const asITypeInfo *ti,
                                   ToStringCallback callback);
@@ -108,8 +108,9 @@ public:
     // Line callback invoked by context
     void lineCallback(asIScriptContext *ctx);
 
+    // tag = 1 : string should be printed with quotes
     QString toString(void *value, asUINT typeId,
-                     asIScriptEngine *engine = nullptr);
+                     asIScriptEngine *engine = nullptr, asUINT tag = 0);
 
     GCStatistic gcStatistics();
 

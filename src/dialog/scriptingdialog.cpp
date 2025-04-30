@@ -583,6 +583,7 @@ ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
                                        ads::CDockAreaWidget *areaw) {
     m_consoleout = new ScriptingConsole(this);
     m_consoleout->setMode(ScriptingConsole::Output);
+    m_consoleout->setIsTerminal(false);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
                               tr("ConsoleOutput"), m_consoleout);
     return dock->addDockWidget(area, dw, areaw);

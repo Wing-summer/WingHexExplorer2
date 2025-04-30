@@ -28,16 +28,15 @@ class AngelObjString : public QObject {
     Q_OBJECT
 
 public:
-    // for debugger use
-    static QString stringToString(void *obj, asDebugger *dbg);
+    static QString stringToString(void *obj, asDebugger *dbg, asUINT tag);
 
-    static QString arrayToString(void *obj, asDebugger *dbg);
+    static QString arrayToString(void *obj, asDebugger *dbg, asUINT tag);
 
-    static QString charToString(void *obj, asDebugger *dbg);
+    static QString charToString(void *obj, asDebugger *dbg, asUINT tag);
 
-    static QString dictionaryToString(void *obj, asDebugger *dbg);
+    static QString dictionaryToString(void *obj, asDebugger *dbg, asUINT tag);
 
-    static QString colorToString(void *obj, asDebugger *dbg);
+    static QString colorToString(void *obj, asDebugger *dbg, asUINT tag);
 
 public:
     // ==================================================

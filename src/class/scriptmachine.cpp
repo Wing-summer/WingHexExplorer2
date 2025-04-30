@@ -43,7 +43,75 @@
 #include <QProcess>
 #include <QScopeGuard>
 
-ScriptMachine::~ScriptMachine() { destoryMachine(); }
+class StringFormatter {
+public:
+    static QString format(const QString &input, uint indentSize = 4) {
+        QString output;
+        int level = 0;
+        bool inString = false;
+        QChar stringDelim;
+        bool escape = false;
+
+        for (int i = 0; i < input.size(); ++i) {
+            QChar c = input[i];
+
+            if (inString) {
+                output += c;
+                if (escape) {
+                    escape = false;
+                } else if (c == '\\') {
+                    escape = true;
+                } else if (c == stringDelim) {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (isQuote(c)) {
+                inString = true;
+                stringDelim = c;
+                output += c;
+                continue;
+            }
+
+            switch (c.unicode()) {
+            case '{':
+                output += QStringLiteral("{\n");
+                ++level;
+                output += QString(level * indentSize, ' ');
+                break;
+
+            case '}':
+                output += QStringLiteral("\n");
+                --level;
+                output +=
+                    QString(level * indentSize, ' ') + QStringLiteral("}");
+                break;
+
+            case ',':
+                output +=
+                    QStringLiteral(",\n") + QString(level * indentSize, ' ');
+                break;
+
+            default:
+                if (c.isSpace()) {
+                    // collapse multiple spaces outside strings
+                    if (!output.isEmpty() && !output.endsWith(' ')) {
+                        output += ' ';
+                    }
+                } else {
+                    output += c;
+                }
+                break;
+            }
+        }
+
+        return output;
+    }
+
+private:
+    static bool isQuote(QChar c) { return c == '"' || c == '\''; }
+};
 
 bool ScriptMachine::init() {
     if (isInited()) {
@@ -76,6 +144,8 @@ bool ScriptMachine::configureEngine() {
     if (_engine == nullptr) {
         return false;
     }
+
+    _engine->SetDefaultAccessMask(0x1);
 
     // we need utf8, the default is what we want
     _engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
@@ -155,6 +225,22 @@ bool ScriptMachine::configureEngine() {
         return false;
     }
 
+    r = _engine->RegisterGlobalFunction("string stringify(? &in obj)",
+                                        asMETHOD(ScriptMachine, stringify),
+                                        asCALL_THISCALL_ASGLOBAL, this);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = _engine->RegisterGlobalFunction(
+        "string beautify(const string &in str, uint indent = 4)",
+        asFUNCTION(beautify), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
     r = _engine->RegisterGlobalFunction(
         "int exec(string &out output, const string &in exe, "
         "const string &in params = \"\", int timeout = 3000)",
@@ -198,7 +284,8 @@ bool ScriptMachine::configureEngine() {
     PluginSystem::instance().angelApi()->installAPI(this);
 
     // create module for Console
-    _engine->GetModule("WINGCONSOLE", asGM_ALWAYS_CREATE);
+    auto mod = _engine->GetModule("WINGCONSOLE", asGM_ALWAYS_CREATE);
+    mod->SetAccessMask(0x1);
 
     return true;
 }
@@ -317,8 +404,21 @@ int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
     }
 }
 
+QString ScriptMachine::beautify(const QString &str, uint indent) {
+    return StringFormatter::format(str, indent);
+}
+
+QString ScriptMachine::stringify(void *ref, int typeId) {
+    return _debugger->toString(ref, typeId, _engine);
+}
+
 bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
-                                  bool isInDebug) {
+                                  bool isInDebug, int *retCode) {
+    Q_ASSERT(mode != Interactive && mode != DefineEvaluator);
+    if (script.isEmpty()) {
+        return true;
+    }
+
     // Compile the script
     auto mod = createModule(mode);
     // script-running is not allowed in interactive mode
@@ -326,13 +426,11 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         return false;
     }
 
-    QScopeGuard guard([mod, mode]() {
-        if (mode != ConsoleMode::Interactive) {
-            // Before leaving, allow the engine to clean up remaining objects by
-            // discarding the module and doing a full garbage collection so that
-            // this can also be debugged if desired
-            mod->Discard();
-        }
+    QScopeGuard guard([mod]() {
+        // Before leaving, allow the engine to clean up remaining objects by
+        // discarding the module and doing a full garbage collection so that
+        // this can also be debugged if desired
+        mod->Discard();
     });
 
     asPWORD isDbg = 0;
@@ -353,12 +451,13 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     builder.setPragmaCallback(&ScriptMachine::pragmaCallback, this);
     builder.setIncludeCallback(&ScriptMachine::includeCallback, this);
 
+    _curMode = mode;
     auto r = builder.loadSectionFromFile(script.toUtf8());
     if (r < 0) {
+        // TODO
         return false;
     }
 
-    _curMode = mode;
     r = builder.build(mod);
     if (r < 0) {
         MessageInfo info;
@@ -414,6 +513,9 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
     _ctx[mode] = ctx;
 
+    ctx->SetUserData(reinterpret_cast<void *>(
+                         AppManager::instance()->currentMSecsSinceEpoch()),
+                     AsUserDataType::UserData_Timer);
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
 
@@ -492,7 +594,77 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         _debugger->clearBreakPoint();
         emit onDebugFinished();
     }
+
+    if (retCode) {
+        *retCode = r;
+    }
+
     return r >= 0;
+}
+
+int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
+    auto mod = createModuleIfNotExist(DefineEvaluator);
+    if (mod) {
+        asIScriptFunction *func = nullptr;
+
+        auto ccode = code;
+        ccode.prepend("bool f(){ return (").append(");}");
+        // start to compile
+        _curMode = DefineEvaluator;
+        auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
+        if (cr < 0) {
+            return cr;
+        }
+
+        // Set up a context to execute the script
+        // The context manager will request the context from the
+        // pool, which will automatically attach the debugger
+        asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+        _ctx[DefineEvaluator] = ctx;
+
+        ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
+                             AppManager::instance()->currentMSecsSinceEpoch())),
+                         AsUserDataType::UserData_Timer);
+
+        asPWORD isDbg = 0;
+        ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+                         AsUserDataType::UserData_isDbg);
+        mod->SetUserData(reinterpret_cast<void *>(isDbg),
+                         AsUserDataType::UserData_isDbg);
+
+        asPWORD umode = asPWORD(DefineEvaluator);
+        ctx->SetUserData(reinterpret_cast<void *>(umode),
+                         AsUserDataType::UserData_ContextMode);
+
+        ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback),
+                                  this, asCALL_THISCALL);
+
+        // Execute the script until completion
+        // The script may create co-routines. These will automatically
+        // be managed by the context manager
+        while (_ctxMgr->ExecuteScripts()) {
+            qApp->processEvents();
+        }
+
+        _ctx[DefineEvaluator] = nullptr;
+
+        // Check if the main script finished normally
+        int r = ctx->GetState();
+        if (r != asEXECUTION_FINISHED) {
+            r = -1;
+        } else {
+            result = bool(ctx->GetReturnByte());
+            r = 0;
+        }
+
+        func->Release();
+
+        // Return the context after retrieving the return value
+        _ctxMgr->DoneWithContext(ctx);
+        _engine->GarbageCollect();
+        return r;
+    }
+    return asERROR;
 }
 
 void ScriptMachine::abortDbgScript() {
@@ -573,29 +745,51 @@ asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
     if (isModuleExists(mode)) {
         return nullptr;
     }
+
+    asIScriptModule *mod = nullptr;
+
     switch (mode) {
     case Interactive:
-        return nullptr;
+        mod = nullptr;
     case Scripting:
-        return _engine->GetModule("WINGSCRIPT", asGM_ALWAYS_CREATE);
+        mod = _engine->GetModule("WINGSCRIPT", asGM_ALWAYS_CREATE);
+        mod->SetAccessMask(0x1);
+        break;
     case Background:
-        return _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
+        mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
+        mod->SetAccessMask(0x1);
+        break;
+    case DefineEvaluator:
+        mod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
+        mod->SetAccessMask(0x2);
+        break;
     }
-    // should not go there
-    return nullptr;
+
+    return mod;
 }
 
 asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
+    asIScriptModule *mod = nullptr;
     switch (mode) {
     case Interactive:
-        return _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
+        mod = _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
+        mod->SetAccessMask(0x1);
+        break;
     case Scripting:
-        return _engine->GetModule("WINGSCRIPT", asGM_CREATE_IF_NOT_EXISTS);
+        mod = _engine->GetModule("WINGSCRIPT", asGM_CREATE_IF_NOT_EXISTS);
+        mod->SetAccessMask(0x1);
+        break;
     case Background:
-        return _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
+        mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
+        mod->SetAccessMask(0x1);
+        break;
+    case DefineEvaluator:
+        mod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
+        mod->SetAccessMask(0x2);
+        break;
     }
-    // should not go there
-    return nullptr;
+
+    return mod;
 }
 
 asIScriptModule *ScriptMachine::module(ConsoleMode mode) {
@@ -606,6 +800,8 @@ asIScriptModule *ScriptMachine::module(ConsoleMode mode) {
         return _engine->GetModule("WINGSCRIPT", asGM_ONLY_IF_EXISTS);
     case Background:
         return _engine->GetModule("WINGSRV", asGM_ONLY_IF_EXISTS);
+    case DefineEvaluator:
+        return _engine->GetModule("WINGDEF", asGM_ONLY_IF_EXISTS);
     }
     return nullptr;
 }
@@ -1832,6 +2028,10 @@ asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
+    if (code.isEmpty()) {
+        return true;
+    }
+
     asIScriptModule *mod = createModuleIfNotExist(mode);
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
 
@@ -1841,26 +2041,30 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
 
     asIScriptFunction *func = nullptr;
 
-    auto ret = parser.parse(ccode);
+    QList<QAsCodeParser::CodeSegment> ret;
+    if (mode != DefineEvaluator) {
+        ret = parser.parse(ccode);
+    }
 
     // check whether there is any enum/class
-    if (std::find_if(ret.begin(), ret.end(),
-                     [](const QAsCodeParser::CodeSegment &seg) {
-                         switch (seg.type) {
-                         case QAsCodeParser::SymbolType::Enum:
-                         case QAsCodeParser::SymbolType::Class:
-                         case QAsCodeParser::SymbolType::Function:
-                         case QAsCodeParser::SymbolType::Interface:
-                         case QAsCodeParser::SymbolType::Import:
-                         case QAsCodeParser::SymbolType::Variable:
-                             return false;
-                         case QAsCodeParser::SymbolType::Invalid:
-                         case QAsCodeParser::SymbolType::TypeDef:
-                         case QAsCodeParser::SymbolType::FnDef:
-                             return true;
-                         }
-                         return true;
-                     }) != ret.end()) {
+    if (ret.isEmpty() ||
+        std::any_of(ret.begin(), ret.end(),
+                    [](const QAsCodeParser::CodeSegment &seg) {
+                        switch (seg.type) {
+                        case QAsCodeParser::SymbolType::Enum:
+                        case QAsCodeParser::SymbolType::Class:
+                        case QAsCodeParser::SymbolType::Function:
+                        case QAsCodeParser::SymbolType::Interface:
+                        case QAsCodeParser::SymbolType::Import:
+                        case QAsCodeParser::SymbolType::Variable:
+                            return false;
+                        case QAsCodeParser::SymbolType::Invalid:
+                        case QAsCodeParser::SymbolType::TypeDef:
+                        case QAsCodeParser::SymbolType::FnDef:
+                            return true;
+                        }
+                        return true;
+                    })) {
         // ok, wrap the codes
         ccode.prepend("void f(){").append("}");
         // start to compile
@@ -1880,6 +2084,10 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         // pool, which will automatically attach the debugger
         asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
         _ctx[mode] = ctx;
+
+        ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
+                             AppManager::instance()->currentMSecsSinceEpoch())),
+                         AsUserDataType::UserData_Timer);
 
         asPWORD isDbg = 0;
         ctx->SetUserData(reinterpret_cast<void *>(isDbg),

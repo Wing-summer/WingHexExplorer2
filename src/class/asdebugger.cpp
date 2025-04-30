@@ -16,6 +16,7 @@
 */
 
 #include "asdebugger.h"
+#include "class/appmanager.h"
 #include "define.h"
 
 #include <QApplication>
@@ -78,6 +79,40 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     if (ctx == nullptr)
         return;
 
+    // By default we ignore callbacks when the context is not active.
+    // An application might override this to for example disconnect the
+    // debugger as the execution finished.
+    if (ctx->GetState() != asEXECUTION_ACTIVE)
+        return;
+
+    auto now = AppManager::instance()->currentMSecsSinceEpoch();
+    auto timer = reinterpret_cast<asPWORD>(
+        ctx->GetUserData(AsUserDataType::UserData_Timer));
+    auto mode = ScriptMachine::ConsoleMode(reinterpret_cast<asPWORD>(
+        ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
+
+    bool timeOut = false;
+    if (timer < 0) {
+        timeOut = true;
+    } else {
+        if (mode == ScriptMachine::DefineEvaluator) {
+            timeOut = (now - timer) > 3000; // 3 s
+        } else {
+            timeOut = (now - timer) > 600000; // 10 min
+        }
+    }
+
+    if (timeOut) {
+        auto timeOut = tr("ScriptTimedOut");
+        ScriptMachine::MessageInfo info;
+        info.message = timeOut;
+        info.mode = mode;
+        info.type = ScriptMachine::MessageType::Error;
+        ScriptMachine::instance().outputMessage(info);
+        ctx->Abort();
+        return;
+    }
+
     auto isDbg = reinterpret_cast<asPWORD>(
         ctx->GetUserData(AsUserDataType::UserData_isDbg));
     if (!isDbg) {
@@ -106,12 +141,6 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
             }
         }
     }
-
-    // By default we ignore callbacks when the context is not active.
-    // An application might override this to for example disconnect the
-    // debugger as the execution finished.
-    if (ctx->GetState() != asEXECUTION_ACTIVE)
-        return;
 
     auto dbgContext = reinterpret_cast<ContextDbgInfo *>(ctx->GetUserData());
     Q_ASSERT(dbgContext);
@@ -368,7 +397,7 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
 }
 
 QString asDebugger::toString(void *value, asUINT typeId,
-                             asIScriptEngine *engine) {
+                             asIScriptEngine *engine, asUINT tag) {
     if (value == nullptr)
         return QStringLiteral("<null>");
 
@@ -445,7 +474,8 @@ QString asDebugger::toString(void *value, asUINT typeId,
                     s << name /*type->GetPropertyDeclaration(n)*/
                       << QStringLiteral(" = ")
                       << toString(obj->GetAddressOfProperty(n),
-                                  obj->GetPropertyTypeId(n), type->GetEngine());
+                                  obj->GetPropertyTypeId(n), type->GetEngine(),
+                                  1);
                 }
             }
         }
@@ -482,7 +512,7 @@ QString asDebugger::toString(void *value, asUINT typeId,
 
                     // Invoke the callback to get the string representation of
                     // this type
-                    s << it.value()(value, this);
+                    s << it.value()(value, this, tag);
                 } else {
                     // Unknown type: type + address
                     s << type->GetName() << '(' << value << ')';
