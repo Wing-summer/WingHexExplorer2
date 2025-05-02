@@ -71,7 +71,7 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
  *      * #define <word> <string|int64|double>
  *      * #undef <word>
  *      * #ifdef <word>
- *      * #ifundef <word>
+ *      * #ifndef <word>
  */
 class AsPreprocesser {
 public:
@@ -84,9 +84,6 @@ public:
         QByteArray script;
     };
 
-    using DefineValueType =
-        std::variant<std::monostate, QString, qint64, double>;
-
 public:
     // Load a script section from a file on disk
     // Returns  1 if the file was included
@@ -94,6 +91,8 @@ public:
     //         <0 on error
     int loadSectionFromFile(const QString &filename);
     int loadSectionFromMemory(const QString &section, const QByteArray &code);
+
+    void addScriptSection(const QString &section, const QByteArray &code);
 
     QList<ScriptData> scriptData() const;
 
@@ -107,25 +106,39 @@ public:
     void setPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
 
     // Add a pre-processor define for conditional compilation
-    void defineWord(const QString &word, const DefineValueType &value = {});
+    bool defineWord(const QString &word, const QByteArray &value = {});
 
     // Enumerate included script sections
     unsigned int sectionCount() const;
 
     QString sectionName(unsigned int idx) const;
 
+    bool isCodeCompleteMode() const;
+    void setIsCodeCompleteMode(bool newIsCodeCompleteMode);
+
+    QHash<QString, QByteArray> definedMacros() const;
+
+protected:
+    QString translate(const char *str);
+
 protected:
     void clearAll();
-    void addScriptSection(const QString &section, const QByteArray &code);
+
     int processScriptSection(const QByteArray &script,
                              const QString &sectionname);
     int loadScriptSection(const QString &filename);
     bool includeIfNotAlreadyIncluded(const QString &filename);
 
-    int skipStatement(const QByteArray &modifiedScript, int pos);
+    int skipStatement(QByteArray &modifiedScript, int pos);
 
-    int excludeCode(QByteArray &modifiedScript, int pos);
+    int excludeIfCode(QByteArray &modifiedScript, int pos);
+    int excludeElseCode(QByteArray &modifiedScript, int pos);
     void overwriteCode(QByteArray &modifiedScript, int start, int len);
+    int getLineCount(const QByteArray &modifiedScript, int pos) const;
+
+    bool endLinePassFailed(const QByteArray &modifiedScript, int pos);
+
+    QByteArray findReplaceResult(const QByteArray &v);
 
     asIScriptEngine *engine;
     QList<ScriptData> modifiedScripts;
@@ -138,8 +151,10 @@ protected:
 
     QStringList includedScripts;
 
-    QEventLoop waitLoop;
-    QHash<QString, DefineValueType> definedWords;
+    QHash<QString, QByteArray> definedWords;
+
+private:
+    bool _isCodeCompleteMode = false;
 };
 
 #endif // ASPREPROCESSER_H

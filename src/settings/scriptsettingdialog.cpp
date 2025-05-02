@@ -48,6 +48,7 @@ void ScriptSettingDialog::loadData() {
     this->blockSignals(true);
     ui->cbEnable->setChecked(set.scriptEnabled());
     ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
+    ui->sbTimeout->setValue(set.scriptTimeout());
     this->blockSignals(false);
 
     if (set.scriptEnabled()) {
@@ -112,6 +113,7 @@ void ScriptSettingDialog::apply() {
     auto &set = SettingManager::instance();
     set.setScriptEnabled(ui->cbEnable->isChecked());
     set.setAllowUsrScriptInRoot(ui->cbAllowUsrScript->isChecked());
+    set.setScriptTimeout(ui->sbTimeout->value());
     set.setUsrHideCats(usrHideCats);
     set.setSysHideCats(sysHideCats);
     set.save(SettingManager::SCRIPT);

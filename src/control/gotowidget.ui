@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>412</width>
     <height>50</height>
    </rect>
   </property>
@@ -44,7 +44,7 @@
    <item>
     <spacer name="horizontalSpacer">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -60,7 +60,7 @@
       <string>GoTo:</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
    </item>
@@ -77,6 +77,9 @@
        <width>400</width>
        <height>16777215</height>
       </size>
+     </property>
+     <property name="contextMenuPolicy">
+      <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
      </property>
     </widget>
    </item>

@@ -36,6 +36,7 @@ GotoLineWidget::GotoLineWidget(QWidget *parent)
 
     m_sbline = new QSpinBox(this);
     m_sbline->setRange(1, 1);
+    m_sbline->setContextMenuPolicy(Qt::NoContextMenu);
     m_sbline->setMinimumWidth(120);
     connect(m_sbline, &QSpinBox::valueChanged, this,
             &GotoLineWidget::onGotoLine);

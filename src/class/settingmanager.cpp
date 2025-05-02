@@ -59,6 +59,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_RECENTFILES, ("script.recentfiles"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                           ("script.allowUsrScriptRoot"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE, ("script.enable"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_TIMEOUT, ("script.timeout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USESYS_FILEDIALOG,
@@ -146,6 +147,8 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_scriptEnabled, SCRIPT_ENABLE, true);
     READ_CONFIG_BOOL(m_allowUsrScriptInRoot, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                      false);
+    READ_CONFIG_INT(m_scriptTimeout, SCRIPT_TIMEOUT, 10);
+    m_scriptTimeout = qBound(0, m_scriptTimeout, 312480);
     m_usrHideCats =
         READ_CONFIG(SCRIPT_USRHIDECATS, QStringList()).toStringList();
     m_sysHideCats =
@@ -183,6 +186,16 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+int SettingManager::scriptTimeout() const { return m_scriptTimeout; }
+
+void SettingManager::setScriptTimeout(int newScriptTimeout) {
+    newScriptTimeout = qBound(0, newScriptTimeout, 312480);
+    if (m_scriptTimeout != newScriptTimeout) {
+        m_scriptTimeout = newScriptTimeout;
+        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_TIMEOUT);
+    }
 }
 
 qsizetype SettingManager::logCount() const { return m_logCount; }
@@ -392,6 +405,7 @@ void SettingManager::save(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
         WRITE_CONFIG_SET(SCRIPT_ENABLE, m_scriptEnabled);
+        WRITE_CONFIG_SET(SCRIPT_TIMEOUT, m_scriptTimeout);
         WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
         WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, m_usrHideCats);
         WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, m_sysHideCats);
@@ -432,6 +446,7 @@ void SettingManager::reset(SETTINGS cat) {
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
         WRITE_CONFIG_SET(SCRIPT_ENABLE, true);
+        WRITE_CONFIG_SET(SCRIPT_TIMEOUT, 10);
         WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
         WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, QStringList());
         WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, QStringList());

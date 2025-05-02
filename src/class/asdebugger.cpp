@@ -88,6 +88,8 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
     auto now = AppManager::instance()->currentMSecsSinceEpoch();
     auto timer = reinterpret_cast<asPWORD>(
         ctx->GetUserData(AsUserDataType::UserData_Timer));
+    auto timeOutTime = reinterpret_cast<asPWORD>(
+        ctx->GetUserData(AsUserDataType::UserData_TimeOut));
     auto mode = ScriptMachine::ConsoleMode(reinterpret_cast<asPWORD>(
         ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
 
@@ -98,7 +100,9 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         if (mode == ScriptMachine::DefineEvaluator) {
             timeOut = (now - timer) > 3000; // 3 s
         } else {
-            timeOut = (now - timer) > 600000; // 10 min
+            if (timeOutTime) {
+                timeOut = (now - timer) > timeOutTime; // 10 min
+            }
         }
     }
 

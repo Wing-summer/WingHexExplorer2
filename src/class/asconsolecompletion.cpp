@@ -87,3 +87,22 @@ QList<CodeInfoTip> AsConsoleCompletion::parseDocument() {
         return citips;
     }
 }
+
+QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
+    static QList<CodeInfoTip> marcos;
+    if (marcos.isEmpty()) {
+        QStringList m{
+            "ls",
+            "del",
+            "cls",
+        };
+        for (auto &i : m) {
+            CodeInfoTip tip;
+            tip.name = i;
+            tip.dontAddGlobal = true;
+            tip.type = CodeInfoTip::Type::KeyWord;
+            marcos.append(tip);
+        }
+    }
+    return marcos;
+}

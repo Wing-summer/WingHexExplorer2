@@ -42,6 +42,8 @@ protected:
 
     virtual QList<CodeInfoTip> parseDocument();
 
+    virtual QList<CodeInfoTip> parseMarcos();
+
     QList<CodeInfoTip> parseScriptData(qsizetype offset,
                                        const QByteArray &code);
 

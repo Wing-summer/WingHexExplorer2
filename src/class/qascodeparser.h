@@ -106,12 +106,8 @@ public:
     QList<Symbol> parseAndIntell(qsizetype offset, const QByteArray &codes);
 
 public:
-    // utilities
-    static bool isConstant(int tokenType);
-    static bool isOperator(int tokenType);
-    static bool isPreOperator(int tokenType);
-    static bool isPostOperator(int tokenType);
-    static bool isAssignOperator(int tokenType);
+    static eTokenType getToken(asIScriptEngine *engine, const char *string,
+                               size_t stringLength, size_t *tokenLength);
 
 private:
     QList<QAsCodeParser::CodeSegment> parseScript(bool inBlock);
@@ -161,7 +157,7 @@ private:
 
     QByteArrayList parseOptionalScope();
 
-    QList<Symbol> parseDeclaration(const QByteArrayList &ns,
+    QList<Symbol> parseDeclaration(qsizetype end, const QByteArrayList &ns,
                                    bool isClassProp = false,
                                    bool isGlobalVar = false);
 

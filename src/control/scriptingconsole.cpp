@@ -255,32 +255,28 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         auto &ins = ScriptMachine::instance();
         auto mod = ins.module(ScriptMachine::Interactive);
         if (mod) {
-            QList<QPair<QByteArray, QByteArray>> vars;
             auto total = mod->GetGlobalVarCount();
 
-            // generate codes to print
-            QString codes;
+            setMode(Output);
+
             if (total == 0) {
-                codes = QStringLiteral("print(\"<none>\");");
+                stdOut("<none>");
             } else {
+                auto &sm = ScriptMachine::instance();
                 for (asUINT i = 0; i < total; ++i) {
                     const char *name;
-                    int typeId;
+                    int typeID;
                     auto decl = mod->GetGlobalVarDeclaration(i);
-                    if (decl && mod->GetGlobalVar(i, &name) == asSUCCESS) {
-                        vars.emplaceBack(decl, name);
+                    if (decl && mod->GetGlobalVar(i, &name, nullptr, &typeID) ==
+                                    asSUCCESS) {
+                        auto value = sm.debugger()->toString(
+                            mod->GetAddressOfGlobalVar(i), typeID, sm.engine(),
+                            1);
+                        stdOut(decl + QStringLiteral(" = ") + value);
                     }
-                }
-
-                for (auto &var : vars) {
-                    codes.append("print(\"" + var.first + " = \");print(" +
-                                 var.second + ");print(\";\\n\");");
                 }
             }
 
-            setMode(Output);
-            ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
-                                                  codes);
             _codes.clear();
             appendCommandPrompt();
             setMode(Input);
@@ -329,11 +325,13 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         auto mod = ins.module(ScriptMachine::Interactive);
         if (mod) {
             auto total = mod->GetGlobalVarCount();
-            asUINT i = total;
-            do {
-                --i;
-                mod->RemoveGlobalVar(i);
-            } while (i);
+            if (total) {
+                asUINT i = total;
+                do {
+                    --i;
+                    mod->RemoveGlobalVar(i);
+                } while (i);
+            }
         }
         _codes.clear();
         appendCommandPrompt();

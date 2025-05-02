@@ -53,6 +53,15 @@ QAsCodeParser::parse(const QByteArray &codes) {
     return parseScript(false);
 }
 
+eTokenType QAsCodeParser::getToken(asIScriptEngine *engine, const char *string,
+                                   size_t stringLength, size_t *tokenLength) {
+    auto e = dynamic_cast<asCScriptEngine *>(engine);
+    if (e) {
+        return e->tok.GetToken(string, stringLength, tokenLength, nullptr);
+    }
+    return ttUnrecognizedToken;
+}
+
 QList<QAsCodeParser::Symbol>
 QAsCodeParser::parseAndIntell(qsizetype offset, const QByteArray &codes) {
     return parseIntell(offset, parse(codes));
@@ -572,7 +581,7 @@ QAsCodeParser::parseStatementBlock(const QByteArrayList &ns,
                 rewindTo(&t1);
 
                 if (isVarDecl()) {
-                    syms.top().append(parseDeclaration(ns));
+                    syms.top().append(parseDeclaration(end, ns));
                 } else {
                     _isSyntaxError = true;
                 }
@@ -1069,8 +1078,8 @@ void QAsCodeParser::superficiallyParseVarInit() {
 }
 
 QList<QAsCodeParser::Symbol>
-QAsCodeParser::parseDeclaration(const QByteArrayList &ns, bool isClassProp,
-                                bool isGlobalVar) {
+QAsCodeParser::parseDeclaration(qsizetype end, const QByteArrayList &ns,
+                                bool isClassProp, bool isGlobalVar) {
     QList<QAsCodeParser::Symbol> ret;
     Symbol sym;
 
@@ -1097,6 +1106,10 @@ QAsCodeParser::parseDeclaration(const QByteArrayList &ns, bool isClassProp,
     for (;;) {
         // Parse identifier
         auto id = parseIdentifier();
+        if (end >= 0 && id.pos > end) {
+            return ret;
+        }
+
         if (_isSyntaxError)
             return ret;
 
@@ -1438,7 +1451,7 @@ QList<QAsCodeParser::Symbol>
 QAsCodeParser::parseGlobalVarDecls(const QByteArrayList &ns,
                                    const QByteArray &code) {
     _code = code;
-    return parseDeclaration(ns, false, true);
+    return parseDeclaration(-1, ns, false, true);
 }
 
 QAsCodeParser::CodeSegment QAsCodeParser::parseFunctionMethod(Visiblity &vis) {
@@ -1625,7 +1638,7 @@ QAsCodeParser::parseClassContent(qsizetype offset, const QByteArrayList &ns,
             auto vp = parseVirtualPropertyDecl(true, false);
             syms.append(vp);
         } else if (isVarDecl()) {
-            auto decl = parseDeclaration(ns, true);
+            auto decl = parseDeclaration(offset, ns, true);
             syms.append(decl);
         } else if (t.type == ttEndStatement)
             // Skip empty declarations
@@ -2301,66 +2314,6 @@ bool QAsCodeParser::findTokenAfterType(
     rewindTo(&t);
 
     return true;
-}
-
-bool QAsCodeParser::isConstant(int tokenType) {
-    if (tokenType == ttIntConstant || tokenType == ttFloatConstant ||
-        tokenType == ttDoubleConstant || tokenType == ttStringConstant ||
-        tokenType == ttMultilineStringConstant ||
-        tokenType == ttHeredocStringConstant || tokenType == ttTrue ||
-        tokenType == ttFalse || tokenType == ttBitsConstant ||
-        tokenType == ttNull)
-        return true;
-
-    return false;
-}
-
-bool QAsCodeParser::isOperator(int tokenType) {
-    if (tokenType == ttPlus || tokenType == ttMinus || tokenType == ttStar ||
-        tokenType == ttSlash || tokenType == ttPercent ||
-        tokenType == ttStarStar || tokenType == ttAnd || tokenType == ttOr ||
-        tokenType == ttXor || tokenType == ttEqual || tokenType == ttNotEqual ||
-        tokenType == ttLessThan || tokenType == ttLessThanOrEqual ||
-        tokenType == ttGreaterThan || tokenType == ttGreaterThanOrEqual ||
-        tokenType == ttAmp || tokenType == ttBitOr || tokenType == ttBitXor ||
-        tokenType == ttBitShiftLeft || tokenType == ttBitShiftRight ||
-        tokenType == ttBitShiftRightArith || tokenType == ttIs ||
-        tokenType == ttNotIs)
-        return true;
-
-    return false;
-}
-
-bool QAsCodeParser::isPreOperator(int tokenType) {
-    if (tokenType == ttMinus || tokenType == ttPlus || tokenType == ttNot ||
-        tokenType == ttInc || tokenType == ttDec || tokenType == ttBitNot ||
-        tokenType == ttHandle)
-        return true;
-    return false;
-}
-
-bool QAsCodeParser::isPostOperator(int tokenType) {
-    if (tokenType == ttInc ||         // post increment
-        tokenType == ttDec ||         // post decrement
-        tokenType == ttDot ||         // member access
-        tokenType == ttOpenBracket || // index operator
-        tokenType ==
-            ttOpenParenthesis) // argument list for call on function pointer
-        return true;
-    return false;
-}
-
-bool QAsCodeParser::isAssignOperator(int tokenType) {
-    if (tokenType == ttAssignment || tokenType == ttAddAssign ||
-        tokenType == ttSubAssign || tokenType == ttMulAssign ||
-        tokenType == ttDivAssign || tokenType == ttModAssign ||
-        tokenType == ttPowAssign || tokenType == ttAndAssign ||
-        tokenType == ttOrAssign || tokenType == ttXorAssign ||
-        tokenType == ttShiftLeftAssign || tokenType == ttShiftRightLAssign ||
-        tokenType == ttShiftRightAAssign)
-        return true;
-
-    return false;
 }
 
 bool QAsCodeParser::typeExist(const QString &t) {

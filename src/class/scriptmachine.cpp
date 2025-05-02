@@ -31,8 +31,10 @@
 #include "angelobjstring.h"
 #include "class/appmanager.h"
 #include "class/asbuilder.h"
+#include "class/logger.h"
 #include "class/pluginsystem.h"
 #include "class/qascodeparser.h"
+#include "class/settingmanager.h"
 #include "define.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptfile.h"
@@ -415,6 +417,11 @@ QString ScriptMachine::stringify(void *ref, int typeId) {
 bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
                                   bool isInDebug, int *retCode) {
     Q_ASSERT(mode != Interactive && mode != DefineEvaluator);
+    if (QThread::currentThread() != qApp->thread()) {
+        Logger::warning(tr("Code must be exec in the main thread"));
+        return false;
+    }
+
     if (script.isEmpty()) {
         return true;
     }
@@ -451,10 +458,14 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     builder.setPragmaCallback(&ScriptMachine::pragmaCallback, this);
     builder.setIncludeCallback(&ScriptMachine::includeCallback, this);
 
-    _curMode = mode;
+    _curMsgMode = mode;
     auto r = builder.loadSectionFromFile(script.toUtf8());
     if (r < 0) {
-        // TODO
+        MessageInfo info;
+        info.mode = mode;
+        info.message = tr("Script failed to pre-processed");
+        info.type = MessageType::Error;
+        outputMessage(info);
         return false;
     }
 
@@ -518,6 +529,11 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
                      AsUserDataType::UserData_Timer);
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
+
+    auto timeOutRaw = SettingManager::instance().scriptTimeout();
+    auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
+    ctx->SetUserData(reinterpret_cast<void *>(timeOut),
+                     AsUserDataType::UserData_TimeOut);
 
     mod->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
@@ -607,10 +623,14 @@ int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
     if (mod) {
         asIScriptFunction *func = nullptr;
 
+        auto oldMode = _curMsgMode;
+        QScopeGuard guard([this, oldMode]() { _curMsgMode = oldMode; });
+
         auto ccode = code;
         ccode.prepend("bool f(){ return (").append(");}");
         // start to compile
-        _curMode = DefineEvaluator;
+
+        _curMsgMode = DefineEvaluator;
         auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
         if (cr < 0) {
             return cr;
@@ -706,7 +726,7 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
         return;
     }
     MessageInfo info;
-    info.mode = ins->_curMode;
+    info.mode = ins->_curMsgMode;
     info.row = msg->row;
     info.col = msg->col;
     info.section = msg->section;
@@ -839,19 +859,21 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
                                           asIScriptContext *ctx, void *param) {
     Q_UNUSED(engine);
 
-    // We can also check for possible script exceptions here if so desired
+    if (ctx) {
+        // We can also check for possible script exceptions here if so desired
 
-    // Unprepare the context to free any objects it may still hold (e.g. return
-    // value) This must be done before making the context available for re-use,
-    // as the clean up may trigger other script executions, e.g. if a destructor
-    // needs to call a function.
-    ctx->Unprepare();
+        // Unprepare the context to free any objects it may still hold (e.g.
+        // return value) This must be done before making the context available
+        // for re-use, as the clean up may trigger other script executions, e.g.
+        // if a destructor needs to call a function.
+        ctx->Unprepare();
 
-    auto p = reinterpret_cast<ScriptMachine *>(param);
-    Q_ASSERT(p);
+        auto p = reinterpret_cast<ScriptMachine *>(param);
+        Q_ASSERT(p);
 
-    // Place the context into the pool for when it will be needed again
-    p->_ctxPool.push_back(ctx);
+        // Place the context into the pool for when it will be needed again
+        p->_ctxPool.push_back(ctx);
+    }
 }
 
 int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
@@ -2028,6 +2050,11 @@ asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
+    if (QThread::currentThread() != qApp->thread()) {
+        Logger::warning(tr("Code must be exec in the main thread"));
+        return false;
+    }
+
     if (code.isEmpty()) {
         return true;
     }
@@ -2068,7 +2095,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         // ok, wrap the codes
         ccode.prepend("void f(){").append("}");
         // start to compile
-        _curMode = mode;
+        _curMsgMode = mode;
         auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
         if (cr < 0) {
             MessageInfo info;
@@ -2094,6 +2121,11 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                          AsUserDataType::UserData_isDbg);
         mod->SetUserData(reinterpret_cast<void *>(isDbg),
                          AsUserDataType::UserData_isDbg);
+
+        auto timeOutRaw = SettingManager::instance().scriptTimeout();
+        auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
+        ctx->SetUserData(reinterpret_cast<void *>(timeOut),
+                         AsUserDataType::UserData_TimeOut);
 
         asPWORD umode = asPWORD(mode);
         ctx->SetUserData(reinterpret_cast<void *>(umode),
@@ -2159,7 +2191,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                             return seg.type ==
                                    QAsCodeParser::SymbolType::Variable;
                         })) {
-            _curMode = mode;
+            _curMsgMode = mode;
 
             for (auto &s : ret) {
                 auto r = mod->CompileGlobalVar(nullptr, s.codes, 0);

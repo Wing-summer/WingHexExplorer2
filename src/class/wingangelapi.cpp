@@ -1899,20 +1899,43 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
 
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
-    auto handles = _handles;
-    auto ret = ScriptMachine::instance().executeScript(
-        ScriptMachine::Background, fileName);
-    cleanUpHandles(handles);
-    return ret;
+
+    auto exec = [this, fileName]() -> bool {
+        auto handles = _handles;
+        auto ret = ScriptMachine::instance().executeScript(
+            ScriptMachine::Background, fileName);
+        cleanUpHandles(handles);
+        return ret;
+    };
+
+    if (QThread::currentThread() != qApp->thread()) {
+        bool ret = false;
+        QMetaObject::invokeMethod(qApp, exec, Qt::BlockingQueuedConnection,
+                                  &ret);
+        return ret;
+    } else {
+        return exec();
+    }
 }
 
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
-    auto handles = _handles;
-    auto ret =
-        ScriptMachine::instance().executeCode(ScriptMachine::Background, code);
-    cleanUpHandles(handles);
-    return ret;
+    auto exec = [this, code]() -> bool {
+        auto handles = _handles;
+        auto ret = ScriptMachine::instance().executeCode(
+            ScriptMachine::Background, code);
+        cleanUpHandles(handles);
+        return ret;
+    };
+
+    if (QThread::currentThread() != qApp->thread()) {
+        bool ret = false;
+        QMetaObject::invokeMethod(qApp, exec, Qt::BlockingQueuedConnection,
+                                  &ret);
+        return ret;
+    } else {
+        return exec();
+    }
 }
 
 QVector<void *> WingAngelAPI::retriveAsCArray(const WingHex::SenderInfo &sender,

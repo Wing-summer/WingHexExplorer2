@@ -80,7 +80,7 @@
                 <HlCOct attribute="Octal" context="#stay"/>
                 <HlCHex attribute="Hex" context="#stay"/>
                 <Int attribute="Decimal" context="Int Suffixes"/>
-                <HlCChar attribute="Char" context="#stay"/>
+                <DetectChar attribute="Char" context="String" char="&apos;"/>
                 <StringDetect attribute="Text Block" context="TextBlock" String="&quot;&quot;&quot;"/>
                 <DetectChar attribute="String" context="String" char="&quot;"/>
                 <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="/" lookAhead="true"/>
@@ -105,6 +105,7 @@
             <context attribute="String" lineEndContext="#pop" name="String">
                 <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
                 <DetectChar attribute="String" context="#pop" char="&quot;"/>
+                <DetectChar attribute="Char" context="#pop" char="&apos;"/>
             </context>
             <context attribute="String" lineEndContext="#pop" name="StringEscapedChar">
                 <HlCStringChar attribute="String Char" context="#pop"/>
@@ -144,7 +145,7 @@
             <itemData name="Octal"        defStyleNum="dsBaseN"/>
             <itemData name="Hex"          defStyleNum="dsBaseN"/>
             <itemData name="Float"        defStyleNum="dsFloat"/>
-            <itemData name="Char"         defStyleNum="dsChar"/>
+            <itemData name="Char"         defStyleNum="dsString"/>
             <itemData name="String"       defStyleNum="dsString"/>
             <itemData name="Text Block"   defStyleNum="dsString"/>
             <itemData name="String Char"  defStyleNum="dsSpecialChar"/>

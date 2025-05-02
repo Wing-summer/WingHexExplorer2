@@ -212,7 +212,7 @@ private:
     QVector<asITypeInfo *> _rtypes;
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;
-    ConsoleMode _curMode = ConsoleMode::Background;
+    ConsoleMode _curMsgMode = ConsoleMode::Background;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

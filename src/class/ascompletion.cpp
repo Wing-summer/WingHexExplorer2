@@ -40,6 +40,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, DOT_TRIGGER, ("."))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, DBL_COLON_TRIGGER, ("::"))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, LEFT_PARE_TRIGGER, ("("))
 Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SEMI_COLON_TRIGGER, (";"))
+Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SHARP_TRIGGER, ("#"))
 
 AsCompletion::AsCompletion(WingCodeEdit *p)
     : WingCompleter(p), parser(ScriptMachine::instance().engine()) {
@@ -47,7 +48,9 @@ AsCompletion::AsCompletion(WingCodeEdit *p)
                     // unleash the power of call tips
                     *LEFT_PARE_TRIGGER,
                     // clear the tips
-                    *SEMI_COLON_TRIGGER});
+                    *SEMI_COLON_TRIGGER,
+                    // for marcos
+                    *SHARP_TRIGGER});
     setTriggerAmount(3);
 
     connect(this, QOverload<const QModelIndex &>::of(&AsCompletion::activated),
@@ -168,12 +171,20 @@ int AsCompletion::includeCallBack(const QString &include, bool quotedInclude,
 void AsCompletion::clearFunctionTip() { emit onFunctionTip({}); }
 
 QString AsCompletion::wordSeperators() const {
-    static QString eow(QStringLiteral("~!@#$%^&*()_+{}|\"<>?,/;'[]\\-="));
+    static QString eow(QStringLiteral("~!@$%^&*()_+{}|\"<>?,/;'[]\\-="));
     return eow;
 }
 
 bool AsCompletion::processTrigger(const QString &trigger,
                                   const QString &content) {
+    QList<CodeInfoTip> nodes;
+
+    if (trigger == *SHARP_TRIGGER) {
+        setModel(new CodeCompletionModel(parseMarcos(), this));
+        setCompletionPrefix({});
+        return true;
+    }
+
     if (content.isEmpty()) {
         return false;
     }
@@ -185,8 +196,6 @@ bool AsCompletion::processTrigger(const QString &trigger,
 
     auto len = content.length();
     auto code = content.toUtf8();
-
-    QList<CodeInfoTip> nodes;
 
     if (!trigger.isEmpty() && trigger != *DOT_TRIGGER) {
         clearFunctionTip();
@@ -257,6 +266,7 @@ bool AsCompletion::processTrigger(const QString &trigger,
     auto etoken = tokens.back();
     // it can not be any trigger, so take the last as prefix
     QString prefix = etoken.content;
+
     if (etoken.type == asTC_VALUE || etoken.type == asTC_COMMENT ||
         etoken.type == asTC_UNKNOWN) {
         popup()->hide();
@@ -266,6 +276,15 @@ bool AsCompletion::processTrigger(const QString &trigger,
     if (trigger.isEmpty() && popup()->isVisible()) {
         setCompletionPrefix(prefix);
         return true;
+    }
+
+    if (trigger.isEmpty() && tokens.length() > 1) {
+        auto t = std::next(tokens.rbegin());
+        if (t->content == "#") {
+            setModel(new CodeCompletionModel(parseMarcos(), this));
+            setCompletionPrefix(prefix);
+            return true;
+        }
     }
 
     QList<CodeInfoTip> docNodes = parseDocument();
@@ -413,11 +432,8 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 
     // first preprocess the code
     AsPreprocesser prepc(engine);
+    prepc.setIsCodeCompleteMode(true);
     prepc.setIncludeCallback(&AsCompletion::includeCallBack, this);
-    prepc.setPragmaCallback([](const QByteArray &, AsPreprocesser *,
-                               const QString &,
-                               void *) -> int { return asSUCCESS; },
-                            nullptr);
 
     auto r = prepc.loadSectionFromMemory(QStringLiteral("ASCOMPLETION"),
                                          code.toUtf8());
@@ -428,6 +444,15 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     auto data = prepc.scriptData();
     QList<CodeInfoTip> ret;
 
+    auto marcos = prepc.definedMacros();
+    for (auto pkey = marcos.keyBegin(); pkey != marcos.keyEnd(); pkey++) {
+        CodeInfoTip tip;
+        tip.type = CodeInfoTip::Type::KeyWord;
+        tip.dontAddGlobal = true;
+        tip.name = *pkey;
+        ret.append(tip);
+    }
+
     for (auto &d : data) {
         qsizetype offset = -1;
         if (d.section == QStringLiteral("ASCOMPLETION")) {
@@ -437,6 +462,22 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
     }
 
     return ret;
+}
+
+QList<CodeInfoTip> AsCompletion::parseMarcos() {
+    static QList<CodeInfoTip> marcos;
+    if (marcos.isEmpty()) {
+        QStringList m{"define", "undef", "if",    "else",
+                      "endif",  "ifdef", "ifndef"};
+        for (auto &i : m) {
+            CodeInfoTip tip;
+            tip.name = i;
+            tip.dontAddGlobal = true;
+            tip.type = CodeInfoTip::Type::KeyWord;
+            marcos.append(tip);
+        }
+    }
+    return marcos;
 }
 
 QList<CodeInfoTip> AsCompletion::parseScriptData(qsizetype offset,
