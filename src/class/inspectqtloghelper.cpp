@@ -1,6 +1,8 @@
 #include "inspectqtloghelper.h"
 #include "utilities.h"
 
+#include <QMenu>
+
 #include <iostream>
 
 #define INFOLOG(msg) "<font color=\"green\">" + msg + "</font>"

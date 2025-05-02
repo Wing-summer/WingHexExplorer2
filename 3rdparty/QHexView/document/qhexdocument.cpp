@@ -442,39 +442,26 @@ qsizetype QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
                                         QList<qsizetype> &results,
                                         const std::function<bool()> &pred) {
     results.clear();
-    auto patterns = parseConvertPattern(pattern);
-    if (patterns.isEmpty()) {
-        return 0;
+    if (end < 0) {
+        end = m_buffer->length();
     }
 
-    qsizetype p = begin > 0 ? begin : 0;
-    qsizetype e = end > begin ? end : -1;
-
-    qsizetype offset = 0;
-    for (auto &p : patterns) {
-        if (std::holds_alternative<QByteArray>(p)) {
-            offset += std::get<QByteArray>(p).length();
-        } else if (std::holds_alternative<size_t>(p)) {
-            offset += std::get<size_t>(p);
-        } else if (std::holds_alternative<HexWildItem>(p)) {
-            offset += 1;
-        }
+    if (pattern.isEmpty() || end > m_buffer->length() || begin >= end) {
+        return -1;
     }
-
-    while (pred()) {
-        p = findNextExt(p, pattern);
-        if (p < 0 || (e > 0 && p > e)) {
+    qsizetype pos = begin;
+    qsizetype n = pattern.size();
+    while (pos + n <= end && pred()) {
+        qsizetype f = findNextExt(pos, pattern);
+        if (f < 0 || f + n > end)
+            break;
+        results.append(f);
+        pos = f + 1;
+        if (results.size() >= QHEXVIEW_FIND_LIMIT) {
             break;
         }
-
-        if (results.size() > QHEXVIEW_FIND_LIMIT) {
-            break;
-        }
-        results.append(p);
-        p += offset;
     }
-
-    return offset;
+    return results.isEmpty() ? -1 : results.first();
 }
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {
@@ -538,285 +525,90 @@ bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     return true;
 }
 
-qsizetype QHexDocument::findNextExt(qsizetype begin,
-                                    const QList<FindStep> &patterns) {
-    auto op = [this](qsizetype &pos, const FindStep &step,
-                     qsizetype *begin = nullptr) -> bool {
-        if (pos < 0 || pos >= length()) {
-            return false;
-        }
-        if (std::holds_alternative<QByteArray>(step)) {
-            auto v = std::get<QByteArray>(step);
-            auto len = v.length();
-            auto r = findNext(pos, v);
-            if (r >= 0) {
-                if (begin) {
-                    *begin = r;
-                } else {
-                    if (r != pos) {
-                        pos = -1;
-                        return false;
-                    }
-                }
-                pos = r + len;
-                return true;
-            } else {
-                pos = -1;
+bool QHexDocument::parsePattern(const QString &pattern,
+                                QList<PatternByte> &out) {
+    out.clear();
+    QString p = pattern;
+    p.remove(' ');
+    if (p.size() % 2 != 0) {
+        return false;
+    }
+    for (int i = 0; i < p.size(); i += 2) {
+        QChar hi = p[i], lo = p[i + 1];
+        PatternByte pb;
+        // high nibble
+        if (hi != '?') {
+            int v = hex2Int(hi);
+            if (v < 0) {
                 return false;
             }
-        } else if (std::holds_alternative<HexWildItem>(step)) {
-            auto v = std::get<HexWildItem>(step);
-            auto wc = uchar(at(pos));
-            pos += 1;
-
-            if (v.higher == '?') {
-                if ((wc & 0xf) == v.lower) {
-                    return true;
-                }
-            } else {
-                if ((wc >> 4) == v.higher) {
-                    return true;
-                }
-            }
-        } else if (std::holds_alternative<size_t>(step)) {
-            auto v = std::get<size_t>(step);
-            pos += v;
-            if (v + pos < length()) {
-                return true;
-            }
+            pb.value |= quint8(v << 4);
+            pb.mask |= 0xF0;
         }
-        return false;
-    };
-
-    while (begin < length()) {
-        auto pos = begin;
-
-        auto p = patterns.cbegin();
-        auto r = op(pos, *p, &begin);
-        if (!r) {
-            if (pos < 0) {
-                return -1;
+        // low nibble
+        if (lo != '?') {
+            int v = hex2Int(lo);
+            if (v < 0) {
+                return false;
             }
-            continue;
+            pb.value |= quint8(v);
+            pb.mask |= 0x0F;
         }
-        ++p;
+        out.append(pb);
+    }
+    return true;
+}
 
+int QHexDocument::hex2Int(const QChar &c) {
+    ushort u = c.unicode();
+    if (u >= '0' && u <= '9')
+        return u - '0';
+    else if (u >= 'A' && u <= 'F')
+        return 10 + (u - 'A');
+    else if (u >= 'a' && u <= 'f')
+        return 10 + (u - 'a');
+    else
+        return -1;
+}
+
+qsizetype QHexDocument::findNextExt(qsizetype begin,
+                                    const QList<PatternByte> &patterns) {
+    if (patterns.isEmpty() || begin < 0 ||
+        begin + patterns.size() > m_buffer->length())
+        return -1;
+    qsizetype n = patterns.size();
+    for (qsizetype pos = begin; pos + n <= m_buffer->length(); ++pos) {
         bool ok = true;
-        for (; p != patterns.cend(); ++p) {
-            auto r = op(pos, *p);
-            if (!r) {
+        for (qsizetype i = 0; i < n; ++i) {
+            if (!matchByte(m_buffer->at(pos + i), patterns[i])) {
                 ok = false;
-                if (pos < 0) {
-                    return -1;
-                }
-                begin = pos;
                 break;
             }
         }
-
-        if (ok) {
-            return begin;
-        }
+        if (ok)
+            return pos;
     }
-
     return -1;
 }
 
 qsizetype QHexDocument::findPreviousExt(qsizetype begin,
-                                        const QList<FindStep> &patterns) {
-    auto op = [this](qsizetype &pos, const FindStep &step,
-                     qsizetype *begin = nullptr) -> bool {
-        if (pos < 0 || pos >= length()) {
-            return false;
-        }
-        if (std::holds_alternative<QByteArray>(step)) {
-            auto v = std::get<QByteArray>(step);
-            auto len = v.length();
-            auto r = findPrevious(pos, v);
-            if (r >= 0) {
-                if (begin) {
-                    *begin = r;
-                } else {
-                    if (r + len != pos) {
-                        pos = -1;
-                        return false;
-                    }
-                }
-                pos = r - len;
-                return true;
-            } else {
-                pos = -1;
-                return false;
-            }
-        } else if (std::holds_alternative<HexWildItem>(step)) {
-            auto v = std::get<HexWildItem>(step);
-            auto wc = uchar(at(pos));
-            pos -= 1;
-
-            if (v.higher == '?') {
-                if ((wc & 0xf) == v.lower) {
-                    return true;
-                }
-            } else {
-                if ((wc >> 4) == v.higher) {
-                    return true;
-                }
-            }
-        } else if (std::holds_alternative<size_t>(step)) {
-            auto v = std::get<size_t>(step);
-            pos -= v;
-            if (v - pos >= 0) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    while (begin >= 0) {
-        auto pos = begin;
-
-        auto p = patterns.crbegin();
-        auto r = op(pos, *p, &begin);
-        if (!r) {
-            if (pos < 0) {
-                return -1;
-            }
-            continue;
-        }
-        ++p;
-
+                                        const QList<PatternByte> &patterns) {
+    if (patterns.isEmpty() || begin < 0)
+        return -1;
+    qsizetype n = patterns.size();
+    qsizetype maxStart = qMin(begin, m_buffer->length() - n);
+    for (qsizetype pos = maxStart; pos >= 0; --pos) {
         bool ok = true;
-        for (; p != patterns.crend(); ++p) {
-            auto r = op(pos, *p);
-            if (!r) {
+        for (qsizetype i = 0; i < n; ++i) {
+            if (!matchByte(m_buffer->at(pos + i), patterns[i])) {
                 ok = false;
-                if (pos < 0) {
-                    return -1;
-                }
-                begin = pos;
                 break;
             }
         }
-
-        if (ok) {
-            return begin;
-        }
+        if (ok)
+            return pos;
     }
-
     return -1;
-}
-
-QList<QHexDocument::FindStep>
-QHexDocument::parseConvertPattern(const QString &pattern) {
-    // process hex pattern
-    QList<HexWildItem> words;
-    std::optional<uchar> higher;
-    for (auto pchar = pattern.cbegin(); pchar != pattern.cend(); ++pchar) {
-        if (pchar->isSpace()) {
-            if (higher) {
-                return {};
-            } else {
-                continue;
-            }
-        }
-
-        auto c = pchar->unicode();
-        if (c >= '0' && c <= '9') {
-            if (higher) {
-                HexWildItem item;
-                item.higher = higher.value();
-                item.lower = uchar(c) - '0';
-                words.append(item);
-                higher.reset();
-            } else {
-                higher = uchar(c) - '0';
-            }
-        } else if (c >= 'A' && c <= 'F') {
-            if (higher) {
-                HexWildItem item;
-                item.higher = higher.value();
-                item.lower = uchar(c) - 'A' + 10;
-                words.append(item);
-                higher.reset();
-            } else {
-                higher = uchar(c) - 'A' + 10;
-            }
-        } else if (c >= 'a' && c <= 'f') {
-            if (higher) {
-                HexWildItem item;
-                item.higher = higher.value();
-                item.lower = uchar(c) - 'a' + 10;
-                words.append(item);
-                higher.reset();
-            } else {
-                higher = uchar(c) - 'a' + 10;
-            }
-        } else if (c == '?') {
-            if (higher) {
-                HexWildItem item;
-                item.higher = higher.value();
-                item.lower = '?';
-                words.append(item);
-                higher.reset();
-            } else {
-                higher = '?';
-            }
-        }
-    }
-
-    if (higher) {
-        return {};
-    }
-
-    if (!words.isEmpty()) {
-        QList<FindStep> steps;
-
-        // parsing...
-        QByteArray buffer;
-        size_t len = 0;
-        for (auto pw = words.cbegin(); pw != words.cend(); ++pw) {
-            auto higher = pw->higher;
-            auto lower = pw->lower;
-            if (higher == '?' || lower == '?') {
-                if (higher == '?' && lower == '?') {
-                    if (!buffer.isEmpty()) {
-                        steps.append(buffer);
-                        buffer.clear();
-                    }
-                    len++;
-                } else {
-                    if (len != 0) {
-                        steps.append(len);
-                        len = 0;
-                    }
-                    if (!buffer.isEmpty()) {
-                        steps.append(buffer);
-                        buffer.clear();
-                    }
-                    HexWildItem item;
-                    item.higher = higher;
-                    item.lower = lower;
-                    steps.append(item);
-                }
-            } else {
-                if (len != 0) {
-                    steps.append(len);
-                    len = 0;
-                }
-                buffer.append(char(pw->higher << 4 | pw->lower));
-            }
-        }
-
-        // clean up
-        if (len != 0) {
-            steps.append(len);
-        }
-        if (!buffer.isEmpty()) {
-            steps.append(buffer);
-        }
-        return steps;
-    }
-    return {};
 }
 
 /*======================*/
@@ -1063,21 +855,19 @@ qsizetype QHexDocument::findPrevious(qsizetype begin, const QByteArray &ba) {
 }
 
 qsizetype QHexDocument::findNextExt(qsizetype begin, const QString &pattern) {
-    auto patterns = parseConvertPattern(pattern);
-    if (patterns.isEmpty()) {
+    QList<PatternByte> patterns;
+    if (!parsePattern(pattern, patterns)) {
         return -1;
     }
-
     return findNextExt(begin, patterns);
 }
 
 qsizetype QHexDocument::findPreviousExt(qsizetype begin,
                                         const QString &pattern) {
-    auto patterns = parseConvertPattern(pattern);
-    if (patterns.isEmpty()) {
+    QList<PatternByte> patterns;
+    if (!parsePattern(pattern, patterns)) {
         return -1;
     }
-
     return findPreviousExt(begin, patterns);
 }
 

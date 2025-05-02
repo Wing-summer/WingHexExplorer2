@@ -204,20 +204,28 @@ public slots:
     bool _remove(qsizetype offset, qsizetype len);
 
 private:
-    // AB
-    struct HexWildItem {
-        uchar higher; // A
-        uchar lower;  // B
+    // PatternByte: represents a byte in the pattern, with nibble-level wildcard
+    // support
+    struct PatternByte {
+        quint8 value = 0; // fixed bits
+        quint8 mask =
+            0; // mask: which bits to match (1 = must match, 0 = wildcard)
     };
 
-    // std::variant< find-content, hex with wildcard, all-wildcards >
-    using FindStep = std::variant<QByteArray, HexWildItem, size_t>;
+    // Parse pattern string (e.g., "00 ?? AB C? 88" or "00??ABC?88") into
+    // PatternByte list
+    bool parsePattern(const QString &pattern, QList<PatternByte> &out);
 
-    QList<FindStep> parseConvertPattern(const QString &pattern);
-    qsizetype findNextExt(qsizetype begin, const QList<FindStep> &patterns);
-    qsizetype findPreviousExt(qsizetype begin, const QList<FindStep> &patterns);
+    // Byte match using mask
+    inline bool matchByte(quint8 data, const PatternByte &pb) {
+        return (data & pb.mask) == (pb.value & pb.mask);
+    }
 
-    /*================================*/
+    int hex2Int(const QChar &c);
+
+    qsizetype findNextExt(qsizetype begin, const QList<PatternByte> &patterns);
+    qsizetype findPreviousExt(qsizetype begin,
+                              const QList<PatternByte> &patterns);
 
     /*================================*/
     // modified by wingsummer

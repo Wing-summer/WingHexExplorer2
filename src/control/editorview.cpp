@@ -227,7 +227,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             end = cur->selectionEnd(0).offset();
         } break;
         default: {
-            begin = -1;
+            begin = 0;
             end = -1;
         } break;
         }

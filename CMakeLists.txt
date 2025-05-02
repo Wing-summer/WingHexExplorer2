@@ -21,12 +21,16 @@ message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
+option(WINGHEX_USE_FRAMELESS ON)
 option(BUILD_TEST_PLUGIN OFF)
+option(BUILD_SHARED_MEM_EXT OFF)
+
+add_definitions(-DAS_NO_THREADS)
+
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
 endif()
 
-option(BUILD_SHARED_MEM_EXT OFF)
 if(BUILD_SHARED_MEM_EXT)
     add_subdirectory(ShareMemoryDrv)
 endif()
@@ -36,8 +40,6 @@ add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
 
-option(WINGHEX_USE_FRAMELESS "Use borderless windows to ensure UI uniformity"
-       TRUE)
 
 if(WIN32)
     find_package(QT NAMES Qt6 Qt5 REQUIRED AxContainer)
