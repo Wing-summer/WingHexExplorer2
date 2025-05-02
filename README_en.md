@@ -175,7 +175,7 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 
 ## WIKI
 
-&emsp;&emsp;If you want to learn how to use WingHexEditor and how to develop plug-ins for the software, please go to this link: `Not available yet`. At the same time, you are also welcome to point out errors in the Wiki and contribute high-quality content.
+&emsp;&emsp;If you want to learn how to use WingHexEditor and how to develop plug-ins for the software, please go to [this link](https://wing-summer.github.io/WingHexExplorer2/docs/zh/credits.html) (Chinese only). At the same time, you are also welcome to point out errors in the Wiki and contribute high-quality content.
 
 ## Plugins
 

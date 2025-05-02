@@ -174,7 +174,7 @@
 
 ## WIKI
 
-&emsp;&emsp;如果想学习羽云十六进制编辑器的使用以及如何开发该软件的插件，请到 [该链接](https://github.com/Wing-summer/WingHexExplorer2/wiki/%E7%AE%80%E4%BB%8B) ，同时也欢迎大家指出 Wiki 的错误以及贡献优质内容。
+&emsp;&emsp;如果想学习羽云十六进制编辑器的使用以及如何开发该软件的插件，请到 [该链接](https://wing-summer.github.io/WingHexExplorer2/docs/zh/credits.html) ，同时也欢迎大家指出 Wiki 的错误以及贡献优质内容。
 
 ## 插件库
 
