@@ -115,8 +115,7 @@ For plugin development, the corresponding open source agreements are different. 
 
 1. The source code of this software shall not be used for closed-source commercial purposes unless you open source it completely (as required by the GPL agreement). If you want to commercially close the code of the software warehouse, you must contact me to purchase a commercial license and sign a contract. Please contact me for the price. Please do not disturb me if you are not serious.
 2. This software was written in my spare time. Please forgive me for not being able to fix bugs or provide technical support in time.
-3. I am not a computer major, and there are inevitably bugs in the program I write. Welcome to submit PR.
-4. Whenever you have questions, please read the Wiki in detail.
+3. Whenever you have questions, please read the Wiki in detail.
 
 ### For Packagers
 
@@ -128,7 +127,7 @@ First of all, I would like to express my sincere tanks for your enthusiastic hel
 4. It is best to contain the checksum of the main program in the package, but it is not mandatory.
 5. Regardless of the packaging format, its open source agreement and free attributes must be stated, and it is not allowed to hide and charge for it. Although I don't mind charging, the download server still needs money to maintain, but I hate charging by taking advantage of the information gap.
 6. Regardless of the purpose, if you do not obtain the authorization of me, you may not modify any network links pointed to and the ABOUT contents in the program, such as sponsorship and content about the software.
-7. You may not insert any plug-in containing commercial promotion in the installation program, and strictly abide by the content of the second article.
+7. You may not insert any plug-in containing commercial promotion in the installation program.
 
 ### Issue
 

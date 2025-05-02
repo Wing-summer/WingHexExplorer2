@@ -472,6 +472,10 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
                            ScriptMachine::instance().abortScript(
                                ScriptMachine::Background);
                        });
+    } else {
+        menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                       QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+                       &ScriptingConsole::clear);
     }
 
     menu.exec(event->globalPos());

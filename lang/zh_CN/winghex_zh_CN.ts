@@ -781,17 +781,17 @@
 <context>
     <name>InspectQtLogHelper</name>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="26"/>
+        <location filename="../../src/class/inspectqtloghelper.cpp" line="28"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="32"/>
+        <location filename="../../src/class/inspectqtloghelper.cpp" line="34"/>
         <source>TopMost</source>
         <translation>窗口置顶</translation>
     </message>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="48"/>
+        <location filename="../../src/class/inspectqtloghelper.cpp" line="50"/>
         <source>Inspect</source>
         <translation>监视</translation>
     </message>
@@ -4565,6 +4565,7 @@
     </message>
     <message>
         <location filename="../../src/control/scriptingconsole.cpp" line="466"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="476"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
