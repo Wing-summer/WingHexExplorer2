@@ -210,7 +210,9 @@ set(CONTROL_SRC
     src/control/gotolinewidget.h
     src/control/gotolinewidget.cpp
     src/control/codeeditcontrolwidget.h
-    src/control/codeeditcontrolwidget.cpp)
+    src/control/codeeditcontrolwidget.cpp
+    src/control/scrollablelabel.h
+    src/control/scrollablelabel.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -356,7 +358,8 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptjson.h
     src/scriptaddon/scriptjson.cpp
     src/scriptaddon/scriptfile.cpp
-    src/scriptaddon/scriptfile.h)
+    src/scriptaddon/scriptfile.h
+    src/scriptaddon/aspromise.hpp)
 
 # localization support
 file(

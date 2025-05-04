@@ -160,7 +160,9 @@ protected:
     QString getCallStack(asIScriptContext *context);
 
 private:
-    void print(void *ref, int typeId);
+    static void print(asIScriptGeneric *args);
+    static void println(asIScriptGeneric *args);
+
     QString getInput();
 
     bool isType(asITypeInfo *tinfo, RegisteredType type);

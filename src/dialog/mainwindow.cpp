@@ -131,7 +131,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
 
-        _status = new QLabel(m_status);
+        _status = new ScrollableLabel(m_status);
         m_status->addPermanentWidget(_status);
 
         auto separator = new QFrame(m_status);

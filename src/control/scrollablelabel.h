@@ -15,43 +15,38 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTINGCONSOLEBASE_H
-#define SCRIPTINGCONSOLEBASE_H
+#ifndef SCROLLABLELABEL_H
+#define SCROLLABLELABEL_H
 
-#include "QConsoleWidget/QConsoleWidget.h"
+#include <QLabel>
+#include <QScrollArea>
+#include <QTimer>
 
-class ScriptingConsoleBase : public QConsoleWidget {
+class ScrollableLabel : public QScrollArea {
     Q_OBJECT
-public:
-    explicit ScriptingConsoleBase(QWidget *parent = nullptr);
 
 public:
-    QTextStream &consoleStream();
+    explicit ScrollableLabel(QWidget *parent = nullptr);
 
-    bool lastCommandPrompt() const;
+    void setText(const QString &text);
 
-public slots:
-    void stdOut(const QString &str);
-    void stdErr(const QString &str);
-    void stdWarn(const QString &str);
-    void newLine();
-    void flush();
+    QSize sizeHint() const override;
 
-    void initOutput();
-
-    //! Appends a newline and command prompt at the end of the document.
-    void appendCommandPrompt(bool storeOnly = false);
+    QSize minimumSizeHint() const override;
 
 protected:
-    void dontHighlightLastLine(bool followTheme);
+    void wheelEvent(QWheelEvent *event) override;
 
-    void dontHighlightLastOffset(int offset, bool followTheme = true);
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
-    QTextStream _s;
-    QTextCharFormat _warnCharFmt;
+    QLabel label;
 
-    bool _lastCommandPrompt = false;
+    void setupUI();
+
+    void updateLabelSize();
+
+    bool shouldScroll() const;
 };
 
-#endif // SCRIPTINGCONSOLEBASE_H
+#endif // MARQUEELABEL_H

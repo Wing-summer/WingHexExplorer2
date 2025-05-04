@@ -18,6 +18,7 @@
 #include "aspreprocesser.h"
 #include "class/qascodeparser.h"
 #include "class/scriptmachine.h"
+#include "scriptaddon/aspromise.hpp"
 
 #include <QDir>
 #include <QFileInfo>
@@ -28,7 +29,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(
     ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
       "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
-      "__WING_DICTIONARY__"}));
+      "__WING_DICTIONARY__", "__WING_PRINT_VAR__", "__WING_PRINT_LN__",
+      "__AS_PROMISE__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -655,6 +657,12 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
             pos = skipStatement(modifiedScript, pos);
         }
     }
+
+    // asPromise co_await keyword expansion
+    size_t len = modifiedScript.size();
+    auto data = AsGeneratePromiseEntrypoints(modifiedScript.data(), &len);
+    modifiedScript = QByteArray(data, len);
+    asFreeMem(data);
 
     // Build the actual script
     engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);

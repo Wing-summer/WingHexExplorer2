@@ -36,6 +36,7 @@
 #include "class/qascodeparser.h"
 #include "class/settingmanager.h"
 #include "define.h"
+#include "scriptaddon/aspromise.hpp"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptjson.h"
@@ -142,6 +143,12 @@ bool ScriptMachine::isRunning(ConsoleMode mode) const {
     return _ctx.value(mode) != nullptr;
 }
 
+#define INS_1 "const ?&in = null"
+#define INS_2 INS_1 ", " INS_1
+#define INS_4 INS_2 ", " INS_2
+#define INS_8 INS_4 ", " INS_4
+#define INS_16 INS_8 ", " INS_8
+
 bool ScriptMachine::configureEngine() {
     if (_engine == nullptr) {
         return false;
@@ -211,9 +218,17 @@ bool ScriptMachine::configureEngine() {
         q_check_ptr(_engine->GetTypeInfoByName("color"));
 
     // Register a couple of extra functions for the scripts
-    r = _engine->RegisterGlobalFunction("void print(? &in obj)",
-                                        asMETHOD(ScriptMachine, print),
-                                        asCALL_THISCALL_ASGLOBAL, this);
+    r = _engine->RegisterGlobalFunction(
+        "void print(const ? &in obj, const ? &in = null," INS_16 ")",
+        asFUNCTION(print), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = _engine->RegisterGlobalFunction(
+        "void println(const ? &in obj, const ? &in = null," INS_16 ")",
+        asFUNCTION(println), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
@@ -341,18 +356,56 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
     }
 }
 
-void ScriptMachine::print(void *ref, int typeId) {
+void ScriptMachine::print(asIScriptGeneric *args) {
     auto context = asGetActiveContext();
     if (context) {
         ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
             context->GetUserData(AsUserDataType::UserData_ContextMode)));
 
+        auto &m = ScriptMachine::instance();
+
         MessageInfo info;
         info.mode = mode;
         info.type = MessageType::Print;
-        info.message = _debugger->toString(ref, typeId, _engine);
 
-        outputMessage(info);
+        for (int i = 0; i < args->GetArgCount(); ++i) {
+            void *ref = args->GetArgAddress(i);
+            int typeId = args->GetArgTypeId(i);
+
+            if (typeId) {
+                info.message.append(
+                    m.debugger()->toString(ref, typeId, m.engine()));
+            }
+        }
+
+        m.outputMessage(info);
+    }
+}
+
+void ScriptMachine::println(asIScriptGeneric *args) {
+    auto context = asGetActiveContext();
+    if (context) {
+        ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            context->GetUserData(AsUserDataType::UserData_ContextMode)));
+
+        auto &m = ScriptMachine::instance();
+
+        MessageInfo info;
+        info.mode = mode;
+        info.type = MessageType::Print;
+
+        for (int i = 0; i < args->GetArgCount(); ++i) {
+            void *ref = args->GetArgAddress(i);
+            int typeId = args->GetArgTypeId(i);
+
+            if (typeId) {
+                info.message
+                    .append(m.debugger()->toString(ref, typeId, m.engine()))
+                    .append('\n');
+            }
+        }
+
+        m.outputMessage(info);
     }
 }
 
@@ -1963,6 +2016,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptFile(engine);
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
+    AsDirectPromise::Register(engine);
 }
 
 void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {

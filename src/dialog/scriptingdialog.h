@@ -20,6 +20,7 @@
 
 #include "control/asobjtreewidget.h"
 #include "control/scriptingconsole.h"
+#include "control/scrollablelabel.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
 
@@ -301,7 +302,7 @@ private:
 
     ScriptEditor *_DebugingEditor;
 
-    QLabel *_status = nullptr;
+    ScrollableLabel *_status = nullptr;
 };
 
 #endif // SCRIPTINGDIALOG_H

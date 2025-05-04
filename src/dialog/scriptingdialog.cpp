@@ -38,6 +38,7 @@
 #include <QPainter>
 #include <QPicture>
 #include <QStatusBar>
+#include <QToolTip>
 
 constexpr auto EMPTY_FUNC = [] {};
 
@@ -71,7 +72,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
-    _status = new QLabel(this);
+    _status = new ScrollableLabel(this);
     m_status->addPermanentWidget(_status);
     layout->addWidget(m_status);
     buildUpContent(cw);

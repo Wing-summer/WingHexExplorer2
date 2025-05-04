@@ -225,7 +225,7 @@ void ScriptingConsole::applyScriptSettings() {
     auto dfont = QFont(set.consoleFontFamily());
     dfont.setPointSize(set.consoleFontSize());
 
-    auto thname = set.editorTheme();
+    auto thname = set.consoleTheme();
     if (thname.isEmpty()) {
         switch (SkinManager::instance().currentTheme()) {
         case SkinManager::Theme::Dark:
