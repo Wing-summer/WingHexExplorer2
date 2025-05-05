@@ -1,5 +1,5 @@
 ---
-title: 脚本开发
+title: 脚本开发 - 编辑器介绍
 permalink: /docs/zh/script-ide
 toc: true
 ---
