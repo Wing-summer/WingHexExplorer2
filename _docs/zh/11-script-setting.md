@@ -1,5 +1,5 @@
 ---
-title: 脚本开发
+title: 脚本开发 - 设置相关
 permalink: /docs/zh/script-setting
 toc: true
 ---

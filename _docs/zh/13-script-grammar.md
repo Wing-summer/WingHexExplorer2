@@ -1,5 +1,5 @@
 ---
-title: 脚本开发
+title: 脚本开发 - 基本语法
 permalink: /docs/zh/script-grammar
 toc: true
 ---

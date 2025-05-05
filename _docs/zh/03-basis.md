@@ -1,5 +1,5 @@
 ---
-title: 入门
+title: 入门 - 基础
 permalink: /docs/zh/basis
 toc: true
 ---
