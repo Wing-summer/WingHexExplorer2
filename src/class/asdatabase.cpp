@@ -40,7 +40,8 @@ ASDataBase::ASDataBase(asIScriptEngine *engine) {
         "function",  "interface", "shared",   "this",   "explicit", "override",
         "namespace", "get",       "set",      "super",  "mixin",    "false",
         "true",      "null",      "typename", "return", "typedef",  "funcdef",
-        "from",      "import",    "not",      "xor",    "or",       "is"};
+        "from",      "import",    "not",      "xor",    "or",       "is",
+        "co_await"};
     for (auto &k : kws) {
         CodeInfoTip t;
         t.type = CodeInfoTip::Type::KeyWord;

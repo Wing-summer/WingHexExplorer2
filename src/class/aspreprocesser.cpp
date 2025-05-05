@@ -16,17 +16,25 @@
 */
 
 #include "aspreprocesser.h"
+#include "class/languagemanager.h"
 #include "class/qascodeparser.h"
 #include "class/scriptmachine.h"
+#include "class/skinmanager.h"
 #include "scriptaddon/aspromise.hpp"
 
 #include <QDir>
 #include <QFileInfo>
+#include <QLibraryInfo>
+#include <QMetaEnum>
 #include <QStack>
+#include <QVersionNumber>
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QByteArrayList, DEFAULT_MARCO,
-    ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
+    ({// special marcos
+      "__LINE__", "__SECTION__",
+      // functions
+      "__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
       "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
       "__WING_DICTIONARY__", "__WING_PRINT_VAR__", "__WING_PRINT_LN__",
@@ -44,6 +52,55 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     for (auto &m : *DEFAULT_MARCO) {
         definedWords.insert(m, {});
     }
+
+    static QHash<QString, QByteArray> addInfos;
+    if (addInfos.isEmpty()) {
+        // software infos
+        auto ver = QVersionNumber::fromString(WINGHEX_VERSION);
+        addInfos.insert(QStringLiteral("__WING_VERSION__"),
+                        "\"" WINGHEX_VERSION "\"");
+        addInfos.insert(QStringLiteral("__WING_VERSION_MAJOR__"),
+                        QByteArray::number(ver.majorVersion()));
+        addInfos.insert(QStringLiteral("__WING_VERSION_MINOR__"),
+                        QByteArray::number(ver.minorVersion()));
+        addInfos.insert(QStringLiteral("__WING_VERSION_PATCH__"),
+                        QByteArray::number(ver.microVersion()));
+        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION__"),
+                        "\"" ANGELSCRIPT_VERSION_STRING "\"");
+        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MAJOR__"),
+                        QByteArray::number(ANGELSCRIPT_VERSION / 10000));
+        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MINOR__"),
+                        QByteArray::number((ANGELSCRIPT_VERSION / 100) % 100));
+        addInfos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_PATCH__"),
+                        QByteArray::number(ANGELSCRIPT_VERSION % 100));
+        addInfos.insert(QStringLiteral("__WINGHEX_APPNAME__"),
+                        "\"" APP_NAME "\"");
+        addInfos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), "\"wingsummer\"");
+        ver = QLibraryInfo::version();
+        addInfos.insert(QStringLiteral("__QT_VERSION__"),
+                        ver.toString().toUtf8().prepend('"').append('"'));
+        addInfos.insert(QStringLiteral("__QT_VERSION_MAJOR__"),
+                        QByteArray::number(ver.majorVersion()));
+        addInfos.insert(QStringLiteral("__QT_VERSION_MINOR__"),
+                        QByteArray::number(ver.minorVersion()));
+        addInfos.insert(QStringLiteral("__QT_VERSION_PATCH__"),
+                        QByteArray::number(ver.microVersion()));
+
+        // UI
+        addInfos.insert(QStringLiteral("__LANG__"), LanguageManager::instance()
+                                                        .defaultLocale()
+                                                        .name()
+                                                        .toUtf8()
+                                                        .prepend('"')
+                                                        .append('"'));
+        auto theme = SkinManager::instance().currentTheme();
+        auto te = QMetaEnum::fromType<SkinManager::Theme>();
+        addInfos.insert(
+            QStringLiteral("__THEME__"),
+            QByteArray(te.valueToKey(int(theme))).prepend('"').append('"'));
+    }
+
+    definedWords.insert(addInfos);
 }
 
 AsPreprocesser::~AsPreprocesser() { void ClearAll(); }
@@ -130,6 +187,8 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
     QStack<std::optional<bool>> m_condtionStack;
 
     while (pos < modifiedScript.size()) {
+        auto SECTION = sectionname.toUtf8();
+
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
@@ -164,7 +223,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         }
 
                         auto str = QObject::tr("IfDefNoWord");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -209,7 +268,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 #endif
                     } else {
                         auto str = QObject::tr("IfDefInvalidWord");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -218,7 +277,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                     // ensure end line
                     if (endLinePassFailed(modifiedScript, pos)) {
                         auto str = QObject::tr("UnexceptedToken");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -246,11 +305,15 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                     auto &sm = ScriptMachine::instance();
                     bool ok = false;
-                    auto ret = sm.evaluateDefine(codes, ok);
+                    // if expression should processed the marcos
+                    auto ret = sm.evaluateDefine(
+                        processIfExpression(
+                            codes, getLineCount(modifiedScript, pos), SECTION),
+                        ok);
 
                     if (ret < 0) {
                         auto str = QObject::tr("CalIfFailed");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -314,7 +377,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                 default:
                                     auto str = QObject::tr("UnexceptedToken");
                                     engine->WriteMessage(
-                                        sectionname.toUtf8(),
+                                        SECTION,
                                         getLineCount(modifiedScript, pos), 1,
                                         asMSGTYPE_ERROR, str.toUtf8());
                                     return asERROR;
@@ -329,8 +392,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         if (endLinePassFailed(modifiedScript, pos)) {
                             auto str = QObject::tr("UnexceptedToken");
                             engine->WriteMessage(
-                                sectionname.toUtf8(),
-                                getLineCount(modifiedScript, pos), 1,
+                                SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
@@ -348,7 +410,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                             continue;
                         }
                         auto str = QObject::tr("InvalidDef");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -376,16 +438,14 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                             // Warning
                             auto str = QObject::tr("ReservedMarcoType");
                             engine->WriteMessage(
-                                sectionname.toUtf8(),
-                                getLineCount(modifiedScript, pos), 1,
+                                SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_WARNING, str.toUtf8());
                         } else {
                             if (!definedWords.remove(word)) {
                                 auto str = QObject::tr("MarcoNotFound:") + word;
                                 engine->WriteMessage(
-                                    sectionname.toUtf8(),
-                                    getLineCount(modifiedScript, pos), 1,
-                                    asMSGTYPE_WARNING, str.toUtf8());
+                                    SECTION, getLineCount(modifiedScript, pos),
+                                    1, asMSGTYPE_WARNING, str.toUtf8());
                             }
                         }
 
@@ -393,14 +453,13 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         if (endLinePassFailed(modifiedScript, pos)) {
                             auto str = QObject::tr("UnexceptedToken");
                             engine->WriteMessage(
-                                sectionname.toUtf8(),
-                                getLineCount(modifiedScript, pos), 1,
+                                SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
                     } else {
                         auto str = QObject::tr("InvalidDef");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -413,7 +472,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 }
                 if (m_condtionStack.isEmpty()) {
                     auto str = QObject::tr("NoMatchingIf");
-                    engine->WriteMessage(sectionname.toUtf8(),
+                    engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
                     return asERROR;
@@ -430,14 +489,13 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         if (endLinePassFailed(modifiedScript, pos - 1)) {
                             auto str = QObject::tr("UnexceptedToken");
                             engine->WriteMessage(
-                                sectionname.toUtf8(),
-                                getLineCount(modifiedScript, pos), 1,
+                                SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
                     } else {
                         auto str = QObject::tr("DupElseDef");
-                        engine->WriteMessage(sectionname.toUtf8(),
+                        engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
@@ -454,7 +512,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 // Only remove the #endif if there was a matching #if
                 if (m_condtionStack.isEmpty()) {
                     auto str = QObject::tr("NoMatchingIf");
-                    engine->WriteMessage(sectionname.toUtf8(),
+                    engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
                     return asERROR;
@@ -466,7 +524,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 // ensure end line
                 if (endLinePassFailed(modifiedScript, pos)) {
                     auto str = QObject::tr("UnexceptedToken");
-                    engine->WriteMessage(sectionname.toUtf8(),
+                    engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
                     return asERROR;
@@ -476,13 +534,59 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 #endif
             }
         } else {
-            if (t == asTC_IDENTIFIER) {
-                // define replace
-                auto word = modifiedScript.sliced(pos, len);
-                auto rword = findReplaceResult(word);
-                if (word != rword) {
-                    modifiedScript.replace(pos, len, rword);
-                    len = rword.length();
+            if (!_isCodeCompleteMode) {
+                if (t == asTC_IDENTIFIER) {
+                    // define replace
+                    auto word = modifiedScript.sliced(pos, len);
+                    if (word == PROMISE_AWAIT) {
+                        auto npos = pos + len;
+                        asUINT total = 0;
+                        auto t = engine->ParseToken(
+                            modifiedScript.data() + npos,
+                            modifiedScript.size() - npos, &total);
+                        if (t == asTC_WHITESPACE) {
+                            npos += total;
+                            t = engine->ParseToken(modifiedScript.data() + npos,
+                                                   modifiedScript.size() - npos,
+                                                   &total);
+                            if (t == asTC_IDENTIFIER) {
+                                // ok
+                                auto word = modifiedScript.sliced(npos, total);
+                                auto data = "(" + word +
+                                            ")." PROMISE_YIELD
+                                            "()." PROMISE_UNWRAP "()";
+                                auto oldLen = npos - pos + word.length();
+                                modifiedScript.replace(pos, oldLen, data);
+                                pos = npos;
+                                pos += data.length() - oldLen + word.length();
+                                continue;
+                            }
+                        }
+
+                        auto str = QObject::tr("UnexceptedToken");
+                        engine->WriteMessage(SECTION,
+                                             getLineCount(modifiedScript, pos),
+                                             1, asMSGTYPE_ERROR, str.toUtf8());
+                        return asERROR;
+                    } else if (word == "__LINE__") {
+                        auto data = QByteArray::number(
+                            getLineCount(modifiedScript, pos));
+                        modifiedScript.replace(pos, len, data);
+                        pos += data.length();
+                        continue;
+                    } else if (word == "__SECTION__") {
+                        auto data = SECTION;
+                        data.prepend('"').append('"');
+                        modifiedScript.replace(pos, len, data);
+                        pos += data.length();
+                        continue;
+                    } else {
+                        auto rword = findReplaceResult(word);
+                        if (word != rword) {
+                            modifiedScript.replace(pos, len, rword);
+                            len = rword.length();
+                        }
+                    }
                 }
             }
             pos += len;
@@ -658,12 +762,6 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
         }
     }
 
-    // asPromise co_await keyword expansion
-    size_t len = modifiedScript.size();
-    auto data = AsGeneratePromiseEntrypoints(modifiedScript.data(), &len);
-    modifiedScript = QByteArray(data, len);
-    asFreeMem(data);
-
     // Build the actual script
     engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
 
@@ -720,9 +818,6 @@ int AsPreprocesser::loadScriptSection(const QString &filename) {
                    QFileInfo(filename).absoluteFilePath() + QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
-
-        // TODO: Write the file where this one was included from
-
         return -1;
     }
 
@@ -886,6 +981,37 @@ bool AsPreprocesser::endLinePassFailed(const QByteArray &modifiedScript,
         }
     }
     return endError;
+}
+
+QByteArray
+AsPreprocesser::processIfExpression(const QByteArray &codes, int currentLine,
+                                    const QByteArray &currentSection) {
+    QByteArray ret;
+
+    int pos = 0;
+    auto total = codes.length();
+    while (pos < total) {
+        asUINT len = 0;
+        auto t =
+            engine->ParseToken(codes.data() + pos, codes.size() - pos, &len);
+        auto word = codes.sliced(pos, len);
+        if (t == asTC_IDENTIFIER) {
+            if (word == "__LINE__") {
+                ret.append(currentLine);
+            } else if (word == "__SECTION__") {
+                auto s = currentSection;
+                s.prepend('"').append('"');
+                ret.append(s);
+            } else {
+                ret.append(findReplaceResult(word));
+            }
+        } else {
+            ret.append(word);
+        }
+        pos += len;
+    }
+
+    return ret;
 }
 
 QByteArray AsPreprocesser::findReplaceResult(const QByteArray &v) {

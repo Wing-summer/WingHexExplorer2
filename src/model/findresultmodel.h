@@ -42,7 +42,7 @@ public:
 
     QList<FindResult> &results();
     QList<FindInfo> &findData();
-    QString &lastFindData();
+    QPair<QString, qsizetype> &lastFindData();
 
     void beginUpdate();
     void endUpdate();
@@ -67,7 +67,7 @@ public:
 private:
     QList<FindResult> m_results;
     QList<FindInfo> m_findData;
-    QString m_lastFindData;
+    QPair<QString, qsizetype> m_lastFindData;
 
     QString m_encoding;
 };

@@ -437,17 +437,17 @@ void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
     }
 }
 
-qsizetype QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
-                                        const QString &pattern,
-                                        QList<qsizetype> &results,
-                                        const std::function<bool()> &pred) {
+void QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
+                                   const QString &pattern,
+                                   QList<qsizetype> &results,
+                                   const std::function<bool()> &pred) {
     results.clear();
     if (end < 0) {
         end = m_buffer->length();
     }
 
     if (pattern.isEmpty() || end > m_buffer->length() || begin >= end) {
-        return -1;
+        return;
     }
     qsizetype pos = begin;
     qsizetype n = pattern.size();
@@ -461,7 +461,6 @@ qsizetype QHexDocument::findAllBytesExt(qsizetype begin, qsizetype end,
             break;
         }
     }
-    return results.isEmpty() ? -1 : results.first();
 }
 
 bool QHexDocument::insert(qsizetype offset, uchar b) {

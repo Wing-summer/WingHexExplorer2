@@ -102,3 +102,17 @@ bool QHexTextEdit::isHexMode() const { return m_isHexMode; }
 void QHexTextEdit::setIsHexMode(bool newIsHexMode) {
     m_isHexMode = newIsHexMode;
 }
+
+void QHexTextEdit::setFindText(const QString &text) {
+    mText = text;
+    mText = mText
+                .removeIf([](const QChar &ch) {
+                    return !std::isalnum(ch.unicode()) && ch != '?';
+                })
+                .toUpper();
+    setText(text);
+    auto cur = this->textCursor();
+    cur.movePosition(QTextCursor::End);
+    setTextCursor(cur);
+    mCurserPositionPre = cur.position();
+}

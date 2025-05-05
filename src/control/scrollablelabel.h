@@ -47,6 +47,8 @@ private:
     void updateLabelSize();
 
     bool shouldScroll() const;
+
+    void adjustDisplayLogic();
 };
 
 #endif // MARQUEELABEL_H

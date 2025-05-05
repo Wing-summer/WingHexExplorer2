@@ -102,6 +102,15 @@ void AsCompletion::applyEmptyNsNode(QList<CodeInfoTip> &nodes,
             tip.name = p.nameSpace;
             nodes.append(tip);
         }
+
+        if (p.type == CodeInfoTip::Type::Class) {
+            for (auto &c : p.children) {
+                if (c.type == CodeInfoTip::Type::ClsFunction ||
+                    c.type == CodeInfoTip::Type::Property) {
+                    nodes.append(c);
+                }
+            }
+        }
     }
 
     nodes.append(emptyNsNodes);

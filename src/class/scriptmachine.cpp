@@ -147,7 +147,6 @@ bool ScriptMachine::isRunning(ConsoleMode mode) const {
 #define INS_2 INS_1 ", " INS_1
 #define INS_4 INS_2 ", " INS_2
 #define INS_8 INS_4 ", " INS_4
-#define INS_16 INS_8 ", " INS_8
 
 bool ScriptMachine::configureEngine() {
     if (_engine == nullptr) {
@@ -219,7 +218,7 @@ bool ScriptMachine::configureEngine() {
 
     // Register a couple of extra functions for the scripts
     r = _engine->RegisterGlobalFunction(
-        "void print(const ? &in obj, const ? &in = null," INS_16 ")",
+        "void print(const ? &in obj, const ? &in = null," INS_8 ")",
         asFUNCTION(print), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     if (r < 0) {
@@ -227,7 +226,7 @@ bool ScriptMachine::configureEngine() {
     }
 
     r = _engine->RegisterGlobalFunction(
-        "void println(const ? &in obj, const ? &in = null," INS_16 ")",
+        "void println(const ? &in obj, const ? &in = null," INS_8 ")",
         asFUNCTION(println), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     if (r < 0) {
@@ -680,7 +679,7 @@ int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
         QScopeGuard guard([this, oldMode]() { _curMsgMode = oldMode; });
 
         auto ccode = code;
-        ccode.prepend("bool f(){ return (").append(");}");
+        ccode.prepend("bool f(){ return bool(").append(");}");
         // start to compile
 
         _curMsgMode = DefineEvaluator;

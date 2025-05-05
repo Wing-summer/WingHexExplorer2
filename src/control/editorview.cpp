@@ -242,8 +242,12 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             contextLen = raw.length();
             m_findResults->setEncoding(result.encoding);
             d->findAllBytes(begin, end, raw, results);
+            m_findResults->lastFindData() = qMakePair(data, contextLen);
         } else {
-            contextLen = d->findAllBytesExt(begin, end, result.str, results);
+            // assuming the find pattern is 'xx xx xx xx'
+            contextLen = std::count(data.begin(), data.end(), ' ') + 1;
+            d->findAllBytesExt(begin, end, result.str, results);
+            m_findResults->lastFindData() = qMakePair(data, contextLen);
         }
 
         m_findResults->beginUpdate();
@@ -257,11 +261,8 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             r.col = r.offset % lineWidth;
             m_findResults->results().append(r);
             m_findResults->findData().append(
-                readContextFinding(ritem, contextLen, FIND_CONTEXT_SIZE,
-                                   FIND_MAX_DISPLAY_FIND_CHARS));
+                readContextFinding(ritem, contextLen));
         }
-
-        m_findResults->lastFindData() = data;
 
         m_findResults->endUpdate();
 
@@ -804,34 +805,50 @@ bool EditorView::checkHasUnsavedState() const {
 }
 
 FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
-                                                         qsizetype findSize,
-                                                         int contextSize,
-                                                         int maxDisplayBytes) {
+                                                         qsizetype findSize) {
+    constexpr long DISPLAY_SIZE = 16;
+    constexpr long FIND_CONTENXT_LEN = 10;
+    constexpr long HT_SIZE = (DISPLAY_SIZE - FIND_CONTENXT_LEN) / 2;
+
     auto doc = m_hex->document();
+    if (findSize <= FIND_CONTENXT_LEN) {
+        long leftsize = FIND_CONTENXT_LEN - findSize;
+        auto rs = std::div(leftsize, 2l);
 
-    qsizetype halfSize = maxDisplayBytes / 2;
-    auto header = doc->read(offset, qMin(findSize, halfSize));
-    QByteArray tailer;
-    if (header.size() < findSize) {
-        auto len = qMin(findSize, qsizetype(maxDisplayBytes) - halfSize);
-        tailer = doc->read(offset + findSize - len, len);
+        auto headerlen = HT_SIZE + rs.quot + rs.rem;
+        auto taillen = HT_SIZE + rs.quot;
+
+        auto begin = qMax(offset - headerlen, 0);
+        auto end = qMin(offset + findSize + taillen, doc->length());
+        auto boff = offset - begin;
+
+        auto buffer = doc->read(begin, end - begin + 1);
+
+        FindResultModel::FindInfo info;
+        info.cheader = buffer.left(boff);
+        info.hbuffer = buffer.sliced(boff, findSize);
+        info.tbuffer = {};
+        info.ctailer = buffer.sliced(boff + findSize);
+        return info;
+    } else {
+        constexpr long FIND_CONTENXT_HALF = FIND_CONTENXT_LEN / 2;
+
+        auto hbegin = qMax(offset - HT_SIZE, 0);
+        auto hlen = offset - hbegin + FIND_CONTENXT_HALF;
+        auto header = doc->read(hbegin, hlen);
+        auto toff = offset - hbegin;
+
+        auto tbegin = offset + findSize - FIND_CONTENXT_HALF;
+        auto tlen = HT_SIZE + FIND_CONTENXT_HALF;
+        auto tailer = doc->read(tbegin, tlen);
+
+        FindResultModel::FindInfo info;
+        info.cheader = header.left(toff);
+        info.hbuffer = header.sliced(toff);
+        info.tbuffer = tailer.left(FIND_CONTENXT_HALF);
+        info.ctailer = tailer.sliced(FIND_CONTENXT_HALF);
+        return info;
     }
-
-    auto left = qsizetype(maxDisplayBytes) - header.size() - tailer.size();
-
-    // append to contextSize
-    contextSize += (left / 2);
-
-    auto cheader = doc->read(offset - contextSize, contextSize);
-    auto ctailer = doc->read(offset + findSize, contextSize);
-
-    FindResultModel::FindInfo info;
-    info.cheader = cheader;
-    info.hbuffer = header;
-    info.tbuffer = tailer;
-    info.ctailer = ctailer;
-
-    return info;
 }
 
 void EditorView::applyFunctionTables(WingEditorViewWidget *view,

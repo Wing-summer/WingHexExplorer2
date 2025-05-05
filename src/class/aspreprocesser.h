@@ -138,6 +138,9 @@ protected:
 
     bool endLinePassFailed(const QByteArray &modifiedScript, int pos);
 
+    QByteArray processIfExpression(const QByteArray &codes, int currentLine,
+                                   const QByteArray &currentSection);
+
     QByteArray findReplaceResult(const QByteArray &v);
 
     asIScriptEngine *engine;

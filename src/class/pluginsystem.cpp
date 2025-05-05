@@ -3126,8 +3126,8 @@ void PluginSystem::applyFunctionTables(IWingPluginBase *plg,
     plg->setProperty("__CALL_POINTER__", quintptr(this));
 }
 
-QString PluginSystem::type2AngelScriptString(IWingPlugin::MetaType type,
-                                             bool isArg, bool noModifier) {
+QString PluginSystem::type2AngelScriptString(uint type, bool isArg,
+                                             bool noModifier) {
     auto isArray = !!(type & WingHex::IWingPlugin::Array);
     auto isList = !!(type & WingHex::IWingPlugin::List);
     auto isContainer = isArray || isList;

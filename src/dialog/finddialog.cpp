@@ -89,7 +89,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
         m_findMode->setCurrentIndex(0);
     }
 
-    m_lineeditor->setText(info.str);
+    m_lineeditor->setFindText(info.str);
 
     auto regionw = new QWidget(this);
     auto regionLayout = new QHBoxLayout(regionw);

@@ -225,9 +225,7 @@ private:
     bool checkHasUnsavedState() const;
 
     FindResultModel::FindInfo readContextFinding(qsizetype offset,
-                                                 qsizetype findSize,
-                                                 int contextSize,
-                                                 int maxDisplayBytes);
+                                                 qsizetype findSize);
 
     void applyFunctionTables(WingHex::WingEditorViewWidget *view,
                              const CallTable &fns);

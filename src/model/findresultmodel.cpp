@@ -135,7 +135,9 @@ QList<FindResultModel::FindInfo> &FindResultModel::findData() {
     return m_findData;
 }
 
-QString &FindResultModel::lastFindData() { return m_lastFindData; }
+QPair<QString, qsizetype> &FindResultModel::lastFindData() {
+    return m_lastFindData;
+}
 
 void FindResultModel::beginUpdate() { this->beginResetModel(); }
 

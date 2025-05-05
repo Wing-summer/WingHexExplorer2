@@ -52,9 +52,6 @@
 
 #define PROEXT ".wingpro"
 
-Q_DECL_UNUSED constexpr auto FIND_CONTEXT_SIZE = 3;
-Q_DECL_UNUSED constexpr auto FIND_MAX_DISPLAY_FIND_CHARS = 8;
-
 Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
     return ":/com.wingsummer.winghex/images/" + name + ".png";
 }

@@ -28,6 +28,10 @@ public:
     bool isHexMode() const;
     void setIsHexMode(bool newIsHexMode);
 
+public:
+    // must be 'xx xx xx' style
+    void setFindText(const QString &text);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

@@ -95,7 +95,7 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
         info.fn = std::bind(
             QOverload<const QVariantList &>::of(&WingCStruct::structTypes),
             this, std::placeholders::_1);
-        info.ret = MetaType(MetaType::String | MetaType::Array);
+        info.ret = MetaType::String | MetaType::Array;
 
         _scriptInfo.insert(QStringLiteral("structTypes"), info);
     }
@@ -125,7 +125,7 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
         info.fn = std::bind(
             QOverload<const QVariantList &>::of(&WingCStruct::constDefines),
             this, std::placeholders::_1);
-        info.ret = MetaType(MetaType::String | MetaType::Array);
+        info.ret = MetaType::String | MetaType::Array;
 
         _scriptInfo.insert(QStringLiteral("constDefines"), info);
     }
@@ -166,7 +166,7 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
         info.fn = std::bind(
             QOverload<const QVariantList &>::of(&WingCStruct::readRaw), this,
             std::placeholders::_1);
-        info.ret = MetaType(MetaType::Byte | MetaType::Array);
+        info.ret = MetaType::Byte | MetaType::Array;
 
         info.params.append(
             qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
@@ -542,7 +542,6 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
         switch (type) {
         case QMetaType::Bool:
         case QMetaType::UChar:
-        case QMetaType::Char:
         case QMetaType::Int:
         case QMetaType::Long:
         case QMetaType::LongLong:
@@ -564,6 +563,13 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
         case QMetaType::Float:
             dic->Set(p->first, var.toDouble());
             break;
+        case QMetaType::Char: {
+            auto v = var.value<char>();
+            auto ch = new QChar(v);
+            auto id = engine->GetTypeIdByDecl("char");
+            dic->Set(p->first, ch, id);
+            break;
+        }
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         case QMetaType::Char16: {
             auto v = var.value<char16_t>();

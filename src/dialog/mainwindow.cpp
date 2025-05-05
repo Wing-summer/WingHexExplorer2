@@ -714,9 +714,16 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
 
                 cursor->moveTo(fm->resultAt(index.row()).offset);
                 if (cursor->selectionCount() <= 1 && index.column() >= 3) {
-                    cursor->select(fm->lastFindData().length());
+                    cursor->select(fm->lastFindData().second);
                 }
             });
+
+    auto header = m_findresult->horizontalHeader();
+    auto font = QFontMetrics(m_findresult->font());
+    auto len = font.horizontalAdvance('F') * (15 + 16 * 2);
+    if (header->sectionSize(3) < len) {
+        header->resizeSection(3, len);
+    }
 
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
                               tr("FindResult") + QStringLiteral(" (ASCII)"),
@@ -2127,7 +2134,6 @@ void MainWindow::on_findfile() {
         ExecAsync<EditorView::FindError>(
             [this, r]() -> EditorView::FindError {
                 m_isfinding = true;
-
                 return currentEditor()->find(r);
             },
             [this](EditorView::FindError err) {
@@ -2151,6 +2157,14 @@ void MainWindow::on_findfile() {
                 if (result) {
                     m_findEncoding.value(result->encoding())->setChecked(true);
                 }
+
+                auto header = m_findresult->horizontalHeader();
+                auto font = QFontMetrics(m_findresult->font());
+                auto len = font.horizontalAdvance('F') * (15 + 16 * 2);
+                if (header->sectionSize(3) < len) {
+                    header->resizeSection(3, len);
+                }
+
                 m_find->raise();
 
                 m_isfinding = false;
@@ -2595,7 +2609,7 @@ void MainWindow::on_exportfindresult() {
 
         auto d = findresitem->lastFindData();
 
-        fobj.insert(QStringLiteral("find"), d);
+        fobj.insert(QStringLiteral("find"), d.first);
         QJsonArray arr;
         for (int i = 0; i < c; i++) {
             auto data = findresitem->resultAt(i);

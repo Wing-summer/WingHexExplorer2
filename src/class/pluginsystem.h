@@ -175,8 +175,8 @@ public:
 
     static QString getPUID(IWingPluginBase *p);
 
-    static QString type2AngelScriptString(IWingPlugin::MetaType type,
-                                          bool isArg, bool noModifier = false);
+    static QString type2AngelScriptString(uint type, bool isArg,
+                                          bool noModifier = false);
 
 private:
     void loadExtPlugin();

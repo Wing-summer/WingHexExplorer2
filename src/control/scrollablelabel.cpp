@@ -52,6 +52,7 @@ void ScrollableLabel::wheelEvent(QWheelEvent *event) {
 void ScrollableLabel::resizeEvent(QResizeEvent *event) {
     QScrollArea::resizeEvent(event);
     updateLabelSize();
+    adjustDisplayLogic();
 }
 
 void ScrollableLabel::setupUI() {
@@ -60,7 +61,7 @@ void ScrollableLabel::setupUI() {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    label.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    label.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     label.setWordWrap(false);
     label.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
@@ -81,4 +82,19 @@ void ScrollableLabel::updateLabelSize() {
 
 bool ScrollableLabel::shouldScroll() const {
     return label.width() > viewport()->width();
+}
+
+void ScrollableLabel::adjustDisplayLogic() {
+    QFontMetrics fm(label.font());
+    const int contentWidth = fm.horizontalAdvance(label.text());
+    const int containerWidth = width();
+
+    if (contentWidth > containerWidth) {
+        label.setFixedSize(contentWidth, fm.height());
+        label.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        horizontalScrollBar()->setValue(0);
+    } else {
+        label.setFixedSize(containerWidth, fm.height());
+        label.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    }
 }

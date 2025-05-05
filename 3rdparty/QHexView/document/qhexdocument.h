@@ -107,7 +107,7 @@ public:
         QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
 
-    qsizetype findAllBytesExt(
+    void findAllBytesExt(
         qsizetype begin, qsizetype end, const QString &pattern,
         QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
