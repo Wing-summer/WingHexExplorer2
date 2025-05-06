@@ -32,13 +32,13 @@
 Q_GLOBAL_STATIC_WITH_ARGS(
     QByteArrayList, DEFAULT_MARCO,
     ({// special marcos
-      "__LINE__", "__SECTION__",
+      "__LINE__", "__SECTION__", "__SECTION_BASE__",
       // functions
       "__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
       "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
       "__WING_DICTIONARY__", "__WING_PRINT_VAR__", "__WING_PRINT_LN__",
-      "__AS_PROMISE__"}));
+      "__AS_PROMISE__", "__WING_CLIPBOARD__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -268,15 +268,6 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 #endif
                     } else {
                         auto str = QObject::tr("IfDefInvalidWord");
-                        engine->WriteMessage(SECTION,
-                                             getLineCount(modifiedScript, pos),
-                                             1, asMSGTYPE_ERROR, str.toUtf8());
-                        return asERROR;
-                    }
-
-                    // ensure end line
-                    if (endLinePassFailed(modifiedScript, pos)) {
-                        auto str = QObject::tr("UnexceptedToken");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
@@ -580,6 +571,12 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         modifiedScript.replace(pos, len, data);
                         pos += data.length();
                         continue;
+                    } else if (word == "__SECTION_BASE__") {
+                        auto data = QFileInfo(SECTION).baseName().toUtf8();
+                        data.prepend('"').append('"');
+                        modifiedScript.replace(pos, len, data);
+                        pos += data.length();
+                        continue;
                     } else {
                         auto rword = findReplaceResult(word);
                         if (word != rword) {
@@ -693,17 +690,16 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                             auto p = includefile.indexOf('\n');
                             auto ws = includefile.indexOf(' ');
                             if (!includefile.isEmpty() && p >= 0 && ws >= 0) {
-                                // TODO: Show the correct line number for
-                                // the error
                                 auto str =
                                     QObject::tr(
                                         "Invalid file name for #include; "
                                         "it contains a line-break: ") +
                                     QStringLiteral("'") + includefile.left(p) +
                                     QStringLiteral("'");
-                                engine->WriteMessage(sectionname.toUtf8(), 0, 0,
-                                                     asMSGTYPE_ERROR,
-                                                     str.toUtf8());
+                                engine->WriteMessage(
+                                    sectionname.toUtf8(),
+                                    getLineCount(modifiedScript, pos), 1,
+                                    asMSGTYPE_ERROR, str.toUtf8());
                             } else {
                                 // Store it for later processing
                                 includes.append({includefile, false});
@@ -744,9 +740,10 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                                      sectionname, pragmaParam)
                                     : -1;
                         if (r < 0) {
-                            // TODO: Report the correct line number
                             engine->WriteMessage(
-                                sectionname.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+                                sectionname.toUtf8(),
+                                getLineCount(modifiedScript, pos), 1,
+                                asMSGTYPE_ERROR,
                                 QObject::tr("Invalid #pragma directive")
                                     .toUtf8());
                             return r;

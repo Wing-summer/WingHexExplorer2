@@ -43,6 +43,8 @@
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
 
+#include <QClipboard>
+#include <QMimeData>
 #include <QProcess>
 #include <QScopeGuard>
 
@@ -152,8 +154,6 @@ bool ScriptMachine::configureEngine() {
     if (_engine == nullptr) {
         return false;
     }
-
-    _engine->SetDefaultAccessMask(0x1);
 
     // we need utf8, the default is what we want
     _engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
@@ -1998,6 +1998,8 @@ void ScriptMachine::translation() {
 }
 
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
+    // all modules can access
+    engine->SetDefaultAccessMask(0x3);
     RegisterScriptArray(engine, true);
     RegisterQString(engine);
     RegisterScriptRegex(engine);
@@ -2012,9 +2014,12 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptHandle(engine);
     RegisterColor(engine);
     RegisterQJson(engine);
+
+    engine->SetDefaultAccessMask(0x1);
     RegisterScriptFile(engine);
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
+    registerEngineClipboard(engine);
     AsDirectPromise::Register(engine);
 }
 
@@ -2051,6 +2056,41 @@ void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
     }
 }
 
+void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("clipboard");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // The string type must be available
+    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+
+    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
+        r = engine->RegisterGlobalFunction(
+            "void setText(const string &in text)", asFUNCTION(clip_setText),
+            asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
+            "void setBinary(const uint8[]@ data)", asFUNCTION(clip_setBinary),
+            asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+    } else {
+        r = engine->RegisterGlobalFunction(
+            "void setText(const string &in text)", WRAP_FN(clip_setText),
+            asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
+            "void setBinary(const uint8[]@ data)", WRAP_FN(clip_setBinary),
+            asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+    }
+
+    engine->SetDefaultNamespace("");
+}
+
 void ScriptMachine::registerCallBack(ConsoleMode mode,
                                      const RegCallBacks &callbacks) {
     _regcalls.insert(mode, callbacks);
@@ -2077,6 +2117,27 @@ void ScriptMachine::scriptAssert_X(bool b, const QString &msg) {
             ctx->SetException(m.toUtf8(), false);
         }
     }
+}
+
+void ScriptMachine::clip_setText(const QString &text) {
+    qApp->clipboard()->setText(text);
+}
+
+void ScriptMachine::clip_setBinary(const CScriptArray &array) {
+    QByteArray buffer;
+    buffer.reserve(array.GetSize());
+    array.AddRef();
+    for (asUINT i = 0; i < array.GetSize(); ++i) {
+        auto item = reinterpret_cast<const asBYTE *>(array.At(i));
+        buffer.append(*item);
+    }
+    array.Release();
+
+    auto c = qApp->clipboard();
+    auto mime = new QMimeData;
+    mime->setData(QStringLiteral("application/octet-stream"),
+                  buffer); // don't use setText()
+    c->setMimeData(mime);
 }
 
 void ScriptMachine::scriptThrow(const QString &msg) {

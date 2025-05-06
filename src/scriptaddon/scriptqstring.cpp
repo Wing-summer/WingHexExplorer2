@@ -148,6 +148,10 @@ static void ConstructString(QString *thisPointer) {
     new (thisPointer) QString();
 }
 
+static void ConstructStringChar(const QChar &ch, QString *thisPointer) {
+    new (thisPointer) QString(ch);
+}
+
 static void CopyConstructString(const QString &other, QString *thisPointer) {
     new (thisPointer) QString(other);
 }
@@ -230,6 +234,16 @@ static QString &AddAssignFloatToString(float f, QString &dest) {
     return dest;
 }
 
+static QString &AssignCharToString(const QChar &ch, QString &dest) {
+    dest = ch;
+    return dest;
+}
+
+static QString &AddAssignCharToString(const QChar &ch, QString &dest) {
+    dest += ch;
+    return dest;
+}
+
 static QString &AssignBoolToString(bool b, QString &dest) {
     dest = b ? QStringLiteral("true") : QStringLiteral("false");
     return dest;
@@ -256,6 +270,14 @@ static QString AddFloatString(float f, const QString &str) {
     return QString::number(f) + str;
 }
 
+static QString AddStringChar(const QString &str, const QChar &ch) {
+    return str + ch;
+}
+
+static QString AddCharString(const QChar &ch, const QString &str) {
+    return ch + str;
+}
+
 static QString AddStringBool(const QString &str, bool b) {
     return str + (b ? QStringLiteral("true") : QStringLiteral("false"));
 }
@@ -265,7 +287,7 @@ static QString AddBoolString(bool b, const QString &str) {
 }
 #endif
 
-static char *StringCharAt(unsigned int i, QString &str) {
+static QChar *StringCharAt(unsigned int i, QString &str) {
     if (asDWORD(i) >= asDWORD(str.size())) {
         // Set a script exception
         asIScriptContext *ctx = asGetActiveContext();
@@ -275,7 +297,7 @@ static char *StringCharAt(unsigned int i, QString &str) {
         return nullptr;
     }
 
-    return reinterpret_cast<char *>(str.data() + i);
+    return str.data() + i;
 }
 
 // AngelScript signature:
@@ -595,6 +617,11 @@ void RegisterQString_Native(asIScriptEngine *engine) {
                                         asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour(
+        "string", asBEHAVE_CONSTRUCT, "void f(const char &in)",
+        asFUNCTION(ConstructStringChar), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
         "string", "string &opAssign(const string &in)",
         asMETHODPR(QString, operator=, (const QString &), QString &),
@@ -717,8 +744,29 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
+    r = engine->RegisterObjectMethod(
+        "string", "string &opAssign(const char &in)",
+        asFUNCTION(AssignCharToString), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "string &opAddAssign(const char &in)",
+        asFUNCTION(AddAssignCharToString), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "string opAdd(const char &in) const",
+        asFUNCTION(AddStringChar), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "string opAdd_r(const char &in) const",
+        asFUNCTION(AddCharString), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
     r = engine->RegisterObjectMethod("string", "string &opAssign(float)",
-                                     asFUNCTION(AssignFloatToString),
+                                     asFUNCTION(AssignCharToString),
                                      asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);

@@ -28,6 +28,8 @@
 #include <QObject>
 #include <QQueue>
 
+class CScriptArray;
+
 class ScriptMachine : public QObject {
     Q_OBJECT
 private:
@@ -118,6 +120,7 @@ public:
 
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
+    static void registerEngineClipboard(asIScriptEngine *engine);
 
     void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
 
@@ -131,6 +134,9 @@ public:
 public:
     static void scriptAssert(bool b);
     static void scriptAssert_X(bool b, const QString &msg);
+
+    static void clip_setText(const QString &text);
+    static void clip_setBinary(const CScriptArray &array);
 
     static void scriptThrow(const QString &msg);
 

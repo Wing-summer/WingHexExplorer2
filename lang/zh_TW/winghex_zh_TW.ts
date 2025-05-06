@@ -2678,13 +2678,13 @@
         <translation>關閉標籤</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="816"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="813"/>
         <source>Failed to open script file </source>
         <translation>打開腳本檔失敗</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="651"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="699"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="648"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="694"/>
         <source>Invalid file name for #include; it contains a line-break: </source>
         <translation>#include 的檔案名無效；它包含換行符：</translation>
     </message>
@@ -2699,55 +2699,54 @@
         <translation>ifdef 非法宏</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="279"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="378"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="393"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="454"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="490"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="526"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="566"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="369"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="384"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="445"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="481"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="517"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="557"/>
         <source>UnexceptedToken</source>
         <translation>非法標識</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="315"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="306"/>
         <source>CalIfFailed</source>
         <translation>宏條件判斷發生錯誤</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="412"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="461"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="403"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="452"/>
         <source>InvalidDef</source>
         <translation>無效定義</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="439"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="430"/>
         <source>ReservedMarcoType</source>
         <translation>被保留的宏樣式</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="445"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="436"/>
         <source>MarcoNotFound:</source>
         <translation>宏未找到：</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="474"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="514"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="465"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="505"/>
         <source>NoMatchingIf</source>
         <translation>未匹配的宏條件</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="497"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="488"/>
         <source>DupElseDef</source>
         <translation>重複的另外條件宏</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="718"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="714"/>
         <source>Invalid file name for #include; it contains a line-break or unpaired symbol</source>
         <translation>#include 的檔案名無效；它包含換行符或不成對的符號</translation>
     </message>
     <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="750"/>
+        <location filename="../../src/class/aspreprocesser.cpp" line="747"/>
         <source>Invalid #pragma directive</source>
         <translation>#pragma 指令無效</translation>
     </message>
@@ -2849,7 +2848,7 @@
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="473"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2107"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2168"/>
         <source>Code must be exec in the main thread</source>
         <translation>腳本代碼必須在主線程執行</translation>
     </message>
@@ -2860,8 +2859,8 @@
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="528"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2156"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2272"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2217"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2333"/>
         <source>Script failed to build</source>
         <translation>腳本編譯失敗</translation>
     </message>
@@ -2882,19 +2881,19 @@
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="615"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2206"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2267"/>
         <source>The script failed with an exception</source>
         <translation>異常被拋出，腳本執行失敗</translation>
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="624"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2215"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2276"/>
         <source>The script was aborted</source>
         <translation>腳本被終止</translation>
     </message>
     <message>
         <location filename="../../src/class/scriptmachine.cpp" line="632"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2223"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2284"/>
         <source>The script terminated unexpectedly</source>
         <translation>腳本異常退出</translation>
     </message>
@@ -4405,18 +4404,18 @@
         <translation>嵌套調用過多</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="2063"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="2075"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2103"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2115"/>
         <source>Assert failed</source>
         <translation>斷言失敗</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="2254"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2315"/>
         <source>BadDecl:</source>
         <translation>錯誤的聲明：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="2263"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="2324"/>
         <source>GlobalBadDecl</source>
         <translation>錯誤的全局聲明</translation>
     </message>
