@@ -38,10 +38,9 @@ private:
 public:
     // we have three console modes
     enum ConsoleMode {
-        Interactive,    // in a shell
-        Scripting,      // in scripting dialog
-        Background,     // run codes from other way
-        DefineEvaluator // define result calculator
+        Interactive = 1, // in a shell
+        Scripting,       // in scripting dialog
+        Background,      // run codes from other way
     };
 
 public:
@@ -137,6 +136,8 @@ public:
 
     static void clip_setText(const QString &text);
     static void clip_setBinary(const CScriptArray &array);
+    static QString clip_getText();
+    static CScriptArray *clip_getBinary();
 
     static void scriptThrow(const QString &msg);
 

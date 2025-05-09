@@ -801,6 +801,21 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
                                  message + QStringLiteral("</font></b>"));
             });
 
+    connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
+        editor->editor()->setContentModified(true);
+        if (currentEditor() == editor) {
+            activateWindow();
+            raise();
+            auto ret = WingMessageBox::question(this, tr("Reload"),
+                                                tr("ReloadNeededYesOrNo"));
+            if (ret == QMessageBox::Yes) {
+                editor->reload();
+            }
+        } else {
+            editor->setProperty("__RELOAD__", true);
+        }
+    });
+
     m_views.append(editor);
 
     auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
@@ -875,6 +890,19 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
 
     m_curEditor = cur;
     updateCursorPosition();
+
+    if (cur) {
+        auto needReload = cur->property("__RELOAD__").toBool();
+        if (needReload) {
+            auto ret = WingMessageBox::question(this, tr("Reload"),
+                                                tr("ReloadNeededYesOrNo"));
+            if (ret == QMessageBox::Yes) {
+                cur->reload();
+            }
+
+            cur->setProperty("__RELOAD__", false);
+        }
+    }
 }
 
 void ScriptingDialog::updateRunDebugMode(bool disable) {
@@ -1371,7 +1399,8 @@ void ScriptingDialog::on_runscript() {
         PluginSystem::instance().scriptPragmaBegin();
 
         editor->setReadOnly(true);
-        // ScriptMachine::instance().executeScript(editor->fileName());
+        ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
+                                                editor->fileName());
         editor->setReadOnly(false);
         updateRunDebugMode();
     }

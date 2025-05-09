@@ -65,6 +65,21 @@ private:
                                void *userParam);
 
 private:
+    struct CompleteDB {
+        QList<CodeInfoTip> data;
+        QByteArray md5;
+        uint time = 0;
+    };
+
+    QHash<QString, CompleteDB> comdb;
+
+    void pushCompleteDBData(const QString &fileName,
+                            const QList<CodeInfoTip> &data);
+    std::optional<CompleteDB> getCompleteDBData(const QString &fileName);
+    void remoteCompleteDBData(const QString &fileName);
+    void clearCompleteDBUnused();
+
+private:
     ASDataBase parser;
 };
 

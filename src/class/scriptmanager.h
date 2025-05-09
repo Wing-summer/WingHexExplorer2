@@ -24,7 +24,6 @@
 #include <QObject>
 
 #include "QWingRibbon/ribbonbuttongroup.h"
-#include "control/scriptingconsole.h"
 #include "utilities.h"
 
 class ScriptManager : public QObject {
@@ -38,12 +37,8 @@ public:
         QString license;
         QString homepage;
         QString comment;
+        bool isContextMenu = false;
         bool isSys; // a flag
-    };
-
-    struct ScriptActionMaps {
-        QList<QToolButton *> sysList;
-        QList<QToolButton *> usrList;
     };
 
 public:
@@ -68,7 +63,8 @@ public:
     ScriptDirMeta usrDirMeta(const QString &cat) const;
     ScriptDirMeta sysDirMeta(const QString &cat) const;
 
-    static ScriptActionMaps buildUpRibbonScriptRunner(RibbonButtonGroup *group);
+    static QList<QMenu *> buildUpScriptRunnerContext(RibbonButtonGroup *group,
+                                                     QWidget *parent);
 
 private:
     static QToolButton *addPannelAction(RibbonButtonGroup *pannel,
@@ -118,6 +114,8 @@ private:
     QStringList getScriptFileNames(const QDir &dir) const;
 
     QString readJsonObjString(const QJsonObject &jobj, const QString &key);
+
+    bool readJsonObjBool(const QJsonObject &jobj, const QString &key);
 
     static QMenu *buildUpScriptDirMenu(QWidget *parent,
                                        const QStringList &files, bool isSys);

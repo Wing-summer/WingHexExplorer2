@@ -1188,13 +1188,15 @@ QByteArray WingAngelAPI::cArray2ByteArray(const CScriptArray &array, int byteID,
         return {};
     }
 
+    auto len = array.GetSize();
+
     QByteArray buffer;
-    buffer.reserve(array.GetSize());
+    buffer.resize(len);
     array.AddRef();
-    for (asUINT i = 0; i < array.GetSize(); ++i) {
-        auto item = reinterpret_cast<const asBYTE *>(array.At(i));
-        buffer.append(*item);
-    }
+
+    std::memcpy(buffer.data(), const_cast<CScriptArray &>(array).GetBuffer(),
+                len);
+
     array.Release();
     return buffer;
 }
@@ -1993,9 +1995,7 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
     if (info) {
         auto len = content.length();
         auto arr = CScriptArray::Create(info, len);
-        for (decltype(len) i = 0; i < len; ++i) {
-            arr->SetValue(i, content.at(i));
-        }
+        std::memcpy(arr->GetBuffer(), content.data(), len);
         return arr;
     }
     return nullptr;
@@ -2003,6 +2003,10 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
 
 void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
                                  MetaType type, const QList<void *> &content) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    static_assert(std::is_same_v<QList<int>, QVector<int>>);
+    return vector2AsArray(sender, type, content);
+#else
     Q_UNUSED(sender);
     auto typeStr = PluginSystem::type2AngelScriptString(
         MetaType(type | MetaType::Array), false, true);
@@ -2021,6 +2025,7 @@ void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
         return arr;
     }
     return nullptr;
+#endif
 }
 
 void WingAngelAPI::deleteAsArray(const WingHex::SenderInfo &sender,

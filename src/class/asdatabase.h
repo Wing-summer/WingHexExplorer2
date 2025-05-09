@@ -43,6 +43,7 @@ private:
 public:
     const QHash<QString, QList<CodeInfoTip>> &headerNodes() const;
     const QHash<QString, QList<CodeInfoTip>> &enumsNodes() const;
+    const QHash<QString, QList<CodeInfoTip>> &classNodes() const;
 
     const QList<CodeInfoTip> &keywordNodes() const;
 
@@ -57,6 +58,7 @@ private:
     // <namespace, content>
     QHash<QString, QList<CodeInfoTip>> _headerNodes;
     QHash<QString, QList<CodeInfoTip>> _enumsNodes;
+    QHash<QString, QList<CodeInfoTip>> _classNodes;
     QList<CodeInfoTip> _keywordNode;
 };
 

@@ -1450,6 +1450,7 @@ void QAsCodeParser::parseNamespace() {
 QList<QAsCodeParser::Symbol>
 QAsCodeParser::parseGlobalVarDecls(const QByteArrayList &ns,
                                    const QByteArray &code) {
+    reset();
     _code = code;
     return parseDeclaration(-1, ns, false, true);
 }

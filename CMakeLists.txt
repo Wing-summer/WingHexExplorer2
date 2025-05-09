@@ -67,7 +67,7 @@ if(WINGHEX_USE_FRAMELESS)
     option(QWINDOWKIT_BUILD_STATIC "Build static libraries" TRUE)
     option(QWINDOWKIT_INSTALL "Install library" OFF)
     add_subdirectory(3rdparty/qwindowkit)
-    add_definitions(-DWINGHEX_USE_FRAMELESS)
+    add_compile_definitions(WINGHEX_USE_FRAMELESS)
 endif()
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
@@ -194,8 +194,6 @@ set(CONTROL_SRC
     src/control/qlistviewext.cpp
     src/control/asobjtreewidget.h
     src/control/asobjtreewidget.cpp
-    src/control/qtlonglongspinbox.cpp
-    src/control/qtlonglongspinbox.h
     src/control/dockwidgettab.h
     src/control/dockwidgettab.cpp
     src/control/qhextextedit.h

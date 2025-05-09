@@ -524,7 +524,7 @@ private:
 
     RibbonButtonGroup *m_scriptDBGroup = nullptr;
     RibbonButtonGroup *m_pluginSettingsGroup = nullptr;
-    ScriptManager::ScriptActionMaps _scriptMaps;
+    QList<QMenu *> _scriptContexts;
 
     //===================================================
 

@@ -83,39 +83,15 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     if (info.isStringFind) {
         if (!info.encoding.isEmpty()) {
+            m_lineeditor->setIsHexMode(false);
             m_findMode->setCurrentText(info.encoding);
         }
     } else {
+        m_lineeditor->setIsHexMode(true);
         m_findMode->setCurrentIndex(0);
     }
 
     m_lineeditor->setFindText(info.str);
-
-    auto regionw = new QWidget(this);
-    auto regionLayout = new QHBoxLayout(regionw);
-
-    regionLayout->addWidget(new QLabel(tr("Region:"), regionw));
-
-    m_regionStart = new QtLongLongSpinBox(regionw);
-    Q_ASSERT(info.stop >= info.start);
-    m_regionStart->setRange(info.start, info.stop);
-    m_regionStart->setEnabled(false);
-    m_regionStart->setValue(info.start);
-    m_regionStart->setDisplayIntegerBase(16);
-    m_regionStart->setPrefix(QStringLiteral("0x"));
-    regionLayout->addWidget(m_regionStart, 1);
-
-    regionLayout->addWidget(new QLabel(QStringLiteral(" - "), regionw));
-
-    m_regionStop = new QtLongLongSpinBox(regionw);
-    m_regionStop->setRange(info.start, info.stop);
-    connect(m_regionStart, &QtLongLongSpinBox::valueChanged, m_regionStop,
-            &QtLongLongSpinBox::setMinimum);
-    m_regionStop->setEnabled(false);
-    m_regionStop->setValue(qMin(info.start + 1024 * 1024, info.stop));
-    m_regionStop->setDisplayIntegerBase(16);
-    m_regionStop->setPrefix(QStringLiteral("0x"));
-    regionLayout->addWidget(m_regionStop, 1);
 
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
@@ -134,18 +110,9 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
         }
     });
     group->addButton(b, id++);
-    b->setEnabled(!info.isBigFile);
+    b->setChecked(true);
     buttonLayout->addWidget(b);
 
-    b = new QPushButton(tr("Region"), this);
-    b->setCheckable(true);
-    connect(b, &QPushButton::toggled, this, [=](bool b) {
-        if (b) {
-            _result.dir = SearchDirection::Region;
-        }
-        regionw->setVisible(b);
-        regionw->setEnabled(b);
-    });
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
 
@@ -183,7 +150,6 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     group->addButton(b, id++);
     buttonLayout->addWidget(b);
-    group->button(info.isBigFile ? 1 : 0)->setChecked(true);
 
     layout->addWidget(btnBox);
 
@@ -194,9 +160,6 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     auto key = QKeySequence(Qt::Key_Return);
     auto s = new QShortcut(key, this);
     connect(s, &QShortcut::activated, this, &FindDialog::on_accept);
-
-    layout->addWidget(regionw);
-    regionw->hide();
 
     layout->addSpacing(20);
     layout->addWidget(dbbox);
@@ -219,14 +182,6 @@ void FindDialog::on_accept() {
             Toast::toast(this, NAMEICONRES("find"), tr("InvalidHexSeq"));
             return;
         }
-    }
-
-    if (m_regionStart->isEnabled()) {
-        _result.start = m_regionStart->value();
-        _result.stop = m_regionStop->value();
-    } else {
-        _result.start = 0;
-        _result.stop = 0;
     }
 
     _result.encoding = m_findMode->currentText();

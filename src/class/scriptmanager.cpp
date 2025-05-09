@@ -73,6 +73,11 @@ QString ScriptManager::readJsonObjString(const QJsonObject &jobj,
     return {};
 }
 
+bool ScriptManager::readJsonObjBool(const QJsonObject &jobj,
+                                    const QString &key) {
+    return jobj.value(key).toBool();
+}
+
 QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
                                            const QStringList &files,
                                            bool isSys) {
@@ -167,6 +172,7 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
         jobj.insert(QStringLiteral("license"), QLatin1String());
         jobj.insert(QStringLiteral("homepage"), QLatin1String());
         jobj.insert(QStringLiteral("comment"), QLatin1String());
+        jobj.insert(QStringLiteral("hexmenu"), false);
         QFile f(base.absoluteFilePath(QStringLiteral(".wingasmeta")));
         if (f.open(QFile::WriteOnly | QFile::Text)) {
             QJsonDocument jdoc(jobj);
@@ -195,6 +201,8 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
                     readJsonObjString(jobj, QStringLiteral("homepage"));
                 meta.comment =
                     readJsonObjString(jobj, QStringLiteral("comment"));
+                meta.isContextMenu =
+                    readJsonObjBool(jobj, QStringLiteral("hexmenu"));
             } else {
                 meta.name = info.fileName();
             }
@@ -217,9 +225,10 @@ ScriptManager::sysDirMeta(const QString &cat) const {
     return _sysDirMetas.value(cat);
 }
 
-ScriptManager::ScriptActionMaps
-ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
-    ScriptActionMaps maps;
+QList<QMenu *>
+ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
+                                          QWidget *parent) {
+    QList<QMenu *> maps;
 
     auto &sm = ScriptManager::instance();
     auto &stm = SettingManager::instance();
@@ -229,10 +238,20 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
         if (hideCats.contains(cat)) {
             continue;
         }
-        maps.sysList << addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolder")),
-            sm.sysDirMeta(cat).name,
+
+        auto meta = sm.sysDirMeta(cat);
+
+        addPannelAction(
+            group, ICONRES(QStringLiteral("scriptfolder")), meta.name,
             buildUpScriptDirMenu(group, sm.getSysScriptFileNames(cat), true));
+
+        if (meta.isContextMenu) {
+            auto m = buildUpScriptDirMenu(parent, sm.getSysScriptFileNames(cat),
+                                          true);
+            m->setTitle(meta.name);
+            m->setIcon(ICONRES(QStringLiteral("scriptfolder")));
+            maps << m;
+        }
     }
 
     hideCats = stm.usrHideCats();
@@ -240,10 +259,19 @@ ScriptManager::buildUpRibbonScriptRunner(RibbonButtonGroup *group) {
         if (hideCats.contains(cat)) {
             continue;
         }
-        maps.usrList << addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolderusr")),
-            sm.usrDirMeta(cat).name,
+        auto meta = sm.usrDirMeta(cat);
+
+        addPannelAction(
+            group, ICONRES(QStringLiteral("scriptfolderusr")), meta.name,
             buildUpScriptDirMenu(group, sm.getUsrScriptFileNames(cat), false));
+
+        if (meta.isContextMenu) {
+            auto m = buildUpScriptDirMenu(parent, sm.getSysScriptFileNames(cat),
+                                          true);
+            m->setTitle(meta.name);
+            m->setIcon(ICONRES(QStringLiteral("scriptfolderusr")));
+            maps << m;
+        }
     }
 
     return maps;

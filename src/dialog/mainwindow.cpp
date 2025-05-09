@@ -1525,7 +1525,8 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
         pannel->setVisible(false);
         connect(pannel, &RibbonButtonGroup::emptyStatusChanged, this,
                 [pannel](bool isEmpty) { pannel->setVisible(!isEmpty); });
-        _scriptMaps = ScriptManager::buildUpRibbonScriptRunner(pannel);
+        _scriptContexts =
+            ScriptManager::buildUpScriptRunnerContext(pannel, this);
         m_scriptDBGroup = pannel;
     }
 
@@ -2118,9 +2119,6 @@ void MainWindow::on_findfile() {
     auto hexeditor = editor->hexEditor();
 
     static FindDialog::FindInfo info;
-    info.isBigFile = editor->isBigFile();
-    info.start = 0;
-    info.stop = hexeditor->documentBytes();
     info.isSel = hexeditor->selectionCount() == 1;
 
     FindDialog fd(info, this);
@@ -3050,6 +3048,11 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
                     });
         }
     }
+
+    for (auto &m : _scriptContexts) {
+        editor->registerQMenu(m);
+    }
+
     for (auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
     }
@@ -3238,6 +3241,8 @@ void MainWindow::connectEditorView(EditorView *editor) {
         if (editor->isBigFile()) {
             auto fileName = editor->fileName();
             if (!QFile::exists(fileName)) {
+                activateWindow();
+                raise();
                 editor->raise();
                 WingMessageBox::critical(this, tr("Error"),
                                          tr("FileCloseBigFile"));

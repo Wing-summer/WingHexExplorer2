@@ -216,6 +216,8 @@ bool ScriptMachine::configureEngine() {
     _rtypes[RegisteredType::tColor] =
         q_check_ptr(_engine->GetTypeInfoByName("color"));
 
+    _engine->SetDefaultAccessMask(0x1);
+
     // Register a couple of extra functions for the scripts
     r = _engine->RegisterGlobalFunction(
         "void print(const ? &in obj, const ? &in = null," INS_8 ")",
@@ -468,7 +470,7 @@ QString ScriptMachine::stringify(void *ref, int typeId) {
 
 bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
                                   bool isInDebug, int *retCode) {
-    Q_ASSERT(mode != Interactive && mode != DefineEvaluator);
+    Q_ASSERT(mode != Interactive);
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(tr("Code must be exec in the main thread"));
         return false;
@@ -576,6 +578,14 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
     _ctx[mode] = ctx;
 
+    if (mode == Background) {
+        MessageInfo info;
+        info.mode = mode;
+        info.message = tr("Run:") + script;
+        info.type = MessageType::Info;
+        outputMessage(info);
+    }
+
     ctx->SetUserData(reinterpret_cast<void *>(
                          AppManager::instance()->currentMSecsSinceEpoch()),
                      AsUserDataType::UserData_Timer);
@@ -671,72 +681,71 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 }
 
 int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
-    auto mod = createModuleIfNotExist(DefineEvaluator);
-    if (mod) {
-        asIScriptFunction *func = nullptr;
+    QByteArray name =
+        QByteArrayLiteral("WINGDEF") +
+        QByteArray::number(AppManager::instance()->currentMSecsSinceEpoch());
 
-        auto oldMode = _curMsgMode;
-        QScopeGuard guard([this, oldMode]() { _curMsgMode = oldMode; });
+    auto mod = _engine->GetModule(name.data(), asGM_ALWAYS_CREATE);
+    mod->SetAccessMask(0x2);
 
-        auto ccode = code;
-        ccode.prepend("bool f(){ return bool(").append(");}");
-        // start to compile
+    asIScriptFunction *func = nullptr;
+    QScopeGuard guard([mod]() {
+        // Before leaving, allow the engine to clean up remaining objects by
+        // discarding the module and doing a full garbage collection so that
+        // this can also be debugged if desired
+        mod->Discard();
+    });
 
-        _curMsgMode = DefineEvaluator;
-        auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
-        if (cr < 0) {
-            return cr;
-        }
+    auto ccode = code;
+    ccode.prepend("bool f(){ return bool(").append(");}");
+    // start to compile
 
-        // Set up a context to execute the script
-        // The context manager will request the context from the
-        // pool, which will automatically attach the debugger
-        asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
-        _ctx[DefineEvaluator] = ctx;
-
-        ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
-                             AppManager::instance()->currentMSecsSinceEpoch())),
-                         AsUserDataType::UserData_Timer);
-
-        asPWORD isDbg = 0;
-        ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-                         AsUserDataType::UserData_isDbg);
-        mod->SetUserData(reinterpret_cast<void *>(isDbg),
-                         AsUserDataType::UserData_isDbg);
-
-        asPWORD umode = asPWORD(DefineEvaluator);
-        ctx->SetUserData(reinterpret_cast<void *>(umode),
-                         AsUserDataType::UserData_ContextMode);
-
-        ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback),
-                                  this, asCALL_THISCALL);
-
-        // Execute the script until completion
-        // The script may create co-routines. These will automatically
-        // be managed by the context manager
-        while (_ctxMgr->ExecuteScripts()) {
-            qApp->processEvents();
-        }
-
-        _ctx[DefineEvaluator] = nullptr;
-
-        // Check if the main script finished normally
-        int r = ctx->GetState();
-        if (r != asEXECUTION_FINISHED) {
-            r = -1;
-        } else {
-            result = bool(ctx->GetReturnByte());
-            r = 0;
-        }
-
-        func->Release();
-
-        // Return the context after retrieving the return value
-        _ctxMgr->DoneWithContext(ctx);
-        _engine->GarbageCollect();
-        return r;
+    auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
+    if (cr < 0) {
+        return cr;
     }
-    return asERROR;
+
+    // Set up a context to execute the script
+    // The context manager will request the context from the
+    // pool, which will automatically attach the debugger
+    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+
+    ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
+                         AppManager::instance()->currentMSecsSinceEpoch())),
+                     AsUserDataType::UserData_Timer);
+
+    asPWORD isDbg = 0;
+    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+    mod->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+    ctx->SetUserData(0, AsUserDataType::UserData_ContextMode);
+
+    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
+                              asCALL_THISCALL);
+
+    // Execute the script until completion
+    // The script may create co-routines. These will automatically
+    // be managed by the context manager
+    while (_ctxMgr->ExecuteScripts()) {
+        qApp->processEvents();
+    }
+
+    // Check if the main script finished normally
+    int r = ctx->GetState();
+    if (r != asEXECUTION_FINISHED) {
+        r = -1;
+    } else {
+        result = bool(ctx->GetReturnByte());
+        r = 0;
+    }
+
+    func->Release();
+
+    // Return the context after retrieving the return value
+    _ctxMgr->DoneWithContext(ctx);
+    _engine->GarbageCollect();
+    return r;
 }
 
 void ScriptMachine::abortDbgScript() {
@@ -831,10 +840,6 @@ asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
         mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
         mod->SetAccessMask(0x1);
         break;
-    case DefineEvaluator:
-        mod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x2);
-        break;
     }
 
     return mod;
@@ -855,10 +860,6 @@ asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
         mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
         mod->SetAccessMask(0x1);
         break;
-    case DefineEvaluator:
-        mod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x2);
-        break;
     }
 
     return mod;
@@ -872,8 +873,6 @@ asIScriptModule *ScriptMachine::module(ConsoleMode mode) {
         return _engine->GetModule("WINGSCRIPT", asGM_ONLY_IF_EXISTS);
     case Background:
         return _engine->GetModule("WINGSRV", asGM_ONLY_IF_EXISTS);
-    case DefineEvaluator:
-        return _engine->GetModule("WINGDEF", asGM_ONLY_IF_EXISTS);
     }
     return nullptr;
 }
@@ -2071,8 +2070,16 @@ void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
         r = engine->RegisterGlobalFunction(
+            "string text()", asFUNCTION(clip_getText), asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
             "void setBinary(const uint8[]@ data)", asFUNCTION(clip_setBinary),
             asCALL_CDECL);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
+            "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
     } else {
@@ -2082,8 +2089,16 @@ void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
         r = engine->RegisterGlobalFunction(
+            "string text()", asFUNCTION(clip_getText), asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
             "void setBinary(const uint8[]@ data)", WRAP_FN(clip_setBinary),
             asCALL_GENERIC);
+        Q_ASSERT(r >= 0);
+        Q_UNUSED(r);
+        r = engine->RegisterGlobalFunction(
+            "uint8[]@ getBinary()", WRAP_FN(clip_getBinary), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
     }
@@ -2140,6 +2155,28 @@ void ScriptMachine::clip_setBinary(const CScriptArray &array) {
     c->setMimeData(mime);
 }
 
+QString ScriptMachine::clip_getText() { return qApp->clipboard()->text(); }
+
+CScriptArray *ScriptMachine::clip_getBinary() {
+    QClipboard *c = qApp->clipboard();
+
+    QByteArray data;
+    auto d = c->mimeData();
+    data = d->data(QStringLiteral("application/octet-stream"));
+
+    auto engine = ScriptMachine::instance().engine();
+    auto len = data.size();
+    auto arr =
+        CScriptArray::Create(engine->GetTypeInfoByDecl("array<uint8>"), len);
+    arr->AddRef();
+    for (int i = 0; i < len; ++i) {
+        auto addr = arr->At(i);
+        *reinterpret_cast<char *>(addr) = data.at(i);
+    }
+    arr->Release();
+    return arr;
+}
+
 void ScriptMachine::scriptThrow(const QString &msg) {
     asIScriptContext *ctx = asGetActiveContext();
     if (ctx) {
@@ -2183,7 +2220,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     asIScriptFunction *func = nullptr;
 
     QList<QAsCodeParser::CodeSegment> ret;
-    if (mode != DefineEvaluator) {
+    if (mode > 0) {
         ret = parser.parse(ccode);
     }
 

@@ -326,6 +326,42 @@ void ASDataBase::addClassCompletion(asIScriptEngine *engine) {
         obj->Release();
 
         _headerNodes[ns].append(cls);
+
+        auto cat = cls.nameSpace;
+        if (cat.isEmpty()) {
+            cat = cls.name;
+        } else {
+            cat += QStringLiteral("::") + cls.name;
+        }
+
+        auto data = cls.children;
+        data.removeIf([](const CodeInfoTip &tip) {
+            static QStringList opList{
+                "opNeg",       "opCom",        "opPreInc",    "opPreDec",
+                "opPostInc",   "opPostDec",    "opEquals",    "opCmp",
+                "opEquals",    "opAssign",     "opAddAssign", "opSubAssign",
+                "opMulAssign", "opDivAssign",  "opModAssign", "opPowAssign",
+                "opAndAssign", "opOrAssign",   "opXorAssign", "opShlAssign",
+                "opShrAssign", "opUShrAssign", "opAdd",       "opAdd_r",
+                "opSub",       "opSub_r",      "opMul",       "opMul_r",
+                "opDiv",       "opDiv_r",      "opMod",       "opMod_r",
+                "opPow",       "opPow_r",      "opAnd",       "opAnd_r",
+                "opOr",        "opOr_r",       "opXor",       "opXor_r",
+                "opShl",       "opShl_r",      "opShr",       "opShr_r",
+                "opUShr",      "opUShr_r",     "opIndex",     "opCall",
+                "opConv",      "opImplConv",   "opCast",      "opImplCast"};
+            return tip.addinfo.value(CodeInfoTip::RetType).isEmpty() ||
+                   opList.contains(tip.name);
+        });
+        for (auto &d : data) {
+            d.addinfo.insert(
+                CodeInfoTip::Comment,
+                d.addinfo.value(CodeInfoTip::RetType) + QStringLiteral(" ") +
+                    d.name + QStringLiteral("(") +
+                    d.addinfo.value(CodeInfoTip::Args) + QStringLiteral(") ") +
+                    d.addinfo.value(CodeInfoTip::SuffixQualifier));
+        }
+        _classNodes[cat].append(data);
     }
 }
 
@@ -334,6 +370,10 @@ QString ASDataBase::getSuffixQualifier(asIScriptFunction *fn) {
         return fn->IsReadOnly() ? QStringLiteral("const") : QString();
     }
     return {};
+}
+
+const QHash<QString, QList<CodeInfoTip>> &ASDataBase::classNodes() const {
+    return _classNodes;
 }
 
 const QList<CodeInfoTip> &ASDataBase::keywordNodes() const {

@@ -21,7 +21,9 @@
 #include "class/aspreprocesser.h"
 #include "class/qascodeparser.h"
 #include "class/scriptmachine.h"
+#include "control/scripteditor.h"
 #include "model/codecompletionmodel.h"
+#include "utilities.h"
 #include "wingcodeedit.h"
 
 #include <QAbstractItemView>
@@ -141,7 +143,7 @@ void AsCompletion::applyClassNodes(QList<CodeInfoTip> &nodes) {
 int AsCompletion::includeCallBack(const QString &include, bool quotedInclude,
                                   const QString &from, AsPreprocesser *builder,
                                   void *userParam) {
-    Q_UNUSED(userParam);
+    auto p = reinterpret_cast<AsCompletion *>(userParam);
 
     QFileInfo info(include);
     bool isAbsolute = info.isAbsolute();
@@ -151,7 +153,9 @@ int AsCompletion::includeCallBack(const QString &include, bool quotedInclude,
         if (isAbsolute) {
             inc = include;
         } else {
-            auto pwd = QFileInfo(from).absoluteDir();
+            auto editor = qobject_cast<ScriptEditor *>(p->widget()->parent());
+            Q_ASSERT(editor);
+            auto pwd = QFileInfo(editor->fileName()).absoluteDir();
             inc = pwd.absoluteFilePath(include);
         }
     } else {
@@ -175,6 +179,42 @@ int AsCompletion::includeCallBack(const QString &include, bool quotedInclude,
 
     builder->loadSectionFromFile(inc);
     return asSUCCESS;
+}
+
+void AsCompletion::pushCompleteDBData(const QString &fileName,
+                                      const QList<CodeInfoTip> &data) {
+    if (!QFile::exists(fileName)) {
+        return;
+    }
+
+    CompleteDB c;
+    c.data = data;
+    c.md5 = Utilities::getMd5(fileName);
+    c.time = 3;
+
+    comdb.insert(fileName, c);
+}
+
+void AsCompletion::remoteCompleteDBData(const QString &fileName) {
+    comdb.remove(fileName);
+}
+
+std::optional<AsCompletion::CompleteDB>
+AsCompletion::getCompleteDBData(const QString &fileName) {
+    if (comdb.contains(fileName)) {
+        auto ret = comdb[fileName];
+        ret.time++;
+        return ret;
+    }
+    return std::nullopt;
+}
+
+void AsCompletion::clearCompleteDBUnused() {
+    for (auto &c : comdb) {
+        c.time--;
+    }
+    comdb.removeIf(
+        [](const QPair<QString, CompleteDB> &c) { return c.second.time == 0; });
 }
 
 void AsCompletion::clearFunctionTip() { emit onFunctionTip({}); }
@@ -340,7 +380,7 @@ bool AsCompletion::processTrigger(const QString &trigger,
                 return basicType.contains(type);
             };
 
-            auto clsNodes = parser.headerNodes();
+            auto clsNodes = parser.classNodes();
 
             // filter the type we can use to auto-complete in docNodes
             for (auto &item : docNodes) {
@@ -348,6 +388,8 @@ bool AsCompletion::processTrigger(const QString &trigger,
                     auto name = item.nameSpace;
                     if (name.isEmpty()) {
                         name = item.name;
+                    } else {
+                        name += QStringLiteral("::") + item.name;
                     }
                     clsNodes.insert(name, item.children);
                 }
@@ -464,10 +506,29 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 
     for (auto &d : data) {
         qsizetype offset = -1;
+        QList<CodeInfoTip> dd;
+
         if (d.section == QStringLiteral("ASCOMPLETION")) {
             offset = editor->textCursor().position();
+        } else {
+            auto r = getCompleteDBData(d.section);
+            if (r) {
+                auto md5 = r->md5;
+                if (Utilities::getMd5(d.section) == md5) {
+                    dd = r->data;
+                } else {
+                    remoteCompleteDBData(d.section);
+                }
+            }
         }
-        ret.append(parseScriptData(offset, d.script));
+
+        if (dd.isEmpty()) {
+            dd = parseScriptData(offset, d.script);
+            if (offset < 0) {
+                pushCompleteDBData(d.section, dd);
+            }
+        }
+        ret.append(dd);
     }
 
     return ret;
@@ -476,8 +537,8 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 QList<CodeInfoTip> AsCompletion::parseMarcos() {
     static QList<CodeInfoTip> marcos;
     if (marcos.isEmpty()) {
-        QStringList m{"define", "undef", "if",    "else",
-                      "endif",  "ifdef", "ifndef"};
+        QStringList m{"define", "undef",  "if",      "else",  "endif",
+                      "ifdef",  "ifndef", "include", "pragma"};
         for (auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;

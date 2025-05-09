@@ -46,6 +46,7 @@ void ScriptSettingDialog::loadData() {
     auto &set = SettingManager::instance();
 
     this->blockSignals(true);
+    ui->listWidget->clear();
     ui->cbEnable->setChecked(set.scriptEnabled());
     ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
     ui->sbTimeout->setValue(set.scriptTimeout());
@@ -151,6 +152,9 @@ void ScriptSettingDialog::on_listWidget_currentRowChanged(int currentRow) {
         info->append(tr("Name:") + meta.name);
         info->append(tr("Author:") + meta.author);
         info->append(tr("License:") + meta.license);
+        info->append(tr("ContextMenu:") + (meta.isContextMenu
+                                               ? QStringLiteral("true")
+                                               : QStringLiteral("false")));
         info->append(tr("HomePage:") + meta.homepage);
         info->append(tr("Comment:"));
         auto cur = info->textCursor();
