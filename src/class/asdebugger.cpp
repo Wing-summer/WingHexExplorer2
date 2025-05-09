@@ -90,14 +90,14 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         ctx->GetUserData(AsUserDataType::UserData_Timer));
     auto timeOutTime = reinterpret_cast<asPWORD>(
         ctx->GetUserData(AsUserDataType::UserData_TimeOut));
-    auto mode = ScriptMachine::ConsoleMode(reinterpret_cast<asPWORD>(
-        ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
+    auto mode = reinterpret_cast<asPWORD>(
+        ctx->GetUserData(AsUserDataType::UserData_ContextMode));
 
     bool timeOut = false;
     if (timer < 0) {
         timeOut = true;
     } else {
-        if (mode == ScriptMachine::DefineEvaluator) {
+        if (mode == 0) {
             timeOut = (now - timer) > 3000; // 3 s
         } else {
             if (timeOutTime) {
@@ -106,11 +106,11 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
         }
     }
 
-    if (timeOut) {
+    if (timeOut && mode) {
         auto timeOut = tr("ScriptTimedOut");
         ScriptMachine::MessageInfo info;
         info.message = timeOut;
-        info.mode = mode;
+        info.mode = ScriptMachine::ConsoleMode(mode);
         info.type = ScriptMachine::MessageType::Error;
         ScriptMachine::instance().outputMessage(info);
         ctx->Abort();

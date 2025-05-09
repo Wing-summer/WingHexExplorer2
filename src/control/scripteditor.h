@@ -21,6 +21,8 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "control/codeedit.h"
 
+#include <QFileSystemWatcher>
+
 class asIScriptEngine;
 
 class ScriptEditor : public ads::CDockWidget {
@@ -40,6 +42,8 @@ signals:
     void onToggleMark(int line);
     void onFunctionTip(const QString &tip);
 
+    void need2Reload();
+
 public slots:
     void setReadOnly(bool b);
     bool openFile(const QString &filename);
@@ -57,6 +61,8 @@ private:
 private:
     CodeEdit *m_editor = nullptr;
     QString m_fileName;
+
+    QFileSystemWatcher _watcher;
 };
 
 #endif // SCRIPTEDITOR_H

@@ -707,7 +707,6 @@ void QHexRenderer::drawHex(QPainter *painter, const QRect &linerect,
     if (!dis)
         this->applyMetadata(textcursor, line, Hex);
 
-    this->applyBookMark(textcursor, line, Hex);
     this->applySelection(textcursor, line, Hex);
     this->applyCursorHex(textcursor, line);
 
@@ -718,24 +717,76 @@ void QHexRenderer::drawHex(QPainter *painter, const QRect &linerect,
     ctx.palette.setColor(QPalette::Text, m_bytesColor);
     textdocument.documentLayout()->draw(painter, ctx);
 
+    this->applyBookMark(painter, textcursor, line, Hex);
     painter->restore();
 }
 
-void QHexRenderer::applyBookMark(QTextCursor &textcursor, qsizetype line,
-                                 Factor factor) {
+void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
+                                 qsizetype line, Factor factor) {
 
     if (!m_document->lineHasBookMark(line))
         return;
 
+    painter->save();
+
     auto pos = m_document->getLineBookmarksPos(line);
     for (auto &item : pos) {
-        textcursor.setPosition(int((item % hexLineWidth()) * factor) + 2);
+        auto off = item % hexLineWidth();
+
+        qreal begin, width;
+        auto height = lineHeight();
+
+        // add some paddings
+        if (factor == Hex) {
+            begin = getCellWidth() * off * 3 + 1;
+            begin += getCellWidth() / 2;
+            width = getCellWidth() * 2 + 2;
+            textcursor.setPosition(off * factor);
+        } else {
+            begin = getCellWidth() * off + 1;
+            width = getCellWidth();
+            textcursor.setPosition(m_cursor->currentColumn());
+        }
+
         auto charformat = textcursor.charFormat();
-        textcursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor,
-                                factor - 1);
-        charformat.setFontWeight(QFont::Bold);
-        textcursor.setCharFormat(charformat);
+        auto textOutline = charformat.textOutline();
+
+        constexpr auto ALPHA = 180;
+
+        if (textOutline.style() != Qt::NoPen) {
+            auto outColor = textOutline.color();
+            outColor.setAlpha(ALPHA);
+            QPen pen(outColor, 1, Qt::DotLine);
+            painter->setPen(pen);
+        } else {
+            if (m_cursor->currentLine() == line &&
+                m_cursor->currentColumn() == off) {
+                auto color = m_bytesColor;
+                color.setAlpha(ALPHA);
+                QPen pen(color, 1, Qt::DotLine);
+                painter->setPen(pen);
+            } else {
+                auto foreground = charformat.foreground();
+                if (foreground.style() != Qt::NoBrush) {
+                    auto textColor = foreground.color();
+                    textColor.setAlpha(ALPHA);
+                    QPen pen(textColor, 1, Qt::DotLine);
+                    painter->setPen(pen);
+                } else {
+                    auto color = m_bytesColor;
+                    color.setAlpha(ALPHA);
+                    QPen pen(color, 1, Qt::DotLine);
+                    painter->setPen(pen);
+                }
+            }
+        }
+
+        painter->setBrush(Qt::transparent);
+        painter->setBackground(Qt::transparent);
+        painter->drawRect(begin, 0, width, height);
     }
+
+    painter->restore();
 }
 
 void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
@@ -770,6 +821,7 @@ void QHexRenderer::drawString(QPainter *painter, const QRect &linerect,
     ctx.palette.setColor(QPalette::Text, m_bytesColor);
     textdocument.documentLayout()->draw(painter, ctx);
 
+    this->applyBookMark(painter, textcursor, line, String);
     painter->restore();
 }
 

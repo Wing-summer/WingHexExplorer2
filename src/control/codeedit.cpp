@@ -180,6 +180,8 @@ void CodeEdit::applyEditorSetStyle() {
 
 SearchReplaceWidget *CodeEdit::searchWidget() const { return m_searchWidget; }
 
+void CodeEdit::setContentModified(bool b) { emit contentModified(b); }
+
 void CodeEdit::resizeEvent(QResizeEvent *event) {
     if (event)
         WingCodeEdit::resizeEvent(event);

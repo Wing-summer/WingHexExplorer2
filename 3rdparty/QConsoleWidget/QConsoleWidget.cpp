@@ -374,7 +374,6 @@ QString QConsoleWidget::currentCommandLine() const {
 int QConsoleWidget::currentHeaderPos() const { return inpos_; }
 
 void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
-    QTextCharFormat currfmt = currentCharFormat();
     QTextCursor tc = textCursor();
 
     if (mode() == Input) {
@@ -400,8 +399,8 @@ void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
         inpos_ = tc.position() - inpos_;
         // restore the edit pos
         tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, editpos);
+        tc.setCharFormat({});
         setTextCursor(tc);
-        setCurrentCharFormat(currfmt);
     } else {
         // in output mode messages are ed
         QTextCursor tc1 = tc;
@@ -415,6 +414,8 @@ void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
         setTextCursor(tc1);
         textCursor().insertText(message, fmt);
         ensureCursorVisible();
+
+        tc.setCharFormat({});
 
         // restore cursor if needed
         if (needsRestore)

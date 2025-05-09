@@ -144,8 +144,10 @@ private:
                         qsizetype lineStart, qsizetype lineEnd, Factor factor,
                         bool strikeOut, bool hasSelection) const;
 
-    void applyBookMark(QTextCursor &textcursor, qsizetype line,
-                       Factor factor); // added by wingsummer
+    // added by wingsummer
+    void applyBookMark(QPainter *painter, QTextCursor &textcursor,
+                       qsizetype line, Factor factor);
+
     void applyCursorAscii(QTextCursor &textcursor, qsizetype line) const;
     void applyCursorHex(QTextCursor &textcursor, qsizetype line) const;
     void drawAddress(QPainter *painter, const QRect &linerect, qsizetype line);

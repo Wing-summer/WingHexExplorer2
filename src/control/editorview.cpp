@@ -288,9 +288,8 @@ ErrFile EditorView::newFile(size_t index) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
-    if (!m_fileName.isEmpty()) {
-        _watcher.removePath(m_fileName);
-    }
+
+    removeMonitorPaths();
     auto istr = QString::number(index);
     m_fileName = tr("Untitled") + istr;
     this->setWindowTitle(m_fileName);
@@ -327,9 +326,7 @@ ErrFile EditorView::openFile(const QString &filename) {
             return ErrFile::Permission;
         }
 
-        if (!m_fileName.isEmpty()) {
-            _watcher.removePath(m_fileName);
-        }
+        removeMonitorPaths();
 
         m_hex->setDocument(QSharedPointer<QHexDocument>(p));
         m_hex->setLockedFile(readonly);
@@ -347,7 +344,7 @@ ErrFile EditorView::openFile(const QString &filename) {
         tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
         tab->setToolTip(m_fileName);
 
-        _watcher.addPath(m_fileName);
+        addMonitorPath();
     }
 
     return ErrFile::Success;
@@ -385,9 +382,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
         return ErrFile::Error;
     }
 
-    if (!m_fileName.isEmpty()) {
-        _watcher.removePath(m_fileName);
-    }
+    removeMonitorPaths();
 
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->setLockedFile(readonly);
@@ -575,19 +570,20 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                 return ErrFile::Permission;
             }
 
+            removeMonitorPaths();
+
             if (doc->saveTo(&file, !isExport)) {
                 file.close();
 
                 if (!isExport) {
-                    if (!m_fileName.isEmpty()) {
-                        _watcher.removePath(m_fileName);
-                    }
                     m_fileName = QFileInfo(fileName).absoluteFilePath();
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
-                    _watcher.addPath(m_fileName);
                 }
+
+                addMonitorPath();
+
 #ifdef Q_OS_LINUX
                 adjustPermission();
 #endif
@@ -737,6 +733,16 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                 }
             });
 }
+
+void EditorView::removeMonitorPaths() {
+    auto files = _watcher.files();
+    if (files.isEmpty()) {
+        return;
+    }
+    _watcher.removePaths(files);
+}
+
+void EditorView::addMonitorPath() { _watcher.addPath(m_fileName); }
 
 BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
 

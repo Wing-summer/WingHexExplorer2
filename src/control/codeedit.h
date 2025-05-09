@@ -35,6 +35,9 @@ public:
 
     SearchReplaceWidget *searchWidget() const;
 
+public:
+    void setContentModified(bool b);
+
 signals:
     void contentModified(bool b);
 

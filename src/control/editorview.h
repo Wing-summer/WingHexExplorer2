@@ -536,7 +536,10 @@ private:
         parent->addAction(a);
     }
 
+private:
     void connectDocSavedFlag(EditorView *editor);
+    void removeMonitorPaths();
+    void addMonitorPath();
 
 signals:
     void sigOnCutFile();

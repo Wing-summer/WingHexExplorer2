@@ -537,10 +537,11 @@ bool QHexView::copy(bool hex) {
 qreal QHexView::fontSize() const { return m_fontSize; }
 
 void QHexView::setScaleRate(qreal rate) {
-    if (m_scaleRate > 0) {
+    if (rate >= 0.2 && rate < 2.01) {
         m_scaleRate = rate;
         setFontSize(fontSize());
         emit scaleRateChanged();
+        update();
     }
 }
 
@@ -709,7 +710,7 @@ void QHexView::focusOutEvent(QFocusEvent *e) {
 
 void QHexView::wheelEvent(QWheelEvent *e) {
     if (qApp->keyboardModifiers() == Qt::ControlModifier) {
-        auto dela = e->angleDelta().y() / 1200.0 / 2;
+        auto dela = e->angleDelta().y() / 1200.0;
         setScaleRate(scaleRate() + dela);
         return;
     }

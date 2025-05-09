@@ -57,6 +57,9 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     connect(m_editor, &CodeEdit::contentModified, this,
             [this]() { processTitle(); });
 
+    connect(&_watcher, &QFileSystemWatcher::fileChanged, this,
+            &ScriptEditor::need2Reload);
+
     this->setWidget(m_editor);
 }
 
@@ -75,12 +78,30 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
     m_editor->setPlainText(QString::fromUtf8(f.readAll()));
     f.close();
+
+    if (!m_fileName.isEmpty()) {
+        _watcher.removePath(m_fileName);
+    }
+
     m_fileName = filename;
+    _watcher.addPath(m_fileName);
+
     processTitle();
     return true;
 }
 
 bool ScriptEditor::save(const QString &path) {
+    if (!m_fileName.isEmpty()) {
+        _watcher.removePath(m_fileName);
+    }
+    QScopeGuard guard([this, path]() {
+        if (path.isEmpty()) {
+            _watcher.addPath(m_fileName);
+        } else {
+            _watcher.addPath(path);
+        }
+    });
+
 #ifdef Q_OS_LINUX
     auto needAdjustFile = !QFile::exists(path);
 #endif
