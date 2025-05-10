@@ -355,7 +355,7 @@ qsizetype QHexView::findPrevious(qsizetype begin, const QByteArray &ba) {
 
 bool QHexView::RemoveSelection(int nibbleindex) {
     if (!m_cursor->hasSelection())
-        return false;
+        return true;
 
     auto total = m_cursor->selectionCount();
     m_document->beginMarco(QStringLiteral("RemoveSelection"));
@@ -375,7 +375,7 @@ bool QHexView::RemoveSelection(int nibbleindex) {
 
 bool QHexView::removeSelection() {
     if (!m_cursor->hasSelection())
-        return false;
+        return true;
 
     // We essure selections are ordered by desending
     // by selection-start, so it's safe to remove
@@ -417,7 +417,7 @@ QByteArrayList QHexView::selectedBytes() const {
     return res;
 }
 
-void QHexView::paste(bool hex) {
+bool QHexView::paste(bool hex) {
     QClipboard *c = qApp->clipboard();
 
     QByteArray data;
@@ -426,19 +426,28 @@ void QHexView::paste(bool hex) {
     } else {
         auto d = c->mimeData();
         data = d->data(QStringLiteral("application/octet-stream"));
+        if (data.isEmpty()) {
+            data = d->text().toUtf8();
+        }
     }
 
-    if (data.isEmpty())
-        return;
+    if (data.isEmpty()) {
+        return true;
+    }
 
-    this->removeSelection();
+    auto ret = this->removeSelection();
+    if (!ret) {
+        return false;
+    }
 
     auto pos = m_cursor->position().offset();
     if (!m_document->isKeepSize()) {
-        m_document->insert(pos, data);
+        bool ret = m_document->insert(pos, data);
         m_cursor->moveTo(pos + data.length()); // added by wingsummer
-    } else
-        m_document->replace(pos, data);
+        return ret;
+    } else {
+        return m_document->replace(pos, data);
+    }
 }
 
 bool QHexView::Cut(bool hex, int nibbleindex) {
@@ -457,7 +466,7 @@ bool QHexView::Cut(bool hex, int nibbleindex) {
     }
 }
 
-void QHexView::Paste(bool hex, int nibbleindex) {
+bool QHexView::Paste(bool hex, int nibbleindex) {
     QClipboard *c = qApp->clipboard();
 
     QByteArray data;
@@ -466,19 +475,27 @@ void QHexView::Paste(bool hex, int nibbleindex) {
     } else {
         auto d = c->mimeData();
         data = d->data(QStringLiteral("application/octet-stream"));
+        if (data.isEmpty()) {
+            data = d->text().toUtf8();
+        }
     }
 
-    if (data.isEmpty())
-        return;
+    if (data.isEmpty()) {
+        return true;
+    }
 
-    this->RemoveSelection(nibbleindex);
+    auto ret = this->RemoveSelection(nibbleindex);
+    if (!ret) {
+        return false;
+    }
 
     auto pos = m_cursor->position().offset();
     if (m_cursor->insertionMode() == QHexCursor::InsertionMode::InsertMode) {
-        m_document->Insert(m_cursor, pos, data, nibbleindex);
+        auto ret = m_document->Insert(m_cursor, pos, data, nibbleindex);
         m_cursor->moveTo(pos + data.length()); // added by wingsummer
+        return ret;
     } else {
-        m_document->Replace(m_cursor, pos, data, nibbleindex);
+        return m_document->Replace(m_cursor, pos, data, nibbleindex);
     }
 }
 

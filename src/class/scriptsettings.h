@@ -57,6 +57,8 @@ public:
     void save(SETTINGS cat = SETTING::ALL);
     void reset(SETTINGS cat = SETTING::ALL);
 
+    void __reset(SETTINGS cat);
+
 public:
     QString editorFontFamily() const;
     void setEditorFontFamily(const QString &newEditorFontFamily);

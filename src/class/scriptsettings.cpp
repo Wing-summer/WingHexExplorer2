@@ -33,11 +33,23 @@
         _setUnsavedEditor.setFlag(flag, false);                                \
     }
 
+#define WRITE_CONFIG_EDITOR_RESET(config, flag, dvalue)                        \
+    do {                                                                       \
+        WRITE_CONFIG(config, dvalue);                                          \
+        _setUnsavedEditor.setFlag(flag, false);                                \
+    } while (0);
+
 #define WRITE_CONFIG_CONSOLE_SET(config, flag, dvalue)                         \
     if (this->_setUnsavedConsole.testFlag(flag)) {                             \
         WRITE_CONFIG(config, dvalue);                                          \
         _setUnsavedConsole.setFlag(flag, false);                               \
     }
+
+#define WRITE_CONFIG_CONSOLE_RESET(config, flag, dvalue)                       \
+    do {                                                                       \
+        WRITE_CONFIG(config, dvalue);                                          \
+        _setUnsavedConsole.setFlag(flag, false);                               \
+    } while (0);
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT, ("codeedit.font"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CODEEDIT_FONT_SIZE, ("codeedit.fontsize"))
@@ -200,56 +212,59 @@ void ScriptSettings::save(SETTINGS cat) {
 }
 
 void ScriptSettings::reset(SETTINGS cat) {
+    __reset(cat);
+    load();
+}
+
+void ScriptSettings::__reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_FONT, SETTING_ITEM::FONT,
-                                _defaultFont.defaultFamily());
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_FONT_SIZE, SETTING_ITEM::FONT_SIZE,
-                                10);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_THEME, SETTING_ITEM::THEME, {});
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_TABS_WIDTH, SETTING_ITEM::TAB_WIDTH,
-                                4);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_INDENTATION, SETTING_ITEM::INDENTATION,
-                                0);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_MATCH_BRACES,
-                                SETTING_ITEM::MATCH_BRACES, true);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_WORD_WRAP, SETTING_ITEM::WORD_WRAP,
-                                false);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_SHOW_LINENUMBER,
-                                SETTING_ITEM::SHOW_LINENUMBER, true);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_SHOW_FOLDING,
-                                SETTING_ITEM::SHOW_FOLDING, true);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_SHOW_INDENTGUIDES,
-                                SETTING_ITEM::SHOW_INDENTGUIDES, true);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_SHOW_LONGLINEEDGE,
-                                SETTING_ITEM::SHOW_LONGLINEEDGE, false);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_SHOW_WHITESPACE,
-                                SETTING_ITEM::SHOW_WHITESPACE, false);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_CLOSE_CHAR,
-                                SETTING_ITEM::AUTO_CLOSE_CHAR, true);
-        WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_IDEN, SETTING_ITEM::AUTO_IDEN,
-                                true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_FONT, SETTING_ITEM::FONT,
+                                  _defaultFont.defaultFamily());
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_FONT_SIZE, SETTING_ITEM::FONT_SIZE,
+                                  10);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_THEME, SETTING_ITEM::THEME, {});
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_TABS_WIDTH, SETTING_ITEM::TAB_WIDTH,
+                                  4);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_INDENTATION,
+                                  SETTING_ITEM::INDENTATION, 0);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_MATCH_BRACES,
+                                  SETTING_ITEM::MATCH_BRACES, true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_WORD_WRAP, SETTING_ITEM::WORD_WRAP,
+                                  false);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_SHOW_LINENUMBER,
+                                  SETTING_ITEM::SHOW_LINENUMBER, true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_SHOW_FOLDING,
+                                  SETTING_ITEM::SHOW_FOLDING, true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_SHOW_INDENTGUIDES,
+                                  SETTING_ITEM::SHOW_INDENTGUIDES, true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_SHOW_LONGLINEEDGE,
+                                  SETTING_ITEM::SHOW_LONGLINEEDGE, false);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_SHOW_WHITESPACE,
+                                  SETTING_ITEM::SHOW_WHITESPACE, false);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_AUTO_CLOSE_CHAR,
+                                  SETTING_ITEM::AUTO_CLOSE_CHAR, true);
+        WRITE_CONFIG_EDITOR_RESET(CODEEDIT_AUTO_IDEN, SETTING_ITEM::AUTO_IDEN,
+                                  true);
     }
 
     if (cat.testFlag(SETTING::CONSOLE)) {
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_FONT, SETTING_ITEM::FONT,
-                                 _defaultFont.defaultFamily());
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_FONT_SIZE, SETTING_ITEM::FONT_SIZE,
-                                 10);
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_THEME, SETTING_ITEM::THEME, {});
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_TABS_WIDTH, SETTING_ITEM::TAB_WIDTH,
-                                 4);
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_INDENTATION, SETTING_ITEM::INDENTATION,
-                                 0);
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_MATCH_BRACES,
-                                 SETTING_ITEM::MATCH_BRACES, true);
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_SHOW_WHITESPACE,
-                                 SETTING_ITEM::SHOW_WHITESPACE, false);
-        WRITE_CONFIG_CONSOLE_SET(CONSOLE_AUTO_CLOSE_CHAR,
-                                 SETTING_ITEM::AUTO_CLOSE_CHAR, true);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_FONT, SETTING_ITEM::FONT,
+                                   _defaultFont.defaultFamily());
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_FONT_SIZE, SETTING_ITEM::FONT_SIZE,
+                                   10);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_THEME, SETTING_ITEM::THEME, {});
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_TABS_WIDTH, SETTING_ITEM::TAB_WIDTH,
+                                   4);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_INDENTATION,
+                                   SETTING_ITEM::INDENTATION, 0);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_MATCH_BRACES,
+                                   SETTING_ITEM::MATCH_BRACES, true);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_SHOW_WHITESPACE,
+                                   SETTING_ITEM::SHOW_WHITESPACE, false);
+        WRITE_CONFIG_CONSOLE_RESET(CONSOLE_AUTO_CLOSE_CHAR,
+                                   SETTING_ITEM::AUTO_CLOSE_CHAR, true);
     }
-
-    load();
 }
 
 ScriptSettings::ScriptSettings() : QObject() {

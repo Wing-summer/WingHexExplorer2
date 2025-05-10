@@ -119,6 +119,8 @@ public:
     void save(SETTINGS cat = SETTING::ALL);
     void reset(SETTINGS cat);
 
+    void __reset(SETTINGS cat);
+
     QList<RecentFileManager::RecentInfo> recentHexFiles() const;
     void
     setRecentFiles(const QList<RecentFileManager::RecentInfo> &newRecentFiles);

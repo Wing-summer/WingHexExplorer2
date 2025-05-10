@@ -704,27 +704,31 @@ void QHexDocument::beginMarco(const QString &text) {
 
 void QHexDocument::endMarco() { m_undostack->endMacro(); }
 
-void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset, uchar b,
+bool QHexDocument::Insert(QHexCursor *cursor, qsizetype offset, uchar b,
                           int nibbleindex) {
-    this->Insert(cursor, offset, QByteArray(1, char(b)), nibbleindex);
+    return this->Insert(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset, uchar b,
+bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                            int nibbleindex) {
-    this->Replace(cursor, offset, QByteArray(1, char(b)), nibbleindex);
+    return this->Replace(cursor, offset, QByteArray(1, char(b)), nibbleindex);
 }
 
-void QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
+bool QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
                           const QByteArray &data, int nibbleindex) {
-    if (m_keepsize || m_readonly || m_islocked)
-        return;
+    if (m_keepsize || m_readonly || m_islocked) {
+        return false;
+    }
 
     auto cmd = MakeInsert(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+    } else {
+        return false;
     }
 
     emit documentChanged();
+    return true;
 }
 
 void QHexDocument::Append(QHexCursor *cursor, uchar b, int nibbleindex) {
@@ -742,15 +746,19 @@ void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
     emit documentChanged();
 }
 
-void QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
+bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
                            const QByteArray &data, int nibbleindex) {
-    if (m_readonly || m_islocked)
-        return;
+    if (m_readonly || m_islocked) {
+        return false;
+    }
     auto cmd = MakeReplace(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+    } else {
+        return false;
     }
     emit documentChanged();
+    return true;
 }
 
 bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,

@@ -389,11 +389,20 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
     if (selfdata.type == CodeInfoTip::Type::Function ||
         selfdata.type == CodeInfoTip::Type::ClsFunction) {
         auto args = selfdata.addinfo.value(CodeInfoTip::Args);
-        auto cursor = textCursor();
-        cursor.insertText(QStringLiteral("()"));
-        if (!args.isEmpty()) {
-            cursor.movePosition(QTextCursor::Left);
-            setTextCursor(cursor);
+
+        auto cur = textCursor();
+        cur.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        auto ch = cur.selectedText();
+        if (ch.isEmpty() || ch.front().isSpace()) {
+            auto cursor = textCursor();
+            cursor.insertText(QStringLiteral("()"));
+            if (!args.isEmpty()) {
+                cursor.movePosition(QTextCursor::Left);
+                setTextCursor(cursor);
+            }
+        } else {
+            auto cursor = textCursor();
+            cursor.insertText(QStringLiteral("("));
         }
     }
 }
@@ -407,7 +416,12 @@ void ScriptingConsole::paste() {
     const QString text = clipboard->text();
     if (!text.isEmpty()) {
         if (text.indexOf('\n') < 0) {
-            replaceCommandLine(text);
+            if (isCursorInEditZone()) {
+                auto cursor = this->textCursor();
+                cursor.insertText(text);
+            } else {
+                replaceCommandLine(text);
+            }
         } else {
             auto ret = WingMessageBox::question(
                 nullptr, tr("MultiCodeCanNotUndo"), text);
@@ -452,30 +466,37 @@ QString ScriptingConsole::currentCodes() const {
 void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);
 
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/copy.png")), tr("Copy"),
-                   QKeySequence(QKeySequence::Copy), this,
-                   &ScriptingConsole::copy);
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/cut.png")), tr("Cut"),
-                   QKeySequence(QKeySequence::Cut), this,
-                   &ScriptingConsole::cut);
-    menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")), tr("Paste"),
-                   QKeySequence(QKeySequence::Paste), this,
-                   &ScriptingConsole::paste);
+    auto a = menu.addAction(QIcon(QStringLiteral(":/qeditor/copy.png")),
+                            tr("Copy"), QKeySequence(QKeySequence::Copy), this,
+                            &ScriptingConsole::copy);
+    a->setShortcutContext(Qt::WidgetShortcut);
+    a = menu.addAction(QIcon(QStringLiteral(":/qeditor/cut.png")), tr("Cut"),
+                       QKeySequence(QKeySequence::Cut), this,
+                       &ScriptingConsole::cut);
+    a->setShortcutContext(Qt::WidgetShortcut);
+    a = menu.addAction(QIcon(QStringLiteral(":/qeditor/paste.png")),
+                       tr("Paste"), QKeySequence(QKeySequence::Paste), this,
+                       &ScriptingConsole::paste);
+    a->setShortcutContext(Qt::WidgetShortcut);
 
     if (_isTerminal) {
-        menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                       QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
-                       &ScriptingConsole::clearConsole);
+        a = menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                           QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+                           &ScriptingConsole::clearConsole);
+        a->setShortcutContext(Qt::WidgetShortcut);
         menu.addSeparator();
-        menu.addAction(ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
-                       QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
-                           ScriptMachine::instance().abortScript(
-                               ScriptMachine::Background);
-                       });
+        a = menu.addAction(ICONRES(QStringLiteral("dbgstop")),
+                           tr("AbortScript"),
+                           QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
+                               ScriptMachine::instance().abortScript(
+                                   ScriptMachine::Background);
+                           });
+        a->setShortcutContext(Qt::WidgetShortcut);
     } else {
-        menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                       QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
-                       &ScriptingConsole::clear);
+        a = menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                           QKeySequence(Qt::ControlModifier | Qt::Key_L), this,
+                           &ScriptingConsole::clear);
+        a->setShortcutContext(Qt::WidgetShortcut);
     }
 
     menu.exec(event->globalPos());

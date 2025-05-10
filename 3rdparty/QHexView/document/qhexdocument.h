@@ -148,14 +148,14 @@ public slots:
     void beginMarco(const QString &text);
     void endMarco();
 
-    void Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
-    void Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
+    bool Insert(QHexCursor *cursor, qsizetype offset, uchar b, int nibbleindex);
+    bool Insert(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                 int nibbleindex);
     void Append(QHexCursor *cursor, uchar b, int nibbleindex);
     void Append(QHexCursor *cursor, const QByteArray &data, int nibbleindex);
-    void Replace(QHexCursor *cursor, qsizetype offset, uchar b,
+    bool Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                  int nibbleindex);
-    void Replace(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
+    bool Replace(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
                  int nibbleindex = 0);
     bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
                 int nibbleindex = 0);

@@ -135,10 +135,10 @@ public:
 
     bool cut(bool hex);
     bool copy(bool hex = false);
-    void paste(bool hex = false);
+    bool paste(bool hex = false);
 
     bool Cut(bool hex = false, int nibbleindex = 0);
-    void Paste(bool hex = false, int nibbleindex = 0);
+    bool Paste(bool hex = false, int nibbleindex = 0);
     void Replace(qsizetype offset, uchar b, int nibbleindex);
     void Replace(qsizetype offset, const QByteArray &data, int nibbleindex = 0);
 

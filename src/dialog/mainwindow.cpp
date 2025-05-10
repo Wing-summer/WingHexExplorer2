@@ -607,11 +607,13 @@ ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
     m_logbrowser->setOpenExternalLinks(true);
     m_logbrowser->setUndoRedoEnabled(false);
 
-    m_logbrowser->addAction(newAction(
+    auto a = newAction(
         ICONRES("copy"), tr("Copy"), [=]() { m_logbrowser->copy(); },
-        QKeySequence::Copy));
+        QKeySequence::Copy);
+    a->setShortcutContext(Qt::WidgetShortcut);
+    m_logbrowser->addAction(a);
 
-    auto a = new QAction(this);
+    a = new QAction(this);
     a->setSeparator(true);
     m_logbrowser->addAction(a);
 
@@ -1009,18 +1011,17 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                               tr("DecodeText") + QStringLiteral(" (ASCII)"),
                               m_txtDecode);
 
-    auto menu = m_txtDecode->createStandardContextMenu();
-    menu->addSeparator();
-    auto a = new QAction(tr("Encoding"), this);
+    auto a = newAction(
+        ICONRES("copy"), tr("Copy"), [=]() { m_logbrowser->copy(); },
+        QKeySequence::Copy);
+    a->setShortcutContext(Qt::WidgetShortcut);
+    m_txtDecode->addAction(a);
+    a = new QAction(tr("Encoding"), this);
     a->setIcon(ICONRES(QStringLiteral("encoding")));
     connect(a, &QAction::triggered, this, &MainWindow::on_encoding);
-    menu->addAction(a);
+    m_txtDecode->addAction(a);
 
-    m_txtDecode->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_txtDecode, &QTextBrowser::customContextMenuRequested, this,
-            [=](const QPoint &pos) {
-                menu->popup(m_txtDecode->viewport()->mapToGlobal(pos));
-            });
+    m_txtDecode->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
             &QDockWidget::setWindowTitle);
@@ -1066,13 +1067,16 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
     auto a = newAction(
         ICONRES(QStringLiteral("mStr")), tr("SelectAll"),
         [this]() { m_bgScriptOutput->selectAll(); }, QKeySequence::SelectAll);
+    a->setShortcutContext(Qt::WidgetShortcut);
     m_bgScriptOutput->addAction(a);
     a = newAction(
         ICONRES(QStringLiteral("copy")), tr("Copy"),
         [this]() { m_bgScriptOutput->copy(); }, QKeySequence::Copy);
+    a->setShortcutContext(Qt::WidgetShortcut);
     m_bgScriptOutput->addAction(a);
     a = newAction(ICONRES(QStringLiteral("del")), tr("Clear"),
                   [this]() { m_bgScriptOutput->clear(); });
+    a->setShortcutContext(Qt::WidgetShortcut);
     m_bgScriptOutput->addAction(a);
     a = new QAction(this);
     a->setSeparator(true);
@@ -1083,6 +1087,7 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
             ScriptMachine::instance().abortScript(ScriptMachine::Background);
         },
         QKeySequence(Qt::ControlModifier | Qt::Key_Q));
+    a->setShortcutContext(Qt::WidgetShortcut);
     m_bgScriptOutput->addAction(a);
     m_bgScriptOutput->setContextMenuPolicy(Qt::ActionsContextMenu);
 
@@ -2077,7 +2082,10 @@ void MainWindow::on_pastefile() {
     if (hexeditor == nullptr) {
         return;
     }
-    hexeditor->Paste();
+    if (!hexeditor->Paste()) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("paste")),
+                     tr("PasteFailedNote"));
+    }
 }
 
 void MainWindow::on_delete() {

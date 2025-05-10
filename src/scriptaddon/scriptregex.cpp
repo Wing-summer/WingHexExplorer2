@@ -47,7 +47,8 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
 
     r = engine->RegisterObjectBehaviour(
         "exp", asBEHAVE_CONSTRUCT,
-        "void f(string &in, PatternOptions = PatternOptions::NoPatternOption)",
+        "void f(const string &in, PatternOptions = "
+        "regex::PatternOptions::NoPatternOption)",
         asFUNCTIONPR(
             [](void *memory, const QString &r, Angel::PatternOptions op) {
                 new (memory) QRegularExpression(
@@ -169,7 +170,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
 
     // QRegularExpression...
     r = engine->RegisterObjectMethod(
-        "exp", "void setPattern(string &in)",
+        "exp", "void setPattern(const string &in)",
         asMETHODPR(QRegularExpression, setPattern, (const QString &), void),
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);

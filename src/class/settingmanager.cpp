@@ -31,6 +31,12 @@
         _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
     }
 
+#define WRITE_CONFIG_RESET(config, dvalue)                                     \
+    do {                                                                       \
+        WRITE_CONFIG(config, dvalue);                                          \
+        _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
+    } while (0);
+
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_DOCK_LAYOUT, ("script.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LASTUSED_PATH, ("app.lastusedpath"))
@@ -423,45 +429,49 @@ void SettingManager::save(SETTINGS cat) {
 }
 
 void SettingManager::reset(SETTINGS cat) {
+    __reset(cat);
+    load();
+}
+
+void SettingManager::__reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::APP)) {
-        WRITE_CONFIG_SET(SKIN_THEME, 0);
-        WRITE_CONFIG_SET(APP_LANGUAGE, QString());
-        WRITE_CONFIG_SET(APP_FONTFAMILY, _defaultFont.family());
-        WRITE_CONFIG_SET(APP_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG_SET(APP_WINDOWSIZE, Qt::WindowMaximized);
+        WRITE_CONFIG_RESET(SKIN_THEME, 0);
+        WRITE_CONFIG_RESET(APP_LANGUAGE, QString());
+        WRITE_CONFIG_RESET(APP_FONTFAMILY, _defaultFont.family());
+        WRITE_CONFIG_RESET(APP_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG_RESET(APP_WINDOWSIZE, Qt::WindowMaximized);
     }
     if (cat.testFlag(SETTING::PLUGIN)) {
-        WRITE_CONFIG_SET(PLUGIN_ENABLE, true);
-        WRITE_CONFIG_SET(PLUGIN_ENABLE_ROOT, false);
+        WRITE_CONFIG_RESET(PLUGIN_ENABLE, true);
+        WRITE_CONFIG_RESET(PLUGIN_ENABLE_ROOT, false);
     }
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG_SET(EDITOR_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, true);
-        WRITE_CONFIG_SET(EDITOR_SHOW_COL, true);
-        WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, true);
-        WRITE_CONFIG_SET(EDITOR_FIND_MAXCOUNT, 100);
-        WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, 100);
-        WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, 10);
+        WRITE_CONFIG_RESET(EDITOR_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG_RESET(EDITOR_SHOW_ADDR, true);
+        WRITE_CONFIG_RESET(EDITOR_SHOW_COL, true);
+        WRITE_CONFIG_RESET(EDITOR_SHOW_TEXT, true);
+        WRITE_CONFIG_RESET(EDITOR_FIND_MAXCOUNT, 100);
+        WRITE_CONFIG_RESET(EDITOR_COPY_LIMIT, 100);
+        WRITE_CONFIG_RESET(EDITOR_DECSTRLIMIT, 10);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
-        WRITE_CONFIG_SET(SCRIPT_ENABLE, true);
-        WRITE_CONFIG_SET(SCRIPT_TIMEOUT, 10);
-        WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
-        WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, QStringList());
-        WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, QStringList());
+        WRITE_CONFIG_RESET(SCRIPT_ENABLE, true);
+        WRITE_CONFIG_RESET(SCRIPT_TIMEOUT, 10);
+        WRITE_CONFIG_RESET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
+        WRITE_CONFIG_RESET(SCRIPT_USRHIDECATS, QStringList());
+        WRITE_CONFIG_RESET(SCRIPT_SYSHIDECATS, QStringList());
     }
     if (cat.testFlag(SETTING::OTHER)) {
-        WRITE_CONFIG_SET(OTHER_USESYS_FILEDIALOG, true);
+        WRITE_CONFIG_RESET(OTHER_USESYS_FILEDIALOG, true);
 #ifdef WINGHEX_USE_FRAMELESS
-        WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, false);
+        WRITE_CONFIG_RESET(OTHER_USE_NATIVE_TITLEBAR, false);
 #endif
-        WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, false);
-        WRITE_CONFIG_SET(OTHER_CHECK_UPDATE, false);
-        WRITE_CONFIG_SET(OTHER_LOG_LEVEL, Logger::defaultLevel());
-        WRITE_CONFIG_SET(OTHER_LOG_COUNT, 20);
+        WRITE_CONFIG_RESET(OTHER_DONT_USE_SPLASH, false);
+        WRITE_CONFIG_RESET(OTHER_CHECK_UPDATE, false);
+        WRITE_CONFIG_RESET(OTHER_LOG_LEVEL, Logger::defaultLevel());
+        WRITE_CONFIG_RESET(OTHER_LOG_COUNT, 20);
     }
-    load();
 }
 
 qsizetype SettingManager::decodeStrlimit() const { return m_decodeStrlimit; }

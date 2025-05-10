@@ -104,11 +104,20 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
     if (selfdata.type == CodeInfoTip::Type::Function ||
         selfdata.type == CodeInfoTip::Type::ClsFunction) {
         auto args = selfdata.addinfo.value(CodeInfoTip::Args);
-        auto cursor = textCursor();
-        cursor.insertText(QStringLiteral("()"));
-        if (!args.isEmpty()) {
-            cursor.movePosition(QTextCursor::Left);
-            setTextCursor(cursor);
+
+        auto cur = textCursor();
+        cur.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        auto ch = cur.selectedText();
+        if (ch.isEmpty() || ch.front().isSpace()) {
+            auto cursor = textCursor();
+            cursor.insertText(QStringLiteral("()"));
+            if (!args.isEmpty()) {
+                cursor.movePosition(QTextCursor::Left);
+                setTextCursor(cursor);
+            }
+        } else {
+            auto cursor = textCursor();
+            cursor.insertText(QStringLiteral("("));
         }
     }
 }

@@ -126,7 +126,7 @@ void AsCompletion::applyClassNodes(QList<CodeInfoTip> &nodes) {
             for (auto &item : n) {
                 if (item.type == CodeInfoTip::Type::Class) {
                     for (auto &c : item.children) {
-                        if (c.type == CodeInfoTip::Type::Function) {
+                        if (c.type == CodeInfoTip::Type::ClsFunction) {
                             if (!c.addinfo.contains(CodeInfoTip::RetType)) {
                                 continue;
                             }
@@ -361,6 +361,8 @@ bool AsCompletion::processTrigger(const QString &trigger,
                 processTrigger(*DOT_TRIGGER, content.left(etoken.pos));
                 setCompletionPrefix(prefix);
                 return true;
+            } else if (etoken.content == QByteArrayLiteral(")")) {
+                // ignore
             } else {
                 applyEmptyNsNode(nodes, docNodes);
             }
@@ -370,48 +372,60 @@ bool AsCompletion::processTrigger(const QString &trigger,
         }
 
         if (trigger == *DOT_TRIGGER) {
-            // member type guessing ? basic match is enough. (>n<)
-            auto isBasicType = [](const QString &type) {
-                static QStringList basicType{
-                    "int",   "int8",   "int16",  "int32",  "int64",
-                    "uint",  "uint8",  "uint16", "uint32", "uint64",
-                    "float", "double", "byte"};
+            if (etoken.type == asTC_IDENTIFIER) {
+                // member type guessing ? basic match is enough. (>n<)
+                auto isBasicType = [](const QByteArray &type) {
+                    static QByteArrayList basicType{
+                        "int",   "int8",   "int16",  "int32",  "int64",
+                        "uint",  "uint8",  "uint16", "uint32", "uint64",
+                        "float", "double", "byte"};
 
-                return basicType.contains(type);
-            };
+                    return basicType.contains(type);
+                };
 
-            auto clsNodes = parser.classNodes();
+                auto clsNodes = parser.classNodes();
 
-            // filter the type we can use to auto-complete in docNodes
-            for (auto &item : docNodes) {
-                if (item.type == CodeInfoTip::Type::Class) {
-                    auto name = item.nameSpace;
-                    if (name.isEmpty()) {
-                        name = item.name;
-                    } else {
-                        name += QStringLiteral("::") + item.name;
+                // filter the type we can use to auto-complete in docNodes
+                for (auto &item : docNodes) {
+                    if (item.type == CodeInfoTip::Type::Class) {
+                        auto name = item.nameSpace;
+                        if (name.isEmpty()) {
+                            name = item.name;
+                        } else {
+                            name += QStringLiteral("::") + item.name;
+                        }
+                        clsNodes.insert(name, item.children);
                     }
-                    clsNodes.insert(name, item.children);
+                    // a typedef can only be used to define an alias
+                    // for primitive types, so NO NEED for auto-completing
                 }
-                // a typedef can only be used to define an alias
-                // for primitive types, so NO NEED for auto-completing
-            }
 
-            tokens.removeLast();
-            auto ns = getNamespace(tokens);
-            for (auto &item : docNodes) {
-                if (etoken.content == item.name && ns == item.nameSpace) {
-                    auto retType = item.addinfo.value(CodeInfoTip::RetType);
+                tokens.removeLast();
+                auto ns = getNamespace(tokens);
+                for (auto &item : docNodes) {
+                    if (etoken.content == item.name && ns == item.nameSpace) {
+                        auto retType = item.addinfo.value(CodeInfoTip::RetType);
+                        auto decl = engine->GetTypeInfoByDecl(retType.toUtf8());
+                        if (decl) {
+                            QByteArray type = decl->GetNamespace();
+                            if (type.isEmpty()) {
+                                type = decl->GetName();
+                            } else {
+                                type +=
+                                    (QByteArrayLiteral("::") + decl->GetName());
+                            }
 
-                    // auto type inference is not supported.
-                    // PRs will be welcomed !!!
-                    if (isBasicType(retType)) {
-                        popup()->hide();
-                        return false;
+                            // auto type inference is not supported.
+                            // PRs will be welcomed !!!
+                            if (isBasicType(type)) {
+                                popup()->hide();
+                                return false;
+                            }
+
+                            nodes.append(clsNodes.value(type));
+                            break;
+                        }
                     }
-
-                    nodes.append(clsNodes.value(retType));
-                    break;
                 }
             }
 

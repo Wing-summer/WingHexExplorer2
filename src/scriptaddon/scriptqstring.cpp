@@ -71,7 +71,7 @@ public:
         Map_t::iterator it = stringCache.find(strv);
         if (it == stringCache.end()) {
             // ret = asERROR;
-            // TODO: I don't know why invalid string pointer passed to it
+            // I don't know why invalid string pointer passed to it
             // just ignore it.
         } else {
             it->second--;
@@ -311,19 +311,6 @@ static int StringCmp(const QString &a, const QString &b) {
     return cmp;
 }
 
-// This function returns the index of the first position where the substring
-// exists in the input string. If the substring doesn't exist in the input
-// string -1 is returned.
-//
-// AngelScript signature:
-// int string::findFirst(const string &in sub, uint start = 0) const
-static int StringFindFirst(const QString &sub, asUINT start,
-                           const QString &str) {
-    // We don't register the method directly because the argument types change
-    // between 32bit and 64bit platforms
-    return (int)str.indexOf(sub, start);
-}
-
 // This function returns the index of the first position where the one of the
 // bytes in substring exists in the input string. If the characters in the
 // substring doesn't exist in the input string -1 is returned.
@@ -498,6 +485,82 @@ static CScriptArray *stringSplit(const QString &sep, bool skipEmpty,
         "array<string>");
 }
 
+static QString fromAscii(CScriptArray *array) {
+    return QString::fromLatin1(
+        reinterpret_cast<const char *>(array->GetBuffer()), array->GetSize());
+}
+
+static CScriptArray *toAsciiArray(const QString &s) {
+    return byteArrayWrapperFunction([s]() { return s.toLatin1(); });
+}
+
+static QString fromUtf8(CScriptArray *array) {
+    return QString::fromUtf8(reinterpret_cast<const char *>(array->GetBuffer()),
+                             array->GetSize());
+}
+
+static CScriptArray *toUtf8Array(const QString &s) {
+    return byteArrayWrapperFunction([s]() { return s.toUtf8(); });
+}
+
+static QString fromUtf16(CScriptArray *array) {
+    return QString::fromUtf16(
+        reinterpret_cast<const char16_t *>(array->GetBuffer()),
+        array->GetSize() / sizeof(char16_t));
+}
+
+static CScriptArray *toUtf16Array(const QString &s) {
+    return byteArrayWrapperFunction([s]() {
+        auto data = s.utf16();
+        return QByteArray(reinterpret_cast<const char *>(data),
+                          s.size() * sizeof(char16_t));
+    });
+}
+
+static QString fromUcs4(CScriptArray *array) {
+    return QString::fromUcs4(
+        reinterpret_cast<const char32_t *>(array->GetBuffer()),
+        array->GetSize() / sizeof(char32_t));
+}
+
+static CScriptArray *toUcs4Array(const QString &s) {
+    return byteArrayWrapperFunction([s]() { return s.toUcs4(); });
+}
+
+static QString fromRawData(CScriptArray *array) {
+    auto total = array->GetSize();
+    QString buffer;
+
+    buffer.reserve(total);
+    for (asUINT i = 0; i < total; ++i) {
+        auto ch = reinterpret_cast<const QChar *>(array->At(i));
+        buffer.append(*ch);
+    }
+
+    return buffer;
+}
+
+static void appendStr(const QString &str, QString &s) { s.append(str); }
+
+static void appendCh(const QChar &ch, QString &s) { s.append(ch); }
+
+static void prependStr(const QString &str, QString &s) { s.prepend(str); }
+
+static void prependCh(const QChar &ch, QString &s) { s.prepend(ch); }
+
+static CScriptArray *toRawData(const QString &s) {
+    return retarrayWrapperFunction(
+        [s]() {
+            QList<QChar> data;
+            data.reserve(s.length());
+            for (auto &ch : s) {
+                data.append(ch);
+            }
+            return data;
+        },
+        "array<char>");
+}
+
 //=================================================
 
 static void ConstructChar(QChar *thisPointer) { new (thisPointer) QChar(); }
@@ -669,34 +732,18 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_UNUSED(r);
 #endif
 
-    // The string length can be accessed through methods or through virtual
-    // property
-#if AS_USE_ACCESSORS != 1
     r = engine->RegisterObjectMethod("string", "uint length() const",
                                      asFUNCTION(StringLength),
                                      asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-#endif
+
     r = engine->RegisterObjectMethod("string", "void resize(uint)",
                                      asFUNCTION(StringResize),
                                      asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-#if AS_USE_ACCESSORS == 1
-    // Don't register these if STL names is used, as they conflict with the
-    // method size()
-    r = engine->RegisterObjectMethod(
-        "string", "uint get_length() const property", asFUNCTION(StringLength),
-        asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod("string", "void set_length(uint) property",
-                                     asFUNCTION(StringResize),
-                                     asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-#endif
+
     // Need to use a wrapper on Mac OS X 10.7/XCode 4.3 and CLang/LLVM,
     // otherwise the linker fails
     //	r = engine->RegisterObjectMethod("string", "bool isEmpty() const",
@@ -852,18 +899,38 @@ void RegisterQString_Native(asIScriptEngine *engine) {
 
     // Utilities
     r = engine->RegisterObjectMethod(
+        "string", "void append(const string &in str)", asFUNCTION(appendStr),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string", "void append(const char &in ch)",
+                                     asFUNCTION(appendCh),
+                                     asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "void prepend(const string &in str)", asFUNCTION(prependStr),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "void prepend(const char &in ch)", asFUNCTION(prependCh),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
         "string", "string substr(uint start = 0, int count = -1) const",
         asFUNCTION(StringSubString), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "string", "int findFirst(const string &in, uint start = 0) const",
-        asFUNCTION(StringFindFirst), asCALL_CDECL_OBJLAST);
+        "string", "int findFirstOf(const string &in, uint start = 0) const",
+        asFUNCTION(StringFindFirstOf), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "string", "int findFirstOf(const string &in, uint start = 0) const",
-        asFUNCTION(StringFindFirstOf), asCALL_CDECL_OBJLAST);
+        "string", "int findLastOf(const string &in, uint start = 0) const",
+        asFUNCTION(StringFindLastOf), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -878,12 +945,6 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    /* These following things are not avaliable for generic call
-     * because it needs a lot of wrapper to do
-     * while WingHexExplorer only needs native call
-     * (by wingsummer)
-     * PULL REQUESTS ARE WELCOMED IF YOU WANT TO ADD GENERIC CALL
-     */
     r = engine->RegisterObjectMethod(
         "string",
         "int compare(const string &in val, bool caseSensitive = true) const",
@@ -933,6 +994,33 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
+    r = engine->RegisterObjectMethod(
+        "string", "array<uint8>@ toAsciiArray() const",
+        asFUNCTION(toAsciiArray), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "array<uint8>@ toUtf8Array() const", asFUNCTION(toUtf8Array),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "array<uint8>@ toUtf16Array() const",
+        asFUNCTION(toUtf16Array), asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "array<uint8>@ toUcs4Array() const", asFUNCTION(toUcs4Array),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string", "array<char>@ toRawData() const",
+                                     asFUNCTION(toRawData),
+                                     asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Global functions
     r = engine->SetDefaultNamespace("string");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -970,6 +1058,33 @@ void RegisterQString_Native(asIScriptEngine *engine) {
         asFUNCTION(parseFloat), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "string fromAscii(const array<uint8> &in array)", asFUNCTION(fromAscii),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUtf8(const array<uint8> &in array)", asFUNCTION(fromUtf8),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUtf16(const array<uint8> &in array)", asFUNCTION(fromUtf16),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUcs4(const array<uint8> &in array)", asFUNCTION(fromUcs4),
+        asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromRawData(const array<char> &in array)",
+        asFUNCTION(fromRawData), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
     engine->SetDefaultNamespace("");
 }
 
@@ -1042,82 +1157,6 @@ static void StringIsEmptyGeneric(asIScriptGeneric *gen) {
 static void StringResizeGeneric(asIScriptGeneric *gen) {
     QString *self = static_cast<QString *>(gen->GetObject());
     self->resize(*static_cast<asUINT *>(gen->GetAddressOfArg(0)));
-}
-
-static void StringInsert_Generic(asIScriptGeneric *gen) {
-    QString *self = static_cast<QString *>(gen->GetObject());
-    asUINT pos = gen->GetArgDWord(0);
-    QString *other = reinterpret_cast<QString *>(gen->GetArgAddress(1));
-    StringInsert(pos, *other, *self);
-}
-
-static void StringErase_Generic(asIScriptGeneric *gen) {
-    QString *self = static_cast<QString *>(gen->GetObject());
-    asUINT pos = gen->GetArgDWord(0);
-    int count = int(gen->GetArgDWord(1));
-    StringErase(pos, count, *self);
-}
-
-static void StringFindFirst_Generic(asIScriptGeneric *gen) {
-    QString *find = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    asUINT start = gen->GetArgDWord(1);
-    QString *self = reinterpret_cast<QString *>(gen->GetObject());
-    *reinterpret_cast<int *>(gen->GetAddressOfReturnLocation()) =
-        StringFindFirst(*find, start, *self);
-}
-
-static void StringFindFirstOf_Generic(asIScriptGeneric *gen) {
-    QString *find = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    asUINT start = gen->GetArgDWord(1);
-    QString *self = reinterpret_cast<QString *>(gen->GetObject());
-    *reinterpret_cast<int *>(gen->GetAddressOfReturnLocation()) =
-        StringFindFirstOf(*find, start, *self);
-}
-
-static void StringFindLastOf_Generic(asIScriptGeneric *gen) {
-    QString *find = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    asUINT start = gen->GetArgDWord(1);
-    QString *self = reinterpret_cast<QString *>(gen->GetObject());
-    *reinterpret_cast<int *>(gen->GetAddressOfReturnLocation()) =
-        StringFindLastOf(*find, start, *self);
-}
-
-static void formatInt_Generic(asIScriptGeneric *gen) {
-    asINT64 val = gen->GetArgQWord(0);
-    QString *options = reinterpret_cast<QString *>(gen->GetArgAddress(1));
-    new (gen->GetAddressOfReturnLocation()) QString(formatInt(val, *options));
-}
-
-static void formatUInt_Generic(asIScriptGeneric *gen) {
-    asQWORD val = gen->GetArgQWord(0);
-    QString *options = reinterpret_cast<QString *>(gen->GetArgAddress(1));
-    new (gen->GetAddressOfReturnLocation()) QString(formatUInt(val, *options));
-}
-
-static void formatFloat_Generic(asIScriptGeneric *gen) {
-    double val = gen->GetArgDouble(0);
-    QString *options = reinterpret_cast<QString *>(gen->GetArgAddress(1));
-    new (gen->GetAddressOfReturnLocation()) QString(formatFloat(val, *options));
-}
-
-static void parseInt_Generic(asIScriptGeneric *gen) {
-    QString *str = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    asUINT base = gen->GetArgDWord(1);
-    asUINT *byteCount = reinterpret_cast<asUINT *>(gen->GetArgAddress(2));
-    gen->SetReturnQWord(parseInt(*str, base, byteCount));
-}
-
-static void parseUInt_Generic(asIScriptGeneric *gen) {
-    QString *str = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    asUINT base = gen->GetArgDWord(1);
-    bool *ok = reinterpret_cast<bool *>(gen->GetArgAddress(2));
-    gen->SetReturnQWord(parseUInt(*str, base, ok));
-}
-
-static void parseFloat_Generic(asIScriptGeneric *gen) {
-    QString *str = reinterpret_cast<QString *>(gen->GetArgAddress(0));
-    bool *ok = reinterpret_cast<bool *>(gen->GetArgAddress(1));
-    gen->SetReturnDouble(parseFloat(*str, ok));
 }
 
 static void StringCharAtGeneric(asIScriptGeneric *gen) {
@@ -1277,17 +1316,6 @@ static void AddBool2StringGeneric(asIScriptGeneric *gen) {
 }
 #endif
 
-static void StringSubString_Generic(asIScriptGeneric *gen) {
-    // Get the arguments
-    QString *str = (QString *)gen->GetObject();
-    asUINT start = *(int *)gen->GetAddressOfArg(0);
-    int count = *(int *)gen->GetAddressOfArg(1);
-
-    // Return the substring
-    new (gen->GetAddressOfReturnLocation())
-        QString(StringSubString(start, count, *str));
-}
-
 void RegisterQString_Generic(asIScriptEngine *engine) {
     int r = 0;
     Q_UNUSED(r);
@@ -1348,13 +1376,12 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     // Register the object methods
-#if AS_USE_ACCESSORS != 1
     r = engine->RegisterObjectMethod("string", "uint length() const",
                                      asFUNCTION(StringLengthGeneric),
                                      asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-#endif
+
     r = engine->RegisterObjectMethod("string", "void resize(uint)",
                                      asFUNCTION(StringResizeGeneric),
                                      asCALL_GENERIC);
@@ -1487,67 +1514,50 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_UNUSED(r);
 #endif
 
-    r = engine->RegisterObjectMethod(
-        "string", "string substr(uint start = 0, int count = -1) const",
-        asFUNCTION(StringSubString_Generic), asCALL_GENERIC);
+    // Utilities
+    r = engine->RegisterObjectMethod("string",
+                                     "void append(const string &in str)",
+                                     WRAP_FN(appendStr), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string", "void append(const char &in ch)",
+                                     WRAP_FN(appendCh), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string",
+                                     "void prepend(const string &in str)",
+                                     WRAP_FN(prependStr), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string",
+                                     "void prepend(const char &in ch)",
+                                     WRAP_FN(prependCh), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "string", "int findFirst(const string &in, uint start = 0) const",
-        asFUNCTION(StringFindFirst_Generic), asCALL_GENERIC);
+        "string", "string substr(uint start = 0, int count = -1) const",
+        WRAP_FN(StringSubString), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
         "string", "int findFirstOf(const string &in, uint start = 0) const",
-        asFUNCTION(StringFindFirstOf_Generic), asCALL_GENERIC);
+        WRAP_FN(StringFindFirstOf), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "string", "int findLastOf(const string &in, int start = -1) const",
-        asFUNCTION(StringFindLastOf_Generic), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod(
-        "string", "void insert(uint pos, const string &in other)",
-        asFUNCTION(StringInsert_Generic), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod(
-        "string", "void erase(uint pos, int count = -1)",
-        asFUNCTION(StringErase_Generic), asCALL_GENERIC);
+        "string", "int findLastOf(const string &in, uint start = 0) const",
+        WRAP_FN(StringFindLastOf), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    r = engine->RegisterGlobalFunction(
-        "string formatInt(int64 val, const string &in options = \"\")",
-        asFUNCTION(formatInt_Generic), asCALL_GENERIC);
+    r = engine->RegisterObjectMethod(
+        "string", "void insert(uint pos, const string &in other)",
+        WRAP_FN(StringInsert), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "string formatUInt(uint64 val, const string &in options = \"\")",
-        asFUNCTION(formatUInt_Generic), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "string formatFloat(double val, const string &in options = \"\")",
-        asFUNCTION(formatFloat_Generic), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10, bool &out ok = false)",
-                                       asFUNCTION(parseInt_Generic),
-                                       asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("uint64 parseUInt(const string &in, "
-                                       "uint base = 10, bool &out ok = false)",
-                                       asFUNCTION(parseUInt_Generic),
-                                       asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, bool &out ok = false)",
-        WRAP_FN(parseFloat_Generic), asCALL_GENERIC);
+    r = engine->RegisterObjectMethod("string",
+                                     "void erase(uint pos, int count = -1)",
+                                     WRAP_FN(StringErase), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -1582,7 +1592,8 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod("string", "string simplified()",
-                                     WRAP_FN(stringSimplified), asCALL_GENERIC);
+                                     asFUNCTION(stringSimplified),
+                                     asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -1599,6 +1610,32 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
+    r = engine->RegisterObjectMethod("string",
+                                     "array<uint8>@ toAsciiArray() const",
+                                     WRAP_FN(toAsciiArray), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string",
+                                     "array<uint8>@ toUtf8Array() const",
+                                     WRAP_FN(toUtf8Array), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string",
+                                     "array<uint8>@ toUtf16Array() const",
+                                     WRAP_FN(toUtf16Array), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string",
+                                     "array<uint8>@ toUcs4Array() const",
+                                     WRAP_FN(toUcs4Array), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("string", "array<char>@ toRawData() const",
+                                     WRAP_FN(toRawData), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Global functions
     r = engine->SetDefaultNamespace("string");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -1636,6 +1673,34 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
         WRAP_FN(parseFloat), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "string fromAscii(const array<uint8> &in array)", WRAP_FN(fromAscii),
+        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUtf8(const array<uint8> &in array)", WRAP_FN(fromUtf8),
+        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUtf16(const array<uint8> &in array)", WRAP_FN(fromUtf16),
+        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromUcs4(const array<uint8> &in array)", WRAP_FN(fromUcs4),
+        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "string fromRawData(const array<char> &in array)", WRAP_FN(fromRawData),
+        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    engine->SetDefaultNamespace("");
 }
 
 void RegisterQString(asIScriptEngine *engine) {
@@ -1725,19 +1790,6 @@ void RegisterQStringUtils(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-// This function returns the index of the first position where the substring
-// exists in the input string. If the substring doesn't exist in the input
-// string -1 is returned.
-//
-// AngelScript signature:
-// int string::findFirst(const regex::exp &in exp, uint start = 0) const
-static int StringFindFirstReg(const QRegularExpression &exp, asUINT start,
-                              const QString &str) {
-    // We don't register the method directly because the argument types change
-    // between 32bit and 64bit platforms
-    return (int)str.indexOf(exp, start);
-}
-
 // This function returns the index of the first position where the one of the
 // bytes in substring exists in the input string. If the characters in the
 // substring doesn't exist in the input string -1 is returned.
@@ -1791,12 +1843,6 @@ void RegisterQStringRegExSupport(asIScriptEngine *engine) {
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
         r = engine->RegisterObjectMethod(
             "string",
-            "int findFirst(const regex::exp &in, uint start = 0) const",
-            WRAP_FN(StringFindFirstReg), asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-        r = engine->RegisterObjectMethod(
-            "string",
             "int findFirstOf(const regex::exp &in, uint start = 0) const",
             WRAP_FN(StringFindFirstOfReg), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
@@ -1819,14 +1865,7 @@ void RegisterQStringRegExSupport(asIScriptEngine *engine) {
             WRAP_FN(stringSplitReg), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
-
     } else {
-        r = engine->RegisterObjectMethod(
-            "string",
-            "int findFirst(const regex::exp &in, uint start = 0) const",
-            asFUNCTION(StringFindFirstReg), asCALL_CDECL_OBJLAST);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
         r = engine->RegisterObjectMethod(
             "string",
             "int findFirstOf(const regex::exp &in, uint start = 0) const",

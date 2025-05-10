@@ -113,21 +113,26 @@ void SettingDialog::on_buttonBox_clicked(QAbstractButton *button) {
             page->apply();
         }
     } else if (button == btnbox->button(QDialogButtonBox::RestoreDefaults)) {
-        for (auto &page : m_pages) {
-            page->reset();
+        auto index = ui->listWidget->currentRow();
+        if (index >= 0) {
+            m_pages.at(index)->reset();
         }
-
+        toastTakeEffectReboot();
     } else if (button == btnbox->button(QDialogButtonBox::Reset)) {
         auto res = WingMessageBox::warning(
             this, qAppName(),
             tr("This will reset all settings. Are you sure to continue?"),
             QMessageBox::Yes | QMessageBox::No);
-        if (res == QMessageBox::No)
+
+        if (res == QMessageBox::No) {
             return;
+        }
 
         for (auto &page : m_pages) {
             page->reset();
         }
+
+        toastTakeEffectReboot();
     } else if (button == btnbox->button(QDialogButtonBox::Cancel)) {
         for (auto &page : m_pages) {
             page->cancel();
