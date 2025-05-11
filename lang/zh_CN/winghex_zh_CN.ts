@@ -5133,7 +5133,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="216"/>
+        <location filename="../../src/class/settingmanager.cpp" line="217"/>
         <source>ConfigUnableSave</source>
         <translation>程序将无法保存配置，请检查配置文件权限。</translation>
     </message>

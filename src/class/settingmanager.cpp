@@ -120,6 +120,7 @@ void SettingManager::load() {
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, EDITOR_FONTSIZE,
                              defaultFontSize);
+    m_editorfontSize = qBound(5, m_editorfontSize, 25);
     READ_CONFIG_BOOL(m_editorShowHeader, EDITOR_SHOW_ADDR, true);
     READ_CONFIG_BOOL(m_editorShowcol, EDITOR_SHOW_COL, true);
     READ_CONFIG_BOOL(m_editorShowtext, EDITOR_SHOW_TEXT, true);
