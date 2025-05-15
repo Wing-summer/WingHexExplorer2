@@ -27,6 +27,7 @@
 <p align="center">
 <img alt="Author" src="authorband.svg" />
 <img alt="License" src="licenseband.svg" />
+<a href="https://deepwiki.com/Wing-summer/WingHexExplorer2"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
