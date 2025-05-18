@@ -63,7 +63,8 @@ EditorView::EditorView(QWidget *parent)
     auto hexLayout = new QVBoxLayout(m_hexContainer);
     hexLayout->setSpacing(0);
     hexLayout->setContentsMargins(0, 0, 0, 0);
-    m_hex = new QHexView;
+    m_hex = new QHexView(this);
+
     hexLayout->addWidget(m_hex, 1);
     m_goto = new GotoWidget(this);
     connect(m_goto, &GotoWidget::jumpToLine, this,

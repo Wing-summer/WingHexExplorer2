@@ -20,6 +20,18 @@ int main(int argc, char *argv[]) {
 
     QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 
+#ifdef Q_OS_LINUX
+    // fix wayland issue (a workaround): floating dock not work
+    // reference:
+    // https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/
+    //         issues/714#issuecomment-2802752677
+    auto denv = qgetenv("XDG_SESSION_TYPE");
+    if (denv.isEmpty() ||
+        denv.compare(QByteArrayLiteral("wayland"), Qt::CaseInsensitive) == 0) {
+        qputenv("QT_QPA_PLATFORM", "xcb");
+    }
+#endif
+
     QApplication::setApplicationName(APP_NAME);
     QApplication::setOrganizationName(APP_ORG);
     QApplication::setApplicationVersion(WINGHEX_VERSION);

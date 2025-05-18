@@ -171,7 +171,8 @@ QHexView::QHexView(QWidget *parent)
         f.setStyleHint(QFont::TypeWriter);
     }
 
-    m_fontSize = f.pointSizeF();
+    m_fontSize = qApp->font().pointSizeF();
+    f.setPointSizeF(m_fontSize);
     m_cursor = new QHexCursor(this);
 
     this->setFont(f);
@@ -554,7 +555,7 @@ bool QHexView::copy(bool hex) {
 qreal QHexView::fontSize() const { return m_fontSize; }
 
 void QHexView::setScaleRate(qreal rate) {
-    if (rate >= 0.2 && rate < 2.01) {
+    if (rate >= 0.2 && rate < 3.01) {
         m_scaleRate = rate;
         setFontSize(fontSize());
         emit scaleRateChanged();
@@ -576,7 +577,6 @@ void QHexView::setFontSize(qreal size) {
     auto font = this->font();
     font.setPointSizeF(size * m_scaleRate);
     this->setFont(font);
-    m_fontSize = size;
 }
 
 QColor QHexView::selectionColor() const { return m_renderer->selectionColor(); }
