@@ -18,10 +18,13 @@
 #ifndef SKINMANAGER_H
 #define SKINMANAGER_H
 
+#include <QCoreApplication>
 #include <QObject>
 
-class SkinManager : public QObject {
-    Q_OBJECT
+class SkinManager {
+    Q_GADGET
+    Q_DECLARE_TR_FUNCTIONS(SkinManager)
+
 public:
     enum class Theme {
         Dark,
@@ -30,7 +33,7 @@ public:
     Q_ENUM(Theme)
 
 public:
-    virtual ~SkinManager() override;
+    virtual ~SkinManager();
 
     static SkinManager &instance();
 
@@ -45,7 +48,7 @@ private:
 private:
     Theme m_theme;
 
-    explicit SkinManager(QObject *parent = nullptr);
+    explicit SkinManager();
 
     Q_DISABLE_COPY_MOVE(SkinManager)
 };

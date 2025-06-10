@@ -184,7 +184,7 @@ void ScriptSettings::save(SETTINGS cat) {
                                 m_editorAutoCloseChar);
         WRITE_CONFIG_EDITOR_SET(CODEEDIT_AUTO_IDEN, SETTING_ITEM::AUTO_IDEN,
                                 m_editorAutoIden);
-        emit editorSettingsUpdate();
+        Q_EMIT editorSettingsUpdate();
     }
 
     if (cat.testFlag(SETTING::CONSOLE)) {
@@ -207,7 +207,7 @@ void ScriptSettings::save(SETTINGS cat) {
         WRITE_CONFIG_CONSOLE_SET(CONSOLE_AUTO_CLOSE_CHAR,
                                  SETTING_ITEM::AUTO_CLOSE_CHAR,
                                  m_consoleAutoCloseChar);
-        emit consoleSettingUpdate();
+        Q_EMIT consoleSettingUpdate();
     }
 }
 

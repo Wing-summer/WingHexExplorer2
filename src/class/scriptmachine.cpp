@@ -670,7 +670,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     if (isDbg) {
         _debugger->clearBreakPoint();
-        emit onDebugFinished();
+        Q_EMIT onDebugFinished();
     }
 
     if (retCode) {

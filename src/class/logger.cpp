@@ -86,42 +86,44 @@ Logger &Logger::instance() {
 
 Logger::Level Logger::logLevel() const { return _level; }
 
-void Logger::logPrint(const QString &message) { emit instance().log(message); }
+void Logger::logPrint(const QString &message) {
+    Q_EMIT instance().log(message);
+}
 
 void Logger::newLine() { logPrint({}); }
 
 void Logger::trace(const QString &message) {
     if (instance()._level >= q5TRACE) {
         QString str = message;
-        emit instance().log(packDebugStr(tr("[Trace]") + str));
+        Q_EMIT instance().log(packDebugStr(tr("[Trace]") + str));
     }
 }
 
 void Logger::warning(const QString &message) {
     if (instance()._level >= q2WARN) {
         QString str = message;
-        emit instance().log(packWarnStr(tr("[Warn]") + str));
+        Q_EMIT instance().log(packWarnStr(tr("[Warn]") + str));
     }
 }
 
 void Logger::info(const QString &message) {
     if (instance()._level >= q3INFO) {
         QString str = message;
-        emit instance().log(packInfoStr(tr("[Info]") + str));
+        Q_EMIT instance().log(packInfoStr(tr("[Info]") + str));
     }
 }
 
 void Logger::debug(const QString &message) {
     if (instance()._level >= q4DEBUG) {
         QString str = message;
-        emit instance().log(packDebugStr(tr("[Debug]") + str));
+        Q_EMIT instance().log(packDebugStr(tr("[Debug]") + str));
     }
 }
 
 void Logger::critical(const QString &message) {
     if (instance()._level >= q0FATAL) {
         QString str = message;
-        emit instance().log(packErrorStr(tr("[Error]") + str));
+        Q_EMIT instance().log(packErrorStr(tr("[Error]") + str));
     }
 }
 

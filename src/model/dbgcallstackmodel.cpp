@@ -81,5 +81,5 @@ QVariant DbgCallStackModel::headerData(int section, Qt::Orientation orientation,
 void DbgCallStackModel::updateData(
     const QList<asDebugger::CallStackItem> &callstack) {
     _stack = callstack;
-    emit layoutChanged();
+    Q_EMIT layoutChanged();
 }

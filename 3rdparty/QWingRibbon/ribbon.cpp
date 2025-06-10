@@ -131,7 +131,7 @@ void Ribbon::dropEvent(QDropEvent *event) {
             pathList.append(urlList.at(i).toLocalFile());
         }
 
-        emit onDragDropFiles(pathList);
+        Q_EMIT onDragDropFiles(pathList);
         event->acceptProposedAction();
     }
 }

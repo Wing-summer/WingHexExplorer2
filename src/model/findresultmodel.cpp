@@ -123,7 +123,7 @@ QString FindResultModel::encoding() const { return m_encoding; }
 void FindResultModel::setEncoding(const QString &newEncoding) {
     if (m_encoding != newEncoding) {
         m_encoding = newEncoding;
-        emit dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));
+        Q_EMIT dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));
     }
 }
 
@@ -150,7 +150,7 @@ FindResultModel::FindResult FindResultModel::resultAt(qsizetype index) const {
 void FindResultModel::clear() {
     m_results.clear();
     m_findData.clear();
-    emit layoutChanged();
+    Q_EMIT layoutChanged();
 }
 
 QList<FindResultModel::FindResult>::size_type FindResultModel::size() const {

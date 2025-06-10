@@ -50,5 +50,5 @@ void QListViewExt::setModel(QAbstractItemModel *model) {
 
     QListView::setModel(model);
 
-    emit modelChanged();
+    Q_EMIT modelChanged();
 }

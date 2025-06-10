@@ -44,21 +44,21 @@ bool QHexRenderer::stringVisible() { return m_asciiVisible; }
 
 void QHexRenderer::setStringVisible(bool b) {
     m_asciiVisible = b;
-    emit m_document->documentChanged();
+    Q_EMIT m_document->documentChanged();
 }
 
 bool QHexRenderer::headerVisible() { return m_headerVisible; }
 
 void QHexRenderer::setHeaderVisible(bool b) {
     m_headerVisible = b;
-    emit m_document->documentChanged();
+    Q_EMIT m_document->documentChanged();
 }
 
 bool QHexRenderer::addressVisible() { return m_addressVisible; }
 
 void QHexRenderer::setAddressVisible(bool b) {
     m_addressVisible = b;
-    emit m_document->documentChanged();
+    Q_EMIT m_document->documentChanged();
 }
 
 void QHexRenderer::switchDoc(QHexDocument *doc) {

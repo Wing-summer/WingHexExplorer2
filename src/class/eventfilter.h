@@ -34,7 +34,7 @@ signals:
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override {
         if (event->type() == m_event) {
-            emit eventTriggered(obj, event);
+            Q_EMIT eventTriggered(obj, event);
         }
         return QObject::eventFilter(obj, event);
     }

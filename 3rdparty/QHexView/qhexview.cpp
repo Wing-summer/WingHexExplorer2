@@ -116,15 +116,15 @@ QFont QHexView::getHexeditorFont() {
 }
 
 void QHexView::getStatus() {
-    emit canUndoChanged(m_document->canUndo());
-    emit canRedoChanged(m_document->canRedo());
-    emit cursorLocationChanged();
-    emit documentSaved(m_document->isDocSaved());
-    emit documentKeepSize(m_document->isKeepSize());
-    emit documentLockedFile(m_document->isLocked());
-    emit metafgVisibleChanged(m_document->metafgVisible());
-    emit metabgVisibleChanged(m_document->metabgVisible());
-    emit metaCommentVisibleChanged(m_document->metaCommentVisible());
+    Q_EMIT canUndoChanged(m_document->canUndo());
+    Q_EMIT canRedoChanged(m_document->canRedo());
+    Q_EMIT cursorLocationChanged();
+    Q_EMIT documentSaved(m_document->isDocSaved());
+    Q_EMIT documentKeepSize(m_document->isKeepSize());
+    Q_EMIT documentLockedFile(m_document->isLocked());
+    Q_EMIT metafgVisibleChanged(m_document->metafgVisible());
+    Q_EMIT metabgVisibleChanged(m_document->metabgVisible());
+    Q_EMIT metaCommentVisibleChanged(m_document->metaCommentVisible());
 }
 
 void QHexView::establishSignal(QHexDocument *doc) {
@@ -139,16 +139,16 @@ void QHexView::establishSignal(QHexDocument *doc) {
             &QHexView::canRedoChanged);
     connect(doc, &QHexDocument::documentSaved, this, &QHexView::documentSaved);
     connect(doc, &QHexDocument::metabgVisibleChanged, this, [=](bool b) {
-        emit metabgVisibleChanged(b);
-        emit metaStatusChanged();
+        Q_EMIT metabgVisibleChanged(b);
+        Q_EMIT metaStatusChanged();
     });
     connect(doc, &QHexDocument::metafgVisibleChanged, this, [=](bool b) {
-        emit metafgVisibleChanged(b);
-        emit metaStatusChanged();
+        Q_EMIT metafgVisibleChanged(b);
+        Q_EMIT metaStatusChanged();
     });
     connect(doc, &QHexDocument::metaCommentVisibleChanged, this, [=](bool b) {
-        emit metaCommentVisibleChanged(b);
-        emit metaStatusChanged();
+        Q_EMIT metaCommentVisibleChanged(b);
+        Q_EMIT metaStatusChanged();
     });
     connect(doc, &QHexDocument::metaDataChanged, this,
             [=] { this->viewport()->update(); });
@@ -234,12 +234,12 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
             &QHexView::moveToSelection);
     connect(m_cursor, &QHexCursor::selectionChanged, this, [this]() {
         this->viewport()->update();
-        emit cursorSelectionChanged();
+        Q_EMIT cursorSelectionChanged();
     });
     connect(m_cursor, &QHexCursor::insertionModeChanged, this,
             &QHexView::renderCurrentLine);
 
-    emit documentChanged(document.data());
+    Q_EMIT documentChanged(document.data());
 
     this->adjustScrollBars();
     this->viewport()->update();
@@ -462,7 +462,7 @@ bool QHexView::Cut(bool hex, int nibbleindex) {
     if (res) {
         return this->RemoveSelection(nibbleindex);
     } else {
-        emit copyLimitRaised();
+        Q_EMIT copyLimitRaised();
         return res;
     }
 }
@@ -517,7 +517,7 @@ bool QHexView::cut(bool hex) {
     if (res) {
         return this->removeSelection();
     } else {
-        emit copyLimitRaised();
+        Q_EMIT copyLimitRaised();
         return res;
     }
 }
@@ -532,7 +532,7 @@ bool QHexView::copy(bool hex) {
 
     // 如果拷贝字节超过 ? MB 阻止
     if (len > 1024 * 1024 * m_copylimit) {
-        emit copyLimitRaised();
+        Q_EMIT copyLimitRaised();
         return false;
     }
 
@@ -558,7 +558,7 @@ void QHexView::setScaleRate(qreal rate) {
     if (rate >= 0.2 && rate < 3.01) {
         m_scaleRate = rate;
         setFontSize(fontSize());
-        emit scaleRateChanged();
+        Q_EMIT scaleRateChanged();
         update();
     }
 }
@@ -569,7 +569,7 @@ QColor QHexView::selBackgroundColor() const {
 
 void QHexView::setSelBackgroundColor(const QColor &newSelBackgroundColor) {
     m_renderer->setSelBackgroundColor(newSelBackgroundColor);
-    emit selBackgroundColorChanged();
+    Q_EMIT selBackgroundColorChanged();
 }
 
 void QHexView::setFontSize(qreal size) {
@@ -583,7 +583,7 @@ QColor QHexView::selectionColor() const { return m_renderer->selectionColor(); }
 
 void QHexView::setSelectionColor(const QColor &newSelectionColor) {
     m_renderer->setSelectionColor(newSelectionColor);
-    emit selectionColorChanged();
+    Q_EMIT selectionColorChanged();
 }
 
 QColor QHexView::bytesAlterBackground() const {
@@ -592,14 +592,14 @@ QColor QHexView::bytesAlterBackground() const {
 
 void QHexView::setBytesAlterBackground(const QColor &newBytesAlterBackground) {
     m_renderer->setBytesAlterBackground(newBytesAlterBackground);
-    emit bytesAlterBackgroundChanged();
+    Q_EMIT bytesAlterBackgroundChanged();
 }
 
 QColor QHexView::bytesColor() const { return m_renderer->bytesColor(); }
 
 void QHexView::setBytesColor(const QColor &newBytesColor) {
     m_renderer->setBytesColor(newBytesColor);
-    emit bytesColorChanged();
+    Q_EMIT bytesColorChanged();
 }
 
 QColor QHexView::bytesBackground() const {
@@ -608,21 +608,21 @@ QColor QHexView::bytesBackground() const {
 
 void QHexView::setBytesBackground(const QColor &newBytesBackground) {
     m_renderer->setBytesBackground(newBytesBackground);
-    emit bytesBackgroundChanged();
+    Q_EMIT bytesBackgroundChanged();
 }
 
 QColor QHexView::addressColor() const { return m_renderer->addressColor(); }
 
 void QHexView::setAddressColor(const QColor &newAddressColor) {
     m_renderer->setAddressColor(newAddressColor);
-    emit addressColorChanged();
+    Q_EMIT addressColorChanged();
 }
 
 QColor QHexView::headerColor() const { return m_renderer->headerColor(); }
 
 void QHexView::setHeaderColor(const QColor &newHeaderColor) {
     m_renderer->setHeaderColor(newHeaderColor);
-    emit headerColorChanged();
+    Q_EMIT headerColorChanged();
 }
 
 void QHexView::mousePressEvent(QMouseEvent *e) {
@@ -794,7 +794,7 @@ void QHexView::moveToSelection() {
     } else
         this->viewport()->update();
 
-    emit cursorLocationChanged(); // added by wingsummer
+    Q_EMIT cursorLocationChanged(); // added by wingsummer
 }
 
 void QHexView::blinkCursor() {

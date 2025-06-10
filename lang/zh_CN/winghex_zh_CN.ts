@@ -789,57 +789,57 @@
 <context>
     <name>Logger</name>
     <message>
-        <location filename="../../src/class/logger.cpp" line="96"/>
+        <location filename="../../src/class/logger.cpp" line="98"/>
         <source>[Trace]</source>
         <translation>【跟踪】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="103"/>
+        <location filename="../../src/class/logger.cpp" line="105"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="110"/>
+        <location filename="../../src/class/logger.cpp" line="112"/>
         <source>[Info]</source>
         <translation>【信息】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="117"/>
+        <location filename="../../src/class/logger.cpp" line="119"/>
         <source>[Debug]</source>
         <translation>【调试】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="124"/>
+        <location filename="../../src/class/logger.cpp" line="126"/>
         <source>[Error]</source>
         <translation>【错误】</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="149"/>
+        <location filename="../../src/class/logger.cpp" line="151"/>
         <source>Critial</source>
         <translation>崩溃</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="151"/>
+        <location filename="../../src/class/logger.cpp" line="153"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="153"/>
+        <location filename="../../src/class/logger.cpp" line="155"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="155"/>
+        <location filename="../../src/class/logger.cpp" line="157"/>
         <source>Info</source>
         <translation>信息</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="157"/>
+        <location filename="../../src/class/logger.cpp" line="159"/>
         <source>Debug</source>
         <translation>调试</translation>
     </message>
     <message>
-        <location filename="../../src/class/logger.cpp" line="159"/>
+        <location filename="../../src/class/logger.cpp" line="161"/>
         <source>Trace</source>
         <translation>跟踪</translation>
     </message>

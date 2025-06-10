@@ -64,7 +64,7 @@ void RibbonButtonGroup::addButton(QToolButton *button) {
     ui->horizontalLayout->addWidget(button);
 
     if (_buttons.size() == 1) {
-        emit emptyStatusChanged(false);
+        Q_EMIT emptyStatusChanged(false);
     }
 }
 
@@ -73,7 +73,7 @@ void RibbonButtonGroup::removeButton(QToolButton *button) {
         ui->horizontalLayout->removeWidget(button);
         _buttons.removeOne(button);
         if (_buttons.empty()) {
-            emit emptyStatusChanged(true);
+            Q_EMIT emptyStatusChanged(true);
         }
     }
 }

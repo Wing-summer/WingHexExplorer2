@@ -38,7 +38,7 @@ void NumShowModel::setNumData(NumTableIndex index, const QString &data) {
     } else {
         m_num[index] = data;
     }
-    emit dataChanged(this->index(index, 0), this->index(index, 0));
+    Q_EMIT dataChanged(this->index(index, 0), this->index(index, 0));
 }
 
 QString NumShowModel::numData(NumTableIndex index) const {

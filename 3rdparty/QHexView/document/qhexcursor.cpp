@@ -129,7 +129,7 @@ bool QHexCursor::hasInternalSelection() const { return !m_sels.isEmpty(); }
 void QHexCursor::clearPreviewSelection() {
     m_selection = m_position;
     m_preMode = SelectionNormal;
-    emit selectionChanged();
+    Q_EMIT selectionChanged();
 }
 
 void QHexCursor::clearSelection() { m_sels.clear(); }
@@ -155,10 +155,10 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
     }
 
     if (clearSelection) {
-        emit selectionChanged();
+        Q_EMIT selectionChanged();
     }
 
-    emit positionChanged();
+    Q_EMIT positionChanged();
 }
 
 void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
@@ -197,7 +197,7 @@ void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
         }
     }
 
-    emit selectionChanged();
+    Q_EMIT selectionChanged();
 }
 
 void QHexCursor::moveTo(qsizetype offset, bool clearSelection) {
@@ -223,7 +223,7 @@ void QHexCursor::setInsertionMode(QHexCursor::InsertionMode mode) {
     m_insertionmode = mode;
 
     if (differentmode)
-        emit insertionModeChanged();
+        Q_EMIT insertionModeChanged();
 }
 
 void QHexCursor::setLineWidth(quint8 width) {
@@ -243,7 +243,7 @@ void QHexCursor::switchInsertionMode() {
     else
         m_insertionmode = QHexCursor::OverwriteMode;
 
-    emit insertionModeChanged();
+    Q_EMIT insertionModeChanged();
 }
 
 bool QHexCursor::hasPreviewSelection() const {
@@ -299,5 +299,5 @@ void QHexCursor::mergePreviewSelection() {
     }
     clearPreviewSelection();
 
-    emit selectionChanged();
+    Q_EMIT selectionChanged();
 }

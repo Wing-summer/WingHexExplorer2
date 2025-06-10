@@ -65,5 +65,5 @@ QVariant DbgVarShowModel::headerData(int section, Qt::Orientation orientation,
 void DbgVarShowModel::updateData(
     const QVector<asDebugger::VariablesInfo> &varinfos) {
     _vars = varinfos;
-    emit layoutChanged();
+    Q_EMIT layoutChanged();
 }

@@ -45,7 +45,7 @@ GotoLineWidget::GotoLineWidget(QWidget *parent)
     tbGoto->setAutoRaise(true);
     tbGoto->setIcon(skin.themeIcon(QStringLiteral("right_arrow")));
     connect(tbGoto, &QToolButton::clicked, this, [this]() {
-        emit onGotoLine(m_sbline->value());
+        Q_EMIT onGotoLine(m_sbline->value());
         close();
     });
 
@@ -70,6 +70,6 @@ void GotoLineWidget::setOriginLine(int line) {
 }
 
 void GotoLineWidget::cancel() {
-    emit onGotoLine(m_line);
+    Q_EMIT onGotoLine(m_line);
     CodeEditControlWidget::cancel();
 }

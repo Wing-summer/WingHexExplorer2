@@ -77,7 +77,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
                     m_lineeditor->clear();
                 } else {
                     // force update
-                    emit m_lineeditor->textChanged();
+                    Q_EMIT m_lineeditor->textChanged();
                 }
             });
 

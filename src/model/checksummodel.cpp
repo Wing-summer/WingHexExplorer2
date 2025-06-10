@@ -30,7 +30,7 @@ void CheckSumModel::setCheckSumData(QCryptographicHash::Algorithm algorithm,
         _checkSumData[algorithm] = data;
         auto index = this->index(
             Utilities::supportedHashAlgorithms().indexOf(algorithm), 0);
-        emit dataChanged(index, index);
+        Q_EMIT dataChanged(index, index);
     }
 }
 
@@ -43,7 +43,7 @@ void CheckSumModel::clearData() {
     for (auto p = _checkSumData.begin(); p != _checkSumData.end(); ++p) {
         p->clear();
     }
-    emit dataChanged(
+    Q_EMIT dataChanged(
         this->index(0, 0),
         this->index(Utilities::supportedHashAlgorithms().size() - 1, 0));
 }

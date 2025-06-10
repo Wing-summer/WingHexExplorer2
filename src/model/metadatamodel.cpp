@@ -119,5 +119,5 @@ QVariant MetaDataModel::headerData(int section, Qt::Orientation orientation,
 void MetaDataModel::setDocument(QHexDocument *newDoc) {
     _doc = newDoc;
     connect(newDoc, &QHexDocument::metaDataChanged, this,
-            [=] { emit this->layoutChanged(); });
+            [=] { Q_EMIT this->layoutChanged(); });
 }

@@ -60,7 +60,7 @@ AsCompletion::AsCompletion(WingCodeEdit *p)
                 auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
                 if (v.type == CodeInfoTip::Type::Function ||
                     v.type == CodeInfoTip::Type::ClsFunction) {
-                    emit onFunctionTip(v.getTooltip());
+                    Q_EMIT onFunctionTip(v.getTooltip());
                 }
             });
 
@@ -217,7 +217,7 @@ void AsCompletion::clearCompleteDBUnused() {
         [](const QPair<QString, CompleteDB> &c) { return c.second.time == 0; });
 }
 
-void AsCompletion::clearFunctionTip() { emit onFunctionTip({}); }
+void AsCompletion::clearFunctionTip() { Q_EMIT onFunctionTip({}); }
 
 QString AsCompletion::wordSeperators() const {
     static QString eow(QStringLiteral("~!@$%^&*()_+{}|\"<>?,/;'[]\\-="));

@@ -26,7 +26,7 @@
 #include <QScreen>
 #include <QStyleFactory>
 
-SkinManager::SkinManager(QObject *parent) : QObject(parent) {
+SkinManager::SkinManager() {
     ASSERT_SINGLETON;
 
     int theme = SettingManager::instance().themeID();

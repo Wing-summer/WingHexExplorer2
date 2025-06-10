@@ -135,7 +135,7 @@ QColor MetaDialog::backGroundColor() {
 void MetaDialog::setComment(QString comment) {
     if (comment.length() > 0) {
         ccomment->setChecked(true);
-        emit ccomment->clicked(true);
+        Q_EMIT ccomment->clicked(true);
         _comment = comment;
         m_comment->setText(comment);
     }
@@ -144,7 +144,7 @@ void MetaDialog::setComment(QString comment) {
 void MetaDialog::setBackGroundColor(QColor color) {
     if (color.isValid()) {
         cbackground->setChecked(true);
-        emit cbackground->clicked(true);
+        Q_EMIT cbackground->clicked(true);
         _background = color;
         ibackground->setColor(color);
     }
@@ -153,7 +153,7 @@ void MetaDialog::setBackGroundColor(QColor color) {
 void MetaDialog::setForeGroundColor(QColor color) {
     if (color.isValid()) {
         cforeground->setChecked(true);
-        emit cforeground->clicked(true);
+        Q_EMIT cforeground->clicked(true);
         _foreground = color;
         iforeground->setColor(color);
     }

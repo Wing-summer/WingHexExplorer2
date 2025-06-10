@@ -908,7 +908,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
         m_bookmarks->clearSelection();
         doc->RemoveBookMarks(pos);
-        emit model->layoutChanged();
+        Q_EMIT model->layoutChanged();
     });
     m_aDelBookMark->setEnabled(false);
     m_bookmarks->addAction(m_aDelBookMark);
@@ -982,7 +982,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
         m_metadatas->clearSelection();
         hexeditor->document()->metadata()->RemoveMetadatas(pmetas);
-        emit m_metadatas->model()->layoutChanged();
+        Q_EMIT m_metadatas->model()->layoutChanged();
     });
     m_aDelMetaData->setEnabled(false);
     m_metadatas->addAction(m_aDelMetaData);
@@ -3979,7 +3979,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     PluginSystem::instance().destory();
 
     FramelessMainWindow::closeEvent(event);
-    emit closed();
+    Q_EMIT closed();
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {

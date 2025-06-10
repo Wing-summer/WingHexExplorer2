@@ -21,13 +21,12 @@
 #include <QDir>
 #include <QFileSystemWatcher>
 #include <QHash>
-#include <QObject>
 
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "utilities.h"
 
-class ScriptManager : public QObject {
-    Q_OBJECT
+class ScriptManager {
+    Q_DECLARE_TR_FUNCTIONS(ScriptManager)
 
 public:
     struct ScriptDirMeta {
@@ -100,7 +99,7 @@ private:
         return a;
     }
 
-public slots:
+public:
     void runScript(const QString &filename);
 
 private:

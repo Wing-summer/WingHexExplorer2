@@ -138,7 +138,7 @@ void QConsoleWidget::handleReturnKey() {
     if (iodevice_->isOpen())
         iodevice_->consoleWidgetInput(code);
 
-    emit consoleCommand(code);
+    Q_EMIT consoleCommand(code);
 }
 
 void QConsoleWidget::handleTabKey() {
@@ -167,7 +167,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     if (e->modifiers() & Qt::ControlModifier) {
         if (e->key() == Qt::Key_Q) // Ctrl-Q aborts
         {
-            emit abortEvaluation();
+            Q_EMIT abortEvaluation();
             e->accept();
             return;
         }

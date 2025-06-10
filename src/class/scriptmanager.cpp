@@ -39,7 +39,7 @@ QString ScriptManager::userScriptPath() const { return m_usrScriptsPath; }
 
 QString ScriptManager::systemScriptPath() const { return m_sysScriptsPath; }
 
-ScriptManager::ScriptManager() : QObject() {
+ScriptManager::ScriptManager() {
     ASSERT_SINGLETON;
 
     // init script directory

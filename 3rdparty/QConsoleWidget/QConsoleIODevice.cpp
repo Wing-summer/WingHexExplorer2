@@ -62,7 +62,7 @@ qint64 QConsoleIODevice::writeData(const char *data, qint64 len) {
 
     writtenSinceLastEmit_ += len;
     if (!signalsBlocked()) {
-        emit bytesWritten(writtenSinceLastEmit_);
+        Q_EMIT bytesWritten(writtenSinceLastEmit_);
         writtenSinceLastEmit_ = 0;
     }
     return len;
@@ -82,7 +82,7 @@ void QConsoleIODevice::consoleWidgetInput(const QString &in) {
 
     readSinceLastEmit_ += sz;
     if (!signalsBlocked()) {
-        emit readyRead();
+        Q_EMIT readyRead();
         readyReadEmmited_ = true;
         readSinceLastEmit_ = 0;
     }

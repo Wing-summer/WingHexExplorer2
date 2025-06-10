@@ -24,9 +24,7 @@
 #include <QStringList>
 #include <QTranslator>
 
-class LanguageManager : public QObject {
-    Q_OBJECT
-
+class LanguageManager {
 public:
     struct LanguageData {
         QByteArray trFiles;

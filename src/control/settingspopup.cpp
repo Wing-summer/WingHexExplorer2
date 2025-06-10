@@ -65,7 +65,7 @@ void TreeFilterEdit::resizeEvent(QResizeEvent *event) {
 
 void TreeFilterEdit::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Down) {
-        emit navigateDown();
+        Q_EMIT navigateDown();
         return;
     }
     QLineEdit::keyPressEvent(event);
@@ -212,13 +212,15 @@ void SyntaxPopup::syntaxItemChosen(QTreeWidgetItem *current, int) {
         return;
 
     if (current == m_plainTextItem) {
-        emit syntaxSelected(WingCodeEdit::nullSyntax());
+        Q_EMIT syntaxSelected(WingCodeEdit::nullSyntax());
         return;
     }
 
     QVariant itemData = current->data(0, Qt::UserRole);
-    if (itemData.canConvert<KSyntaxHighlighting::Definition>())
-        emit syntaxSelected(itemData.value<KSyntaxHighlighting::Definition>());
+    if (itemData.canConvert<KSyntaxHighlighting::Definition>()) {
+        Q_EMIT syntaxSelected(
+            itemData.value<KSyntaxHighlighting::Definition>());
+    }
 }
 
 EncodingPopup::EncodingPopup(QWidget *parent) : FilteredTreePopup(parent) {
@@ -243,5 +245,5 @@ void EncodingPopup::encodingItemChosen(QTreeWidgetItem *current, int) {
 
     QVariant codecName = current->data(0, Qt::UserRole);
     if (codecName.isValid())
-        emit encodingSelected(codecName.toString());
+        Q_EMIT encodingSelected(codecName.toString());
 }

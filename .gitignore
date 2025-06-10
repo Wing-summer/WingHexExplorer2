@@ -78,3 +78,8 @@ CMakeLists.txt.user*
 
 #VSCode
 .vscode/
+
+# antlr 4 caches
+*.interp
+*.tokens
+.antlr/

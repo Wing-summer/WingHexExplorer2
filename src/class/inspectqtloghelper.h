@@ -3,11 +3,11 @@
 
 #include "dialog/framelessdialogbase.h"
 
-#include <QObject>
+#include <QCoreApplication>
 #include <QTextBrowser>
 
-class InspectQtLogHelper : public QObject {
-    Q_OBJECT
+class InspectQtLogHelper {
+    Q_DECLARE_TR_FUNCTIONS(InspectQtLogHelper)
 
 public:
     static InspectQtLogHelper &instance();

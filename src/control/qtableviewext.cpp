@@ -50,5 +50,5 @@ void QTableViewExt::setModel(QAbstractItemModel *model) {
 
     QTableView::setModel(model);
 
-    emit modelChanged();
+    Q_EMIT modelChanged();
 }

@@ -26,14 +26,14 @@ void InspectQtLogHelper::init() {
 
     menu->addSeparator();
     auto a = new QAction(tr("Clear"), menu);
-    connect(a, &QAction::triggered, this, [this]() { _ctx->clear(); });
+    QObject::connect(a, &QAction::triggered, qApp, [this]() { _ctx->clear(); });
     menu->addAction(a);
 
     auto af = ma.at(0);
     af = menu->insertSeparator(af);
     a = new QAction(tr("TopMost"), menu);
     a->setCheckable(true);
-    connect(a, &QAction::toggled, this, [this](bool b) {
+    QObject::connect(a, &QAction::toggled, qApp, [this](bool b) {
         _logger->setWindowFlag(Qt::WindowStaysOnTopHint, b);
         if (!_logger->isVisible()) {
             _logger->setVisible(true);
@@ -41,10 +41,10 @@ void InspectQtLogHelper::init() {
     });
     menu->insertAction(af, a);
 
-    connect(_ctx, &QTextBrowser::customContextMenuRequested, this,
-            [menu, this](const QPoint &pos) {
-                menu->popup(_ctx->mapToGlobal(pos));
-            });
+    QObject::connect(_ctx, &QTextBrowser::customContextMenuRequested, qApp,
+                     [menu, this](const QPoint &pos) {
+                         menu->popup(_ctx->mapToGlobal(pos));
+                     });
 
     _logger->buildUpContent(_ctx);
     _logger->setWindowTitle(tr("Inspect"));

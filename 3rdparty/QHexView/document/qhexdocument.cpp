@@ -71,20 +71,20 @@ void QHexDocument::addUndoCommand(QUndoCommand *command) {
 
 void QHexDocument::setMetabgVisible(bool b) {
     m_metabg = b;
-    emit documentChanged();
-    emit metabgVisibleChanged(b);
+    Q_EMIT documentChanged();
+    Q_EMIT metabgVisibleChanged(b);
 }
 
 void QHexDocument::setMetafgVisible(bool b) {
     m_metafg = b;
-    emit documentChanged();
-    emit metafgVisibleChanged(b);
+    Q_EMIT documentChanged();
+    Q_EMIT metafgVisibleChanged(b);
 }
 
 void QHexDocument::setMetaCommentVisible(bool b) {
     m_metacomment = b;
-    emit documentChanged();
-    emit metaCommentVisibleChanged(b);
+    Q_EMIT documentChanged();
+    Q_EMIT metaCommentVisibleChanged(b);
 }
 
 bool QHexDocument::metabgVisible() { return m_metabg; }
@@ -227,7 +227,7 @@ void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();
     }
-    emit documentSaved(b);
+    Q_EMIT documentSaved(b);
 }
 
 bool QHexDocument::isReadOnly() { return m_readonly; }
@@ -242,7 +242,7 @@ bool QHexDocument::setLockedFile(bool b) {
     if (m_readonly)
         return false;
     m_islocked = b;
-    emit documentLockedFile(b);
+    Q_EMIT documentLockedFile(b);
     return true;
 }
 bool QHexDocument::setKeepSize(bool b) {
@@ -250,7 +250,7 @@ bool QHexDocument::setKeepSize(bool b) {
         return false;
 
     m_keepsize = b;
-    emit documentKeepSize(b);
+    Q_EMIT documentKeepSize(b);
     return true;
 }
 
@@ -326,8 +326,8 @@ bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (!existBookMark(pos)) {
         _bookmarks.insert(pos, comment);
         setDocSaved(false);
-        emit documentChanged();
-        emit bookMarkChanged();
+        Q_EMIT documentChanged();
+        Q_EMIT bookMarkChanged();
         return true;
     }
     return false;
@@ -365,7 +365,7 @@ bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
         m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
     }
     m_undostack->endMacro();
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
@@ -395,8 +395,8 @@ bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
         _bookmarks.clear();
         setDocSaved(false);
-        emit documentChanged();
-        emit bookMarkChanged();
+        Q_EMIT documentChanged();
+        Q_EMIT bookMarkChanged();
         return true;
     }
     return false;
@@ -411,7 +411,7 @@ qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
 void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
     _bookmarks = books;
     setDocSaved(false);
-    emit documentChanged();
+    Q_EMIT documentChanged();
 }
 
 void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
@@ -502,7 +502,7 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
     m_buffer->insert(offset, data);
     setDocSaved(false);
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
@@ -513,14 +513,14 @@ bool QHexDocument::_replace(qsizetype offset, uchar b) {
 bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
     m_buffer->replace(offset, data);
     setDocSaved(false);
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
 bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     m_buffer->remove(offset, len);
     setDocSaved(false);
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
@@ -636,7 +636,7 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
 
     connect(m_metadata, &QHexMetadata::metadataChanged, this, [this] {
         setDocSaved(false);
-        emit metaDataChanged();
+        Q_EMIT metaDataChanged();
     });
 
     /*=======================*/
@@ -665,7 +665,7 @@ int QHexDocument::hexLineWidth() const { return m_hexlinewidth; }
 void QHexDocument::setHexLineWidth(quint8 value) {
     m_hexlinewidth = value;
     m_metadata->setLineWidth(value);
-    emit hexLineWidthChanged();
+    Q_EMIT hexLineWidthChanged();
 }
 
 QHexMetadata *QHexDocument::metadata() const { return m_metadata; }
@@ -683,19 +683,19 @@ void QHexDocument::setBaseAddress(quint64 baseaddress) {
         return;
 
     m_baseaddress = baseaddress;
-    emit documentChanged();
+    Q_EMIT documentChanged();
 }
 
-void QHexDocument::sync() { emit documentChanged(); }
+void QHexDocument::sync() { Q_EMIT documentChanged(); }
 
 void QHexDocument::undo() {
     m_undostack->undo();
-    emit documentChanged();
+    Q_EMIT documentChanged();
 }
 
 void QHexDocument::redo() {
     m_undostack->redo();
-    emit documentChanged();
+    Q_EMIT documentChanged();
 }
 
 void QHexDocument::beginMarco(const QString &text) {
@@ -727,7 +727,7 @@ bool QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
         return false;
     }
 
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
@@ -743,7 +743,7 @@ void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
     if (cmd) {
         m_undostack->push(cmd);
     }
-    emit documentChanged();
+    Q_EMIT documentChanged();
 }
 
 bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
@@ -757,7 +757,7 @@ bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
     } else {
         return false;
     }
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 
@@ -769,7 +769,7 @@ bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
     if (cmd) {
         m_undostack->push(cmd);
     }
-    emit documentChanged();
+    Q_EMIT documentChanged();
     return true;
 }
 

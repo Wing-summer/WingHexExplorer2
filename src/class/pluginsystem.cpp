@@ -3308,7 +3308,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
 
         // dependencies had been checked
 
-        emit pluginLoading(p->pluginName());
+        Q_EMIT pluginLoading(p->pluginName());
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 

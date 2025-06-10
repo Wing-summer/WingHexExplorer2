@@ -41,8 +41,8 @@ void asDebugger::registerToStringCallback(const asITypeInfo *ti,
 }
 
 void asDebugger::takeCommands(asIScriptContext *ctx) {
-    emit onPullVariables(globalVariables(ctx), localVariables(ctx));
-    emit onPullCallStack(retriveCallstack(ctx));
+    Q_EMIT onPullVariables(globalVariables(ctx), localVariables(ctx));
+    Q_EMIT onPullCallStack(retriveCallstack(ctx));
 
     while (m_action == DebugAction::PAUSE) {
         qApp->processEvents();
@@ -66,7 +66,7 @@ void asDebugger::takeCommands(asIScriptContext *ctx) {
         break;
     }
 
-    emit onDebugActionExec();
+    Q_EMIT onDebugActionExec();
 }
 
 void asDebugger::lineCallback(asIScriptContext *ctx) {
@@ -202,7 +202,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
 
     rc(dbgContext, file, lineNbr, col, ctx->GetCallstackSize());
 
-    emit onRunCurrentLine(file, lineNbr);
+    Q_EMIT onRunCurrentLine(file, lineNbr);
 
     takeCommands(ctx);
 }
@@ -210,7 +210,7 @@ void asDebugger::lineCallback(asIScriptContext *ctx) {
 void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
     BreakPoint bp(file, lineNbr, false);
     m_breakPoints.push_back(bp);
-    emit breakPointChanged();
+    Q_EMIT breakPointChanged();
 }
 
 void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
@@ -222,7 +222,7 @@ void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
         return;
     }
     m_breakPoints.erase(r);
-    emit breakPointChanged();
+    Q_EMIT breakPointChanged();
 }
 
 void asDebugger::addFuncBreakPoint(const QString &func) {
@@ -231,7 +231,7 @@ void asDebugger::addFuncBreakPoint(const QString &func) {
 
     BreakPoint bp(actual, 0, true);
     m_breakPoints.push_back(bp);
-    emit breakPointChanged();
+    Q_EMIT breakPointChanged();
 }
 
 void asDebugger::removeFuncBreakPoint(const QString &func) {
@@ -240,12 +240,12 @@ void asDebugger::removeFuncBreakPoint(const QString &func) {
         m_breakPoints.begin(), m_breakPoints.end(), [=](const BreakPoint &bp) {
             return bp.name == actual && bp.func == true;
         }));
-    emit breakPointChanged();
+    Q_EMIT breakPointChanged();
 }
 
 void asDebugger::clearBreakPoint() {
     m_breakPoints.clear();
-    emit breakPointChanged();
+    Q_EMIT breakPointChanged();
 }
 
 const QVector<asDebugger::BreakPoint> &asDebugger::breakPoints() {
@@ -374,7 +374,7 @@ bool asDebugger::checkBreakPoint(asIScriptContext *ctx) {
                         auto old = m_breakPoints[n];
                         // Move the breakpoint to the next line
                         m_breakPoints[n].lineNbr = line;
-                        emit onAdjustBreakPointLine(old, line);
+                        Q_EMIT onAdjustBreakPointLine(old, line);
                     }
                 }
             }

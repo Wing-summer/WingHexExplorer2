@@ -38,7 +38,7 @@ HueColorPickerSlider::HueColorPickerSlider(Qt::Orientation orientation,
     connect(this, &HueColorPickerSlider::valueChanged, this, [this](int v) {
         _color.setHsv(v, _color.hsvSaturation(), _color.value());
         this->setToolTip(_color.name());
-        emit colorChanged(_color);
+        Q_EMIT colorChanged(_color);
     });
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
@@ -72,7 +72,7 @@ void HueColorPickerSlider::setColor(const QColor &newColor) {
                                 {359.0 / 360.0, redColor(colorS, colorV)}});
 
         this->setValue(_color.hsvHue());
-        emit colorChanged(newColor);
+        Q_EMIT colorChanged(newColor);
     }
 }
 

@@ -158,7 +158,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
 
                         hitems.move(idx, 0);
                     }
-                    emit triggered(f);
+                    Q_EMIT triggered(f);
                 } else {
                     auto index = hitems.indexOf(send);
                     if (index < 0) {

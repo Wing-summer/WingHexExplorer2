@@ -105,14 +105,14 @@ LanguageManager::LanguageManager() {
         QLibraryInfo::location(QLibraryInfo::TranslationsPath);
 #endif
 
-    auto qtTranslator = new QTranslator(this);
+    auto qtTranslator = new QTranslator(qApp);
     if (qtTranslator->load(_defaultLocale, QStringLiteral("qtbase"),
                            QStringLiteral("_"), qtPath)) {
 
         qApp->installTranslator(qtTranslator);
     }
 
-    qtTranslator = new QTranslator(this);
+    qtTranslator = new QTranslator(qApp);
     if (qtTranslator->load(_defaultLocale, QStringLiteral("qt"),
                            QStringLiteral("_"), qtPath)) {
 
@@ -122,7 +122,7 @@ LanguageManager::LanguageManager() {
     if (unpackTr(langPath + QStringLiteral("/") + _defaultLocale.name() +
                      QStringLiteral("/") + QStringLiteral(LANG_PAK_NAME),
                  _defaultLocale)) {
-        auto translator = new QTranslator(this);
+        auto translator = new QTranslator(qApp);
         if (translator->load(
                 reinterpret_cast<const uchar *>(_data.trFiles.data()),
                 _data.trFiles.size())) {
@@ -193,7 +193,7 @@ QTranslator *LanguageManager::try2LoadPluginLang(const QString &plgID) {
     if (!langDir.cd(plgID)) {
         return nullptr;
     }
-    auto translator = new QTranslator(this);
+    auto translator = new QTranslator(qApp);
     if (translator->load(_defaultLocale, plgID, QStringLiteral("_"),
                          langDir.absolutePath())) {
         if (qApp->installTranslator(translator)) {

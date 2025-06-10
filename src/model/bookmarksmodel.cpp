@@ -69,5 +69,5 @@ QVariant BookMarksModel::headerData(int section, Qt::Orientation orientation,
 void BookMarksModel::setDocument(QHexDocument *newDoc) {
     _doc = newDoc;
     connect(newDoc, &QHexDocument::bookMarkChanged, this,
-            [=] { emit this->layoutChanged(); });
+            [=] { Q_EMIT this->layoutChanged(); });
 }

@@ -90,7 +90,7 @@ void ColorPickerDialog::updateColor(QColor color) {
     ui->leColor->setText(color.name());
     ui->wcolor->setStyleSheet(QStringLiteral("background-color: ") +
                               color.name());
-    emit colorChanged();
+    Q_EMIT colorChanged();
 }
 
 QColor ColorPickerDialog::color() const { return _color; }

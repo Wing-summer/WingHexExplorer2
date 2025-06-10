@@ -20,13 +20,10 @@
 
 #include "class/asdebugger.h"
 
-#include <QObject>
 #include <QString>
 #include <QtGlobal>
 
-class AngelObjString : public QObject {
-    Q_OBJECT
-
+class AngelObjString {
 public:
     static QString stringToString(void *obj, asDebugger *dbg, asUINT tag);
 

@@ -170,9 +170,9 @@ void SettingManager::load() {
         }
     }
 
-    emit sigEditorfontSizeChanged(m_editorfontSize);
-    emit sigCopylimitChanged(m_copylimit);
-    emit sigDecodeStrlimitChanged(m_decodeStrlimit);
+    Q_EMIT sigEditorfontSizeChanged(m_editorfontSize);
+    Q_EMIT sigCopylimitChanged(m_copylimit);
+    Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
 }
 
 QList<RecentFileManager::RecentInfo>
@@ -483,7 +483,7 @@ void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
     if (m_decodeStrlimit != newDecodeStrlimit) {
         m_decodeStrlimit = newDecodeStrlimit;
         _setUnsaved.setFlag(SETTING_ITEM::EDITOR_DECSTRLIMIT);
-        emit sigDecodeStrlimitChanged(m_decodeStrlimit);
+        Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
     }
 }
 
@@ -494,7 +494,7 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
     if (m_copylimit != newCopylimit) {
         m_copylimit = newCopylimit;
         _setUnsaved.setFlag(SETTING_ITEM::EDITOR_COPY_LIMIT);
-        emit sigDecodeStrlimitChanged(m_copylimit);
+        Q_EMIT sigDecodeStrlimitChanged(m_copylimit);
     }
 }
 
@@ -522,7 +522,7 @@ void SettingManager::setEditorfontSize(int newEditorfontSize) {
     if (m_editorfontSize != newEditorfontSize) {
         m_editorfontSize = newEditorfontSize;
         _setUnsaved.setFlag(SETTING_ITEM::EDITOR_FONTSIZE);
-        emit sigEditorfontSizeChanged(newEditorfontSize);
+        Q_EMIT sigEditorfontSizeChanged(newEditorfontSize);
     }
 }
 

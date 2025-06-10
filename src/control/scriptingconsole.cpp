@@ -88,7 +88,7 @@ void ScriptingConsole::handleReturnKey() {
             iodevice_->consoleWidgetInput(code);
 
         if (!_isWaitingRead) {
-            emit consoleCommand(code);
+            Q_EMIT consoleCommand(code);
         }
     }
 }

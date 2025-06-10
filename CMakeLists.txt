@@ -46,16 +46,13 @@ if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
-if(${QT_VERSION_MAJOR} EQUAL 5)
-    if(Qt5Widgets_VERSION VERSION_LESS 5.14.0)
-        message(FATAL_ERROR "Minimum supported Qt5 version is 5.14!")
-    endif()
-elseif(${QT_VERSION_MAJOR} EQUAL 6)
+if(${QT_VERSION_MAJOR} EQUAL 6)
     if(Qt6Widgets_VERSION VERSION_LESS 6.6.2)
         message(FATAL_ERROR "Minimum supported Qt6 version is 6.6.2!")
     endif()
 else()
-    message(FATAL_ERROR "Unsupported Qt version!")
+    message(
+        FATAL_ERROR "Qt${QT_VERSION_MAJOR} has been dropped and not supported!")
 endif()
 
 if(MSVC)
@@ -80,6 +77,26 @@ add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/WingCodeEdit)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
+
+set(DISABLE_WARNINGS ON)
+set(ANTLR4_INSTALL OFF)
+set(ANTLR_BUILD_CPP_TESTS OFF)
+set(ANTLR_BUILD_SHARED OFF)
+set(ANTLR_BUILD_STATIC ON)
+set(WITH_STATIC_CRT OFF)
+add_subdirectory(3rdparty/antlr4-cpp)
+
+set(NUMCAL_GRAMMAR
+    src/grammar/NumCal/NumCalBaseVisitor.cpp
+    src/grammar/NumCal/NumCalBaseVisitor.h
+    src/grammar/NumCal/NumCalLexer.cpp
+    src/grammar/NumCal/NumCalLexer.h
+    src/grammar/NumCal/NumCalParser.cpp
+    src/grammar/NumCal/NumCalParser.h
+    src/grammar/NumCal/NumCalVisitor.cpp
+    src/grammar/NumCal/NumCalVisitor.h)
+
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -241,8 +258,6 @@ set(CLASS_SRC
     src/class/asdebugger.cpp
     src/class/angelobjstring.h
     src/class/angelobjstring.cpp
-    src/class/scripteditortheme.h
-    src/class/scripteditortheme.cpp
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
@@ -380,15 +395,8 @@ set(TRANSLATION_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/QWingRibbon
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-if(${QT_VERSION_MAJOR} EQUAL 5)
-    qt5_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                           -no-obsolete)
-elseif(${QT_VERSION_MAJOR} EQUAL 6)
-    qt6_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
-                           -no-obsolete)
-else()
-    message(FATAL_ERROR "Unsupported QT version")
-endif()
+qt_create_translation(QM_FILES ${TRANSLATION_PATH} ${TS_FILES} OPTIONS
+                      -no-obsolete)
 
 set(LANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lang")
 set(LANG_DEST "${CMAKE_CURRENT_BINARY_DIR}/.tmp/lang")
@@ -453,6 +461,7 @@ set(PROJECT_SOURCES
     ${SCRIPT_ADDON_SRC}
     ${ANGEL_SCRIPT_ADDON}
     ${QM_FILES}
+    ${ANTLR4_GRAMMAR}
     theme/breeze.qrc
     resources.qrc)
 
@@ -471,19 +480,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     else()
         qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
                           ${PROJECT_SOURCES})
-    endif()
-else()
-    if(ANDROID)
-        message(FATAL_ERROR "Android is not supported!")
-    else()
-        if(WIN32)
-            set(app_icon_resource_windows
-                "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
-            add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES}
-                                                 ${app_icon_resource_windows})
-        else()
-            add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES})
-        endif()
     endif()
 endif()
 
@@ -510,6 +506,7 @@ target_link_libraries(
             QHexView
             WingCodeEdit
             angelscript
+            antlr4_static
             qtadvanceddocking-qt${QT_VERSION_MAJOR})
 
 if(WINGHEX_USE_FRAMELESS)
@@ -520,6 +517,9 @@ if(WIN32)
     target_link_libraries(${CMAKE_PROJECT_NAME}
                           PRIVATE Qt${QT_VERSION_MAJOR}::AxContainer)
 endif()
+
+# emit marco in Qt conflicts with antlr4-cpp
+target_compile_definitions(WingHexExplorer2 PRIVATE QT_NO_EMIT)
 
 target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"

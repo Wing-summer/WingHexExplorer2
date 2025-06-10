@@ -196,7 +196,7 @@ bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
                &item) { return item.second.isEmpty(); });
 #endif
 
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
     return true;
 }
 
@@ -218,7 +218,7 @@ void QHexMetadata::removeMetadata(qsizetype offset) {
     m_metadata.removeIf(rmfn);
 #endif
 
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 QVector<QHexMetadataItem> QHexMetadata::getAllMetadata() const {
@@ -279,7 +279,7 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
     for (auto &meta : m_metadata) {
         addMetaLines(meta);
     }
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 bool QHexMetadata::hasMetadata() { return m_metadata.count() > 0; }
@@ -320,7 +320,7 @@ void QHexMetadata::endMarco() { m_undo->endMacro(); }
 void QHexMetadata::clear() {
     m_linemeta.clear();
     m_metadata.clear();
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
@@ -329,7 +329,7 @@ bool QHexMetadata::metadata(qsizetype begin, qsizetype end,
     if (checkValidMetadata(begin, end, fgcolor, bgcolor, comment)) {
         QHexMetadataItem absi(begin, end, fgcolor, bgcolor, comment);
         addMetadata(absi);
-        emit metadataChanged();
+        Q_EMIT metadataChanged();
         return true;
     }
     return false;
@@ -344,7 +344,7 @@ void QHexMetadata::setLineWidth(quint8 width) {
             addMetadata(item);
         }
 
-        emit metadataChanged();
+        Q_EMIT metadataChanged();
     }
 }
 
@@ -368,7 +368,7 @@ void QHexMetadata::insertAdjust(qsizetype offset, qsizetype length) {
         addMetaLines(meta);
     }
 
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
@@ -391,7 +391,7 @@ void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
         addMetaLines(meta);
     }
 
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
@@ -435,7 +435,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
             addMetaLines(meta);
         }
 
-        emit metadataChanged();
+        Q_EMIT metadataChanged();
 
         QtConcurrent::blockingMap(
             rmmetas, [](QHexMetadataItem &meta) { meta.flag = false; });
@@ -473,7 +473,7 @@ void QHexMetadata::removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
         addMetaLines(meta);
     }
 
-    emit metadataChanged();
+    Q_EMIT metadataChanged();
 }
 
 bool QHexMetadata::areColorsContrast(const QColor &color1,
