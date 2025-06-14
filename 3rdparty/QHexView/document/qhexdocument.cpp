@@ -226,7 +226,10 @@ bool QHexDocument::isUndoByteModified() { return m_bytesModFlag > 0; }
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
         m_undostack->setClean();
+    } else {
+        m_undostack->resetClean();
     }
+
     Q_EMIT documentSaved(b);
 }
 

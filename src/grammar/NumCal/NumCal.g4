@@ -70,8 +70,8 @@ assignmentExpression
 entryExpression
     : prefixGoto? IntegerConstant EOF
     | (prefixGoto Colon)? assignmentExpression EOF
-    | (prefixGoto LeftBracket)? assignmentExpression RightBracket EOF
-    | (prefixGoto LeftParen)? assignmentExpression RightParen EOF
+    | prefixGoto LeftBracket assignmentExpression RightBracket EOF
+    | prefixGoto LeftParen assignmentExpression RightParen EOF
     ;
 
 prefixGoto

@@ -244,10 +244,10 @@ public:
     PrefixGotoContext *prefixGoto();
     AssignmentExpressionContext *assignmentExpression();
     antlr4::tree::TerminalNode *Colon();
-    antlr4::tree::TerminalNode *RightBracket();
     antlr4::tree::TerminalNode *LeftBracket();
-    antlr4::tree::TerminalNode *RightParen();
+    antlr4::tree::TerminalNode *RightBracket();
     antlr4::tree::TerminalNode *LeftParen();
+    antlr4::tree::TerminalNode *RightParen();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;

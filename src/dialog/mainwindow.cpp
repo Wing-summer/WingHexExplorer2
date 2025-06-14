@@ -3246,8 +3246,9 @@ void MainWindow::connectEditorView(EditorView *editor) {
 
     editor->setProperty("__RELOAD__", false);
     connect(editor, &EditorView::need2Reload, this, [editor, this]() {
+        auto fileName = editor->fileName();
+
         if (editor->isBigFile()) {
-            auto fileName = editor->fileName();
             if (!QFile::exists(fileName)) {
                 activateWindow();
                 raise();
@@ -3255,19 +3256,23 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 WingMessageBox::critical(this, tr("Error"),
                                          tr("FileCloseBigFile"));
                 closeEditor(editor, true);
-            }
-            if (currentEditor() == editor) {
-                editor->reload();
+
             } else {
-                editor->setProperty("__RELOAD__", true);
+                if (currentEditor() == editor) {
+                    editor->reload();
+                } else {
+                    editor->setProperty("__RELOAD__", true);
+                }
             }
         } else {
             editor->hexEditor()->document()->setDocSaved(false);
             if (currentEditor() == editor) {
-                auto ret = WingMessageBox::question(this, tr("Reload"),
-                                                    tr("ReloadNeededYesOrNo"));
-                if (ret == QMessageBox::Yes) {
-                    editor->reload();
+                if (QFile::exists(fileName)) {
+                    auto ret = WingMessageBox::question(
+                        this, tr("Reload"), tr("ReloadNeededYesOrNo"));
+                    if (ret == QMessageBox::Yes) {
+                        editor->reload();
+                    }
                 }
             } else {
                 editor->setProperty("__RELOAD__", true);

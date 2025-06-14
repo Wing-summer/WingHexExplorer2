@@ -444,16 +444,17 @@ TestPlugin::colorTable(const QList<void *> &params) {
         colors.append(new QColor(c));
     }
 
-    auto invoked =
-        invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-                      WINGAPI_RETURN_ARG(array), WINGAPI_ARG(MetaType::Color),
-                      WINGAPI_ARG(colors));
-    if (invoked) {
-        if (array) {
-            qDeleteAll(colors);
-            return array;
-        }
-    }
+    // TODO
+    // auto invoked =
+    //     invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
+    //                   WINGAPI_RETURN_ARG(array),
+    //                   WINGAPI_ARG(MetaType::Color), WINGAPI_ARG(colors));
+    // if (invoked) {
+    //     if (array) {
+    //         qDeleteAll(colors);
+    //         return array;
+    //     }
+    // }
 
     qDeleteAll(colors);
     return generateScriptCallError(-2, tr("AllocArrayFailed"));
@@ -642,8 +643,7 @@ WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
 
 void TestPlugin::eventReady() {
     bool ret;
-    invokeService(
-        QStringLiteral("WingAngelAPI"), "execCode", Qt::AutoConnection,
-        WINGAPI_RETURN_ARG(ret),
-        WINGAPI_ARG(QString(R"(print("Hello, this is TestPlugin!");)")));
+    invokeService(QStringLiteral("WingAngelAPI"), "execCode",
+                  Qt::AutoConnection, qReturnArg(ret),
+                  QStringLiteral(R"(print("Hello, this is TestPlugin!");)"));
 }

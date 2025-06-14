@@ -802,15 +802,10 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             });
 
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
-        editor->editor()->setContentModified(true);
+        auto e = editor->editor();
+        e->setContentModified(true);
         if (currentEditor() == editor) {
-            activateWindow();
-            raise();
-            auto ret = WingMessageBox::question(this, tr("Reload"),
-                                                tr("ReloadNeededYesOrNo"));
-            if (ret == QMessageBox::Yes) {
-                editor->reload();
-            }
+            reloadEditor(editor);
         } else {
             editor->setProperty("__RELOAD__", true);
         }
@@ -894,12 +889,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     if (cur) {
         auto needReload = cur->property("__RELOAD__").toBool();
         if (needReload) {
-            auto ret = WingMessageBox::question(this, tr("Reload"),
-                                                tr("ReloadNeededYesOrNo"));
-            if (ret == QMessageBox::Yes) {
-                cur->reload();
-            }
-
+            reloadEditor(cur);
             cur->setProperty("__RELOAD__", false);
         }
     }
@@ -1148,6 +1138,19 @@ void ScriptingDialog::updateCursorPosition() {
         m_status->showMessage(positionText);
     } else {
         m_status->showMessage({});
+    }
+}
+
+void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
+    activateWindow();
+    raise();
+    editor->editor()->document()->setModified();
+    if (QFile::exists(editor->fileName())) {
+        auto ret = WingMessageBox::question(this, tr("Reload"),
+                                            tr("ReloadNeededYesOrNo"));
+        if (ret == QMessageBox::Yes) {
+            editor->reload();
+        }
     }
 }
 

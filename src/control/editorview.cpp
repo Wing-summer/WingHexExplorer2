@@ -132,19 +132,24 @@ EditorView::EditorView(QWidget *parent)
     auto total = mobj->methodCount();
     for (int i = 0; i < total; ++i) {
         auto m = mobj->method(i);
-        if (m.methodType() == QMetaMethod::Method) {
-            QByteArray msig = m.name();
-            msig.append('(');
-
-            QByteArrayList params;
-            auto total = m.parameterCount();
-            for (int i = 1; i < total; ++i) {
-                auto mt = QMetaType(m.parameterType(i));
-                params.append(mt.name());
+        // all private slots
+        if (m.methodType() == QMetaMethod::Slot &&
+            m.access() == QMetaMethod::Private) {
+            if (qstrcmp(m.tag(), "WING_API")) {
+                continue;
             }
-            msig.append(params.join(','));
 
-            msig.append(')');
+            WingHex::FunctionSig msig;
+            msig.fnName = m.name();
+
+            auto total = m.parameterCount();
+            msig.types.reserve(total);
+
+            for (int i = 1; i < total; ++i) {
+                auto mt = m.parameterType(i);
+                msig.types.append(mt);
+            }
+
             _viewFns.insert(msig, m);
         }
     }
@@ -864,7 +869,7 @@ void EditorView::applyFunctionTables(WingEditorViewWidget *view,
     view->setProperty("__CALL_POINTER__", quintptr(this));
 }
 
-bool EditorView::checkErrAndReport(QObject *sender, const char *func) {
+bool EditorView::checkErrAndReport(const QObject *sender, const char *func) {
     for (auto p = m_others.constBegin(); p != m_others.constEnd(); ++p) {
         if (*p == sender) {
             return true;
@@ -886,18 +891,13 @@ bool EditorView::existsServiceHost(QObject *caller, const QString &puid) {
     return PluginSystem::instance().existsServiceHost(caller, puid);
 }
 
-bool EditorView::invokeService(QObject *caller, const QString &puid,
-                               const char *method, Qt::ConnectionType type,
-                               QGenericReturnArgument ret,
-                               QGenericArgument val0, QGenericArgument val1,
-                               QGenericArgument val2, QGenericArgument val3,
-                               QGenericArgument val4) {
-    if (checkErrAndReport(caller, __func__)) {
+bool EditorView::invokeServiceImpl(const QObject *sender, const QString &puid,
+                                   const MetaCallInfo &infos) {
+    if (checkErrAndReport(sender, __func__)) {
         return false;
     }
 
-    return PluginSystem::instance().invokeService(
-        this, {}, puid, method, type, ret, val0, val1, val2, val3, val4);
+    return PluginSystem::instance().invokeServiceImpl(this, puid, infos);
 }
 
 QString EditorView::currentDocFilename(QObject *caller) {

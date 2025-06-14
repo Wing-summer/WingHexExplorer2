@@ -231,294 +231,273 @@ private:
                              const CallTable &fns);
 
 private:
-    bool checkErrAndReport(QObject *sender, const char *func);
+    bool checkErrAndReport(const QObject *sender, const char *func);
     bool checkThreadAff();
 
-private:
-    WING_SERVICE bool existsServiceHost(QObject *caller, const QString &puid);
+private slots:
+    WING_API bool existsServiceHost(QObject *caller, const QString &puid);
 
-    WING_SERVICE bool
-    invokeService(QObject *caller, const QString &puid, const char *method,
-                  Qt::ConnectionType type, QGenericReturnArgument ret,
-                  QGenericArgument val0, QGenericArgument val1,
-                  QGenericArgument val2, QGenericArgument val3,
-                  QGenericArgument val4);
+    WING_API bool invokeServiceImpl(const QObject *sender, const QString &puid,
+                                    const MetaCallInfo &infos);
 
-private:
-    WING_SERVICE QString currentDocFilename(QObject *caller);
+private slots:
+    WING_API QString currentDocFilename(QObject *caller);
 
     // document
-    WING_SERVICE bool isReadOnly(QObject *caller);
-    WING_SERVICE bool isInsertionMode(QObject *caller);
-    WING_SERVICE bool isKeepSize(QObject *caller);
-    WING_SERVICE bool isLocked(QObject *caller);
-    WING_SERVICE qsizetype documentLines(QObject *caller);
-    WING_SERVICE qsizetype documentBytes(QObject *caller);
-    WING_SERVICE WingHex::HexPosition currentPos(QObject *caller);
-    WING_SERVICE qsizetype currentRow(QObject *caller);
-    WING_SERVICE qsizetype currentColumn(QObject *caller);
-    WING_SERVICE qsizetype currentOffset(QObject *caller);
-    WING_SERVICE qsizetype selectedLength(QObject *caller);
+    WING_API bool isReadOnly(QObject *caller);
+    WING_API bool isInsertionMode(QObject *caller);
+    WING_API bool isKeepSize(QObject *caller);
+    WING_API bool isLocked(QObject *caller);
+    WING_API qsizetype documentLines(QObject *caller);
+    WING_API qsizetype documentBytes(QObject *caller);
+    WING_API WingHex::HexPosition currentPos(QObject *caller);
+    WING_API qsizetype currentRow(QObject *caller);
+    WING_API qsizetype currentColumn(QObject *caller);
+    WING_API qsizetype currentOffset(QObject *caller);
+    WING_API qsizetype selectedLength(QObject *caller);
 
-    WING_SERVICE QByteArray selectedBytes(QObject *caller, qsizetype index);
-    WING_SERVICE QByteArrayList selectionBytes(QObject *caller);
+    WING_API QByteArray selectedBytes(QObject *caller, qsizetype index);
+    WING_API QByteArrayList selectionBytes(QObject *caller);
 
-    WING_SERVICE WingHex::HexPosition selectionStart(QObject *caller,
-                                                     qsizetype index);
-    WING_SERVICE WingHex::HexPosition selectionEnd(QObject *caller,
-                                                   qsizetype index);
-    WING_SERVICE qsizetype selectionLength(QObject *caller, qsizetype index);
-    WING_SERVICE qsizetype selectionCount(QObject *caller);
+    WING_API WingHex::HexPosition selectionStart(QObject *caller,
+                                                 qsizetype index);
+    WING_API WingHex::HexPosition selectionEnd(QObject *caller,
+                                               qsizetype index);
+    WING_API qsizetype selectionLength(QObject *caller, qsizetype index);
+    WING_API qsizetype selectionCount(QObject *caller);
 
-    WING_SERVICE bool stringVisible(QObject *caller);
-    WING_SERVICE bool addressVisible(QObject *caller);
-    WING_SERVICE bool headerVisible(QObject *caller);
-    WING_SERVICE quintptr addressBase(QObject *caller);
-    WING_SERVICE bool isModified(QObject *caller);
+    WING_API bool stringVisible(QObject *caller);
+    WING_API bool addressVisible(QObject *caller);
+    WING_API bool headerVisible(QObject *caller);
+    WING_API quintptr addressBase(QObject *caller);
+    WING_API bool isModified(QObject *caller);
 
-    WING_SERVICE qint8 readInt8(QObject *caller, qsizetype offset);
-    WING_SERVICE qint16 readInt16(QObject *caller, qsizetype offset);
-    WING_SERVICE qint32 readInt32(QObject *caller, qsizetype offset);
-    WING_SERVICE qint64 readInt64(QObject *caller, qsizetype offset);
-    WING_SERVICE quint8 readUInt8(QObject *caller, qsizetype offset);
-    WING_SERVICE quint16 readUInt16(QObject *caller, qsizetype offset);
-    WING_SERVICE quint32 readUInt32(QObject *caller, qsizetype offset);
-    WING_SERVICE quint64 readUInt64(QObject *caller, qsizetype offset);
-    WING_SERVICE float readFloat(QObject *caller, qsizetype offset);
-    WING_SERVICE double readDouble(QObject *caller, qsizetype offset);
-    WING_SERVICE QString readString(QObject *caller, qsizetype offset,
-                                    const QString &encoding);
-    WING_SERVICE QByteArray readBytes(QObject *caller, qsizetype offset,
-                                      qsizetype count);
+    WING_API qint8 readInt8(QObject *caller, qsizetype offset);
+    WING_API qint16 readInt16(QObject *caller, qsizetype offset);
+    WING_API qint32 readInt32(QObject *caller, qsizetype offset);
+    WING_API qint64 readInt64(QObject *caller, qsizetype offset);
+    WING_API quint8 readUInt8(QObject *caller, qsizetype offset);
+    WING_API quint16 readUInt16(QObject *caller, qsizetype offset);
+    WING_API quint32 readUInt32(QObject *caller, qsizetype offset);
+    WING_API quint64 readUInt64(QObject *caller, qsizetype offset);
+    WING_API float readFloat(QObject *caller, qsizetype offset);
+    WING_API double readDouble(QObject *caller, qsizetype offset);
+    WING_API QString readString(QObject *caller, qsizetype offset,
+                                const QString &encoding);
+    WING_API QByteArray readBytes(QObject *caller, qsizetype offset,
+                                  qsizetype count);
 
-    WING_SERVICE qsizetype findNext(QObject *caller, qsizetype begin,
+    WING_API qsizetype findNext(QObject *caller, qsizetype begin,
+                                const QByteArray &ba);
+    WING_API qsizetype findPrevious(QObject *caller, qsizetype begin,
                                     const QByteArray &ba);
-    WING_SERVICE qsizetype findPrevious(QObject *caller, qsizetype begin,
-                                        const QByteArray &ba);
 
-    WING_SERVICE QString bookMarkComment(QObject *caller, qsizetype pos);
-    WING_SERVICE bool existBookMark(QObject *caller, qsizetype pos);
+    WING_API QString bookMarkComment(QObject *caller, qsizetype pos);
+    WING_API bool existBookMark(QObject *caller, qsizetype pos);
 
-    WING_SERVICE bool setLockedFile(QObject *caller, bool b);
-    WING_SERVICE bool setKeepSize(QObject *caller, bool b);
-    WING_SERVICE bool setStringVisible(QObject *caller, bool b);
-    WING_SERVICE bool setAddressVisible(QObject *caller, bool b);
-    WING_SERVICE bool setHeaderVisible(QObject *caller, bool b);
-    WING_SERVICE bool setAddressBase(QObject *caller, quintptr base);
+    WING_API bool setLockedFile(QObject *caller, bool b);
+    WING_API bool setKeepSize(QObject *caller, bool b);
+    WING_API bool setStringVisible(QObject *caller, bool b);
+    WING_API bool setAddressVisible(QObject *caller, bool b);
+    WING_API bool setHeaderVisible(QObject *caller, bool b);
+    WING_API bool setAddressBase(QObject *caller, quintptr base);
 
-    WING_SERVICE bool beginMarco(QObject *caller, const QString &txt);
+    WING_API bool beginMarco(QObject *caller, const QString &txt);
     bool endMarco(QObject *caller);
 
-    WING_SERVICE bool writeInt8(QObject *caller, qsizetype offset, qint8 value);
-    WING_SERVICE bool writeInt16(QObject *caller, qsizetype offset,
-                                 qint16 value);
-    WING_SERVICE bool writeInt32(QObject *caller, qsizetype offset,
-                                 qint32 value);
-    WING_SERVICE bool writeInt64(QObject *caller, qsizetype offset,
-                                 qint64 value);
-    WING_SERVICE bool writeUInt8(QObject *caller, qsizetype offset,
-                                 quint8 value);
-    WING_SERVICE bool writeUInt16(QObject *caller, qsizetype offset,
-                                  quint16 value);
-    WING_SERVICE bool writeUInt32(QObject *caller, qsizetype offset,
-                                  quint32 value);
-    WING_SERVICE bool writeUInt64(QObject *caller, qsizetype offset,
-                                  quint64 value);
-    WING_SERVICE bool writeFloat(QObject *caller, qsizetype offset,
-                                 float value);
-    WING_SERVICE bool writeDouble(QObject *caller, qsizetype offset,
-                                  double value);
-    WING_SERVICE
+    WING_API bool writeInt8(QObject *caller, qsizetype offset, qint8 value);
+    WING_API bool writeInt16(QObject *caller, qsizetype offset, qint16 value);
+    WING_API bool writeInt32(QObject *caller, qsizetype offset, qint32 value);
+    WING_API bool writeInt64(QObject *caller, qsizetype offset, qint64 value);
+    WING_API bool writeUInt8(QObject *caller, qsizetype offset, quint8 value);
+    WING_API bool writeUInt16(QObject *caller, qsizetype offset, quint16 value);
+    WING_API bool writeUInt32(QObject *caller, qsizetype offset, quint32 value);
+    WING_API bool writeUInt64(QObject *caller, qsizetype offset, quint64 value);
+    WING_API bool writeFloat(QObject *caller, qsizetype offset, float value);
+    WING_API bool writeDouble(QObject *caller, qsizetype offset, double value);
+    WING_API
     bool writeString(QObject *caller, qsizetype offset, const QString &value,
                      const QString &encoding);
-    WING_SERVICE bool writeBytes(QObject *caller, qsizetype offset,
-                                 const QByteArray &data);
+    WING_API bool writeBytes(QObject *caller, qsizetype offset,
+                             const QByteArray &data);
 
-    WING_SERVICE bool insertInt8(QObject *caller, qsizetype offset,
-                                 qint8 value);
-    WING_SERVICE bool insertInt16(QObject *caller, qsizetype offset,
-                                  qint16 value);
-    WING_SERVICE bool insertInt32(QObject *caller, qsizetype offset,
-                                  qint32 value);
-    WING_SERVICE bool insertInt64(QObject *caller, qsizetype offset,
-                                  qint64 value);
-    WING_SERVICE bool insertUInt8(QObject *caller, qsizetype offset,
-                                  quint8 value);
-    WING_SERVICE
+    WING_API bool insertInt8(QObject *caller, qsizetype offset, qint8 value);
+    WING_API bool insertInt16(QObject *caller, qsizetype offset, qint16 value);
+    WING_API bool insertInt32(QObject *caller, qsizetype offset, qint32 value);
+    WING_API bool insertInt64(QObject *caller, qsizetype offset, qint64 value);
+    WING_API bool insertUInt8(QObject *caller, qsizetype offset, quint8 value);
+    WING_API
     bool insertUInt16(QObject *caller, qsizetype offset, quint16 value);
-    WING_SERVICE
+    WING_API
     bool insertUInt32(QObject *caller, qsizetype offset, quint32 value);
-    WING_SERVICE bool insertUInt64(QObject *caller, qsizetype offset,
-                                   quint64 value);
-    WING_SERVICE bool insertFloat(QObject *caller, qsizetype offset,
-                                  float value);
-    WING_SERVICE bool insertDouble(QObject *caller, qsizetype offset,
-                                   double value);
-    WING_SERVICE bool insertString(QObject *caller, qsizetype offset,
-                                   const QString &value,
-                                   const QString &encoding);
-    WING_SERVICE bool insertBytes(QObject *caller, qsizetype offset,
-                                  const QByteArray &data);
+    WING_API bool insertUInt64(QObject *caller, qsizetype offset,
+                               quint64 value);
+    WING_API bool insertFloat(QObject *caller, qsizetype offset, float value);
+    WING_API bool insertDouble(QObject *caller, qsizetype offset, double value);
+    WING_API bool insertString(QObject *caller, qsizetype offset,
+                               const QString &value, const QString &encoding);
+    WING_API bool insertBytes(QObject *caller, qsizetype offset,
+                              const QByteArray &data);
 
-    WING_SERVICE bool appendInt8(QObject *caller, qint8 value);
-    WING_SERVICE bool appendInt16(QObject *caller, qint16 value);
-    WING_SERVICE bool appendInt32(QObject *caller, qint32 value);
-    WING_SERVICE bool appendInt64(QObject *caller, qint64 value);
-    WING_SERVICE bool appendUInt8(QObject *caller, quint8 value);
-    WING_SERVICE bool appendUInt16(QObject *caller, quint16 value);
-    WING_SERVICE bool appendUInt32(QObject *caller, quint32 value);
-    WING_SERVICE bool appendUInt64(QObject *caller, quint64 value);
-    WING_SERVICE bool appendFloat(QObject *caller, float value);
-    WING_SERVICE bool appendDouble(QObject *caller, double value);
-    WING_SERVICE bool appendString(QObject *caller, const QString &value,
-                                   const QString &encoding);
-    WING_SERVICE bool appendBytes(QObject *caller, const QByteArray &data);
+    WING_API bool appendInt8(QObject *caller, qint8 value);
+    WING_API bool appendInt16(QObject *caller, qint16 value);
+    WING_API bool appendInt32(QObject *caller, qint32 value);
+    WING_API bool appendInt64(QObject *caller, qint64 value);
+    WING_API bool appendUInt8(QObject *caller, quint8 value);
+    WING_API bool appendUInt16(QObject *caller, quint16 value);
+    WING_API bool appendUInt32(QObject *caller, quint32 value);
+    WING_API bool appendUInt64(QObject *caller, quint64 value);
+    WING_API bool appendFloat(QObject *caller, float value);
+    WING_API bool appendDouble(QObject *caller, double value);
+    WING_API bool appendString(QObject *caller, const QString &value,
+                               const QString &encoding);
+    WING_API bool appendBytes(QObject *caller, const QByteArray &data);
 
-    WING_SERVICE bool removeBytes(QObject *caller, qsizetype offset,
-                                  qsizetype len);
+    WING_API bool removeBytes(QObject *caller, qsizetype offset, qsizetype len);
 
     // cursor
-    WING_SERVICE bool moveTo(QObject *caller, qsizetype line, qsizetype column,
-                             int nibbleindex, bool clearSelection);
-    WING_SERVICE bool moveTo(QObject *caller, qsizetype offset,
-                             bool clearSelection);
-    WING_SERVICE bool select(QObject *caller, qsizetype offset,
-                             qsizetype length, SelectionMode mode);
-    WING_SERVICE bool setInsertionMode(QObject *caller, bool isinsert);
+    WING_API bool moveTo(QObject *caller, qsizetype line, qsizetype column,
+                         int nibbleindex, bool clearSelection);
+    WING_API bool moveTo(QObject *caller, qsizetype offset,
+                         bool clearSelection);
+    WING_API bool select(QObject *caller, qsizetype offset, qsizetype length,
+                         SelectionMode mode);
+    WING_API bool setInsertionMode(QObject *caller, bool isinsert);
 
     // metadata
-    WING_SERVICE bool metadata(QObject *caller, qsizetype begin,
-                               qsizetype length, const QColor &fgcolor,
-                               const QColor &bgcolor, const QString &comment);
+    WING_API bool metadata(QObject *caller, qsizetype begin, qsizetype length,
+                           const QColor &fgcolor, const QColor &bgcolor,
+                           const QString &comment);
 
-    WING_SERVICE bool removeMetadata(QObject *caller, qsizetype offset);
-    WING_SERVICE bool clearMetadata(QObject *caller);
-    WING_SERVICE bool setMetaVisible(QObject *caller, bool b);
-    WING_SERVICE bool setMetafgVisible(QObject *caller, bool b);
-    WING_SERVICE bool setMetabgVisible(QObject *caller, bool b);
-    WING_SERVICE bool setMetaCommentVisible(QObject *caller, bool b);
+    WING_API bool removeMetadata(QObject *caller, qsizetype offset);
+    WING_API bool clearMetadata(QObject *caller);
+    WING_API bool setMetaVisible(QObject *caller, bool b);
+    WING_API bool setMetafgVisible(QObject *caller, bool b);
+    WING_API bool setMetabgVisible(QObject *caller, bool b);
+    WING_API bool setMetaCommentVisible(QObject *caller, bool b);
 
     // bookmark
-    WING_SERVICE bool addBookMark(QObject *caller, qsizetype pos,
-                                  const QString &comment);
-    WING_SERVICE bool modBookMark(QObject *caller, qsizetype pos,
-                                  const QString &comment);
-    WING_SERVICE bool removeBookMark(QObject *caller, qsizetype pos);
-    WING_SERVICE bool clearBookMark(QObject *caller);
+    WING_API bool addBookMark(QObject *caller, qsizetype pos,
+                              const QString &comment);
+    WING_API bool modBookMark(QObject *caller, qsizetype pos,
+                              const QString &comment);
+    WING_API bool removeBookMark(QObject *caller, qsizetype pos);
+    WING_API bool clearBookMark(QObject *caller);
 
-private:
-    WING_SERVICE void toast(QObject *caller, const QPixmap &icon,
-                            const QString &message);
-    WING_SERVICE void logTrace(QObject *caller, const QString &message);
-    WING_SERVICE void logDebug(QObject *caller, const QString &message);
-    WING_SERVICE void logWarn(QObject *caller, const QString &message);
-    WING_SERVICE void logError(QObject *caller, const QString &message);
-    WING_SERVICE void logInfo(QObject *caller, const QString &message);
+private slots:
+    WING_API void toast(QObject *caller, const QPixmap &icon,
+                        const QString &message);
+    WING_API void logTrace(QObject *caller, const QString &message);
+    WING_API void logDebug(QObject *caller, const QString &message);
+    WING_API void logWarn(QObject *caller, const QString &message);
+    WING_API void logError(QObject *caller, const QString &message);
+    WING_API void logInfo(QObject *caller, const QString &message);
 
-    WING_SERVICE bool raiseDockWidget(QObject *caller, QWidget *w);
+    WING_API bool raiseDockWidget(QObject *caller, QWidget *w);
 
     // theme
-    WING_SERVICE WingHex::AppTheme currentAppTheme(QObject *caller);
+    WING_API WingHex::AppTheme currentAppTheme(QObject *caller);
 
     // not available for AngelScript
     // only for plugin UI extenstion
-    WING_SERVICE QDialog *createDialog(QObject *caller, QWidget *content);
+    WING_API QDialog *createDialog(QObject *caller, QWidget *content);
 
-private:
-    WING_SERVICE void msgAboutQt(QObject *caller, QWidget *parent = nullptr,
-                                 const QString &title = QString());
+private slots:
+    WING_API void msgAboutQt(QObject *caller, QWidget *parent = nullptr,
+                             const QString &title = QString());
 
-    WING_SERVICE QMessageBox::StandardButton msgInformation(
+    WING_API QMessageBox::StandardButton msgInformation(
         QObject *caller, QWidget *parent, const QString &title,
         const QString &text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok,
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    WING_SERVICE QMessageBox::StandardButton msgQuestion(
+    WING_API QMessageBox::StandardButton msgQuestion(
         QObject *caller, QWidget *parent, const QString &title,
         const QString &text,
         QMessageBox::StandardButtons buttons =
             QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    WING_SERVICE QMessageBox::StandardButton msgWarning(
+    WING_API QMessageBox::StandardButton msgWarning(
         QObject *caller, QWidget *parent, const QString &title,
         const QString &text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok,
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    WING_SERVICE QMessageBox::StandardButton msgCritical(
+    WING_API QMessageBox::StandardButton msgCritical(
         QObject *caller, QWidget *parent, const QString &title,
         const QString &text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok,
         QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-    WING_SERVICE void msgAbout(QObject *caller, QWidget *parent,
-                               const QString &title, const QString &text);
+    WING_API void msgAbout(QObject *caller, QWidget *parent,
+                           const QString &title, const QString &text);
 
-    WING_SERVICE QMessageBox::StandardButton
+    WING_API QMessageBox::StandardButton
     msgbox(QObject *caller, QWidget *parent, QMessageBox::Icon icon,
            const QString &title, const QString &text,
            QMessageBox::StandardButtons buttons = QMessageBox::NoButton,
            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
-private:
-    WING_SERVICE QString dlgGetText(QObject *caller, QWidget *parent,
-                                    const QString &title, const QString &label,
-                                    QLineEdit::EchoMode echo,
-                                    const QString &text, bool *ok,
-                                    Qt::InputMethodHints inputMethodHints);
-    WING_SERVICE QString
-    dlgGetMultiLineText(QObject *caller, QWidget *parent, const QString &title,
-                        const QString &label, const QString &text, bool *ok,
-                        Qt::InputMethodHints inputMethodHints);
+private slots:
+    WING_API QString dlgGetText(QObject *caller, QWidget *parent,
+                                const QString &title, const QString &label,
+                                QLineEdit::EchoMode echo, const QString &text,
+                                bool *ok,
+                                Qt::InputMethodHints inputMethodHints);
+    WING_API QString dlgGetMultiLineText(QObject *caller, QWidget *parent,
+                                         const QString &title,
+                                         const QString &label,
+                                         const QString &text, bool *ok,
+                                         Qt::InputMethodHints inputMethodHints);
 
-    WING_SERVICE QString dlgGetItem(QObject *caller, QWidget *parent,
-                                    const QString &title, const QString &label,
-                                    const QStringList &items, int current,
-                                    bool editable, bool *ok,
-                                    Qt::InputMethodHints inputMethodHints);
+    WING_API QString dlgGetItem(QObject *caller, QWidget *parent,
+                                const QString &title, const QString &label,
+                                const QStringList &items, int current,
+                                bool editable, bool *ok,
+                                Qt::InputMethodHints inputMethodHints);
 
-    WING_SERVICE int dlgGetInt(QObject *caller, QWidget *parent,
-                               const QString &title, const QString &label,
-                               int value, int minValue, int maxValue, int step,
-                               bool *ok);
+    WING_API int dlgGetInt(QObject *caller, QWidget *parent,
+                           const QString &title, const QString &label,
+                           int value, int minValue, int maxValue, int step,
+                           bool *ok);
 
-    WING_SERVICE double dlgGetDouble(QObject *caller, QWidget *parent,
-                                     const QString &title, const QString &label,
-                                     double value, double minValue,
-                                     double maxValue, int decimals, bool *ok,
-                                     double step);
+    WING_API double dlgGetDouble(QObject *caller, QWidget *parent,
+                                 const QString &title, const QString &label,
+                                 double value, double minValue, double maxValue,
+                                 int decimals, bool *ok, double step);
 
-private:
-    WING_SERVICE QString dlgGetExistingDirectory(QObject *caller,
-                                                 QWidget *parent,
-                                                 const QString &caption,
-                                                 const QString &dir,
-                                                 QFileDialog::Options options);
+private slots:
+    WING_API QString dlgGetExistingDirectory(QObject *caller, QWidget *parent,
+                                             const QString &caption,
+                                             const QString &dir,
+                                             QFileDialog::Options options);
 
-    WING_SERVICE QString dlgGetOpenFileName(QObject *caller, QWidget *parent,
-                                            const QString &caption,
-                                            const QString &dir,
-                                            const QString &filter,
-                                            QString *selectedFilter,
-                                            QFileDialog::Options options);
+    WING_API QString dlgGetOpenFileName(QObject *caller, QWidget *parent,
+                                        const QString &caption,
+                                        const QString &dir,
+                                        const QString &filter,
+                                        QString *selectedFilter,
+                                        QFileDialog::Options options);
 
-    WING_SERVICE QStringList dlgGetOpenFileNames(
-        QObject *caller, QWidget *parent, const QString &caption,
-        const QString &dir, const QString &filter, QString *selectedFilter,
-        QFileDialog::Options options);
+    WING_API QStringList dlgGetOpenFileNames(QObject *caller, QWidget *parent,
+                                             const QString &caption,
+                                             const QString &dir,
+                                             const QString &filter,
+                                             QString *selectedFilter,
+                                             QFileDialog::Options options);
 
-    WING_SERVICE QString dlgGetSaveFileName(QObject *caller, QWidget *parent,
-                                            const QString &caption,
-                                            const QString &dir,
-                                            const QString &filter,
-                                            QString *selectedFilter,
-                                            QFileDialog::Options options);
+    WING_API QString dlgGetSaveFileName(QObject *caller, QWidget *parent,
+                                        const QString &caption,
+                                        const QString &dir,
+                                        const QString &filter,
+                                        QString *selectedFilter,
+                                        QFileDialog::Options options);
 
-private:
-    WING_SERVICE QColor dlgGetColor(QObject *caller, const QString &caption,
-                                    QWidget *parent);
+private slots:
+    WING_API QColor dlgGetColor(QObject *caller, const QString &caption,
+                                QWidget *parent);
 
 private:
     template <typename Func>

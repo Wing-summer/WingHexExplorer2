@@ -1060,7 +1060,8 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                            (const QString &), WingHex::ErrFile),
                 "ErrFile openWorkSpace(string &in filename)");
 
-    registerAPI(engine, asMETHOD(WingHex::IWingPlugin, closeAllFiles),
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, closeAllFiles, (), bool),
                 "bool closeAll()");
 
     engine->SetDefaultNamespace("");
@@ -2098,9 +2099,9 @@ CScriptArray *WingAngelAPI::_HexReader_selectionBytes() {
         auto array = CScriptArray::Create(arrt, ret.size());
         for (qsizetype i = 0; i < ret.size(); ++i) {
             auto buffer = ret.at(i);
-            auto conarr = CScriptArray::Create(t, ret.size());
-            for (qsizetype i = 0; i < ret.size(); ++i) {
-                auto v = ret.at(buffer.at(i));
+            auto conarr = CScriptArray::Create(t, buffer.size());
+            for (qsizetype i = 0; i < buffer.size(); ++i) {
+                auto v = buffer.at(i);
                 conarr->SetValue(i, &v);
             }
             array->SetValue(i, conarr);

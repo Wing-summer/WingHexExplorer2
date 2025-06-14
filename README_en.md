@@ -92,11 +92,7 @@ Make sure that you follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) while contrib
 
 ## Status
 
-> For Qt 5, only version 5.15.2 or higher is suggested, and for Qt 6, only version 6.6.2 or higher is recommended. Other lower versions are wired due to missing APIs of key libraries and some bugs of their own.
-
-And also:
-
-> Support for QT5 had been stopped, and I will no longer fix related issues, but PR will be welcomed. If you need QT5 version for special purposes, please consult me ​​for commercial cooperation and paid technical support.
+> For Qt 6, only version 6.6.2 or higher is recommended. Other lower versions are wired due to missing APIs of key libraries and some bugs of their own. Support for QT5 had been stopped, and I will no longer fix related issues, but PR will be welcomed. If you need QT5 version for special purposes, please consult me ​​for commercial cooperation and paid technical support.
 
 The repository code compiles with Qt 5.15.2 and 6.6.2 on the latest versions of Windows and Ubuntu: ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 

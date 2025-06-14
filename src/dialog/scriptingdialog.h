@@ -223,6 +223,8 @@ private:
 
     void updateCursorPosition();
 
+    void reloadEditor(ScriptEditor *editor);
+
 private slots:
     void on_newfile();
     void on_openfile();
