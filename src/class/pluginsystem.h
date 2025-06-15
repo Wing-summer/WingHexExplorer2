@@ -422,7 +422,7 @@ public slots:
     WING_API bool existsServiceHost(const QObject *sender, const QString &puid);
 
     WING_API bool invokeServiceImpl(const QObject *sender, const QString &puid,
-                                    const MetaCallInfo &infos);
+                                    const WingHex::MetaCallInfo &infos);
 
     WING_API bool isCurrentDocEditing(const QObject *sender);
 

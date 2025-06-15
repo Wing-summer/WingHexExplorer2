@@ -258,25 +258,30 @@ void WingAngelAPI::installLogAPI(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    registerAPI(engine,
-                asMETHODPR(WingAngelAPI, logInfo, (const QString &), void),
-                "void info(const string &in message)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, logInfo, (const QString &) const, void),
+        "void info(const string &in message)");
 
-    registerAPI(engine,
-                asMETHODPR(WingAngelAPI, logTrace, (const QString &), void),
-                "void trace(const string &in message)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, logTrace, (const QString &) const, void),
+        "void trace(const string &in message)");
 
-    registerAPI(engine,
-                asMETHODPR(WingAngelAPI, logDebug, (const QString &), void),
-                "void debug(const string &in message)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, logDebug, (const QString &) const, void),
+        "void debug(const string &in message)");
 
-    registerAPI(engine,
-                asMETHODPR(WingAngelAPI, logWarn, (const QString &), void),
-                "void warn(const string &in message)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, logWarn, (const QString &) const, void),
+        "void warn(const string &in message)");
 
-    registerAPI(engine,
-                asMETHODPR(WingAngelAPI, logError, (const QString &), void),
-                "void error(const string &in message)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, logError, (const QString &) const, void),
+        "void error(const string &in message)");
 
     engine->SetDefaultNamespace("");
 }
@@ -544,65 +549,73 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, isCurrentDocEditing,
+                           (void) const, bool),
+                "bool isCurrentDocEditing()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentDocFilename,
+                           (void) const, QString),
+                "string currentDocFilename()");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, isCurrentDocEditing, (void), bool),
-        "bool isCurrentDocEditing()");
+        asMETHODPR(WingHex::IWingPlugin, isInsertionMode, (void) const, bool),
+        "bool isInsertionMode()");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, currentDocFilename, (void), QString),
-        "string currentDocFilename()");
+        asMETHODPR(WingHex::IWingPlugin, isReadOnly, (void) const, bool),
+        "bool isReadOnly()");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, isKeepSize, (void) const, bool),
+        "bool isKeepSize()");
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isInsertionMode, (void), bool),
-                "bool isInsertionMode()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isReadOnly, (void), bool),
-                "bool isReadOnly()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isKeepSize, (void), bool),
-                "bool isKeepSize()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isLocked, (void), bool),
+                asMETHODPR(WingHex::IWingPlugin, isLocked, (void) const, bool),
                 "bool isLocked()");
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, currentPos, (void),
+                asMETHODPR(WingHex::IWingPlugin, currentPos, (void) const,
                            WingHex::HexPosition),
                 "HexPosition currentPos()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, stringVisible, (void), bool),
-                "bool stringVisible()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, addressVisible, (void), bool),
-                "bool addressVisible()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, headerVisible, (void), bool),
-                "bool headerVisible()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, isModified, (void), bool),
-                "bool isModified()");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, documentLines, (void), qsizetype),
-        QSIZETYPE_WRAP("documentLines()"));
+        asMETHODPR(WingHex::IWingPlugin, stringVisible, (void) const, bool),
+        "bool stringVisible()");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, documentBytes, (void), qsizetype),
-        QSIZETYPE_WRAP("documentBytes()"));
+        asMETHODPR(WingHex::IWingPlugin, addressVisible, (void) const, bool),
+        "bool addressVisible()");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, headerVisible, (void) const, bool),
+        "bool headerVisible()");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, isModified, (void) const, bool),
+        "bool isModified()");
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, currentRow, (void), qsizetype),
-                QSIZETYPE_WRAP("currentRow()"));
+                asMETHODPR(WingHex::IWingPlugin, documentLines, (void) const,
+                           qsizetype),
+                QSIZETYPE_WRAP("documentLines()"));
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, documentBytes, (void) const,
+                           qsizetype),
+                QSIZETYPE_WRAP("documentBytes()"));
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, currentColumn, (void), qsizetype),
-        QSIZETYPE_WRAP("currentColumn()"));
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, currentOffset, (void), qsizetype),
-        QSIZETYPE_WRAP("currentOffset()"));
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, selectedLength, (void), qsizetype),
-        QSIZETYPE_WRAP("selectedLength()"));
+        asMETHODPR(WingHex::IWingPlugin, currentRow, (void) const, qsizetype),
+        QSIZETYPE_WRAP("currentRow()"));
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentColumn, (void) const,
+                           qsizetype),
+                QSIZETYPE_WRAP("currentColumn()"));
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentOffset, (void) const,
+                           qsizetype),
+                QSIZETYPE_WRAP("currentOffset()"));
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, selectedLength, (void) const,
+                           qsizetype),
+                QSIZETYPE_WRAP("selectedLength()"));
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _HexReader_selectedBytes, (qsizetype),
@@ -614,76 +627,80 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                 "byte[][]@ selectionBytes()");
 
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, selectionStart, (qsizetype),
-                           WingHex::HexPosition),
+                asMETHODPR(WingHex::IWingPlugin, selectionStart,
+                           (qsizetype) const, WingHex::HexPosition),
                 "HexPosition selectionStart(" QSIZETYPE " index)");
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, selectionEnd, (qsizetype),
-                           WingHex::HexPosition),
+                asMETHODPR(WingHex::IWingPlugin, selectionEnd,
+                           (qsizetype) const, WingHex::HexPosition),
                 "HexPosition selectionEnd(" QSIZETYPE " index)");
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, selectionLength, (qsizetype),
-                           qsizetype),
+                asMETHODPR(WingHex::IWingPlugin, selectionLength,
+                           (qsizetype) const, qsizetype),
                 QSIZETYPE_WRAP("selectionLength(" QSIZETYPE " index)"));
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, selectionCount, (), qsizetype),
-                QSIZETYPE_WRAP("selectionCount()"));
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, selectionCount, () const, qsizetype),
+        QSIZETYPE_WRAP("selectionCount()"));
 
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, addressBase, (void), quintptr),
-                QPTR_WRAP("addressBase()"));
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, addressBase, (void) const, quintptr),
+        QPTR_WRAP("addressBase()"));
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _HexReader_readBytes,
                            (qsizetype, qsizetype), CScriptArray *),
                 "byte[]@ readBytes(" QSIZETYPE " offset," QSIZETYPE " len)");
 
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, readInt8, (qsizetype), qint8),
-                "int8 readInt8(" QSIZETYPE " offset)");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, readUInt8, (qsizetype), quint8),
+        asMETHODPR(WingHex::IWingPlugin, readInt8, (qsizetype) const, qint8),
+        "int8 readInt8(" QSIZETYPE " offset)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, readUInt8, (qsizetype) const, quint8),
         "uint8 readUInt8(" QSIZETYPE " offset)");
 
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, readInt16, (qsizetype), qint16),
+        asMETHODPR(WingHex::IWingPlugin, readInt16, (qsizetype) const, qint16),
         "int16 readInt16(" QSIZETYPE " offset)");
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, readUInt16, (qsizetype), quint16),
-        "uint16 readUInt16(" QSIZETYPE " offset)");
-
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, readInt32, (qsizetype), qint32),
-        "int readInt32(" QSIZETYPE " offset)");
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, readUInt32, (qsizetype), quint32),
-        "uint readUInt32(" QSIZETYPE " offset)");
-
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, readInt64, (qsizetype), qint64),
-        "int64 readInt64(" QSIZETYPE " offset)");
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, readUInt64, (qsizetype), quint64),
-        "uint64 readUInt64(" QSIZETYPE " offset)");
-
     registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, readFloat, (qsizetype), float),
-                "float readFloat(" QSIZETYPE " offset)");
+                asMETHODPR(WingHex::IWingPlugin, readUInt16, (qsizetype) const,
+                           quint16),
+                "uint16 readUInt16(" QSIZETYPE " offset)");
+
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, readDouble, (qsizetype), double),
+        asMETHODPR(WingHex::IWingPlugin, readInt32, (qsizetype) const, qint32),
+        "int readInt32(" QSIZETYPE " offset)");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, readUInt32, (qsizetype) const,
+                           quint32),
+                "uint readUInt32(" QSIZETYPE " offset)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, readInt64, (qsizetype) const, qint64),
+        "int64 readInt64(" QSIZETYPE " offset)");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, readUInt64, (qsizetype) const,
+                           quint64),
+                "uint64 readUInt64(" QSIZETYPE " offset)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, readFloat, (qsizetype) const, float),
+        "float readFloat(" QSIZETYPE " offset)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, readDouble, (qsizetype) const, double),
         "double readDouble(" QSIZETYPE " offset)");
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, readString,
-                           (qsizetype, const QString &), QString),
+                           (qsizetype, const QString &) const, QString),
                 "string readString(" QSIZETYPE
                 " offset, string &in encoding = \"\")");
 
@@ -697,15 +714,15 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                    (qsizetype, const CScriptArray &), qsizetype),
         QSIZETYPE_WRAP("findPrevious(" QSIZETYPE " begin, byte[] &in ba)"));
 
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, bookMarkComment, (qsizetype), QString),
-        "string bookMarkComment(" QSIZETYPE " pos)");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, bookMarkComment,
+                           (qsizetype) const, QString),
+                "string bookMarkComment(" QSIZETYPE " pos)");
 
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, existBookMark, (qsizetype), bool),
-        "bool existBookMark(" QSIZETYPE " pos)");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, existBookMark,
+                           (qsizetype) const, bool),
+                "bool existBookMark(" QSIZETYPE " pos)");
 
     engine->SetDefaultNamespace("");
 }

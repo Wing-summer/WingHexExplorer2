@@ -45,8 +45,6 @@
 #include <private/qmetaobject_p.h>
 
 PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
-    qRegisterMetaType<MetaCallInfo>("MetaCallInfo");
-
     auto mobj = PluginSystem::metaObject();
     auto total = mobj->methodCount();
     for (int i = 0; i < total; ++i) {
@@ -372,7 +370,7 @@ bool PluginSystem::existsServiceHost(const QObject *sender,
 }
 
 bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
-                                     const MetaCallInfo &infos) {
+                                     const WingHex::MetaCallInfo &infos) {
     auto p = checkPluginAndReport(sender, __func__);
     if (p == nullptr) {
         return false;
@@ -396,6 +394,10 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     const QtPrivate::QMetaTypeInterface *const *metaTypes;
     std::tie(method, c, paramCount, parameters, typeNames, metaTypes) = infos;
 
+    if (parameters == nullptr || typeNames == nullptr || metaTypes == nullptr) {
+        return false;
+    }
+
     QMetaMethod m;
     // retrive method
     auto len = meta->methodCount();
@@ -417,6 +419,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
                 continue;
             }
             m = met;
+            break;
         }
     }
 

@@ -62,8 +62,8 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
             std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_c),
                       this, std::placeholders::_1);
         info.ret = MetaType::Void;
-        info.params.append(qMakePair(MetaType(MetaType::Int | MetaType::Array),
-                                     QStringLiteral("c")));
+        info.params.append(
+            qMakePair(MetaType::Int | MetaType::Array, QStringLiteral("c")));
         _scriptInfo.insert(QStringLiteral("test_c"), info);
     }
 
@@ -91,7 +91,7 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
         info.fn =
             std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_f),
                       this, std::placeholders::_1);
-        info.ret = MetaType(MetaType::Byte | MetaType::Array);
+        info.ret = MetaType::Byte | MetaType::Array;
         _scriptInfo.insert(QStringLiteral("test_f"), info);
     }
 
