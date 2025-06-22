@@ -32,6 +32,7 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
+#include "WingPlugin/iwingmanager.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 
@@ -185,6 +186,8 @@ private:
 
     void checkDirRootSafe(const QDir &dir);
 
+    void try2LoadManagerPlugin();
+
     template <typename T>
     std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
                                          const QDir &setdir);
@@ -224,7 +227,7 @@ private:
     void registerMarcos(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
 
-    void applyFunctionTables(IWingPluginBase *plg, const CallTable &fns);
+    void applyFunctionTables(QObject *plg, const CallTable &fns);
 
     static QString getScriptFnSig(const QString &fnName,
                                   const IWingPlugin::ScriptFnInfo &fninfo);
@@ -641,7 +644,7 @@ public slots:
                          bool clearSelection);
 
     WING_API bool select(const QObject *sender, qsizetype offset,
-                         qsizetype length, SelectionMode mode);
+                         qsizetype length, WingHex::SelectionMode mode);
 
     WING_API bool setInsertionMode(const QObject *sender, bool isinsert);
 
@@ -716,8 +719,8 @@ private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
 
-    WingHex::IWingDevice *checkBaseAndReport(const QObject *sender,
-                                             const char *func);
+    bool passByFailedGuard(const QObject *sender, const char *func,
+                           const QVariantList &params);
 
     bool checkErrAllAllowAndReport(const QObject *sender, const char *func);
 
@@ -743,6 +746,9 @@ private:
     UniqueIdGenerator m_idGen;
 
     QHash<QString, QHash<QString, WingAngelAPI::ScriptFnInfo>> _scfns;
+
+    IWingManager *_manager = nullptr;
+    std::optional<PluginInfo> _manInfo;
 
     WingAngelAPI *_angelplg = nullptr;
     asCScriptEngine *_engine = nullptr;

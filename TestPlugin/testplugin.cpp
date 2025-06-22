@@ -438,23 +438,21 @@ TestPlugin::colorTable(const QList<void *> &params) {
         return generateScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
-    void *array;
+    void *array = nullptr;
     QVector<void *> colors;
     for (auto &c : colorTable()) {
         colors.append(new QColor(c));
     }
 
-    // TODO
-    // auto invoked =
-    //     invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-    //                   WINGAPI_RETURN_ARG(array),
-    //                   WINGAPI_ARG(MetaType::Color), WINGAPI_ARG(colors));
-    // if (invoked) {
-    //     if (array) {
-    //         qDeleteAll(colors);
-    //         return array;
-    //     }
-    // }
+    auto invoked =
+        invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
+                      qReturnArg(array), MetaType::Color, colors);
+    if (invoked) {
+        if (array) {
+            qDeleteAll(colors);
+            return array;
+        }
+    }
 
     qDeleteAll(colors);
     return generateScriptCallError(-2, tr("AllocArrayFailed"));
