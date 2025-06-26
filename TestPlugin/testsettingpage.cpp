@@ -23,8 +23,8 @@
 #include <QVBoxLayout>
 
 TestSettingPage::TestSettingPage(const QString &id, const QString &content,
-                                 QWidget *parent)
-    : WingHex::SettingPage(parent), _id(id) {
+                                 bool isShowInRibbon, QWidget *parent)
+    : WingHex::SettingPage(parent), _id(id), _isShownInRibbton(isShowInRibbon) {
     auto layout = new QVBoxLayout(this);
     _lbl = new QLabel(content, this);
     _lbl->setAlignment(Qt::AlignCenter);
@@ -38,6 +38,8 @@ QIcon TestSettingPage::categoryIcon() const {
 QString TestSettingPage::name() const { return _id; }
 
 QString TestSettingPage::id() const { return _id; }
+
+bool TestSettingPage::showInRibbon() const { return _isShownInRibbton; }
 
 void TestSettingPage::apply() {}
 

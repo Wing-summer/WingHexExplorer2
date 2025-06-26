@@ -20,7 +20,6 @@
 
 #include "testplugin.h"
 #include "testform.h"
-#include "testpluginpage.h"
 #include "testsettingpage.h"
 #include "testwingeditorviewwidget.h"
 
@@ -180,8 +179,6 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
 
 TestPlugin::~TestPlugin() { destoryTestShareMem(); }
 
-int TestPlugin::sdkVersion() const { return WingHex::SDKVERSION; }
-
 bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     auto v = set->value("Test", 0).toInt();
     // 如果你之前启动过且正常推出，这个值一定是 5
@@ -247,17 +244,11 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         _rtbinfo.append(rtinfo);
     }
 
-    {
-        auto sp = new TestSettingPage(QStringLiteral("Test1"),
-                                      QStringLiteral("This is a Test1"));
-        _setpages.insert(sp, true);
-    }
+    _setpages.append(new TestSettingPage(
+        QStringLiteral("Test1"), QStringLiteral("This is a Test1"), true));
 
-    {
-        auto sp = new TestSettingPage(QStringLiteral("Test2"),
-                                      QStringLiteral("This is a Test2"));
-        _setpages.insert(sp, false);
-    }
+    _setpages.append(new TestSettingPage(
+        QStringLiteral("Test2"), QStringLiteral("This is a Test2"), false));
 
     {
         WingHex::WingDockWidgetInfo info;
@@ -272,11 +263,6 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     {
         auto ev = QSharedPointer<TestWingEditorViewWidget::Creator>::create();
         _evws.append(ev);
-    }
-
-    {
-        auto pp = new TestPluginPage;
-        _plgps.append(pp);
     }
 
     _tmenu = new QMenu(QStringLiteral("TestPlugin"));
@@ -298,9 +284,8 @@ void TestPlugin::unload(std::unique_ptr<QSettings> &set) {
     // 设个数字，那就是 5 测试一下配置是否正常工作
     set->setValue("Test", 5);
 
-    for (auto p = _setpages.constKeyValueBegin();
-         p != _setpages.constKeyValueEnd(); ++p) {
-        p->first->deleteLater();
+    for (auto &p : _setpages) {
+        p->deleteLater();
     }
 
     for (auto &item : _winfo) {
@@ -332,12 +317,8 @@ TestPlugin::registeredRibbonTools() const {
     return _rtbinfo;
 }
 
-QHash<WingHex::SettingPage *, bool> TestPlugin::registeredSettingPages() const {
+QList<WingHex::SettingPage *> TestPlugin::registeredSettingPages() const {
     return _setpages;
-}
-
-QList<WingHex::PluginPage *> TestPlugin::registeredPages() const {
-    return _plgps;
 }
 
 QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>

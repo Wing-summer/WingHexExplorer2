@@ -178,8 +178,6 @@ WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
 
 WingCStruct::~WingCStruct() {}
 
-int WingCStruct::sdkVersion() const { return WingHex::SDKVERSION; }
-
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     resetEnv();
@@ -211,8 +209,7 @@ WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
     return evs;
 }
 
-QHash<WingHex::SettingPage *, bool>
-WingCStruct::registeredSettingPages() const {
+QList<WingHex::SettingPage *> WingCStruct::registeredSettingPages() const {
     return _setpgs;
 }
 

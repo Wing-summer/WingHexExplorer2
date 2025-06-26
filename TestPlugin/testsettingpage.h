@@ -29,13 +29,15 @@ class TestSettingPage : public WingHex::SettingPage {
     Q_OBJECT
 public:
     explicit TestSettingPage(const QString &id, const QString &content,
-                             QWidget *parent = nullptr);
+                             bool isShowInRibbon, QWidget *parent = nullptr);
 
     // PageBase interface
 public:
     virtual QIcon categoryIcon() const override;
     virtual QString name() const override;
     virtual QString id() const override;
+
+    virtual bool showInRibbon() const override;
 
     // SettingPage interface
 public:
@@ -45,7 +47,7 @@ public:
 
 private:
     QLabel *_lbl = nullptr;
-
+    bool _isShownInRibbton;
     QString _id;
 };
 

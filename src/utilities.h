@@ -57,7 +57,15 @@ Q_DECL_UNUSED static inline QString NAMEICONRES(const QString &name) {
 }
 
 Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {
-    return QIcon(NAMEICONRES(name));
+    static QHash<QString, QIcon> cache;
+    auto picon = cache.find(name);
+    if (picon == cache.end()) {
+        QIcon icon(NAMEICONRES(name));
+        cache.insert(name, icon);
+        return icon;
+    } else {
+        return *picon;
+    }
 }
 
 class Utilities {

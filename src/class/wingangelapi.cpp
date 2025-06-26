@@ -44,8 +44,6 @@ WingAngelAPI::WingAngelAPI() {
 
 WingAngelAPI::~WingAngelAPI() {}
 
-int WingAngelAPI::sdkVersion() const { return WingHex::SDKVERSION; }
-
 bool WingAngelAPI::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     return true;

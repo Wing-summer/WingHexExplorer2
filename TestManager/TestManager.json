@@ -1,11 +1,8 @@
 {
-    "Id": "TestPlugin",
+    "Id": "TestManager",
     "SDK": 18,
     "Version": "0.0.1",
     "Vendor": "WingCloudStudio",
-    "Dependencies": [
-
-    ],
     "Author": "wingsummer",
     "License": "AGPL-3.0",
     "Url": "https://github.com/Wing-summer/WingHexExplorer2"

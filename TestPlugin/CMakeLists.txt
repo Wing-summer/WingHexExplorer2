@@ -64,9 +64,7 @@ add_library(
     testsettingpage.h
     testsettingpage.cpp
     testwingeditorviewwidget.h
-    testwingeditorviewwidget.cpp
-    testpluginpage.h
-    testpluginpage.cpp)
+    testwingeditorviewwidget.cpp)
 
 set_target_properties(TestPlugin PROPERTIES SUFFIX ".wingplg")
 

@@ -18,21 +18,40 @@
 ** =============================================================================
 */
 
-#include "testpluginpage.h"
+#include "testmanager.h"
 
-#include <QVBoxLayout>
+TestManager::TestManager() : WingHex::IWingManager() { content = new TestPage; }
 
-TestPluginPage::TestPluginPage(QWidget *parent) : WingHex::PluginPage(parent) {
-    auto layout = new QVBoxLayout(this);
-    _lbl = new QLabel(QStringLiteral("TestPluginPage"), this);
-    _lbl->setAlignment(Qt::AlignCenter);
-    layout->addWidget(_lbl);
+TestManager::~TestManager() {
+    // no need to manual delete content
+    // the host will take the ownership
 }
 
-QIcon TestPluginPage::categoryIcon() const {
-    return QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+bool TestManager::init(const std::unique_ptr<QSettings> &set) {
+    Q_UNUSED(set);
+    return true;
 }
 
-QString TestPluginPage::name() const { return tr("TestPluginPage"); }
+void TestManager::unload(std::unique_ptr<QSettings> &set) { Q_UNUSED(set); }
 
-QString TestPluginPage::id() const { return QStringLiteral("TestPluginPage"); }
+const QString TestManager::comment() const {
+    return QStringLiteral("Hello world!");
+}
+
+QList<WingHex::SettingPage *> TestManager::registeredSettingPages() const {
+    return {content};
+}
+
+bool TestManager::enterGuard(const QMetaObject *sender, const QString &sig,
+                             const QVariantList &params) {
+    if (content->isDisableMsg()) {
+        if (sig.startsWith("msg")) {
+            // block all msg-prefix function
+            logWarn(QStringLiteral("Blocking: (%1) {%2}")
+                        .arg(sender->className(), sig));
+            return false;
+        }
+    }
+
+    return true;
+}

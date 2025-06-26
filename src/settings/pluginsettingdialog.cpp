@@ -18,7 +18,6 @@
 #include "pluginsettingdialog.h"
 #include "class/pluginsystem.h"
 #include "class/settingmanager.h"
-#include "dbghelper.h"
 #include "ui_pluginsettingdialog.h"
 #include "utilities.h"
 
@@ -48,6 +47,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto &plgsys = PluginSystem::instance();
     auto pico = ICONRES("plugin");
     ui->plglist->clear();
+
     for (auto &p : plgsys.plugins()) {
         auto pco = p->pluginIcon();
         ui->plglist->addItem(
@@ -63,16 +63,31 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             new QListWidgetItem(pco.isNull() ? pico : pco, d->pluginName()));
     }
     ui->txtd->clear();
+
+    auto minfo = plgsys.monitorManagerInfo();
+    if (minfo) {
+        auto sep = QStringLiteral(" : ");
+
+        ui->txtm->append(getWrappedText(tr("ID") + sep + minfo->id));
+        ui->txtm->append(getWrappedText(tr("License") + sep + minfo->license));
+        ui->txtm->append(getWrappedText(tr("Author") + sep + minfo->author));
+        ui->txtm->append(getWrappedText(tr("Vendor") + sep + minfo->vendor));
+        ui->txtm->append(
+            getWrappedText(tr("Version") + sep + minfo->version.toString()));
+        ui->txtm->append(getWrappedText(
+            tr("URL") + sep + QStringLiteral("<a href=\"") + minfo->url +
+            QStringLiteral("\">") + minfo->url + QStringLiteral("</a>")));
+        ui->txtm->append(getWrappedText(tr("Comment") + sep));
+        auto p = plgsys.monitorManager();
+        if (p) {
+            ui->txtm->append(getWrappedText(p->comment()));
+        }
+    } else {
+        ui->txtm->setText(tr("NoMonitorPlugin"));
+    }
 }
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }
-
-void PluginSettingDialog::buildUp(const QList<PluginPage *> &pages) {
-    ASSERT_SINGLETON;
-    for (auto &page : pages) {
-        ui->tabWidget->addTab(page, page->categoryIcon(), page->name());
-    }
-}
 
 void PluginSettingDialog::reload() {
     this->blockSignals(true);
@@ -112,17 +127,18 @@ void PluginSettingDialog::on_devlist_currentRowChanged(int currentRow) {
 
     auto info = plgsys.getPluginInfo(plg);
     ui->txtd->clear();
-    ui->txtd->append(getWrappedText(tr("ID") + " : " + info.id));
-    ui->txtd->append(getWrappedText(tr("Name") + " : " + plg->pluginName()));
-    ui->txtd->append(getWrappedText(tr("License") + " : " + info.license));
-    ui->txtd->append(getWrappedText(tr("Author") + " : " + info.author));
-    ui->txtd->append(getWrappedText(tr("Vendor") + " : " + info.vendor));
+    static auto sep = QStringLiteral(" : ");
+    ui->txtd->append(getWrappedText(tr("ID") + sep + info.id));
+    ui->txtd->append(getWrappedText(tr("Name") + sep + plg->pluginName()));
+    ui->txtd->append(getWrappedText(tr("License") + sep + info.license));
+    ui->txtd->append(getWrappedText(tr("Author") + sep + info.author));
+    ui->txtd->append(getWrappedText(tr("Vendor") + sep + info.vendor));
     ui->txtd->append(
-        getWrappedText(tr("Version") + " : " + info.version.toString()));
+        getWrappedText(tr("Version") + sep + info.version.toString()));
     ui->txtd->append(
-        getWrappedText(tr("Comment") + " : " + plg->pluginComment()));
+        getWrappedText(tr("Comment") + sep + plg->pluginComment()));
     ui->txtd->append(getWrappedText(
-        tr("URL") + " : " + QStringLiteral("<a href=\"") + info.url +
+        tr("URL") + sep + QStringLiteral("<a href=\"") + info.url +
         QStringLiteral("\">") + info.url + QStringLiteral("</a>")));
 }
 
@@ -136,16 +152,16 @@ void PluginSettingDialog::on_plglist_currentRowChanged(int currentRow) {
 
     auto info = plgsys.getPluginInfo(plg);
     ui->txtc->clear();
-
-    ui->txtc->append(getWrappedText(tr("ID") + " : " + info.id));
-    ui->txtc->append(getWrappedText(tr("Name") + " : " + plg->pluginName()));
-    ui->txtc->append(getWrappedText(tr("License") + " : " + info.license));
-    ui->txtc->append(getWrappedText(tr("Author") + " : " + info.author));
-    ui->txtc->append(getWrappedText(tr("Vendor") + " : " + info.vendor));
+    static auto sep = QStringLiteral(" : ");
+    ui->txtc->append(getWrappedText(tr("ID") + sep + info.id));
+    ui->txtc->append(getWrappedText(tr("Name") + sep + plg->pluginName()));
+    ui->txtc->append(getWrappedText(tr("License") + sep + info.license));
+    ui->txtc->append(getWrappedText(tr("Author") + sep + info.author));
+    ui->txtc->append(getWrappedText(tr("Vendor") + sep + info.vendor));
     ui->txtc->append(
-        getWrappedText(tr("Version") + " : " + info.version.toString()));
+        getWrappedText(tr("Version") + sep + info.version.toString()));
     ui->txtc->append(
-        getWrappedText(tr("Comment") + " : " + plg->pluginComment()));
+        getWrappedText(tr("Comment") + sep + plg->pluginComment()));
     if (!info.dependencies.isEmpty()) {
         ui->txtc->append(getWrappedText(tr("pluginDependencies:")));
         for (auto &d : info.dependencies) {
@@ -156,7 +172,7 @@ void PluginSettingDialog::on_plglist_currentRowChanged(int currentRow) {
         }
     }
     ui->txtc->append(getWrappedText(
-        tr("URL") + " : " + QStringLiteral("<a href=\"") + info.url +
+        tr("URL") + sep + QStringLiteral("<a href=\"") + info.url +
         QStringLiteral("\">") + info.url + QStringLiteral("</a> ")));
 }
 

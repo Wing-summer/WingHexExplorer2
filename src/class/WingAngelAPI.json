@@ -1,5 +1,6 @@
 {
     "Id": "WingAngelAPI",
+    "SDK": 18,
     "Author": "wingsummer",
     "Version": "2.2.2",
     "Vendor": "WingCloudStudio",

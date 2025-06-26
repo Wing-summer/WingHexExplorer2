@@ -68,7 +68,7 @@ BEGIN
         BLOCK "080404b0"
         BEGIN
             VALUE "CompanyName", "羽云工作室（WingCloudStudio）"
-            VALUE "FileDescription", "一个自由强大跨平台的十六进制编辑器"
+            VALUE "FileDescription", "羽云十六进制编辑器"
             VALUE "FileVersion", "1.0.0"
             VALUE "InternalName", "WingHexExplorer2.exe"
             VALUE "LegalCopyright", "AGPL-3.0"

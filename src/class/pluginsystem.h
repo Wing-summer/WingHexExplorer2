@@ -103,18 +103,9 @@ private:
         QExplicitlySharedDataPointer<UniqueIdGenerator::UniqueId>;
 
 public:
-    struct PluginInfo {
-        QString id;
-        QVersionNumber version;
-        QString vendor;
-        QList<WingDependency> dependencies;
-        QString author;
-        QString license;
-        QString url;
-    };
-
     enum class PluginStatus {
         Valid,
+        SDKVersion,
         BrokenVersion,
         InvalidID,
         DupID,
@@ -257,12 +248,18 @@ private:
     void registerMarcoDevice(IWingDevice *plg);
 
 private:
+    void registerRibbonTools(const QList<WingRibbonToolBoxInfo> &tools);
+    void registeredSettingPages(const QVariant &itptr,
+                                const QList<SettingPage *> &pages);
     void registerPluginDockWidgets(IWingPluginBase *p);
-    void registerPluginPages(IWingPluginBase *p);
 
 public:
     // fpr crash checking
     QString currentLoadingPlugin() const;
+
+    IWingManager *monitorManager() const;
+
+    const std::optional<PluginInfo> &monitorManagerInfo() const;
 
 private:
     template <typename T>

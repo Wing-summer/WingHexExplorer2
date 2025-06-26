@@ -2520,6 +2520,12 @@ bool PluginSystem::checkErrAllAllowAndReport(const QObject *sender,
     return false;
 }
 
+const std::optional<PluginInfo> &PluginSystem::monitorManagerInfo() const {
+    return _manInfo;
+}
+
+IWingManager *PluginSystem::monitorManager() const { return _manager; }
+
 IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
                                                 const char *func) {
     Q_ASSERT(func);
@@ -3075,8 +3081,8 @@ IWingDevice *PluginSystem::device(qsizetype index) const {
 }
 
 template <typename T>
-std::optional<PluginSystem::PluginInfo>
-PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
+std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
+                                                   const QDir &setdir) {
     Q_ASSERT(_win);
 
     if (fileinfo.exists()) {
@@ -3090,7 +3096,7 @@ PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
 
         auto lmeta = loader.metaData();
         PluginStatus cret;
-        std::optional<PluginSystem::PluginInfo> meta;
+        std::optional<PluginInfo> meta;
         if (lmeta.contains("MetaData")) {
             auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
             cret = checkPluginMetadata(m, std::is_same_v<T, IWingPlugin>);
@@ -3116,13 +3122,25 @@ PluginSystem::loadPlugin(const QFileInfo &fileinfo, const QDir &setdir) {
         case PluginStatus::DupID:
             Logger::critical(tr("InvalidDupPlugin"));
             return std::nullopt;
+        case PluginStatus::SDKVersion:
+            Logger::critical(tr("ErrLoadPluginSDKVersion"));
+            return std::nullopt;
+        }
+
+        auto m = meta.value();
+        if (_manager) {
+            if (!_manager->onLoadingPlugin(fileName, m)) {
+                Logger::critical(QStringLiteral("{ ") + m.id +
+                                 QStringLiteral("} ") +
+                                 tr("PluginBlockByManager"));
+                return std::nullopt;
+            }
         }
 
         auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
             Logger::critical(loader.errorString());
         } else {
-            auto m = meta.value();
             retranslateMetadata(p, m);
             loadPlugin(p, m, setdir);
         }
@@ -3196,11 +3214,11 @@ PluginSystem::assginHandleForPluginView(IWingPlugin *plg, EditorView *view) {
     return id;
 }
 
-PluginSystem::PluginInfo
-PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
-    PluginSystem::PluginInfo info;
+PluginInfo PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
+    PluginInfo info;
 
     info.id = meta["Id"].toString().trimmed();
+    info.SDKVersion = meta["SDK"].toInt();
     info.version =
         QVersionNumber::fromString(meta["Version"].toString().trimmed());
 
@@ -3237,6 +3255,10 @@ PluginSystem::parsePluginMetadata(const QJsonObject &meta) {
 PluginSystem::PluginStatus
 PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
     constexpr auto puid_limit = 36; // same as uuid length, so enough
+
+    if (meta.SDKVersion != SDKVERSION) {
+        return PluginStatus::SDKVersion;
+    }
 
     if (meta.id.length() > puid_limit) {
         return PluginStatus::InvalidID;
@@ -3560,8 +3582,7 @@ IWingDevice *PluginSystem::ext2Device(const QString &ext) {
     return *r;
 }
 
-PluginSystem::PluginInfo
-PluginSystem::getPluginInfo(IWingPluginBase *plg) const {
+PluginInfo PluginSystem::getPluginInfo(IWingPluginBase *plg) const {
     Q_ASSERT(plg);
     return _pinfos.value(plg);
 }
@@ -3596,7 +3617,7 @@ void PluginSystem::loadExtPlugin() {
         loadPlugin<IWingPlugin>(item, udir);
     }
 
-    QList<PluginSystem::PluginInfo> errorplg;
+    QList<PluginInfo> errorplg;
     if (!_lazyplgs.isEmpty()) {
         QStringList lazyplgs;
         lazyplgs.swap(_lazyplgs);
@@ -3687,18 +3708,59 @@ void PluginSystem::try2LoadManagerPlugin() {
     auto lmeta = loader.metaData();
     auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
 
-    // ID should not be empty
-    if (m.id.isEmpty()) {
+    auto cret = checkPluginMetadata(m, false);
+
+    switch (cret) {
+    case PluginStatus::Valid:
+        break;
+    case PluginStatus::SDKVersion:
+        Logger::critical(tr("ErrLoadPluginSDKVersion"));
+        return;
+    case PluginStatus::InvalidID:
+        Logger::critical(tr("InvalidPluginID"));
+        return;
+    case PluginStatus::BrokenVersion:
+        Logger::critical(tr("InvalidPluginBrokenInfo"));
+        return;
+    case PluginStatus::DupID:
+    case PluginStatus::LackDependencies:
+        // monitor is the first plugin to load and
+        // should not have any dependency
+        Q_ASSERT(false);
         return;
     }
 
     auto p = qobject_cast<IWingManager *>(loader.instance());
     if (p) {
+        QDir udir(Utilities::getAppDataPath());
+        auto plgset = QStringLiteral("plgset");
+        udir.mkdir(plgset);
+        if (!udir.cd(plgset)) {
+            throw CrashCode::PluginSetting;
+        }
+
+        auto setp = std::make_unique<QSettings>(udir.absoluteFilePath(m.id),
+                                                QSettings::Format::IniFormat);
+
+        if (!p->init(setp)) {
+            setp->deleteLater();
+            Logger::critical(tr("ErrLoadInitPlugin"));
+            return;
+        }
+
         applyFunctionTables(p, _plgFns);
         _manager = p;
+
+        // translate the meta-data
+        m.author = p->retranslate(m.author);
+        m.vendor = p->retranslate(m.vendor);
+        m.license = p->retranslate(m.license);
+
         _manInfo = m;
 
-        // TODO
+        registerRibbonTools(p->registeredRibbonTools());
+        registeredSettingPages(QVariant::fromValue(p),
+                               p->registeredSettingPages());
     }
 }
 
@@ -4160,10 +4222,6 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
     QTranslator *p_tr = nullptr;
 
     try {
-        if (p->sdkVersion() != SDKVERSION) {
-            throw tr("ErrLoadPluginSDKVersion");
-        }
-
         if (!p->pluginName().trimmed().length()) {
             throw tr("ErrLoadPluginNoName");
         }
@@ -4193,61 +4251,12 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
         _loadedplgs.append(p);
         _pinfos.insert(p, meta);
 
-        Logger::warning(tr("PluginName :") + p->pluginName());
-        Logger::warning(tr("PluginAuthor :") + meta.author);
-        Logger::warning(tr("PluginWidgetRegister"));
+        Logger::info(tr("PluginName :") + p->pluginName());
+        Logger::debug(tr("PluginAuthor :") + meta.author);
+        Logger::debug(tr("PluginWidgetRegister"));
 
         // ensure call only once
-        auto ribbonToolboxInfos = p->registeredRibbonTools();
-        if (!ribbonToolboxInfos.isEmpty()) {
-            for (auto &item : ribbonToolboxInfos) {
-                if (_win->m_ribbonMaps.contains(item.catagory)) {
-                    if (!item.toolboxs.isEmpty()) {
-                        auto &cat = _win->m_ribbonMaps[item.catagory];
-                        for (auto &group : item.toolboxs) {
-                            if (group.tools.isEmpty()) {
-                                continue;
-                            }
-                            auto g = cat->addGroup(group.name);
-                            for (auto &tool : group.tools) {
-                                g->addButton(tool);
-                            }
-                        }
-                    }
-                } else {
-                    if (!item.toolboxs.isEmpty()) {
-                        bool isSys = false;
-                        RibbonTabContent *cat;
-                        if (_win->m_ribbonMaps.contains(item.catagory)) {
-                            isSys = true;
-                            cat = _win->m_ribbonMaps.value(item.catagory);
-                        } else {
-                            cat = new RibbonTabContent;
-                        }
-                        bool hasAdded = false;
-                        for (auto &group : item.toolboxs) {
-                            if (group.tools.isEmpty()) {
-                                continue;
-                            }
-                            auto g = cat->addGroup(group.name);
-                            for (auto &tool : group.tools) {
-                                g->addButton(tool);
-                            }
-                            hasAdded = true;
-                        }
-                        if (!isSys) {
-                            if (hasAdded) {
-                                _win->m_ribbon->addTab(cat, item.displayName);
-                                _win->m_ribbonMaps[item.catagory] = cat;
-                            } else {
-                                delete cat;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
+        registerRibbonTools(p->registeredRibbonTools());
         registerPluginDockWidgets(p);
 
         {
@@ -4264,18 +4273,8 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
             }
         }
 
-        {
-            auto sp = p->registeredSettingPages();
-            if (!sp.isEmpty()) {
-                for (auto page = sp.keyBegin(); page != sp.keyEnd(); ++page) {
-                    auto pp = *page;
-                    pp->setProperty("__plg__", QVariant::fromValue(p));
-                }
-                _win->m_settingPages.insert(sp);
-            }
-        }
-
-        registerPluginPages(p);
+        registeredSettingPages(QVariant::fromValue(p),
+                               p->registeredSettingPages());
 
         registerFns(p);
         registerEnums(p);
@@ -4298,12 +4297,8 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
     QTranslator *p_tr = nullptr;
 
     try {
-        if (p->sdkVersion() != SDKVERSION) {
-            throw tr("ErrLoadExtPluginSDKVersion");
-        }
-
-        Logger::warning(tr("ExtPluginAuthor :") + meta.author);
-        Logger::warning(tr("ExtPluginWidgetRegister"));
+        Logger::debug(tr("ExtPluginAuthor :") + meta.author);
+        Logger::debug(tr("ExtPluginWidgetRegister"));
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
@@ -4326,7 +4321,6 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
         _loadeddevs.append(p);
         _pinfos.insert(p, meta);
 
-        registerPluginPages(p);
         registerMarcoDevice(p);
 
         // ok register into menu open
@@ -4454,20 +4448,72 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
     }
 }
 
-void PluginSystem::registerPluginPages(IWingPluginBase *p) {
-    auto rp = p->registeredPages();
-    if (!rp.isEmpty()) {
-        for (auto &page : rp) {
-            page->setProperty("__plg__", QVariant::fromValue(p));
-        }
-        _win->m_plgPages.append(rp);
-    }
-}
-
 void PluginSystem::registerMarcoDevice(IWingDevice *plg) {
     auto id = getPUID(plg).toUpper();
     auto sep = QStringLiteral("_");
     _scriptMarcos.append(sep + id + sep);
+}
+
+void PluginSystem::registerRibbonTools(
+    const QList<WingRibbonToolBoxInfo> &tools) {
+    if (!tools.isEmpty()) {
+        for (auto &item : tools) {
+            if (_win->m_ribbonMaps.contains(item.catagory)) {
+                if (!item.toolboxs.isEmpty()) {
+                    auto &cat = _win->m_ribbonMaps[item.catagory];
+                    for (auto &group : item.toolboxs) {
+                        if (group.tools.isEmpty()) {
+                            continue;
+                        }
+                        auto g = cat->addGroup(group.name);
+                        for (auto &tool : group.tools) {
+                            g->addButton(tool);
+                        }
+                    }
+                }
+            } else {
+                if (!item.toolboxs.isEmpty()) {
+                    bool isSys = false;
+                    RibbonTabContent *cat;
+                    if (_win->m_ribbonMaps.contains(item.catagory)) {
+                        isSys = true;
+                        cat = _win->m_ribbonMaps.value(item.catagory);
+                    } else {
+                        cat = new RibbonTabContent;
+                    }
+                    bool hasAdded = false;
+                    for (auto &group : item.toolboxs) {
+                        if (group.tools.isEmpty()) {
+                            continue;
+                        }
+                        auto g = cat->addGroup(group.name);
+                        for (auto &tool : group.tools) {
+                            g->addButton(tool);
+                        }
+                        hasAdded = true;
+                    }
+                    if (!isSys) {
+                        if (hasAdded) {
+                            _win->m_ribbon->addTab(cat, item.displayName);
+                            _win->m_ribbonMaps[item.catagory] = cat;
+                        } else {
+                            delete cat;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void PluginSystem::registeredSettingPages(const QVariant &itptr,
+                                          const QList<SettingPage *> &pages) {
+    if (!pages.isEmpty()) {
+        for (auto &page : pages) {
+            page->setProperty("__plg__", itptr);
+        }
+        _win->m_settingPages.append(pages);
+    }
 }
 
 bool PluginSystem::checkThreadAff() {
@@ -4497,6 +4543,7 @@ void PluginSystem::loadAllPlugin() {
     try2LoadManagerPlugin();
 
     auto &set = SettingManager::instance();
+    // manager plugin can not block WingAngelAPI, only settings
     if (set.scriptEnabled()) {
         _angelplg = new WingAngelAPI;
 
@@ -4520,7 +4567,6 @@ void PluginSystem::loadAllPlugin() {
     initCheckingEngine();
 
     {
-        auto cstructplg = new WingCStruct;
         QFile cstructjson(QStringLiteral(
             ":/com.wingsummer.winghex/src/class/WingCStruct.json"));
         auto ret = cstructjson.open(QFile::ReadOnly);
@@ -4532,16 +4578,23 @@ void PluginSystem::loadAllPlugin() {
         QJsonDocument doc = QJsonDocument::fromJson(cstruct);
         auto meta = parsePluginMetadata(doc.object());
 
-        QDir setd(Utilities::getAppDataPath());
-        auto plgset = QStringLiteral("plgset");
-        setd.mkdir(plgset);
-        retranslateMetadata(cstructplg, meta);
-        loadPlugin(cstructplg, meta, setd);
+        // internal plugin has no filename
+        if (_manager->onLoadingPlugin({}, meta)) {
+            auto cstructplg = new WingCStruct;
+            QDir setd(Utilities::getAppDataPath());
+            auto plgset = QStringLiteral("plgset");
+            setd.mkdir(plgset);
+            retranslateMetadata(cstructplg, meta);
+            loadPlugin(cstructplg, meta, setd);
+        } else {
+            Logger::critical(QStringLiteral("{ ") + meta.id +
+                             QStringLiteral("} ") + tr("PluginBlockByManager"));
+        }
     }
 
     Logger::newLine();
 
-    bool ok;
+    bool ok = false;
 
     auto disAll =
         qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
@@ -4603,6 +4656,13 @@ void PluginSystem::destory() {
         delete item;
     }
     _loadeddevs.clear();
+
+    if (_manager && _manInfo) {
+        auto set = std::make_unique<QSettings>(
+            udir.absoluteFilePath(_manInfo->id), QSettings::Format::IniFormat);
+        _manager->unload(set);
+        delete _manager;
+    }
 }
 
 EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *plg) const {

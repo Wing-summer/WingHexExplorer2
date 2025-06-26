@@ -1637,7 +1637,6 @@ void MainWindow::buildUpSettingDialog() {
     auto plgPage = new PluginSettingDialog(m_setdialog);
     connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
-    plgPage->buildUp(m_plgPages);
     m_setdialog->addPage(plgPage);
     id = plgPage->id();
     Q_ASSERT(!id.isEmpty());
@@ -1662,9 +1661,7 @@ void MainWindow::buildUpSettingDialog() {
     usedIDs.append(id);
     qApp->processEvents();
 
-    for (auto page_p = m_settingPages.constKeyValueBegin();
-         page_p != m_settingPages.constKeyValueEnd(); ++page_p) {
-        auto page = page_p->first;
+    for (auto &page : m_settingPages) {
         auto name = page->name();
         auto id = page->id();
 
@@ -1690,7 +1687,7 @@ void MainWindow::buildUpSettingDialog() {
         connect(page, &SettingPage::optionNeedRestartChanged, m_setdialog,
                 &SettingDialog::toastTakeEffectReboot);
         m_setdialog->addPage(page);
-        if (page_p->second) {
+        if (page->showInRibbon()) {
             auto icon = page->categoryIcon();
             addPannelAction(m_pluginSettingsGroup, icon, name,
                             [=] { m_setdialog->showConfig(id); });

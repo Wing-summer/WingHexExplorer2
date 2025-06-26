@@ -23,8 +23,6 @@ SharedMemoryDriver::SharedMemoryDriver() : WingHex::IWingDevice() {}
 
 SharedMemoryDriver::~SharedMemoryDriver() {}
 
-int SharedMemoryDriver::sdkVersion() const { return WingHex::SDKVERSION; }
-
 bool SharedMemoryDriver::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     return true;
@@ -40,10 +38,6 @@ const QString SharedMemoryDriver::pluginName() const {
 
 const QString SharedMemoryDriver::pluginComment() const {
     return tr("An extension for opening sshared memory in WingHexExplorer2.");
-}
-
-QList<WingHex::PluginPage *> SharedMemoryDriver::registeredPages() const {
-    return _plgps;
 }
 
 WingHex::WingIODevice *SharedMemoryDriver::onOpenFile(const QString &path) {

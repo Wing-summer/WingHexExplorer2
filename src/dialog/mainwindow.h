@@ -564,8 +564,7 @@ private:
     QList<QMenu *> m_hexContextMenu;
     QHash<IWingPlugin *, QList<QSharedPointer<WingEditorViewWidget::Creator>>>
         m_editorViewWidgets;
-    QHash<SettingPage *, bool> m_settingPages;
-    QList<PluginPage *> m_plgPages;
+    QList<SettingPage *> m_settingPages;
 
     // these variables will be invalid after restoring state
     ads::CDockAreaWidget *m_leftViewArea = nullptr;

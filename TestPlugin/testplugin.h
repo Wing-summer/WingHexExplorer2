@@ -40,7 +40,6 @@ public:
 
     // IWingPlugin interface (必须)
 public:
-    virtual int sdkVersion() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
@@ -57,9 +56,8 @@ public:
     virtual QMenu *registeredHexContextMenu() const override;
     virtual QList<WingHex::WingRibbonToolBoxInfo>
     registeredRibbonTools() const override;
-    virtual QHash<WingHex::SettingPage *, bool>
+    virtual QList<WingHex::SettingPage *>
     registeredSettingPages() const override;
-    virtual QList<WingHex::PluginPage *> registeredPages() const override;
     virtual QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>
     registeredEditorViewWidgets() const override;
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
@@ -124,9 +122,8 @@ private:
     QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
     QList<WingHex::WingDockWidgetInfo> _winfo;
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
-    QHash<WingHex::SettingPage *, bool> _setpages;
+    QList<WingHex::SettingPage *> _setpages;
     QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
-    QList<WingHex::PluginPage *> _plgps;
 
     QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };

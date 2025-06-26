@@ -48,6 +48,8 @@ private:
 private:
     Theme m_theme;
 
+    QHash<QString, QIcon> m_cache;
+
     explicit SkinManager();
 
     Q_DISABLE_COPY_MOVE(SkinManager)

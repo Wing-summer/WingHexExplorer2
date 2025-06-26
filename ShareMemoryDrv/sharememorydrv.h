@@ -34,14 +34,10 @@ public:
 
     // IWingPlugin interface
 public:
-    virtual int sdkVersion() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
     virtual const QString pluginComment() const override;
-
-public:
-    virtual QList<WingHex::PluginPage *> registeredPages() const override;
 
     // IWingDevice interface
 public:
@@ -50,9 +46,6 @@ public:
     virtual QIcon supportedFileIcon() const override;
     virtual WingHex::WingIODevice *onOpenFile(const QString &path) override;
     virtual bool onCloseFile(WingHex::WingIODevice *dev) override;
-
-private:
-    QList<WingHex::PluginPage *> _plgps;
 };
 
 #endif // SHAREDMEMORYDRIVER_H

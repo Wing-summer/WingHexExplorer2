@@ -32,8 +32,6 @@ public:
     explicit PluginSettingDialog(QWidget *parent = nullptr);
     ~PluginSettingDialog();
 
-    void buildUp(const QList<WingHex::PluginPage *> &pages);
-
 private:
     Ui::PluginSettingDialog *ui;
 

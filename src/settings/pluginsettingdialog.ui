@@ -167,6 +167,24 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="icon">
+       <iconset resource="../../resources.qrc">
+        <normaloff>:/com.wingsummer.winghex/images/monitor.png</normaloff>:/com.wingsummer.winghex/images/monitor.png</iconset>
+      </attribute>
+      <attribute name="title">
+       <string>APIMonitor</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="QTextBrowser" name="txtm">
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

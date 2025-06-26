@@ -1,5 +1,6 @@
 {
     "Id" : "shmem",
+    "SDK": 18,
     "Version" : "0.0.1",
     "Vendor" : "WingCloudStudio",
     "Author" : "wingsummer",

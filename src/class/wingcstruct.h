@@ -35,7 +35,6 @@ public:
 
     // IWingPluginBase interface
 public:
-    virtual int sdkVersion() const override;
     virtual bool init(const std::unique_ptr<QSettings> &set) override;
     virtual void unload(std::unique_ptr<QSettings> &set) override;
     virtual const QString pluginName() const override;
@@ -47,7 +46,7 @@ public:
     // IWingPlugin interface
 public:
     virtual RegisteredEvents registeredEvents() const override;
-    virtual QHash<WingHex::SettingPage *, bool>
+    virtual QList<WingHex::SettingPage *>
     registeredSettingPages() const override;
     virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
     virtual bool eventOnScriptPragma(const QString &script,
@@ -118,7 +117,7 @@ private:
 private:
     CTypeParser _parser;
 
-    QHash<WingHex::SettingPage *, bool> _setpgs;
+    QList<WingHex::SettingPage *> _setpgs;
     QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
     QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };

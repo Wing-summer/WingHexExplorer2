@@ -59,18 +59,35 @@ SkinManager &SkinManager::instance() {
     return instance;
 }
 
-void SkinManager::setTheme(SkinManager::Theme theme) { m_theme = theme; }
+void SkinManager::setTheme(SkinManager::Theme theme) {
+    if (m_theme != theme) {
+        m_theme = theme;
+        m_cache.clear();
+    }
+}
 
 QIcon SkinManager::themeIcon(const QString &name) {
-    switch (m_theme) {
-    case Theme::Dark:
-        return QIcon(QStringLiteral("://dark/") + name +
-                     QStringLiteral(".svg"));
-    case Theme::Light:
-        return QIcon(QStringLiteral("://light/") + name +
-                     QStringLiteral(".svg"));
+    auto picon = m_cache.find(name);
+    if (picon == m_cache.end()) {
+        switch (m_theme) {
+        case Theme::Dark: {
+            QIcon icon(QStringLiteral("://dark/") + name +
+                       QStringLiteral(".svg"));
+            m_cache.insert(name, icon);
+            return icon;
+        }
+        case Theme::Light: {
+            QIcon icon(QStringLiteral("://light/") + name +
+                       QStringLiteral(".svg"));
+            m_cache.insert(name, icon);
+            return icon;
+        }
+        default:
+            return {};
+        }
+    } else {
+        return *picon;
     }
-    return {};
 }
 
 SkinManager::Theme SkinManager::currentTheme() const { return m_theme; }

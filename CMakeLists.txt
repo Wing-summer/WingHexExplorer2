@@ -28,6 +28,7 @@ add_definitions(-DAS_NO_THREADS)
 
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
+    add_subdirectory(TestManager)
 endif()
 
 if(BUILD_SHARED_MEM_EXT)
