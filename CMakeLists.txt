@@ -298,7 +298,11 @@ set(CLASS_SRC
     src/class/asconsolecompletion.h
     src/class/asconsolecompletion.cpp
     src/class/scriptsettings.h
-    src/class/scriptsettings.cpp)
+    src/class/scriptsettings.cpp
+    src/class/wingangel.h
+    src/class/wingangel.cpp
+    src/class/winggeneric.h
+    src/class/winggeneric.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

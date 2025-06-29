@@ -234,26 +234,62 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto &sm = ScriptMachine::instance();
         auto smr = sm.init();
         if (smr) {
-            ScriptMachine::RegCallBacks callbacks;
-            callbacks.getInputFn = [this]() -> QString {
-                return m_scriptConsole->getInput();
-            };
-            callbacks.clearFn = [this]() { m_scriptConsole->clearConsole(); };
-            callbacks.printMsgFn =
-                [this](const ScriptMachine::MessageInfo &message) {
-                    m_scriptConsole->onOutput(message);
-                };
-            sm.registerCallBack(ScriptMachine::Interactive, callbacks);
+            plg.doneRegisterScriptObj();
+            auto cfgerr = sm.isEngineConfigError();
 
-            callbacks.getInputFn = [this]() -> QString {
-                return WingInputDialog::getText(this, tr("InputRequest"),
-                                                tr("PleaseInput"));
-            };
-            callbacks.clearFn = [this]() { m_bgScriptOutput->clear(); };
-            callbacks.printMsgFn =
-                std::bind(&MainWindow::onOutputBgScriptOutput, this,
-                          std::placeholders::_1);
-            sm.registerCallBack(ScriptMachine::Background, callbacks);
+            // At this time, AngelScript service plugin has started
+            if (cfgerr) {
+                m_scriptConsole->initOutput();
+                m_scriptConsole->setMode(QConsoleWidget::Output);
+                m_scriptConsole->stdErr(tr("EngineConfigError"));
+
+                m_scriptConsole->setEnabled(false);
+
+                // configure error, so disable all script feature
+                WingHex::WingRibbonToolBoxInfo::RibbonCatagories catagories;
+                m_ribbonMaps[catagories.SCRIPT]->setEnabled(false);
+            } else {
+                ScriptMachine::RegCallBacks callbacks;
+                callbacks.getInputFn = [this]() -> QString {
+                    return m_scriptConsole->getInput();
+                };
+                callbacks.clearFn = [this]() {
+                    m_scriptConsole->clearConsole();
+                };
+                callbacks.printMsgFn =
+                    [this](const ScriptMachine::MessageInfo &message) {
+                        m_scriptConsole->onOutput(message);
+                    };
+                sm.registerCallBack(ScriptMachine::Interactive, callbacks);
+
+                callbacks.getInputFn = [this]() -> QString {
+                    return WingInputDialog::getText(this, tr("InputRequest"),
+                                                    tr("PleaseInput"));
+                };
+                callbacks.clearFn = [this]() { m_bgScriptOutput->clear(); };
+                callbacks.printMsgFn =
+                    std::bind(&MainWindow::onOutputBgScriptOutput, this,
+                              std::placeholders::_1);
+                sm.registerCallBack(ScriptMachine::Background, callbacks);
+
+                if (splash)
+                    splash->setInfoText(tr("SetupConsole"));
+
+                m_scriptConsole->init();
+                if (splash)
+                    splash->setInfoText(tr("SetupScriptManager"));
+
+                if (splash)
+                    splash->setInfoText(tr("SetupScriptService"));
+
+                m_scriptConsole->initOutput();
+                m_scriptConsole->setMode(QConsoleWidget::Input);
+
+                if (splash)
+                    splash->setInfoText(tr("SetupScriptEditor"));
+                m_scriptDialog = new ScriptingDialog(this);
+                m_scriptDialog->initConsole();
+            }
         } else {
             QMessageBox::critical(this, qAppName(),
                                   tr("ScriptEngineInitFailed"));
@@ -261,25 +297,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             set.save(SettingManager::SCRIPT);
             throw CrashCode::ScriptInitFailed;
         }
-
-        // At this time, AngelScript service plugin has started
-        if (splash)
-            splash->setInfoText(tr("SetupConsole"));
-
-        m_scriptConsole->init();
-        if (splash)
-            splash->setInfoText(tr("SetupScriptManager"));
-
-        if (splash)
-            splash->setInfoText(tr("SetupScriptService"));
-
-        m_scriptConsole->initOutput();
-        m_scriptConsole->setMode(QConsoleWidget::Input);
-
-        if (splash)
-            splash->setInfoText(tr("SetupScriptEditor"));
-        m_scriptDialog = new ScriptingDialog(this);
-        m_scriptDialog->initConsole();
     }
 
     // connect settings signals

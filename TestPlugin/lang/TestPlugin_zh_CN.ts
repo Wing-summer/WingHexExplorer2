@@ -269,60 +269,60 @@
 <context>
     <name>TestPlugin</name>
     <message>
-        <location filename="../testplugin.cpp" line="204"/>
+        <location filename="../testplugin.cpp" line="69"/>
         <source>Test</source>
         <translation>测试</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="216"/>
-        <location filename="../testplugin.cpp" line="225"/>
-        <location filename="../testplugin.cpp" line="230"/>
-        <location filename="../testplugin.cpp" line="299"/>
+        <location filename="../testplugin.cpp" line="81"/>
+        <location filename="../testplugin.cpp" line="90"/>
+        <location filename="../testplugin.cpp" line="95"/>
+        <location filename="../testplugin.cpp" line="164"/>
         <source>TestPlugin</source>
         <translation>测试插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="234"/>
+        <location filename="../testplugin.cpp" line="99"/>
         <source>Button - </source>
         <translation>按钮 - </translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="238"/>
+        <location filename="../testplugin.cpp" line="103"/>
         <source>Click</source>
         <translation>点击</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="302"/>
+        <location filename="../testplugin.cpp" line="167"/>
         <source>A Test Plugin for WingHexExplorer2.</source>
         <translation>一个用来测试羽云十六进制编辑器2的插件</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="336"/>
-        <location filename="../testplugin.cpp" line="344"/>
-        <location filename="../testplugin.cpp" line="353"/>
-        <location filename="../testplugin.cpp" line="374"/>
-        <location filename="../testplugin.cpp" line="390"/>
-        <location filename="../testplugin.cpp" line="397"/>
-        <location filename="../testplugin.cpp" line="404"/>
-        <location filename="../testplugin.cpp" line="411"/>
-        <location filename="../testplugin.cpp" line="419"/>
-        <location filename="../testplugin.cpp" line="448"/>
-        <location filename="../testplugin.cpp" line="456"/>
-        <location filename="../testplugin.cpp" line="464"/>
-        <location filename="../testplugin.cpp" line="472"/>
-        <location filename="../testplugin.cpp" line="481"/>
-        <location filename="../testplugin.cpp" line="488"/>
+        <location filename="../testplugin.cpp" line="196"/>
+        <location filename="../testplugin.cpp" line="204"/>
+        <location filename="../testplugin.cpp" line="213"/>
+        <location filename="../testplugin.cpp" line="234"/>
+        <location filename="../testplugin.cpp" line="250"/>
+        <location filename="../testplugin.cpp" line="257"/>
+        <location filename="../testplugin.cpp" line="264"/>
+        <location filename="../testplugin.cpp" line="271"/>
+        <location filename="../testplugin.cpp" line="278"/>
+        <location filename="../testplugin.cpp" line="307"/>
+        <location filename="../testplugin.cpp" line="315"/>
+        <location filename="../testplugin.cpp" line="323"/>
+        <location filename="../testplugin.cpp" line="331"/>
+        <location filename="../testplugin.cpp" line="340"/>
+        <location filename="../testplugin.cpp" line="347"/>
         <source>InvalidParamsCount</source>
         <translation>无效参数个数</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="367"/>
-        <location filename="../testplugin.cpp" line="383"/>
+        <location filename="../testplugin.cpp" line="227"/>
+        <location filename="../testplugin.cpp" line="243"/>
         <source>InvalidParam</source>
         <translation>非法参数</translation>
     </message>
     <message>
-        <location filename="../testplugin.cpp" line="439"/>
+        <location filename="../testplugin.cpp" line="298"/>
         <source>AllocArrayFailed</source>
         <translation>分配数组失败</translation>
     </message>

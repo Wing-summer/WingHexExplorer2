@@ -19,12 +19,15 @@
 */
 
 #include "testplugin.h"
+#include "WingPlugin/iwingangel.h"
 #include "testform.h"
 #include "testsettingpage.h"
 #include "testwingeditorviewwidget.h"
 
 #include <QApplication>
 #include <QMenu>
+
+WING_DECLARE_STATIC_API;
 
 // 注意：所有提供的脚本接口函数都不是线程安全的，只是测试
 
@@ -36,145 +39,7 @@ TestPlugin::TestPlugin() : WingHex::IWingPlugin() {
     // 初始化会传递一个配置类，插件系统会统一管理放到统一的地方，使用 INI 保存
     // 你可以自行管理，但不建议，统一管理方便使用者备份和转移插件配置
 
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_a),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        _scriptInfo.insert(QStringLiteral("test_a"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_b),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("info")));
-        _scriptInfo.insert(QStringLiteral("test_b"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_c),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        info.params.append(
-            qMakePair(MetaType::Int | MetaType::Array, QStringLiteral("c")));
-        _scriptInfo.insert(QStringLiteral("test_c"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_d),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        info.params.append(qMakePair(MetaType::Hash, QStringLiteral("d")));
-        _scriptInfo.insert(QStringLiteral("test_d"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_e),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-        _scriptInfo.insert(QStringLiteral("test_e"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_f),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Byte | MetaType::Array;
-        _scriptInfo.insert(QStringLiteral("test_f"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_g),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::String;
-        _scriptInfo.insert(QStringLiteral("test_g"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn =
-            std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_h),
-                      this, std::placeholders::_1);
-        info.ret = MetaType::Hash;
-        _scriptInfo.insert(QStringLiteral("test_h"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &TestPlugin::createTestShareMem),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-        info.params.append(
-            qMakePair(MetaType::String, QStringLiteral("nameID")));
-        _scriptInfo.insert(QStringLiteral("createTestShareMem"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &TestPlugin::destoryTestShareMem),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        _scriptInfo.insert(QStringLiteral("destoryTestShareMem"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &TestPlugin::printLogTestSharedMemData),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        _scriptInfo.insert(QStringLiteral("printLogTestSharedMemData"), info);
-    }
-
-    {
-        _scriptUnsafe.insert(QStringLiteral("array<color>@ colorTable()"),
-                             std::bind(QOverload<const QList<void *> &>::of(
-                                           &TestPlugin::colorTable),
-                                       this, std::placeholders::_1));
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &TestPlugin::setPluginMetaTestEnabled),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Void;
-        info.params.append(qMakePair(MetaType::Bool, QStringLiteral("b")));
-        _scriptInfo.insert(QStringLiteral("setPluginMetaTestEnabled"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &TestPlugin::pluginMetaTestEnabled),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-        _scriptInfo.insert(QStringLiteral("pluginMetaTestEnabled"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&TestPlugin::testCrash), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Void;
-        _scriptInfo.insert(QStringLiteral("testCrash"), info);
-    }
+    WING_INIT_STATIC_API;
 }
 
 TestPlugin::~TestPlugin() { destoryTestShareMem(); }
@@ -326,11 +191,6 @@ TestPlugin::registeredEditorViewWidgets() const {
     return _evws;
 }
 
-QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
-TestPlugin::registeredScriptUnsafeFns() const {
-    return _scriptUnsafe;
-}
-
 QVariant TestPlugin::test_a(const QVariantList &params) {
     if (!params.isEmpty()) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -413,8 +273,7 @@ QVariant TestPlugin::test_h(const QVariantList &params) {
     return test_h();
 }
 
-WingHex::IWingPlugin::UNSAFE_RET
-TestPlugin::colorTable(const QList<void *> &params) {
+WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
     if (!params.isEmpty()) {
         return generateScriptCallError(-1, tr("InvalidParamsCount"));
     }
@@ -427,7 +286,7 @@ TestPlugin::colorTable(const QList<void *> &params) {
 
     auto invoked =
         invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
-                      qReturnArg(array), MetaType::Color, colors);
+                      qReturnArg(array), WingHex::MetaType::Meta_Color, colors);
     if (invoked) {
         if (array) {
             qDeleteAll(colors);
@@ -489,6 +348,19 @@ QVariant TestPlugin::testCrash(const QVariantList &params) {
     }
     testCrash();
     return {};
+}
+
+void TestPlugin::testGenericAdd(WingHex::asIWingGeneric *param) {
+    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(param));
+
+    auto arg0 = g->argDWord(0);
+    auto arg1 = g->argDWord(1);
+
+    g->setReturnDWord(arg0 + arg1);
+}
+
+void TestPlugin::testRaiseScriptException(WingHex::asIWingGeneric *) {
+    raiseContextException(__func__, true);
 }
 
 void TestPlugin::test_a() { logDebug(__FUNCTION__); }
@@ -608,15 +480,9 @@ void TestPlugin::testCrash() {
     abort();
 }
 
-QHash<QString, WingHex::IWingPlugin::ScriptFnInfo>
-TestPlugin::registeredScriptFns() const {
-    return _scriptInfo;
-}
-
 WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
     RegisteredEvents evs;
     evs.setFlag(RegisteredEvent::AppReady);
-    evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
     return evs;
 }
 
@@ -625,4 +491,114 @@ void TestPlugin::eventReady() {
     invokeService(QStringLiteral("WingAngelAPI"), "execCode",
                   Qt::AutoConnection, qReturnArg(ret),
                   QStringLiteral(R"(print("Hello, this is TestPlugin!");)"));
+}
+
+void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_a),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_a"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_b),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_b"),
+        {qMakePair(WingHex::MetaType::Meta_String, QStringLiteral("info"))});
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_c),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_c"),
+        {qMakePair(WingHex::MetaType::Meta_Int | WingHex::MetaType::Meta_Array,
+                   QStringLiteral("c"))});
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_d),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_d"),
+        {qMakePair(WingHex::MetaType::Meta_Hash, QStringLiteral("d"))});
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_e),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_e"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Byte | WingHex::MetaType::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_f),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_f"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_String,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_g),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_g"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Hash,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::test_h),
+                  this, std::placeholders::_1),
+        QStringLiteral("test_h"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &TestPlugin::createTestShareMem),
+                  this, std::placeholders::_1),
+        QStringLiteral("createTestShareMem"),
+        {qMakePair(WingHex::MetaType::Meta_String, QStringLiteral("nameID"))});
+
+    o->registerGlobalFunction(WingHex::MetaType::Meta_Void,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &TestPlugin::destoryTestShareMem),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("destoryTestShareMem"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &TestPlugin::printLogTestSharedMemData),
+                  this, std::placeholders::_1),
+        QStringLiteral("printLogTestSharedMemData"));
+
+    o->registerGlobalFunction(
+        QStringLiteral("array<color>@ colorTable()"),
+        std::bind(QOverload<const QList<void *> &>::of(&TestPlugin::colorTable),
+                  this, std::placeholders::_1));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &TestPlugin::setPluginMetaTestEnabled),
+                  this, std::placeholders::_1),
+        QStringLiteral("setPluginMetaTestEnabled"),
+        {qMakePair(WingHex::MetaType::Meta_Bool, QStringLiteral("b"))});
+
+    o->registerGlobalFunction(WingHex::MetaType::Meta_Bool,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &TestPlugin::pluginMetaTestEnabled),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("pluginMetaTestEnabled"));
+
+    o->registerGlobalFunction(
+        WingHex::MetaType::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&TestPlugin::testCrash),
+                  this, std::placeholders::_1),
+        QStringLiteral("testCrash"));
+
+    o->registerGlobalFunction(
+        "int testAdd(int a,int b)", asWINGFUNCTION(TestPlugin::testGenericAdd),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_GENERIC);
+
+    o->registerGlobalFunction(
+        "void raiseScriptException()",
+        asWINGFUNCTION(TestPlugin::testRaiseScriptException),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_GENERIC);
 }

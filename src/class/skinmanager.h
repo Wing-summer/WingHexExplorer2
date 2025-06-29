@@ -19,6 +19,7 @@
 #define SKINMANAGER_H
 
 #include <QCoreApplication>
+#include <QHash>
 #include <QObject>
 
 class SkinManager {

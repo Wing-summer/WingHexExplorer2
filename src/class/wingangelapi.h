@@ -29,9 +29,21 @@ class asIScriptEngine;
 class ScriptMachine;
 class ScriptingConsole;
 
+namespace WingScriptInternal {
+
+struct ScriptFnInfo {
+    uint ret; // MetaType
+    QVector<QPair<uint, QString>> params;
+    std::function<QVariant(const QVariantList &)> fn;
+};
+
+} // namespace WingScriptInternal
+
 class WingAngelAPI : public WingHex::IWingPlugin {
     Q_OBJECT
     Q_INTERFACES(WingHex::IWingPlugin)
+
+    friend class WingAngel;
 
 public:
     WingAngelAPI();
@@ -48,25 +60,14 @@ public:
 
     virtual QString retranslate(const QString &str) override;
 
-    virtual QStringList registerScriptMarcos() const override;
-
 private:
+    virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
+
     virtual void eventPluginFile(PluginFileEvent e, FileType type,
                                  const QString &newfileName, int handle,
                                  const QString &oldfileName) override;
 
 public:
-    void
-    registerScriptFns(const QString &ns,
-                      const QHash<QString, IWingPlugin::ScriptFnInfo> &rfns);
-    void registerUnSafeScriptFns(
-        const QString &ns,
-        const QHash<QString, IWingPlugin::UNSAFE_SCFNPTR> &rfns);
-
-    void
-    registerScriptEnums(const QString &ns,
-                        const QHash<QString, QList<QPair<QString, int>>> &objs);
-
     void installAPI(ScriptMachine *machine);
     void installBasicTypes(asIScriptEngine *engine);
 
@@ -84,6 +85,10 @@ public:
         *reinterpret_cast<T *>(&buffer) = v;
     }
 
+public:
+    static QString type2AngelScriptString(uint type, bool isArg,
+                                          bool noModifier);
+
 private:
     void installLogAPI(asIScriptEngine *engine);
     void installExtAPI(asIScriptEngine *engine);
@@ -94,9 +99,6 @@ private:
     void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
-    void installScriptFns(asIScriptEngine *engine);
-    void installScriptUnSafeFns(asIScriptEngine *engine);
-    void installScriptEnums(asIScriptEngine *engine);
 
 private:
     void registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
@@ -125,9 +127,8 @@ private:
     static QVariant qvariantGet(asIScriptEngine *engine, const void *raw,
                                 int typeID, bool flag);
 
-    static bool
-    getQVariantGetFlag(const WingHex::IWingPlugin::ScriptFnInfo &info,
-                       int index);
+    static bool getQVariantGetFlag(const WingScriptInternal::ScriptFnInfo &info,
+                                   int index);
 
     template <typename T>
     static const T *getDereferencePointer(const void *value, bool isHandle) {
@@ -169,17 +170,17 @@ private:
     retriveAsDictionary(const WingHex::SenderInfo &sender, void *dic);
 
     WING_SERVICE void *vector2AsArray(const WingHex::SenderInfo &sender,
-                                      MetaType type,
+                                      WingHex::MetaType type,
                                       const QVector<void *> &content);
     WING_SERVICE void *list2AsArray(const WingHex::SenderInfo &sender,
-                                    MetaType type,
+                                    WingHex::MetaType type,
                                     const QList<void *> &content);
     WING_SERVICE void deleteAsArray(const WingHex::SenderInfo &sender,
                                     void *array);
 
-    WING_SERVICE void *
-    newAsDictionary(const WingHex::SenderInfo &sender,
-                    const QHash<QString, QPair<MetaType, void *>> &content);
+    WING_SERVICE void *newAsDictionary(
+        const WingHex::SenderInfo &sender,
+        const QHash<QString, QPair<WingHex::MetaType, void *>> &content);
     WING_SERVICE void deleteAsDictionary(const WingHex::SenderInfo &sender,
                                          void *dic);
 
@@ -284,13 +285,8 @@ private:
                                         QFileDialog::Options options);
 
 private:
-    QVector<IWingPlugin::ScriptFnInfo> _sfns;
-    QHash<QString, QHash<QString, qsizetype>> _rfns;
-
-    QVector<IWingPlugin::UNSAFE_SCFNPTR> _usfns;
-    QHash<QString, QHash<QString, qsizetype>> _urfns;
-
-    QHash<QString, QHash<QString, QList<QPair<QString, int>>>> _objs;
+    QVector<WingScriptInternal::ScriptFnInfo> _sfns;
+    QVector<WingHex::UNSAFE_SCFNPTR> _usfns;
 
     QVector<int> _handles;
 };

@@ -116,6 +116,7 @@ public:
     bool init();
     bool isInited() const;
     bool isRunning(ConsoleMode mode) const;
+    bool isEngineConfigError() const;
 
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
@@ -150,15 +151,15 @@ public:
     bool isDebugMode(ConsoleMode mode = Scripting);
 
 public slots:
-    bool executeCode(ConsoleMode mode, const QString &code);
+    bool executeCode(ScriptMachine::ConsoleMode mode, const QString &code);
     // only scripting mode can be debugged
-    bool executeScript(ConsoleMode mode, const QString &script,
+    bool executeScript(ScriptMachine::ConsoleMode mode, const QString &script,
                        bool isInDebug = false, int *retCode = nullptr);
 
     int evaluateDefine(const QString &code, bool &result);
 
     void abortDbgScript();
-    void abortScript(ConsoleMode mode);
+    void abortScript(ScriptMachine::ConsoleMode mode);
     void abortScript();
 
 protected:

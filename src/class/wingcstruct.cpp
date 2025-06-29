@@ -17,164 +17,12 @@
 
 #include "wingcstruct.h"
 
+#include "WingPlugin/iwingangel.h"
 #include "scriptaddon/scriptqdictionary.h"
 #include "utilities.h"
 #include "wingangelapi.h"
 
-WingCStruct::WingCStruct() : WingHex::IWingPlugin() {
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::addStruct), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(MetaType::String, QStringLiteral("header")));
-
-        _scriptInfo.insert(QStringLiteral("addStruct"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(QOverload<const QVariantList &>::of(
-                                &WingCStruct::addStructFromFile),
-                            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(
-            qMakePair(MetaType::String, QStringLiteral("fileName")));
-
-        _scriptInfo.insert(QStringLiteral("addStructFromFile"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::resetEnv), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Void;
-
-        _scriptInfo.insert(QStringLiteral("resetEnv"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::setStructPadding),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-
-        info.params.append(qMakePair(MetaType::Int, QStringLiteral("padding")));
-
-        _scriptInfo.insert(QStringLiteral("setStructPadding"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::structPadding),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Int;
-
-        _scriptInfo.insert(QStringLiteral("structPadding"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::structPadding),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Int;
-
-        _scriptInfo.insert(QStringLiteral("structPadding"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::structTypes),
-            this, std::placeholders::_1);
-        info.ret = MetaType::String | MetaType::Array;
-
-        _scriptInfo.insert(QStringLiteral("structTypes"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::sizeofStruct),
-            this, std::placeholders::_1);
-        info.ret = getqsizetypeMetaType();
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        _scriptInfo.insert(QStringLiteral("sizeofStruct"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::existStruct),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-        _scriptInfo.insert(QStringLiteral("existStruct"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::constDefines),
-            this, std::placeholders::_1);
-        info.ret = MetaType::String | MetaType::Array;
-
-        _scriptInfo.insert(QStringLiteral("constDefines"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::existDefineValue),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Bool;
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-
-        _scriptInfo.insert(QStringLiteral("existDefineValue"), info);
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::defineValue),
-            this, std::placeholders::_1);
-        info.ret = MetaType::Int;
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-
-        _scriptInfo.insert(QStringLiteral("defineValue"), info);
-    }
-
-    // nested dictionary is not supported, so unsafe registering will help
-    {
-        _scriptUnsafe.insert(
-            QStringLiteral("dictionary@ read(") + getqsizeTypeAsString() +
-                (" offset, const string &in type)"),
-            std::bind(QOverload<const QList<void *> &>::of(&WingCStruct::read),
-                      this, std::placeholders::_1));
-    }
-
-    {
-        WingHex::IWingPlugin::ScriptFnInfo info;
-        info.fn = std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::readRaw), this,
-            std::placeholders::_1);
-        info.ret = MetaType::Byte | MetaType::Array;
-
-        info.params.append(
-            qMakePair(getqsizetypeMetaType(), QStringLiteral("offset")));
-        info.params.append(qMakePair(MetaType::String, QStringLiteral("type")));
-
-        _scriptInfo.insert(QStringLiteral("readRaw"), info);
-    }
-}
+WingCStruct::WingCStruct() : WingHex::IWingPlugin() {}
 
 WingCStruct::~WingCStruct() {}
 
@@ -203,7 +51,6 @@ QString WingCStruct::retranslate(const QString &str) {
 
 WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
     RegisteredEvents evs;
-    evs.setFlag(RegisteredEvent::ScriptUnSafeFnRegistering);
     evs.setFlag(RegisteredEvent::ScriptPragma);
     evs.setFlag(RegisteredEvent::ScriptPragmaInit);
     return evs;
@@ -211,11 +58,6 @@ WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
 
 QList<WingHex::SettingPage *> WingCStruct::registeredSettingPages() const {
     return _setpgs;
-}
-
-QHash<QString, WingCStruct::ScriptFnInfo>
-WingCStruct::registeredScriptFns() const {
-    return _scriptInfo;
 }
 
 bool WingCStruct::eventOnScriptPragma(const QString &script,
@@ -288,9 +130,99 @@ bool WingCStruct::eventOnScriptPragma(const QString &script,
 
 void WingCStruct::eventOnScriptPragmaInit() { resetEnv(); }
 
-QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR>
-WingCStruct::registeredScriptUnsafeFns() const {
-    return _scriptUnsafe;
+void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(&WingCStruct::addStruct),
+                  this, std::placeholders::_1),
+        QStringLiteral("addStruct"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("header"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::addStructFromFile),
+                  this, std::placeholders::_1),
+        QStringLiteral("addStructFromFile"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("fileName"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(&WingCStruct::resetEnv),
+                  this, std::placeholders::_1),
+        QStringLiteral("resetEnv"));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::setStructPadding),
+            this, std::placeholders::_1),
+        QStringLiteral("setStructPadding"),
+        {qMakePair(WingHex::Meta_Int, QStringLiteral("padding"))});
+
+    o->registerGlobalFunction(WingHex::Meta_Int,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::structPadding),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("structPadding"));
+
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::structTypes),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("structTypes"));
+
+    o->registerGlobalFunction(
+        getqsizetypeMetaType(),
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::sizeofStruct),
+            this, std::placeholders::_1),
+        QStringLiteral("sizeofStruct"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::existStruct),
+            this, std::placeholders::_1),
+        QStringLiteral("existStruct"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::constDefines),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("constDefines"));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::existDefineValue),
+            this, std::placeholders::_1),
+        QStringLiteral("existDefineValue"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Int,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::defineValue),
+            this, std::placeholders::_1),
+        QStringLiteral("defineValue"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    // nested dictionary is not supported, so unsafe registering will help
+    o->registerGlobalFunction(
+        QStringLiteral("dictionary@ read(") + getqsizeTypeAsString() +
+            (" offset, const string &in type)"),
+        std::bind(QOverload<const QList<void *> &>::of(&WingCStruct::read),
+                  this, std::placeholders::_1));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Byte | WingHex::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(&WingCStruct::readRaw),
+                  this, std::placeholders::_1),
+        QStringLiteral("readRaw"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
 }
 
 bool WingCStruct::addStruct(const QString &header) {
@@ -713,9 +645,9 @@ CScriptArray *WingCStruct::convert2AsArray(const QVariantList &array,
     return arr;
 }
 
-WingHex::IWingPlugin::MetaType WingCStruct::getqsizetypeMetaType() const {
-    return sizeof(qsizetype) == sizeof(quint64) ? MetaType::Int64
-                                                : MetaType::Int32;
+WingHex::MetaType WingCStruct::getqsizetypeMetaType() const {
+    return sizeof(qsizetype) == sizeof(quint64) ? WingHex::MetaType::Meta_Int64
+                                                : WingHex::MetaType::Meta_Int32;
 }
 
 QVariant WingCStruct::addStruct(const QVariantList &params) {
@@ -834,8 +766,7 @@ QVariant WingCStruct::defineValue(const QVariantList &params) {
     return defineValue(type);
 }
 
-WingHex::IWingPlugin::UNSAFE_RET
-WingCStruct::read(const QList<void *> &params) {
+WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     if (params.size() != 2) {
         return generateScriptCallError(-1, tr("InvalidParamsCount"));
     }

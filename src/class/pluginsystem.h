@@ -136,6 +136,8 @@ public:
     void loadAllPlugin();
     void unloadAllPlugin();
 
+    void doneRegisterScriptObj();
+
     void destory();
 
     const QList<IWingPlugin *> &plugins() const;
@@ -166,9 +168,6 @@ public:
     QString getPluginID(IWingPluginBase *plg) const;
 
     static QString getPUID(IWingPluginBase *p);
-
-    static QString type2AngelScriptString(uint type, bool isArg,
-                                          bool noModifier = false);
 
 private:
     void loadExtPlugin();
@@ -207,21 +206,12 @@ private:
 
     PluginStatus checkPluginMetadata(const PluginInfo &meta, bool isPlg);
 
-    static bool isValidIdentifier(const QString &str);
-
     void retranslateMetadata(IWingPluginBase *plg, PluginInfo &meta);
 
 private:
-    void registerFns(IWingPlugin *plg);
-    void registerUnSafeFns(IWingPlugin *plg);
-    void registerEnums(IWingPlugin *plg);
-    void registerMarcos(IWingPlugin *plg);
     void registerEvents(IWingPlugin *plg);
 
     void applyFunctionTables(QObject *plg, const CallTable &fns);
-
-    static QString getScriptFnSig(const QString &fnName,
-                                  const IWingPlugin::ScriptFnInfo &fninfo);
 
     bool isPluginLoaded(const WingDependency &d);
 
@@ -245,7 +235,7 @@ private:
                     const std::optional<QDir> &setdir);
 
 private:
-    void registerMarcoDevice(IWingDevice *plg);
+    void registerPluginDetectMarco(const QString &id);
 
 private:
     void registerRibbonTools(const QList<WingRibbonToolBoxInfo> &tools);
@@ -318,10 +308,6 @@ signals:
 private:
     PluginSystem(QObject *parent = nullptr);
     ~PluginSystem();
-
-    void initCheckingEngine();
-
-    void finalizeCheckingEngine();
 
     // IWingPluginBase API
 public slots:
@@ -712,6 +698,14 @@ public slots:
     // extension
     WING_API bool closeAllFiles(const QObject *sender);
 
+    // generic call support
+    WING_API WingHex::IWingGeneric *__createParamContext(const QObject *sender,
+                                                         void *ctx);
+
+    WING_API void __raiseContextException(const QObject *sender,
+                                          const QString &exception,
+                                          bool allowCatch = true);
+
 private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
@@ -742,13 +736,10 @@ private:
 
     UniqueIdGenerator m_idGen;
 
-    QHash<QString, QHash<QString, WingAngelAPI::ScriptFnInfo>> _scfns;
-
     IWingManager *_manager = nullptr;
     std::optional<PluginInfo> _manInfo;
 
     WingAngelAPI *_angelplg = nullptr;
-    asCScriptEngine *_engine = nullptr;
 
     QStringList _scriptMarcos;
     QList<IWingPlugin *> _pragmaedPlg;

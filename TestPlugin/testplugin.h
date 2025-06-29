@@ -60,13 +60,13 @@ public:
     registeredSettingPages() const override;
     virtual QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>>
     registeredEditorViewWidgets() const override;
-    virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
-
-    virtual QHash<QString, UNSAFE_SCFNPTR>
-    registeredScriptUnsafeFns() const override;
 
     virtual RegisteredEvents registeredEvents() const override;
     virtual void eventReady() override;
+
+    // IWingPluginCoreBase interface
+public:
+    virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
 
 private:
     QVariant test_a(const QVariantList &params);
@@ -79,7 +79,7 @@ private:
     QVariant test_g(const QVariantList &params);
     QVariant test_h(const QVariantList &params);
 
-    UNSAFE_RET colorTable(const QList<void *> &params);
+    WingHex::UNSAFE_RET colorTable(const QList<void *> &params);
 
     QVariant createTestShareMem(const QVariantList &params);
     QVariant destoryTestShareMem(const QVariantList &params);
@@ -89,6 +89,10 @@ private:
     QVariant pluginMetaTestEnabled(const QVariantList &params);
 
     QVariant testCrash(const QVariantList &params);
+
+    static void testGenericAdd(WingHex::asIWingGeneric *param);
+
+    static void testRaiseScriptException(WingHex::asIWingGeneric *);
 
 private:
     void test_a();
@@ -119,13 +123,10 @@ private:
 
     bool ENABLE_META = false;
 
-    QHash<QString, WingHex::IWingPlugin::ScriptFnInfo> _scriptInfo;
     QList<WingHex::WingDockWidgetInfo> _winfo;
     QList<WingHex::WingRibbonToolBoxInfo> _rtbinfo;
     QList<WingHex::SettingPage *> _setpages;
     QList<QSharedPointer<WingHex::WingEditorViewWidget::Creator>> _evws;
-
-    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // TESTPLUGIN_H

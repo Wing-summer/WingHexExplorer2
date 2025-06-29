@@ -27,6 +27,7 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
+#include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
 
 #include "angelobjstring.h"
 #include "class/appmanager.h"
@@ -143,6 +144,16 @@ bool ScriptMachine::isInited() const { return _engine != nullptr; }
 
 bool ScriptMachine::isRunning(ConsoleMode mode) const {
     return _ctx.value(mode) != nullptr;
+}
+
+bool ScriptMachine::isEngineConfigError() const {
+    if (_engine) {
+        auto e = dynamic_cast<asCScriptEngine *>(_engine);
+        if (e) {
+            return e->configFailed;
+        }
+    }
+    return true;
 }
 
 #define INS_1 "const ?&in = null"

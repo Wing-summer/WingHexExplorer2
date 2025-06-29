@@ -48,12 +48,13 @@ public:
     virtual RegisteredEvents registeredEvents() const override;
     virtual QList<WingHex::SettingPage *>
     registeredSettingPages() const override;
-    virtual QHash<QString, ScriptFnInfo> registeredScriptFns() const override;
     virtual bool eventOnScriptPragma(const QString &script,
                                      const QStringList &comments) override;
     virtual void eventOnScriptPragmaInit() override;
-    virtual QHash<QString, UNSAFE_SCFNPTR>
-    registeredScriptUnsafeFns() const override;
+
+    // IWingPluginCoreBase interface
+public:
+    virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
 
 private:
     // basic
@@ -78,7 +79,7 @@ private:
     WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
 
 private:
-    MetaType getqsizetypeMetaType() const;
+    WingHex::MetaType getqsizetypeMetaType() const;
 
     QString getqsizeTypeAsString() const;
 
@@ -111,15 +112,13 @@ private:
     QVariant existDefineValue(const QVariantList &params);
     QVariant defineValue(const QVariantList &params);
 
-    UNSAFE_RET read(const QList<void *> &params);
+    WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
 
 private:
     CTypeParser _parser;
 
     QList<WingHex::SettingPage *> _setpgs;
-    QHash<QString, WingCStruct::ScriptFnInfo> _scriptInfo;
-    QHash<QString, WingHex::IWingPlugin::UNSAFE_SCFNPTR> _scriptUnsafe;
 };
 
 #endif // WINGCSTRUCT_H

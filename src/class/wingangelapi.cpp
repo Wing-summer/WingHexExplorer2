@@ -18,9 +18,9 @@
 #include "wingangelapi.h"
 
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
+#include "WingPlugin/iwingangel.h"
 #include "class/angelscripthelper.h"
 #include "class/logger.h"
-#include "class/pluginsystem.h"
 #include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
@@ -31,6 +31,7 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QTemporaryFile>
+#include <QThread>
 
 #ifdef Q_OS_WIN
 #undef MessageBox
@@ -67,8 +68,8 @@ QString WingAngelAPI::retranslate(const QString &str) {
     return QApplication::tr(str.toLatin1());
 }
 
-QStringList WingAngelAPI::registerScriptMarcos() const {
-    return {"EXEC_BASE", "AS_ARRAY_EXT", "AS_DICTIONARY_EXT"};
+void WingAngelAPI::onRegisterScriptObj(WingHex::IWingAngel *o) {
+    o->registerScriptMarcos({"EXEC_BASE", "AS_ARRAY_EXT", "AS_DICTIONARY_EXT"});
 }
 
 WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {
@@ -91,48 +92,6 @@ void WingAngelAPI::eventPluginFile(PluginFileEvent e, FileType type,
     }
 }
 
-void WingAngelAPI::registerUnSafeScriptFns(
-    const QString &ns, const QHash<QString, UNSAFE_SCFNPTR> &rfns) {
-    Q_ASSERT(!ns.isEmpty());
-    if (rfns.isEmpty()) {
-        return;
-    }
-
-    auto id = _usfns.size();
-    for (auto p = rfns.constKeyValueBegin(); p != rfns.constKeyValueEnd();
-         p++) {
-        _urfns[ns][p->first] = id;
-        id++;
-        _usfns.append(p->second);
-    }
-}
-
-void WingAngelAPI::registerScriptEnums(
-    const QString &ns, const QHash<QString, QList<QPair<QString, int>>> &objs) {
-    Q_ASSERT(!ns.isEmpty());
-    if (objs.isEmpty()) {
-        return;
-    }
-
-    _objs.insert(ns, objs);
-}
-
-void WingAngelAPI::registerScriptFns(const QString &ns,
-                                     const QHash<QString, ScriptFnInfo> &rfns) {
-    Q_ASSERT(!ns.isEmpty());
-    if (rfns.isEmpty()) {
-        return;
-    }
-
-    auto id = _sfns.size();
-    for (auto p = rfns.constKeyValueBegin(); p != rfns.constKeyValueEnd();
-         p++) {
-        _rfns[ns][p->first] = id;
-        id++;
-        _sfns.append(p->second);
-    }
-}
-
 void WingAngelAPI::installAPI(ScriptMachine *machine) {
     Q_ASSERT(machine);
     auto engine = machine->engine();
@@ -148,9 +107,7 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
 
-    installScriptEnums(engine);
-    installScriptFns(engine);
-    installScriptUnSafeFns(engine);
+    // plugin script objects will be install later
 }
 
 void WingAngelAPI::installBasicTypes(asIScriptEngine *engine) {
@@ -1082,89 +1039,6 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 }
 
-void WingAngelAPI::installScriptFns(asIScriptEngine *engine) {
-    for (auto pfns = _rfns.constKeyValueBegin();
-         pfns != _rfns.constKeyValueEnd(); pfns++) {
-        auto ns = pfns->first;
-        int r = engine->SetDefaultNamespace(ns.toUtf8());
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-
-        auto &pfn = pfns->second;
-        for (auto p = pfn.constKeyValueBegin(); p != pfn.constKeyValueEnd();
-             p++) {
-            auto sig = p->first;
-            auto id = p->second;
-            auto r = engine->RegisterGlobalFunction(
-                sig.toUtf8(), asFUNCTION(script_call), asCALL_GENERIC);
-            Q_ASSERT(r >= 0);
-            Q_UNUSED(r);
-
-            // r is the AngelScript function ID
-            auto fn = engine->GetFunctionById(r);
-            fn->SetUserData(this, AsUserDataType::UserData_API);
-            fn->SetUserData(reinterpret_cast<void *>(id),
-                            AsUserDataType::UserData_PluginFn);
-        }
-        engine->SetDefaultNamespace("");
-    }
-}
-
-void WingAngelAPI::installScriptUnSafeFns(asIScriptEngine *engine) {
-    for (auto pfns = _urfns.constKeyValueBegin();
-         pfns != _urfns.constKeyValueEnd(); pfns++) {
-        auto ns = pfns->first;
-        int r = engine->SetDefaultNamespace(ns.toUtf8());
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-
-        auto &pfn = pfns->second;
-        for (auto p = pfn.constKeyValueBegin(); p != pfn.constKeyValueEnd();
-             p++) {
-            auto sig = p->first;
-            auto id = p->second;
-            auto r = engine->RegisterGlobalFunction(
-                sig.toUtf8(), asFUNCTION(script_unsafe_call), asCALL_GENERIC);
-            Q_ASSERT(r >= 0);
-            Q_UNUSED(r);
-
-            // r is the AngelScript function ID
-            auto fn = engine->GetFunctionById(r);
-            fn->SetUserData(this, AsUserDataType::UserData_API);
-            fn->SetUserData(reinterpret_cast<void *>(id),
-                            AsUserDataType::UserData_PluginFn);
-        }
-        engine->SetDefaultNamespace("");
-    }
-}
-
-void WingAngelAPI::installScriptEnums(asIScriptEngine *engine) {
-    for (auto pobjs = _objs.constKeyValueBegin();
-         pobjs != _objs.constKeyValueEnd(); ++pobjs) {
-        auto ns = pobjs->first;
-        int r = engine->SetDefaultNamespace(ns.toUtf8());
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-
-        auto &pobj = pobjs->second;
-        for (auto p = pobj.constKeyValueBegin(); p != pobj.constKeyValueEnd();
-             p++) {
-            auto en = p->first.toUtf8();
-            r = engine->RegisterEnum(en.data());
-            Q_ASSERT(r >= 0);
-            Q_UNUSED(r);
-
-            for (auto &e : p->second) {
-                auto ev = e.first.toUtf8();
-                r = engine->RegisterEnumValue(en.data(), ev.data(), e.second);
-                Q_ASSERT(r >= 0);
-                Q_UNUSED(r);
-            }
-        }
-        engine->SetDefaultNamespace("");
-    }
-}
-
 void WingAngelAPI::registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
                                const char *sig) {
     auto r =
@@ -1563,12 +1437,13 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
     return {};
 }
 
-bool WingAngelAPI::getQVariantGetFlag(const ScriptFnInfo &info, int index) {
+bool WingAngelAPI::getQVariantGetFlag(
+    const WingScriptInternal::ScriptFnInfo &info, int index) {
     auto &params = info.params;
     Q_ASSERT(index >= 0 && index < params.size());
 
     auto minfo = params.at(index).first;
-    return !!(minfo & MetaType::List) || !!(minfo & MetaType::Hash);
+    return !!(minfo & WingHex::Meta_List) || !!(minfo & WingHex::Meta_Hash);
 }
 
 int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
@@ -1696,6 +1571,118 @@ bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
     }
 }
 
+QString WingAngelAPI::type2AngelScriptString(uint type, bool isArg,
+                                             bool noModifier) {
+    auto isArray = !!(type & WingHex::Meta_Array);
+    auto isList = !!(type & WingHex::Meta_List);
+    auto isContainer = isArray || isList;
+    if (isContainer) {
+        if (isArray && isList) {
+            return {};
+        }
+    }
+
+    QString retype;
+    bool complexType = false;
+
+    type = WingHex::MetaType(type & WingHex::MetaTypeMask);
+    switch (type) {
+    case WingHex::Meta_Void:
+        retype = QStringLiteral("void");
+        break;
+    case WingHex::Meta_Bool:
+        retype = QStringLiteral("bool");
+        break;
+    case WingHex::Meta_Int:
+        retype = QStringLiteral("int");
+        break;
+    case WingHex::Meta_UInt:
+        retype = QStringLiteral("uint");
+        break;
+    case WingHex::Meta_Int8:
+        retype = QStringLiteral("int8");
+        break;
+    case WingHex::Meta_UInt8:
+        retype = QStringLiteral("uint8");
+        break;
+    case WingHex::Meta_Int16:
+        retype = QStringLiteral("int16");
+        break;
+    case WingHex::Meta_UInt16:
+        retype = QStringLiteral("uint16");
+        break;
+    case WingHex::Meta_Int64:
+        retype = QStringLiteral("int64");
+        break;
+    case WingHex::Meta_UInt64:
+        retype = QStringLiteral("uint64");
+        break;
+    case WingHex::Meta_Float:
+        retype = QStringLiteral("float");
+        break;
+    case WingHex::Meta_Double:
+        retype = QStringLiteral("double");
+        break;
+    case WingHex::Meta_String:
+        retype = QStringLiteral("string");
+        break;
+    case WingHex::Meta_Char:
+        retype = QStringLiteral("char");
+        break;
+    case WingHex::Meta_Byte:
+        retype = QStringLiteral("byte");
+        break;
+    case WingHex::Meta_Color:
+        retype = QStringLiteral("color");
+        complexType = true;
+        break;
+    case WingHex::Meta_Map:
+    case WingHex::Meta_Hash:
+        retype = QStringLiteral("dictionary");
+        complexType = true;
+        break;
+    default:
+        return {};
+    }
+
+    if (isArray || isList) {
+        retype.append(QStringLiteral("[]"));
+    }
+
+    if (isArg) {
+        if (!noModifier && (isContainer || complexType)) {
+            retype.append(QStringLiteral(" &in"))
+                .prepend(QStringLiteral("const "));
+        }
+    } else {
+        if (!noModifier) {
+            // if it's a return type, only array<byte> and array<string> are
+            // supported in AngelScript
+            // ( array<byte> -> QByteArray , array<string> -> QStringList ),
+            // other array types are not suported. PRs are welcomed !!!
+            // IT'S TOO COMPLEX TO SUPPORT QVARIANTLIST !!!
+
+            // You can use unsafe registering to support
+            // extensive scripting system.
+            // It will be faster and flexible but not easy to implement.
+            if (isContainer) {
+                if (type != WingHex::Meta_Byte &&
+                    type != WingHex::Meta_String) {
+                    return {};
+                }
+
+                retype.append(QStringLiteral("@"));
+            }
+
+            if (complexType) {
+                retype.append(QStringLiteral("@"));
+            }
+        }
+    }
+
+    return retype.trimmed();
+}
+
 void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     auto fn = gen->GetFunction();
 
@@ -1780,7 +1767,7 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     }
 
     auto rettype = fns.ret;
-    auto r = PluginSystem::type2AngelScriptString(rettype, false, true);
+    auto r = type2AngelScriptString(rettype, false, true);
     if (r == QStringLiteral("int")) {
         r = QStringLiteral("int32");
     } else if (r == QStringLiteral("uint")) {
@@ -1829,7 +1816,7 @@ void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
 
     QList<void *> params;
     auto total = gen->GetArgCount();
-    WingHex::IWingPlugin::UNSAFE_RET ret;
+    WingHex::UNSAFE_RET ret;
     for (decltype(total) i = 0; i < total; ++i) {
         auto raw = gen->GetAddressOfArg(i);
         params.append(raw);
@@ -1997,11 +1984,11 @@ WingAngelAPI::retriveAsDictionary(const WingHex::SenderInfo &sender,
 }
 
 void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
-                                   MetaType type,
+                                   WingHex::MetaType type,
                                    const QVector<void *> &content) {
     Q_UNUSED(sender);
-    auto typeStr = PluginSystem::type2AngelScriptString(
-        MetaType(type | MetaType::Array), false, true);
+    auto typeStr = type2AngelScriptString(
+        WingHex::MetaType(type | WingHex::MetaType::Meta_Array), false, true);
     if (typeStr.isEmpty()) {
         return nullptr;
     }
@@ -2018,14 +2005,15 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
 }
 
 void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
-                                 MetaType type, const QList<void *> &content) {
+                                 WingHex::MetaType type,
+                                 const QList<void *> &content) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     static_assert(std::is_same_v<QList<int>, QVector<int>>);
     return vector2AsArray(sender, type, content);
 #else
     Q_UNUSED(sender);
-    auto typeStr = PluginSystem::type2AngelScriptString(
-        MetaType(type | MetaType::Array), false, true);
+    auto typeStr = type2AngelScriptString(MetaType(type | MetaType::Meta_Array),
+                                          false, true);
     if (typeStr.isEmpty()) {
         return nullptr;
     }
@@ -2054,7 +2042,7 @@ void WingAngelAPI::deleteAsArray(const WingHex::SenderInfo &sender,
 
 void *WingAngelAPI::newAsDictionary(
     const WingHex::SenderInfo &sender,
-    const QHash<QString, QPair<MetaType, void *>> &content) {
+    const QHash<QString, QPair<WingHex::MetaType, void *>> &content) {
     Q_UNUSED(sender);
     auto engine = ScriptMachine::instance().engine();
     auto dic = CScriptDictionary::Create(engine);
@@ -2062,8 +2050,7 @@ void *WingAngelAPI::newAsDictionary(
     for (auto p = content.constKeyValueBegin(); p != content.constKeyValueEnd();
          ++p) {
         auto key = p->first;
-        auto typeStr =
-            PluginSystem::type2AngelScriptString(p->second.first, false, true);
+        auto typeStr = type2AngelScriptString(p->second.first, false, true);
         auto id = engine->GetTypeIdByDecl(typeStr.toUtf8());
         if (id < 0) {
             continue;

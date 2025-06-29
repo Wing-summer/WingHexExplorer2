@@ -313,6 +313,23 @@ public:
         return dec->toUnicode(buffer);
 #endif
     }
+
+    static bool isValidIdentifier(const QString &str) {
+        if (str.isEmpty()) {
+            return false;
+        }
+        auto pch = str.cbegin();
+        if (pch->isDigit()) {
+            return false;
+        }
+        pch++;
+        for (; pch != str.cend(); pch++) {
+            if (!pch->isLetterOrNumber() && *pch != '_') {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 #endif // UTILITIES_H
