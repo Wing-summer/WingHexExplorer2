@@ -32,37 +32,7 @@
 #include <QUndoStack>
 #include <QVector>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-using qhash_result_t = uint;
-
-// copying from QT6 source code for supporting QT5's qHashMulti
-namespace QtPrivate {
-template <typename T>
-inline constexpr bool QNothrowHashableHelper_v =
-    noexcept(qHash(std::declval<const T &>()));
-
-template <typename T, typename Enable = void>
-struct QNothrowHashable : std::false_type {};
-
-template <typename T>
-struct QNothrowHashable<T, std::enable_if_t<QNothrowHashableHelper_v<T>>>
-    : std::true_type {};
-
-template <typename T>
-constexpr inline bool QNothrowHashable_v = QNothrowHashable<T>::value;
-
-} // namespace QtPrivate
-
-template <typename... T>
-constexpr qhash_result_t
-qHashMulti(qhash_result_t seed, const T &...args) noexcept(
-    std::conjunction_v<QtPrivate::QNothrowHashable<T>...>) {
-    QtPrivate::QHashCombine hash;
-    return ((seed = hash(seed, args)), ...), seed;
-}
-#else
 using qhash_result_t = size_t;
-#endif
 
 struct QHexMetadataItem : QHexRegionObject<qsizetype, QHexMetadataItem> {
     QColor foreground, background;
@@ -96,24 +66,7 @@ public:
         if (sel.foreground == this->foreground &&
             sel.background == this->background &&
             sel.comment == this->comment) {
-            if (canMerge(sel)) {
-                if (locker) {
-                    locker->lock();
-                }
-
-                if (!this->contains(sel)) {
-                    if (this->begin < sel.end) {
-                        this->begin = qMin(this->begin, next(sel.begin));
-                        this->end = qMax(next(this->end), sel.end);
-                    } else {
-                        this->begin = qMin(next(this->begin), sel.begin);
-                        this->end = qMax(this->end, next(sel.end));
-                    }
-                }
-
-                if (locker) {
-                    locker->unlock();
-                }
+            if (mergeRegionWithoutMetaCheck(sel, locker)) {
                 return std::nullopt;
             }
             return false;
@@ -129,6 +82,18 @@ public:
                 return false;
             }
         }
+    }
+
+    bool mergeRegionWithoutMetaCheck(const QHexMetadataItem &sel,
+                                     QMutex *locker = nullptr) {
+        Q_ASSERT(sel.foreground == this->foreground &&
+                 sel.background == this->background &&
+                 sel.comment == this->comment);
+        auto ret = Super::mergeRegion(sel, locker);
+        if (std::holds_alternative<bool>(ret)) {
+            return std::get<bool>(ret);
+        }
+        return false;
     }
 };
 

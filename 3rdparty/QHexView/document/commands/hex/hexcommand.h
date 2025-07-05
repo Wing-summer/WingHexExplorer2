@@ -25,15 +25,13 @@
 #include "document/qhexcursor.h"
 #include "document/qhexdocument.h"
 
-#include <QUndoCommand>
+#include "document/commands/undocommandbase.h"
 
-class HexCommand : public QUndoCommand {
+class HexCommand : public UndoCommandBase {
 public:
-    HexCommand(QHexDocument *doc, QHexCursor *cursor, int nibbleindex,
-               QUndoCommand *parent = nullptr);
-
-    void undo() override;
-    void redo() override;
+    explicit HexCommand(const QString &text, QHexDocument *doc,
+                        QHexCursor *cursor, int nibbleindex,
+                        QUndoCommand *parent = nullptr);
 
 protected:
     QHexDocument *m_doc;

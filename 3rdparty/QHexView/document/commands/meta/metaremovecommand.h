@@ -23,18 +23,26 @@
 #define METAREMOVECOMMAND_H
 
 #include "metacommand.h"
+#include <QCoreApplication>
 #include <QList>
 #include <QObject>
 
 // this class is newed by wingsummer
 
 class MetaRemoveCommand : public MetaCommand {
+    Q_DECLARE_TR_FUNCTIONS(MetaRemoveCommand)
 public:
-    MetaRemoveCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
-                      QUndoCommand *parent = nullptr);
+    explicit MetaRemoveCommand(QHexMetadata *hexmeta,
+                               const QHexMetadataItem &meta,
+                               QUndoCommand *parent = nullptr);
 
-    void undo() override;
-    void redo() override;
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 };
 
 #endif // METAREMOVECOMMAND_H

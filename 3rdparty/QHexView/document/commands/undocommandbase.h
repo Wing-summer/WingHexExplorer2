@@ -19,23 +19,31 @@
 ** =============================================================================
 */
 
-#ifndef BASEADDRCOMMAND_H
-#define BASEADDRCOMMAND_H
+#ifndef UNDOCOMMANDBASE_H
+#define UNDOCOMMANDBASE_H
 
-#include "document/qhexdocument.h"
 #include <QUndoCommand>
 
-class BaseAddrCommand : public QUndoCommand {
+class UndoCommandBase : public QUndoCommand {
 public:
-    BaseAddrCommand(QHexDocument *doc, quint64 oldaddr, quint64 newaddr,
-                    QUndoCommand *parent = nullptr);
+    enum UndoCommandID {
+        UndoID_BookMarkAdd,
+        UndoID_BookMarkClear,
+        UndoID_BookMarkRemove,
+        UndoID_BookMarkReplace,
+        UndoID_HexAppend,
+        UndoID_HexReplaceInsert,
+        UndoID_HexRemove,
+        UndoID_MetaAdd,
+        UndoID_MetaClear,
+        UndoID_MetaRemove,
+        UndoID_MetaRemovePos,
+        UndoID_MetaReplace
+    };
 
-    void redo() override;
-    void undo() override;
-
-private:
-    QHexDocument *m_doc;
-    quint64 m_old, m_new;
+public:
+    explicit UndoCommandBase(const QString &text,
+                             QUndoCommand *parent = nullptr);
 };
 
-#endif // BASEADDRCOMMAND_H
+#endif // UNDOCOMMANDBASE_H

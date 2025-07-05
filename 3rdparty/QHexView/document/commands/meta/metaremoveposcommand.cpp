@@ -23,16 +23,28 @@
 
 MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
-    : QUndoCommand(parent), m_hexmeta(hexmeta), m_pos(pos) {
+    : MetaCommand(tr("[MetaRemovePos]"), hexmeta, {}, parent), m_pos(pos) {
     auto po = m_hexmeta->get(pos);
     if (po.has_value()) {
-        oldmeta = po.value();
+        m_meta = po.value();
     }
 }
 
 void MetaRemovePosCommand::redo() { m_hexmeta->removeMetadata(m_pos); }
 
+int MetaRemovePosCommand::id() const { return UndoID_MetaRemovePos; }
+
+bool MetaRemovePosCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const MetaRemovePosCommand *>(other);
+    if (ucmd) {
+        if (this->m_pos == ucmd->m_pos) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void MetaRemovePosCommand::undo() {
-    m_hexmeta->metadata(oldmeta.begin, oldmeta.end, oldmeta.foreground,
-                        oldmeta.background, oldmeta.comment);
+    m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,
+                        m_meta.background, m_meta.comment);
 }

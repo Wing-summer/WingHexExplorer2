@@ -34,6 +34,7 @@
 #include <QTextBrowser>
 #include <QToolButton>
 #include <QTreeView>
+#include <QUndoView>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtEndian>
 
@@ -44,7 +45,6 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingplugin.h"
 #include "class/recentfilemanager.h"
-#include "class/scriptmanager.h"
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
@@ -121,6 +121,10 @@ private:
     ads::CDockAreaWidget *
     buildUpScriptBgOutputDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                               ads::CDockAreaWidget *areaw = nullptr);
+
+    ads::CDockAreaWidget *
+    buildUpUndoStackDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                         ads::CDockAreaWidget *areaw = nullptr);
 
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
@@ -243,6 +247,7 @@ private:
 
     void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
+    void updateWindowTitle();
 
     void loadFindResult(EditorView *view);
 
@@ -495,6 +500,8 @@ private:
 
     QTableViewExt *m_metadatas = nullptr;
     MetaDataModel *_metadataEmpty = nullptr;
+
+    QUndoView *_undoView = nullptr;
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 

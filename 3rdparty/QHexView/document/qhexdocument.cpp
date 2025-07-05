@@ -21,7 +21,6 @@
 
 #include "qhexdocument.h"
 #include "buffer/qfilebuffer.h"
-#include "commands/baseaddrcommand.h"
 #include "commands/bookmark/bookmarkaddcommand.h"
 #include "commands/bookmark/bookmarkclearcommand.h"
 #include "commands/bookmark/bookmarkremovecommand.h"
@@ -220,8 +219,6 @@ void QHexDocument::removeBookMarkAdjustRevert(
 }
 
 bool QHexDocument::isDocSaved() { return m_undostack->isClean(); }
-
-bool QHexDocument::isUndoByteModified() { return m_bytesModFlag > 0; }
 
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
@@ -677,19 +674,15 @@ char QHexDocument::at(qsizetype offset) const {
     return char(m_buffer->at(offset));
 }
 
-void QHexDocument::SetBaseAddress(quint64 baseaddress) {
-    m_undostack->push(new BaseAddrCommand(this, m_baseaddress, baseaddress));
-}
-
-void QHexDocument::setBaseAddress(quint64 baseaddress) {
-    if (m_baseaddress == baseaddress)
-        return;
+bool QHexDocument::setBaseAddress(quint64 baseaddress) {
+    if (m_baseaddress == baseaddress) {
+        return false;
+    }
 
     m_baseaddress = baseaddress;
     Q_EMIT documentChanged();
+    return true;
 }
-
-void QHexDocument::sync() { Q_EMIT documentChanged(); }
 
 void QHexDocument::undo() {
     m_undostack->undo();
@@ -904,3 +897,5 @@ QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
 }
 
 QHexBuffer *QHexDocument::buffer() const { return m_buffer; }
+
+QUndoStack *QHexDocument::undoStack() const { return m_undostack; }

@@ -24,13 +24,27 @@
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,
                                QUndoCommand *parent)
-    : MetaCommand(hexmeta, meta, parent) {
+    : MetaCommand(tr("[MetaAdd]"), hexmeta, meta, parent) {
     _brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
 }
 
 void MetaAddCommand::redo() {
     m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,
                         m_meta.background, m_meta.comment);
+}
+
+int MetaAddCommand::id() const { return UndoID_MetaAdd; }
+
+bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const MetaAddCommand *>(other);
+    if (ucmd) {
+        if (this->m_meta.foreground == ucmd->m_meta.foreground &&
+            this->m_meta.background == ucmd->m_meta.background &&
+            this->m_meta.comment == ucmd->m_meta.comment) {
+            return this->m_meta.mergeRegionWithoutMetaCheck(ucmd->m_meta);
+        }
+    }
+    return false;
 }
 
 void MetaAddCommand::undo() {

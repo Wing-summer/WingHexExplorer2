@@ -23,21 +23,27 @@
 #define METACLEARCOMMAND_H
 
 #include "../../qhexmetadata.h"
-#include <QList>
-#include <QObject>
-#include <QUndoCommand>
-#include <QUndoStack>
+#include "../undocommandbase.h"
+
+#include <QCoreApplication>
+#include <QVector>
 
 // this class is newed by wingsummer
 
-class MetaClearCommand : public QUndoCommand {
+class MetaClearCommand : public UndoCommandBase {
+    Q_DECLARE_TR_FUNCTIONS(MetaClearCommand)
 public:
-    MetaClearCommand(QHexMetadata *hexmeta,
-                     const QVector<QHexMetadataItem> &metas,
-                     QUndoCommand *parent = nullptr);
+    explicit MetaClearCommand(QHexMetadata *hexmeta,
+                              const QVector<QHexMetadataItem> &metas,
+                              QUndoCommand *parent = nullptr);
 
-    void undo() override;
-    void redo() override;
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 protected:
     QHexMetadata *m_hexmeta;

@@ -24,13 +24,23 @@
 
 #include "bookmarkcommand.h"
 
-class BookMarkRemoveCommand : public BookMarkCommand {
-public:
-    BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos, QString comment,
-                          QUndoCommand *parent = nullptr);
+#include <QCoreApplication>
 
-    void undo() override;
-    void redo() override;
+class BookMarkRemoveCommand : public BookMarkCommand {
+    Q_DECLARE_TR_FUNCTIONS(BookMarkRemoveCommand)
+
+public:
+    explicit BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
+                                   QString comment,
+                                   QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 };
 
 #endif // BOOKMARKREMOVECOMMAND_H

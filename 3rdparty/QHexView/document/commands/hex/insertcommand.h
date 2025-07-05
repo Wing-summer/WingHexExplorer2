@@ -24,13 +24,23 @@
 
 #include "hexcommand.h"
 
+#include <QCoreApplication>
+
 class InsertCommand : public HexCommand {
+    Q_DECLARE_TR_FUNCTIONS(InsertCommand)
+
 public:
-    InsertCommand(QHexDocument *doc, QHexCursor *cursor, qsizetype offset,
-                  const QByteArray &data, int nibbleindex,
-                  QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
+    explicit InsertCommand(QHexDocument *doc, QHexCursor *cursor,
+                           qsizetype offset, const QByteArray &data,
+                           int nibbleindex, QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 };
 
 #endif // INSERTCOMMAND_H

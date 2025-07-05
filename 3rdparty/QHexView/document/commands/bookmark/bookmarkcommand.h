@@ -22,14 +22,14 @@
 #ifndef BOOKMARKCOMMAND_H
 #define BOOKMARKCOMMAND_H
 
+#include "../undocommandbase.h"
 #include "document/qhexdocument.h"
-#include <QObject>
-#include <QUndoCommand>
 
-class BookMarkCommand : public QUndoCommand {
+class BookMarkCommand : public UndoCommandBase {
 public:
-    BookMarkCommand(QHexDocument *doc, qsizetype pos, QString comment,
-                    QUndoCommand *parent = nullptr);
+    explicit BookMarkCommand(const QString &text, QHexDocument *doc,
+                             qsizetype pos, QString comment,
+                             QUndoCommand *parent = nullptr);
 
 protected:
     QHexDocument *m_doc;

@@ -23,15 +23,24 @@
 #define METAREPLACECOMMAND_H
 
 #include "metacommand.h"
+#include <QCoreApplication>
 #include <QObject>
 
 class MetaReplaceCommand : public MetaCommand {
+    Q_DECLARE_TR_FUNCTIONS(MetaReplaceCommand)
 public:
-    MetaReplaceCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
-                       const QHexMetadataItem &oldmeta,
-                       QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
+    explicit MetaReplaceCommand(QHexMetadata *hexmeta,
+                                const QHexMetadataItem &meta,
+                                const QHexMetadataItem &oldmeta,
+                                QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
     QHexMetadataItem m_old;

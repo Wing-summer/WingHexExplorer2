@@ -722,6 +722,12 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, endMarco, (void), bool),
                 "bool endMarco()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, isMacroEmpty, (void), bool),
+                "bool isMacroEmpty()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, resetMarco, (void), bool),
+                "bool resetMarco()");
 
     registerAPI(
         engine,
@@ -948,20 +954,18 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
         asMETHODPR(WingHex::IWingPlugin, setMetaCommentVisible, (bool), bool),
         "bool setMetaCommentVisible(bool b)");
 
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, newFile, (), WingHex::ErrFile),
-                "ErrFile newFile()");
+    registerAPI(engine, asMETHODPR(WingHex::IWingPlugin, newFile, (), int),
+                "int newFile()");
 
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, openFile, (const QString &),
-                           WingHex::ErrFile),
-                "ErrFile openFile(string &in filename)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, openFile, (const QString &), int),
+        "int openFile(string &in filename)");
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, openExtFile,
-                           (const QString &, const QString &),
-                           WingHex::ErrFile),
-                "ErrFile openExtFile(string &in ext, string &in file)");
+                           (const QString &, const QString &), int),
+                "int openExtFile(string &in ext, string &in file)");
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, closeFile, (int, bool),
@@ -988,10 +992,8 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                            (int, const QString &), WingHex::ErrFile),
                 "ErrFile saveAsFile(int handle, string &in savename)");
 
-    registerAPI(
-        engine,
-        asMETHODPR(WingHex::IWingPlugin, openCurrent, (), WingHex::ErrFile),
-        "ErrFile openCurrent()");
+    registerAPI(engine, asMETHODPR(WingHex::IWingPlugin, openCurrent, (), int),
+                "int openCurrent()");
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, closeCurrent, (bool),
@@ -1027,10 +1029,10 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                 asMETHODPR(WingHex::IWingPlugin, clearBookMark, (), bool),
                 "bool clearBookMark()");
 
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, openWorkSpace,
-                           (const QString &), WingHex::ErrFile),
-                "ErrFile openWorkSpace(string &in filename)");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, openWorkSpace, (const QString &), int),
+        "int openWorkSpace(string &in filename)");
 
     registerAPI(engine,
                 asMETHODPR(WingHex::IWingPlugin, closeAllFiles, (), bool),

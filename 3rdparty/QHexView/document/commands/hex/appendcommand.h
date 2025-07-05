@@ -24,12 +24,22 @@
 
 #include "hexcommand.h"
 
+#include <QCoreApplication>
+
 class AppendCommand : public HexCommand {
+    Q_DECLARE_TR_FUNCTIONS(AppendCommand)
 public:
-    AppendCommand(QHexDocument *doc, QHexCursor *cursor, const QByteArray &data,
-                  int nibbleindex, QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
+    explicit AppendCommand(QHexDocument *doc, QHexCursor *cursor,
+                           const QByteArray &data, int nibbleindex,
+                           QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 };
 
 #endif // APPENDCOMMAND_H

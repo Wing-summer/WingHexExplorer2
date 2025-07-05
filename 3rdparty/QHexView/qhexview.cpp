@@ -101,7 +101,7 @@ void QHexView::setHeaderVisible(bool b) {
 quintptr QHexView::addressBase() { return m_document->baseAddress(); }
 
 void QHexView::setAddressBase(quintptr base) {
-    m_document->SetBaseAddress(base);
+    m_document->setBaseAddress(base);
 }
 
 bool QHexView::isSaved() { return m_document->isDocSaved(); }
@@ -109,7 +109,7 @@ bool QHexView::isSaved() { return m_document->isDocSaved(); }
 QFont QHexView::getHexeditorFont() {
     QFont f = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     if (f.styleHint() != QFont::TypeWriter) {
-        f.setFamily("Monospace"); // Force Monospaced font
+        f.setFamily(QStringLiteral("Monospace")); // Force Monospaced font
         f.setStyleHint(QFont::TypeWriter);
     }
     return f;

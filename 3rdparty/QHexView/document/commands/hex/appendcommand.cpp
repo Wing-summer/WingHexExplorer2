@@ -24,7 +24,7 @@
 AppendCommand::AppendCommand(QHexDocument *doc, QHexCursor *cursor,
                              const QByteArray &data, int nibbleindex,
                              QUndoCommand *parent)
-    : HexCommand(doc, cursor, nibbleindex, parent) {
+    : HexCommand(tr("[HexAppend]"), doc, cursor, nibbleindex, parent) {
     m_offset = -1;
     m_data = data;
     m_length = data.length();
@@ -36,7 +36,6 @@ void AppendCommand::undo() {
     m_doc->insertBookMarkAdjustRevert(offset, m_length);
     m_doc->metadata()->insertAdjustRevert(offset, m_length);
     m_cursor->setPos(offset, m_nibbleindex);
-    HexCommand::undo();
 }
 
 void AppendCommand::redo() {
@@ -49,5 +48,15 @@ void AppendCommand::redo() {
     } else {
         m_cursor->setPos(offset + m_length, m_nibbleindex);
     }
-    HexCommand::redo();
+}
+
+int AppendCommand::id() const { return UndoID_HexAppend; }
+
+bool AppendCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const AppendCommand *>(other);
+    if (ucmd) {
+        this->m_data.append(ucmd->m_data);
+        return true;
+    }
+    return false;
 }

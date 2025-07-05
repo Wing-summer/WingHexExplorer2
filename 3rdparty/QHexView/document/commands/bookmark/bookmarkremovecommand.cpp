@@ -24,8 +24,21 @@
 BookMarkRemoveCommand::BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
                                              QString comment,
                                              QUndoCommand *parent)
-    : BookMarkCommand(doc, pos, comment, parent) {}
+    : BookMarkCommand(tr("[RemoveBookMark] pos: %1").arg(pos), doc, pos,
+                      comment, parent) {}
 
 void BookMarkRemoveCommand::redo() { m_doc->removeBookMark(m_pos); }
+
+int BookMarkRemoveCommand::id() const { return UndoID_BookMarkRemove; }
+
+bool BookMarkRemoveCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const BookMarkRemoveCommand *>(other);
+    if (ucmd) {
+        if (this->m_pos == ucmd->m_pos) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void BookMarkRemoveCommand::undo() { m_doc->addBookMark(m_pos, m_comment); }

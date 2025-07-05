@@ -24,8 +24,16 @@
 MetaClearCommand::MetaClearCommand(QHexMetadata *hexmeta,
                                    const QVector<QHexMetadataItem> &metas,
                                    QUndoCommand *parent)
-    : QUndoCommand(parent), m_hexmeta(hexmeta), m_metas(metas) {}
+    : UndoCommandBase(tr("[MetaClear]"), parent), m_hexmeta(hexmeta),
+      m_metas(metas) {}
 
 void MetaClearCommand::redo() { m_hexmeta->clear(); }
+
+int MetaClearCommand::id() const { return UndoID_MetaClear; }
+
+bool MetaClearCommand::mergeWith(const QUndoCommand *other) {
+    Q_UNUSED(other);
+    return true;
+}
 
 void MetaClearCommand::undo() { m_hexmeta->applyMetas(m_metas); }

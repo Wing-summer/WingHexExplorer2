@@ -238,7 +238,7 @@ private slots:
     WING_API bool existsServiceHost(QObject *caller, const QString &puid);
 
     WING_API bool invokeServiceImpl(const QObject *sender, const QString &puid,
-                                    const MetaCallInfo &infos);
+                                    const WingHex::MetaCallInfo &infos);
 
 private slots:
     WING_API QString currentDocFilename(QObject *caller);
@@ -544,6 +544,7 @@ private:
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
     bool _hasRegistered = false;
+    quintptr _oldbase = 0;
 
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;

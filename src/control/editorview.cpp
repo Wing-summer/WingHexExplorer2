@@ -559,7 +559,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    if (doc->isUndoByteModified() || m_fileName != fileName || isNewFile()) {
+    if (!doc->isDocSaved() || m_fileName != fileName || isNewFile()) {
         if (m_docType == DocumentType::Extension) {
             if (_dev->isOpen()) {
                 _dev->close();

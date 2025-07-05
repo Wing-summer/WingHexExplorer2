@@ -86,7 +86,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
     // ok, preparing for starting...
-    this->setWindowTitle(tr("ScriptEditor"));
+    updateWindowTitle();
     this->setWindowIcon(ICONRES(QStringLiteral("script")));
     this->setMinimumSize(800, 600);
 
@@ -833,6 +833,16 @@ void ScriptingDialog::updateEditModeEnabled() {
         item->setEnabled(b);
     }
 
+    if (b) {
+        auto fn = editor->fileName();
+        setWindowFilePath(fn);
+        m_status->setToolTip(fn);
+    } else {
+        setWindowFilePath({});
+        m_status->setToolTip({});
+        m_status->clearMessage();
+    }
+    updateWindowTitle();
     updateRunDebugMode();
 }
 
@@ -892,6 +902,17 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
             reloadEditor(cur);
             cur->setProperty("__RELOAD__", false);
         }
+    }
+}
+
+void ScriptingDialog::updateWindowTitle() {
+    auto title = tr("ScriptEditor");
+    auto fp = windowFilePath();
+    if (fp.isEmpty()) {
+        this->setWindowTitle(title);
+    } else {
+        QFileInfo info(fp);
+        this->setWindowTitle(title + QStringLiteral(" - ") + info.fileName());
     }
 }
 
@@ -1239,6 +1260,8 @@ void ScriptingDialog::on_save() {
 
     auto res = editor->save();
     if (res) {
+        setWindowFilePath(editor->fileName());
+        updateWindowTitle();
         Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                      tr("SaveSuccessfully"));
     } else {
@@ -1267,6 +1290,8 @@ void ScriptingDialog::on_saveas() {
 
     auto res = editor->save(filename);
     if (res) {
+        setWindowFilePath(editor->fileName());
+        updateWindowTitle();
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
     } else {

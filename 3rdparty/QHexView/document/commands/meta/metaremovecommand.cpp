@@ -24,9 +24,19 @@
 MetaRemoveCommand::MetaRemoveCommand(QHexMetadata *hexmeta,
                                      const QHexMetadataItem &meta,
                                      QUndoCommand *parent)
-    : MetaCommand(hexmeta, meta, parent) {}
+    : MetaCommand(tr("[MetaRemove]"), hexmeta, meta, parent) {}
 
 void MetaRemoveCommand::redo() { m_hexmeta->removeMetadata(m_meta); }
+
+int MetaRemoveCommand::id() const { return UndoID_MetaRemove; }
+
+bool MetaRemoveCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const MetaRemoveCommand *>(other);
+    if (ucmd) {
+        return this->m_meta == ucmd->m_meta;
+    }
+    return false;
+}
 
 void MetaRemoveCommand::undo() {
     m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,

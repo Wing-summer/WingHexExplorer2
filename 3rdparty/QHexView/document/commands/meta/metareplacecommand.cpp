@@ -25,8 +25,21 @@ MetaReplaceCommand::MetaReplaceCommand(QHexMetadata *hexmeta,
                                        const QHexMetadataItem &meta,
                                        const QHexMetadataItem &oldmeta,
                                        QUndoCommand *parent)
-    : MetaCommand(hexmeta, meta, parent), m_old(oldmeta) {}
+    : MetaCommand(tr("[MetaReplace]"), hexmeta, meta, parent), m_old(oldmeta) {}
 
 void MetaReplaceCommand::undo() { m_hexmeta->modifyMetadata(m_old, m_meta); }
 
 void MetaReplaceCommand::redo() { m_hexmeta->modifyMetadata(m_meta, m_old); }
+
+int MetaReplaceCommand::id() const { return UndoID_MetaReplace; }
+
+bool MetaReplaceCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const MetaReplaceCommand *>(other);
+    if (ucmd) {
+        if (this->m_old == ucmd->m_old) {
+            this->m_meta = ucmd->m_meta;
+            return true;
+        }
+    }
+    return false;
+}

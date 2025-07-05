@@ -25,8 +25,23 @@ BookMarkReplaceCommand::BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos,
                                                QString comment,
                                                QString oldcomment,
                                                QUndoCommand *parent)
-    : BookMarkCommand(doc, pos, comment, parent), m_oldcomment(oldcomment) {}
+    : BookMarkCommand(tr("[ReplaceBookMark] pos: %1").arg(pos), doc, pos,
+                      comment, parent),
+      m_oldcomment(oldcomment) {}
 
 void BookMarkReplaceCommand::redo() { m_doc->modBookMark(m_pos, m_comment); }
+
+int BookMarkReplaceCommand::id() const { return UndoID_BookMarkReplace; }
+
+bool BookMarkReplaceCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = static_cast<const BookMarkReplaceCommand *>(other);
+    if (ucmd) {
+        if (this->m_pos == ucmd->m_pos) {
+            this->m_comment = m_comment;
+            return true;
+        }
+    }
+    return false;
+}
 
 void BookMarkReplaceCommand::undo() { m_doc->modBookMark(m_pos, m_oldcomment); }

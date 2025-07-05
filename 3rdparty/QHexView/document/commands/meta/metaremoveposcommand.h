@@ -22,24 +22,26 @@
 #ifndef METAREMOVEPOSCOMMAND_H
 #define METAREMOVEPOSCOMMAND_H
 
-#include "../../qhexmetadata.h"
-#include <QList>
-#include <QObject>
-#include <QUndoCommand>
-#include <QUndoStack>
+#include "metacommand.h"
 
-class MetaRemovePosCommand : public QUndoCommand {
+#include <QCoreApplication>
+
+class MetaRemovePosCommand : public MetaCommand {
+    Q_DECLARE_TR_FUNCTIONS(MetaRemovePosCommand)
 public:
-    MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
-                         QUndoCommand *parent = nullptr);
+    explicit MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
+                                  QUndoCommand *parent = nullptr);
 
-    void undo() override;
-    void redo() override;
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 protected:
-    QHexMetadata *m_hexmeta;
     qsizetype m_pos;
-    QHexMetadataItem oldmeta;
 };
 
 #endif // METAREMOVEPOSCOMMAND_H

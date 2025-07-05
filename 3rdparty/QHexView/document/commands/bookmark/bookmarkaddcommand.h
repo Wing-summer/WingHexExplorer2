@@ -24,13 +24,22 @@
 
 #include "bookmarkcommand.h"
 
-class BookMarkAddCommand : public BookMarkCommand {
-public:
-    BookMarkAddCommand(QHexDocument *doc, qsizetype pos, QString comment,
-                       QUndoCommand *parent = nullptr);
+#include <QCoreApplication>
 
-    void undo() override;
-    void redo() override;
+class BookMarkAddCommand : public BookMarkCommand {
+    Q_DECLARE_TR_FUNCTIONS(BookMarkAddCommand)
+public:
+    explicit BookMarkAddCommand(QHexDocument *doc, qsizetype pos,
+                                QString comment,
+                                QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 };
 
 #endif // BOOKMARKADDCOMMAND_H

@@ -25,7 +25,8 @@
 ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
                                const QByteArray &data, QHexCursor *cursor,
                                int nibbleindex, QUndoCommand *parent)
-    : HexCommand(doc, cursor, nibbleindex, parent) {
+    : HexCommand(tr("[HexReplace] pos: %1").arg(offset), doc, cursor,
+                 nibbleindex, parent) {
     m_offset = offset;
     m_data = data;
     m_length = data.length();
@@ -35,7 +36,6 @@ ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
 void ReplaceCommand::undo() {
     m_doc->_replace(m_offset, m_olddata);
     m_cursor->setPos(m_offset, m_nibbleindex);
-    HexCommand::undo();
 }
 
 void ReplaceCommand::redo() {
@@ -45,5 +45,48 @@ void ReplaceCommand::redo() {
     } else {
         m_cursor->setPos(m_offset + m_length, !m_nibbleindex);
     }
-    HexCommand::redo();
+}
+
+int ReplaceCommand::id() const { return UndoID_HexReplaceInsert; }
+
+bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
+    auto ucmd = dynamic_cast<const ReplaceCommand *>(other);
+    if (ucmd) {
+        if (this->m_offset == ucmd->m_offset) {
+            if (this->m_length <= ucmd->m_length) {
+                this->m_olddata = ucmd->m_olddata;
+                this->m_data = ucmd->m_data;
+                this->m_length = ucmd->m_length;
+            } else {
+                this->m_data.replace(0, ucmd->m_length, ucmd->m_data);
+            }
+            return true;
+        }
+
+        if (this->m_offset + this->m_length == ucmd->m_offset) {
+            this->m_length += ucmd->m_offset;
+            this->m_data.append(ucmd->m_data);
+            this->m_olddata.append(ucmd->m_olddata);
+            this->m_nibbleindex = ucmd->m_nibbleindex;
+            return true;
+        }
+
+        if (this->m_offset <= ucmd->m_offset &&
+            this->m_offset + m_length >= ucmd->m_offset + ucmd->m_length) {
+            auto dis = ucmd->m_offset - this->m_offset;
+            this->m_data.replace(dis, ucmd->m_length, ucmd->m_data);
+            return true;
+        }
+        if (this->m_offset >= ucmd->m_offset &&
+            this->m_offset + m_length <= ucmd->m_offset + ucmd->m_length) {
+            this->m_offset = ucmd->m_offset;
+            this->m_data = ucmd->m_data;
+            this->m_length = ucmd->m_length;
+            this->m_olddata = ucmd->m_olddata;
+            this->m_nibbleindex = ucmd->m_nibbleindex;
+            setText(tr("[HexReplace] pos: %1").arg(this->m_offset));
+            return true;
+        }
+    }
+    return false;
 }

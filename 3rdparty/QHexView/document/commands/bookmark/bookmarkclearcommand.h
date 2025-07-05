@@ -22,19 +22,26 @@
 #ifndef BOOKMARKCLEARCOMMAND_H
 #define BOOKMARKCLEARCOMMAND_H
 
+#include "../undocommandbase.h"
 #include "document/qhexdocument.h"
+
+#include <QCoreApplication>
 #include <QMap>
-#include <QObject>
-#include <QUndoCommand>
 
-class BookMarkClearCommand : public QUndoCommand {
+class BookMarkClearCommand : public UndoCommandBase {
+    Q_DECLARE_TR_FUNCTIONS(BookMarkClearCommand)
 public:
-    BookMarkClearCommand(QHexDocument *doc,
-                         const QMap<qsizetype, QString> &bookmarks,
-                         QUndoCommand *parent = nullptr);
+    explicit BookMarkClearCommand(QHexDocument *doc,
+                                  const QMap<qsizetype, QString> &bookmarks,
+                                  QUndoCommand *parent = nullptr);
 
-    void undo() override;
-    void redo() override;
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 protected:
     QHexDocument *m_doc;

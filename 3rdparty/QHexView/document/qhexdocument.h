@@ -32,8 +32,6 @@
 class QHexDocument : public QObject {
     Q_OBJECT
 
-    friend class HexCommand;
-
 private:
     explicit QHexDocument(QHexBuffer *buffer,
                           bool readonly = false); // modified by wingsummer
@@ -113,7 +111,6 @@ public:
         const std::function<bool()> &pred = [] { return true; });
 
     bool isDocSaved();
-    bool isUndoByteModified();
     void setDocSaved(bool b = true);
 
     void setMetafgVisible(bool b);
@@ -137,9 +134,7 @@ public:
     QByteArray read(qsizetype offset, qsizetype len = -1) const;
 
     char at(qsizetype offset) const;
-    void SetBaseAddress(quintptr baseaddress);
-    void setBaseAddress(quintptr baseaddress);
-    void sync();
+    bool setBaseAddress(quintptr baseaddress);
 
 public slots:
     void undo();
@@ -247,6 +242,8 @@ public:
 
     QHexBuffer *buffer() const;
 
+    QUndoStack *undoStack() const;
+
 signals:
 
     /*================================*/
@@ -277,7 +274,6 @@ private:
     QHexMetadata *m_metadata;
 
     QUndoStack *m_undostack;
-    size_t m_bytesModFlag = 0;
 
     quintptr m_baseaddress;
     quint8 m_areaindent;

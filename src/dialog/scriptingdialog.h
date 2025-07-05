@@ -202,6 +202,7 @@ private:
     void updateEditModeEnabled();
     ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
+    void updateWindowTitle();
 
     void updateRunDebugMode(bool disable = false);
 

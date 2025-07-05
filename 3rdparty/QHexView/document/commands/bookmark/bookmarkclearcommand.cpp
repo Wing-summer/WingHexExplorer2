@@ -24,8 +24,16 @@
 BookMarkClearCommand::BookMarkClearCommand(
     QHexDocument *doc, const QMap<qsizetype, QString> &bookmarks,
     QUndoCommand *parent)
-    : QUndoCommand(parent), m_doc(doc), m_bookmarks(bookmarks) {}
+    : UndoCommandBase(tr("[ClearBookMark]"), parent), m_doc(doc),
+      m_bookmarks(bookmarks) {}
 
 void BookMarkClearCommand::redo() { m_doc->clearBookMark(); }
+
+int BookMarkClearCommand::id() const { return UndoID_BookMarkClear; }
+
+bool BookMarkClearCommand::mergeWith(const QUndoCommand *other) {
+    Q_UNUSED(other);
+    return true;
+}
 
 void BookMarkClearCommand::undo() { m_doc->applyBookMarks(m_bookmarks); }

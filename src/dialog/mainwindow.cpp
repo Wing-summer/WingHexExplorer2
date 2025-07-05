@@ -198,7 +198,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
 
     // ok, preparing for starting...
-    this->setWindowTitle(tr("WingHexExplorer"));
     this->setWindowIcon(Utilities::isRoot()
                             ? ICONRES(QStringLiteral("iconroot"))
                             : ICONRES(QStringLiteral("icon")));
@@ -467,6 +466,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                     m_metadatas->setModel(_metadataEmpty);
                     m_aDelBookMark->setEnabled(false);
                     m_aDelMetaData->setEnabled(false);
+                    _undoView->setStack(nullptr);
                 }
                 updateEditModeEnabled();
             });
@@ -569,6 +569,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     buildUpHexMetaDataDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     qApp->processEvents();
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
+    qApp->processEvents();
+    buildUpUndoStackDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     qApp->processEvents();
 
     ads::CDockAreaWidget *bottomRightArea;
@@ -1110,6 +1112,16 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
 
     auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
                               tr("BgScriptOutput"), m_bgScriptOutput);
+    return dock->addDockWidget(area, dw, areaw);
+}
+
+ads::CDockAreaWidget *
+MainWindow::buildUpUndoStackDock(ads::CDockManager *dock,
+                                 ads::DockWidgetArea area,
+                                 ads::CDockAreaWidget *areaw) {
+    _undoView = new QUndoView(this);
+    auto dw = buildDockWidget(dock, QStringLiteral("UndoStack"),
+                              tr("UndoStack"), _undoView);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -3218,7 +3230,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 auto total = hexeditor->selectionCount();
                 if (m.exec()) {
                     auto meta = doc->metadata();
-                    meta->beginMarco(QStringLiteral("OnMetaData"));
+                    meta->beginMarco(tr("[MetaAdd]"));
                     for (int i = 0; i < total; ++i) {
                         auto begin = cur->selectionStart(i).offset();
                         auto end = cur->selectionEnd(i).offset();
@@ -3345,6 +3357,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     connect(hexeditor, &QHexView::documentSaved, this, [this](bool b) {
         m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);
         m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
+        if (b) {
+            auto cur = currentEditor();
+            auto fn = cur->fileName();
+            if (cur) {
+                m_sSaved->setToolTip(fn);
+                setWindowFilePath(QFileInfo(fn).fileName());
+                updateWindowTitle();
+            }
+        }
     });
     connect(hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
         m_iCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
@@ -3409,12 +3430,25 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                     m_metadatas->selectionModel()->hasSelection());
             });
 
+    _undoView->setStack(doc->undoStack());
+
     m_curEditor = cur;
     hexeditor->getStatus();
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::FileSwitched,
         {cur->fileName(), (old ? old->fileName() : QString())});
+}
+
+void MainWindow::updateWindowTitle() {
+    static auto title = tr("WingHexExplorer");
+    auto fp = windowFilePath();
+    if (fp.isEmpty()) {
+        this->setWindowTitle(title);
+    } else {
+        QFileInfo info(fp);
+        this->setWindowTitle(title + QStringLiteral(" - ") + info.fileName());
+    }
 }
 
 void MainWindow::loadFindResult(EditorView *view) {
@@ -3672,11 +3706,15 @@ void MainWindow::updateEditModeEnabled() {
             doc->canRedo());
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
             doc->canUndo());
+        setWindowFilePath(editor->fileName());
     } else {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
+        setWindowFilePath({});
     }
+
+    updateWindowTitle();
 }
 
 void MainWindow::setCurrentHexEditorScale(qreal rate) {

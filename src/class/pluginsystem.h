@@ -118,12 +118,22 @@ private:
         SharedUniqueId fid;
         EditorView *view = nullptr;
         IWingPlugin *linkedplg = nullptr;
-        QUndoCommand *cmd = nullptr;
+    };
 
-        ~PluginFileContext() {
-            if (cmd) {
-                delete cmd;
+    struct PluginFile {
+        QVector<QSharedPointer<PluginFileContext>> contexts;
+        int currentFID = -1;
+    };
+
+    struct ViewBind {
+        QList<IWingPlugin *> linkedplg;
+        QList<QPair<QUndoCommand *, IWingPlugin *>> undoStackPlg;
+
+        ~ViewBind() {
+            if (!undoStackPlg.isEmpty()) {
+                delete undoStackPlg.first().first;
             }
+            undoStackPlg.clear();
         }
     };
 
@@ -194,8 +204,7 @@ private:
 
     EditorView *handle2EditorView(IWingPlugin *plg, int handle);
 
-    SharedUniqueId assginHandleForPluginView(IWingPlugin *plg,
-                                             EditorView *view);
+    int assginHandleForOpenPluginView(IWingPlugin *plg, EditorView *view);
 
     static bool equalCompareHandle(const SharedUniqueId &id, int handle);
 
@@ -226,7 +235,7 @@ private:
     QSharedPointer<PluginFileContext> pluginContextById(IWingPlugin *plg,
                                                         int fid) const;
 
-    QUndoCommand *pluginCurrentUndoCmd(IWingPlugin *plg) const;
+    QUndoCommand *currentUndoCmd(EditorView *view);
 
 private:
     void loadPlugin(IWingPlugin *p, PluginInfo &meta,
@@ -274,7 +283,7 @@ private:
         auto e = getCurrentPluginView(plg);
         if (e) {
             return EditorView::insertBasicTypeContent<T>(
-                e, offset, value, pluginCurrentUndoCmd(plg), _rwlock);
+                e, offset, value, currentUndoCmd(e), _rwlock);
         }
         return false;
     }
@@ -286,7 +295,7 @@ private:
         auto e = getCurrentPluginView(plg);
         if (e) {
             return EditorView::writeBasicTypeContent<T>(
-                e, offset, value, pluginCurrentUndoCmd(plg), _rwlock);
+                e, offset, value, currentUndoCmd(e), _rwlock);
         }
         return false;
     }
@@ -297,7 +306,7 @@ private:
         auto e = getCurrentPluginView(plg);
         if (e) {
             return EditorView::appendBasicTypeContent<T>(
-                e, value, pluginCurrentUndoCmd(plg), _rwlock);
+                e, value, currentUndoCmd(e), _rwlock);
         }
         return false;
     }
@@ -518,6 +527,10 @@ public slots:
 
     WING_API bool endMarco(const QObject *sender);
 
+    WING_API bool isMacroEmpty(const QObject *sender);
+
+    WING_API bool resetMarco(const QObject *sender);
+
     WING_API bool writeInt8(const QObject *sender, qsizetype offset,
                             qint8 value);
 
@@ -648,16 +661,14 @@ public slots:
     WING_API bool setMetaCommentVisible(const QObject *sender, bool b);
 
     // mainwindow
-    WING_API WingHex::ErrFile newFile(const QObject *sender);
+    WING_API int newFile(const QObject *sender);
 
-    WING_API WingHex::ErrFile openFile(const QObject *sender,
-                                       const QString &filename);
+    WING_API int openFile(const QObject *sender, const QString &filename);
 
-    WING_API WingHex::ErrFile
-    openExtFile(const QObject *sender, const QString &ext, const QString &file);
+    WING_API int openExtFile(const QObject *sender, const QString &ext,
+                             const QString &file);
 
-    WING_API WingHex::ErrFile openWorkSpace(const QObject *sender,
-                                            const QString &filename);
+    WING_API int openWorkSpace(const QObject *sender, const QString &filename);
 
     WING_API WingHex::ErrFile closeHandle(const QObject *sender, int handle);
 
@@ -672,7 +683,7 @@ public slots:
     WING_API WingHex::ErrFile saveAsFile(const QObject *sender, int handle,
                                          const QString &savename);
 
-    WING_API WingHex::ErrFile openCurrent(const QObject *sender);
+    WING_API int openCurrent(const QObject *sender);
 
     WING_API WingHex::ErrFile closeCurrent(const QObject *sender, bool force);
 
@@ -729,10 +740,8 @@ private:
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
-    QHash<IWingPlugin *, QVector<QSharedPointer<PluginFileContext>>>
-        m_plgviewMap;
-    QHash<IWingPlugin *, int> m_plgCurrentfid; // fid
-    QHash<EditorView *, QList<IWingPlugin *>> m_viewBindings;
+    QHash<IWingPlugin *, PluginFile> m_plgviewMap;
+    QHash<EditorView *, ViewBind> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
 

@@ -24,13 +24,21 @@
 
 #include "hexcommand.h"
 
+#include <QCoreApplication>
+
 class RemoveCommand : public HexCommand {
+    Q_DECLARE_TR_FUNCTIONS(RemoveCommand)
 public:
-    RemoveCommand(QHexDocument *doc, qsizetype offset, qsizetype length,
-                  QHexCursor *cursor, int nibbleindex,
-                  QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
+    explicit RemoveCommand(QHexDocument *doc, qsizetype offset,
+                           qsizetype length, QHexCursor *cursor,
+                           int nibbleindex, QUndoCommand *parent = nullptr);
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
     QVector<QHexMetadataItem> _rmMetas;

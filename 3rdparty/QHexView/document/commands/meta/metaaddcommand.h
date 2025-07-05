@@ -23,14 +23,22 @@
 #define METAADDCOMMAND_H
 
 #include "metacommand.h"
+#include <QCoreApplication>
 #include <QObject>
 
 class MetaAddCommand : public MetaCommand {
+    Q_DECLARE_TR_FUNCTIONS(MetaAddCommand)
 public:
-    MetaAddCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
-                   QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
+    explicit MetaAddCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
+                            QUndoCommand *parent = nullptr);
+
+    // QUndoCommand interface
+public:
+    virtual void undo() override;
+    virtual void redo() override;
+
+    virtual int id() const override;
+    virtual bool mergeWith(const QUndoCommand *other) override;
 
 private:
     QVector<QHexMetadataItem> _brokenMetas;
