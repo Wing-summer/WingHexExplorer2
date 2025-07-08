@@ -10,20 +10,27 @@ ClangFormatSetDialog::ClangFormatSetDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::ClangFormatSetDialog) {
     ui->setupUi(this);
 
-    auto &clang = ClangFormatManager::instance();
-    ui->cbStyle->addItems(clang.supportedStyles());
+    auto clang = &ClangFormatManager::instance();
+    ui->cbStyle->addItems(clang->supportedStyles());
 
     ui->leLocation->setText(ClangFormatManager::getProgramName());
 
-    if (clang.exists()) {
-        ui->lblClangPath->setText(clang.path());
-        ui->lblClangPath->setToolTip(clang.path());
-        ui->lblClangVersion->setText(clang.version());
+    if (clang->exists()) {
+        ui->lblClangPath->setText(clang->path());
+        ui->lblClangPath->setToolTip(clang->path());
+        ui->lblClangVersion->setText(clang->version());
     } else {
         ui->lblClangPath->setStyleSheet(QStringLiteral("color:red"));
     }
 
     reload();
+
+    connect(ui->cbEnabled, &QCheckBox::toggled, clang,
+            &ClangFormatManager::setEnabled);
+    connect(ui->cbAutoFmt, &QCheckBox::toggled, clang,
+            &ClangFormatManager::setAutoFormat);
+    connect(ui->cbStyle, &QComboBox::currentTextChanged, clang,
+            &ClangFormatManager::setClangStyle);
 }
 
 ClangFormatSetDialog::~ClangFormatSetDialog() { delete ui; }
@@ -59,20 +66,11 @@ QString ClangFormatSetDialog::id() const {
     return QStringLiteral("ClangFormat");
 }
 
-void ClangFormatSetDialog::apply() {
-    auto &clang = ClangFormatManager::instance();
-    clang.setEnabled(ui->cbEnabled->isChecked());
-    clang.setAutoFormat(ui->cbAutoFmt->isChecked());
-    clang.setClangStyle(ui->cbStyle->currentText());
-}
-
-void ClangFormatSetDialog::reset() {
+void ClangFormatSetDialog::restore() {
     auto &clang = ClangFormatManager::instance();
     clang.reset();
     reload();
 }
-
-void ClangFormatSetDialog::cancel() { reload(); }
 
 void ClangFormatSetDialog::on_cbStyle_currentTextChanged(const QString &arg1) {
     ui->btnStyleCustom->setEnabled(arg1 == QStringLiteral("Custom"));

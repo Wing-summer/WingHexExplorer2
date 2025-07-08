@@ -18,9 +18,12 @@
 #ifndef CLANGFORMATMANAGER_H
 #define CLANGFORMATMANAGER_H
 
+#include <QObject>
 #include <QString>
 
-class ClangFormatManager {
+class ClangFormatManager : public QObject {
+    Q_OBJECT
+
 public:
     static ClangFormatManager &instance();
 

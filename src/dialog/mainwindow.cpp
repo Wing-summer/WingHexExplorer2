@@ -293,7 +293,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             QMessageBox::critical(this, qAppName(),
                                   tr("ScriptEngineInitFailed"));
             set.setScriptEnabled(false);
-            set.save(SettingManager::SCRIPT);
             throw CrashCode::ScriptInitFailed;
         }
     }
@@ -4030,7 +4029,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     if (m_scriptDialog) {
         m_scriptDialog->saveDockLayout();
         set.setRecentFiles(m_recentmanager->saveRecent());
-        set.save();
     }
 
     PluginSystem::instance().destory();

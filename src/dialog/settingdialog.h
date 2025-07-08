@@ -31,8 +31,9 @@ class SettingDialog : public QWidget {
 
 public:
     explicit SettingDialog(QWidget *parent = nullptr);
-    ~SettingDialog();
+    virtual ~SettingDialog();
 
+public:
     void addPage(WingHex::SettingPage *page);
     void build(); // you can only call once
     void showConfig(int index = -1);
@@ -40,11 +41,6 @@ public:
 
 public slots:
     void toastTakeEffectReboot();
-
-private slots:
-    void on_buttonBox_clicked(QAbstractButton *button);
-
-    void on_listWidget_currentRowChanged(int currentRow);
 
 private:
     Ui::SettingDialog *ui;

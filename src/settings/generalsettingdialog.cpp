@@ -65,6 +65,34 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
             this, &GeneralSettingDialog::optionNeedRestartChanged);
 
     reload();
+
+    auto sm = &SettingManager::instance();
+    connect(ui->cbLanguage, &QComboBox::currentIndexChanged, sm,
+            [this](int index) {
+                auto data = ui->cbLanguage->itemData(index).toString();
+                SettingManager::instance().setDefaultLang(data);
+            });
+    connect(ui->sbFontSize, &QSpinBox::valueChanged, sm,
+            &SettingManager::setAppfontSize);
+    connect(ui->cbFont, &QFontComboBox::currentTextChanged, sm,
+            &SettingManager::setAppFontFamily);
+    connect(ui->cbTheme, &QComboBox::currentIndexChanged, sm,
+            &SettingManager::setThemeID);
+    connect(ui->cbWinState, &QComboBox::currentIndexChanged, sm, [](int index) {
+        Qt::WindowState state;
+        switch (index) {
+        case 0:
+            state = Qt::WindowState::WindowNoState;
+            break;
+        case 1:
+            state = Qt::WindowState::WindowMaximized;
+            break;
+        default:
+            state = Qt::WindowState::WindowFullScreen;
+            break;
+        }
+        SettingManager::instance().setDefaultWinState(state);
+    });
 }
 
 GeneralSettingDialog::~GeneralSettingDialog() { delete ui; }
@@ -117,32 +145,7 @@ QString GeneralSettingDialog::name() const { return tr("General"); }
 
 QString GeneralSettingDialog::id() const { return QStringLiteral("General"); }
 
-void GeneralSettingDialog::apply() {
-    auto &set = SettingManager::instance();
-    set.setDefaultLang(ui->cbLanguage->currentData().toString());
-    set.setAppfontSize(ui->sbFontSize->value());
-    set.setAppFontFamily(ui->cbFont->currentText());
-    set.setThemeID(ui->cbTheme->currentIndex());
-    auto s = ui->cbWinState->currentIndex();
-    Qt::WindowState state;
-    switch (s) {
-    case 0:
-        state = Qt::WindowState::WindowNoState;
-        break;
-    case 1:
-        state = Qt::WindowState::WindowMaximized;
-        break;
-    default:
-        state = Qt::WindowState::WindowFullScreen;
-        break;
-    }
-    set.setDefaultWinState(state);
-    set.save(SettingManager::SETTING::APP);
-}
-
-void GeneralSettingDialog::reset() {
+void GeneralSettingDialog::restore() {
     SettingManager::instance().reset(SettingManager::SETTING::APP);
     reload();
 }
-
-void GeneralSettingDialog::cancel() { reload(); }

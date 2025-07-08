@@ -30,9 +30,7 @@ public:
 
     // SettingPage interface
 public:
-    virtual void apply() override;
-    virtual void reset() override;
-    virtual void cancel() override;
+    virtual void restore() override;
 
 private slots:
     void on_cbStyle_currentTextChanged(const QString &arg1);

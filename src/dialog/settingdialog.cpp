@@ -23,20 +23,79 @@
 #include "utilities.h"
 
 #include <QApplication>
+#include <QMenu>
 #include <QPushButton>
 
 SettingDialog::SettingDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingDialog) {
     ui->setupUi(this);
 
+    connect(ui->listWidget, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *previous) {
+                if (previous) {
+                    auto page = m_pages.at(
+                        ui->listWidget->indexFromItem(current).row());
+                    if (page->containUnsavedChanges()) {
+                        auto ret = WingMessageBox::question(
+                            this, tr("UnsavedChanges"),
+                            tr("SaveChangesDiscardLeave?"));
+                        if (ret == QMessageBox::Yes) {
+                            page->discard();
+                        } else {
+                            ui->listWidget->setCurrentItem(previous);
+                            return;
+                        }
+                    }
+                }
+                if (current) {
+                    auto curpage = m_pages.at(
+                        ui->listWidget->indexFromItem(current).row());
+                    ui->stackedWidget->setCurrentWidget(curpage);
+                }
+            });
+    connect(ui->btnRestore, &QPushButton::clicked, this, [this]() {
+        auto idx = ui->listWidget->currentRow();
+        auto page = m_pages.at(idx);
+        page->restore();
+    });
+
     _dialog = new FramelessDialogBase(parent);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());
-    connect(_dialog, &FramelessDialogBase::rejected, this, [=] {
-        for (auto &page : m_pages) {
-            page->cancel();
+
+    ui->btnRestore->setStyleSheet(
+        QStringLiteral("QToolButton::down-arrow { width:10px; height:10px; "
+                       "subcontrol-position:right center; "
+                       "subcontrol-origin:content; left: -2px;"));
+    auto menu = new QMenu(ui->btnRestore);
+    auto a = menu->addAction(tr("Restore current"));
+    connect(a, &QAction::triggered, this, [this]() {
+        auto ret = WingMessageBox::warning(this, tr("Restore"),
+                                           tr("RestoreCurPageSets?"),
+                                           QMessageBox::Yes | QMessageBox::No);
+        if (ret == QMessageBox::No) {
+            return;
+        }
+        auto idx = ui->listWidget->currentRow();
+        if (idx > 0) {
+            auto page = m_pages.at(idx);
+            page->restore();
         }
     });
+
+    a = menu->addAction(tr("Restore all"));
+    connect(a, &QAction::triggered, this, [this]() {
+        auto ret =
+            WingMessageBox::critical(this, tr("Restore"), tr("RestoreAllSets?"),
+                                     QMessageBox::Yes | QMessageBox::No);
+        if (ret == QMessageBox::No) {
+            return;
+        }
+        for (auto &p : m_pages) {
+            p->restore();
+        }
+    });
+    ui->btnRestore->setMenu(menu);
 
     Utilities::moveToCenter(this);
 }
@@ -99,48 +158,4 @@ void SettingDialog::toastTakeEffectReboot() {
         Toast::toast(_dialog, icon.pixmap(avsize.first()),
                      tr("TakeEffectRestart"));
     }
-}
-
-void SettingDialog::on_buttonBox_clicked(QAbstractButton *button) {
-    auto btnbox = ui->buttonBox;
-    if (button == btnbox->button(QDialogButtonBox::Ok)) {
-        for (auto &page : m_pages) {
-            page->apply();
-        }
-        _dialog->done(1);
-    } else if (button == btnbox->button(QDialogButtonBox::Apply)) {
-        for (auto &page : m_pages) {
-            page->apply();
-        }
-    } else if (button == btnbox->button(QDialogButtonBox::RestoreDefaults)) {
-        auto index = ui->listWidget->currentRow();
-        if (index >= 0) {
-            m_pages.at(index)->reset();
-        }
-        toastTakeEffectReboot();
-    } else if (button == btnbox->button(QDialogButtonBox::Reset)) {
-        auto res = WingMessageBox::warning(
-            this, qAppName(),
-            tr("This will reset all settings. Are you sure to continue?"),
-            QMessageBox::Yes | QMessageBox::No);
-
-        if (res == QMessageBox::No) {
-            return;
-        }
-
-        for (auto &page : m_pages) {
-            page->reset();
-        }
-
-        toastTakeEffectReboot();
-    } else if (button == btnbox->button(QDialogButtonBox::Cancel)) {
-        for (auto &page : m_pages) {
-            page->cancel();
-        }
-        _dialog->done(0);
-    }
-}
-
-void SettingDialog::on_listWidget_currentRowChanged(int currentRow) {
-    ui->stackedWidget->setCurrentWidget(m_pages.at(currentRow));
 }

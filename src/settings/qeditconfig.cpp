@@ -173,70 +173,87 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     }
 
     reload();
+
+    auto set = &ScriptSettings::instance();
+    if (m_isConsole) {
+        connect(ui->cbTheme, &QComboBox::currentIndexChanged, set, [this]() {
+            auto &set = ScriptSettings::instance();
+            if (ui->cbTheme->currentIndex() == 0) {
+                set.setConsoleTheme({});
+            } else {
+                set.setConsoleTheme(ui->cbTheme->currentText());
+            }
+        });
+        connect(ui->cbFont, &QFontComboBox::currentFontChanged, set,
+                [](const QFont &font) {
+                    ScriptSettings::instance().setConsoleFontFamily(
+                        font.family());
+                });
+        connect(ui->spnFontSize, &QSpinBox::valueChanged, set,
+                &ScriptSettings::setConsoleFontSize);
+        connect(ui->spnTabWidth, &QSpinBox::valueChanged, set,
+                &ScriptSettings::setConsoleTabWidth);
+        connect(ui->cbIndentation, &QComboBox::currentIndexChanged, set,
+                [this](int index) {
+                    auto data = ui->cbIndentation->itemData(index);
+                    ScriptSettings::instance().setConsoleInden(data.toInt());
+                });
+        connect(ui->chkMatchBraces, &QCheckBox::toggled, set,
+                &ScriptSettings::setConsoleMatchBraces);
+        connect(ui->chkShowWhitespace, &QCheckBox::toggled, set,
+                &ScriptSettings::setConsoleShowWhiteSpace);
+        connect(ui->chkAutoCloseChar, &QCheckBox::toggled, set,
+                &ScriptSettings::setConsoleAutoCloseChar);
+    } else {
+        connect(ui->cbTheme, &QComboBox::currentIndexChanged, set, [this]() {
+            auto &set = ScriptSettings::instance();
+            if (ui->cbTheme->currentIndex() == 0) {
+                set.setEditorTheme({});
+            } else {
+                set.setEditorTheme(ui->cbTheme->currentText());
+            }
+        });
+        connect(ui->cbFont, &QFontComboBox::currentFontChanged, set,
+                [](const QFont &font) {
+                    ScriptSettings::instance().setEditorFontFamily(
+                        font.family());
+                });
+        connect(ui->spnFontSize, &QSpinBox::valueChanged, set,
+                &ScriptSettings::setEditorFontSize);
+        connect(ui->spnTabWidth, &QSpinBox::valueChanged, set,
+                &ScriptSettings::setEditorTabWidth);
+        connect(ui->cbIndentation, &QComboBox::currentIndexChanged, set,
+                [this](int index) {
+                    auto data = ui->cbIndentation->itemData(index);
+                    ScriptSettings::instance().setEditorInden(data.toInt());
+                });
+        connect(ui->chkMatchBraces, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorShowLineNumber);
+        connect(ui->chkShowFolding, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorFolding);
+        connect(ui->chkShowIndentGuides, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorShowGuideLine);
+        connect(ui->chkWordWrap, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorWordWrap);
+        connect(ui->chkLongLineEdge, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorShowLineEdges);
+        connect(ui->chkShowWhitespace, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorShowWhiteSpace);
+        connect(ui->chkAutoCloseChar, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorAutoCloseChar);
+        connect(ui->chkAutoIden, &QCheckBox::toggled, set,
+                &ScriptSettings::setEditorAutoIden);
+    }
 }
 
 QEditConfig::~QEditConfig() { delete ui; }
-
-/*!
-        \brief Apply changes
-*/
-void QEditConfig::apply() {
-    auto &set = ScriptSettings::instance();
-    if (m_isConsole) {
-        if (ui->cbTheme->currentIndex() == 0) {
-            set.setConsoleTheme({});
-        } else {
-            set.setConsoleTheme(ui->cbTheme->currentText());
-        }
-
-        set.setConsoleFontFamily(ui->cbFont->currentFont().family());
-        set.setConsoleFontSize(ui->spnFontSize->value());
-        set.setConsoleTabWidth(ui->spnTabWidth->value());
-        set.setConsoleInden(ui->cbIndentation->currentData().toInt());
-
-        set.setConsoleMatchBraces(ui->chkMatchBraces->isChecked());
-        set.setConsoleShowWhiteSpace(ui->chkShowWhitespace->isChecked());
-        set.setConsoleAutoCloseChar(ui->chkAutoCloseChar->isChecked());
-    } else {
-        if (ui->cbTheme->currentIndex() == 0) {
-            set.setEditorTheme({});
-        } else {
-            set.setEditorTheme(ui->cbTheme->currentText());
-        }
-
-        set.setEditorFontFamily(ui->cbFont->currentFont().family());
-        set.setEditorFontSize(ui->spnFontSize->value());
-        set.setEditorTabWidth(ui->spnTabWidth->value());
-        set.setEditorInden(ui->cbIndentation->currentData().toInt());
-
-        set.setEditorShowLineNumber(ui->chkShowLineNumber->isChecked());
-        set.setEditorFolding(ui->chkShowFolding->isChecked());
-        set.setEditorShowGuideLine(ui->chkShowIndentGuides->isChecked());
-        set.setEditorWordWrap(ui->chkWordWrap->isChecked());
-        set.setEditorShowLineEdges(ui->chkLongLineEdge->isChecked());
-        set.setEditorMatchBraces(ui->chkMatchBraces->isChecked());
-        set.setEditorShowWhiteSpace(ui->chkShowWhitespace->isChecked());
-        set.setEditorAutoCloseChar(ui->chkAutoCloseChar->isChecked());
-        set.setEditorAutoIden(ui->chkAutoIden->isChecked());
-    }
-    set.save(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
-}
-
-/*!
-        \brief Reset the subcontrols to reflect the current settings
-
-        The name can be a bit misleading at first, it has been chosen
-        because it directly maps to the effect a "cancel" button would
-        have on the widget
-*/
-void QEditConfig::cancel() { reload(); }
 
 /*!
         \brief Restore default values for all subcontrols
 
         \note The widgets are changed but these changes are NOT applied.
 */
-void QEditConfig::reset() {
+void QEditConfig::restore() {
     auto &set = ScriptSettings::instance();
     set.reset(m_isConsole ? ScriptSettings::CONSOLE : ScriptSettings::EDITOR);
     reload();

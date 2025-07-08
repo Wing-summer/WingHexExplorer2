@@ -41,9 +41,7 @@ public:
 
     // SettingPage interface
 public:
-    virtual void apply() override;
-    virtual void reset() override;
-    virtual void cancel() override;
+    virtual void restore() override;
 
 private:
     QLabel *_lbl = nullptr;

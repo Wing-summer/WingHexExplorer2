@@ -41,8 +41,4 @@ QString TestSettingPage::id() const { return _id; }
 
 bool TestSettingPage::showInRibbon() const { return _isShownInRibbton; }
 
-void TestSettingPage::apply() {}
-
-void TestSettingPage::reset() {}
-
-void TestSettingPage::cancel() {}
+void TestSettingPage::restore() {}

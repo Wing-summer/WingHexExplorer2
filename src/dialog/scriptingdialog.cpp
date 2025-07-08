@@ -278,7 +278,6 @@ bool ScriptingDialog::about2Close() {
 void ScriptingDialog::saveDockLayout() {
     auto &set = SettingManager::instance();
     set.setScriptDockLayout(_savedLayout);
-    set.save(SettingManager::NONE);
 }
 
 void ScriptingDialog::buildUpRibbonBar() {

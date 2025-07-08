@@ -25,6 +25,20 @@ EditorSettingDialog::EditorSettingDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::EditorSettingDialog) {
     ui->setupUi(this);
     reload();
+
+    auto sm = &SettingManager::instance();
+    connect(ui->cbShowaddr, &QCheckBox::toggled, sm,
+            &SettingManager::setEditorShowHeader);
+    connect(ui->cbShowcol, &QCheckBox::toggled, sm,
+            &SettingManager::setEditorShowcol);
+    connect(ui->cbShowtext, &QCheckBox::toggled, sm,
+            &SettingManager::setEditorShowtext);
+    connect(ui->sbFontSize, &QSpinBox::valueChanged, sm,
+            &SettingManager::setEditorfontSize);
+    connect(ui->sbDecStrLimit, &QSpinBox::valueChanged, sm,
+            &SettingManager::setDecodeStrlimit);
+    connect(ui->sbCopyLimit, &QSpinBox::valueChanged, sm,
+            &SettingManager::setCopylimit);
 }
 
 EditorSettingDialog::~EditorSettingDialog() { delete ui; }
@@ -45,20 +59,7 @@ QString EditorSettingDialog::name() const { return tr("Editor"); }
 
 QString EditorSettingDialog::id() const { return QStringLiteral("Editor"); }
 
-void EditorSettingDialog::apply() {
-    auto &set = SettingManager::instance();
-    set.setEditorShowHeader(ui->cbShowaddr->isChecked());
-    set.setEditorShowcol(ui->cbShowcol->isChecked());
-    set.setEditorShowtext(ui->cbShowtext->isChecked());
-    set.setEditorfontSize(ui->sbFontSize->value());
-    set.setDecodeStrlimit(ui->sbDecStrLimit->value());
-    set.setCopylimit(ui->sbCopyLimit->value());
-    set.save(SettingManager::SETTING::EDITOR);
-}
-
-void EditorSettingDialog::reset() {
+void EditorSettingDialog::restore() {
     SettingManager::instance().reset(SettingManager::SETTING::EDITOR);
     reload();
 }
-
-void EditorSettingDialog::cancel() { reload(); }

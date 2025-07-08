@@ -32,7 +32,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_CUSTOM_STYLE, ("clang.customStyle"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, CLANG_DEFAULT_CUSTOM,
                           ("BasedOnStyle: llvm, IndentWidth: 4"))
 
-ClangFormatManager::ClangFormatManager() {
+ClangFormatManager::ClangFormatManager() : QObject() {
     ASSERT_SINGLETON;
 
     // load config

@@ -38,6 +38,44 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
             this, &ScriptSettingDialog::optionNeedRestartChanged);
 
     loadData();
+
+    connect(ui->listWidget, &QListWidget::itemChanged, this,
+            [this](QListWidgetItem *item) {
+                auto var = item->data(Qt::UserRole);
+                if (var.isValid()) {
+                    auto meta = var.value<ScriptManager::ScriptDirMeta>();
+                    switch (item->checkState()) {
+                    case Qt::Unchecked: {
+                        if (meta.isSys) {
+                            m_sysHideCats.append(meta.rawName);
+                        } else {
+                            m_usrHideCats.append(meta.rawName);
+                        }
+                    } break;
+                    case Qt::Checked: {
+                        if (meta.isSys) {
+                            m_sysHideCats.removeOne(meta.rawName);
+                        } else {
+                            m_usrHideCats.removeOne(meta.rawName);
+                        }
+                    } break;
+                    case Qt::PartiallyChecked:
+                        break;
+                    }
+                }
+
+                auto &set = SettingManager::instance();
+                set.setUsrHideCats(m_sysHideCats);
+                set.setSysHideCats(m_usrHideCats);
+            });
+
+    auto set = &SettingManager::instance();
+    connect(ui->cbEnable, &QCheckBox::toggled, set,
+            &SettingManager::setScriptEnabled);
+    connect(ui->cbAllowUsrScript, &QCheckBox::toggled, set,
+            &SettingManager::setAllowUsrScriptInRoot);
+    connect(ui->sbTimeout, &QSpinBox::valueChanged, set,
+            &SettingManager::setScriptTimeout);
 }
 
 ScriptSettingDialog::~ScriptSettingDialog() { delete ui; }
@@ -91,45 +129,11 @@ QString ScriptSettingDialog::name() const { return tr("Script"); }
 
 QString ScriptSettingDialog::id() const { return QStringLiteral("Script"); }
 
-void ScriptSettingDialog::apply() {
-    QStringList usrHideCats;
-    QStringList sysHideCats;
-
-    auto total = ui->listWidget->count();
-    for (int i = 0; i < total; ++i) {
-        auto lw = ui->listWidget->item(i);
-        auto var = lw->data(Qt::UserRole);
-        if (var.isValid()) {
-            auto meta = var.value<ScriptManager::ScriptDirMeta>();
-            if (lw->checkState() == Qt::Unchecked) {
-                if (meta.isSys) {
-                    sysHideCats << meta.rawName;
-                } else {
-                    usrHideCats << meta.rawName;
-                }
-            }
-        }
-    }
-
-    auto &set = SettingManager::instance();
-    set.setScriptEnabled(ui->cbEnable->isChecked());
-    set.setAllowUsrScriptInRoot(ui->cbAllowUsrScript->isChecked());
-    set.setScriptTimeout(ui->sbTimeout->value());
-    set.setUsrHideCats(usrHideCats);
-    set.setSysHideCats(sysHideCats);
-    set.save(SettingManager::SCRIPT);
-
-    m_usrHideCats = usrHideCats;
-    m_sysHideCats = sysHideCats;
-}
-
-void ScriptSettingDialog::reset() {
+void ScriptSettingDialog::restore() {
     auto &set = SettingManager::instance();
     set.reset(SettingManager::SCRIPT);
     loadData();
 }
-
-void ScriptSettingDialog::cancel() { loadData(); }
 
 void ScriptSettingDialog::on_btnRefresh_clicked() {
     ui->listWidget->clear();

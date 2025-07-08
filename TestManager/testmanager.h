@@ -72,19 +72,13 @@ private:
 
         // SettingInterface interface
     public:
-        virtual void apply() override { _isDisabled = _cbblk->isChecked(); }
-        virtual void reset() override {
-            _isDisabled = false;
-            _cbblk->setChecked(false);
-        }
-        virtual void cancel() override { _cbblk->setChecked(_isDisabled); }
+        virtual void restore() override { _cbblk->setChecked(false); }
 
     public:
-        bool isDisableMsg() const { return _isDisabled; }
+        bool isDisableMsg() const { return _cbblk->isChecked(); }
 
     private:
         QCheckBox *_cbblk;
-        bool _isDisabled = false;
     };
 
 public slots:

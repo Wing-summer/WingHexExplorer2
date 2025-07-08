@@ -85,6 +85,12 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     } else {
         ui->txtm->setText(tr("NoMonitorPlugin"));
     }
+
+    auto set = &SettingManager::instance();
+    connect(ui->cbEnablePlugin, &QCheckBox::toggled, set,
+            &SettingManager::setEnablePlugin);
+    connect(ui->cbEnablePluginRoot, &QCheckBox::toggled, set,
+            &SettingManager::setEnablePlgInRoot);
 }
 
 PluginSettingDialog::~PluginSettingDialog() { delete ui; }
@@ -103,19 +109,10 @@ QString PluginSettingDialog::name() const { return tr("Plugin"); }
 
 QString PluginSettingDialog::id() const { return QStringLiteral("Plugin"); }
 
-void PluginSettingDialog::apply() {
-    auto &set = SettingManager::instance();
-    set.setEnablePlugin(ui->cbEnablePlugin->isChecked());
-    set.setEnablePlgInRoot(ui->cbEnablePluginRoot->isChecked());
-    set.save(SettingManager::SETTING::PLUGIN);
-}
-
-void PluginSettingDialog::reset() {
+void PluginSettingDialog::restore() {
     SettingManager::instance().reset(SettingManager::SETTING::PLUGIN);
     reload();
 }
-
-void PluginSettingDialog::cancel() { reload(); }
 
 void PluginSettingDialog::on_devlist_currentRowChanged(int currentRow) {
     if (currentRow < 0) {

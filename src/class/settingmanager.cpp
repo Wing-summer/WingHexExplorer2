@@ -25,18 +25,6 @@
 #include <QFileInfo>
 #include <QMetaEnum>
 
-#define WRITE_CONFIG_SET(config, dvalue)                                       \
-    if (this->_setUnsaved.testFlag(SETTING_ITEM::config)) {                    \
-        WRITE_CONFIG(config, dvalue);                                          \
-        _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
-    }
-
-#define WRITE_CONFIG_RESET(config, dvalue)                                     \
-    do {                                                                       \
-        WRITE_CONFIG(config, dvalue);                                          \
-        _setUnsaved.setFlag(SettingManager::SETTING_ITEM::config, false);      \
-    } while (0);
-
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_DOCK_LAYOUT, ("script.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LASTUSED_PATH, ("app.lastusedpath"))
@@ -89,7 +77,11 @@ SettingManager::SettingManager() {
 QString SettingManager::lastUsedPath() const { return m_lastUsedPath; }
 
 void SettingManager::setLastUsedPath(const QString &newLastUsedPath) {
-    m_lastUsedPath = newLastUsedPath;
+    if (m_lastUsedPath != newLastUsedPath) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_LASTUSED_PATH, newLastUsedPath);
+        m_lastUsedPath = newLastUsedPath;
+    }
 }
 
 void SettingManager::load() {
@@ -200,15 +192,20 @@ int SettingManager::scriptTimeout() const { return m_scriptTimeout; }
 void SettingManager::setScriptTimeout(int newScriptTimeout) {
     newScriptTimeout = qBound(0, newScriptTimeout, 312480);
     if (m_scriptTimeout != newScriptTimeout) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_TIMEOUT, newScriptTimeout);
         m_scriptTimeout = newScriptTimeout;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_TIMEOUT);
     }
 }
 
 qsizetype SettingManager::logCount() const { return m_logCount; }
 
 void SettingManager::setLogCount(qsizetype newLogCount) {
-    m_logCount = newLogCount;
+    if (m_logCount != newLogCount) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_LOG_COUNT, newLogCount);
+        m_logCount = newLogCount;
+    }
 }
 
 void SettingManager::checkWriteableAndWarn() {
@@ -222,15 +219,20 @@ void SettingManager::checkWriteableAndWarn() {
 bool SettingManager::checkUpdate() const { return m_checkUpdate; }
 
 void SettingManager::setCheckUpdate(bool newCheckUpdate) {
-    m_checkUpdate = newCheckUpdate;
+    if (m_checkUpdate != newCheckUpdate) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_CHECK_UPDATE, newCheckUpdate);
+        m_checkUpdate = newCheckUpdate;
+    }
 }
 
 bool SettingManager::dontUseSplash() const { return m_dontUseSplash; }
 
 void SettingManager::setDontUseSplash(bool newDontUseSplash) {
     if (m_dontUseSplash != newDontUseSplash) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_DONT_USE_SPLASH, newDontUseSplash);
         m_dontUseSplash = newDontUseSplash;
-        _setUnsaved.setFlag(SETTING_ITEM::OTHER_DONT_USE_SPLASH);
     }
 }
 
@@ -238,8 +240,9 @@ bool SettingManager::scriptEnabled() const { return m_scriptEnabled; }
 
 void SettingManager::setScriptEnabled(bool newScriptEnabled) {
     if (m_scriptEnabled != newScriptEnabled) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_ENABLE, newScriptEnabled);
         m_scriptEnabled = newScriptEnabled;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_ENABLE);
     }
 }
 
@@ -249,22 +252,25 @@ bool SettingManager::allowUsrScriptInRoot() const {
 
 void SettingManager::setAllowUsrScriptInRoot(bool newAllowUsrScriptInRoot) {
     if (m_allowUsrScriptInRoot != newAllowUsrScriptInRoot) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, newAllowUsrScriptInRoot);
         m_allowUsrScriptInRoot = newAllowUsrScriptInRoot;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_ALLOW_USRSCRIPT_INROOT);
     }
 }
 
 void SettingManager::setUsrHideCats(const QStringList &newUsrHideCats) {
     if (m_usrHideCats != newUsrHideCats) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_USRHIDECATS, newUsrHideCats);
         m_usrHideCats = newUsrHideCats;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_USRHIDECATS);
     }
 }
 
 void SettingManager::setSysHideCats(const QStringList &newSysHideCats) {
     if (m_sysHideCats != newSysHideCats) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_SYSHIDECATS, newSysHideCats);
         m_sysHideCats = newSysHideCats;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_SYSHIDECATS);
     }
 }
 
@@ -272,8 +278,9 @@ int SettingManager::logLevel() const { return m_logLevel; }
 
 void SettingManager::setLogLevel(int newLogLevel) {
     if (m_logLevel != newLogLevel) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_LOG_LEVEL, newLogLevel);
         m_logLevel = newLogLevel;
-        _setUnsaved.setFlag(SETTING_ITEM::OTHER_LOG_LEVEL);
     }
 }
 
@@ -281,8 +288,9 @@ bool SettingManager::useNativeTitleBar() const { return m_useNativeTitleBar; }
 
 void SettingManager::setUseNativeTitleBar(bool newUseNativeTitleBar) {
     if (m_useNativeTitleBar != newUseNativeTitleBar) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, newUseNativeTitleBar);
         m_useNativeTitleBar = newUseNativeTitleBar;
-        _setUnsaved.setFlag(SETTING_ITEM::OTHER_USE_NATIVE_TITLEBAR);
     }
 }
 
@@ -292,8 +300,9 @@ bool SettingManager::useNativeFileDialog() const {
 
 void SettingManager::setUseNativeFileDialog(bool newUseNativeFileDialog) {
     if (m_useNativeFileDialog != newUseNativeFileDialog) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, newUseNativeFileDialog);
         m_useNativeFileDialog = newUseNativeFileDialog;
-        _setUnsaved.setFlag(SETTING_ITEM::OTHER_USESYS_FILEDIALOG);
     }
 }
 
@@ -304,8 +313,9 @@ QByteArray SettingManager::scriptDockLayout() const {
 void SettingManager::setScriptDockLayout(
     const QByteArray &newScriptDockLayout) {
     if (m_scriptDockLayout != newScriptDockLayout) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_DOCK_LAYOUT, newScriptDockLayout);
         m_scriptDockLayout = newScriptDockLayout;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_DOCK_LAYOUT);
     }
 }
 
@@ -320,8 +330,9 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentScriptFiles() const {
 void SettingManager::setRecentScriptFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentScriptFiles) {
     if (m_recentScriptFiles != newRecentScriptFiles) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_RECENTFILES, getVarList(newRecentScriptFiles));
         m_recentScriptFiles = newRecentScriptFiles;
-        _setUnsaved.setFlag(SETTING_ITEM::SCRIPT_RECENTFILES);
     }
 }
 
@@ -329,8 +340,9 @@ QString SettingManager::appFontFamily() const { return m_appFontFamily; }
 
 void SettingManager::setAppFontFamily(const QString &newAppFontFamily) {
     if (m_appFontFamily != newAppFontFamily) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_FONTFAMILY, newAppFontFamily);
         m_appFontFamily = newAppFontFamily;
-        _setUnsaved.setFlag(SETTING_ITEM::APP_FONTFAMILY);
     }
 }
 
@@ -338,8 +350,9 @@ bool SettingManager::editorShowHeader() const { return m_editorShowHeader; }
 
 void SettingManager::setEditorShowHeader(bool newEditorShowAddr) {
     if (m_editorShowHeader != newEditorShowAddr) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_SHOW_ADDR, newEditorShowAddr);
         m_editorShowHeader = newEditorShowAddr;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_ADDR);
     }
 }
 
@@ -347,8 +360,9 @@ bool SettingManager::enablePlugin() const { return m_enablePlugin; }
 
 void SettingManager::setEnablePlugin(bool newEnablePlugin) {
     if (m_enablePlugin != newEnablePlugin) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLE, newEnablePlugin);
         m_enablePlugin = newEnablePlugin;
-        _setUnsaved.setFlag(SETTING_ITEM::PLUGIN_ENABLE);
     }
 }
 
@@ -359,8 +373,9 @@ QList<RecentFileManager::RecentInfo> SettingManager::recentHexFiles() const {
 void SettingManager::setRecentFiles(
     const QList<RecentFileManager::RecentInfo> &newRecentFiles) {
     if (m_recentHexFiles != newRecentFiles) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_RECENTFILES, getVarList(newRecentFiles));
         m_recentHexFiles = newRecentFiles;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_RECENTFILES);
     }
 }
 
@@ -379,53 +394,9 @@ void SettingManager::setDefaultWinState(Qt::WindowState newDefaultWinState) {
         break;
     }
     if (m_defaultWinState != newDefaultWinState) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_WINDOWSIZE, newDefaultWinState);
         m_defaultWinState = newDefaultWinState;
-        _setUnsaved.setFlag(SETTING_ITEM::APP_WINDOWSIZE);
-    }
-}
-
-void SettingManager::save(SETTINGS cat) {
-    HANDLE_CONFIG;
-    WRITE_CONFIG_SET(DOCK_LAYOUT, m_dockLayout);
-    WRITE_CONFIG_SET(SCRIPT_DOCK_LAYOUT, m_scriptDockLayout);
-    WRITE_CONFIG_SET(EDITOR_RECENTFILES, getVarList(m_recentHexFiles));
-    WRITE_CONFIG_SET(SCRIPT_RECENTFILES, getVarList(m_recentScriptFiles));
-    WRITE_CONFIG_SET(APP_LASTUSED_PATH, m_lastUsedPath);
-    if (cat.testFlag(SETTING::APP)) {
-        WRITE_CONFIG_SET(SKIN_THEME, m_themeID);
-        WRITE_CONFIG_SET(APP_LANGUAGE, m_defaultLang);
-        WRITE_CONFIG_SET(APP_FONTFAMILY, m_appFontFamily);
-        WRITE_CONFIG_SET(APP_FONTSIZE, m_appfontSize);
-        WRITE_CONFIG_SET(APP_WINDOWSIZE, m_defaultWinState);
-    }
-    if (cat.testFlag(SETTING::PLUGIN)) {
-        WRITE_CONFIG_SET(PLUGIN_ENABLE, m_enablePlugin);
-        WRITE_CONFIG_SET(PLUGIN_ENABLE_ROOT, m_enablePlgInRoot);
-    }
-    if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG_SET(EDITOR_FONTSIZE, m_editorfontSize);
-        WRITE_CONFIG_SET(EDITOR_SHOW_ADDR, m_editorShowHeader);
-        WRITE_CONFIG_SET(EDITOR_SHOW_COL, m_editorShowcol);
-        WRITE_CONFIG_SET(EDITOR_SHOW_TEXT, m_editorShowtext);
-        WRITE_CONFIG_SET(EDITOR_COPY_LIMIT, m_copylimit);
-        WRITE_CONFIG_SET(EDITOR_DECSTRLIMIT, m_decodeStrlimit);
-    }
-    if (cat.testFlag(SETTING::SCRIPT)) {
-        WRITE_CONFIG_SET(SCRIPT_ENABLE, m_scriptEnabled);
-        WRITE_CONFIG_SET(SCRIPT_TIMEOUT, m_scriptTimeout);
-        WRITE_CONFIG_SET(SCRIPT_ALLOW_USRSCRIPT_INROOT, m_allowUsrScriptInRoot);
-        WRITE_CONFIG_SET(SCRIPT_USRHIDECATS, m_usrHideCats);
-        WRITE_CONFIG_SET(SCRIPT_SYSHIDECATS, m_sysHideCats);
-    }
-    if (cat.testFlag(SETTING::OTHER)) {
-        WRITE_CONFIG_SET(OTHER_USESYS_FILEDIALOG, m_useNativeFileDialog);
-#ifdef WINGHEX_USE_FRAMELESS
-        WRITE_CONFIG_SET(OTHER_USE_NATIVE_TITLEBAR, m_useNativeTitleBar);
-#endif
-        WRITE_CONFIG_SET(OTHER_DONT_USE_SPLASH, m_dontUseSplash);
-        WRITE_CONFIG_SET(OTHER_CHECK_UPDATE, m_checkUpdate);
-        WRITE_CONFIG_SET(OTHER_LOG_LEVEL, m_logLevel);
-        WRITE_CONFIG_SET(OTHER_LOG_COUNT, m_logCount);
     }
 }
 
@@ -437,41 +408,41 @@ void SettingManager::reset(SETTINGS cat) {
 void SettingManager::__reset(SETTINGS cat) {
     HANDLE_CONFIG;
     if (cat.testFlag(SETTING::APP)) {
-        WRITE_CONFIG_RESET(SKIN_THEME, 0);
-        WRITE_CONFIG_RESET(APP_LANGUAGE, QString());
-        WRITE_CONFIG_RESET(APP_FONTFAMILY, _defaultFont.family());
-        WRITE_CONFIG_RESET(APP_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG_RESET(APP_WINDOWSIZE, Qt::WindowMaximized);
+        WRITE_CONFIG(SKIN_THEME, 0);
+        WRITE_CONFIG(APP_LANGUAGE, QString());
+        WRITE_CONFIG(APP_FONTFAMILY, _defaultFont.family());
+        WRITE_CONFIG(APP_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG(APP_WINDOWSIZE, Qt::WindowMaximized);
     }
     if (cat.testFlag(SETTING::PLUGIN)) {
-        WRITE_CONFIG_RESET(PLUGIN_ENABLE, true);
-        WRITE_CONFIG_RESET(PLUGIN_ENABLE_ROOT, false);
+        WRITE_CONFIG(PLUGIN_ENABLE, true);
+        WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
     }
     if (cat.testFlag(SETTING::EDITOR)) {
-        WRITE_CONFIG_RESET(EDITOR_FONTSIZE, _defaultFont.pointSize());
-        WRITE_CONFIG_RESET(EDITOR_SHOW_ADDR, true);
-        WRITE_CONFIG_RESET(EDITOR_SHOW_COL, true);
-        WRITE_CONFIG_RESET(EDITOR_SHOW_TEXT, true);
-        WRITE_CONFIG_RESET(EDITOR_FIND_MAXCOUNT, 100);
-        WRITE_CONFIG_RESET(EDITOR_COPY_LIMIT, 100);
-        WRITE_CONFIG_RESET(EDITOR_DECSTRLIMIT, 10);
+        WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());
+        WRITE_CONFIG(EDITOR_SHOW_ADDR, true);
+        WRITE_CONFIG(EDITOR_SHOW_COL, true);
+        WRITE_CONFIG(EDITOR_SHOW_TEXT, true);
+        WRITE_CONFIG(EDITOR_FIND_MAXCOUNT, 100);
+        WRITE_CONFIG(EDITOR_COPY_LIMIT, 100);
+        WRITE_CONFIG(EDITOR_DECSTRLIMIT, 10);
     }
     if (cat.testFlag(SETTING::SCRIPT)) {
-        WRITE_CONFIG_RESET(SCRIPT_ENABLE, true);
-        WRITE_CONFIG_RESET(SCRIPT_TIMEOUT, 10);
-        WRITE_CONFIG_RESET(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
-        WRITE_CONFIG_RESET(SCRIPT_USRHIDECATS, QStringList());
-        WRITE_CONFIG_RESET(SCRIPT_SYSHIDECATS, QStringList());
+        WRITE_CONFIG(SCRIPT_ENABLE, true);
+        WRITE_CONFIG(SCRIPT_TIMEOUT, 10);
+        WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
+        WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
+        WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());
     }
     if (cat.testFlag(SETTING::OTHER)) {
-        WRITE_CONFIG_RESET(OTHER_USESYS_FILEDIALOG, true);
+        WRITE_CONFIG(OTHER_USESYS_FILEDIALOG, true);
 #ifdef WINGHEX_USE_FRAMELESS
-        WRITE_CONFIG_RESET(OTHER_USE_NATIVE_TITLEBAR, false);
+        WRITE_CONFIG(OTHER_USE_NATIVE_TITLEBAR, false);
 #endif
-        WRITE_CONFIG_RESET(OTHER_DONT_USE_SPLASH, false);
-        WRITE_CONFIG_RESET(OTHER_CHECK_UPDATE, false);
-        WRITE_CONFIG_RESET(OTHER_LOG_LEVEL, Logger::defaultLevel());
-        WRITE_CONFIG_RESET(OTHER_LOG_COUNT, 20);
+        WRITE_CONFIG(OTHER_DONT_USE_SPLASH, false);
+        WRITE_CONFIG(OTHER_CHECK_UPDATE, false);
+        WRITE_CONFIG(OTHER_LOG_LEVEL, Logger::defaultLevel());
+        WRITE_CONFIG(OTHER_LOG_COUNT, 20);
     }
 }
 
@@ -481,8 +452,9 @@ void SettingManager::setDecodeStrlimit(qsizetype newDecodeStrlimit) {
     newDecodeStrlimit =
         qBound(qsizetype(100), newDecodeStrlimit, qsizetype(1024));
     if (m_decodeStrlimit != newDecodeStrlimit) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_DECSTRLIMIT, newDecodeStrlimit);
         m_decodeStrlimit = newDecodeStrlimit;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_DECSTRLIMIT);
         Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
     }
 }
@@ -492,8 +464,9 @@ qsizetype SettingManager::copylimit() const { return m_copylimit; }
 void SettingManager::setCopylimit(qsizetype newCopylimit) {
     newCopylimit = qBound(qsizetype(100), newCopylimit, qsizetype(1024));
     if (m_copylimit != newCopylimit) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_COPY_LIMIT, newCopylimit);
         m_copylimit = newCopylimit;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_COPY_LIMIT);
         Q_EMIT sigDecodeStrlimitChanged(m_copylimit);
     }
 }
@@ -502,8 +475,9 @@ bool SettingManager::editorShowtext() const { return m_editorShowtext; }
 
 void SettingManager::setEditorShowtext(bool newEditorShowtext) {
     if (m_editorShowtext != newEditorShowtext) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_SHOW_TEXT, newEditorShowtext);
         m_editorShowtext = newEditorShowtext;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_TEXT);
     }
 }
 
@@ -511,8 +485,9 @@ bool SettingManager::editorShowcol() const { return m_editorShowcol; }
 
 void SettingManager::setEditorShowcol(bool newEditorShowcol) {
     if (m_editorShowcol != newEditorShowcol) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_SHOW_COL, newEditorShowcol);
         m_editorShowcol = newEditorShowcol;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_SHOW_COL);
     }
 }
 
@@ -520,8 +495,9 @@ int SettingManager::editorfontSize() const { return m_editorfontSize; }
 
 void SettingManager::setEditorfontSize(int newEditorfontSize) {
     if (m_editorfontSize != newEditorfontSize) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(EDITOR_FONTSIZE, newEditorfontSize);
         m_editorfontSize = newEditorfontSize;
-        _setUnsaved.setFlag(SETTING_ITEM::EDITOR_FONTSIZE);
         Q_EMIT sigEditorfontSizeChanged(newEditorfontSize);
     }
 }
@@ -530,8 +506,9 @@ int SettingManager::appfontSize() const { return m_appfontSize; }
 
 void SettingManager::setAppfontSize(int newAppfontSize) {
     if (m_appfontSize != newAppfontSize) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_FONTSIZE, newAppfontSize);
         m_appfontSize = newAppfontSize;
-        _setUnsaved.setFlag(SETTING_ITEM::APP_FONTSIZE);
     }
 }
 
@@ -539,8 +516,9 @@ bool SettingManager::enablePlgInRoot() const { return m_enablePlgInRoot; }
 
 void SettingManager::setEnablePlgInRoot(bool newEnablePlgInRoot) {
     if (m_enablePlgInRoot != newEnablePlgInRoot) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLE_ROOT, newEnablePlgInRoot);
         m_enablePlgInRoot = newEnablePlgInRoot;
-        _setUnsaved.setFlag(SETTING_ITEM::PLUGIN_ENABLE_ROOT);
     }
 }
 
@@ -548,8 +526,9 @@ QString SettingManager::defaultLang() const { return m_defaultLang; }
 
 void SettingManager::setDefaultLang(const QString &newDefaultLang) {
     if (m_defaultLang != newDefaultLang) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_LANGUAGE, newDefaultLang);
         m_defaultLang = newDefaultLang;
-        _setUnsaved.setFlag(SETTING_ITEM::APP_LANGUAGE);
     }
 }
 
@@ -564,8 +543,9 @@ QByteArray SettingManager::dockLayout() const { return m_dockLayout; }
 
 void SettingManager::setDockLayout(const QByteArray &newDockLayout) {
     if (m_dockLayout != newDockLayout) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(DOCK_LAYOUT, newDockLayout);
         m_dockLayout = newDockLayout;
-        _setUnsaved.setFlag(SETTING_ITEM::DOCK_LAYOUT);
     }
 }
 
@@ -573,7 +553,8 @@ int SettingManager::themeID() const { return m_themeID; }
 
 void SettingManager::setThemeID(int newThemeID) {
     if (m_themeID != newThemeID) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SKIN_THEME, newThemeID);
         m_themeID = newThemeID;
-        _setUnsaved.setFlag(SETTING_ITEM::SKIN_THEME);
     }
 }
