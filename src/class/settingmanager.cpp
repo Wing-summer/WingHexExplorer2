@@ -21,6 +21,8 @@
 #include "class/skinmanager.h"
 #include "settings/settings.h"
 
+#include "utilities.h"
+
 #include <QApplication>
 #include <QFileInfo>
 #include <QMetaEnum>
@@ -37,6 +39,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LANGUAGE, ("app.lang"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
                           ("plugin.rootenableplugin"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_EXT, ("plugin.ext"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_DEV, ("plugin.dev"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_FONTSIZE, ("editor.fontsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, EDITOR_SHOW_ADDR, ("editor.showaddr"))
@@ -110,6 +114,21 @@ void SettingManager::load() {
 
     READ_CONFIG_BOOL(m_enablePlugin, PLUGIN_ENABLE, true);
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
+
+    {
+        auto data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
+        if (data.isValid()) {
+            auto rawRules = data.toByteArray();
+            m_enabledExtPlugins = readPluginRule(rawRules);
+        }
+
+        data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
+        if (data.isValid()) {
+            auto rawRules = data.toByteArray();
+            m_enabledDevPlugins = readPluginRule(rawRules);
+        }
+    }
+
     READ_CONFIG_INT_POSITIVE(m_editorfontSize, EDITOR_FONTSIZE,
                              defaultFontSize);
     m_editorfontSize = qBound(5, m_editorfontSize, 25);
@@ -187,6 +206,34 @@ QVariantList SettingManager::getVarList(
     return varlist;
 }
 
+QStringList SettingManager::enabledDevPlugins() const {
+    return m_enabledDevPlugins;
+}
+
+void SettingManager::setEnabledDevPlugins(
+    const QStringList &newEnabledDevPlugins) {
+    if (m_enabledDevPlugins != newEnabledDevPlugins) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV,
+                     savePluginRule(newEnabledDevPlugins));
+        m_enabledDevPlugins = newEnabledDevPlugins;
+    }
+}
+
+QStringList SettingManager::enabledExtPlugins() const {
+    return m_enabledExtPlugins;
+}
+
+void SettingManager::setEnabledExtPlugins(
+    const QStringList &newEnabledPlugins) {
+    if (m_enabledExtPlugins != newEnabledPlugins) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT,
+                     savePluginRule(newEnabledPlugins));
+        m_enabledExtPlugins = newEnabledPlugins;
+    }
+}
+
 int SettingManager::scriptTimeout() const { return m_scriptTimeout; }
 
 void SettingManager::setScriptTimeout(int newScriptTimeout) {
@@ -214,6 +261,27 @@ void SettingManager::checkWriteableAndWarn() {
         Logger::warning(QStringLiteral("<i><u>") + tr("ConfigUnableSave") +
                         QStringLiteral("</u></i>"));
     }
+}
+
+QStringList SettingManager::readPluginRule(const QByteArray &data) {
+    if (!data.isEmpty()) {
+        auto up = qUncompress(data);
+        if (!up.isEmpty()) {
+            auto rules = QString::fromUtf8(up);
+            auto rlist = rules.split('|', Qt::SkipEmptyParts);
+            rlist.removeIf([](const QString &str) {
+                return !Utilities::isValidIdentifier(str);
+            });
+            return rlist;
+        }
+    }
+    return {};
+}
+
+QByteArray SettingManager::savePluginRule(const QStringList &rules) {
+    auto plgs = rules.join('|');
+    auto data = qCompress(plgs.toUtf8());
+    return data;
 }
 
 bool SettingManager::checkUpdate() const { return m_checkUpdate; }

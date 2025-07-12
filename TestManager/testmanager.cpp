@@ -28,11 +28,14 @@ TestManager::~TestManager() {
 }
 
 bool TestManager::init(const std::unique_ptr<QSettings> &set) {
-    Q_UNUSED(set);
+    _banTestBadPlugin = set->value("BanTestBadPlugin").toBool();
+    content->initConfig(this);
     return true;
 }
 
-void TestManager::unload(std::unique_ptr<QSettings> &set) { Q_UNUSED(set); }
+void TestManager::unload(std::unique_ptr<QSettings> &set) {
+    set->setValue("BanTestBadPlugin", _banTestBadPlugin);
+}
 
 const QString TestManager::comment() const {
     return QStringLiteral("Hello world!");
@@ -53,5 +56,14 @@ bool TestManager::enterGuard(const QMetaObject *sender, const QString &sig,
         }
     }
 
+    return true;
+}
+
+bool TestManager::onLoadingPlugin(const QString &fileName,
+                                  const WingHex::PluginInfo &info) {
+    Q_UNUSED(fileName);
+    if (info.id == QStringLiteral("TestBadPlugin")) {
+        return !_banTestBadPlugin;
+    }
     return true;
 }

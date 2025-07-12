@@ -55,15 +55,15 @@ public:
 
     QStringList getSysScriptFileNames(const QString &cat) const;
 
-    void refresh();
-    void refreshUsrScriptsDbCats();
-    void refreshSysScriptsDbCats();
-
     ScriptDirMeta usrDirMeta(const QString &cat) const;
     ScriptDirMeta sysDirMeta(const QString &cat) const;
 
     static QList<QMenu *> buildUpScriptRunnerContext(RibbonButtonGroup *group,
                                                      QWidget *parent);
+
+private:
+    void refreshUsrScriptsDbCats();
+    void refreshSysScriptsDbCats();
 
 private:
     static QToolButton *addPannelAction(RibbonButtonGroup *pannel,

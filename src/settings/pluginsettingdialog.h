@@ -19,6 +19,9 @@
 #define PLUGINSETTINGDIALOG_H
 
 #include "WingPlugin/settingpage.h"
+#include "class/changedstringlist.h"
+
+#include <QListWidget>
 #include <QWidget>
 
 namespace Ui {
@@ -35,6 +38,10 @@ public:
 private:
     Ui::PluginSettingDialog *ui;
 
+    ChangedStringList _devChanged;
+    ChangedStringList _plgChanged;
+
+private:
     void reload();
 
     // SettingPage interface
@@ -43,11 +50,18 @@ public:
     virtual QString name() const override;
     virtual QString id() const override;
 
+    virtual bool containUnsavedChanges() const override;
+    virtual void highlightUnsavedChange() override;
+    virtual void discard() override;
     virtual void restore() override;
 
-private slots:
-    void on_devlist_currentRowChanged(int currentRow);
-    void on_plglist_currentRowChanged(int currentRow);
+private:
+    void createPluginStandardMenu(QListWidget *widget);
+
+    QIcon getGrayIcon(const QString &path);
+
+    void resetChangedList();
+    void resetUIChagned();
 
 private:
     QString getWrappedText(const QString &str);

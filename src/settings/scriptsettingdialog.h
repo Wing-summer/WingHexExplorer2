@@ -19,6 +19,7 @@
 #define SCRIPTSETTINGDIALOG_H
 
 #include "WingPlugin/settingpage.h"
+#include "class/changedstringlist.h"
 #include "class/scriptmanager.h"
 #include <QWidget>
 
@@ -36,13 +37,18 @@ public:
 private:
     Ui::ScriptSettingDialog *ui;
 
-    QStringList m_usrHideCats;
-    QStringList m_sysHideCats;
+    QStringList _usrHideCats;
+    QStringList _sysHideCats;
+
+    ChangedStringList m_usrHideCats;
+    ChangedStringList m_sysHideCats;
 
 private:
     void loadData();
     bool addCatagory(const ScriptManager::ScriptDirMeta &meta, bool isUser,
                      bool hidden);
+
+    void createPluginStandardMenu();
 
     // SettingPage interface
 public:
@@ -50,11 +56,9 @@ public:
     virtual QString name() const override;
     virtual QString id() const override;
 
+    virtual bool containUnsavedChanges() const override;
     virtual void restore() override;
-
-private slots:
-    void on_btnRefresh_clicked();
-    void on_listWidget_currentRowChanged(int currentRow);
+    virtual void discard() override;
 };
 
 #endif // SCRIPTSETTINGDIALOG_H

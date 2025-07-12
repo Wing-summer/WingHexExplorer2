@@ -130,9 +130,12 @@
            <widget class="QTextBrowser" name="textBrowser"/>
           </item>
           <item>
-           <widget class="QPushButton" name="btnRefresh">
+           <widget class="QPushButton" name="btnSave">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
-             <string>Refresh</string>
+             <string>Save</string>
             </property>
            </widget>
           </item>

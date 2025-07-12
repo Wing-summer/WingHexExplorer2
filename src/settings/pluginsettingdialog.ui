@@ -72,7 +72,7 @@
      <property name="usesScrollButtons">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="tabPluginInfo">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
         <normaloff>:/com.wingsummer.winghex/images/plugin.png</normaloff>:/com.wingsummer.winghex/images/plugin.png</iconset>
@@ -116,6 +116,16 @@
            <item>
             <widget class="QListWidget" name="plglist"/>
            </item>
+           <item>
+            <widget class="QPushButton" name="btnplgSave">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Save</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
          <widget class="QTextBrowser" name="txtc">
@@ -127,7 +137,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="widget">
+     <widget class="QWidget" name="tabDevInfo">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
         <normaloff>:/com.wingsummer.winghex/images/devext.png</normaloff>:/com.wingsummer.winghex/images/devext.png</iconset>
@@ -156,6 +166,16 @@
            <item>
             <widget class="QListWidget" name="devlist"/>
            </item>
+           <item>
+            <widget class="QPushButton" name="btndevSave">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Save</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
          <widget class="QTextBrowser" name="txtd">
@@ -167,7 +187,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
+     <widget class="QWidget" name="tabAPIMon">
       <attribute name="icon">
        <iconset resource="../../resources.qrc">
         <normaloff>:/com.wingsummer.winghex/images/monitor.png</normaloff>:/com.wingsummer.winghex/images/monitor.png</iconset>

@@ -48,7 +48,8 @@ ScriptManager::ScriptManager() {
     m_usrScriptsPath = Utilities::getAppDataPath() + QDir::separator() +
                        QStringLiteral("scripts");
 
-    refresh();
+    refreshSysScriptsDbCats();
+    refreshUsrScriptsDbCats();
 }
 
 ScriptManager::~ScriptManager() {}
@@ -118,11 +119,6 @@ QStringList ScriptManager::getSysScriptFileNames(const QString &cat) const {
     }
     scriptDir.cd(cat);
     return getScriptFileNames(scriptDir);
-}
-
-void ScriptManager::refresh() {
-    refreshSysScriptsDbCats();
-    refreshUsrScriptsDbCats();
 }
 
 void ScriptManager::refreshUsrScriptsDbCats() {

@@ -23,8 +23,10 @@
 #include "utilities.h"
 
 #include <QApplication>
+#include <QCloseEvent>
 #include <QMenu>
 #include <QPushButton>
+#include <QTimer>
 
 SettingDialog::SettingDialog(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingDialog) {
@@ -34,7 +36,7 @@ SettingDialog::SettingDialog(QWidget *parent)
             [this](QListWidgetItem *current, QListWidgetItem *previous) {
                 if (previous) {
                     auto page = m_pages.at(
-                        ui->listWidget->indexFromItem(current).row());
+                        ui->listWidget->indexFromItem(previous).row());
                     if (page->containUnsavedChanges()) {
                         auto ret = WingMessageBox::question(
                             this, tr("UnsavedChanges"),
@@ -42,7 +44,12 @@ SettingDialog::SettingDialog(QWidget *parent)
                         if (ret == QMessageBox::Yes) {
                             page->discard();
                         } else {
-                            ui->listWidget->setCurrentItem(previous);
+                            QTimer::singleShot(100, this, [this, previous]() {
+                                ui->listWidget->blockSignals(true);
+                                ui->listWidget->setCurrentItem(previous);
+                                ui->listWidget->blockSignals(false);
+                            });
+                            page->highlightUnsavedChange();
                             return;
                         }
                     }
@@ -60,6 +67,7 @@ SettingDialog::SettingDialog(QWidget *parent)
     });
 
     _dialog = new FramelessDialogBase(parent);
+    _dialog->installEventFilter(this);
     _dialog->buildUpContent(this);
     _dialog->setWindowTitle(this->windowTitle());
 
@@ -127,9 +135,11 @@ void SettingDialog::build() {
 }
 
 void SettingDialog::showConfig(int index) {
+    ui->listWidget->blockSignals(true);
     if (index >= 0 && index < m_pages.size()) {
         ui->listWidget->setCurrentRow(index);
     }
+    ui->listWidget->blockSignals(false);
     Utilities::moveToCenter(this);
     _dialog->exec();
 }
@@ -147,6 +157,25 @@ void SettingDialog::showConfig(const QString &id) {
     ui->listWidget->setCurrentRow(m_pages.indexOf(*r));
     Utilities::moveToCenter(this);
     _dialog->exec();
+}
+
+bool SettingDialog::eventFilter(QObject *, QEvent *event) {
+    if (event->type() == QEvent::Close) {
+        auto e = static_cast<QCloseEvent *>(event);
+        auto page = m_pages.at(ui->listWidget->currentRow());
+        if (page->containUnsavedChanges()) {
+            auto ret = WingMessageBox::question(this, tr("UnsavedChanges"),
+                                                tr("SaveChangesDiscardLeave?"));
+            if (ret == QMessageBox::Yes) {
+                page->discard();
+            } else {
+                page->highlightUnsavedChange();
+                event->ignore();
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void SettingDialog::toastTakeEffectReboot() {

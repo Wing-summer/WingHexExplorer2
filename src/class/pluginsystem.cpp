@@ -2631,6 +2631,16 @@ bool PluginSystem::checkErrAllAllowAndReport(const QObject *sender,
     return false;
 }
 
+QMap<PluginSystem::BlockReason, QList<PluginInfo>>
+PluginSystem::blockedDevPlugins() const {
+    return _blkdevs;
+}
+
+QMap<PluginSystem::BlockReason, QList<PluginInfo>>
+PluginSystem::blockedPlugins() const {
+    return _blkplgs;
+}
+
 void PluginSystem::doneRegisterScriptObj() {
     Q_ASSERT(_angelplg);
     // ok, then, we will register all script objects
@@ -3254,11 +3264,29 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
         }
 
         auto m = meta.value();
+
         if (_manager) {
             if (!_manager->onLoadingPlugin(fileName, m)) {
+                if constexpr (std::is_same_v<T, IWingPlugin>) {
+                    _blkplgs[BlockReason::BlockedByManager].append(m);
+                } else if constexpr (std::is_same_v<T, IWingDevice>) {
+                    _blkdevs[BlockReason::BlockedByManager].append(m);
+                }
                 Logger::critical(QStringLiteral("{ ") + m.id +
-                                 QStringLiteral("} ") +
+                                 QStringLiteral(" } ") +
                                  tr("PluginBlockByManager"));
+                return std::nullopt;
+            }
+        }
+
+        if constexpr (std::is_same_v<T, IWingPlugin>) {
+            if (!_enabledExtIDs.contains(m.id)) {
+                _blkplgs[BlockReason::Disabled].append(m);
+                return std::nullopt;
+            }
+        } else if constexpr (std::is_same_v<T, IWingDevice>) {
+            if (!_enabledDevIDs.contains(m.id)) {
+                _blkdevs[BlockReason::Disabled].append(m);
                 return std::nullopt;
             }
         }
@@ -4270,6 +4298,9 @@ void PluginSystem::loadAllPlugin() {
     try2LoadManagerPlugin();
 
     auto &set = SettingManager::instance();
+    _enabledExtIDs = set.enabledExtPlugins();
+    _enabledDevIDs = set.enabledDevPlugins();
+
     // manager plugin can not block WingAngelAPI, only settings
     if (set.scriptEnabled()) {
         _angelplg = new WingAngelAPI;
@@ -4307,15 +4338,21 @@ void PluginSystem::loadAllPlugin() {
         // internal plugin has no filename
         if (_manager == nullptr ||
             (_manager && _manager->onLoadingPlugin({}, meta))) {
-            auto cstructplg = new WingCStruct;
-            QDir setd(Utilities::getAppDataPath());
-            auto plgset = QStringLiteral("plgset");
-            setd.mkdir(plgset);
-            retranslateMetadata(cstructplg, meta);
-            loadPlugin(cstructplg, meta, setd);
+            if (_enabledExtIDs.contains(meta.id)) {
+                auto cstructplg = new WingCStruct;
+                QDir setd(Utilities::getAppDataPath());
+                auto plgset = QStringLiteral("plgset");
+                setd.mkdir(plgset);
+                retranslateMetadata(cstructplg, meta);
+                loadPlugin(cstructplg, meta, setd);
+            } else {
+                _blkplgs[BlockReason::Disabled].append(meta);
+            }
         } else {
+            _blkplgs[BlockReason::BlockedByManager].append(meta);
             Logger::critical(QStringLiteral("{ ") + meta.id +
-                             QStringLiteral("} ") + tr("PluginBlockByManager"));
+                             QStringLiteral(" } ") +
+                             tr("PluginBlockByManager"));
         }
     }
 

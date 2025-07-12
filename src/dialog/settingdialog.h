@@ -39,6 +39,10 @@ public:
     void showConfig(int index = -1);
     void showConfig(const QString &id);
 
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
 public slots:
     void toastTakeEffectReboot();
 

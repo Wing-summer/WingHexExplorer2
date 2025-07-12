@@ -111,7 +111,8 @@ public:
         DupID,
         LackDependencies
     };
-    Q_ENUM(PluginStatus)
+
+    enum class BlockReason { Disabled, BlockedByManager };
 
 private:
     struct PluginFileContext {
@@ -259,6 +260,10 @@ public:
     IWingManager *monitorManager() const;
 
     const std::optional<PluginInfo> &monitorManagerInfo() const;
+
+    QMap<BlockReason, QList<PluginInfo>> blockedPlugins() const;
+
+    QMap<BlockReason, QList<PluginInfo>> blockedDevPlugins() const;
 
 private:
     template <typename T>
@@ -737,6 +742,11 @@ private:
     QStringList _lazyplgs;
 
     QList<IWingDevice *> _loadeddevs;
+
+    QStringList _enabledExtIDs;
+    QStringList _enabledDevIDs;
+    QMap<BlockReason, QList<PluginInfo>> _blkplgs;
+    QMap<BlockReason, QList<PluginInfo>> _blkdevs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 

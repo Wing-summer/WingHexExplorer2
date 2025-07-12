@@ -30,6 +30,7 @@
         <file>images/defines.png</file>
         <file>images/del.png</file>
         <file>images/devext.png</file>
+        <file>images/devextdis.png</file>
         <file>images/edit.png</file>
         <file>images/encoding.png</file>
         <file>images/export.png</file>
@@ -70,6 +71,7 @@
         <file>images/paste.png</file>
         <file>images/pastehex.png</file>
         <file>images/plugin.png</file>
+        <file>images/plugindis.png</file>
         <file>images/pro.png</file>
         <file>images/qt.png</file>
         <file>images/qtloginspect.png</file>

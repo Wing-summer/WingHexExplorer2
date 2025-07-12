@@ -56,6 +56,10 @@ private:
             _cbblk = new QCheckBox(QStringLiteral("Disable msg*"), this);
             _cbblk->setChecked(false);
             layout->addWidget(_cbblk);
+
+            _banclk = new QCheckBox(QStringLiteral("BanTestBadPlugin"), this);
+
+            layout->addWidget(_banclk);
             layout->addStretch();
         }
         // PageBase interface
@@ -74,19 +78,31 @@ private:
     public:
         virtual void restore() override { _cbblk->setChecked(false); }
 
+        void initConfig(TestManager *man) {
+            _banclk->setChecked(man->_banTestBadPlugin);
+            connect(_banclk, &QCheckBox::toggled, this, [man, this](bool b) {
+                man->_banTestBadPlugin = b;
+                Q_EMIT optionNeedRestartChanged();
+            });
+        }
+
     public:
         bool isDisableMsg() const { return _cbblk->isChecked(); }
 
     private:
-        QCheckBox *_cbblk;
+        QCheckBox *_cbblk, *_banclk;
     };
 
 public slots:
     virtual bool enterGuard(const QMetaObject *sender, const QString &sig,
                             const QVariantList &params) override;
 
+    virtual bool onLoadingPlugin(const QString &fileName,
+                                 const WingHex::PluginInfo &info) override;
+
 private:
     TestPage *content;
+    bool _banTestBadPlugin = false;
 };
 
 #endif // TESTMANAGER_H

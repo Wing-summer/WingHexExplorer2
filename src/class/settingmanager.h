@@ -81,6 +81,9 @@ public:
     qsizetype logCount() const;
     int scriptTimeout() const;
 
+    QStringList enabledExtPlugins() const;
+    QStringList enabledDevPlugins() const;
+
 public slots:
     void setThemeID(int newThemeID);
     void setDockLayout(const QByteArray &newDockLayout);
@@ -114,8 +117,14 @@ public slots:
     void setLogCount(qsizetype newLogCount);
     void setScriptTimeout(int newScriptTimeout);
 
+    void setEnabledExtPlugins(const QStringList &newEnabledPlugins);
+    void setEnabledDevPlugins(const QStringList &newEnabledDevPlugins);
+
 public:
     void checkWriteableAndWarn();
+
+    QStringList readPluginRule(const QByteArray &data);
+    QByteArray savePluginRule(const QStringList &rules);
 
 signals:
     void sigEditorfontSizeChanged(int v);
@@ -162,6 +171,8 @@ private:
     QStringList m_usrHideCats;
     QStringList m_sysHideCats;
 
+    QStringList m_enabledExtPlugins;
+    QStringList m_enabledDevPlugins;
     QString m_lastUsedPath;
 
     bool m_dontUseSplash = false;

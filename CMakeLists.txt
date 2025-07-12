@@ -28,6 +28,7 @@ add_definitions(-DAS_NO_THREADS)
 
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
+    add_subdirectory(TestBadPlugin)
     add_subdirectory(TestManager)
 endif()
 
@@ -302,7 +303,9 @@ set(CLASS_SRC
     src/class/wingangel.h
     src/class/wingangel.cpp
     src/class/winggeneric.h
-    src/class/winggeneric.cpp)
+    src/class/winggeneric.cpp
+    src/class/changedstringlist.h
+    src/class/changedstringlist.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
