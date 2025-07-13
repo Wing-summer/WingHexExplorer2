@@ -58,7 +58,6 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
     _tform->setMaximumHeight(500);
 
     using TBInfo = WingHex::WingRibbonToolBoxInfo;
-    TBInfo::RibbonCatagories cats;
     auto tb = new QToolButton;
 
     // 这里有一个约定，对于含有图片的，前缀应为：/images/插件的 PUID
@@ -74,61 +73,42 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
         }
     });
 
-    {
-        WingHex::WingRibbonToolBoxInfo rtinfo;
-        rtinfo.catagory = cats.PLUGIN;
+    QIcon btnIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
+
+    _rtbinfo << createRibbonToolBox(WingHex::WingRibbonCatagories::PLUGIN,
+                                    createToolBox(tr("TestPlugin"), tb));
+
+    auto rtb =
+        createRibbonToolBox(QStringLiteral("TestPlugin"), tr("TestPlugin"));
+    for (int i = 0; i < 3; ++i) {
         TBInfo::Toolbox tbtb;
-        tbtb.name = tr("TestPlugin");
-        tbtb.tools = {tb};
-        rtinfo.toolboxs = {tbtb};
-        _rtbinfo.append(rtinfo);
-    }
-
-    {
-        WingHex::WingRibbonToolBoxInfo rtinfo;
-        rtinfo.catagory = QStringLiteral("TestPlugin");
-        rtinfo.displayName = tr("TestPlugin");
-
-        QIcon btnIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
-        for (int i = 0; i < 3; ++i) {
-            TBInfo::Toolbox tbtb;
-            tbtb.name = tr("TestPlugin") + QStringLiteral("(%1)").arg(i);
-            for (int y = 0; y < 5; ++y) {
-                auto tb = new QToolButton;
-                tb->setIcon(btnIcon);
-                tb->setText(tr("Button - ") +
-                            QStringLiteral("(%1, %2)").arg(i).arg(y));
-                connect(tb, &QToolButton::clicked, this, [this] {
+        tbtb.name = tr("TestPlugin") + QStringLiteral("(%1)").arg(i);
+        for (int y = 0; y < 5; ++y) {
+            tbtb.tools << createToolButton(
+                btnIcon,
+                tr("Button - ") + QStringLiteral("(%1, %2)").arg(i).arg(y),
+                this, [this] {
                     auto tb = qobject_cast<QToolButton *>(sender());
                     msgInformation(nullptr, tr("Click"), tb->text());
                 });
-                tbtb.tools.append(tb);
-            }
-            rtinfo.toolboxs.append(tbtb);
         }
-        _rtbinfo.append(rtinfo);
+        rtb.toolboxs.append(tbtb);
     }
+    _rtbinfo.append(rtb);
 
-    _setpages.append(new TestSettingPage(
-        QStringLiteral("Test1"), QStringLiteral("This is a Test1"), true));
+    _setpages = {new TestSettingPage(QStringLiteral("Test1"),
+                                     QStringLiteral("This is a Test1"), true),
+                 new TestSettingPage(QStringLiteral("Test2"),
+                                     QStringLiteral("This is a Test2"), false)};
 
-    _setpages.append(new TestSettingPage(
-        QStringLiteral("Test2"), QStringLiteral("This is a Test2"), false));
+    // DockWidget test
+    auto lbl = new QLabel(QStringLiteral("DockTest1"));
+    lbl->setAlignment(Qt::AlignCenter);
+    _winfo << WingHex::createWingDockWidget(QStringLiteral("DockTest1"), lbl,
+                                            Qt::LeftDockWidgetArea);
 
-    {
-        WingHex::WingDockWidgetInfo info;
-        auto lbl = new QLabel(QStringLiteral("DockTest1"));
-        lbl->setAlignment(Qt::AlignCenter);
-        info.widget = lbl;
-        info.widgetName = QStringLiteral("DockTest1");
-        info.area = Qt::LeftDockWidgetArea;
-        _winfo.append(info);
-    }
-
-    {
-        auto ev = QSharedPointer<TestWingEditorViewWidget::Creator>::create();
-        _evws.append(ev);
-    }
+    auto ev = QSharedPointer<TestWingEditorViewWidget::Creator>::create();
+    _evws.append(ev);
 
     _tmenu = new QMenu(QStringLiteral("TestPlugin"));
     auto micon = QIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
@@ -481,9 +461,8 @@ void TestPlugin::testCrash() {
 }
 
 WingHex::IWingPlugin::RegisteredEvents TestPlugin::registeredEvents() const {
-    RegisteredEvents evs;
-    evs.setFlag(RegisteredEvent::AppReady);
-    return evs;
+    return packupEvent(RegisteredEvent::AppReady,
+                       RegisteredEvent::HexEditorViewPaint);
 }
 
 void TestPlugin::eventReady() {

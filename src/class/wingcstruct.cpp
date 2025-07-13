@@ -50,10 +50,8 @@ QString WingCStruct::retranslate(const QString &str) {
 }
 
 WingCStruct::RegisteredEvents WingCStruct::registeredEvents() const {
-    RegisteredEvents evs;
-    evs.setFlag(RegisteredEvent::ScriptPragma);
-    evs.setFlag(RegisteredEvent::ScriptPragmaInit);
-    return evs;
+    return packupEvent(RegisteredEvent::ScriptPragma,
+                       RegisteredEvent::ScriptPragmaInit);
 }
 
 QList<WingHex::SettingPage *> WingCStruct::registeredSettingPages() const {

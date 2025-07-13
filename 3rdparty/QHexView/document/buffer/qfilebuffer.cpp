@@ -18,28 +18,24 @@
 #include "QHexEdit2/chunks.h"
 
 QFileBuffer::QFileBuffer(QObject *parent) : QHexBuffer(parent) {
-    _chunks = new Chunks(parent);
+    _chunks = new Chunks(this);
 }
 
 QFileBuffer::~QFileBuffer() {}
 
 uchar QFileBuffer::at(qsizetype idx) {
-    auto data = _chunks->data(idx, 1);
-    return uchar(data[0]);
+    auto data = _chunks->at(idx);
+    return uchar(data);
 }
 
 qsizetype QFileBuffer::length() const { return _chunks->size(); }
 
 void QFileBuffer::insert(qsizetype offset, const QByteArray &data) {
-    for (int i = 0; i < data.length(); i++) {
-        _chunks->insert(offset + i, data.at(i));
-    }
+    _chunks->insert(offset, data);
 }
 
 void QFileBuffer::remove(qsizetype offset, qsizetype length) {
-    for (uint i = 0; i < uint(length); i++) {
-        _chunks->removeAt(offset + i);
-    }
+    _chunks->remove(offset, length);
 }
 
 QByteArray QFileBuffer::read(qsizetype offset, qsizetype length) {
@@ -47,7 +43,11 @@ QByteArray QFileBuffer::read(qsizetype offset, qsizetype length) {
 }
 
 bool QFileBuffer::read(QIODevice *device) {
-    return _chunks->setIODevice(device);
+    auto d = _chunks->ioDevice();
+    auto ret = _chunks->setIODevice(device);
+    d->setParent(nullptr);
+    d->deleteLater();
+    return ret;
 }
 
 void QFileBuffer::write(QIODevice *device) { _chunks->write(device); }

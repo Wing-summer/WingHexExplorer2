@@ -361,7 +361,7 @@ private slots:
     WING_API bool moveTo(QObject *caller, qsizetype offset,
                          bool clearSelection);
     WING_API bool select(QObject *caller, qsizetype offset, qsizetype length,
-                         SelectionMode mode);
+                         WingHex::SelectionMode mode);
     WING_API bool setInsertionMode(QObject *caller, bool isinsert);
 
     // metadata

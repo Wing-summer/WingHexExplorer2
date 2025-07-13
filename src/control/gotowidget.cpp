@@ -76,25 +76,21 @@ public:
 
         if (ctx->IntegerConstant()) {
             auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (std::holds_alternative<qint64>(r)) {
-                lastAddr = std::get<qint64>(r);
-            } else if (std::holds_alternative<quint64>(r)) {
-                lastAddr = std::get<quint64>(r);
+            if (r) {
+                lastAddr = r.value();
             } else {
                 lastPos = GotoWidget::SEEKPOS::Invaild;
                 lastAddr = 0;
             }
         } else {
             auto r = visitAssignmentExpression(ctx->assignmentExpression());
-            if (r.type() == typeid(quint64)) {
-                lastAddr = std::any_cast<quint64>(r);
-            } else if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto addr = std::any_cast<qint64>(r);
                 if (addr < 0) {
                     lastPos = GotoWidget::SEEKPOS::Invaild;
                     lastAddr = 0;
                 }
-                lastAddr = quint64(addr);
+                lastAddr = addr;
             } else {
                 lastPos = GotoWidget::SEEKPOS::Invaild;
                 lastAddr = 0;
@@ -105,7 +101,7 @@ public:
     }
 
 public:
-    quint64 lastAddr = 0;
+    qint64 lastAddr = 0;
     GotoWidget::SEEKPOS lastPos = GotoWidget::SEEKPOS::Invaild;
 
 public:
@@ -117,10 +113,8 @@ public:
 
         if (ctx->IntegerConstant()) {
             auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (std::holds_alternative<qint64>(r)) {
-                return std::get<qint64>(r);
-            } else if (std::holds_alternative<quint64>(r)) {
-                return std::get<quint64>(r);
+            if (r) {
+                return r.value();
             }
         } else if (ctx->unaryExpression()) {
             return visitUnaryExpression(ctx->unaryExpression());
@@ -137,18 +131,7 @@ public:
 
         auto op = ctx->unaryOperator();
         auto r = visitCastExpression(ctx->castExpression());
-        if (r.type() == typeid(quint64)) {
-            auto v = std::any_cast<quint64>(r);
-            if (op->Minus()) {
-                return -v;
-            } else if (op->Plus()) {
-                return +v;
-            } else if (op->Tilde()) {
-                return ~v;
-            } else {
-                return defaultResult();
-            }
-        } else if (r.type() == typeid(qint64)) {
+        if (r.has_value()) {
             auto v = std::any_cast<qint64>(r);
             if (op->Minus()) {
                 return -v;
@@ -170,13 +153,10 @@ public:
             return defaultResult();
         }
 
-        qulonglong ret = 0;
+        qint64 ret = 0;
         for (auto &v : ctx->exclusiveOrExpression()) {
             auto r = visitExclusiveOrExpression(v);
-            if (r.type() == typeid(quint64)) {
-                auto rr = std::any_cast<quint64>(r);
-                ret |= rr;
-            } else if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto rr = std::any_cast<qint64>(r);
                 ret |= rr;
             } else {
@@ -195,10 +175,8 @@ public:
 
         if (ctx->IntegerConstant()) {
             auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (std::holds_alternative<qint64>(r)) {
-                return std::get<qint64>(r);
-            } else if (std::holds_alternative<quint64>(r)) {
-                return std::get<quint64>(r);
+            if (r) {
+                return r.value();
             }
         } else if (ctx->inclusiveOrExpression()) {
             return visitInclusiveOrExpression(ctx->inclusiveOrExpression());
@@ -213,14 +191,11 @@ public:
             return defaultResult();
         }
 
-        quint64 v = 0;
+        qint64 v = 0;
         for (auto &ex : ctx->andExpression()) {
             auto r = visitAndExpression(ex);
-            if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);
-                v ^= rv;
-            } else if (r.type() == typeid(quint64)) {
-                auto rv = std::any_cast<quint64>(r);
                 v ^= rv;
             } else {
                 return defaultResult();
@@ -239,17 +214,14 @@ public:
         quint64 v = std::numeric_limits<quint64>::max();
         for (auto &ex : ctx->shiftExpression()) {
             auto r = visitShiftExpression(ex);
-            if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);
-                v &= rv;
-            } else if (r.type() == typeid(quint64)) {
-                auto rv = std::any_cast<quint64>(r);
-                v &= rv;
+                v &= quint64(rv);
             } else {
                 return defaultResult();
             }
         }
-        return v;
+        return qint64(v);
     }
 
     std::any
@@ -261,12 +233,10 @@ public:
         auto data = ctx->additiveExpression();
         auto total = data.size();
 
-        quint64 ret = 0;
+        qint64 ret = 0;
         auto retv = visitAdditiveExpression(data.front());
-        if (retv.type() == typeid(qint64)) {
+        if (retv.has_value()) {
             ret = std::any_cast<qint64>(retv);
-        } else if (retv.type() == typeid(quint64)) {
-            ret = std::any_cast<quint64>(retv);
         } else {
             return defaultResult();
         }
@@ -275,21 +245,15 @@ public:
             auto op = ctx->children[2 * i - 1]->getText();
             auto r = visitAdditiveExpression(data.at(i));
             if (op == "<<") {
-                if (r.type() == typeid(qint64)) {
+                if (r.has_value()) {
                     auto rv = std::any_cast<qint64>(r);
-                    ret <<= rv;
-                } else if (r.type() == typeid(quint64)) {
-                    auto rv = std::any_cast<quint64>(r);
                     ret <<= rv;
                 } else {
                     return defaultResult();
                 }
             } else if (op == ">>") {
-                if (r.type() == typeid(qint64)) {
+                if (r.has_value()) {
                     auto rv = std::any_cast<qint64>(r);
-                    ret >>= rv;
-                } else if (r.type() == typeid(quint64)) {
-                    auto rv = std::any_cast<quint64>(r);
                     ret >>= rv;
                 } else {
                     return defaultResult();
@@ -311,12 +275,10 @@ public:
         auto data = ctx->multiplicativeExpression();
         auto total = data.size();
 
-        quint64 ret = 0;
+        qint64 ret = 0;
         auto retv = visitMultiplicativeExpression(data.front());
-        if (retv.type() == typeid(qint64)) {
+        if (retv.has_value()) {
             ret = std::any_cast<qint64>(retv);
-        } else if (retv.type() == typeid(quint64)) {
-            ret = std::any_cast<quint64>(retv);
         } else {
             return defaultResult();
         }
@@ -324,17 +286,8 @@ public:
         for (size_t i = 1; i < total; i++) {
             auto r = visitMultiplicativeExpression(data.at(i));
             auto op = ctx->children[2 * i - 1]->getText();
-            if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);
-                if (op == "+") {
-                    ret += rv;
-                } else if (op == "-") {
-                    ret -= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else if (r.type() == typeid(quint64)) {
-                auto rv = std::any_cast<quint64>(r);
                 if (op == "+") {
                     ret += rv;
                 } else if (op == "-") {
@@ -359,12 +312,10 @@ public:
         auto data = ctx->castExpression();
         auto total = data.size();
 
-        quint64 ret = 0;
+        qint64 ret = 0;
         auto retv = visitCastExpression(data.front());
-        if (retv.type() == typeid(qint64)) {
+        if (retv.has_value()) {
             ret = std::any_cast<qint64>(retv);
-        } else if (retv.type() == typeid(quint64)) {
-            ret = std::any_cast<quint64>(retv);
         } else {
             return defaultResult();
         }
@@ -372,19 +323,8 @@ public:
         for (size_t i = 1; i < total; i++) {
             auto r = visitCastExpression(data.at(i));
             auto op = ctx->children[2 * i - 1]->getText();
-            if (r.type() == typeid(qint64)) {
+            if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);
-                if (op == "*") {
-                    ret *= rv;
-                } else if (op == "/") {
-                    ret /= rv;
-                } else if (op == "%") {
-                    ret %= rv;
-                } else {
-                    return defaultResult();
-                }
-            } else if (r.type() == typeid(quint64)) {
-                auto rv = std::any_cast<quint64>(r);
                 if (op == "*") {
                     ret *= rv;
                 } else if (op == "/") {
@@ -410,10 +350,8 @@ public:
 
         if (ctx->IntegerConstant()) {
             auto r = parseIntegerConstant(ctx->IntegerConstant()->getText());
-            if (std::holds_alternative<qint64>(r)) {
-                return std::get<qint64>(r);
-            } else if (std::holds_alternative<quint64>(r)) {
-                return std::get<quint64>(r);
+            if (r) {
+                return r.value();
             }
         } else if (ctx->assignmentExpression()) {
             return visitAssignmentExpression(ctx->assignmentExpression());
@@ -423,8 +361,7 @@ public:
     }
 
 private:
-    std::variant<std::monostate, qint64, quint64>
-    parseIntegerConstant(const std::string &text) {
+    std::optional<qint64> parseIntegerConstant(const std::string &text) {
         Q_STATIC_ASSERT_X(
             QT_VERSION >= QT_VERSION_CHECK(6, 4, 0),
             "If you want to support Qt version lower than 6.4.0, You should "
@@ -436,11 +373,7 @@ private:
         if (b) {
             return num;
         } else {
-            auto num = ct.toULongLong(&b, 0);
-            if (b) {
-                return num;
-            }
-            return {};
+            return std::nullopt;
         }
     }
 };

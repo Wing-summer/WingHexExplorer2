@@ -237,10 +237,9 @@ public:
     template <typename T>
     static QHexDocument *fromMemory(const QByteArray &ba,
                                     bool readonly = false);
-    static QHexDocument *fromLargeFile(const QString &filename,
-                                       bool readonly = false);
 
     QHexBuffer *buffer() const;
+    void setBuffer(QHexBuffer *buffer);
 
     QUndoStack *undoStack() const;
 
@@ -304,7 +303,6 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
 
     if (!iodevice->isOpen()) {
         needsclose = true;
-        iodevice->open(QIODevice::ReadOnly);
     }
 
     QHexBuffer *hexbuffer = new T();
@@ -314,6 +312,9 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
 
         return new QHexDocument(hexbuffer, readonly);
     } else {
+        if (needsclose)
+            iodevice->close();
+
         delete hexbuffer;
     }
 
@@ -322,17 +323,24 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
 
 template <typename T>
 QHexDocument *QHexDocument::fromFile(QString filename, bool readonly) {
-    QFile f;
-    QHexDocument *doc;
-    if (filename.length()) {
-        f.setFileName(filename);
-        f.open(QFile::ReadOnly);
-        doc = QHexDocument::fromDevice<T>(&f, readonly);
-        f.close();
+    auto f = new QFile;
+    if (!filename.isEmpty()) {
+        f->setFileName(filename);
+        QHexBuffer *hexbuffer = new T();
+        if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite)) {
+            f->close();
+            if (hexbuffer->read(f)) {
+                // modified by wingsummer
+                return new QHexDocument(hexbuffer, readonly);
+            }
+        } else {
+            delete hexbuffer;
+        }
     } else {
-        doc = new QHexDocument(new T(), readonly);
+        delete f;
+        return new QHexDocument(new T(), readonly);
     }
-    return doc;
+    return nullptr;
 }
 
 template <typename T>

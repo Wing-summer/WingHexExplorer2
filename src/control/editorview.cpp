@@ -18,7 +18,6 @@
 #include "editorview.h"
 
 #include "QHexView/document/buffer/qfilebuffer.h"
-#include "QHexView/document/buffer/qmemorybuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 
 #include "class/logger.h"
@@ -36,7 +35,6 @@
 #include <unistd.h>
 #endif
 
-constexpr qsizetype FILE_MAX_BUFFER = 0x32000000; // 800MB
 constexpr auto CLONE_LIMIT = 3;
 
 constexpr auto VIEW_PROPERTY = "__VIEW__";
@@ -302,7 +300,7 @@ ErrFile EditorView::newFile(size_t index) {
     m_docType = DocumentType::File;
     m_isWorkSpace = false;
     m_isNewFile = true;
-    auto p = QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false);
+    auto p = QHexDocument::fromMemory<QFileBuffer>(QByteArray(), false);
     p->setDocSaved();
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
@@ -323,11 +321,7 @@ ErrFile EditorView::openFile(const QString &filename) {
 
         auto readonly = !Utilities::fileCanWrite(filename);
 
-        auto *p =
-            info.size() > FILE_MAX_BUFFER
-                ? QHexDocument::fromLargeFile(filename, readonly)
-                : QHexDocument::fromFile<QMemoryBuffer>(filename, readonly);
-
+        auto *p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
         if (Q_UNLIKELY(p == nullptr)) {
             return ErrFile::Permission;
         }
@@ -380,9 +374,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
         }
     }
 
-    auto *p = (d->size() > FILE_MAX_BUFFER || d->size() < 0)
-                  ? QHexDocument::fromDevice<QFileBuffer>(d, readonly)
-                  : QHexDocument::fromDevice<QMemoryBuffer>(d, readonly);
+    auto *p = QHexDocument::fromDevice<QFileBuffer>(d, readonly);
 
     if (Q_UNLIKELY(p == nullptr)) {
         return ErrFile::Error;
@@ -580,9 +572,15 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
             if (doc->saveTo(&file, !isExport)) {
                 file.close();
-
                 if (!isExport) {
                     m_fileName = QFileInfo(fileName).absoluteFilePath();
+
+                    if (isNewFile()) {
+                        auto buffer = new QFileBuffer;
+                        buffer->read(new QFile(fileName));
+                        doc->setBuffer(buffer);
+                    }
+
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();

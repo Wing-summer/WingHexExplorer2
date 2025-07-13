@@ -245,8 +245,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 m_scriptConsole->setEnabled(false);
 
                 // configure error, so disable all script feature
-                WingHex::WingRibbonToolBoxInfo::RibbonCatagories catagories;
-                m_ribbonMaps[catagories.SCRIPT]->setEnabled(false);
+                m_ribbonMaps[WingHex::WingRibbonCatagories::SCRIPT]->setEnabled(
+                    false);
             } else {
                 ScriptMachine::RegCallBacks callbacks;
                 callbacks.getInputFn = [this]() -> QString {
@@ -369,33 +369,35 @@ void MainWindow::buildUpRibbonBar() {
 
     loadCacheIcon();
 
-    using RibbonCatagories = WingHex::WingRibbonToolBoxInfo::RibbonCatagories;
-    RibbonCatagories catagories;
+    using RibbonCatagories = WingHex::WingRibbonCatagories;
 
-    m_ribbonMaps[catagories.FILE] = buildFilePage(m_ribbon->addTab(tr("File")));
+    m_ribbonMaps[RibbonCatagories::FILE] =
+        buildFilePage(m_ribbon->addTab(tr("File")));
     qApp->processEvents();
-    m_ribbonMaps[catagories.EDIT] = buildEditPage(m_ribbon->addTab(tr("Edit")));
+    m_ribbonMaps[RibbonCatagories::EDIT] =
+        buildEditPage(m_ribbon->addTab(tr("Edit")));
     qApp->processEvents();
-    m_ribbonMaps[catagories.VIEW] = buildViewPage(m_ribbon->addTab(tr("View")));
+    m_ribbonMaps[RibbonCatagories::VIEW] =
+        buildViewPage(m_ribbon->addTab(tr("View")));
     qApp->processEvents();
 
     auto &set = SettingManager::instance();
     if (set.scriptEnabled()) {
-        m_ribbonMaps[catagories.SCRIPT] =
+        m_ribbonMaps[RibbonCatagories::SCRIPT] =
             buildScriptPage(m_ribbon->addTab(tr("Script")));
         qApp->processEvents();
     }
 
     if (set.enablePlugin()) {
-        m_ribbonMaps[catagories.PLUGIN] =
+        m_ribbonMaps[RibbonCatagories::PLUGIN] =
             buildPluginPage(m_ribbon->addTab(tr("Plugin")));
         qApp->processEvents();
     }
 
-    m_ribbonMaps[catagories.SETTING] =
+    m_ribbonMaps[RibbonCatagories::SETTING] =
         buildSettingPage(m_ribbon->addTab(tr("Setting")));
     qApp->processEvents();
-    m_ribbonMaps[catagories.ABOUT] =
+    m_ribbonMaps[RibbonCatagories::ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
     qApp->processEvents();
 

@@ -1,23 +1,21 @@
-/*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
-**
-** This program is free software: you can redistribute it and/or modify it under
-** the terms of the GNU Affero General Public License as published by the Free
-** Software Foundation, version 3.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-** details.
-**
-** You should have received a copy of the GNU Affero General Public License
-** along with this program. If not, see <https://www.gnu.org/licenses/>.
-**
-** The original License is LGPL from Andres6936/QHexEdit. I have modified a lot
-** so I decide to change the Open Source License. You can use the original
-** library under LGPL. Thanks for Andres6936's efforts.
-** =============================================================================
-*/
+/*
+ * QHexEdit is a Hex Editor Widget for the Qt Framework
+ * Copyright (C) 2010-2025 Winfried Simon
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * https://www.gnu.org/licenses/
+ */
 
 #ifndef CHUNKS_H
 #define CHUNKS_H
@@ -40,49 +38,59 @@
  *
  */
 
-#include <QtCore>
-#include <QtGlobal>
+// I (wingsummer) made some modifications for supporting QByteArray
+// manipulations, great thanks for Simsys's effort!
+
+#include <QByteArray>
+#include <QList>
+#include <QObject>
 
 struct Chunk {
     QByteArray data;
-    QByteArray dataChanged;
-    qsizetype absPos;
+    qint64 absPos;
 };
 
 class Chunks : public QObject {
     Q_OBJECT
+
 public:
     // Constructors and file settings
-    Chunks(QObject *parent = nullptr);
-    Chunks(QIODevice *ioDevice, QObject *parent);
+    explicit Chunks(QObject *parent);
+    explicit Chunks(QIODevice *ioDevice, QObject *parent);
 
-    ~Chunks();
-
+public:
+    QIODevice *ioDevice() const;
     bool setIODevice(QIODevice *ioDevice);
 
     // Getting data out of Chunks
-    QByteArray data(qsizetype pos = 0, qsizetype maxSize = -1);
-    bool write(QIODevice *iODevice, qsizetype pos = 0, qsizetype count = -1);
+    QByteArray data(qint64 pos = 0, qint64 count = -1) const;
+    bool write(QIODevice *iODevice, qint64 pos = 0, qint64 count = -1);
 
     // Search API
-    qsizetype indexOf(const QByteArray &ba, qsizetype from);
-    qsizetype lastIndexOf(const QByteArray &ba, qsizetype from);
+    qint64 indexOf(const QByteArray &ba, qint64 from) const;
+    qint64 lastIndexOf(const QByteArray &ba, qint64 from) const;
 
     // Char manipulations
-    bool insert(qsizetype pos, char b);
-    bool overwrite(qsizetype pos, char b);
-    bool removeAt(qsizetype pos);
+    bool insert(qint64 pos, char b);
+    bool overwrite(qint64 pos, char b);
+    bool removeAt(qint64 pos);
+
+    // QByteArray manipulations by wingsummer
+    bool insert(qint64 pos, const QByteArray &ba);
+    bool overwrite(qint64 pos, const QByteArray &ba);
+    bool remove(qint64 pos, qint64 length);
 
     // Utility functions
-    char operator[](qsizetype pos);
-    qsizetype pos();
-    qsizetype size();
+    char at(qint64 pos) const; // by wingsummer
+    char operator[](qint64 pos) const;
+    qint64 size() const;
 
 private:
-    qsizetype getChunkIndex(qsizetype absPos);
+    int getChunkIndex(qint64 absPos);
+
+private:
     QIODevice *_ioDevice;
-    qsizetype _pos;
-    qsizetype _size;
+    qint64 _size;
     QList<Chunk> _chunks;
 };
 

@@ -617,6 +617,7 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
     : QObject(nullptr), m_baseaddress(0), m_readonly(false), m_keepsize(false),
       m_islocked(false) {
 
+    buffer->setParent(this);
     m_buffer = buffer;
     m_areaindent = DEFAULT_AREA_IDENTATION;
     m_hexlinewidth = DEFAULT_HEX_LINE_LENGTH;
@@ -874,28 +875,13 @@ qsizetype QHexDocument::findPreviousExt(qsizetype begin,
     return findPreviousExt(begin, patterns);
 }
 
-QHexDocument *QHexDocument::fromLargeFile(const QString &filename,
-                                          bool readonly) {
-
-    auto f = new QFile;
-    if (!filename.isEmpty()) {
-        f->setFileName(filename);
-        QHexBuffer *hexbuffer = new QFileBuffer();
-        if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite) &&
-            hexbuffer->read(f)) {
-            return new QHexDocument(hexbuffer,
-                                    readonly); // modified by wingsummer
-        } else {
-            delete hexbuffer;
-        }
-    } else {
-        delete f;
-        return new QHexDocument(new QFileBuffer(), readonly);
-    }
-
-    return nullptr;
-}
-
 QHexBuffer *QHexDocument::buffer() const { return m_buffer; }
+
+void QHexDocument::setBuffer(QHexBuffer *buffer) {
+    if (buffer) {
+        m_buffer->deleteLater();
+        m_buffer = buffer;
+    }
+}
 
 QUndoStack *QHexDocument::undoStack() const { return m_undostack; }
