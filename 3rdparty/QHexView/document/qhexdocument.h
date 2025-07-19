@@ -58,9 +58,9 @@ public:
 
     bool setLockedFile(bool b);
     bool setKeepSize(bool b);
-    bool isReadOnly();
-    bool isKeepSize();
-    bool isLocked();
+    bool isReadOnly() const;
+    bool isKeepSize() const;
+    bool isLocked() const;
 
     void setLockKeepSize(bool b);
     bool lockKeepSize() const;
@@ -110,16 +110,16 @@ public:
         QList<qsizetype> &results,
         const std::function<bool()> &pred = [] { return true; });
 
-    bool isDocSaved();
+    bool isDocSaved() const;
     void setDocSaved(bool b = true);
 
     void setMetafgVisible(bool b);
     void setMetabgVisible(bool b);
     void setMetaCommentVisible(bool b);
 
-    bool metafgVisible();
-    bool metabgVisible();
-    bool metaCommentVisible();
+    bool metafgVisible() const;
+    bool metabgVisible() const;
+    bool metaCommentVisible() const;
 
     void insertBookMarkAdjust(qsizetype offset, qsizetype length);
     QMap<qsizetype, QString> removeBookMarkAdjust(qsizetype offset,

@@ -44,6 +44,8 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     Utilities::addSpecialMark(ui->lblCount);
     Utilities::addSpecialMark(ui->cbCheckWhenStartup);
 
+    reload();
+
     connect(ui->cbNativeTitile,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
@@ -62,8 +64,6 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 
     connect(ui->cbLogLevel, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &OtherSettingsDialog::optionNeedRestartChanged);
-
-    reload();
 
     auto set = &SettingManager::instance();
     connect(ui->cbDontShowSplash, &QCheckBox::toggled, set,

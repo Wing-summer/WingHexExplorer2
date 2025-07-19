@@ -29,6 +29,7 @@ add_definitions(-DAS_NO_THREADS)
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestBadPlugin)
+    add_subdirectory(TestHexExt)
     add_subdirectory(TestManager)
 endif()
 
@@ -305,7 +306,9 @@ set(CLASS_SRC
     src/class/winggeneric.h
     src/class/winggeneric.cpp
     src/class/changedstringlist.h
-    src/class/changedstringlist.cpp)
+    src/class/changedstringlist.cpp
+    src/class/editorviewcontext.h
+    src/class/editorviewcontext.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

@@ -101,6 +101,9 @@ public:
     QColor selBackgroundColor() const;
     void setSelBackgroundColor(const QColor &newSelBackgroundColor);
 
+    QColor borderColor() const;
+    void setBorderColor(const QColor &newBorderColor);
+
     QHexCursor *cursor() const;
     void setCursor(QHexCursor *newCursor);
 
@@ -111,6 +114,8 @@ private:
 
     QByteArray getLine(qsizetype line) const;
     qsizetype rendererLength() const;
+
+public:
     int getAddressWidth() const;
     int getHexColumnX() const;
     int getAsciiColumnX() const;
@@ -178,6 +183,7 @@ private:
     QColor m_bytesColor = Qt::black;
     QColor m_selectionColor = Qt::white;
     QColor m_selBackgroundColor = Qt::blue;
+    QColor m_borderColor = Qt::white;
     /*==============================*/
 };
 

@@ -225,7 +225,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             });
 
     plg.setMainWindow(this);
-    plg.loadAllPlugin();
+    plg.loadAllPlugins();
 
     // Don't setup it too early, because the plugin can register script
     // functions. Code completions of them will be not worked out.
@@ -362,7 +362,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         splash->setInfoText(tr("SetupFinished"));
 }
 
-MainWindow::~MainWindow() { Logger::instance().disconnect(); }
+MainWindow::~MainWindow() {
+    qDeleteAll(m_hexContextMenu);
+    Logger::instance().disconnect();
+}
 
 void MainWindow::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);

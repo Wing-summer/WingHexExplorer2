@@ -32,6 +32,7 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
+#include "WingPlugin/iwinghexeditorplugin.h"
 #include "WingPlugin/iwingmanager.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
@@ -144,8 +145,8 @@ public:
     void setMainWindow(MainWindow *win);
     QWidget *mainWindow() const;
 
-    void loadAllPlugin();
-    void unloadAllPlugin();
+    void loadAllPlugins();
+    void unloadAllPlugins();
 
     void doneRegisterScriptObj();
 
@@ -188,6 +189,8 @@ private:
     void checkDirRootSafe(const QDir &dir);
 
     void try2LoadManagerPlugin();
+
+    void try2LoadHexExtPlugin();
 
     template <typename T>
     std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
@@ -259,11 +262,15 @@ public:
 
     IWingManager *monitorManager() const;
 
-    const std::optional<PluginInfo> &monitorManagerInfo() const;
+    IWingHexEditorPlugin *hexEditorExtension() const;
 
     QMap<BlockReason, QList<PluginInfo>> blockedPlugins() const;
 
     QMap<BlockReason, QList<PluginInfo>> blockedDevPlugins() const;
+
+    const std::optional<PluginInfo> &monitorManagerInfo() const;
+
+    const std::optional<PluginInfo> &hexEditorExtensionInfo() const;
 
 private:
     template <typename T>
@@ -757,6 +764,9 @@ private:
 
     IWingManager *_manager = nullptr;
     std::optional<PluginInfo> _manInfo;
+
+    IWingHexEditorPlugin *_hexExt = nullptr;
+    std::optional<PluginInfo> _manHexInfo;
 
     WingAngelAPI *_angelplg = nullptr;
 

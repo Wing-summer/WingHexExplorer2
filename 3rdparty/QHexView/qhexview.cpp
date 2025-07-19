@@ -323,7 +323,9 @@ void QHexView::keyPressEvent(QKeyEvent *e) {
 }
 
 QPoint QHexView::absolutePosition(const QPoint &pos) const {
-    QPoint shift(horizontalScrollBar()->value(), 0);
+    auto margins = viewport()->contentsMargins();
+    QPoint shift(horizontalScrollBar()->value() - margins.left(),
+                 -margins.top() * m_renderer->lineHeight());
     return pos + shift;
 }
 
@@ -567,9 +569,18 @@ QColor QHexView::selBackgroundColor() const {
     return m_renderer->selBackgroundColor();
 }
 
+QColor QHexView::borderColor() const { return m_renderer->borderColor(); }
+
 void QHexView::setSelBackgroundColor(const QColor &newSelBackgroundColor) {
     m_renderer->setSelBackgroundColor(newSelBackgroundColor);
     Q_EMIT selBackgroundColorChanged();
+    this->viewport()->update();
+}
+
+void QHexView::setBorderColor(const QColor &newBorderColor) {
+    m_renderer->setBorderColor(newBorderColor);
+    Q_EMIT borderColorChanged();
+    this->viewport()->update();
 }
 
 void QHexView::setFontSize(qreal size) {
@@ -577,6 +588,7 @@ void QHexView::setFontSize(qreal size) {
     auto font = this->font();
     font.setPointSizeF(size * m_scaleRate);
     this->setFont(font);
+    this->viewport()->update();
 }
 
 QColor QHexView::selectionColor() const { return m_renderer->selectionColor(); }
@@ -584,6 +596,7 @@ QColor QHexView::selectionColor() const { return m_renderer->selectionColor(); }
 void QHexView::setSelectionColor(const QColor &newSelectionColor) {
     m_renderer->setSelectionColor(newSelectionColor);
     Q_EMIT selectionColorChanged();
+    this->viewport()->update();
 }
 
 QColor QHexView::bytesAlterBackground() const {
@@ -593,6 +606,7 @@ QColor QHexView::bytesAlterBackground() const {
 void QHexView::setBytesAlterBackground(const QColor &newBytesAlterBackground) {
     m_renderer->setBytesAlterBackground(newBytesAlterBackground);
     Q_EMIT bytesAlterBackgroundChanged();
+    this->viewport()->update();
 }
 
 QColor QHexView::bytesColor() const { return m_renderer->bytesColor(); }
@@ -600,6 +614,7 @@ QColor QHexView::bytesColor() const { return m_renderer->bytesColor(); }
 void QHexView::setBytesColor(const QColor &newBytesColor) {
     m_renderer->setBytesColor(newBytesColor);
     Q_EMIT bytesColorChanged();
+    this->viewport()->update();
 }
 
 QColor QHexView::bytesBackground() const {
@@ -609,6 +624,7 @@ QColor QHexView::bytesBackground() const {
 void QHexView::setBytesBackground(const QColor &newBytesBackground) {
     m_renderer->setBytesBackground(newBytesBackground);
     Q_EMIT bytesBackgroundChanged();
+    this->viewport()->update();
 }
 
 QColor QHexView::addressColor() const { return m_renderer->addressColor(); }
@@ -616,6 +632,7 @@ QColor QHexView::addressColor() const { return m_renderer->addressColor(); }
 void QHexView::setAddressColor(const QColor &newAddressColor) {
     m_renderer->setAddressColor(newAddressColor);
     Q_EMIT addressColorChanged();
+    this->viewport()->update();
 }
 
 QColor QHexView::headerColor() const { return m_renderer->headerColor(); }
@@ -623,6 +640,7 @@ QColor QHexView::headerColor() const { return m_renderer->headerColor(); }
 void QHexView::setHeaderColor(const QColor &newHeaderColor) {
     m_renderer->setHeaderColor(newHeaderColor);
     Q_EMIT headerColorChanged();
+    this->viewport()->update();
 }
 
 void QHexView::mousePressEvent(QMouseEvent *e) {
@@ -764,21 +782,27 @@ void QHexView::paintEvent(QPaintEvent *e) {
     const int lineHeight = m_renderer->lineHeight();
     const int headerCount = m_renderer->headerLineCount();
 
+    auto m = viewport()->contentsMargins();
+
     // these are lines from the point of view of the visible rect
     // where the first "headerCount" are taken by the header
-    const int first = (r.top() / lineHeight);              // included
-    const int lastPlusOne = (r.bottom() / lineHeight) + 1; // excluded
+    const int first = (r.top() / lineHeight); // included
+    const int lastPlusOne =
+        (r.bottom() / lineHeight) + 1 - m.top() - m.bottom(); // excluded
 
     // compute document lines, adding firstVisible and removing the header
     // the max is necessary if the rect covers the header
     const qsizetype begin = firstVisible + std::max(first - headerCount, 0);
     const qsizetype end = firstVisible + std::max(lastPlusOne - headerCount, 0);
 
+    Q_EMIT onPaintCustomEventBegin();
     painter.save();
-    painter.translate(-this->horizontalScrollBar()->value(), 0);
+    auto xOff = this->horizontalScrollBar()->value();
+    painter.translate(-xOff + m.left(), m.top() * m_renderer->lineHeight());
     m_renderer->render(&painter, begin, end, firstVisible);
     m_renderer->renderFrame(&painter);
     painter.restore();
+    Q_EMIT onPaintCustomEvent(xOff, firstVisible, begin, end);
 }
 
 void QHexView::moveToSelection() {
@@ -1160,6 +1184,7 @@ void QHexView::adjustScrollBars() {
 
     auto docLines = m_renderer->documentLines();
     auto visLines = this->visibleLines();
+    auto margins = viewport()->contentsMargins();
 
     // modified by wingsummer,fix the scrollbar bug
     if (docLines > visLines && !m_document->isEmpty()) {
@@ -1180,11 +1205,13 @@ void QHexView::adjustScrollBars() {
         this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         // +1 to see the rightmost vertical line, +2 seems more pleasant to the
         // eyes
-        hscrollbar->setMaximum(documentWidth - viewportWidth + 2);
+        hscrollbar->setMaximum(documentWidth - viewportWidth + 2 +
+                               margins.left() + margins.right());
     } else {
         this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         hscrollbar->setValue(0);
-        hscrollbar->setMaximum(documentWidth);
+        hscrollbar->setMaximum(documentWidth + margins.left() +
+                               margins.right());
     }
 }
 
@@ -1203,9 +1230,10 @@ qsizetype QHexView::lastVisibleLine() const {
 }
 
 qsizetype QHexView::visibleLines() const {
-    auto visLines =
-        qsizetype(std::ceil(this->height() / m_renderer->lineHeight() -
-                            m_renderer->headerLineCount()));
+    auto margins = viewport()->contentsMargins();
+    auto visLines = qsizetype(std::ceil(
+        this->height() / m_renderer->lineHeight() -
+        m_renderer->headerLineCount() - margins.top() - margins.bottom()));
     return std::min(visLines, m_renderer->documentLines());
 }
 

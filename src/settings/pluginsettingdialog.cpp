@@ -34,6 +34,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnablePlugin);
     Utilities::addSpecialMark(ui->cbEnablePluginRoot);
+    Utilities::addSpecialMark(ui->cbEnableManager);
+    Utilities::addSpecialMark(ui->cbEnableHex);
+
+    reload();
+
     connect(ui->cbEnablePlugin,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
@@ -48,8 +53,20 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             &QCheckBox::stateChanged,
 #endif
             this, &PluginSettingDialog::optionNeedRestartChanged);
-
-    reload();
+    connect(ui->cbEnableManager,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &PluginSettingDialog::optionNeedRestartChanged);
+    connect(ui->cbEnableHex,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &PluginSettingDialog::optionNeedRestartChanged);
 
     auto &plgsys = PluginSystem::instance();
     auto pico = ICONRES("plugin");
@@ -103,8 +120,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->plglist->addItem(lwi);
     }
 
-    ui->txtc->clear();
-
     pico = ICONRES("devext");
     ui->devlist->clear();
     for (auto &d : plgsys.devices()) {
@@ -149,35 +164,31 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->devlist->addItem(lwi);
     }
 
-    ui->txtd->clear();
-
     auto minfo = plgsys.monitorManagerInfo();
-    if (minfo) {
-        auto sep = QStringLiteral(" : ");
-
-        ui->txtm->append(getWrappedText(tr("ID") + sep + minfo->id));
-        ui->txtm->append(getWrappedText(tr("License") + sep + minfo->license));
-        ui->txtm->append(getWrappedText(tr("Author") + sep + minfo->author));
-        ui->txtm->append(getWrappedText(tr("Vendor") + sep + minfo->vendor));
-        ui->txtm->append(
-            getWrappedText(tr("Version") + sep + minfo->version.toString()));
-        ui->txtm->append(getWrappedText(
-            tr("URL") + sep + QStringLiteral("<a href=\"") + minfo->url +
-            QStringLiteral("\">") + minfo->url + QStringLiteral("</a>")));
-        ui->txtm->append(getWrappedText(tr("Comment") + sep));
-        auto p = plgsys.monitorManager();
-        if (p) {
-            ui->txtm->append(getWrappedText(p->comment()));
-        }
-    } else {
-        ui->txtm->setText(tr("NoMonitorPlugin"));
+    QString mcomment;
+    auto mp = plgsys.monitorManager();
+    if (mp) {
+        mcomment = mp->comment();
     }
+    loadPluginInfo(minfo, {}, mcomment, {}, ui->txtm);
+
+    auto hinfo = plgsys.hexEditorExtensionInfo();
+    QString hcomment;
+    auto hp = plgsys.hexEditorExtension();
+    if (hp) {
+        hcomment = hp->comment();
+    }
+    loadPluginInfo(hinfo, {}, hcomment, {}, ui->txtext);
 
     auto set = &SettingManager::instance();
     connect(ui->cbEnablePlugin, &QCheckBox::toggled, set,
             &SettingManager::setEnablePlugin);
     connect(ui->cbEnablePluginRoot, &QCheckBox::toggled, set,
             &SettingManager::setEnablePlgInRoot);
+    connect(ui->cbEnableManager, &QCheckBox::toggled, set,
+            &SettingManager::setEnableMonitor);
+    connect(ui->cbEnableHex, &QCheckBox::toggled, set,
+            &SettingManager::setEnableHexExt);
 
     connect(ui->plglist, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -199,42 +210,19 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
                 ui->btnplgSave->setEnabled(_plgChanged.containChanges());
             });
-    connect(
-        ui->plglist, &QListWidget::currentItemChanged, this,
-        [this](QListWidgetItem *current, QListWidgetItem *) {
-            if (current == nullptr) {
-                return;
-            }
-
-            auto info = current->data(PLUIGN_META).value<PluginInfo>();
-            auto plgName = current->data(PLUIGN_NAME).toString();
-            auto plgComment = current->data(PLUIGN_COMMENT).toString();
-
-            ui->txtc->clear();
-            static auto sep = QStringLiteral(" : ");
-            ui->txtc->append(getWrappedText(tr("ID") + sep + info.id));
-            ui->txtc->append(getWrappedText(tr("Name") + sep + plgName));
-            ui->txtc->append(
-                getWrappedText(tr("License") + sep + info.license));
-            ui->txtc->append(getWrappedText(tr("Author") + sep + info.author));
-            ui->txtc->append(getWrappedText(tr("Vendor") + sep + info.vendor));
-            ui->txtc->append(
-                getWrappedText(tr("Version") + sep + info.version.toString()));
-            ui->txtc->append(getWrappedText(tr("Comment") + sep + plgComment));
-            if (!info.dependencies.isEmpty()) {
-                ui->txtc->append(getWrappedText(tr("pluginDependencies:")));
-                for (auto &d : info.dependencies) {
-                    ui->txtc->append(
-                        getWrappedText(QString(4, ' ') + tr("PUID:") + d.puid));
-                    ui->txtc->append(getWrappedText(QString(4, ' ') +
-                                                    tr("Version:") +
-                                                    d.version.toString()));
+    connect(ui->plglist, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *) {
+                if (current == nullptr) {
+                    return;
                 }
-            }
-            ui->txtc->append(getWrappedText(
-                tr("URL") + sep + QStringLiteral("<a href=\"") + info.url +
-                QStringLiteral("\">") + info.url + QStringLiteral("</a> ")));
-        });
+
+                auto info = current->data(PLUIGN_META).value<PluginInfo>();
+                auto plgName = current->data(PLUIGN_NAME).toString();
+                auto plgComment = current->data(PLUIGN_COMMENT).toString();
+
+                loadPluginInfo(info, plgName, plgComment, info.dependencies,
+                               ui->txtc);
+            });
 
     connect(ui->devlist, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -256,32 +244,19 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
                 ui->btndevSave->setEnabled(_devChanged.containChanges());
             });
-    connect(
-        ui->devlist, &QListWidget::currentItemChanged, this,
-        [this](QListWidgetItem *current, QListWidgetItem *) {
-            if (current == nullptr) {
-                return;
-            }
+    connect(ui->devlist, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *) {
+                if (current == nullptr) {
+                    return;
+                }
 
-            auto info = current->data(PLUIGN_META).value<PluginInfo>();
-            auto plgName = current->data(PLUIGN_NAME).toString();
-            auto plgComment = current->data(PLUIGN_COMMENT).toString();
+                auto info = current->data(PLUIGN_META).value<PluginInfo>();
+                auto plgName = current->data(PLUIGN_NAME).toString();
+                auto plgComment = current->data(PLUIGN_COMMENT).toString();
 
-            ui->txtd->clear();
-            static auto sep = QStringLiteral(" : ");
-            ui->txtd->append(getWrappedText(tr("ID") + sep + info.id));
-            ui->txtd->append(getWrappedText(tr("Name") + sep + plgName));
-            ui->txtd->append(
-                getWrappedText(tr("License") + sep + info.license));
-            ui->txtd->append(getWrappedText(tr("Author") + sep + info.author));
-            ui->txtd->append(getWrappedText(tr("Vendor") + sep + info.vendor));
-            ui->txtd->append(
-                getWrappedText(tr("Version") + sep + info.version.toString()));
-            ui->txtd->append(getWrappedText(tr("Comment") + sep + plgComment));
-            ui->txtd->append(getWrappedText(
-                tr("URL") + sep + QStringLiteral("<a href=\"") + info.url +
-                QStringLiteral("\">") + info.url + QStringLiteral("</a>")));
-        });
+                loadPluginInfo(info, plgName, plgComment, info.dependencies,
+                               ui->txtd);
+            });
 
     connect(ui->btnplgSave, &QPushButton::clicked, set, [this]() {
         SettingManager::instance().setEnabledExtPlugins(
@@ -335,6 +310,8 @@ void PluginSettingDialog::reload() {
     auto &set = SettingManager::instance();
     ui->cbEnablePlugin->setChecked(set.enablePlugin());
     ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
+    ui->cbEnableManager->setChecked(set.enableMonitor());
+    ui->cbEnableHex->setChecked(set.enableHexExt());
     this->blockSignals(false);
 }
 
@@ -455,6 +432,45 @@ void PluginSettingDialog::resetUIChagned() {
 
     ui->btnplgSave->setEnabled(false);
     ui->btndevSave->setEnabled(false);
+}
+
+void PluginSettingDialog::loadPluginInfo(
+    const std::optional<WingHex::PluginInfo> &info, const QString &name,
+    const QString &comment, const QList<WingHex::WingDependency> &dependencies,
+    QTextBrowser *t) {
+    if (info) {
+        t->clear();
+        static auto sep = QStringLiteral(" : ");
+        if (!name.isEmpty()) {
+            t->append(getWrappedText(tr("Name") + sep + name));
+        }
+        t->append(getWrappedText(tr("ID") + sep + info->id));
+        t->append(getWrappedText(tr("License") + sep + info->license));
+        t->append(getWrappedText(tr("Author") + sep + info->author));
+        t->append(getWrappedText(tr("Vendor") + sep + info->vendor));
+        t->append(
+            getWrappedText(tr("Version") + sep + info->version.toString()));
+        t->append(getWrappedText(
+            tr("URL") + sep + QStringLiteral("<a href=\"") + info->url +
+            QStringLiteral("\">") + info->url + QStringLiteral("</a>")));
+
+        if (!dependencies.isEmpty()) {
+            ui->txtc->append(getWrappedText(tr("Dependencies") + sep));
+            for (auto &d : dependencies) {
+                ui->txtc->append(getWrappedText(QString(4, ' ') + tr("PUID") +
+                                                sep + d.puid));
+                ui->txtc->append(getWrappedText(QString(4, ' ') +
+                                                tr("Version") + sep +
+                                                d.version.toString()));
+            }
+        }
+
+        t->append(getWrappedText({}));
+        t->append(getWrappedText(tr("Comment") + sep));
+        t->append(getWrappedText(comment));
+    } else {
+        t->setText(tr("NoPluginLoaded"));
+    }
 }
 
 QString PluginSettingDialog::getWrappedText(const QString &str) {

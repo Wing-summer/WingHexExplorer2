@@ -37,6 +37,9 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_WINDOWSIZE, ("app.windowsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LANGUAGE, ("app.lang"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_MANAGER, ("plugin.enableman"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_HEXEXT,
+                          ("plugin.enablehexext"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
                           ("plugin.rootenableplugin"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLEDPLUGINS_EXT, ("plugin.ext"))
@@ -114,6 +117,8 @@ void SettingManager::load() {
 
     READ_CONFIG_BOOL(m_enablePlugin, PLUGIN_ENABLE, true);
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
+    READ_CONFIG_BOOL(m_enableMonitor, PLUGIN_ENABLE_MANAGER, true);
+    READ_CONFIG_BOOL(m_enableHexExt, PLUGIN_ENABLE_HEXEXT, true);
 
     {
         auto data = READ_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
@@ -204,6 +209,26 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+bool SettingManager::enableHexExt() const { return m_enableHexExt; }
+
+void SettingManager::setEnableHexExt(bool newEnableHexExt) {
+    if (m_enableHexExt != newEnableHexExt) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, newEnableHexExt);
+        m_enableHexExt = newEnableHexExt;
+    }
+}
+
+bool SettingManager::enableMonitor() const { return m_enableMonitor; }
+
+void SettingManager::setEnableMonitor(bool newEnableMonitor) {
+    if (m_enableMonitor != newEnableMonitor) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(PLUGIN_ENABLE_MANAGER, newEnableMonitor);
+        m_enableMonitor = newEnableMonitor;
+    }
 }
 
 QStringList SettingManager::enabledDevPlugins() const {
@@ -485,6 +510,10 @@ void SettingManager::__reset(SETTINGS cat) {
     if (cat.testFlag(SETTING::PLUGIN)) {
         WRITE_CONFIG(PLUGIN_ENABLE, true);
         WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
+        WRITE_CONFIG(PLUGIN_ENABLE_MANAGER, true);
+        WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, true);
+        WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
+        WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
     }
     if (cat.testFlag(SETTING::EDITOR)) {
         WRITE_CONFIG(EDITOR_FONTSIZE, _defaultFont.pointSize());

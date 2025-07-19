@@ -62,6 +62,41 @@ EditorView::EditorView(QWidget *parent)
     hexLayout->setSpacing(0);
     hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView(this);
+    _context = new EditorViewContext(m_hex);
+    if (PluginSystem::instance().hexEditorExtension()) {
+        connect(m_hex, &QHexView::onPaintCustomEventBegin, this, [this]() {
+            auto m =
+                PluginSystem::instance().hexEditorExtension()->contentMargins(
+                    _context);
+            m.setLeft(qMax(0, m.left()));
+            m.setTop(qMax(0, m.top()));
+            m.setRight(qMax(0, m.right()));
+            m.setBottom(qMax(0, m.bottom()));
+            m_hex->viewport()->setContentsMargins(m);
+        });
+    }
+    connect(m_hex, &QHexView::onPaintCustomEvent, this,
+            [this](int XOffset, qsizetype firstVisible, qsizetype begin,
+                   qsizetype end) {
+                auto vp = m_hex->viewport();
+                QPainter painter(vp);
+                auto &plgsys = PluginSystem::instance();
+                auto hext = plgsys.hexEditorExtension();
+
+                _context->setCurrentHorizontalOffset(XOffset);
+                _context->setFirstVisibleLine(firstVisible);
+                _context->setBeginLine(begin);
+                _context->setEndLine(end);
+
+                if (hext) {
+                    painter.save();
+                    hext->onPaintEvent(&painter, vp, _context);
+                    painter.restore();
+                }
+                plgsys.dispatchEvent(
+                    IWingPlugin::RegisteredEvent::HexEditorViewPaint,
+                    {quintptr(&painter), quintptr(vp), quintptr(_context)});
+            });
 
     hexLayout->addWidget(m_hex, 1);
     m_goto = new GotoWidget(this);

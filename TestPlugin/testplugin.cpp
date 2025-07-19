@@ -26,6 +26,7 @@
 
 #include <QApplication>
 #include <QMenu>
+#include <QPainter>
 
 WING_DECLARE_STATIC_API;
 
@@ -75,11 +76,12 @@ bool TestPlugin::init(const std::unique_ptr<QSettings> &set) {
 
     QIcon btnIcon(QStringLiteral(":/images/TestPlugin/images/btn.png"));
 
-    _rtbinfo << createRibbonToolBox(WingHex::WingRibbonCatagories::PLUGIN,
-                                    createToolBox(tr("TestPlugin"), tb));
+    _rtbinfo << createRibbonToolBox(
+        WingHex::WingRibbonCatagories::PLUGIN,
+        WingHex::createToolBox(tr("TestPlugin"), tb));
 
-    auto rtb =
-        createRibbonToolBox(QStringLiteral("TestPlugin"), tr("TestPlugin"));
+    auto rtb = WingHex::createRibbonToolBox(QStringLiteral("TestPlugin"),
+                                            tr("TestPlugin"));
     for (int i = 0; i < 3; ++i) {
         TBInfo::Toolbox tbtb;
         tbtb.name = tr("TestPlugin") + QStringLiteral("(%1)").arg(i);
@@ -580,4 +582,24 @@ void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
         "void raiseScriptException()",
         asWINGFUNCTION(TestPlugin::testRaiseScriptException),
         WingHex::IWingAngel::asCallConvTypes::asCALL_GENERIC);
+}
+
+void TestPlugin::onPaintHexEditorView(QPainter *painter, QWidget *w,
+                                      WingHex::HexEditorContext *context) {
+    Q_UNUSED(context);
+    painter->save();
+    auto font = painter->font();
+    auto metric = QFontMetrics(font);
+    auto str = QStringLiteral("TestPlugin");
+    auto len = metric.horizontalAdvance(str);
+    auto height = metric.height();
+    auto pen = painter->pen();
+    auto color = pen.color();
+    color.setAlpha(180);
+    pen.setColor(color);
+    painter->setPen(pen);
+    constexpr auto padding = 2;
+    auto rect = w->rect();
+    painter->drawText(rect.right() - len - padding, height + padding, str);
+    painter->restore();
 }

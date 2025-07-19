@@ -92,14 +92,16 @@ void QHexRenderer::renderFrame(QPainter *painter) {
     int asciix = this->getAsciiColumnX();
     int endx = this->getEndColumnX();
 
+    painter->setPen(m_borderColor);
+
     // x coordinates are in absolute space
     // y coordinates are in viewport space
     // see QHexView::paintEvent where the painter has been shifted horizontally
 
+    auto h = this->headerLineCount() * this->lineHeight();
+
     if (m_headerVisible)
-        painter->drawLine(0, this->headerLineCount() * this->lineHeight() - 1,
-                          endx,
-                          this->headerLineCount() * this->lineHeight() - 1);
+        painter->drawLine(0, h, endx, h);
     if (m_addressVisible)
         painter->drawLine(hexx, rect.top(), hexx, rect.bottom());
 
@@ -871,6 +873,12 @@ void QHexRenderer::drawHeader(QPainter *painter) {
                           QStringLiteral("ASCII"));
     painter->restore();
 }
+
+void QHexRenderer::setBorderColor(const QColor &newBorderColor) {
+    m_borderColor = newBorderColor;
+}
+
+QColor QHexRenderer::borderColor() const { return m_borderColor; }
 
 QHexCursor *QHexRenderer::cursor() const { return m_cursor; }
 

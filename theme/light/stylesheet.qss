@@ -2960,6 +2960,7 @@ QHexView
     qproperty-selBackgroundColor: rgba(51, 164, 223, 0.5);
     qproperty-headerColor: #07DBD7;
     qproperty-addressColor: #07DBD7;
+    qproperty-borderColor: #31363b;
 }
 
 Toast

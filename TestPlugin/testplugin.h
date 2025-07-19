@@ -68,6 +68,10 @@ public:
 public:
     virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
 
+    virtual void
+    onPaintHexEditorView(QPainter *painter, QWidget *w,
+                         WingHex::HexEditorContext *context) override;
+
 private:
     QVariant test_a(const QVariantList &params);
     QVariant test_b(const QVariantList &params);

@@ -86,11 +86,11 @@ void QHexDocument::setMetaCommentVisible(bool b) {
     Q_EMIT metaCommentVisibleChanged(b);
 }
 
-bool QHexDocument::metabgVisible() { return m_metabg; }
+bool QHexDocument::metabgVisible() const { return m_metabg; }
 
-bool QHexDocument::metafgVisible() { return m_metafg; }
+bool QHexDocument::metafgVisible() const { return m_metafg; }
 
-bool QHexDocument::metaCommentVisible() { return m_metacomment; }
+bool QHexDocument::metaCommentVisible() const { return m_metacomment; }
 
 void QHexDocument::insertBookMarkAdjust(qsizetype offset, qsizetype length) {
     QMap<qsizetype, QString> bms;
@@ -218,7 +218,7 @@ void QHexDocument::removeBookMarkAdjustRevert(
     _bookmarks.insert(rmbms);
 }
 
-bool QHexDocument::isDocSaved() { return m_undostack->isClean(); }
+bool QHexDocument::isDocSaved() const { return m_undostack->isClean(); }
 
 void QHexDocument::setDocSaved(bool b) {
     if (b) {
@@ -230,9 +230,9 @@ void QHexDocument::setDocSaved(bool b) {
     Q_EMIT documentSaved(b);
 }
 
-bool QHexDocument::isReadOnly() { return m_readonly; }
-bool QHexDocument::isKeepSize() { return m_keepsize; }
-bool QHexDocument::isLocked() { return m_islocked; }
+bool QHexDocument::isReadOnly() const { return m_readonly; }
+bool QHexDocument::isKeepSize() const { return m_keepsize; }
+bool QHexDocument::isLocked() const { return m_islocked; }
 
 void QHexDocument::setLockKeepSize(bool b) { m_lockKeepSize = b; }
 

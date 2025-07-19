@@ -130,9 +130,12 @@ void ScriptManager::refreshUsrScriptsDbCats() {
     } else {
         for (auto &info :
              scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir dir(info.absoluteFilePath());
+            auto files = dir.entryList({"*.as"}, QDir::Files);
             m_usrScriptsDbCats << info.fileName();
             auto meta = ensureDirMeta(info);
             meta.isSys = false;
+            meta.isEmptyDir = files.isEmpty();
             _usrDirMetas.insert(info.fileName(), meta);
         }
     }
@@ -145,9 +148,12 @@ void ScriptManager::refreshSysScriptsDbCats() {
     if (sysScriptDir.exists()) {
         for (auto &info :
              sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir dir(info.absoluteFilePath());
+            auto files = dir.entryList({"*.as"}, QDir::Files);
             m_sysScriptsDbCats << info.fileName();
             auto meta = ensureDirMeta(info);
             meta.isSys = true;
+            meta.isEmptyDir = files.isEmpty();
             _sysDirMetas.insert(info.fileName(), meta);
         }
     }
@@ -236,17 +242,17 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         }
 
         auto meta = sm.sysDirMeta(cat);
-
-        addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolder")), meta.name,
-            buildUpScriptDirMenu(group, sm.getSysScriptFileNames(cat), true));
-
-        if (meta.isContextMenu) {
-            auto m = buildUpScriptDirMenu(parent, sm.getSysScriptFileNames(cat),
-                                          true);
-            m->setTitle(meta.name);
-            m->setIcon(ICONRES(QStringLiteral("scriptfolder")));
-            maps << m;
+        auto files = sm.getSysScriptFileNames(cat);
+        if (!files.isEmpty()) {
+            addPannelAction(group, ICONRES(QStringLiteral("scriptfolder")),
+                            meta.name,
+                            buildUpScriptDirMenu(group, files, true));
+            if (meta.isContextMenu) {
+                auto m = buildUpScriptDirMenu(parent, files, true);
+                m->setTitle(meta.name);
+                m->setIcon(ICONRES(QStringLiteral("scriptfolder")));
+                maps << m;
+            }
         }
     }
 
@@ -255,18 +261,20 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         if (hideCats.contains(cat)) {
             continue;
         }
+
         auto meta = sm.usrDirMeta(cat);
+        auto files = sm.getUsrScriptFileNames(cat);
+        if (!files.isEmpty()) {
+            addPannelAction(group, ICONRES(QStringLiteral("scriptfolderusr")),
+                            meta.name,
+                            buildUpScriptDirMenu(group, files, false));
 
-        addPannelAction(
-            group, ICONRES(QStringLiteral("scriptfolderusr")), meta.name,
-            buildUpScriptDirMenu(group, sm.getUsrScriptFileNames(cat), false));
-
-        if (meta.isContextMenu) {
-            auto m = buildUpScriptDirMenu(parent, sm.getSysScriptFileNames(cat),
-                                          true);
-            m->setTitle(meta.name);
-            m->setIcon(ICONRES(QStringLiteral("scriptfolderusr")));
-            maps << m;
+            if (meta.isContextMenu) {
+                auto m = buildUpScriptDirMenu(parent, files, true);
+                m->setTitle(meta.name);
+                m->setIcon(ICONRES(QStringLiteral("scriptfolderusr")));
+                maps << m;
+            }
         }
     }
 

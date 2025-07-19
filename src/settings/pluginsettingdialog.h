@@ -22,6 +22,7 @@
 #include "class/changedstringlist.h"
 
 #include <QListWidget>
+#include <QTextBrowser>
 #include <QWidget>
 
 namespace Ui {
@@ -62,6 +63,11 @@ private:
 
     void resetChangedList();
     void resetUIChagned();
+
+    void loadPluginInfo(const std::optional<WingHex::PluginInfo> &info,
+                        const QString &name, const QString &comment,
+                        const QList<WingHex::WingDependency> &dependencies,
+                        QTextBrowser *t);
 
 private:
     QString getWrappedText(const QString &str);

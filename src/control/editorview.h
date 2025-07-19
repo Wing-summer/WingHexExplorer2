@@ -26,6 +26,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
+#include "class/editorviewcontext.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
 #include "model/bookmarksmodel.h"
@@ -543,6 +544,7 @@ private:
     QStackedWidget *m_stack = nullptr;
     GotoWidget *m_goto = nullptr;
     QWidget *m_hexContainer = nullptr;
+    EditorViewContext *_context = nullptr;
     bool _hasRegistered = false;
     quintptr _oldbase = 0;
 

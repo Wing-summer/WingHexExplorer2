@@ -47,6 +47,8 @@ class QHexView : public QAbstractScrollArea {
                    NOTIFY selectionColorChanged FINAL)
     Q_PROPERTY(QColor selBackgroundColor READ selBackgroundColor WRITE
                    setSelBackgroundColor NOTIFY selBackgroundColorChanged FINAL)
+    Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY
+                   borderColorChanged FINAL)
     Q_PROPERTY(qreal scaleRate READ scaleRate WRITE setScaleRate NOTIFY
                    scaleRateChanged FINAL)
 
@@ -54,18 +56,10 @@ public:
     explicit QHexView(QWidget *parent = nullptr);
     virtual ~QHexView();
 
+public:
     QSharedPointer<QHexDocument> document();
     QHexRenderer *renderer();
 
-    void setDocument(const QSharedPointer<QHexDocument> &document,
-                     QHexCursor *cursor = nullptr);
-
-    /*=============================*/
-    // added by wingsummer
-    bool setLockedFile(bool b);
-    bool setKeepSize(bool b);
-
-    void setLockKeepSize(bool b);
     bool lockKeepSize() const;
 
     bool isReadOnly();
@@ -81,57 +75,65 @@ public:
     qsizetype selectionCount();
     bool hasSelection();
 
-    void setAsciiVisible(bool b);
     bool asciiVisible();
-    void setAddressVisible(bool b);
     bool addressVisible();
-    void setHeaderVisible(bool b);
     bool headerVisible();
 
     quintptr addressBase();
-    void setAddressBase(quintptr base);
 
     bool isSaved();
     static QFont getHexeditorFont();
     void getStatus();
 
     QColor headerColor() const;
-    void setHeaderColor(const QColor &newHeaderColor);
-
     QColor addressColor() const;
-    void setAddressColor(const QColor &newAddressColor);
-
     QColor bytesBackground() const;
-    void setBytesBackground(const QColor &newBytesBackground);
-
     QColor bytesAlterBackground() const;
-    void setBytesAlterBackground(const QColor &newBytesAlterBackground);
-
     QColor bytesColor() const;
-    void setBytesColor(const QColor &newBytesColor);
-
     QColor selectionColor() const;
-    void setSelectionColor(const QColor &newSelectionColor);
-
     QColor selBackgroundColor() const;
-    void setSelBackgroundColor(const QColor &newSelBackgroundColor);
+    QColor borderColor() const;
 
-    void setFontSize(qreal size);
     qreal fontSize() const;
-
-    void setScaleRate(qreal rate);
     qreal scaleRate() const;
 
-    qsizetype findNext(qsizetype begin, const QByteArray &ba);
-    qsizetype findPrevious(qsizetype begin, const QByteArray &ba);
-
-    bool RemoveSelection(int nibbleindex = 1);
-    bool removeSelection();
     bool atEnd() const;
 
     QByteArray selectedBytes(qsizetype index) const;
     QByteArray previewSelectedBytes() const;
     QByteArrayList selectedBytes() const;
+
+    qsizetype copyLimit() const;
+    QHexCursor *cursor() const;
+
+public slots:
+    void setDocument(const QSharedPointer<QHexDocument> &document,
+                     QHexCursor *cursor = nullptr);
+    bool RemoveSelection(int nibbleindex = 1);
+    bool removeSelection();
+
+    bool setLockedFile(bool b);
+    bool setKeepSize(bool b);
+    void setLockKeepSize(bool b);
+    void setAddressBase(quintptr base);
+
+    void setHeaderColor(const QColor &newHeaderColor);
+    void setAddressColor(const QColor &newAddressColor);
+    void setBytesBackground(const QColor &newBytesBackground);
+    void setBytesAlterBackground(const QColor &newBytesAlterBackground);
+    void setBytesColor(const QColor &newBytesColor);
+    void setSelectionColor(const QColor &newSelectionColor);
+    void setSelBackgroundColor(const QColor &newSelBackgroundColor);
+    void setBorderColor(const QColor &newBorderColor);
+
+    void setFontSize(qreal size);
+    void setScaleRate(qreal rate);
+    qsizetype findNext(qsizetype begin, const QByteArray &ba);
+    qsizetype findPrevious(qsizetype begin, const QByteArray &ba);
+
+    void setAsciiVisible(bool b);
+    void setAddressVisible(bool b);
+    void setHeaderVisible(bool b);
 
     bool cut(bool hex);
     bool copy(bool hex = false);
@@ -142,10 +144,7 @@ public:
     void Replace(qsizetype offset, uchar b, int nibbleindex);
     void Replace(qsizetype offset, const QByteArray &data, int nibbleindex = 0);
 
-    qsizetype copyLimit() const;
     void setCopyLimit(qsizetype newCopylimit);
-
-    QHexCursor *cursor() const;
 
 private:
     void establishSignal(QHexDocument *doc);
@@ -177,6 +176,11 @@ signals:
     void bytesColorChanged();
     void selectionColorChanged();
     void selBackgroundColorChanged();
+    void borderColorChanged();
+
+    void onPaintCustomEventBegin();
+    void onPaintCustomEvent(int XOffset, qsizetype firstVisible,
+                            qsizetype begin, qsizetype end);
 
 protected:
     virtual bool event(QEvent *e);

@@ -53,6 +53,8 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     Utilities::addSpecialMark(ui->lblFontSize);
     Utilities::addSpecialMark(ui->lblWinState);
 
+    reload();
+
     connect(ui->cbLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &GeneralSettingDialog::optionNeedRestartChanged);
     connect(ui->cbTheme, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -63,8 +65,6 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
             &GeneralSettingDialog::optionNeedRestartChanged);
     connect(ui->cbWinState, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &GeneralSettingDialog::optionNeedRestartChanged);
-
-    reload();
 
     auto sm = &SettingManager::instance();
     connect(ui->cbLanguage, &QComboBox::currentIndexChanged, sm,

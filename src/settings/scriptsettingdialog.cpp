@@ -29,6 +29,9 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnable);
     Utilities::addSpecialMark(ui->cbAllowUsrScript);
+
+    loadData();
+
     connect(ui->cbAllowUsrScript,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
@@ -36,8 +39,6 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
             &QCheckBox::stateChanged,
 #endif
             this, &ScriptSettingDialog::optionNeedRestartChanged);
-
-    loadData();
 
     connect(ui->listWidget, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -160,10 +161,14 @@ void ScriptSettingDialog::loadData() {
 
 bool ScriptSettingDialog::addCatagory(const ScriptManager::ScriptDirMeta &meta,
                                       bool isUser, bool hidden) {
+    auto name = meta.name;
+    if (meta.isEmptyDir) {
+        name.append(' ').append(tr("[Empty]"));
+    }
     auto lw =
         new QListWidgetItem(isUser ? ICONRES(QStringLiteral("scriptfolderusr"))
                                    : ICONRES(QStringLiteral("scriptfolder")),
-                            meta.name, ui->listWidget);
+                            name, ui->listWidget);
     lw->setData(Qt::UserRole, QVariant::fromValue(meta));
     lw->setCheckState(hidden ? Qt::Unchecked : Qt::Checked);
     return hidden;

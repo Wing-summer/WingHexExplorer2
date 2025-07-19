@@ -2631,6 +2631,14 @@ bool PluginSystem::checkErrAllAllowAndReport(const QObject *sender,
     return false;
 }
 
+const std::optional<PluginInfo> &PluginSystem::hexEditorExtensionInfo() const {
+    return _manHexInfo;
+}
+
+IWingHexEditorPlugin *PluginSystem::hexEditorExtension() const {
+    return _hexExt;
+}
+
 QMap<PluginSystem::BlockReason, QList<PluginInfo>>
 PluginSystem::blockedDevPlugins() const {
     return _blkdevs;
@@ -3687,6 +3695,16 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
             }
         }
         break;
+    case WingHex::IWingPlugin::RegisteredEvent::HexEditorViewPaint: {
+        auto painter =
+            reinterpret_cast<QPainter *>(params.at(0).value<quintptr>());
+        auto w = reinterpret_cast<QWidget *>(params.at(1).value<quintptr>());
+        auto palette = reinterpret_cast<HexEditorContext *>(
+            params.at(2).value<quintptr>());
+        for (auto &plg : _evplgs[event]) {
+            plg->onPaintHexEditorView(painter, w, palette);
+        }
+    } break;
     default:
         return false;
     }
@@ -3886,6 +3904,89 @@ void PluginSystem::try2LoadManagerPlugin() {
     }
 }
 
+void PluginSystem::try2LoadHexExtPlugin() {
+    QDir dir(qApp->applicationDirPath());
+
+    auto mplgs = dir.entryInfoList({"*.winghexe"}, QDir::Files);
+    if (mplgs.isEmpty()) {
+        return;
+    }
+
+    if (mplgs.size() > 1) {
+        Logger::warning(tr("HexExtNeedSingleton"));
+        return;
+    }
+
+    auto mplg = mplgs.front();
+    auto path = mplg.absoluteFilePath();
+    QPluginLoader loader(path);
+
+    auto lmeta = loader.metaData();
+    auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
+
+    auto cret = checkPluginMetadata(m, false);
+
+    switch (cret) {
+    case PluginStatus::Valid:
+        break;
+    case PluginStatus::SDKVersion:
+        Logger::critical(tr("ErrLoadPluginSDKVersion"));
+        return;
+    case PluginStatus::InvalidID:
+        Logger::critical(tr("InvalidPluginID"));
+        return;
+    case PluginStatus::BrokenVersion:
+        Logger::critical(tr("InvalidPluginBrokenInfo"));
+        return;
+    case PluginStatus::DupID:
+    case PluginStatus::LackDependencies:
+        // monitor is the first plugin to load and
+        // should not have any dependency
+        Q_ASSERT(false);
+        return;
+    }
+
+    auto p = qobject_cast<IWingHexEditorPlugin *>(loader.instance());
+    if (p) {
+        QDir udir(Utilities::getAppDataPath());
+        auto plgset = QStringLiteral("plgset");
+        udir.mkdir(plgset);
+        if (!udir.cd(plgset)) {
+            throw CrashCode::PluginSetting;
+        }
+
+        auto setp = std::make_unique<QSettings>(udir.absoluteFilePath(m.id),
+                                                QSettings::Format::IniFormat);
+
+        if (!p->init(setp)) {
+            setp->deleteLater();
+            Logger::critical(tr("ErrLoadInitPlugin"));
+            return;
+        }
+
+        applyFunctionTables(p, _plgFns);
+        _hexExt = p;
+        registerPluginDetectMarco(m.id);
+
+        // translate the meta-data
+        m.author = p->retranslate(m.author);
+        m.vendor = p->retranslate(m.vendor);
+        m.license = p->retranslate(m.license);
+
+        _manHexInfo = m;
+
+        {
+            auto menu = p->registeredHexContextMenu();
+            if (menu) {
+                _win->m_hexContextMenu.append(menu);
+            }
+        }
+        registerRibbonTools(p->registeredRibbonTools());
+        registeredSettingPages(QVariant::fromValue(p),
+                               p->registeredSettingPages());
+    }
+}
+
 void PluginSystem::registerPluginDetectMarco(const QString &id) {
     static auto sep = QStringLiteral("_");
     _scriptMarcos.append(sep + id + sep);
@@ -3946,6 +4047,10 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::PluginFileClosed)) {
         _evplgs[IWingPlugin::RegisteredEvent::PluginFileClosed].append(plg);
+    }
+
+    if (evs.testFlag(IWingPlugin::RegisteredEvent::HexEditorViewPaint)) {
+        _evplgs[IWingPlugin::RegisteredEvent::HexEditorViewPaint].append(plg);
     }
 }
 
@@ -4292,12 +4397,21 @@ void PluginSystem::setMainWindow(MainWindow *win) { _win = win; }
 
 QWidget *PluginSystem::mainWindow() const { return _win; }
 
-void PluginSystem::loadAllPlugin() {
+void PluginSystem::loadAllPlugins() {
     Q_ASSERT(_win);
 
-    try2LoadManagerPlugin();
-
     auto &set = SettingManager::instance();
+    bool enableSet = set.enablePlugin();
+
+    if (enableSet) {
+        if (set.enableMonitor()) {
+            try2LoadManagerPlugin();
+        }
+        if (set.enableHexExt()) {
+            try2LoadHexExtPlugin();
+        }
+    }
+
     _enabledExtIDs = set.enabledExtPlugins();
     _enabledDevIDs = set.enabledDevPlugins();
 
@@ -4358,38 +4472,40 @@ void PluginSystem::loadAllPlugin() {
 
     Logger::newLine();
 
-    bool ok = false;
+    if (enableSet) {
+        bool ok = false;
+        auto disAll =
+            qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
+        if (!ok || (ok && disAll == 0)) {
+            bool enabledrv = true, enableplg = true;
+            auto disdrv =
+                qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
+            if (ok && disdrv != 0) {
+                enabledrv = false;
+            }
 
-    auto disAll =
-        qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
-    if (!ok || (ok && disAll == 0)) {
-        bool enabledrv = true, enableplg = true;
-        auto disdrv = qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
-        if (ok && disdrv != 0) {
-            enabledrv = false;
-        }
+            if (enabledrv) {
+                loadDevicePlugin();
+            }
 
-        if (enabledrv) {
-            loadDevicePlugin();
-        }
-
-        auto displg = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
-        if ((ok && displg != 0) || !set.enablePlugin()) {
-            enableplg = false;
-        }
-
-        if (Utilities::isRoot()) {
-            if (!set.enablePlgInRoot()) {
+            auto displg =
+                qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
+            if ((ok && displg != 0) || !set.enablePlugin()) {
                 enableplg = false;
             }
-        }
 
-        if (enableplg) {
-            loadExtPlugin();
+            if (Utilities::isRoot()) {
+                if (!set.enablePlgInRoot()) {
+                    enableplg = false;
+                }
+            }
+
+            if (enableplg) {
+                loadExtPlugin();
+            }
         }
+        Logger::newLine();
     }
-
-    Logger::newLine();
 }
 
 void PluginSystem::destory() {
@@ -4423,6 +4539,16 @@ void PluginSystem::destory() {
             udir.absoluteFilePath(_manInfo->id), QSettings::Format::IniFormat);
         _manager->unload(set);
         delete _manager;
+        _manInfo.reset();
+    }
+
+    if (_hexExt && _manHexInfo) {
+        auto set =
+            std::make_unique<QSettings>(udir.absoluteFilePath(_manHexInfo->id),
+                                        QSettings::Format::IniFormat);
+        _hexExt->unload(set);
+        delete _hexExt;
+        _manHexInfo.reset();
     }
 }
 

@@ -36,6 +36,7 @@ public:
         QString license;
         QString homepage;
         QString comment;
+        bool isEmptyDir = false;
         bool isContextMenu = false;
         bool isSys; // a flag
     };
