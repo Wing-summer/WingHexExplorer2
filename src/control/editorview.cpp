@@ -63,7 +63,9 @@ EditorView::EditorView(QWidget *parent)
     hexLayout->setContentsMargins(0, 0, 0, 0);
     m_hex = new QHexView(this);
     _context = new EditorViewContext(m_hex);
-    if (PluginSystem::instance().hexEditorExtension()) {
+    auto &plgsys = PluginSystem::instance();
+    auto hexExt = plgsys.hexEditorExtension();
+    if (hexExt) {
         connect(m_hex, &QHexView::onPaintCustomEventBegin, this, [this]() {
             auto m =
                 PluginSystem::instance().hexEditorExtension()->contentMargins(
@@ -74,6 +76,7 @@ EditorView::EditorView(QWidget *parent)
             m.setBottom(qMax(0, m.bottom()));
             m_hex->viewport()->setContentsMargins(m);
         });
+        m_hex->setDisableInternalPaint(hexExt->disableOriginPainting());
     }
     connect(m_hex, &QHexView::onPaintCustomEvent, this,
             [this](int XOffset, qsizetype firstVisible, qsizetype begin,
@@ -920,7 +923,7 @@ bool EditorView::checkThreadAff() {
     return true;
 }
 
-bool EditorView::existsServiceHost(QObject *caller, const QString &puid) {
+bool EditorView::existsServiceHost(const QObject *caller, const QString &puid) {
     return PluginSystem::instance().existsServiceHost(caller, puid);
 }
 
@@ -933,21 +936,21 @@ bool EditorView::invokeServiceImpl(const QObject *sender, const QString &puid,
     return PluginSystem::instance().invokeServiceImpl(this, puid, infos);
 }
 
-QString EditorView::currentDocFilename(QObject *caller) {
+QString EditorView::currentDocFilename(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
     return fileName();
 }
 
-bool EditorView::isReadOnly(QObject *caller) {
+bool EditorView::isReadOnly(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->isReadOnly();
 }
 
-bool EditorView::isInsertionMode(QObject *caller) {
+bool EditorView::isInsertionMode(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -955,77 +958,77 @@ bool EditorView::isInsertionMode(QObject *caller) {
            QHexCursor::InsertionMode::InsertMode;
 }
 
-bool EditorView::isKeepSize(QObject *caller) {
+bool EditorView::isKeepSize(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->isKeepSize();
 }
 
-bool EditorView::isLocked(QObject *caller) {
+bool EditorView::isLocked(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->isLocked();
 }
 
-qsizetype EditorView::documentLines(QObject *caller) {
+qsizetype EditorView::documentLines(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->documentLines();
 }
 
-qsizetype EditorView::documentBytes(QObject *caller) {
+qsizetype EditorView::documentBytes(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->documentBytes();
 }
 
-qsizetype EditorView::currentRow(QObject *caller) {
+qsizetype EditorView::currentRow(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->currentRow();
 }
 
-qsizetype EditorView::currentColumn(QObject *caller) {
+qsizetype EditorView::currentColumn(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->currentColumn();
 }
 
-qsizetype EditorView::currentOffset(QObject *caller) {
+qsizetype EditorView::currentOffset(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->currentOffset();
 }
 
-qsizetype EditorView::selectedLength(QObject *caller) {
+qsizetype EditorView::selectedLength(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->cursor()->currentSelectionLength();
 }
 
-QByteArray EditorView::selectedBytes(QObject *caller, qsizetype index) {
+QByteArray EditorView::selectedBytes(const QObject *caller, qsizetype index) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
     return m_hex->selectedBytes(index);
 }
 
-QByteArrayList EditorView::selectionBytes(QObject *caller) {
+QByteArrayList EditorView::selectionBytes(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
     return m_hex->selectedBytes();
 }
 
-qsizetype EditorView::selectionLength(QObject *caller, qsizetype index) {
+qsizetype EditorView::selectionLength(const QObject *caller, qsizetype index) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
@@ -1038,119 +1041,119 @@ qsizetype EditorView::selectionLength(QObject *caller, qsizetype index) {
     return 0;
 }
 
-qsizetype EditorView::selectionCount(QObject *caller) {
+qsizetype EditorView::selectionCount(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->selectionCount();
 }
 
-bool EditorView::stringVisible(QObject *caller) {
+bool EditorView::stringVisible(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->asciiVisible();
 }
 
-bool EditorView::addressVisible(QObject *caller) {
+bool EditorView::addressVisible(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->addressVisible();
 }
 
-bool EditorView::headerVisible(QObject *caller) {
+bool EditorView::headerVisible(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->headerVisible();
 }
 
-quintptr EditorView::addressBase(QObject *caller) {
+quintptr EditorView::addressBase(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return m_hex->addressBase();
 }
 
-bool EditorView::isModified(QObject *caller) {
+bool EditorView::isModified(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return !m_hex->isSaved();
 }
 
-qint8 EditorView::readInt8(QObject *caller, qsizetype offset) {
+qint8 EditorView::readInt8(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<qint8>(this, offset, _rwlock);
 }
 
-qint16 EditorView::readInt16(QObject *caller, qsizetype offset) {
+qint16 EditorView::readInt16(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<qint16>(this, offset, _rwlock);
 }
 
-qint32 EditorView::readInt32(QObject *caller, qsizetype offset) {
+qint32 EditorView::readInt32(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<qint32>(this, offset, _rwlock);
 }
 
-qint64 EditorView::readInt64(QObject *caller, qsizetype offset) {
+qint64 EditorView::readInt64(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<qint64>(this, offset, _rwlock);
 }
 
-quint8 EditorView::readUInt8(QObject *caller, qsizetype offset) {
+quint8 EditorView::readUInt8(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<quint8>(this, offset, _rwlock);
 }
 
-quint16 EditorView::readUInt16(QObject *caller, qsizetype offset) {
+quint16 EditorView::readUInt16(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<quint16>(this, offset, _rwlock);
 }
 
-quint32 EditorView::readUInt32(QObject *caller, qsizetype offset) {
+quint32 EditorView::readUInt32(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<quint32>(this, offset, _rwlock);
 }
 
-quint64 EditorView::readUInt64(QObject *caller, qsizetype offset) {
+quint64 EditorView::readUInt64(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<quint64>(this, offset, _rwlock);
 }
 
-float EditorView::readFloat(QObject *caller, qsizetype offset) {
+float EditorView::readFloat(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<float>(this, offset, _rwlock);
 }
 
-double EditorView::readDouble(QObject *caller, qsizetype offset) {
+double EditorView::readDouble(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return 0;
     }
     return readBasicTypeContent<double>(this, offset, _rwlock);
 }
 
-QString EditorView::readString(QObject *caller, qsizetype offset,
+QString EditorView::readString(const QObject *caller, qsizetype offset,
                                const QString &encoding) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
@@ -1169,7 +1172,7 @@ QString EditorView::readString(QObject *caller, qsizetype offset,
     return Utilities::decodingString(buffer, encoding);
 }
 
-QByteArray EditorView::readBytes(QObject *caller, qsizetype offset,
+QByteArray EditorView::readBytes(const QObject *caller, qsizetype offset,
                                  qsizetype count) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
@@ -1180,7 +1183,7 @@ QByteArray EditorView::readBytes(QObject *caller, qsizetype offset,
     return ret;
 }
 
-qsizetype EditorView::findNext(QObject *caller, qsizetype begin,
+qsizetype EditorView::findNext(const QObject *caller, qsizetype begin,
                                const QByteArray &ba) {
     if (checkErrAndReport(caller, __func__)) {
         return -1;
@@ -1188,7 +1191,7 @@ qsizetype EditorView::findNext(QObject *caller, qsizetype begin,
     return m_hex->document()->findNext(begin, ba);
 }
 
-qsizetype EditorView::findPrevious(QObject *caller, qsizetype begin,
+qsizetype EditorView::findPrevious(const QObject *caller, qsizetype begin,
                                    const QByteArray &ba) {
     if (checkErrAndReport(caller, __func__)) {
         return -1;
@@ -1196,21 +1199,21 @@ qsizetype EditorView::findPrevious(QObject *caller, qsizetype begin,
     return m_hex->document()->findPrevious(begin, ba);
 }
 
-QString EditorView::bookMarkComment(QObject *caller, qsizetype pos) {
+QString EditorView::bookMarkComment(const QObject *caller, qsizetype pos) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
     return m_hex->document()->bookMark(pos);
 }
 
-bool EditorView::existBookMark(QObject *caller, qsizetype pos) {
+bool EditorView::existBookMark(const QObject *caller, qsizetype pos) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return m_hex->document()->existBookMark(pos);
 }
 
-bool EditorView::setLockedFile(QObject *caller, bool b) {
+bool EditorView::setLockedFile(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1221,7 +1224,7 @@ bool EditorView::setLockedFile(QObject *caller, bool b) {
     return m_hex->setLockedFile(b);
 }
 
-bool EditorView::setKeepSize(QObject *caller, bool b) {
+bool EditorView::setKeepSize(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1231,7 +1234,7 @@ bool EditorView::setKeepSize(QObject *caller, bool b) {
     return m_hex->setKeepSize(b);
 }
 
-bool EditorView::setStringVisible(QObject *caller, bool b) {
+bool EditorView::setStringVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1242,7 +1245,7 @@ bool EditorView::setStringVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setAddressVisible(QObject *caller, bool b) {
+bool EditorView::setAddressVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1253,7 +1256,7 @@ bool EditorView::setAddressVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setHeaderVisible(QObject *caller, bool b) {
+bool EditorView::setHeaderVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1264,7 +1267,7 @@ bool EditorView::setHeaderVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setAddressBase(QObject *caller, quintptr base) {
+bool EditorView::setAddressBase(const QObject *caller, quintptr base) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1275,7 +1278,7 @@ bool EditorView::setAddressBase(QObject *caller, quintptr base) {
     return true;
 }
 
-bool EditorView::beginMarco(QObject *caller, const QString &txt) {
+bool EditorView::beginMarco(const QObject *caller, const QString &txt) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1283,7 +1286,7 @@ bool EditorView::beginMarco(QObject *caller, const QString &txt) {
     return true;
 }
 
-bool EditorView::endMarco(QObject *caller) {
+bool EditorView::endMarco(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1291,77 +1294,87 @@ bool EditorView::endMarco(QObject *caller) {
     return true;
 }
 
-bool EditorView::writeInt8(QObject *caller, qsizetype offset, qint8 value) {
+bool EditorView::writeInt8(const QObject *caller, qsizetype offset,
+                           qint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeInt16(QObject *caller, qsizetype offset, qint16 value) {
+bool EditorView::writeInt16(const QObject *caller, qsizetype offset,
+                            qint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeInt32(QObject *caller, qsizetype offset, qint32 value) {
+bool EditorView::writeInt32(const QObject *caller, qsizetype offset,
+                            qint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeInt64(QObject *caller, qsizetype offset, qint64 value) {
+bool EditorView::writeInt64(const QObject *caller, qsizetype offset,
+                            qint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeUInt8(QObject *caller, qsizetype offset, quint8 value) {
+bool EditorView::writeUInt8(const QObject *caller, qsizetype offset,
+                            quint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeUInt16(QObject *caller, qsizetype offset, quint16 value) {
+bool EditorView::writeUInt16(const QObject *caller, qsizetype offset,
+                             quint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeUInt32(QObject *caller, qsizetype offset, quint32 value) {
+bool EditorView::writeUInt32(const QObject *caller, qsizetype offset,
+                             quint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeUInt64(QObject *caller, qsizetype offset, quint64 value) {
+bool EditorView::writeUInt64(const QObject *caller, qsizetype offset,
+                             quint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeFloat(QObject *caller, qsizetype offset, float value) {
+bool EditorView::writeFloat(const QObject *caller, qsizetype offset,
+                            float value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeDouble(QObject *caller, qsizetype offset, double value) {
+bool EditorView::writeDouble(const QObject *caller, qsizetype offset,
+                             double value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::writeString(QObject *caller, qsizetype offset,
+bool EditorView::writeString(const QObject *caller, qsizetype offset,
                              const QString &value, const QString &encoding) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1379,7 +1392,7 @@ bool EditorView::writeString(QObject *caller, qsizetype offset,
     return false;
 }
 
-bool EditorView::writeBytes(QObject *caller, qsizetype offset,
+bool EditorView::writeBytes(const QObject *caller, qsizetype offset,
                             const QByteArray &data) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1395,42 +1408,47 @@ bool EditorView::writeBytes(QObject *caller, qsizetype offset,
     return false;
 }
 
-bool EditorView::insertInt8(QObject *caller, qsizetype offset, qint8 value) {
+bool EditorView::insertInt8(const QObject *caller, qsizetype offset,
+                            qint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertInt16(QObject *caller, qsizetype offset, qint16 value) {
+bool EditorView::insertInt16(const QObject *caller, qsizetype offset,
+                             qint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertInt32(QObject *caller, qsizetype offset, qint32 value) {
+bool EditorView::insertInt32(const QObject *caller, qsizetype offset,
+                             qint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertInt64(QObject *caller, qsizetype offset, qint64 value) {
+bool EditorView::insertInt64(const QObject *caller, qsizetype offset,
+                             qint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertUInt8(QObject *caller, qsizetype offset, quint8 value) {
+bool EditorView::insertUInt8(const QObject *caller, qsizetype offset,
+                             quint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertUInt16(QObject *caller, qsizetype offset,
+bool EditorView::insertUInt16(const QObject *caller, qsizetype offset,
                               quint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1438,7 +1456,7 @@ bool EditorView::insertUInt16(QObject *caller, qsizetype offset,
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertUInt32(QObject *caller, qsizetype offset,
+bool EditorView::insertUInt32(const QObject *caller, qsizetype offset,
                               quint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1446,7 +1464,7 @@ bool EditorView::insertUInt32(QObject *caller, qsizetype offset,
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertUInt64(QObject *caller, qsizetype offset,
+bool EditorView::insertUInt64(const QObject *caller, qsizetype offset,
                               quint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1454,21 +1472,23 @@ bool EditorView::insertUInt64(QObject *caller, qsizetype offset,
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertFloat(QObject *caller, qsizetype offset, float value) {
+bool EditorView::insertFloat(const QObject *caller, qsizetype offset,
+                             float value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertDouble(QObject *caller, qsizetype offset, double value) {
+bool EditorView::insertDouble(const QObject *caller, qsizetype offset,
+                              double value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
 }
 
-bool EditorView::insertString(QObject *caller, qsizetype offset,
+bool EditorView::insertString(const QObject *caller, qsizetype offset,
                               const QString &value, const QString &encoding) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1487,7 +1507,7 @@ bool EditorView::insertString(QObject *caller, qsizetype offset,
     return false;
 }
 
-bool EditorView::insertBytes(QObject *caller, qsizetype offset,
+bool EditorView::insertBytes(const QObject *caller, qsizetype offset,
                              const QByteArray &data) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1504,77 +1524,77 @@ bool EditorView::insertBytes(QObject *caller, qsizetype offset,
     return false;
 }
 
-bool EditorView::appendInt8(QObject *caller, qint8 value) {
+bool EditorView::appendInt8(const QObject *caller, qint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendInt16(QObject *caller, qint16 value) {
+bool EditorView::appendInt16(const QObject *caller, qint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendInt32(QObject *caller, qint32 value) {
+bool EditorView::appendInt32(const QObject *caller, qint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendInt64(QObject *caller, qint64 value) {
+bool EditorView::appendInt64(const QObject *caller, qint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendUInt8(QObject *caller, quint8 value) {
+bool EditorView::appendUInt8(const QObject *caller, quint8 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendUInt16(QObject *caller, quint16 value) {
+bool EditorView::appendUInt16(const QObject *caller, quint16 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendUInt32(QObject *caller, quint32 value) {
+bool EditorView::appendUInt32(const QObject *caller, quint32 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendUInt64(QObject *caller, quint64 value) {
+bool EditorView::appendUInt64(const QObject *caller, quint64 value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendFloat(QObject *caller, float value) {
+bool EditorView::appendFloat(const QObject *caller, float value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendDouble(QObject *caller, double value) {
+bool EditorView::appendDouble(const QObject *caller, double value) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
 }
 
-bool EditorView::appendString(QObject *caller, const QString &value,
+bool EditorView::appendString(const QObject *caller, const QString &value,
                               const QString &encoding) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1593,7 +1613,7 @@ bool EditorView::appendString(QObject *caller, const QString &value,
     return false;
 }
 
-bool EditorView::appendBytes(QObject *caller, const QByteArray &data) {
+bool EditorView::appendBytes(const QObject *caller, const QByteArray &data) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1609,7 +1629,8 @@ bool EditorView::appendBytes(QObject *caller, const QByteArray &data) {
     return false;
 }
 
-bool EditorView::removeBytes(QObject *caller, qsizetype offset, qsizetype len) {
+bool EditorView::removeBytes(const QObject *caller, qsizetype offset,
+                             qsizetype len) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1625,7 +1646,7 @@ bool EditorView::removeBytes(QObject *caller, qsizetype offset, qsizetype len) {
     return false;
 }
 
-bool EditorView::moveTo(QObject *caller, qsizetype line, qsizetype column,
+bool EditorView::moveTo(const QObject *caller, qsizetype line, qsizetype column,
                         int nibbleindex, bool clearSelection) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1637,7 +1658,7 @@ bool EditorView::moveTo(QObject *caller, qsizetype line, qsizetype column,
     return true;
 }
 
-bool EditorView::moveTo(QObject *caller, qsizetype offset,
+bool EditorView::moveTo(const QObject *caller, qsizetype offset,
                         bool clearSelection) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1649,8 +1670,8 @@ bool EditorView::moveTo(QObject *caller, qsizetype offset,
     return true;
 }
 
-bool EditorView::select(QObject *caller, qsizetype offset, qsizetype length,
-                        SelectionMode mode) {
+bool EditorView::select(const QObject *caller, qsizetype offset,
+                        qsizetype length, SelectionMode mode) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1675,7 +1696,7 @@ bool EditorView::select(QObject *caller, qsizetype offset, qsizetype length,
     return true;
 }
 
-bool EditorView::setInsertionMode(QObject *caller, bool isinsert) {
+bool EditorView::setInsertionMode(const QObject *caller, bool isinsert) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1687,9 +1708,9 @@ bool EditorView::setInsertionMode(QObject *caller, bool isinsert) {
     return true;
 }
 
-bool EditorView::metadata(QObject *caller, qsizetype begin, qsizetype length,
-                          const QColor &fgcolor, const QColor &bgcolor,
-                          const QString &comment) {
+bool EditorView::metadata(const QObject *caller, qsizetype begin,
+                          qsizetype length, const QColor &fgcolor,
+                          const QColor &bgcolor, const QString &comment) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1708,7 +1729,7 @@ bool EditorView::metadata(QObject *caller, qsizetype begin, qsizetype length,
     return false;
 }
 
-bool EditorView::removeMetadata(QObject *caller, qsizetype offset) {
+bool EditorView::removeMetadata(const QObject *caller, qsizetype offset) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1725,7 +1746,7 @@ bool EditorView::removeMetadata(QObject *caller, qsizetype offset) {
     return false;
 }
 
-bool EditorView::clearMetadata(QObject *caller) {
+bool EditorView::clearMetadata(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1742,7 +1763,7 @@ bool EditorView::clearMetadata(QObject *caller) {
     return false;
 }
 
-bool EditorView::setMetaVisible(QObject *caller, bool b) {
+bool EditorView::setMetaVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1756,7 +1777,7 @@ bool EditorView::setMetaVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setMetafgVisible(QObject *caller, bool b) {
+bool EditorView::setMetafgVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1768,7 +1789,7 @@ bool EditorView::setMetafgVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setMetabgVisible(QObject *caller, bool b) {
+bool EditorView::setMetabgVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1780,7 +1801,7 @@ bool EditorView::setMetabgVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::setMetaCommentVisible(QObject *caller, bool b) {
+bool EditorView::setMetaCommentVisible(const QObject *caller, bool b) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1792,7 +1813,7 @@ bool EditorView::setMetaCommentVisible(QObject *caller, bool b) {
     return true;
 }
 
-bool EditorView::addBookMark(QObject *caller, qsizetype pos,
+bool EditorView::addBookMark(const QObject *caller, qsizetype pos,
                              const QString &comment) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1809,7 +1830,7 @@ bool EditorView::addBookMark(QObject *caller, qsizetype pos,
     return false;
 }
 
-bool EditorView::modBookMark(QObject *caller, qsizetype pos,
+bool EditorView::modBookMark(const QObject *caller, qsizetype pos,
                              const QString &comment) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
@@ -1826,7 +1847,7 @@ bool EditorView::modBookMark(QObject *caller, qsizetype pos,
     return false;
 }
 
-bool EditorView::removeBookMark(QObject *caller, qsizetype pos) {
+bool EditorView::removeBookMark(const QObject *caller, qsizetype pos) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1842,7 +1863,7 @@ bool EditorView::removeBookMark(QObject *caller, qsizetype pos) {
     return false;
 }
 
-bool EditorView::clearBookMark(QObject *caller) {
+bool EditorView::clearBookMark(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return false;
     }
@@ -1858,20 +1879,20 @@ bool EditorView::clearBookMark(QObject *caller) {
     return false;
 }
 
-void EditorView::toast(QObject *caller, const QPixmap &icon,
+void EditorView::toast(const QObject *caller, const QPixmap &icon,
                        const QString &message) {
     PluginSystem::instance().toast(caller, icon, message);
 }
 
-void EditorView::logTrace(QObject *caller, const QString &message) {
+void EditorView::logTrace(const QObject *caller, const QString &message) {
     PluginSystem::instance().logTrace(caller, message);
 }
 
-void EditorView::logDebug(QObject *caller, const QString &message) {
+void EditorView::logDebug(const QObject *caller, const QString &message) {
     PluginSystem::instance().logDebug(caller, message);
 }
 
-HexPosition EditorView::selectionEnd(QObject *caller, qsizetype index) {
+HexPosition EditorView::selectionEnd(const QObject *caller, qsizetype index) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
@@ -1890,7 +1911,7 @@ HexPosition EditorView::selectionEnd(QObject *caller, qsizetype index) {
     return pos;
 }
 
-HexPosition EditorView::selectionStart(QObject *caller, qsizetype index) {
+HexPosition EditorView::selectionStart(const QObject *caller, qsizetype index) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
@@ -1909,7 +1930,7 @@ HexPosition EditorView::selectionStart(QObject *caller, qsizetype index) {
     return pos;
 }
 
-HexPosition EditorView::currentPos(QObject *caller) {
+HexPosition EditorView::currentPos(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
@@ -1924,33 +1945,33 @@ HexPosition EditorView::currentPos(QObject *caller) {
     return pos;
 }
 
-void EditorView::logWarn(QObject *caller, const QString &message) {
+void EditorView::logWarn(const QObject *caller, const QString &message) {
     PluginSystem::instance().logWarn(caller, message);
 }
 
-void EditorView::logError(QObject *caller, const QString &message) {
+void EditorView::logError(const QObject *caller, const QString &message) {
     PluginSystem::instance().logError(caller, message);
 }
 
-void EditorView::logInfo(QObject *caller, const QString &message) {
+void EditorView::logInfo(const QObject *caller, const QString &message) {
     PluginSystem::instance().logInfo(caller, message);
 }
 
-bool EditorView::raiseDockWidget(QObject *caller, QWidget *w) {
+bool EditorView::raiseDockWidget(const QObject *caller, QWidget *w) {
     return PluginSystem::instance().raiseDockWidget(caller, w);
 }
 
-QDialog *EditorView::createDialog(QObject *caller, QWidget *content) {
+QDialog *EditorView::createDialog(const QObject *caller, QWidget *content) {
     return PluginSystem::instance().createDialog(caller, content);
 }
 
-void EditorView::msgAboutQt(QObject *caller, QWidget *parent,
+void EditorView::msgAboutQt(const QObject *caller, QWidget *parent,
                             const QString &title) {
     return PluginSystem::instance().msgAboutQt(caller, parent, title);
 }
 
 QMessageBox::StandardButton
-EditorView::msgInformation(QObject *caller, QWidget *parent,
+EditorView::msgInformation(const QObject *caller, QWidget *parent,
                            const QString &title, const QString &text,
                            QMessageBox::StandardButtons buttons,
                            QMessageBox::StandardButton defaultButton) {
@@ -1959,8 +1980,8 @@ EditorView::msgInformation(QObject *caller, QWidget *parent,
 }
 
 QMessageBox::StandardButton
-EditorView::msgQuestion(QObject *caller, QWidget *parent, const QString &title,
-                        const QString &text,
+EditorView::msgQuestion(const QObject *caller, QWidget *parent,
+                        const QString &title, const QString &text,
                         QMessageBox::StandardButtons buttons,
                         QMessageBox::StandardButton defaultButton) {
     return PluginSystem::instance().msgQuestion(caller, parent, title, text,
@@ -1968,8 +1989,8 @@ EditorView::msgQuestion(QObject *caller, QWidget *parent, const QString &title,
 }
 
 QMessageBox::StandardButton
-EditorView::msgWarning(QObject *caller, QWidget *parent, const QString &title,
-                       const QString &text,
+EditorView::msgWarning(const QObject *caller, QWidget *parent,
+                       const QString &title, const QString &text,
                        QMessageBox::StandardButtons buttons,
                        QMessageBox::StandardButton defaultButton) {
     return PluginSystem::instance().msgWarning(caller, parent, title, text,
@@ -1977,29 +1998,29 @@ EditorView::msgWarning(QObject *caller, QWidget *parent, const QString &title,
 }
 
 QMessageBox::StandardButton
-EditorView::msgCritical(QObject *caller, QWidget *parent, const QString &title,
-                        const QString &text,
+EditorView::msgCritical(const QObject *caller, QWidget *parent,
+                        const QString &title, const QString &text,
                         QMessageBox::StandardButtons buttons,
                         QMessageBox::StandardButton defaultButton) {
     return PluginSystem::instance().msgCritical(caller, parent, title, text,
                                                 buttons, defaultButton);
 }
 
-void EditorView::msgAbout(QObject *caller, QWidget *parent,
+void EditorView::msgAbout(const QObject *caller, QWidget *parent,
                           const QString &title, const QString &text) {
     return PluginSystem::instance().msgAbout(caller, parent, title, text);
 }
 
 QMessageBox::StandardButton
-EditorView::msgbox(QObject *caller, QWidget *parent, QMessageBox::Icon icon,
-                   const QString &title, const QString &text,
-                   QMessageBox::StandardButtons buttons,
+EditorView::msgbox(const QObject *caller, QWidget *parent,
+                   QMessageBox::Icon icon, const QString &title,
+                   const QString &text, QMessageBox::StandardButtons buttons,
                    QMessageBox::StandardButton defaultButton) {
     return PluginSystem::instance().msgbox(caller, parent, icon, title, text,
                                            buttons, defaultButton);
 }
 
-QString EditorView::dlgGetText(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetText(const QObject *caller, QWidget *parent,
                                const QString &title, const QString &label,
                                QLineEdit::EchoMode echo, const QString &text,
                                bool *ok,
@@ -2008,7 +2029,7 @@ QString EditorView::dlgGetText(QObject *caller, QWidget *parent,
         caller, parent, title, label, echo, text, ok, inputMethodHints);
 }
 
-QString EditorView::dlgGetMultiLineText(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetMultiLineText(const QObject *caller, QWidget *parent,
                                         const QString &title,
                                         const QString &label,
                                         const QString &text, bool *ok,
@@ -2017,7 +2038,7 @@ QString EditorView::dlgGetMultiLineText(QObject *caller, QWidget *parent,
         caller, parent, title, label, text, ok, inputMethodHints);
 }
 
-QString EditorView::dlgGetItem(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetItem(const QObject *caller, QWidget *parent,
                                const QString &title, const QString &label,
                                const QStringList &items, int current,
                                bool editable, bool *ok,
@@ -2027,14 +2048,14 @@ QString EditorView::dlgGetItem(QObject *caller, QWidget *parent,
                                                inputMethodHints);
 }
 
-int EditorView::dlgGetInt(QObject *caller, QWidget *parent,
+int EditorView::dlgGetInt(const QObject *caller, QWidget *parent,
                           const QString &title, const QString &label, int value,
                           int minValue, int maxValue, int step, bool *ok) {
     return PluginSystem::instance().dlgGetInt(
         caller, parent, title, label, value, minValue, maxValue, step, ok);
 }
 
-double EditorView::dlgGetDouble(QObject *caller, QWidget *parent,
+double EditorView::dlgGetDouble(const QObject *caller, QWidget *parent,
                                 const QString &title, const QString &label,
                                 double value, double minValue, double maxValue,
                                 int decimals, bool *ok, double step) {
@@ -2043,7 +2064,8 @@ double EditorView::dlgGetDouble(QObject *caller, QWidget *parent,
                                                  decimals, ok, step);
 }
 
-QString EditorView::dlgGetExistingDirectory(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetExistingDirectory(const QObject *caller,
+                                            QWidget *parent,
                                             const QString &caption,
                                             const QString &dir,
                                             QFileDialog::Options options) {
@@ -2051,7 +2073,7 @@ QString EditorView::dlgGetExistingDirectory(QObject *caller, QWidget *parent,
         caller, parent, caption, dir, options);
 }
 
-QString EditorView::dlgGetOpenFileName(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetOpenFileName(const QObject *caller, QWidget *parent,
                                        const QString &caption,
                                        const QString &dir,
                                        const QString &filter,
@@ -2061,17 +2083,16 @@ QString EditorView::dlgGetOpenFileName(QObject *caller, QWidget *parent,
         caller, parent, caption, dir, filter, selectedFilter, options);
 }
 
-QStringList EditorView::dlgGetOpenFileNames(QObject *caller, QWidget *parent,
-                                            const QString &caption,
-                                            const QString &dir,
-                                            const QString &filter,
-                                            QString *selectedFilter,
-                                            QFileDialog::Options options) {
+QStringList
+EditorView::dlgGetOpenFileNames(const QObject *caller, QWidget *parent,
+                                const QString &caption, const QString &dir,
+                                const QString &filter, QString *selectedFilter,
+                                QFileDialog::Options options) {
     return PluginSystem::instance().dlgGetOpenFileNames(
         caller, parent, caption, dir, filter, selectedFilter, options);
 }
 
-QString EditorView::dlgGetSaveFileName(QObject *caller, QWidget *parent,
+QString EditorView::dlgGetSaveFileName(const QObject *caller, QWidget *parent,
                                        const QString &caption,
                                        const QString &dir,
                                        const QString &filter,
@@ -2081,12 +2102,12 @@ QString EditorView::dlgGetSaveFileName(QObject *caller, QWidget *parent,
         caller, parent, caption, dir, filter, selectedFilter, options);
 }
 
-QColor EditorView::dlgGetColor(QObject *caller, const QString &caption,
+QColor EditorView::dlgGetColor(const QObject *caller, const QString &caption,
                                QWidget *parent) {
     return PluginSystem::instance().dlgGetColor(caller, caption, parent);
 }
 
-AppTheme EditorView::currentAppTheme(QObject *caller) {
+AppTheme EditorView::currentAppTheme(const QObject *caller) {
     return PluginSystem::instance().currentAppTheme(caller);
 }
 

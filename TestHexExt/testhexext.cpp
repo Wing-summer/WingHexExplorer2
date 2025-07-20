@@ -48,7 +48,6 @@ QMenu *TestHexExt::registeredHexContextMenu() const { return m_context; }
 
 QList<WingHex::WingRibbonToolBoxInfo>
 TestHexExt::registeredRibbonTools() const {
-    // TODO
     return {};
 }
 
@@ -60,8 +59,10 @@ QMargins TestHexExt::contentMargins(WingHex::HexEditorContext *context) const {
     auto str = QString::number(lines);
     auto fm = context->fontMetrics();
     constexpr auto padding = 4;
-    auto len = fm.horizontalAdvance(str) + padding;
-    return {int(len), 0, 0, 1};
+    auto header = QStringLiteral("Line");
+    auto minLen = fm.horizontalAdvance(header) + padding;
+    auto colLen = qMax(fm.horizontalAdvance(str) + padding, minLen);
+    return {int(colLen) + 1, 0, 0, 0};
 }
 
 void TestHexExt::onPaintEvent(QPainter *painter, const QWidget *w,
@@ -90,7 +91,6 @@ void TestHexExt::onPaintEvent(QPainter *painter, const QWidget *w,
         painter->restore();
         context->renderHexBackground(painter, {0, 0}, colLen);
     }
-    painter->drawLine(colLen, 0, colLen, w->height());
 
     // draw Line Numbers
     painter->setPen(context->addressColor());

@@ -239,8 +239,10 @@ WingAngel::registerGlobalFunction(uint retMetaType, const ScriptFn &fn,
                                   const QVector<QPair<uint, QString>> &params) {
     auto sig = getScriptFnSig(retMetaType, fn, fnName, params);
     if (sig.isEmpty()) {
-        Logger::critical(tr("RegisterScriptFnUnSupportedTypes:") + _plgsess +
-                         QStringLiteral("::") + fnName);
+        Logger::critical(QStringLiteral("[WingAngel::registerGlobalFunction] "
+                                        "getScriptFnSig failed (") +
+                         _plgsess + QStringLiteral("::") + fnName +
+                         QStringLiteral(")"));
         return WingHex::asRetCodes::asINVALID_ARG;
     }
 
@@ -250,8 +252,13 @@ WingAngel::registerGlobalFunction(uint retMetaType, const ScriptFn &fn,
         sig.toUtf8(), asFUNCTION(WingAngelAPI::script_call),
         asECallConvTypes::asCALL_GENERIC);
 
+    auto minfo = QMetaEnum::fromType<WingHex::asRetCodes>();
+
     if (ret < 0) {
-        // TODO
+        Logger::critical(
+            QStringLiteral("[WingAngel::registerGlobalFunction] "
+                           "RegisterGlobalFunction '%1' failed (%2)")
+                .arg(sig, minfo.valueToKey(ret)));
         return returnValue(ret);
     }
 
@@ -264,6 +271,9 @@ WingAngel::registerGlobalFunction(uint retMetaType, const ScriptFn &fn,
         f->SetUserData(reinterpret_cast<void *>(id),
                        AsUserDataType::UserData_PluginFn);
     } else {
+        Logger::critical(QStringLiteral("[WingAngel::registerGlobalFunction] "
+                                        "'%1' GetFunctionById failed")
+                             .arg(sig));
         return WingHex::asRetCodes::asINVALID_ARG;
     }
 
@@ -281,8 +291,8 @@ WingHex::asRetCodes
 WingAngel::registerGlobalFunction(const QString &decl,
                                   const WingHex::UNSAFE_SCFNPTR &fn) {
     if (decl.isEmpty()) {
-        Logger::critical(tr("RegisterScriptFnUnSupportedTypes:") + _plgsess +
-                         QStringLiteral("::") + decl);
+        Logger::critical(QStringLiteral(
+            "[WingAngel::registerGlobalFunction] Empty declaration"));
         return WingHex::asRetCodes::asINVALID_ARG;
     }
 
@@ -292,8 +302,12 @@ WingAngel::registerGlobalFunction(const QString &decl,
         decl.toUtf8(), asFUNCTION(WingAngelAPI::script_unsafe_call),
         asECallConvTypes::asCALL_GENERIC);
 
+    auto minfo = QMetaEnum::fromType<WingHex::asRetCodes>();
     if (ret < 0) {
-        // TODO
+        Logger::critical(
+            QStringLiteral("[WingAngel::registerGlobalFunction] "
+                           "RegisterGlobalFunction '%1' failed (%2)")
+                .arg(decl, minfo.valueToKey(ret)));
         return returnValue(ret);
     }
 
@@ -306,6 +320,9 @@ WingAngel::registerGlobalFunction(const QString &decl,
         f->SetUserData(reinterpret_cast<void *>(id),
                        AsUserDataType::UserData_PluginFn);
     } else {
+        Logger::critical(QStringLiteral("[WingAngel::registerGlobalFunction] "
+                                        "'%1' GetFunctionById failed")
+                             .arg(decl));
         return WingHex::asRetCodes::asINVALID_ARG;
     }
 
@@ -319,8 +336,8 @@ void WingAngel::registerScriptMarco(const QString &marco) {
         static auto sep = QStringLiteral("_");
         _scriptMarcos.append(sep + _plgsess + sep + marco + sep);
     } else {
-
-        // TODO
+        Logger::critical(QStringLiteral(
+            "[WingAngel::registerScriptMarco] isValidIdentifier failed"));
     }
 }
 

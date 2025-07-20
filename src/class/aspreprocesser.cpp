@@ -953,7 +953,7 @@ void AsPreprocesser::overwriteCode(QByteArray &modifiedScript, int start,
 
 int AsPreprocesser::getLineCount(const QByteArray &modifiedScript,
                                  int pos) const {
-    pos = qBound(0, pos, int(modifiedScript.size()));
+    pos = qBound(0, pos, qsizetype(modifiedScript.size()));
     return std::count_if(modifiedScript.begin(),
                          std::next(modifiedScript.begin(), pos),
                          [](char ch) -> bool { return ch == '\n'; }) +

@@ -513,14 +513,66 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         return false;
     }
 
-    auto r =
-        std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
-                     [=](IWingPlugin *plg) { return getPUID(plg) == puid; });
-    if (r == _loadedplgs.end()) {
+    QObject *obj = nullptr;
+    if (puid.compare(QStringLiteral("[MAN]"), Qt::CaseInsensitive) == 0) {
+        obj = _manager;
+    } else if (puid.compare(QStringLiteral("[HEXE]"), Qt::CaseInsensitive) ==
+               0) {
+        obj = _hexExt;
+    } else {
+        QString rpuid;
+        auto question = puid.indexOf('?');
+        enum { None, MustPlugin, MustExt } State = None;
+
+        if (question >= 0) {
+            rpuid = puid.sliced(0, question);
+            auto equest = puid.sliced(question + 1);
+            if (equest.compare(QStringLiteral("[PLG]"))) {
+                State = MustPlugin;
+            } else if (equest.compare(QStringLiteral("[EXT]"))) {
+                State = MustExt;
+            } else {
+                // warn and ignored
+                Logger::warning(
+                    QStringLiteral("[PluginSystem::invokeServiceImpl] Cannot "
+                                   "parsing filter: '%1'")
+                        .arg(equest));
+            }
+        } else {
+            rpuid = puid;
+            State = None;
+        }
+        auto r = std::find_if(
+            _loadedplgs.begin(), _loadedplgs.end(),
+            [=](IWingPlugin *plg) { return getPUID(plg) == rpuid; });
+
+        if (r == _loadedplgs.end()) {
+            return false;
+        }
+
+        auto rc = *r;
+        switch (State) {
+        case None:
+            obj = rc;
+            break;
+        case MustPlugin:
+            if (qobject_cast<IWingPlugin *>(rc)) {
+                obj = rc;
+            }
+            break;
+        case MustExt:
+            if (qobject_cast<IWingDevice *>(rc)) {
+                obj = rc;
+            }
+            break;
+        }
+    }
+
+    if (obj == nullptr) {
+        qCritical("[PluginSystem::invokeServiceImpl] Null caller");
         return false;
     }
 
-    auto obj = *r;
     auto meta = obj->metaObject();
 
     Qt::ConnectionType c;
@@ -532,6 +584,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     std::tie(method, c, paramCount, parameters, typeNames, metaTypes) = infos;
 
     if (parameters == nullptr || typeNames == nullptr || metaTypes == nullptr) {
+        qCritical("[PluginSystem::invokeServiceImpl] Invalid calling info");
         return false;
     }
 
@@ -561,6 +614,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     }
 
     if (!m.isValid()) {
+        qCritical("[PluginSystem::invokeServiceImpl] Invalid MetaMethod");
         return false;
     }
 
@@ -610,7 +664,37 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         m, obj, c, nparamCount, nparameters.data(), ntypeNames.data(),
         nmetaTypes.data());
 
-    // errror report
+    auto cstr = [](QMetaMethodInvoker::InvokeFailReason r) -> const char * {
+        switch (r) {
+        case QMetaMethodInvoker::InvokeFailReason::ReturnTypeMismatch:
+            return "ReturnTypeMismatch";
+        case QMetaMethodInvoker::InvokeFailReason::DeadLockDetected:
+            return "DeadLockDetected";
+        case QMetaMethodInvoker::InvokeFailReason::CallViaVirtualFailed:
+            return "CallViaVirtualFailed";
+        case QMetaMethodInvoker::InvokeFailReason::ConstructorCallOnObject:
+            return "ConstructorCallOnObject";
+        case QMetaMethodInvoker::InvokeFailReason::ConstructorCallWithoutResult:
+            return "ConstructorCallWithoutResult";
+        case QMetaMethodInvoker::InvokeFailReason::ConstructorCallFailed:
+            return "ConstructorCallFailed";
+        case QMetaMethodInvoker::InvokeFailReason::CouldNotQueueParameter:
+            return "CouldNotQueueParameter";
+        case QMetaMethodInvoker::InvokeFailReason::None:
+            return "None";
+        case QMetaMethodInvoker::InvokeFailReason::TooFewArguments:
+            return "TooFewArguments";
+        case QMetaMethodInvoker::InvokeFailReason::FormalParameterMismatch:
+            return "FormalParameterMismatch";
+            break;
+        }
+        return "";
+    };
+
+    if (ret != QMetaMethodInvoker::InvokeFailReason::None) {
+        qCritical("[PluginSystem::invokeServiceImpl] MetaCall failed: %s (%d)",
+                  cstr(ret), ret);
+    }
 
     return ret == QMetaMethodInvoker::InvokeFailReason::None;
 }
@@ -2612,7 +2696,11 @@ IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
 bool PluginSystem::passByFailedGuard(const QObject *sender, const char *func,
                                      const QVariantList &params) {
     if (_manager && sender != _manager) {
-        return !_manager->enterGuard(sender->metaObject(), func, params);
+        auto ret = !_manager->enterGuard(sender->metaObject(), func, params);
+        if (ret) {
+            qCritical("[GuardBlock] '%s' was blocked", func);
+        }
+        return ret;
     }
     return false;
 }
@@ -3280,9 +3368,9 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
                 } else if constexpr (std::is_same_v<T, IWingDevice>) {
                     _blkdevs[BlockReason::BlockedByManager].append(m);
                 }
-                Logger::critical(QStringLiteral("{ ") + m.id +
-                                 QStringLiteral(" } ") +
-                                 tr("PluginBlockByManager"));
+                qCritical(
+                    "[PluginSystem::loadPlugin] '%s' was blocked by manager",
+                    qUtf8Printable(m.id));
                 return std::nullopt;
             }
         }

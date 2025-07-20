@@ -111,6 +111,19 @@ void QHexRenderer::renderFrame(QPainter *painter) {
         painter->drawLine(endx, rect.top(), endx, rect.bottom());
 }
 
+void QHexRenderer::renderAdditonalFrame(QPainter *painter, bool top,
+                                        bool left) {
+    QRect rect = painter->window();
+    int endx = this->getEndColumnX();
+    painter->setPen(m_borderColor);
+    if (top) {
+        painter->drawLine(0, 0, endx, 0);
+    }
+    if (left) {
+        painter->drawLine(0, 0, 0, rect.bottom());
+    }
+}
+
 // modified by wingsummer
 void QHexRenderer::render(QPainter *painter, qsizetype begin, qsizetype end,
                           qsizetype firstline) {

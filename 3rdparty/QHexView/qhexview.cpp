@@ -325,8 +325,15 @@ void QHexView::keyPressEvent(QKeyEvent *e) {
 QPoint QHexView::absolutePosition(const QPoint &pos) const {
     auto margins = viewport()->contentsMargins();
     QPoint shift(horizontalScrollBar()->value() - margins.left(),
-                 -margins.top() * m_renderer->lineHeight());
+                 -margins.top());
     return pos + shift;
+}
+
+bool QHexView::disableInternalPaint() const { return m_disableInternalPaint; }
+
+void QHexView::setDisableInternalPaint(bool newDisableInternalPaint) {
+    m_disableInternalPaint = newDisableInternalPaint;
+    update();
 }
 
 QHexCursor *QHexView::cursor() const { return m_cursor; }
@@ -786,9 +793,9 @@ void QHexView::paintEvent(QPaintEvent *e) {
 
     // these are lines from the point of view of the visible rect
     // where the first "headerCount" are taken by the header
-    const int first = (r.top() / lineHeight); // included
+    const int first = (r.top() - m.top()) / lineHeight; // included
     const int lastPlusOne =
-        (r.bottom() / lineHeight) + 1 - m.top() - m.bottom(); // excluded
+        ((r.bottom() - m.top() - m.bottom()) / lineHeight) + 1; // excluded
 
     // compute document lines, adding firstVisible and removing the header
     // the max is necessary if the rect covers the header
@@ -796,12 +803,15 @@ void QHexView::paintEvent(QPaintEvent *e) {
     const qsizetype end = firstVisible + std::max(lastPlusOne - headerCount, 0);
 
     Q_EMIT onPaintCustomEventBegin();
-    painter.save();
     auto xOff = this->horizontalScrollBar()->value();
-    painter.translate(-xOff + m.left(), m.top() * m_renderer->lineHeight());
-    m_renderer->render(&painter, begin, end, firstVisible);
-    m_renderer->renderFrame(&painter);
-    painter.restore();
+    if (Q_LIKELY(!m_disableInternalPaint)) {
+        painter.save();
+        painter.translate(-xOff + m.left(), m.top());
+        m_renderer->render(&painter, begin, end, firstVisible);
+        m_renderer->renderFrame(&painter);
+        m_renderer->renderAdditonalFrame(&painter, m.top() > 0, m.left() > 0);
+        painter.restore();
+    }
     Q_EMIT onPaintCustomEvent(xOff, firstVisible, begin, end);
 }
 
@@ -1184,7 +1194,6 @@ void QHexView::adjustScrollBars() {
 
     auto docLines = m_renderer->documentLines();
     auto visLines = this->visibleLines();
-    auto margins = viewport()->contentsMargins();
 
     // modified by wingsummer,fix the scrollbar bug
     if (docLines > visLines && !m_document->isEmpty()) {
@@ -1200,6 +1209,7 @@ void QHexView::adjustScrollBars() {
     QScrollBar *hscrollbar = this->horizontalScrollBar();
     int documentWidth = m_renderer->documentWidth();
     int viewportWidth = viewport()->width();
+    auto margins = viewport()->contentsMargins();
 
     if (documentWidth > viewportWidth) {
         this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -1231,9 +1241,10 @@ qsizetype QHexView::lastVisibleLine() const {
 
 qsizetype QHexView::visibleLines() const {
     auto margins = viewport()->contentsMargins();
-    auto visLines = qsizetype(std::ceil(
-        this->height() / m_renderer->lineHeight() -
-        m_renderer->headerLineCount() - margins.top() - margins.bottom()));
+    auto visLines = qsizetype(
+        std::ceil((this->height() - margins.top() - margins.bottom()) /
+                      m_renderer->lineHeight() -
+                  m_renderer->headerLineCount()));
     return std::min(visLines, m_renderer->documentLines());
 }
 

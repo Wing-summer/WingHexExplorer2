@@ -72,9 +72,9 @@ SettingDialog::SettingDialog(QWidget *parent)
     _dialog->setWindowTitle(this->windowTitle());
 
     ui->btnRestore->setStyleSheet(
-        QStringLiteral("QToolButton::down-arrow { width:10px; height:10px; "
+        QStringLiteral("QToolButton::down-arrow {width:10px; height:10px; "
                        "subcontrol-position:right center; "
-                       "subcontrol-origin:content; left: -2px;"));
+                       "subcontrol-origin:content; left: -2px;}"));
     auto menu = new QMenu(ui->btnRestore);
     auto a = menu->addAction(tr("Restore current"));
     connect(a, &QAction::triggered, this, [this]() {

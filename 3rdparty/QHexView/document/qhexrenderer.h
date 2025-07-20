@@ -43,6 +43,7 @@ public:
                           const QFontMetricsF &fontmetrics,
                           QObject *parent = nullptr);
     void renderFrame(QPainter *painter);
+    void renderAdditonalFrame(QPainter *painter, bool top, bool left);
     void render(QPainter *painter, qsizetype start, qsizetype end,
                 qsizetype firstline); // begin included, end excluded
     void updateMetrics(const QFontMetricsF &fm);
