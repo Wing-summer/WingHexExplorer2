@@ -25,6 +25,7 @@ option(BUILD_TEST_PLUGIN OFF)
 option(BUILD_SHARED_MEM_EXT OFF)
 
 add_definitions(-DAS_NO_THREADS)
+add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
 
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
@@ -308,7 +309,9 @@ set(CLASS_SRC
     src/class/changedstringlist.h
     src/class/changedstringlist.cpp
     src/class/editorviewcontext.h
-    src/class/editorviewcontext.cpp)
+    src/class/editorviewcontext.cpp
+    src/class/consolehighlighanim.h
+    src/class/consolehighlighanim.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp

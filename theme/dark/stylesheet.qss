@@ -2741,12 +2741,12 @@ ads--CDockWidgetTab[activeTab="true"]
 
 ads--CDockWidgetTab QLabel
 {
-    background-color: #1b1d20;
+    background-color: transparent;
 }
 
-ads--CDockWidgetTab[activeTab="true"] QLabel
+ads--CDockWidgetTab[activeTab="false"]:hover
 {
-    background-color: #202326;
+    background-color: rgba(61, 173, 232, 0.1);
 }
 
 ads--CDockContainerWidget > QSplitter{

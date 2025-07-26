@@ -27,6 +27,7 @@ public:
 
     // HexEditorPalette interface
 public:
+    virtual QString docFileName() const override;
     virtual QFontMetricsF fontMetrics() const override;
     virtual QColor headerColor() const override;
     virtual QColor addressColor() const override;

@@ -6,7 +6,8 @@ enum class CrashCode : int {
     LanguageFile,
     PluginSetting,
     ScriptInitFailed,
-    GenericCallNotSupported
+    GenericCallNotSupported,
+    OutofMemory
 };
 
 namespace AsUserDataType {

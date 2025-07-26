@@ -333,8 +333,9 @@ ErrFile EditorView::newFile(size_t index) {
 
     removeMonitorPaths();
     auto istr = QString::number(index);
-    m_fileName = tr("Untitled") + istr;
-    this->setWindowTitle(m_fileName);
+    auto fname = tr("Untitled") + istr;
+    m_hex->setWindowFilePath(fname);
+    this->setWindowTitle(fname);
     m_docType = DocumentType::File;
     m_isWorkSpace = false;
     m_isNewFile = true;
@@ -371,7 +372,8 @@ ErrFile EditorView::openFile(const QString &filename) {
         m_hex->setKeepSize(true);
 
         m_docType = DocumentType::File;
-        m_fileName = info.absoluteFilePath();
+        auto fName = info.absoluteFilePath();
+        m_hex->setWindowFilePath(fName);
         m_isNewFile = false;
         p->setDocSaved();
 
@@ -379,8 +381,8 @@ ErrFile EditorView::openFile(const QString &filename) {
         connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
-        tab->setIcon(Utilities::getIconFromFile(style(), m_fileName));
-        tab->setToolTip(m_fileName);
+        tab->setIcon(Utilities::getIconFromFile(style(), fName));
+        tab->setToolTip(fName);
 
         addMonitorPath();
     }
@@ -435,7 +437,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     _file = file;
 
     m_docType = DocumentType::Extension;
-    m_fileName = fileName;
+    m_hex->setWindowFilePath(fileName);
     m_isNewFile = false;
     p->setDocSaved();
 
@@ -513,7 +515,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         return this->cloneParent()->save(workSpaceName, path, isExport,
                                          workSpaceAttr);
     }
-    auto fileName = path.isEmpty() ? m_fileName : path;
+    auto fileName = path.isEmpty() ? m_hex->windowFilePath() : path;
     auto doc = m_hex->document();
 
 #ifdef Q_OS_LINUX
@@ -589,7 +591,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    if (!doc->isDocSaved() || m_fileName != fileName || isNewFile()) {
+    if (!doc->isDocSaved() || m_hex->windowFilePath() != fileName ||
+        isNewFile()) {
         if (m_docType == DocumentType::Extension) {
             if (_dev->isOpen()) {
                 _dev->close();
@@ -611,7 +614,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             if (doc->saveTo(&file, !isExport)) {
                 file.close();
                 if (!isExport) {
-                    m_fileName = QFileInfo(fileName).absoluteFilePath();
+                    m_hex->setWindowFilePath(
+                        QFileInfo(fileName).absoluteFilePath());
 
                     if (isNewFile()) {
                         auto buffer = new QFileBuffer;
@@ -660,7 +664,7 @@ ErrFile EditorView::reload() {
 
     switch (documentType()) {
     case DocumentType::File:
-        return openFile(m_fileName);
+        return openFile(m_hex->windowFilePath());
     case DocumentType::Extension:
         return openExtFile(_ext, _file);
     default:
@@ -741,13 +745,14 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
     connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
             [=](bool b) {
                 QString fileName;
+                auto fName = m_hex->windowFilePath();
                 if (editor->isNewFile()) {
-                    fileName = m_fileName;
+                    fileName = fName;
                 } else if (editor->isExtensionFile()) {
-                    auto idx = m_fileName.indexOf('}');
-                    fileName = m_fileName.mid(idx);
+                    auto idx = fName.indexOf('}');
+                    fileName = fName.mid(idx);
                 } else {
-                    fileName = QFileInfo(m_fileName).fileName();
+                    fileName = QFileInfo(fName).fileName();
                 }
                 QString content;
 
@@ -770,7 +775,7 @@ void EditorView::connectDocSavedFlag(EditorView *editor) {
                     auto tab = this->tabWidget();
                     if (tab->icon().isNull()) {
                         tab->setIcon(
-                            Utilities::getIconFromFile(style(), m_fileName));
+                            Utilities::getIconFromFile(style(), fName));
                     }
                 }
             });
@@ -784,7 +789,7 @@ void EditorView::removeMonitorPaths() {
     _watcher.removePaths(files);
 }
 
-void EditorView::addMonitorPath() { _watcher.addPath(m_fileName); }
+void EditorView::addMonitorPath() { _watcher.addPath(m_hex->windowFilePath()); }
 
 BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
 
@@ -2144,12 +2149,12 @@ EditorView *EditorView::clone() {
     connect(ev, &EditorView::sigOnMetadata, this, &EditorView::sigOnMetadata);
     connect(ev, &EditorView::sigOnBookMark, this, &EditorView::sigOnBookMark);
 
-    auto doc = this->m_hex->document();
+    auto doc = m_hex->document();
 
     ev->m_cloneParent = this;
     ev->m_hex->setDocument(doc, ev->m_hex->cursor());
 
-    ev->m_fileName = this->m_fileName;
+    ev->m_hex->setWindowFilePath(m_hex->windowFilePath());
     ev->setWindowTitle(this->windowTitle() + QStringLiteral(" : ") +
                        QString::number(cloneIndex + 1));
 
@@ -2234,7 +2239,7 @@ QString EditorView::fileName() const {
     if (isCloneFile()) {
         return this->cloneParent()->fileName();
     }
-    return m_fileName;
+    return m_hex->windowFilePath();
 }
 
 bool EditorView::eventFilter(QObject *watched, QEvent *event) {
@@ -2247,3 +2252,5 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     }
     return ads::CDockWidget::eventFilter(watched, event);
 }
+
+EditorViewContext *EditorView::editorContext() const { return _context; }

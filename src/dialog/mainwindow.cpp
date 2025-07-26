@@ -465,6 +465,9 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                     swapEditor(m_curEditor, editview);
                     _editorLock.unlock();
                 } else {
+                    for (auto &menu : m_hexContextMenu) {
+                        menu->setProperty("__CONTEXT__", {});
+                    }
                     m_findresult->setModel(_findEmptyResult);
                     m_bookmarks->setModel(_bookMarkEmpty);
                     m_metadatas->setModel(_metadataEmpty);
@@ -1083,9 +1086,12 @@ ads::CDockAreaWidget *
 MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
                                       ads::DockWidgetArea area,
                                       ads::CDockAreaWidget *areaw) {
+
     m_bgScriptOutput = new QPlainTextEdit(this);
     m_bgScriptOutput->setPlaceholderText(tr("BgScriptOutputHere"));
     m_bgScriptOutput->setReadOnly(true);
+
+    _hlAnim = new ConsoleHighlighAnim(m_bgScriptOutput);
 
     auto a = newAction(
         ICONRES(QStringLiteral("mStr")), tr("SelectAll"),
@@ -1116,6 +1122,13 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
 
     auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
                               tr("BgScriptOutput"), m_bgScriptOutput);
+    _hlAnim->setWidget(dw->tabWidget());
+
+    auto e = new EventFilter(QEvent::Show, dw);
+    connect(e, &EventFilter::eventTriggered, this,
+            [this]() { _hlAnim->stop(); });
+    m_bgScriptOutput->installEventFilter(e);
+
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -3333,7 +3346,6 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         doc->disconnect(m_aShowMetaComment);
     }
 
-    Q_ASSERT(cur);
     auto hexeditor = cur->hexEditor();
     auto needReload = cur->property("__RELOAD__").toBool();
     if (needReload) {
@@ -3433,6 +3445,10 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                 m_aDelMetaData->setEnabled(
                     m_metadatas->selectionModel()->hasSelection());
             });
+
+    for (auto &menu : m_hexContextMenu) {
+        menu->setProperty("__CONTEXT__", quintptr(cur->editorContext()));
+    }
 
     _undoView->setStack(doc->undoStack());
 
@@ -3959,6 +3975,10 @@ void MainWindow::onOutputBgScriptOutput(
 
     lastInfo.first = message.type;
     lastInfo.second = qMakePair(message.row, message.col);
+
+    if (!m_bgScriptOutput->isVisible()) {
+        _hlAnim->start();
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

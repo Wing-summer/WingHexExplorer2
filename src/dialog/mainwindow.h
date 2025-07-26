@@ -44,6 +44,7 @@
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingplugin.h"
+#include "class/consolehighlighanim.h"
 #include "class/recentfilemanager.h"
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
@@ -478,6 +479,8 @@ private:
     ScriptingDialog *m_scriptDialog = nullptr;
     ScriptingConsole *m_scriptConsole = nullptr;
     QPlainTextEdit *m_bgScriptOutput = nullptr;
+
+    ConsoleHighlighAnim *_hlAnim = nullptr;
 
     bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;

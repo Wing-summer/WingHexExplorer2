@@ -217,6 +217,8 @@ public:
 
     void applySettings();
 
+    EditorViewContext *editorContext() const;
+
 private:
     inline qsizetype findAvailCloneIndex();
 
@@ -570,7 +572,6 @@ private:
     QMenu *m_menu = nullptr;
 
     QHash<QString, WingEditorViewWidget *> m_others;
-    QString m_fileName;
     bool m_isNewFile = true;
     QByteArray m_md5;
 

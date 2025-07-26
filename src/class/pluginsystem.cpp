@@ -4063,12 +4063,7 @@ void PluginSystem::try2LoadHexExtPlugin() {
 
         _manHexInfo = m;
 
-        {
-            auto menu = p->registeredHexContextMenu();
-            if (menu) {
-                _win->m_hexContextMenu.append(menu);
-            }
-        }
+        registerHexContextMenu(p);
         registerRibbonTools(p->registeredRibbonTools());
         registeredSettingPages(QVariant::fromValue(p),
                                p->registeredSettingPages());
@@ -4139,6 +4134,30 @@ void PluginSystem::registerEvents(IWingPlugin *plg) {
 
     if (evs.testFlag(IWingPlugin::RegisteredEvent::HexEditorViewPaint)) {
         _evplgs[IWingPlugin::RegisteredEvent::HexEditorViewPaint].append(plg);
+    }
+}
+
+void PluginSystem::registerHexContextMenu(IWingHexEditorInterface *inter) {
+    Q_ASSERT(inter);
+    auto menu = inter->registeredHexContextMenu();
+    if (menu) {
+        _win->m_hexContextMenu.append(menu);
+        connect(menu, &QMenu::aboutToShow, this, [menu, inter]() {
+            auto pp = menu->property("__CONTEXT__");
+            auto ptr =
+                reinterpret_cast<HexEditorContext *>(pp.value<quintptr>());
+            if (ptr) {
+                inter->prepareCallEditorContext(ptr);
+            }
+        });
+        connect(menu, &QMenu::triggered, this, [menu, inter]() {
+            auto pp = menu->property("__CONTEXT__");
+            auto ptr =
+                reinterpret_cast<HexEditorContext *>(pp.value<quintptr>());
+            if (ptr) {
+                inter->finishCallEditorContext(ptr);
+            }
+        });
     }
 }
 
@@ -4217,13 +4236,7 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
         // ensure call only once
         registerRibbonTools(p->registeredRibbonTools());
         registerPluginDockWidgets(p);
-
-        {
-            auto menu = p->registeredHexContextMenu();
-            if (menu) {
-                _win->m_hexContextMenu.append(menu);
-            }
-        }
+        registerHexContextMenu(p);
 
         {
             auto vieww = p->registeredEditorViewWidgets();

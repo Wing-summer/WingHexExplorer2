@@ -186,13 +186,15 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
     QStack<std::optional<bool>> m_condtionStack;
 
+    bool isEndLine = true;
+
     while (pos < modifiedScript.size()) {
         auto SECTION = sectionname.toUtf8();
 
         asUINT len = 0;
         asETokenClass t = engine->ParseToken(modifiedScript.data() + pos,
                                              modifiedScript.size() - pos, &len);
-        if (t == asTC_UNKNOWN && modifiedScript[pos] == '#' &&
+        if (isEndLine && t == asTC_UNKNOWN && modifiedScript[pos] == '#' &&
             (pos + 1 < modifiedScript.size())) {
             int start = pos++;
 
@@ -217,12 +219,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                     if (std::any_of(modifiedScript.data() + pos,
                                     modifiedScript.data() + pos + len,
                                     [](char ch) { return ch == '\n'; })) {
-                        if (_isCodeCompleteMode) {
-                            pos = modifiedScript.indexOf('\n', pos);
-                            continue;
-                        }
-
-                        auto str = QObject::tr("IfDefNoWord");
+                        auto str = tr("IfDefNoWord");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
@@ -234,16 +231,6 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 }
 
                 if (isIfDef || isIfnDef) {
-                    if (_isCodeCompleteMode) {
-                        auto pos = modifiedScript.indexOf('\n', start);
-                        if (pos < 0) {
-                            overwriteCode(modifiedScript, start,
-                                          modifiedScript.size() - start - 1);
-                        } else {
-                            overwriteCode(modifiedScript, start, pos - start);
-                        }
-                        continue;
-                    }
                     if (t == asTC_IDENTIFIER) {
                         QByteArray word = modifiedScript.sliced(pos, len);
 
@@ -267,23 +254,13 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         qDebug().noquote() << modifiedScript;
 #endif
                     } else {
-                        auto str = QObject::tr("IfDefInvalidWord");
+                        auto str = tr("IfDefInvalidWord");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
                     }
                 } else if (isIf) {
-                    if (_isCodeCompleteMode) {
-                        auto pos = modifiedScript.indexOf('\n', start);
-                        if (pos < 0) {
-                            overwriteCode(modifiedScript, start,
-                                          modifiedScript.size() - start - 1);
-                        } else {
-                            overwriteCode(modifiedScript, start, pos - start);
-                        }
-                        continue;
-                    }
                     // evalutate the string
                     auto npos = modifiedScript.indexOf('\n', pos);
                     QByteArray codes;
@@ -303,7 +280,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         ok);
 
                     if (ret < 0) {
-                        auto str = QObject::tr("CalIfFailed");
+                        auto str = tr("CalIfFailed");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
@@ -323,20 +300,6 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                     if (t == asTC_IDENTIFIER) {
                         QByteArray word = modifiedScript.sliced(pos, len);
                         pos += len;
-
-                        if (_isCodeCompleteMode) {
-                            defineWord(word, {});
-                            auto pos = modifiedScript.indexOf('\n', start);
-                            if (pos < 0) {
-                                overwriteCode(modifiedScript, start,
-                                              modifiedScript.size() - start -
-                                                  1);
-                            } else {
-                                overwriteCode(modifiedScript, start,
-                                              pos - start);
-                            }
-                            continue;
-                        }
 
                         t = engine->ParseToken(modifiedScript.data() + pos,
                                                modifiedScript.size() - pos,
@@ -366,7 +329,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                     defineWord(word, v);
                                 } break;
                                 default:
-                                    auto str = QObject::tr("UnexceptedToken");
+                                    auto str = tr("UnexceptedToken");
                                     engine->WriteMessage(
                                         SECTION,
                                         getLineCount(modifiedScript, pos), 1,
@@ -381,42 +344,20 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                         // ensure end line
                         if (endLinePassFailed(modifiedScript, pos)) {
-                            auto str = QObject::tr("UnexceptedToken");
+                            auto str = tr("UnexceptedToken");
                             engine->WriteMessage(
                                 SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
                     } else {
-                        if (_isCodeCompleteMode) {
-                            auto pos = modifiedScript.indexOf('\n', start);
-                            if (pos < 0) {
-                                overwriteCode(modifiedScript, start,
-                                              modifiedScript.size() - start -
-                                                  1);
-                            } else {
-                                overwriteCode(modifiedScript, start,
-                                              pos - start);
-                            }
-                            continue;
-                        }
-                        auto str = QObject::tr("InvalidDef");
+                        auto str = tr("InvalidDef");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
                         return asERROR;
                     }
                 } else if (isUnDef) {
-                    if (_isCodeCompleteMode) {
-                        auto pos = modifiedScript.indexOf('\n', start);
-                        if (pos < 0) {
-                            overwriteCode(modifiedScript, start,
-                                          modifiedScript.size() - start - 1);
-                        } else {
-                            overwriteCode(modifiedScript, start, pos - start);
-                        }
-                        continue;
-                    }
                     if (t == asTC_IDENTIFIER) {
                         QByteArray word = modifiedScript.sliced(pos, len);
 
@@ -427,13 +368,13 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         constexpr auto PREFIX = "__";
                         if (word.startsWith(PREFIX) && word.endsWith(PREFIX)) {
                             // Warning
-                            auto str = QObject::tr("ReservedMarcoType");
+                            auto str = tr("ReservedMarcoType");
                             engine->WriteMessage(
                                 SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_WARNING, str.toUtf8());
                         } else {
                             if (!definedWords.remove(word)) {
-                                auto str = QObject::tr("MarcoNotFound:") + word;
+                                auto str = tr("MarcoNotFound:") + word;
                                 engine->WriteMessage(
                                     SECTION, getLineCount(modifiedScript, pos),
                                     1, asMSGTYPE_WARNING, str.toUtf8());
@@ -442,14 +383,14 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                         // ensure end line
                         if (endLinePassFailed(modifiedScript, pos)) {
-                            auto str = QObject::tr("UnexceptedToken");
+                            auto str = tr("UnexceptedToken");
                             engine->WriteMessage(
                                 SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
                     } else {
-                        auto str = QObject::tr("InvalidDef");
+                        auto str = tr("InvalidDef");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
@@ -457,12 +398,8 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                     }
                 }
             } else if (token == "else") {
-                if (_isCodeCompleteMode) {
-                    overwriteCode(modifiedScript, start, pos - start);
-                    continue;
-                }
                 if (m_condtionStack.isEmpty()) {
-                    auto str = QObject::tr("NoMatchingIf");
+                    auto str = tr("NoMatchingIf");
                     engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
@@ -478,14 +415,14 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                         // ensure end line
                         if (endLinePassFailed(modifiedScript, pos - 1)) {
-                            auto str = QObject::tr("UnexceptedToken");
+                            auto str = tr("UnexceptedToken");
                             engine->WriteMessage(
                                 SECTION, getLineCount(modifiedScript, pos), 1,
                                 asMSGTYPE_ERROR, str.toUtf8());
                             return asERROR;
                         }
                     } else {
-                        auto str = QObject::tr("DupElseDef");
+                        auto str = tr("DupElseDef");
                         engine->WriteMessage(SECTION,
                                              getLineCount(modifiedScript, pos),
                                              1, asMSGTYPE_ERROR, str.toUtf8());
@@ -496,13 +433,9 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 qDebug().noquote() << modifiedScript;
 #endif
             } else if (token == "endif") {
-                if (_isCodeCompleteMode) {
-                    overwriteCode(modifiedScript, start, pos - start);
-                    continue;
-                }
                 // Only remove the #endif if there was a matching #if
                 if (m_condtionStack.isEmpty()) {
-                    auto str = QObject::tr("NoMatchingIf");
+                    auto str = tr("NoMatchingIf");
                     engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
@@ -514,7 +447,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
 
                 // ensure end line
                 if (endLinePassFailed(modifiedScript, pos)) {
-                    auto str = QObject::tr("UnexceptedToken");
+                    auto str = tr("UnexceptedToken");
                     engine->WriteMessage(SECTION,
                                          getLineCount(modifiedScript, pos), 1,
                                          asMSGTYPE_ERROR, str.toUtf8());
@@ -524,67 +457,71 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                 qDebug().noquote() << modifiedScript;
 #endif
             }
-        } else {
-            if (!_isCodeCompleteMode) {
-                if (t == asTC_IDENTIFIER) {
-                    // define replace
-                    auto word = modifiedScript.sliced(pos, len);
-                    if (word == PROMISE_AWAIT) {
-                        auto npos = pos + len;
-                        asUINT total = 0;
-                        auto t = engine->ParseToken(
-                            modifiedScript.data() + npos,
-                            modifiedScript.size() - npos, &total);
-                        if (t == asTC_WHITESPACE) {
-                            npos += total;
-                            t = engine->ParseToken(modifiedScript.data() + npos,
-                                                   modifiedScript.size() - npos,
-                                                   &total);
-                            if (t == asTC_IDENTIFIER) {
-                                // ok
-                                auto word = modifiedScript.sliced(npos, total);
-                                auto data = "(" + word +
-                                            ")." PROMISE_YIELD
-                                            "()." PROMISE_UNWRAP "()";
-                                auto oldLen = npos - pos + word.length();
-                                modifiedScript.replace(pos, oldLen, data);
-                                pos = npos;
-                                pos += data.length() - oldLen + word.length();
-                                continue;
-                            }
-                        }
 
-                        auto str = QObject::tr("UnexceptedToken");
-                        engine->WriteMessage(SECTION,
-                                             getLineCount(modifiedScript, pos),
-                                             1, asMSGTYPE_ERROR, str.toUtf8());
-                        return asERROR;
-                    } else if (word == "__LINE__") {
-                        auto data = QByteArray::number(
-                            getLineCount(modifiedScript, pos));
-                        modifiedScript.replace(pos, len, data);
-                        pos += data.length();
-                        continue;
-                    } else if (word == "__SECTION__") {
-                        auto data = SECTION;
-                        data.prepend('"').append('"');
-                        modifiedScript.replace(pos, len, data);
-                        pos += data.length();
-                        continue;
-                    } else if (word == "__SECTION_BASE__") {
-                        auto data = QFileInfo(SECTION).baseName().toUtf8();
-                        data.prepend('"').append('"');
-                        modifiedScript.replace(pos, len, data);
-                        pos += data.length();
-                        continue;
-                    } else {
-                        auto rword = findReplaceResult(word);
-                        if (word != rword) {
-                            modifiedScript.replace(pos, len, rword);
-                            len = rword.length();
+            isEndLine = true;
+        } else {
+            if (t == asTC_IDENTIFIER) {
+                // define replace
+                auto word = modifiedScript.sliced(pos, len);
+                if (word == PROMISE_AWAIT) {
+                    auto npos = pos + len;
+                    asUINT total = 0;
+                    auto t = engine->ParseToken(modifiedScript.data() + npos,
+                                                modifiedScript.size() - npos,
+                                                &total);
+                    if (t == asTC_WHITESPACE) {
+                        npos += total;
+                        t = engine->ParseToken(modifiedScript.data() + npos,
+                                               modifiedScript.size() - npos,
+                                               &total);
+                        if (t == asTC_IDENTIFIER) {
+                            // ok
+                            auto word = modifiedScript.sliced(npos, total);
+                            auto data = "(" + word +
+                                        ")." PROMISE_YIELD "()." PROMISE_UNWRAP
+                                        "()";
+                            auto oldLen = npos - pos + word.length();
+                            modifiedScript.replace(pos, oldLen, data);
+                            pos = npos;
+                            pos += data.length() - oldLen + word.length();
+                            continue;
                         }
                     }
+
+                    auto str = tr("UnexceptedToken");
+                    engine->WriteMessage(SECTION,
+                                         getLineCount(modifiedScript, pos), 1,
+                                         asMSGTYPE_ERROR, str.toUtf8());
+                    return asERROR;
+                } else if (word == "__LINE__") {
+                    auto data =
+                        QByteArray::number(getLineCount(modifiedScript, pos));
+                    modifiedScript.replace(pos, len, data);
+                    pos += data.length();
+                    continue;
+                } else if (word == "__SECTION__") {
+                    auto data = SECTION;
+                    data.prepend('"').append('"');
+                    modifiedScript.replace(pos, len, data);
+                    pos += data.length();
+                    continue;
+                } else if (word == "__SECTION_BASE__") {
+                    auto data = QFileInfo(SECTION).baseName().toUtf8();
+                    data.prepend('"').append('"');
+                    modifiedScript.replace(pos, len, data);
+                    pos += data.length();
+                    continue;
+                } else {
+                    auto rword = findReplaceResult(word);
+                    if (word != rword) {
+                        modifiedScript.replace(pos, len, rword);
+                        len = rword.length();
+                    }
                 }
+            } else if (t == asTC_WHITESPACE) {
+                isEndLine = std::any_of(modifiedScript.data() + pos,
+                                        modifiedScript.data() + pos + len,
+                                        [](char ch) { return ch == '\n'; });
             }
             pos += len;
         }
@@ -644,11 +581,11 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                         // line breaks
                         auto p = includefile.indexOf('\n');
                         if (p >= 0) {
-                            auto str =
-                                QObject::tr("Invalid file name for #include; "
-                                            "it contains a line-break: ") +
-                                QStringLiteral("'") + includefile.left(p) +
-                                QStringLiteral("'");
+                            auto str = tr("Invalid file name for #include; "
+                                          "it contains a line-break: ") +
+                                       QStringLiteral("'") +
+                                       includefile.left(p) +
+                                       QStringLiteral("'");
                             engine->WriteMessage(
                                 sectionname.toUtf8(),
                                 getLineCount(modifiedScript, pos), 1,
@@ -690,12 +627,11 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                             auto p = includefile.indexOf('\n');
                             auto ws = includefile.indexOf(' ');
                             if (!includefile.isEmpty() && p >= 0 && ws >= 0) {
-                                auto str =
-                                    QObject::tr(
-                                        "Invalid file name for #include; "
-                                        "it contains a line-break: ") +
-                                    QStringLiteral("'") + includefile.left(p) +
-                                    QStringLiteral("'");
+                                auto str = tr("Invalid file name for #include; "
+                                              "it contains a line-break: ") +
+                                           QStringLiteral("'") +
+                                           includefile.left(p) +
+                                           QStringLiteral("'");
                                 engine->WriteMessage(
                                     sectionname.toUtf8(),
                                     getLineCount(modifiedScript, pos), 1,
@@ -710,10 +646,9 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                                               pos - start);
                             }
                         } else {
-                            auto str =
-                                QObject::tr("Invalid file name for #include; "
-                                            "it contains a line-break or "
-                                            "unpaired symbol");
+                            auto str = tr("Invalid file name for #include; "
+                                          "it contains a line-break or "
+                                          "unpaired symbol");
                             engine->WriteMessage(sectionname.toUtf8(), 0, 0,
                                                  asMSGTYPE_ERROR, str.toUtf8());
                         }
@@ -734,20 +669,17 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
                     // to avoid compiler error
                     overwriteCode(modifiedScript, start, pos - start);
 
-                    if (!_isCodeCompleteMode) {
-                        int r = pragmaCallback
-                                    ? pragmaCallback(pragmaText, this,
-                                                     sectionname, pragmaParam)
-                                    : -1;
-                        if (r < 0) {
-                            engine->WriteMessage(
-                                sectionname.toUtf8(),
-                                getLineCount(modifiedScript, pos), 1,
-                                asMSGTYPE_ERROR,
-                                QObject::tr("Invalid #pragma directive")
-                                    .toUtf8());
-                            return r;
-                        }
+                    int r = pragmaCallback
+                                ? pragmaCallback(pragmaText, this, sectionname,
+                                                 pragmaParam)
+                                : -1;
+                    if (r < 0) {
+                        engine->WriteMessage(
+                            sectionname.toUtf8(),
+                            getLineCount(modifiedScript, pos), 1,
+                            asMSGTYPE_ERROR,
+                            tr("Invalid #pragma directive").toUtf8());
+                        return r;
                     }
                 }
             }
@@ -810,8 +742,7 @@ int AsPreprocesser::loadScriptSection(const QString &filename) {
 
     if (!f.open(QFile::ReadOnly)) {
         // Write a message to the engine's message callback
-        auto msg = QObject::tr("Failed to open script file ") +
-                   QStringLiteral("'") +
+        auto msg = tr("Failed to open script file ") + QStringLiteral("'") +
                    QFileInfo(filename).absoluteFilePath() + QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
@@ -1020,12 +951,6 @@ QByteArray AsPreprocesser::findReplaceResult(const QByteArray &v) {
         }
     }
     return r;
-}
-
-bool AsPreprocesser::isCodeCompleteMode() const { return _isCodeCompleteMode; }
-
-void AsPreprocesser::setIsCodeCompleteMode(bool newIsCodeCompleteMode) {
-    _isCodeCompleteMode = newIsCodeCompleteMode;
 }
 
 QHash<QString, QByteArray> AsPreprocesser::definedMacros() const {

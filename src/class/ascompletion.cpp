@@ -497,7 +497,6 @@ QList<CodeInfoTip> AsCompletion::parseDocument() {
 
     // first preprocess the code
     AsPreprocesser prepc(engine);
-    prepc.setIsCodeCompleteMode(true);
     prepc.setIncludeCallback(&AsCompletion::includeCallBack, this);
 
     auto r = prepc.loadSectionFromMemory(QStringLiteral("ASCOMPLETION"),

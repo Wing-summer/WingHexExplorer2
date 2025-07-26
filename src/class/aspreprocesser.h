@@ -35,6 +35,7 @@
 #pragma warning(disable : 4786)
 #endif
 
+#include <QApplication>
 #include <QEventLoop>
 #include <QMap>
 #include <QSet>
@@ -74,6 +75,7 @@ typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
  *      * #ifndef <word>
  */
 class AsPreprocesser {
+    Q_DECLARE_TR_FUNCTIONS(AsPreprocesser)
 public:
     explicit AsPreprocesser(asIScriptEngine *engine);
     virtual ~AsPreprocesser();
@@ -112,9 +114,6 @@ public:
     unsigned int sectionCount() const;
 
     QString sectionName(unsigned int idx) const;
-
-    bool isCodeCompleteMode() const;
-    void setIsCodeCompleteMode(bool newIsCodeCompleteMode);
 
     QHash<QString, QByteArray> definedMacros() const;
 
@@ -155,9 +154,6 @@ protected:
     QStringList includedScripts;
 
     QHash<QString, QByteArray> definedWords;
-
-private:
-    bool _isCodeCompleteMode = false;
 };
 
 #endif // ASPREPROCESSER_H

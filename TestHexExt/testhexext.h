@@ -53,15 +53,25 @@ public:
     contentMargins(WingHex::HexEditorContext *context) const override;
 
 public:
+    virtual void
+    prepareCallEditorContext(WingHex::HexEditorContext *context) override;
+    virtual void
+    finishCallEditorContext(WingHex::HexEditorContext *context) override;
+
+public:
     virtual void onPaintEvent(QPainter *painter, const QWidget *w,
                               WingHex::HexEditorContext *context) override;
+
+private:
+    bool isShowLinePannel(WingHex::HexEditorContext *context);
 
 private slots:
     void setColVisible(bool b);
 
 private:
     QMenu *m_context;
-    bool _visCol = true;
+    QAction *m_aVisCol;
+    WingHex::HexEditorContext *_curContext = nullptr;
 };
 
 #endif // TESTHEXEXT_H

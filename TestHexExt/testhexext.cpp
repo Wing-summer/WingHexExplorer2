@@ -31,6 +31,7 @@ TestHexExt::TestHexExt() : WingHex::IWingHexEditorPlugin() {
     a->setChecked(true);
     connect(a, &QAction::toggled, this, &TestHexExt::setColVisible);
     m_context->addAction(a);
+    m_aVisCol = a;
 }
 
 bool TestHexExt::init(const std::unique_ptr<QSettings> &set) {
@@ -52,7 +53,8 @@ TestHexExt::registeredRibbonTools() const {
 }
 
 QMargins TestHexExt::contentMargins(WingHex::HexEditorContext *context) const {
-    if (!_visCol) {
+    auto visCol = context->property("TestHexExt.colVis").toBool();
+    if (!visCol) {
         return {};
     }
     auto lines = context->documentLines();
@@ -65,9 +67,23 @@ QMargins TestHexExt::contentMargins(WingHex::HexEditorContext *context) const {
     return {int(colLen) + 1, 0, 0, 0};
 }
 
+void TestHexExt::prepareCallEditorContext(WingHex::HexEditorContext *context) {
+    _curContext = context;
+    auto b = isShowLinePannel(context);
+    m_aVisCol->blockSignals(true);
+    m_aVisCol->setChecked(b);
+    m_aVisCol->blockSignals(false);
+}
+
+void TestHexExt::finishCallEditorContext(WingHex::HexEditorContext *context) {
+    Q_UNUSED(context);
+    _curContext = nullptr;
+}
+
 void TestHexExt::onPaintEvent(QPainter *painter, const QWidget *w,
                               WingHex::HexEditorContext *context) {
-    if (!_visCol) {
+    auto visCol = isShowLinePannel(context);
+    if (!visCol) {
         return;
     }
     painter->save();
@@ -104,4 +120,17 @@ void TestHexExt::onPaintEvent(QPainter *painter, const QWidget *w,
     painter->restore();
 }
 
-void TestHexExt::setColVisible(bool b) { _visCol = b; }
+bool TestHexExt::isShowLinePannel(WingHex::HexEditorContext *context) {
+    auto pp = context->property("TestHexExt.colVis");
+    if (pp.isNull()) {
+        context->setProperty("TestHexExt.colVis", true);
+        return true;
+    }
+    return pp.toBool();
+}
+
+void TestHexExt::setColVisible(bool b) {
+    if (_curContext) {
+        _curContext->setProperty("TestHexExt.colVis", b);
+    }
+}

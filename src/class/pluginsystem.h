@@ -224,6 +224,8 @@ private:
 private:
     void registerEvents(IWingPlugin *plg);
 
+    void registerHexContextMenu(IWingHexEditorInterface *inter);
+
     void applyFunctionTables(QObject *plg, const CallTable &fns);
 
     bool isPluginLoaded(const WingDependency &d);

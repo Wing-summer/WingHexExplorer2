@@ -18,8 +18,12 @@
 #include "editorviewcontext.h"
 
 EditorViewContext::EditorViewContext(QHexView *view)
-    : WingHex::HexEditorContext(), _view(view) {
+    : WingHex::HexEditorContext(view), _view(view) {
     Q_ASSERT(view);
+}
+
+QString EditorViewContext::docFileName() const {
+    return _view->windowFilePath();
 }
 
 QFontMetricsF EditorViewContext::fontMetrics() const {
