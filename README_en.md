@@ -126,6 +126,8 @@ First of all, I would like to express my sincere tanks for your enthusiastic hel
 6. Regardless of the purpose, if you do not obtain the authorization of me, you may not modify any network links pointed to and the ABOUT contents in the program, such as sponsorship and content about the software.
 7. You may not insert any plug-in containing commercial promotion in the installation program.
 
+If you are a Windows user, you can download in the release page, or compile other versions by yourself; For Linuxers, you can try to download the RUN file or help yourself; If you are using Arch-based Linux, you can install the `winghexexplorer2` AUR package, or install `winghexexplorer2-git` to try the latest contents, but it is best not to use the nightly builds for daily use, although it is generally stable at present.
+
 ### Issue
 
 If you have any suggestions, please be sure to read the following statement before submitting an issue to avoid wasting our precious time:
