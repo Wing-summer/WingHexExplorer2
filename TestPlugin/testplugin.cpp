@@ -263,7 +263,7 @@ WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
     void *array = nullptr;
     QVector<void *> colors;
     for (auto &c : colorTable()) {
-        colors.append(new QColor(c));
+        colors.append(&c);
     }
 
     auto invoked =
@@ -271,7 +271,6 @@ WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
                       qReturnArg(array), WingHex::MetaType::Meta_Color, colors);
     if (invoked) {
         if (array) {
-            qDeleteAll(colors);
             return array;
         }
     }

@@ -175,14 +175,10 @@ private:
     WING_SERVICE void *list2AsArray(const WingHex::SenderInfo &sender,
                                     WingHex::MetaType type,
                                     const QList<void *> &content);
-    WING_SERVICE void deleteAsArray(const WingHex::SenderInfo &sender,
-                                    void *array);
 
     WING_SERVICE void *newAsDictionary(
         const WingHex::SenderInfo &sender,
         const QHash<QString, QPair<WingHex::MetaType, void *>> &content);
-    WING_SERVICE void deleteAsDictionary(const WingHex::SenderInfo &sender,
-                                         void *dic);
 
     // =========================================================
 

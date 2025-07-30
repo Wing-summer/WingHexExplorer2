@@ -1061,12 +1061,10 @@ QStringList WingAngelAPI::cArray2QStringList(const CScriptArray &array,
 
     QStringList buffer;
     buffer.reserve(array.GetSize());
-    array.AddRef();
     for (asUINT i = 0; i < array.GetSize(); ++i) {
         auto item = reinterpret_cast<const QString *>(array.At(i));
         buffer.append(*item);
     }
-    array.Release();
     return buffer;
 }
 
@@ -1217,9 +1215,10 @@ void WingAngelAPI::qvariantCastOp(
         assignTmpBuffer(buffer, var.toULongLong());
         fn(&buffer, type);
         break;
-    case QMetaType::QChar:
-        fn(new QChar(var.toChar()), type);
-        break;
+    case QMetaType::QChar: {
+        auto obj = var.toChar();
+        fn(&obj, type);
+    } break;
     case QMetaType::Float:
         assignTmpBuffer(buffer, var.toULongLong());
         fn(&buffer, type);
@@ -1229,21 +1228,24 @@ void WingAngelAPI::qvariantCastOp(
         fn(&buffer, type);
         break;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    case QMetaType::Char16:
-        fn(new QChar(var.value<char16_t>()), type);
-        break;
-    case QMetaType::Char32:
-        fn(new QChar(var.value<char32_t>()), type);
-        break;
+    case QMetaType::Char16: {
+        auto obj = QChar(var.value<char16_t>());
+        fn(&obj, type);
+    } break;
+    case QMetaType::Char32: {
+        auto obj = QChar(var.value<char32_t>());
+        fn(&obj, type);
+    } break;
 #endif
     case QMetaType::UChar:
     case QMetaType::SChar:
     case QMetaType::Char:
         assignTmpBuffer(buffer, var.value<uchar>());
         break;
-    case QMetaType::QString:
-        fn(new QString(var.toString()), type);
-        break;
+    case QMetaType::QString: {
+        auto obj = var.toString();
+        fn(&obj, type);
+    } break;
     case QMetaType::QByteArray: {
         auto value = var.toByteArray();
         auto info = engine->GetTypeInfoByDecl("array<byte>");
@@ -1298,9 +1300,10 @@ void WingAngelAPI::qvariantCastOp(
         fn(arr, type);
         arr->Release();
     } break;
-    case QMetaType::QColor:
-        fn(new QColor(var.value<QColor>()), type);
-        break;
+    case QMetaType::QColor: {
+        auto obj = var.value<QColor>();
+        fn(&obj, type);
+    } break;
     case QMetaType::Void:
         break;
     default:
@@ -2000,7 +2003,9 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
     if (info) {
         auto len = content.length();
         auto arr = CScriptArray::Create(info, len);
-        std::memcpy(arr->GetBuffer(), content.data(), len);
+        for (int i = 0; i < len; ++i) {
+            arr->SetValue(i, content.at(i));
+        }
         return arr;
     }
     return nullptr;
@@ -2009,37 +2014,8 @@ void *WingAngelAPI::vector2AsArray(const WingHex::SenderInfo &sender,
 void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
                                  WingHex::MetaType type,
                                  const QList<void *> &content) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     static_assert(std::is_same_v<QList<int>, QVector<int>>);
     return vector2AsArray(sender, type, content);
-#else
-    Q_UNUSED(sender);
-    auto typeStr = type2AngelScriptString(MetaType(type | MetaType::Meta_Array),
-                                          false, true);
-    if (typeStr.isEmpty()) {
-        return nullptr;
-    }
-
-    auto engine = ScriptMachine::instance().engine();
-    auto info = engine->GetTypeInfoByDecl(typeStr.toUtf8());
-    if (info) {
-        auto len = content.length();
-        auto arr = CScriptArray::Create(info, len);
-        for (decltype(len) i = 0; i < len; ++i) {
-            arr->SetValue(i, content.at(i));
-        }
-        return arr;
-    }
-    return nullptr;
-#endif
-}
-
-void WingAngelAPI::deleteAsArray(const WingHex::SenderInfo &sender,
-                                 void *array) {
-    Q_UNUSED(sender);
-    if (array) {
-        reinterpret_cast<CScriptArray *>(array)->Release();
-    }
 }
 
 void *WingAngelAPI::newAsDictionary(
@@ -2061,14 +2037,6 @@ void *WingAngelAPI::newAsDictionary(
     }
 
     return dic;
-}
-
-void WingAngelAPI::deleteAsDictionary(const WingHex::SenderInfo &sender,
-                                      void *dic) {
-    Q_UNUSED(sender);
-    if (dic) {
-        reinterpret_cast<CScriptDictionary *>(dic)->Release();
-    }
 }
 
 void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {

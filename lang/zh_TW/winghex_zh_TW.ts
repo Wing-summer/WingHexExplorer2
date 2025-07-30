@@ -5467,18 +5467,18 @@
         <translation>為 AngelScript 腳本提供調用主機 API 能力的內部插件。</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1307"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1310"/>
         <source>NotSupportedQMetaType:</source>
         <translation>不支持的 QT 數據元類型：</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1764"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1848"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1767"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1851"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>腳本調用發生異常：（%1）%2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1790"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1793"/>
         <source>InvalidRetType: need </source>
         <translation>無效返回值：需要 </translation>
     </message>
