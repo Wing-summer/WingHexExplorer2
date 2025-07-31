@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
 
         // this exception can only occur when your memory are too limit or
         // you are writing more than 2GB with QByteArray on 32-bit operating
-        // system.
+        // system or with Qt5.
         if (QLocale::China == df.territory()) {
             WingMessageBox::critical(
                 nullptr, QStringLiteral(APP_NAME),

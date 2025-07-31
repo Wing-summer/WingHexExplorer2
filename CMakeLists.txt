@@ -384,7 +384,9 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptjson.cpp
     src/scriptaddon/scriptfile.cpp
     src/scriptaddon/scriptfile.h
-    src/scriptaddon/aspromise.hpp)
+    src/scriptaddon/aspromise.hpp
+    src/scriptaddon/scriptenv.h
+    src/scriptaddon/scriptenv.cpp)
 
 # localization support
 file(

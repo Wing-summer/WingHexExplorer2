@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -30,6 +30,44 @@
     <number>0</number>
    </property>
    <item>
+    <widget class="QPushButton" name="btnPrev">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>15</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>8</width>
+       <height>8</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="linePrev">
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Plain</enum>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QScrollArea" name="ribbonTabScrollArea">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -38,19 +76,19 @@
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
      </property>
      <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
      </property>
      <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
@@ -60,7 +98,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>409</width>
+        <width>373</width>
         <height>90</height>
        </rect>
       </property>
@@ -111,6 +149,44 @@
        </item>
       </layout>
      </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="lineNext">
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Plain</enum>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btnNext">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>15</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::GoNext"/>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>8</width>
+       <height>8</height>
+      </size>
+     </property>
     </widget>
    </item>
   </layout>

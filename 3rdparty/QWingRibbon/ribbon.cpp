@@ -50,7 +50,7 @@ Ribbon::Ribbon(QWidget *parent) : QTabWidget(parent) {
         Q_ASSERT(tab_pane);
         tab_pane->setVisible(!checked);
         if (checked) {
-            this->setMaximumHeight(this->tabBar()->height());
+            this->setMaximumHeight(this->tabBar()->height() + 1);
         } else {
             this->setMaximumHeight(QWIDGETSIZE_MAX);
         }

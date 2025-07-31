@@ -27,9 +27,9 @@ ConsoleHighlighAnim::ConsoleHighlighAnim(QObject *parent)
     _anim = new QPropertyAnimation(this, QByteArrayLiteral("alpha"), this);
     _anim->setStartValue(10);
     _anim->setEndValue(100);
-    _anim->setDuration(1000);
+    _anim->setDuration(800);
     _anim->setEasingCurve(QEasingCurve::InOutQuad);
-    _anim->setLoopCount(5);
+    _anim->setLoopCount(-1);
     connect(_anim, &QPropertyAnimation::finished, this, [this]() {
         if (_w) {
             _w->setStyleSheet({});

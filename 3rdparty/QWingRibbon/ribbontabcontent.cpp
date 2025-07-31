@@ -37,9 +37,17 @@ RibbonTabContent::RibbonTabContent(QWidget *parent)
                     return;
                 }
 
-                int delta = e->angleDelta().y();
+                int delta = e->angleDelta().y() / 2;
                 hb->setValue(hb->value() - delta);
             });
+    connect(hb, &QScrollBar::valueChanged, this,
+            &RibbonTabContent::updateButtonIndicator);
+
+    constexpr auto delta = 10;
+    connect(ui->btnNext, &QPushButton::clicked, this,
+            [hb]() { hb->setValue(hb->value() + delta); });
+    connect(ui->btnPrev, &QPushButton::clicked, this,
+            [hb]() { hb->setValue(hb->value() - delta); });
     view->installEventFilter(we);
 }
 
@@ -50,6 +58,7 @@ RibbonButtonGroup *RibbonTabContent::addGroup(const QString &groupName) {
     ribbonButtonGroup->setTitle(groupName);
 
     ui->ribbonHorizontalLayout->addWidget(ribbonButtonGroup);
+    updateButtonIndicator();
 
     return ribbonButtonGroup;
 }
@@ -65,6 +74,7 @@ void RibbonTabContent::removeGroup(const QString &groupName) {
             break;
         }
     }
+    updateButtonIndicator();
 }
 
 void RibbonTabContent::removeGroup(RibbonButtonGroup *group) {
@@ -72,6 +82,7 @@ void RibbonTabContent::removeGroup(RibbonButtonGroup *group) {
     if (index >= 0) {
         ui->ribbonHorizontalLayout->removeWidget(group);
         delete group;
+        updateButtonIndicator();
     }
 }
 
@@ -81,4 +92,34 @@ int RibbonTabContent::groupCount() const {
 
 QSize RibbonTabContent::sizeHint() const {
     return ui->ribbonTabScrollAreaContent->sizeHint();
+}
+
+void RibbonTabContent::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    updateButtonIndicator();
+}
+
+void RibbonTabContent::resizeEvent(QResizeEvent *event) {
+    QWidget::resizeEvent(event);
+    updateButtonIndicator();
+}
+
+void RibbonTabContent::updateButtonIndicator() {
+    if (groupCount() == 0) {
+        ui->btnPrev->setVisible(false);
+        ui->btnNext->setVisible(false);
+        ui->linePrev->setVisible(false);
+        ui->lineNext->setVisible(false);
+    } else {
+        auto hb = ui->ribbonTabScrollArea->horizontalScrollBar();
+        auto en = hb->maximum() != 0;
+        ui->btnPrev->setVisible(en);
+        ui->btnNext->setVisible(en);
+        ui->linePrev->setVisible(en);
+        ui->lineNext->setVisible(en);
+        if (en) {
+            ui->btnPrev->setEnabled(hb->value() > 0);
+            ui->btnNext->setEnabled(hb->value() < hb->maximum());
+        }
+    }
 }

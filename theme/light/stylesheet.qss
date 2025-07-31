@@ -2638,15 +2638,15 @@ ads--CAutoHideDockContainer #dockAreaAutoHideButton {
 }
 
 ads--CAutoHideDockContainer #dockAreaAutoHideButton {
-    image: url(:/dark/ads_unpin.svg);
+    image: url(:/light/ads_unpin.svg);
 }
 
 #dockAreaAutoHideButton:hover {
-    image: url(:/dark/ads_pin_hover.svg);
+    image: url(:/light/ads_pin_hover.svg);
 }
 
 ads--CAutoHideDockContainer #dockAreaAutoHideButton :hover {
-    image: url(:/dark/ads_unpin_hover.svg);
+    image: url(:/light/ads_unpin_hover.svg);
 }
 
 #autoHideTitleLabel {
@@ -2906,18 +2906,35 @@ QTabWidget#RIBBON>QTabBar::tab {
 
 #RIBBON_HIDE_BTN
 {
-    image: url(:/dark/ads_menu_button.svg);
-}
-
-#RIBBON_HIDE_BTN
-{
+    image: url(:/light/ads_menu_button.svg);
     border: none;
     background-color: transparent;
 }
 
 #RIBBON_HIDE_BTN:checked
 {
-    image: url(:/dark/ads_maximize.svg);
+    image: url(:/light/ads_maximize.svg);
+    border: none;
+    background-color: transparent;
+}
+
+RibbonTabContent #btnPrev
+{
+    border: none;
+    icon: url(:/light/left_arrow.svg)
+}
+
+RibbonTabContent #btnNext
+{
+    border: none;
+    icon: url(:/light/right_arrow.svg)
+}
+
+RibbonTabContent #btnPrev:hover,
+RibbonTabContent #btnNext:hover
+{
+    border: none;
+    background-color: rgba(61, 173, 232, 0.1);
 }
 
 RibbonButtonGroup QToolButton
@@ -2940,6 +2957,8 @@ RibbonButtonGroup QToolButton:pressed
     background-color: #3daee9;
 }
 
+RibbonTabContent QFrame[frameShape="4"]:hover,
+RibbonTabContent QFrame[frameShape="5"]:hover,
 RibbonButtonGroup QFrame[frameShape="4"]:hover,
 RibbonButtonGroup QFrame[frameShape="5"]:hover
 {

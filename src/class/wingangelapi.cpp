@@ -331,20 +331,36 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
                     const QString &, bool *, Qt::InputMethodHints),
                    QString),
         "string getText(const string &in title, const string &in label, "
-        "inputbox::EchoMode echo = inputbox::Normal, "
-        "const string &in text = \"\", bool &out ok = false, "
+        "inputbox::EchoMode echo, const string &in text, bool &out ok, "
         "inputbox::InputMethodHints inputMethodHints = inputbox::ImhNone)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, _InputBox_GetText,
+                   (const QString &, const QString &, QLineEdit::EchoMode,
+                    const QString &),
+                   QString),
+        "string getText(const string &in title, const string &in label, "
+        "inputbox::EchoMode echo = inputbox::Normal, "
+        "const string &in text = \"\")");
 
     registerAPI(
         engine,
         asMETHODPR(WingAngelAPI, _InputBox_GetMultiLineText,
                    (const QString &, const QString &, const QString &, bool *,
-                    Qt::InputMethodHints inputMethodHints),
+                    Qt::InputMethodHints),
                    QString),
         "string getMultiLineText(const string &in title, "
-        "const string &in label, "
-        "const string &in text = \"\", bool &out ok = false, "
+        "const string &in label, const string &in text, bool &out ok, "
         "inputbox::InputMethodHints inputMethodHints = inputbox::ImhNone)");
+
+    registerAPI(engine,
+                asMETHODPR(WingAngelAPI, _InputBox_GetMultiLineText,
+                           (const QString &, const QString &, const QString &),
+                           QString),
+                "string getMultiLineText(const string &in title, "
+                "const string &in label, "
+                "const string &in text = \"\")");
 
     registerAPI(engine,
                 asMETHODPR(WingAngelAPI, _InputBox_GetInt,
@@ -352,9 +368,17 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
                             int, bool *),
                            int),
                 "int getInt(const string &in title, const string &in label, "
-                "int &in value = 0, int &in minValue = -2147483647, "
-                "int &in maxValue = 2147483647, "
-                "int &in step = 1, bool &out ok = false)");
+                "int &in value, int &in minValue, int &in maxValue, "
+                "int &in step, bool &out ok)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(WingAngelAPI, _InputBox_GetInt,
+                   (const QString &, const QString &, int, int, int, int), int),
+        "int getInt(const string &in title, const string &in label, "
+        "int &in value = 0, int &in minValue = -2147483647, "
+        "int &in maxValue = 2147483647, "
+        "int &in step = 1)");
 
     registerAPI(
         engine,
@@ -363,9 +387,19 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
                     int, bool *, double),
                    double),
         "double getDouble(const string &in title, const string &in label, "
+        "double &in value, double &in minValue, "
+        "double &in maxValue, int &in decimals, "
+        "bool &out ok, double &in step = 1)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(
+            WingAngelAPI, _InputBox_GetDouble,
+            (const QString &, const QString &, double, double, double, int),
+            double),
+        "double getDouble(const string &in title, const string &in label, "
         "double &in value = 0, double &in minValue = -2147483647, "
-        "double &in maxValue = 2147483647, int &in decimals = 1, "
-        "bool &out ok = false, double &in step = 1)");
+        "double &in maxValue = 2147483647, int &in decimals = 1)");
 
     registerAPI(
         engine,
@@ -374,9 +408,19 @@ void WingAngelAPI::installInputboxAPI(asIScriptEngine *engine) {
                     bool, bool *, Qt::InputMethodHints),
                    QString),
         "string getItem(const string &in title, const string &in label, "
-        "const string[] &in items, int current = 0, "
-        "bool editable = true, bool &out ok = false, "
+        "const string[] &in items, int current, "
+        "bool editable, bool &out ok, "
         "inputbox::InputMethodHints inputMethodHints = inputbox::ImhNone)");
+
+    registerAPI(
+        engine,
+        asMETHODPR(
+            WingAngelAPI, _InputBox_getItem,
+            (const QString &, const QString &, const CScriptArray &, int, bool),
+            QString),
+        "string getItem(const string &in title, const string &in label, "
+        "const string[] &in items, int current = 0, "
+        "bool editable = true)");
 
     engine->SetDefaultNamespace("");
 }
@@ -395,15 +439,22 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
         "const string &in dir = \"\", "
         "filedlg::options &in options = filedlg::options::ShowDirsOnly)");
 
+    registerAPI(engine,
+                asMETHODPR(WingAngelAPI, _FileDialog_GetOpenFileName,
+                           (const QString &, const QString &, const QString &),
+                           QString),
+                "string getOpenFileName(const string &in caption = \"\", "
+                "const string &in dir = \"\", const string &in filter = \"\")");
+
     registerAPI(
         engine,
         asMETHODPR(WingAngelAPI, _FileDialog_GetOpenFileName,
                    (const QString &, const QString &, const QString &,
                     QString *, QFileDialog::Options),
                    QString),
-        "string getOpenFileName(const string &in caption = \"\", "
-        "const string &in dir = \"\", const string &in filter = \"\", "
-        "string &out selectedFilter = \"\", filedlg::options &in options = 0)");
+        "string getOpenFileName(const string &in caption, "
+        "const string &in dir, const string &in filter, "
+        "string &out selectedFilter, filedlg::options &in options = 0)");
 
     registerAPI(
         engine,
@@ -411,9 +462,23 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                    (const QString &, const QString &, const QString &,
                     QString *, QFileDialog::Options),
                    QString),
-        "string getSaveFileName(const string &in caption = \"\", "
-        "const string &in dir = \"\", const string &in filter = \"\", "
-        "string &out selectedFilter = \"\", filedlg::options &in options = 0)");
+        "string getSaveFileName(const string &in caption, "
+        "const string &in dir, const string &in filter, "
+        "string &out selectedFilter, filedlg::options &in options = 0)");
+
+    registerAPI(engine,
+                asMETHODPR(WingAngelAPI, _FileDialog_GetSaveFileName,
+                           (const QString &, const QString &, const QString &),
+                           QString),
+                "string getSaveFileName(const string &in caption = \"\", "
+                "const string &in dir = \"\", const string &in filter = \"\")");
+
+    registerAPI(engine,
+                asMETHODPR(WingAngelAPI, _FileDialog_getOpenFileNames,
+                           (const QString &, const QString &, const QString &),
+                           CScriptArray *),
+                "string[]@ getOpenFileNames(const string &in caption = \"\", "
+                "const string &in dir = \"\", const string &in filter = \"\")");
 
     registerAPI(
         engine,
@@ -421,9 +486,9 @@ void WingAngelAPI::installFileDialogAPI(asIScriptEngine *engine) {
                    (const QString &, const QString &, const QString &,
                     QString *, QFileDialog::Options),
                    CScriptArray *),
-        "string[]@ getOpenFileNames(const string &in caption = \"\", "
-        "const string &in dir = \"\", const string &in filter = \"\", "
-        "string &out selectedFilter = \"\", filedlg::options &in options = 0)");
+        "string[]@ getOpenFileNames(const string &in caption, "
+        "const string &in dir, const string &in filter, "
+        "string &out selectedFilter, filedlg::options &in options = 0)");
 
     engine->SetDefaultNamespace("");
 }
@@ -2247,11 +2312,24 @@ QString WingAngelAPI::_InputBox_GetText(const QString &title,
     return dlgGetText(nullptr, title, label, echo, text, ok, inputMethodHints);
 }
 
+QString WingAngelAPI::_InputBox_GetText(const QString &title,
+                                        const QString &label,
+                                        QLineEdit::EchoMode echo,
+                                        const QString &text) {
+    return dlgGetText(nullptr, title, label, echo, text);
+}
+
 QString WingAngelAPI::_InputBox_GetMultiLineText(
     const QString &title, const QString &label, const QString &text, bool *ok,
     Qt::InputMethodHints inputMethodHints) {
     return dlgGetMultiLineText(nullptr, title, label, text, ok,
                                inputMethodHints);
+}
+
+QString WingAngelAPI::_InputBox_GetMultiLineText(const QString &title,
+                                                 const QString &label,
+                                                 const QString &text) {
+    return dlgGetMultiLineText(nullptr, title, label, text);
 }
 
 QString WingAngelAPI::_InputBox_getItem(const QString &title,
@@ -2272,11 +2350,21 @@ QString WingAngelAPI::_InputBox_getItem(const QString &title,
             return WingInputDialog::getItem(nullptr, title, label, ret, current,
                                             editable, ok, inputMethodHints);
         } else {
-            *ok = false;
+            if (ok) {
+                *ok = false;
+            }
             return {};
         }
     }
     return {};
+}
+
+QString WingAngelAPI::_InputBox_getItem(const QString &title,
+                                        const QString &label,
+                                        const CScriptArray &items, int current,
+                                        bool editable) {
+    return _InputBox_getItem(title, label, items, current, editable, nullptr,
+                             Qt::ImhNone);
 }
 
 int WingAngelAPI::_InputBox_GetInt(const QString &title, const QString &label,
@@ -2286,12 +2374,26 @@ int WingAngelAPI::_InputBox_GetInt(const QString &title, const QString &label,
                      ok);
 }
 
+int WingAngelAPI::_InputBox_GetInt(const QString &title, const QString &label,
+                                   int value, int minValue, int maxValue,
+                                   int step) {
+    return dlgGetInt(nullptr, title, label, value, minValue, maxValue, step);
+}
+
 double WingAngelAPI::_InputBox_GetDouble(const QString &title,
                                          const QString &label, double value,
                                          double minValue, double maxValue,
                                          int decimals, bool *ok, double step) {
     return dlgGetDouble(nullptr, title, label, value, minValue, maxValue,
                         decimals, ok, step);
+}
+
+double WingAngelAPI::_InputBox_GetDouble(const QString &title,
+                                         const QString &label, double value,
+                                         double minValue, double maxValue,
+                                         int decimals) {
+    return dlgGetDouble(nullptr, title, label, value, minValue, maxValue,
+                        decimals);
 }
 
 QString WingAngelAPI::_FileDialog_GetExistingDirectory(
@@ -2306,6 +2408,12 @@ QString WingAngelAPI::_FileDialog_GetOpenFileName(
                               options);
 }
 
+QString WingAngelAPI::_FileDialog_GetOpenFileName(const QString &caption,
+                                                  const QString &dir,
+                                                  const QString &filter) {
+    return dlgGetOpenFileName(nullptr, caption, dir, filter);
+}
+
 CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
     const QString &caption, const QString &dir, const QString &filter,
     QString *selectedFilter, QFileDialog::Options options) {
@@ -2317,9 +2425,20 @@ CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
         "array<string>");
 }
 
+CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
+    const QString &caption, const QString &dir, const QString &filter) {
+    return _FileDialog_getOpenFileNames(caption, dir, filter, nullptr, {});
+}
+
 QString WingAngelAPI::_FileDialog_GetSaveFileName(
     const QString &caption, const QString &dir, const QString &filter,
     QString *selectedFilter, QFileDialog::Options options) {
     return dlgGetSaveFileName(nullptr, caption, dir, filter, selectedFilter,
                               options);
+}
+
+QString WingAngelAPI::_FileDialog_GetSaveFileName(const QString &caption,
+                                                  const QString &dir,
+                                                  const QString &filter) {
+    return dlgGetSaveFileName(nullptr, caption, dir, filter);
 }

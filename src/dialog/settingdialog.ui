@@ -77,7 +77,7 @@
           <enum>Qt::ToolButtonStyle::ToolButtonTextOnly</enum>
          </property>
          <property name="arrowType">
-          <enum>Qt::ArrowType::DownArrow</enum>
+          <enum>Qt::ArrowType::NoArrow</enum>
          </property>
         </widget>
        </item>

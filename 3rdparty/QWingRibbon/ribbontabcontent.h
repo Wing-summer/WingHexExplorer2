@@ -50,7 +50,13 @@ public:
     int groupCount() const;
 
 protected:
-    QSize sizeHint() const override;
+    virtual QSize sizeHint() const override;
+
+    virtual void showEvent(QShowEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *event) override;
+
+private slots:
+    void updateButtonIndicator();
 
 private:
     Ui::RibbonTabContent *ui;

@@ -2900,13 +2900,28 @@ QTabWidget#RIBBON>QTabBar::tab {
     min-width: 80px;
 }
 
-#RIBBON_HIDE_BTN
+RibbonTabContent #btnPrev
 {
-    image: url(:/dark/ads_menu_button.svg);
+    border: none;
+    icon: url(:/dark/left_arrow.svg)
+}
+
+RibbonTabContent #btnNext
+{
+    border: none;
+    icon: url(:/dark/right_arrow.svg)
+}
+
+RibbonTabContent #btnPrev:hover,
+RibbonTabContent #btnNext:hover
+{
+    border: none;
+    background-color: rgba(61, 173, 232, 0.1);
 }
 
 #RIBBON_HIDE_BTN
 {
+    image: url(:/dark/ads_menu_button.svg);
     border: none;
     background-color: transparent;
 }
@@ -2914,6 +2929,8 @@ QTabWidget#RIBBON>QTabBar::tab {
 #RIBBON_HIDE_BTN:checked
 {
     image: url(:/dark/ads_maximize.svg);
+    border: none;
+    background-color: transparent;
 }
 
 RibbonButtonGroup QToolButton
@@ -2936,6 +2953,8 @@ RibbonButtonGroup QToolButton:pressed
     background-color: #3daee9;
 }
 
+RibbonTabContent QFrame[frameShape="4"]:hover,
+RibbonTabContent QFrame[frameShape="5"]:hover,
 RibbonButtonGroup QFrame[frameShape="4"]:hover,
 RibbonButtonGroup QFrame[frameShape="5"]:hover
 {

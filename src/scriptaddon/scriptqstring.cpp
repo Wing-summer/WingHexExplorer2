@@ -26,82 +26,87 @@
 #include <QString>
 
 BEGIN_AS_NAMESPACE
-typedef std::unordered_map<QString, int> Map_t;
-END_AS_NAMESPACE
-
-BEGIN_AS_NAMESPACE
 class CQStringFactory : public asIStringFactory {
 public:
     CQStringFactory() {}
     ~CQStringFactory() {
-        // The script engine must release each string
-        // constant that it has requested
-        Q_ASSERT(stringCache.size() == 0);
+        // In destructor, ensure all string constants have been released
+        Q_ASSERT(refCount.isEmpty());
     }
 
-    const void *GetStringConstant(const char *data, asUINT length) {
-        // The string factory might be modified from multiple
-        // threads, so it is necessary to use a mutex.
+    // Acquire or create a string constant
+    const void *GetStringConstant(const char *data, asUINT length) override {
         asAcquireExclusiveLock();
 
-        QString str = QString::fromUtf8(QByteArray(data, length));
+        // 1) Build a temporary QString (lazy copy happens only if needed)
+        QString temp = QString::fromUtf8(QByteArray(data, length));
 
-        Map_t::iterator it = stringCache.find(str);
-        if (it != stringCache.end())
-            it->second++;
-        else
-            it = stringCache.insert(Map_t::value_type(str, 1)).first;
+        // 2) Check if we already have this string
+        auto ptrIt = cache.find(temp);
+        if (ptrIt != cache.end()) {
+            // Found: increment reference count and return existing pointer
+            refCount[ptrIt.value()]++;
+            const void *p = ptrIt.value();
+            asReleaseExclusiveLock();
+            return p;
+        }
+
+        // 3) Not found: allocate a new QString on the heap
+        QString *p = new QString(std::move(temp));
+
+        //    - cache maps from string value → pointer for deduplication
+        cache.insert(*p, p);
+        //    - refCount maps from pointer → count for fast release
+        refCount.insert(p, 1);
 
         asReleaseExclusiveLock();
-
-        return reinterpret_cast<const void *>(&it->first);
+        return p;
     }
 
-    int ReleaseStringConstant(const void *str) {
-        if (str == 0)
+    // Release a string constant
+    int ReleaseStringConstant(const void *str) override {
+        if (!str)
             return asERROR;
-
-        int ret = asSUCCESS;
-
-        // The string factory might be modified from multiple
-        // threads, so it is necessary to use a mutex.
         asAcquireExclusiveLock();
-        auto strv = *reinterpret_cast<const QString *>(str);
 
-        Map_t::iterator it = stringCache.find(strv);
-        if (it == stringCache.end()) {
-            // ret = asERROR;
-            // I don't know why invalid string pointer passed to it
-            // just ignore it.
-        } else {
-            it->second--;
-            if (it->second == 0)
-                stringCache.erase(it);
+        // Look up the pointer in refCount
+        auto rcIt =
+            refCount.find(reinterpret_cast<QString *>(const_cast<void *>(str)));
+        if (rcIt == refCount.end()) {
+            asReleaseExclusiveLock();
+            return asERROR;
+        }
+
+        // Decrement and check for zero
+        if (--rcIt.value() == 0) {
+            // When count reaches zero: remove from both maps and delete
+            QString *p = rcIt.key();
+            refCount.erase(rcIt);
+            cache.remove(*p);
+            delete p;
         }
 
         asReleaseExclusiveLock();
-
-        return ret;
-    }
-
-    int GetRawStringData(const void *str, char *data, asUINT *length) const {
-        if (str == 0)
-            return asERROR;
-
-        auto buffer = reinterpret_cast<const QString *>(str)->toUtf8();
-
-        if (length)
-            *length = buffer.length();
-
-        if (data)
-            memcpy(data, buffer.data(), buffer.length());
-
         return asSUCCESS;
     }
 
-    // THe access to the string cache is protected with the common mutex
-    // provided by AngelScript
-    Map_t stringCache;
+    // Retrieve raw UTF‑8 data for the script engine
+    int GetRawStringData(const void *str, char *data,
+                         asUINT *length) const override {
+        if (!str)
+            return asERROR;
+        QByteArray buf = reinterpret_cast<const QString *>(str)->toUtf8();
+        if (length)
+            *length = buf.size();
+        if (data)
+            memcpy(data, buf.constData(), buf.size());
+        return asSUCCESS;
+    }
+
+    // value -> pointer map for deduplication
+    QHash<QString, QString *> cache;
+    // pointer -> reference count map for quick releases
+    QHash<QString *, int> refCount;
 };
 
 static CQStringFactory *stringFactory = nullptr;
@@ -134,7 +139,7 @@ public:
             // the application might crash. Not deleting the cache would
             // lead to a memory leak, but since this is only happens when the
             // application is shutting down anyway, it is not important.
-            if (stringFactory->stringCache.empty()) {
+            if (stringFactory->cache.empty()) {
                 delete stringFactory;
                 stringFactory = nullptr;
             }
@@ -389,22 +394,22 @@ static QString formatFloat(double value, const QString &options) {
 }
 
 // AngelScript signature:
-// int64 parseInt(const string &in val, uint base = 10, uint &out byteCount = 0)
-static asINT64 parseInt(const QString &val, asUINT base, asUINT *byteCount) {
-    Q_UNUSED(byteCount);
-    return val.toInt(nullptr, base);
+// int64 parseInt(const string &in val, uint base = 10, bool &out ok)
+static asINT64 parseInt(const QString &val, asUINT base, bool *ok = nullptr) {
+    return val.toInt(ok, base);
 }
 
 // AngelScript signature:
-// uint64 parseUInt(const string &in val, uint base = 10, bool &out ok =
-// 0)
-static asQWORD parseUInt(const QString &val, asUINT base, bool *ok) {
+// uint64 parseUInt(const string &in val, uint base = 10, bool &out ok )
+static asQWORD parseUInt(const QString &val, asUINT base, bool *ok = nullptr) {
     return val.toUInt(ok, base);
 }
 
 // AngelScript signature:
-// double parseFloat(const string &in val, uint &out byteCount = 0)
-double parseFloat(const QString &val, bool *ok) { return val.toFloat(ok); }
+// double parseFloat(const string &in val, bool &out ok)
+double parseFloat(const QString &val, bool *ok = nullptr) {
+    return val.toDouble(ok);
+}
 
 // This function returns a string containing the substring of the input string
 // determined by the starting index and count of characters.
@@ -1043,18 +1048,31 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10, uint &out byteCount = 0)",
+                                       "base = 10)",
+                                       asFUNCTION(parseInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
+                                       "base, bool &out ok)",
                                        asFUNCTION(parseInt), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base = 10, uint &out "
-        "byteCount = 0)",
+        "uint64 parseUInt(const string &in, uint base = 10)",
         asFUNCTION(parseUInt), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, uint &out byteCount = 0)",
+        "uint64 parseUInt(const string &in, uint base, bool &out ok)",
+        asFUNCTION(parseUInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("double parseFloat(const string &in)",
+                                       asFUNCTION(parseFloat), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "double parseFloat(const string &in, bool &out ok)",
         asFUNCTION(parseFloat), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -1658,18 +1676,31 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10, uint &out byteCount = 0)",
+                                       "base = 10)",
+                                       WRAP_FN(parseInt), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
+                                       "base, bool &out ok)",
                                        WRAP_FN(parseInt), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base = 10, uint &out "
-        "byteCount = 0)",
+        "uint64 parseUInt(const string &in, uint base = 10)",
         WRAP_FN(parseUInt), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, uint &out byteCount = 0)",
+        "uint64 parseUInt(const string &in, uint base, bool &out ok)",
+        WRAP_FN(parseUInt), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("double parseFloat(const string &in)",
+                                       WRAP_FN(parseFloat), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "double parseFloat(const string &in, bool &out ok)",
         WRAP_FN(parseFloat), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -1764,25 +1795,27 @@ void RegisterQStringUtils(asIScriptEngine *engine) {
 
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY")) {
         r = engine->RegisterGlobalFunction(
-            "string join(const array<string> &in, const string &in)",
+            "string join(const array<string> &in, const string &in delim)",
             asFUNCTION(StringJoin_Generic), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
 
         r = engine->RegisterGlobalFunction(
-            "int compare(const string &in, const string &in, bool = true)",
+            "int compare(const string &in, const string &in, bool "
+            "caseSensitive = true)",
             WRAP_FN(StringCompare), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
     } else {
         r = engine->RegisterGlobalFunction(
-            "string join(const array<string> &in, const string &in)",
+            "string join(const array<string> &in, const string &in delim)",
             asFUNCTION(StringJoin), asCALL_CDECL);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
 
         r = engine->RegisterGlobalFunction(
-            "int compare(const string &in, const string &in, bool = true)",
+            "int compare(const string &in, const string &in, bool "
+            "caseSensitive = true)",
             asFUNCTION(StringCompare), asCALL_CDECL);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);

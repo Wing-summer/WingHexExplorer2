@@ -39,6 +39,7 @@
 #include "define.h"
 #include "scriptaddon/aspromise.hpp"
 #include "scriptaddon/scriptcolor.h"
+#include "scriptaddon/scriptenv.h"
 #include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
@@ -2024,6 +2025,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptHandle(engine);
     RegisterColor(engine);
     RegisterQJson(engine);
+    RegisterEnv(engine);
 
     engine->SetDefaultAccessMask(0x1);
     RegisterScriptFile(engine);
