@@ -2083,6 +2083,14 @@ void *WingAngelAPI::list2AsArray(const WingHex::SenderInfo &sender,
     return vector2AsArray(sender, type, content);
 }
 
+void WingAngelAPI::releaseAsArray(const WingHex::SenderInfo &sender,
+                                  void *array) {
+    Q_UNUSED(sender);
+    if (array) {
+        reinterpret_cast<CScriptArray *>(array)->Release();
+    }
+}
+
 void *WingAngelAPI::newAsDictionary(
     const WingHex::SenderInfo &sender,
     const QHash<QString, QPair<WingHex::MetaType, void *>> &content) {
@@ -2102,6 +2110,14 @@ void *WingAngelAPI::newAsDictionary(
     }
 
     return dic;
+}
+
+void WingAngelAPI::releaseAsDictionary(const WingHex::SenderInfo &sender,
+                                       void *dic) {
+    Q_UNUSED(sender);
+    if (dic) {
+        reinterpret_cast<CScriptDictionary *>(dic)->Release();
+    }
 }
 
 void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {

@@ -261,10 +261,9 @@ WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
     }
 
     void *array = nullptr;
-    QVector<void *> colors;
-    for (auto &c : colorTable()) {
-        colors.append(&c);
-    }
+
+    auto ctbl = colorTable(); // note: you should hold the reference
+    auto colors = WingHex::normalizePackedVector(ctbl);
 
     auto invoked =
         invokeService(QStringLiteral("WingAngelAPI"), "vector2AsArray",
@@ -275,7 +274,6 @@ WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
         }
     }
 
-    qDeleteAll(colors);
     return generateScriptCallError(-2, tr("AllocArrayFailed"));
 }
 

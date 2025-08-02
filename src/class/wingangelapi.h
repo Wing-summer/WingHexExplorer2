@@ -176,9 +176,14 @@ private:
                                     WingHex::MetaType type,
                                     const QList<void *> &content);
 
+    WING_SERVICE void releaseAsArray(const WingHex::SenderInfo &sender,
+                                     void *array);
+
     WING_SERVICE void *newAsDictionary(
         const WingHex::SenderInfo &sender,
         const QHash<QString, QPair<WingHex::MetaType, void *>> &content);
+    WING_SERVICE void releaseAsDictionary(const WingHex::SenderInfo &sender,
+                                          void *dic);
 
     // =========================================================
 

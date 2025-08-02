@@ -600,9 +600,17 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         if (met.name() == method) {
             bool err = false;
             for (int i = 1; i < paramCount; ++i) {
-                if (met.parameterTypeName(i).compare(metaTypes[i]->name)) {
-                    err = true;
-                    break;
+                if (metaTypes[i]->typeId == QMetaType::UnknownType) {
+                    // user defined meta type
+                    if (met.parameterTypeName(i).compare(metaTypes[i]->name)) {
+                        err = true;
+                        break;
+                    }
+                } else {
+                    if (metaTypes[i]->typeId != met.parameterType(i)) {
+                        err = true;
+                        break;
+                    }
                 }
             }
             if (err) {
