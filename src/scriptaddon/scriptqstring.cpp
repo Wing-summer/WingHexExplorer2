@@ -25,6 +25,8 @@
 #include <QMetaEnum>
 #include <QString>
 
+enum DoubleFmt { DFDecimal, DFExponent, DFSignificantDigits };
+
 BEGIN_AS_NAMESPACE
 class CQStringFactory : public asIStringFactory {
 public:
@@ -375,41 +377,98 @@ static void StringResize(asUINT l, QString &str) {
 }
 
 // AngelScript signature:
-// string formatInt(int64 val, const string &in options)
-static QString formatInt(asINT64 value, const QString &options) {
-    return QString::asprintf(options.toLatin1(), value);
+// string number(int32 val, int base=10)
+static QString Int32toString(asINT32 value, int base) {
+    return QString::number(value, base);
 }
 
 // AngelScript signature:
-// string formatUInt(uint64 val, const string &in options)
-static QString formatUInt(asQWORD value, const QString &options) {
-    return QString::asprintf(options.toLatin1(), value);
+// string number(int32 val, int base=10)
+static QString UInt32toString(asDWORD value, int base) {
+    return QString::number(value, base);
 }
 
 // AngelScript signature:
-// string formatFloat(double val, const string &in options, uint width, uint
-// precision)
-static QString formatFloat(double value, const QString &options) {
-    return QString::asprintf(options.toLatin1(), value);
+// string number(int64 val, int base=10)
+static QString Int64toString(asINT64 value, int base) {
+    return QString::number(value, base);
 }
 
 // AngelScript signature:
-// int64 parseInt(const string &in val, uint base = 10, bool &out ok)
-static asINT64 parseInt(const QString &val, asUINT base, bool *ok = nullptr) {
+// string number(uint64 val, int base=10)
+static QString UInt64String(asQWORD value, int base) {
+    return QString::number(value, base);
+}
+
+// AngelScript signature:
+// string number(float, string::DoubleFmt format=
+//          string::DoubleFmt::DFSignificantDigits, int precision=6)
+static QString Float2String(float value, DoubleFmt format, int precision) {
+    char fmt = 'g';
+    switch (format) {
+    case DFDecimal:
+        fmt = 'f';
+        break;
+    case DFExponent:
+        fmt = 'e';
+        break;
+    case DFSignificantDigits:
+        fmt = 'g';
+        break;
+    }
+    return QString::number(value, fmt, precision);
+}
+
+// AngelScript signature:
+// string number(double, DoubleFmt format=
+//          string::DoubleFmt::DFSignificantDigits, int precision=6)
+static QString Double2String(double value, DoubleFmt format, int precision) {
+    char fmt = 'g';
+    switch (format) {
+    case DFDecimal:
+        fmt = 'f';
+        break;
+    case DFExponent:
+        fmt = 'e';
+        break;
+    case DFSignificantDigits:
+        fmt = 'g';
+        break;
+    }
+    return QString::number(value, fmt, precision);
+}
+
+// AngelScript signature:
+// int parseInt(const string &in val, int base = 10, bool &out ok = void)
+static asINT32 parseInt(const QString &val, int base, bool *ok) {
     return val.toInt(ok, base);
 }
 
 // AngelScript signature:
-// uint64 parseUInt(const string &in val, uint base = 10, bool &out ok )
-static asQWORD parseUInt(const QString &val, asUINT base, bool *ok = nullptr) {
+// uint parseUInt(const string &in val, int base = 10, bool &out ok = void)
+static asDWORD parseUInt(const QString &val, int base, bool *ok) {
     return val.toUInt(ok, base);
 }
 
 // AngelScript signature:
-// double parseFloat(const string &in val, bool &out ok)
-double parseFloat(const QString &val, bool *ok = nullptr) {
-    return val.toDouble(ok);
+// int64 parseInt64(const string &in val, int base = 10, bool &out ok = void)
+static asINT64 parseInt64(const QString &val, int base, bool *ok) {
+    return val.toLongLong(ok, base);
 }
+
+// AngelScript signature:
+// uint64 parseUInt64(const string &in val, int base = 10, bool &out ok = void)
+static asQWORD parseUInt64(const QString &val, int base, bool *ok) {
+    return val.toULongLong(ok, base);
+}
+
+// AngelScript signature:
+// double parseFloat(const string &in val, bool &out ok = void)
+float parseFloat(const QString &val, bool *ok) { return val.toFloat(ok); }
+
+// AngelScript signature:
+// double parseDouble(const string &in val, bool &out ok = void)
+double parseDouble(const QString &val, bool *ok) { return val.toDouble(ok); }
 
 // This function returns a string containing the substring of the input string
 // determined by the starting index and count of characters.
@@ -1029,51 +1088,80 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     r = engine->SetDefaultNamespace("string");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "string formatInt(int64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        asFUNCTION(formatInt), asCALL_CDECL);
+
+    r = engine->RegisterEnum("DoubleFmt");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFDecimal",
+                                  DoubleFmt::DFDecimal);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFExponent",
+                                  DoubleFmt::DFExponent);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFSignificantDigits",
+                                  DoubleFmt::DFSignificantDigits);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction("string number(int64 val, int base=10)",
+                                       asFUNCTION(Int64toString), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(uint64 val, int base=10)",
+                                       asFUNCTION(UInt64String), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(int32 val, int base=10)",
+                                       asFUNCTION(Int32toString), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(uint32 val, int base=10)",
+                                       asFUNCTION(UInt32toString),
+                                       asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "string formatUInt(uint64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        asFUNCTION(formatUInt), asCALL_CDECL);
+        "string number(float val, string::DoubleFmt "
+        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        asFUNCTION(Float2String), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "string formatFloat(double val, const string &in options = \"\", uint "
-        "width = 0, uint precision = 0)",
-        asFUNCTION(formatFloat), asCALL_CDECL);
+        "string number(double val, string::DoubleFmt "
+        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        asFUNCTION(Double2String), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10)",
+    r = engine->RegisterGlobalFunction("int parseInt(const string &in, int "
+                                       "base = 10, bool &out ok = void)",
                                        asFUNCTION(parseInt), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base, bool &out ok)",
-                                       asFUNCTION(parseInt), asCALL_CDECL);
+    r = engine->RegisterGlobalFunction("uint parseUInt(const string &in, "
+                                       "int base = 10, bool &out ok = void)",
+                                       asFUNCTION(parseUInt), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("int64 parseInt64(const string &in, int "
+                                       "base = 10, bool &out ok = void)",
+                                       asFUNCTION(parseInt64), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("uint64 parseUInt64(const string &in, "
+                                       "int base = 10, bool &out ok = void)",
+                                       asFUNCTION(parseUInt64), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base = 10)",
-        asFUNCTION(parseUInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base, bool &out ok)",
-        asFUNCTION(parseUInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("double parseFloat(const string &in)",
-                                       asFUNCTION(parseFloat), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, bool &out ok)",
+        "float parseFloat(const string &in, bool &out ok = void)",
         asFUNCTION(parseFloat), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "double parseDouble(const string &in, bool &out ok = void)",
+        asFUNCTION(parseDouble), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -1657,51 +1745,79 @@ void RegisterQString_Generic(asIScriptEngine *engine) {
     r = engine->SetDefaultNamespace("string");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "string formatInt(int64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        WRAP_FN(formatInt), asCALL_GENERIC);
+
+    r = engine->RegisterEnum("DoubleFmt");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFDecimal",
+                                  DoubleFmt::DFDecimal);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFExponent",
+                                  DoubleFmt::DFExponent);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterEnumValue("DoubleFmt", "DFSignificantDigits",
+                                  DoubleFmt::DFSignificantDigits);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction("string number(int64 val, int base=10)",
+                                       WRAP_FN(Int64toString), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(uint64 val, int base=10)",
+                                       WRAP_FN(UInt64String), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(int32 val, int base=10)",
+                                       WRAP_FN(Int32toString), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("string number(uint32 val, int base=10)",
+                                       WRAP_FN(UInt32toString), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "string formatUInt(uint64 val, const string &in options = \"\", uint "
-        "width = 0)",
-        WRAP_FN(formatUInt), asCALL_GENERIC);
+        "string number(float val, string::DoubleFmt "
+        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        WRAP_FN(Float2String), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "string formatFloat(double val, const string &in options = \"\", uint "
-        "width = 0, uint precision = 0)",
-        WRAP_FN(formatFloat), asCALL_GENERIC);
+        "string number(double val, string::DoubleFmt "
+        "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
+        WRAP_FN(Double2String), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base = 10)",
-                                       WRAP_FN(parseInt), asCALL_GENERIC);
+    r = engine->RegisterGlobalFunction("int parseInt(const string &in, int "
+                                       "base = 10, bool &out ok = void)",
+                                       WRAP_FN(parseInt), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint "
-                                       "base, bool &out ok)",
-                                       WRAP_FN(parseInt), asCALL_GENERIC);
+    r = engine->RegisterGlobalFunction("uint parseUInt(const string &in, "
+                                       "int base = 10, bool &out ok = void)",
+                                       WRAP_FN(parseUInt), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base = 10)",
-        WRAP_FN(parseUInt), asCALL_GENERIC);
+    r = engine->RegisterGlobalFunction("int64 parseInt64(const string &in, int "
+                                       "base = 10, bool &out ok = void)",
+                                       WRAP_FN(parseInt64), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction(
-        "uint64 parseUInt(const string &in, uint base, bool &out ok)",
-        WRAP_FN(parseUInt), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("double parseFloat(const string &in)",
-                                       WRAP_FN(parseFloat), asCALL_GENERIC);
+    r = engine->RegisterGlobalFunction("uint64 parseUInt64(const string &in, "
+                                       "int base = 10, bool &out ok = void)",
+                                       WRAP_FN(parseUInt64), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterGlobalFunction(
-        "double parseFloat(const string &in, bool &out ok)",
-        WRAP_FN(parseFloat), asCALL_GENERIC);
+        "float parseFloat(const string &in, bool &out ok = void)",
+        WRAP_FN(parseFloat), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction(
+        "double parseDouble(const string &in, bool &out ok = void)",
+        WRAP_FN(parseDouble), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 

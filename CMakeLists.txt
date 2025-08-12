@@ -26,7 +26,6 @@ option(BUILD_SHARED_MEM_EXT OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
-
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestBadPlugin)
@@ -576,3 +575,32 @@ if(${QT_VERSION_MAJOR} EQUAL 6)
     endif()
 endif()
 add_subdirectory(WingPlugin)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
+if(_ipo_supported)
+    set_property(TARGET WingHexExplorer2
+                 PROPERTY INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
+    set_property(TARGET WingHexExplorer2
+                 PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif()
+
+target_compile_options(
+    WingHexExplorer2
+    PRIVATE
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-ffunction-sections
+        -fdata-sections
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden>
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-ffunction-sections
+        -fdata-sections
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden>)
+
+target_link_options(
+    WingHexExplorer2
+    PRIVATE
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Wl,--gc-sections>
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/OPT:REF
+    /OPT:ICF>)

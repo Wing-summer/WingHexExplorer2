@@ -2924,17 +2924,34 @@ RibbonTabContent #btnPrev
     icon: url(:/light/left_arrow.svg)
 }
 
+RibbonTabContent #btnPrev:disabled
+{
+    border: none;
+    icon: url(:/light/left_arrow_disabled.svg)
+}
+
 RibbonTabContent #btnNext
 {
     border: none;
     icon: url(:/light/right_arrow.svg)
 }
 
-RibbonTabContent #btnPrev:hover,
+RibbonTabContent #btnNext:disabled
+{
+    border: none;
+    icon: url(:/light/right_arrow_disabled.svg)
+}
+
+RibbonTabContent #btnPrev:hover
+{
+    border: none;
+    icon: url(:/light/left_arrow_hover.svg)
+}
+
 RibbonTabContent #btnNext:hover
 {
     border: none;
-    background-color: rgba(61, 173, 232, 0.1);
+    icon: url(:/light/right_arrow_hover.svg)
 }
 
 RibbonButtonGroup QToolButton

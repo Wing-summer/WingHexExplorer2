@@ -19,10 +19,6 @@ static int readEnvironmentVarInt(const QString &env, bool *ok) {
     return qEnvironmentVariableIntValue(env.toUtf8(), ok);
 }
 
-static int readEnvironmentVarInt_P(const QString &env) {
-    return qEnvironmentVariableIntValue(env.toUtf8());
-}
-
 void RegisterEnv(asIScriptEngine *engine) {
     auto r = engine->SetDefaultNamespace("env");
     Q_ASSERT(r >= 0);
@@ -48,15 +44,8 @@ void RegisterEnv(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     r = engine->RegisterGlobalFunction("int readEnvironmentVarInt(const string "
-                                       "&in name, bool &out ok)",
+                                       "&in name, bool &out ok = void)",
                                        asFUNCTION(readEnvironmentVarInt),
-                                       asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterGlobalFunction("int readEnvironmentVarInt(const string "
-                                       "&in name)",
-                                       asFUNCTION(readEnvironmentVarInt_P),
                                        asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);

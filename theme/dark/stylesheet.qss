@@ -2906,17 +2906,34 @@ RibbonTabContent #btnPrev
     icon: url(:/dark/left_arrow.svg)
 }
 
+RibbonTabContent #btnPrev:disabled
+{
+    border: none;
+    icon: url(:/dark/left_arrow_disabled.svg)
+}
+
 RibbonTabContent #btnNext
 {
     border: none;
     icon: url(:/dark/right_arrow.svg)
 }
 
-RibbonTabContent #btnPrev:hover,
+RibbonTabContent #btnNext:disabled
+{
+    border: none;
+    icon: url(:/dark/right_arrow_disabled.svg)
+}
+
+RibbonTabContent #btnPrev:hover
+{
+    border: none;
+    icon: url(:/dark/left_arrow_hover.svg)
+}
+
 RibbonTabContent #btnNext:hover
 {
     border: none;
-    background-color: rgba(61, 173, 232, 0.1);
+    icon: url(:/dark/right_arrow_hover.svg)
 }
 
 #RIBBON_HIDE_BTN

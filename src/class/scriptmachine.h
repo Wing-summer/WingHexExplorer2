@@ -202,12 +202,7 @@ private:
                                const QString &from, AsPreprocesser *builder,
                                void *userParam);
 
-    static QString processTranslation(const char *content,
-                                      ScriptMachine *machine);
-
     void exceptionCallback(asIScriptContext *context);
-
-    Q_DECL_UNUSED void translation();
 
 signals:
     void onDebugFinished();
