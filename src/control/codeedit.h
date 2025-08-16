@@ -18,12 +18,12 @@
 #ifndef CODEEDIT_H
 #define CODEEDIT_H
 
-#include "WingCodeEdit/wingcodeedit.h"
-#include "control/gotolinewidget.h"
+#include "gotolinewidget.h"
+#include "wingcodeeditlsp.h"
 
 class SearchReplaceWidget;
 
-class CodeEdit : public WingCodeEdit {
+class CodeEdit : public WingCodeEditLSP {
     Q_OBJECT
 
 public:

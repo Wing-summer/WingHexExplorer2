@@ -23,6 +23,7 @@ install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 option(WINGHEX_USE_FRAMELESS ON)
 option(BUILD_TEST_PLUGIN OFF)
 option(BUILD_SHARED_MEM_EXT OFF)
+option(ANGEL_LSP ON)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
@@ -228,7 +229,9 @@ set(CONTROL_SRC
     src/control/codeeditcontrolwidget.h
     src/control/codeeditcontrolwidget.cpp
     src/control/scrollablelabel.h
-    src/control/scrollablelabel.cpp)
+    src/control/scrollablelabel.cpp
+    src/control/wingcodeeditlsp.h
+    src/control/wingcodeeditlsp.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -263,16 +266,12 @@ set(CLASS_SRC
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
-    src/class/asdatabase.cpp
-    src/class/asdatabase.h
     src/class/qascodeparser.h
     src/class/qascodeparser.cpp
     src/class/ascompletion.cpp
     src/class/ascompletion.h
     src/class/asbuilder.h
     src/class/asbuilder.cpp
-    src/class/clangformatmanager.h
-    src/class/clangformatmanager.cpp
     src/class/aspreprocesser.h
     src/class/aspreprocesser.cpp
     src/class/layoutmanager.h
@@ -310,7 +309,10 @@ set(CLASS_SRC
     src/class/editorviewcontext.h
     src/class/editorviewcontext.cpp
     src/class/consolehighlighanim.h
-    src/class/consolehighlighanim.cpp)
+    src/class/consolehighlighanim.cpp
+    src/class/angellsp.h
+    src/class/angellsp.cpp
+    src/class/lsp.h)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
@@ -363,9 +365,6 @@ set(SETTING_SRC
     src/settings/othersettingsdialog.h
     src/settings/othersettingsdialog.cpp
     src/settings/othersettingsdialog.ui
-    src/settings/clangformatsetdialog.h
-    src/settings/clangformatsetdialog.cpp
-    src/settings/clangformatsetdialog.ui
     src/settings/qeditconfig.h
     src/settings/qeditconfig.cpp
     src/settings/qeditconfig.ui)
@@ -463,6 +462,7 @@ set(PROJECT_SOURCES
     src/utilities.h
     src/dbghelper.h
     src/define.h
+    src/predefgen.h
     ${QCONSOLEWIDGET_SRC}
     ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
@@ -492,8 +492,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
                           ${PROJECT_SOURCES} ${app_icon_resource_windows})
     else()
+        find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
         qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
                           ${PROJECT_SOURCES})
+
+        target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Widgets)
     endif()
 endif()
 
@@ -558,6 +562,8 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(WingHexExplorer2)
 endif()
 
+add_dependencies(WingHexExplorer2 post_build_tasks build-time-make-directory)
+
 if(${QT_VERSION_MAJOR} EQUAL 6)
     if(Qt6Widgets_VERSION VERSION_GREATER_EQUAL 6.5.0)
         install(
@@ -604,3 +610,127 @@ target_link_options(
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/OPT:REF
     /OPT:ICF>)
+
+if(ANGEL_LSP)
+    set(NODE_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp/server")
+    set(BUILD_BIN_DIR "${CMAKE_BINARY_DIR}/lsp")
+    set(BUILD_BIN_BUILD_DIR "${CMAKE_BINARY_DIR}/lsp-build")
+
+    if(WIN32)
+        set(OUT_NAME "angelscript-ls.exe")
+    else()
+        set(OUT_NAME "angelscript-ls")
+    endif()
+
+    set(SRC_JS "${NODE_SUBDIR}/src/server.ts")
+    set(DIST_JS "${BUILD_BIN_BUILD_DIR}/dist/server.ts")
+    set(OUT_BIN "${BUILD_BIN_DIR}/${OUT_NAME}")
+
+    find_program(NODE_EXE NAMES node)
+    find_program(NPM_EXE NAMES npm)
+    find_program(NPX_EXE NAMES npx)
+    find_program(PKG_EXE NAMES pkg)
+
+    if(NOT NODE_EXE)
+        message(FATAL_ERROR "Node.js not found. Install Node >= 18.")
+    endif()
+    if(NOT NPM_EXE)
+        message(FATAL_ERROR "npm not found. Install npm.")
+    endif()
+
+    message(STATUS "Found node: ${NODE_EXE}")
+    message(STATUS "Found npm:  ${NPM_EXE}")
+    if(PKG_EXE)
+        message(STATUS "Found global pkg: ${PKG_EXE}")
+    elseif(NPX_EXE)
+        message(
+            STATUS "Found npx: ${NPX_EXE} (will use npx pkg if pkg not global)")
+    else()
+        message(
+            STATUS
+                "No global pkg or npx found; will call 'npm exec pkg' as fallback"
+        )
+    endif()
+
+    if(WIN32)
+        set(PKG_TARGET "node18-win-x64")
+    elseif(APPLE)
+        set(PKG_TARGET "node18-macos-x64")
+    else()
+        set(PKG_TARGET "node18-linux-x64")
+    endif()
+
+    if(NPX_EXE)
+        set(ESBUILD_CMD
+            ${NPX_EXE}
+            esbuild
+            "${SRC_JS}"
+            --bundle
+            --platform=node
+            --target=node18
+            "--outfile=${BUILD_BIN_BUILD_DIR}/dist/server.ts"
+            --minify)
+    else()
+        set(ESBUILD_CMD
+            ${NPM_EXE}
+            exec
+            --yes
+            esbuild
+            --
+            "${SRC_JS}"
+            --bundle
+            --platform=node
+            --target=node18
+            "--outfile=${BUILD_BIN_BUILD_DIR}/dist/server.ts"
+            --minify)
+    endif()
+
+    if(PKG_EXE)
+        set(PKG_CMD ${PKG_EXE} "${DIST_JS}" --targets ${PKG_TARGET} --output
+                    "${OUT_BIN}")
+    elseif(NPX_EXE)
+        set(PKG_CMD
+            ${NPX_EXE}
+            pkg
+            "${DIST_JS}"
+            --targets
+            ${PKG_TARGET}
+            --output
+            "${OUT_BIN}")
+    else()
+        set(PKG_CMD
+            ${NPM_EXE}
+            exec
+            --yes
+            pkg
+            --
+            "${DIST_JS}"
+            --targets
+            ${PKG_TARGET}
+            --output
+            "${OUT_BIN}")
+    endif()
+
+    add_custom_command(
+        OUTPUT ${DIST_JS}
+        WORKING_DIRECTORY ${NODE_SUBDIR}
+        COMMAND ${CMAKE_COMMAND} -E echo "[1] npm ci (local deps)"
+        COMMAND ${NPM_EXE} ci --silent
+        COMMAND ${CMAKE_COMMAND} -E echo "[2] building with esbuild"
+        COMMAND ${ESBUILD_CMD}
+        COMMENT "Building JS bundle with esbuild -> ${DIST_JS}"
+        VERBATIM)
+
+    add_custom_command(
+        OUTPUT ${OUT_BIN}
+        DEPENDS ${DIST_JS}
+        WORKING_DIRECTORY ${NODE_SUBDIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_BIN_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_BIN_BUILD_DIR}
+        COMMAND ${CMAKE_COMMAND} -E echo "[3] packaging with pkg/npm exec/npx"
+        COMMAND ${PKG_CMD}
+        COMMENT "Packaging with pkg"
+        VERBATIM)
+    add_custom_target(build_angel_lsp ALL DEPENDS ${OUT_BIN})
+    add_dependencies(WingHexExplorer2 build_angel_lsp)
+endif()

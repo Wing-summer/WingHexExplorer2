@@ -32,8 +32,8 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
+#include "class/angellsp.h"
 #include "class/ascompletion.h"
-#include "class/clangformatmanager.h"
 
 ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
@@ -47,6 +47,8 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor = new CodeEdit(this);
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
+    connect(m_editor, &CodeEdit::incrementalDidChange, this,
+            &ScriptEditor::processContentsChange);
 
     auto cm = new AsCompletion(m_editor);
     connect(cm, &AsCompletion::onFunctionTip, this,
@@ -64,6 +66,10 @@ ScriptEditor::ScriptEditor(QWidget *parent)
 }
 
 ScriptEditor::~ScriptEditor() {
+    if (!m_fileName.isEmpty()) {
+        AngelLsp::instance().closeDocument(Utilities::getUrlString(m_fileName));
+    }
+
     auto e = editor();
     e->document()->disconnect();
     e->disconnect();
@@ -72,11 +78,15 @@ ScriptEditor::~ScriptEditor() {
 QString ScriptEditor::fileName() const { return m_fileName; }
 
 bool ScriptEditor::openFile(const QString &filename) {
+    auto &lsp = AngelLsp::instance();
+
     QFile f(filename);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
         return false;
     }
-    m_editor->setPlainText(QString::fromUtf8(f.readAll()));
+
+    auto txt = QString::fromUtf8(f.readAll());
+    m_editor->setPlainText(txt);
     f.close();
 
     if (!m_fileName.isEmpty()) {
@@ -84,6 +94,7 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
 
     m_fileName = filename;
+    lsp.openDocument(Utilities::getUrlString(m_fileName), 0, txt);
     _watcher.addPath(m_fileName);
 
     processTitle();
@@ -91,8 +102,11 @@ bool ScriptEditor::openFile(const QString &filename) {
 }
 
 bool ScriptEditor::save(const QString &path) {
+    auto &lsp = AngelLsp::instance();
+
     if (!m_fileName.isEmpty()) {
         _watcher.removePath(m_fileName);
+        lsp.closeDocument(Utilities::getUrlString(m_fileName));
     }
     QScopeGuard guard([this, path]() {
         if (path.isEmpty()) {
@@ -105,11 +119,6 @@ bool ScriptEditor::save(const QString &path) {
 #ifdef Q_OS_LINUX
     auto needAdjustFile = !QFile::exists(path);
 #endif
-
-    auto &clang = ClangFormatManager::instance();
-    if (clang.exists() && clang.autoFormat()) {
-        formatCode();
-    }
 
     if (path.isEmpty()) {
         QFile f(m_fileName);
@@ -158,6 +167,24 @@ void ScriptEditor::replace() { m_editor->showSearchReplaceBar(true, true); }
 
 void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
 
+void ScriptEditor::processContentsChange(
+    const LSP::TextDocumentContentChangeEvent &e) {
+    if (m_fileName.isEmpty()) {
+        return;
+    }
+    auto url = Utilities::getUrlString(m_fileName);
+    auto &lsp = AngelLsp::instance();
+    auto txt = m_editor->toPlainText();
+    version++;
+    if (version < 0) { // test overflow
+        lsp.closeDocument(url);
+        lsp.openDocument(url, 0, txt);
+        version = 0;
+    } else {
+        lsp.changeDocument(url, version, e);
+    }
+}
+
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
     this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());
@@ -175,33 +202,6 @@ void ScriptEditor::processTitle() {
 CodeEdit *ScriptEditor::editor() const { return m_editor; }
 
 bool ScriptEditor::formatCode() {
-    bool ok;
-    auto e = editor();
-    auto orign = e->toPlainText();
-    auto fmtcodes = ClangFormatManager::instance().formatCode(orign, ok);
-    if (ok && fmtcodes != orign) {
-        auto cursor = e->textCursor();
-        auto row = cursor.blockNumber();
-        auto col = cursor.columnNumber();
-
-        cursor.beginEditBlock();
-        cursor.select(QTextCursor::Document);
-        cursor.removeSelectedText();
-        cursor.insertText(fmtcodes);
-        cursor.endEditBlock();
-
-        cursor = e->textCursor();
-        cursor.setPosition(0);
-        cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, row);
-
-        auto tmpcur = cursor;
-        tmpcur.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
-        auto len = tmpcur.position() - cursor.position();
-        cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor,
-                            qMin(len, col));
-        e->setTextCursor(cursor);
-
-        return true;
-    }
+    // TODO
     return false;
 }

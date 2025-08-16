@@ -330,6 +330,10 @@ public:
         }
         return true;
     }
+
+    static QString getUrlString(const QString &fileName) {
+        return QUrl::fromLocalFile(fileName).toString(QUrl::FullyEncoded);
+    }
 };
 
 #endif // UTILITIES_H

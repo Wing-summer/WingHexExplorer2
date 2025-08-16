@@ -32,6 +32,7 @@
 #include "dialog/colorpickerdialog.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
+#include "predefgen.h"
 
 #include <QDir>
 #include <QFileInfoList>
@@ -2767,6 +2768,11 @@ void PluginSystem::doneRegisterScriptObj() {
         ptr->setCurrentPluginSession(puid.toUtf8());
         p->onRegisterScriptObj(ptr);
     }
+
+    QDir datap(Utilities::getAppDataPath());
+    generateScriptPredefined(
+        ScriptMachine::instance().engine(),
+        datap.absoluteFilePath(QStringLiteral("as.predefined")));
 }
 
 const std::optional<PluginInfo> &PluginSystem::monitorManagerInfo() const {

@@ -23,6 +23,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "aboutsoftwaredialog.h"
 #include "checksumdialog.h"
+#include "class/angellsp.h"
 #include "class/appmanager.h"
 #include "class/dockcomponentsfactory.h"
 #include "class/eventfilter.h"
@@ -295,6 +296,14 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             set.setScriptEnabled(false);
             throw CrashCode::ScriptInitFailed;
         }
+
+        auto &lsp = AngelLsp::instance();
+        if (!lsp.start()) {
+            // TODO
+        }
+
+        auto ret = lsp.initializeSync();
+        lsp.initialized();
     }
 
     // connect settings signals

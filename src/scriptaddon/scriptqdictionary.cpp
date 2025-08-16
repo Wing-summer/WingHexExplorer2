@@ -89,6 +89,7 @@ void CScriptDictionary::Init(asIScriptEngine *e) {
     // We start with one reference
     refCount = 1;
     gcFlag = false;
+    iterGuard = 0;
 
     // Keep a reference to the engine for as long as we live
     // We don't increment the reference counter, because the
@@ -317,8 +318,10 @@ CScriptDictionary::operator[](const dictKey_t &key) const {
 void CScriptDictionary::Set(const dictKey_t &key, void *value, int typeId) {
     dictMap_t::iterator it;
     it = dict.find(key);
-    if (it == dict.end())
+    if (it == dict.end()) {
         it = dict.insert(dictMap_t::value_type(key, CScriptDictValue())).first;
+        iterGuard++;
+    }
 
     it->second.Set(engine, value, typeId);
 }
@@ -405,6 +408,7 @@ bool CScriptDictionary::Delete(const dictKey_t &key) {
     if (it != dict.end()) {
         it->second.FreeValue(engine);
         dict.erase(it);
+        iterGuard++;
         return true;
     }
 
@@ -417,6 +421,7 @@ void CScriptDictionary::DeleteAll() {
         it->second.FreeValue(engine);
 
     dict.clear();
+    iterGuard++;
 }
 
 CScriptArray *CScriptDictionary::GetKeys() const {
@@ -1046,6 +1051,179 @@ static void CScriptDictValue_FreeValue_Generic(asIScriptGeneric *gen) {
     self->FreeValue(gen->GetEngine());
 }
 
+//----------------------------------------------------------------------------
+// Foreach support
+CScriptDictionary::CScriptDictIter::CScriptDictIter(
+    const CScriptDictionary *dict)
+    : iter(dict->begin()), refCount(1), iterGuard(dict->iterGuard) {}
+CScriptDictionary::CScriptDictIter::~CScriptDictIter() {}
+
+void CScriptDictionary::CScriptDictIter::AddRef() const {
+    asAtomicInc(refCount);
+}
+
+void CScriptDictionary::CScriptDictIter::Release() const {
+    if (asAtomicDec(refCount) == 0) {
+        this->~CScriptDictIter();
+        asFreeMem(const_cast<CScriptDictIter *>(this));
+    }
+}
+
+CScriptDictionary::CScriptDictIter *CScriptDictionary::opForBegin() const {
+    // Use the custom memory routine from AngelScript to allow application to
+    // better control how much memory is used
+    CScriptDictionary::CScriptDictIter *iter =
+        (CScriptDictionary::CScriptDictIter *)asAllocMem(
+            sizeof(CScriptDictionary::CScriptDictIter));
+    new (iter) CScriptDictionary::CScriptDictIter(this);
+    return iter;
+}
+
+bool CScriptDictionary::opForEnd(
+    const CScriptDictionary::CScriptDictIter &iter) const {
+    if (iter.iterGuard != iterGuard)
+        return true;
+
+    if (iter.iter == end())
+        return true;
+
+    return false;
+}
+
+CScriptDictionary::CScriptDictIter *
+CScriptDictionary::opForNext(CScriptDictionary::CScriptDictIter &iter) const {
+    if (iter.iterGuard != iterGuard)
+        iter.iter = end();
+    else
+        ++iter.iter;
+    return &iter;
+}
+
+const CScriptDictValue &CScriptDictionary::opForValue0(
+    const CScriptDictionary::CScriptDictIter &iter) const {
+    return iter.iter.m_it->second;
+}
+
+const dictKey_t &CScriptDictionary::opForValue1(
+    const CScriptDictionary::CScriptDictIter &iter) const {
+    return iter.iter.m_it->first;
+}
+
+void ScriptDictIterAddRef_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary::CScriptDictIter *iter =
+        (CScriptDictionary::CScriptDictIter *)gen->GetObject();
+    iter->AddRef();
+}
+
+void ScriptDictIterRelease_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary::CScriptDictIter *iter =
+        (CScriptDictionary::CScriptDictIter *)gen->GetObject();
+    iter->Release();
+}
+
+void ScriptDictionary_opForBegin_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary *dict = (CScriptDictionary *)gen->GetObject();
+    *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfReturnLocation() =
+        dict->opForBegin();
+}
+
+void ScriptDictionary_opForEnd_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary *dict = (CScriptDictionary *)gen->GetObject();
+    CScriptDictionary::CScriptDictIter *iter =
+        *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfArg(0);
+    *(bool *)gen->GetAddressOfReturnLocation() = dict->opForEnd(*iter);
+}
+
+void ScriptDictionary_opForNext_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary *dict = (CScriptDictionary *)gen->GetObject();
+    CScriptDictionary::CScriptDictIter *iter =
+        *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfArg(0);
+    *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfReturnLocation() =
+        dict->opForNext(*iter);
+}
+
+void ScriptDictionary_opForValue0_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary *dict = (CScriptDictionary *)gen->GetObject();
+    CScriptDictionary::CScriptDictIter *iter =
+        *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfArg(0);
+    *reinterpret_cast<const CScriptDictValue **>(
+        gen->GetAddressOfReturnLocation()) = &dict->opForValue0(*iter);
+}
+
+void ScriptDictionary_opForValue1_Generic(asIScriptGeneric *gen) {
+    CScriptDictionary *dict = (CScriptDictionary *)gen->GetObject();
+    CScriptDictionary::CScriptDictIter *iter =
+        *(CScriptDictionary::CScriptDictIter **)gen->GetAddressOfArg(0);
+    *reinterpret_cast<const dictKey_t **>(gen->GetAddressOfReturnLocation()) =
+        &dict->opForValue1(*iter);
+}
+
+//------------------------------------------------------------------
+// Iterator implementation
+
+CScriptDictionary::CIterator CScriptDictionary::begin() const {
+    return CIterator(*this, dict.begin());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::end() const {
+    return CIterator(*this, dict.end());
+}
+
+CScriptDictionary::CIterator
+CScriptDictionary::find(const dictKey_t &key) const {
+    return CIterator(*this, dict.find(key));
+}
+
+CScriptDictionary::CIterator::CIterator(const CScriptDictionary &dict,
+                                        dictMap_t::const_iterator it)
+    : m_it(it), m_dict(dict) {}
+
+void CScriptDictionary::CIterator::operator++() { ++m_it; }
+
+void CScriptDictionary::CIterator::operator++(int) {
+    ++m_it;
+
+    // Normally the post increment would return a copy of the object with the
+    // original state, but it is rarely used so we skip this extra copy to avoid
+    // unnecessary overhead
+}
+
+CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*() {
+    return *this;
+}
+
+bool CScriptDictionary::CIterator::operator==(const CIterator &other) const {
+    return m_it == other.m_it;
+}
+
+bool CScriptDictionary::CIterator::operator!=(const CIterator &other) const {
+    return m_it != other.m_it;
+}
+
+const dictKey_t &CScriptDictionary::CIterator::GetKey() const {
+    return m_it->first;
+}
+
+int CScriptDictionary::CIterator::GetTypeId() const {
+    return m_it->second.m_typeId;
+}
+
+bool CScriptDictionary::CIterator::GetValue(asINT64 &value) const {
+    return m_it->second.Get(m_dict.engine, &value, asTYPEID_INT64);
+}
+
+bool CScriptDictionary::CIterator::GetValue(double &value) const {
+    return m_it->second.Get(m_dict.engine, &value, asTYPEID_DOUBLE);
+}
+
+bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const {
+    return m_it->second.Get(m_dict.engine, value, typeId);
+}
+
+const void *CScriptDictionary::CIterator::GetAddressOfValue() const {
+    return m_it->second.GetAddressOfValue();
+}
+
 //--------------------------------------------------------------------------
 // Register the type
 
@@ -1354,32 +1532,60 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-#if AS_USE_STLNAMES == 1
-    // Same as isEmpty
-    r = engine->RegisterObjectMethod("dictionary", "bool empty() const",
-                                     asMETHOD(CScriptDictionary, IsEmpty),
-                                     asCALL_THISCALL);
+    // Support foreach
+    r = engine->RegisterObjectType("dictionaryIter", 0, asOBJ_REF);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    // Same as getSize
-    r = engine->RegisterObjectMethod("dictionary", "uint size() const",
-                                     asMETHOD(CScriptDictionary, GetSize),
-                                     asCALL_THISCALL);
+    r = engine->RegisterObjectBehaviour(
+        "dictionaryIter", asBEHAVE_ADDREF, "void f()",
+        asMETHOD(CScriptDictionary::CScriptDictIter, AddRef), asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    // Same as delete
+    r = engine->RegisterObjectBehaviour(
+        "dictionaryIter", asBEHAVE_RELEASE, "void f()",
+        asMETHOD(CScriptDictionary::CScriptDictIter, Release), asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
     r = engine->RegisterObjectMethod(
-        "dictionary", "void erase(const string &in)",
-        asMETHOD(CScriptDictionary, Delete), asCALL_THISCALL);
+        "dictionary", "dictionaryIter @opForBegin() const",
+        asMETHODPR(CScriptDictionary, opForBegin, () const,
+                   CScriptDictionary::CScriptDictIter *),
+        asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    // Same as deleteAll
-    r = engine->RegisterObjectMethod("dictionary", "void clear()",
-                                     asMETHOD(CScriptDictionary, DeleteAll),
-                                     asCALL_THISCALL);
+    r = engine->RegisterObjectMethod(
+        "dictionary", "bool opForEnd(dictionaryIter @+) const",
+        asMETHODPR(CScriptDictionary, opForEnd,
+                   (const CScriptDictionary::CScriptDictIter &) const, bool),
+        asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-#endif
+    r = engine->RegisterObjectMethod(
+        "dictionary", "dictionaryIter @+ opForNext(dictionaryIter @+) const",
+        asMETHODPR(CScriptDictionary, opForNext,
+                   (CScriptDictionary::CScriptDictIter &) const,
+                   CScriptDictionary::CScriptDictIter *),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary",
+        "const dictionaryValue &opForValue0(dictionaryIter @+) const",
+        asMETHODPR(CScriptDictionary, opForValue0,
+                   (const CScriptDictionary::CScriptDictIter &) const,
+                   const CScriptDictValue &),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary", "const string &opForValue1(dictionaryIter @+) const",
+        asMETHODPR(CScriptDictionary, opForValue1,
+                   (const CScriptDictionary::CScriptDictIter &) const,
+                   const dictKey_t &),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     // Cache some things the dictionary will need at runtime
     SDictionaryCache::Setup(engine);
@@ -1636,78 +1842,50 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
+    // Support foreach
+    r = engine->RegisterObjectType("dictionaryIter", 0, asOBJ_REF);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour(
+        "dictionaryIter", asBEHAVE_ADDREF, "void f()",
+        asFUNCTION(ScriptDictIterAddRef_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour(
+        "dictionaryIter", asBEHAVE_RELEASE, "void f()",
+        asFUNCTION(ScriptDictIterRelease_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "dictionary", "dictionaryIter @opForBegin() const",
+        asFUNCTION(ScriptDictionary_opForBegin_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary", "bool opForEnd(dictionaryIter @+) const",
+        asFUNCTION(ScriptDictionary_opForEnd_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary", "dictionaryIter @+ opForNext(dictionaryIter @+) const",
+        asFUNCTION(ScriptDictionary_opForNext_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary",
+        "const dictionaryValue &opForValue0(dictionaryIter @+) const",
+        asFUNCTION(ScriptDictionary_opForValue0_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "dictionary", "const string &opForValue1(dictionaryIter @+) const",
+        asFUNCTION(ScriptDictionary_opForValue1_Generic), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
     // Cache some things the dictionary will need at runtime
     SDictionaryCache::Setup(engine);
-}
-
-//------------------------------------------------------------------
-// Iterator implementation
-
-CScriptDictionary::CIterator CScriptDictionary::begin() const {
-    return CIterator(*this, dict.begin());
-}
-
-CScriptDictionary::CIterator CScriptDictionary::end() const {
-    return CIterator(*this, dict.end());
-}
-
-CScriptDictionary::CIterator
-CScriptDictionary::find(const dictKey_t &key) const {
-    return CIterator(*this, dict.find(key));
-}
-
-CScriptDictionary::CIterator::CIterator(const CScriptDictionary &dict,
-                                        dictMap_t::const_iterator it)
-    : m_it(it), m_dict(dict) {}
-
-void CScriptDictionary::CIterator::operator++() { ++m_it; }
-
-void CScriptDictionary::CIterator::operator++(int) {
-    ++m_it;
-
-    // Normally the post increment would return a copy of the object with the
-    // original state, but it is rarely used so we skip this extra copy to avoid
-    // unnecessary overhead
-}
-
-CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*() {
-    return *this;
-}
-
-bool CScriptDictionary::CIterator::operator==(const CIterator &other) const {
-    return m_it == other.m_it;
-}
-
-bool CScriptDictionary::CIterator::operator!=(const CIterator &other) const {
-    return m_it != other.m_it;
-}
-
-const dictKey_t &CScriptDictionary::CIterator::GetKey() const {
-    return m_it->first;
-}
-
-int CScriptDictionary::CIterator::GetTypeId() const {
-    return m_it->second.m_typeId;
-}
-
-bool CScriptDictionary::CIterator::GetValue(asQWORD &value) const {
-    return m_it->second.Get(m_dict.engine, &value, asTYPEID_UINT64);
-}
-
-bool CScriptDictionary::CIterator::GetValue(asINT64 &value) const {
-    return m_it->second.Get(m_dict.engine, &value, asTYPEID_INT64);
-}
-
-bool CScriptDictionary::CIterator::GetValue(double &value) const {
-    return m_it->second.Get(m_dict.engine, &value, asTYPEID_DOUBLE);
-}
-
-bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const {
-    return m_it->second.Get(m_dict.engine, value, typeId);
-}
-
-const void *CScriptDictionary::CIterator::GetAddressOfValue() const {
-    return m_it->second.GetAddressOfValue();
 }
 
 END_AS_NAMESPACE

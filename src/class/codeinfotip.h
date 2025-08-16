@@ -42,9 +42,7 @@ public:
     enum CacheIndex {
         ICON_ENUM,
         ICON_ENUMERATOR,
-        // ICON_UNION,
         ICON_CLASS,
-        // ICON_STRUCT,
         ICON_KEYWORD,
         ICON_TYPEDEF,
         ICON_NAMESPACE,
@@ -79,7 +77,6 @@ public:
 
 public:
     QString name;
-    bool dontAddGlobal = false;
     Type type = Type::Unknown;
     QString nameSpace;
     CodeInfoVisibility visualpo = CodeInfoVisibility::VISIBILITY_DEFAULT;

@@ -20,3 +20,6 @@
 [submodule "3rdparty/antlr4-cpp"]
 	path = 3rdparty/antlr4-cpp
 	url = git@github.com:Wing-summer/antlr4-cpp.git
+[submodule "3rdparty/angel-lsp"]
+	path = 3rdparty/angel-lsp
+	url = git@github.com:Wing-summer/angel-lsp.git

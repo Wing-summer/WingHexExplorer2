@@ -29,7 +29,6 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
-#include "settings/clangformatsetdialog.h"
 #include "settings/qeditconfig.h"
 
 #include <QDesktopServices>
@@ -1015,9 +1014,6 @@ void ScriptingDialog::buildUpSettingDialog() {
 
     edit = new QEditConfig(true, m_setdialog);
     m_setdialog->addPage(edit);
-
-    auto clang = new ClangFormatSetDialog(m_setdialog);
-    m_setdialog->addPage(clang);
 
     m_setdialog->build();
 }

@@ -22,7 +22,6 @@
 #include "QConsoleWidget/QConsoleWidget.h"
 #include "QConsoleWidget/commandhistorymanager.h"
 #include "angelscript.h"
-#include "clangformatmanager.h"
 #include "control/toast.h"
 #include "crashhandler.h"
 #include "dbghelper.h"
@@ -34,6 +33,7 @@
 #include "logger.h"
 #include "settingmanager.h"
 #include "skinmanager.h"
+#include "src/predefgen.h"
 #include "utilities.h"
 #include "wingmessagebox.h"
 
@@ -95,7 +95,6 @@ AppManager::AppManager(int &argc, char *argv[])
     if (!dontSplash) {
         splash = new SplashDialog;
         splash->setInfoText(tr("SetupClang"));
-        ClangFormatManager::instance();
     }
 
     auto cmdlist = CommandHistoryManager::load();
@@ -143,7 +142,6 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
-    ClangFormatManager::instance().save();
     ScriptMachine::instance().deleteLater();
     InspectQtLogHelper::instance().destory();
     CommandHistoryManager::save(QConsoleWidget::history().strings_);

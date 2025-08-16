@@ -29,7 +29,6 @@ public:
     virtual ~AsConsoleCompletion() = default;
 
 protected:
-    virtual QList<CodeInfoTip> parseDocument() override;
     virtual QList<CodeInfoTip> parseMarcos() override;
 
 private:

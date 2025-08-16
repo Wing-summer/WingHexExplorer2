@@ -55,12 +55,16 @@ public slots:
     void replace();
     void gotoLine();
 
+private slots:
+    void processContentsChange(const LSP::TextDocumentContentChangeEvent &e);
+
 private:
     void processTitle();
 
 private:
     CodeEdit *m_editor = nullptr;
     QString m_fileName;
+    quint64 version = 1;
 
     QFileSystemWatcher _watcher;
 };
