@@ -6,7 +6,7 @@
 	url = git@github.com:Wing-summer/qwindowkit.git
 [submodule "3rdparty/AngelScript"]
 	path = 3rdparty/AngelScript
-	url = git@github.com:Wing-summer/AngelScript.git
+	url = git@github.com:Wing-summer/angelscript.git
 	branch=stable
 [submodule "3rdparty/cpptrace"]
 	path = 3rdparty/cpptrace
