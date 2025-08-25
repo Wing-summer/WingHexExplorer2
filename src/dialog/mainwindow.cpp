@@ -241,7 +241,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             if (cfgerr) {
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Output);
-                m_scriptConsole->stdErr(tr("EngineConfigError"));
+                m_scriptConsole->stdErrLine(tr("EngineConfigError"));
 
                 m_scriptConsole->setEnabled(false);
 

@@ -16,8 +16,6 @@
 */
 
 #include "scriptingconsolebase.h"
-#include "class/wingconsolehighligher.h"
-#include "wingsyntaxhighlighter.h"
 
 #include <QTextBlock>
 #include <QTextStream>
@@ -29,53 +27,61 @@
 ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     : QConsoleWidget(parent) {
     _warnCharFmt.setForeground(QColorConstants::Svg::gold);
+    _errCharFmt.setForeground(Qt::red);
     setHighlighter(new WingConsoleHighligher);
     setSyntax(syntaxRepo().definitionForName("AngelScript"));
 
     _s.setDevice(this->device());
 }
 
-void ScriptingConsoleBase::stdOut(const QString &str) {
-    auto lines = str.split('\n');
-    if (lines.isEmpty()) {
+void ScriptingConsoleBase::stdOutLine(const QString &str) {
+    if (str.isEmpty()) {
         return;
     }
-    writeStdOut(lines.takeFirst());
-    dontHighlightLastLine(false);
-    for (auto &l : lines) {
-        newLine();
-        writeStdOut(l);
-        dontHighlightLastLine(true);
+
+    auto olen = this->blockCount();
+    auto id = write(str);
+    auto nlen = this->blockCount();
+    auto total = nlen - olen + 1;
+    auto doc = this->document();
+    auto h = consoleHighligher();
+    for (int i = 0; i < total; ++i) {
+        auto blk = doc->findBlockByNumber(id + i);
+        h->setBlockAsTextOnly(blk);
     }
 }
 
-void ScriptingConsoleBase::stdErr(const QString &str) {
-    auto lines = str.split('\n');
-    if (lines.isEmpty()) {
+void ScriptingConsoleBase::stdErrLine(const QString &str) {
+    if (str.isEmpty()) {
         return;
     }
 
-    writeStdErr(lines.takeFirst());
-    dontHighlightLastLine(false);
-    for (auto &l : lines) {
-        newLine();
-        writeStdErr(l);
-        dontHighlightLastLine(false);
+    auto olen = this->blockCount();
+    auto id = write(str);
+    auto nlen = this->blockCount();
+    auto total = nlen - olen + 1;
+    auto doc = this->document();
+    auto h = consoleHighligher();
+    for (int i = 0; i < total; ++i) {
+        auto blk = doc->findBlockByNumber(id + i);
+        h->setBlockAsTextWithFormat(blk, _errCharFmt);
     }
 }
 
-void ScriptingConsoleBase::stdWarn(const QString &str) {
-    auto lines = str.split('\n');
-    if (lines.isEmpty()) {
+void ScriptingConsoleBase::stdWarnLine(const QString &str) {
+    if (str.isEmpty()) {
         return;
     }
 
-    write(lines.takeFirst(), _warnCharFmt);
-    dontHighlightLastLine(false);
-    for (auto &l : lines) {
-        newLine();
-        write(l, _warnCharFmt);
-        dontHighlightLastLine(false);
+    auto olen = this->blockCount();
+    auto id = write(str);
+    auto nlen = this->blockCount();
+    auto total = nlen - olen + 1;
+    auto doc = this->document();
+    auto h = consoleHighligher();
+    for (int i = 0; i < total; ++i) {
+        auto blk = doc->findBlockByNumber(id + i);
+        h->setBlockAsTextWithFormat(blk, _warnCharFmt);
     }
 }
 
@@ -84,10 +90,11 @@ void ScriptingConsoleBase::newLine() { _s << Qt::endl; }
 void ScriptingConsoleBase::flush() { _s << Qt::flush; }
 
 void ScriptingConsoleBase::initOutput() {
-    stdWarn(tr("Scripting console for WingHexExplorer"));
-    _s << Qt::endl;
-    stdWarn(tr(">>>> Powered by AngelScript <<<<"));
-    _s << Qt::endl << Qt::endl;
+    stdWarnLine(tr("Scripting console for WingHexExplorer"));
+    newLine();
+    stdWarnLine(tr(">>>> Powered by AngelScript <<<<"));
+    newLine();
+    newLine();
     appendCommandPrompt();
 }
 
@@ -96,7 +103,7 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
 
     auto cursor = this->textCursor();
     if (!cursor.atBlockStart()) {
-        newLine();
+        cursor.insertBlock();
     }
 
     if (storeOnly) {
@@ -106,32 +113,18 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     }
 
     _lastCommandPrompt = storeOnly;
-
-    writeStdOut(commandPrompt);
-    dontHighlightLastOffset(commandPrompt.length());
-}
-
-void ScriptingConsoleBase::dontHighlightLastLine(bool followTheme) {
-    dontHighlightLastOffset(-1, followTheme);
-}
-
-void ScriptingConsoleBase::dontHighlightLastOffset(int offset,
-                                                   bool followTheme) {
-    auto blk = document()->lastBlock();
-    auto hl = highlighter();
-    if (offset < 0) {
-        offset = -1;
-    }
-    if (offset == -1 && followTheme) {
-        hl->setProperty(blk, "cmdoff", -2);
-    } else {
-        hl->setProperty(blk, "cmdoff", offset);
-    }
-    hl->rehighlightBlock(blk);
+    auto id = write(commandPrompt);
+    auto blk = document()->findBlockByNumber(id);
+    auto h = consoleHighligher();
+    h->setBlockAsCodeWithPrefix(blk, commandPrompt.length());
 }
 
 bool ScriptingConsoleBase::lastCommandPrompt() const {
     return _lastCommandPrompt;
+}
+
+WingConsoleHighligher *ScriptingConsoleBase::consoleHighligher() const {
+    return reinterpret_cast<WingConsoleHighligher *>(highlighter());
 }
 
 QTextStream &ScriptingConsoleBase::consoleStream() { return _s; }

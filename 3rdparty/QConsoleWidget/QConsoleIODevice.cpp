@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "QConsoleIODevice.h"
 #include "QConsoleWidget.h"
 
@@ -54,12 +71,7 @@ qint64 QConsoleIODevice::readData(char *data, qint64 len) {
 
 qint64 QConsoleIODevice::writeData(const char *data, qint64 len) {
     QByteArray ba(data, (int)len);
-    int ch = currentWriteChannel();
-    if (ch == QConsoleWidget::StandardError)
-        widget_->writeStdErr(ba);
-    else
-        widget_->writeStdOut(ba);
-
+    widget_->write(ba);
     writtenSinceLastEmit_ += len;
     if (!signalsBlocked()) {
         Q_EMIT bytesWritten(writtenSinceLastEmit_);

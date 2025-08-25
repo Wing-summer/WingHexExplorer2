@@ -112,6 +112,9 @@ bool AsCompletion::processTrigger(const QString &trigger,
     }
 
     auto editor = qobject_cast<ScriptEditor *>(this->widget()->parent());
+    if (editor == nullptr) {
+        return false;
+    }
     Q_ASSERT(editor);
 
     if (!trigger.isEmpty() && trigger != *DOT_TRIGGER) {

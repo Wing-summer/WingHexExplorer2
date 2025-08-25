@@ -41,10 +41,6 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
     : WingCodeEdit(parent), mode_(Output) {
     iodevice_ = new QConsoleIODevice(this, this);
 
-    QTextCharFormat fmt = currentCharFormat();
-    for (int i = 0; i < nConsoleChannels; i++)
-        chanFormat_[i] = fmt;
-
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setUndoRedoEnabled(false);
 
@@ -52,16 +48,6 @@ QConsoleWidget::QConsoleWidget(QWidget *parent)
     setMatchBraces(true);
 
     setDefaultTheme();
-    auto theme = highlighter()->theme();
-    auto color = theme.textColor(KSyntaxHighlighting::Theme::Normal);
-    chanFormat_[StandardOutput].setForeground(QColor(color));
-    chanFormat_[StandardError].setForeground(Qt::red);
-
-    connect(this, &QConsoleWidget::themeChanged, this, [this]() {
-        auto theme = highlighter()->theme();
-        auto color = theme.textColor(KSyntaxHighlighting::Theme::Normal);
-        chanFormat_[StandardOutput].setForeground(QColor(color));
-    });
 }
 
 QConsoleWidget::~QConsoleWidget() {}
@@ -76,7 +62,6 @@ void QConsoleWidget::setMode(ConsoleMode m) {
         QTextCursor cursor = textCursor();
         cursor.movePosition(QTextCursor::End);
         setTextCursor(cursor);
-        setCurrentCharFormat(chanFormat_[StandardInput]);
         inpos_ = cursor.position();
         mode_ = Input;
     }
@@ -87,15 +72,6 @@ void QConsoleWidget::setMode(ConsoleMode m) {
 }
 
 QIODevice *QConsoleWidget::device() const { return iodevice_; }
-
-QTextCharFormat QConsoleWidget::channelCharFormat(ConsoleChannel ch) const {
-    return chanFormat_[ch];
-}
-
-void QConsoleWidget::setChannelCharFormat(ConsoleChannel ch,
-                                          const QTextCharFormat &fmt) {
-    chanFormat_[ch] = fmt;
-}
 
 QString QConsoleWidget::getCommandLine() {
     if (mode_ == Output)
@@ -114,7 +90,7 @@ void QConsoleWidget::paste() {
     const QMimeData *const clipboard = QApplication::clipboard()->mimeData();
     const QString text = clipboard->text();
     if (!text.isNull()) {
-        textCursor.insertText(text, channelCharFormat(StandardInput));
+        textCursor.insertText(text);
     }
 }
 
@@ -298,7 +274,6 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     default:
         e->accept();
-        setCurrentCharFormat(chanFormat_[StandardInput]);
         processDefaultKeyPressEvent(e);
         break;
     }
@@ -357,7 +332,7 @@ void QConsoleWidget::replaceCommandLine(const QString &str) {
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
 
     // ... and replace it with new string.
-    textCursor.insertText(str, chanFormat_[StandardInput]);
+    textCursor.insertText(str);
 
     // move to the end of the document
     textCursor.movePosition(QTextCursor::End);
@@ -373,7 +348,7 @@ QString QConsoleWidget::currentCommandLine() const {
 
 int QConsoleWidget::currentHeaderPos() const { return inpos_; }
 
-void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
+int QConsoleWidget::write(const QString &message) {
     QTextCursor tc = textCursor();
 
     if (mode() == Input) {
@@ -391,16 +366,18 @@ void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
         // insert block
         tc.movePosition(QTextCursor::StartOfBlock);
         tc.insertBlock();
+        auto id = tc.blockNumber();
         tc.movePosition(QTextCursor::PreviousBlock);
 
-        tc.insertText(message, fmt);
+        tc.insertText(message);
         tc.movePosition(QTextCursor::End);
         // restore input pos
         inpos_ = tc.position() - inpos_;
         // restore the edit pos
         tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, editpos);
-        tc.setCharFormat({});
+
         setTextCursor(tc);
+        return id;
     } else {
         // in output mode messages are ed
         QTextCursor tc1 = tc;
@@ -412,26 +389,19 @@ void QConsoleWidget::write(const QString &message, const QTextCharFormat &fmt) {
 
         // insert text
         setTextCursor(tc1);
-        textCursor().insertText(message, fmt);
+        auto id = tc1.blockNumber();
+        tc1.insertText(message);
         ensureCursorVisible();
-
-        tc.setCharFormat({});
 
         // restore cursor if needed
         if (needsRestore)
             setTextCursor(tc);
+
+        return id;
     }
 }
 
 QConsoleWidget::History &QConsoleWidget::history() { return history_; }
-
-void QConsoleWidget::writeStdOut(const QString &s) {
-    write(s, chanFormat_[StandardOutput]);
-}
-
-void QConsoleWidget::writeStdErr(const QString &s) {
-    write(s, chanFormat_[StandardError]);
-}
 
 /////////////////// QConsoleWidget::History /////////////////////
 

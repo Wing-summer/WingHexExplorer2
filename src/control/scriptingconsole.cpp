@@ -71,7 +71,6 @@ void ScriptingConsole::handleReturnKey() {
 
         // start new block
         appendPlainText(QString());
-        dontHighlightLastLine(true);
         setMode(Output);
 
         QTextCursor textCursor = this->textCursor();
@@ -118,11 +117,12 @@ void ScriptingConsole::clearConsole() {
         auto lines = _codes.split('\n');
         auto pl = lines.begin();
         appendCommandPrompt(false);
-        writeStdOut(*pl);
+        write(*pl);
+
         pl++;
         for (; pl != lines.end(); pl++) {
             appendCommandPrompt(true);
-            writeStdOut(*pl);
+            write(*pl);
         }
         appendCommandPrompt(true);
     } else {
@@ -170,34 +170,34 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     switch (message.type) {
     case ScriptMachine::MessageType::Info:
         if (isMatchLast(message)) {
-            stdOut(message.message);
+            stdOutLine(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
             }
-            stdOut(tr("[Info]") + fmtMsg(message));
+            stdOutLine(tr("[Info]") + fmtMsg(message));
         }
         flush();
         break;
     case ScriptMachine::MessageType::Warn:
         if (isMatchLast(message)) {
-            stdWarn(message.message);
+            stdWarnLine(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
             }
-            stdWarn(tr("[Warn]") + fmtMsg(message));
+            stdWarnLine(tr("[Warn]") + fmtMsg(message));
         }
         flush();
         break;
     case ScriptMachine::MessageType::Error:
         if (isMatchLast(message)) {
-            stdErr(message.message);
+            stdErrLine(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
             }
-            stdErr(tr("[Error]") + fmtMsg(message));
+            stdErrLine(tr("[Error]") + fmtMsg(message));
         }
         flush();
         break;
@@ -205,7 +205,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         if (lastInfo.first != message.type && isNotBlockStart) {
             newLine();
         }
-        stdOut(message.message);
+        stdOutLine(message.message);
         break;
     }
 
@@ -260,7 +260,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
             setMode(Output);
 
             if (total == 0) {
-                stdOut("<none>");
+                stdOutLine("<none>");
             } else {
                 auto &sm = ScriptMachine::instance();
                 for (asUINT i = 0; i < total; ++i) {
@@ -272,7 +272,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                         auto value = sm.debugger()->toString(
                             mod->GetAddressOfGlobalVar(i), typeID, sm.engine(),
                             1);
-                        stdOut(decl + QStringLiteral(" = ") + value);
+                        stdOutLine(decl + QStringLiteral(" = ") + value);
                     }
                 }
             }
@@ -290,7 +290,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
             auto idx = exec.indexOf('\n');
             if (idx >= 0) {
                 setMode(Output);
-                stdErr(tr("InvalidDelCmd"));
+                stdErrLine(tr("InvalidDelCmd"));
             } else {
                 // ok, then tokens should be devided by the space
                 exec.remove(0, 4);
@@ -305,7 +305,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                     if (idx >= 0) {
                         indices.append(idx);
                     } else {
-                        stdWarn(tr("NotFoundIgnore:") + v);
+                        stdWarnLine(tr("NotFoundIgnore:") + v);
                     }
                 }
 
@@ -436,11 +436,11 @@ void ScriptingConsole::paste() {
             setMode(Output);
             auto pl = lines.begin();
             auto pend = std::prev(lines.end());
-            writeStdOut(*pl);
+            write(*pl);
             pl++;
             for (; pl != pend; pl++) {
                 appendCommandPrompt(true);
-                writeStdOut(*pl);
+                write(*pl);
             }
             appendCommandPrompt(true);
             setMode(Input);

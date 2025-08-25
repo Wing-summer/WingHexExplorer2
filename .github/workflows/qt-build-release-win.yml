@@ -19,12 +19,12 @@ jobs:
         token: ${{ secrets.CONTRIBUTORS_TOKEN }}
     - name: Install Qt
       # Installs the Qt SDK
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
-        version: 6.6.2
+        version: 6.8.1
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2019_64'
+        arch: 'win64_msvc2022_64'
         modules: 'qtactiveqt'
         cache: true
     - name: Add Chinese support file for InnoSetup

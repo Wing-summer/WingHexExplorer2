@@ -19,6 +19,7 @@
 #define SCRIPTINGCONSOLEBASE_H
 
 #include "QConsoleWidget/QConsoleWidget.h"
+#include "class/wingconsolehighligher.h"
 
 class ScriptingConsoleBase : public QConsoleWidget {
     Q_OBJECT
@@ -30,26 +31,26 @@ public:
 
     bool lastCommandPrompt() const;
 
+public:
+    WingConsoleHighligher *consoleHighligher() const;
+
 public slots:
-    void stdOut(const QString &str);
-    void stdErr(const QString &str);
-    void stdWarn(const QString &str);
+    void stdOutLine(const QString &str);
+    void stdErrLine(const QString &str);
+    void stdWarnLine(const QString &str);
     void newLine();
     void flush();
 
     void initOutput();
 
     //! Appends a newline and command prompt at the end of the document.
+    //! return prefix length
     void appendCommandPrompt(bool storeOnly = false);
-
-protected:
-    void dontHighlightLastLine(bool followTheme);
-
-    void dontHighlightLastOffset(int offset, bool followTheme = true);
 
 private:
     QTextStream _s;
     QTextCharFormat _warnCharFmt;
+    QTextCharFormat _errCharFmt;
 
     bool _lastCommandPrompt = false;
 };

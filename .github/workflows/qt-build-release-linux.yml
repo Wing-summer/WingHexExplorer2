@@ -19,7 +19,7 @@ jobs:
         token: ${{ secrets.CONTRIBUTORS_TOKEN }}
     - name: Install Qt
       # Installs the Qt SDK
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         version: 6.8.1
         host: 'linux'

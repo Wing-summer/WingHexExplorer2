@@ -68,10 +68,9 @@ public:
     ConsoleMode mode() const;
     void setMode(ConsoleMode m);
     QIODevice *device() const;
-    QTextCharFormat channelCharFormat(ConsoleChannel ch) const;
-    void setChannelCharFormat(ConsoleChannel ch, const QTextCharFormat &fmt);
+
     // write a formatted message to the console
-    void write(const QString &message, const QTextCharFormat &fmt);
+
     static History &history();
 
     // get the current command line
@@ -81,15 +80,9 @@ public:
 
     int currentHeaderPos() const;
 
-public slots:
-
-    // write to StandardOutput
-    void writeStdOut(const QString &s);
-    // write to StandardError
-    void writeStdErr(const QString &s);
+    int write(const QString &message); // return block ID
 
 signals:
-
     // fired when user hits the return key
     void consoleCommand(const QString &code);
     // fired when user enters a Ctrl-Q
@@ -118,7 +111,6 @@ protected:
     ConsoleMode mode_;
     int inpos_;
     QConsoleIODevice *iodevice_;
-    QTextCharFormat chanFormat_[nConsoleChannels];
 };
 
 QTextStream &waitForInput(QTextStream &s);

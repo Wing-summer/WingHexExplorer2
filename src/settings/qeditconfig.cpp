@@ -58,20 +58,16 @@ QEditConfig::QEditConfig(bool isConsole, QWidget *w)
     if (isConsole) {
         auto console = new ScriptingConsoleBase(this);
         console->initOutput();
-        auto outfmt =
-            console->channelCharFormat(QConsoleWidget::StandardOutput);
         console->write(
-            QStringLiteral(R"(print("WingHexExplorer2 by wingsummer!");)"),
-            outfmt);
+            QStringLiteral(R"(print("WingHexExplorer2 by wingsummer!");)"));
         console->appendCommandPrompt();
-        console->write(QStringLiteral(R"(for(auto i = 0; i < 5; i++) { \)"),
-                       outfmt);
+        console->write(QStringLiteral(R"(for(auto i = 0; i < 5; i++) { \)"));
         console->appendCommandPrompt(true);
-        console->write(QStringLiteral(R"(print(i); \)"), outfmt);
+        console->write(QStringLiteral(R"(print(i); \)"));
         console->appendCommandPrompt(true);
-        console->write(QStringLiteral("}"), outfmt);
+        console->write(QStringLiteral("}"));
         console->newLine();
-        console->stdOut(QStringLiteral("01234"));
+        console->stdOutLine(QStringLiteral("01234"));
         _edit = console;
     } else {
         _edit = new WingCodeEdit(this);

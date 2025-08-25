@@ -2711,32 +2711,32 @@
         <translation>跳位字元寬度</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="312"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="308"/>
         <source>Default</source>
         <translation>默認</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="324"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="320"/>
         <source>IndentMixed</source>
         <translation>混合縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="321"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="317"/>
         <source>IndentSpaces</source>
         <translation>空格縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="166"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="162"/>
         <source>Console</source>
         <translation>控制台</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="322"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="318"/>
         <source>IndentTabs</source>
         <translation>定位字元縮進</translation>
     </message>
     <message>
-        <location filename="../../src/settings/qeditconfig.cpp" line="170"/>
+        <location filename="../../src/settings/qeditconfig.cpp" line="166"/>
         <source>Edit</source>
         <translation>編輯</translation>
     </message>
@@ -3184,12 +3184,12 @@
 <context>
     <name>ScriptingConsoleBase</name>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="87"/>
+        <location filename="../../src/control/scriptingconsolebase.cpp" line="93"/>
         <source>Scripting console for WingHexExplorer</source>
         <translation>羽雲十六進制編輯器腳本控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsolebase.cpp" line="89"/>
+        <location filename="../../src/control/scriptingconsolebase.cpp" line="95"/>
         <source>&gt;&gt;&gt;&gt; Powered by AngelScript &lt;&lt;&lt;&lt;</source>
         <translation>&gt;&gt;&gt;&gt; 由 AngelScript 引擎提供支持 &lt;&lt;&lt;&lt;</translation>
     </message>

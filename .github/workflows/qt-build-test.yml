@@ -18,13 +18,12 @@ jobs:
     strategy:
       matrix: 
         os: [windows-latest, ubuntu-latest]
-        qt_version: [6.6.2]
-        arch: [win64_msvc2019_64, gcc_64]
+        arch: [win64_msvc2022_64, linux_gcc_64]
         exclude:
           - os: windows-latest
-            arch: gcc_64
+            arch: linux_gcc_64
           - os: ubuntu-latest
-            arch: win64_msvc2019_64
+            arch: win64_msvc2022_64
 
     steps:
     - uses: actions/checkout@v3
@@ -33,13 +32,13 @@ jobs:
         token: ${{ secrets.CONTRIBUTORS_TOKEN }}
     - name: Install Qt
       # Installs the Qt SDK
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
-        version: ${{ matrix.qt_version }}
+        version: 6.8.1
         host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
         target: 'desktop'
         arch: ${{ matrix.arch }}
-        modules: ${{ matrix.os == 'windows-latest' && matrix.qt_version == '6.6.2' && 'qtactiveqt' || '' }}
+        modules: ${{ matrix.os == 'windows-latest' && 'qtactiveqt' || '' }}
         cache: true
 
     - name: Configure CMake
