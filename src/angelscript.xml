@@ -55,7 +55,6 @@
             <item>typedef</item>
             <item>while</item>
             <item>xor</item>
-            <item>co_await</item>
         </list>
         <list name="types">
             <item>void</item>

@@ -2425,134 +2425,134 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3341"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3339"/>
         <source>LoadingPlugin</source>
         <translation>加载插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3359"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3964"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4041"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3357"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3962"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4039"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>加载插件失败：损坏的插件数据</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4594"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4592"/>
         <source>PluginBlockByManager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3793"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3791"/>
         <source>AppClosingCanceled:</source>
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3879"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3877"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3901"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3899"/>
         <source>FoundDrvPluginCount</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3942"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3940"/>
         <source>PluginManagerNeedSingleton</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3372"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3958"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4035"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3370"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3956"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4033"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加载失败：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4216"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4214"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3988"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4065"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4237"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3986"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4063"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4235"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4018"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4016"/>
         <source>HexExtNeedSingleton</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4246"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4244"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4247"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4245"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4248"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4246"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4282"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4280"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4283"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4281"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4299"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4297"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4322"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4320"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4329"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4334"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4327"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4332"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4330"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4328"/>
         <source>FileNotExist</source>
         <translation>文件不存在！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4335"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4333"/>
         <source>FilePermission</source>
         <translation>因文件权限无法继续！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4365"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4363"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4375"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4373"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4383"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4381"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4496"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4494"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
@@ -2562,49 +2562,49 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3927"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3925"/>
         <source>UnsafePluginDir</source>
         <translation>不安全的插件目录，请将插件目录设置为仅管理员账户可写</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3366"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3961"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4038"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3364"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3959"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4036"/>
         <source>InvalidPluginID</source>
         <translation>加载插件失败：非法插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3369"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3367"/>
         <source>InvalidDupPlugin</source>
         <translation>加载插件失败：重复的插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3844"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3842"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3875"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3873"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依赖插件加载失败总结</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3880"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3878"/>
         <source>- Dependencies:</source>
         <translation>- 依赖：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3882"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3880"/>
         <source>PUID:</source>
         <translation>插件唯一标志符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3883"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3881"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3890"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3888"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>

@@ -16,16 +16,21 @@
 */
 
 #include "asconsolecompletion.h"
-
 #include "control/scriptingconsole.h"
 
 AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
     : AsCompletion(p), _console(p) {}
 
+bool AsConsoleCompletion::processTrigger(const QString &trigger,
+                                         const QString &content) {
+    // TODO
+    return false;
+}
+
 QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
     static QList<CodeInfoTip> marcos;
     if (marcos.isEmpty()) {
-        QStringList m{
+        static QStringList m{
             "ls",
             "del",
             "cls",

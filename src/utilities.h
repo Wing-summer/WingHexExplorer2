@@ -334,6 +334,11 @@ public:
     static QString getUrlString(const QString &fileName) {
         return QUrl::fromLocalFile(fileName).toString(QUrl::FullyEncoded);
     }
+
+    static QString getASPredefPath() {
+        QDir datap(Utilities::getAppDataPath());
+        return datap.absoluteFilePath(QStringLiteral("as.predefined"));
+    }
 };
 
 #endif // UTILITIES_H

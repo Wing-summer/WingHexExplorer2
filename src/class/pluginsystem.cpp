@@ -2769,10 +2769,8 @@ void PluginSystem::doneRegisterScriptObj() {
         p->onRegisterScriptObj(ptr);
     }
 
-    QDir datap(Utilities::getAppDataPath());
-    generateScriptPredefined(
-        ScriptMachine::instance().engine(),
-        datap.absoluteFilePath(QStringLiteral("as.predefined")));
+    generateScriptPredefined(ScriptMachine::instance().engine(),
+                             Utilities::getASPredefPath());
 }
 
 const std::optional<PluginInfo> &PluginSystem::monitorManagerInfo() const {

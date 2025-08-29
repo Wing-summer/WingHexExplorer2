@@ -98,13 +98,6 @@ public:
     // First, we should parse and split the code into segments
     QList<QAsCodeParser::CodeSegment> parse(const QByteArray &codes);
 
-    // Then, we can deep parsing for code completion
-    QList<Symbol> parseIntell(qsizetype offset,
-                              const QList<QAsCodeParser::CodeSegment> &segs);
-
-    // so, a helper function?
-    QList<Symbol> parseAndIntell(qsizetype offset, const QByteArray &codes);
-
 public:
     static eTokenType getToken(asIScriptEngine *engine, const char *string,
                                size_t stringLength, size_t *tokenLength);
@@ -116,7 +109,6 @@ private:
     QByteArray getSymbolString(const sToken &t);
 
     // Statements
-    void superficiallyParseVarInit();
     sToken superficiallyParseStatementBlock();
     void superficiallyParseExpression();
     void superficiallyParseTemplateList();
@@ -137,7 +129,6 @@ private:
     // parse tokens
     sToken parseIdentifier();
     sToken parseToken(int token);
-    sToken parseRealType();
     sToken parseDataType(bool allowVariableType = false,
                          bool allowAuto = false);
     sToken parseOneOf(int *tokens, int count);
@@ -146,42 +137,12 @@ private:
 
 private:
     // deep parsing
-    QList<Symbol> parseEnumerationContent(const QByteArrayList &ns,
-                                          const QByteArray &name,
-                                          const QByteArray &code);
-    Symbol parseTypedefContent(const QByteArrayList &ns,
-                               const QByteArray &code);
-
-    QList<Symbol> parseGlobalVarDecls(const QByteArrayList &ns,
-                                      const QByteArray &code);
-
     QByteArrayList parseOptionalScope();
-
-    QList<Symbol> parseDeclaration(qsizetype end, const QByteArrayList &ns,
-                                   bool isClassProp = false,
-                                   bool isGlobalVar = false);
 
     QByteArray parseType(bool allowConst, bool allowVariableType = false,
                          bool allowAuto = false);
 
-    Symbol parseFuncDefContent(const QByteArrayList &ns,
-                               const QByteArray &code);
-
-    Symbol parseFuncDefContent(const QByteArrayList &ns);
-
-    QPair<QByteArrayList, QList<Symbol>>
-    parseClassContent(qsizetype offset, const QByteArrayList &ns,
-                      const QByteArray &code);
-
-    QPair<QByteArrayList, QList<Symbol>>
-    parseInterfaceContent(qsizetype offset, const QByteArrayList &ns,
-                          const QByteArray &code);
-
-    QList<Symbol> parseStatementBlock(const QByteArrayList &ns,
-                                      const QByteArray &code, qsizetype end);
-
 private:
-    Symbol parseVirtualPropertyDecl(bool isMethod, bool isInterface);
     QList<Symbol> parseParameterListContent();
 
     // parse but not get symbols
@@ -210,8 +171,6 @@ private:
     bool findTokenAfterType(sToken &nextToken);
 
     bool typeExist(const QString &t);
-
-    Symbol parseInterfaceMethod();
 
 private:
     bool _errorWhileParsing;

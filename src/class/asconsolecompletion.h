@@ -29,6 +29,8 @@ public:
     virtual ~AsConsoleCompletion() = default;
 
 protected:
+    virtual bool processTrigger(const QString &trigger,
+                                const QString &content) override;
     virtual QList<CodeInfoTip> parseMarcos() override;
 
 private:

@@ -527,11 +527,11 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             QJsonArray result;
 
             QJsonObject o;
-            o["suppressAnalyzerErrors"] = true;
+            o["suppressAnalyzerErrors"] = false;
             o["includePath"] = QJsonArray();
             o["implicitMutualInclusion"] = false;
-            o["hoistEnumParentScope"] = true;
-            o["explicitPropertyAccessor"] = false;
+            o["hoistEnumParentScope"] = false;
+            o["explicitPropertyAccessor"] = true;
             o["allowUnicodeIdentifiers"] = true;
             o["supportsForEach"] = true;
             o["characterLiterals"] = false;
@@ -545,7 +545,7 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             fmt["useTabIndent"] = false;
             o["formatter"] = fmt;
             QJsonObject trace;
-            trace["server"] = "verbose";
+            trace["server"] = "off";
             o["trace"] = trace;
             result.append(o);
 

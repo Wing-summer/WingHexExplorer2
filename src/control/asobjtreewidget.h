@@ -42,14 +42,14 @@ private:
     QByteArray getFnRealName(asIScriptFunction *fn);
 
 private:
-    void addGlobalFunctionCompletion(asIScriptEngine *engine);
+    void addGlobalFunctionCompletion(asIScriptEngine *engine,
+                                     QHash<QString, QList<CodeInfoTip>> &c);
 
-    void addEnumCompletion(asIScriptEngine *engine);
+    void addEnumCompletion(asIScriptEngine *engine,
+                           QHash<QString, QList<CodeInfoTip>> &c);
 
-    void addClassCompletion(asIScriptEngine *engine);
-
-private:
-    QHash<QString, QList<CodeInfoTip>> _headerNodes;
+    void addClassCompletion(asIScriptEngine *engine,
+                            QHash<QString, QList<CodeInfoTip>> &c);
 };
 
 #endif // ASOBJTREEWIDGET_H

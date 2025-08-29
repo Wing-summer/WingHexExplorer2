@@ -37,13 +37,13 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
         return;
     }
 
-    _headerNodes.clear();
-    addGlobalFunctionCompletion(engine);
-    addClassCompletion(engine);
-    addEnumCompletion(engine);
+    QHash<QString, QList<CodeInfoTip>> headerNodes;
+    addGlobalFunctionCompletion(engine, headerNodes);
+    addClassCompletion(engine, headerNodes);
+    addEnumCompletion(engine, headerNodes);
 
-    for (auto node = _headerNodes.constKeyValueBegin();
-         node != _headerNodes.constKeyValueEnd(); node++) {
+    for (auto node = headerNodes.constKeyValueBegin();
+         node != headerNodes.constKeyValueEnd(); node++) {
         QString header = node->first;
 
         QTreeWidgetItem *item = nullptr;
@@ -116,7 +116,8 @@ QByteArray ASObjTreeWidget::getFnRealName(asIScriptFunction *fn) {
     return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
 }
 
-void ASObjTreeWidget::addGlobalFunctionCompletion(asIScriptEngine *engine) {
+void ASObjTreeWidget::addGlobalFunctionCompletion(
+    asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
 
     for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); ++i) {
@@ -126,11 +127,12 @@ void ASObjTreeWidget::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         fnInfo.name = fn->GetName();
         fnInfo.type = LSP::CompletionItemKind::Function;
         fnInfo.comment = fn->GetDeclaration(true, true, true);
-        _headerNodes[ns].append(fnInfo);
+        c[ns].append(fnInfo);
     }
 }
 
-void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine) {
+void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
+                                        QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
 
     for (asUINT i = 0; i < engine->GetEnumCount(); ++i) {
@@ -154,11 +156,12 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine) {
         }
 
         etype->Release();
-        _headerNodes[ns].append(einfo);
+        c[ns].append(einfo);
     }
 }
 
-void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
+void ASObjTreeWidget::addClassCompletion(
+    asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
     auto eng = reinterpret_cast<asCScriptEngine *>(engine);
     Q_ASSERT(eng);
 
@@ -230,6 +233,6 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
 
         obj->Release();
 
-        _headerNodes[ns].append(cls);
+        c[ns].append(cls);
     }
 }
