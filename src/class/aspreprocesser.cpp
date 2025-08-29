@@ -20,7 +20,6 @@
 #include "class/qascodeparser.h"
 #include "class/scriptmachine.h"
 #include "class/skinmanager.h"
-#include "scriptaddon/aspromise.hpp"
 
 #include <QDir>
 #include <QFileInfo>
@@ -38,7 +37,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
       "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
       "__WING_DICTIONARY__", "__WING_PRINT_VAR__", "__WING_PRINT_LN__",
-      "__AS_PROMISE__", "__WING_CLIPBOARD__"}));
+      "__WING_CLIPBOARD__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -463,37 +462,7 @@ int AsPreprocesser::processScriptSection(const QByteArray &script,
             if (t == asTC_IDENTIFIER) {
                 // define replace
                 auto word = modifiedScript.sliced(pos, len);
-                if (word == PROMISE_AWAIT) {
-                    auto npos = pos + len;
-                    asUINT total = 0;
-                    auto t = engine->ParseToken(modifiedScript.data() + npos,
-                                                modifiedScript.size() - npos,
-                                                &total);
-                    if (t == asTC_WHITESPACE) {
-                        npos += total;
-                        t = engine->ParseToken(modifiedScript.data() + npos,
-                                               modifiedScript.size() - npos,
-                                               &total);
-                        if (t == asTC_IDENTIFIER) {
-                            // ok
-                            auto word = modifiedScript.sliced(npos, total);
-                            auto data = "(" + word +
-                                        ")." PROMISE_YIELD "()." PROMISE_UNWRAP
-                                        "()";
-                            auto oldLen = npos - pos + word.length();
-                            modifiedScript.replace(pos, oldLen, data);
-                            pos = npos;
-                            pos += data.length() - oldLen + word.length();
-                            continue;
-                        }
-                    }
-
-                    auto str = tr("UnexceptedToken");
-                    engine->WriteMessage(SECTION,
-                                         getLineCount(modifiedScript, pos), 1,
-                                         asMSGTYPE_ERROR, str.toUtf8());
-                    return asERROR;
-                } else if (word == "__LINE__") {
+                if (word == "__LINE__") {
                     auto data =
                         QByteArray::number(getLineCount(modifiedScript, pos));
                     modifiedScript.replace(pos, len, data);

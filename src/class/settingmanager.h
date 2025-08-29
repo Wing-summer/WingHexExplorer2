@@ -86,6 +86,9 @@ public:
     QStringList enabledExtPlugins() const;
     QStringList enabledDevPlugins() const;
 
+    QByteArray settingsLayout() const;
+    QByteArray settingsScriptLayout() const;
+
 public slots:
     void setThemeID(int newThemeID);
     void setDockLayout(const QByteArray &newDockLayout);
@@ -124,6 +127,9 @@ public slots:
     void setEnableMonitor(bool newEnableMonitor);
     void setEnableHexExt(bool newEnableHexExt);
 
+    void setSettingsLayout(const QByteArray &newSetLayout);
+    void setSettingsScriptLayout(const QByteArray &newSetScriptLayout);
+
 public:
     void checkWriteableAndWarn();
 
@@ -160,6 +166,8 @@ private:
     QString m_defaultLang;
     QByteArray m_dockLayout;
     QByteArray m_scriptDockLayout;
+    QByteArray m_setLayout;
+    QByteArray m_setScriptLayout;
     QString m_appFontFamily;
 
     bool m_editorShowHeader = true;

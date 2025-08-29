@@ -33,7 +33,7 @@ QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
         for (auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;
-            tip.type = CodeInfoTip::Type::KeyWord;
+            tip.type = LSP::CompletionItemKind::Keyword;
             marcos.append(tip);
         }
     }

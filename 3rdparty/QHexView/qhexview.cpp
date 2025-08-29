@@ -781,6 +781,7 @@ void QHexView::paintEvent(QPaintEvent *e) {
         return;
 
     QPainter painter(this->viewport());
+    painter.setRenderHint(QPainter::TextAntialiasing);
     painter.setFont(this->font());
 
     const QRect &r = e->rect();

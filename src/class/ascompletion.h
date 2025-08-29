@@ -34,6 +34,9 @@ public:
 
     void clearFunctionTip();
 
+private:
+    QList<CodeInfoTip> parseCompletion(const QJsonValue &v);
+
 protected:
     virtual bool processTrigger(const QString &trigger,
                                 const QString &content) override;

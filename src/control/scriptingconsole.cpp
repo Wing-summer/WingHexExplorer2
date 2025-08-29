@@ -170,7 +170,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     switch (message.type) {
     case ScriptMachine::MessageType::Info:
         if (isMatchLast(message)) {
-            stdOutLine(message.message);
+            write(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
@@ -181,7 +181,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         break;
     case ScriptMachine::MessageType::Warn:
         if (isMatchLast(message)) {
-            stdWarnLine(message.message);
+            write(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
@@ -192,7 +192,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         break;
     case ScriptMachine::MessageType::Error:
         if (isMatchLast(message)) {
-            stdErrLine(message.message);
+            write(message.message);
         } else {
             if (isNotBlockStart) {
                 newLine();
@@ -386,24 +386,8 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
 void ScriptingConsole::onCompletion(const QModelIndex &index) {
     WingCodeEdit::onCompletion(index);
     auto selfdata = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
-    if (selfdata.type == CodeInfoTip::Type::Function ||
-        selfdata.type == CodeInfoTip::Type::ClsFunction) {
-        auto args = selfdata.addinfo.value(CodeInfoTip::Args);
-
-        auto cur = textCursor();
-        cur.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-        auto ch = cur.selectedText();
-        if (ch.isEmpty() || ch.front().isSpace()) {
-            auto cursor = textCursor();
-            cursor.insertText(QStringLiteral("()"));
-            if (!args.isEmpty()) {
-                cursor.movePosition(QTextCursor::Left);
-                setTextCursor(cursor);
-            }
-        } else {
-            auto cursor = textCursor();
-            cursor.insertText(QStringLiteral("("));
-        }
+    if (selfdata.type == LSP::CompletionItemKind::Function) {
+        // TODO
     }
 }
 

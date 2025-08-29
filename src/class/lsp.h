@@ -37,6 +37,7 @@ enum class TextDocumentSyncKind {
     Incremental = 2,
 };
 
+Q_NAMESPACE
 enum class CompletionItemKind {
     Missing = 0,
     Text = 1,
@@ -65,6 +66,7 @@ enum class CompletionItemKind {
     Operator = 24,
     TypeParameter = 25,
 };
+Q_ENUM_NS(CompletionItemKind)
 
 enum class SymbolKind {
     File = 1,
@@ -187,17 +189,6 @@ struct Diagnostics {
     Range range;
     DiagnosticSeverity severity = DiagnosticSeverity::None;
     // QString source; = "AngelScript"
-};
-
-struct CompletionItem {
-    CompletionItemKind kind = CompletionItemKind::Missing;
-    QString label;
-    int data;
-};
-
-struct ResolvedCompletionItem : public CompletionItem {
-    QString detail;
-    QString insertText;
 };
 
 struct TextDocumentContentChangeEvent {

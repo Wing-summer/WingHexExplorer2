@@ -60,6 +60,7 @@ public:
                                  int timeoutMs = 3000);
     QJsonValue requestSignatureHelp(const QString &uri, int line, int character,
                                     int timeoutMs = 3000);
+    QJsonValue requestResolve(const QJsonValue &symbol, int timeoutMs = 3000);
 
 private:
     // Generic request/notification
@@ -107,7 +108,7 @@ signals:
     // New: emitted when a completion response arrives from server (either
     // result or error). items: the "result" (or "error" if no result). For
     // typical successful completion, items is the completion list/array.
-    void completionReceived(const QVector<LSP::CompletionItem> &items);
+    void completionReceived(const QJsonValue &items);
 
 public slots:
     // convenience: synchronous shutdown

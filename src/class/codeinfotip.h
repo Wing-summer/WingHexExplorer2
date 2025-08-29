@@ -18,70 +18,24 @@
 #ifndef CODEINFOTIP_H
 #define CODEINFOTIP_H
 
+#include "lsp.h"
+
 #include <QIcon>
+#include <QJsonValue>
 #include <QMap>
 #include <QObject>
 #include <QString>
 
 class CodeInfoTip {
 public:
-    enum class Type {
-        Unknown,
-        KeyWord,
-        Group,
-        Class,
-        Function,
-        ClsFunction,
-        Enum,
-        Variable,
-        Property = Variable,
-        Enumerater,
-        TypeDef
-    };
-
-    enum CacheIndex {
-        ICON_ENUM,
-        ICON_ENUMERATOR,
-        ICON_CLASS,
-        ICON_KEYWORD,
-        ICON_TYPEDEF,
-        ICON_NAMESPACE,
-        ICON_FUNCTION = ICON_NAMESPACE + 2,
-        ICON_VARIABLE = ICON_FUNCTION + 5
-    };
-
-    enum CodeInfoVisibility {
-        VISIBILITY_DEFAULT = -1,
-        VISIBILITY_PUBLIC,
-        VISIBILITY_PROTECTED,
-        VISIBILITY_PRIVATE
-    };
-
-    static QIcon getDisplayIcon(Type type,
-                                CodeInfoVisibility vis = VISIBILITY_DEFAULT);
-
-    static QIcon icon(int cacheIndex);
-
-    enum ArgsIndex {
-        Comment,
-        Reserved,
-        // for function
-        RetType = Reserved,
-        Args,
-        SuffixQualifier,
-    };
-
-public:
-    QString getTooltip() const;
-    QString getDisplayStr() const;
+    static QIcon getDisplayIcon(LSP::CompletionItemKind type);
 
 public:
     QString name;
-    Type type = Type::Unknown;
-    QString nameSpace;
-    CodeInfoVisibility visualpo = CodeInfoVisibility::VISIBILITY_DEFAULT;
+    LSP::CompletionItemKind type = LSP::CompletionItemKind::Missing;
+    QString comment;
 
-    QMap<ArgsIndex, QString> addinfo; // additonal info
+    QJsonValue value;
     QList<CodeInfoTip> children;
 };
 

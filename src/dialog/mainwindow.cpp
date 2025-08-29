@@ -50,6 +50,7 @@
 #include "settings/generalsettingdialog.h"
 #include "settings/othersettingsdialog.h"
 #include "settings/pluginsettingdialog.h"
+#include "settings/qeditconfig.h"
 #include "settings/scriptsettingdialog.h"
 
 #include <QAction>
@@ -284,11 +285,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Input);
-
-                if (splash)
-                    splash->setInfoText(tr("SetupScriptEditor"));
-                m_scriptDialog = new ScriptingDialog(this);
-                m_scriptDialog->initConsole();
             }
         } else {
             QMessageBox::critical(this, qAppName(),
@@ -354,10 +350,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash)
         splash->setInfoText(tr("SetupWaiting"));
 
-    // others
-    _showtxt = new ShowTextDialog(this);
-    qApp->processEvents();
-
     // update status
     updateEditModeEnabled();
 
@@ -385,33 +377,26 @@ void MainWindow::buildUpRibbonBar() {
 
     m_ribbonMaps[RibbonCatagories::FILE] =
         buildFilePage(m_ribbon->addTab(tr("File")));
-    qApp->processEvents();
     m_ribbonMaps[RibbonCatagories::EDIT] =
         buildEditPage(m_ribbon->addTab(tr("Edit")));
-    qApp->processEvents();
     m_ribbonMaps[RibbonCatagories::VIEW] =
         buildViewPage(m_ribbon->addTab(tr("View")));
-    qApp->processEvents();
 
     auto &set = SettingManager::instance();
     if (set.scriptEnabled()) {
         m_ribbonMaps[RibbonCatagories::SCRIPT] =
             buildScriptPage(m_ribbon->addTab(tr("Script")));
-        qApp->processEvents();
     }
 
     if (set.enablePlugin()) {
         m_ribbonMaps[RibbonCatagories::PLUGIN] =
             buildPluginPage(m_ribbon->addTab(tr("Plugin")));
-        qApp->processEvents();
     }
 
     m_ribbonMaps[RibbonCatagories::SETTING] =
         buildSettingPage(m_ribbon->addTab(tr("Setting")));
-    qApp->processEvents();
     m_ribbonMaps[RibbonCatagories::ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
-    qApp->processEvents();
 
     connect(m_ribbon, &Ribbon::onDragDropFiles, this,
             [=](const QStringList &files) {
@@ -457,8 +442,6 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
                                 true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
-
-    qApp->processEvents();
 
     ads::CDockComponentsFactory::setFactory(new DockComponentsFactory);
 
@@ -519,8 +502,6 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         }
     });
 
-    qApp->processEvents();
-
     // add empty area
     auto label = new QLabel(this);
 
@@ -537,8 +518,6 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     label->setPicture(backimg);
     label->setAlignment(Qt::AlignCenter);
 
-    qApp->processEvents();
-
     CDockWidget *CentralDockWidget =
         m_dock->createDockWidget(QStringLiteral("CentralWidget"));
     CentralDockWidget->setWidget(label);
@@ -546,13 +525,19 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CentralDockWidget->setFeature(ads::CDockWidget::NoTab, true);
     auto editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
-    qApp->processEvents();
+    m_lazyVisibleFilter = new EventFilter(QEvent::Show, this);
+    connect(m_lazyVisibleFilter, &EventFilter::eventTriggered, this,
+            [this](QObject *obj, QEvent *) {
+                if (obj == m_numshowtable) {
+                    updateNumberTable();
+                } else if (obj == m_txtDecode) {
+                    updateStringDec({});
+                }
+            });
 
     // build up basic docking widgets
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
-
-    qApp->processEvents();
 
     auto splitter =
         ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
@@ -561,12 +546,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         splitter->setSizes({height() - bottomHeight, bottomHeight});
     }
 
-    qApp->processEvents();
-
     auto rightArea =
         buildUpLogDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
-
-    qApp->processEvents();
 
     splitter = ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
     if (splitter) {
@@ -576,37 +557,24 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     m_rightViewArea = rightArea;
 
-    qApp->processEvents();
-
     buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    qApp->processEvents();
     buildUpHexBookMarkDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    qApp->processEvents();
     buildUpHexMetaDataDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    qApp->processEvents();
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    qApp->processEvents();
     buildUpUndoStackDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    qApp->processEvents();
 
     ads::CDockAreaWidget *bottomRightArea;
     if (SettingManager::instance().scriptEnabled()) {
         bottomRightArea = buildUpScriptConsoleDock(
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
-        qApp->processEvents();
         buildUpScriptBgOutputDock(m_dock, ads::CenterDockWidgetArea,
                                   bottomRightArea);
-        qApp->processEvents();
         buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea,
                               bottomRightArea);
-        qApp->processEvents();
     } else {
         bottomRightArea = buildUpHashResultDock(
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
-        qApp->processEvents();
     }
-
-    qApp->processEvents();
 
     m_bottomViewArea = bottomRightArea;
 }
@@ -623,7 +591,7 @@ void MainWindow::finishBuildDockSystem() {
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
-            qApp->processEvents();
+            updateUI();
             auto d = item->dockWidget(i);
             if (d->features().testFlag(ads::CDockWidget::NoTab)) {
                 continue;
@@ -846,6 +814,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
 
     auto dw = buildDockWidget(dock, QStringLiteral("Number"), tr("Number"),
                               m_numshowtable);
+    m_numshowtable->installEventFilter(m_lazyVisibleFilter);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1060,6 +1029,7 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
 
     connect(m_txtDecode, &QTextBrowser::windowTitleChanged, dw,
             &QDockWidget::setWindowTitle);
+    m_txtDecode->installEventFilter(m_lazyVisibleFilter);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -1152,6 +1122,7 @@ MainWindow::buildUpUndoStackDock(ads::CDockManager *dock,
 }
 
 RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Basic"));
@@ -1211,6 +1182,7 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
@@ -1322,6 +1294,7 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Display"));
@@ -1532,7 +1505,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto menu = new QMenu(this);
         menu->addAction(newAction(tr("Default"), [this]() {
             showStatus(tr("LayoutRestoring..."));
-            qApp->processEvents();
+            updateUI();
             m_dock->restoreState(_defaultLayout);
             showStatus({});
         }));
@@ -1545,7 +1518,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             auto layout = p->second;
             menu->addAction(newAction(p->first, [this, layout]() {
                 showStatus(tr("LayoutRestoring..."));
-                qApp->processEvents();
+                updateUI();
                 m_dock->restoreState(layout);
                 showStatus({});
             }));
@@ -1574,6 +1547,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
+    updateUI();
     {
         auto pannel = tab->addGroup(tr("Basic"));
         addPannelAction(pannel, QStringLiteral("script"), tr("ScriptEditor"),
@@ -1594,6 +1568,7 @@ RibbonTabContent *MainWindow::buildScriptPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
@@ -1614,6 +1589,7 @@ RibbonTabContent *MainWindow::buildPluginPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
 
     auto &set = SettingManager::instance();
@@ -1642,6 +1618,7 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
+    updateUI();
     auto pannel = tab->addGroup(tr("Info"));
 
     addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
@@ -1665,9 +1642,10 @@ RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
 void MainWindow::buildUpSettingDialog() {
     QStringList usedIDs;
     QString id;
+    auto &set = SettingManager::instance();
 
     m_setdialog = new SettingDialog(this);
-    qApp->processEvents();
+    updateUI();
 
     auto generalPage = new GeneralSettingDialog(m_setdialog);
     connect(generalPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1677,7 +1655,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
-    qApp->processEvents();
+    updateUI();
 
     auto editorPage = new EditorSettingDialog(m_setdialog);
     connect(editorPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1687,7 +1665,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
-    qApp->processEvents();
+    updateUI();
 
     auto plgPage = new PluginSettingDialog(m_setdialog);
     connect(plgPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1697,7 +1675,7 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
-    qApp->processEvents();
+    updateUI();
 
     auto scriptPage = new ScriptSettingDialog(m_setdialog);
     connect(scriptPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
@@ -1707,16 +1685,18 @@ void MainWindow::buildUpSettingDialog() {
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
-    qApp->processEvents();
+    updateUI();
 
     auto otherPage = new OtherSettingsDialog(m_setdialog);
     id = otherPage->id();
     Q_ASSERT(!id.isEmpty());
     Q_ASSERT(usedIDs.indexOf(id) < 0);
     usedIDs.append(id);
-    qApp->processEvents();
+    updateUI();
 
     for (auto &page : m_settingPages) {
+        updateUI();
+
         auto name = page->name();
         auto id = page->id();
 
@@ -1748,15 +1728,37 @@ void MainWindow::buildUpSettingDialog() {
                             [=] { m_setdialog->showConfig(id); });
         }
         usedIDs.append(id);
-        qApp->processEvents();
     }
 
     connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             &SettingDialog::toastTakeEffectReboot);
     m_setdialog->addPage(otherPage);
-    qApp->processEvents();
+    updateUI();
 
     m_setdialog->build();
+    auto ge = set.settingsLayout();
+    if (!ge.isEmpty()) {
+        m_setdialog->restoreLayout(ge);
+    }
+    connect(m_setdialog, &SettingDialog::onClosing, this, [this]() {
+        SettingManager::instance().setSettingsLayout(m_setdialog->saveLayout());
+    });
+
+    // script settings
+    m_scriptsetdlg = new SettingDialog(this);
+    auto edit = new QEditConfig(false, m_scriptsetdlg);
+    m_scriptsetdlg->addPage(edit);
+    edit = new QEditConfig(true, m_scriptsetdlg);
+    m_scriptsetdlg->addPage(edit);
+    m_scriptsetdlg->build();
+    ge = set.settingsScriptLayout();
+    if (!ge.isEmpty()) {
+        m_scriptsetdlg->restoreLayout(ge);
+    }
+    connect(m_scriptsetdlg, &SettingDialog::onClosing, this, [this]() {
+        SettingManager::instance().setSettingsScriptLayout(
+            m_scriptsetdlg->saveLayout());
+    });
 }
 
 void MainWindow::installPluginEditorWidgets() {
@@ -1770,7 +1772,7 @@ void MainWindow::installPluginEditorWidgets() {
          p != m_editorViewWidgets.constKeyValueEnd(); ++p) {
         decltype(newEditorViewWidgets)::mapped_type newCreatorList;
         for (auto &wctor : p->second) {
-            qApp->processEvents();
+            updateUI();
 
             auto id = wctor->id();
             if (names.contains(id)) {
@@ -1795,7 +1797,7 @@ void MainWindow::installPluginEditorWidgets() {
             newCreatorList.append(wctor);
         }
         newEditorViewWidgets.insert(p->first, newCreatorList);
-        qApp->processEvents();
+        updateUI();
     }
 
     m_editorViewWidgets = newEditorViewWidgets;
@@ -2716,112 +2718,7 @@ void MainWindow::on_locChanged() {
                              .arg(sellen)
                              .arg(QString::number(sellen, 16).toUpper()));
 
-    // number analyse
-    auto off = hexeditor->currentOffset();
-    auto d = hexeditor->document();
-
-    constexpr auto maxlen = 32;
-
-    auto tmp = d->read(off, maxlen);
-    quint64 n = *reinterpret_cast<const quint64 *>(tmp.constData());
-
-    auto len = size_t(tmp.length());
-
-    if (len >= sizeof(quint64)) {
-        auto s = processEndian(n);
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::Uint64,
-            m_unsignedHex
-                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
-                : QString::number(s));
-        auto s1 = processEndian(qsizetype(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
-                              QString::number(s1));
-        double s2 = *(double *)(&n);
-        auto s3 = processEndian(s2);
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
-                              qIsNaN(s3) ? QStringLiteral("NAN")
-                                         : QString::number(s3));
-    } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64, QString());
-    }
-
-    if (len >= sizeof(quint32)) {
-        auto s = processEndian(quint32(n));
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::Uint32,
-            m_unsignedHex
-                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
-                : QString::number(s));
-        auto s1 = processEndian(qint32(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
-                              QString::number(s1));
-        float s2 = *(float *)(&n);
-        auto s3 = processEndian(s2);
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
-                              qIsNaN(s3) ? QStringLiteral("NAN")
-                                         : QString::number(s3));
-    } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
-    }
-
-    if (len >= sizeof(quint16)) {
-        auto s = processEndian(quint16(n));
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::Ushort,
-            m_unsignedHex
-                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
-                : QString::number(s));
-        auto s1 = processEndian(qint16(n));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Short,
-                              QString::number(s1));
-    } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
-    }
-    if (len >= sizeof(uchar)) {
-        auto s1 = tmp.at(0);
-        auto s = uchar(s1);
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::Byte,
-            m_unsignedHex
-                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
-                : QString::number(s));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Char,
-                              QString::number(s1));
-    } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
-    }
-
-    // str
-    if (len > 0) {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
-                              QString::fromLatin1(tmp));
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
-                              QString::fromUtf8(tmp));
-        auto re = processEndian(tmp);
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::UTF16_STR,
-            QString::fromUtf16(reinterpret_cast<const char16_t *>(re.data()),
-                               re.length() / sizeof(char16_t)));
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::UTF32_STR,
-            QString::fromUcs4(reinterpret_cast<const char32_t *>(re.data()),
-                              re.length() / sizeof(char32_t)));
-    } else {
-        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
-                              QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR, QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
-                              QString());
-        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
-                              QString());
-    }
+    updateNumberTable();
 
     auto cursor = hexeditor->cursor();
 
@@ -2853,29 +2750,7 @@ void MainWindow::on_selectionChanged() {
         }
     }
 
-    auto total = buffer.size();
-    m_txtDecode->clear();
-
-    for (int i = 0; i < total; i++) {
-        auto b = buffer.at(i);
-
-        if (!isPreview) {
-            m_txtDecode->insertHtml(
-                QStringLiteral("<font color=\"gold\">[ %1 / %2 ]</font><br />")
-                    .arg(i + 1)
-                    .arg(total));
-        }
-
-        if (buffer.length() <= 1024 * _decstrlim) {
-            m_txtDecode->insertPlainText(
-                Utilities::decodingString(b, m_encoding));
-            m_txtDecode->insertPlainText(QStringLiteral("\n"));
-        } else {
-            m_txtDecode->insertHtml(
-                QStringLiteral("<font color=\"red\">%1</font><br />")
-                    .arg(tr("TooManyBytesDecode")));
-        }
-    }
+    updateStringDec(buffer);
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::SelectionChanged,
@@ -2899,6 +2774,11 @@ void MainWindow::on_viewtxt() {
         if (ret == QMessageBox::No) {
             return;
         }
+    }
+    if (_showtxt == nullptr) {
+        _showtxt = new ShowTextDialog(this);
+        connect(_showtxt, &ShowTextDialog::destroyed, this,
+                [this]() { _showtxt = nullptr; });
     }
     _showtxt->load(hexeditor->document()->buffer(), mime.name());
 }
@@ -2935,7 +2815,7 @@ void MainWindow::on_saveLayout() {
             menu->addAction(
                 newAction(lm.getSavedLayoutName(fileID), [this, layout]() {
                     showStatus(tr("LayoutRestoring..."));
-                    qApp->processEvents();
+                    updateUI();
                     m_dock->restoreState(layout);
                     showStatus({});
                 }));
@@ -2974,16 +2854,24 @@ void MainWindow::on_inspectQt() {
 }
 
 void MainWindow::on_scriptwindow() {
-    Q_ASSERT(m_scriptDialog);
+    if (m_scriptDialog == nullptr) {
+        auto splash = new SplashDialog(this);
+        splash->setInfoText(tr("SetupScriptEditor"));
+
+        m_scriptDialog = new ScriptingDialog(m_scriptsetdlg, this);
+        connect(m_scriptDialog, &ScriptingDialog::destroyed, this,
+                [this]() { m_scriptDialog = nullptr; });
+        m_scriptDialog->initConsole();
+
+        splash->close();
+    }
     m_scriptDialog->show();
     m_scriptDialog->raise();
 }
 
 void MainWindow::on_settingGeneral() { m_setdialog->showConfig(0); }
 
-void MainWindow::on_settingScript() {
-    m_scriptDialog->settingDialog()->showConfig();
-}
+void MainWindow::on_settingScript() { m_scriptsetdlg->showConfig(); }
 
 void MainWindow::on_settingPlugin() { m_setdialog->showConfig(2); }
 
@@ -3059,6 +2947,8 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
                                               const QString &displayName,
                                               QWidget *content,
                                               ToolButtonIndex index) {
+    updateUI();
+
     using namespace ads;
     auto dw = dock->createDockWidget(displayName, dock);
     dw->setObjectName(widgetName);
@@ -3865,6 +3755,186 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
     Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
                  tr("SaveSuccessfully"));
 }
+
+void MainWindow::updateNumberTable() {
+    if (!m_numshowtable->isVisible()) {
+        return;
+    }
+
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return;
+    }
+
+    // lazy loading
+    static QHexView *lastView = nullptr;
+    static qsizetype lastOff = -1;
+    auto off = hexeditor->currentOffset();
+    if (lastView == hexeditor && lastOff == off) {
+        return;
+    } else {
+        lastView = hexeditor;
+        lastOff = off;
+    }
+
+    auto d = hexeditor->document();
+
+    constexpr auto maxlen = 32;
+
+    auto tmp = d->read(off, maxlen);
+    quint64 n = *reinterpret_cast<const quint64 *>(tmp.constData());
+
+    auto len = size_t(tmp.length());
+
+    if (len >= sizeof(quint64)) {
+        auto s = processEndian(n);
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Uint64,
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
+        auto s1 = processEndian(qsizetype(n));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64,
+                              QString::number(s1));
+        double s2 = *(double *)(&n);
+        auto s3 = processEndian(s2);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64,
+                              qIsNaN(s3) ? QStringLiteral("NAN")
+                                         : QString::number(s3));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint64, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int64, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Double64, QString());
+    }
+
+    if (len >= sizeof(quint32)) {
+        auto s = processEndian(quint32(n));
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Uint32,
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
+        auto s1 = processEndian(qint32(n));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32,
+                              QString::number(s1));
+        float s2 = *(float *)(&n);
+        auto s3 = processEndian(s2);
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32,
+                              qIsNaN(s3) ? QStringLiteral("NAN")
+                                         : QString::number(s3));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Uint32, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Int32, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Float32, QString());
+    }
+
+    if (len >= sizeof(quint16)) {
+        auto s = processEndian(quint16(n));
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Ushort,
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
+        auto s1 = processEndian(qint16(n));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Short,
+                              QString::number(s1));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Ushort, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Short, QString());
+    }
+    if (len >= sizeof(uchar)) {
+        auto s1 = tmp.at(0);
+        auto s = uchar(s1);
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::Byte,
+            m_unsignedHex
+                ? QStringLiteral("0x%1").arg(QString::number(s, 16).toUpper())
+                : QString::number(s));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Char,
+                              QString::number(s1));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Byte, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::Char, QString());
+    }
+
+    // str
+    if (len > 0) {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                              QString::fromLatin1(tmp));
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
+                              QString::fromUtf8(tmp));
+        auto re = processEndian(tmp);
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::UTF16_STR,
+            QString::fromUtf16(reinterpret_cast<const char16_t *>(re.data()),
+                               re.length() / sizeof(char16_t)));
+        _numsitem->setNumData(
+            NumShowModel::NumTableIndex::UTF32_STR,
+            QString::fromUcs4(reinterpret_cast<const char32_t *>(re.data()),
+                              re.length() / sizeof(char32_t)));
+    } else {
+        _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
+                              QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR, QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                              QString());
+        _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                              QString());
+    }
+}
+
+void MainWindow::updateStringDec(const QByteArrayList &content) {
+    if (!m_txtDecode->isVisible()) {
+        return;
+    }
+
+    QByteArrayList buffer = content;
+    bool isPreview = false;
+
+    if (content.isEmpty()) {
+        auto hexeditor = currentHexView();
+        if (hexeditor == nullptr) {
+            return;
+        }
+
+        auto cursor = hexeditor->cursor();
+        if (cursor->previewSelectionMode() != QHexCursor::SelectionRemove &&
+            cursor->hasPreviewSelection()) {
+            buffer.append(hexeditor->previewSelectedBytes());
+            isPreview = true;
+        }
+
+        if (buffer.isEmpty()) {
+            if (hexeditor->selectionCount() > 0) {
+                buffer = hexeditor->selectedBytes();
+            }
+        }
+    }
+
+    auto total = buffer.size();
+    m_txtDecode->clear();
+    for (int i = 0; i < total; i++) {
+        auto b = buffer.at(i);
+        if (!isPreview) {
+            m_txtDecode->insertHtml(
+                QStringLiteral("<font color=\"gold\">[ %1 / %2 ]</font><br />")
+                    .arg(i + 1)
+                    .arg(total));
+        }
+
+        if (buffer.length() <= 1024 * _decstrlim) {
+            m_txtDecode->insertPlainText(
+                Utilities::decodingString(b, m_encoding));
+            m_txtDecode->insertPlainText(QStringLiteral("\n"));
+        } else {
+            m_txtDecode->insertHtml(
+                QStringLiteral("<font color=\"red\">%1</font><br />")
+                    .arg(tr("TooManyBytesDecode")));
+        }
+    }
+}
+
+void MainWindow::updateUI() { QApplication::processEvents(); }
 
 QHexView *MainWindow::currentHexView() {
     auto editor = currentEditor();

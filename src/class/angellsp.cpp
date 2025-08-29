@@ -1,5 +1,4 @@
 #include "angellsp.h"
-#include "utilities.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -116,19 +115,11 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     QJsonObject params;
     params["processId"] = QCoreApplication::applicationPid();
 
-    // rootUri null
-    QJsonArray wfs;
-    QJsonObject wf;
-    wf["uri"] = Utilities::getAppDataPath();
-    wf["name"] = APP_NAME;
-    wfs.append(wf);
-    params["workspaceFolders"] = wfs;
-
     // capabilities minimal
     QJsonObject caps;
     QJsonObject workspace;
-    workspace["configuration"] = true;
-    workspace["workspaceFolders"] = true;
+    workspace["configuration"] = false;
+    workspace["workspaceFolders"] = false;
     caps["workspace"] = workspace;
     QJsonObject td;
     QJsonObject sync;
@@ -230,6 +221,10 @@ QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
     p["textDocument"] = QJsonObject{{"uri", uri}};
     p["position"] = pos;
     return sendRequestSync("textDocument/signatureHelp", p, timeoutMs);
+}
+
+QJsonValue AngelLsp::requestResolve(const QJsonValue &symbol, int timeoutMs) {
+    return sendRequestSync("completionItem/resolve", symbol, timeoutMs);
 }
 
 int AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
@@ -488,20 +483,7 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
         // if this response is for a completion request, emit completionReceived
         if (!method.isEmpty() &&
             method == QStringLiteral("textDocument/completion")) {
-            auto cs = payload.toArray();
-
-            QVector<LSP::CompletionItem> cis;
-            auto total = cs.size();
-            for (qsizetype i = 0; i < total; ++i) {
-                LSP::CompletionItem item;
-                auto pc = cs.at(i).toObject();
-                item.data = pc.value("data").toInt();
-                item.kind = LSP::CompletionItemKind(pc.value("kind").toInt());
-                item.label = pc.value("label").toString();
-                cis.append(item);
-            }
-
-            Q_EMIT completionReceived(cis);
+            Q_EMIT completionReceived(payload);
             // if it matches the last completion id, clear it
             if (m_lastCompletionRequestId == id)
                 m_lastCompletionRequestId = 0;

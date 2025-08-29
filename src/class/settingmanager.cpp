@@ -72,6 +72,10 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_LEVEL, ("sys.loglevel"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_LOG_COUNT, ("sys.logCount"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_CHECK_UPDATE, ("sys.checkUpdate"))
 
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_SET_LAYOUT, ("set.layout"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_SET_SCRIPT_LAYOUT,
+                          ("set.script.layout"))
+
 SettingManager::SettingManager() {
     _defaultFont = qApp->font();
     qRegisterMetaType<RecentFileManager::RecentInfo>();
@@ -99,11 +103,10 @@ void SettingManager::load() {
     READ_CONFIG_INT(m_themeID, SKIN_THEME, 0);
     m_themeID = qBound(0, m_themeID,
                        QMetaEnum::fromType<SkinManager::Theme>().keyCount());
-    m_defaultLang = READ_CONFIG(APP_LANGUAGE, QString()).toString();
+    m_defaultLang = READ_CONFIG(APP_LANGUAGE, {}).toString();
 
-    m_dockLayout = READ_CONFIG(DOCK_LAYOUT, QByteArray()).toByteArray();
-    m_scriptDockLayout =
-        READ_CONFIG(SCRIPT_DOCK_LAYOUT, QByteArray()).toByteArray();
+    m_dockLayout = READ_CONFIG(DOCK_LAYOUT, {}).toByteArray();
+    m_scriptDockLayout = READ_CONFIG(SCRIPT_DOCK_LAYOUT, {}).toByteArray();
     READ_CONFIG_STRING(m_appFontFamily, APP_FONTFAMILY, _defaultFont.family());
 
     // check font
@@ -162,22 +165,20 @@ void SettingManager::load() {
     READ_CONFIG_QSIZETYPE(m_decodeStrlimit, EDITOR_DECSTRLIMIT, 100);
     m_decodeStrlimit =
         qBound(qsizetype(100), m_decodeStrlimit, qsizetype(1024));
-    m_recentHexFiles = getDataFromVarList(
-        READ_CONFIG(EDITOR_RECENTFILES, QVariantList()).toList());
-    m_recentScriptFiles = getDataFromVarList(
-        READ_CONFIG(SCRIPT_RECENTFILES, QVariantList()).toList());
+    m_recentHexFiles =
+        getDataFromVarList(READ_CONFIG(EDITOR_RECENTFILES, {}).toList());
+    m_recentScriptFiles =
+        getDataFromVarList(READ_CONFIG(SCRIPT_RECENTFILES, {}).toList());
 
     READ_CONFIG_BOOL(m_scriptEnabled, SCRIPT_ENABLE, true);
     READ_CONFIG_BOOL(m_allowUsrScriptInRoot, SCRIPT_ALLOW_USRSCRIPT_INROOT,
                      false);
     READ_CONFIG_INT(m_scriptTimeout, SCRIPT_TIMEOUT, 10);
     m_scriptTimeout = qBound(0, m_scriptTimeout, 312480);
-    m_usrHideCats =
-        READ_CONFIG(SCRIPT_USRHIDECATS, QStringList()).toStringList();
-    m_sysHideCats =
-        READ_CONFIG(SCRIPT_SYSHIDECATS, QStringList()).toStringList();
+    m_usrHideCats = READ_CONFIG(SCRIPT_USRHIDECATS, {}).toStringList();
+    m_sysHideCats = READ_CONFIG(SCRIPT_SYSHIDECATS, {}).toStringList();
 
-    m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, QString()).toString();
+    m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, {}).toString();
     if (!m_lastUsedPath.isEmpty()) {
         QFileInfo info(m_lastUsedPath);
         if (info.exists() && info.isDir()) {
@@ -185,6 +186,9 @@ void SettingManager::load() {
             m_lastUsedPath.clear();
         }
     }
+
+    m_setLayout = READ_CONFIG(OTHER_SET_LAYOUT, {}).toByteArray();
+    m_setScriptLayout = READ_CONFIG(OTHER_SET_SCRIPT_LAYOUT, {}).toByteArray();
 
     Q_EMIT sigEditorfontSizeChanged(m_editorfontSize);
     Q_EMIT sigCopylimitChanged(m_copylimit);
@@ -209,6 +213,29 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+QByteArray SettingManager::settingsScriptLayout() const {
+    return m_setScriptLayout;
+}
+
+void SettingManager::setSettingsScriptLayout(
+    const QByteArray &newSetScriptLayout) {
+    if (m_setScriptLayout != newSetScriptLayout) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_SET_SCRIPT_LAYOUT, newSetScriptLayout);
+        m_setScriptLayout = newSetScriptLayout;
+    }
+}
+
+QByteArray SettingManager::settingsLayout() const { return m_setLayout; }
+
+void SettingManager::setSettingsLayout(const QByteArray &newSetLayout) {
+    if (m_setLayout != newSetLayout) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(OTHER_SET_LAYOUT, newSetLayout);
+        m_setLayout = newSetLayout;
+    }
 }
 
 bool SettingManager::enableHexExt() const { return m_enableHexExt; }

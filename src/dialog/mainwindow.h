@@ -58,6 +58,7 @@
 #include "utilities.h"
 
 class PluginSystem;
+class EventFilter;
 
 class MainWindow : public FramelessMainWindow {
     Q_OBJECT
@@ -229,6 +230,11 @@ public:
     QString getWorkSpaceFileName(const QString &curFile);
 
     void saveTableContent(QAbstractItemModel *model);
+
+private:
+    void updateNumberTable();
+    void updateStringDec(const QByteArrayList &content);
+    void updateUI();
 
 private:
     IWingPlugin::FileType getEditorViewFileType(EditorView *view);
@@ -489,6 +495,8 @@ private:
     QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findEmptyResult = nullptr;
 
+    EventFilter *m_lazyVisibleFilter = nullptr;
+
     QTableViewExt *m_numshowtable = nullptr;
     NumShowModel *_numsitem = nullptr;
 
@@ -528,7 +536,7 @@ private:
     EditorView *m_curEditor = nullptr;
 
     SettingDialog *m_setdialog = nullptr;
-    SettingDialog *m_plgsetdlg = nullptr;
+    SettingDialog *m_scriptsetdlg = nullptr;
     RecentFileManager *m_recentmanager = nullptr;
     QMenu *m_recentMenu = nullptr;
 

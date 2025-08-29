@@ -55,7 +55,8 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
         }
 
         item->setToolTip(0, header);
-        item->setIcon(0, CodeInfoTip::getDisplayIcon(CodeInfoTip::Type::Group));
+        item->setIcon(
+            0, CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind::Module));
         createObjNodes(node->second, item);
         addTopLevelItem(item);
     }
@@ -66,8 +67,8 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
 
 QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
                                                 QTreeWidgetItem *parent) {
-    Q_ASSERT(node.type != CodeInfoTip::Type::Unknown && parent);
-    QStringList contents{node.name, node.getTooltip()};
+    Q_ASSERT(parent);
+    QStringList contents{node.name, node.comment};
     auto c = new QTreeWidgetItem(contents);
     c->setToolTip(0, contents.at(0));
     c->setToolTip(1, contents.at(1));
@@ -88,79 +89,8 @@ void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
     }
 }
 
-QByteArray ASObjTreeWidget::getFnParamDeclString(asIScriptFunction *fn,
-                                                 bool includeNamespace,
-                                                 bool includeParamNames) {
-    auto fun = dynamic_cast<asCScriptFunction *>(fn);
-    if (fun == nullptr) {
-        return {};
-    }
-
-    asCString str;
-
-    auto &parameterTypes = fun->parameterTypes;
-    auto &parameterNames = fun->parameterNames;
-    auto &nameSpace = fun->nameSpace;
-    auto &inOutFlags = fun->inOutFlags;
-    auto &defaultArgs = fun->defaultArgs;
-
-    if (parameterTypes.GetLength() > 0) {
-        asUINT n;
-        for (n = 0; n < parameterTypes.GetLength() - 1; n++) {
-            str += parameterTypes[n].Format(nameSpace, includeNamespace);
-            if (parameterTypes[n].IsReference() && inOutFlags.GetLength() > n) {
-                if (inOutFlags[n] == asTM_INREF)
-                    str += "in";
-                else if (inOutFlags[n] == asTM_OUTREF)
-                    str += "out";
-                else if (inOutFlags[n] == asTM_INOUTREF)
-                    str += "inout";
-            }
-
-            if (includeParamNames && n < parameterNames.GetLength() &&
-                parameterNames[n].GetLength() != 0) {
-                str += " ";
-                str += parameterNames[n];
-            }
-
-            if (defaultArgs.GetLength() > n && defaultArgs[n]) {
-                asCString tmp;
-                tmp.Format(" = %s", defaultArgs[n]->AddressOf());
-                str += tmp;
-            }
-
-            str += ", ";
-        }
-
-        // Add the last parameter
-        str += parameterTypes[n].Format(nameSpace, includeNamespace);
-        if (parameterTypes[n].IsReference() && inOutFlags.GetLength() > n) {
-            if (inOutFlags[n] == asTM_INREF)
-                str += "in";
-            else if (inOutFlags[n] == asTM_OUTREF)
-                str += "out";
-            else if (inOutFlags[n] == asTM_INOUTREF)
-                str += "inout";
-        }
-
-        if (includeParamNames && n < parameterNames.GetLength() &&
-            parameterNames[n].GetLength() != 0) {
-            str += " ";
-            str += parameterNames[n];
-        }
-
-        if (defaultArgs.GetLength() > n && defaultArgs[n]) {
-            asCString tmp;
-            tmp.Format(" = %s", defaultArgs[n]->AddressOf());
-            str += tmp;
-        }
-    }
-
-    return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
-}
-
 QByteArray ASObjTreeWidget::getFnRealName(asIScriptFunction *fn) {
-    auto fun = dynamic_cast<asCScriptFunction *>(fn);
+    auto fun = reinterpret_cast<asCScriptFunction *>(fn);
     if (fun == nullptr) {
         return {};
     }
@@ -186,30 +116,6 @@ QByteArray ASObjTreeWidget::getFnRealName(asIScriptFunction *fn) {
     return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
 }
 
-QByteArray ASObjTreeWidget::getFnRetTypeString(asIScriptFunction *fn,
-                                               bool includeNamespace) {
-    auto fun = dynamic_cast<asCScriptFunction *>(fn);
-    if (fun == nullptr) {
-        return {};
-    }
-
-    auto &returnType = fun->returnType;
-    auto &objectType = fun->objectType;
-    auto &name = fun->name;
-    auto &nameSpace = fun->nameSpace;
-
-    if (!(returnType.GetTokenType() == ttVoid && objectType &&
-          (name == objectType->name ||
-           (name.GetLength() > 0 && name[0] == '~') || name == "$beh0" ||
-           name == "$beh2"))) {
-        auto str = returnType.Format(nameSpace, includeNamespace);
-        return QByteArray(str.AddressOf(),
-                          QByteArray::size_type(str.GetLength()));
-    }
-
-    return {};
-}
-
 void ASObjTreeWidget::addGlobalFunctionCompletion(asIScriptEngine *engine) {
     Q_ASSERT(engine);
 
@@ -217,15 +123,9 @@ void ASObjTreeWidget::addGlobalFunctionCompletion(asIScriptEngine *engine) {
         auto fn = engine->GetGlobalFunctionByIndex(i);
         CodeInfoTip fnInfo;
         auto ns = fn->GetNamespace();
-        fnInfo.nameSpace = ns;
         fnInfo.name = fn->GetName();
-        fnInfo.type = CodeInfoTip::Type::Function;
-        fnInfo.addinfo.insert(CodeInfoTip::RetType,
-                              getFnRetTypeString(fn, true));
-        fnInfo.addinfo.insert(CodeInfoTip::Args,
-                              getFnParamDeclString(fn, false, true));
-        fnInfo.addinfo.insert(CodeInfoTip::SuffixQualifier,
-                              getSuffixQualifier(fn));
+        fnInfo.type = LSP::CompletionItemKind::Function;
+        fnInfo.comment = fn->GetDeclaration(true, true, true);
         _headerNodes[ns].append(fnInfo);
     }
 }
@@ -238,28 +138,18 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine) {
         etype->AddRef();
 
         CodeInfoTip einfo;
-        auto ns = etype->GetNamespace();
-        einfo.nameSpace = ns;
+        QString ns = etype->GetNamespace();
         einfo.name = etype->GetName();
-        einfo.type = CodeInfoTip::Type::Enum;
-
-        auto ens = einfo.nameSpace;
-        if (ens.isEmpty()) {
-            ens = einfo.name;
-        } else {
-            ens += QStringLiteral("::") + einfo.name;
-        }
+        einfo.type = LSP::CompletionItemKind::Enum;
 
         for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
             int v;
             auto e = etype->GetEnumValueByIndex(i, &v);
 
             CodeInfoTip en;
-            en.type = CodeInfoTip::Type::Enumerater;
+            en.type = LSP::CompletionItemKind::EnumMember;
             en.name = QString::fromLatin1(e);
-            en.addinfo.insert(CodeInfoTip::Comment, en.name +
-                                                        QStringLiteral(" = ") +
-                                                        QString::number(v));
+            en.comment = en.name + QStringLiteral(" = ") + QString::number(v);
             einfo.children.append(en);
         }
 
@@ -269,7 +159,7 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine) {
 }
 
 void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
-    auto eng = dynamic_cast<asCScriptEngine *>(engine);
+    auto eng = reinterpret_cast<asCScriptEngine *>(engine);
     Q_ASSERT(eng);
 
     for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
@@ -277,9 +167,9 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
         obj->AddRef();
 
         CodeInfoTip cls;
-        cls.type = CodeInfoTip::Type::Class;
+        cls.type = LSP::CompletionItemKind::Class;
         cls.name = obj->GetName();
-        auto ns = obj->GetNamespace();
+        QString ns = obj->GetNamespace();
 
         for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
             asEBehaviours bv;
@@ -290,13 +180,9 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
                 // only these are supported
                 b->AddRef();
                 CodeInfoTip fn;
-                fn.type = CodeInfoTip::Type::ClsFunction;
-                fn.nameSpace = cls.name;
+                fn.type = LSP::CompletionItemKind::Function;
                 fn.name = getFnRealName(b);
-                fn.addinfo.insert(CodeInfoTip::Args,
-                                  getFnParamDeclString(b, false, true));
-                fn.addinfo.insert(CodeInfoTip::SuffixQualifier,
-                                  getSuffixQualifier(b));
+                fn.comment = b->GetDeclaration(true, true, true);
                 cls.children.append(fn);
                 b->Release();
             }
@@ -310,15 +196,9 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
 
             m->AddRef();
             CodeInfoTip fn;
-            fn.type = CodeInfoTip::Type::ClsFunction;
-            fn.nameSpace = cls.name;
-            fn.addinfo.insert(CodeInfoTip::RetType,
-                              getFnRetTypeString(m, true));
+            fn.type = LSP::CompletionItemKind::Function;
             fn.name = getFnRealName(m);
-            fn.addinfo.insert(CodeInfoTip::Args,
-                              getFnParamDeclString(m, false, true));
-            fn.addinfo.insert(CodeInfoTip::SuffixQualifier,
-                              getSuffixQualifier(m));
+            fn.comment = m->GetDeclaration(true, true, true);
             cls.children.append(fn);
             m->Release();
         }
@@ -327,8 +207,7 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
             auto p = obj->properties[i];
 
             CodeInfoTip pi;
-            pi.type = CodeInfoTip::Type::Property;
-            pi.nameSpace = cls.name;
+            pi.type = LSP::CompletionItemKind::Property;
             pi.name =
                 QString::fromLatin1(p->name.AddressOf(),
                                     QByteArray::size_type(p->name.GetLength()));
@@ -345,55 +224,12 @@ void ASObjTreeWidget::addClassCompletion(asIScriptEngine *engine) {
                 prefix = QStringLiteral("(public) ");
             }
 
-            pi.addinfo.insert(CodeInfoTip::Comment,
-                              prefix + type + QChar(' ') + pi.name);
+            pi.comment = prefix + type + QChar(' ') + pi.name;
             cls.children.append(pi);
         }
 
         obj->Release();
 
         _headerNodes[ns].append(cls);
-
-        auto cat = cls.nameSpace;
-        if (cat.isEmpty()) {
-            cat = cls.name;
-        } else {
-            cat += QStringLiteral("::") + cls.name;
-        }
-
-        auto data = cls.children;
-        data.removeIf([](const CodeInfoTip &tip) {
-            static QStringList opList{
-                "opNeg",       "opCom",        "opPreInc",    "opPreDec",
-                "opPostInc",   "opPostDec",    "opEquals",    "opCmp",
-                "opEquals",    "opAssign",     "opAddAssign", "opSubAssign",
-                "opMulAssign", "opDivAssign",  "opModAssign", "opPowAssign",
-                "opAndAssign", "opOrAssign",   "opXorAssign", "opShlAssign",
-                "opShrAssign", "opUShrAssign", "opAdd",       "opAdd_r",
-                "opSub",       "opSub_r",      "opMul",       "opMul_r",
-                "opDiv",       "opDiv_r",      "opMod",       "opMod_r",
-                "opPow",       "opPow_r",      "opAnd",       "opAnd_r",
-                "opOr",        "opOr_r",       "opXor",       "opXor_r",
-                "opShl",       "opShl_r",      "opShr",       "opShr_r",
-                "opUShr",      "opUShr_r",     "opIndex",     "opCall",
-                "opConv",      "opImplConv",   "opCast",      "opImplCast"};
-            return tip.addinfo.value(CodeInfoTip::RetType).isEmpty() ||
-                   opList.contains(tip.name);
-        });
-        for (auto &d : data) {
-            d.addinfo.insert(
-                CodeInfoTip::Comment,
-                d.addinfo.value(CodeInfoTip::RetType) + QStringLiteral(" ") +
-                    d.name + QStringLiteral("(") +
-                    d.addinfo.value(CodeInfoTip::Args) + QStringLiteral(") ") +
-                    d.addinfo.value(CodeInfoTip::SuffixQualifier));
-        }
     }
-}
-
-QString ASObjTreeWidget::getSuffixQualifier(asIScriptFunction *fn) {
-    if (fn) {
-        return fn->IsReadOnly() ? QStringLiteral("const") : QString();
-    }
-    return {};
 }

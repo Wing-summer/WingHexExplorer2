@@ -37,7 +37,6 @@
 #include "class/qascodeparser.h"
 #include "class/settingmanager.h"
 #include "define.h"
-#include "scriptaddon/aspromise.hpp"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptenv.h"
 #include "scriptaddon/scriptfile.h"
@@ -157,11 +156,6 @@ bool ScriptMachine::isEngineConfigError() const {
     return true;
 }
 
-#define INS_1 "const ?&in = null"
-#define INS_2 INS_1 ", " INS_1
-#define INS_4 INS_2 ", " INS_2
-#define INS_8 INS_4 ", " INS_4
-
 bool ScriptMachine::configureEngine() {
     if (_engine == nullptr) {
         return false;
@@ -231,17 +225,15 @@ bool ScriptMachine::configureEngine() {
     _engine->SetDefaultAccessMask(0x1);
 
     // Register a couple of extra functions for the scripts
-    r = _engine->RegisterGlobalFunction(
-        "void print(const ? &in obj, const ? &in = null," INS_8 ")",
-        asFUNCTION(print), asCALL_GENERIC);
+    r = _engine->RegisterGlobalFunction("void print(const ? &in ...)",
+                                        asFUNCTION(print), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
 
-    r = _engine->RegisterGlobalFunction(
-        "void println(const ? &in obj, const ? &in = null," INS_8 ")",
-        asFUNCTION(println), asCALL_GENERIC);
+    r = _engine->RegisterGlobalFunction("void println(const ? &in ...)",
+                                        asFUNCTION(println), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
     if (r < 0) {
         return false;
@@ -1034,7 +1026,6 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
     registerEngineClipboard(engine);
-    AsDirectPromise::Register(engine);
 }
 
 void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {

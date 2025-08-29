@@ -4518,19 +4518,29 @@ void PluginSystem::loadAllPlugins() {
     auto &set = SettingManager::instance();
     bool enableSet = set.enablePlugin();
 
-    if (enableSet) {
-        if (set.enableMonitor()) {
-            try2LoadManagerPlugin();
-        }
-        if (set.enableHexExt()) {
-            try2LoadHexExtPlugin();
+    bool ok = false;
+    auto disAll =
+        qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
+    auto marco_Enabled = !ok || (ok && !disAll);
+
+    if (marco_Enabled) {
+        if (enableSet) {
+            auto dis =
+                qEnvironmentVariableIntValue("WING_DISABLE_MONITOR", &ok);
+            if (set.enableMonitor() && (!ok || (ok && !dis))) {
+                try2LoadManagerPlugin();
+            }
+            dis = qEnvironmentVariableIntValue("WING_DISABLE_HEXEXT", &ok);
+            if (set.enableHexExt() && (!ok || (ok && !dis))) {
+                try2LoadHexExtPlugin();
+            }
         }
     }
 
     _enabledExtIDs = set.enabledExtPlugins();
     _enabledDevIDs = set.enabledDevPlugins();
 
-    // manager plugin can not block WingAngelAPI, only settings
+    // manager plugin can be blocked by settings only
     if (set.scriptEnabled()) {
         _angelplg = new WingAngelAPI;
 
@@ -4551,7 +4561,7 @@ void PluginSystem::loadAllPlugins() {
 
     Logger::newLine();
 
-    {
+    if (marco_Enabled) {
         QFile cstructjson(QStringLiteral(
             ":/com.wingsummer.winghex/src/class/WingCStruct.json"));
         auto ret = cstructjson.open(QFile::ReadOnly);
@@ -4588,14 +4598,11 @@ void PluginSystem::loadAllPlugins() {
     Logger::newLine();
 
     if (enableSet) {
-        bool ok = false;
-        auto disAll =
-            qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
-        if (!ok || (ok && disAll == 0)) {
+        if (marco_Enabled) {
             bool enabledrv = true, enableplg = true;
             auto disdrv =
                 qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
-            if (ok && disdrv != 0) {
+            if (ok && disdrv) {
                 enabledrv = false;
             }
 
@@ -4605,7 +4612,7 @@ void PluginSystem::loadAllPlugins() {
 
             auto displg =
                 qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
-            if ((ok && displg != 0) || !set.enablePlugin()) {
+            if ((ok && displg) || !set.enablePlugin()) {
                 enableplg = false;
             }
 

@@ -39,28 +39,57 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     reload();
 
-    connect(ui->cbEnablePlugin,
+    bool ok = false;
+    auto dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
+    if (dis && ok) {
+        ui->groupBox->setEnabled(false);
+        ui->tabAPIMon->setEnabled(false);
+        ui->tabDevInfo->setEnabled(false);
+        ui->tabHexEditorExt->setEnabled(false);
+        return;
+    } else {
+        dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
+        if (dis && ok) {
+            ui->cbEnablePlugin->setEnabled(false);
+            ui->tabDevInfo->setEnabled(false);
+        } else {
+            connect(ui->cbEnablePlugin,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            &QCheckBox::checkStateChanged,
+                    &QCheckBox::checkStateChanged,
 #else
-            &QCheckBox::stateChanged,
+                    &QCheckBox::stateChanged,
 #endif
-            this, &PluginSettingDialog::optionNeedRestartChanged);
+                    this, &PluginSettingDialog::optionNeedRestartChanged);
+        }
+
+        dis = qEnvironmentVariableIntValue("WING_DISABLE_MONITOR", &ok);
+        if (dis && ok) {
+            ui->cbEnableManager->setEnabled(false);
+        } else {
+            connect(ui->cbEnableManager,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                    &QCheckBox::checkStateChanged,
+#else
+                    &QCheckBox::stateChanged,
+#endif
+                    this, &PluginSettingDialog::optionNeedRestartChanged);
+        }
+
+        dis = qEnvironmentVariableIntValue("WING_DISABLE_HEXEXT", &ok);
+        if (dis && ok) {
+            ui->cbEnableManager->setEnabled(false);
+        } else {
+            connect(ui->cbEnableHex,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                    &QCheckBox::checkStateChanged,
+#else
+                    &QCheckBox::stateChanged,
+#endif
+                    this, &PluginSettingDialog::optionNeedRestartChanged);
+        }
+    }
+
     connect(ui->cbEnablePluginRoot,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            &QCheckBox::checkStateChanged,
-#else
-            &QCheckBox::stateChanged,
-#endif
-            this, &PluginSettingDialog::optionNeedRestartChanged);
-    connect(ui->cbEnableManager,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            &QCheckBox::checkStateChanged,
-#else
-            &QCheckBox::stateChanged,
-#endif
-            this, &PluginSettingDialog::optionNeedRestartChanged);
-    connect(ui->cbEnableHex,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
 #else

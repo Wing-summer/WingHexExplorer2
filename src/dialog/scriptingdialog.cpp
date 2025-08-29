@@ -29,7 +29,6 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
-#include "settings/qeditconfig.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -41,8 +40,8 @@
 
 constexpr auto EMPTY_FUNC = [] {};
 
-ScriptingDialog::ScriptingDialog(QWidget *parent)
-    : FramelessMainWindow(parent) {
+ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
+    : FramelessMainWindow(parent), m_setdialog(setdlg) {
     this->setUpdatesEnabled(false);
 
     // recent file manager init
@@ -76,8 +75,6 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
     layout->addWidget(m_status);
     buildUpContent(cw);
 
-    buildUpSettingDialog();
-
     registerMark();
 
     updateEditModeEnabled();
@@ -106,6 +103,7 @@ ScriptingDialog::ScriptingDialog(QWidget *parent)
                                                callbacks);
 
     this->setUpdatesEnabled(true);
+    this->setAttribute(Qt::WA_DeleteOnClose);
 }
 
 ScriptingDialog::~ScriptingDialog() {}
@@ -310,6 +308,7 @@ void ScriptingDialog::buildUpRibbonBar() {
 }
 
 RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("Basic"));
@@ -345,6 +344,7 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
+    updateUI();
     auto shortcuts = QKeySequences::instance();
     {
         auto pannel = tab->addGroup(tr("General"));
@@ -405,6 +405,7 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
+    updateUI();
     {
         auto pannel = tab->addGroup(tr("Window"));
         m_Tbtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
@@ -429,6 +430,7 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
+    updateUI();
     auto dbgkey = QKeySequence(Qt::Key_F5);
 
     {
@@ -521,6 +523,7 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
+    updateUI();
     auto pannel = tab->addGroup(tr("Settings"));
 
     addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
@@ -536,6 +539,7 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
 }
 
 RibbonTabContent *ScriptingDialog::buildAboutPage(RibbonTabContent *tab) {
+    updateUI();
     auto pannel = tab->addGroup(tr("Info"));
 
     addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
@@ -682,6 +686,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     // set the first tab visible
     for (auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
+            updateUI();
             auto d = item->dockWidget(i);
             if (d->features().testFlag(ads::CDockWidget::NoTab)) {
                 continue;
@@ -707,6 +712,7 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
                                                    const QString &displayName,
                                                    QWidget *content,
                                                    ToolButtonIndex index) {
+    updateUI();
     using namespace ads;
     auto dw = dock->createDockWidget(displayName, dock);
     dw->setObjectName(widgetName);
@@ -1006,18 +1012,6 @@ void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
     }
 }
 
-void ScriptingDialog::buildUpSettingDialog() {
-    m_setdialog = new SettingDialog(this);
-
-    auto edit = new QEditConfig(false, m_setdialog);
-    m_setdialog->addPage(edit);
-
-    edit = new QEditConfig(true, m_setdialog);
-    m_setdialog->addPage(edit);
-
-    m_setdialog->build();
-}
-
 void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
     Q_ASSERT(editor);
     m_ribbon->setCurrentIndex(3);
@@ -1169,6 +1163,8 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
         }
     }
 }
+
+void ScriptingDialog::updateUI() { QApplication::processEvents(); }
 
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
@@ -1502,15 +1498,17 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
-    _savedLayout = m_dock->saveState();
-
-    auto &set = SettingManager::instance();
-    set.setRecentScriptFiles(m_recentmanager->saveRecent());
-
+    if (m_views.isEmpty()) {
+        _savedLayout = m_dock->saveState();
+        auto &set = SettingManager::instance();
+        set.setRecentScriptFiles(m_recentmanager->saveRecent());
+    } else {
+        event->ignore();
+        this->hide();
+        return;
+    }
     FramelessMainWindow::closeEvent(event);
 }
-
-SettingDialog *ScriptingDialog::settingDialog() const { return m_setdialog; }
 
 QPixmap ScriptingDialog::markFromPath(const QString &name) {
     return QPixmap(

@@ -182,6 +182,30 @@ void printGlobalTypedef(const asIScriptEngine *engine, QTextStream &out) {
             out << "}\n";
     }
 }
+
+void printFuncdef(const asIScriptEngine *engine, QTextStream &out) {
+    for (int i = 0; i < engine->GetFuncdefCount(); ++i) {
+        const auto type = engine->GetFuncdefByIndex(i);
+        if (!type)
+            continue;
+
+        const auto fn = type->GetFuncdefSignature();
+        if (type->GetParentType()) { // check whether is in global scope
+            continue;
+        }
+
+        const QString ns = toQString(fn->GetNamespace());
+        if (!ns.isEmpty())
+            out << QStringLiteral("namespace %1 {\n").arg(ns);
+
+        out << QStringLiteral("funcdef %1;\n")
+                   .arg(toQString(fn->GetDeclaration()));
+
+        if (!ns.isEmpty())
+            out << "}\n";
+    }
+}
+
 } // namespace
 
 static inline void generateScriptPredefined(const asIScriptEngine *engine,
@@ -202,6 +226,7 @@ static inline void generateScriptPredefined(const asIScriptEngine *engine,
     printGlobalFunctionList(engine, out);
     printGlobalPropertyList(engine, out);
     printGlobalTypedef(engine, out);
+    printFuncdef(engine, out);
 
     file.close();
 }

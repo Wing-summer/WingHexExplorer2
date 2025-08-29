@@ -23,7 +23,9 @@
 #include "utilities.h"
 
 #include <QApplication>
+#include <QBuffer>
 #include <QCloseEvent>
+#include <QDataStream>
 #include <QMenu>
 #include <QPushButton>
 #include <QTimer>
@@ -159,6 +161,28 @@ void SettingDialog::showConfig(const QString &id) {
     _dialog->exec();
 }
 
+QByteArray SettingDialog::saveLayout() {
+    QByteArray ret;
+    QDataStream buffer(&ret, QDataStream::WriteOnly);
+    buffer << _dialog->saveGeometry();
+    buffer << ui->splitter->saveState();
+    return ret;
+}
+
+void SettingDialog::restoreLayout(const QByteArray &layout) {
+    auto data = layout;
+    QDataStream buffer(&data, QDataStream::ReadOnly);
+    QByteArray ret;
+    buffer >> ret;
+    if (!ret.isEmpty()) {
+        _dialog->restoreGeometry(ret);
+    }
+    buffer >> ret;
+    if (!ret.isEmpty()) {
+        ui->splitter->restoreState(ret);
+    }
+}
+
 bool SettingDialog::eventFilter(QObject *, QEvent *event) {
     if (event->type() == QEvent::Close) {
         auto e = static_cast<QCloseEvent *>(event);
@@ -174,6 +198,7 @@ bool SettingDialog::eventFilter(QObject *, QEvent *event) {
                 return true;
             }
         }
+        Q_EMIT onClosing();
     }
     return false;
 }

@@ -39,6 +39,13 @@ public:
     void showConfig(int index = -1);
     void showConfig(const QString &id);
 
+public slots:
+    QByteArray saveLayout();
+    void restoreLayout(const QByteArray &layout);
+
+signals:
+    void onClosing();
+
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;

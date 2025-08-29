@@ -63,7 +63,7 @@ private:
     };
 
 public:
-    explicit ScriptingDialog(QWidget *parent = nullptr);
+    explicit ScriptingDialog(SettingDialog *setdlg, QWidget *parent = nullptr);
     virtual ~ScriptingDialog();
 
     void initConsole();
@@ -71,8 +71,6 @@ public:
     bool about2Close();
 
     void saveDockLayout();
-
-    SettingDialog *settingDialog() const;
 
 private:
     void buildUpRibbonBar();
@@ -214,8 +212,6 @@ private:
 
     void runDbgCommand(asDebugger::DebugAction action);
 
-    void buildUpSettingDialog();
-
     void startDebugScript(ScriptEditor *editor);
 
     void addBreakPoint(ScriptEditor *editor, int line);
@@ -225,6 +221,8 @@ private:
     void updateCursorPosition();
 
     void reloadEditor(ScriptEditor *editor);
+
+    void updateUI();
 
 private slots:
     void on_newfile();

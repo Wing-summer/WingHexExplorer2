@@ -28,6 +28,7 @@
 #include <QByteArray>
 #include <QDir>
 #include <QEvent>
+#include <QJsonArray>
 #include <QLibraryInfo>
 #include <QQueue>
 #include <QTextStream>
@@ -43,21 +44,22 @@ Q_GLOBAL_STATIC_WITH_ARGS(QByteArray, SHARP_TRIGGER, ("#"))
 
 AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
     QStringList kws{
-        "const",     "in",        "inout",    "out",    "auto",     "public",
-        "protected", "private",   "void",     "int8",   "int16",    "int",
-        "int64",     "uint8",     "uint16",   "uint",   "uint64",   "float",
-        "double",    "bool",      "enum",     "string", "array",    "any",
-        "for",       "while",     "do",       "if",     "else",     "switch",
-        "break",     "continue",  "try",      "catch",  "throw",    "abstract",
-        "delete",    "cast",      "class",    "final",  "property", "external",
-        "function",  "interface", "shared",   "this",   "explicit", "override",
-        "namespace", "get",       "set",      "super",  "mixin",    "false",
-        "true",      "null",      "typename", "return", "typedef",  "funcdef",
-        "from",      "import",    "not",      "xor",    "or",       "is",
-        "co_await"};
+        "const",     "in",        "inout",    "out",      "auto",
+        "public",    "protected", "private",  "void",     "int8",
+        "int16",     "int",       "int64",    "uint8",    "uint16",
+        "uint",      "uint64",    "float",    "double",   "bool",
+        "enum",      "for",       "while",    "do",       "if",
+        "else",      "switch",    "break",    "continue", "try",
+        "catch",     "throw",     "abstract", "delete",   "cast",
+        "class",     "final",     "property", "external", "function",
+        "interface", "shared",    "this",     "explicit", "override",
+        "namespace", "get",       "set",      "super",    "mixin",
+        "false",     "true",      "null",     "typename", "return",
+        "typedef",   "funcdef",   "from",     "import",   "not",
+        "xor",       "or",        "is"};
     for (auto &k : kws) {
         CodeInfoTip t;
-        t.type = CodeInfoTip::Type::KeyWord;
+        t.type = LSP::CompletionItemKind::Keyword;
         t.name = k;
         _keywordNode.append(t);
     }
@@ -74,9 +76,8 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
     connect(this, QOverload<const QModelIndex &>::of(&AsCompletion::activated),
             this, [this](const QModelIndex &index) {
                 auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
-                if (v.type == CodeInfoTip::Type::Function ||
-                    v.type == CodeInfoTip::Type::ClsFunction) {
-                    Q_EMIT onFunctionTip(v.getTooltip());
+                if (v.type == LSP::CompletionItemKind::Function) {
+                    Q_EMIT onFunctionTip(v.comment);
                 }
             });
 
@@ -87,6 +88,25 @@ AsCompletion::~AsCompletion() {}
 
 void AsCompletion::clearFunctionTip() { Q_EMIT onFunctionTip({}); }
 
+QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
+    if (!v.isArray()) {
+        return {};
+    }
+
+    QList<CodeInfoTip> ret;
+    auto arr = v.toArray();
+    auto total = arr.size();
+    for (int i = 0; i < total; ++i) {
+        auto item = arr.at(i);
+        CodeInfoTip tip;
+        tip.value = item;
+        tip.type = LSP::CompletionItemKind(item["kind"].toInt());
+        tip.name = item["label"].toString();
+        ret.append(tip);
+    }
+    return ret;
+}
+
 QString AsCompletion::wordSeperators() const {
     static QString eow(QStringLiteral("~!@$%^&*()_+{}|\"<>?,/;'[]\\-="));
     return eow;
@@ -94,7 +114,6 @@ QString AsCompletion::wordSeperators() const {
 
 bool AsCompletion::processTrigger(const QString &trigger,
                                   const QString &content) {
-    QList<CodeInfoTip> nodes;
 
     if (trigger == *SHARP_TRIGGER) {
         setModel(new CodeCompletionModel(parseMarcos(), this));
@@ -125,10 +144,37 @@ bool AsCompletion::processTrigger(const QString &trigger,
     auto tc = editor->editor()->textCursor();
     auto &lsp = AngelLsp::instance();
     auto line = tc.blockNumber();
-    auto character = tc.positionInBlock() + trigger.size();
-    auto ret = lsp.requestCompletion(url, line, character);
 
+    auto seps = wordSeperators();
+    auto r =
+        std::find_if(content.crbegin(), content.crend(),
+                     [seps](const QChar &ch) { return seps.contains(ch); });
+    auto stridx = std::distance(r, content.crend());
+    auto str = content.sliced(stridx);
+    auto idx = str.lastIndexOf(*DOT_TRIGGER);
+    if (idx < 0) {
+        idx = str.lastIndexOf(*DBL_COLON_TRIGGER);
+    }
+    QString prefix;
+    if (idx >= 0) {
+        prefix = str.sliced(idx + 1);
+    } else {
+        prefix = str;
+    }
+
+    auto character = tc.positionInBlock();
+    if (trigger.isEmpty()) {
+        character -= prefix.length();
+    } else {
+        character += trigger.size();
+    }
+
+    auto ret = lsp.requestCompletion(url, line, character);
+    auto nodes = parseCompletion(ret);
+
+    // TODO
     setModel(new CodeCompletionModel(nodes, this));
+    setCompletionPrefix(prefix);
 
     return true;
 }
@@ -141,7 +187,7 @@ QList<CodeInfoTip> AsCompletion::parseMarcos() {
         for (auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;
-            tip.type = CodeInfoTip::Type::KeyWord;
+            tip.type = LSP::CompletionItemKind::Keyword;
             marcos.append(tip);
         }
     }

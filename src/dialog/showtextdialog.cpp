@@ -102,6 +102,7 @@ ShowTextDialog::ShowTextDialog(QWidget *parent) : FramelessMainWindow(parent) {
     this->setMinimumSize(800, 600);
 
     this->setUpdatesEnabled(true);
+    this->setAttribute(Qt::WA_DeleteOnClose);
 }
 
 ShowTextDialog::~ShowTextDialog() {}
