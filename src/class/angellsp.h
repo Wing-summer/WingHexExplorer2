@@ -38,13 +38,6 @@ public:
     void closeDocument(const QString &uri);
 
 public:
-    // Debounced completion: if user types quickly, use this so only one
-    // completion fires after pause. debounceMs default 150ms (tweak to taste:
-    // smaller for snappier UI, larger to reduce server load).
-    void requestCompletionDebounced(const QString &uri, int line, int character,
-                                    int debounceMs = 150);
-
-public:
     // High-level feature wrappers (sync)
     QJsonValue requestDocumentSymbol(const QString &uri, int timeoutMs = 3000);
     QJsonValue requestSemanticTokensFull(const QString &uri,
@@ -65,9 +58,9 @@ public:
 private:
     // Generic request/notification
     // Returns request id
-    int sendRequest(const QString &method,
-                    const QJsonValue &params = QJsonValue(),
-                    int /*timeoutMs*/ = 0);
+    qint64 sendRequest(const QString &method,
+                       const QJsonValue &params = QJsonValue(),
+                       int /*timeoutMs*/ = 0);
 
     // Blocking request
     QJsonValue sendRequestSync(const QString &method,
@@ -105,11 +98,6 @@ signals:
     void serverRequestReceived(const QString &method, const QJsonValue &params,
                                int id);
 
-    // New: emitted when a completion response arrives from server (either
-    // result or error). items: the "result" (or "error" if no result). For
-    // typical successful completion, items is the completion list/array.
-    void completionReceived(const QJsonValue &items);
-
 public slots:
     // convenience: synchronous shutdown
     void shutdownAndExit();
@@ -136,23 +124,14 @@ private:
     QProcess *m_proc = nullptr;
     QByteArray m_stdoutBuffer;
 
-    int m_nextId = 1;
-    QMap<int, QEventLoop *> m_pendingLoops;
-    QMap<int, QJsonValue> m_pendingResponses;
+    qint64 m_nextId = 1;
+    QMap<qint64, QEventLoop *> m_pendingLoops;
+    QMap<qint64, QJsonValue> m_pendingResponses;
 
-    QMap<int, QString> m_outstandingRequests; // map request id -> method
+    QMap<qint64, QString> m_outstandingRequests; // map request id -> method
 
     // Debounce/coalesce document change support
     QHash<QString, QTimer *> m_docTimers; // per-document debouncers
-
-    // Debounced completion support
-    QTimer *m_completionTimer = nullptr;
-    struct PendingCompletion {
-        QString uri;
-        int line = 0;
-        int character = 0;
-    } m_pendingCompletion;
-    int m_lastCompletionRequestId = 0;
 };
 
 #endif // ANGELLSP_H

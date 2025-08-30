@@ -312,7 +312,9 @@ set(CLASS_SRC
     src/class/consolehighlighanim.cpp
     src/class/angellsp.h
     src/class/angellsp.cpp
-    src/class/lsp.h)
+    src/class/lsp.h
+    src/class/resettabletimer.h
+    src/class/resettabletimer.cpp)
 
 set(INTERNAL_PLG_SRC
     src/class/wingangelapi.h src/class/wingangelapi.cpp
@@ -492,11 +494,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
                           ${PROJECT_SOURCES} ${app_icon_resource_windows})
     else()
         find_package(Qt6 REQUIRED COMPONENTS Widgets)
+        find_package(Qt6 REQUIRED COMPONENTS Core)
 
         qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
                           ${PROJECT_SOURCES})
 
         target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Widgets)
+        target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Core)
     endif()
 endif()
 

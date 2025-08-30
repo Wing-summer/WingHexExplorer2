@@ -82,6 +82,10 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
             });
 
     p->installEventFilter(this);
+
+    _timer = new ResettableTimer(this);
+    connect(_timer, &ResettableTimer::timeoutTriggered, this,
+            &AsCompletion::onCodeComplete);
 }
 
 AsCompletion::~AsCompletion() {}
@@ -140,6 +144,10 @@ bool AsCompletion::processTrigger(const QString &trigger,
         clearFunctionTip();
     }
 
+    if (!_ok) {
+        return false;
+    }
+
     auto url = Utilities::getUrlString(editor->fileName());
     auto tc = editor->editor()->textCursor();
     auto &lsp = AngelLsp::instance();
@@ -171,10 +179,10 @@ bool AsCompletion::processTrigger(const QString &trigger,
 
     auto ret = lsp.requestCompletion(url, line, character);
     auto nodes = parseCompletion(ret);
-
-    // TODO
     setModel(new CodeCompletionModel(nodes, this));
     setCompletionPrefix(prefix);
+    _ok = false;
+    _timer->reset(300);
 
     return true;
 }
@@ -203,3 +211,5 @@ bool AsCompletion::eventFilter(QObject *watched, QEvent *event) {
     }
     return WingCompleter::eventFilter(watched, event);
 }
+
+void AsCompletion::onCodeComplete() { _ok = true; }

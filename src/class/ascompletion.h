@@ -20,6 +20,7 @@
 
 #include "WingCodeEdit/wingcompleter.h"
 #include "class/codeinfotip.h"
+#include "class/resettabletimer.h"
 
 class AsCompletion : public WingCompleter {
     Q_OBJECT
@@ -50,8 +51,14 @@ signals:
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
+private slots:
+    void onCodeComplete();
+
 private:
     QList<CodeInfoTip> _keywordNode;
+    ResettableTimer *_timer;
+
+    bool _ok = true;
 };
 
 #endif // _CPP_COMPLETION_H_

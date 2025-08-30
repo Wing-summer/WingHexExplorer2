@@ -6,29 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-AngelLsp::AngelLsp() {
-    // create a single timer reused for completion debounce
-    m_completionTimer = new QTimer(this);
-    m_completionTimer->setSingleShot(true);
-    connect(m_completionTimer, &QTimer::timeout, this, [this]() {
-        // before sending new completion, cancel previous pending request if any
-        if (m_lastCompletionRequestId != 0) {
-            sendCancelRequest(m_lastCompletionRequestId);
-            // do not reset id here; server may already have processed it
-        }
-        // send actual completion request (async, id returned)
-        QJsonObject pos;
-        pos["line"] = m_pendingCompletion.line;
-        pos["character"] = m_pendingCompletion.character;
-        QJsonObject p;
-        p["textDocument"] = QJsonObject{{"uri", m_pendingCompletion.uri}};
-        p["position"] = pos;
-        int id = sendRequest("textDocument/completion", p);
-        m_lastCompletionRequestId = id;
-        // response will be delivered to handleIncomingMessage ->
-        // requestFinished signal
-    });
-}
+AngelLsp::AngelLsp() {}
 
 AngelLsp &AngelLsp::instance() {
     static AngelLsp ins;
@@ -227,9 +205,9 @@ QJsonValue AngelLsp::requestResolve(const QJsonValue &symbol, int timeoutMs) {
     return sendRequestSync("completionItem/resolve", symbol, timeoutMs);
 }
 
-int AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
-                          int) {
-    int id = m_nextId++;
+qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
+                             int) {
+    qint64 id = m_nextId++;
     QJsonObject obj;
     obj["jsonrpc"] = "2.0";
     obj["id"] = id;
@@ -261,7 +239,7 @@ void AngelLsp::changeDocument(const QString &uri, qint64 version,
 
 QJsonValue AngelLsp::sendRequestSync(const QString &method,
                                      const QJsonValue &params, int timeoutMs) {
-    int id = m_nextId++;
+    qint64 id = m_nextId++;
     QJsonObject obj;
     obj["jsonrpc"] = "2.0";
     obj["id"] = id;
@@ -480,20 +458,6 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             m_outstandingRequests.remove(id);
         }
 
-        // if this response is for a completion request, emit completionReceived
-        if (!method.isEmpty() &&
-            method == QStringLiteral("textDocument/completion")) {
-            Q_EMIT completionReceived(payload);
-            // if it matches the last completion id, clear it
-            if (m_lastCompletionRequestId == id)
-                m_lastCompletionRequestId = 0;
-        }
-        // if response matches lastCompletionRequestId but method mapping not
-        // present, still check and clear
-        if (m_lastCompletionRequestId == id) {
-            m_lastCompletionRequestId = 0;
-        }
-
         if (m_pendingLoops.contains(id)) {
             QEventLoop *loop = m_pendingLoops[id];
             if (loop)
@@ -639,15 +603,4 @@ QJsonObject AngelLsp::jsonLSPDocLocation(const LSP::Location &loc) {
     r["line"] = loc.line;
     r["character"] = loc.character;
     return r;
-}
-
-void AngelLsp::requestCompletionDebounced(const QString &uri, int line,
-                                          int character, int debounceMs) {
-    // store latest requested position
-    m_pendingCompletion.uri = uri;
-    m_pendingCompletion.line = line;
-    m_pendingCompletion.character = character;
-    // restart debounce timer
-    m_completionTimer->stop();
-    m_completionTimer->start(debounceMs);
 }
