@@ -19,7 +19,7 @@
 #define WINGCSTRUCT_H
 
 #include "WingPlugin/iwingplugin.h"
-#include "ctypeparser.h"
+#include "structlib/ctypeparser.h"
 
 class CScriptDictionary;
 class asIScriptEngine;
@@ -58,22 +58,41 @@ public:
 
 private:
     // basic
-    WING_SERVICE bool addStruct(const QString &header);
-    WING_SERVICE bool addStructFromFile(const QString &fileName);
-    WING_SERVICE void resetEnv();
+    WING_SERVICE bool parseFromSource(const QString &header);
+    WING_SERVICE bool parse(const QString &fileName);
+    WING_SERVICE void reset();
 
-    WING_SERVICE bool setStructPadding(int padding); // [1,8]
-    WING_SERVICE int structPadding();
+    WING_SERVICE bool setPadAlignment(int padding); // 1, 2, 4, 8, 16
+    WING_SERVICE int padAlignment();
 
     // lookup
-    WING_SERVICE QStringList structTypes();
-    WING_SERVICE qsizetype sizeofStruct(const QString &type);
-    WING_SERVICE bool existStruct(const QString &type);
+    WING_SERVICE QStringList structTypeDefs();
+    WING_SERVICE QStringList unionTypeDefs();
+    WING_SERVICE QStringList typedefTypeDefs();
+    WING_SERVICE QStringList enumTypeDefs();
+    WING_SERVICE QStringList constVarDefs();
 
-    // defines
-    WING_SERVICE QStringList constDefines();
-    WING_SERVICE bool existDefineValue(const QString &type);
-    WING_SERVICE int defineValue(const QString &type);
+    WING_SERVICE quint64 sizeOf(const QString &type);
+    WING_SERVICE bool containsType(const QString &name);
+
+    WING_SERVICE bool isBasicType(const QString &name);
+    WING_SERVICE bool isUnsignedBasicType(const QString &name);
+
+    WING_SERVICE bool containsEnum(const QString &name);
+    WING_SERVICE bool containsStruct(const QString &name);
+    WING_SERVICE bool containsUnion(const QString &name);
+    WING_SERVICE bool containsTypeDef(const QString &name);
+    WING_SERVICE bool containsConstVar(const QString &name);
+    WING_SERVICE bool isCompletedType(const QString &name);
+
+    WING_SERVICE QStringList enumValueNames(const QString &name);
+    WING_SERVICE qint64 constVarValueInt(const QString &name, bool *ok);
+    WING_SERVICE quint64 constVarValueUInt(const QString &name, bool *ok);
+
+    WING_SERVICE bool isCompletedStruct(const QString &name);
+    WING_SERVICE bool isCompletedUnion(const QString &name);
+
+    WING_SERVICE QStringList getMissingDependencise(const QString &name);
 
     WING_SERVICE QVariantHash read(qsizetype offset, const QString &type);
     WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
@@ -96,28 +115,22 @@ private:
 
 private:
     // wrapper for WingAngelApi
-    QVariant addStruct(const QVariantList &params);
-    QVariant addStructFromFile(const QVariantList &params);
-    QVariant resetEnv(const QVariantList &params);
+    QVariant parseFromSource(const QVariantList &params);
+    QVariant parse(const QVariantList &params);
+    QVariant reset(const QVariantList &params);
 
-    QVariant setStructPadding(const QVariantList &params);
-    QVariant structPadding(const QVariantList &params);
+    QVariant setPadAlignment(const QVariantList &params);
+    QVariant padAlignment(const QVariantList &params);
 
     QVariant structTypes(const QVariantList &params);
     QVariant sizeofStruct(const QVariantList &params);
-    QVariant existStruct(const QVariantList &params);
-
-    // defines
-    QVariant constDefines(const QVariantList &params);
-    QVariant existDefineValue(const QVariantList &params);
-    QVariant defineValue(const QVariantList &params);
+    QVariant containsStruct(const QVariantList &params);
 
     WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
 
 private:
-    CTypeParser _parser;
-
+    CTypeParser *_parser = nullptr;
     QList<WingHex::SettingPage *> _setpgs;
 };
 

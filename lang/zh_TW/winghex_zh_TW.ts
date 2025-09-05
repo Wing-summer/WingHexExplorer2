@@ -218,6 +218,182 @@
     </message>
 </context>
 <context>
+    <name>CStructErrorListener</name>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="42"/>
+        <source>&lt;EOF&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="48"/>
+        <source>&lt;unknown input&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="50"/>
+        <source>no viable alternative at input %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="57"/>
+        <source>mismatched input %1 expecting %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="71"/>
+        <source>rule %1 failed predicate: %2?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="92"/>
+        <source>extraneous input %1 expecting %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="111"/>
+        <source>missing %1 at %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CStructVisitorParser</name>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="135"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="381"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="414"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="444"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="469"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="510"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="636"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="670"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="788"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1660"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1814"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1944"/>
+        <source>&lt;unknown&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="229"/>
+        <source>&quot;%1&quot; is out of range with number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="237"/>
+        <source>&quot;%1&quot; is already declared with type %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="246"/>
+        <source>&quot;%1&quot; is duplicated declaration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="254"/>
+        <source>Unexprected type &quot;%1&quot;, expecting: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="263"/>
+        <source>Unexprected token &quot;%1&quot;, expecting: {%2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="269"/>
+        <source>Declaring syntax error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="276"/>
+        <source>&quot;%1&quot; is unknown type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="285"/>
+        <source>Too large array &quot;%1&quot; in %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="293"/>
+        <source>Operation &quot;%1&quot; will cause number overflow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="301"/>
+        <source>Too many bits(%1) for type %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="320"/>
+        <source>&quot;%1&quot; is incompleted type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="324"/>
+        <source>&quot;%1&quot; is too large type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="329"/>
+        <source>Too many symbols when adding &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="844"/>
+        <source>Invalid typeName Mask with converting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="853"/>
+        <source>Can not convert Interger to &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1308"/>
+        <source>Invalid #include marco failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1314"/>
+        <source>Invalid #include file is not exists: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1322"/>
+        <source>Invalid #include marco syntax</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1583"/>
+        <source>Unknown type of specifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1667"/>
+        <source>Unknown type of declarator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1744"/>
+        <source>Unsupported alignas value: %1 , supported alignas = {1, 2, 4, 8, 16}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1784"/>
+        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1914"/>
+        <source>Only bit field feature of completed numberic types is supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CTypeParser</name>
+    <message>
+        <location filename="../../src/structlib/ctypeparser.cpp" line="1065"/>
+        <source>sizeof(%1) will be always 8 for enum type</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CheckSumDialog</name>
     <message>
         <location filename="../../src/dialog/checksumdialog.cpp" line="32"/>
@@ -2431,128 +2607,128 @@
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="3357"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3962"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4039"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3963"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4040"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>加載插件失敗：損壞的插件數據</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4592"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4593"/>
         <source>PluginBlockByManager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3791"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3792"/>
         <source>AppClosingCanceled:</source>
         <translation>程式關閉被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3877"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3878"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3899"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3900"/>
         <source>FoundDrvPluginCount</source>
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3940"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3941"/>
         <source>PluginManagerNeedSingleton</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="3370"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3956"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4033"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3957"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4034"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加載失敗：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4214"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4215"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3986"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4063"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4235"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3987"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4064"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4236"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4016"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4017"/>
         <source>HexExtNeedSingleton</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4244"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4245"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4245"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4246"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4246"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4247"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4280"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4281"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4281"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4282"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4297"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4298"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4320"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4321"/>
         <source>ChooseFile</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4327"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4332"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4328"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4333"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4328"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4329"/>
         <source>FileNotExist</source>
         <translation>檔不存在！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4333"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4334"/>
         <source>FilePermission</source>
         <translation>因檔許可權無法繼續！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4363"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4364"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4373"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4374"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4381"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4382"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4494"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4495"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2562,14 +2738,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3925"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3926"/>
         <source>UnsafePluginDir</source>
         <translation>不安全的插件目錄，請將插件目錄設置為僅管理員帳戶可寫</translation>
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="3364"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3959"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4036"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3960"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4037"/>
         <source>InvalidPluginID</source>
         <translation>加載插件失敗：非法插件識別字</translation>
     </message>
@@ -2579,32 +2755,32 @@
         <translation>加載插件失敗：重複的插件識別字</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3842"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3843"/>
         <source>FoundPluginCount</source>
         <translation>總計發現插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3873"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3874"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依賴插件加載失敗總結</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3878"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3879"/>
         <source>- Dependencies:</source>
         <translation>- 依賴：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3880"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3881"/>
         <source>PUID:</source>
         <translation>插件唯一標誌符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3881"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3882"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3888"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3889"/>
         <source>PluginLoadingFinished</source>
         <translation>加載插件完畢！</translation>
     </message>
@@ -3904,41 +4080,36 @@
 <context>
     <name>WingCStruct</name>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="40"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="42"/>
         <source>WingCStruct</source>
         <translation>羽雲檔結構分析器</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="43"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="45"/>
         <source>Providing basic support for analyzing file structures</source>
         <translation>提供基礎的檔結構分析支持</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="653"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="665"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="678"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="687"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="699"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="707"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="714"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="726"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="738"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="745"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="757"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="769"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="781"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="741"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="753"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="766"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="775"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="787"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="795"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="802"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="814"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="826"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="838"/>
         <source>InvalidParamsCount</source>
         <translation>非法參數個數</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="657"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="669"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="691"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="718"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="730"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="749"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="761"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="787"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="745"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="757"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="779"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="806"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="818"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="844"/>
         <source>InvalidParam</source>
         <translation>非法參數</translation>
     </message>

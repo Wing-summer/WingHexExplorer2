@@ -99,7 +99,17 @@ set(NUMCAL_GRAMMAR
     src/grammar/NumCal/NumCalVisitor.cpp
     src/grammar/NumCal/NumCalVisitor.h)
 
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR})
+set(CSTRUCT_GRAMMAR
+    src/grammar/c/CStructVisitor.h
+    src/grammar/c/CStructBaseVisitor.cpp
+    src/grammar/c/CStructLexer.cpp
+    src/grammar/c/CStructParser.cpp
+    src/grammar/c/CStructVisitor.cpp
+    src/grammar/c/CStructBaseVisitor.h
+    src/grammar/c/CStructLexer.h
+    src/grammar/c/CStructParser.h)
+
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -187,6 +197,17 @@ set(DIALOG_SRC
     src/dialog/showtextdialog.h
     src/dialog/definitiondownload.cpp
     src/dialog/definitiondownload.h)
+
+set(STRUCT_LIB_SRC
+    src/structlib/cstructerrorlistener.cpp
+    src/structlib/cstructerrorlistener.h
+    src/structlib/cstructerrorstrategy.cpp
+    src/structlib/cstructerrorstrategy.h
+    src/structlib/cstructvisitorparser.cpp
+    src/structlib/cstructvisitorparser.h
+    src/structlib/ctypeparser.cpp
+    src/structlib/ctypeparser.h
+    src/structlib/structdefine.h)
 
 set(CONTROL_SRC
     src/control/codeedit.h
@@ -316,10 +337,8 @@ set(CLASS_SRC
     src/class/resettabletimer.h
     src/class/resettabletimer.cpp)
 
-set(INTERNAL_PLG_SRC
-    src/class/wingangelapi.h src/class/wingangelapi.cpp
-    src/class/ctypeparser.cpp src/class/ctypeparser.h src/class/wingcstruct.h
-    src/class/wingcstruct.cpp)
+set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
+                     src/class/wingcstruct.h src/class/wingcstruct.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC
@@ -467,6 +486,7 @@ set(PROJECT_SOURCES
     ${QCONSOLEWIDGET_SRC}
     ${WIDGET_FRAME_SRC}
     ${RIBBON_SRC}
+    ${STRUCT_LIB_SRC}
     ${CLASS_SRC}
     ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}

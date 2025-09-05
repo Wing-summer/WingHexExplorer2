@@ -3753,6 +3753,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto plg = *r;
         if (!_pragmaedPlg.contains(plg)) {
             plg->eventOnScriptPragmaInit();
+            _pragmaedPlg.append(plg);
         }
         return plg->eventOnScriptPragma(section, params.at(2).toStringList());
     } break;
