@@ -15,10 +15,10 @@
 ** =============================================================================
 */
 
-grammar NumCal;
+grammar DefEvaluator;
 
 primaryExpression
-    : IntegerConstant
+    : Constant
     | '(' assignmentExpression ')'
     ;
 
@@ -31,11 +31,20 @@ unaryOperator
     : '+'
     | '-'
     | '~'
+    | '!'
     ;
 
 castExpression
     : unaryExpression
-    | IntegerConstant 
+    | Constant 
+    ;
+
+relationalExpression
+    : shiftExpression (('<' | '>' | '<=' | '>=') shiftExpression)*
+    ;
+
+equalityExpression
+    : relationalExpression (('==' | '!=') relationalExpression)*
     ;
 
 multiplicativeExpression
@@ -62,22 +71,27 @@ inclusiveOrExpression
     : exclusiveOrExpression ('|' exclusiveOrExpression)*
     ;
 
+logicalAndExpression
+    : inclusiveOrExpression ('&&' inclusiveOrExpression)*
+    ;
+
+logicalOrExpression
+    : logicalAndExpression ('||' logicalAndExpression)*
+    ;
+
+conditionalExpression
+    : logicalOrExpression ('?' primaryExpression ':' conditionalExpression)?
+    ;
+
 assignmentExpression
-    : IntegerConstant
+    : conditionalExpression
     | inclusiveOrExpression
     ;
 
 entryExpression
-    : prefixGoto? IntegerConstant EOF
-    | (prefixGoto Colon)? assignmentExpression EOF
-    | prefixGoto LeftBracket assignmentExpression RightBracket EOF
-    | prefixGoto LeftParen assignmentExpression RightParen EOF
+    : Constant EOF
+    | assignmentExpression EOF
     ;
-
-prefixGoto
-    : (Plus | Minus | LessThan)
-    ;
-
 
 LeftParen
     : '('
@@ -127,6 +141,10 @@ Caret
     : '^'
     ;
 
+Not
+    : '!'
+    ;
+
 Tilde
     : '~'
     ;
@@ -135,24 +153,17 @@ LessThan
     : '<'
     ;
 
-Colon
-    : ':'
-    ;
-
-LeftBracket
-    : '['
-    ;
-
-RightBracket
-    : ']'
-    ;
-
 fragment Digit
     : [0-9]
     ;
 
 fragment HexQuad
     : HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
+    ;
+
+Constant
+    : IntegerConstant
+    | FloatingConstant
     ;
 
 IntegerConstant
@@ -190,8 +201,35 @@ fragment OctalDigit
     : [0-7]
     ;
 
+fragment FloatingSuffix
+: [flFL]
+;
+
+fragment HexadecimalFractionalConstant
+    : HexadecimalDigitSequence? '.' HexadecimalDigitSequence
+    | HexadecimalDigitSequence '.'
+    ;
+
 fragment HexadecimalDigit
     : [0-9a-fA-F]
+    ;
+
+fragment FloatingConstant
+    : DecimalFloatingConstant
+    ;
+
+fragment DecimalFloatingConstant
+    : FractionalConstant ExponentPart? FloatingSuffix?
+    | DigitSequence ExponentPart FloatingSuffix?
+    ;
+
+fragment FractionalConstant
+    : DigitSequence? '.' DigitSequence
+    | DigitSequence '.'
+    ;
+
+fragment ExponentPart
+    : [eE] Sign? DigitSequence
     ;
 
 fragment Sign
