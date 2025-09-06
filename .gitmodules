@@ -23,3 +23,9 @@
 [submodule "3rdparty/angel-lsp"]
 	path = 3rdparty/angel-lsp
 	url = git@github.com:Wing-summer/angel-lsp.git
+[submodule "3rdparty/cppdap"]
+	path = 3rdparty/cppdap
+	url = git@github.com:Wing-summer/cppdap.git
+[submodule "3rdparty/fmt"]
+	path = 3rdparty/fmt
+	url = git@github.com:Wing-summer/fmt.git

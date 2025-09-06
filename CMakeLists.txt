@@ -80,6 +80,7 @@ add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/WingCodeEdit)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
+add_subdirectory(3rdparty/cppdap)
 
 set(DISABLE_WARNINGS ON)
 set(ANTLR4_INSTALL OFF)
@@ -137,6 +138,17 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h)
 
 add_subdirectory(3rdparty/qtsingleapplication)
+add_subdirectory(3rdparty/fmt)
+
+set(AS_DEBUGGER_SRC
+    3rdparty/as-debugger/as_debugger.cpp
+    3rdparty/as-debugger/as_debugger.h
+    3rdparty/as-debugger/as_debugger_dap.cpp
+    3rdparty/as-debugger/as_debugger_dap.h
+    3rdparty/as-debugger/as_helpers.cpp
+    3rdparty/as-debugger/as_helpers.h
+    3rdparty/as-debugger/as_dbg_state.h
+    3rdparty/as-debugger/as_dbg_state.cpp)
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -335,7 +347,8 @@ set(CLASS_SRC
     src/class/angellsp.cpp
     src/class/lsp.h
     src/class/resettabletimer.h
-    src/class/resettabletimer.cpp)
+    src/class/resettabletimer.cpp
+    src/class/astype_evaluator.h)
 
 set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
                      src/class/wingcstruct.h src/class/wingcstruct.cpp)
@@ -488,6 +501,7 @@ set(PROJECT_SOURCES
     ${RIBBON_SRC}
     ${STRUCT_LIB_SRC}
     ${CLASS_SRC}
+    ${AS_DEBUGGER_SRC}
     ${INTERNAL_PLG_SRC}
     ${MODEL_SRC}
     ${DIALOG_SRC}
@@ -547,6 +561,8 @@ target_link_libraries(
             QHexView
             WingCodeEdit
             angelscript
+            cppdap
+            fmt::fmt
             antlr4_static
             qtadvanceddocking-qt${QT_VERSION_MAJOR})
 
