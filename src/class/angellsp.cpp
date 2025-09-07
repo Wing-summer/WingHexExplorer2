@@ -66,6 +66,9 @@ bool AngelLsp::start() {
 }
 
 void AngelLsp::stop() {
+    if (!m_proc)
+        return;
+
     // destroy timers for documents
     for (auto &t : m_docTimers) {
         if (t) {
@@ -75,8 +78,6 @@ void AngelLsp::stop() {
     }
     m_docTimers.clear();
 
-    if (!m_proc)
-        return;
     if (m_proc->state() == QProcess::Running) {
         m_proc->terminate();
         m_proc->waitForFinished(1000);
@@ -90,6 +91,9 @@ void AngelLsp::stop() {
 }
 
 QJsonValue AngelLsp::initializeSync(int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject params;
     params["processId"] = QCoreApplication::applicationPid();
 
@@ -113,6 +117,9 @@ void AngelLsp::initialized() { sendNotification("initialized", {}); }
 
 void AngelLsp::openDocument(const QString &uri, qint64 version,
                             const QString &text) {
+    if (!m_proc)
+        return;
+
     QJsonObject textDoc;
     textDoc["uri"] = uri;
     textDoc["languageId"] = QStringLiteral("angelscript");
@@ -124,12 +131,18 @@ void AngelLsp::openDocument(const QString &uri, qint64 version,
 }
 
 void AngelLsp::closeDocument(const QString &uri) {
+    if (!m_proc)
+        return;
+
     QJsonObject params;
     params["textDocument"] = QJsonObject{{"uri", uri}};
     sendNotification("textDocument/didClose", params);
 }
 
 QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
     return sendRequestSync("textDocument/documentSymbol", p, timeoutMs);
@@ -137,6 +150,9 @@ QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
 
 QJsonValue AngelLsp::requestSemanticTokensFull(const QString &uri,
                                                int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
     return sendRequestSync("textDocument/semanticTokens/full", p, timeoutMs);
@@ -144,6 +160,9 @@ QJsonValue AngelLsp::requestSemanticTokensFull(const QString &uri,
 
 QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
                                        int character, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
@@ -155,6 +174,9 @@ QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
 
 QJsonValue AngelLsp::requestHover(const QString &uri, int line, int character,
                                   int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
@@ -166,6 +188,9 @@ QJsonValue AngelLsp::requestHover(const QString &uri, int line, int character,
 
 QJsonValue AngelLsp::requestDefinition(const QString &uri, int line,
                                        int character, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
@@ -178,6 +203,9 @@ QJsonValue AngelLsp::requestDefinition(const QString &uri, int line,
 QJsonValue AngelLsp::requestReferences(const QString &uri, int line,
                                        int character, bool includeDeclaration,
                                        int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
@@ -192,6 +220,9 @@ QJsonValue AngelLsp::requestReferences(const QString &uri, int line,
 
 QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
                                           int character, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
@@ -202,11 +233,17 @@ QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
 }
 
 QJsonValue AngelLsp::requestResolve(const QJsonValue &symbol, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     return sendRequestSync("completionItem/resolve", symbol, timeoutMs);
 }
 
 qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
                              int) {
+    if (!m_proc)
+        return -1;
+
     qint64 id = m_nextId++;
     QJsonObject obj;
     obj["jsonrpc"] = "2.0";
@@ -222,6 +259,9 @@ qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
 
 void AngelLsp::changeDocument(const QString &uri, qint64 version,
                               const LSP::TextDocumentContentChangeEvent &e) {
+    if (!m_proc)
+        return;
+
     QJsonArray changes;
 
     QJsonObject v;
@@ -239,6 +279,9 @@ void AngelLsp::changeDocument(const QString &uri, qint64 version,
 
 QJsonValue AngelLsp::sendRequestSync(const QString &method,
                                      const QJsonValue &params, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
     qint64 id = m_nextId++;
     QJsonObject obj;
     obj["jsonrpc"] = "2.0";
@@ -276,7 +319,7 @@ QJsonValue AngelLsp::sendRequestSync(const QString &method,
         // timeout: remove outstandingRequests to avoid leak
         if (m_outstandingRequests.contains(id))
             m_outstandingRequests.remove(id);
-        qWarning("AngelLSP: request timeout for %s id %d",
+        qWarning("AngelLSP: request timeout for %s id %lld",
                  qUtf8Printable(method), id);
         return {};
     }
@@ -284,6 +327,9 @@ QJsonValue AngelLsp::sendRequestSync(const QString &method,
 
 void AngelLsp::sendNotification(const QString &method,
                                 const QJsonValue &params) {
+    if (!m_proc)
+        return;
+
     QJsonObject obj;
     obj["jsonrpc"] = "2.0";
     obj["method"] = method;
@@ -294,6 +340,9 @@ void AngelLsp::sendNotification(const QString &method,
 }
 
 void AngelLsp::sendCancelRequest(int id) {
+    if (!m_proc)
+        return;
+
     if (id <= 0)
         return;
     QJsonObject p;
@@ -303,6 +352,9 @@ void AngelLsp::sendCancelRequest(int id) {
 }
 
 void AngelLsp::shutdownAndExit() {
+    if (!m_proc)
+        return;
+
     sendRequestSync("shutdown", {}, 2000);
     sendNotification("exit", {});
     stop();

@@ -33,6 +33,7 @@
 #include <QDesktopServices>
 #include <QHeaderView>
 #include <QLabel>
+#include <QListView>
 #include <QPainter>
 #include <QPicture>
 #include <QStatusBar>
@@ -617,6 +618,18 @@ ScriptingDialog::buildSymbolShowDock(ads::CDockManager *dock,
     return dock->addDockWidget(area, dw, areaw);
 }
 
+ads::CDockAreaWidget *
+ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
+                                    ads::DockWidgetArea area,
+                                    ads::CDockAreaWidget *areaw) {
+    auto dview = new QListView(this);
+    _squinfoModel = new SquiggleInformationModel(this);
+    dview->setModel(_squinfoModel);
+    auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
+                              tr("Diagnosis"), dview);
+    return dock->addDockWidget(area, dw, areaw);
+}
+
 void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     Q_ASSERT(container);
 
@@ -642,6 +655,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
                 auto editview = qobject_cast<ScriptEditor *>(now);
                 if (editview) {
                     swapEditor(m_curEditor, editview);
+                } else {
+                    _squinfoModel->setEditor(nullptr);
                 }
                 updateEditModeEnabled();
             });
@@ -669,7 +684,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     m_editorViewArea = m_dock->setCentralWidget(CentralDockWidget);
 
     // build up basic docking widgets
-    auto bottomArea = buildUpOutputShowDock(m_dock, ads::BottomDockWidgetArea);
+    auto bottomArea = buildDiagnosisDock(m_dock, ads::BottomDockWidgetArea);
+    buildUpOutputShowDock(m_dock, ads::CenterDockWidgetArea, bottomArea);
 
     auto splitter =
         ads::internal::findParent<ads::CDockSplitter *>(m_editorViewArea);
@@ -898,6 +914,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
             &ScriptingDialog::updateCursorPosition);
 
     m_curEditor = cur;
+    _squinfoModel->setEditor(editor);
     updateCursorPosition();
 
     if (cur) {
@@ -1507,6 +1524,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         this->hide();
         return;
     }
+
+    saveDockLayout();
     FramelessMainWindow::closeEvent(event);
 }
 

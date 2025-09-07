@@ -294,12 +294,13 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         }
 
         auto &lsp = AngelLsp::instance();
-        if (!lsp.start()) {
+        if (lsp.start()) {
+            auto ret = lsp.initializeSync();
+            Q_UNUSED(ret);
+            lsp.initialized();
+        } else {
             // TODO
         }
-
-        auto ret = lsp.initializeSync();
-        lsp.initialized();
     }
 
     // connect settings signals
@@ -2853,21 +2854,7 @@ void MainWindow::on_inspectQt() {
     InspectQtLogHelper::instance().showLogWidget();
 }
 
-void MainWindow::on_scriptwindow() {
-    if (m_scriptDialog == nullptr) {
-        auto splash = new SplashDialog(this);
-        splash->setInfoText(tr("SetupScriptEditor"));
-
-        m_scriptDialog = new ScriptingDialog(m_scriptsetdlg, this);
-        connect(m_scriptDialog, &ScriptingDialog::destroyed, this,
-                [this]() { m_scriptDialog = nullptr; });
-        m_scriptDialog->initConsole();
-
-        splash->close();
-    }
-    m_scriptDialog->show();
-    m_scriptDialog->raise();
-}
+void MainWindow::on_scriptwindow() { createScriptDialog(nullptr); }
 
 void MainWindow::on_settingGeneral() { m_setdialog->showConfig(0); }
 
@@ -3591,6 +3578,12 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     return ErrFile::Success;
 }
 
+void MainWindow::openScriptFile(const QString &filename, SplashDialog *splash) {
+    createScriptDialog(splash);
+    m_scriptDialog->openFile(filename);
+    QTimer::singleShot(100, this, [this] { m_scriptDialog->raise(); });
+}
+
 IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
     Q_ASSERT(view);
 
@@ -3936,6 +3929,22 @@ void MainWindow::updateStringDec(const QByteArrayList &content) {
 
 void MainWindow::updateUI() { QApplication::processEvents(); }
 
+void MainWindow::createScriptDialog(SplashDialog *d) {
+    if (m_scriptDialog == nullptr) {
+        auto splash = d ? d : new SplashDialog(this);
+        splash->setInfoText(tr("SetupScriptEditor"));
+
+        m_scriptDialog = new ScriptingDialog(m_scriptsetdlg, this);
+        connect(m_scriptDialog, &ScriptingDialog::destroyed, this,
+                [this]() { m_scriptDialog = nullptr; });
+        m_scriptDialog->initConsole();
+
+        splash->close();
+    }
+    m_scriptDialog->show();
+    m_scriptDialog->raise();
+}
+
 QHexView *MainWindow::currentHexView() {
     auto editor = currentEditor();
     if (editor == nullptr) {
@@ -4129,11 +4138,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
-
-    if (m_scriptDialog) {
-        m_scriptDialog->saveDockLayout();
-        set.setRecentFiles(m_recentmanager->saveRecent());
-    }
 
     PluginSystem::instance().destory();
 

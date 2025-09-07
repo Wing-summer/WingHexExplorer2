@@ -224,6 +224,8 @@ public:
                        QString *ws = nullptr);
     ErrFile closeEditor(EditorView *editor, bool force);
 
+    void openScriptFile(const QString &filename, SplashDialog *splash);
+
     EditorView *currentEditor();
     void adjustEditorFocus(EditorView *closedEditor);
 
@@ -235,6 +237,8 @@ private:
     void updateNumberTable();
     void updateStringDec(const QByteArrayList &content);
     void updateUI();
+
+    void createScriptDialog(SplashDialog *d);
 
 private:
     IWingPlugin::FileType getEditorViewFileType(EditorView *view);

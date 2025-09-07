@@ -235,7 +235,7 @@ public:
 
     static bool isTextFile(const QFileInfo &info) {
         QMimeDatabase db;
-        auto t = db.mimeTypeForFile(info);
+        auto t = db.mimeTypeForFile(info, QMimeDatabase::MatchContent);
         return isTextFile(t);
     }
 

@@ -47,8 +47,6 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor = new CodeEdit(this);
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
-    connect(m_editor, &CodeEdit::incrementalDidChange, this,
-            &ScriptEditor::processContentsChange);
 
     auto cm = new AsCompletion(m_editor);
     connect(cm, &AsCompletion::onFunctionTip, this,
@@ -167,8 +165,7 @@ void ScriptEditor::replace() { m_editor->showSearchReplaceBar(true, true); }
 
 void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
 
-void ScriptEditor::processContentsChange(
-    const LSP::TextDocumentContentChangeEvent &e) {
+void ScriptEditor::processContentsChange() {
     if (m_fileName.isEmpty()) {
         return;
     }
@@ -181,7 +178,7 @@ void ScriptEditor::processContentsChange(
         lsp.openDocument(url, 0, txt);
         version = 0;
     } else {
-        lsp.changeDocument(url, version, e);
+        // lsp.changeDocument(url, version, e);
     }
 }
 

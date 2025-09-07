@@ -33,7 +33,7 @@
 #include <KSyntaxHighlighting/Repository>
 #include <KSyntaxHighlighting/Theme>
 
-CodeEdit::CodeEdit(QWidget *parent) : WingCodeEditLSP(parent) {
+CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
     connect(this->document(), &QTextDocument::modificationChanged, this,
             &CodeEdit::contentModified);
     addEditorBasicShortcut();

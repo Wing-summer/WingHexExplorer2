@@ -56,7 +56,7 @@ public slots:
     void gotoLine();
 
 private slots:
-    void processContentsChange(const LSP::TextDocumentContentChangeEvent &e);
+    void processContentsChange();
 
 private:
     void processTitle();

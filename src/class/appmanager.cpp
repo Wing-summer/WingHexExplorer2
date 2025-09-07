@@ -33,7 +33,6 @@
 #include "logger.h"
 #include "settingmanager.h"
 #include "skinmanager.h"
-#include "src/predefgen.h"
 #include "utilities.h"
 #include "wingmessagebox.h"
 
@@ -91,7 +90,6 @@ AppManager::AppManager(int &argc, char *argv[])
 
     auto dontSplash = set.dontUseSplash();
 
-    SplashDialog *splash = nullptr;
     if (!dontSplash) {
         splash = new SplashDialog;
         splash->setInfoText(tr("SetupClang"));
@@ -137,8 +135,10 @@ AppManager::AppManager(int &argc, char *argv[])
     connect(_w, &MainWindow::closed, this,
             []() { AppManager::instance()->exit(); });
 
-    if (splash)
+    if (splash) {
         splash->close();
+        splash = nullptr;
+    }
 }
 
 AppManager::~AppManager() {
@@ -162,7 +162,16 @@ void AppManager::openFile(const QString &file, bool autoDetect) {
 
     ErrFile ret = ErrFile::Error;
     if (autoDetect) {
-        ret = _w->openWorkSpace(file, &editor);
+        QFileInfo finfo(file);
+        if (Utilities::isTextFile(finfo)) {
+            auto suffix = finfo.suffix();
+            if (suffix.compare(QStringLiteral("wingpro")) == 0) {
+                ret = _w->openWorkSpace(file, &editor);
+            } else if (suffix.compare(QStringLiteral("as")) == 0) {
+                _w->openScriptFile(file, splash);
+                ret = ErrFile::Success;
+            }
+        }
     }
     if (ret == ErrFile::Error) {
         ret = _w->openFile(file, &editor);

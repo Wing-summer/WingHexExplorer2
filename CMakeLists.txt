@@ -262,9 +262,7 @@ set(CONTROL_SRC
     src/control/codeeditcontrolwidget.h
     src/control/codeeditcontrolwidget.cpp
     src/control/scrollablelabel.h
-    src/control/scrollablelabel.cpp
-    src/control/wingcodeeditlsp.h
-    src/control/wingcodeeditlsp.cpp)
+    src/control/scrollablelabel.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp

@@ -32,6 +32,7 @@
 #include "control/scripteditor.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
+#include "squiggleinformationmodel.h"
 #include "utilities.h"
 
 #include <QKeySequence>
@@ -70,10 +71,10 @@ public:
 
     bool about2Close();
 
-    void saveDockLayout();
-
 private:
     void buildUpRibbonBar();
+    void saveDockLayout();
+
     RibbonTabContent *buildFilePage(RibbonTabContent *tab);
     RibbonTabContent *buildEditPage(RibbonTabContent *tab);
     RibbonTabContent *buildViewPage(RibbonTabContent *tab);
@@ -93,6 +94,10 @@ private:
     ads::CDockAreaWidget *
     buildSymbolShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                         ads::CDockAreaWidget *areaw = nullptr);
+
+    ads::CDockAreaWidget *
+    buildDiagnosisDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                       ads::CDockAreaWidget *areaw = nullptr);
 
     void buildUpDockSystem(QWidget *container);
 
@@ -208,8 +213,6 @@ private:
 
     bool isCurrentDebugging() const;
 
-    ScriptEditor *openFile(const QString &filename);
-
     void runDbgCommand(asDebugger::DebugAction action);
 
     void startDebugScript(ScriptEditor *editor);
@@ -223,6 +226,9 @@ private:
     void reloadEditor(ScriptEditor *editor);
 
     void updateUI();
+
+public:
+    ScriptEditor *openFile(const QString &filename);
 
 private slots:
     void on_newfile();
@@ -278,6 +284,7 @@ private:
     QByteArray _savedLayout;
 
     ScriptEditor *m_curEditor = nullptr;
+    SquiggleInformationModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
 
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;

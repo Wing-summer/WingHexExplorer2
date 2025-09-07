@@ -48,6 +48,7 @@ public slots:
 private:
     MainWindow *_w = nullptr;
     QElapsedTimer _timer;
+    SplashDialog *splash = nullptr;
 
     static AppManager *_instance;
 };
