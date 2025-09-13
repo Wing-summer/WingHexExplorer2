@@ -1,4 +1,6 @@
 name: CMake build check
+permissions:
+  contents: read
 
 on:
   push:

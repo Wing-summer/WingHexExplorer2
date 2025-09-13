@@ -1,4 +1,6 @@
 name: CMake build release for linux
+permissions:
+  contents: read
 
 on:
   push:
