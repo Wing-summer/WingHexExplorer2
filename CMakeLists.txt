@@ -110,7 +110,17 @@ set(CSTRUCT_GRAMMAR
     src/grammar/c/CStructLexer.h
     src/grammar/c/CStructParser.h)
 
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR})
+set(ASCONSOLE_GRAMMAR
+    src/grammar/ASConsole/AngelscriptConsoleLexer.cpp
+    src/grammar/ASConsole/AngelscriptConsoleParser.cpp
+    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.cpp
+    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.cpp
+    src/grammar/ASConsole/AngelscriptConsoleLexer.h
+    src/grammar/ASConsole/AngelscriptConsoleParser.h
+    src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h
+    src/grammar/ASConsole/AngelscriptConsoleParserVisitor.h)
+
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -297,8 +307,6 @@ set(CLASS_SRC
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
-    src/class/qascodeparser.h
-    src/class/qascodeparser.cpp
     src/class/ascompletion.cpp
     src/class/ascompletion.h
     src/class/asbuilder.h

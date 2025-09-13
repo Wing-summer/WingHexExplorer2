@@ -98,81 +98,6 @@
     </message>
 </context>
 <context>
-    <name>AsPreprocesser</name>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="221"/>
-        <source>IfDefNoWord</source>
-        <translation type="unfinished">ifdef 未定义宏</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="256"/>
-        <source>IfDefInvalidWord</source>
-        <translation type="unfinished">ifdef 非法宏</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="282"/>
-        <source>CalIfFailed</source>
-        <translation type="unfinished">宏条件判断发生错误</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="331"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="346"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="385"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="417"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="449"/>
-        <source>UnexceptedToken</source>
-        <translation type="unfinished">非法标识</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="353"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="392"/>
-        <source>InvalidDef</source>
-        <translation type="unfinished">无效定义</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="370"/>
-        <source>ReservedMarcoType</source>
-        <translation type="unfinished">被保留的宏样式</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="376"/>
-        <source>MarcoNotFound:</source>
-        <translation type="unfinished">宏未找到：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="401"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="437"/>
-        <source>NoMatchingIf</source>
-        <translation type="unfinished">未匹配的宏条件</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="424"/>
-        <source>DupElseDef</source>
-        <translation type="unfinished">重复的另外条件宏</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="553"/>
-        <location filename="../../src/class/aspreprocesser.cpp" line="599"/>
-        <source>Invalid file name for #include; it contains a line-break: </source>
-        <translation type="unfinished">#include 的文件名无效；它包含换行符：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="618"/>
-        <source>Invalid file name for #include; it contains a line-break or unpaired symbol</source>
-        <translation type="unfinished">#include 的文件名无效；它包含换行符或不成对的符号</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="650"/>
-        <source>Invalid #pragma directive</source>
-        <translation type="unfinished">#pragma 指令无效</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/aspreprocesser.cpp" line="714"/>
-        <source>Failed to open script file </source>
-        <translation type="unfinished">打开脚本文件失败</translation>
-    </message>
-</context>
-<context>
     <name>BookMarkAddCommand</name>
     <message>
         <location filename="../../3rdparty/QHexView/document/commands/bookmark/bookmarkaddcommand.cpp" line="26"/>
@@ -215,182 +140,6 @@
         <location filename="../../src/model/bookmarksmodel.cpp" line="60"/>
         <source>comment</source>
         <translation>批注</translation>
-    </message>
-</context>
-<context>
-    <name>CStructErrorListener</name>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="42"/>
-        <source>&lt;EOF&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="48"/>
-        <source>&lt;unknown input&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="50"/>
-        <source>no viable alternative at input %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="57"/>
-        <source>mismatched input %1 expecting %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="71"/>
-        <source>rule %1 failed predicate: %2?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="92"/>
-        <source>extraneous input %1 expecting %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructerrorstrategy.cpp" line="111"/>
-        <source>missing %1 at %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CStructVisitorParser</name>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="135"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="381"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="414"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="444"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="469"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="510"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="636"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="670"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="788"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1660"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1814"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1944"/>
-        <source>&lt;unknown&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="229"/>
-        <source>&quot;%1&quot; is out of range with number</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="237"/>
-        <source>&quot;%1&quot; is already declared with type %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="246"/>
-        <source>&quot;%1&quot; is duplicated declaration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="254"/>
-        <source>Unexprected type &quot;%1&quot;, expecting: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="263"/>
-        <source>Unexprected token &quot;%1&quot;, expecting: {%2}</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="269"/>
-        <source>Declaring syntax error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="276"/>
-        <source>&quot;%1&quot; is unknown type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="285"/>
-        <source>Too large array &quot;%1&quot; in %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="293"/>
-        <source>Operation &quot;%1&quot; will cause number overflow</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="301"/>
-        <source>Too many bits(%1) for type %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="320"/>
-        <source>&quot;%1&quot; is incompleted type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="324"/>
-        <source>&quot;%1&quot; is too large type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="329"/>
-        <source>Too many symbols when adding &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="844"/>
-        <source>Invalid typeName Mask with converting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="853"/>
-        <source>Can not convert Interger to &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1308"/>
-        <source>Invalid #include marco failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1314"/>
-        <source>Invalid #include file is not exists: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1322"/>
-        <source>Invalid #include marco syntax</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1583"/>
-        <source>Unknown type of specifier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1667"/>
-        <source>Unknown type of declarator</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1744"/>
-        <source>Unsupported alignas value: %1 , supported alignas = {1, 2, 4, 8, 16}</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1784"/>
-        <location filename="../../src/structlib/cstructvisitorparser.cpp" line="1914"/>
-        <source>Only bit field feature of completed numberic types is supported</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CTypeParser</name>
-    <message>
-        <location filename="../../src/structlib/ctypeparser.cpp" line="1065"/>
-        <source>sizeof(%1) will be always 8 for enum type</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3072,98 +2821,88 @@
 <context>
     <name>ScriptMachine</name>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="316"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="319"/>
         <source>AngelScript callstack:
 </source>
         <translation>AngelScript 调用堆栈：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="348"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="351"/>
         <source>- Exception &apos;%1&apos; in &apos;%2&apos;
 </source>
         <translation>— 在 ‘%2’ 中发生异常 ‘%1’</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="449"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="452"/>
         <source>ExecNotAllowedInRoot</source>
         <translation>在管理员权限执行第三方命令为非法操作</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="479"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1211"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="482"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1235"/>
         <source>Code must be exec in the main thread</source>
         <translation>脚本代码必须在主线程执行</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="524"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="526"/>
         <source>Script failed to pre-processed</source>
         <translation>脚本代码预处理失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="534"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1260"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1376"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="536"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1277"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1393"/>
         <source>Script failed to build</source>
         <translation>脚本编译失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="550"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="552"/>
         <source>Cannot find &apos;int main()&apos; or &apos;void main()&apos;</source>
         <translation>无法找到程序入口点： &quot;int main()&quot; 或者 &quot;void main()&quot;</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="560"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="562"/>
         <source>Debugging, waiting for commands.</source>
         <translation>调试中，等待调试命令。</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="573"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="575"/>
         <source>Failed while initializing global variables</source>
         <translation>初始化全局变量失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="588"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="590"/>
         <source>Run:</source>
         <translation>执行脚本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="629"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1310"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="631"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1327"/>
         <source>The script failed with an exception</source>
         <translation>异常被抛出，脚本执行失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="638"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1319"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="640"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1336"/>
         <source>The script was aborted</source>
         <translation>脚本被终止</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="646"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1327"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="648"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1344"/>
         <source>The script terminated unexpectedly</source>
         <translation>脚本异常退出</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="663"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="665"/>
         <source>The script exited with </source>
         <translation>脚本退出返回值：</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1124"/>
-        <location filename="../../src/class/scriptmachine.cpp" line="1136"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1148"/>
+        <location filename="../../src/class/scriptmachine.cpp" line="1160"/>
         <source>Assert failed</source>
         <translation>断言失败</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1358"/>
-        <source>BadDecl:</source>
-        <translation>错误的声明：</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/scriptmachine.cpp" line="1367"/>
-        <source>GlobalBadDecl</source>
-        <translation>错误的全局声明</translation>
     </message>
 </context>
 <context>
@@ -3953,12 +3692,12 @@
 <context>
     <name>ShowInShell</name>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="104"/>
+        <location filename="../../src/class/showinshell.cpp" line="121"/>
         <source>Launching Windows Explorer Failed</source>
         <translation>启动 Windows 资源管理器失败</translation>
     </message>
     <message>
-        <location filename="../../src/class/showinshell.cpp" line="106"/>
+        <location filename="../../src/class/showinshell.cpp" line="123"/>
         <source>Could not find explorer.exe in path to launch Windows Explorer.</source>
         <translation>在启动 Windows 资源管理器的路径中找不到 explorer.exe。</translation>
     </message>

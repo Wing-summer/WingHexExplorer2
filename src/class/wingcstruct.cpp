@@ -476,7 +476,7 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
                 }
             } break;
             case CTypeParser::CType::Enum:
-                //
+                // should not go there
                 break;
             case CTypeParser::CType::Struct:
                 content.insert(m.var_name, readStruct(ptr, end, m.data_type));

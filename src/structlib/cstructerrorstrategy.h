@@ -7,8 +7,6 @@
 #include <QCoreApplication>
 
 class CStructErrorStrategy : public antlr4::DefaultErrorStrategy {
-    Q_DECLARE_TR_FUNCTIONS(CStructErrorListener)
-
 public:
     CStructErrorStrategy();
 

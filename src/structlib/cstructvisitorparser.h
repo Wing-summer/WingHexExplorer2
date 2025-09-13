@@ -18,7 +18,6 @@
 #ifndef CSTRUCTVISITORPARSER_H
 #define CSTRUCTVISITORPARSER_H
 
-#include <QCoreApplication>
 #include <QHash>
 #include <QPair>
 #include <QString>
@@ -32,8 +31,6 @@
 class CStructErrorListener;
 
 class CStructVisitorParser : public CStructBaseVisitor {
-    Q_DECLARE_TR_FUNCTIONS(CStructVisitorParser)
-
 public:
     explicit CStructVisitorParser(CTypeParser *container,
                                   CStructErrorListener *listener);

@@ -99,6 +99,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitBasicTypeFmt(CStructParser::BasicTypeFmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitStructDeclarationList(CStructParser::StructDeclarationListContext *ctx) override {
     return visitChildren(ctx);
   }

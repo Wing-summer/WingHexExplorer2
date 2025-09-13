@@ -15,14 +15,14 @@ public:
     T__0 = 1, Char = 2, Const = 3, Double = 4, Enum = 5, Float = 6, Int = 7, 
     Long = 8, TypeDef = 9, AlignAs = 10, SizeOf = 11, Short = 12, Signed = 13, 
     Struct = 14, Union = 15, Unsigned = 16, Void = 17, QuestionMark = 18, 
-    LeftParen = 19, RightParen = 20, LeftBracket = 21, RightBracket = 22, 
-    LeftBrace = 23, RightBrace = 24, LeftShift = 25, RightShift = 26, Plus = 27, 
-    PlusPlus = 28, Minus = 29, MinusMinus = 30, Star = 31, Div = 32, Mod = 33, 
-    And = 34, Or = 35, Caret = 36, Tilde = 37, Colon = 38, Semi = 39, Comma = 40, 
-    Identifier = 41, IntegerConstant = 42, StringLiteral = 43, MultiLineMacroDefine = 44, 
-    MultiLineMacro = 45, DirectiveInclude = 46, DirectiveDefine = 47, Directive = 48, 
-    Whitespace = 49, Newline = 50, LINE_CONTINUATION = 51, BlockComment = 52, 
-    LineComment = 53
+    LeftParen = 19, RightParen = 20, DoubleLeftBracket = 21, LeftBracket = 22, 
+    DoubleRightBracket = 23, RightBracket = 24, LeftBrace = 25, RightBrace = 26, 
+    LeftShift = 27, RightShift = 28, Plus = 29, PlusPlus = 30, Minus = 31, 
+    MinusMinus = 32, Star = 33, Div = 34, Mod = 35, And = 36, Or = 37, Caret = 38, 
+    Tilde = 39, Colon = 40, Semi = 41, Comma = 42, Identifier = 43, IntegerConstant = 44, 
+    StringLiteral = 45, MultiLineMacroDefine = 46, MultiLineMacro = 47, 
+    DirectiveInclude = 48, DirectiveDefine = 49, Directive = 50, Whitespace = 51, 
+    Newline = 52, LINE_CONTINUATION = 53, BlockComment = 54, LineComment = 55
   };
 
   enum {
@@ -33,13 +33,13 @@ public:
     RuleInclusiveOrExpression = 12, RuleAssignmentExpressionDef = 13, RuleAssignmentExpression = 14, 
     RuleDeclaration = 15, RuleDeclarationSpecifier = 16, RuleTypeSpecifier = 17, 
     RuleStructOrUnionSpecifier = 18, RuleStructOrUnion = 19, RuleAlignAsAttr = 20, 
-    RuleStructDeclarationList = 21, RuleStructDeclaration = 22, RuleSpecifierQualifierList = 23, 
-    RuleStructDeclaratorList = 24, RuleStructDeclarator = 25, RuleEnumSpecifier = 26, 
-    RuleEnumeratorList = 27, RuleEnumerator = 28, RuleEnumerationConstant = 29, 
-    RuleDeclarator = 30, RuleDirectDeclarator = 31, RulePointer = 32, RuleIdentifierList = 33, 
-    RuleTypeName = 34, RuleAbstractDeclarator = 35, RuleDirectAbstractDeclarator = 36, 
-    RuleCompilationUnit = 37, RuleTranslationUnit = 38, RuleExternalDeclaration = 39, 
-    RuleDefineDecl = 40
+    RuleBasicTypeFmt = 21, RuleStructDeclarationList = 22, RuleStructDeclaration = 23, 
+    RuleSpecifierQualifierList = 24, RuleStructDeclaratorList = 25, RuleStructDeclarator = 26, 
+    RuleEnumSpecifier = 27, RuleEnumeratorList = 28, RuleEnumerator = 29, 
+    RuleEnumerationConstant = 30, RuleDeclarator = 31, RuleDirectDeclarator = 32, 
+    RulePointer = 33, RuleIdentifierList = 34, RuleTypeName = 35, RuleAbstractDeclarator = 36, 
+    RuleDirectAbstractDeclarator = 37, RuleCompilationUnit = 38, RuleTranslationUnit = 39, 
+    RuleExternalDeclaration = 40, RuleDefineDecl = 41
   };
 
   explicit CStructParser(antlr4::TokenStream *input);
@@ -80,6 +80,7 @@ public:
   class StructOrUnionSpecifierContext;
   class StructOrUnionContext;
   class AlignAsAttrContext;
+  class BasicTypeFmtContext;
   class StructDeclarationListContext;
   class StructDeclarationContext;
   class SpecifierQualifierListContext;
@@ -455,6 +456,22 @@ public:
 
   AlignAsAttrContext* alignAsAttr();
 
+  class  BasicTypeFmtContext : public antlr4::ParserRuleContext {
+  public:
+    BasicTypeFmtContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *DoubleLeftBracket();
+    EnumSpecifierContext *enumSpecifier();
+    antlr4::tree::TerminalNode *DoubleRightBracket();
+    antlr4::tree::TerminalNode *Identifier();
+
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  BasicTypeFmtContext* basicTypeFmt();
+
   class  StructDeclarationListContext : public antlr4::ParserRuleContext {
   public:
     StructDeclarationListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -476,6 +493,7 @@ public:
     SpecifierQualifierListContext *specifierQualifierList();
     StructDeclaratorListContext *structDeclaratorList();
     antlr4::tree::TerminalNode *Semi();
+    BasicTypeFmtContext *basicTypeFmt();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;

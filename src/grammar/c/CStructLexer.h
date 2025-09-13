@@ -15,14 +15,14 @@ public:
     T__0 = 1, Char = 2, Const = 3, Double = 4, Enum = 5, Float = 6, Int = 7, 
     Long = 8, TypeDef = 9, AlignAs = 10, SizeOf = 11, Short = 12, Signed = 13, 
     Struct = 14, Union = 15, Unsigned = 16, Void = 17, QuestionMark = 18, 
-    LeftParen = 19, RightParen = 20, LeftBracket = 21, RightBracket = 22, 
-    LeftBrace = 23, RightBrace = 24, LeftShift = 25, RightShift = 26, Plus = 27, 
-    PlusPlus = 28, Minus = 29, MinusMinus = 30, Star = 31, Div = 32, Mod = 33, 
-    And = 34, Or = 35, Caret = 36, Tilde = 37, Colon = 38, Semi = 39, Comma = 40, 
-    Identifier = 41, IntegerConstant = 42, StringLiteral = 43, MultiLineMacroDefine = 44, 
-    MultiLineMacro = 45, DirectiveInclude = 46, DirectiveDefine = 47, Directive = 48, 
-    Whitespace = 49, Newline = 50, LINE_CONTINUATION = 51, BlockComment = 52, 
-    LineComment = 53
+    LeftParen = 19, RightParen = 20, DoubleLeftBracket = 21, LeftBracket = 22, 
+    DoubleRightBracket = 23, RightBracket = 24, LeftBrace = 25, RightBrace = 26, 
+    LeftShift = 27, RightShift = 28, Plus = 29, PlusPlus = 30, Minus = 31, 
+    MinusMinus = 32, Star = 33, Div = 34, Mod = 35, And = 36, Or = 37, Caret = 38, 
+    Tilde = 39, Colon = 40, Semi = 41, Comma = 42, Identifier = 43, IntegerConstant = 44, 
+    StringLiteral = 45, MultiLineMacroDefine = 46, MultiLineMacro = 47, 
+    DirectiveInclude = 48, DirectiveDefine = 49, Directive = 50, Whitespace = 51, 
+    Newline = 52, LINE_CONTINUATION = 53, BlockComment = 54, LineComment = 55
   };
 
   explicit CStructLexer(antlr4::CharStream *input);

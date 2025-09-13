@@ -132,7 +132,8 @@ std::any CStructVisitorParser::visitExclusiveOrExpression(
         } else {
             auto t = ex->start;
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 tr("<unknown>"), {"uint64", "int64"});
+                                 QStringLiteral("<unknown>"),
+                                 {"uint64", "int64"});
             return defaultResult();
         }
     }
@@ -225,25 +226,28 @@ CStructVisitorParser::parseIntegerConstant(const std::string &text) {
 void CStructVisitorParser::reportNumOutofRangeError(size_t line,
                                                     size_t charPositionInLine,
                                                     const QString &num) {
-    errlis->reportError(line, charPositionInLine,
-                        tr("\"%1\" is out of range with number").arg(num));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("\"%1\" is out of range with number").arg(num));
 }
 
 void CStructVisitorParser::reportDupDeclError(size_t line,
                                               size_t charPositionInLine,
                                               const QString &var) {
     auto e = QMetaEnum::fromType<CTypeParser::CType>();
-    errlis->reportError(line, charPositionInLine,
-                        tr("\"%1\" is already declared with type %2")
-                            .arg(var)
-                            .arg(e.valueToKey(int(parser->type(var)))));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("\"%1\" is already declared with type %2")
+            .arg(var)
+            .arg(e.valueToKey(int(parser->type(var)))));
 }
 
 void CStructVisitorParser::reportDupError(size_t line,
                                           size_t charPositionInLine,
                                           const QString &var) {
-    errlis->reportError(line, charPositionInLine,
-                        tr("\"%1\" is duplicated declaration").arg(var));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("\"%1\" is duplicated declaration").arg(var));
 }
 
 void CStructVisitorParser::reportUnexpectedType(size_t line,
@@ -251,7 +255,7 @@ void CStructVisitorParser::reportUnexpectedType(size_t line,
                                                 const QString &var,
                                                 const QStringList &expected) {
     errlis->reportError(line, charPositionInLine,
-                        tr("Unexprected type \"%1\", expecting: %2")
+                        QStringLiteral("Unexprected type \"%1\", expecting: %2")
                             .arg(var, expected.join(QStringLiteral(", "))));
 }
 
@@ -259,21 +263,23 @@ void CStructVisitorParser::reportUnexpectedToken(size_t line,
                                                  size_t charPositionInLine,
                                                  const QString &token,
                                                  const QStringList &expected) {
-    errlis->reportError(line, charPositionInLine,
-                        tr("Unexprected token \"%1\", expecting: {%2}")
-                            .arg(token, expected.join(QStringLiteral(", "))));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("Unexprected token \"%1\", expecting: {%2}")
+            .arg(token, expected.join(QStringLiteral(", "))));
 }
 
 void CStructVisitorParser::reportSyntaxDeclError(size_t line,
                                                  size_t charPositionInLine) {
-    errlis->reportError(line, charPositionInLine, tr("Declaring syntax error"));
+    errlis->reportError(line, charPositionInLine,
+                        QStringLiteral("Declaring syntax error"));
 }
 
 void CStructVisitorParser::reportUndeclaredType(size_t line,
                                                 size_t charPositionInLine,
                                                 const QString &type) {
     errlis->reportError(line, charPositionInLine,
-                        tr("\"%1\" is unknown type").arg(type));
+                        QStringLiteral("\"%1\" is unknown type").arg(type));
 }
 
 void CStructVisitorParser::reportArrayOutofLimit(size_t line,
@@ -281,8 +287,9 @@ void CStructVisitorParser::reportArrayOutofLimit(size_t line,
                                                  const QString &name,
                                                  const QString &iden) {
 
-    errlis->reportError(line, charPositionInLine,
-                        tr("Too large array \"%1\" in %2").arg(name, iden));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("Too large array \"%1\" in %2").arg(name, iden));
 }
 
 void CStructVisitorParser::reportOverflowWarn(size_t line,
@@ -290,15 +297,16 @@ void CStructVisitorParser::reportOverflowWarn(size_t line,
                                               const QString &op) {
     errlis->reportWarn(
         line, charPositionInLine,
-        tr("Operation \"%1\" will cause number overflow").arg(op));
+        QStringLiteral("Operation \"%1\" will cause number overflow").arg(op));
 }
 
 void CStructVisitorParser::reportFiledBitOverflow(size_t line,
                                                   size_t charPositionInLine,
                                                   const QString &type,
                                                   quint64 bit) {
-    errlis->reportError(line, charPositionInLine,
-                        tr("Too many bits(%1) for type %2").arg(bit).arg(type));
+    errlis->reportError(
+        line, charPositionInLine,
+        QStringLiteral("Too many bits(%1) for type %2").arg(bit).arg(type));
 }
 
 CTypeParser::StructResult
@@ -316,28 +324,27 @@ CStructVisitorParser::reportCTypeError(size_t line, size_t charPositionInLine,
         reportDupError(line, charPositionInLine, identifier);
         break;
     case CTypeParser::StructResult::IncompleteReference:
-        errlis->reportError(line, charPositionInLine,
-                            tr("\"%1\" is incompleted type").arg(identifier));
+        errlis->reportError(
+            line, charPositionInLine,
+            QStringLiteral("\"%1\" is incompleted type").arg(identifier));
         break;
     case CTypeParser::StructResult::OutofMemory:
-        errlis->reportError(line, charPositionInLine,
-                            tr("\"%1\" is too large type").arg(identifier));
+        errlis->reportError(
+            line, charPositionInLine,
+            QStringLiteral("\"%1\" is too large type").arg(identifier));
         break;
     case CTypeParser::StructResult::CountOfLimit:
         errlis->reportError(
             line, charPositionInLine,
-            tr("Too many symbols when adding \"%1\"").arg(identifier));
+            QStringLiteral("Too many symbols when adding \"%1\"")
+                .arg(identifier));
         break;
     }
     return result;
 }
 
 bool CStructVisitorParser::isInteger(const QString &text) {
-    if (parser->containsEnum(text)) {
-        return true;
-    }
-
-    auto type = parser->metaType(text);
+    auto type = parser->typeMapValue(text);
     switch (type) {
     case QMetaType::Int:
     case QMetaType::UInt:
@@ -378,7 +385,8 @@ std::any CStructVisitorParser::visitAndExpression(
         } else {
             auto t = ex->start;
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 tr("<unknown>"), {"uint64", "int64"});
+                                 QStringLiteral("<unknown>"),
+                                 {"uint64", "int64"});
             return defaultResult();
         }
     }
@@ -411,7 +419,7 @@ std::any CStructVisitorParser::visitShiftExpression(
     } else {
         auto t = data.front()->start;
         reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                             tr("<unknown>"), {"uint64", "int64"});
+                             QStringLiteral("<unknown>"), {"uint64", "int64"});
         return defaultResult();
     }
 
@@ -441,7 +449,8 @@ std::any CStructVisitorParser::visitShiftExpression(
             } else {
                 auto t = ex->start;
                 reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                     tr("<unknown>"), {"uint64", "int64"});
+                                     QStringLiteral("<unknown>"),
+                                     {"uint64", "int64"});
                 return defaultResult();
             }
         } else if (op == ">>") {
@@ -466,7 +475,8 @@ std::any CStructVisitorParser::visitShiftExpression(
             } else {
                 auto t = ex->start;
                 reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                     tr("<unknown>"), {"uint64", "int64"});
+                                     QStringLiteral("<unknown>"),
+                                     {"uint64", "int64"});
                 return defaultResult();
             }
         } else {
@@ -507,7 +517,7 @@ std::any CStructVisitorParser::visitAdditiveExpression(
     } else {
         auto t = data.front()->start;
         reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                             tr("<unknown>"), {"uint64", "int64"});
+                             QStringLiteral("<unknown>"), {"uint64", "int64"});
         return defaultResult();
     }
 
@@ -633,7 +643,8 @@ std::any CStructVisitorParser::visitAdditiveExpression(
         } else {
             auto t = ex->start;
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 tr("<unknown>"), {"uint64", "int64"});
+                                 QStringLiteral("<unknown>"),
+                                 {"uint64", "int64"});
             return defaultResult();
         }
     }
@@ -667,7 +678,7 @@ std::any CStructVisitorParser::visitMultiplicativeExpression(
     } else {
         auto t = data.front()->start;
         reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                             tr("<unknown>"), {"uint64", "int64"});
+                             QStringLiteral("<unknown>"), {"uint64", "int64"});
         return defaultResult();
     }
 
@@ -785,7 +796,8 @@ std::any CStructVisitorParser::visitMultiplicativeExpression(
         } else {
             auto t = ex->start;
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 tr("<unknown>"), {"uint64", "int64"});
+                                 QStringLiteral("<unknown>"),
+                                 {"uint64", "int64"});
             return defaultResult();
         }
     }
@@ -841,7 +853,7 @@ std::any CStructVisitorParser::visitCastExpression(
                 auto t = ctx->typeName()->start;
                 errlis->reportError(
                     t->getLine(), t->getCharPositionInLine(),
-                    tr("Invalid typeName Mask with converting"));
+                    QStringLiteral("Invalid typeName Mask with converting"));
                 return defaultResult();
             }
             }
@@ -850,7 +862,8 @@ std::any CStructVisitorParser::visitCastExpression(
                 auto t = ctx->typeName()->start;
                 errlis->reportError(
                     t->getLine(), t->getCharPositionInLine(),
-                    tr("Can not convert Interger to \"%1\"").arg(tname));
+                    QStringLiteral("Can not convert Interger to \"%1\"")
+                        .arg(tname));
                 return defaultResult();
             }
             mask = std::numeric_limits<int>::max();
@@ -1303,15 +1316,16 @@ CStructVisitorParser::visitDefineDecl(CStructParser::DefineDeclContext *ctx) {
                 auto header = dir.absoluteFilePath(path);
                 if (QFile::exists(header)) {
                     if (!parser->parse(header)) {
-                        errlis->reportWarn(t->getLine(),
-                                           t->getCharPositionInLine(),
-                                           tr("Invalid #include marco failed"));
+                        errlis->reportWarn(
+                            t->getLine(), t->getCharPositionInLine(),
+                            QStringLiteral("Invalid #include marco failed"));
                     }
                     return defaultResult();
                 } else {
                     errlis->reportWarn(
                         t->getLine(), t->getCharPositionInLine(),
-                        tr("Invalid #include file is not exists: ") +
+                        QStringLiteral(
+                            "Invalid #include file is not exists: ") +
                             header.prepend('"').append('"'));
                 }
             }
@@ -1319,7 +1333,7 @@ CStructVisitorParser::visitDefineDecl(CStructParser::DefineDeclContext *ctx) {
 
         // report warning and ignored
         errlis->reportWarn(t->getLine(), t->getCharPositionInLine(),
-                           tr("Invalid #include marco syntax"));
+                           QStringLiteral("Invalid #include marco syntax"));
     } else {
         antlr4::Token *t = nullptr;
 
@@ -1580,7 +1594,7 @@ CStructVisitorParser::getSpecifier(CStructParser::TypeSpecifierContext *ctx,
     } else {
         auto sym = ctx->getStart();
         errlis->reportError(sym->getLine(), sym->getCharPositionInLine(),
-                            tr("Unknown type of specifier"));
+                            QStringLiteral("Unknown type of specifier"));
         return std::nullopt;
     }
 
@@ -1657,14 +1671,15 @@ CStructVisitorParser::getDeclarator(
         } else {
             auto t = sym->getStart();
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 tr("<unknown>"), {"uint64", "int64"});
+                                 QStringLiteral("<unknown>"),
+                                 {"uint64", "int64"});
             return std::nullopt;
         }
         dor.next = ctx->directDeclarator();
     } else {
         auto sym = ctx->getStart();
         errlis->reportError(sym->getLine(), sym->getCharPositionInLine(),
-                            tr("Unknown type of declarator"));
+                            QStringLiteral("Unknown type of declarator"));
         return std::nullopt;
     }
 
@@ -1740,10 +1755,11 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
         } else {
             // report warning and ignored
             auto sym = integer->getSymbol();
-            errlis->reportWarn(sym->getLine(), sym->getCharPositionInLine(),
-                               tr("Unsupported alignas value: %1 , "
-                                  "supported alignas = {1, 2, 4, 8, 16}")
-                                   .arg(QString::fromStdString(numstr)));
+            errlis->reportWarn(
+                sym->getLine(), sym->getCharPositionInLine(),
+                QStringLiteral("Unsupported alignas value: %1 , "
+                               "supported alignas = {1, 2, 4, 8, 16}")
+                    .arg(QString::fromStdString(numstr)));
             decl.alignment = alignment > 0 ? alignment : parser->padAlignment();
         }
     } else {
@@ -1758,6 +1774,45 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
             return std::nullopt;
         }
 
+        // cannot be enum
+        if (parser->resolveType(dl->tname) == CTypeParser::CType::Enum) {
+            auto sym = m->getStart();
+            errlis->reportWarn(
+                sym->getLine(), sym->getCharPositionInLine(),
+                QStringLiteral("The enum type in struct or union is not "
+                               "allowed and will be treated as int type"));
+            dl->tname = QStringLiteral("int");
+            dl->type = StructMemType::Normal;
+        }
+
+        auto fmtdecl = m->basicTypeFmt();
+        QString fmttype;
+        if (fmtdecl) {
+            if (isInteger(dl->tname)) {
+                fmttype =
+                    QString::fromStdString(fmtdecl->Identifier()->getText());
+                if (parser->containsType(fmttype)) {
+                    if (!parser->containsEnum(fmttype)) {
+                        auto sym = fmtdecl->getStart();
+                        errlis->reportWarn(
+                            sym->getLine(), sym->getCharPositionInLine(),
+                            QStringLiteral(
+                                "The type in [[FMT_TYPE]] should be an"
+                                "enum type"));
+                        fmttype.clear();
+                    }
+                } else {
+                    parser->addForwardEnum(fmttype);
+                }
+            } else {
+                auto sym = m->getStart();
+                errlis->reportWarn(
+                    sym->getLine(), sym->getCharPositionInLine(),
+                    QStringLiteral("The type with [[FMT_TYPE]] should be "
+                                   "completed basic numberic"));
+            }
+        }
+
         auto dclist = m->structDeclaratorList();
         if (dclist) {
             auto sd = dclist->structDeclarator();
@@ -1768,9 +1823,11 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                                  decl.name);
                 return std::nullopt;
             }
+
             for (auto &sub : sd) {
                 VariableDeclaration var;
                 var.data_type = dl->tname;
+                var.fmt_type = fmttype;
 
                 auto declor = sub->declarator();
                 if (declor) {
@@ -1779,11 +1836,11 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                         auto sym = m->getStart();
 
                         if (!isInteger(dl->tname)) {
-                            errlis->reportError(sym->getLine(),
-                                                sym->getCharPositionInLine(),
-                                                tr("Only bit field feature of "
-                                                   "completed numberic types "
-                                                   "is supported"));
+                            errlis->reportError(
+                                sym->getLine(), sym->getCharPositionInLine(),
+                                QStringLiteral("Only bit field feature of "
+                                               "completed numberic types "
+                                               "is supported"));
                             return std::nullopt;
                         }
 
@@ -1809,9 +1866,10 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                             }
                             var.bit_size = b;
                         } else {
-                            reportUnexpectedType(
-                                sym->getLine(), sym->getCharPositionInLine(),
-                                tr("<unknown>"), {"uint64", "int64"});
+                            reportUnexpectedType(sym->getLine(),
+                                                 sym->getCharPositionInLine(),
+                                                 QStringLiteral("<unknown>"),
+                                                 {"uint64", "int64"});
                             return std::nullopt;
                         }
                     }
@@ -1909,11 +1967,11 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                     var.var_name.clear();
                     auto sym = m->getStart();
                     if (!isInteger(dl->tname)) {
-                        errlis->reportError(sym->getLine(),
-                                            sym->getCharPositionInLine(),
-                                            tr("Only bit field feature of "
-                                               "completed numberic types "
-                                               "is supported"));
+                        errlis->reportError(
+                            sym->getLine(), sym->getCharPositionInLine(),
+                            QStringLiteral("Only bit field feature of "
+                                           "completed numberic types "
+                                           "is supported"));
                         return std::nullopt;
                     }
 
@@ -1941,7 +1999,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                     } else {
                         reportUnexpectedType(
                             sym->getLine(), sym->getCharPositionInLine(),
-                            tr("<unknown>"), {"uint64", "int64"});
+                            QStringLiteral("<unknown>"), {"uint64", "int64"});
                     }
                     decl.members.append(var);
                 }

@@ -61,6 +61,8 @@ public:
 
     virtual std::any visitAlignAsAttr(CStructParser::AlignAsAttrContext *context) = 0;
 
+    virtual std::any visitBasicTypeFmt(CStructParser::BasicTypeFmtContext *context) = 0;
+
     virtual std::any visitStructDeclarationList(CStructParser::StructDeclarationListContext *context) = 0;
 
     virtual std::any visitStructDeclaration(CStructParser::StructDeclarationContext *context) = 0;

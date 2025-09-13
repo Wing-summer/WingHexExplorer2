@@ -17,6 +17,10 @@
 
 #include "scriptmachine.h"
 
+#include "grammar/ASConsole/AngelscriptConsoleLexer.h"
+#include "grammar/ASConsole/AngelscriptConsoleParser.h"
+#include "grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h"
+
 #include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
@@ -34,7 +38,6 @@
 #include "class/asbuilder.h"
 #include "class/logger.h"
 #include "class/pluginsystem.h"
-#include "class/qascodeparser.h"
 #include "class/settingmanager.h"
 #include "define.h"
 #include "scriptaddon/scriptcolor.h"
@@ -509,12 +512,11 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     asBuilder builder(_engine);
     for (auto &m : PluginSystem::instance().scriptMarcos()) {
-        builder.defineWord(m);
+        builder.defineMacroWord(m);
     }
 
     // Set the pragma callback so we can detect
-    builder.setPragmaCallback(&ScriptMachine::pragmaCallback, this);
-    builder.setIncludeCallback(&ScriptMachine::includeCallback, this);
+    builder.setPragmaCallback(&ScriptMachine::pragmaCallback);
 
     _curMsgMode = mode;
     auto r = builder.loadSectionFromFile(script.toUtf8());
@@ -684,7 +686,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     return r >= 0;
 }
 
-int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
+QVariant ScriptMachine::evaluateDefine(const QString &code) {
     QByteArray name =
         QByteArrayLiteral("WINGDEF") +
         QByteArray::number(AppManager::instance()->currentMSecsSinceEpoch());
@@ -701,12 +703,12 @@ int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
     });
 
     auto ccode = code;
-    ccode.prepend("bool f(){ return bool(").append(");}");
+    ccode.prepend("any f(){ return (").append(");}");
     // start to compile
 
     auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
     if (cr < 0) {
-        return cr;
+        return {};
     }
 
     // Set up a context to execute the script
@@ -735,13 +737,72 @@ int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
         qApp->processEvents();
     }
 
+    QVariant result;
     // Check if the main script finished normally
     int r = ctx->GetState();
-    if (r != asEXECUTION_FINISHED) {
-        r = -1;
-    } else {
-        result = bool(ctx->GetReturnByte());
-        r = 0;
+    if (r == asEXECUTION_FINISHED) {
+        auto ret = reinterpret_cast<CScriptAny *>(ctx->GetReturnObject());
+        int typeID = ret->GetTypeId();
+        switch (typeID) {
+        case asTYPEID_BOOL: {
+            bool r;
+            ret->Retrieve(&r, asTYPEID_BOOL);
+            result = r;
+        } break;
+        case asTYPEID_INT8: {
+            qint8 r;
+            ret->Retrieve(&r, asTYPEID_INT8);
+            result = r;
+        } break;
+        case asTYPEID_INT16: {
+            qint16 r;
+            ret->Retrieve(&r, asTYPEID_INT16);
+            result = r;
+        } break;
+        case asTYPEID_INT32: {
+            qint32 r;
+            ret->Retrieve(&r, asTYPEID_INT32);
+            result = r;
+        } break;
+        case asTYPEID_INT64: {
+            qint64 r;
+            ret->Retrieve(&r, asTYPEID_INT64);
+            result = r;
+        } break;
+        case asTYPEID_UINT8: {
+            quint8 r;
+            ret->Retrieve(&r, asTYPEID_UINT8);
+            result = r;
+        } break;
+        case asTYPEID_UINT16: {
+            quint16 r;
+            ret->Retrieve(&r, asTYPEID_UINT16);
+            result = r;
+        } break;
+        case asTYPEID_UINT32: {
+            quint32 r;
+            ret->Retrieve(&r, asTYPEID_UINT32);
+            result = r;
+        } break;
+        case asTYPEID_UINT64: {
+            quint64 r;
+            ret->Retrieve(&r, asTYPEID_UINT64);
+            result = r;
+        } break;
+        case asTYPEID_FLOAT: {
+            float r;
+            ret->Retrieve(&r, asTYPEID_FLOAT);
+            result = r;
+        } break;
+        case asTYPEID_DOUBLE: {
+            double r;
+            ret->Retrieve(r);
+            result = r;
+        } break;
+        default:
+            break;
+        }
+        ret->Release();
     }
 
     func->Release();
@@ -749,7 +810,8 @@ int ScriptMachine::evaluateDefine(const QString &code, bool &result) {
     // Return the context after retrieving the return value
     _ctxMgr->DoneWithContext(ctx);
     _engine->GarbageCollect();
-    return r;
+
+    return result;
 }
 
 void ScriptMachine::abortDbgScript() {
@@ -838,7 +900,7 @@ asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
         break;
     case Background:
         mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x1);
+        mod->SetAccessMask(0x2);
         break;
     }
 
@@ -858,7 +920,7 @@ asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
         break;
     case Background:
         mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
-        mod->SetAccessMask(0x1);
+        mod->SetAccessMask(0x2);
         break;
     }
 
@@ -927,11 +989,9 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
     }
 }
 
-int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
+int ScriptMachine::pragmaCallback(const QString &pragmaText,
                                   AsPreprocesser *builder,
-                                  const QString &sectionname, void *userParam) {
-    Q_UNUSED(userParam);
-
+                                  const QString &sectionname) {
     asIScriptEngine *engine = builder->getEngine();
 
     // Filter the pragmaText so only what is of interest remains
@@ -941,13 +1001,14 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
     asUINT pos = 0;
     asUINT length = 0;
     QStringList tokens;
+    auto pcodes = pragmaText.toUtf8();
     while (pos < pragmaText.size()) {
         asETokenClass tokenClass =
-            engine->ParseToken(pragmaText.data() + pos, 0, &length);
+            engine->ParseToken(pcodes.data() + pos, 0, &length);
         if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD ||
             tokenClass == asTC_VALUE) {
-            auto token = pragmaText.mid(pos, length);
-            tokens << token;
+            auto token = pcodes.mid(pos, length);
+            tokens << QString::fromUtf8(token);
         }
         if (tokenClass == asTC_UNKNOWN)
             return -1;
@@ -963,43 +1024,6 @@ int ScriptMachine::pragmaCallback(const QByteArray &pragmaText,
 
     // The #pragma directive was not accepted
     return -1;
-}
-
-int ScriptMachine::includeCallback(const QString &include, bool quotedInclude,
-                                   const QString &from, AsPreprocesser *builder,
-                                   void *userParam) {
-    Q_UNUSED(userParam);
-
-    QFileInfo info(include);
-    bool isAbsolute = info.isAbsolute();
-    bool hasNoExt = info.suffix().isEmpty();
-    QString inc;
-    if (quotedInclude) {
-        if (isAbsolute) {
-            inc = include;
-        } else {
-            auto pwd = QFileInfo(from).absoluteDir();
-            inc = pwd.absoluteFilePath(include);
-        }
-    } else {
-        // absolute include is not allowed in #include<>
-        if (isAbsolute) {
-            return asERROR;
-        }
-
-        QDir dir(qApp->applicationDirPath());
-        if (!dir.cd(QStringLiteral("aslib"))) {
-            // someone crash the software
-            return asERROR;
-        }
-        inc = dir.absoluteFilePath(include);
-    }
-
-    if (hasNoExt) {
-        inc += QStringLiteral(".as");
-    }
-
-    return builder->loadSectionFromFile(inc);
 }
 
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
@@ -1220,35 +1244,28 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
 
     // first, preparse the code
-    QAsCodeParser parser(_engine);
-    auto ccode = code.toUtf8();
+    auto buffer = code.toUtf8();
+    antlr4::ANTLRInputStream input(buffer.constData(), buffer.length());
+    AngelscriptConsoleLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
 
-    asIScriptFunction *func = nullptr;
+    AngelscriptConsoleParser parser(&tokens);
+    parser.removeErrorListeners();
+    parser.setBuildParseTree(false);
+    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 
-    QList<QAsCodeParser::CodeSegment> ret;
-    if (mode > 0) {
-        ret = parser.parse(ccode);
+    AngelscriptConsoleParserBaseVisitor visitor;
+
+    try {
+        visitor.visit(parser.script());
+    } catch (...) {
+        return false;
     }
 
+    asIScriptFunction *func = nullptr;
     // check whether there is any enum/class
-    if (ret.isEmpty() ||
-        std::any_of(ret.begin(), ret.end(),
-                    [](const QAsCodeParser::CodeSegment &seg) {
-                        switch (seg.type) {
-                        case QAsCodeParser::SymbolType::Enum:
-                        case QAsCodeParser::SymbolType::Class:
-                        case QAsCodeParser::SymbolType::Function:
-                        case QAsCodeParser::SymbolType::Interface:
-                        case QAsCodeParser::SymbolType::Import:
-                        case QAsCodeParser::SymbolType::Variable:
-                            return false;
-                        case QAsCodeParser::SymbolType::Invalid:
-                        case QAsCodeParser::SymbolType::TypeDef:
-                        case QAsCodeParser::SymbolType::FnDef:
-                            return true;
-                        }
-                        return true;
-                    })) {
+    QByteArray ccode;
+    if (true) {
         // ok, wrap the codes
         ccode.prepend("void f(){").append("}");
         // start to compile
@@ -1343,33 +1360,33 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
 
         return r >= 0;
     } else {
-        if (std::all_of(ret.begin(), ret.end(),
-                        [](const QAsCodeParser::CodeSegment &seg) {
-                            return seg.type ==
-                                   QAsCodeParser::SymbolType::Variable;
-                        })) {
-            _curMsgMode = mode;
+        // if (std::all_of(ret.begin(), ret.end(),
+        //                 [](const QAsCodeParser::CodeSegment &seg) {
+        //                     return seg.type ==
+        //                            QAsCodeParser::SymbolType::Variable;
+        //                 })) {
+        //     _curMsgMode = mode;
 
-            for (auto &s : ret) {
-                auto r = mod->CompileGlobalVar(nullptr, s.codes, 0);
-                if (r < 0) {
-                    MessageInfo info;
-                    info.mode = mode;
-                    info.message = tr("BadDecl:") + s.codes;
-                    info.type = MessageType::Error;
-                    outputMessage(info);
-                }
-            }
+        //     // for (auto &s : ret) {
+        //     //     auto r = mod->CompileGlobalVar(nullptr, s.codes, 0);
+        //     //     if (r < 0) {
+        //     //         MessageInfo info;
+        //     //         info.mode = mode;
+        //     //         info.message = tr("BadDecl:") + s.codes;
+        //     //         info.type = MessageType::Error;
+        //     //         outputMessage(info);
+        //     //     }
+        //     // }
 
-            if (mod->ResetGlobalVars() < 0) {
-                MessageInfo info;
-                info.mode = mode;
-                info.message = tr("GlobalBadDecl");
-                info.type = MessageType::Error;
-                outputMessage(info);
-            }
-            return true;
-        }
+        //     if (mod->ResetGlobalVars() < 0) {
+        //         MessageInfo info;
+        //         info.mode = mode;
+        //         info.message = tr("GlobalBadDecl");
+        //         info.type = MessageType::Error;
+        //         outputMessage(info);
+        //     }
+        //     return true;
+        // }
 
         MessageInfo info;
         info.mode = mode;

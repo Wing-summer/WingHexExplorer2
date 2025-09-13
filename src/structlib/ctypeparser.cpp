@@ -312,6 +312,32 @@ quint64 CTypeParser::generateAnomyID() {
     return ret;
 }
 
+CTypeParser::StructResult
+CTypeParser::addForwardAnyTypeWithoutEnum(const QString &name) {
+    Q_ASSERT(!name.isEmpty());
+    if (containsType(name))
+        return StructResult::NameConflict;
+    if (containsEnum(name))
+        return StructResult::DuplicateDefinition;
+
+    if (referencedIncomplete_.contains(name)) {
+        auto t = referencedIncomplete_.value(name);
+        if (t != IncompleteType::Enum) {
+            return StructResult::DuplicateDefinition;
+        }
+
+        return StructResult::NameConflict;
+    }
+
+    if (referencedIncomplete_.size() >= std::numeric_limits<qsizetype>::max()) {
+        return StructResult::CountOfLimit;
+    }
+
+    referencedIncomplete_.insert(
+        name, CTypeParser::IncompleteType::AnyTypeWithoutEnum);
+    return StructResult::Ok;
+}
+
 CTypeParser::StructResult CTypeParser::addForwardEnum(const QString &name) {
     Q_ASSERT(!name.isEmpty());
     if (containsType(name))
@@ -320,14 +346,18 @@ CTypeParser::StructResult CTypeParser::addForwardEnum(const QString &name) {
         return StructResult::DuplicateDefinition;
 
     if (referencedIncomplete_.contains(name)) {
-        if (referencedIncomplete_.value(name) == IncompleteType::Enum) {
-            return StructResult::DuplicateDefinition;
+        auto t = referencedIncomplete_.value(name);
+        if (t != IncompleteType::AnyTypeWithoutEnum) {
+            if (t == IncompleteType::Enum) {
+                return StructResult::DuplicateDefinition;
+            }
+            return StructResult::NameConflict;
         }
-        return StructResult::NameConflict;
-    }
-
-    if (referencedIncomplete_.size() >= std::numeric_limits<qsizetype>::max()) {
-        return StructResult::CountOfLimit;
+    } else {
+        if (referencedIncomplete_.size() >=
+            std::numeric_limits<qsizetype>::max()) {
+            return StructResult::CountOfLimit;
+        }
     }
 
     referencedIncomplete_.insert(name, CTypeParser::IncompleteType::Enum);
@@ -445,7 +475,9 @@ CTypeParser::defineUnion(const QString &name,
         return StructResult::DuplicateDefinition;
 
     if (referencedIncomplete_.contains(name)) {
-        if (referencedIncomplete_[name] == IncompleteType::Union) {
+        auto t = referencedIncomplete_[name];
+        if (t == IncompleteType::Union ||
+            t == IncompleteType::AnyTypeWithoutEnum) {
             referencedIncomplete_.remove(name);
         } else {
             return StructResult::NameConflict;
@@ -514,7 +546,9 @@ CTypeParser::defineStruct(const QString &name,
 
     if (referencedIncomplete_.contains(name)) {
         if (referencedIncomplete_.contains(name)) {
-            if (referencedIncomplete_[name] == IncompleteType::Struct) {
+            auto t = referencedIncomplete_[name];
+            if (t == IncompleteType::Struct ||
+                t == IncompleteType::AnyTypeWithoutEnum) {
                 referencedIncomplete_.remove(name);
             } else {
                 return StructResult::NameConflict;
@@ -569,14 +603,18 @@ CTypeParser::StructResult CTypeParser::addForwardStruct(const QString &name) {
         return StructResult::DuplicateDefinition;
 
     if (referencedIncomplete_.contains(name)) {
-        if (referencedIncomplete_.value(name) == IncompleteType::Struct) {
-            return StructResult::DuplicateDefinition;
+        auto t = referencedIncomplete_.value(name);
+        if (t != IncompleteType::AnyTypeWithoutEnum) {
+            if (t == IncompleteType::Struct) {
+                return StructResult::DuplicateDefinition;
+            }
+            return StructResult::NameConflict;
         }
-        return StructResult::NameConflict;
-    }
-
-    if (referencedIncomplete_.size() >= std::numeric_limits<qsizetype>::max()) {
-        return StructResult::CountOfLimit;
+    } else {
+        if (referencedIncomplete_.size() >=
+            std::numeric_limits<qsizetype>::max()) {
+            return StructResult::CountOfLimit;
+        }
     }
 
     referencedIncomplete_.insert(name, CTypeParser::IncompleteType::Struct);
@@ -591,14 +629,18 @@ CTypeParser::StructResult CTypeParser::addForwardUnion(const QString &name) {
         return StructResult::DuplicateDefinition;
 
     if (referencedIncomplete_.contains(name)) {
-        if (referencedIncomplete_.value(name) == IncompleteType::Union) {
-            return StructResult::DuplicateDefinition;
+        auto t = referencedIncomplete_.value(name);
+        if (t != IncompleteType::AnyTypeWithoutEnum) {
+            if (t == IncompleteType::Union) {
+                return StructResult::DuplicateDefinition;
+            }
+            return StructResult::NameConflict;
         }
-        return StructResult::NameConflict;
-    }
-
-    if (referencedIncomplete_.size() >= std::numeric_limits<qsizetype>::max()) {
-        return StructResult::CountOfLimit;
+    } else {
+        if (referencedIncomplete_.size() >=
+            std::numeric_limits<qsizetype>::max()) {
+            return StructResult::CountOfLimit;
+        }
     }
 
     referencedIncomplete_.insert(name, CTypeParser::IncompleteType::Union);
@@ -764,6 +806,32 @@ QMetaType::Type CTypeParser::metaType(const QString &name) const {
     }
 }
 
+QMetaType::Type CTypeParser::typeMapValue(const QString &name) const {
+    if (type_maps_.contains(name)) {
+        return type_maps_.value(name).first;
+    }
+    return QMetaType::UnknownType;
+}
+
+CTypeParser::CType CTypeParser::resolveType(const QString &name) const {
+    CTypeParser::CType t;
+    QString rname = name;
+    while (true) {
+        t = type(rname);
+        if (t == CTypeParser::CType::TypeDef) {
+            auto r = type_defs_.value(rname);
+            if (r.second) {
+                return CType::Pointer;
+            } else {
+                rname = r.first;
+            }
+        } else {
+            break;
+        }
+    }
+    return t;
+}
+
 CTypeParser::CType CTypeParser::type(const QString &name) const {
     if (isBasicType(name)) {
         return CType::BasicType;
@@ -800,6 +868,8 @@ CTypeParser::CType CTypeParser::type(const QString &name) const {
             return CType::TypeDef;
         case IncompleteType::Enum:
             return CType::Enum;
+        default:
+            break;
         }
     }
 
@@ -1062,8 +1132,9 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
                 // warnning
                 MsgInfo info;
                 info.type = MsgType::Warn;
-                info.info = tr("sizeof(%1) will be always 8 for enum type")
-                                .arg(m.data_type);
+                info.info =
+                    QStringLiteral("sizeof(%1) will be always 8 for enum type")
+                        .arg(m.data_type);
                 _msgcb(info);
             }
             auto s = getTypeSize(m.data_type);
@@ -1127,6 +1198,7 @@ void CTypeParser::restoreIncompleteType(const QString &name) {
                     type_maps_.insert(name, type_maps_[type_defs_[name].first]);
                     break;
                 case IncompleteType::Enum:
+                case IncompleteType::AnyTypeWithoutEnum:
                     // do nothing
                     break;
                 }

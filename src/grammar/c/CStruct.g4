@@ -130,13 +130,18 @@ alignAsAttr
     : 'alignas' '(' IntegerConstant ')'
     ;
 
+basicTypeFmt
+    : '[[' enumSpecifier ']]'
+    | '[[' Identifier ']]'
+    ;
+
 structDeclarationList
     : structDeclaration+
     ;
 
 structDeclaration // The first two rules have priority order and cannot be simplified to one expression.
-    : specifierQualifierList structDeclaratorList ';'
-    | specifierQualifierList ';'
+    : basicTypeFmt? specifierQualifierList structDeclaratorList ';'
+    | basicTypeFmt? specifierQualifierList ';'
     ;
 
 specifierQualifierList
@@ -299,8 +304,16 @@ RightParen
     : ')'
     ;
 
+DoubleLeftBracket
+    : '[['
+    ;
+
 LeftBracket
     : '['
+    ;
+
+DoubleRightBracket
+    : ']]'
     ;
 
 RightBracket

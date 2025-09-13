@@ -39,22 +39,22 @@ void CStructErrorStrategy::reportNoViableAlternative(
     QString input;
     if (tokens != nullptr) {
         if (e.getStartToken()->getType() == antlr4::Token::EOF) {
-            input = tr("<EOF>");
+            input = QStringLiteral("<EOF>");
         } else {
             input = QString::fromStdString(escapeWSAndQuote(
                 tokens->getText(e.getStartToken(), e.getOffendingToken())));
         }
     } else {
-        input = tr("<unknown input>");
+        input = QStringLiteral("<unknown input>");
     }
-    auto msg = tr("no viable alternative at input %1").arg(input);
+    auto msg = QStringLiteral("no viable alternative at input %1").arg(input);
     recognizer->notifyErrorListeners(e.getOffendingToken(), msg.toStdString(),
                                      std::make_exception_ptr(e));
 }
 
 void CStructErrorStrategy::reportInputMismatch(
     antlr4::Parser *recognizer, const antlr4::InputMismatchException &e) {
-    auto msg = tr("mismatched input %1 expecting %2")
+    auto msg = QStringLiteral("mismatched input %1 expecting %2")
                    .arg(QString::fromStdString(
                             getTokenErrorDisplay(e.getOffendingToken())),
                         QString::fromStdString(e.getExpectedTokens().toString(
@@ -68,7 +68,7 @@ void CStructErrorStrategy::reportFailedPredicate(
     const std::string &ruleName =
         recognizer->getRuleNames()[recognizer->getContext()->getRuleIndex()];
 
-    auto msg = tr("rule %1 failed predicate: %2?")
+    auto msg = QStringLiteral("rule %1 failed predicate: %2?")
                    .arg(QString::fromStdString(ruleName),
                         QString::fromStdString(
                             const_cast<antlr4::FailedPredicateException &>(e)
@@ -89,7 +89,7 @@ void CStructErrorStrategy::reportUnwantedToken(antlr4::Parser *recognizer) {
     std::string tokenName = getTokenErrorDisplay(t);
     antlr4::misc::IntervalSet expecting = getExpectedTokens(recognizer);
 
-    auto msg = tr("extraneous input %1 expecting %2")
+    auto msg = QStringLiteral("extraneous input %1 expecting %2")
                    .arg(QString::fromStdString(tokenName),
                         QString::fromStdString(
                             expecting.toString(recognizer->getVocabulary())));
@@ -108,7 +108,7 @@ void CStructErrorStrategy::reportMissingToken(antlr4::Parser *recognizer) {
     antlr4::misc::IntervalSet expecting = getExpectedTokens(recognizer);
     std::string expectedText = expecting.toString(recognizer->getVocabulary());
 
-    auto msg = tr("missing %1 at %2")
+    auto msg = QStringLiteral("missing %1 at %2")
                    .arg(QString::fromStdString(expectedText),
                         QString::fromStdString(getTokenErrorDisplay(t)));
 

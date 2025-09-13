@@ -1,1 +1,0 @@
-antlr4  -Dlanguage=Cpp -visitor -no-listener DefEvaluator.g4 -o .

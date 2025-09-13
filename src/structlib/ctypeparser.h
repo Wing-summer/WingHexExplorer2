@@ -20,7 +20,6 @@
 
 #include "structdefine.h"
 
-#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QHash>
@@ -39,7 +38,6 @@ enum class LongMode { LLP64, LP64 };
 
 class CTypeParser {
     Q_GADGET
-    Q_DECLARE_TR_FUNCTIONS(CTypeParser)
 
 public:
     // Result codes for manager operations
@@ -59,7 +57,8 @@ public:
         Struct,
         Union,
         TypeDef,
-        BasicType
+        BasicType,
+        Pointer
     };
     Q_ENUM(CType);
 
@@ -80,6 +79,7 @@ public:
     StructResult addForwardStruct(const QString &name);
     StructResult addForwardUnion(const QString &name);
     StructResult addForwardEnum(const QString &name);
+    StructResult addForwardAnyTypeWithoutEnum(const QString &name);
 
     // Definitions (only register names)
     StructResult defineStruct(const QString &name,
@@ -166,7 +166,9 @@ public:
 
 public:
     QMetaType::Type metaType(const QString &name) const;
+    QMetaType::Type typeMapValue(const QString &name) const;
     CType type(const QString &name) const;
+    CType resolveType(const QString &name) const;
     std::optional<quint64> getTypeSize(const QString &data_type) const;
 
 public:
@@ -191,7 +193,13 @@ private:
     void restoreIncompleteType(const QString &name);
 
 private:
-    enum class IncompleteType { Struct, Union, Typedef, Enum };
+    enum class IncompleteType {
+        Struct,
+        Union,
+        Typedef,
+        Enum,
+        AnyTypeWithoutEnum
+    };
 
 private:
     /// read in basic data such as keywords/qualifiers, and basic data type

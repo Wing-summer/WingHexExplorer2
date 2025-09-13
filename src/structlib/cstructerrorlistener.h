@@ -4,14 +4,11 @@
 #include <antlr4-runtime.h>
 #include <functional>
 
-#include <QCoreApplication>
 #include <QString>
 
 #include "structdefine.h"
 
 class CStructErrorListener : public antlr4::BaseErrorListener {
-    Q_DECLARE_TR_FUNCTIONS(CStructErrorListener)
-
 public:
     using ErrorHandler = std::function<void(const MsgInfo &)>;
 

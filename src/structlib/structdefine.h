@@ -18,6 +18,7 @@
 struct VariableDeclaration {
     QString data_type;   ///< name of a data type, either basic type or
                          ///< user-defined type
+    QString fmt_type;    /// [[type]] can only use with basic numberic type
     QString var_name;    ///< variable name
     size_t offset = 0;   ///< member offset in struct: -1 for non-struct
     size_t bit_size = 0; // int v : bit_size , 0 for no bit_size exists

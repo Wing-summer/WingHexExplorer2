@@ -18,22 +18,7 @@
 #ifndef ASPREPROCESSER_H
 #define ASPREPROCESSER_H
 
-// DON'T DELETE this
-#include "AngelScript/sdk/angelscript/source/as_config.h"
-
-//---------------------------
-// Declaration
-//
-
-#ifndef ANGELSCRIPT_H
-// Avoid having to inform include path if header is already include before
-#include <angelscript.h>
-#endif
-
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-// disable the annoying warnings on MSVC 6
-#pragma warning(disable : 4786)
-#endif
+#include "angelscript.h"
 
 #include <QApplication>
 #include <QEventLoop>
@@ -44,46 +29,137 @@
 class AsPreprocesser;
 class asCScriptCode;
 
-// This callback will be called for each #include directive encountered by the
-// builder. The callback should call the AddSectionFromFile or
-// AddSectionFromMemory to add the included section to the script. If the
-// include cannot be resolved then the function should return a negative value
-// to abort the compilation.
-typedef int (*INCLUDECALLBACK_t)(const QString &include, bool quotedInclude,
-                                 const QString &from, AsPreprocesser *builder,
-                                 void *userParam);
-
-// This callback will be called for each #pragma directive encountered by the
-// builder. The application can interpret the pragmaText and decide what do to
-// based on that. If the callback returns a negative value the builder will
-// report an error and abort the compilation.
-typedef int (*PRAGMACALLBACK_t)(const QByteArray &pragmaText,
-                                AsPreprocesser *builder,
-                                const QString &sectionname, void *userParam);
-
-// Helper class for loading and pre-processing script files to
-// support include directives declarations
-
 /** for macros, we support:
  *      * #if <conditions>
  *      * #else
  *      * #endif
- *      * #define <word>
- *      * #define <word> <string|int64|double>
- *      * #undef <word>
  *      * #ifdef <word>
  *      * #ifndef <word>
  */
 class AsPreprocesser {
-    Q_DECLARE_TR_FUNCTIONS(AsPreprocesser)
+public:
+    enum class Severity { Info = 0, Warning = 1, Error = 2 };
+
+    enum class PreprocErrorCode {
+        ERR_SUCCESS,
+        ERR_SOURCE_DEFINE_FORBIDDEN,
+        ERR_ELIF_ELSE_WITHOUT_IF,
+        ERR_ENDIF_MISSING,
+        ERR_IF_PARSE,
+        ERR_MACRO_EXPR_RECURSION,
+        ERR_INCLUDE_NOT_FOUND
+    };
+
+    struct PreprocError {
+        PreprocErrorCode code;
+        Severity severity;
+        QString file;
+        qint64 line;
+        qint64 column;
+        QString message;
+        QString suggestion;
+    };
+
+    using CErrorCallback = std::function<void(
+        const QString &file, qint64 line, qint64 column, PreprocErrorCode code,
+        Severity severity, const QString &message, const QString &suggestion)>;
+
+    using CPragamaCallback =
+        std::function<void(const QString &pragmaText, AsPreprocesser *builder,
+                           const QString &sectionname)>;
+
+    struct SourcePos {
+        QString file;
+        qint64 line = 1;
+        qint64 column = 1;
+    };
+
+    struct LineSegmentMap {
+        qint64 outColStart = 1;
+        qint64 length = 1;
+        QString file;
+        qint64 originalLine = 1;
+        qint64 origColStart = 1;
+    };
+
+    struct OutputLineMap {
+        qint64 outLineNumber = 1;
+        QVector<LineSegmentMap> segments;
+    };
+
+    struct Mapping {
+        QVector<OutputLineMap> lines;
+
+        inline std::optional<SourcePos>
+        mapOutputPositionToSource(qint64 outLine, qint64 outCol) const {
+            if (outLine < 1)
+                return std::nullopt;
+            for (const auto &olm : lines) {
+                if (olm.outLineNumber == outLine) {
+                    for (const auto &seg : olm.segments) {
+                        if (outCol >= seg.outColStart &&
+                            outCol < seg.outColStart + seg.length) {
+                            auto delta = outCol - seg.outColStart;
+                            return SourcePos{seg.file, seg.originalLine,
+                                             seg.origColStart + delta};
+                        }
+                    }
+                    if (!olm.segments.isEmpty()) {
+                        const auto &seg = olm.segments.last();
+                        return SourcePos{seg.file, seg.originalLine,
+                                         seg.origColStart + seg.length - 1};
+                    }
+                    return std::nullopt;
+                }
+            }
+            return std::nullopt;
+        }
+
+        inline void addOutputLineMap(const OutputLineMap &olm) {
+            lines.append(olm);
+        }
+    };
+
+    struct Result {
+        QString script;
+        Mapping mapping;
+    };
+
 public:
     explicit AsPreprocesser(asIScriptEngine *engine);
     virtual ~AsPreprocesser();
 
 public:
+    void registerBuiltin(const QString &name,
+                         std::function<QString(const SourcePos &)> cb);
+
+private:
+    void processBuffer(const QByteArray &buf, const QString &sourceName,
+                       const QString &currentDir, QString &outText,
+                       Mapping &outMap);
+
+    static bool parseIncludePathToken(const QString &args, QString &outPath,
+                                      bool &isAngled);
+
+    QString resolveIncludeFile(const QString &filename,
+                               const QString &currentDir);
+
+private:
+    QString expandExpressionForIf(const QString &expr, const QString &file,
+                                  qint64 line, qint64 col);
+
+    std::optional<bool> evalExpression(const QString &expr, const QString &file,
+                                       qint64 line, qint64 col);
+
+private:
+    QString m_currentSource;
+    QHash<QString, QString> m_runtimeMacros;
+    QHash<QString, std::function<QString(const SourcePos &)>> m_builtinMacros;
+
+public:
     struct ScriptData {
         QString section;
-        QByteArray script;
+        Result result;
     };
 
 public:
@@ -92,68 +168,40 @@ public:
     //          0 if the file had already been included before
     //         <0 on error
     int loadSectionFromFile(const QString &filename);
-    int loadSectionFromMemory(const QString &section, const QByteArray &code);
 
-    void addScriptSection(const QString &section, const QByteArray &code);
+    void addScriptSection(const QString &section, const Result &result);
 
     QList<ScriptData> scriptData() const;
 
     // Returns the engine
-    asIScriptEngine *getEngine();
-
-    // Register the callback for resolving include directive
-    void setIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
+    asIScriptEngine *getEngine() const;
 
     // Register the callback for resolving pragma directive
-    void setPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
+    void setPragmaCallback(const CPragamaCallback &callback);
 
     // Add a pre-processor define for conditional compilation
-    bool defineWord(const QString &word, const QByteArray &value = {});
+    void defineMacroWord(const QString &word, const QString &value = {});
 
-    // Enumerate included script sections
-    unsigned int sectionCount() const;
-
-    QString sectionName(unsigned int idx) const;
-
-    QHash<QString, QByteArray> definedMacros() const;
-
-protected:
-    QString translate(const char *str);
+    std::function<void(const PreprocError &)> getErrorHandler() const;
+    void setErrorHandler(
+        const std::function<void(const PreprocError &)> &newErrorHandler);
 
 protected:
     void clearAll();
 
-    int processScriptSection(const QByteArray &script,
-                             const QString &sectionname);
     int loadScriptSection(const QString &filename);
     bool includeIfNotAlreadyIncluded(const QString &filename);
 
-    int skipStatement(QByteArray &modifiedScript, int pos);
+    Result preprocess(const QByteArray &source, const QString &sourceName);
 
-    int excludeIfCode(QByteArray &modifiedScript, int pos);
-    int excludeElseCode(QByteArray &modifiedScript, int pos);
-    void overwriteCode(QByteArray &modifiedScript, int start, int len);
-    int getLineCount(const QByteArray &modifiedScript, int pos) const;
-
-    bool endLinePassFailed(const QByteArray &modifiedScript, int pos);
-
-    QByteArray processIfExpression(const QByteArray &codes, int currentLine,
-                                   const QByteArray &currentSection);
-
-    QByteArray findReplaceResult(const QByteArray &v);
-
+private:
     asIScriptEngine *engine;
     QList<ScriptData> modifiedScripts;
 
-    INCLUDECALLBACK_t includeCallback;
-    void *includeParam;
-
-    PRAGMACALLBACK_t pragmaCallback;
-    void *pragmaParam;
+    CPragamaCallback pragmaCallback;
+    std::function<void(const PreprocError &)> errorHandler;
 
     QStringList includedScripts;
-
-    QHash<QString, QByteArray> definedWords;
 };
 
 #endif // ASPREPROCESSER_H
