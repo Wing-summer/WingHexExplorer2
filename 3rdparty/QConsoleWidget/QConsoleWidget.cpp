@@ -17,7 +17,6 @@
 
 #include "QConsoleWidget.h"
 #include "QConsoleIODevice.h"
-#include "wingsyntaxhighlighter.h"
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -75,14 +74,15 @@ QIODevice *QConsoleWidget::device() const { return iodevice_; }
 
 QString QConsoleWidget::getCommandLine() {
     if (mode_ == Output)
-        return QString();
+        return {};
+
     // select text in edit zone (from the input pos to the end)
     QTextCursor textCursor = this->textCursor();
     textCursor.movePosition(QTextCursor::End);
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
     QString code = textCursor.selectedText();
     code.replace(QChar::ParagraphSeparator, QChar::LineFeed);
-    return code;
+    return code.trimmed();
 }
 
 void QConsoleWidget::paste() {
@@ -94,7 +94,9 @@ void QConsoleWidget::paste() {
     }
 }
 
-void QConsoleWidget::handleReturnKey() {
+void QConsoleWidget::handleReturnKey(Qt::KeyboardModifiers mod) {
+    Q_UNUSED(mod);
+
     QString code = getCommandLine();
 
     // start new block
@@ -117,7 +119,9 @@ void QConsoleWidget::handleReturnKey() {
     Q_EMIT consoleCommand(code);
 }
 
-void QConsoleWidget::handleTabKey() {
+void QConsoleWidget::handleTabKey(Qt::KeyboardModifiers mod) {
+    Q_UNUSED(mod);
+
     QTextCursor tc = this->textCursor();
     int anchor = tc.anchor();
     int position = tc.position();
@@ -251,7 +255,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     case Qt::Key_Tab:
         e->accept();
-        handleTabKey();
+        handleTabKey(e->modifiers());
         return;
 
     case Qt::Key_Home:
@@ -264,7 +268,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
         e->accept();
-        handleReturnKey();
+        handleReturnKey(e->modifiers());
         break;
 
     case Qt::Key_Escape:

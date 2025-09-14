@@ -287,8 +287,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 m_scriptConsole->setMode(QConsoleWidget::Input);
             }
         } else {
-            QMessageBox::critical(this, qAppName(),
-                                  tr("ScriptEngineInitFailed"));
+            WingMessageBox::critical(this, qAppName(),
+                                     tr("ScriptEngineInitFailed"));
             set.setScriptEnabled(false);
             throw CrashCode::ScriptInitFailed;
         }
@@ -656,7 +656,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
 
     auto menu = new QMenu(tr("Encoding"), this);
     menu->setIcon(ICONRES(QStringLiteral("encoding")));
-    auto aGroup = new QActionGroup(this);
+    auto aGroup = new QActionGroup(menu);
+    aGroup->setParent(menu);
     auto langs = Utilities::getEncodings();
     for (auto &l : langs) {
         auto a = newCheckableAction(menu, l, [=]() {
@@ -666,9 +667,12 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                 se();
             }
         });
-        aGroup->addAction(a);
+        a->setActionGroup(aGroup);
         menu->addAction(a);
         m_findEncoding.insert(l, a);
+    }
+    if (langs.isEmpty()) {
+        aGroup->deleteLater();
     }
 
     m_menuFind = new QMenu(m_findresult);
@@ -1847,8 +1851,10 @@ void MainWindow::on_openfile() {
         }
         if (res == ErrFile::AlreadyOpened) {
             Q_ASSERT(editor);
-            editor->raise();
-            editor->setFocus();
+            if (editor) {
+                editor->raise();
+                editor->setFocus();
+            }
             return;
         }
 
@@ -1881,8 +1887,10 @@ void MainWindow::on_openworkspace() {
     }
     if (res == ErrFile::AlreadyOpened) {
         Q_ASSERT(editor);
-        editor->raise();
-        editor->setFocus();
+        if (editor) {
+            editor->raise();
+            editor->setFocus();
+        }
         return;
     }
 

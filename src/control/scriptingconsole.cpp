@@ -17,10 +17,13 @@
 
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
+#include "class/eventfilter.h"
 #include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
 #include "class/wingmessagebox.h"
+#include "control/codeedit.h"
+#include "dialog/framelessdialogbase.h"
 #include "model/codecompletionmodel.h"
 #include "utilities.h"
 
@@ -47,45 +50,82 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
 
 ScriptingConsole::~ScriptingConsole() {}
 
-void ScriptingConsole::handleReturnKey() {
-    auto cursor = this->textCursor();
-    cursor.movePosition(QTextCursor::PreviousCharacter,
-                        QTextCursor::KeepAnchor);
-    // TODO whether '\' is in a string ?
-    if (cursor.selectedText() == QStringLiteral("\\")) {
-        cursor = this->textCursor();
-        cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-        auto restCode = cursor.selectedText();
-        cursor.removeSelectedText();
-        QString code = getCommandLine();
-        setMode(Output);
-        _codes += code.sliced(0, code.length() - 1);
-        appendCommandPrompt(true);
-        cursor = this->textCursor();
-        setMode(Input);
-        cursor.insertText(restCode);
-        cursor.movePosition(QTextCursor::PreviousCharacter);
-        setTextCursor(cursor);
+void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
+    QString code = getCommandLine();
+
+    setMode(Output);
+    if (code.isEmpty()) {
+        if (mod.testFlags(Qt::ControlModifier | Qt::AltModifier)) {
+            // pop up a coding dialog
+            FramelessDialogBase edialog;
+
+            auto editor = new CodeEdit(&edialog);
+            editor->setSyntax(
+                CodeEdit::syntaxRepo().definitionForName("AngelScript"));
+
+            auto filter = new EventFilter(QEvent::KeyRelease, editor);
+            connect(filter, &EventFilter::eventTriggered, this,
+                    [&edialog](QObject *, QEvent *event) {
+                        auto e = reinterpret_cast<QKeyEvent *>(event);
+                        if (e->modifiers() == Qt::ControlModifier &&
+                            (e->key() == Qt::Key_Enter ||
+                             e->key() == Qt::Key_Return)) {
+                            edialog.accept();
+                        }
+                    });
+            editor->installEventFilter(filter);
+
+            // TODO
+            // auto cm = new AsCompletion(editor);
+            // connect(cm, &AsCompletion::onFunctionTip, this,
+            //         &ScriptEditor::onFunctionTip);
+
+            edialog.buildUpContent(editor);
+            edialog.setWindowTitle(tr("ConsoleMutiLine"));
+            edialog.setMinimumSize(400, 450);
+
+            auto ret = edialog.exec();
+            if (ret) {
+                code = editor->toPlainText();
+                auto lines = code.split('\n');
+                if (!lines.isEmpty()) {
+                    auto fline = lines.at(0);
+                    write(fline);
+                    for (qsizetype i = 1; i < lines.size(); i++) {
+                        newLine();
+                        appendCommandPrompt(true);
+                        write(lines.at(i));
+                    }
+                }
+            } else {
+                setMode(Input);
+                return;
+            }
+        }
     } else {
-        QString code = getCommandLine();
+        history_.add(code);
+    }
 
-        // start new block
-        appendPlainText(QString());
-        setMode(Output);
+    newLine();
 
-        QTextCursor textCursor = this->textCursor();
-        textCursor.movePosition(QTextCursor::End);
-        setTextCursor(textCursor);
+    QTextCursor textCursor = this->textCursor();
+    textCursor.movePosition(QTextCursor::End);
+    setTextCursor(textCursor);
 
-        // Update the history
-        if (!code.isEmpty())
-            history_.add(code);
+    // append the newline char and
+    // send signal / update iodevice
+    if (iodevice_->isOpen())
+        iodevice_->consoleWidgetInput(code);
 
-        // append the newline char and
-        // send signal / update iodevice
-        if (iodevice_->isOpen())
-            iodevice_->consoleWidgetInput(code);
-
+    if (mod == Qt::ControlModifier) {
+        if (_codes.isEmpty()) {
+            _codes = code;
+        } else {
+            _codes.append('\n').append(code);
+        }
+        appendCommandPrompt(true);
+        setMode(Input);
+    } else {
         if (!_isWaitingRead) {
             Q_EMIT consoleCommand(code);
         }
@@ -273,6 +313,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                             mod->GetAddressOfGlobalVar(i), typeID, sm.engine(),
                             1);
                         stdOutLine(decl + QStringLiteral(" = ") + value);
+                        newLine();
                     }
                 }
             }
@@ -336,16 +377,15 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         _codes.clear();
         appendCommandPrompt();
         setMode(Input);
-    } else if (exec.endsWith('\\')) {
-        static QRegularExpression ex(QStringLiteral("[\\\\\\s]+$"));
-        _codes.append('\n');
-        _codes += exec.remove(ex);
-        setMode(Output);
-        appendCommandPrompt(true);
-        setMode(Input);
+    } else if (exec == QStringLiteral("#hiscls")) {
+        history_.strings_.clear();
     } else {
         setMode(Output);
-        _codes += exec;
+        if (_codes.isEmpty()) {
+            _codes = exec;
+        } else {
+            _codes.append('\n').append(exec);
+        }
         ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
                                               _codes);
         _codes.clear();

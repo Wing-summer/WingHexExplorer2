@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.2.3")
+set(PROJECT_VERSION "2.3.0-WIP")
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Network Concurrent
                                               PrintSupport Xml LinguistTools)
@@ -354,7 +354,9 @@ set(CLASS_SRC
     src/class/lsp.h
     src/class/resettabletimer.h
     src/class/resettabletimer.cpp
-    src/class/astype_evaluator.h)
+    src/class/astype_evaluator.h
+    src/class/angelscriptconsolevisitor.h
+    src/class/angelscriptconsolevisitor.cpp)
 
 set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
                      src/class/wingcstruct.h src/class/wingcstruct.cpp)

@@ -65,7 +65,7 @@ private:
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent *event) override;
-    void handleReturnKey() override;
+    void handleReturnKey(Qt::KeyboardModifiers mod) override;
     void keyPressEvent(QKeyEvent *e) override;
 
 protected slots:

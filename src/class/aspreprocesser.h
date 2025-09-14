@@ -32,6 +32,7 @@ class asCScriptCode;
 /** for macros, we support:
  *      * #if <conditions>
  *      * #else
+ *      * #elif
  *      * #endif
  *      * #ifdef <word>
  *      * #ifndef <word>
@@ -157,12 +158,6 @@ private:
     QHash<QString, std::function<QString(const SourcePos &)>> m_builtinMacros;
 
 public:
-    struct ScriptData {
-        QString section;
-        Result result;
-    };
-
-public:
     // Load a script section from a file on disk
     // Returns  1 if the file was included
     //          0 if the file had already been included before
@@ -171,7 +166,10 @@ public:
 
     void addScriptSection(const QString &section, const Result &result);
 
-    QList<ScriptData> scriptData() const;
+    QHash<QString, Result> scriptData() const;
+
+    std::optional<SourcePos> mapErrPos2Src(const QString &section, qint64 line,
+                                           qint64 col);
 
     // Returns the engine
     asIScriptEngine *getEngine() const;
@@ -194,12 +192,15 @@ protected:
 
     Result preprocess(const QByteArray &source, const QString &sourceName);
 
+    void errorReport(const PreprocError &error);
+
 private:
     asIScriptEngine *engine;
-    QList<ScriptData> modifiedScripts;
+    QHash<QString, Result> modifiedScripts;
 
     CPragamaCallback pragmaCallback;
     std::function<void(const PreprocError &)> errorHandler;
+    bool errOccurred = false;
 
     QStringList includedScripts;
 };

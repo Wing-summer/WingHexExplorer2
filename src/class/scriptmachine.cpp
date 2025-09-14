@@ -19,7 +19,9 @@
 
 #include "grammar/ASConsole/AngelscriptConsoleLexer.h"
 #include "grammar/ASConsole/AngelscriptConsoleParser.h"
-#include "grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h"
+
+// reuse the listener
+#include "structlib/cstructerrorlistener.h"
 
 #include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/sdk/add_on/scriptany/scriptany.h"
@@ -34,6 +36,7 @@
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
 
 #include "angelobjstring.h"
+#include "class/angelscriptconsolevisitor.h"
 #include "class/appmanager.h"
 #include "class/asbuilder.h"
 #include "class/logger.h"
@@ -316,7 +319,7 @@ bool ScriptMachine::configureEngine() {
 }
 
 QString ScriptMachine::getCallStack(asIScriptContext *context) {
-    QString str = tr("AngelScript callstack:\n");
+    QString str = QStringLiteral("AngelScript callstack:\n");
 
     // Append the call stack
     for (asUINT i = 0; i < context->GetCallstackSize(); i++) {
@@ -348,15 +351,17 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
         ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
             context->GetUserData(AsUserDataType::UserData_ContextMode)));
         QString message =
-            tr("- Exception '%1' in '%2'\n")
+            QStringLiteral("- Exception '%1' in '%2'\n")
                 .arg(context->GetExceptionString(),
                      context->GetExceptionFunction()->GetDeclaration()) +
             QStringLiteral("\n") + getCallStack(context);
 
         const char *section;
+        int col;
         MessageInfo msg;
         msg.mode = mode;
-        msg.row = context->GetExceptionLineNumber(&msg.col, &section);
+        msg.row = context->GetExceptionLineNumber(&col, &section);
+        msg.col = col;
         msg.type = MessageType::Error;
         msg.message = message;
 
@@ -449,7 +454,7 @@ int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
     if (Utilities::isRoot()) {
         auto ctx = asGetActiveContext();
         if (ctx) {
-            auto err = tr("ExecNotAllowedInRoot");
+            auto err = QStringLiteral("ExecNotAllowedInRoot");
             ctx->SetException(err.toUtf8());
         }
         return -1;
@@ -479,7 +484,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
                                   bool isInDebug, int *retCode) {
     Q_ASSERT(mode != Interactive);
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Code must be exec in the main thread"));
+        Logger::warning(QStringLiteral("Code must be exec in the main thread"));
         return false;
     }
 
@@ -517,13 +522,23 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     // Set the pragma callback so we can detect
     builder.setPragmaCallback(&ScriptMachine::pragmaCallback);
+    builder.setErrorHandler(
+        [this, mode](const AsPreprocesser::PreprocError &error) {
+            MessageInfo info;
+            info.mode = mode;
+            info.row = error.line;
+            info.col = error.column;
+            info.message = error.message;
+            info.type = MessageType::Error;
+            outputMessage(info);
+        });
 
     _curMsgMode = mode;
     auto r = builder.loadSectionFromFile(script.toUtf8());
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Script failed to pre-processed");
+        info.message = QStringLiteral("Script failed to pre-processed");
         info.type = MessageType::Error;
         outputMessage(info);
         return false;
@@ -533,7 +548,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Script failed to build");
+        info.message = QStringLiteral("Script failed to build");
         info.type = MessageType::Error;
         outputMessage(info);
         return false;
@@ -549,7 +564,8 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (func == nullptr) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Cannot find 'int main()' or 'void main()'");
+        info.message =
+            QStringLiteral("Cannot find 'int main()' or 'void main()'");
         info.type = MessageType::Error;
         outputMessage(info);
         return false;
@@ -559,7 +575,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Debugging, waiting for commands.");
+        info.message = QStringLiteral("Debugging, waiting for commands.");
         info.type = MessageType::Info;
         outputMessage(info);
     }
@@ -572,7 +588,8 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Failed while initializing global variables");
+        info.message =
+            QStringLiteral("Failed while initializing global variables");
         info.type = MessageType::Error;
         outputMessage(info);
         return false;
@@ -587,7 +604,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (mode == Background) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Run:") + script;
+        info.message = QStringLiteral("Run:") + script;
         info.type = MessageType::Info;
         outputMessage(info);
     }
@@ -628,16 +645,16 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         if (r == asEXECUTION_EXCEPTION) {
             MessageInfo info;
             info.mode = mode;
-            info.message = tr("The script failed with an exception") +
-                           QStringLiteral("\n") +
-                           QString::fromStdString(GetExceptionInfo(ctx, true));
+            info.message =
+                QStringLiteral("The script failed with an exception:\n") +
+                QString::fromStdString(GetExceptionInfo(ctx, true));
             info.type = MessageType::Error;
             outputMessage(info);
             r = -1;
         } else if (r == asEXECUTION_ABORTED) {
             MessageInfo info;
             info.mode = mode;
-            info.message = tr("The script was aborted");
+            info.message = QStringLiteral("The script was aborted");
             info.type = MessageType::Error;
             outputMessage(info);
             r = -1;
@@ -645,9 +662,9 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
             auto e = QMetaEnum::fromType<asEContextState>();
             MessageInfo info;
             info.mode = mode;
-            info.message = tr("The script terminated unexpectedly") +
-                           QStringLiteral(" (") + e.valueToKey(r) +
-                           QStringLiteral(")");
+            info.message =
+                QStringLiteral("The script terminated unexpectedly (") +
+                e.valueToKey(r) + QStringLiteral(")");
             info.type = MessageType::Error;
             outputMessage(info);
             r = -1;
@@ -662,7 +679,8 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     MessageInfo info;
     info.mode = mode;
-    info.message = tr("The script exited with ") + QString::number(r);
+    info.message =
+        QStringLiteral("The script exited with ") + QString::number(r);
     info.type = MessageType::Info;
     outputMessage(info);
 
@@ -850,8 +868,8 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
 
     MessageInfo info;
     info.mode = ins->_curMsgMode;
-    info.row = msg->row;
-    info.col = msg->col;
+    info.row = msg->row + ins->lineOffset;
+    info.col = msg->col + ins->colOffset;
     info.section = msg->section;
     info.message = msg->message;
     info.type = t;
@@ -900,7 +918,7 @@ asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
         break;
     case Background:
         mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
-        mod->SetAccessMask(0x2);
+        mod->SetAccessMask(0x1);
         break;
     }
 
@@ -920,7 +938,7 @@ asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
         break;
     case Background:
         mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
-        mod->SetAccessMask(0x2);
+        mod->SetAccessMask(0x1);
         break;
     }
 
@@ -1145,7 +1163,7 @@ void ScriptMachine::scriptAssert(bool b) {
     auto ctx = asGetActiveContext();
     if (ctx) {
         if (!b) {
-            QString buffer = tr("Assert failed");
+            QString buffer = QStringLiteral("Assert failed");
             ctx->SetException(buffer.toUtf8(), false);
         }
     }
@@ -1157,7 +1175,7 @@ void ScriptMachine::scriptAssert_X(bool b, const QString &msg) {
         if (!b) {
             auto m = msg;
             if (m.isEmpty()) {
-                m = tr("Assert failed");
+                m = QStringLiteral("Assert failed");
             }
             ctx->SetException(m.toUtf8(), false);
         }
@@ -1232,7 +1250,7 @@ asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
 bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     if (QThread::currentThread() != qApp->thread()) {
-        Logger::warning(tr("Code must be exec in the main thread"));
+        Logger::warning(QStringLiteral("Code must be exec in the main thread"));
         return false;
     }
 
@@ -1240,21 +1258,44 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         return true;
     }
 
+    QScopeGuard guard([this]() {
+        lineOffset = 0;
+        colOffset = 0;
+    });
+
     asIScriptModule *mod = createModuleIfNotExist(mode);
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
 
-    // first, preparse the code
-    auto buffer = code.toUtf8();
-    antlr4::ANTLRInputStream input(buffer.constData(), buffer.length());
+    // first, valid the input
+    auto ccode = code.toUtf8();
+    antlr4::ANTLRInputStream input(ccode.constData(), ccode.length());
     AngelscriptConsoleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
 
+    // reuse the listener, ha!
+    CStructErrorListener lis([this, mode](const MsgInfo &info) {
+        MessageInfo inf;
+        inf.mode = mode;
+        inf.row = info.line;
+        inf.col = info.charPositionInLine;
+        inf.message = info.info;
+        switch (info.type) {
+        case MsgType::Error:
+            inf.type = MessageType::Error;
+            break;
+        case MsgType::Warn:
+            inf.type = MessageType::Warn;
+            break;
+        }
+        outputMessage(inf);
+    });
+
     AngelscriptConsoleParser parser(&tokens);
     parser.removeErrorListeners();
-    parser.setBuildParseTree(false);
+    parser.addErrorListener(&lis);
     parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 
-    AngelscriptConsoleParserBaseVisitor visitor;
+    AngelScriptConsoleVisitor visitor(tokens);
 
     try {
         visitor.visit(parser.script());
@@ -1263,138 +1304,126 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     }
 
     asIScriptFunction *func = nullptr;
-    // check whether there is any enum/class
-    QByteArray ccode;
-    if (true) {
-        // ok, wrap the codes
-        ccode.prepend("void f(){").append("}");
-        // start to compile
-        _curMsgMode = mode;
-        auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
-        if (cr < 0) {
+    _curMsgMode = mode;
+
+    auto decls = visitor.declCode();
+    if (!decls.isEmpty()) {
+        for (auto &s : visitor.declCode()) {
+            auto r = mod->CompileGlobalVar(nullptr, s, 0);
+            if (r < 0) {
+                MessageInfo info;
+                info.mode = mode;
+                info.message = QStringLiteral("BadDecl:") + s;
+                info.type = MessageType::Error;
+                outputMessage(info);
+            }
+        }
+
+        if (mod->ResetGlobalVars() < 0) {
             MessageInfo info;
             info.mode = mode;
-            info.message = tr("Script failed to build");
+            info.message = QStringLiteral("GlobalBadDecl");
             info.type = MessageType::Error;
             outputMessage(info);
             return false;
         }
+    }
 
-        // Set up a context to execute the script
-        // The context manager will request the context from the
-        // pool, which will automatically attach the debugger
-        asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
-        _ctx[mode] = ctx;
+    ccode = visitor.execCode().trimmed();
+    if (ccode.isEmpty()) {
+        return true;
+    }
 
-        ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
-                             AppManager::instance()->currentMSecsSinceEpoch())),
-                         AsUserDataType::UserData_Timer);
+    // ok, wrap the codes
+    ccode.prepend("void f(){\n").append("\n}");
 
-        asPWORD isDbg = 0;
-        ctx->SetUserData(reinterpret_cast<void *>(isDbg),
-                         AsUserDataType::UserData_isDbg);
-        mod->SetUserData(reinterpret_cast<void *>(isDbg),
-                         AsUserDataType::UserData_isDbg);
+    auto off = decls.size();
+    lineOffset = off - 1;
 
-        auto timeOutRaw = SettingManager::instance().scriptTimeout();
-        auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
-        ctx->SetUserData(reinterpret_cast<void *>(timeOut),
-                         AsUserDataType::UserData_TimeOut);
-
-        asPWORD umode = asPWORD(mode);
-        ctx->SetUserData(reinterpret_cast<void *>(umode),
-                         AsUserDataType::UserData_ContextMode);
-
-        ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback),
-                                  this, asCALL_THISCALL);
-
-        // Execute the script until completion
-        // The script may create co-routines. These will automatically
-        // be managed by the context manager
-        while (_ctxMgr->ExecuteScripts()) {
-            qApp->processEvents();
-        }
-
-        _ctx[mode] = nullptr;
-
-        // Check if the main script finished normally
-        int r = ctx->GetState();
-        if (r != asEXECUTION_FINISHED) {
-            if (r == asEXECUTION_EXCEPTION) {
-                MessageInfo info;
-                info.mode = mode;
-                info.message =
-                    tr("The script failed with an exception") +
-                    QStringLiteral("\n") +
-                    QString::fromStdString(GetExceptionInfo(ctx, true));
-                info.type = MessageType::Error;
-                outputMessage(info);
-                r = -1;
-            } else if (r == asEXECUTION_ABORTED) {
-                MessageInfo info;
-                info.mode = mode;
-                info.message = tr("The script was aborted");
-                info.type = MessageType::Error;
-                outputMessage(info);
-                r = -1;
-            } else {
-                auto e = QMetaEnum::fromType<asEContextState>();
-                MessageInfo info;
-                info.mode = mode;
-                info.message = tr("The script terminated unexpectedly") +
-                               QStringLiteral(" (") + e.valueToKey(r) +
-                               QStringLiteral(")");
-                info.type = MessageType::Error;
-                outputMessage(info);
-                r = -1;
-            }
-        } else {
-            r = 0;
-        }
-
-        func->Release();
-
-        // Return the context after retrieving the return value
-        _ctxMgr->DoneWithContext(ctx);
-        _engine->GarbageCollect();
-
-        return r >= 0;
-    } else {
-        // if (std::all_of(ret.begin(), ret.end(),
-        //                 [](const QAsCodeParser::CodeSegment &seg) {
-        //                     return seg.type ==
-        //                            QAsCodeParser::SymbolType::Variable;
-        //                 })) {
-        //     _curMsgMode = mode;
-
-        //     // for (auto &s : ret) {
-        //     //     auto r = mod->CompileGlobalVar(nullptr, s.codes, 0);
-        //     //     if (r < 0) {
-        //     //         MessageInfo info;
-        //     //         info.mode = mode;
-        //     //         info.message = tr("BadDecl:") + s.codes;
-        //     //         info.type = MessageType::Error;
-        //     //         outputMessage(info);
-        //     //     }
-        //     // }
-
-        //     if (mod->ResetGlobalVars() < 0) {
-        //         MessageInfo info;
-        //         info.mode = mode;
-        //         info.message = tr("GlobalBadDecl");
-        //         info.type = MessageType::Error;
-        //         outputMessage(info);
-        //     }
-        //     return true;
-        // }
-
+    // start to compile
+    auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
+    if (cr < 0) {
         MessageInfo info;
         info.mode = mode;
-        info.message = tr("Script failed to build");
+        info.message = QStringLiteral("Script failed to build");
         info.type = MessageType::Error;
         outputMessage(info);
+        return false;
     }
-    return false;
+
+    // Set up a context to execute the script
+    // The context manager will request the context from the
+    // pool, which will automatically attach the debugger
+    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    _ctx[mode] = ctx;
+
+    ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
+                         AppManager::instance()->currentMSecsSinceEpoch())),
+                     AsUserDataType::UserData_Timer);
+
+    asPWORD isDbg = 0;
+    ctx->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+    mod->SetUserData(reinterpret_cast<void *>(isDbg),
+                     AsUserDataType::UserData_isDbg);
+
+    auto timeOutRaw = SettingManager::instance().scriptTimeout();
+    auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
+    ctx->SetUserData(reinterpret_cast<void *>(timeOut),
+                     AsUserDataType::UserData_TimeOut);
+
+    asPWORD umode = asPWORD(mode);
+    ctx->SetUserData(reinterpret_cast<void *>(umode),
+                     AsUserDataType::UserData_ContextMode);
+
+    ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
+                              asCALL_THISCALL);
+
+    // Execute the script until completion
+    // The script may create co-routines. These will automatically
+    // be managed by the context manager
+    while (_ctxMgr->ExecuteScripts()) {
+        qApp->processEvents();
+    }
+
+    _ctx[mode] = nullptr;
+
+    // Check if the main script finished normally
+    int r = ctx->GetState();
+    if (r != asEXECUTION_FINISHED) {
+        if (r == asEXECUTION_EXCEPTION) {
+            MessageInfo info;
+            info.mode = mode;
+            info.message =
+                QStringLiteral("The script failed with an exception:\n") +
+                QString::fromStdString(GetExceptionInfo(ctx, true));
+            info.type = MessageType::Error;
+            outputMessage(info);
+            r = -1;
+        } else if (r == asEXECUTION_ABORTED) {
+            MessageInfo info;
+            info.mode = mode;
+            info.message = QStringLiteral("The script was aborted");
+            info.type = MessageType::Error;
+            outputMessage(info);
+            r = -1;
+        } else {
+            auto e = QMetaEnum::fromType<asEContextState>();
+            MessageInfo info;
+            info.mode = mode;
+            info.message =
+                QStringLiteral("The script terminated unexpectedly (") +
+                e.valueToKey(r) + QStringLiteral(")");
+            info.type = MessageType::Error;
+            outputMessage(info);
+            r = -1;
+        }
+    } else {
+        r = 0;
+    }
+
+    func->Release();
+    return r >= 0;
 }
 
 QString ScriptMachine::scriptGetExceptionInfo() {

@@ -34,13 +34,17 @@ options {
     tokenVocab = AngelscriptConsoleLexer;
 }
 
-/*Basic concepts*/
+/* Basic concepts */
 script
-    : expressionStatement? EOF 
-    | statementSeq? EOF
+    : scriptItem* EOF
     ;
 
-/*Angelscript */
+scriptItem
+    : declSpecifierSeq initDeclaratorList Semi  
+    | statement                          
+    ;
+
+/* Angelscript */
 asGeneric
     : Identifier Less simpleTypeSpecifierList Greater
     ;
@@ -54,7 +58,7 @@ booleanLiteral
     | True_
     ;
 
-/*Expressions*/
+/* Expressions */
 
 primaryExpression
     : literal+
@@ -251,16 +255,15 @@ constantExpression
     : conditionalExpression
     ;
 
-/*Statements*/
+/* Statements */
 statement
     : labeledStatement
-    | (
-        expressionStatement
-        | compoundStatement
-        | selectionStatement
-        | iterationStatement
-        | jumpStatement
-    )
+    | declaration
+    | expressionStatement
+    | compoundStatement
+    | selectionStatement
+    | iterationStatement
+    | jumpStatement
     ;
 
 labeledStatement
@@ -313,27 +316,26 @@ forRangeInitializer
     ;
 
 jumpStatement
-    : (Break | Continue | Return (expression | bracedInitList)?) Semi
+    : (Break | Continue | Return) Semi
     ;
 
-/*Declarations*/
+/* Declarations */
 
 declarationseq
     : declaration+
     ;
 
 declaration
-    :simpleDeclaration
+    : simpleDeclaration
     | emptyDeclaration_
     ;
-
 
 aliasDeclaration
     : Identifier Assign theTypeId Semi
     ;
 
 simpleDeclaration
-    : declSpecifierSeq? (initDeclaratorList | assignmentExpression)? Semi
+    : declSpecifierSeq (initDeclaratorList | assignmentExpression)? Semi
     ;
 
 emptyDeclaration_
@@ -345,7 +347,7 @@ declSpecifier
     ;
 
 declSpecifierSeq
-    : declSpecifier+?
+    : declSpecifier+
     ;
 
 typedefName
@@ -417,7 +419,7 @@ balancedtoken
     | ~(LeftParen | RightParen | LeftBrace | RightBrace | LeftBracket | RightBracket)+
     ;
 
-/*Declarators*/
+/* Declarators */
 
 initDeclaratorList
     : initDeclarator (Comma initDeclarator)*
@@ -488,7 +490,7 @@ bracedInitList
     : (LeftBrace | LeftBracket) (initializerList Comma?)? (RightBrace | RightBracket)
     ;
 
-/*Lexer*/
+/* Lexer token groupings referenced in parser (kept as parser rules here) */
 
 theOperator
     :

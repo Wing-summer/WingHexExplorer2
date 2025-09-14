@@ -49,8 +49,8 @@ public:
     struct MessageInfo {
         ConsoleMode mode = ConsoleMode::Background;
         QString section;
-        int row = -1;
-        int col = -1;
+        qint64 row = -1;
+        qint64 col = -1;
         MessageType type = MessageType::Info;
         QString message;
     };
@@ -214,6 +214,9 @@ private:
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;
     ConsoleMode _curMsgMode = ConsoleMode::Background;
+
+    qint64 lineOffset = 0;
+    qint64 colOffset = 0;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

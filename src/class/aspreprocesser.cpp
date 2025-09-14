@@ -346,7 +346,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                            QString("#%1 in source is forbidden; macros must be "
                                    "injected by host")
                                .arg(kw)};
-            errorHandler(e);
+            errorReport(e);
             emitBlankLine();
             return;
         }
@@ -372,7 +372,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                QStringLiteral("Bad #include syntax: %1")
                                    .arg(args.trimmed()),
                                "Use #include \"file\" or #include <file>"};
-                errorHandler(e);
+                errorReport(e);
                 emitBlankLine();
                 return;
             }
@@ -397,7 +397,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                     dStartCol,
                     QStringLiteral("Included file not found: %1").arg(incPath),
                     "Check include paths or filename"};
-                errorHandler(e);
+                errorReport(e);
                 // preserve one blank line so row count moves on (or choose to
                 // preserve file lines if you prefer)
                 emitBlankLine();
@@ -435,7 +435,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                dStartLine,
                                dStartCol,
                                "bad #ifdef usage: missing identifier"};
-                errorHandler(e);
+                errorReport(e);
                 CondState cs;
                 cs.parentTaking =
                     condStack.isEmpty() ? true : condStack.last().currentTaking;
@@ -467,7 +467,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                dStartCol,
                                "bad #ifndef usage: missing identifier",
                                ""};
-                errorHandler(e);
+                errorReport(e);
                 CondState cs;
                 cs.parentTaking =
                     condStack.isEmpty() ? true : condStack.last().currentTaking;
@@ -497,7 +497,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                dStartCol,
                                "#elif without matching #if",
                                ""};
-                errorHandler(e);
+                errorReport(e);
                 emitBlankLine();
                 return;
             }
@@ -525,7 +525,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                dStartCol,
                                "#else without matching #if",
                                ""};
-                errorHandler(e);
+                errorReport(e);
                 emitBlankLine();
                 return;
             }
@@ -548,7 +548,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                dStartCol,
                                "#endif without matching #if",
                                ""};
-                errorHandler(e);
+                errorReport(e);
                 emitBlankLine();
                 return;
             }
@@ -721,7 +721,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                        srcCol,
                        "Unterminated conditional block: missing #endif",
                        ""};
-        errorHandler(e);
+        errorReport(e);
     }
     if (!curOutLine.isEmpty() || !curSegments.isEmpty())
         flushCurrLine();
@@ -829,8 +829,8 @@ AsPreprocesser::getErrorHandler() const {
 }
 
 void AsPreprocesser::setErrorHandler(
-    const std::function<void(const PreprocError &)> &newErrorHandler) {
-    errorHandler = newErrorHandler;
+    const std::function<void(const PreprocError &)> &newerrorReport) {
+    errorHandler = newerrorReport;
 }
 
 AsPreprocesser::Result AsPreprocesser::preprocess(const QByteArray &source,
@@ -858,7 +858,7 @@ int AsPreprocesser::loadSectionFromFile(const QString &filename) {
     return 0;
 }
 
-QList<AsPreprocesser::ScriptData> AsPreprocesser::scriptData() const {
+QHash<QString, AsPreprocesser::Result> AsPreprocesser::scriptData() const {
     return modifiedScripts;
 }
 
@@ -873,7 +873,10 @@ void AsPreprocesser::defineMacroWord(const QString &word,
     m_runtimeMacros.insert(word, value);
 }
 
-void AsPreprocesser::clearAll() { includedScripts.clear(); }
+void AsPreprocesser::clearAll() {
+    includedScripts.clear();
+    errOccurred = false;
+}
 
 int AsPreprocesser::loadScriptSection(const QString &filename) {
     // Open the script file
@@ -881,8 +884,7 @@ int AsPreprocesser::loadScriptSection(const QString &filename) {
 
     if (!f.open(QFile::ReadOnly)) {
         // Write a message to the engine's message callback
-        auto msg = QStringLiteral("Failed to open script file ") +
-                   QStringLiteral("'") +
+        auto msg = QStringLiteral("Failed to open script file '") +
                    QFileInfo(filename).absoluteFilePath() + QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
@@ -897,7 +899,8 @@ int AsPreprocesser::loadScriptSection(const QString &filename) {
     // is registered
     auto ret = preprocess(code, filename);
     addScriptSection(filename, ret);
-    return 0;
+
+    return errOccurred ? -1 : 0;
 }
 
 bool AsPreprocesser::includeIfNotAlreadyIncluded(const QString &filename) {
@@ -911,10 +914,23 @@ bool AsPreprocesser::includeIfNotAlreadyIncluded(const QString &filename) {
     return true;
 }
 
+void AsPreprocesser::errorReport(const PreprocError &error) {
+    if (errorHandler) {
+        errorHandler(error);
+        errOccurred = true;
+    }
+}
+
 void AsPreprocesser::addScriptSection(const QString &section,
                                       const Result &result) {
-    ScriptData data;
-    data.section = section;
-    data.result = result;
-    modifiedScripts.append(data);
+    modifiedScripts.insert(section, result);
+}
+
+std::optional<AsPreprocesser::SourcePos>
+AsPreprocesser::mapErrPos2Src(const QString &section, qint64 line, qint64 col) {
+    if (modifiedScripts.contains(section)) {
+        return modifiedScripts[section].mapping.mapOutputPositionToSource(line,
+                                                                          col);
+    }
+    return {};
 }

@@ -19,6 +19,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitScriptItem(AngelscriptConsoleParser::ScriptItemContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitAsGeneric(AngelscriptConsoleParser::AsGenericContext *ctx) override {
     return visitChildren(ctx);
   }

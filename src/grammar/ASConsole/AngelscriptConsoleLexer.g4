@@ -282,7 +282,7 @@ UserDefinedCharacterLiteral: CharacterLiteral Udsuffix;
 
 fragment Udsuffix: Identifier;
 
-Whitespace: [ \t]+ -> skip;
+Whitespace: [ \t]+ -> channel(HIDDEN);
 
 Newline                   : ('\r' '\n'? | '\n')                               -> skip;
 BlockComment              : '/*' .*? '*/'                                     -> skip;

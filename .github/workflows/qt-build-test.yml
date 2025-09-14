@@ -6,10 +6,10 @@ permissions:
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
 
 env:
   BUILD_TYPE: Release
@@ -29,40 +29,82 @@ jobs:
             arch: win64_msvc2022_64
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
-        token: ${{ secrets.CONTRIBUTORS_TOKEN }}
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.CONTRIBUTORS_TOKEN }}
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: cpp
+      - name: Initialize CodeQL (only on Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
 
-    - name: Install Qt
-      # Installs the Qt SDK
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: 6.8.1
-        host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
-        target: 'desktop'
-        arch: ${{ matrix.arch }}
-        modules: ${{ matrix.os == 'windows-latest' && 'qtactiveqt' || '' }}
-        cache: true
+      - name: Install Qt
+        # Installs the Qt SDK
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.8.1
+          host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
+          target: 'desktop'
+          arch: ${{ matrix.arch }}
+          modules: ${{ matrix.os == 'windows-latest' && 'qtactiveqt' || '' }}
+          cache: true
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      - name: Build
+        # Build your program with the given configuration
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WingHexExplorer2-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}-build-cache
+          path: ${{github.workspace}}/build
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: WingHexExplorer2-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}-${{ matrix.qt_version }}-build-cache
-        path: ${{github.workspace}}/build
+      - name: Perform CodeQL analysis (produce SARIF)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
+          upload: false
+
+      - name: Filter SARIF (exclude third-party dirs)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            +**/*.c
+            +**/*.cpp
+            +**/*.cc
+            +**/*.cxx
+            +**/*.h
+            +**/*.hpp
+            +**/*.hh
+            -3rdparty/angel-lsp/**
+            -3rdparty/AngelScript/**
+            -3rdparty/antlr4-cpp/**
+            -3rdparty/cppdap/**
+            -3rdparty/cpptrace/**
+            -3rdparty/fmt/**
+            -3rdparty/Qt-Advanced-Docking-System/**
+            -3rdparty/qwindowkit/**
+          input: codeql-results/cpp.sarif
+          output: codeql-results/cpp.sarif
+
+      - name: Upload filtered SARIF to GitHub Code Scanning
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: codeql-results/cpp.sarif
+
+      - name: Attach CodeQL SARIF artifact
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results
+          path: codeql-results
+          retention-days: 1

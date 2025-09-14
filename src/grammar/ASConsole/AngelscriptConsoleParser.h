@@ -34,36 +34,36 @@ public:
   };
 
   enum {
-    RuleScript = 0, RuleAsGeneric = 1, RuleSimpleTypeSpecifierList = 2, 
-    RuleBooleanLiteral = 3, RulePrimaryExpression = 4, RuleIdExpression = 5, 
-    RuleUnqualifiedId = 6, RuleQualifiedId = 7, RuleNestedNameSpecifier = 8, 
-    RuleLambdaExpression = 9, RuleLambdaIntroducer = 10, RuleLambdaCapture = 11, 
-    RuleCaptureDefault = 12, RuleCaptureList = 13, RuleCapture = 14, RuleSimpleCapture = 15, 
-    RuleInitcapture = 16, RuleLambdaDeclarator = 17, RulePostfixExpression = 18, 
-    RuleExpressionList = 19, RulePseudoDestructorName = 20, RuleUnaryExpression = 21, 
-    RuleUnaryOperator = 22, RuleNewPlacement = 23, RuleNewInitializer_ = 24, 
-    RuleCastExpression = 25, RuleMultiplicativeExpression = 26, RuleAdditiveExpression = 27, 
-    RuleShiftExpression = 28, RuleShiftOperator = 29, RuleRelationalExpression = 30, 
-    RuleEqualityExpression = 31, RuleAndExpression = 32, RuleExclusiveOrExpression = 33, 
-    RuleInclusiveOrExpression = 34, RuleLogicalAndExpression = 35, RuleLogicalOrExpression = 36, 
-    RuleConditionalExpression = 37, RuleAssignmentExpression = 38, RuleAssignmentOperator = 39, 
-    RuleExpression = 40, RuleConstantExpression = 41, RuleStatement = 42, 
-    RuleLabeledStatement = 43, RuleExpressionStatement = 44, RuleCompoundStatement = 45, 
-    RuleStatementSeq = 46, RuleSelectionStatement = 47, RuleCondition = 48, 
-    RuleIterationStatement = 49, RuleForInitStatement = 50, RuleForRangeDeclaration = 51, 
-    RuleForRangeInitializer = 52, RuleJumpStatement = 53, RuleDeclarationseq = 54, 
-    RuleDeclaration = 55, RuleAliasDeclaration = 56, RuleSimpleDeclaration = 57, 
-    RuleEmptyDeclaration_ = 58, RuleDeclSpecifier = 59, RuleDeclSpecifierSeq = 60, 
-    RuleTypedefName = 61, RuleTypeSpecifier = 62, RuleTrailingTypeSpecifier = 63, 
-    RuleTypeSpecifierSeq = 64, RuleTrailingTypeSpecifierSeq = 65, RuleSimpleTypeSpecifier = 66, 
-    RuleTheTypeName = 67, RuleDecltypeSpecifier = 68, RuleNamespaceName = 69, 
-    RuleQualifiednamespacespecifier = 70, RuleBalancedTokenSeq = 71, RuleBalancedtoken = 72, 
-    RuleInitDeclaratorList = 73, RuleInitDeclarator = 74, RuleDeclarator = 75, 
-    RuleDeclaratorDef = 76, RuleParametersAndQualifiers = 77, RuleRefqualifier = 78, 
-    RuleDeclaratorid = 79, RuleTheTypeId = 80, RuleParameterDeclarationClause = 81, 
-    RuleParameterDeclarationList = 82, RuleParameterDeclaration = 83, RuleInitializer = 84, 
-    RuleBraceOrEqualInitializer = 85, RuleInitializerClause = 86, RuleInitializerList = 87, 
-    RuleBracedInitList = 88, RuleTheOperator = 89, RuleLiteral = 90
+    RuleScript = 0, RuleScriptItem = 1, RuleAsGeneric = 2, RuleSimpleTypeSpecifierList = 3, 
+    RuleBooleanLiteral = 4, RulePrimaryExpression = 5, RuleIdExpression = 6, 
+    RuleUnqualifiedId = 7, RuleQualifiedId = 8, RuleNestedNameSpecifier = 9, 
+    RuleLambdaExpression = 10, RuleLambdaIntroducer = 11, RuleLambdaCapture = 12, 
+    RuleCaptureDefault = 13, RuleCaptureList = 14, RuleCapture = 15, RuleSimpleCapture = 16, 
+    RuleInitcapture = 17, RuleLambdaDeclarator = 18, RulePostfixExpression = 19, 
+    RuleExpressionList = 20, RulePseudoDestructorName = 21, RuleUnaryExpression = 22, 
+    RuleUnaryOperator = 23, RuleNewPlacement = 24, RuleNewInitializer_ = 25, 
+    RuleCastExpression = 26, RuleMultiplicativeExpression = 27, RuleAdditiveExpression = 28, 
+    RuleShiftExpression = 29, RuleShiftOperator = 30, RuleRelationalExpression = 31, 
+    RuleEqualityExpression = 32, RuleAndExpression = 33, RuleExclusiveOrExpression = 34, 
+    RuleInclusiveOrExpression = 35, RuleLogicalAndExpression = 36, RuleLogicalOrExpression = 37, 
+    RuleConditionalExpression = 38, RuleAssignmentExpression = 39, RuleAssignmentOperator = 40, 
+    RuleExpression = 41, RuleConstantExpression = 42, RuleStatement = 43, 
+    RuleLabeledStatement = 44, RuleExpressionStatement = 45, RuleCompoundStatement = 46, 
+    RuleStatementSeq = 47, RuleSelectionStatement = 48, RuleCondition = 49, 
+    RuleIterationStatement = 50, RuleForInitStatement = 51, RuleForRangeDeclaration = 52, 
+    RuleForRangeInitializer = 53, RuleJumpStatement = 54, RuleDeclarationseq = 55, 
+    RuleDeclaration = 56, RuleAliasDeclaration = 57, RuleSimpleDeclaration = 58, 
+    RuleEmptyDeclaration_ = 59, RuleDeclSpecifier = 60, RuleDeclSpecifierSeq = 61, 
+    RuleTypedefName = 62, RuleTypeSpecifier = 63, RuleTrailingTypeSpecifier = 64, 
+    RuleTypeSpecifierSeq = 65, RuleTrailingTypeSpecifierSeq = 66, RuleSimpleTypeSpecifier = 67, 
+    RuleTheTypeName = 68, RuleDecltypeSpecifier = 69, RuleNamespaceName = 70, 
+    RuleQualifiednamespacespecifier = 71, RuleBalancedTokenSeq = 72, RuleBalancedtoken = 73, 
+    RuleInitDeclaratorList = 74, RuleInitDeclarator = 75, RuleDeclarator = 76, 
+    RuleDeclaratorDef = 77, RuleParametersAndQualifiers = 78, RuleRefqualifier = 79, 
+    RuleDeclaratorid = 80, RuleTheTypeId = 81, RuleParameterDeclarationClause = 82, 
+    RuleParameterDeclarationList = 83, RuleParameterDeclaration = 84, RuleInitializer = 85, 
+    RuleBraceOrEqualInitializer = 86, RuleInitializerClause = 87, RuleInitializerList = 88, 
+    RuleBracedInitList = 89, RuleTheOperator = 90, RuleLiteral = 91
   };
 
   explicit AngelscriptConsoleParser(antlr4::TokenStream *input);
@@ -84,6 +84,7 @@ public:
 
 
   class ScriptContext;
+  class ScriptItemContext;
   class AsGenericContext;
   class SimpleTypeSpecifierListContext;
   class BooleanLiteralContext;
@@ -180,8 +181,8 @@ public:
     ScriptContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *EOF();
-    ExpressionStatementContext *expressionStatement();
-    StatementSeqContext *statementSeq();
+    std::vector<ScriptItemContext *> scriptItem();
+    ScriptItemContext* scriptItem(size_t i);
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
@@ -189,6 +190,22 @@ public:
   };
 
   ScriptContext* script();
+
+  class  ScriptItemContext : public antlr4::ParserRuleContext {
+  public:
+    ScriptItemContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    DeclSpecifierSeqContext *declSpecifierSeq();
+    InitDeclaratorListContext *initDeclaratorList();
+    antlr4::tree::TerminalNode *Semi();
+    StatementContext *statement();
+
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  ScriptItemContext* scriptItem();
 
   class  AsGenericContext : public antlr4::ParserRuleContext {
   public:
@@ -879,6 +896,7 @@ public:
     StatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     LabeledStatementContext *labeledStatement();
+    DeclarationContext *declaration();
     ExpressionStatementContext *expressionStatement();
     CompoundStatementContext *compoundStatement();
     SelectionStatementContext *selectionStatement();
@@ -1066,8 +1084,6 @@ public:
     antlr4::tree::TerminalNode *Break();
     antlr4::tree::TerminalNode *Continue();
     antlr4::tree::TerminalNode *Return();
-    ExpressionContext *expression();
-    BracedInitListContext *bracedInitList();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
@@ -1124,8 +1140,8 @@ public:
   public:
     SimpleDeclarationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *Semi();
     DeclSpecifierSeqContext *declSpecifierSeq();
+    antlr4::tree::TerminalNode *Semi();
     InitDeclaratorListContext *initDeclaratorList();
     AssignmentExpressionContext *assignmentExpression();
 

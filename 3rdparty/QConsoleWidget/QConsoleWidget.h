@@ -92,8 +92,9 @@ protected:
     bool canPaste() const;
     bool canCut() const;
 
-    virtual void handleReturnKey();
-    virtual void handleTabKey();
+    virtual void handleReturnKey(Qt::KeyboardModifiers mod);
+    virtual void handleTabKey(Qt::KeyboardModifiers mod);
+
     // reimp QPlainTextEdit functions
     void keyPressEvent(QKeyEvent *e) override;
     void contextMenuEvent(QContextMenuEvent *event) override;

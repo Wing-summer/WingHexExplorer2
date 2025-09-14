@@ -15,35 +15,34 @@
 ** =============================================================================
 */
 
-#include "asbuilder.h"
+#ifndef ANGELSCRIPTCONSOLEVISITOR_H
+#define ANGELSCRIPTCONSOLEVISITOR_H
 
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#include <QObject>
+#include "grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h"
 
-asBuilder::asBuilder(asIScriptEngine *engine) : AsPreprocesser(engine) {}
+#include <QByteArray>
+#include <QByteArrayList>
 
-int asBuilder::build(asIScriptModule *module) {
-    Q_ASSERT(module);
-    if (module == nullptr) {
-        return -1;
-    }
+class AngelScriptConsoleVisitor : public AngelscriptConsoleParserBaseVisitor {
+public:
+    AngelScriptConsoleVisitor(antlr4::CommonTokenStream &codes);
 
-    module->ResetGlobalVars();
+public:
+    std::any visitScript(AngelscriptConsoleParser::ScriptContext *context);
 
-    auto sc = scriptData();
-    for (auto &&[section, data] : sc.asKeyValueRange()) {
-        auto script = data.script.toUtf8();
-        module->AddScriptSection(section.toUtf8(), script.data(),
-                                 script.size());
-    }
+    QByteArrayList declCode() const;
 
-    int r = module->Build();
-    if (r < 0)
-        return r;
+    QByteArray execCode() const;
 
-    module->SetDefaultNamespace("");
+private:
+    QByteArray getSrcCode(antlr4::ParserRuleContext *content);
+    QByteArray getSrcCode(antlr4::Token *start, antlr4::Token *end);
 
-    return 0;
-}
+private:
+    QByteArrayList _declCode;
+    QByteArray _execCode;
+
+    antlr4::CommonTokenStream &_codes;
+};
+
+#endif // ANGELSCRIPTCONSOLEVISITOR_H

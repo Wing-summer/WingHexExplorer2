@@ -21,6 +21,8 @@ public:
    */
     virtual std::any visitScript(AngelscriptConsoleParser::ScriptContext *context) = 0;
 
+    virtual std::any visitScriptItem(AngelscriptConsoleParser::ScriptItemContext *context) = 0;
+
     virtual std::any visitAsGeneric(AngelscriptConsoleParser::AsGenericContext *context) = 0;
 
     virtual std::any visitSimpleTypeSpecifierList(AngelscriptConsoleParser::SimpleTypeSpecifierListContext *context) = 0;

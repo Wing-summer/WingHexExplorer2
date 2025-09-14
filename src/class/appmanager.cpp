@@ -98,7 +98,8 @@ AppManager::AppManager(int &argc, char *argv[])
     auto cmdlist = CommandHistoryManager::load();
     auto &his = QConsoleWidget::history();
     for (auto &cmd : cmdlist) {
-        his.add(cmd);
+        static QRegularExpression ex(QStringLiteral("[\\r\\n]"));
+        his.add(cmd.remove(ex));
     }
 
     _timer.start();
