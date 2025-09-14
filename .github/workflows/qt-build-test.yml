@@ -1,6 +1,7 @@
 name: CMake build check
 permissions:
   contents: read
+  security-events: write
 
 on:
   push:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      matrix: 
+      matrix:
         os: [windows-latest, ubuntu-latest]
         arch: [win64_msvc2022_64, linux_gcc_64]
         exclude:
@@ -32,6 +33,12 @@ jobs:
       with:
         submodules: 'recursive'
         token: ${{ secrets.CONTRIBUTORS_TOKEN }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: cpp
+
     - name: Install Qt
       # Installs the Qt SDK
       uses: jurplel/install-qt-action@v4
@@ -50,10 +57,12 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}      
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
 
     - uses: actions/upload-artifact@v4
       with:
         name: WingHexExplorer2-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}-${{ matrix.qt_version }}-build-cache
         path: ${{github.workspace}}/build
-    
