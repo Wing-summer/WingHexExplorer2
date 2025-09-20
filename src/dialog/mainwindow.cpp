@@ -133,7 +133,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
 
-        _status = new ScrollableLabel(m_status);
+        _status = new QLabel(m_status);
         m_status->addPermanentWidget(_status);
 
         auto separator = new QFrame(m_status);
@@ -539,6 +539,11 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     // build up basic docking widgets
     auto bottomLeftArea =
         buildUpFindResultDock(m_dock, ads::BottomDockWidgetArea);
+    bottomLeftArea = buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea,
+                                           bottomLeftArea);
+    bottomLeftArea =
+        buildUpUndoStackDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
+    buildUpLogDock(m_dock, ads::CenterDockWidgetArea, bottomLeftArea);
 
     auto splitter =
         ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
@@ -548,7 +553,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     }
 
     auto rightArea =
-        buildUpLogDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
+        buildUpNumberShowDock(m_dock, ads::RightDockWidgetArea, editorViewArea);
 
     splitter = ads::internal::findParent<ads::CDockSplitter *>(editorViewArea);
     if (splitter) {
@@ -558,11 +563,9 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
 
     m_rightViewArea = rightArea;
 
-    buildUpNumberShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpHexBookMarkDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpHexMetaDataDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
-    buildUpUndoStackDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     ads::CDockAreaWidget *bottomRightArea;
     if (SettingManager::instance().scriptEnabled()) {
@@ -570,11 +573,6 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
         buildUpScriptBgOutputDock(m_dock, ads::CenterDockWidgetArea,
                                   bottomRightArea);
-        buildUpHashResultDock(m_dock, ads::CenterDockWidgetArea,
-                              bottomRightArea);
-    } else {
-        bottomRightArea = buildUpHashResultDock(
-            m_dock, ads::RightDockWidgetArea, bottomLeftArea);
     }
 
     m_bottomViewArea = bottomRightArea;
@@ -1046,11 +1044,6 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
 
     connect(m_scriptConsole, &ScriptingConsole::consoleCommand, this,
             [this] { showStatus({}); });
-    connect(m_scriptConsole, &ScriptingConsole::onFunctionTip, this,
-            [this](const QString &content) {
-                showStatus(QStringLiteral("<b><font color=\"gold\">") +
-                           content + QStringLiteral("</font></b>"));
-            });
     connect(m_scriptConsole, &ScriptingConsole::abortEvaluation, this,
             [this]() {
                 auto &sm = ScriptMachine::instance();

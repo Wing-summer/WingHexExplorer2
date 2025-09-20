@@ -48,8 +48,9 @@ public:
     virtual RegisteredEvents registeredEvents() const override;
     virtual QList<WingHex::SettingPage *>
     registeredSettingPages() const override;
-    virtual bool eventOnScriptPragma(const QString &script,
-                                     const QStringList &comments) override;
+    virtual std::optional<WingHex::PragmaResult>
+    eventOnScriptPragma(const QString &script,
+                        const QStringList &comments) override;
     virtual void eventOnScriptPragmaInit() override;
 
     // IWingPluginCoreBase interface

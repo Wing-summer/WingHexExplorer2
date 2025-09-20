@@ -20,7 +20,6 @@
 
 #include "control/asobjtreewidget.h"
 #include "control/scriptingconsole.h"
-#include "control/scrollablelabel.h"
 #include "dialog/settingdialog.h"
 #include "framelessmainwindow.h"
 
@@ -28,11 +27,11 @@
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "Qt-Advanced-Docking-System/src/DockManager.h"
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "WingCodeEdit/wingsquiggleinfomodel.h"
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
 #include "model/dbgcallstackmodel.h"
 #include "model/dbgvarshowmodel.h"
-#include "squiggleinformationmodel.h"
 #include "utilities.h"
 
 #include <QKeySequence>
@@ -283,8 +282,9 @@ private:
     QByteArray _defaultLayout;
     QByteArray _savedLayout;
 
+    ads::CDockWidget *m_outConsole = nullptr;
     ScriptEditor *m_curEditor = nullptr;
-    SquiggleInformationModel *_squinfoModel = nullptr;
+    WingSquiggleInfoModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
 
     QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
@@ -310,7 +310,7 @@ private:
 
     ScriptEditor *_DebugingEditor;
 
-    ScrollableLabel *_status = nullptr;
+    QLabel *_status = nullptr;
 };
 
 #endif // SCRIPTINGDIALOG_H

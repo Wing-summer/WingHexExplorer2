@@ -40,8 +40,6 @@ public:
 
 signals:
     void onToggleMark(int line);
-    void onFunctionTip(const QString &tip);
-
     void need2Reload();
 
 public slots:
@@ -57,6 +55,8 @@ public slots:
 
 private slots:
     void processContentsChange();
+
+    void onFunctionTip(const QString &tip);
 
 private:
     void processTitle();

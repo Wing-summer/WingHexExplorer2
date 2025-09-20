@@ -60,15 +60,18 @@ QList<WingHex::SettingPage *> WingCStruct::registeredSettingPages() const {
     return _setpgs;
 }
 
-bool WingCStruct::eventOnScriptPragma(const QString &script,
-                                      const QStringList &comments) {
+std::optional<WingHex::PragmaResult>
+WingCStruct::eventOnScriptPragma(const QString &script,
+                                 const QStringList &comments) {
     // #pragma WingCStruct Arch [32 | 64]
     // #pragma WingCStruct Env reset
     // #pragma WingCStruct Pak [1-8]
     // #pragma WingCStruct Inc [fileName]
     // #pragma WingCStruct Long [ LLP64 | LP64 ]
     if (comments.size() != 2) {
-        return false;
+        WingHex::PragmaResult r;
+        r.error.append(QStringLiteral("Excessive count of parameters"));
+        return r;
     }
 
     auto cmd = comments.at(0);
@@ -76,57 +79,88 @@ bool WingCStruct::eventOnScriptPragma(const QString &script,
     if (cmd == QStringLiteral("Arch")) {
         if (param == QStringLiteral("32")) {
             _parser->setPointerMode(PointerMode::X86);
-            return true;
+            return {};
         } else if (param == QStringLiteral("64")) {
             _parser->setPointerMode(PointerMode::X64);
-            return true;
+            return {};
+        } else {
+            WingHex::PragmaResult r;
+            r.error.append(
+                QStringLiteral("Unsupported '%1' with 'Arch'").arg(param));
+            return r;
         }
     } else if (cmd == QStringLiteral("Env")) {
         if (param == QStringLiteral("reset")) {
             reset();
-            return true;
+            return {};
+        } else {
+            WingHex::PragmaResult r;
+            r.error.append(
+                QStringLiteral("Unsupported '%1' with 'Env'").arg(param));
+            return r;
         }
     } else if (cmd == QStringLiteral("Pak")) {
-        if (param.length() == 1) {
-            auto num = param.at(0).toLatin1();
-            // TODO modify pak
-            if (num >= '0' && num <= '9') {
-                _parser->setPadAlignment(num - '0');
-                return true;
-            }
+        bool ok;
+        auto num = param.toInt(&ok, 0);
+        if (_parser->setPadAlignment(num)) {
+            return {};
+        } else {
+            WingHex::PragmaResult r;
+            r.error.append(
+                QStringLiteral("Unsupported padding '%1' with 'Pak'").arg(num));
+            return r;
         }
     } else if (cmd == QStringLiteral("Inc")) {
-        if (param.startsWith("\"")) {
-            if (param.endsWith("\"")) {
-                param = param.mid(1, param.length() - 2);
-            } else {
-                return false;
-            }
-        } else if (param.startsWith('\'')) {
-            if (param.endsWith("\'")) {
-                param = param.mid(1, param.length() - 2);
-            } else {
-                return false;
-            }
+        if ((param.startsWith("\"") && param.endsWith("\"")) ||
+            (param.startsWith('\'') && param.endsWith("\'"))) {
+            param = param.mid(1, param.length() - 2);
+        } else {
+            WingHex::PragmaResult r;
+            r.error.append(QStringLiteral("Invalid syntax with 'Inc'"));
+            return r;
         }
+
         QFileInfo finc(param);
         if (finc.isAbsolute()) {
-            return parse(param);
+            if (parse(param)) {
+                return {};
+            } else {
+                WingHex::PragmaResult r;
+                r.error.append(
+                    QStringLiteral("Error parsing '%1' with 'Inc'").arg(param));
+                return r;
+            }
         } else {
             QFileInfo finfo(script);
-            return parse(finfo.absoluteDir().filePath(param));
+            auto path = finfo.absoluteDir().filePath(param);
+            if (parse(path)) {
+                return {};
+            } else {
+                WingHex::PragmaResult r;
+                r.error.append(
+                    QStringLiteral("Error parsing '%1' with 'Inc'").arg(path));
+                return r;
+            }
         }
     } else if (cmd == QStringLiteral("Long")) {
         if (param == QStringLiteral("LLP64")) {
             _parser->setLongmode(LongMode::LLP64);
-            return true;
+            return {};
         } else if (param == QStringLiteral("LP64")) {
             _parser->setLongmode(LongMode::LP64);
-            return true;
+            return {};
+        } else {
+            WingHex::PragmaResult r;
+            r.error.append(
+                QStringLiteral("Unsupported '%1' with 'Long'").arg(param));
+            return r;
         }
+    } else {
+        WingHex::PragmaResult r;
+        r.error.append(QStringLiteral("Unsupported pragma command: %1")
+                           .arg(comments.join(' ')));
+        return r;
     }
-
-    return false;
 }
 
 void WingCStruct::eventOnScriptPragmaInit() { reset(); }
@@ -499,6 +533,8 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
                 // TODO
                 retry = true;
             } break;
+            case CTypeParser::CType::Pointer:
+                break;
             }
         } while (retry);
     }

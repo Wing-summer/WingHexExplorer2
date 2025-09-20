@@ -3010,8 +3010,7 @@ int PluginSystem::openWorkSpace(const QObject *sender,
     }
     auto ret = _win->openWorkSpace(filename, &view);
     if (view) {
-        if (ret == ErrFile::AlreadyOpened &&
-            checkPluginHasAlreadyOpened(plg, view)) {
+        if (ret == ErrFile::AlreadyOpened) {
             return ErrFile::AlreadyOpened;
         }
         auto id = assginHandleForOpenPluginView(plg, view);
@@ -3114,8 +3113,7 @@ int PluginSystem::openExtFile(const QObject *sender, const QString &ext,
     }
     auto ret = _win->openExtFile(ext, file, &view);
     if (view) {
-        if (ret == ErrFile::AlreadyOpened &&
-            checkPluginHasAlreadyOpened(plg, view)) {
+        if (ret == ErrFile::AlreadyOpened) {
             return ErrFile::AlreadyOpened;
         }
         auto id = assginHandleForOpenPluginView(plg, view);
@@ -3151,8 +3149,7 @@ int PluginSystem::openFile(const QObject *sender, const QString &filename) {
     }
     auto ret = _win->openFile(filename, &view);
     if (view) {
-        if (ret == ErrFile::AlreadyOpened &&
-            checkPluginHasAlreadyOpened(plg, view)) {
+        if (ret == ErrFile::AlreadyOpened) {
             return ErrFile::AlreadyOpened;
         }
         auto id = assginHandleForOpenPluginView(plg, view);
@@ -3740,22 +3737,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         }
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::ScriptPragma: {
-        Q_ASSERT(params.size() == 3);
-        auto section = params.at(0).toString();
-        auto plgID = params.at(1).toString();
-        auto &es = _evplgs[event];
-        auto r = std::find_if(
-            es.constBegin(), es.constEnd(),
-            [plgID](IWingPlugin *p) { return getPUID(p) == plgID; });
-        if (r == es.constEnd()) {
-            return false;
-        }
-        auto plg = *r;
-        if (!_pragmaedPlg.contains(plg)) {
-            plg->eventOnScriptPragmaInit();
-            _pragmaedPlg.append(plg);
-        }
-        return plg->eventOnScriptPragma(section, params.at(2).toStringList());
+        Q_ASSERT(false);
+        // should not go there, call processScriptPragma instead
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::ScriptPragmaInit: {
         Q_ASSERT(false);
@@ -3810,6 +3793,28 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         return false;
     }
     return true;
+}
+
+std::optional<PragmaResult>
+PluginSystem::processPragma(const QString &section, const QString &plgId,
+                            const QStringList &params) {
+
+    auto &es = _evplgs[WingHex::IWingPlugin::RegisteredEvent::ScriptPragma];
+    auto r =
+        std::find_if(es.constBegin(), es.constEnd(),
+                     [plgId](IWingPlugin *p) { return getPUID(p) == plgId; });
+    if (r == es.constEnd()) {
+        PragmaResult res;
+        res.error.append(QStringLiteral("Unknown pragma command %1 with %2")
+                             .arg(params.join(' '), plgId));
+        return res;
+    }
+    auto plg = *r;
+    if (!_pragmaedPlg.contains(plg)) {
+        plg->eventOnScriptPragmaInit();
+        _pragmaedPlg.append(plg);
+    }
+    return plg->eventOnScriptPragma(section, params);
 }
 
 IWingDevice *PluginSystem::ext2Device(const QString &ext) {

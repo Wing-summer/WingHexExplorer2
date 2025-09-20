@@ -165,6 +165,10 @@ public:
     bool dispatchEvent(IWingPlugin::RegisteredEvent event,
                        const QVariantList &params);
 
+    std::optional<WingHex::PragmaResult>
+    processPragma(const QString &section, const QString &plgId,
+                  const QStringList &params);
+
     IWingDevice *ext2Device(const QString &ext);
 
     QStringList scriptMarcos() const;

@@ -16,9 +16,13 @@
 */
 
 #include "aspreprocesser.h"
+#include "class/angelscriptconsolevisitor.h"
 #include "class/languagemanager.h"
 #include "class/skinmanager.h"
+#include "grammar/ASConsole/AngelscriptConsoleLexer.h"
+#include "grammar/ASConsole/AngelscriptConsoleParser.h"
 #include "scriptmachine.h"
+#include "structlib/cstructerrorlistener.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -31,10 +35,10 @@
 Q_GLOBAL_STATIC_WITH_ARGS(
     QByteArrayList, DEFAULT_MARCO,
     ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
-      "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__WING_FILE__",
-      "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__", "__WING_REGEX__",
-      "__WING_DICTIONARY__", "__WING_PRINT_VAR__", "__WING_PRINT_LN__",
-      "__WING_CLIPBOARD__"}));
+      "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__AS_FILE__",
+      "__AS_FILESYSTEM__", "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__",
+      "__WING_REGEX__", "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
+      "__WING_PRINT_LN__", "__WING_CLIPBOARD__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -76,7 +80,7 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
                         QString::number(ANGELSCRIPT_VERSION % 100));
         addInfos.insert(QStringLiteral("__WINGHEX_APPNAME__"),
                         "\"" APP_NAME "\"");
-        addInfos.insert(QString("__WINGHEX_AUTHOR__"), "\"wingsummer\"");
+        addInfos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), "\"wingsummer\"");
         ver = QLibraryInfo::version();
         addInfos.insert(QStringLiteral("__QT_VERSION__"),
                         ver.toString().prepend('"').append('"'));
@@ -114,6 +118,9 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                    const QString &sourceName,
                                    const QString &currentDir, QString &outText,
                                    Mapping &outMap) {
+    ScriptMachine::instance().beginEvaluateDefine();
+    QScopeGuard guard([] { ScriptMachine::instance().endEvaluateDefine(); });
+
     const char *data = buf.constData();
     auto n = buf.size();
     qint64 idx = 0;
@@ -243,7 +250,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         }
         visited.append(name);
         QString val = m_runtimeMacros.value(name);
-        SourcePos defPos = SourcePos{"<host>", 1, 1};
+        SourcePos defPos = SourcePos{{}, 1, 1};
         // empty value => treat as "no-value" macro: remove identifier (i.e.
         // emit nothing)
         if (val.isEmpty()) {
@@ -313,7 +320,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
     // handle directive line (a whole line that starts with #)
     auto handleDirective = [&](const QByteArray &dirBytes, qint64 dStartLine,
-                               qint64 dStartCol) {
+                               qint64 dStartCol) -> void {
         QString s = QString::fromUtf8(dirBytes);
         while (!s.isEmpty() && (s.endsWith('\n') || s.endsWith('\r')))
             s.chop(1);
@@ -338,14 +345,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
         if (kw == "define" || kw == "undef") {
             // Always forbidden in script
-            PreprocError e{PreprocErrorCode::ERR_SOURCE_DEFINE_FORBIDDEN,
-                           Severity::Error,
-                           m_currentSource,
-                           dStartLine,
-                           dStartCol,
-                           QString("#%1 in source is forbidden; macros must be "
-                                   "injected by host")
-                               .arg(kw)};
+            PreprocError e{
+                PreprocErrorCode::ERR_SOURCE_DEFINE_FORBIDDEN,
+                Severity::Error,
+                m_currentSource,
+                dStartLine,
+                dStartCol,
+                QStringLiteral("#%1 in source is forbidden.").arg(kw)};
             errorReport(e);
             emitBlankLine();
             return;
@@ -353,8 +359,41 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
         if (kw == "pragma") {
             if (pragmaCallback) {
-                pragmaCallback(args, this, m_currentSource);
+                auto r = pragmaCallback(args, this, m_currentSource);
+                if (r) {
+                    auto c = r->info;
+                    if (!c.isEmpty()) {
+                        PreprocError e{PreprocErrorCode::ERR_SUCCESS,
+                                       Severity::Info,
+                                       m_currentSource,
+                                       dStartLine,
+                                       dStartCol,
+                                       c};
+                        errorReport(e);
+                    }
+                    c = r->warn;
+                    if (!c.isEmpty()) {
+                        PreprocError e{PreprocErrorCode::ERR_SUCCESS,
+                                       Severity::Info,
+                                       m_currentSource,
+                                       dStartLine,
+                                       dStartCol,
+                                       c};
+                        errorReport(e);
+                    }
+                    c = r->error;
+                    if (!c.isEmpty()) {
+                        PreprocError e{PreprocErrorCode::ERR_ERROR,
+                                       Severity::Error,
+                                       m_currentSource,
+                                       dStartLine,
+                                       dStartCol,
+                                       c};
+                        errorReport(e);
+                    }
+                }
             }
+            emitBlankLine();
             return;
         }
 
@@ -364,14 +403,15 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             bool isAngled = false;
             if (!parseIncludePathToken(args, incPath, isAngled)) {
                 // bad include syntax -> report error and emit blank line
-                PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               QStringLiteral("Bad #include syntax: %1")
-                                   .arg(args.trimmed()),
-                               "Use #include \"file\" or #include <file>"};
+                PreprocError e{
+                    PreprocErrorCode::ERR_IF_PARSE,
+                    Severity::Error,
+                    m_currentSource,
+                    dStartLine,
+                    dStartCol,
+                    QStringLiteral("Bad #include syntax: %1, Use #include "
+                                   "\"file\" or #include <file>")
+                        .arg(args.trimmed())};
                 errorReport(e);
                 emitBlankLine();
                 return;
@@ -395,17 +435,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                     m_currentSource,
                     dStartLine,
                     dStartCol,
-                    QStringLiteral("Included file not found: %1").arg(incPath),
-                    "Check include paths or filename"};
+                    QStringLiteral("Included file not found: %1").arg(incPath)};
                 errorReport(e);
                 // preserve one blank line so row count moves on (or choose to
                 // preserve file lines if you prefer)
                 emitBlankLine();
                 return;
             }
-
-            loadSectionFromFile(resolved);
-            return;
         }
 
         if (kw == "if") {
@@ -413,7 +449,12 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                                      dStartLine, dStartCol);
             auto er = evalExpression(expanded, m_currentSource, dStartLine,
                                      dStartCol);
-            bool val = er ? er.value() : false;
+            bool val;
+            if (er) {
+                val = er.value();
+            } else {
+                return;
+            }
             bool parent =
                 condStack.isEmpty() ? true : condStack.last().currentTaking;
             CondState cs;
@@ -429,12 +470,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             QByteArray ba = args.toUtf8();
             QString name = parseFirstIdentifierInBA(ba);
             if (name.isEmpty()) {
-                PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               "bad #ifdef usage: missing identifier"};
+                PreprocError e{
+                    PreprocErrorCode::ERR_IF_PARSE,
+                    Severity::Error,
+                    m_currentSource,
+                    dStartLine,
+                    dStartCol,
+                    QStringLiteral("bad #ifdef usage: missing identifier")};
                 errorReport(e);
                 CondState cs;
                 cs.parentTaking =
@@ -442,6 +484,8 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 cs.currentTaking = false;
                 cs.anyBranchTaken = false;
                 condStack.append(cs);
+                emitBlankLine();
+                return;
             } else {
                 bool take = m_runtimeMacros.contains(name);
                 bool parent =
@@ -460,13 +504,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             QByteArray ba = args.toUtf8();
             QString name = parseFirstIdentifierInBA(ba);
             if (name.isEmpty()) {
-                PreprocError e{PreprocErrorCode::ERR_IF_PARSE,
-                               Severity::Error,
-                               m_currentSource,
-                               dStartLine,
-                               dStartCol,
-                               "bad #ifndef usage: missing identifier",
-                               ""};
+                PreprocError e{
+                    PreprocErrorCode::ERR_IF_PARSE,
+                    Severity::Error,
+                    m_currentSource,
+                    dStartLine,
+                    dStartCol,
+                    QStringLiteral("bad #ifndef usage: missing identifier")};
                 errorReport(e);
                 CondState cs;
                 cs.parentTaking =
@@ -495,8 +539,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                m_currentSource,
                                dStartLine,
                                dStartCol,
-                               "#elif without matching #if",
-                               ""};
+                               QStringLiteral("#elif without matching #if")};
                 errorReport(e);
                 emitBlankLine();
                 return;
@@ -508,7 +551,12 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                                      dStartLine, dStartCol);
             auto er = evalExpression(expanded, m_currentSource, dStartLine,
                                      dStartCol);
-            bool val = er ? er.value() : false;
+            bool val;
+            if (er) {
+                val = er.value();
+            } else {
+                return;
+            }
             bool current = parent && (!prevAny) && val;
             top.currentTaking = current;
             top.anyBranchTaken = prevAny || current;
@@ -523,8 +571,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                m_currentSource,
                                dStartLine,
                                dStartCol,
-                               "#else without matching #if",
-                               ""};
+                               QStringLiteral("#else without matching #if")};
                 errorReport(e);
                 emitBlankLine();
                 return;
@@ -546,8 +593,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                m_currentSource,
                                dStartLine,
                                dStartCol,
-                               "#endif without matching #if",
-                               ""};
+                               QStringLiteral("#endif without matching #if")};
                 errorReport(e);
                 emitBlankLine();
                 return;
@@ -559,7 +605,6 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
         // unknown directive: remove line (preserve blank)
         emitBlankLine();
-        return;
     }; // end handleDirective
 
     m_currentSource = sourceName;
@@ -571,7 +616,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         if (tokenLen == 0)
             tokenLen = 1;
         const char *tokStart = data + idx;
-        int tlen = (int)tokenLen;
+        auto tlen = tokenLen;
 
         bool isDirective = (tokClass == asTC_UNKNOWN && tlen > 0 &&
                             tokStart[0] == '#' && !lineHasSignificantToken);
@@ -579,18 +624,18 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         bool taking = !inCond || condStack.last().currentTaking;
 
         if (isDirective) {
-            int j = idx;
+            qint64 j = idx;
             QByteArray dir;
-            int dStartLine = srcLine, dStartCol = srcCol;
+            qint64 dStartLine = srcLine, dStartCol = srcCol;
             // read whole directive line (handle backslash continuation)
             while (j < n) {
-                int k = j;
+                qint64 k = j;
                 while (k < n && data[k] != '\n')
                     k++;
                 dir.append(data + j, k - j);
                 bool cont = false;
                 if (k - j > 0) {
-                    int m = k - 1;
+                    qint64 m = k - 1;
                     while (m >= j && (data[m] == ' ' || data[m] == '\t' ||
                                       data[m] == '\r'))
                         m--;
@@ -604,7 +649,8 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                     break;
             }
             handleDirective(dir, dStartLine, dStartCol);
-            for (int p = 0; p < dir.size(); ++p) {
+
+            for (qsizetype p = 0; p < dir.size(); ++p) {
                 char c = dir[p];
                 if (c == '\n') {
                     ++srcLine;
@@ -619,7 +665,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
         if (!taking) {
             // skip tokens in inactive branch, but still update srcLine/srcCol
-            for (int i = 0; i < tlen; ++i) {
+            for (qsizetype i = 0; i < tlen; ++i) {
                 char c = tokStart[i];
                 if (c == '\n') {
                     curOutLine.clear();
@@ -637,7 +683,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
         // active branch: emit tokens, expanding macros and builtins
         if (tokClass == asTC_WHITESPACE) {
-            for (int i = 0; i < tlen; ++i) {
+            for (qsizetype i = 0; i < tlen; ++i) {
                 char c = tokStart[i];
                 if (c == '\n') {
                     flushCurrLine();
@@ -666,7 +712,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             continue;
         }
         if (tokClass == asTC_IDENTIFIER || tokClass == asTC_KEYWORD) {
-            QString ident = QString::fromUtf8(tokStart, tlen);
+            auto ident = QString::fromUtf8(tokStart, tlen);
             // builtin macros first
             if (m_builtinMacros.contains(ident)) {
                 SourcePos sp{sourceName, srcLine, srcCol};
@@ -714,13 +760,13 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
     } // main loop
 
     if (!condStack.isEmpty()) {
-        PreprocError e{PreprocErrorCode::ERR_ENDIF_MISSING,
-                       Severity::Error,
-                       m_currentSource,
-                       srcLine,
-                       srcCol,
-                       "Unterminated conditional block: missing #endif",
-                       ""};
+        PreprocError e{
+            PreprocErrorCode::ERR_ENDIF_MISSING,
+            Severity::Error,
+            m_currentSource,
+            srcLine,
+            srcCol,
+            QStringLiteral("Unterminated conditional block: missing #endif")};
         errorReport(e);
     }
     if (!curOutLine.isEmpty() || !curSegments.isEmpty())
@@ -812,7 +858,43 @@ QString AsPreprocesser::expandExpressionForIf(const QString &expr,
 std::optional<bool> AsPreprocesser::evalExpression(const QString &expr,
                                                    const QString &file,
                                                    qint64 line, qint64 col) {
-    // TODO check grammar
+    // check grammar
+    auto ccode = expr.toUtf8();
+    antlr4::ANTLRInputStream input(ccode.constData(), ccode.length());
+    AngelscriptConsoleLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+
+    // reuse the listener, ha!
+    CStructErrorListener lis([line, col](const MsgInfo &info) {
+        ScriptMachine::MessageInfo inf;
+        // only scripting canbe used with eval #if expression
+        inf.mode = ScriptMachine::Scripting;
+        inf.row = line;
+        inf.col = col;
+        inf.message = info.info;
+        switch (info.type) {
+        case MsgType::Error:
+            inf.type = ScriptMachine::MessageType::Error;
+            break;
+        case MsgType::Warn:
+            inf.type = ScriptMachine::MessageType::Warn;
+            break;
+        }
+        ScriptMachine::instance().outputMessage(inf);
+    });
+
+    AngelscriptConsoleParser parser(&tokens);
+    parser.removeErrorListeners();
+    parser.addErrorListener(&lis);
+    parser.setBuildParseTree(false);
+    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+
+    AngelScriptConsoleVisitor visitor(tokens);
+    try {
+        visitor.visit(parser.logicalOrExpression());
+    } catch (...) {
+        return false;
+    }
 
     // eval
     auto r = ScriptMachine::instance().evaluateDefine(expr);
@@ -855,7 +937,7 @@ int AsPreprocesser::loadSectionFromFile(const QString &filename) {
             return 1;
     }
 
-    return 0;
+    return errOccurred ? -1 : 0;
 }
 
 QHash<QString, AsPreprocesser::Result> AsPreprocesser::scriptData() const {
@@ -916,8 +998,10 @@ bool AsPreprocesser::includeIfNotAlreadyIncluded(const QString &filename) {
 
 void AsPreprocesser::errorReport(const PreprocError &error) {
     if (errorHandler) {
+        if (error.severity == Severity::Error) {
+            errOccurred = true;
+        }
         errorHandler(error);
-        errOccurred = true;
     }
 }
 

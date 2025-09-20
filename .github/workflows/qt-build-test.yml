@@ -92,6 +92,7 @@ jobs:
             -3rdparty/fmt/**
             -3rdparty/Qt-Advanced-Docking-System/**
             -3rdparty/qwindowkit/**
+            -build/**
           input: codeql-results/cpp.sarif
           output: codeql-results/cpp.sarif
 

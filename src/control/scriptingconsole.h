@@ -34,9 +34,6 @@ public:
 
     QString currentCodes() const;
 
-signals:
-    void onFunctionTip(const QString &tip);
-
 public:
     QString getInput();
 
@@ -57,6 +54,8 @@ public slots:
 
 private slots:
     void applyScriptSettings();
+
+    void onFunctionTip(const QString &tip);
 
 private:
     void runConsoleCommand(const QString &code);

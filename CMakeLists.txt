@@ -145,7 +145,13 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/serializer/serializer.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/serializer/serializer.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h)
+    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h
+    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.cpp
+    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.h
+    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.cpp
+    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.h
+    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.cpp
+    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.h)
 
 add_subdirectory(3rdparty/qtsingleapplication)
 add_subdirectory(3rdparty/fmt)
@@ -270,9 +276,7 @@ set(CONTROL_SRC
     src/control/gotolinewidget.h
     src/control/gotolinewidget.cpp
     src/control/codeeditcontrolwidget.h
-    src/control/codeeditcontrolwidget.cpp
-    src/control/scrollablelabel.h
-    src/control/scrollablelabel.cpp)
+    src/control/codeeditcontrolwidget.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -422,8 +426,6 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptcolor.cpp
     src/scriptaddon/scriptjson.h
     src/scriptaddon/scriptjson.cpp
-    src/scriptaddon/scriptfile.cpp
-    src/scriptaddon/scriptfile.h
     src/scriptaddon/scriptenv.h
     src/scriptaddon/scriptenv.cpp)
 

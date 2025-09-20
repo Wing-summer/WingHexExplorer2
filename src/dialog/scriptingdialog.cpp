@@ -71,7 +71,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     layout->addWidget(m_dock, 1);
 
     m_status = new QStatusBar(this);
-    _status = new ScrollableLabel(this);
+    _status = new QLabel(this);
     m_status->addPermanentWidget(_status);
     layout->addWidget(m_status);
     buildUpContent(cw);
@@ -590,6 +590,7 @@ ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
     m_consoleout->setIsTerminal(false);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
                               tr("ConsoleOutput"), m_consoleout);
+    m_outConsole = dw;
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -623,7 +624,7 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
                                     ads::DockWidgetArea area,
                                     ads::CDockAreaWidget *areaw) {
     auto dview = new QListView(this);
-    _squinfoModel = new SquiggleInformationModel(this);
+    _squinfoModel = new WingSquiggleInfoModel(this);
     dview->setModel(_squinfoModel);
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
                               tr("Diagnosis"), dview);
@@ -815,11 +816,6 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         Q_ASSERT(editor);
         toggleBreakPoint(editor, lineIndex);
     });
-    connect(editor, &ScriptEditor::onFunctionTip, this,
-            [this](const QString &message) {
-                _status->setText(QStringLiteral("<b><font color=\"gold\">") +
-                                 message + QStringLiteral("</font></b>"));
-            });
 
     connect(editor, &ScriptEditor::need2Reload, this, [editor, this]() {
         auto e = editor->editor();
@@ -1438,6 +1434,7 @@ void ScriptingDialog::on_runscript() {
         ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
                                                 editor->fileName());
         editor->setReadOnly(false);
+        m_outConsole->raise();
         updateRunDebugMode();
     }
 }
@@ -1450,6 +1447,7 @@ void ScriptingDialog::on_rundbgscript() {
                                      tr("CannotSave2RunScript"));
             return;
         }
+        m_outConsole->raise();
         startDebugScript(editor);
     }
 }

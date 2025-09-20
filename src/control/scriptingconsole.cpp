@@ -57,20 +57,21 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     if (code.isEmpty()) {
         if (mod.testFlags(Qt::ControlModifier | Qt::AltModifier)) {
             // pop up a coding dialog
-            FramelessDialogBase edialog;
+            auto edialog = new FramelessDialogBase;
+            edialog->setAttribute(Qt::WA_DeleteOnClose);
 
-            auto editor = new CodeEdit(&edialog);
+            auto editor = new CodeEdit(edialog);
             editor->setSyntax(
                 CodeEdit::syntaxRepo().definitionForName("AngelScript"));
 
             auto filter = new EventFilter(QEvent::KeyRelease, editor);
             connect(filter, &EventFilter::eventTriggered, this,
-                    [&edialog](QObject *, QEvent *event) {
+                    [edialog](QObject *, QEvent *event) {
                         auto e = reinterpret_cast<QKeyEvent *>(event);
                         if (e->modifiers() == Qt::ControlModifier &&
                             (e->key() == Qt::Key_Enter ||
                              e->key() == Qt::Key_Return)) {
-                            edialog.accept();
+                            edialog->accept();
                         }
                     });
             editor->installEventFilter(filter);
@@ -80,11 +81,11 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
             // connect(cm, &AsCompletion::onFunctionTip, this,
             //         &ScriptEditor::onFunctionTip);
 
-            edialog.buildUpContent(editor);
-            edialog.setWindowTitle(tr("ConsoleMutiLine"));
-            edialog.setMinimumSize(400, 450);
+            edialog->buildUpContent(editor);
+            edialog->setWindowTitle(tr("ConsoleMutiLine"));
+            edialog->setMinimumSize(400, 450);
 
-            auto ret = edialog.exec();
+            auto ret = edialog->exec();
             if (ret) {
                 code = editor->toPlainText();
                 auto lines = code.split('\n');
@@ -287,6 +288,10 @@ void ScriptingConsole::applyScriptSettings() {
     this->setMatchBraces(set.consoleMatchBraces());
     this->setShowWhitespace(set.consoleShowWhiteSpace());
     this->setAutoCloseChar(set.consoleAutoCloseChar());
+}
+
+void ScriptingConsole::onFunctionTip(const QString &tip) {
+    // TODO
 }
 
 void ScriptingConsole::runConsoleCommand(const QString &code) {

@@ -17,6 +17,7 @@
 
 #include "scriptmachine.h"
 
+#include "AngelScript/sdk/add_on/scriptfile/scriptfilesystem.h"
 #include "grammar/ASConsole/AngelscriptConsoleLexer.h"
 #include "grammar/ASConsole/AngelscriptConsoleParser.h"
 
@@ -24,9 +25,11 @@
 #include "structlib/cstructerrorlistener.h"
 
 #include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
+#include "AngelScript/sdk/add_on/datetime/datetime.h"
 #include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/sdk/add_on/scriptdictionary/scriptdictionary.h"
+#include "AngelScript/sdk/add_on/scriptfile/scriptfile.h"
 #include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/sdk/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/sdk/add_on/scripthelper/scripthelper.h"
@@ -45,7 +48,6 @@
 #include "define.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptenv.h"
-#include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
@@ -704,27 +706,30 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     return r >= 0;
 }
 
-QVariant ScriptMachine::evaluateDefine(const QString &code) {
-    QByteArray name =
-        QByteArrayLiteral("WINGDEF") +
-        QByteArray::number(AppManager::instance()->currentMSecsSinceEpoch());
+bool ScriptMachine::beginEvaluateDefine() {
+    Q_ASSERT(_eMod == nullptr);
+    if (_eMod) {
+        return false;
+    } else {
+        _eMod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
+        _eMod->SetAccessMask(0x2);
+        return true;
+    }
+}
 
-    auto mod = _engine->GetModule(name.data(), asGM_ALWAYS_CREATE);
-    mod->SetAccessMask(0x2);
+QVariant ScriptMachine::evaluateDefine(const QString &code) {
+    Q_ASSERT(_eMod);
+    if (!_eMod) {
+        return {};
+    }
 
     asIScriptFunction *func = nullptr;
-    QScopeGuard guard([mod]() {
-        // Before leaving, allow the engine to clean up remaining objects by
-        // discarding the module and doing a full garbage collection so that
-        // this can also be debugged if desired
-        mod->Discard();
-    });
 
     auto ccode = code;
-    ccode.prepend("any f(){ return (").append(");}");
+    ccode.prepend("any f(){any ret;ret.store(").append(");return ret;}");
     // start to compile
 
-    auto cr = mod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
+    auto cr = _eMod->CompileFunction(nullptr, ccode.toUtf8(), 0, 0, &func);
     if (cr < 0) {
         return {};
     }
@@ -741,8 +746,8 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
     asPWORD isDbg = 0;
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-    mod->SetUserData(reinterpret_cast<void *>(isDbg),
-                     AsUserDataType::UserData_isDbg);
+    _eMod->SetUserData(reinterpret_cast<void *>(isDbg),
+                       AsUserDataType::UserData_isDbg);
     ctx->SetUserData(0, AsUserDataType::UserData_ContextMode);
 
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
@@ -820,7 +825,6 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
         default:
             break;
         }
-        ret->Release();
     }
 
     func->Release();
@@ -830,6 +834,13 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
     _engine->GarbageCollect();
 
     return result;
+}
+
+void ScriptMachine::endEvaluateDefine() {
+    if (_eMod) {
+        _eMod->Discard();
+        _eMod = nullptr;
+    }
 }
 
 void ScriptMachine::abortDbgScript() {
@@ -1007,15 +1018,15 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
     }
 }
 
-int ScriptMachine::pragmaCallback(const QString &pragmaText,
-                                  AsPreprocesser *builder,
-                                  const QString &sectionname) {
+std::optional<PragmaResult>
+ScriptMachine::pragmaCallback(const QString &pragmaText,
+                              AsPreprocesser *builder,
+                              const QString &sectionname) {
     asIScriptEngine *engine = builder->getEngine();
 
     // Filter the pragmaText so only what is of interest remains
     // With this the user can add comments and use different whitespaces
     // without affecting the result
-
     asUINT pos = 0;
     asUINT length = 0;
     QStringList tokens;
@@ -1029,19 +1040,12 @@ int ScriptMachine::pragmaCallback(const QString &pragmaText,
             tokens << QString::fromUtf8(token);
         }
         if (tokenClass == asTC_UNKNOWN)
-            return -1;
+            return {};
         pos += length;
     }
 
     auto pn = tokens.takeFirst();
-    if (PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::ScriptPragma,
-            {sectionname, pn, tokens})) {
-        return 0;
-    }
-
-    // The #pragma directive was not accepted
-    return -1;
+    return PluginSystem::instance().processPragma(sectionname, pn, tokens);
 }
 
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
@@ -1062,9 +1066,11 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterColor(engine);
     RegisterQJson(engine);
     RegisterEnv(engine);
+    RegisterScriptFile(engine);
+    RegisterScriptDateTime(engine);
+    RegisterScriptFileSystem(engine);
 
     engine->SetDefaultAccessMask(0x1);
-    RegisterScriptFile(engine);
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
     registerEngineClipboard(engine);

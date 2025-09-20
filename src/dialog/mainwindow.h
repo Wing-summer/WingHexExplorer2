@@ -482,7 +482,7 @@ signals:
 private:
     Ribbon *m_ribbon = nullptr;
     ads::CDockManager *m_dock = nullptr;
-    ScrollableLabel *_status = nullptr;
+    QLabel *_status = nullptr;
 
     QString m_encoding;
 

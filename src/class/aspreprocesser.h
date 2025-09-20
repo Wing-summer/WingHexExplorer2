@@ -18,6 +18,7 @@
 #ifndef ASPREPROCESSER_H
 #define ASPREPROCESSER_H
 
+#include "WingPlugin/wingplugin_global.h"
 #include "angelscript.h"
 
 #include <QApplication>
@@ -43,12 +44,14 @@ public:
 
     enum class PreprocErrorCode {
         ERR_SUCCESS,
+        ERR_ERROR,
         ERR_SOURCE_DEFINE_FORBIDDEN,
         ERR_ELIF_ELSE_WITHOUT_IF,
         ERR_ENDIF_MISSING,
         ERR_IF_PARSE,
         ERR_MACRO_EXPR_RECURSION,
-        ERR_INCLUDE_NOT_FOUND
+        ERR_INCLUDE_NOT_FOUND,
+        ERR_MARCO_ERROR
     };
 
     struct PreprocError {
@@ -58,16 +61,15 @@ public:
         qint64 line;
         qint64 column;
         QString message;
-        QString suggestion;
     };
 
     using CErrorCallback = std::function<void(
         const QString &file, qint64 line, qint64 column, PreprocErrorCode code,
-        Severity severity, const QString &message, const QString &suggestion)>;
+        Severity severity, const QString &message)>;
 
-    using CPragamaCallback =
-        std::function<void(const QString &pragmaText, AsPreprocesser *builder,
-                           const QString &sectionname)>;
+    using CPragamaCallback = std::function<std::optional<WingHex::PragmaResult>(
+        const QString &pragmaText, AsPreprocesser *builder,
+        const QString &sectionname)>;
 
     struct SourcePos {
         QString file;

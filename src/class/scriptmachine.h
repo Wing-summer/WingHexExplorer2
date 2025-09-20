@@ -156,7 +156,9 @@ public slots:
     bool executeScript(ScriptMachine::ConsoleMode mode, const QString &script,
                        bool isInDebug = false, int *retCode = nullptr);
 
+    bool beginEvaluateDefine();
     QVariant evaluateDefine(const QString &code);
+    void endEvaluateDefine();
 
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
@@ -194,9 +196,9 @@ private:
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 
-    static int pragmaCallback(const QString &pragmaText,
-                              AsPreprocesser *builder,
-                              const QString &sectionname);
+    static std::optional<WingHex::PragmaResult>
+    pragmaCallback(const QString &pragmaText, AsPreprocesser *builder,
+                   const QString &sectionname);
 
     void exceptionCallback(asIScriptContext *context);
 
@@ -207,6 +209,7 @@ private:
     asIScriptEngine *_engine = nullptr;
     asDebugger *_debugger = nullptr;
     CContextMgr *_ctxMgr = nullptr;
+    asIScriptModule *_eMod = nullptr;
 
     QQueue<asIScriptContext *> _ctxPool;
 

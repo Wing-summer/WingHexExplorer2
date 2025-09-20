@@ -182,6 +182,10 @@ void ScriptEditor::processContentsChange() {
     }
 }
 
+void ScriptEditor::onFunctionTip(const QString &tip) {
+    // TODO
+}
+
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
     this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());
