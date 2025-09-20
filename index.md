@@ -26,11 +26,6 @@ header:
 ❤️ 许可证：**AGPL-3.0** ❤️
 {: .text-center}
 
-<video width="100%" controls>
-  <source src="{{"/assets/WingHexExplorer2-decl.mp4" | relative_url }}" type="video/mp4">
-您的浏览器不支持 video 标签。
-</video>
-
 该软件经过长时间的迭代，目前成为了一个高自定义性、功能强大的十六进制编辑器。它具有以下功能特点：
 
 - 基础的十六进制编辑查看编辑功能
