@@ -539,7 +539,15 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
     if (globals->expanded)
         return;
 
-    auto main = ctx->GetFunction(0)->GetModule();
+    auto fn = ctx->GetFunction(0);
+    if (fn == nullptr) {
+        return;
+    }
+
+    auto main = fn->GetModule();
+    if (main == nullptr) {
+        return;
+    }
 
     for (asUINT n = 0; n < main->GetGlobalVarCount(); n++) {
         const char *name;
@@ -1073,16 +1081,14 @@ std::string asIDBFileWorkspace::SectionSource(const std::string_view v) const {
 }
 
 void asIDBFileWorkspace::CompileScriptSources() {
-    for (auto &engine : engines) {
-        for (size_t i = 0; i < engine->GetModuleCount(); i++) {
-            auto module = engine->GetModuleByIndex(i);
+    for (size_t i = 0; i < engine->GetModuleCount(); i++) {
+        auto module = engine->GetModuleByIndex(i);
 
-            for (size_t f = 0; f < module->GetFunctionCount(); f++) {
-                const char *section;
-                module->GetFunctionByIndex(f)->GetDeclaredAt(&section, nullptr,
-                                                             nullptr);
-                AddSection(section);
-            }
+        for (size_t f = 0; f < module->GetFunctionCount(); f++) {
+            const char *section;
+            module->GetFunctionByIndex(f)->GetDeclaredAt(&section, nullptr,
+                                                         nullptr);
+            AddSection(section);
         }
     }
 }
@@ -1100,27 +1106,25 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
         }
     };
 
-    for (auto &engine : engines) {
-        for (size_t i = 0; i < engine->GetModuleCount(); i++) {
-            asIScriptModule *module = engine->GetModuleByIndex(i);
+    for (size_t i = 0; i < engine->GetModuleCount(); i++) {
+        asIScriptModule *module = engine->GetModuleByIndex(i);
 
-            for (size_t f = 0; f < module->GetFunctionCount(); f++)
-                addFunctionBreakpointLocations(module->GetFunctionByIndex(f));
+        for (size_t f = 0; f < module->GetFunctionCount(); f++)
+            addFunctionBreakpointLocations(module->GetFunctionByIndex(f));
 
-            for (size_t t = 0; t < module->GetObjectTypeCount(); t++) {
-                asITypeInfo *type = module->GetObjectTypeByIndex(t);
+        for (size_t t = 0; t < module->GetObjectTypeCount(); t++) {
+            asITypeInfo *type = module->GetObjectTypeByIndex(t);
 
-                for (size_t m = 0; m < type->GetMethodCount(); m++)
-                    addFunctionBreakpointLocations(
-                        type->GetMethodByIndex(m, false));
+            for (size_t m = 0; m < type->GetMethodCount(); m++)
+                addFunctionBreakpointLocations(
+                    type->GetMethodByIndex(m, false));
 
-                for (size_t m = 0; m < type->GetBehaviourCount(); m++)
-                    addFunctionBreakpointLocations(
-                        type->GetBehaviourByIndex(m, nullptr));
+            for (size_t m = 0; m < type->GetBehaviourCount(); m++)
+                addFunctionBreakpointLocations(
+                    type->GetBehaviourByIndex(m, nullptr));
 
-                for (size_t m = 0; m < type->GetFactoryCount(); m++)
-                    addFunctionBreakpointLocations(type->GetFactoryByIndex(m));
-            }
+            for (size_t m = 0; m < type->GetFactoryCount(); m++)
+                addFunctionBreakpointLocations(type->GetFactoryByIndex(m));
         }
     }
 }
@@ -1129,6 +1133,22 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
                                             asIDBDebugger *debugger) {
     if (debugger->internal_execution)
         return;
+
+    if (debugger->onLineCallBack) {
+        auto r = debugger->onLineCallBack(ctx);
+        if (!r) {
+            // cancelled
+            return;
+        }
+    }
+
+    const char *section = nullptr;
+    int col;
+    int row = ctx->GetLineNumber(0, &col, &section);
+
+    if (debugger->onLineCallBackExec) {
+        debugger->onLineCallBackExec(row, col, section);
+    }
 
     // we might not have an action - functions called from within
     // the debugger will never have this set.
@@ -1159,19 +1179,47 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
     // breakpoint can be hit by multiple things on the same
     // line.
     bool break_from_bp = false;
-    const char *section = nullptr;
-    int col;
-    int row = ctx->GetLineNumber(0, &col, &section);
 
     if (section) {
         std::scoped_lock lock(debugger->mutex);
 
         if (auto entries = debugger->breakpoints.find(section);
             entries != debugger->breakpoints.end()) {
-            for (auto &lines : entries->second) {
-                if (row == lines.line) {
-                    if (!lines.column.has_value() ||
-                        lines.column.value() == col) {
+            // Did we move into a new function?
+            asIScriptFunction *func = ctx->GetFunction();
+
+            if (debugger->_lastFunction != func) {
+                // Check if any breakpoints need adjusting
+                for (auto &bp : entries->second) {
+                    // We need to check for a breakpoint at entering the
+                    // function
+
+                    // Check if a given breakpoint fall on a line with code or
+                    // else adjust it to the next line
+                    if (bp.needAdjust) {
+                        int line = func->FindNextLineWithCode(bp.line);
+                        if (line >= 0) {
+                            bp.needAdjust = false;
+                            if (line != bp.line) {
+                                // Moving break point to next line with code
+                                auto old = bp.line;
+                                // Move the breakpoint to the next line
+                                bp.line = line;
+
+                                if (debugger->onAdjustBreakPoint) {
+                                    debugger->onAdjustBreakPoint(old, line,
+                                                                 section);
+                                }
+                            }
+                        }
+                    }
+                }
+                debugger->_lastFunction = func;
+            }
+
+            for (auto &bp : entries->second) {
+                if (row == bp.line) {
+                    if (!bp.column.has_value() || bp.column.value() == col) {
                         break_from_bp = true;
                         break;
                     }
@@ -1205,10 +1253,17 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
 }
 
 void asIDBDebugger::HookContext(asIScriptContext *ctx, bool has_work) {
+    if (ctx == nullptr) {
+        return;
+    }
+
+    if (!cache) {
+        cache = CreateCache(ctx);
+    }
+
     // TODO: is this safe to be called even if
     // the context is being switched?
-    if (ctx->GetState() != asEXECUTION_EXCEPTION &&
-        workspace->engines.find(ctx->GetEngine()) != workspace->engines.end()) {
+    if (ctx->GetState() != asEXECUTION_EXCEPTION) {
         if (has_work)
             ctx->SetLineCallback(asFUNCTION(asIDBDebugger::LineCallback), this,
                                  asCALL_CDECL);
@@ -1218,12 +1273,12 @@ void asIDBDebugger::HookContext(asIScriptContext *ctx, bool has_work) {
 }
 
 void asIDBDebugger::DebugBreak(asIScriptContext *ctx) {
-    if (workspace->engines.find(ctx->GetEngine()) == workspace->engines.end())
+    if (ctx->GetEngine() != workspace->engine)
         return;
 
     {
         std::scoped_lock lock(mutex);
-        action = asIDBAction::None;
+        action = asIDBAction::Pause;
         std::unique_ptr<asIDBCache> new_cache = CreateCache(ctx);
 
         if (cache)
@@ -1232,7 +1287,13 @@ void asIDBDebugger::DebugBreak(asIScriptContext *ctx) {
         std::swap(cache, new_cache);
     }
 
+    if (onDebugBreak) {
+        onDebugBreak();
+    }
+
+    // rehook
     HookContext(ctx, true);
+
     Suspend();
 }
 
@@ -1258,32 +1319,11 @@ void asIDBDebugger::SetAction(asIDBAction new_action) {
 
     if (new_action != asIDBAction::Continue) {
         std::scoped_lock lock(mutex);
-        action = new_action;
 
         if (cache)
             stack_size = cache->ctx->GetCallstackSize();
     }
+    action = new_action;
 
     Resume();
-}
-
-bool asIDBDebugger::ToggleBreakpoint(std::string_view section, int line) {
-    auto it = breakpoints.find(section);
-
-    if (it == breakpoints.end())
-        it = breakpoints.emplace(section, asIDBSectionBreakpoints{}).first;
-
-    for (auto lit = it->second.begin(); lit != it->second.end(); lit++) {
-        if (lit->line == line) {
-            it->second.erase(lit);
-
-            if (it->second.empty())
-                breakpoints.erase(it);
-
-            return false;
-        }
-    }
-
-    it->second.push_back({line});
-    return true;
 }

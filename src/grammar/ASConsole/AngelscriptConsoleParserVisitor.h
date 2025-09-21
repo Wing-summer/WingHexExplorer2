@@ -147,6 +147,8 @@ public:
 
     virtual std::any visitTypeSpecifier(AngelscriptConsoleParser::TypeSpecifierContext *context) = 0;
 
+    virtual std::any visitArraySpecifier(AngelscriptConsoleParser::ArraySpecifierContext *context) = 0;
+
     virtual std::any visitTrailingTypeSpecifier(AngelscriptConsoleParser::TrailingTypeSpecifierContext *context) = 0;
 
     virtual std::any visitTypeSpecifierSeq(AngelscriptConsoleParser::TypeSpecifierSeqContext *context) = 0;

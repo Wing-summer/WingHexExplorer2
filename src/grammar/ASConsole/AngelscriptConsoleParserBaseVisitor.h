@@ -271,6 +271,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitArraySpecifier(AngelscriptConsoleParser::ArraySpecifierContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitTrailingTypeSpecifier(AngelscriptConsoleParser::TrailingTypeSpecifierContext *ctx) override {
     return visitChildren(ctx);
   }

@@ -17,11 +17,28 @@
 
 #include "dbgvarshowmodel.h"
 
-DbgVarShowModel::DbgVarShowModel(QObject *parent)
-    : QAbstractTableModel(parent) {}
+DbgVarShowModel::DbgVarShowModel(bool isGlobal, QObject *parent)
+    : QAbstractTableModel(parent), _isGlobal(isGlobal) {}
 
 int DbgVarShowModel::rowCount(const QModelIndex &parent) const {
-    return _vars.size();
+    if (_debugger) {
+        if (_debugger->cache) {
+            if (_isGlobal) {
+                _debugger->cache->CacheGlobals();
+                return _debugger->cache->globals->namedProps.size();
+            } else {
+                auto &cs = _debugger->cache->call_stack;
+                if (!cs.empty()) {
+                    _debugger->cache->CacheCallstack();
+                    auto l = _debugger->cache->call_stack.at(0).scope.locals;
+                    if (l) {
+                        return l->namedProps.size();
+                    }
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 int DbgVarShowModel::columnCount(const QModelIndex &parent) const { return 2; }
@@ -31,12 +48,32 @@ QVariant DbgVarShowModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
         auto r = index.row();
-        auto d = _vars.at(r);
-        switch (index.column()) {
-        case 0: // name
-            return d.name;
-        case 1: // value
-            return d.value;
+        if (_isGlobal) {
+            auto d =
+                *std::next(_debugger->cache->globals->namedProps.begin(), r);
+            d->Evaluate();
+            switch (index.column()) {
+            case 0: // name
+                return QString::fromStdString(d->identifier.Combine());
+            case 1: // value
+                return QString::fromStdString(d->value);
+            }
+        } else {
+            auto &cs = _debugger->cache->call_stack;
+            if (!cs.empty()) {
+                _debugger->cache->CacheCallstack();
+                auto l = _debugger->cache->call_stack.at(0).scope.locals;
+                if (l) {
+                    auto d = *std::next(l->namedProps.begin(), r);
+                    d->Evaluate();
+                    switch (index.column()) {
+                    case 0: // name
+                        return QString::fromStdString(d->identifier.Combine());
+                    case 1: // value
+                        return QString::fromStdString(d->value);
+                    }
+                }
+            }
         }
     }
     case Qt::TextAlignmentRole:
@@ -62,8 +99,14 @@ QVariant DbgVarShowModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-void DbgVarShowModel::updateData(
-    const QVector<asDebugger::VariablesInfo> &varinfos) {
-    _vars = varinfos;
-    Q_EMIT layoutChanged();
+void DbgVarShowModel::attachDebugger(asDebugger *debugger) {
+    if (_debugger != debugger) {
+        if (_debugger) {
+            _debugger->disconnect(this, nullptr);
+        }
+        _debugger = debugger;
+        connect(_debugger, &asDebugger::onPullVariables, this,
+                [this]() { Q_EMIT layoutChanged(); });
+        Q_EMIT layoutChanged();
+    }
 }

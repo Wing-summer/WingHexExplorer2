@@ -25,7 +25,7 @@
 class DbgVarShowModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    explicit DbgVarShowModel(QObject *parent = nullptr);
+    explicit DbgVarShowModel(bool isGlobal, QObject *parent = nullptr);
 
     // QAbstractItemModel interface
 public:
@@ -36,10 +36,11 @@ public:
                                 int role) const override;
 
 public slots:
-    void updateData(const QVector<asDebugger::VariablesInfo> &varinfos);
+    void attachDebugger(asDebugger *debugger);
 
 private:
-    QVector<asDebugger::VariablesInfo> _vars;
+    asDebugger *_debugger = nullptr;
+    bool _isGlobal;
 };
 
 #endif // DBGVARSHOWMODEL_H

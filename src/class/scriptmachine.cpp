@@ -26,7 +26,6 @@
 
 #include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 #include "AngelScript/sdk/add_on/datetime/datetime.h"
-#include "AngelScript/sdk/add_on/scriptany/scriptany.h"
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "AngelScript/sdk/add_on/scriptdictionary/scriptdictionary.h"
 #include "AngelScript/sdk/add_on/scriptfile/scriptfile.h"
@@ -37,8 +36,8 @@
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
+#include "scriptaddon/scriptany.h"
 
-#include "angelobjstring.h"
 #include "class/angelscriptconsolevisitor.h"
 #include "class/appmanager.h"
 #include "class/asbuilder.h"
@@ -141,10 +140,9 @@ bool ScriptMachine::init() {
         return false;
     }
 
-    // Let the debugger hold an engine pointer that can be used by the
-    // callbacks
-    _debugger->setEngine(_engine);
-
+    // create the debugger
+    _workspace = new asIDBFileWorkspace("", _engine);
+    _debugger = new asDebugger(_workspace);
     return true;
 }
 
@@ -194,41 +192,11 @@ bool ScriptMachine::configureEngine() {
         return false;
     }
 
-    _engine->SetContextUserDataCleanupCallback(
-        &ScriptMachine::cleanUpDbgContext,
-        AsUserDataType::UserData_ContextDbgInfo);
-
     _engine->SetFunctionUserDataCleanupCallback(
         &ScriptMachine::cleanUpPluginSysIDFunction,
         AsUserDataType::UserData_PluginFn);
 
     registerEngineAddon(_engine);
-
-    _rtypes.resize(RegisteredType::tMAXCOUNT);
-    _rtypes[RegisteredType::tString] =
-        q_check_ptr(_engine->GetTypeInfoByName("string"));
-    _rtypes[RegisteredType::tChar] =
-        q_check_ptr(_engine->GetTypeInfoByName("char"));
-    _rtypes[RegisteredType::tArray] =
-        q_check_ptr(_engine->GetTypeInfoByName("array"));
-    _rtypes[RegisteredType::tComplex] =
-        q_check_ptr(_engine->GetTypeInfoByName("complex"));
-    _rtypes[RegisteredType::tWeakref] =
-        q_check_ptr(_engine->GetTypeInfoByName("weakref"));
-    _rtypes[RegisteredType::tConstWeakref] =
-        q_check_ptr(_engine->GetTypeInfoByName("const_weakref"));
-    _rtypes[RegisteredType::tAny] =
-        q_check_ptr(_engine->GetTypeInfoByName("any"));
-    _rtypes[RegisteredType::tDictionary] =
-        q_check_ptr(_engine->GetTypeInfoByName("dictionary"));
-    _rtypes[RegisteredType::tDictionaryValue] =
-        q_check_ptr(_engine->GetTypeInfoByName("dictionaryValue"));
-    _rtypes[RegisteredType::tGrid] =
-        q_check_ptr(_engine->GetTypeInfoByName("grid"));
-    _rtypes[RegisteredType::tRef] =
-        q_check_ptr(_engine->GetTypeInfoByName("ref"));
-    _rtypes[RegisteredType::tColor] =
-        q_check_ptr(_engine->GetTypeInfoByName("color"));
 
     _engine->SetDefaultAccessMask(0x1);
 
@@ -296,21 +264,6 @@ bool ScriptMachine::configureEngine() {
         return false;
     }
 
-    _debugger = new asDebugger(this);
-
-    // Register the to-string callbacks so the user can see
-    // the contents of strings
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tString],
-                                        &AngelObjString::stringToString);
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tChar],
-                                        &AngelObjString::charToString);
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tArray],
-                                        &AngelObjString::arrayToString);
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tDictionary],
-                                        &AngelObjString::dictionaryToString);
-    _debugger->registerToStringCallback(_rtypes[RegisteredType::tColor],
-                                        &AngelObjString::colorToString);
-
     PluginSystem::instance().angelApi()->installAPI(this);
 
     // create module for Console
@@ -343,7 +296,9 @@ void ScriptMachine::destoryMachine() {
     _ctxMgr->AbortAll();
     delete _ctxMgr;
 
-    _debugger->setEngine(nullptr);
+    delete _debugger;
+    delete _workspace;
+
     _engine->ShutDownAndRelease();
     _engine = nullptr;
 }
@@ -371,6 +326,24 @@ void ScriptMachine::exceptionCallback(asIScriptContext *context) {
     }
 }
 
+void ScriptMachine::attachDebugBreak(asIScriptContext *ctx) {
+    if (!ctx)
+        ctx = asGetActiveContext();
+
+    checkDebugger(ctx);
+
+    if (_debugger)
+        _debugger->DebugBreak(ctx);
+}
+
+void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
+    if (_debugger == nullptr) {
+        return;
+    }
+    // hook the context
+    _debugger->HookContext(ctx, _debugger->HasWork());
+}
+
 void ScriptMachine::print(asIScriptGeneric *args) {
     auto context = asGetActiveContext();
     if (context) {
@@ -386,11 +359,7 @@ void ScriptMachine::print(asIScriptGeneric *args) {
         for (int i = 0; i < args->GetArgCount(); ++i) {
             void *ref = args->GetArgAddress(i);
             int typeId = args->GetArgTypeId(i);
-
-            if (typeId) {
-                info.message.append(
-                    m.debugger()->toString(ref, typeId, m.engine()));
-            }
+            info.message.append(m.stringify(ref, typeId));
         }
 
         m.outputMessage(info);
@@ -414,9 +383,7 @@ void ScriptMachine::println(asIScriptGeneric *args) {
             int typeId = args->GetArgTypeId(i);
 
             if (typeId) {
-                info.message
-                    .append(m.debugger()->toString(ref, typeId, m.engine()))
-                    .append('\n');
+                info.message.append(m.stringify(ref, typeId)).append('\n');
             }
         }
 
@@ -443,12 +410,6 @@ void ScriptMachine::outputMessage(const MessageInfo &info) {
     if (cbs.printMsgFn) {
         cbs.printMsgFn(info);
     }
-}
-
-bool ScriptMachine::isType(asITypeInfo *tinfo, RegisteredType type) {
-    Q_ASSERT(type < RegisteredType::tMAXCOUNT);
-    auto t = _rtypes.at(type);
-    return tinfo->DerivesFrom(t) || tinfo->Implements(t);
 }
 
 int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
@@ -479,7 +440,45 @@ QString ScriptMachine::beautify(const QString &str, uint indent) {
 }
 
 QString ScriptMachine::stringify(void *ref, int typeId) {
-    return _debugger->toString(ref, typeId, _engine);
+    if (_debugger && typeId) {
+        auto var = std::make_shared<asIDBVariable>(*_debugger);
+        var->ptr = var;
+        var->address.typeId = typeId;
+        var->address.address = ref;
+        return stringify_helper(var);
+    }
+    return {};
+}
+
+QString
+ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
+    Q_ASSERT(var);
+    var->Evaluate();
+    if (var->evaluated) {
+        if (var->expandable) {
+            var->Expand();
+            if (var->expanded) {
+                QStringList r;
+                for (auto &item : var->indexedProps) {
+                    auto istr = stringify_helper(item);
+                    r.append(istr.prepend(QStringLiteral(" = "))
+                                 .prepend(item->identifier.Combine()));
+                }
+                for (auto &item : var->namedProps) {
+                    auto istr = stringify_helper(item);
+                    r.append(istr.prepend(QStringLiteral(" = "))
+                                 .prepend(item->identifier.Combine()));
+                }
+                return r.join(QStringLiteral(", ")).prepend('{').append('}');
+            } else {
+                return QStringLiteral("<expand-failed>");
+            }
+        } else {
+            return QString::fromStdString(var->value);
+        }
+    } else {
+        return QStringLiteral("<eval-failed>");
+    }
 }
 
 bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
@@ -512,7 +511,6 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     if (mode == Scripting) {
         if (isInDebug) {
             isDbg = 1;
-            _debugger->resetState();
         }
     }
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, isDbg == 0);
@@ -695,7 +693,7 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     _engine->GarbageCollect();
 
     if (isDbg) {
-        _debugger->clearBreakPoint();
+        _debugger->reset();
         Q_EMIT onDebugFinished();
     }
 
@@ -844,8 +842,9 @@ void ScriptMachine::endEvaluateDefine() {
 }
 
 void ScriptMachine::abortDbgScript() {
-    if (_debugger->getEngine()) {
-        _debugger->runDebugAction(asDebugger::ABORT);
+    if (_debugger) {
+        abortScript(ConsoleMode::Scripting);
+        _debugger->Resume();
     }
 }
 
@@ -887,23 +886,10 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     ins->outputMessage(info);
 }
 
-void ScriptMachine::cleanUpDbgContext(asIScriptContext *context) {
-    auto dbgContext =
-        context->GetUserData(AsUserDataType::UserData_ContextDbgInfo);
-    asDebugger::deleteDbgContextInfo(dbgContext);
-}
-
 void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *) {
     // do nothing
     // UserData_API is readonly and it will delete later by its allocator
     // UserData_PluginFn is just an id, not a valid pointer to data
-}
-
-asITypeInfo *ScriptMachine::typeInfo(RegisteredType type) const {
-    if (type < RegisteredType::tMAXCOUNT && type >= 0) {
-        return _rtypes.at(type);
-    }
-    return nullptr;
 }
 
 ScriptMachine &ScriptMachine::instance() {
@@ -987,12 +973,8 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
         ctx = engine->CreateContext();
     }
 
-    // Attach the debugger if needed
-    if (ctx && p->_debugger->getEngine()) {
-        // Set the line callback for the debugging
-        ctx->SetLineCallback(asMETHOD(asDebugger, lineCallback), p->_debugger,
-                             asCALL_THISCALL);
-    }
+    // Attach the debugger
+    p->checkDebugger(ctx);
 
     return ctx;
 }

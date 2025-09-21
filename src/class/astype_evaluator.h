@@ -1,8 +1,31 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #ifndef ASTYPE_EVALUATOR_H
 #define ASTYPE_EVALUATOR_H
 
+#include "scriptaddon/scriptany.h"
+
 #include "as-debugger/as_debugger.h"
 #include "src/scriptaddon/scriptqdictionary.h"
+
+#include <QChar>
+#include <QColor>
+#include <QString>
 
 class asIDBArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
@@ -11,45 +34,75 @@ public:
     }
 };
 
-// class asIDBAnyTypeEvaluator : public asIDBTypeEvaluator {
-// public:
-//     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-//         const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
+class asIDBStringTypeEvaluator : public asIDBTypeEvaluator {
+public:
+    virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        const QString *s = var->address.ResolveAs<const QString>();
 
-//         if (v->GetTypeId() == 0) {
-//             var->value = "(no stored value)";
-//             return;
-//         }
+        if (s->isEmpty()) {
+            var->value = "<empty>";
+        } else {
+            if (var->owner.expired()) {
+                var->value = s->toStdString();
+            } else {
+                var->value = fmt::format("\"{}\"", s->toStdString());
+            }
+        }
+    }
+};
 
-//         var->value = fmt::format("any<{}>",
-//         var->dbg.cache->GetTypeNameFromType(
-//                                                 {v->GetTypeId(),
-//                                                 asTM_NONE}));
-//         var->expandable = true;
-//     }
+class asIDBCharTypeEvaluator : public asIDBTypeEvaluator {
+public:
+    virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        const QChar *s = var->address.ResolveAs<const QChar>();
+        var->value = s->unicode();
+    }
+};
 
-//     virtual void Expand(asIDBVariable::Ptr var) const override {
-//         const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
+class asIDBColorTypeEvaluator : public asIDBTypeEvaluator {
+public:
+    virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        const QColor *s = var->address.ResolveAs<const QColor>();
+        var->value = s->name().toStdString();
+    }
+};
 
-//         auto tid = v->GetTypeId();
+class asIDBAnyTypeEvaluator : public asIDBTypeEvaluator {
+public:
+    virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
 
-//         asIDBVarAddr id(tid, false, nullptr);
+        if (v->GetTypeId() == 0) {
+            var->value = "<no stored value>";
+            return;
+        }
 
-//         if (tid == asTYPEID_DOUBLE)
-//             id.address = (void *)&v->value.valueFlt;
-//         else if (tid == asTYPEID_INT64)
-//             id.address = (void *)&v->value.valueInt;
-//         else if (tid & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE))
-//             id.address = (void *)&v->value.valueObj;
-//         else
-//             id.address = v->value.valueObj;
+        var->value = fmt::format("any<{}>", var->dbg.cache->GetTypeNameFromType(
+                                                {v->GetTypeId(), asTM_NONE}));
+        var->expandable = true;
+    }
 
-//         var->CreateChildVariable(
-//             "value", id,
-//             var->dbg.cache->GetTypeNameFromType({v->GetTypeId(),
-//             asTM_NONE}));
-//     }
-// };
+    virtual void Expand(asIDBVariable::Ptr var) const override {
+        const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
+
+        auto tid = v->GetTypeId();
+
+        asIDBVarAddr id(tid, false, nullptr);
+
+        if (tid == asTYPEID_DOUBLE)
+            id.address = (void *)&v->value.valueFlt;
+        else if (tid == asTYPEID_INT64)
+            id.address = (void *)&v->value.valueInt;
+        else if (tid & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE))
+            id.address = (void *)&v->value.valueObj;
+        else
+            id.address = v->value.valueObj;
+
+        var->CreateChildVariable(
+            "value", id,
+            var->dbg.cache->GetTypeNameFromType({v->GetTypeId(), asTM_NONE}));
+    }
+};
 
 class asIDBDictionaryTypeEvaluator : public asIDBTypeEvaluator {
 public:
@@ -69,7 +122,7 @@ public:
 
         for (auto &kvp : *v) {
             auto child = var->CreateChildVariable(
-                fmt::format("[{}]", kvp.GetKey()),
+                fmt::format("[\"{}\"]", kvp.GetKey().toStdString()),
                 {kvp.GetTypeId(), false,
                  const_cast<void *>(kvp.GetAddressOfValue())},
                 var->dbg.cache->GetTypeNameFromType(

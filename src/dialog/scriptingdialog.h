@@ -212,7 +212,7 @@ private:
 
     bool isCurrentDebugging() const;
 
-    void runDbgCommand(asDebugger::DebugAction action);
+    void runDbgCommand(asIDBAction action);
 
     void startDebugScript(ScriptEditor *editor);
 

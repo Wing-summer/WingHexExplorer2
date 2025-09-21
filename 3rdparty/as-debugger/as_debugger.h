@@ -5,6 +5,7 @@
 
 #include <angelscript.h>
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -377,6 +378,7 @@ public:
 struct asIDBBreakpoint {
     int line;
     std::optional<int> column;
+    bool needAdjust;
 };
 
 using asIDBSectionBreakpoints = std::vector<asIDBBreakpoint>;
@@ -429,7 +431,6 @@ struct asIDBSource {
 };
 
 using asIDBSectionSet = std::set<asIDBSource, asIDBSource::LessComparator>;
-using asIDBEngineSet = std::unordered_set<asIScriptEngine *>;
 using asIDBPotentialBreakpointMap =
     std::unordered_map<std::string_view, std::set<asIDBLineCol, std::less<>>>;
 
@@ -441,7 +442,7 @@ public:
     asIDBSectionSet sections;
 
     // list of engines that can be hooked.
-    asIDBEngineSet engines;
+    asIScriptEngine *engine;
 
     // map of breakpoint positions
     asIDBPotentialBreakpointMap potential_breakpoints;
@@ -449,11 +450,7 @@ public:
     // source ref id
     uint64_t ref_id = 1;
 
-    asIDBWorkspace(std::initializer_list<asIScriptEngine *> engines) {
-        for (auto &engine : engines)
-            if (engine)
-                this->engines.insert(engine);
-    }
+    asIDBWorkspace(asIScriptEngine *engine) { this->engine = engine; }
 
     virtual ~asIDBWorkspace() {}
 
@@ -481,13 +478,9 @@ class asIDBFileWorkspace : public asIDBWorkspace {
     std::string base_path;
 
 public:
-    asIDBFileWorkspace(std::string_view base_path,
-                       std::initializer_list<asIScriptEngine *> engines)
-        : asIDBWorkspace(engines), base_path(base_path) {
-        for (auto &engine : engines)
-            if (engine)
-                this->engines.insert(engine);
-
+    asIDBFileWorkspace(std::string_view base_path, asIScriptEngine *engine)
+        : asIDBWorkspace(engine), base_path(base_path) {
+        this->engine = engine;
         CompileScriptSources();
         CompileBreakpointPositions();
     }
@@ -507,7 +500,7 @@ private:
 };
 
 using asIDBBreakpointMap =
-    std::unordered_map<std::string_view, asIDBSectionBreakpoints>;
+    std::unordered_map<std::string, asIDBSectionBreakpoints>;
 
 // This is the main class for interfacing with
 // the debugger. This manages the debugger thread
@@ -542,6 +535,11 @@ public:
     // current frame offset for use by the cache
     std::atomic_int64_t frame_offset = 0;
 
+    std::function<bool(asIScriptContext *)> onLineCallBack;
+    std::function<void(int, int, const char *)> onLineCallBackExec;
+    std::function<void()> onDebugBreak;
+    std::function<void(int, int, const char *)> onAdjustBreakPoint;
+
     asIDBDebugger(asIDBWorkspace *workspace) : workspace(workspace) {}
 
     virtual ~asIDBDebugger() {}
@@ -571,14 +569,6 @@ public:
     // clear the cache context and call Resume.
     virtual void SetAction(asIDBAction new_action);
 
-    // breakpoint stuff
-    bool ToggleBreakpoint(std::string_view section, int line);
-
-    // get the source code for the given section
-    // of the given module.
-    // FIXME: can we move this to cache?
-    virtual std::string FetchSource(const char *section) = 0;
-
 protected:
     // called when the debugger is being asked to pause.
     // don't call directly, use DebugBreak.
@@ -594,6 +584,9 @@ protected:
     static void LineCallback(asIScriptContext *ctx, asIDBDebugger *debugger);
     static void ExceptionCallback(asIScriptContext *ctx,
                                   asIDBDebugger *debugger);
+
+protected:
+    asIScriptFunction *_lastFunction = nullptr;
 };
 
 template <typename T>

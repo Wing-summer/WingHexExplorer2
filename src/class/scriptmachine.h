@@ -21,6 +21,7 @@
 #include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 
+#include "as-debugger/as_debugger.h"
 #include "class/aspreprocesser.h"
 
 #include "asdebugger.h"
@@ -54,24 +55,6 @@ public:
         MessageType type = MessageType::Info;
         QString message;
     };
-
-    enum RegisteredType {
-        tString,
-        tChar,
-        tArray,
-        tComplex,
-        tWeakref,
-        tConstWeakref,
-        tAny,
-        tDictionary,
-        tDictionaryValue,
-        tGrid,
-        tRef,
-        tColor,
-        tMAXCOUNT
-    };
-
-    asITypeInfo *typeInfo(RegisteredType type) const;
 
 public:
     // only for refection
@@ -175,19 +158,16 @@ private:
 
     QString getInput();
 
-    bool isType(asITypeInfo *tinfo, RegisteredType type);
-
     static int execSystemCmd(QString &out, const QString &exe,
                              const QString &params, int timeout);
 
     static QString beautify(const QString &str, uint indent);
 
     QString stringify(void *ref, int typeId);
+    QString stringify_helper(const std::shared_ptr<asIDBVariable> &var);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);
-
-    static void cleanUpDbgContext(asIScriptContext *context);
 
     static void cleanUpPluginSysIDFunction(asIScriptFunction *fn);
 
@@ -202,24 +182,32 @@ private:
 
     void exceptionCallback(asIScriptContext *context);
 
+private:
+    void attachDebugBreak(asIScriptContext *ctx);
+
 signals:
     void onDebugFinished();
 
 private:
     asIScriptEngine *_engine = nullptr;
-    asDebugger *_debugger = nullptr;
     CContextMgr *_ctxMgr = nullptr;
     asIScriptModule *_eMod = nullptr;
 
     QQueue<asIScriptContext *> _ctxPool;
 
-    QVector<asITypeInfo *> _rtypes;
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;
     ConsoleMode _curMsgMode = ConsoleMode::Background;
 
     qint64 lineOffset = 0;
     qint64 colOffset = 0;
+
+private:
+    void checkDebugger(asIScriptContext *ctx);
+
+private:
+    asDebugger *_debugger = nullptr;
+    asIDBWorkspace *_workspace = nullptr;
 };
 
 Q_DECLARE_METATYPE(ScriptMachine::MessageInfo)

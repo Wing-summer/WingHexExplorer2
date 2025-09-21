@@ -36,10 +36,10 @@ public:
                                 int role) const override;
 
 public slots:
-    void updateData(const QList<asDebugger::CallStackItem> &callstack);
+    void attachDebugger(asDebugger *debugger);
 
 private:
-    QList<asDebugger::CallStackItem> _stack;
+    asDebugger *_debugger = nullptr;
 };
 
 #endif // DBGCALLSTACKMODEL_H

@@ -314,11 +314,12 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                     auto decl = mod->GetGlobalVarDeclaration(i);
                     if (decl && mod->GetGlobalVar(i, &name, nullptr, &typeID) ==
                                     asSUCCESS) {
-                        auto value = sm.debugger()->toString(
-                            mod->GetAddressOfGlobalVar(i), typeID, sm.engine(),
-                            1);
-                        stdOutLine(decl + QStringLiteral(" = ") + value);
-                        newLine();
+                        // TODO
+                        // auto value = sm.debugger()->toString(
+                        //     mod->GetAddressOfGlobalVar(i), typeID,
+                        //     sm.engine(), 1);
+                        // stdOutLine(decl + QStringLiteral(" = ") + value);
+                        // newLine();
                     }
                 }
             }

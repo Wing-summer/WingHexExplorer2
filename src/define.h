@@ -12,7 +12,6 @@ enum class CrashCode : int {
 
 namespace AsUserDataType {
 enum AsUserDataType {
-    UserData_ContextDbgInfo,
     UserData_API,
     UserData_PluginFn,
     UserData_isDbg,

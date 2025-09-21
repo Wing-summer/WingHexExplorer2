@@ -358,8 +358,12 @@ typeSpecifier
     : trailingTypeSpecifier
     ;
 
+arraySpecifier
+    : LeftBracket constantExpression? RightBracket
+    ;
+
 trailingTypeSpecifier
-    : simpleTypeSpecifier
+    : simpleTypeSpecifier arraySpecifier*
     | Const
     ;
 

@@ -116,9 +116,9 @@ void ScriptingDialog::initConsole() {
     auto &machine = ScriptMachine::instance();
     connect(&machine, &ScriptMachine::onDebugFinished, this, [=] {
         this->updateRunDebugMode();
-        m_callstack->updateData({});
-        m_varshow->updateData({});
-        m_gvarshow->updateData({});
+        m_callstack->attachDebugger(nullptr);
+        m_varshow->attachDebugger(nullptr);
+        m_gvarshow->attachDebugger(nullptr);
 
         // clean up
         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
@@ -149,24 +149,22 @@ void ScriptingDialog::initConsole() {
             _DebugingEditor = nullptr;
         }
     });
+
     auto dbg = machine.debugger();
     Q_ASSERT(dbg);
     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
-            [=](const asDebugger::BreakPoint &old, int newLineNr) {
-                auto editor = findEditorView(old.name);
+            [=](const QString &file, int oldLineNbr, int newLineNbr) {
+                auto editor = findEditorView(file);
                 if (editor) {
-                    removeBreakPoint(editor, old.lineNbr);
-                    addBreakPoint(editor, newLineNr);
+                    removeBreakPoint(editor, oldLineNbr);
+                    addBreakPoint(editor, newLineNbr);
                 }
             });
-    connect(dbg, &asDebugger::onPullVariables, this,
-            [=](const QVector<asDebugger::VariablesInfo> &globalvars,
-                const QVector<asDebugger::VariablesInfo> &localvars) {
-                m_varshow->updateData(localvars);
-                m_gvarshow->updateData(globalvars);
-            });
-    connect(dbg, &asDebugger::onPullCallStack, m_callstack,
-            &DbgCallStackModel::updateData);
+    //     connect(dbg, &asDebugger::onPullVariables, this,
+    //             [=]() {
+    //                 m_varshow->updateData(localvars);
+    //                 m_gvarshow->updateData(globalvars);
+    //             });
     connect(
         dbg, &asDebugger::onRunCurrentLine, this,
         [=](const QString &file, int lineNr) {
@@ -511,7 +509,8 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         isRun = runner.isRunning(ScriptMachine::Scripting);
         isDbg = runner.isDebugMode();
         auto dbg = runner.debugger();
-        isPaused = dbg->currentState() == asDebugger::PAUSE;
+
+        isPaused = dbg->action == asIDBAction::Pause;
 
         if (isRun && isDbg && isPaused) {
             m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->animateClick();
@@ -566,13 +565,13 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
 
     auto varview = new QTableView(this);
     Utilities::applyTableViewProperty(varview);
-    m_varshow = new DbgVarShowModel(varview);
+    m_varshow = new DbgVarShowModel(false, varview);
     varview->setModel(m_varshow);
     vars->addTab(varview, tr("Local"));
 
     varview = new QTableView(this);
     Utilities::applyTableViewProperty(varview);
-    m_gvarshow = new DbgVarShowModel(varview);
+    m_gvarshow = new DbgVarShowModel(true, varview);
     varview->setModel(m_gvarshow);
     vars->addTab(varview, tr("Global"));
 
@@ -943,7 +942,7 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
     isRun = runner.isRunning(ScriptMachine::Scripting);
     isDbg = runner.isDebugMode();
     auto dbg = runner.debugger();
-    isPaused = dbg->currentState() == asDebugger::PAUSE;
+    isPaused = dbg->action == asIDBAction::Pause;
 
     m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_ACTION)->setEnabled(!isRun);
     m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_DBG_ACTION)
@@ -1016,12 +1015,12 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
     return editor;
 }
 
-void ScriptingDialog::runDbgCommand(asDebugger::DebugAction action) {
+void ScriptingDialog::runDbgCommand(asIDBAction action) {
     updateRunDebugMode(true);
     auto &machine = ScriptMachine::instance();
     if (machine.isDebugMode()) {
         auto dbg = machine.debugger();
-        dbg->runDebugAction(action);
+        dbg->SetAction(action);
     }
 }
 
@@ -1044,6 +1043,10 @@ void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
 
     _DebugingEditor = editor;
     PluginSystem::instance().scriptPragmaBegin();
+
+    m_callstack->attachDebugger(dbg);
+    m_gvarshow->attachDebugger(dbg);
+    m_varshow->attachDebugger(dbg);
 
     editor->setReadOnly(true);
     ScriptMachine::instance().executeScript(ScriptMachine::Scripting, fileName,
@@ -1452,13 +1455,15 @@ void ScriptingDialog::on_rundbgscript() {
     }
 }
 
-void ScriptingDialog::on_pausescript() { runDbgCommand(asDebugger::PAUSE); }
+void ScriptingDialog::on_pausescript() { runDbgCommand(asIDBAction::Pause); }
 
 void ScriptingDialog::on_continuescript() {
-    runDbgCommand(asDebugger::CONTINUE);
+    runDbgCommand(asIDBAction::Continue);
 }
 
-void ScriptingDialog::on_stopscript() { runDbgCommand(asDebugger::ABORT); }
+void ScriptingDialog::on_stopscript() {
+    ScriptMachine::instance().abortDbgScript();
+}
 
 void ScriptingDialog::on_restartscript() {
     on_stopscript();
@@ -1466,15 +1471,15 @@ void ScriptingDialog::on_restartscript() {
 }
 
 void ScriptingDialog::on_stepinscript() {
-    runDbgCommand(asDebugger::STEP_INTO);
+    runDbgCommand(asIDBAction::StepInto);
 }
 
 void ScriptingDialog::on_stepoutscript() {
-    runDbgCommand(asDebugger::STEP_OUT);
+    runDbgCommand(asIDBAction::StepOut);
 }
 
 void ScriptingDialog::on_stepoverscript() {
-    runDbgCommand(asDebugger::STEP_OVER);
+    runDbgCommand(asIDBAction::StepOver);
 }
 
 void ScriptingDialog::on_togglebreakpoint() {

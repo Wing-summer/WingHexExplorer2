@@ -54,16 +54,16 @@ public:
     RuleForRangeInitializer = 53, RuleJumpStatement = 54, RuleDeclarationseq = 55, 
     RuleDeclaration = 56, RuleAliasDeclaration = 57, RuleSimpleDeclaration = 58, 
     RuleEmptyDeclaration_ = 59, RuleDeclSpecifier = 60, RuleDeclSpecifierSeq = 61, 
-    RuleTypedefName = 62, RuleTypeSpecifier = 63, RuleTrailingTypeSpecifier = 64, 
-    RuleTypeSpecifierSeq = 65, RuleTrailingTypeSpecifierSeq = 66, RuleSimpleTypeSpecifier = 67, 
-    RuleTheTypeName = 68, RuleDecltypeSpecifier = 69, RuleNamespaceName = 70, 
-    RuleQualifiednamespacespecifier = 71, RuleBalancedTokenSeq = 72, RuleBalancedtoken = 73, 
-    RuleInitDeclaratorList = 74, RuleInitDeclarator = 75, RuleDeclarator = 76, 
-    RuleDeclaratorDef = 77, RuleParametersAndQualifiers = 78, RuleRefqualifier = 79, 
-    RuleDeclaratorid = 80, RuleTheTypeId = 81, RuleParameterDeclarationClause = 82, 
-    RuleParameterDeclarationList = 83, RuleParameterDeclaration = 84, RuleInitializer = 85, 
-    RuleBraceOrEqualInitializer = 86, RuleInitializerClause = 87, RuleInitializerList = 88, 
-    RuleBracedInitList = 89, RuleTheOperator = 90, RuleLiteral = 91
+    RuleTypedefName = 62, RuleTypeSpecifier = 63, RuleArraySpecifier = 64, 
+    RuleTrailingTypeSpecifier = 65, RuleTypeSpecifierSeq = 66, RuleTrailingTypeSpecifierSeq = 67, 
+    RuleSimpleTypeSpecifier = 68, RuleTheTypeName = 69, RuleDecltypeSpecifier = 70, 
+    RuleNamespaceName = 71, RuleQualifiednamespacespecifier = 72, RuleBalancedTokenSeq = 73, 
+    RuleBalancedtoken = 74, RuleInitDeclaratorList = 75, RuleInitDeclarator = 76, 
+    RuleDeclarator = 77, RuleDeclaratorDef = 78, RuleParametersAndQualifiers = 79, 
+    RuleRefqualifier = 80, RuleDeclaratorid = 81, RuleTheTypeId = 82, RuleParameterDeclarationClause = 83, 
+    RuleParameterDeclarationList = 84, RuleParameterDeclaration = 85, RuleInitializer = 86, 
+    RuleBraceOrEqualInitializer = 87, RuleInitializerClause = 88, RuleInitializerList = 89, 
+    RuleBracedInitList = 90, RuleTheOperator = 91, RuleLiteral = 92
   };
 
   explicit AngelscriptConsoleParser(antlr4::TokenStream *input);
@@ -147,6 +147,7 @@ public:
   class DeclSpecifierSeqContext;
   class TypedefNameContext;
   class TypeSpecifierContext;
+  class ArraySpecifierContext;
   class TrailingTypeSpecifierContext;
   class TypeSpecifierSeqContext;
   class TrailingTypeSpecifierSeqContext;
@@ -1218,11 +1219,28 @@ public:
 
   TypeSpecifierContext* typeSpecifier();
 
+  class  ArraySpecifierContext : public antlr4::ParserRuleContext {
+  public:
+    ArraySpecifierContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *LeftBracket();
+    antlr4::tree::TerminalNode *RightBracket();
+    ConstantExpressionContext *constantExpression();
+
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  ArraySpecifierContext* arraySpecifier();
+
   class  TrailingTypeSpecifierContext : public antlr4::ParserRuleContext {
   public:
     TrailingTypeSpecifierContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     SimpleTypeSpecifierContext *simpleTypeSpecifier();
+    std::vector<ArraySpecifierContext *> arraySpecifier();
+    ArraySpecifierContext* arraySpecifier(size_t i);
     antlr4::tree::TerminalNode *Const();
 
 

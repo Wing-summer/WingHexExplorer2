@@ -80,7 +80,6 @@ add_subdirectory(3rdparty/QHexView)
 add_subdirectory(3rdparty/WingCodeEdit)
 add_subdirectory(3rdparty/Qt-Advanced-Docking-System)
 add_subdirectory(3rdparty/AngelScript/sdk/angelscript/projects/cmake)
-add_subdirectory(3rdparty/cppdap)
 
 set(DISABLE_WARNINGS ON)
 set(ANTLR4_INSTALL OFF)
@@ -128,8 +127,6 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/autowrapper/aswrappedcall.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptany/scriptany.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.cpp
@@ -157,14 +154,8 @@ add_subdirectory(3rdparty/qtsingleapplication)
 add_subdirectory(3rdparty/fmt)
 
 set(AS_DEBUGGER_SRC
-    3rdparty/as-debugger/as_debugger.cpp
-    3rdparty/as-debugger/as_debugger.h
-    3rdparty/as-debugger/as_debugger_dap.cpp
-    3rdparty/as-debugger/as_debugger_dap.h
-    3rdparty/as-debugger/as_helpers.cpp
-    3rdparty/as-debugger/as_helpers.h
-    3rdparty/as-debugger/as_dbg_state.h
-    3rdparty/as-debugger/as_dbg_state.cpp)
+    3rdparty/as-debugger/as_debugger.cpp 3rdparty/as-debugger/as_debugger.h
+    3rdparty/as-debugger/as_helpers.cpp 3rdparty/as-debugger/as_helpers.h)
 
 set(RIBBON_SRC
     3rdparty/QWingRibbon/ribbon.cpp
@@ -306,8 +297,6 @@ set(CLASS_SRC
     src/class/settingmanager.cpp
     src/class/asdebugger.h
     src/class/asdebugger.cpp
-    src/class/angelobjstring.h
-    src/class/angelobjstring.cpp
     src/class/appmanager.h
     src/class/appmanager.cpp
     src/class/angelscripthelper.h
@@ -360,7 +349,9 @@ set(CLASS_SRC
     src/class/resettabletimer.cpp
     src/class/astype_evaluator.h
     src/class/angelscriptconsolevisitor.h
-    src/class/angelscriptconsolevisitor.cpp)
+    src/class/angelscriptconsolevisitor.cpp
+    src/class/aswingcache.h
+    src/class/aswingcache.cpp)
 
 set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
                      src/class/wingcstruct.h src/class/wingcstruct.cpp)
@@ -427,7 +418,9 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptjson.h
     src/scriptaddon/scriptjson.cpp
     src/scriptaddon/scriptenv.h
-    src/scriptaddon/scriptenv.cpp)
+    src/scriptaddon/scriptenv.cpp
+    src/scriptaddon/scriptany.cpp
+    src/scriptaddon/scriptany.h)
 
 # localization support
 file(
@@ -571,7 +564,6 @@ target_link_libraries(
             QHexView
             WingCodeEdit
             angelscript
-            cppdap
             fmt::fmt
             antlr4_static
             qtadvanceddocking-qt${QT_VERSION_MAJOR})
