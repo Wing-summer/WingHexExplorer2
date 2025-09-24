@@ -146,7 +146,7 @@ struct asIDBVariable {
     bool evaluated = false;
     bool expandable = false;
     std::string value;
-    std::string_view typeName;
+    std::string typeName;
     asIDBValue stackValue;
 
     // if it's a getter, this will be set.
@@ -318,7 +318,7 @@ public:
     virtual void Refresh();
 
     // get a safe view into a cached type string.
-    virtual const std::string_view GetTypeNameFromType(asIDBTypeId id);
+    virtual const std::string GetTypeNameFromType(asIDBTypeId id);
 
     // for the given type + property data, fetch the address of the
     // value that this property points to.

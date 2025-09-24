@@ -128,7 +128,7 @@ postfixExpression
     : primaryExpression
     | postfixExpression LeftBracket (expression | bracedInitList) RightBracket
     | postfixExpression LeftParen expressionList? RightParen
-    | simpleTypeSpecifier ( LeftParen expressionList? RightParen | bracedInitList)
+    | simpleTypeSpecifier arraySpecifier* ( LeftParen expressionList? RightParen | bracedInitList)
     | postfixExpression Dot ( idExpression | pseudoDestructorName)
     | postfixExpression (PlusPlus | MinusMinus)
     | Cast Less theTypeId Greater LeftParen expression RightParen

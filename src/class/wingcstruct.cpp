@@ -203,15 +203,14 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
 
     o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
                               std::bind(QOverload<const QVariantList &>::of(
-                                            &WingCStruct::structTypes),
+                                            &WingCStruct::structTypeDefs),
                                         this, std::placeholders::_1),
                               QStringLiteral("structTypes"));
 
     o->registerGlobalFunction(
         getqsizetypeMetaType(),
-        std::bind(
-            QOverload<const QVariantList &>::of(&WingCStruct::sizeofStruct),
-            this, std::placeholders::_1),
+        std::bind(QOverload<const QVariantList &>::of(&WingCStruct::sizeOf),
+                  this, std::placeholders::_1),
         QStringLiteral("sizeofStruct"),
         {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
 
@@ -826,14 +825,14 @@ QVariant WingCStruct::padAlignment(const QVariantList &params) {
     return padAlignment();
 }
 
-QVariant WingCStruct::structTypes(const QVariantList &params) {
+QVariant WingCStruct::structTypeDefs(const QVariantList &params) {
     if (!params.isEmpty()) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return structTypeDefs();
 }
 
-QVariant WingCStruct::sizeofStruct(const QVariantList &params) {
+QVariant WingCStruct::sizeOf(const QVariantList &params) {
     if (params.size() != 1) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }

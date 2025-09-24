@@ -46,6 +46,7 @@
 #include "WingPlugin/iwingplugin.h"
 #include "class/consolehighlighanim.h"
 #include "class/recentfilemanager.h"
+#include "control/asidbtreeview.h"
 #include "control/editorview.h"
 #include "control/qtableviewext.h"
 #include "control/scriptingconsole.h"
@@ -123,7 +124,9 @@ private:
     ads::CDockAreaWidget *
     buildUpScriptBgOutputDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                               ads::CDockAreaWidget *areaw = nullptr);
-
+    ads::CDockAreaWidget *
+    buildUpScriptObjDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                         ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpUndoStackDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                          ads::CDockAreaWidget *areaw = nullptr);
@@ -517,6 +520,7 @@ private:
     MetaDataModel *_metadataEmpty = nullptr;
 
     QUndoView *_undoView = nullptr;
+    asIDBTreeView *_scriptObjView = nullptr;
 
     QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
 

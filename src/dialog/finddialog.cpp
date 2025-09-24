@@ -43,55 +43,27 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     layout->addSpacing(3);
 
     layout->addWidget(new QLabel(tr("Content:"), this));
-    m_lineeditor = new QHexTextEdit(this);
+    m_lineeditor = new HexLineEdit(this);
     m_lineeditor->setFixedHeight(m_findMode->height());
     layout->addWidget(m_lineeditor);
     layout->addSpacing(3);
 
-    layout->addWidget(new QLabel(tr("EncBytes:"), this));
-    m_preview = new QTextEdit(this);
-    m_preview->setFocusPolicy(Qt::NoFocus);
-    m_preview->setReadOnly(true);
-    m_preview->setUndoRedoEnabled(false);
-    m_preview->setWordWrapMode(QTextOption::WordWrap);
-    m_preview->setAcceptRichText(false);
-    m_preview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    layout->addWidget(m_preview);
-
-    connect(m_lineeditor, &QHexTextEdit::textChanged, this, [this]() {
-        auto text = m_lineeditor->toPlainText();
-        if (m_findMode->currentIndex()) {
-            auto encoding = m_findMode->currentText();
-            auto dbytes = Utilities::encodingString(text, encoding);
-            m_preview->setText(dbytes.toHex(' '));
-        } else {
-            m_preview->setText(text);
-        }
-    });
     connect(m_findMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int index) {
-                auto oldva = m_lineeditor->isHexMode();
                 auto newva = index == 0;
-                m_lineeditor->setIsHexMode(newva);
-                if (oldva != newva) {
-                    m_lineeditor->clear();
-                } else {
-                    // force update
-                    Q_EMIT m_lineeditor->textChanged();
-                }
+                m_lineeditor->setMode(newva ? HexLineEdit::HexMode
+                                            : HexLineEdit::TextMode);
             });
 
     if (info.isStringFind) {
-        if (!info.encoding.isEmpty()) {
-            m_lineeditor->setIsHexMode(false);
-            m_findMode->setCurrentText(info.encoding);
-        }
+        m_lineeditor->setMode(HexLineEdit::TextMode);
+        m_findMode->setCurrentText(info.encoding);
+        m_lineeditor->setText(info.findValue);
     } else {
-        m_lineeditor->setIsHexMode(true);
+        m_lineeditor->setMode(HexLineEdit::HexMode);
         m_findMode->setCurrentIndex(0);
+        m_lineeditor->setHexText(info.findValue);
     }
-
-    m_lineeditor->setFindText(info.str);
 
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
@@ -173,15 +145,18 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 FindDialog::Result FindDialog::getResult() const { return _result; }
 
 void FindDialog::on_accept() {
-    _result.isStringFind = m_findMode->currentIndex() > 0;
-    _result.str = m_lineeditor->toPlainText().trimmed();
+    // check the last byte nibbles
+    if (!m_lineeditor->isValid()) {
+        Toast::toast(this, NAMEICONRES("find"), tr("InvalidSeq"));
+        return;
+    }
 
-    if (!_result.isStringFind) {
-        // check the last byte nibbles
-        if (std::next(_result.str.rbegin())->isSpace()) {
-            Toast::toast(this, NAMEICONRES("find"), tr("InvalidHexSeq"));
-            return;
-        }
+    _result.isStringFind = m_findMode->currentIndex() > 0;
+
+    if (_result.isStringFind) {
+        _result.value = m_lineeditor->text();
+    } else {
+        _result.value = m_lineeditor->rawHexText();
     }
 
     _result.encoding = m_findMode->currentText();

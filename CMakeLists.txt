@@ -256,8 +256,8 @@ set(CONTROL_SRC
     src/control/asobjtreewidget.cpp
     src/control/dockwidgettab.h
     src/control/dockwidgettab.cpp
-    src/control/qhextextedit.h
-    src/control/qhextextedit.cpp
+    src/control/hexlineedit.h
+    src/control/hexlineedit.cpp
     src/control/popupactionwidget.h
     src/control/popupactionwidget.cpp
     src/control/settingspopup.cpp
@@ -267,7 +267,9 @@ set(CONTROL_SRC
     src/control/gotolinewidget.h
     src/control/gotolinewidget.cpp
     src/control/codeeditcontrolwidget.h
-    src/control/codeeditcontrolwidget.cpp)
+    src/control/codeeditcontrolwidget.cpp
+    src/control/asidbtreeview.h
+    src/control/asidbtreeview.cpp)
 
 set(CLASS_SRC
     src/class/logger.cpp
@@ -380,10 +382,12 @@ set(MODEL_SRC
     src/model/checksummodel.cpp
     src/model/dbgcallstackmodel.h
     src/model/dbgcallstackmodel.cpp
-    src/model/dbgvarshowmodel.h
-    src/model/dbgvarshowmodel.cpp
     src/model/codecompletionmodel.h
-    src/model/codecompletionmodel.cpp)
+    src/model/codecompletionmodel.cpp
+    src/model/asidbtreemodel.h
+    src/model/asidbtreemodel.cpp
+    src/model/asidbwatchmodel.h
+    src/model/asidbwatchmodel.cpp)
 
 set(SETTING_SRC
     src/settings/settings.h
@@ -527,17 +531,15 @@ add_custom_target(
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     if(WIN32)
         set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
-        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
-                          ${PROJECT_SOURCES} ${app_icon_resource_windows})
-    else()
-        find_package(Qt6 REQUIRED COMPONENTS Widgets)
         find_package(Qt6 REQUIRED COMPONENTS Core)
 
         qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
-                          ${PROJECT_SOURCES})
+                          ${PROJECT_SOURCES} ${app_icon_resource_windows})
 
-        target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Widgets)
         target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Core)
+    else()
+        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
+                          ${PROJECT_SOURCES})
     endif()
 endif()
 

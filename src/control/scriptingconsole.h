@@ -57,6 +57,9 @@ private slots:
 
     void onFunctionTip(const QString &tip);
 
+signals:
+    void consoleScriptRunFinished();
+
 private:
     void runConsoleCommand(const QString &code);
 

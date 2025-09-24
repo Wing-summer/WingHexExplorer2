@@ -29,6 +29,7 @@
 #include "class/wingfiledialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "model/asidbwatchmodel.h"
 
 #include <QDesktopServices>
 #include <QHeaderView>
@@ -117,8 +118,8 @@ void ScriptingDialog::initConsole() {
     connect(&machine, &ScriptMachine::onDebugFinished, this, [=] {
         this->updateRunDebugMode();
         m_callstack->attachDebugger(nullptr);
-        m_varshow->attachDebugger(nullptr);
-        m_gvarshow->attachDebugger(nullptr);
+        m_varshow->refreshWithNewRoots({});
+        m_gvarshow->refreshWithNewRoots({});
 
         // clean up
         if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
@@ -160,11 +161,18 @@ void ScriptingDialog::initConsole() {
                     addBreakPoint(editor, newLineNbr);
                 }
             });
-    //     connect(dbg, &asDebugger::onPullVariables, this,
-    //             [=]() {
-    //                 m_varshow->updateData(localvars);
-    //                 m_gvarshow->updateData(globalvars);
-    //             });
+    connect(dbg, &asDebugger::onPullVariables, this, [=]() {
+        auto dbg = ScriptMachine::instance().debugger();
+        auto &cache = dbg->cache;
+        cache->CacheGlobals();
+        m_gvarshow->refreshWithNewRoot(cache->globals);
+        auto &cs = cache->call_stack;
+        if (!cs.empty()) {
+            cache->CacheCallstack();
+            auto l = cs.at(0).scope.locals;
+            m_varshow->refreshWithNewRoot(l);
+        }
+    });
     connect(
         dbg, &asDebugger::onRunCurrentLine, this,
         [=](const QString &file, int lineNr) {
@@ -563,20 +571,27 @@ ScriptingDialog::buildUpVarShowDock(ads::CDockManager *dock,
     auto vars = new QTabWidget(this);
     vars->setTabPosition(QTabWidget::South);
 
-    auto varview = new QTableView(this);
-    Utilities::applyTableViewProperty(varview);
-    m_varshow = new DbgVarShowModel(false, varview);
-    varview->setModel(m_varshow);
-    vars->addTab(varview, tr("Local"));
+    m_varshow = new asIDBTreeView(this);
+    vars->addTab(m_varshow, tr("Local"));
 
-    varview = new QTableView(this);
-    Utilities::applyTableViewProperty(varview);
-    m_gvarshow = new DbgVarShowModel(true, varview);
-    varview->setModel(m_gvarshow);
-    vars->addTab(varview, tr("Global"));
+    m_gvarshow = new asIDBTreeView(this);
+    vars->addTab(m_gvarshow, tr("Global"));
 
     auto dw = buildDockWidget(dock, QStringLiteral("Variables"),
                               tr("Variables"), vars);
+    m_dbgVarView = dw;
+    return dock->addDockWidget(area, dw, areaw);
+}
+
+ads::CDockAreaWidget *
+ScriptingDialog::buildUpVarWatchDock(ads::CDockManager *dock,
+                                     ads::DockWidgetArea area,
+                                     ads::CDockAreaWidget *areaw) {
+    m_watchVar = new asIDBTreeView(new AsIDBWatchModel, this);
+
+    auto dw = buildDockWidget(dock, QStringLiteral("WatchVars"),
+                              tr("WatchVars"), m_watchVar);
+    m_dbgWatchView = dw;
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -697,6 +712,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     buildUpStackShowDock(m_dock, ads::RightDockWidgetArea, bottomArea);
     auto rightArea =
         buildUpVarShowDock(m_dock, ads::RightDockWidgetArea, m_editorViewArea);
+    rightArea =
+        buildUpVarWatchDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
@@ -1045,8 +1062,6 @@ void ScriptingDialog::startDebugScript(ScriptEditor *editor) {
     PluginSystem::instance().scriptPragmaBegin();
 
     m_callstack->attachDebugger(dbg);
-    m_gvarshow->attachDebugger(dbg);
-    m_varshow->attachDebugger(dbg);
 
     editor->setReadOnly(true);
     ScriptMachine::instance().executeScript(ScriptMachine::Scripting, fileName,
@@ -1451,6 +1466,7 @@ void ScriptingDialog::on_rundbgscript() {
             return;
         }
         m_outConsole->raise();
+        m_dbgVarView->raise();
         startDebugScript(editor);
     }
 }
@@ -1518,16 +1534,15 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
-    if (m_views.isEmpty()) {
-        _savedLayout = m_dock->saveState();
-        auto &set = SettingManager::instance();
-        set.setRecentScriptFiles(m_recentmanager->saveRecent());
-    } else {
+    if (!m_views.isEmpty()) {
         event->ignore();
         this->hide();
         return;
     }
 
+    _savedLayout = m_dock->saveState();
+    auto &set = SettingManager::instance();
+    set.setRecentScriptFiles(m_recentmanager->saveRecent());
     saveDockLayout();
     FramelessMainWindow::closeEvent(event);
 }

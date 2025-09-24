@@ -17,6 +17,8 @@
 
 #include "asobjtreewidget.h"
 
+#include "utilities.h"
+
 #include "AngelScript/sdk/angelscript/source/as_objecttype.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptfunction.h"
@@ -24,9 +26,9 @@
 #include <QHeaderView>
 
 ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
+    Utilities::applyItemViewProperty(this);
     setColumnCount(2);
     auto header = this->header();
-    header->setDefaultAlignment(Qt::AlignCenter);
     header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);
     setHeaderLabels({tr("Symbol"), tr("Decl")});
 }

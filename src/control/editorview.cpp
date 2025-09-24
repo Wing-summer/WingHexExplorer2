@@ -275,7 +275,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         }
 
         QString data;
-        data = result.str;
+        data = result.value;
 
         qsizetype contextLen = 0;
 
@@ -286,9 +286,9 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             d->findAllBytes(begin, end, raw, results);
             m_findResults->lastFindData() = qMakePair(data, contextLen);
         } else {
-            // assuming the find pattern is 'xx xx xx xx'
-            contextLen = std::count(data.begin(), data.end(), ' ') + 1;
-            d->findAllBytesExt(begin, end, result.str, results);
+            // assuming the find pattern is 'xxxxxxxx'
+            contextLen = data.length() / 2;
+            d->findAllBytesExt(begin, end, result.value, results);
             m_findResults->lastFindData() = qMakePair(data, contextLen);
         }
 

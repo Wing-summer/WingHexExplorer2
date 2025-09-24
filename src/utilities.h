@@ -34,6 +34,7 @@
 #include <QStorageInfo>
 #include <QStyle>
 #include <QTableView>
+#include <QTreeView>
 #include <QWidget>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -244,16 +245,29 @@ public:
             QStandardPaths::AppDataLocation);
     }
 
-    static void applyTableViewProperty(QTableView *view) {
+    static void applyItemViewProperty(QAbstractItemView *view) {
         view->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
         view->setSelectionMode(QAbstractItemView::SingleSelection);
         view->setSelectionBehavior(
             QAbstractItemView::SelectionBehavior::SelectRows);
         view->setFocusPolicy(Qt::StrongFocus);
+        view->setAlternatingRowColors(true);
+    }
+
+    static void applyTableViewProperty(QTableView *view) {
+        applyItemViewProperty(view);
         view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
         auto hheader = view->horizontalHeader();
         hheader->setStretchLastSection(true);
         hheader->setHighlightSections(false);
+    }
+
+    static void applyTreeViewProperty(QTreeView *view) {
+        applyItemViewProperty(view);
+        view->setRootIsDecorated(true);
+        view->setUniformRowHeights(true);
+        auto hheader = view->header();
+        hheader->setDefaultAlignment(Qt::AlignCenter);
     }
 
     template <typename T>

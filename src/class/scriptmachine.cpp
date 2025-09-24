@@ -1410,6 +1410,14 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         r = 0;
     }
 
+    // Return the context after retrieving the return value
+    _ctxMgr->DoneWithContext(ctx);
+
+    // Before leaving, allow the engine to clean up remaining objects by
+    // discarding the module and doing a full garbage collection so that
+    // this can also be debugged if desired
+    _engine->GarbageCollect();
+
     func->Release();
     return r >= 0;
 }

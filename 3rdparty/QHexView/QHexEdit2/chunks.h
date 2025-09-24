@@ -43,6 +43,7 @@
 
 #include <QByteArray>
 #include <QList>
+#include <QMutex>
 #include <QObject>
 
 struct Chunk {
@@ -90,6 +91,7 @@ private:
 
 private:
     QIODevice *_ioDevice;
+    mutable QMutex _mutex;
     qint64 _size;
     QList<Chunk> _chunks;
 };

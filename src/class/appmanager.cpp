@@ -143,7 +143,7 @@ AppManager::AppManager(int &argc, char *argv[])
 }
 
 AppManager::~AppManager() {
-    ScriptMachine::instance().deleteLater();
+    ScriptMachine::instance().destoryMachine();
     InspectQtLogHelper::instance().destory();
     CommandHistoryManager::save(QConsoleWidget::history().strings_);
 

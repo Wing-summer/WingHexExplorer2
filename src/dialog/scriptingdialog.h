@@ -18,6 +18,7 @@
 #ifndef SCRIPTINGDIALOG_H
 #define SCRIPTINGDIALOG_H
 
+#include "control/asidbtreeview.h"
 #include "control/asobjtreewidget.h"
 #include "control/scriptingconsole.h"
 #include "dialog/settingdialog.h"
@@ -31,7 +32,6 @@
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
 #include "model/dbgcallstackmodel.h"
-#include "model/dbgvarshowmodel.h"
 #include "utilities.h"
 
 #include <QKeySequence>
@@ -84,6 +84,9 @@ private:
     ads::CDockAreaWidget *
     buildUpVarShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                        ads::CDockAreaWidget *areaw = nullptr);
+    ads::CDockAreaWidget *
+    buildUpVarWatchDock(ads::CDockManager *dock, ads::DockWidgetArea area,
+                        ads::CDockAreaWidget *areaw = nullptr);
     ads::CDockAreaWidget *
     buildUpOutputShowDock(ads::CDockManager *dock, ads::DockWidgetArea area,
                           ads::CDockAreaWidget *areaw = nullptr);
@@ -283,6 +286,9 @@ private:
     QByteArray _savedLayout;
 
     ads::CDockWidget *m_outConsole = nullptr;
+    ads::CDockWidget *m_dbgVarView = nullptr;
+    ads::CDockWidget *m_dbgWatchView = nullptr;
+
     ScriptEditor *m_curEditor = nullptr;
     WingSquiggleInfoModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
@@ -303,8 +309,9 @@ private:
 
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;
-    DbgVarShowModel *m_varshow = nullptr;
-    DbgVarShowModel *m_gvarshow = nullptr;
+    asIDBTreeView *m_varshow = nullptr;
+    asIDBTreeView *m_gvarshow = nullptr;
+    asIDBTreeView *m_watchVar = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
     ASObjTreeWidget *m_sym = nullptr;
 

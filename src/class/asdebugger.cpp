@@ -75,13 +75,15 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
 
     this->onLineCallBackExec = [this](int row, int col,
                                       const char *section) -> void {
-        Q_EMIT onPullCallStack();
-        Q_EMIT onPullVariables();
         Q_EMIT onRunCurrentLine(QString::fromUtf8(section), row);
         Q_EMIT onDebugActionExec();
     };
 
-    this->onDebugBreak = [this]() { Q_EMIT onDebugActionExec(); };
+    this->onDebugBreak = [this]() {
+        Q_EMIT onPullCallStack();
+        Q_EMIT onPullVariables();
+        Q_EMIT onDebugActionExec();
+    };
 
     this->onAdjustBreakPoint = [this](int old, int line, const char *section) {
         Q_EMIT onAdjustBreakPointLine(QString::fromUtf8(section), old, line);

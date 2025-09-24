@@ -139,8 +139,7 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
 
             asIDBTypeId typeKey{thisTypeId, asTM_NONE};
 
-            const std::string_view viewType =
-                cache.GetTypeNameFromType(typeKey);
+            const auto viewType = cache.GetTypeNameFromType(typeKey);
 
             asIDBVarAddr idKey{thisTypeId, false, thisPtr};
 
@@ -173,7 +172,7 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
                                     ? fmt::format("{} (&{})", name, n)
                                     : fmt::format("&{}", n);
 
-        const std::string_view viewType = cache.GetTypeNameFromType(typeKey);
+        const auto viewType = cache.GetTypeNameFromType(typeKey);
 
         asIDBVarAddr idKey{typeId, (modifiers & asTM_CONST) != 0, ptr};
 
@@ -191,10 +190,9 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
 
 /*virtual*/ void asIDBCache::Refresh() {}
 
-/*virtual*/ const std::string_view
-asIDBCache::GetTypeNameFromType(asIDBTypeId id) {
+/*virtual*/ const std::string asIDBCache::GetTypeNameFromType(asIDBTypeId id) {
     if (auto f = type_names.find(id); f != type_names.end())
-        return f->second.c_str();
+        return f->second;
 
     auto type = ctx->GetEngine()->GetTypeInfoById(id.typeId);
     const char *rawName;
@@ -250,8 +248,8 @@ asIDBCache::GetTypeNameFromType(asIDBTypeId id) {
         : ((id.modifiers & asTM_INOUTREF) == asTM_INREF)  ? "&in"
         : ((id.modifiers & asTM_INOUTREF) == asTM_OUTREF) ? "&out"
                                                           : "");
-
-    return type_names.emplace(id, std::move(name)).first->second;
+    type_names.emplace(id, std::move(name));
+    return name;
 }
 
 void *asIDBCache::ResolvePropertyAddress(const asIDBVarAddr &id,
@@ -560,7 +558,7 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
         ptr = main->GetAddressOfGlobalVar(n);
 
         asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
-        const std::string_view viewType = GetTypeNameFromType(typeKey);
+        const auto viewType = GetTypeNameFromType(typeKey);
 
         asIDBVarAddr idKey{typeId, isConst, ptr};
 
@@ -580,7 +578,7 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
             n, &name, &nameSpace, &typeId, &isConst, nullptr, &ptr);
 
         asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
-        const std::string_view viewType = GetTypeNameFromType(typeKey);
+        const auto viewType = GetTypeNameFromType(typeKey);
 
         asIDBVarAddr idKey{typeId, isConst, ptr};
 
@@ -1146,7 +1144,7 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
     int col;
     int row = ctx->GetLineNumber(0, &col, &section);
 
-    if (debugger->onLineCallBackExec) {
+    if (section && debugger->onLineCallBackExec) {
         debugger->onLineCallBackExec(row, col, section);
     }
 

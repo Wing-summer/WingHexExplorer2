@@ -18,7 +18,7 @@
 #ifndef FINDDIALOG_H
 #define FINDDIALOG_H
 
-#include "control/qhextextedit.h"
+#include "control/hexlineedit.h"
 #include "framelessdialogbase.h"
 
 #include <QComboBox>
@@ -38,7 +38,7 @@ public:
         // for searching info
         bool isStringFind;
         QString encoding;
-        QString str;
+        QString value;
     };
 
     struct FindInfo {
@@ -46,9 +46,8 @@ public:
         bool isSel;
 
         // for searching info
-        QByteArray buffer;
         QString encoding;
-        QString str;
+        QString findValue;
     };
 
 public:
@@ -60,9 +59,8 @@ private:
     void on_reject();
 
 private:
-    QHexTextEdit *m_lineeditor;
+    HexLineEdit *m_lineeditor;
     QComboBox *m_findMode;
-    QTextEdit *m_preview;
 
     Result _result;
 };

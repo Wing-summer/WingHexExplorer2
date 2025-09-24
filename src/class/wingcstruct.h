@@ -123,9 +123,31 @@ private:
     QVariant setPadAlignment(const QVariantList &params);
     QVariant padAlignment(const QVariantList &params);
 
-    QVariant structTypes(const QVariantList &params);
-    QVariant sizeofStruct(const QVariantList &params);
+    QVariant structTypeDefs(const QVariantList &params);
+    QVariant unionTypeDefs(const QVariantList &params);
+    QVariant typedefTypeDefs(const QVariantList &params);
+    QVariant enumTypeDefs(const QVariantList &params);
+    QVariant constVarDefs(const QVariantList &params);
+
+    QVariant sizeOf(const QVariantList &params);
+    QVariant containsType(const QVariantList &params);
+    QVariant isBasicType(const QVariantList &params);
+    QVariant isUnsignedBasicType(const QVariantList &params);
+    QVariant containsEnum(const QVariantList &params);
     QVariant containsStruct(const QVariantList &params);
+    QVariant containsUnion(const QVariantList &params);
+    QVariant containsTypeDef(const QVariantList &params);
+    QVariant containsConstVar(const QVariantList &params);
+    QVariant isCompletedType(const QVariantList &params);
+
+    QVariant enumValueNames(const QVariantList &params);
+    QVariant constVarValueInt(const QVariantList &params);
+    QVariant constVarValueUInt(const QVariantList &params);
+
+    QVariant isCompletedStruct(const QVariantList &params);
+    QVariant isCompletedUnion(const QVariantList &params);
+
+    QVariant getMissingDependencise(const QVariantList &params);
 
     WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);

@@ -15,32 +15,39 @@
 ** =============================================================================
 */
 
-#ifndef DBGVARSHOWMODEL_H
-#define DBGVARSHOWMODEL_H
+#ifndef ASIDBTREEVIEW_H
+#define ASIDBTREEVIEW_H
 
-#include <QAbstractTableModel>
+#include "as-debugger/as_debugger.h"
+#include "model/asidbtreemodel.h"
 
-#include "class/asdebugger.h"
+#include <QTreeView>
 
-class DbgVarShowModel : public QAbstractTableModel {
+class asIDBTreeView : public QTreeView {
     Q_OBJECT
 public:
-    explicit DbgVarShowModel(bool isGlobal, QObject *parent = nullptr);
+    explicit asIDBTreeView(QWidget *parent = nullptr);
+    explicit asIDBTreeView(AsIDBTreeModel *model, QWidget *parent = nullptr);
 
-    // QAbstractItemModel interface
 public:
-    virtual int rowCount(const QModelIndex &parent) const override;
-    virtual int columnCount(const QModelIndex &parent) const override;
-    virtual QVariant data(const QModelIndex &index, int role) const override;
-    virtual QVariant headerData(int section, Qt::Orientation orientation,
-                                int role) const override;
-
-public slots:
-    void attachDebugger(asDebugger *debugger);
+    void refreshWithNewRoots(const QVector<asIDBVariable::Ptr> &newRoots);
+    void refreshWithNewRoot(const asIDBVariable::Ptr &newRoot);
 
 private:
-    asDebugger *_debugger = nullptr;
-    bool _isGlobal;
+    void saveExpansionState();
+
+    void saveExpansionStateRecursive(const QModelIndex &parent);
+
+    void restoreExpansionState();
+
+    void restoreExpansionStateRecursive(const QModelIndex &parent);
+
+    QString getIndexIdentifier(const QModelIndex &index) const;
+
+private:
+    QSet<QString> m_expansionState;
+
+    asIDBVariable::Ptr _newRoot; // hold the reference
 };
 
-#endif // DBGVARSHOWMODEL_H
+#endif // ASIDBTREEVIEW_H

@@ -571,8 +571,10 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     if (SettingManager::instance().scriptEnabled()) {
         bottomRightArea = buildUpScriptConsoleDock(
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
-        buildUpScriptBgOutputDock(m_dock, ads::CenterDockWidgetArea,
-                                  bottomRightArea);
+        bottomRightArea = buildUpScriptBgOutputDock(
+            m_dock, ads::CenterDockWidgetArea, bottomRightArea);
+        buildUpScriptObjDock(m_dock, ads::CenterDockWidgetArea,
+                             bottomRightArea);
     }
 
     m_bottomViewArea = bottomRightArea;
@@ -1106,6 +1108,152 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
             [this]() { _hlAnim->stop(); });
     m_bgScriptOutput->installEventFilter(e);
 
+    return dock->addDockWidget(area, dw, areaw);
+}
+
+ads::CDockAreaWidget *
+MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
+                                 ads::DockWidgetArea area,
+                                 ads::CDockAreaWidget *areaw) {
+    _scriptObjView = new asIDBTreeView(this);
+
+    connect(
+        m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished, this,
+        [this]() {
+            auto &m = ScriptMachine::instance();
+            auto mod = m.module(ScriptMachine::Interactive);
+            if (mod == nullptr) {
+                return;
+            }
+
+            auto globals = std::make_shared<asIDBVariable>(*m.debugger());
+
+            // copy from asIDBCache
+            auto typeNameFromType = [](const asIDBTypeId &id) -> std::string {
+                static asIDBTypeNameMap type_names; // cached name
+                auto ret = type_names.find(id);
+                if (ret != type_names.end()) {
+                    return ret->second;
+                }
+
+                auto engine = ScriptMachine::instance().engine();
+                auto type = engine->GetTypeInfoById(id.typeId);
+                const char *rawName;
+
+                if (!type) {
+                    // a primitive
+                    switch (id.typeId & asTYPEID_MASK_SEQNBR) {
+                    case asTYPEID_BOOL:
+                        rawName = "bool";
+                        break;
+                    case asTYPEID_INT8:
+                        rawName = "int8";
+                        break;
+                    case asTYPEID_INT16:
+                        rawName = "int16";
+                        break;
+                    case asTYPEID_INT32:
+                        rawName = "int32";
+                        break;
+                    case asTYPEID_INT64:
+                        rawName = "int64";
+                        break;
+                    case asTYPEID_UINT8:
+                        rawName = "uint8";
+                        break;
+                    case asTYPEID_UINT16:
+                        rawName = "uint16";
+                        break;
+                    case asTYPEID_UINT32:
+                        rawName = "uint32";
+                        break;
+                    case asTYPEID_UINT64:
+                        rawName = "uint64";
+                        break;
+                    case asTYPEID_FLOAT:
+                        rawName = "float";
+                        break;
+                    case asTYPEID_DOUBLE:
+                        rawName = "double";
+                        break;
+                    default:
+                        rawName = "???";
+                        break;
+                    }
+                } else {
+                    rawName = type->GetName();
+                }
+
+                std::string name = fmt::format(
+                    "{}{}{}{}", (id.modifiers & asTM_CONST) ? "const " : "",
+                    rawName,
+                    (id.typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE))
+                        ? "@"
+                        : "",
+                    ((id.modifiers & asTM_INOUTREF) == asTM_INOUTREF) ? "&"
+                    : ((id.modifiers & asTM_INOUTREF) == asTM_INREF)  ? "&in"
+                    : ((id.modifiers & asTM_INOUTREF) == asTM_OUTREF) ? "&out"
+                                                                      : "");
+                type_names.emplace(id, std::move(name));
+                return name;
+            };
+
+            for (asUINT n = 0; n < mod->GetGlobalVarCount(); n++) {
+                const char *name;
+                const char *nameSpace;
+                int typeId;
+                void *ptr;
+                bool isConst;
+
+                mod->GetGlobalVar(n, &name, &nameSpace, &typeId, &isConst);
+                ptr = mod->GetAddressOfGlobalVar(n);
+
+                asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
+                const auto viewType = typeNameFromType(typeKey);
+
+                asIDBVarAddr idKey{typeId, isConst, ptr};
+
+                globals->CreateChildVariable(
+                    asIDBVarName((nameSpace && nameSpace[0]) ? nameSpace : "",
+                                 name),
+                    idKey, viewType);
+            }
+
+            for (asUINT n = 0; n < mod->GetEngine()->GetGlobalPropertyCount();
+                 n++) {
+                const char *name;
+                const char *nameSpace;
+                int typeId;
+                void *ptr;
+                bool isConst;
+
+                mod->GetEngine()->GetGlobalPropertyByIndex(
+                    n, &name, &nameSpace, &typeId, &isConst, nullptr, &ptr);
+
+                asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
+                const auto viewType = typeNameFromType(typeKey);
+
+                asIDBVarAddr idKey{typeId, isConst, ptr};
+
+                std::string localName =
+                    (nameSpace && nameSpace[0])
+                        ? fmt::format("{}::{}", nameSpace, name)
+                        : name;
+
+                globals->CreateChildVariable(std::move(localName), idKey,
+                                             viewType);
+            }
+
+            globals->evaluated = globals->expanded = true;
+
+            if (!globals->namedProps.empty() || !globals->indexedProps.empty())
+                globals->SetRefId();
+
+            _scriptObjView->refreshWithNewRoot(globals);
+        });
+
+    auto dw = buildDockWidget(dock, QStringLiteral("ConsoleObj"),
+                              tr("ConsoleObj"), _scriptObjView);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -2190,7 +2338,7 @@ void MainWindow::on_findfile() {
         auto r = fd.getResult();
         info.isStringFind = r.isStringFind;
         info.encoding = r.encoding;
-        info.str = r.str;
+        info.findValue = r.value;
 
         showStatus(tr("Finding..."));
         ExecAsync<EditorView::FindError>(

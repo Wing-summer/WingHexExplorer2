@@ -21,6 +21,7 @@
 #include <limits.h>
 
 #include <QBuffer>
+#include <QMutexLocker>
 
 #define NORMAL 0
 #define HIGHLIGHTED 1
@@ -43,6 +44,7 @@ Chunks::Chunks(QIODevice *ioDevice, QObject *parent) : QObject(parent) {
 }
 
 bool Chunks::setIODevice(QIODevice *ioDevice) {
+    QMutexLocker locker(&_mutex);
     _ioDevice = ioDevice;
     bool ok = _ioDevice->open(QIODevice::ReadOnly);
     if (ok) // Try to open IODevice
@@ -78,6 +80,7 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
     else if ((pos + maxSize) > _size)
         maxSize = _size - pos;
 
+    QMutexLocker locker(&_mutex);
     _ioDevice->open(QIODevice::ReadOnly);
 
     while (maxSize > 0) {
@@ -132,6 +135,7 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
 }
 
 bool Chunks::write(QIODevice *iODevice, qint64 pos, qint64 count) {
+    QMutexLocker locker(&_mutex);
     if (count == -1)
         count = _size;
     if (iODevice->isOpen()) {
@@ -224,6 +228,7 @@ bool Chunks::insert(qint64 pos, const QByteArray &ba) {
 bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
     if ((pos < 0) || (pos >= _size))
         return false;
+
     int chunkIdx = getChunkIndex(pos);
 
     auto &chunk = _chunks[chunkIdx];
@@ -249,6 +254,7 @@ bool Chunks::overwrite(qint64 pos, const QByteArray &ba) {
 bool Chunks::remove(qint64 pos, qint64 length) {
     if ((pos < 0) || (pos >= _size))
         return false;
+
     int chunkIdx = getChunkIndex(pos);
 
     auto &chunk = _chunks[chunkIdx];
@@ -310,6 +316,7 @@ int Chunks::getChunkIndex(qint64 absPos) {
     }
 
     if (foundIdx == -1) {
+        QMutexLocker locker(&_mutex);
         Chunk newChunk;
         qint64 readAbsPos = absPos - ioDelta;
         qint64 readPos = (readAbsPos & READ_CHUNK_MASK);

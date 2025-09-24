@@ -474,6 +474,8 @@ public:
     antlr4::tree::TerminalNode *LeftParen();
     antlr4::tree::TerminalNode *RightParen();
     BracedInitListContext *bracedInitList();
+    std::vector<ArraySpecifierContext *> arraySpecifier();
+    ArraySpecifierContext* arraySpecifier(size_t i);
     ExpressionListContext *expressionList();
     antlr4::tree::TerminalNode *Cast();
     antlr4::tree::TerminalNode *Less();

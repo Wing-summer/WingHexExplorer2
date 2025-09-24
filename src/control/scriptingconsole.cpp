@@ -397,6 +397,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         _codes.clear();
         appendCommandPrompt();
         setMode(Input);
+        Q_EMIT consoleScriptRunFinished();
     }
 }
 
