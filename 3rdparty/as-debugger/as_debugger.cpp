@@ -302,8 +302,11 @@ asIDBCache::ResolveExpression(std::string_view expr,
     asIDBExpected<asIDBVariable::WeakPtr> variable;
     asIDBCallStackEntry *stack = nullptr;
 
-    if (stack_index.has_value())
-        stack = &call_stack[stack_index.value()];
+    if (stack_index.has_value()) {
+        if (call_stack.size() > stack_index.value()) {
+            stack = &call_stack[stack_index.value()];
+        }
+    }
 
     // if it starts with a & it has to be a local variable index
     if (stack && variable_name[0] == '&') {
@@ -1144,10 +1147,6 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
     int col;
     int row = ctx->GetLineNumber(0, &col, &section);
 
-    if (section && debugger->onLineCallBackExec) {
-        debugger->onLineCallBackExec(row, col, section);
-    }
-
     // we might not have an action - functions called from within
     // the debugger will never have this set.
     if (debugger->action != asIDBAction::None) {
@@ -1157,6 +1156,7 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
             debugger->DebugBreak(ctx);
             return;
         }
+
         // Step Over breaks on the next line that is <= the
         // current stack level.
         else if (debugger->action == asIDBAction::StepOver) {
@@ -1285,8 +1285,12 @@ void asIDBDebugger::DebugBreak(asIScriptContext *ctx) {
         std::swap(cache, new_cache);
     }
 
-    if (onDebugBreak) {
-        onDebugBreak();
+    const char *section = nullptr;
+    int col;
+    int row = ctx->GetLineNumber(0, &col, &section);
+
+    if (onLineCallBackExec) {
+        onLineCallBackExec(row, col, section);
     }
 
     // rehook

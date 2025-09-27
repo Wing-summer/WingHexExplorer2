@@ -76,12 +76,9 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
     this->onLineCallBackExec = [this](int row, int col,
                                       const char *section) -> void {
         Q_EMIT onRunCurrentLine(QString::fromUtf8(section), row);
-        Q_EMIT onDebugActionExec();
-    };
-
-    this->onDebugBreak = [this]() {
         Q_EMIT onPullCallStack();
         Q_EMIT onPullVariables();
+        Q_EMIT onDebugActionExec();
         Q_EMIT onDebugActionExec();
     };
 

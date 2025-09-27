@@ -481,8 +481,10 @@ ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
     }
 }
 
-bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
-                                  bool isInDebug, int *retCode) {
+bool ScriptMachine::executeScript(
+    ConsoleMode mode, const QString &script, bool isInDebug, int *retCode,
+    std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
+        sections) {
     Q_ASSERT(mode != Interactive);
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
@@ -500,12 +502,15 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         return false;
     }
 
-    QScopeGuard guard([mod]() {
+    QScopeGuard guard([mod, this]() {
         // Before leaving, allow the engine to clean up remaining objects by
         // discarding the module and doing a full garbage collection so that
         // this can also be debugged if desired
         mod->Discard();
+        endEvaluateDefine();
     });
+
+    beginEvaluateDefine();
 
     asPWORD isDbg = 0;
     if (mode == Scripting) {
@@ -569,6 +574,11 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
         info.type = MessageType::Error;
         outputMessage(info);
         return false;
+    }
+
+    if (sections) {
+        auto data = builder.scriptData();
+        sections(data);
     }
 
     if (isInDebug) {
@@ -694,7 +704,6 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
 
     if (isDbg) {
         _debugger->reset();
-        Q_EMIT onDebugFinished();
     }
 
     if (retCode) {
@@ -704,14 +713,11 @@ bool ScriptMachine::executeScript(ConsoleMode mode, const QString &script,
     return r >= 0;
 }
 
-bool ScriptMachine::beginEvaluateDefine() {
+void ScriptMachine::beginEvaluateDefine() {
     Q_ASSERT(_eMod == nullptr);
-    if (_eMod) {
-        return false;
-    } else {
+    if (_eMod == nullptr) {
         _eMod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
         _eMod->SetAccessMask(0x2);
-        return true;
     }
 }
 
@@ -897,7 +903,7 @@ ScriptMachine &ScriptMachine::instance() {
     return ins;
 }
 
-ScriptMachine::ScriptMachine() : QObject() {}
+ScriptMachine::ScriptMachine() {}
 
 asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
     if (isModuleExists(mode)) {
@@ -1000,6 +1006,49 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
     }
 }
 
+void ScriptMachine::debug_break() {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto &m = ScriptMachine::instance();
+        if (m._ctx[ConsoleMode::Scripting] == ctx) {
+            m._debugger->DebugBreak(ctx);
+        } else {
+            ctx->SetException("debug::setBreak can be only used in scripting");
+        }
+    }
+}
+
+QString ScriptMachine::debug_backtrace() {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto &m = ScriptMachine::instance();
+        if (m._ctx[ConsoleMode::Interactive] == ctx) {
+            ctx->SetException("debug::break cannot be used in console");
+            return {};
+        }
+
+        auto cs = ctx->GetCallstackSize();
+
+        QString ret;
+        for (asUINT i = 0; i < cs; i++) {
+            auto f = ctx->GetFunction(i);
+            int col;
+            const char *section;
+            int row = ctx->GetLineNumber(i, &col, &section);
+            ret.append(QStringLiteral("%1 %2[%3:%4]\n")
+                           .arg(QString::fromUtf8(
+                                    f->GetDeclaration(true, false, true)),
+                                QString::fromUtf8(section))
+                           .arg(row)
+                           .arg(col));
+        }
+
+        return ret;
+    }
+
+    return {};
+}
+
 std::optional<PragmaResult>
 ScriptMachine::pragmaCallback(const QString &pragmaText,
                               AsPreprocesser *builder,
@@ -1056,6 +1105,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     registerExceptionRoutines(engine);
     registerEngineAssert(engine);
     registerEngineClipboard(engine);
+    registerEngineDebug(engine);
 }
 
 void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
@@ -1138,6 +1188,24 @@ void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
     }
+
+    engine->SetDefaultNamespace("");
+}
+
+void ScriptMachine::registerEngineDebug(asIScriptEngine *engine) {
+    int r = engine->SetDefaultNamespace("debug");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction("void setBreak()",
+                                       asFUNCTION(debug_break), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "string backtrace()", asFUNCTION(debug_backtrace), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 
     engine->SetDefaultNamespace("");
 }

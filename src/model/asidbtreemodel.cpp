@@ -369,10 +369,9 @@ QVariant AsIDBTreeModel::getVariableIdentifier(const QModelIndex &index) const {
         asIDBVariable *v = decodeVar(ip);
         auto vp = getPtrFromRaw(v);
         if (vp) {
-            return QStringLiteral("var_%1_%2_%3")
+            return QStringLiteral("var_%1_%2")
                 .arg(QString::fromStdString(vp->identifier.Combine()),
-                     QString::fromStdString(vp->typeName))
-                .arg(quintptr(vp->address.address));
+                     QString::fromStdString(vp->typeName));
         }
     }
 
@@ -481,6 +480,11 @@ asIDBVariable::Ptr AsIDBTreeModel::getPtrFromRaw(asIDBVariable *raw) const {
             return f;
     }
     return {};
+}
+
+void AsIDBTreeModel::replaceRoots(const QVector<asIDBVariable::Ptr> &newRoots) {
+    roots = newRoots;
+    proxyMap.clear();
 }
 
 std::shared_ptr<AsIDBTreeModel::ProxyNode>

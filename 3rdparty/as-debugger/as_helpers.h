@@ -18,7 +18,7 @@ private:
     std::variant<std::string_view, T> data;
 
 public:
-    constexpr asIDBExpected() : data("unknown error") {}
+    constexpr asIDBExpected() : data("") {}
 
     constexpr asIDBExpected(const std::string_view v)
         : data(std::in_place_index<0>, v) {}

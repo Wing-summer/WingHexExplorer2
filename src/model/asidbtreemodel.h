@@ -115,6 +115,9 @@ protected:
 
     // map raw pointer to stored shared_ptr (recursive search)
     asIDBVariable::Ptr getPtrFromRaw(asIDBVariable *raw) const;
+
+protected:
+    void replaceRoots(const QVector<asIDBVariable::Ptr> &newRoots);
 };
 
 #endif // ASIDBTREEMODEL_H

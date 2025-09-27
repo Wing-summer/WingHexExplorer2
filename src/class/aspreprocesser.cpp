@@ -23,6 +23,7 @@
 #include "grammar/ASConsole/AngelscriptConsoleParser.h"
 #include "scriptmachine.h"
 #include "structlib/cstructerrorlistener.h"
+#include "utilities.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -118,9 +119,6 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                                    const QString &sourceName,
                                    const QString &currentDir, QString &outText,
                                    Mapping &outMap) {
-    ScriptMachine::instance().beginEvaluateDefine();
-    QScopeGuard guard([] { ScriptMachine::instance().endEvaluateDefine(); });
-
     const char *data = buf.constData();
     auto n = buf.size();
     qint64 idx = 0;
@@ -442,6 +440,10 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 emitBlankLine();
                 return;
             }
+
+            loadScriptSection(resolved);
+            emitBlankLine();
+            return;
         }
 
         if (kw == "if") {
@@ -799,7 +801,7 @@ QString AsPreprocesser::resolveIncludeFile(const QString &filename,
         if (isAbsolute) {
             inc = filename;
         } else {
-            auto pwd = QFileInfo(filename).absoluteDir();
+            QDir pwd(currentDir);
             inc = pwd.absoluteFilePath(filename);
         }
     } else {
@@ -918,6 +920,8 @@ void AsPreprocesser::setErrorHandler(
 AsPreprocesser::Result AsPreprocesser::preprocess(const QByteArray &source,
                                                   const QString &sourceName) {
     Result res;
+    res.checksum = Utilities::getMd5(source);
+    res.source = source;
     processBuffer(source, sourceName, QFileInfo(sourceName).absolutePath(),
                   res.script, res.mapping);
     return res;

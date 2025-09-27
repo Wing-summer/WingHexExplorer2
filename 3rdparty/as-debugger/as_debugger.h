@@ -200,7 +200,7 @@ private:
 struct asIDBCallStackEntry {
     int64_t id; // unique id during debugging
     std::string declaration;
-    std::string_view section;
+    std::string section;
     int row, column;
     asIDBScope scope;
 };
@@ -537,7 +537,6 @@ public:
 
     std::function<bool(asIScriptContext *)> onLineCallBack;
     std::function<void(int, int, const char *)> onLineCallBackExec;
-    std::function<void()> onDebugBreak;
     std::function<void(int, int, const char *)> onAdjustBreakPoint;
 
     asIDBDebugger(asIDBWorkspace *workspace) : workspace(workspace) {}

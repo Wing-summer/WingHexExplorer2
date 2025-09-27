@@ -124,6 +124,8 @@ public:
     };
 
     struct Result {
+        QString source;
+        QByteArray checksum;
         QString script;
         Mapping mapping;
     };

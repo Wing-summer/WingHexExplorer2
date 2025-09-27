@@ -1649,12 +1649,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto &l = LayoutManager::instance().layouts();
 
         auto menu = new QMenu(this);
-        menu->addAction(newAction(tr("Default"), [this]() {
-            showStatus(tr("LayoutRestoring..."));
-            updateUI();
-            m_dock->restoreState(_defaultLayout);
-            showStatus({});
-        }));
+        menu->addAction(newAction(tr("Default"),
+                                  [this]() { restoreLayout(_defaultLayout); }));
 
         if (!l.isEmpty()) {
             menu->addSeparator();
@@ -1662,12 +1658,8 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
         for (auto p = l.constKeyValueBegin(); p != l.constKeyValueEnd(); ++p) {
             auto layout = p->second;
-            menu->addAction(newAction(p->first, [this, layout]() {
-                showStatus(tr("LayoutRestoring..."));
-                updateUI();
-                m_dock->restoreState(layout);
-                showStatus({});
-            }));
+            menu->addAction(newAction(
+                p->first, [this, layout]() { restoreLayout(layout); }));
         }
 
         m_toolBtneditors.insert(
@@ -1677,16 +1669,6 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
         addPannelAction(pannel, QStringLiteral("layoutexport"),
                         tr("SaveLayout"), &MainWindow::on_saveLayout);
-    }
-
-    {
-        auto pannel = tab->addGroup(tr("Log"));
-        addPannelAction(pannel, QStringLiteral("log"), tr("ExportLog"),
-                        &MainWindow::on_exportlog);
-        addPannelAction(pannel, QStringLiteral("clearhis"), tr("ClearLog"),
-                        &MainWindow::on_clslog);
-        addPannelAction(pannel, QStringLiteral("qtloginspect"), tr("InsepctQt"),
-                        &MainWindow::on_inspectQt);
     }
 
     return tab;
@@ -1765,22 +1747,30 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
 
 RibbonTabContent *MainWindow::buildAboutPage(RibbonTabContent *tab) {
     updateUI();
-    auto pannel = tab->addGroup(tr("Info"));
 
-    addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
-                    &MainWindow::on_about);
+    {
+        auto pannel = tab->addGroup(tr("Info"));
+        addPannelAction(pannel, QStringLiteral("soft"), tr("Software"),
+                        &MainWindow::on_about);
+        addPannelAction(pannel, QStringLiteral("sponsor"), tr("Sponsor"),
+                        &MainWindow::on_sponsor);
+        addPannelAction(pannel, QStringLiteral("wiki"), tr("Wiki"),
+                        &MainWindow::on_wiki);
+        addPannelAction(pannel, QStringLiteral("qt"), tr("AboutQT"),
+                        [this] { WingMessageBox::aboutQt(this); });
+        addPannelAction(pannel, QStringLiteral("update"), tr("CheckUpdate"),
+                        &MainWindow::on_update);
+    }
 
-    addPannelAction(pannel, QStringLiteral("sponsor"), tr("Sponsor"),
-                    &MainWindow::on_sponsor);
-
-    addPannelAction(pannel, QStringLiteral("wiki"), tr("Wiki"),
-                    &MainWindow::on_wiki);
-
-    addPannelAction(pannel, QStringLiteral("qt"), tr("AboutQT"),
-                    [this] { WingMessageBox::aboutQt(this); });
-
-    addPannelAction(pannel, QStringLiteral("update"), tr("CheckUpdate"),
-                    &MainWindow::on_update);
+    {
+        auto pannel = tab->addGroup(tr("Log"));
+        addPannelAction(pannel, QStringLiteral("log"), tr("ExportLog"),
+                        &MainWindow::on_exportlog);
+        addPannelAction(pannel, QStringLiteral("clearhis"), tr("ClearLog"),
+                        &MainWindow::on_clslog);
+        addPannelAction(pannel, QStringLiteral("qtloginspect"), tr("InsepctQt"),
+                        &MainWindow::on_inspectQt);
+    }
 
     return tab;
 }
@@ -4216,6 +4206,49 @@ void MainWindow::onOutputBgScriptOutput(
     if (!m_bgScriptOutput->isVisible()) {
         _hlAnim->start();
     }
+}
+
+void MainWindow::restoreLayout(const QByteArray &layout) {
+    showStatus(tr("LayoutRestoring..."));
+    updateUI();
+
+    if (m_views.isEmpty()) {
+        m_dock->restoreState(layout);
+    } else {
+        auto curEditor = m_curEditor;
+
+        // remove temperaily
+        QVector<EditorView *> hiddenView;
+        for (auto pview = m_views.keyBegin(); pview != m_views.keyEnd();
+             pview++) {
+            auto view = *pview;
+            if (view->isClosed()) {
+                hiddenView.append(view);
+            }
+            m_dock->removeDockWidget(*pview);
+        }
+
+        m_dock->restoreState(layout);
+
+        // add back
+        auto centeralWidget = m_dock->centralWidget();
+        auto area = centeralWidget->dockAreaWidget();
+        for (auto pview = m_views.keyBegin(); pview != m_views.keyEnd();
+             pview++) {
+            auto view = *pview;
+            m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
+            if (hiddenView.contains(view)) {
+                view->toggleView(false);
+            }
+        }
+
+        if (curEditor) {
+            curEditor->raise();
+            curEditor->setFocus();
+        }
+    }
+
+    showStatus({});
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

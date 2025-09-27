@@ -23,15 +23,25 @@
 
 asIDBTreeView::asIDBTreeView(QWidget *parent) : QTreeView(parent) {
     Utilities::applyTreeViewProperty(this);
-    setModel(new AsIDBTreeModel(this));
+    auto mod = new AsIDBTreeModel(this);
+    connect(mod, &AsIDBTreeModel::modelAboutToBeReset, this,
+            &asIDBTreeView::saveExpansionState);
+    connect(mod, &AsIDBTreeModel::modelReset, this, [this]() {
+        QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
+    });
+    QTreeView::setModel(mod);
 }
 
 asIDBTreeView::asIDBTreeView(AsIDBTreeModel *model, QWidget *parent)
     : QTreeView(parent) {
     Utilities::applyTreeViewProperty(this);
     if (model) {
-        model->setParent(this);
-        setModel(model);
+        connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
+                &asIDBTreeView::saveExpansionState);
+        connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
+            QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
+        });
+        QTreeView::setModel(model);
     }
 }
 
@@ -39,20 +49,31 @@ void asIDBTreeView::refreshWithNewRoots(
     const QVector<asIDBVariable::Ptr> &newRoots) {
     auto model = qobject_cast<AsIDBTreeModel *>(this->model());
     if (model) {
-        saveExpansionState();
         model->setRoots(newRoots);
         _newRoot.reset();
-        QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
     }
 }
 
 void asIDBTreeView::refreshWithNewRoot(const asIDBVariable::Ptr &newRoot) {
     auto model = qobject_cast<AsIDBTreeModel *>(this->model());
     if (model) {
-        saveExpansionState();
         model->setRoot(newRoot);
         _newRoot = newRoot;
-        QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
+    }
+}
+
+void asIDBTreeView::setModel(QAbstractItemModel *model) {
+    if (this->model()) {
+        this->model()->disconnect(this, nullptr);
+    }
+    if (model) {
+        model->setParent(this);
+        connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
+                &asIDBTreeView::saveExpansionState);
+        connect(model, &AsIDBTreeModel::modelReset, this, [this]() {
+            QTimer::singleShot(0, this, &asIDBTreeView::restoreExpansionState);
+        });
+        QTreeView::setModel(model);
     }
 }
 
@@ -115,15 +136,14 @@ QString asIDBTreeView::getIndexIdentifier(const QModelIndex &index) const {
         }
     }
 
-    auto name = model()->data(index, Qt::DisplayRole).toString();
-    auto value = model()
-                     ->data(index.sibling(index.row(), 1), Qt::DisplayRole)
-                     .toString();
-
     auto varData = model()->data(index, Qt::UserRole);
     if (varData.isValid()) {
         return QStringLiteral("var_%1").arg(varData.toString());
     }
 
+    auto name = model()->data(index, Qt::DisplayRole).toString();
+    auto value = model()
+                     ->data(index.sibling(index.row(), 1), Qt::DisplayRole)
+                     .toString();
     return QStringLiteral("%1|%2").arg(name, value);
 }

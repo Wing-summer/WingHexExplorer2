@@ -20,6 +20,7 @@
 
 #include "asidbtreemodel.h"
 #include "class/asdebugger.h"
+#include <memory>
 
 class AsIDBWatchModel : public AsIDBTreeModel {
     Q_OBJECT
@@ -39,16 +40,17 @@ public:
     explicit AsIDBWatchModel(QObject *parent = nullptr);
 
 public:
-    void attachDebugger(asDebugger *debugger);
+    QStringList expressionList() const;
 
 public slots:
-    bool addWatchExpression(const QString &expression);
-
+    void attachDebugger(asDebugger *debugger);
+    void addWatchExpression(const QString &expression);
     void removeWatchExpression(qsizetype index);
-
+    void removeWatchExpressions(const QModelIndexList &indexes);
     bool editWatchExpression(qsizetype index, const QString &newExpression);
+    void refresh();
 
-    void refreshAll();
+    void reloadExpressionList(const QStringList &expressions);
 
 public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
@@ -58,7 +60,7 @@ public:
 
     void clearAll();
 
-protected:
+public:
     QVariant data(const QModelIndex &index, int role) const override;
 
     bool hasChildren(const QModelIndex &parent) const override;
@@ -71,14 +73,16 @@ protected:
     QModelIndex parent(const QModelIndex &child) const override;
 
 private:
-    void updateRootsFromWatchItems();
-
-    bool isChildOf(const asIDBVariable::Ptr &parent,
-                   const asIDBVariable *child) const;
-
-    QVector<WatchItem> m_watchItems;
-
+    // use shared_ptr so WatchItem* (shared_ptr.get()) remains stable across
+    // QVector reallocs
+    QVector<std::shared_ptr<WatchItem>> m_watchItems;
     asDebugger *_dbg = nullptr;
+
+    // helper: consistent user role id
+    QString makeTopLevelUserRole(const WatchItem &item) const;
+
+    // helper: build roots vector from current m_watchItems
+    QVector<asIDBVariable::Ptr> buildRootsFromWatchItems() const;
 };
 
 #endif // ASIDBWATCHMODEL_H

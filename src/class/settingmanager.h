@@ -136,6 +136,9 @@ public:
     QStringList readPluginRule(const QByteArray &data);
     QByteArray savePluginRule(const QStringList &rules);
 
+    QStringList watchExpressions() const;
+    void setWatchExpressions(const QStringList &newWatchExpressions);
+
 signals:
     void sigEditorfontSizeChanged(int v);
     void sigDecodeStrlimitChanged(int v);
@@ -169,6 +172,8 @@ private:
     QByteArray m_setLayout;
     QByteArray m_setScriptLayout;
     QString m_appFontFamily;
+
+    QStringList m_watchExpressions;
 
     bool m_editorShowHeader = true;
     bool m_editorShowcol = true;

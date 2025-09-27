@@ -33,6 +33,9 @@ public:
     void refreshWithNewRoots(const QVector<asIDBVariable::Ptr> &newRoots);
     void refreshWithNewRoot(const asIDBVariable::Ptr &newRoot);
 
+public slots:
+    void setModel(QAbstractItemModel *model) override;
+
 private:
     void saveExpansionState();
 

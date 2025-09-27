@@ -203,6 +203,12 @@ public:
         return {};
     }
 
+    static QByteArray getMd5(const QByteArray &data) {
+        QCryptographicHash hash(QCryptographicHash::Md5);
+        hash.addData(data);
+        return hash.result();
+    }
+
     static bool checkIsLittleEndian() {
         short s = 0x1122;
         auto l = *reinterpret_cast<char *>(&s);

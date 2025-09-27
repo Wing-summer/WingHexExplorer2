@@ -280,6 +280,8 @@ private:
 
     void onOutputBgScriptOutput(const ScriptMachine::MessageInfo &message);
 
+    void restoreLayout(const QByteArray &layout);
+
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 

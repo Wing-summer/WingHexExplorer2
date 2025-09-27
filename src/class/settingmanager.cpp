@@ -63,6 +63,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE, ("script.enable"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_TIMEOUT, ("script.timeout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_WATCH_VARS, ("script.watchexps"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USESYS_FILEDIALOG,
                           ("sys.nativeDialog"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USE_NATIVE_TITLEBAR,
@@ -177,6 +178,7 @@ void SettingManager::load() {
     m_scriptTimeout = qBound(0, m_scriptTimeout, 312480);
     m_usrHideCats = READ_CONFIG(SCRIPT_USRHIDECATS, {}).toStringList();
     m_sysHideCats = READ_CONFIG(SCRIPT_SYSHIDECATS, {}).toStringList();
+    m_watchExpressions = READ_CONFIG(SCRIPT_WATCH_VARS, {}).toStringList();
 
     m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, {}).toString();
     if (!m_lastUsedPath.isEmpty()) {
@@ -213,6 +215,19 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+QStringList SettingManager::watchExpressions() const {
+    return m_watchExpressions;
+}
+
+void SettingManager::setWatchExpressions(
+    const QStringList &newWatchExpressions) {
+    if (m_watchExpressions != newWatchExpressions) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(SCRIPT_WATCH_VARS, newWatchExpressions);
+        m_watchExpressions = newWatchExpressions;
+    }
 }
 
 QByteArray SettingManager::settingsScriptLayout() const {

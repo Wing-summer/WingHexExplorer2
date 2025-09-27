@@ -31,11 +31,8 @@
 
 class CScriptArray;
 
-class ScriptMachine : public QObject {
-    Q_OBJECT
-private:
-    using TranslateFunc = std::function<QString(const QStringList &)>;
-
+class ScriptMachine {
+    Q_GADGET
 public:
     // we have three console modes
     enum ConsoleMode {
@@ -104,6 +101,7 @@ public:
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
     static void registerEngineClipboard(asIScriptEngine *engine);
+    static void registerEngineDebug(asIScriptEngine *engine);
 
     void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
 
@@ -133,15 +131,16 @@ public:
     // debug or release?
     bool isDebugMode(ConsoleMode mode = Scripting);
 
-public slots:
+public:
     bool executeCode(ScriptMachine::ConsoleMode mode, const QString &code);
     // only scripting mode can be debugged
-    bool executeScript(ScriptMachine::ConsoleMode mode, const QString &script,
-                       bool isInDebug = false, int *retCode = nullptr);
+    bool executeScript(
+        ScriptMachine::ConsoleMode mode, const QString &script,
+        bool isInDebug = false, int *retCode = nullptr,
+        std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
+            sections = {});
 
-    bool beginEvaluateDefine();
     QVariant evaluateDefine(const QString &code);
-    void endEvaluateDefine();
 
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
@@ -149,6 +148,8 @@ public slots:
 
 protected:
     bool configureEngine();
+    void beginEvaluateDefine();
+    void endEvaluateDefine();
 
     QString getCallStack(asIScriptContext *context);
 
@@ -180,13 +181,14 @@ private:
     pragmaCallback(const QString &pragmaText, AsPreprocesser *builder,
                    const QString &sectionname);
 
+    static void debug_break();
+
+    static QString debug_backtrace();
+
     void exceptionCallback(asIScriptContext *context);
 
 private:
     void attachDebugBreak(asIScriptContext *ctx);
-
-signals:
-    void onDebugFinished();
 
 private:
     asIScriptEngine *_engine = nullptr;

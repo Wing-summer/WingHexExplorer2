@@ -49,13 +49,9 @@ bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
     QAxObject shellApp("Shell.Application");
 
     QAxObject *windows = shellApp.querySubObject("Windows()");
-    windows->disableMetaObject();
     auto count = windows->dynamicCall("Count()").toInt();
-    qDebug() << count;
     for (int i = 0; i < count; ++i) {
         QAxObject *win = windows->querySubObject("Item(QVariant)", {i});
-        win->disableMetaObject();
-
         auto program = win->dynamicCall("FullName()").toString();
         QFileInfo programFI(program);
         if (programFI.baseName().toLower() != "explorer")
@@ -68,28 +64,21 @@ bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
             continue;
 
         QAxObject *doc = win->querySubObject("Document()");
-
         QAxObject *folder = doc->querySubObject("Folder()");
-        folder->disableMetaObject();
         QAxObject *folderItems = folder->querySubObject("Items()");
-        folderItems->disableMetaObject();
 
         QAxObject *ourEntry = {};
         int count = folderItems->dynamicCall("Count()").toInt();
         for (int j = 0; j < count; j++) {
             QAxObject *entry = folderItems->querySubObject("Item(QVariant)", j);
-            entry->disableMetaObject();
             auto name = entry->dynamicCall("Name()").toString().toLower();
             if (name == matchName)
                 ourEntry = entry;
         }
         if (ourEntry) {
-            if (false)
-                ourEntry->dynamicCall("InvokeVerb(QVariant)",
-                                      QVariant()); // open etc.
-            auto rc = doc->dynamicCall(
-                "SelectItem(QVariant, int)", ourEntry->asVariant(),
-                SVSI_SELECT | (deselect ? SVSI_DESELECTOTHERS : 0));
+            doc->dynamicCall("SelectItem(QVariant, int)", ourEntry->asVariant(),
+                             SVSI_SELECT |
+                                 (deselect ? SVSI_DESELECTOTHERS : 0));
             auto hwnd = win->dynamicCall("HWND()").toLongLong();
             BringWindowToTop(HWND(hwnd));
             return true;

@@ -31,6 +31,7 @@
 #include "WingCodeEdit/wingsquiggleinfomodel.h"
 #include "class/recentfilemanager.h"
 #include "control/scripteditor.h"
+#include "model/asidbwatchmodel.h"
 #include "model/dbgcallstackmodel.h"
 #include "utilities.h"
 
@@ -217,7 +218,7 @@ private:
 
     void runDbgCommand(asIDBAction action);
 
-    void startDebugScript(ScriptEditor *editor);
+    void startDebugScript(const QString &fileName);
 
     void addBreakPoint(ScriptEditor *editor, int line);
     void removeBreakPoint(ScriptEditor *editor, int line);
@@ -278,6 +279,11 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    ScriptEditor *createFakeEditor(const QString &fileName,
+                                   const QString &text);
+    void destoryFakeEditor();
+
+private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
     QStatusBar *m_status = nullptr;
@@ -307,15 +313,17 @@ private:
     QList<ScriptEditor *> m_views;
     QString m_lastusedpath;
 
+    QHash<QString, AsPreprocesser::Result> _curDbgData;
+    QVector<ScriptEditor *> _reditors;
+
     // widgets for debugging
     ScriptingConsole *m_consoleout = nullptr;
     asIDBTreeView *m_varshow = nullptr;
     asIDBTreeView *m_gvarshow = nullptr;
-    asIDBTreeView *m_watchVar = nullptr;
+    AsIDBWatchModel *m_watchModel = nullptr;
     DbgCallStackModel *m_callstack = nullptr;
     ASObjTreeWidget *m_sym = nullptr;
-
-    ScriptEditor *_DebugingEditor;
+    ScriptEditor *_fakeEditor = nullptr;
 
     QLabel *_status = nullptr;
 };
