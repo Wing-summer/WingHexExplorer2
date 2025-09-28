@@ -28,8 +28,14 @@ WingCStruct::~WingCStruct() {}
 
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
-    _parser = new CTypeParser([](const MsgInfo &info) {
+    _parser = new CTypeParser([this](const MsgInfo &info) {
         // TODO
+        switch (info.type) {
+        case MsgType::Error:
+            break;
+        case MsgType::Warn:
+            break;
+        }
     });
     return true;
 }
@@ -832,6 +838,34 @@ QVariant WingCStruct::structTypeDefs(const QVariantList &params) {
     return structTypeDefs();
 }
 
+QVariant WingCStruct::unionTypeDefs(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return unionTypeDefs();
+}
+
+QVariant WingCStruct::typedefTypeDefs(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return typedefTypeDefs();
+}
+
+QVariant WingCStruct::enumTypeDefs(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return enumTypeDefs();
+}
+
+QVariant WingCStruct::constVarDefs(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return constVarDefs();
+}
+
 QVariant WingCStruct::sizeOf(const QVariantList &params) {
     if (params.size() != 1) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -844,6 +878,54 @@ QVariant WingCStruct::sizeOf(const QVariantList &params) {
     return sizeOf(type);
 }
 
+QVariant WingCStruct::containsType(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return containsType(type);
+}
+
+QVariant WingCStruct::isBasicType(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return isBasicType(type);
+}
+
+QVariant WingCStruct::isUnsignedBasicType(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return isUnsignedBasicType(type);
+}
+
+QVariant WingCStruct::containsEnum(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return containsEnum(type);
+}
+
 QVariant WingCStruct::containsStruct(const QVariantList &params) {
     if (params.size() != 1) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -854,6 +936,140 @@ QVariant WingCStruct::containsStruct(const QVariantList &params) {
     }
     auto type = type_v.toString();
     return containsStruct(type);
+}
+
+QVariant WingCStruct::containsUnion(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return containsUnion(type);
+}
+
+QVariant WingCStruct::containsTypeDef(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return containsTypeDef(type);
+}
+
+QVariant WingCStruct::containsConstVar(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return containsConstVar(type);
+}
+
+QVariant WingCStruct::isCompletedType(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return isCompletedType(params);
+}
+
+QVariant WingCStruct::enumValueNames(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return enumValueNames(type);
+}
+
+QVariant WingCStruct::constVarValueInt(const QVariantList &params) {
+    if (params.size() != 2) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+
+    auto ok_v = params.at(1);
+    if (!ok_v.canConvert<bool *>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+
+    auto type = type_v.toString();
+    auto ok = type_v.value<bool *>();
+    return constVarValueInt(type, ok);
+}
+
+QVariant WingCStruct::constVarValueUInt(const QVariantList &params) {
+    if (params.size() != 2) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+
+    auto ok_v = params.at(1);
+    if (!ok_v.canConvert<bool *>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+
+    auto type = type_v.toString();
+    auto ok = type_v.value<bool *>();
+    return constVarValueUInt(type, ok);
+}
+
+QVariant WingCStruct::isCompletedStruct(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return isCompletedStruct(type);
+}
+
+QVariant WingCStruct::isCompletedUnion(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return isCompletedUnion(type);
+}
+
+QVariant WingCStruct::getMissingDependencise(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return getMissingDependencise(type);
 }
 
 WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {

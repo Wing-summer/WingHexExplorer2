@@ -24,7 +24,7 @@ class asDebugger;
 
 class asWingCache : public asIDBCache {
 public:
-    explicit asWingCache(asIDBDebugger &dbg, asIScriptContext *ctx);
+    explicit asWingCache(asDebugger &dbg, asIScriptContext *ctx);
 
 public:
     const asIDBTypeEvaluator &GetEvaluator(const asIDBVarAddr &id) const;
@@ -38,8 +38,7 @@ private:
     // of T from the given type name.
     template <typename T>
     void registerEvaluator(asIScriptEngine *engine, const char *name) {
-        registerEvaluator(engine->GetTypeInfoByName(name)->GetTypeId(),
-                          std::make_unique<T>());
+        registerEvaluator(engine->GetTypeIdByDecl(name), std::make_unique<T>());
     }
 
     // _evaluators don't take up much memory so we'll just

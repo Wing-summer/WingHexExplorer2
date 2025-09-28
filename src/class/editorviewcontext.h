@@ -95,6 +95,8 @@ public:
 
 public slots:
     virtual void update() override;
+    virtual void update(const QRect &r) override;
+    virtual void update(const QRegion &r) override;
 
 public:
     void setBeginLine(qsizetype newBeginLine);

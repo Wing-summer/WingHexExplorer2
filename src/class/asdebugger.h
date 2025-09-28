@@ -18,6 +18,7 @@
 #ifndef ASDEBUGGER_H
 #define ASDEBUGGER_H
 
+#include "WingPlugin/iwingangel.h"
 #include "angelscript.h"
 #include "as-debugger/as_debugger.h"
 
@@ -28,6 +29,9 @@
 
 class asDebugger : public QObject, public asIDBDebugger {
     Q_OBJECT
+
+    friend class asWingCache;
+
 public:
     struct VariablesInfo {
         QString name;
@@ -37,6 +41,10 @@ public:
 public:
     explicit asDebugger(asIDBWorkspace *workspace);
     virtual ~asDebugger();
+
+public:
+    void setCustomEvals(
+        const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals);
 
 public:
     void addFileBreakPoint(const QString &file, int lineNbr);
@@ -61,6 +69,9 @@ protected:
 
     virtual std::unique_ptr<asIDBCache>
     CreateCache(asIScriptContext *ctx) override;
+
+private:
+    QHash<std::string, WingHex::IWingAngel::Evaluator> _customEvals;
 };
 
 #endif // ASDEBUGGER_H

@@ -18,10 +18,15 @@
 #include "as_helpers.h"
 
 struct asIDBTypeId {
-    int typeId = 0;
-    asETypeModifiers modifiers = asTM_NONE;
+    int typeId;
+    asETypeModifiers modifiers;
 
-    constexpr bool operator==(const asIDBTypeId &other) const {
+    inline asIDBTypeId() : typeId(0), modifiers(asTM_NONE) {}
+    inline asIDBTypeId(int id) : typeId(id), modifiers(asTM_NONE) {}
+    inline asIDBTypeId(int id, asETypeModifiers mod)
+        : typeId(id), modifiers(mod) {}
+
+    constexpr inline bool operator==(const asIDBTypeId &other) const {
         return typeId == other.typeId && modifiers == other.modifiers;
     }
 };

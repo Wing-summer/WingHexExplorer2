@@ -2751,6 +2751,23 @@ void PluginSystem::doneRegisterScriptObj() {
     // ok, then, we will register all script objects
     auto api =
         QScopedPointer<WingAngel>(new WingAngel(_angelplg, _scriptMarcos));
+
+    // don't register evalutors for internal types
+    auto &m = ScriptMachine::instance();
+    auto engine = m.engine();
+    auto total = engine->GetObjectTypeCount();
+    QList<int> excludeTypeId;
+    excludeTypeId.reserve(total);
+    for (asUINT i = 0; i < total; ++i) {
+        auto obj = engine->GetObjectTypeByIndex(i);
+        auto typeId = obj->GetTypeId();
+        typeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
+        if (typeId) {
+            excludeTypeId.append(typeId);
+        }
+    }
+    api->setExcludeEvalIDs(excludeTypeId);
+
     auto ptr = api.data();
     if (_manager) {
         ptr->setCurrentPluginSession(_manInfo->id.toUtf8());
@@ -2769,6 +2786,10 @@ void PluginSystem::doneRegisterScriptObj() {
         p->onRegisterScriptObj(ptr);
     }
 
+    auto evals = api->customEvals();
+    m.setCustomEvals(evals);
+
+    ptr->setCurrentPluginSession({});
     generateScriptPredefined(ScriptMachine::instance().engine(),
                              Utilities::getASPredefPath());
 }

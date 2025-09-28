@@ -150,7 +150,7 @@ void ScriptingDialog::initConsole() {
 #ifdef Q_OS_WIN
             if (file.compare(m_curEditor->fileName(), Qt::CaseInsensitive)) {
 #else
-            if (file != e->fileName()) {
+            if (file != m_curEditor->fileName()) {
 #endif
                 e = findEditorView(file);
                 if (e) {

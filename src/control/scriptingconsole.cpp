@@ -314,12 +314,8 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                     auto decl = mod->GetGlobalVarDeclaration(i);
                     if (decl && mod->GetGlobalVar(i, &name, nullptr, &typeID) ==
                                     asSUCCESS) {
-                        // TODO
-                        // auto value = sm.debugger()->toString(
-                        //     mod->GetAddressOfGlobalVar(i), typeID,
-                        //     sm.engine(), 1);
-                        // stdOutLine(decl + QStringLiteral(" = ") + value);
-                        // newLine();
+                        stdOutLine(decl + QStringLiteral(";"));
+                        newLine();
                     }
                 }
             }
@@ -367,6 +363,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         _codes.clear();
         appendCommandPrompt();
         setMode(Input);
+        Q_EMIT consoleScriptRunFinished();
     } else if (exec == QStringLiteral("#cls")) {
         auto &ins = ScriptMachine::instance();
         auto mod = ins.module(ScriptMachine::Interactive);
@@ -383,6 +380,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         _codes.clear();
         appendCommandPrompt();
         setMode(Input);
+        Q_EMIT consoleScriptRunFinished();
     } else if (exec == QStringLiteral("#hiscls")) {
         history_.strings_.clear();
     } else {

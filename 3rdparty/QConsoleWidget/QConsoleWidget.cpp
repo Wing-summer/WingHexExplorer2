@@ -142,23 +142,23 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
     QTextCursor textCursor = this->textCursor();
     bool selectionInEditZone = isSelectionInEditZone();
+    int key = e->key();
 
     // check for user abort request
-    if (e->modifiers() & Qt::ControlModifier) {
-        if (e->key() == Qt::Key_Q) // Ctrl-Q aborts
-        {
+    if (e->modifiers() == Qt::ControlModifier) {
+        switch (key) {
+        case Qt::Key_Q:
             Q_EMIT abortEvaluation();
             e->accept();
             return;
+        case Qt::Key_C:
+            // Allow copying anywhere in the console ...
+            if (textCursor.hasSelection()) {
+                copy();
+            }
+            e->accept();
+            return;
         }
-    }
-
-    // Allow copying anywhere in the console ...
-    if (e->key() == Qt::Key_C && e->modifiers() == Qt::ControlModifier) {
-        if (textCursor.hasSelection())
-            copy();
-        e->accept();
-        return;
     }
 
     // the rest of key events are ignored during output mode
@@ -167,25 +167,27 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
         return;
     }
 
-    // Allow cut only if the selection is limited to the interactive area ...
-    if (e->key() == Qt::Key_X && e->modifiers() == Qt::ControlModifier) {
-        if (selectionInEditZone)
-            cut();
-        e->accept();
-        return;
-    }
+    if (e->modifiers() == Qt::ControlModifier) {
+        switch (key) {
+        case Qt::Key_X:
+            // Allow cut only if the selection is limited to the interactive
+            // area
+            if (selectionInEditZone) {
+                cut();
+            }
+            e->accept();
+            return;
+        case Qt::Key_V:
+            // Allow paste only if the selection is in the interactive area
+            if (selectionInEditZone || isCursorInEditZone()) {
+                paste();
+            }
 
-    // Allow paste only if the selection is in the interactive area ...
-    if (e->key() == Qt::Key_V && e->modifiers() == Qt::ControlModifier) {
-        if (selectionInEditZone || isCursorInEditZone()) {
-            paste();
+            e->accept();
+            return;
         }
-
-        e->accept();
-        return;
     }
 
-    int key = e->key();
     int shiftMod = e->modifiers() == Qt::ShiftModifier;
 
     if (history_.isActive() && key != Qt::Key_Up && key != Qt::Key_Down)
@@ -233,7 +235,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             cut();
         else {
             // cursor must be in edit zone
-            if (textCursor.position() < inpos_)
+            if (textCursor.selectionStart() < inpos_)
                 QApplication::beep();
             else
                 processDefaultKeyPressEvent(e);
@@ -246,7 +248,7 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
             cut();
         else {
             // cursor must be in edit zone
-            if (textCursor.position() <= inpos_)
+            if (textCursor.selectionStart() <= inpos_)
                 QApplication::beep();
             else
                 processDefaultKeyPressEvent(e);

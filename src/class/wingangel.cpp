@@ -357,6 +357,11 @@ WingAngel::registerGlobalFunction(const char *declaration,
     return returnValue(ret);
 }
 
+QHash<std::string, WingHex::IWingAngel::Evaluator>
+WingAngel::customEvals() const {
+    return _customEvals;
+}
+
 WingHex::asRetCodes
 WingAngel::registerInterfaceMethod(const char *intf, const char *declaration) {
     auto engine = ScriptMachine::instance().engine();
@@ -380,6 +385,52 @@ WingHex::asRetCodes WingAngel::registerObjectBehaviour(
         asECallConvTypes(callConv), auxiliary, compositeOffset,
         isCompositeIndirect);
     return returnValue(ret);
+}
+
+WingHex::asRetCodes WingAngel::registerObjectEvaluator(const char *obj,
+                                                       const Evaluator &ev) {
+    auto &m = ScriptMachine::instance();
+    auto engine = m.engine();
+    // current namespace is _plgsess
+    auto type = engine->GetTypeInfoByName(obj);
+    if (type) {
+        auto typeId = type->GetTypeId();
+        typeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
+
+        switch (typeId) {
+        case asTYPEID_BOOL:
+        case asTYPEID_INT8:
+        case asTYPEID_INT16:
+        case asTYPEID_INT32:
+        case asTYPEID_INT64:
+        case asTYPEID_UINT8:
+        case asTYPEID_UINT16:
+        case asTYPEID_UINT32:
+        case asTYPEID_UINT64:
+        case asTYPEID_FLOAT:
+        case asTYPEID_DOUBLE:
+            return WingHex::asRetCodes::asALREADY_REGISTERED;
+        default: {
+            if (_excludeEvalIDs.contains(typeId)) {
+                return WingHex::asRetCodes::asALREADY_REGISTERED;
+            }
+
+            auto flags = type->GetFlags();
+            if ((flags & asOBJ_ENUM) || (flags & asOBJ_TYPEDEF)) {
+                return WingHex::asRetCodes::asALREADY_REGISTERED;
+            }
+
+            std::string key = _plgsess.toStdString() + "::" + obj;
+            if (_customEvals.contains(key)) {
+                return WingHex::asRetCodes::asALREADY_REGISTERED;
+            }
+
+            _customEvals.insert(key, ev);
+            return WingHex::asRetCodes::asSUCCESS;
+        } break;
+        }
+    }
+    return WingHex::asRetCodes::asINVALID_TYPE;
 }
 
 WingHex::asRetCodes
@@ -611,4 +662,10 @@ WingHex::asRetCodes WingAngel::returnValue(int ret) {
     } else {
         return WingHex::asRetCodes::asSUCCESS;
     }
+}
+
+QList<int> WingAngel::excludeEvalIDs() const { return _excludeEvalIDs; }
+
+void WingAngel::setExcludeEvalIDs(const QList<int> &newExcludeEvals) {
+    _excludeEvalIDs = newExcludeEvals;
 }

@@ -579,6 +579,63 @@ void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
         "void raiseScriptException()",
         asWINGFUNCTION(TestPlugin::testRaiseScriptException),
         WingHex::IWingAngel::asCallConvTypes::asCALL_GENERIC);
+
+    // register test object
+    struct TestObj {
+        TestObj() : _v(0) {}
+        TestObj(int v) : _v(v) {}
+
+        int getV() { return _v; }
+        int _v;
+    };
+
+    auto r = o->registerObjectType(
+        "TestObj", sizeof(TestObj),
+        WingHex::IWingAngel::asOBJ_VALUE | WingHex::IWingAngel::asOBJ_POD |
+            WingHex::IWingAngel::asOBJ_APP_CLASS_ALLINTS |
+            WingHex::asGetTypeTraits<TestObj>());
+    if (r == WingHex::asRetCodes::asSUCCESS) {
+        // Register the constructors
+        o->registerObjectBehaviour(
+            "TestObj", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f()",
+            asWINGFUNCTIONPR([](void *memory) { new (memory) TestObj(); },
+                             (void *), void),
+            WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+        o->registerObjectBehaviour(
+            "TestObj", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(int v)",
+            asWINGFUNCTIONPR(
+                [](void *memory, int v) { new (memory) TestObj(v); },
+                (void *, int), void),
+            WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+        o->registerObjectMethod(
+            "TestObj", "int getV() const", asWINGMETHOD(TestObj, getV),
+            WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL);
+
+        o->registerObjectEvaluator(
+            "TestObj",
+            [](void *result, WingHex::IWingAngel::EvalMode mode)
+                -> WingHex::IWingAngel::EvaluateResult {
+                if (mode == WingHex::IWingAngel::EvalMode::Eval) {
+                    auto obj = static_cast<TestObj *>(result);
+                    if (obj) {
+                        WingHex::IWingAngel::EvalResult r;
+                        r.value = QString::number(obj->_v).append(
+                            QStringLiteral(" (Custom Type)"));
+                        r.expandable = true; // fake expand
+                        return r;
+                    }
+                } else {
+                    auto obj = static_cast<TestObj *>(result);
+                    if (obj) {
+                        WingHex::IWingAngel::ExpandResult r;
+                        r.type = "int";
+                        r.buffer = &obj->_v;
+                        return QVector<WingHex::IWingAngel::ExpandResult>{r};
+                    }
+                }
+                return {};
+            });
+    }
 }
 
 void TestPlugin::onPaintHexEditorView(QPainter *painter, QWidget *w,

@@ -76,6 +76,9 @@ public:
         void *auxiliary, int compositeOffset,
         bool isCompositeIndirect) override;
 
+    virtual WingHex::asRetCodes
+    registerObjectEvaluator(const char *obj, const Evaluator &ev) override;
+
     virtual WingHex::asRetCodes registerInterface(const char *name) override;
 
     virtual WingHex::asRetCodes
@@ -85,6 +88,12 @@ public:
     registerGlobalFunction(const char *declaration,
                            const WingHex::asFuncPtr &funcPointer,
                            asCallConvTypes callConv, void *auxiliary) override;
+
+public:
+    QHash<std::string, WingHex::IWingAngel::Evaluator> customEvals() const;
+
+    QList<int> excludeEvalIDs() const;
+    void setExcludeEvalIDs(const QList<int> &newExcludeEvals);
 
 private:
     static QString getScriptFnSig(uint retMetaType, const ScriptFn &fn,
@@ -102,6 +111,9 @@ private:
     QByteArray _plgsess;
 
     QStringList &_scriptMarcos;
+
+    QList<int> _excludeEvalIDs;
+    QHash<std::string, WingHex::IWingAngel::Evaluator> _customEvals;
 };
 
 #endif // WINGANGEL_H

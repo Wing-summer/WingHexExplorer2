@@ -5,6 +5,7 @@
 #include <array>
 #include <bitset>
 #include <charconv>
+#include <string>
 
 void asIDBVariable::Evaluate() {
     if (evaluated)
@@ -195,7 +196,7 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
         return f->second;
 
     auto type = ctx->GetEngine()->GetTypeInfoById(id.typeId);
-    const char *rawName;
+    std::string rawName;
 
     if (!type) {
         // a primitive
@@ -238,7 +239,12 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
             break;
         }
     } else {
-        rawName = type->GetName();
+        auto ns = type->GetNamespace();
+        if (ns && strlen(ns)) {
+            rawName = fmt::format("{}::{}", ns, type->GetName());
+        } else {
+            rawName = type->GetName();
+        }
     }
 
     std::string name = fmt::format(
@@ -601,14 +607,14 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
 class asIDBNullTypeEvaluator : public asIDBTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        var->value = "(null)";
+        var->value = "<null>";
     }
 };
 
 class asIDBUninitTypeEvaluator : public asIDBTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        var->value = "(uninit)";
+        var->value = "<uninit>";
     }
 };
 
@@ -804,6 +810,12 @@ asIDBObjectTypeEvaluator::Evaluate(asIDBVariable::Ptr var) const /*override*/
     auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
 
     var->expandable = CanExpand(var);
+
+    if (type == nullptr) {
+        return;
+    }
+
+    var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
     if (ctx->GetState() != asEXECUTION_EXCEPTION) {
         asIDBObjectIteratorHelper it(type, var->address.ResolveAs<void>());

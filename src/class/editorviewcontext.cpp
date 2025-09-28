@@ -305,6 +305,12 @@ bool EditorViewContext::lockKeepSize() const {
 
 void EditorViewContext::update() { _view->viewport()->update(); }
 
+void EditorViewContext::update(const QRect &r) { _view->viewport()->update(r); }
+
+void EditorViewContext::update(const QRegion &r) {
+    _view->viewport()->update(r);
+}
+
 void EditorViewContext::setBeginLine(qsizetype newBeginLine) {
     _beginLine = newBeginLine;
 }

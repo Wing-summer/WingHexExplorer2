@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language>
 <language name="AngelScript" section="Sources" version="19" kateversion="5.79" extensions="*.as;*.angelscript" indenter="cstyle" style="C++"
-    author="wingsummer" license="GPL" priority="99" >
+          author="wingsummer" license="GPL" priority="99" >
     <highlighting>
         <list name="keywords">
+            <!-- （略）保持原样，实际使用时可全部保留你的关键字列表 -->
             <item>abstract</item>
             <item>and</item>
             <item>break</item>
@@ -80,9 +81,11 @@
                 <HlCOct attribute="Octal" context="#stay"/>
                 <HlCHex attribute="Hex" context="#stay"/>
                 <Int attribute="Decimal" context="Int Suffixes"/>
-                <DetectChar attribute="Char" context="String" char="&apos;"/>
+
                 <StringDetect attribute="Text Block" context="TextBlock" String="&quot;&quot;&quot;"/>
-                <DetectChar attribute="String" context="String" char="&quot;"/>
+                <DetectChar attribute="String" context="StringDouble" char="&quot;"/>
+                <DetectChar attribute="String" context="StringSingle" char="&apos;"/>
+
                 <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="/" lookAhead="true"/>
                 <Detect2Chars attribute="Comment" context="MatchComment" char="/" char1="*" lookAhead="true" />
                 <DetectChar attribute="Symbol" context="#stay" char="{" beginRegion="block1"/>
@@ -94,6 +97,7 @@
                 <AnyChar attribute="Symbol" context="#stay" String=":!%&amp;()+,-/*&lt;=&gt;?[]|~^&#59;"/>
                 <DetectChar attribute="Macro" context="Macro" char="#"/>
             </context>
+
             <context name="Float Suffixes" attribute="Float" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
                 <AnyChar String="dDfFmM" attribute="Float" context="#pop"/>
             </context>
@@ -102,22 +106,31 @@
                 <StringDetect attribute="Decimal" context="#pop" String="LU" insensitive="true"/>
                 <AnyChar attribute="Decimal" context="#pop" String="ULul"/>
             </context>
-            <context attribute="String" lineEndContext="#pop" name="String">
+
+            <context attribute="String" lineEndContext="#pop" name="StringDouble">
                 <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
                 <DetectChar attribute="String" context="#pop" char="&quot;"/>
-                <DetectChar attribute="Char" context="#pop" char="&apos;"/>
             </context>
+
+            <context attribute="String" lineEndContext="#pop" name="StringSingle">
+                <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
+                <DetectChar attribute="String" context="#pop" char="&apos;"/>
+            </context>
+
             <context attribute="String" lineEndContext="#pop" name="StringEscapedChar">
                 <HlCStringChar attribute="String Char" context="#pop"/>
                 <RegExpr attribute="String Char" context="#pop" String="\\u+[0-9a-fA-F]{4}"/>
             </context>
+
             <context attribute="Text Block" lineEndContext="#stay" name="TextBlock">
                 <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
                 <StringDetect attribute="Text Block" context="#pop" String="&quot;&quot;&quot;"/>
             </context>
+
             <context attribute="Normal Text" lineEndContext="#pop" name="Member" fallthrough="true" fallthroughContext="#pop">
                 <RegExpr attribute="Function" context="#pop" String="\b[_\w][_\w\d]*(?=[\s]*)" />
             </context>
+
             <context attribute="Comment" lineEndContext="#pop" name="Commentar 1">
                 <IncludeRules context="##Comments"/>
             </context>

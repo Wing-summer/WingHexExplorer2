@@ -236,13 +236,30 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto smr = sm.init();
         if (smr) {
             plg.doneRegisterScriptObj();
-            auto cfgerr = sm.isEngineConfigError();
+
+            // register the callback for output error message
+            // when configuring error
+            ScriptMachine::RegCallBacks callbacks;
+            callbacks.getInputFn = [this]() -> QString {
+                return m_scriptConsole->getInput();
+            };
+            callbacks.clearFn = [this]() { m_scriptConsole->clearConsole(); };
+            callbacks.printMsgFn =
+                [this](const ScriptMachine::MessageInfo &message) {
+                    m_scriptConsole->onOutput(message);
+                };
+            sm.registerCallBack(ScriptMachine::Interactive, callbacks);
+
+            m_scriptConsole->setMode(QConsoleWidget::Output);
+            auto cfgerr = sm.checkEngineConfigError();
 
             // At this time, AngelScript service plugin has started
             if (cfgerr) {
-                m_scriptConsole->initOutput();
-                m_scriptConsole->setMode(QConsoleWidget::Output);
-                m_scriptConsole->stdErrLine(tr("EngineConfigError"));
+                ScriptMachine::MessageInfo msg;
+                msg.type = ScriptMachine::MessageType::Error;
+                msg.mode = ScriptMachine::Interactive;
+                msg.message = tr("EngineConfigError");
+                m_scriptConsole->onOutput(msg);
 
                 m_scriptConsole->setEnabled(false);
 
@@ -251,18 +268,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     false);
             } else {
                 ScriptMachine::RegCallBacks callbacks;
-                callbacks.getInputFn = [this]() -> QString {
-                    return m_scriptConsole->getInput();
-                };
-                callbacks.clearFn = [this]() {
-                    m_scriptConsole->clearConsole();
-                };
-                callbacks.printMsgFn =
-                    [this](const ScriptMachine::MessageInfo &message) {
-                        m_scriptConsole->onOutput(message);
-                    };
-                sm.registerCallBack(ScriptMachine::Interactive, callbacks);
-
                 callbacks.getInputFn = [this]() -> QString {
                     return WingInputDialog::getText(this, tr("InputRequest"),
                                                     tr("PleaseInput"));

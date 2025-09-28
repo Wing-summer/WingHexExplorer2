@@ -152,10 +152,11 @@ bool ScriptMachine::isRunning(ConsoleMode mode) const {
     return _ctx.value(mode) != nullptr;
 }
 
-bool ScriptMachine::isEngineConfigError() const {
+bool ScriptMachine::checkEngineConfigError() const {
     if (_engine) {
-        auto e = dynamic_cast<asCScriptEngine *>(_engine);
+        auto e = static_cast<asCScriptEngine *>(_engine);
         if (e) {
+            e->PrepareEngine();
             return e->configFailed;
         }
     }
@@ -301,6 +302,11 @@ void ScriptMachine::destoryMachine() {
 
     _engine->ShutDownAndRelease();
     _engine = nullptr;
+}
+
+void ScriptMachine::setCustomEvals(
+    const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals) {
+    _debugger->setCustomEvals(evals);
 }
 
 void ScriptMachine::exceptionCallback(asIScriptContext *context) {

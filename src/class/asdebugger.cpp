@@ -79,7 +79,6 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
         Q_EMIT onPullCallStack();
         Q_EMIT onPullVariables();
         Q_EMIT onDebugActionExec();
-        Q_EMIT onDebugActionExec();
     };
 
     this->onAdjustBreakPoint = [this](int old, int line, const char *section) {
@@ -88,6 +87,11 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
 }
 
 asDebugger::~asDebugger() {}
+
+void asDebugger::setCustomEvals(
+    const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals) {
+    _customEvals = evals;
+}
 
 void asDebugger::addFileBreakPoint(const QString &file, int lineNbr) {
     auto id = file.toStdString();

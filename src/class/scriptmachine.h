@@ -21,6 +21,7 @@
 #include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 
+#include "WingPlugin/iwingangel.h"
 #include "as-debugger/as_debugger.h"
 #include "class/aspreprocesser.h"
 
@@ -92,11 +93,14 @@ public:
     static ScriptMachine &instance();
     void destoryMachine();
 
+    void setCustomEvals(
+        const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals);
+
 public:
     bool init();
     bool isInited() const;
     bool isRunning(ConsoleMode mode) const;
-    bool isEngineConfigError() const;
+    bool checkEngineConfigError() const;
 
     static void registerEngineAddon(asIScriptEngine *engine);
     static void registerEngineAssert(asIScriptEngine *engine);
@@ -199,7 +203,7 @@ private:
 
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;
-    ConsoleMode _curMsgMode = ConsoleMode::Background;
+    ConsoleMode _curMsgMode = ConsoleMode::Interactive;
 
     qint64 lineOffset = 0;
     qint64 colOffset = 0;

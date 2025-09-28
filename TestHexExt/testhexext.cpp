@@ -118,6 +118,7 @@ void TestHexExt::onPaintEvent(QPainter *painter, const QWidget *w,
         });
 
     painter->restore();
+    context->update();
 }
 
 bool TestHexExt::isShowLinePannel(WingHex::HexEditorContext *context) {
