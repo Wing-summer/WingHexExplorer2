@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.20)
 
 project(WingHexExplorer2 LANGUAGES CXX)
 
@@ -27,6 +27,22 @@ option(ANGEL_LSP ON)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
+
+if(DEFINED CMAKE_CXX_BYTE_ORDER AND CMAKE_CXX_BYTE_ORDER)
+    if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+        add_definitions(-DWING_LITTLE_ENDIAN=0)
+    elseif(CMAKE_CXX_BYTE_ORDER STREQUAL "LITTLE_ENDIAN")
+        add_definitions(-DWING_LITTLE_ENDIAN=1)
+    else()
+        message(
+            FATAL_ERROR
+                "CMAKE_CXX_BYTE_ORDER defined but unknown value: ${CMAKE_CXX_BYTE_ORDER}"
+        )
+    endif()
+else()
+    message(FATAL_ERROR "CMAKE_CXX_BYTE_ORDER not set or empty")
+endif()
+
 if(BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestBadPlugin)
@@ -119,7 +135,18 @@ set(ASCONSOLE_GRAMMAR
     src/grammar/ASConsole/AngelscriptConsoleParserBaseVisitor.h
     src/grammar/ASConsole/AngelscriptConsoleParserVisitor.h)
 
-set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR})
+set(SNIPPET_GRAMMAR
+    src/grammar/Snippet/SnippetVisitor.h
+    src/grammar/Snippet/SnippetVisitor.cpp
+    src/grammar/Snippet/SnippetParser.h
+    src/grammar/Snippet/SnippetParser.cpp
+    src/grammar/Snippet/SnippetLexer.h
+    src/grammar/Snippet/SnippetLexer.cpp
+    src/grammar/Snippet/SnippetBaseVisitor.h
+    src/grammar/Snippet/SnippetBaseVisitor.cpp)
+
+set(ANTLR4_GRAMMAR ${NUMCAL_GRAMMAR} ${CSTRUCT_GRAMMAR} ${ASCONSOLE_GRAMMAR}
+                   ${SNIPPET_GRAMMAR})
 
 set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
@@ -353,7 +380,9 @@ set(CLASS_SRC
     src/class/angelscriptconsolevisitor.h
     src/class/angelscriptconsolevisitor.cpp
     src/class/aswingcache.h
-    src/class/aswingcache.cpp)
+    src/class/aswingcache.cpp
+    src/class/snippetprocessor.h
+    src/class/snippetprocessor.cpp)
 
 set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
                      src/class/wingcstruct.h src/class/wingcstruct.cpp)
@@ -666,13 +695,12 @@ if(ANGEL_LSP)
     endif()
 
     set(SRC_JS "${NODE_SUBDIR}/src/server.ts")
-    set(DIST_JS "${BUILD_BIN_BUILD_DIR}/dist/server.ts")
+    set(DIST_JS "${BUILD_BIN_BUILD_DIR}/dist/angelscript-language-server.js")
     set(OUT_BIN "${BUILD_BIN_DIR}/${OUT_NAME}")
 
     find_program(NODE_EXE NAMES node)
     find_program(NPM_EXE NAMES npm)
     find_program(NPX_EXE NAMES npx)
-    find_program(PKG_EXE NAMES pkg)
 
     if(NOT NODE_EXE)
         message(FATAL_ERROR "Node.js not found. Install Node >= 18.")
@@ -680,20 +708,12 @@ if(ANGEL_LSP)
     if(NOT NPM_EXE)
         message(FATAL_ERROR "npm not found. Install npm.")
     endif()
+    if(NOT NPX_EXE)
+        message(FATAL_ERROR "npx not found. Install npx.")
+    endif()
 
     message(STATUS "Found node: ${NODE_EXE}")
     message(STATUS "Found npm:  ${NPM_EXE}")
-    if(PKG_EXE)
-        message(STATUS "Found global pkg: ${PKG_EXE}")
-    elseif(NPX_EXE)
-        message(
-            STATUS "Found npx: ${NPX_EXE} (will use npx pkg if pkg not global)")
-    else()
-        message(
-            STATUS
-                "No global pkg or npx found; will call 'npm exec pkg' as fallback"
-        )
-    endif()
 
     if(WIN32)
         set(PKG_TARGET "node18-win-x64")
@@ -703,56 +723,24 @@ if(ANGEL_LSP)
         set(PKG_TARGET "node18-linux-x64")
     endif()
 
-    if(NPX_EXE)
-        set(ESBUILD_CMD
-            ${NPX_EXE}
-            esbuild
-            "${SRC_JS}"
-            --bundle
-            --platform=node
-            --target=node18
-            "--outfile=${BUILD_BIN_BUILD_DIR}/dist/server.ts"
-            --minify)
-    else()
-        set(ESBUILD_CMD
-            ${NPM_EXE}
-            exec
-            --yes
-            esbuild
-            --
-            "${SRC_JS}"
-            --bundle
-            --platform=node
-            --target=node18
-            "--outfile=${BUILD_BIN_BUILD_DIR}/dist/server.ts"
-            --minify)
-    endif()
+    set(ESBUILD_CMD
+        ${NPX_EXE}
+        esbuild
+        "${SRC_JS}"
+        --bundle
+        --platform=node
+        --target=node18
+        "--outfile=${DIST_JS}"
+        --minify)
 
-    if(PKG_EXE)
-        set(PKG_CMD ${PKG_EXE} "${DIST_JS}" --targets ${PKG_TARGET} --output
-                    "${OUT_BIN}")
-    elseif(NPX_EXE)
-        set(PKG_CMD
-            ${NPX_EXE}
-            pkg
-            "${DIST_JS}"
-            --targets
-            ${PKG_TARGET}
-            --output
-            "${OUT_BIN}")
-    else()
-        set(PKG_CMD
-            ${NPM_EXE}
-            exec
-            --yes
-            pkg
-            --
-            "${DIST_JS}"
-            --targets
-            ${PKG_TARGET}
-            --output
-            "${OUT_BIN}")
-    endif()
+    set(PKG_CMD
+        ${NPX_EXE}
+        pkg
+        "${DIST_JS}"
+        --targets
+        ${PKG_TARGET}
+        --output
+        "${OUT_BIN}")
 
     add_custom_command(
         OUTPUT ${DIST_JS}
@@ -760,6 +748,7 @@ if(ANGEL_LSP)
         COMMAND ${CMAKE_COMMAND} -E echo "[1] npm ci (local deps)"
         COMMAND ${NPM_EXE} ci --silent
         COMMAND ${CMAKE_COMMAND} -E echo "[2] building with esbuild"
+        COMMAND ${NPX_EXE} tsc
         COMMAND ${ESBUILD_CMD}
         COMMENT "Building JS bundle with esbuild -> ${DIST_JS}"
         VERBATIM)

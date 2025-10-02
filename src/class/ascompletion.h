@@ -45,7 +45,7 @@ protected:
     virtual QList<CodeInfoTip> parseMarcos();
 
 signals:
-    void onFunctionTip(const QString &content);
+    void onFunctionTip(LSP::CompletionItemKind kind, const QString &content);
 
     // QObject interface
 public:

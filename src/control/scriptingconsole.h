@@ -55,7 +55,7 @@ public slots:
 private slots:
     void applyScriptSettings();
 
-    void onFunctionTip(const QString &tip);
+    void onFunctionTip(LSP::CompletionItemKind kind, const QString &content);
 
 signals:
     void consoleScriptRunFinished();

@@ -1,3 +1,20 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #ifndef ANGELLSP_H
 #define ANGELLSP_H
 
@@ -33,24 +50,18 @@ public:
     void openDocument(const QString &uri, qint64 version, const QString &text);
 
     void changeDocument(const QString &uri, qint64 version,
-                        const LSP::TextDocumentContentChangeEvent &e);
+                        const QString &fullText);
 
     void closeDocument(const QString &uri);
 
 public:
     // High-level feature wrappers (sync)
     QJsonValue requestDocumentSymbol(const QString &uri, int timeoutMs = 3000);
-    QJsonValue requestSemanticTokensFull(const QString &uri,
-                                         int timeoutMs = 3000);
     QJsonValue requestCompletion(const QString &uri, int line, int character,
+                                 const QString &triggerChar,
                                  int timeoutMs = 3000);
     QJsonValue requestHover(const QString &uri, int line, int character,
                             int timeoutMs = 3000);
-    QJsonValue requestDefinition(const QString &uri, int line, int character,
-                                 int timeoutMs = 3000);
-    QJsonValue requestReferences(const QString &uri, int line, int character,
-                                 bool includeDeclaration = true,
-                                 int timeoutMs = 3000);
     QJsonValue requestSignatureHelp(const QString &uri, int line, int character,
                                     int timeoutMs = 3000);
     QJsonValue requestResolve(const QJsonValue &symbol, int timeoutMs = 3000);
@@ -74,15 +85,9 @@ private:
     void sendCancelRequest(int id);
 
 signals:
-    // emitted when a (previously sent) request finishes (async mode)
-    void requestFinished(int id, const QJsonValue &result);
-
     // emitted when server sends diagnostics
-    void diagnosticsPublished(const QString &uri,
+    void diagnosticsPublished(const QString &url,
                               const QList<LSP::Diagnostics> &diagnostics);
-
-    // log message notifications
-    void logMessage(LSP::MessageType type, const QString &message);
 
     // other notifications from server
     void notificationReceived(const QString &method, const QJsonValue &params);
@@ -90,13 +95,6 @@ signals:
     // server process events
     void serverStarted();
     void serverExited(int exitCode, QProcess::ExitStatus status);
-
-    // emitted when server sends a request (method with id) and before we
-    // auto-respond. If you want to handle request yourself, connect to this
-    // signal and do your reply; otherwise AngelLSP will auto-respond with
-    // default handlers.
-    void serverRequestReceived(const QString &method, const QJsonValue &params,
-                               int id);
 
 public slots:
     // convenience: synchronous shutdown

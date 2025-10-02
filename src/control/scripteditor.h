@@ -19,6 +19,8 @@
 #define SCRIPTEDITOR_H
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "class/lsp.h"
+#include "class/resettabletimer.h"
 #include "control/codeedit.h"
 
 #include <QFileSystemWatcher>
@@ -38,6 +40,10 @@ public:
 
     bool formatCode();
 
+    quint64 getVersion() const;
+
+    bool isContentLspUpdated() const;
+
 signals:
     void onToggleMark(int line);
     void need2Reload();
@@ -54,17 +60,23 @@ public slots:
     void gotoLine();
 
 private slots:
-    void processContentsChange();
+    void onFunctionTip(LSP::CompletionItemKind kind, const QString &content);
 
-    void onFunctionTip(const QString &tip);
+    void onSendFullTextChangeCompleted();
 
 private:
     void processTitle();
 
+    bool increaseVersion();
+    void sendDocChange();
+
 private:
     CodeEdit *m_editor = nullptr;
-    QString m_fileName;
     quint64 version = 1;
+
+    ResettableTimer *_timer;
+    bool _ok = true;
+    bool _lastSent = true;
 
     QFileSystemWatcher _watcher;
 };

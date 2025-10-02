@@ -290,7 +290,8 @@ void ScriptingConsole::applyScriptSettings() {
     this->setAutoCloseChar(set.consoleAutoCloseChar());
 }
 
-void ScriptingConsole::onFunctionTip(const QString &tip) {
+void ScriptingConsole::onFunctionTip(LSP::CompletionItemKind kind,
+                                     const QString &content) {
     // TODO
 }
 

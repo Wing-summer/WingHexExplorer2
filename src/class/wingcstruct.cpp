@@ -189,6 +189,20 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
 
     o->registerGlobalFunction(
         WingHex::Meta_Void,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::setIsLittleEndian),
+                  this, std::placeholders::_1),
+        QStringLiteral("setIsLittleEndian"),
+        {qMakePair(WingHex::Meta_Bool, QStringLiteral("value"))});
+
+    o->registerGlobalFunction(WingHex::Meta_Bool,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::isLittleEndian),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("isLittleEndian"));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Void,
         std::bind(QOverload<const QVariantList &>::of(&WingCStruct::reset),
                   this, std::placeholders::_1),
         QStringLiteral("reset"));
@@ -212,14 +226,63 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                                             &WingCStruct::structTypeDefs),
                                         this, std::placeholders::_1),
                               QStringLiteral("structTypes"));
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::unionTypeDefs),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("unionTypeDefs"));
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::typedefTypeDefs),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("typedefTypeDefs"));
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::enumTypeDefs),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("enumTypeDefs"));
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::constVarDefs),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("constVarDefs"));
 
     o->registerGlobalFunction(
-        getqsizetypeMetaType(),
+        WingHex::Meta_UInt64,
         std::bind(QOverload<const QVariantList &>::of(&WingCStruct::sizeOf),
                   this, std::placeholders::_1),
-        QStringLiteral("sizeofStruct"),
+        QStringLiteral("sizeOf"),
         {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
 
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::containsType),
+            this, std::placeholders::_1),
+        QStringLiteral("containsType"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::isBasicType),
+            this, std::placeholders::_1),
+        QStringLiteral("isBasicType"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::isUnsignedBasicType),
+                  this, std::placeholders::_1),
+        QStringLiteral("isUnsignedBasicType"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::containsEnum),
+            this, std::placeholders::_1),
+        QStringLiteral("containsEnum"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
     o->registerGlobalFunction(
         WingHex::Meta_Bool,
         std::bind(
@@ -227,6 +290,77 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
             this, std::placeholders::_1),
         QStringLiteral("containsStruct"),
         {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::containsUnion),
+            this, std::placeholders::_1),
+        QStringLiteral("containsUnion"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::containsTypeDef),
+            this, std::placeholders::_1),
+        QStringLiteral("containsTypeDef"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::containsConstVar),
+            this, std::placeholders::_1),
+        QStringLiteral("containsConstVar"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::isCompletedType),
+            this, std::placeholders::_1),
+        QStringLiteral("isCompletedType"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::enumValueNames),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("enumValueNames"));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::isCompletedStruct),
+                  this, std::placeholders::_1),
+        QStringLiteral("isCompletedStruct"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(
+            QOverload<const QVariantList &>::of(&WingCStruct::isCompletedUnion),
+            this, std::placeholders::_1),
+        QStringLiteral("isCompletedUnion"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        WingHex::Meta_Bool,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::getMissingDependencise),
+                  this, std::placeholders::_1),
+        QStringLiteral("getMissingDependencise"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        QStringLiteral("int64 constVarValueInt(const string &in type, bool "
+                       "&out ok = void)"),
+        std::bind(QOverload<const QList<void *> &>::of(
+                      &WingCStruct::constVarValueInt),
+                  this, std::placeholders::_1));
+    o->registerGlobalFunction(
+        QStringLiteral("uint64 constVarValueUInt(const string &in type, bool "
+                       "&out ok = void)"),
+        std::bind(QOverload<const QList<void *> &>::of(
+                      &WingCStruct::constVarValueUInt),
+                  this, std::placeholders::_1));
 
     // nested dictionary is not supported, so unsafe registering will help
     o->registerGlobalFunction(
@@ -409,57 +543,48 @@ QString WingCStruct::getqsizeTypeAsString() const {
 }
 
 QVariant WingCStruct::getData(const char *ptr, const char *end,
-                              QMetaType::Type type, qsizetype size) {
+                              QMetaType::Type type, size_t shift, size_t mask,
+                              qsizetype size) {
     if (ptr + size > end) {
         return {};
     }
+
+    QByteArray buffer(ptr, size);
     switch (type) {
     case QMetaType::Bool:
-        return (*ptr) ? true : false;
+        return getShiftAndMasked<bool>(buffer, shift, mask);
     case QMetaType::Int:
-        return *reinterpret_cast<const int *>(ptr);
+        return getShiftAndMasked<int>(buffer, shift, mask);
     case QMetaType::UInt:
-        return *reinterpret_cast<const unsigned int *>(ptr);
+        return getShiftAndMasked<unsigned int>(buffer, shift, mask);
     case QMetaType::LongLong:
-        return *reinterpret_cast<const long long *>(ptr);
+        return getShiftAndMasked<long long>(buffer, shift, mask);
     case QMetaType::ULongLong:
-        return *reinterpret_cast<const unsigned long long *>(ptr);
+        return getShiftAndMasked<unsigned long long>(buffer, shift, mask);
     case QMetaType::Double:
-        return *reinterpret_cast<const double *>(ptr);
+        return getShiftAndMasked<double>(buffer, shift, mask);
     case QMetaType::Long:
-        return QVariant::fromValue(*reinterpret_cast<const long *>(ptr));
+        return QVariant::fromValue(
+            getShiftAndMasked<long>(buffer, shift, mask));
     case QMetaType::Short:
-        return *reinterpret_cast<const short *>(ptr);
+        return getShiftAndMasked<short>(buffer, shift, mask);
     case QMetaType::Char:
-        return *ptr;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        return getShiftAndMasked<char>(buffer, shift, mask);
     case QMetaType::Char16:
-        return *reinterpret_cast<const char16_t *>(ptr);
+        return getShiftAndMasked<char16_t>(buffer, shift, mask);
     case QMetaType::Char32:
-        return *reinterpret_cast<const char32_t *>(ptr);
-#else
-    case QMetaType::QChar: {
-        if (size == sizeof(quint16)) {
-            auto ch = *reinterpret_cast<const quint16 *>(ptr);
-            return QChar(ch);
-        } else if (size == sizeof(quint32)) {
-            auto ch = *reinterpret_cast<const quint32 *>(ptr);
-            return QChar(ch);
-        }
-        return {};
-    }
-#endif
+        return getShiftAndMasked<char32_t>(buffer, shift, mask);
     case QMetaType::ULong:
         return QVariant::fromValue(
-            *reinterpret_cast<const unsigned long *>(ptr));
+            getShiftAndMasked<unsigned long>(buffer, shift, mask));
     case QMetaType::UShort:
-        return *reinterpret_cast<const unsigned short *>(ptr);
+        return getShiftAndMasked<unsigned short>(buffer, shift, mask);
     case QMetaType::UChar:
-        return *reinterpret_cast<const unsigned char *>(ptr);
+        return getShiftAndMasked<unsigned char>(buffer, shift, mask);
     case QMetaType::Float:
-        return *reinterpret_cast<const float *>(ptr);
+        return getShiftAndMasked<float>(buffer, shift, mask);
     case QMetaType::SChar:
-        return *reinterpret_cast<const signed char *>(ptr);
+        return getShiftAndMasked<signed char>(buffer, shift, mask);
     default:
         return {};
     }
@@ -493,7 +618,8 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
                 if (m.element_count) {
                     QVariantList l;
                     for (qsizetype i = 0; i < m.element_count; ++i) {
-                        auto data = getData(ptr, end, meta, size_v);
+                        auto data = getData(ptr, end, meta, m.op.shift,
+                                            m.op.mask, size_v);
                         if (data.isNull()) {
                             return content;
                         }
@@ -502,11 +628,8 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
                     }
                     content.insert(m.var_name, l);
                 } else {
-                    // TODO
-                    // auto mask = m.op.mask;
-                    // auto shift = m.op.shift;
-
-                    auto data = getData(ptr, end, meta, size_v);
+                    auto data =
+                        getData(ptr, end, meta, m.op.shift, m.op.mask, size_v);
                     if (data.isNull()) {
                         return content;
                     }
@@ -811,6 +934,27 @@ QVariant WingCStruct::reset(const QVariantList &params) {
     return {};
 }
 
+QVariant WingCStruct::isLittleEndian(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return isLittleEndian();
+}
+
+QVariant WingCStruct::setIsLittleEndian(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto islittle_v = params.at(1);
+    if (!islittle_v.canConvert<bool>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+
+    auto islittle = islittle_v.toBool();
+    setIsLittleEndian(islittle);
+    return {};
+}
+
 QVariant WingCStruct::setPadAlignment(const QVariantList &params) {
     if (params.size() != 1) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
@@ -983,7 +1127,7 @@ QVariant WingCStruct::isCompletedType(const QVariantList &params) {
         return getScriptCallError(-2, tr("InvalidParam"));
     }
     auto type = type_v.toString();
-    return isCompletedType(params);
+    return isCompletedType(type);
 }
 
 QVariant WingCStruct::enumValueNames(const QVariantList &params) {
@@ -996,44 +1140,6 @@ QVariant WingCStruct::enumValueNames(const QVariantList &params) {
     }
     auto type = type_v.toString();
     return enumValueNames(type);
-}
-
-QVariant WingCStruct::constVarValueInt(const QVariantList &params) {
-    if (params.size() != 2) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-    auto type_v = params.at(0);
-    if (!type_v.canConvert<QString>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto ok_v = params.at(1);
-    if (!ok_v.canConvert<bool *>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto type = type_v.toString();
-    auto ok = type_v.value<bool *>();
-    return constVarValueInt(type, ok);
-}
-
-QVariant WingCStruct::constVarValueUInt(const QVariantList &params) {
-    if (params.size() != 2) {
-        return getScriptCallError(-1, tr("InvalidParamsCount"));
-    }
-    auto type_v = params.at(0);
-    if (!type_v.canConvert<QString>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto ok_v = params.at(1);
-    if (!ok_v.canConvert<bool *>()) {
-        return getScriptCallError(-2, tr("InvalidParam"));
-    }
-
-    auto type = type_v.toString();
-    auto ok = type_v.value<bool *>();
-    return constVarValueUInt(type, ok);
 }
 
 QVariant WingCStruct::isCompletedStruct(const QVariantList &params) {
@@ -1072,13 +1178,34 @@ QVariant WingCStruct::getMissingDependencise(const QVariantList &params) {
     return getMissingDependencise(type);
 }
 
+WingHex::UNSAFE_RET WingCStruct::constVarValueInt(const QList<void *> &params) {
+    if (params.size() != 2) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(0));
+    auto ok = WingHex::resolveUnsafeParamAsOut<bool>(params.at(1));
+    return quint64(constVarValueInt(type, ok));
+}
+
+WingHex::UNSAFE_RET
+WingCStruct::constVarValueUInt(const QList<void *> &params) {
+    if (params.size() != 2) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(0));
+    auto ok = WingHex::resolveUnsafeParamAsOut<bool>(params.at(1));
+    return constVarValueUInt(type, ok);
+}
+
 WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     if (params.size() != 2) {
         return generateScriptCallError(-1, tr("InvalidParamsCount"));
     }
 
-    auto offset = *reinterpret_cast<qsizetype *>(params.at(0));
-    auto type = **reinterpret_cast<QString **>(params.at(1));
+    auto offset = WingHex::resolveUnsafeParamAs<qsizetype>(params.at(0));
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
 
     auto ret = read(offset, type);
     return static_cast<void *>(convert2AsDictionary(ret));
@@ -1098,4 +1225,10 @@ QVariant WingCStruct::readRaw(const QVariantList &params) {
     auto offset = offset_v.value<qsizetype>();
     auto type = type_v.toString();
     return readRaw(offset, type);
+}
+
+bool WingCStruct::isLittleEndian() const { return m_islittle; }
+
+void WingCStruct::setIsLittleEndian(bool newIslittle) {
+    m_islittle = newIslittle;
 }

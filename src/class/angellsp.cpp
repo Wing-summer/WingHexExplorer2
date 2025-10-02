@@ -1,4 +1,23 @@
+/*==============================================================================
+** Copyright (C) 2024-2027 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
+
 #include "angellsp.h"
+
+#include "utilities.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -55,7 +74,7 @@ bool AngelLsp::start() {
 
     m_proc->start();
     if (!m_proc->waitForStarted(3000)) {
-        qWarning("AngelLSP: failed to start server");
+        qCritical("AngelLSP: failed to start server");
         delete m_proc;
         m_proc = nullptr;
         return false;
@@ -68,6 +87,8 @@ bool AngelLsp::start() {
 void AngelLsp::stop() {
     if (!m_proc)
         return;
+
+    m_proc->blockSignals(true);
 
     // destroy timers for documents
     for (auto &t : m_docTimers) {
@@ -148,27 +169,28 @@ QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
     return sendRequestSync("textDocument/documentSymbol", p, timeoutMs);
 }
 
-QJsonValue AngelLsp::requestSemanticTokensFull(const QString &uri,
-                                               int timeoutMs) {
-    if (!m_proc)
-        return {};
-
-    QJsonObject p;
-    p["textDocument"] = QJsonObject{{"uri", uri}};
-    return sendRequestSync("textDocument/semanticTokens/full", p, timeoutMs);
-}
-
 QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
-                                       int character, int timeoutMs) {
+                                       int character,
+                                       const QString &triggerChar,
+                                       int timeoutMs) {
     if (!m_proc)
         return {};
 
     QJsonObject pos;
     pos["line"] = line;
     pos["character"] = character;
+
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
     p["position"] = pos;
+
+    QJsonObject context;
+    context["triggerKind"] = triggerChar.isEmpty() ? 1 : 2;
+    if (!triggerChar.isEmpty()) {
+        context["triggerCharacter"] = triggerChar;
+    }
+    p["context"] = context;
+
     return sendRequestSync("textDocument/completion", p, timeoutMs);
 }
 
@@ -184,38 +206,6 @@ QJsonValue AngelLsp::requestHover(const QString &uri, int line, int character,
     p["textDocument"] = QJsonObject{{"uri", uri}};
     p["position"] = pos;
     return sendRequestSync("textDocument/hover", p, timeoutMs);
-}
-
-QJsonValue AngelLsp::requestDefinition(const QString &uri, int line,
-                                       int character, int timeoutMs) {
-    if (!m_proc)
-        return {};
-
-    QJsonObject pos;
-    pos["line"] = line;
-    pos["character"] = character;
-    QJsonObject p;
-    p["textDocument"] = QJsonObject{{"uri", uri}};
-    p["position"] = pos;
-    return sendRequestSync("textDocument/definition", p, timeoutMs);
-}
-
-QJsonValue AngelLsp::requestReferences(const QString &uri, int line,
-                                       int character, bool includeDeclaration,
-                                       int timeoutMs) {
-    if (!m_proc)
-        return {};
-
-    QJsonObject pos;
-    pos["line"] = line;
-    pos["character"] = character;
-    QJsonObject context;
-    context["includeDeclaration"] = includeDeclaration;
-    QJsonObject p;
-    p["textDocument"] = QJsonObject{{"uri", uri}};
-    p["position"] = pos;
-    p["context"] = context;
-    return sendRequestSync("textDocument/references", p, timeoutMs);
 }
 
 QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
@@ -258,16 +248,14 @@ qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
 }
 
 void AngelLsp::changeDocument(const QString &uri, qint64 version,
-                              const LSP::TextDocumentContentChangeEvent &e) {
+                              const QString &fullText) {
     if (!m_proc)
         return;
 
     QJsonArray changes;
 
     QJsonObject v;
-    v["range"] = jsonLSPDocRange(e.range);
-    v["rangeLength"] = e.rangeLength;
-    v["text"] = e.text;
+    v["text"] = fullText;
     changes.append(v);
 
     QJsonObject params;
@@ -372,8 +360,8 @@ void AngelLsp::handleStdout() {
     // fragmentation)
     while (true) {
         // find header/body separator (try CRLF CRLF first, then LF LF)
-        int headerEnd = m_stdoutBuffer.indexOf("\r\n\r\n");
-        int sepLen = 4;
+        qsizetype headerEnd = m_stdoutBuffer.indexOf("\r\n\r\n");
+        qsizetype sepLen = 4;
         if (headerEnd == -1) {
             headerEnd = m_stdoutBuffer.indexOf("\n\n");
             sepLen = 2;
@@ -383,12 +371,12 @@ void AngelLsp::handleStdout() {
             break;
         }
 
-        QByteArray headerBytes = m_stdoutBuffer.left(headerEnd);
-        QString headerStr = QString::fromUtf8(headerBytes);
+        auto headerBytes = m_stdoutBuffer.first(headerEnd);
+        auto headerStr = QString::fromUtf8(headerBytes);
 
         // find Content-Length header (case-insensitive)
-        int contentLength = -1;
-        int idx = -1;
+        qsizetype contentLength = -1;
+        qsizetype idx = -1;
         idx = headerBytes.indexOf("Content-Length:");
         if (idx == -1)
             idx = headerBytes.indexOf("content-length:");
@@ -397,18 +385,18 @@ void AngelLsp::handleStdout() {
         if (idx == -1)
             idx = headerBytes.indexOf("content-Length:");
         if (idx == -1) {
-            qWarning("AngelLSP: no Content-Length header found in: %s",
-                     qUtf8Printable(headerStr.sliced(200)));
+            qWarning("[AngelLSP] no Content-Length header found in: %s",
+                     qUtf8Printable(headerStr.left(200)));
             // consume header portion and continue
             m_stdoutBuffer.remove(0, headerEnd + sepLen);
             continue;
         }
 
-        int lenStart = idx + QByteArrayLiteral("Content-Length:").size();
+        auto lenStart = idx + QByteArrayLiteral("Content-Length:").size();
         // determine end-of-line after lenStart
-        int crlfPos = headerBytes.indexOf("\r\n", lenStart);
-        int lfPos = headerBytes.indexOf("\n", lenStart);
-        int lenEnd = -1;
+        auto crlfPos = headerBytes.indexOf("\r\n", lenStart);
+        auto lfPos = headerBytes.indexOf("\n", lenStart);
+        qsizetype lenEnd = -1;
         if (crlfPos != -1)
             lenEnd = crlfPos;
         else if (lfPos != -1)
@@ -419,16 +407,17 @@ void AngelLsp::handleStdout() {
         QByteArray lenBytes =
             headerBytes.sliced(lenStart, lenEnd - lenStart).trimmed();
         bool ok = false;
-        int len = lenBytes.toInt(&ok);
+        auto len = lenBytes.toInt(&ok);
         if (!ok || len < 0) {
-            qWarning() << "AngelLSP: invalid Content-Length value:"
-                       << QString::fromUtf8(lenBytes);
+            qCritical().noquote()
+                << QStringLiteral("[AngelLSP] invalid Content-Length value: ")
+                << lenBytes;
             m_stdoutBuffer.remove(0, headerEnd + sepLen);
             continue;
         }
         contentLength = len;
 
-        int totalNeeded = headerEnd + sepLen + contentLength;
+        auto totalNeeded = headerEnd + sepLen + contentLength;
         if (m_stdoutBuffer.size() < totalNeeded) {
             // body not yet complete; wait for more data
             break;
@@ -441,14 +430,14 @@ void AngelLsp::handleStdout() {
         QJsonParseError parseErr{};
         QJsonDocument doc = QJsonDocument::fromJson(body, &parseErr);
         if (parseErr.error != QJsonParseError::NoError) {
-            qWarning() << "AngelLSP: JSON parse error:"
-                       << parseErr.errorString()
-                       << "body:" << QString::fromUtf8(body.left(200));
+            qCritical().noquote()
+                << QStringLiteral("AngelLSP: JSON parse error:")
+                << parseErr.errorString() << QStringLiteral(", body: ") << body;
             // continue to next message if any
             continue;
         }
         if (!doc.isObject()) {
-            qWarning("AngelLSP: unexpected JSON (not object) body");
+            qCritical("[AngelLSP] unexpected JSON (not object) body");
             continue;
         }
         QJsonObject msg = doc.object();
@@ -465,17 +454,18 @@ void AngelLsp::handleStderr() {
     if (chunk.isEmpty())
         return;
     QString s = QString::fromUtf8(chunk);
-    qWarning().noquote() << "[server-stderr]" << s;
+    qCritical().noquote() << QStringLiteral("[server-stderr]") << s;
 }
 
 void AngelLsp::handleProcessFinished(int exitCode,
                                      QProcess::ExitStatus status) {
+    stop();
     Q_EMIT serverExited(exitCode, status);
 }
 
 void AngelLsp::sendMessage(const QJsonObject &msg) {
     if (!m_proc || m_proc->state() != QProcess::Running) {
-        qWarning() << "AngelLSP: sendMessage but process not running";
+        qWarning("[AngelLSP] sendMessage but process not running");
         return;
     }
     QJsonDocument doc(msg);
@@ -486,7 +476,8 @@ void AngelLsp::sendMessage(const QJsonObject &msg) {
     QByteArray out = header + body;
     m_proc->write(out);
     m_proc->waitForBytesWritten(1000);
-    qDebug() << "[AngelLSP->server]" << QString::fromUtf8(body);
+
+    qDebug().noquote() << QStringLiteral("[AngelLSP->server] ") << body;
 }
 
 void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
@@ -515,7 +506,10 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             if (loop)
                 loop->quit();
         }
-        Q_EMIT requestFinished(id, payload);
+
+        qDebug().noquote() << method.prepend(QStringLiteral("[AngelLSP|"))
+                                  .append(QStringLiteral("] "))
+                           << payload;
         return;
     }
 
@@ -524,10 +518,6 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
         QString method = msg["method"].toString();
         int id = msg["id"].toInt();
         auto params = msg.value("params");
-
-        // emit notification that server requested something (allow external
-        // handling)
-        Q_EMIT serverRequestReceived(method, params, id);
 
         // Implement standard minimal replies the server expects
         if (method == QStringLiteral("client/registerCapability")) {
@@ -543,6 +533,7 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             QJsonArray result;
 
             QJsonObject o;
+
             o["suppressAnalyzerErrors"] = false;
             o["includePath"] = QJsonArray();
             o["implicitMutualInclusion"] = false;
@@ -561,8 +552,13 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             fmt["useTabIndent"] = false;
             o["formatter"] = fmt;
             QJsonObject trace;
-            trace["server"] = "off";
+            trace["server"] = QStringLiteral("off");
             o["trace"] = trace;
+
+            QJsonArray j;
+            j.append(Utilities::getASPredefPath());
+            o["forceIncludePredefined"] = j;
+
             result.append(o);
 
             QJsonObject resp;
@@ -616,8 +612,23 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
                 QJsonObject o = params.toObject();
                 int type = o.value("type").toInt();
                 QString message = o.value("message").toString();
-                qInfo() << "[logMessage]" << message;
-                Q_EMIT logMessage(LSP::MessageType(type), message);
+
+                message.prepend(QStringLiteral("[AngelLsp|Log] "));
+
+                switch (LSP::MessageType(type)) {
+                case LSP::MessageType::Error:
+                    qCritical().noquote() << message;
+                    break;
+                case LSP::MessageType::Warning:
+                    qWarning().noquote() << message;
+                    break;
+                case LSP::MessageType::Info:
+                    qInfo().noquote() << message;
+                    break;
+                case LSP::MessageType::Log:
+                    qDebug().noquote() << message;
+                    break;
+                }
             }
             return;
         }

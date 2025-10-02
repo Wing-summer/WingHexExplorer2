@@ -34,9 +34,13 @@ public:
     QString name;
     LSP::CompletionItemKind type = LSP::CompletionItemKind::Missing;
     QString comment;
+    QString completion;
 
     QJsonValue value;
     QList<CodeInfoTip> children;
+
+public:
+    void resolve();
 };
 
 Q_DECLARE_METATYPE(CodeInfoTip);

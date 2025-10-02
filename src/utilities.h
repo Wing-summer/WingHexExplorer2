@@ -20,6 +20,7 @@
 
 #include <QAbstractButton>
 #include <QApplication>
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileIconProvider>
@@ -36,6 +37,7 @@
 #include <QTableView>
 #include <QTreeView>
 #include <QWidget>
+#include <QtEndian>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
@@ -209,10 +211,58 @@ public:
         return hash.result();
     }
 
-    static bool checkIsLittleEndian() {
-        short s = 0x1122;
-        auto l = *reinterpret_cast<char *>(&s);
-        return l == 0x22;
+    static constexpr bool checkIsLittleEndian() {
+#if WING_LITTLE_ENDIAN
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    template <typename T>
+    static inline T qToBigEndian(T source) {
+        return ::qToBigEndian(source);
+    }
+
+    template <typename T>
+    static inline T qToLittleEndian(T source) {
+        return ::qToLittleEndian(source);
+    }
+
+    static inline QByteArray qToBigEndian(QByteArray source) {
+        QByteArray result;
+        QBuffer buffer(&result);
+        buffer.open(QIODevice::WriteOnly);
+
+        QDataStream stream(&buffer);
+        stream.setByteOrder(QDataStream::BigEndian);
+        stream.writeRawData(source.constData(), source.size());
+        return result;
+    }
+
+    static inline QByteArray qToLittleEndian(QByteArray source) {
+        QByteArray result;
+        QBuffer buffer(&result);
+        buffer.open(QIODevice::WriteOnly);
+
+        QDataStream stream(&buffer);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream.writeRawData(source.constData(), source.size());
+        return result;
+    }
+
+    template <typename T>
+    static inline T processEndian(T source, bool isLitteEndian) {
+        if (checkIsLittleEndian()) {
+            if (!isLitteEndian) {
+                return qToBigEndian(source);
+            }
+        } else {
+            if (isLitteEndian) {
+                return qToLittleEndian(source);
+            }
+        }
+        return source;
     }
 
     static QIcon getIconFromFile(QStyle *style, const QString &filename) {

@@ -191,15 +191,6 @@ struct Diagnostics {
     // QString source; = "AngelScript"
 };
 
-struct TextDocumentContentChangeEvent {
-    /// The range of the document that changed.
-    Range range;
-    /// The length of the range that got replaced.
-    int rangeLength;
-    /// The new text of the range/document.
-    QString text;
-};
-
 } // namespace LSP
 
 #endif // LSP_H

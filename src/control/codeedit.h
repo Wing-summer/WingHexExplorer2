@@ -40,6 +40,7 @@ public:
 
 signals:
     void contentModified(bool b);
+    void tryShowToolTip(int line, int character);
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;

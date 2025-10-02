@@ -64,7 +64,7 @@ public slots:
     static void critical(const QString &message);
     static void logPrint(const QString &message);
 
-    void setLogLevel(Level level);
+    void setLogLevel(Logger::Level level);
 
     static QString packInfoStr(QString msg);
     static QString packDebugStr(QString msg);

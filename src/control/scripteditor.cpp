@@ -47,6 +47,21 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     m_editor = new CodeEdit(this);
     m_editor->setSyntax(
         m_editor->syntaxRepo().definitionForName("AngelScript"));
+    connect(m_editor, &CodeEdit::textChanged, this, [this]() {
+        if (!_ok) {
+            _lastSent = false;
+            return;
+        }
+        sendDocChange();
+        _ok = false;
+        _timer->reset(300);
+    });
+    connect(m_editor, &CodeEdit::tryShowToolTip, this,
+            [this](int line, int character) {
+                auto &lsp = AngelLsp::instance();
+                // lsp.requestSignatureHelp(fileName(), , );
+                // TODO
+            });
 
     auto cm = new AsCompletion(m_editor);
     connect(cm, &AsCompletion::onFunctionTip, this,
@@ -61,19 +76,20 @@ ScriptEditor::ScriptEditor(QWidget *parent)
             &ScriptEditor::need2Reload);
 
     this->setWidget(m_editor);
+
+    _timer = new ResettableTimer(this);
+    connect(_timer, &ResettableTimer::timeoutTriggered, this,
+            &ScriptEditor::onSendFullTextChangeCompleted);
 }
 
 ScriptEditor::~ScriptEditor() {
-    if (!m_fileName.isEmpty()) {
-        AngelLsp::instance().closeDocument(Utilities::getUrlString(m_fileName));
+    auto fileName = this->fileName();
+    if (!fileName.isEmpty()) {
+        AngelLsp::instance().closeDocument(Utilities::getUrlString(fileName));
     }
-
-    auto e = editor();
-    e->document()->disconnect();
-    e->disconnect();
 }
 
-QString ScriptEditor::fileName() const { return m_fileName; }
+QString ScriptEditor::fileName() const { return m_editor->windowFilePath(); }
 
 bool ScriptEditor::openFile(const QString &filename) {
     auto &lsp = AngelLsp::instance();
@@ -84,16 +100,20 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
 
     auto txt = QString::fromUtf8(f.readAll());
+    m_editor->blockSignals(true); // don't triiger textChanged()
     m_editor->setPlainText(txt);
+    m_editor->blockSignals(false);
     f.close();
 
-    if (!m_fileName.isEmpty()) {
-        _watcher.removePath(m_fileName);
+    auto oldFileName = this->fileName();
+
+    if (!oldFileName.isEmpty()) {
+        _watcher.removePath(oldFileName);
     }
 
-    m_fileName = filename;
-    lsp.openDocument(Utilities::getUrlString(m_fileName), 0, txt);
-    _watcher.addPath(m_fileName);
+    m_editor->setWindowFilePath(filename);
+    lsp.openDocument(Utilities::getUrlString(filename), 0, txt);
+    _watcher.addPath(filename);
 
     processTitle();
     return true;
@@ -102,13 +122,14 @@ bool ScriptEditor::openFile(const QString &filename) {
 bool ScriptEditor::save(const QString &path) {
     auto &lsp = AngelLsp::instance();
 
-    if (!m_fileName.isEmpty()) {
-        _watcher.removePath(m_fileName);
-        lsp.closeDocument(Utilities::getUrlString(m_fileName));
+    auto oldFileName = fileName();
+    if (!oldFileName.isEmpty()) {
+        _watcher.removePath(oldFileName);
+        lsp.closeDocument(Utilities::getUrlString(oldFileName));
     }
     QScopeGuard guard([this, path]() {
         if (path.isEmpty()) {
-            _watcher.addPath(m_fileName);
+            _watcher.addPath(fileName());
         } else {
             _watcher.addPath(path);
         }
@@ -119,7 +140,7 @@ bool ScriptEditor::save(const QString &path) {
 #endif
 
     if (path.isEmpty()) {
-        QFile f(m_fileName);
+        QFile f(oldFileName);
         if (!f.open(QFile::WriteOnly | QFile::Text)) {
             return false;
         }
@@ -152,12 +173,17 @@ bool ScriptEditor::save(const QString &path) {
     }
 #endif
 
-    m_fileName = path;
+    m_editor->setWindowFilePath(path);
     m_editor->document()->setModified(false);
     return true;
 }
 
-bool ScriptEditor::reload() { return openFile(m_fileName); }
+bool ScriptEditor::reload() {
+    auto &lsp = AngelLsp::instance();
+    auto fileName = this->fileName();
+    lsp.closeDocument(Utilities::getUrlString(fileName));
+    return openFile(fileName);
+}
 
 void ScriptEditor::find() { m_editor->showSearchReplaceBar(true, false); }
 
@@ -165,25 +191,28 @@ void ScriptEditor::replace() { m_editor->showSearchReplaceBar(true, true); }
 
 void ScriptEditor::gotoLine() { m_editor->showGotoBar(true); }
 
-void ScriptEditor::processContentsChange() {
-    if (m_fileName.isEmpty()) {
-        return;
-    }
-    auto url = Utilities::getUrlString(m_fileName);
-    auto &lsp = AngelLsp::instance();
-    auto txt = m_editor->toPlainText();
+bool ScriptEditor::increaseVersion() {
     version++;
-    if (version < 0) { // test overflow
-        lsp.closeDocument(url);
-        lsp.openDocument(url, 0, txt);
-        version = 0;
-    } else {
-        // lsp.changeDocument(url, version, e);
+    if (version == 0) { // test overflow
+        version = 1;
+        return true;
+    }
+    return false;
+}
+
+void ScriptEditor::onFunctionTip(LSP::CompletionItemKind kind,
+                                 const QString &content) {
+    if (kind != LSP::CompletionItemKind::Function) {
+        return;
     }
 }
 
-void ScriptEditor::onFunctionTip(const QString &tip) {
-    // TODO
+void ScriptEditor::onSendFullTextChangeCompleted() {
+    if (!_lastSent) {
+        sendDocChange();
+        _lastSent = true;
+    }
+    _ok = true;
 }
 
 void ScriptEditor::setReadOnly(bool b) {
@@ -192,13 +221,31 @@ void ScriptEditor::setReadOnly(bool b) {
 }
 
 void ScriptEditor::processTitle() {
-    QString filename = QFileInfo(m_fileName).fileName();
+    QString filename = QFileInfo(fileName()).fileName();
     if (m_editor->document()->isModified()) {
         setWindowTitle(filename.prepend(QStringLiteral("* ")));
     } else {
         setWindowTitle(filename);
     }
 }
+
+void ScriptEditor::sendDocChange() {
+    auto url = Utilities::getUrlString(fileName());
+    auto &lsp = AngelLsp::instance();
+
+    auto txt = m_editor->toPlainText();
+    // test overflow
+    if (increaseVersion()) {
+        lsp.closeDocument(url);
+        lsp.openDocument(url, 0, txt);
+    } else {
+        lsp.changeDocument(url, getVersion(), txt);
+    }
+}
+
+bool ScriptEditor::isContentLspUpdated() const { return _ok; }
+
+quint64 ScriptEditor::getVersion() const { return version; }
 
 CodeEdit *ScriptEditor::editor() const { return m_editor; }
 

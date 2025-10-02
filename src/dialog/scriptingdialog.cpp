@@ -22,6 +22,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "WingCodeEdit/wingsymbolcenter.h"
 #include "aboutsoftwaredialog.h"
+#include "class/angellsp.h"
 #include "class/languagemanager.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
@@ -106,6 +107,45 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     };
     ScriptMachine::instance().registerCallBack(ScriptMachine::Scripting,
                                                callbacks);
+
+    auto &lsp = AngelLsp::instance();
+    connect(
+        &lsp, &AngelLsp::diagnosticsPublished, this,
+        [this](const QString &url, const QList<LSP::Diagnostics> &diagnostics) {
+            QUrl path(url);
+            if (path.isValid()) {
+                auto fileName = path.toLocalFile();
+                auto view = findEditorView(fileName);
+                if (view) {
+                    auto editor = view->editor();
+                    editor->clearSquiggle();
+                    for (auto &d : diagnostics) {
+                        auto lsps = [](LSP::DiagnosticSeverity s)
+                            -> WingCodeEdit::SeverityLevel {
+                            switch (s) {
+                            case LSP::DiagnosticSeverity::None:
+                                return WingCodeEdit::SeverityLevel::Information;
+                            case LSP::DiagnosticSeverity::Error:
+                                return WingCodeEdit::SeverityLevel::Error;
+                            case LSP::DiagnosticSeverity::Warning:
+                                return WingCodeEdit::SeverityLevel::Warning;
+                            case LSP::DiagnosticSeverity::Information:
+                                return WingCodeEdit::SeverityLevel::Information;
+                            case LSP::DiagnosticSeverity::Hint:
+                                return WingCodeEdit::SeverityLevel::Hint;
+                            }
+                            return WingCodeEdit::SeverityLevel::Information;
+                        };
+                        editor->addSquiggle(
+                            lsps(d.severity),
+                            {d.range.start.line + 1, d.range.start.character},
+                            {d.range.end.line + 1, d.range.end.character},
+                            d.message);
+                    }
+                    editor->highlightAllSquiggle();
+                }
+            }
+        });
 
     this->setUpdatesEnabled(true);
     this->setAttribute(Qt::WA_DeleteOnClose);
@@ -696,6 +736,19 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
                                     ads::CDockAreaWidget *areaw) {
     auto dview = new QListView(this);
     _squinfoModel = new WingSquiggleInfoModel(this);
+    _squinfoModel->setSeverityLevelIcon(
+        WingSquiggleInfoModel::SeverityLevel::Error,
+        QIcon(QStringLiteral(":/completion/images/completion/error.svg")));
+    _squinfoModel->setSeverityLevelIcon(
+        WingSquiggleInfoModel::SeverityLevel::Hint,
+        QIcon(QStringLiteral(":/completion/images/completion/hint.svg")));
+    _squinfoModel->setSeverityLevelIcon(
+        WingSquiggleInfoModel::SeverityLevel::Information,
+        QIcon(
+            QStringLiteral(":/completion/images/completion/Information.svg")));
+    _squinfoModel->setSeverityLevelIcon(
+        WingSquiggleInfoModel::SeverityLevel::Warning,
+        QIcon(QStringLiteral(":/completion/images/completion/warn.svg")));
     dview->setModel(_squinfoModel);
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
                               tr("Diagnosis"), dview);
@@ -727,8 +780,6 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
                 auto editview = qobject_cast<ScriptEditor *>(now);
                 if (editview) {
                     swapEditor(m_curEditor, editview);
-                } else {
-                    _squinfoModel->setEditor(nullptr);
                 }
                 updateEditModeEnabled();
             });
@@ -930,8 +981,9 @@ void ScriptingDialog::updateEditModeEnabled() {
         m_status->setToolTip(fn);
     } else {
         setWindowFilePath({});
-        m_status->setToolTip({});
+        _squinfoModel->setEditor(nullptr);
         m_status->clearMessage();
+        m_status->setToolTip({});
     }
     updateWindowTitle();
     updateRunDebugMode();
@@ -1086,7 +1138,7 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
     }
 
     if (_curDbgData.contains(filename)) {
-        e->setReadOnly(true);
+        editor->setReadOnly(true);
     }
 
     registerEditorView(editor);

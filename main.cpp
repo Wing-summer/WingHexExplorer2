@@ -136,6 +136,8 @@ int main(int argc, char *argv[]) {
     QApplication::setOrganizationName(QStringLiteral(APP_ORG));
     QApplication::setApplicationVersion(QStringLiteral(WINGHEX_VERSION));
 
+    static_assert(CHAR_BIT == 8, APP_NAME "is only supported with 8-bit char");
+
     try {
         AppManager a(argc, argv);
         auto w = a.mainWindow();

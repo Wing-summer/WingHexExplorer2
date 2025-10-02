@@ -16,7 +16,6 @@
 */
 
 #include "codecompletionmodel.h"
-#include "class/angellsp.h"
 
 CodeCompletionModel::CodeCompletionModel(const QList<CodeInfoTip> &infos,
                                          QObject *parent)
@@ -39,12 +38,8 @@ QVariant CodeCompletionModel::data(const QModelIndex &index, int role) const {
     case Qt::DisplayRole:
         return info.name;
     case Qt::ToolTipRole:
-        if (info.comment.isEmpty() && !info.value.isNull()) {
-            auto &ins = AngelLsp::instance();
-            auto v = ins.requestResolve(info.value);
-            info.comment = v["detail"].toString();
-        }
-        return info.comment; // TODO
+        info.resolve();
+        return info.comment;
     case Qt::DecorationRole:
         return CodeInfoTip::getDisplayIcon(info.type);
     }

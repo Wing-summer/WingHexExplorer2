@@ -4,7 +4,6 @@
           author="wingsummer" license="GPL" priority="99" >
     <highlighting>
         <list name="keywords">
-            <!-- （略）保持原样，实际使用时可全部保留你的关键字列表 -->
             <item>abstract</item>
             <item>and</item>
             <item>break</item>

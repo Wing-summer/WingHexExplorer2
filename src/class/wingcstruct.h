@@ -20,6 +20,7 @@
 
 #include "WingPlugin/iwingplugin.h"
 #include "structlib/ctypeparser.h"
+#include "utilities.h"
 
 class CScriptDictionary;
 class asIScriptEngine;
@@ -28,6 +29,47 @@ class CScriptArray;
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
     Q_INTERFACES(WingHex::IWingPlugin)
+
+private:
+    template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
+    inline T getShiftAndMasked(const QByteArray &buffer, size_t shift,
+                               size_t mask) {
+        auto buf = Utilities::processEndian(buffer, m_islittle);
+        if constexpr (std::is_integral_v<T>) {
+            auto len = buffer.size();
+            Q_ASSERT(len >= sizeof(quint8));
+
+            if (len >= sizeof(quint64)) {
+                auto r = *reinterpret_cast<const quint64 *>(buf.constData());
+                r >>= shift;
+                r &= mask;
+                return T(r);
+            }
+
+            if (len >= sizeof(quint32)) {
+                auto r = *reinterpret_cast<const quint32 *>(buf.constData());
+                r >>= shift;
+                r &= mask;
+                return T(r);
+            }
+
+            if (len >= sizeof(quint16)) {
+                auto r = *reinterpret_cast<const quint16 *>(buf.constData());
+                r >>= shift;
+                r &= mask;
+                return T(r);
+            }
+
+            auto r = *reinterpret_cast<const quint8 *>(buf.constData());
+            r >>= shift;
+            r &= mask;
+            return T(r);
+        } else if constexpr (std::is_same_v<T, float>) {
+            return *reinterpret_cast<const float *>(buf.constData());
+        } else if constexpr (std::is_same_v<T, double>) {
+            return *reinterpret_cast<const double *>(buf.constData());
+        }
+    }
 
 public:
     explicit WingCStruct();
@@ -62,6 +104,9 @@ private:
     WING_SERVICE bool parseFromSource(const QString &header);
     WING_SERVICE bool parse(const QString &fileName);
     WING_SERVICE void reset();
+
+    WING_SERVICE bool isLittleEndian() const;
+    WING_SERVICE void setIsLittleEndian(bool newIslittle);
 
     WING_SERVICE bool setPadAlignment(int padding); // 1, 2, 4, 8, 16
     WING_SERVICE int padAlignment();
@@ -104,7 +149,7 @@ private:
     QString getqsizeTypeAsString() const;
 
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
-                     qsizetype size);
+                     size_t shift, size_t mask, qsizetype size);
 
     QVariantHash readStruct(const char *&ptr, const char *end,
                             const QString &type);
@@ -119,6 +164,9 @@ private:
     QVariant parseFromSource(const QVariantList &params);
     QVariant parse(const QVariantList &params);
     QVariant reset(const QVariantList &params);
+
+    QVariant isLittleEndian(const QVariantList &params);
+    QVariant setIsLittleEndian(const QVariantList &params);
 
     QVariant setPadAlignment(const QVariantList &params);
     QVariant padAlignment(const QVariantList &params);
@@ -141,13 +189,13 @@ private:
     QVariant isCompletedType(const QVariantList &params);
 
     QVariant enumValueNames(const QVariantList &params);
-    QVariant constVarValueInt(const QVariantList &params);
-    QVariant constVarValueUInt(const QVariantList &params);
-
     QVariant isCompletedStruct(const QVariantList &params);
     QVariant isCompletedUnion(const QVariantList &params);
 
     QVariant getMissingDependencise(const QVariantList &params);
+
+    WingHex::UNSAFE_RET constVarValueInt(const QList<void *> &params);
+    WingHex::UNSAFE_RET constVarValueUInt(const QList<void *> &params);
 
     WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
@@ -155,6 +203,7 @@ private:
 private:
     CTypeParser *_parser = nullptr;
     QList<WingHex::SettingPage *> _setpgs;
+    bool m_islittle = Utilities::checkIsLittleEndian();
 };
 
 #endif // WINGCSTRUCT_H

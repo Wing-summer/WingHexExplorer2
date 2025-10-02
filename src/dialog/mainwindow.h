@@ -22,7 +22,6 @@
 #include "dialog/splashdialog.h"
 #include "framelessmainwindow.h"
 
-#include <QBuffer>
 #include <QFutureWatcher>
 #include <QListView>
 #include <QMainWindow>
@@ -36,7 +35,6 @@
 #include <QTreeView>
 #include <QUndoView>
 #include <QtConcurrent/QtConcurrentRun>
-#include <QtEndian>
 
 #include "QWingRibbon/ribbon.h"
 #include "QWingRibbon/ribbonbuttongroup.h"
@@ -406,49 +404,8 @@ private:
     }
 
     template <typename T>
-    inline T qToBigEndian(T source) {
-        return ::qToBigEndian(source);
-    }
-
-    template <typename T>
-    inline T qToLittleEndian(T source) {
-        return ::qToLittleEndian(source);
-    }
-
-    inline QByteArray qToBigEndian(QByteArray source) {
-        QByteArray result;
-        QBuffer buffer(&result);
-        buffer.open(QIODevice::WriteOnly);
-
-        QDataStream stream(&buffer);
-        stream.setByteOrder(QDataStream::BigEndian);
-        stream.writeRawData(source.constData(), source.size());
-        return result;
-    }
-
-    inline QByteArray qToLittleEndian(QByteArray source) {
-        QByteArray result;
-        QBuffer buffer(&result);
-        buffer.open(QIODevice::WriteOnly);
-
-        QDataStream stream(&buffer);
-        stream.setByteOrder(QDataStream::LittleEndian);
-        stream.writeRawData(source.constData(), source.size());
-        return result;
-    }
-
-    template <typename T>
     inline T processEndian(T source) {
-        if (Utilities::checkIsLittleEndian()) {
-            if (!m_islittle) {
-                return qToBigEndian(source);
-            }
-        } else {
-            if (m_islittle) {
-                return qToLittleEndian(source);
-            }
-        }
-        return source;
+        return Utilities::processEndian(source, m_islittle);
     }
 
     /* =============== some templates for async execution ===============*/

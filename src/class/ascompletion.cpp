@@ -32,6 +32,7 @@
 #include <QLibraryInfo>
 #include <QQueue>
 #include <QTextStream>
+#include <QThread>
 #include <QTime>
 #include <QTimer>
 #include <QtDebug>
@@ -77,7 +78,7 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
             this, [this](const QModelIndex &index) {
                 auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
                 if (v.type == LSP::CompletionItemKind::Function) {
-                    Q_EMIT onFunctionTip(v.comment);
+                    Q_EMIT onFunctionTip(v.type, v.name);
                 }
             });
 
@@ -90,7 +91,9 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
 
 AsCompletion::~AsCompletion() {}
 
-void AsCompletion::clearFunctionTip() { Q_EMIT onFunctionTip({}); }
+void AsCompletion::clearFunctionTip() {
+    Q_EMIT onFunctionTip(LSP::CompletionItemKind::Missing, {});
+}
 
 QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
     if (!v.isArray()) {
@@ -108,6 +111,7 @@ QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
         tip.name = item["label"].toString();
         ret.append(tip);
     }
+
     return ret;
 }
 
@@ -152,33 +156,42 @@ bool AsCompletion::processTrigger(const QString &trigger,
     auto tc = editor->editor()->textCursor();
     auto &lsp = AngelLsp::instance();
     auto line = tc.blockNumber();
-
-    auto seps = wordSeperators();
-    auto r =
-        std::find_if(content.crbegin(), content.crend(),
-                     [seps](const QChar &ch) { return seps.contains(ch); });
-    auto stridx = std::distance(r, content.crend());
-    auto str = content.sliced(stridx);
-    auto idx = str.lastIndexOf(*DOT_TRIGGER);
-    if (idx < 0) {
-        idx = str.lastIndexOf(*DBL_COLON_TRIGGER);
-    }
-    QString prefix;
-    if (idx >= 0) {
-        prefix = str.sliced(idx + 1);
-    } else {
-        prefix = str;
-    }
-
     auto character = tc.positionInBlock();
+
+    QString prefix;
     if (trigger.isEmpty()) {
-        character -= prefix.length();
-    } else {
-        character += trigger.size();
+        auto seps = wordSeperators();
+        auto r =
+            std::find_if(content.crbegin(), content.crend(),
+                         [seps](const QChar &ch) { return seps.contains(ch); });
+        auto stridx = std::distance(r, content.crend());
+        auto str = content.sliced(stridx);
+
+        auto tg = *DOT_TRIGGER;
+        auto idx = str.lastIndexOf(tg);
+        if (idx < 0) {
+            tg = *DBL_COLON_TRIGGER;
+            idx = str.lastIndexOf(tg);
+        }
+
+        if (idx >= 0) {
+            prefix = str.sliced(idx + tg.size());
+        } else {
+            prefix = str;
+        }
     }
 
-    auto ret = lsp.requestCompletion(url, line, character);
+    while (editor->isContentLspUpdated()) {
+        // wait for a moment
+    }
+
+    auto ret = lsp.requestCompletion(url, line, character, trigger);
     auto nodes = parseCompletion(ret);
+
+    if (trigger.isEmpty()) {
+        nodes.append(_keywordNode);
+    }
+
     setModel(new CodeCompletionModel(nodes, this));
     setCompletionPrefix(prefix);
     _ok = false;

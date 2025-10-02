@@ -17,6 +17,8 @@
 
 #include "codeinfotip.h"
 
+#include "class/angellsp.h"
+
 #include <QHash>
 #include <QMetaEnum>
 
@@ -43,4 +45,22 @@ QIcon CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind type) {
     }
 
     return q_icon_cache->value(type);
+}
+
+void CodeInfoTip::resolve() {
+    if (value.isNull()) {
+        comment = name;
+        completion = name;
+        return;
+    }
+
+    auto &lsp = AngelLsp::instance();
+    auto v = lsp.requestResolve(value);
+    if (comment.isEmpty()) {
+        comment = v["detail"].toString();
+    }
+
+    if (completion.isEmpty()) {
+        completion = v["insertText"].toString();
+    }
 }
