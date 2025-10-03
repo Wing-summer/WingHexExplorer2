@@ -295,6 +295,8 @@ set(CONTROL_SRC
     src/control/gotolinewidget.cpp
     src/control/codeeditcontrolwidget.h
     src/control/codeeditcontrolwidget.cpp
+    src/control/consolecodeedit.h
+    src/control/consolecodeedit.cpp
     src/control/asidbtreeview.h
     src/control/asidbtreeview.cpp)
 
@@ -381,6 +383,7 @@ set(CLASS_SRC
     src/class/angelscriptconsolevisitor.cpp
     src/class/aswingcache.h
     src/class/aswingcache.cpp
+    src/class/lspeditorinterface.h
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 
@@ -435,6 +438,9 @@ set(SETTING_SRC
     src/settings/othersettingsdialog.h
     src/settings/othersettingsdialog.cpp
     src/settings/othersettingsdialog.ui
+    src/settings/lspsettingdialog.h
+    src/settings/lspsettingdialog.cpp
+    src/settings/lspsettingdialog.ui
     src/settings/qeditconfig.h
     src/settings/qeditconfig.cpp
     src/settings/qeditconfig.ui)

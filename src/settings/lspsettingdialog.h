@@ -15,33 +15,38 @@
 ** =============================================================================
 */
 
-#include "asconsolecompletion.h"
-#include "control/scriptingconsole.h"
+#ifndef LSPSETTINGDIALOG_H
+#define LSPSETTINGDIALOG_H
 
-#include <QJsonArray>
+#include "WingPlugin/settingpage.h"
+#include <QWidget>
 
-AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
-    : AsCompletion(p), _console(p) {}
-
-AsConsoleCompletion::AsConsoleCompletion(ConsoleCodeEdit *p)
-    : AsCompletion(p), _console(p) {}
-
-QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
-    static QList<CodeInfoTip> marcos;
-    if (marcos.isEmpty()) {
-        static QStringList m{
-            "ls",
-            "del",
-            "cls",
-        };
-        for (auto &i : m) {
-            CodeInfoTip tip;
-            tip.name = i;
-            tip.type = LSP::CompletionItemKind::Keyword;
-            marcos.append(tip);
-        }
-    }
-    return marcos;
+namespace Ui {
+class LspSettingDialog;
 }
 
-LspEditorInterace *AsConsoleCompletion::getEditor() { return _console; }
+class LspSettingDialog : public WingHex::SettingPage {
+    Q_OBJECT
+
+public:
+    explicit LspSettingDialog(QWidget *parent = nullptr);
+    ~LspSettingDialog();
+
+private:
+    Ui::LspSettingDialog *ui;
+
+    // PageBase interface
+public:
+    virtual QIcon categoryIcon() const override;
+    virtual QString name() const override;
+    virtual QString id() const override;
+
+    // SettingInterface interface
+public:
+    virtual void restore() override;
+
+private slots:
+    void reload();
+};
+
+#endif // LSPSETTINGDIALOG_H

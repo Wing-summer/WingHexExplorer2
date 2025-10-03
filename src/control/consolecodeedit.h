@@ -15,77 +15,52 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#ifndef CONSOLECODEEDIT_H
+#define CONSOLECODEEDIT_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "class/lspeditorinterface.h"
 #include "class/resettabletimer.h"
-#include "control/codeedit.h"
+#include "codeedit.h"
 
-#include <QFileSystemWatcher>
-
-class asIScriptEngine;
-
-class ScriptEditor : public ads::CDockWidget, public LspEditorInterace {
+class ConsoleCodeEdit : public CodeEdit, public LspEditorInterace {
     Q_OBJECT
 
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
-    virtual ~ScriptEditor();
+    explicit ConsoleCodeEdit(QWidget *parent = nullptr);
+    virtual ~ConsoleCodeEdit();
 
-    CodeEdit *editor() const;
-
-    bool formatCode();
-
-    quint64 getVersion() const;
-
-    QString fileName() const;
-
+    // LspEditorInterace interface
 public:
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;
+    virtual void sendDocChange() override;
     virtual void showFunctionTip(
         const QList<WingSignatureTooltip::Signature> &sigs) override;
     virtual void clearFunctionTip() override;
-    virtual void sendDocChange() override;
 
 signals:
-    void onToggleMark(int line);
-    void need2Reload();
+    void onCloseEvent();
 
-public slots:
-    void setReadOnly(bool b);
-    bool openFile(const QString &filename);
-
-    bool save(const QString &path = QString());
-    bool reload();
-
-    void find();
-    void replace();
-    void gotoLine();
-
-    void onReconnectLsp();
-    void setCompleterEnabled(bool b);
+    // QWidget interface
+protected:
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
 
 private slots:
     void onSendFullTextChangeCompleted();
 
 private:
-    void processTitle();
+    static QString lspURL();
+    quint64 getVersion() const;
 
     bool increaseVersion();
 
 private:
-    CodeEdit *m_editor = nullptr;
     quint64 version = 1;
 
     ResettableTimer *_timer;
     bool _ok = true;
     bool _lastSent = true;
-
-    QFileSystemWatcher _watcher;
 };
 
-#endif // SCRIPTEDITOR_H
+#endif // CONSOLECODEEDIT_H

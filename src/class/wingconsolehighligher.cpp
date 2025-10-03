@@ -79,6 +79,15 @@ void WingConsoleHighligher::setBlockAsCodeWithPrefix(QTextBlock &block,
     rehighlightBlock(block);
 }
 
+int WingConsoleHighligher::blockPrefixLength(const QTextBlock &block) {
+    auto data =
+        dynamic_cast<const ConsoleTextBlockUserData *>(block.userData());
+    if (data == nullptr) {
+        return 0;
+    }
+    return data->prefixLength;
+}
+
 void WingConsoleHighligher::highlightBlock(const QString &text) {
     WingSyntaxHighlighter::highlightBlock(text);
 }

@@ -48,6 +48,10 @@ QIcon CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind type) {
 }
 
 void CodeInfoTip::resolve() {
+    if (!comment.isEmpty() && !completion.isEmpty()) {
+        return;
+    }
+
     if (value.isNull()) {
         comment = name;
         completion = name;

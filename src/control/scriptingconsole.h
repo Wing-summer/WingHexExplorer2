@@ -19,12 +19,13 @@
 #define ScriptingConsole_H
 
 #include "class/asconsolecompletion.h"
+#include "class/lspeditorinterface.h"
 #include "class/scriptmachine.h"
 #include "scriptingconsolebase.h"
 
 #include <QMutex>
 
-class ScriptingConsole : public ScriptingConsoleBase {
+class ScriptingConsole : public ScriptingConsoleBase, public LspEditorInterace {
     Q_OBJECT
 
 public:
@@ -35,11 +36,28 @@ public:
     QString currentCodes() const;
 
 public:
+    void enableLSP();
+    quint64 getVersion() const;
+
+public:
     QString getInput();
 
     bool isTerminal() const;
-
     void setIsTerminal(bool newIsTerminal);
+
+public:
+    virtual QString lspFileNameURL() const override;
+    virtual bool isContentLspUpdated() const override;
+    virtual CursorPos currentPosition() const override;
+    virtual void showFunctionTip(
+        const QList<WingSignatureTooltip::Signature> &sigs) override;
+    virtual void clearFunctionTip() override;
+    virtual void sendDocChange() override;
+
+private:
+    static QString lspURL();
+
+    void setEditMode(ConsoleMode mode);
 
 public slots:
     void init();
@@ -54,8 +72,7 @@ public slots:
 
 private slots:
     void applyScriptSettings();
-
-    void onFunctionTip(LSP::CompletionItemKind kind, const QString &content);
+    void onSendFullTextChangeCompleted();
 
 signals:
     void consoleScriptRunFinished();
@@ -75,7 +92,16 @@ protected slots:
     virtual void paste() override;
 
 private:
+    bool increaseVersion();
+
+private:
     QString _codes;
+
+    quint64 version = 1;
+
+    ResettableTimer *_timer;
+    bool _ok = true;
+    bool _lastSent = true;
 
     bool _isTerminal = true;
     bool _isWaitingRead = false;

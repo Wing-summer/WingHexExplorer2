@@ -109,9 +109,25 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                                                callbacks);
 
     auto &lsp = AngelLsp::instance();
+    connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
+        // only happened when restarting
+        for (auto &view : m_views) {
+            view->onReconnectLsp();
+            view->setCompleterEnabled(true);
+        }
+    });
+    connect(&lsp, &AngelLsp::serverExited, this, [this]() {
+        for (auto &view : m_views) {
+            view->setCompleterEnabled(false);
+        }
+    });
     connect(
         &lsp, &AngelLsp::diagnosticsPublished, this,
         [this](const QString &url, const QList<LSP::Diagnostics> &diagnostics) {
+            if (url.startsWith(QStringLiteral("dev"))) {
+                // a device not a file
+                return;
+            }
             QUrl path(url);
             if (path.isValid()) {
                 auto fileName = path.toLocalFile();
@@ -119,23 +135,23 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                 if (view) {
                     auto editor = view->editor();
                     editor->clearSquiggle();
-                    for (auto &d : diagnostics) {
-                        auto lsps = [](LSP::DiagnosticSeverity s)
-                            -> WingCodeEdit::SeverityLevel {
-                            switch (s) {
-                            case LSP::DiagnosticSeverity::None:
-                                return WingCodeEdit::SeverityLevel::Information;
-                            case LSP::DiagnosticSeverity::Error:
-                                return WingCodeEdit::SeverityLevel::Error;
-                            case LSP::DiagnosticSeverity::Warning:
-                                return WingCodeEdit::SeverityLevel::Warning;
-                            case LSP::DiagnosticSeverity::Information:
-                                return WingCodeEdit::SeverityLevel::Information;
-                            case LSP::DiagnosticSeverity::Hint:
-                                return WingCodeEdit::SeverityLevel::Hint;
-                            }
+                    auto lsps = [](LSP::DiagnosticSeverity s)
+                        -> WingCodeEdit::SeverityLevel {
+                        switch (s) {
+                        case LSP::DiagnosticSeverity::None:
                             return WingCodeEdit::SeverityLevel::Information;
-                        };
+                        case LSP::DiagnosticSeverity::Error:
+                            return WingCodeEdit::SeverityLevel::Error;
+                        case LSP::DiagnosticSeverity::Warning:
+                            return WingCodeEdit::SeverityLevel::Warning;
+                        case LSP::DiagnosticSeverity::Information:
+                            return WingCodeEdit::SeverityLevel::Information;
+                        case LSP::DiagnosticSeverity::Hint:
+                            return WingCodeEdit::SeverityLevel::Hint;
+                        }
+                        return WingCodeEdit::SeverityLevel::Information;
+                    };
+                    for (auto &d : diagnostics) {
                         editor->addSquiggle(
                             lsps(d.severity),
                             {d.range.start.line + 1, d.range.start.character},
@@ -576,9 +592,9 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     addPannelAction(pannel, QStringLiteral("console"), tr("Console"), [=] {
         m_setdialog->showConfig(QStringLiteral("Console"));
     });
-    addPannelAction(
-        pannel, QStringLiteral("codeformat"), tr("ClangFormat"),
-        [=] { m_setdialog->showConfig(QStringLiteral("ClangFormat")); });
+    addPannelAction(pannel, QStringLiteral("angellsp"), tr("AngelLSP"), [=] {
+        m_setdialog->showConfig(QStringLiteral("AngelLSP"));
+    });
 
     return tab;
 }

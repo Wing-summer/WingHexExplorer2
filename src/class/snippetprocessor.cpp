@@ -27,6 +27,7 @@ class SnippetExpansionVisitor : public SnippetBaseVisitor {
 public:
     SnippetExpansionVisitor(const SnippetProcessor::Resolver &resolver);
 
+    virtual std::any visitSnippet(SnippetParser::SnippetContext *ctx) override;
     virtual std::any visitText(SnippetParser::TextContext *ctx) override;
     virtual std::any
     visitEscapedChar(SnippetParser::EscapedCharContext *ctx) override;
@@ -58,6 +59,15 @@ SnippetExpansionVisitor::SnippetExpansionVisitor(
     const SnippetProcessor::Resolver &resolver)
     : cursorOffset_(-1), resolver_(resolver) {
     Q_ASSERT(resolver);
+}
+
+std::any
+SnippetExpansionVisitor::visitSnippet(SnippetParser::SnippetContext *ctx) {
+    auto ret = visitChildren(ctx);
+    if (cursorOffset_ < 0) {
+        cursorOffset_ = result_.size();
+    }
+    return ret;
 }
 
 std::any SnippetExpansionVisitor::visitText(SnippetParser::TextContext *ctx) {

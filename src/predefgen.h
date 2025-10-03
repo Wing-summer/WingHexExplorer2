@@ -206,6 +206,40 @@ void printFuncdef(const asIScriptEngine *engine, QTextStream &out) {
     }
 }
 
+void printMarcos(QTextStream &out) {
+    // marco, type
+    static QHash<QString, QString> marcos;
+    static QString INT_TYPE = QStringLiteral("int");
+    static QString STRING_TYPE = QStringLiteral("string");
+    if (marcos.isEmpty()) {
+        marcos.insert(QStringLiteral("__LINE__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__SECTION__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__SECTION_BASE__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__WING_VERSION__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__WING_VERSION_MAJOR__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__WING_VERSION_MINOR__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__WING_VERSION_PATCH__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MAJOR__"),
+                      INT_TYPE);
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MINOR__"),
+                      INT_TYPE);
+        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_PATCH__"),
+                      INT_TYPE);
+        marcos.insert(QStringLiteral("__WINGHEX_APPNAME__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__QT_VERSION__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__QT_VERSION_MAJOR__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__QT_VERSION_MINOR__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__QT_VERSION_PATCH__"), INT_TYPE);
+        marcos.insert(QStringLiteral("__LANG__"), STRING_TYPE);
+        marcos.insert(QStringLiteral("__THEME__"), STRING_TYPE);
+    }
+    for (auto &&item : marcos.asKeyValueRange()) {
+        out << item.second << ' ' << item.first << ';' << Qt::endl;
+    }
+}
+
 } // namespace
 
 static inline void generateScriptPredefined(const asIScriptEngine *engine,
@@ -227,6 +261,7 @@ static inline void generateScriptPredefined(const asIScriptEngine *engine,
     printGlobalPropertyList(engine, out);
     printGlobalTypedef(engine, out);
     printFuncdef(engine, out);
+    printMarcos(out);
 
     file.close();
 }

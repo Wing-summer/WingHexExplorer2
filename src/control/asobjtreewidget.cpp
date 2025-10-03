@@ -26,7 +26,7 @@
 #include <QHeaderView>
 
 ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
-    Utilities::applyItemViewProperty(this);
+    Utilities::applyTreeViewProperty(this);
     setColumnCount(2);
     auto header = this->header();
     header->setSortIndicator(0, Qt::SortOrder::AscendingOrder);

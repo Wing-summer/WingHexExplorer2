@@ -24,6 +24,7 @@
 #include "model/codecompletionmodel.h"
 #include "wingcompleter.h"
 
+#include <QAbstractItemView>
 #include <QApplication>
 #include <QClipboard>
 #include <QFileInfo>
@@ -274,7 +275,6 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
         tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, roff);
     }
     setTextCursor(tc);
-    Q_EMIT tryShowToolTip(tc.blockNumber(), tc.positionInBlock());
 }
 
 void CodeEdit::addEditorBasicShortcut() {
@@ -409,6 +409,23 @@ void CodeEdit::keyPressEvent(QKeyEvent *event) {
     }
 
     if (unHandled) {
+        if (isHelpTooltipVisible()) {
+            if (event->modifiers() == Qt::KeyboardModifier::NoModifier) {
+                auto key = event->key();
+                if (key == Qt::Key_Semicolon) {
+                    hideHelpTooltip();
+                } else if (auto c = completer()) {
+                    if (c) {
+                        auto pp = c->popup();
+                        if (!pp || !pp->isVisible()) {
+                            if (key == Qt::Key_Enter || key == Qt::Key_Return) {
+                                hideHelpTooltip();
+                            }
+                        }
+                    }
+                }
+            }
+        }
         WingCodeEdit::keyPressEvent(event);
     }
 }

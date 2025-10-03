@@ -17,12 +17,13 @@
 
 #include "scriptingconsole.h"
 #include "QConsoleWidget/QConsoleIODevice.h"
-#include "class/eventfilter.h"
+#include "class/angellsp.h"
 #include "class/scriptmachine.h"
 #include "class/scriptsettings.h"
 #include "class/skinmanager.h"
+#include "class/snippetprocessor.h"
 #include "class/wingmessagebox.h"
-#include "control/codeedit.h"
+#include "control/consolecodeedit.h"
 #include "dialog/framelessdialogbase.h"
 #include "model/codecompletionmodel.h"
 #include "utilities.h"
@@ -34,7 +35,9 @@
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMimeData>
+#include <QRandomGenerator>
 #include <QRegularExpression>
+#include <QTemporaryFile>
 #include <QTextBlock>
 
 #include <KSyntaxHighlighting/Definition>
@@ -48,39 +51,26 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
     applyScriptSettings();
 }
 
-ScriptingConsole::~ScriptingConsole() {}
+ScriptingConsole::~ScriptingConsole() {
+    if (_isTerminal) {
+        // assuming we enable lsp after setting the terminal flag
+        AngelLsp::instance().closeDocument(lspURL());
+    }
+}
 
 void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     QString code = getCommandLine();
 
-    setMode(Output);
+    setEditMode(Output);
     if (code.isEmpty()) {
         if (mod.testFlags(Qt::ControlModifier | Qt::AltModifier)) {
             // pop up a coding dialog
             auto edialog = new FramelessDialogBase;
             edialog->setAttribute(Qt::WA_DeleteOnClose);
 
-            auto editor = new CodeEdit(edialog);
-            editor->setSyntax(
-                CodeEdit::syntaxRepo().definitionForName("AngelScript"));
-
-            auto filter = new EventFilter(QEvent::KeyRelease, editor);
-            connect(filter, &EventFilter::eventTriggered, this,
-                    [edialog](QObject *, QEvent *event) {
-                        auto e = reinterpret_cast<QKeyEvent *>(event);
-                        if (e->modifiers() == Qt::ControlModifier &&
-                            (e->key() == Qt::Key_Enter ||
-                             e->key() == Qt::Key_Return)) {
-                            edialog->accept();
-                        }
-                    });
-            editor->installEventFilter(filter);
-
-            // TODO
-            // auto cm = new AsCompletion(editor);
-            // connect(cm, &AsCompletion::onFunctionTip, this,
-            //         &ScriptEditor::onFunctionTip);
-
+            auto editor = new ConsoleCodeEdit(edialog);
+            connect(editor, &ConsoleCodeEdit::onCloseEvent, edialog,
+                    &FramelessDialogBase::accept);
             edialog->buildUpContent(editor);
             edialog->setWindowTitle(tr("ConsoleMutiLine"));
             edialog->setMinimumSize(400, 450);
@@ -99,7 +89,8 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
                     }
                 }
             } else {
-                setMode(Input);
+                setEditMode(Input);
+
                 return;
             }
         }
@@ -125,7 +116,8 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
             _codes.append('\n').append(code);
         }
         appendCommandPrompt(true);
-        setMode(Input);
+        setEditMode(Input);
+
     } else {
         if (!_isWaitingRead) {
             Q_EMIT consoleCommand(code);
@@ -140,12 +132,12 @@ void ScriptingConsole::init() {
             &ScriptingConsole::runConsoleCommand);
 
     auto cm = new AsConsoleCompletion(this);
-    connect(cm, &AsCompletion::onFunctionTip, this,
-            &ScriptingConsole::onFunctionTip);
+    cm->setParent(this);
+    cm->setEnabled(false);
 }
 
 void ScriptingConsole::clearConsole() {
-    setMode(Output);
+    setEditMode(Output);
 
     auto cur = this->textCursor();
     auto off = cur.position() - this->currentHeaderPos();
@@ -170,7 +162,7 @@ void ScriptingConsole::clearConsole() {
         appendCommandPrompt(false);
     }
 
-    setMode(Input);
+    setEditMode(Input);
     replaceCommandLine(lastCmd);
     cur = this->textCursor();
     cur.movePosition(QTextCursor::EndOfBlock);
@@ -255,10 +247,10 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
 }
 
 void ScriptingConsole::abortCurrentCode() {
-    setMode(Output);
+    setEditMode(Output);
     _codes.clear();
     appendCommandPrompt();
-    setMode(Input);
+    setEditMode(Input);
 }
 
 void ScriptingConsole::applyScriptSettings() {
@@ -290,12 +282,16 @@ void ScriptingConsole::applyScriptSettings() {
     this->setAutoCloseChar(set.consoleAutoCloseChar());
 }
 
-void ScriptingConsole::onFunctionTip(LSP::CompletionItemKind kind,
-                                     const QString &content) {
-    // TODO
+void ScriptingConsole::onSendFullTextChangeCompleted() {
+    if (!_lastSent) {
+        sendDocChange();
+        _lastSent = true;
+    }
+    _ok = true;
 }
 
 void ScriptingConsole::runConsoleCommand(const QString &code) {
+    hideHelpTooltip();
     auto exec = code.trimmed();
     if (exec == QStringLiteral("#ls")) {
         auto &ins = ScriptMachine::instance();
@@ -303,7 +299,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         if (mod) {
             auto total = mod->GetGlobalVarCount();
 
-            setMode(Output);
+            setEditMode(Output);
 
             if (total == 0) {
                 stdOutLine("<none>");
@@ -323,7 +319,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
 
             _codes.clear();
             appendCommandPrompt();
-            setMode(Input);
+            setEditMode(Input);
         }
     } else if (exec.startsWith(QStringLiteral("#del"))) {
         // this is special command
@@ -333,7 +329,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
             // first check whether contains \n
             auto idx = exec.indexOf('\n');
             if (idx >= 0) {
-                setMode(Output);
+                setEditMode(Output);
                 stdErrLine(tr("InvalidDelCmd"));
             } else {
                 // ok, then tokens should be devided by the space
@@ -343,7 +339,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                 QList<asUINT> indices;
 
                 // then check
-                setMode(Output);
+                setEditMode(Output);
                 for (auto &v : vars) {
                     auto idx = mod->GetGlobalVarIndexByName(v.toUtf8());
                     if (idx >= 0) {
@@ -363,7 +359,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         }
         _codes.clear();
         appendCommandPrompt();
-        setMode(Input);
+        setEditMode(Input);
         Q_EMIT consoleScriptRunFinished();
     } else if (exec == QStringLiteral("#cls")) {
         auto &ins = ScriptMachine::instance();
@@ -380,12 +376,12 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         }
         _codes.clear();
         appendCommandPrompt();
-        setMode(Input);
+        setEditMode(Input);
         Q_EMIT consoleScriptRunFinished();
     } else if (exec == QStringLiteral("#hiscls")) {
         history_.strings_.clear();
     } else {
-        setMode(Output);
+        setEditMode(Output);
         if (_codes.isEmpty()) {
             _codes = exec;
         } else {
@@ -395,7 +391,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                                               _codes);
         _codes.clear();
         appendCommandPrompt();
-        setMode(Input);
+        setEditMode(Input);
         Q_EMIT consoleScriptRunFinished();
     }
 }
@@ -403,17 +399,17 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
 QString ScriptingConsole::getInput() {
     auto &s = consoleStream();
     appendCommandPrompt(true);
-    setMode(Input);
+    _isWaitingRead = true;
+    setEditMode(Input);
     s.status();
     auto d = s.device();
     auto ba = d->bytesAvailable();
     d->skip(ba);
-    _isWaitingRead = true;
     d->waitForReadyRead(-1);
     QString instr;
     s >> instr;
     _isWaitingRead = false;
-    setMode(Output);
+    setEditMode(Output);
     return instr;
 }
 
@@ -425,16 +421,191 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_L) {
         clearConsole();
     } else {
+        if (e->modifiers() == Qt::NoModifier && e->key() == Qt::Key_Escape) {
+            if (isHelpTooltipVisible()) {
+                hideHelpTooltip();
+                return;
+            }
+        }
         QConsoleWidget::keyPressEvent(e);
     }
 }
 
 void ScriptingConsole::onCompletion(const QModelIndex &index) {
-    WingCodeEdit::onCompletion(index);
-    auto selfdata = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
-    if (selfdata.type == LSP::CompletionItemKind::Function) {
-        // TODO
+    auto completer = this->completer();
+    if (completer->widget() != this) {
+        return;
     }
+
+    auto selfdata = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+    selfdata.resolve();
+
+    QTextCursor tc = textCursor();
+    if (!completer->completionPrefix().isEmpty()) {
+        tc.movePosition(QTextCursor::WordLeft, QTextCursor::KeepAnchor);
+        tc.removeSelectedText();
+    }
+
+    if (selfdata.comment.isEmpty()) {
+        tc.insertText(selfdata.name);
+    } else {
+        auto resolver = [this](const QString &name) -> QString {
+            static QHash<QString, SnippetProcessor::TM_CODE> maps;
+
+            if (maps.isEmpty()) {
+                auto e = QMetaEnum::fromType<SnippetProcessor::TM_CODE>();
+                auto total = e.keyCount();
+                for (int i = 0; i < total; ++i) {
+                    maps.insert(e.key(i),
+                                SnippetProcessor::TM_CODE(e.value(i)));
+                }
+            }
+
+            if (!maps.contains(name)) {
+                return {};
+            }
+
+            auto en = maps.value(name);
+            switch (en) {
+            case SnippetProcessor::TM_CODE::TM_SELECTED_TEXT: {
+                auto completer = this->completer();
+                return completer->completionPrefix();
+            }
+            case SnippetProcessor::TM_CODE::TM_CURRENT_LINE: {
+                auto tc = textCursor();
+                return tc.block().text();
+            }
+            case SnippetProcessor::TM_CODE::TM_CURRENT_WORD: {
+                auto tc = textCursor();
+                tc.movePosition(QTextCursor::PreviousWord,
+                                QTextCursor::KeepAnchor);
+                return tc.selectedText();
+            }
+            case SnippetProcessor::TM_CODE::TM_LINE_INDEX: {
+                auto tc = textCursor();
+                return QString::number(tc.blockNumber());
+            }
+            case SnippetProcessor::TM_CODE::TM_LINE_NUMBER: {
+                auto tc = textCursor();
+                return QString::number(tc.blockNumber() + 1);
+            }
+            case SnippetProcessor::TM_CODE::TM_FILENAME: {
+                // Assuming fileName is stored in it
+                return windowFilePath();
+            }
+            case SnippetProcessor::TM_CODE::RELATIVE_FILEPATH:
+            case SnippetProcessor::TM_CODE::TM_FILENAME_BASE: {
+                auto fileName = windowFilePath();
+                QFileInfo info(fileName);
+                return info.fileName();
+            }
+            case SnippetProcessor::TM_CODE::TM_DIRECTORY: {
+                auto fileName = windowFilePath();
+                QFileInfo info(fileName);
+                return info.filePath();
+            }
+            case SnippetProcessor::TM_CODE::TM_FILEPATH: {
+                auto fileName = windowFilePath();
+                QFileInfo info(fileName);
+                return info.absoluteFilePath();
+            }
+            case SnippetProcessor::TM_CODE::CLIPBOARD:
+                return QApplication::clipboard()->text();
+            case SnippetProcessor::TM_CODE::WORKSPACE_NAME:
+            case SnippetProcessor::TM_CODE::WORKSPACE_FOLDER:
+                return {};
+            case SnippetProcessor::TM_CODE::CURRENT_YEAR: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("yyyy"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_YEAR_SHORT: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("yy"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_MONTH: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("M"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_MONTH_NAME: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("MMMM"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_MONTH_NAME_SHORT: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("MMM"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_DATE: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("d"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_DAY_NAME: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("dddd"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_DAY_NAME_SHORT: {
+                auto date = QDate::currentDate();
+                return date.toString(QStringLiteral("ddd"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_HOUR: {
+                auto time = QTime::currentTime();
+                return time.toString(QStringLiteral("h"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_MINUTE: {
+                auto time = QTime::currentTime();
+                return time.toString(QStringLiteral("m"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_SECOND: {
+                auto time = QTime::currentTime();
+                return time.toString(QStringLiteral("s"));
+            }
+            case SnippetProcessor::TM_CODE::CURRENT_SECONDS_UNIX:
+                return QString::number(QDateTime::currentSecsSinceEpoch());
+            case SnippetProcessor::TM_CODE::RANDOM: {
+                auto ran = QRandomGenerator::global();
+                QString buffer(6, QChar{});
+                for (int i = 0; i < 6; ++i) {
+                    buffer[i] = QChar(ran->bounded(0, 9) + '0');
+                }
+                return buffer;
+            }
+            case SnippetProcessor::TM_CODE::RANDOM_HEX: {
+                auto ran = QRandomGenerator::global();
+                QString buffer(6, QChar{});
+                for (int i = 0; i < 6; ++i) {
+                    auto n = ran->bounded(0, 16);
+                    if (n >= 10) {
+                        buffer[i] = QChar(n - 10 + 'A');
+                    } else {
+                        buffer[i] = QChar(n + '0');
+                    }
+                }
+                return buffer;
+            }
+            case SnippetProcessor::TM_CODE::UUID:
+                return QUuid::createUuid().toString();
+            case SnippetProcessor::TM_CODE::BLOCK_COMMENT_START:
+                return QStringLiteral("/*");
+            case SnippetProcessor::TM_CODE::BLOCK_COMMENT_END:
+                return QStringLiteral("*/");
+            case SnippetProcessor::TM_CODE::LINE_COMMENT:
+                return QStringLiteral("//");
+                break;
+            }
+            return {};
+        };
+
+        SnippetProcessor snipt(resolver);
+        auto r = snipt.process(selfdata.completion);
+
+        static QRegularExpression regex(QStringLiteral("[\\r\\n]"));
+        // replace with space
+        r.expandedText.replace(regex, QStringLiteral(" "));
+
+        tc.insertText(r.expandedText);
+        auto roff = r.expandedText.size() - r.cursorOffset;
+        tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, roff);
+    }
+    setTextCursor(tc);
 }
 
 void ScriptingConsole::paste() {
@@ -463,7 +634,7 @@ void ScriptingConsole::paste() {
                 return;
             }
 
-            setMode(Output);
+            setEditMode(Output);
             auto pl = lines.begin();
             auto pend = std::prev(lines.end());
             write(*pl);
@@ -473,7 +644,7 @@ void ScriptingConsole::paste() {
                 write(*pl);
             }
             appendCommandPrompt(true);
-            setMode(Input);
+            setEditMode(Input);
             replaceCommandLine(*pl);
             lines.removeLast();
             _codes = lines.join('\n');
@@ -481,17 +652,171 @@ void ScriptingConsole::paste() {
     }
 }
 
+bool ScriptingConsole::increaseVersion() {
+    version++;
+    if (version == 0) { // test overflow
+        version = 1;
+        return true;
+    }
+    return false;
+}
+
+void ScriptingConsole::sendDocChange() {
+    auto &lsp = AngelLsp::instance();
+    auto url = lspURL();
+    auto txt = currentCodes();
+    txt.prepend(QStringLiteral("void f(){\n")).append(QStringLiteral("\n}"));
+
+    // test overflow
+    if (increaseVersion()) {
+        lsp.closeDocument(url);
+        lsp.openDocument(url, 0, txt);
+    } else {
+        lsp.changeDocument(url, getVersion(), txt);
+    }
+
+    _ok = false;
+    _timer->reset(300);
+}
+
+QString ScriptingConsole::lspURL() {
+    return QStringLiteral("dev://as_console");
+}
+
+void ScriptingConsole::setEditMode(ConsoleMode mode) {
+    setMode(mode);
+    if (mode == Input && !_isWaitingRead) {
+        completer()->setEnabled(true);
+        Q_EMIT textChanged();
+    } else {
+        completer()->setEnabled(false);
+    }
+}
+
+bool ScriptingConsole::isContentLspUpdated() const { return _ok; }
+
+LspEditorInterace::CursorPos ScriptingConsole::currentPosition() const {
+    auto cursor = textCursor();
+    auto block = cursor.block();
+
+    int prefixLen = 0;
+
+    auto hl = consoleHighligher();
+    if (hl) {
+        prefixLen = hl->blockPrefixLength(block);
+    }
+
+    LspEditorInterace::CursorPos pos;
+    pos.blockNumber = _codes.length() + 1;
+    pos.positionInBlock = cursor.positionInBlock() - prefixLen;
+    return pos;
+}
+
+void ScriptingConsole::showFunctionTip(
+    const QList<WingSignatureTooltip::Signature> &sigs) {
+    showHelpTooltip(sigs);
+}
+
+void ScriptingConsole::clearFunctionTip() { hideHelpTooltip(); }
+
 bool ScriptingConsole::isTerminal() const { return _isTerminal; }
 
 void ScriptingConsole::setIsTerminal(bool newIsTerminal) {
     _isTerminal = newIsTerminal;
 }
 
+QString ScriptingConsole::lspFileNameURL() const { return lspURL(); }
+
 QString ScriptingConsole::currentCodes() const {
     QTextCursor textCursor = this->textCursor();
+    textCursor.movePosition(QTextCursor::End);
     textCursor.setPosition(inpos_, QTextCursor::KeepAnchor);
-    return _codes + textCursor.selectedText();
+    if (_codes.isEmpty()) {
+        return textCursor.selectedText();
+    }
+    return _codes + '\n' + textCursor.selectedText();
 }
+
+void ScriptingConsole::enableLSP() {
+    if (!_isTerminal) {
+        return;
+    }
+
+    auto &lsp = AngelLsp::instance();
+    connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
+        completer()->setEnabled(true);
+        auto &lsp = AngelLsp::instance();
+        auto txt = currentCodes();
+        txt.prepend(QStringLiteral("void f(){\n"))
+            .append(QStringLiteral("\n}"));
+        lsp.openDocument(lspFileNameURL(), 0, txt);
+        version = 1;
+    });
+    connect(&lsp, &AngelLsp::serverExited, this,
+            [this]() { completer()->setEnabled(false); });
+    connect(
+        &lsp, &AngelLsp::diagnosticsPublished, this,
+        [this](const QString &url, const QList<LSP::Diagnostics> &diagnostics) {
+            if (url == lspURL()) {
+                auto lsps = [](LSP::DiagnosticSeverity s)
+                    -> WingCodeEdit::SeverityLevel {
+                    switch (s) {
+                    case LSP::DiagnosticSeverity::None:
+                        return WingCodeEdit::SeverityLevel::Information;
+                    case LSP::DiagnosticSeverity::Error:
+                        return WingCodeEdit::SeverityLevel::Error;
+                    case LSP::DiagnosticSeverity::Warning:
+                        return WingCodeEdit::SeverityLevel::Warning;
+                    case LSP::DiagnosticSeverity::Information:
+                        return WingCodeEdit::SeverityLevel::Information;
+                    case LSP::DiagnosticSeverity::Hint:
+                        return WingCodeEdit::SeverityLevel::Hint;
+                    }
+                    return WingCodeEdit::SeverityLevel::Information;
+                };
+
+                auto doc = document();
+                auto block = doc->lastBlock();
+                auto hl = this->consoleHighligher();
+                auto prefix = hl->blockPrefixLength(block);
+
+                clearSquiggle();
+                auto offline = block.blockNumber();
+                for (auto &d : diagnostics) {
+                    auto t = _codes.count('\n') + 1;
+                    if (d.range.start.line == t) {
+                        addSquiggle(lsps(d.severity),
+                                    {offline + d.range.start.line,
+                                     prefix + d.range.start.character},
+                                    {offline + d.range.end.line,
+                                     prefix + d.range.end.character},
+                                    d.message);
+                    }
+                }
+                highlightAllSquiggle();
+            }
+        });
+
+    lsp.openDocument(lspURL(), 0, {});
+    connect(this, &ScriptingConsole::textChanged, this, [this]() {
+        if (mode_ == Output || _isWaitingRead) {
+            return;
+        }
+        if (!_ok) {
+            _lastSent = false;
+            return;
+        }
+        sendDocChange();
+    });
+
+    _timer = new ResettableTimer(this);
+    connect(_timer, &ResettableTimer::timeoutTriggered, this,
+            &ScriptingConsole::onSendFullTextChangeCompleted);
+
+    completer()->setEnabled(lsp.isActive());
+}
+
+quint64 ScriptingConsole::getVersion() const { return version; }
 
 void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);

@@ -34,6 +34,8 @@ public:
                                   const QTextCharFormat &fmt);
     void setBlockAsCodeWithPrefix(QTextBlock &block, int codePrefix = 0);
 
+    int blockPrefixLength(const QTextBlock &block);
+
 protected:
     virtual void highlightBlock(const QString &text) override;
     virtual void

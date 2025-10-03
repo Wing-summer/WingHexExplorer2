@@ -18,9 +18,7 @@
 #include "ascompletion.h"
 
 #include "class/angellsp.h"
-#include "control/scripteditor.h"
 #include "model/codecompletionmodel.h"
-#include "utilities.h"
 #include "wingcodeedit.h"
 
 #include <QAbstractItemView>
@@ -75,12 +73,7 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
     setTriggerAmount(3);
 
     connect(this, QOverload<const QModelIndex &>::of(&AsCompletion::activated),
-            this, [this](const QModelIndex &index) {
-                auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
-                if (v.type == LSP::CompletionItemKind::Function) {
-                    Q_EMIT onFunctionTip(v.type, v.name);
-                }
-            });
+            this, &AsCompletion::onActivatedCodeComplete);
 
     p->installEventFilter(this);
 
@@ -92,7 +85,12 @@ AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
 AsCompletion::~AsCompletion() {}
 
 void AsCompletion::clearFunctionTip() {
-    Q_EMIT onFunctionTip(LSP::CompletionItemKind::Missing, {});
+    auto editor = getEditor();
+    if (editor == nullptr) {
+        return;
+    }
+
+    editor->clearFunctionTip();
 }
 
 QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
@@ -138,7 +136,7 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return false;
     }
 
-    auto editor = qobject_cast<ScriptEditor *>(this->widget()->parent());
+    auto editor = getEditor();
     if (editor == nullptr) {
         return false;
     }
@@ -152,11 +150,12 @@ bool AsCompletion::processTrigger(const QString &trigger,
         return false;
     }
 
-    auto url = Utilities::getUrlString(editor->fileName());
-    auto tc = editor->editor()->textCursor();
+    auto url = editor->lspFileNameURL();
     auto &lsp = AngelLsp::instance();
-    auto line = tc.blockNumber();
-    auto character = tc.positionInBlock();
+
+    auto tc = editor->currentPosition();
+    auto line = tc.blockNumber;
+    auto character = tc.positionInBlock;
 
     QString prefix;
     if (trigger.isEmpty()) {
@@ -166,6 +165,15 @@ bool AsCompletion::processTrigger(const QString &trigger,
                          [seps](const QChar &ch) { return seps.contains(ch); });
         auto stridx = std::distance(r, content.crend());
         auto str = content.sliced(stridx);
+
+        if (str.startsWith('#')) {
+            prefix = str.sliced(1);
+            setModel(new CodeCompletionModel(parseMarcos(), this));
+            setCompletionPrefix(prefix);
+            _ok = false;
+            _timer->reset(300);
+            return true;
+        }
 
         auto tg = *DOT_TRIGGER;
         auto idx = str.lastIndexOf(tg);
@@ -215,6 +223,10 @@ QList<CodeInfoTip> AsCompletion::parseMarcos() {
     return marcos;
 }
 
+LspEditorInterace *AsCompletion::getEditor() {
+    return dynamic_cast<LspEditorInterace *>(this->widget()->parent());
+}
+
 bool AsCompletion::eventFilter(QObject *watched, QEvent *event) {
     if (event->type() == QEvent::KeyPress) {
         auto e = static_cast<QKeyEvent *>(event);
@@ -226,3 +238,39 @@ bool AsCompletion::eventFilter(QObject *watched, QEvent *event) {
 }
 
 void AsCompletion::onCodeComplete() { _ok = true; }
+
+void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
+    auto editor = getEditor();
+    if (editor == nullptr) {
+        return;
+    }
+    auto v = index.data(Qt::SelfDataRole).value<CodeInfoTip>();
+    if (v.type == LSP::CompletionItemKind::Function) {
+        auto tc = editor->currentPosition();
+        auto line = tc.blockNumber;
+        auto character = tc.positionInBlock;
+        auto &lsp = AngelLsp::instance();
+
+        // textChanged will emit later so send now
+        editor->sendDocChange();
+        while (editor->isContentLspUpdated()) {
+            // wait for a moment
+        }
+
+        auto url = editor->lspFileNameURL();
+        auto r = lsp.requestSignatureHelp(url, line, character);
+        auto sigs = r["signatures"].toArray();
+
+        QList<WingSignatureTooltip::Signature> ss;
+        for (auto &&sig : sigs) {
+            QJsonValue js = sig;
+            WingSignatureTooltip::Signature s;
+            s.label = js["label"].toString();
+            s.doc = js["documentation"].toString();
+            ss.append(s);
+        }
+        editor->showFunctionTip(ss);
+    }
+}
+
+QList<CodeInfoTip> AsCompletion::keywordNode() const { return _keywordNode; }

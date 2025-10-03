@@ -48,6 +48,7 @@
 #include "metadialog.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
+#include "settings/lspsettingdialog.h"
 #include "settings/othersettingsdialog.h"
 #include "settings/pluginsettingdialog.h"
 #include "settings/qeditconfig.h"
@@ -301,11 +302,21 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto &lsp = AngelLsp::instance();
         if (lsp.start()) {
             auto ret = lsp.initializeSync();
-            Q_UNUSED(ret);
-            lsp.initialized();
+            if (!ret.isNull()) {
+                lsp.initialized();
+            } else {
+                QTimer::singleShot(1000, [this]() {
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
+                                 tr("AngelLspInitFailed"));
+                });
+            }
         } else {
-            // TODO
+            QTimer::singleShot(1000, [this]() {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
+                             tr("AngelLspStartFailed"));
+            });
         }
+        m_scriptConsole->enableLSP();
     }
 
     // connect settings signals
@@ -1048,9 +1059,7 @@ MainWindow::buildUpScriptConsoleDock(ads::CDockManager *dock,
                                      ads::DockWidgetArea area,
                                      ads::CDockAreaWidget *areaw) {
     m_scriptConsole = new ScriptingConsole(this);
-
-    connect(m_scriptConsole, &ScriptingConsole::consoleCommand, this,
-            [this] { showStatus({}); });
+    m_scriptConsole->setIsTerminal(true);
     connect(m_scriptConsole, &ScriptingConsole::abortEvaluation, this,
             [this]() {
                 auto &sm = ScriptMachine::instance();
@@ -1891,7 +1900,10 @@ void MainWindow::buildUpSettingDialog() {
     m_scriptsetdlg->addPage(edit);
     edit = new QEditConfig(true, m_scriptsetdlg);
     m_scriptsetdlg->addPage(edit);
+    auto lspset = new LspSettingDialog(this);
+    m_scriptsetdlg->addPage(lspset);
     m_scriptsetdlg->build();
+
     ge = set.settingsScriptLayout();
     if (!ge.isEmpty()) {
         m_scriptsetdlg->restoreLayout(ge);

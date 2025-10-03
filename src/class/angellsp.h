@@ -32,6 +32,10 @@ class AngelLsp : public QObject {
     Q_OBJECT
 
 public:
+    enum class TraceMode { off = 0, messages = 1, verbose = 2 };
+    Q_ENUM(TraceMode);
+
+public:
     static AngelLsp &instance();
     virtual ~AngelLsp();
 
@@ -39,6 +43,10 @@ public:
     // Start/stop server (returns true if started)
     bool start();
     void stop();
+
+    bool restart();
+
+    bool isActive() const;
 
 public:
     // Synchronous (blocking) initialize
@@ -66,7 +74,11 @@ public:
                                     int timeoutMs = 3000);
     QJsonValue requestResolve(const QJsonValue &symbol, int timeoutMs = 3000);
 
+    QJsonValue requestFormat(const QString &uri, int timeoutMs = 3000);
+
 private:
+    void reloadConfigure();
+
     // Generic request/notification
     // Returns request id
     qint64 sendRequest(const QString &method,
@@ -96,6 +108,8 @@ signals:
     void serverStarted();
     void serverExited(int exitCode, QProcess::ExitStatus status);
 
+    void useTabIndentChanged();
+
 public slots:
     // convenience: synchronous shutdown
     void shutdownAndExit();
@@ -111,12 +125,27 @@ private:
     void sendMessage(const QJsonObject &msg);
     void handleIncomingMessage(const QJsonObject &msg);
 
-private:
-    LSP::Range readLSPDocRange(const QJsonObject &items);
-    LSP::Location readLSPDocLocation(const QJsonObject &items);
+public:
+    static LSP::Range readLSPDocRange(const QJsonObject &items);
+    static LSP::Location readLSPDocLocation(const QJsonObject &items);
 
-    QJsonObject jsonLSPDocRange(const LSP::Range &range);
-    QJsonObject jsonLSPDocLocation(const LSP::Location &loc);
+    static QJsonObject jsonLSPDocRange(const LSP::Range &range);
+    static QJsonObject jsonLSPDocLocation(const LSP::Location &loc);
+
+public:
+    TraceMode traceMode() const;
+    void setTraceMode(const TraceMode &newTraceMode);
+
+    int indentSpace() const;
+    void setIndentSpace(int newIndentSpace);
+
+    bool useTabIndent() const;
+    void setUseTabIndent(bool newUseTabIndent);
+
+    void resetSettings();
+
+    bool enabled() const;
+    void setEnabled(bool newEnable);
 
 private:
     QProcess *m_proc = nullptr;
@@ -130,6 +159,13 @@ private:
 
     // Debounce/coalesce document change support
     QHash<QString, QTimer *> m_docTimers; // per-document debouncers
+
+private:
+    // configures
+    TraceMode _traceMode = TraceMode::off;
+    int _indentSpace = 4;
+    bool _useTabIndent = false;
+    bool _enabled = true;
 };
 
 #endif // ANGELLSP_H

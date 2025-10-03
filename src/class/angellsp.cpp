@@ -17,6 +17,7 @@
 
 #include "angellsp.h"
 
+#include "settings/settings.h"
 #include "utilities.h"
 
 #include <QCoreApplication>
@@ -25,7 +26,24 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-AngelLsp::AngelLsp() {}
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_ENABLE, ("lsp.enable"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_TRACE, ("lsp.trace"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_INDENT_SPACE, ("lsp.indentspace"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_USE_TAB_INDENT, ("lsp.useTabIndent"))
+
+AngelLsp::AngelLsp() {
+    HANDLE_CONFIG;
+    READ_CONFIG_BOOL(_enabled, LSP_ENABLE, true);
+    READ_CONFIG_BOOL(_useTabIndent, LSP_USE_TAB_INDENT, false);
+
+    int tmp;
+    READ_CONFIG_INT(tmp, LSP_TRACE, int(TraceMode::off));
+    tmp = qBound(0, tmp, 2); // hard coded
+    _traceMode = TraceMode(tmp);
+
+    READ_CONFIG_INT_POSITIVE(_indentSpace, LSP_INDENT_SPACE, 4);
+    _indentSpace = qBound(1, _indentSpace, 16);
+}
 
 AngelLsp &AngelLsp::instance() {
     static AngelLsp ins;
@@ -38,6 +56,10 @@ bool AngelLsp::start() {
     if (m_proc)
         stop();
 
+    if (!_enabled) {
+        return false;
+    }
+
     QDir appDir(qApp->applicationDirPath());
 
 #ifdef Q_OS_WIN
@@ -47,12 +69,12 @@ bool AngelLsp::start() {
 #endif
 
     if (!appDir.cd(QStringLiteral("lsp"))) {
-        qWarning("AngelLSP: server not found");
+        qWarning("[AngelLSP] server not found");
         return false;
     }
 
     if (!appDir.exists(LSP_FILENAME)) {
-        qWarning("AngelLSP: server not found");
+        qWarning("[AngelLSP] server not found");
         return false;
     }
 
@@ -74,7 +96,7 @@ bool AngelLsp::start() {
 
     m_proc->start();
     if (!m_proc->waitForStarted(3000)) {
-        qCritical("AngelLSP: failed to start server");
+        qCritical("[AngelLSP] failed to start server");
         delete m_proc;
         m_proc = nullptr;
         return false;
@@ -111,6 +133,19 @@ void AngelLsp::stop() {
     m_proc = nullptr;
 }
 
+bool AngelLsp::restart() {
+    if (start()) {
+        auto ret = initializeSync();
+        if (!ret.isNull()) {
+            initialized();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AngelLsp::isActive() const { return m_proc != nullptr; }
+
 QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     if (!m_proc)
         return {};
@@ -131,10 +166,12 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
     caps["textDocument"] = td;
     params["capabilities"] = caps;
 
-    return sendRequestSync("initialize", params, timeoutMs);
+    return sendRequestSync(QStringLiteral("initialize"), params, timeoutMs);
 }
 
-void AngelLsp::initialized() { sendNotification("initialized", {}); }
+void AngelLsp::initialized() {
+    sendNotification(QStringLiteral("initialized"), {});
+}
 
 void AngelLsp::openDocument(const QString &uri, qint64 version,
                             const QString &text) {
@@ -148,7 +185,7 @@ void AngelLsp::openDocument(const QString &uri, qint64 version,
     textDoc["text"] = text;
     QJsonObject params;
     params["textDocument"] = textDoc;
-    sendNotification("textDocument/didOpen", params);
+    sendNotification(QStringLiteral("textDocument/didOpen"), params);
 }
 
 void AngelLsp::closeDocument(const QString &uri) {
@@ -157,7 +194,15 @@ void AngelLsp::closeDocument(const QString &uri) {
 
     QJsonObject params;
     params["textDocument"] = QJsonObject{{"uri", uri}};
-    sendNotification("textDocument/didClose", params);
+    sendNotification(QStringLiteral("textDocument/didClose"), params);
+}
+
+void AngelLsp::reloadConfigure() {
+    if (!m_proc)
+        return;
+
+    // Angel-lsp dont use the param actually, so don't construct it
+    sendNotification(QStringLiteral("workspace/didChangeConfiguration"));
 }
 
 QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
@@ -166,7 +211,8 @@ QJsonValue AngelLsp::requestDocumentSymbol(const QString &uri, int timeoutMs) {
 
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
-    return sendRequestSync("textDocument/documentSymbol", p, timeoutMs);
+    return sendRequestSync(QStringLiteral("textDocument/documentSymbol"), p,
+                           timeoutMs);
 }
 
 QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
@@ -185,13 +231,16 @@ QJsonValue AngelLsp::requestCompletion(const QString &uri, int line,
     p["position"] = pos;
 
     QJsonObject context;
-    context["triggerKind"] = triggerChar.isEmpty() ? 1 : 2;
+    context["triggerKind"] = int(
+        triggerChar.isEmpty() ? LSP::CompletionTriggerKind::Invoked
+                              : LSP::CompletionTriggerKind::TriggerCharacter);
     if (!triggerChar.isEmpty()) {
         context["triggerCharacter"] = triggerChar;
     }
     p["context"] = context;
 
-    return sendRequestSync("textDocument/completion", p, timeoutMs);
+    return sendRequestSync(QStringLiteral("textDocument/completion"), p,
+                           timeoutMs);
 }
 
 QJsonValue AngelLsp::requestHover(const QString &uri, int line, int character,
@@ -205,7 +254,7 @@ QJsonValue AngelLsp::requestHover(const QString &uri, int line, int character,
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
     p["position"] = pos;
-    return sendRequestSync("textDocument/hover", p, timeoutMs);
+    return sendRequestSync(QStringLiteral("textDocument/hover"), p, timeoutMs);
 }
 
 QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
@@ -219,7 +268,14 @@ QJsonValue AngelLsp::requestSignatureHelp(const QString &uri, int line,
     QJsonObject p;
     p["textDocument"] = QJsonObject{{"uri", uri}};
     p["position"] = pos;
-    return sendRequestSync("textDocument/signatureHelp", p, timeoutMs);
+
+    QJsonObject context;
+    context["isRetrigger"] = false;
+    context["triggerKind"] = 1; // Invoked
+    p["context"] = context;
+
+    return sendRequestSync(QStringLiteral("textDocument/signatureHelp"), p,
+                           timeoutMs);
 }
 
 QJsonValue AngelLsp::requestResolve(const QJsonValue &symbol, int timeoutMs) {
@@ -227,6 +283,17 @@ QJsonValue AngelLsp::requestResolve(const QJsonValue &symbol, int timeoutMs) {
         return {};
 
     return sendRequestSync("completionItem/resolve", symbol, timeoutMs);
+}
+
+QJsonValue AngelLsp::requestFormat(const QString &uri, int timeoutMs) {
+    if (!m_proc)
+        return {};
+
+    QJsonObject p;
+    p["textDocument"] = QJsonObject{{"uri", uri}};
+
+    return sendRequestSync(QStringLiteral("textDocument/formatting"), p,
+                           timeoutMs);
 }
 
 qint64 AngelLsp::sendRequest(const QString &method, const QJsonValue &params,
@@ -262,7 +329,7 @@ void AngelLsp::changeDocument(const QString &uri, qint64 version,
     params["textDocument"] = QJsonObject{{"uri", uri}, {"version", version}};
     params["contentChanges"] = changes;
 
-    sendNotification("textDocument/didChange", params);
+    sendNotification(QStringLiteral("textDocument/didChange"), params);
 }
 
 QJsonValue AngelLsp::sendRequestSync(const QString &method,
@@ -272,7 +339,7 @@ QJsonValue AngelLsp::sendRequestSync(const QString &method,
 
     qint64 id = m_nextId++;
     QJsonObject obj;
-    obj["jsonrpc"] = "2.0";
+    obj["jsonrpc"] = QStringLiteral("2.0");
     obj["id"] = id;
     obj["method"] = method;
     if (!params.isNull())
@@ -307,7 +374,7 @@ QJsonValue AngelLsp::sendRequestSync(const QString &method,
         // timeout: remove outstandingRequests to avoid leak
         if (m_outstandingRequests.contains(id))
             m_outstandingRequests.remove(id);
-        qWarning("AngelLSP: request timeout for %s id %lld",
+        qWarning("[AngelLSP] request timeout for %s id %lld",
                  qUtf8Printable(method), id);
         return {};
     }
@@ -319,7 +386,7 @@ void AngelLsp::sendNotification(const QString &method,
         return;
 
     QJsonObject obj;
-    obj["jsonrpc"] = "2.0";
+    obj["jsonrpc"] = QStringLiteral("2.0");
     obj["method"] = method;
     if (!params.isNull()) {
         obj["params"] = params;
@@ -335,16 +402,16 @@ void AngelLsp::sendCancelRequest(int id) {
         return;
     QJsonObject p;
     p["id"] = id;
-    sendNotification("$/cancelRequest", p);
-    qDebug("AngelLSP: sent cancelRequest for id %d", id);
+    sendNotification(QStringLiteral("$/cancelRequest"), p);
+    qDebug("[AngelLSP] sent cancelRequest for id %d", id);
 }
 
 void AngelLsp::shutdownAndExit() {
     if (!m_proc)
         return;
 
-    sendRequestSync("shutdown", {}, 2000);
-    sendNotification("exit", {});
+    sendRequestSync(QStringLiteral("shutdown"), {}, 2000);
+    sendNotification(QStringLiteral("exit"), {});
     stop();
 }
 
@@ -431,7 +498,7 @@ void AngelLsp::handleStdout() {
         QJsonDocument doc = QJsonDocument::fromJson(body, &parseErr);
         if (parseErr.error != QJsonParseError::NoError) {
             qCritical().noquote()
-                << QStringLiteral("AngelLSP: JSON parse error:")
+                << QStringLiteral("[AngelLSP] JSON parse error:")
                 << parseErr.errorString() << QStringLiteral(", body: ") << body;
             // continue to next message if any
             continue;
@@ -543,16 +610,18 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             o["supportsForEach"] = true;
             o["characterLiterals"] = false;
             o["supportsTypedEnumerations"] = true;
-            o["supportsDigitSeparators"] = false;
+            o["supportsDigitSeparators"] = true;
             o["builtinStringType"] = "string";
             o["builtinArrayType"] = "array";
             QJsonObject fmt;
             fmt["maxBlankLines"] = 1;
-            fmt["indentSpaces"] = 4;
-            fmt["useTabIndent"] = false;
+            fmt["indentSpaces"] = _indentSpace;
+            fmt["useTabIndent"] = _useTabIndent;
             o["formatter"] = fmt;
+
+            auto e = QMetaEnum::fromType<TraceMode>();
             QJsonObject trace;
-            trace["server"] = QStringLiteral("off");
+            trace["server"] = e.valueToKey(int(_traceMode));
             o["trace"] = trace;
 
             QJsonArray j;
@@ -666,4 +735,64 @@ QJsonObject AngelLsp::jsonLSPDocLocation(const LSP::Location &loc) {
     r["line"] = loc.line;
     r["character"] = loc.character;
     return r;
+}
+
+AngelLsp::TraceMode AngelLsp::traceMode() const { return _traceMode; }
+
+void AngelLsp::setTraceMode(const TraceMode &newTraceMode) {
+    if (_traceMode != newTraceMode) {
+        _traceMode = newTraceMode;
+        reloadConfigure();
+
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_TRACE, int(newTraceMode));
+    }
+}
+
+int AngelLsp::indentSpace() const { return _indentSpace; }
+
+void AngelLsp::setIndentSpace(int newIndentSpace) {
+    if (_indentSpace != newIndentSpace) {
+        _indentSpace = newIndentSpace;
+        reloadConfigure();
+
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_INDENT_SPACE, newIndentSpace);
+    }
+}
+
+bool AngelLsp::useTabIndent() const { return _useTabIndent; }
+
+void AngelLsp::setUseTabIndent(bool newUseTabIndent) {
+    if (_useTabIndent != newUseTabIndent) {
+        _useTabIndent = newUseTabIndent;
+        reloadConfigure();
+
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_USE_TAB_INDENT, newUseTabIndent);
+    }
+}
+
+void AngelLsp::resetSettings() {
+    HANDLE_CONFIG;
+    WRITE_CONFIG(LSP_ENABLE, true);
+    WRITE_CONFIG(LSP_TRACE, int(TraceMode::off));
+    WRITE_CONFIG(LSP_INDENT_SPACE, 4);
+    WRITE_CONFIG(LSP_USE_TAB_INDENT, false);
+
+    _traceMode = TraceMode::off;
+    _indentSpace = 4;
+    _useTabIndent = false;
+
+    reloadConfigure();
+}
+
+bool AngelLsp::enabled() const { return _enabled; }
+
+void AngelLsp::setEnabled(bool newEnable) {
+    if (_enabled != newEnable) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_ENABLE, newEnable);
+        _enabled = newEnable;
+    }
 }

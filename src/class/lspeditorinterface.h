@@ -15,33 +15,31 @@
 ** =============================================================================
 */
 
-#include "asconsolecompletion.h"
-#include "control/scriptingconsole.h"
+#ifndef LSPEDITORINTERFACE_H
+#define LSPEDITORINTERFACE_H
 
-#include <QJsonArray>
+#include <QString>
+#include <QTextCursor>
 
-AsConsoleCompletion::AsConsoleCompletion(ScriptingConsole *p)
-    : AsCompletion(p), _console(p) {}
+#include "WingCodeEdit/wingsignaturetooltip.h"
 
-AsConsoleCompletion::AsConsoleCompletion(ConsoleCodeEdit *p)
-    : AsCompletion(p), _console(p) {}
+class LspEditorInterace {
+public:
+    struct CursorPos {
+        int blockNumber = -1;
+        int positionInBlock = -1;
+    };
 
-QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
-    static QList<CodeInfoTip> marcos;
-    if (marcos.isEmpty()) {
-        static QStringList m{
-            "ls",
-            "del",
-            "cls",
-        };
-        for (auto &i : m) {
-            CodeInfoTip tip;
-            tip.name = i;
-            tip.type = LSP::CompletionItemKind::Keyword;
-            marcos.append(tip);
-        }
-    }
-    return marcos;
-}
+public:
+    virtual QString lspFileNameURL() const = 0;
+    virtual bool isContentLspUpdated() const = 0;
+    virtual CursorPos currentPosition() const = 0;
 
-LspEditorInterace *AsConsoleCompletion::getEditor() { return _console; }
+    virtual void sendDocChange() = 0;
+
+    virtual void
+    showFunctionTip(const QList<WingSignatureTooltip::Signature> &sigs) = 0;
+    virtual void clearFunctionTip() = 0;
+};
+
+#endif // LSPEDITORINTERFACE_H

@@ -20,6 +20,7 @@
 
 #include "WingCodeEdit/wingcompleter.h"
 #include "class/codeinfotip.h"
+#include "class/lspeditorinterface.h"
 #include "class/resettabletimer.h"
 
 class AsCompletion : public WingCompleter {
@@ -44,20 +45,23 @@ protected:
 
     virtual QList<CodeInfoTip> parseMarcos();
 
-signals:
-    void onFunctionTip(LSP::CompletionItemKind kind, const QString &content);
+    virtual LspEditorInterace *getEditor();
 
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
+    QList<CodeInfoTip> keywordNode() const;
+
 private slots:
     void onCodeComplete();
+    void onActivatedCodeComplete(const QModelIndex &index);
 
 private:
     QList<CodeInfoTip> _keywordNode;
-    ResettableTimer *_timer;
 
+protected:
+    ResettableTimer *_timer;
     bool _ok = true;
 };
 

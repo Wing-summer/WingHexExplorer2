@@ -41,6 +41,10 @@ void InspectQtLogHelper::init() {
     });
     menu->insertAction(af, a);
 
+    for (auto &a : ma) {
+        a->setEnabled(true);
+    }
+
     QObject::connect(_ctx, &QTextBrowser::customContextMenuRequested, qApp,
                      [menu, this](const QPoint &pos) {
                          menu->popup(_ctx->mapToGlobal(pos));
