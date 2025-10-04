@@ -92,7 +92,6 @@ AppManager::AppManager(int &argc, char *argv[])
 
     if (!dontSplash) {
         splash = new SplashDialog;
-        splash->setInfoText(tr("SetupClang"));
     }
 
     auto cmdlist = CommandHistoryManager::load();

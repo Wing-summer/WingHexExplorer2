@@ -22,8 +22,7 @@
 #include "bookmarkclearcommand.h"
 
 inline QString constructText(qsizetype length) {
-    return QStringLiteral("[B~] {cnt: %1-0x%2}")
-        .arg(QString::number(length), QString::number(length, 16).toUpper());
+    return QStringLiteral("[B~] {cnt: %1}").arg(QString::number(length));
 }
 
 BookMarkClearCommand::BookMarkClearCommand(

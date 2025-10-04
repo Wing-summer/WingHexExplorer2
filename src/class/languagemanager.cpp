@@ -43,7 +43,8 @@ QString LanguageManager::langDisplay(const QString &lang) const {
 
 LanguageManager::LanguageManager() {
     m_langMap = {{"zh_CN", QStringLiteral("简体中文")},
-                 {"zh_TW", QStringLiteral("繁體中文")}};
+                 {"zh_TW", QStringLiteral("繁體中文")},
+                 {"en_US", QStringLiteral("English")}};
 
     auto langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");

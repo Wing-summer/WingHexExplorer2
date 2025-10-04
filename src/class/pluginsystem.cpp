@@ -702,7 +702,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
 
     if (ret != QMetaMethodInvoker::InvokeFailReason::None) {
         qCritical("[PluginSystem::invokeServiceImpl] MetaCall failed: %s (%d)",
-                  cstr(ret), ret);
+                  cstr(ret), int(ret));
     }
 
     return ret == QMetaMethodInvoker::InvokeFailReason::None;

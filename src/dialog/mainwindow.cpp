@@ -3246,9 +3246,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 if (m.exec()) {
                     auto meta = doc->metadata();
                     meta->beginMarco(
-                        QStringLiteral("[M+G] {cnt: %1-0x%2}")
-                            .arg(QString::number(total),
-                                 QString::number(total, 16).toUpper()));
+                        QStringLiteral("[M+G] {cnt: %1}").arg(total));
                     for (int i = 0; i < total; ++i) {
                         auto begin = cur->selectionStart(i).offset();
                         auto end = cur->selectionEnd(i).offset();
