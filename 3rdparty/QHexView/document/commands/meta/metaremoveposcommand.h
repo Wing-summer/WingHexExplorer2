@@ -24,10 +24,7 @@
 
 #include "metacommand.h"
 
-#include <QCoreApplication>
-
 class MetaRemovePosCommand : public MetaCommand {
-    Q_DECLARE_TR_FUNCTIONS(MetaRemovePosCommand)
 public:
     explicit MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                   QUndoCommand *parent = nullptr);

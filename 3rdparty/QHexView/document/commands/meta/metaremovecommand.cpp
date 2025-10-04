@@ -21,10 +21,26 @@
 
 #include "metaremovecommand.h"
 
+inline QString constructText(const QHexMetadataItem &meta) {
+    auto buffer = QStringLiteral("[M-] {pos: %1-0x%2} ")
+                      .arg(QString::number(meta.begin),
+                           QString::number(meta.begin, 16).toUpper());
+    if (meta.foreground.isValid()) {
+        buffer.append('F');
+    }
+    if (meta.background.isValid()) {
+        buffer.append('B');
+    }
+    if (!meta.comment.isEmpty()) {
+        buffer.append('C');
+    }
+    return buffer;
+}
+
 MetaRemoveCommand::MetaRemoveCommand(QHexMetadata *hexmeta,
                                      const QHexMetadataItem &meta,
                                      QUndoCommand *parent)
-    : MetaCommand(tr("[MetaRemove]"), hexmeta, meta, parent) {}
+    : MetaCommand(constructText(meta), hexmeta, meta, parent) {}
 
 void MetaRemoveCommand::redo() { m_hexmeta->removeMetadata(m_meta); }
 

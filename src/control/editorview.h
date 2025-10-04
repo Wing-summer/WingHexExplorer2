@@ -29,9 +29,7 @@
 #include "class/editorviewcontext.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
-#include "model/bookmarksmodel.h"
 #include "model/findresultmodel.h"
-#include "model/metadatamodel.h"
 #include "utilities.h"
 
 using namespace WingHex;
@@ -153,19 +151,14 @@ public:
     bool isExtensionFile() const;
     bool isCommonFile() const;
 
-    FindResultModel *findResultModel() const;
-
-    BookMarksModel *bookmarksModel() const;
-
-    MetaDataModel *metadataModel() const;
+    FindResultModel::FindData &findResult();
+    QMap<QCryptographicHash::Algorithm, QString> &checkSumResult();
 
     bool hasCloneChildren() const;
 
     void closeAllClonedChildren();
 
     void setFontSize(qreal size);
-
-    int findResultCount() const;
 
     EditorView *cloneParent() const;
 
@@ -197,6 +190,7 @@ public:
     void registerQMenu(QMenu *menu);
 
     FindError find(const FindDialog::Result &result);
+    void getCheckSum(const QVector<int> &algorithmID);
 
     void clearFindResult();
 
@@ -554,8 +548,10 @@ signals:
     void sigOnFill();
     void sigOnMetadata();
     void sigOnBookMark();
+    void sigOnCheckSum();
 
     void need2Reload();
+    void documentChanged();
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -579,9 +575,8 @@ private:
     EditorView *m_cloneParent = nullptr;
 
     QMutex m_findMutex;
-    FindResultModel *m_findResults = nullptr;
-    BookMarksModel *m_bookmarks = nullptr;
-    MetaDataModel *m_metadata = nullptr;
+    FindResultModel::FindData m_findData;
+    QMap<QCryptographicHash::Algorithm, QString> _checkSumData;
 
     DocumentType m_docType = DocumentType::InValid;
     bool m_isWorkSpace = false;

@@ -24,10 +24,7 @@
 
 #include "bookmarkcommand.h"
 
-#include <QCoreApplication>
-
 class BookMarkAddCommand : public BookMarkCommand {
-    Q_DECLARE_TR_FUNCTIONS(BookMarkAddCommand)
 public:
     explicit BookMarkAddCommand(QHexDocument *doc, qsizetype pos,
                                 QString comment,

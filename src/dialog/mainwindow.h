@@ -446,6 +446,7 @@ private:
     ads::CDockManager *m_dock = nullptr;
     QLabel *_status = nullptr;
 
+    // for show text
     QString m_encoding;
 
     ScriptingDialog *m_scriptDialog = nullptr;
@@ -456,27 +457,23 @@ private:
 
     bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;
+    ads::CDockWidget *m_hashtable = nullptr;
     QMenu *m_menuFind = nullptr;
     QHash<QString, QAction *> m_findEncoding;
+
     QTableViewExt *m_findresult = nullptr;
-    FindResultModel *_findEmptyResult = nullptr;
+    FindResultModel *_findResultModel = nullptr;
+    CheckSumModel *_hashModel = nullptr;
+    BookMarksModel *_bookMarkModel = nullptr;
+    MetaDataModel *_metadataModel = nullptr;
 
     EventFilter *m_lazyVisibleFilter = nullptr;
 
     QTableViewExt *m_numshowtable = nullptr;
     NumShowModel *_numsitem = nullptr;
 
-    QTableViewExt *m_hashtable = nullptr;
-    CheckSumModel *_hashModel = nullptr;
-
     QTextBrowser *m_logbrowser = nullptr;
     QTextBrowser *m_txtDecode = nullptr;
-
-    QTableViewExt *m_bookmarks = nullptr;
-    BookMarksModel *_bookMarkEmpty = nullptr;
-
-    QTableViewExt *m_metadatas = nullptr;
-    MetaDataModel *_metadataEmpty = nullptr;
 
     QUndoView *_undoView = nullptr;
     asIDBTreeView *_scriptObjView = nullptr;

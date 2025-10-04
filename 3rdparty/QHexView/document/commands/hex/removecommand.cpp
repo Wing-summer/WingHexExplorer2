@@ -21,11 +21,17 @@
 
 #include "removecommand.h"
 
+inline QString constructText(qsizetype offset, qsizetype length) {
+    return QStringLiteral("[H-] {pos: %1-0x%2} {len: %3-0x%4}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper(),
+             QString::number(length), QString::number(length, 16).toUpper());
+}
+
 RemoveCommand::RemoveCommand(QHexDocument *doc, qsizetype offset,
                              qsizetype length, QHexCursor *cursor,
                              int nibbleindex, QUndoCommand *parent)
-    : HexCommand(tr("[HexRemove] pos: %1").arg(offset), doc, cursor,
-                 nibbleindex, parent) {
+    : HexCommand(constructText(offset, length), doc, cursor, nibbleindex,
+                 parent) {
     m_offset = offset;
     m_length = length;
     m_data = doc->read(m_offset, m_length);
@@ -71,6 +77,7 @@ bool RemoveCommand::mergeWith(const QUndoCommand *other) {
             }
             this->_rmMetas.append(ucmd->_rmMetas);
             this->m_length += ucmd->m_length;
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
     }

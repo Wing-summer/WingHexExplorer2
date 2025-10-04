@@ -54,7 +54,10 @@ ScriptingConsole::ScriptingConsole(QWidget *parent)
 ScriptingConsole::~ScriptingConsole() {
     if (_isTerminal) {
         // assuming we enable lsp after setting the terminal flag
-        AngelLsp::instance().closeDocument(lspURL());
+        auto &lsp = AngelLsp::instance();
+        if (lsp.isActive()) {
+            lsp.closeDocument(lspURL());
+        }
     }
 }
 
@@ -88,9 +91,11 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
                         write(lines.at(i));
                     }
                 }
+                static QRegularExpression regex("[\\r\\n]");
+                code.remove(regex);
+                history_.add(code);
             } else {
                 setEditMode(Input);
-
                 return;
             }
         }
@@ -414,19 +419,13 @@ QString ScriptingConsole::getInput() {
 }
 
 QString ScriptingConsole::packUpLoggingStr(const QString &message) {
-    return tr("[Console]") + message;
+    return tr("[Console]") + ' ' + message;
 }
 
 void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_L) {
         clearConsole();
     } else {
-        if (e->modifiers() == Qt::NoModifier && e->key() == Qt::Key_Escape) {
-            if (isHelpTooltipVisible()) {
-                hideHelpTooltip();
-                return;
-            }
-        }
         QConsoleWidget::keyPressEvent(e);
     }
 }
@@ -663,20 +662,23 @@ bool ScriptingConsole::increaseVersion() {
 
 void ScriptingConsole::sendDocChange() {
     auto &lsp = AngelLsp::instance();
-    auto url = lspURL();
-    auto txt = currentCodes();
-    txt.prepend(QStringLiteral("void f(){\n")).append(QStringLiteral("\n}"));
+    if (lsp.isActive()) {
+        auto url = lspURL();
+        auto txt = currentCodes();
+        txt.prepend(QStringLiteral("void f(){\n"))
+            .append(QStringLiteral("\n}"));
 
-    // test overflow
-    if (increaseVersion()) {
-        lsp.closeDocument(url);
-        lsp.openDocument(url, 0, txt);
-    } else {
-        lsp.changeDocument(url, getVersion(), txt);
+        // test overflow
+        if (increaseVersion()) {
+            lsp.closeDocument(url);
+            lsp.openDocument(url, 0, txt);
+        } else {
+            lsp.changeDocument(url, getVersion(), txt);
+        }
+
+        _ok = false;
+        _timer->reset(300);
     }
-
-    _ok = false;
-    _timer->reset(300);
 }
 
 QString ScriptingConsole::lspURL() {
@@ -685,11 +687,13 @@ QString ScriptingConsole::lspURL() {
 
 void ScriptingConsole::setEditMode(ConsoleMode mode) {
     setMode(mode);
-    if (mode == Input && !_isWaitingRead) {
-        completer()->setEnabled(true);
-        Q_EMIT textChanged();
-    } else {
-        completer()->setEnabled(false);
+    if (AngelLsp::instance().isActive()) {
+        if (mode == Input && !_isWaitingRead) {
+            completer()->setEnabled(true);
+            Q_EMIT textChanged();
+        } else {
+            completer()->setEnabled(false);
+        }
     }
 }
 
@@ -840,6 +844,14 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
                            &ScriptingConsole::clearConsole);
         a->setShortcutContext(Qt::WidgetShortcut);
         menu.addSeparator();
+        a = menu.addAction(
+            ICONRES(QStringLiteral("console")), tr("MutiConsole"),
+            QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Enter),
+            [this]() {
+                replaceCommandLine({});
+                handleReturnKey(Qt::ControlModifier | Qt::AltModifier);
+            });
+        a->setShortcutContext(Qt::WidgetShortcut);
         a = menu.addAction(ICONRES(QStringLiteral("dbgstop")),
                            tr("AbortScript"),
                            QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {

@@ -22,11 +22,17 @@
 #include "replacecommand.h"
 #include "document/qhexdocument.h"
 
+inline QString constructText(qsizetype offset, qsizetype length) {
+    return QStringLiteral("[H*] {pos: %1-0x%2} {len: %3-0x%4}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper(),
+             QString::number(length), QString::number(length, 16).toUpper());
+}
+
 ReplaceCommand::ReplaceCommand(QHexDocument *doc, qsizetype offset,
                                const QByteArray &data, QHexCursor *cursor,
                                int nibbleindex, QUndoCommand *parent)
-    : HexCommand(tr("[HexReplace] pos: %1").arg(offset), doc, cursor,
-                 nibbleindex, parent) {
+    : HexCommand(constructText(offset, data.length()), doc, cursor, nibbleindex,
+                 parent) {
     m_offset = offset;
     m_data = data;
     m_length = data.length();
@@ -60,6 +66,7 @@ bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
             } else {
                 this->m_data.replace(0, ucmd->m_length, ucmd->m_data);
             }
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
 
@@ -68,6 +75,7 @@ bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
             this->m_data.append(ucmd->m_data);
             this->m_olddata.append(ucmd->m_olddata);
             this->m_nibbleindex = ucmd->m_nibbleindex;
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
 
@@ -75,6 +83,7 @@ bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
             this->m_offset + m_length >= ucmd->m_offset + ucmd->m_length) {
             auto dis = ucmd->m_offset - this->m_offset;
             this->m_data.replace(dis, ucmd->m_length, ucmd->m_data);
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
         if (this->m_offset >= ucmd->m_offset &&
@@ -84,7 +93,7 @@ bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
             this->m_length = ucmd->m_length;
             this->m_olddata = ucmd->m_olddata;
             this->m_nibbleindex = ucmd->m_nibbleindex;
-            setText(tr("[HexReplace] pos: %1").arg(this->m_offset));
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
     }

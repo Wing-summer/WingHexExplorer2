@@ -21,10 +21,15 @@
 
 #include "bookmarkclearcommand.h"
 
+inline QString constructText(qsizetype length) {
+    return QStringLiteral("[B~] {cnt: %1-0x%2}")
+        .arg(QString::number(length), QString::number(length, 16).toUpper());
+}
+
 BookMarkClearCommand::BookMarkClearCommand(
     QHexDocument *doc, const QMap<qsizetype, QString> &bookmarks,
     QUndoCommand *parent)
-    : UndoCommandBase(tr("[ClearBookMark]"), parent), m_doc(doc),
+    : UndoCommandBase(constructText(bookmarks.size()), parent), m_doc(doc),
       m_bookmarks(bookmarks) {}
 
 void BookMarkClearCommand::redo() { m_doc->clearBookMark(); }

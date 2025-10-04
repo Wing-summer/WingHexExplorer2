@@ -23,11 +23,9 @@
 #define METAADDCOMMAND_H
 
 #include "metacommand.h"
-#include <QCoreApplication>
 #include <QObject>
 
 class MetaAddCommand : public MetaCommand {
-    Q_DECLARE_TR_FUNCTIONS(MetaAddCommand)
 public:
     explicit MetaAddCommand(QHexMetadata *hexmeta, const QHexMetadataItem &meta,
                             QUndoCommand *parent = nullptr);

@@ -24,19 +24,16 @@ CheckSumModel::CheckSumModel(QObject *parent) : QAbstractTableModel(parent) {
     }
 }
 
-void CheckSumModel::setCheckSumData(QCryptographicHash::Algorithm algorithm,
-                                    const QString &data) {
-    if (_checkSumData.contains(algorithm)) {
-        _checkSumData[algorithm] = data;
-        auto index = this->index(
-            Utilities::supportedHashAlgorithms().indexOf(algorithm), 0);
-        Q_EMIT dataChanged(index, index);
-    }
-}
-
 QString
 CheckSumModel::checkSumData(QCryptographicHash::Algorithm algorithm) const {
     return _checkSumData.value(algorithm);
+}
+
+void CheckSumModel::updateCheckSumData(
+    const QMap<QCryptographicHash::Algorithm, QString> &data) {
+    beginResetModel();
+    _checkSumData = data;
+    endResetModel();
 }
 
 void CheckSumModel::clearData() {

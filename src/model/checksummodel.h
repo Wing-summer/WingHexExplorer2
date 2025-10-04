@@ -26,9 +26,10 @@ class CheckSumModel : public QAbstractTableModel {
 public:
     explicit CheckSumModel(QObject *parent = nullptr);
 
-    void setCheckSumData(QCryptographicHash::Algorithm algorithm,
-                         const QString &data);
     QString checkSumData(QCryptographicHash::Algorithm algorithm) const;
+
+    void updateCheckSumData(
+        const QMap<QCryptographicHash::Algorithm, QString> &data);
 
     void clearData();
 

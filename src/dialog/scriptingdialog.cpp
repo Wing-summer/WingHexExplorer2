@@ -1464,6 +1464,10 @@ void ScriptingDialog::on_save() {
         return;
     }
 
+    if (AngelLsp::instance().autofmt()) {
+        editor->formatCode();
+    }
+
     auto res = editor->save();
     if (res) {
         setWindowFilePath(editor->fileName());

@@ -24,10 +24,7 @@
 
 #include "hexcommand.h"
 
-#include <QCoreApplication>
-
 class AppendCommand : public HexCommand {
-    Q_DECLARE_TR_FUNCTIONS(AppendCommand)
 public:
     explicit AppendCommand(QHexDocument *doc, QHexCursor *cursor,
                            const QByteArray &data, int nibbleindex,

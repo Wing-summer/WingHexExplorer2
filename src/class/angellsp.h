@@ -42,11 +42,17 @@ public:
 public:
     // Start/stop server (returns true if started)
     bool start();
-    void stop();
+
+public slots:
+    // convenience: synchronous shutdown
+    void shutdownAndExit();
 
     bool restart();
 
     bool isActive() const;
+
+private:
+    void stop();
 
 public:
     // Synchronous (blocking) initialize
@@ -106,18 +112,12 @@ signals:
 
     // server process events
     void serverStarted();
-    void serverExited(int exitCode, QProcess::ExitStatus status);
-
-    void useTabIndentChanged();
-
-public slots:
-    // convenience: synchronous shutdown
-    void shutdownAndExit();
+    void serverExited();
 
 private slots:
     void handleStdout();
     void handleStderr();
-    void handleProcessFinished(int exitCode, QProcess::ExitStatus status);
+    void handleProcessFinished();
 
 private:
     AngelLsp();
@@ -147,6 +147,9 @@ public:
     bool enabled() const;
     void setEnabled(bool newEnable);
 
+    bool autofmt() const;
+    void setAutofmt(bool newAutofmt);
+
 private:
     QProcess *m_proc = nullptr;
     QByteArray m_stdoutBuffer;
@@ -166,6 +169,7 @@ private:
     int _indentSpace = 4;
     bool _useTabIndent = false;
     bool _enabled = true;
+    bool _autofmt = true;
 };
 
 #endif // ANGELLSP_H

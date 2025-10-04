@@ -21,10 +21,16 @@
 
 #include "appendcommand.h"
 
+inline QString constructText(qsizetype length) {
+    return QStringLiteral("[H<] {len: %1-0x%2} ")
+        .arg(QString::number(length), QString::number(length, 16).toUpper());
+}
+
 AppendCommand::AppendCommand(QHexDocument *doc, QHexCursor *cursor,
                              const QByteArray &data, int nibbleindex,
                              QUndoCommand *parent)
-    : HexCommand(tr("[HexAppend]"), doc, cursor, nibbleindex, parent) {
+    : HexCommand(constructText(data.length()), doc, cursor, nibbleindex,
+                 parent) {
     m_offset = -1;
     m_data = data;
     m_length = data.length();
@@ -56,6 +62,7 @@ bool AppendCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = static_cast<const AppendCommand *>(other);
     if (ucmd) {
         this->m_data.append(ucmd->m_data);
+        setText(constructText(this->m_data.length()));
         return true;
     }
     return false;

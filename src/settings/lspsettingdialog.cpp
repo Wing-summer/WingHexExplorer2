@@ -71,6 +71,17 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
                     lsp.setUseTabIndent(state != Qt::Unchecked);
                 });
 
+        connect(ui->cbAutoFmt,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+                &QCheckBox::checkStateChanged,
+#else
+                &QCheckBox::stateChanged,
+#endif
+                this, [](Qt::CheckState state) {
+                    auto &lsp = AngelLsp::instance();
+                    lsp.setAutofmt(state != Qt::Unchecked);
+                });
+
         connect(ui->cbTrace,
                 QOverload<int>::of(&QComboBox::currentIndexChanged), this,
                 [](int index) {
@@ -151,6 +162,7 @@ void LspSettingDialog::reload() {
             ui->cbEnabled->setChecked(lsp.enabled());
             ui->cbUseTabStop->setChecked(lsp.useTabIndent());
             ui->sbIndent->setValue(lsp.indentSpace());
+            ui->cbAutoFmt->setChecked(lsp.autofmt());
 
             ui->cbTrace->setCurrentIndex(int(lsp.traceMode()));
         } else {

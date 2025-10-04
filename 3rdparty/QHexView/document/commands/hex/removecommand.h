@@ -24,10 +24,7 @@
 
 #include "hexcommand.h"
 
-#include <QCoreApplication>
-
 class RemoveCommand : public HexCommand {
-    Q_DECLARE_TR_FUNCTIONS(RemoveCommand)
 public:
     explicit RemoveCommand(QHexDocument *doc, qsizetype offset,
                            qsizetype length, QHexCursor *cursor,

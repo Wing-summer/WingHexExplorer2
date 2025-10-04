@@ -24,21 +24,40 @@
 
 #include <QUndoCommand>
 
+/**
+ * @brief The UndoCommandBase class
+ * @note Text visual grammar:
+ *       * For Bookmark and HexEdit:
+ *          [<UndoCmdID>] {pos:<offset>} {len:<length>}
+ *              Ex.: [B+] {pos: 16-0x10}
+ *                   [H+] {pos: 16-0x10} {len: 15-0xF}
+ *       * For Metadata Edit:
+ *          [<UndoCmdID>] {pos:<offset>} F<+|-|*>|B<+|-|*>|C<+|-|*>
+ *          // F: foreground color
+ *          // B: background color
+ *          // C: comment
+ *              Ex: [M+] {pos: 16-0x10} {len: 15-0xF} FB
+ *                  [M*] {pos: 16-0x10} F+B*
+ *
+ *      * For Group Edit for same type
+ *          [<UndoCmdID>G] {cnt: <count>}
+ */
+
 class UndoCommandBase : public QUndoCommand {
 public:
-    enum UndoCommandID {
-        UndoID_BookMarkAdd,
-        UndoID_BookMarkClear,
-        UndoID_BookMarkRemove,
-        UndoID_BookMarkReplace,
-        UndoID_HexAppend,
-        UndoID_HexReplaceInsert,
-        UndoID_HexRemove,
-        UndoID_MetaAdd,
-        UndoID_MetaClear,
-        UndoID_MetaRemove,
-        UndoID_MetaRemovePos,
-        UndoID_MetaReplace
+    enum UndoCommandID {         // UndoCmdID
+        UndoID_BookMarkAdd,      // B+
+        UndoID_BookMarkClear,    // B~
+        UndoID_BookMarkRemove,   // B-
+        UndoID_BookMarkReplace,  // B*
+        UndoID_HexAppend,        // H<
+        UndoID_HexReplaceInsert, // H+
+        UndoID_HexRemove,        // H-
+        UndoID_MetaAdd,          // M+
+        UndoID_MetaClear,        // M~
+        UndoID_MetaRemove,       // M-
+        UndoID_MetaRemovePos,    // M-
+        UndoID_MetaReplace       // M*
     };
 
 public:

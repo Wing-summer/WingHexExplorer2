@@ -24,10 +24,7 @@
 
 #include "bookmarkcommand.h"
 
-#include <QCoreApplication>
-
 class BookMarkReplaceCommand : public BookMarkCommand {
-    Q_DECLARE_TR_FUNCTIONS(BookMarkReplaceCommand)
 public:
     explicit BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos,
                                     QString comment, QString oldcomment,

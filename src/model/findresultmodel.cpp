@@ -19,11 +19,28 @@
 #include "utilities.h"
 
 FindResultModel::FindResultModel(QObject *parent)
-    : QAbstractTableModel(parent), m_encoding(QStringLiteral("ASCII")) {}
+    : QAbstractTableModel(parent) {}
+
+bool FindResultModel::isValid() const { return m_data; }
+
+void FindResultModel::updateData(FindData &data) {
+    beginResetModel();
+    m_data = &data;
+    endResetModel();
+}
+
+void FindResultModel::reset() {
+    beginResetModel();
+    m_data = nullptr;
+    endResetModel();
+}
 
 int FindResultModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    return m_results.size();
+    if (m_data) {
+        return m_data->results.size();
+    }
+    return 0;
 }
 
 int FindResultModel::columnCount(const QModelIndex &parent) const {
@@ -35,7 +52,7 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole: {
         auto row = index.row();
-        auto r = m_results.at(row);
+        auto r = m_data->results.at(row);
         switch (index.column()) {
         case 0: // line
             return r.line;
@@ -46,7 +63,7 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
                    QString::number(r.offset, 16).toUpper();
         case 3: {
             // range
-            auto data = m_findData.at(row);
+            auto data = m_data->findData.at(row);
             QString buffer =
                 data.cheader.toHex(' ').toUpper() + QStringLiteral(" <b>");
             if (!data.hbuffer.isEmpty()) {
@@ -63,9 +80,9 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
             return buffer;
         }
         case 4: { // decoding
-            auto data = m_findData.at(row);
+            auto data = m_data->findData.at(row);
             QString buffer =
-                Utilities::decodingString(data.cheader, m_encoding) +
+                Utilities::decodingString(data.cheader, m_data->encoding) +
                 QStringLiteral(" <b>");
             if (!data.hbuffer.isEmpty()) {
                 buffer += Utilities::decodingString(data.hbuffer);
@@ -118,49 +135,31 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-QString FindResultModel::encoding() const { return m_encoding; }
+QString FindResultModel::encoding() const {
+    return m_data ? m_data->encoding : QString{};
+}
 
 void FindResultModel::setEncoding(const QString &newEncoding) {
-    if (m_encoding != newEncoding) {
-        m_encoding = newEncoding;
+    if (m_data && m_data->encoding != newEncoding) {
+        m_data->encoding = newEncoding;
         Q_EMIT dataChanged(index(0, 4), index(rowCount(QModelIndex()), 4));
     }
 }
 
-QList<FindResultModel::FindResult> &FindResultModel::results() {
-    return m_results;
-}
-
-QList<FindResultModel::FindInfo> &FindResultModel::findData() {
-    return m_findData;
-}
-
-QPair<QString, qsizetype> &FindResultModel::lastFindData() {
-    return m_lastFindData;
-}
-
-void FindResultModel::beginUpdate() { this->beginResetModel(); }
-
-void FindResultModel::endUpdate() { this->endResetModel(); }
-
-FindResultModel::FindResult FindResultModel::resultAt(qsizetype index) const {
-    return m_results.at(index);
-}
-
 void FindResultModel::clear() {
-    m_results.clear();
-    m_findData.clear();
-    Q_EMIT layoutChanged();
+    if (m_data) {
+        beginResetModel();
+        m_data->clear();
+        endResetModel();
+    }
 }
 
-QList<FindResultModel::FindResult>::size_type FindResultModel::size() const {
-    return m_results.size();
-}
+void FindResultModel::refresh() { Q_EMIT layoutChanged(); }
 
 QString FindResultModel::copyContent(const QModelIndex &index) const {
     if (index.isValid()) {
         auto row = index.row();
-        auto r = m_results.at(row);
+        auto r = m_data->results.at(row);
         switch (index.column()) {
         case 0: // line
             return QString::number(r.line);
@@ -171,35 +170,12 @@ QString FindResultModel::copyContent(const QModelIndex &index) const {
                    QString::number(r.offset, 16).toUpper();
         case 3: {
             // range
-            auto data = m_findData.at(row);
-            QString buffer = data.cheader.toHex(' ').toUpper();
-            if (!data.hbuffer.isEmpty()) {
-                buffer += data.hbuffer.toHex(' ').toUpper();
-                if (!data.tbuffer.isEmpty()) {
-                    buffer += QStringLiteral(" .. ");
-                }
-            }
-
-            buffer += data.tbuffer.toHex(' ').toUpper() +
-                      data.ctailer.toHex(' ').toUpper();
-
-            return buffer;
+            auto data = m_data->findData.at(row);
+            return data.generateRange();
         }
         case 4: { // decoding
-            auto data = m_findData.at(row);
-            QString buffer =
-                Utilities::decodingString(data.cheader, m_encoding);
-            if (!data.hbuffer.isEmpty()) {
-                buffer += Utilities::decodingString(data.hbuffer);
-                if (!data.tbuffer.isEmpty()) {
-                    buffer += QStringLiteral(" ... ");
-                }
-            }
-
-            buffer += Utilities::decodingString(data.tbuffer) +
-                      Utilities::decodingString(data.ctailer);
-
-            return buffer;
+            auto data = m_data->findData.at(row);
+            return data.generateDecoding(m_data->encoding);
         }
         }
     }

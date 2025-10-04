@@ -23,11 +23,8 @@
 #define METAREPLACECOMMAND_H
 
 #include "metacommand.h"
-#include <QCoreApplication>
-#include <QObject>
 
 class MetaReplaceCommand : public MetaCommand {
-    Q_DECLARE_TR_FUNCTIONS(MetaReplaceCommand)
 public:
     explicit MetaReplaceCommand(QHexMetadata *hexmeta,
                                 const QHexMetadataItem &meta,

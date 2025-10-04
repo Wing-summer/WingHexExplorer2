@@ -21,11 +21,54 @@
 
 #include "metareplacecommand.h"
 
+inline QString constructText(const QHexMetadataItem &meta,
+                             const QHexMetadataItem &oldmeta) {
+    auto buffer = QStringLiteral("[M*] {pos: %1-0x%2} ")
+                      .arg(QString::number(meta.begin),
+                           QString::number(meta.begin, 16).toUpper());
+
+    if (meta.foreground != oldmeta.foreground) {
+        buffer.append('F');
+        if (meta.foreground.isValid() && !oldmeta.foreground.isValid()) {
+            buffer.append('+');
+        } else if (!meta.foreground.isValid() && oldmeta.foreground.isValid()) {
+            buffer.append('-');
+        } else {
+            buffer.append('*');
+        }
+    }
+
+    if (meta.background != oldmeta.background) {
+        buffer.append('B');
+        if (meta.background.isValid() && !oldmeta.background.isValid()) {
+            buffer.append('+');
+        } else if (!meta.background.isValid() && oldmeta.background.isValid()) {
+            buffer.append('-');
+        } else {
+            buffer.append('*');
+        }
+    }
+
+    if (meta.comment != oldmeta.comment) {
+        buffer.append('C');
+        if (meta.comment.isEmpty() && !oldmeta.comment.isEmpty()) {
+            buffer.append('-');
+        } else if (!meta.comment.isEmpty() && oldmeta.comment.isEmpty()) {
+            buffer.append('+');
+        } else {
+            buffer.append('*');
+        }
+    }
+
+    return buffer;
+}
+
 MetaReplaceCommand::MetaReplaceCommand(QHexMetadata *hexmeta,
                                        const QHexMetadataItem &meta,
                                        const QHexMetadataItem &oldmeta,
                                        QUndoCommand *parent)
-    : MetaCommand(tr("[MetaReplace]"), hexmeta, meta, parent), m_old(oldmeta) {}
+    : MetaCommand(constructText(meta, oldmeta), hexmeta, meta, parent),
+      m_old(oldmeta) {}
 
 void MetaReplaceCommand::undo() { m_hexmeta->modifyMetadata(m_old, m_meta); }
 
@@ -38,6 +81,7 @@ bool MetaReplaceCommand::mergeWith(const QUndoCommand *other) {
     if (ucmd) {
         if (this->m_old == ucmd->m_old) {
             this->m_meta = ucmd->m_meta;
+            setText(constructText(this->m_meta, this->m_old));
             return true;
         }
     }

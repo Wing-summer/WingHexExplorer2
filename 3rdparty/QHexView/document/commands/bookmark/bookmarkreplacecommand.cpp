@@ -21,12 +21,16 @@
 
 #include "bookmarkreplacecommand.h"
 
+inline QString constructText(qsizetype offset) {
+    return QStringLiteral("[B*] {pos: %1-0x%2}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper());
+}
+
 BookMarkReplaceCommand::BookMarkReplaceCommand(QHexDocument *doc, qsizetype pos,
                                                QString comment,
                                                QString oldcomment,
                                                QUndoCommand *parent)
-    : BookMarkCommand(tr("[ReplaceBookMark] pos: %1").arg(pos), doc, pos,
-                      comment, parent),
+    : BookMarkCommand(constructText(pos), doc, pos, comment, parent),
       m_oldcomment(oldcomment) {}
 
 void BookMarkReplaceCommand::redo() { m_doc->modBookMark(m_pos, m_comment); }

@@ -23,11 +23,17 @@
 
 #include "document/commands/hex/replacecommand.h"
 
+inline QString constructText(qsizetype offset, qsizetype length) {
+    return QStringLiteral("[H+] {pos: %1-0x%2} {len: %3-0x%4}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper(),
+             QString::number(length), QString::number(length, 16).toUpper());
+}
+
 InsertCommand::InsertCommand(QHexDocument *doc, QHexCursor *cursor,
                              qsizetype offset, const QByteArray &data,
                              int nibbleindex, QUndoCommand *parent)
-    : HexCommand(tr("[HexInsert] pos: %1").arg(offset), doc, cursor,
-                 nibbleindex, parent) {
+    : HexCommand(constructText(offset, data.length()), doc, cursor, nibbleindex,
+                 parent) {
     m_offset = offset;
     m_data = data;
     m_length = data.length();
@@ -58,6 +64,7 @@ bool InsertCommand::mergeWith(const QUndoCommand *other) {
         if (this->m_offset + this->m_length == ucmd->m_offset) {
             this->m_length += ucmd->m_length;
             this->m_data.append(ucmd->m_data);
+            setText(constructText(this->m_offset, this->m_length));
             return true;
         }
     } else {

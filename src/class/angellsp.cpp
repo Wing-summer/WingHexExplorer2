@@ -30,11 +30,13 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_ENABLE, ("lsp.enable"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_TRACE, ("lsp.trace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_INDENT_SPACE, ("lsp.indentspace"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_USE_TAB_INDENT, ("lsp.useTabIndent"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, LSP_AUTO_FMT, ("lsp.autoFmt"))
 
 AngelLsp::AngelLsp() {
     HANDLE_CONFIG;
     READ_CONFIG_BOOL(_enabled, LSP_ENABLE, true);
     READ_CONFIG_BOOL(_useTabIndent, LSP_USE_TAB_INDENT, false);
+    READ_CONFIG_BOOL(_autofmt, LSP_AUTO_FMT, true);
 
     int tmp;
     READ_CONFIG_INT(tmp, LSP_TRACE, int(TraceMode::off));
@@ -50,11 +52,12 @@ AngelLsp &AngelLsp::instance() {
     return ins;
 }
 
-AngelLsp::~AngelLsp() { stop(); }
+AngelLsp::~AngelLsp() {}
 
 bool AngelLsp::start() {
-    if (m_proc)
-        stop();
+    if (m_proc) {
+        shutdownAndExit();
+    }
 
     if (!_enabled) {
         return false;
@@ -129,11 +132,14 @@ void AngelLsp::stop() {
             m_proc->waitForFinished(1000);
         }
     }
+
     delete m_proc;
     m_proc = nullptr;
+    Q_EMIT serverExited();
 }
 
 bool AngelLsp::restart() {
+    QSignalBlocker blocker(this);
     if (start()) {
         auto ret = initializeSync();
         if (!ret.isNull()) {
@@ -412,6 +418,7 @@ void AngelLsp::shutdownAndExit() {
 
     sendRequestSync(QStringLiteral("shutdown"), {}, 2000);
     sendNotification(QStringLiteral("exit"), {});
+    m_proc->waitForFinished(800);
     stop();
 }
 
@@ -524,11 +531,7 @@ void AngelLsp::handleStderr() {
     qCritical().noquote() << QStringLiteral("[server-stderr]") << s;
 }
 
-void AngelLsp::handleProcessFinished(int exitCode,
-                                     QProcess::ExitStatus status) {
-    stop();
-    Q_EMIT serverExited(exitCode, status);
-}
+void AngelLsp::handleProcessFinished() { stop(); }
 
 void AngelLsp::sendMessage(const QJsonObject &msg) {
     if (!m_proc || m_proc->state() != QProcess::Running) {
@@ -779,10 +782,12 @@ void AngelLsp::resetSettings() {
     WRITE_CONFIG(LSP_TRACE, int(TraceMode::off));
     WRITE_CONFIG(LSP_INDENT_SPACE, 4);
     WRITE_CONFIG(LSP_USE_TAB_INDENT, false);
+    WRITE_CONFIG(LSP_AUTO_FMT, true);
 
     _traceMode = TraceMode::off;
     _indentSpace = 4;
     _useTabIndent = false;
+    _autofmt = true;
 
     reloadConfigure();
 }
@@ -794,5 +799,15 @@ void AngelLsp::setEnabled(bool newEnable) {
         HANDLE_CONFIG;
         WRITE_CONFIG(LSP_ENABLE, newEnable);
         _enabled = newEnable;
+    }
+}
+
+bool AngelLsp::autofmt() const { return _autofmt; }
+
+void AngelLsp::setAutofmt(bool newAutofmt) {
+    if (_autofmt != newAutofmt) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(LSP_AUTO_FMT, newAutofmt);
+        _autofmt = newAutofmt;
     }
 }

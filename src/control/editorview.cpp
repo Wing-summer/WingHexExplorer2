@@ -116,31 +116,40 @@ EditorView::EditorView(QWidget *parent)
     m_menu = new QMenu(m_hex);
     auto &shortcut = QKeySequences::instance();
 
-    newAction(m_menu, "cut", tr("Cut"), &EditorView::sigOnCutFile,
-              QKeySequence::Cut);
-    newAction(m_menu, "cuthex", tr("CutHex"), &EditorView::sigOnCutHex,
+    newAction(m_menu, QStringLiteral("cut"), tr("Cut"),
+              &EditorView::sigOnCutFile, QKeySequence::Cut);
+    newAction(m_menu, QStringLiteral("cuthex"), tr("CutHex"),
+              &EditorView::sigOnCutHex,
               shortcut.keySequence(QKeySequences::Key::CUT_HEX));
-    newAction(m_menu, "copy", tr("Copy"), &EditorView::sigOnCopyFile,
-              QKeySequence::Copy);
-    newAction(m_menu, "copyhex", tr("CopyHex"), &EditorView::sigOnCopyHex,
+    newAction(m_menu, QStringLiteral("copy"), tr("Copy"),
+              &EditorView::sigOnCopyFile, QKeySequence::Copy);
+    newAction(m_menu, QStringLiteral("copyhex"), tr("CopyHex"),
+              &EditorView::sigOnCopyHex,
               shortcut.keySequence(QKeySequences::Key::COPY_HEX));
-    newAction(m_menu, "paste", tr("Paste"), &EditorView::sigOnPasteFile,
-              QKeySequence::Paste);
-    newAction(m_menu, "pastehex", tr("PasteHex"), &EditorView::sigOnPasteHex,
+    newAction(m_menu, QStringLiteral("paste"), tr("Paste"),
+              &EditorView::sigOnPasteFile, QKeySequence::Paste);
+    newAction(m_menu, QStringLiteral("pastehex"), tr("PasteHex"),
+              &EditorView::sigOnPasteHex,
               shortcut.keySequence(QKeySequences::Key::PASTE_HEX));
-    newAction(m_menu, "del", tr("Delete"), &EditorView::sigOnDelete,
-              QKeySequence::Delete);
+    newAction(m_menu, QStringLiteral("del"), tr("Delete"),
+              &EditorView::sigOnDelete, QKeySequence::Delete);
     m_menu->addSeparator();
-    newAction(m_menu, "find", tr("Find"), &EditorView::sigOnFindFile,
-              QKeySequence::Find);
-    newAction(m_menu, "jmp", tr("Goto"), &EditorView::sigOnGoToLine,
+    newAction(m_menu, QStringLiteral("find"), tr("Find"),
+              &EditorView::sigOnFindFile, QKeySequence::Find);
+    newAction(m_menu, QStringLiteral("jmp"), tr("Goto"),
+              &EditorView::sigOnGoToLine,
               shortcut.keySequence(QKeySequences::Key::GOTO));
-    newAction(m_menu, "fill", tr("Fill"), &EditorView::sigOnFill,
+    newAction(m_menu, QStringLiteral("fill"), tr("Fill"),
+              &EditorView::sigOnFill,
               shortcut.keySequence(QKeySequences::Key::HEX_FILL));
-    newAction(m_menu, "metadata", tr("MetaData"), &EditorView::sigOnMetadata,
+    newAction(m_menu, QStringLiteral("metadata"), tr("MetaData"),
+              &EditorView::sigOnMetadata,
               shortcut.keySequence(QKeySequences::Key::METADATA));
-    newAction(m_menu, "bookmark", tr("BookMark"), &EditorView::sigOnBookMark,
+    newAction(m_menu, QStringLiteral("bookmark"), tr("BookMark"),
+              &EditorView::sigOnBookMark,
               shortcut.keySequence(QKeySequences::Key::BOOKMARK));
+    newAction(m_menu, QStringLiteral("sum"), tr("CheckSum"),
+              &EditorView::sigOnCheckSum);
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_hex, &QHexView::customContextMenuRequested, this,
             [=](const QPoint &pos) { m_menu->popup(mapToGlobal(pos)); });
@@ -149,14 +158,8 @@ EditorView::EditorView(QWidget *parent)
 
     m_cloneChildren.fill(nullptr, CLONE_LIMIT);
 
-    m_findResults = new FindResultModel(this);
-    auto doc = m_hex->document().get();
-    m_bookmarks = new BookMarksModel(doc, this);
-    m_metadata = new MetaDataModel(doc, this);
-    connect(m_hex, &QHexView::documentChanged, this, [=](QHexDocument *doc) {
-        m_bookmarks->setDocument(doc);
-        m_metadata->setDocument(doc);
-    });
+    connect(m_hex, &QHexView::documentChanged, this,
+            &EditorView::documentChanged);
 
     connect(&_watcher, &QFileSystemWatcher::fileChanged, this,
             &EditorView::need2Reload);
@@ -188,6 +191,11 @@ EditorView::EditorView(QWidget *parent)
 
             _viewFns.insert(msig, m);
         }
+    }
+
+    // checksum table data
+    for (auto &cs : Utilities::supportedHashAlgorithms()) {
+        _checkSumData.insert(cs, QString());
     }
 }
 
@@ -248,6 +256,38 @@ void EditorView::registerQMenu(QMenu *menu) {
     m_menu->addMenu(menu);
 }
 
+void EditorView::getCheckSum(const QVector<int> &algorithmID) {
+    auto hashes = Utilities::supportedHashAlgorithms();
+
+    if (m_hex->hasSelection()) {
+        auto data = m_hex->selectedBytes();
+        for (auto &c : algorithmID) {
+            auto h = hashes.at(c);
+            QCryptographicHash hash(h);
+            hash.addData(data.join());
+            _checkSumData.insert(h, hash.result().toHex().toUpper());
+        }
+    } else {
+        if (isNewFile()) {
+            auto bytes = m_hex->document()->read(0);
+            for (auto &c : algorithmID) {
+                auto h = hashes.at(c);
+                QCryptographicHash hash(h);
+                hash.addData(bytes);
+                _checkSumData.insert(h, hash.result().toHex().toUpper());
+            }
+        } else {
+            QFile f(fileName());
+            for (auto &c : algorithmID) {
+                auto h = hashes.at(c);
+                QCryptographicHash hash(h);
+                hash.addData(&f);
+                _checkSumData.insert(h, hash.result().toHex().toUpper());
+            }
+        }
+    }
+}
+
 EditorView::FindError EditorView::find(const FindDialog::Result &result) {
     if (m_findMutex.tryLock(3000)) {
         std::unique_lock<QMutex> locker(m_findMutex, std::adopt_lock_t());
@@ -278,22 +318,20 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         data = result.value;
 
         qsizetype contextLen = 0;
+        m_findData.clear();
 
         if (result.isStringFind) {
             auto raw = Utilities::encodingString(data, result.encoding);
             contextLen = raw.length();
-            m_findResults->setEncoding(result.encoding);
+            m_findData.encoding = result.encoding;
             d->findAllBytes(begin, end, raw, results);
-            m_findResults->lastFindData() = qMakePair(data, contextLen);
+            m_findData.lastFindData = qMakePair(data, contextLen);
         } else {
             // assuming the find pattern is 'xxxxxxxx'
             contextLen = data.length() / 2;
             d->findAllBytesExt(begin, end, result.value, results);
-            m_findResults->lastFindData() = qMakePair(data, contextLen);
+            m_findData.lastFindData = qMakePair(data, contextLen);
         }
-
-        m_findResults->beginUpdate();
-        m_findResults->clear();
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
         for (auto &ritem : results) {
@@ -301,14 +339,11 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
             r.offset = ritem;
             r.line = r.offset / lineWidth;
             r.col = r.offset % lineWidth;
-            m_findResults->results().append(r);
-            m_findResults->findData().append(
-                readContextFinding(ritem, contextLen));
+            m_findData.results.append(r);
+            m_findData.findData.append(readContextFinding(ritem, contextLen));
         }
 
-        m_findResults->endUpdate();
-
-        if (m_findResults->size() >= QHEXVIEW_FIND_LIMIT) {
+        if (m_findData.results.size() >= QHEXVIEW_FIND_LIMIT) {
             return FindError::MayOutOfRange;
         } else {
             return FindError::Success;
@@ -318,7 +353,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
     }
 }
 
-void EditorView::clearFindResult() { m_findResults->clear(); }
+void EditorView::clearFindResult() { m_findData.clear(); }
 
 void EditorView::triggerGoto() {
     m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
@@ -790,10 +825,6 @@ void EditorView::removeMonitorPaths() {
 }
 
 void EditorView::addMonitorPath() { _watcher.addPath(m_hex->windowFilePath()); }
-
-BookMarksModel *EditorView::bookmarksModel() const { return m_bookmarks; }
-
-MetaDataModel *EditorView::metadataModel() const { return m_metadata; }
 
 bool EditorView::hasCloneChildren() const {
     for (auto &c : m_cloneChildren) {
@@ -2148,6 +2179,7 @@ EditorView *EditorView::clone() {
     connect(ev, &EditorView::sigOnFill, this, &EditorView::sigOnFill);
     connect(ev, &EditorView::sigOnMetadata, this, &EditorView::sigOnMetadata);
     connect(ev, &EditorView::sigOnBookMark, this, &EditorView::sigOnBookMark);
+    connect(ev, &EditorView::sigOnCheckSum, this, &EditorView::sigOnCheckSum);
 
     auto doc = m_hex->document();
 
@@ -2210,21 +2242,13 @@ bool EditorView::isCommonFile() const {
     return m_docType == EditorView::DocumentType::File;
 }
 
-FindResultModel *EditorView::findResultModel() const {
-    if (isCloneFile()) {
-        return this->cloneParent()->findResultModel();
-    }
-    return m_findResults;
+FindResultModel::FindData &EditorView::findResult() { return m_findData; }
+
+QMap<QCryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
+    return _checkSumData;
 }
 
 void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
-
-int EditorView::findResultCount() const {
-    if (isCloneFile()) {
-        return this->cloneParent()->findResultCount();
-    }
-    return m_findResults->size();
-}
 
 bool EditorView::isOriginWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);

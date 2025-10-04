@@ -20,6 +20,8 @@
 
 #include <QAbstractTableModel>
 
+#include "utilities.h"
+
 class FindResultModel : public QAbstractTableModel {
     Q_OBJECT
 
@@ -29,6 +31,34 @@ public:
         QByteArray hbuffer;
         QByteArray tbuffer;
         QByteArray ctailer;
+
+        inline QString generateRange() const {
+            QString buffer = cheader.toHex(' ').toUpper();
+            if (!hbuffer.isEmpty()) {
+                buffer += hbuffer.toHex(' ').toUpper();
+                if (!tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" .. ");
+                }
+            }
+            buffer +=
+                tbuffer.toHex(' ').toUpper() + ctailer.toHex(' ').toUpper();
+            return buffer;
+        }
+
+        inline QString generateDecoding(const QString &encoding) const {
+            QString buffer = Utilities::decodingString(cheader, encoding);
+            if (!hbuffer.isEmpty()) {
+                buffer += Utilities::decodingString(hbuffer);
+                if (!tbuffer.isEmpty()) {
+                    buffer += QStringLiteral(" ... ");
+                }
+            }
+
+            buffer += Utilities::decodingString(tbuffer) +
+                      Utilities::decodingString(ctailer);
+
+            return buffer;
+        }
     };
 
     struct FindResult {
@@ -37,19 +67,35 @@ public:
         qsizetype col = -1;
     };
 
+    struct FindData {
+        QList<FindResult> results;
+        QList<FindInfo> findData;
+        QPair<QString, qsizetype> lastFindData;
+        QString encoding = QStringLiteral("ASCII");
+
+        inline void clear() {
+            results.clear();
+            findData.clear();
+            lastFindData = {};
+        }
+
+        inline QString generateRange(qsizetype idx) const {
+            return findData.at(idx).generateRange();
+        }
+
+        inline QString generateDecoding(qsizetype idx) const {
+            return findData.at(idx).generateDecoding(encoding);
+        }
+    };
+
 public:
     explicit FindResultModel(QObject *parent = nullptr);
 
-    QList<FindResult> &results();
-    QList<FindInfo> &findData();
-    QPair<QString, qsizetype> &lastFindData();
-
-    void beginUpdate();
-    void endUpdate();
-
-    FindResult resultAt(qsizetype index) const;
+    bool isValid() const;
+    void updateData(FindData &data);
+    void reset();
     void clear();
-    QList<FindResult>::size_type size() const;
+    void refresh();
 
     QString copyContent(const QModelIndex &index) const;
 
@@ -65,11 +111,7 @@ public:
     void setEncoding(const QString &newEncoding);
 
 private:
-    QList<FindResult> m_results;
-    QList<FindInfo> m_findData;
-    QPair<QString, qsizetype> m_lastFindData;
-
-    QString m_encoding;
+    FindData *m_data = nullptr;
 };
 
 #endif // FINDRESULTMODEL_H

@@ -331,9 +331,10 @@ void HexLineEdit::keyPressEvent(QKeyEvent *ev) {
     }
 
     // allow single ASCII hex digit
+    auto mod = ev->modifiers();
     if (!txt.isEmpty() && isHexOrWildcard(txt[0]) &&
-        (ev->modifiers() == Qt::NoModifier ||
-         ev->modifiers() == Qt::ShiftModifier)) {
+        (mod == Qt::NoModifier || mod == Qt::ShiftModifier ||
+         mod == Qt::KeypadModifier)) {
         auto disp = cursorPosition();
         auto logical = logicalPosFromDisplayPos(disp);
         auto oldCursor = logical;

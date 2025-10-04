@@ -21,10 +21,14 @@
 
 #include "metaclearcommand.h"
 
+inline QString constructText(const QVector<QHexMetadataItem> &metas) {
+    return QStringLiteral("[M~] {cnt: %1}").arg(metas.size());
+}
+
 MetaClearCommand::MetaClearCommand(QHexMetadata *hexmeta,
                                    const QVector<QHexMetadataItem> &metas,
                                    QUndoCommand *parent)
-    : UndoCommandBase(tr("[MetaClear]"), parent), m_hexmeta(hexmeta),
+    : UndoCommandBase(constructText(metas), parent), m_hexmeta(hexmeta),
       m_metas(metas) {}
 
 void MetaClearCommand::redo() { m_hexmeta->clear(); }

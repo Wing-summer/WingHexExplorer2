@@ -24,10 +24,7 @@
 
 #include "hexcommand.h"
 
-#include <QCoreApplication>
-
 class ReplaceCommand : public HexCommand {
-    Q_DECLARE_TR_FUNCTIONS(ReplaceCommand)
     friend class InsertCommand;
 
 public:

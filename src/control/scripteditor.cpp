@@ -123,7 +123,7 @@ bool ScriptEditor::save(const QString &path) {
     auto oldFileName = fileName();
     if (!oldFileName.isEmpty()) {
         _watcher.removePath(oldFileName);
-        lsp.closeDocument(Utilities::getUrlString(oldFileName));
+        lsp.closeDocument(lspFileNameURL());
     }
     QScopeGuard guard([this, path]() {
         if (path.isEmpty()) {
@@ -179,7 +179,9 @@ bool ScriptEditor::save(const QString &path) {
 bool ScriptEditor::reload() {
     auto &lsp = AngelLsp::instance();
     auto fileName = this->fileName();
-    lsp.closeDocument(Utilities::getUrlString(fileName));
+    if (lsp.isActive()) {
+        lsp.closeDocument(Utilities::getUrlString(fileName));
+    }
     return openFile(fileName);
 }
 
@@ -231,20 +233,21 @@ void ScriptEditor::processTitle() {
 }
 
 void ScriptEditor::sendDocChange() {
-    auto url = Utilities::getUrlString(fileName());
     auto &lsp = AngelLsp::instance();
+    if (lsp.isActive()) {
+        auto url = lspFileNameURL();
+        auto txt = m_editor->toPlainText();
+        // test overflow
+        if (increaseVersion()) {
+            lsp.closeDocument(url);
+            lsp.openDocument(url, 0, txt);
+        } else {
+            lsp.changeDocument(url, getVersion(), txt);
+        }
 
-    auto txt = m_editor->toPlainText();
-    // test overflow
-    if (increaseVersion()) {
-        lsp.closeDocument(url);
-        lsp.openDocument(url, 0, txt);
-    } else {
-        lsp.changeDocument(url, getVersion(), txt);
+        _ok = false;
+        _timer->reset(300);
     }
-
-    _ok = false;
-    _timer->reset(300);
 }
 
 bool ScriptEditor::isContentLspUpdated() const { return _ok; }
@@ -270,6 +273,10 @@ CodeEdit *ScriptEditor::editor() const { return m_editor; }
 
 bool ScriptEditor::formatCode() {
     auto &lsp = AngelLsp::instance();
+    if (!lsp.isActive()) {
+        return false;
+    }
+
     auto r = lsp.requestFormat(lspFileNameURL());
 
     struct TextEdit {

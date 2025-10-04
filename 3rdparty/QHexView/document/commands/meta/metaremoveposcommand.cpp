@@ -21,9 +21,14 @@
 
 #include "metaremoveposcommand.h"
 
+inline QString constructText(qsizetype pos) {
+    return QStringLiteral("[M-] {pos: %1-0x%2} ")
+        .arg(QString::number(pos), QString::number(pos, 16).toUpper());
+}
+
 MetaRemovePosCommand::MetaRemovePosCommand(QHexMetadata *hexmeta, qsizetype pos,
                                            QUndoCommand *parent)
-    : MetaCommand(tr("[MetaRemovePos]"), hexmeta, {}, parent), m_pos(pos) {
+    : MetaCommand(constructText(pos), hexmeta, {}, parent), m_pos(pos) {
     auto po = m_hexmeta->get(pos);
     if (po.has_value()) {
         m_meta = po.value();

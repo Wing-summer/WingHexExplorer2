@@ -185,6 +185,10 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
 
             e->accept();
             return;
+        case Qt::Key_Backspace:
+            e->accept();
+            replaceCommandLine(QString());
+            return;
         }
     }
 
@@ -271,11 +275,6 @@ void QConsoleWidget::keyPressEvent(QKeyEvent *e) {
     case Qt::Key_Return:
         e->accept();
         handleReturnKey(e->modifiers());
-        break;
-
-    case Qt::Key_Escape:
-        e->accept();
-        replaceCommandLine(QString());
         break;
 
     default:

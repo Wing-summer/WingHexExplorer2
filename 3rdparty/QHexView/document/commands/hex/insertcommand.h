@@ -24,11 +24,7 @@
 
 #include "hexcommand.h"
 
-#include <QCoreApplication>
-
 class InsertCommand : public HexCommand {
-    Q_DECLARE_TR_FUNCTIONS(InsertCommand)
-
 public:
     explicit InsertCommand(QHexDocument *doc, QHexCursor *cursor,
                            qsizetype offset, const QByteArray &data,

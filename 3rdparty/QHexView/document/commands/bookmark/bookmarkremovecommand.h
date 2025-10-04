@@ -24,11 +24,7 @@
 
 #include "bookmarkcommand.h"
 
-#include <QCoreApplication>
-
 class BookMarkRemoveCommand : public BookMarkCommand {
-    Q_DECLARE_TR_FUNCTIONS(BookMarkRemoveCommand)
-
 public:
     explicit BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
                                    QString comment,

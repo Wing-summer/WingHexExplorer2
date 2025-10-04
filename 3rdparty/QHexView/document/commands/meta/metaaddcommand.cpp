@@ -21,10 +21,28 @@
 
 #include "metaaddcommand.h"
 
+inline QString constructText(const QHexMetadataItem &meta) {
+    auto buffer = QStringLiteral("[M+] {pos: %1-0x%2} {len: %3-0x%4} ")
+                      .arg(QString::number(meta.begin),
+                           QString::number(meta.begin, 16).toUpper(),
+                           QString::number(meta.length()),
+                           QString::number(meta.length(), 16).toUtf8());
+    if (meta.foreground.isValid()) {
+        buffer.append('F');
+    }
+    if (meta.background.isValid()) {
+        buffer.append('B');
+    }
+    if (!meta.comment.isEmpty()) {
+        buffer.append('C');
+    }
+    return buffer;
+}
+
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,
                                QUndoCommand *parent)
-    : MetaCommand(tr("[MetaAdd]"), hexmeta, meta, parent) {
+    : MetaCommand(constructText(meta), hexmeta, meta, parent) {
     _brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
 }
 
@@ -41,7 +59,11 @@ bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
         if (this->m_meta.foreground == ucmd->m_meta.foreground &&
             this->m_meta.background == ucmd->m_meta.background &&
             this->m_meta.comment == ucmd->m_meta.comment) {
-            return this->m_meta.mergeRegionWithoutMetaCheck(ucmd->m_meta);
+            auto r = this->m_meta.mergeRegionWithoutMetaCheck(ucmd->m_meta);
+            if (r) {
+                setText(constructText(this->m_meta));
+            }
+            return r;
         }
     }
     return false;

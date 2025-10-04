@@ -25,11 +25,9 @@
 #include "../undocommandbase.h"
 #include "document/qhexdocument.h"
 
-#include <QCoreApplication>
 #include <QMap>
 
 class BookMarkClearCommand : public UndoCommandBase {
-    Q_DECLARE_TR_FUNCTIONS(BookMarkClearCommand)
 public:
     explicit BookMarkClearCommand(QHexDocument *doc,
                                   const QMap<qsizetype, QString> &bookmarks,

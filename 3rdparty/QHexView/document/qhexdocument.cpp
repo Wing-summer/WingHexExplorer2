@@ -20,7 +20,6 @@
 */
 
 #include "qhexdocument.h"
-#include "buffer/qfilebuffer.h"
 #include "commands/bookmark/bookmarkaddcommand.h"
 #include "commands/bookmark/bookmarkclearcommand.h"
 #include "commands/bookmark/bookmarkremovecommand.h"
@@ -325,7 +324,6 @@ QUndoCommand *QHexDocument::MakeClearBookMark(QUndoCommand *parent) {
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {
     if (!existBookMark(pos)) {
         _bookmarks.insert(pos, comment);
-        setDocSaved(false);
         Q_EMIT documentChanged();
         Q_EMIT bookMarkChanged();
         return true;
@@ -373,7 +371,7 @@ bool QHexDocument::removeBookMark(qsizetype pos) {
     if (m_keepsize) {
         auto ret = _bookmarks.remove(pos) != 0;
         if (ret) {
-            setDocSaved(false);
+            Q_EMIT bookMarkChanged();
         }
         return ret;
     }
@@ -384,7 +382,7 @@ bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
     if (m_keepsize) {
         if (_bookmarks.contains(pos)) {
             _bookmarks[pos] = comment;
-            setDocSaved(false);
+            Q_EMIT bookMarkChanged();
             return true;
         }
     }
@@ -394,7 +392,6 @@ bool QHexDocument::modBookMark(qsizetype pos, const QString &comment) {
 bool QHexDocument::clearBookMark() {
     if (m_keepsize) {
         _bookmarks.clear();
-        setDocSaved(false);
         Q_EMIT documentChanged();
         Q_EMIT bookMarkChanged();
         return true;
@@ -410,8 +407,8 @@ qsizetype QHexDocument::bookMarksCount() const { return _bookmarks.count(); }
 
 void QHexDocument::applyBookMarks(const QMap<qsizetype, QString> &books) {
     _bookmarks = books;
-    setDocSaved(false);
     Q_EMIT documentChanged();
+    Q_EMIT bookMarkChanged();
 }
 
 void QHexDocument::findAllBytes(qsizetype begin, qsizetype end,
@@ -635,10 +632,8 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
     m_metadata = new QHexMetadata(m_undostack, this);
     m_metadata->setLineWidth(m_hexlinewidth);
 
-    connect(m_metadata, &QHexMetadata::metadataChanged, this, [this] {
-        setDocSaved(false);
-        Q_EMIT metaDataChanged();
-    });
+    connect(m_metadata, &QHexMetadata::metadataChanged, this,
+            &QHexDocument::metaDataChanged);
 
     /*=======================*/
     // added by wingsummer

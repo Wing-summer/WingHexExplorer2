@@ -23,14 +23,12 @@
 #define METAREMOVECOMMAND_H
 
 #include "metacommand.h"
-#include <QCoreApplication>
 #include <QList>
 #include <QObject>
 
 // this class is newed by wingsummer
 
 class MetaRemoveCommand : public MetaCommand {
-    Q_DECLARE_TR_FUNCTIONS(MetaRemoveCommand)
 public:
     explicit MetaRemoveCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,

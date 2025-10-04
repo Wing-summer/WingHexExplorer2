@@ -53,6 +53,7 @@ void InspectQtLogHelper::init() {
     _logger->buildUpContent(_ctx);
     _logger->setWindowTitle(tr("Inspect"));
     _logger->setWindowIcon(ICONRES("qtloginspect"));
+    _logger->setMinimumSize(400, 350);
 
     qSetMessagePattern(QStringLiteral("%{if-debug}[Debug]%{endif}"
                                       "%{if-warning}[Warn]%{endif}"

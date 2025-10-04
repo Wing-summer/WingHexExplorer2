@@ -21,11 +21,15 @@
 
 #include "bookmarkremovecommand.h"
 
+inline QString constructText(qsizetype offset) {
+    return QStringLiteral("[B-] {pos: %1-0x%2}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper());
+}
+
 BookMarkRemoveCommand::BookMarkRemoveCommand(QHexDocument *doc, qsizetype pos,
                                              QString comment,
                                              QUndoCommand *parent)
-    : BookMarkCommand(tr("[RemoveBookMark] pos: %1").arg(pos), doc, pos,
-                      comment, parent) {}
+    : BookMarkCommand(constructText(pos), doc, pos, comment, parent) {}
 
 void BookMarkRemoveCommand::redo() { m_doc->removeBookMark(m_pos); }
 

@@ -25,13 +25,11 @@
 #include "../../qhexmetadata.h"
 #include "../undocommandbase.h"
 
-#include <QCoreApplication>
 #include <QVector>
 
 // this class is newed by wingsummer
 
 class MetaClearCommand : public UndoCommandBase {
-    Q_DECLARE_TR_FUNCTIONS(MetaClearCommand)
 public:
     explicit MetaClearCommand(QHexMetadata *hexmeta,
                               const QVector<QHexMetadataItem> &metas,

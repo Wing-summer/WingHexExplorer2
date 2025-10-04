@@ -21,10 +21,14 @@
 
 #include "bookmarkaddcommand.h"
 
+inline QString constructText(qsizetype offset) {
+    return QStringLiteral("[B+] {pos: %1-0x%2}")
+        .arg(QString::number(offset), QString::number(offset, 16).toUpper());
+}
+
 BookMarkAddCommand::BookMarkAddCommand(QHexDocument *doc, qsizetype pos,
                                        QString comment, QUndoCommand *parent)
-    : BookMarkCommand(tr("[AddBookMark] pos: %1").arg(pos), doc, pos, comment,
-                      parent) {}
+    : BookMarkCommand(constructText(pos), doc, pos, comment, parent) {}
 
 void BookMarkAddCommand::redo() { m_doc->addBookMark(m_pos, m_comment); }
 
