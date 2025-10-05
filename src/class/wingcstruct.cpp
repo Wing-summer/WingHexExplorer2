@@ -29,11 +29,16 @@ WingCStruct::~WingCStruct() {}
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     _parser = new CTypeParser([this](const MsgInfo &info) {
-        // TODO
+        auto msg = QStringLiteral("(%1, %2) ")
+                       .arg(info.line)
+                       .arg(info.charPositionInLine) +
+                   info.info;
         switch (info.type) {
         case MsgType::Error:
+            logError(msg);
             break;
         case MsgType::Warn:
+            logWarn(msg);
             break;
         }
     });
@@ -418,23 +423,24 @@ bool WingCStruct::containsType(const QString &name) {
 }
 
 bool WingCStruct::isBasicType(const QString &name) {
-    return _parser->isBasicType(name);
+    return _parser->resolveType(name) == CTypeParser::CType::BasicType;
 }
 
 bool WingCStruct::isUnsignedBasicType(const QString &name) {
-    return _parser->isUnsignedBasicType(name);
+    auto rname = _parser->resolveTypeName(name);
+    return _parser->isUnsignedBasicType(rname);
 }
 
 bool WingCStruct::containsEnum(const QString &name) {
-    return _parser->containsEnum(name);
+    return _parser->resolveType(name) == CTypeParser::CType::Enum;
 }
 
 bool WingCStruct::containsStruct(const QString &name) {
-    return _parser->containsStruct(name);
+    return _parser->resolveType(name) == CTypeParser::CType::Struct;
 }
 
 bool WingCStruct::containsUnion(const QString &name) {
-    return _parser->containsUnion(name);
+    return _parser->resolveType(name) == CTypeParser::CType::Union;
 }
 
 bool WingCStruct::containsTypeDef(const QString &name) {
@@ -450,7 +456,8 @@ bool WingCStruct::isCompletedType(const QString &name) {
 }
 
 QStringList WingCStruct::enumValueNames(const QString &name) {
-    return _parser->enumMembers(name);
+    auto rname = _parser->resolveTypeName(name);
+    return _parser->enumMembers(rname);
 }
 
 qint64 WingCStruct::constVarValueInt(const QString &name, bool *ok) {
@@ -484,19 +491,23 @@ quint64 WingCStruct::constVarValueUInt(const QString &name, bool *ok) {
 }
 
 bool WingCStruct::isCompletedStruct(const QString &name) {
-    return _parser->isCompletedStruct(name);
+    auto rname = _parser->resolveTypeName(name);
+    return _parser->isCompletedStruct(rname);
 }
 
 bool WingCStruct::isCompletedUnion(const QString &name) {
-    return _parser->isCompletedUnion(name);
+    auto rname = _parser->resolveTypeName(name);
+    return _parser->isCompletedUnion(rname);
 }
 
 QStringList WingCStruct::getMissingDependencise(const QString &name) {
-    return _parser->getMissingDependencise(name);
+    auto rname = _parser->resolveTypeName(name);
+    return _parser->getMissingDependencise(rname);
 }
 
 QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
-    auto len = sizeOf(type);
+    auto rtype = _parser->resolveTypeName(type);
+    auto len = sizeOf(rtype);
     if (len <= 0) {
         return {};
     }
@@ -521,7 +532,7 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
     const auto *pdata = raw.data();
     const auto *pend = pdata + raw.length();
 
-    return readStruct(pdata, pend, type);
+    return readStruct(pdata, pend, rtype);
 }
 
 QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
@@ -585,6 +596,8 @@ QVariant WingCStruct::getData(const char *ptr, const char *end,
         return getShiftAndMasked<float>(buffer, shift, mask);
     case QMetaType::SChar:
         return getShiftAndMasked<signed char>(buffer, shift, mask);
+    case QMetaType::VoidStar:
+        return getShiftAndMaskedPtr(buffer);
     default:
         return {};
     }
@@ -596,78 +609,169 @@ QVariantHash WingCStruct::readStruct(const char *&ptr, const char *end,
         return {};
     }
     auto struc = _parser->structMembers(type);
+    QVariantHash ret;
 
     QVariantHash content;
-
     // then slice and parse
     for (auto &m : struc) {
-        bool retry = false;
-        auto t = _parser->type(m.data_type);
-        do {
-            retry = false;
-            switch (t) {
-            case CTypeParser::CType::Unknown:
-            case CTypeParser::CType::ConstVar:
-                Q_ASSERT(false);
-                break;
-            case CTypeParser::CType::BasicType: {
-                auto meta = _parser->metaType(m.data_type);
-                auto size = _parser->getTypeSize(m.data_type);
-                Q_ASSERT(size);
-                auto size_v = size.value();
-                if (m.element_count) {
-                    QVariantList l;
-                    for (qsizetype i = 0; i < m.element_count; ++i) {
-                        auto data = getData(ptr, end, meta, m.op.shift,
-                                            m.op.mask, size_v);
-                        if (data.isNull()) {
-                            return content;
-                        }
-                        ptr += size_v;
-                        l.append(data);
-                    }
-                    content.insert(m.var_name, l);
-                } else {
+        content.insert(m.var_name, readContent(ptr, end, m));
+    }
+    return content;
+}
+
+QVariant WingCStruct::readContent(const char *&ptr, const char *end,
+                                  const VariableDeclaration &m) {
+
+    bool retry = false;
+    auto dt = m.data_type;
+    do {
+        auto t = _parser->type(dt);
+        switch (t) {
+        case CTypeParser::CType::Unknown:
+        case CTypeParser::CType::ConstVar:
+            Q_ASSERT(false);
+            break;
+        case CTypeParser::CType::BasicType: {
+            auto meta = _parser->metaType(dt);
+            auto size = _parser->getTypeSize(dt);
+            Q_ASSERT(size);
+            auto size_v = size.value();
+            if (m.element_count > 1) {
+                QVariantList l;
+                for (qsizetype i = 0; i < m.element_count; ++i) {
                     auto data =
                         getData(ptr, end, meta, m.op.shift, m.op.mask, size_v);
                     if (data.isNull()) {
-                        return content;
+                        return {};
                     }
                     ptr += size_v;
-                    content.insert(m.var_name, data);
+                    l.append(data);
                 }
-            } break;
-            case CTypeParser::CType::Enum:
-                // should not go there
-                break;
-            case CTypeParser::CType::Struct:
-                content.insert(m.var_name, readStruct(ptr, end, m.data_type));
-                break;
-            case CTypeParser::CType::Union: {
-                // union, but i dont really know how to diplay it...
-                // QByteArray will a good container for it
-                // TODO
-                auto size = _parser->getTypeSize(m.data_type);
-                Q_ASSERT(size);
-                auto size_v = size.value();
-                if (ptr + size_v < end) {
-                    content.insert(m.var_name, QByteArray(ptr, size_v));
-                    ptr += size_v;
-                } else {
-                    return content;
+                return l;
+            } else {
+                auto data =
+                    getData(ptr, end, meta, m.op.shift, m.op.mask, size_v);
+                if (data.isNull()) {
+                    return {};
                 }
-            } break;
-            case CTypeParser::CType::TypeDef: {
-                // TODO
-                retry = true;
-            } break;
-            case CTypeParser::CType::Pointer:
-                break;
-            }
-        } while (retry);
-    }
 
-    return content;
+                if (!m.fmt_type.isEmpty()) {
+                    // format will take effects if basic type
+                    // is not double or float
+                    auto typeID = data.typeId();
+
+                    // if ok, we create a array
+                    // [0] = int_value, [1] = decoded_enum
+                    QVariantList rlist;
+
+                    if (typeID == QMetaType::Float ||
+                        typeID == QMetaType::Double ||
+                        typeID == QMetaType::Float16) {
+                        // warn and ignore format
+                        logWarn(QStringLiteral(
+                            "Invalid format type on float number"));
+                    }
+
+                    QString v;
+                    if (typeID == QMetaType::ULongLong) {
+                        auto var = data.toULongLong();
+                        auto evs = _parser->enumMembers(m.fmt_type);
+
+                        for (auto &e : evs) {
+                            auto ev = _parser->constVarValue(e);
+                            if (std::holds_alternative<qint64>(ev)) {
+                                auto rv = std::get<qint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            } else {
+                                auto rv = std::get<quint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        auto var = data.toLongLong();
+                        auto evs = _parser->enumMembers(m.fmt_type);
+
+                        for (auto &e : evs) {
+                            auto ev = _parser->constVarValue(e);
+                            if (std::holds_alternative<qint64>(ev)) {
+                                auto rv = std::get<qint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            } else {
+                                auto rv = std::get<quint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    rlist.append(data);
+                    if (v.isEmpty()) {
+                        rlist.append(QStringLiteral("<?>"));
+                    } else {
+                        rlist.append(v);
+                    }
+                    data = rlist;
+                }
+
+                ptr += size_v;
+                return data;
+            }
+        } break;
+        case CTypeParser::CType::Enum:
+            // should not go there
+            Q_ASSERT(false);
+            break;
+        case CTypeParser::CType::Struct:
+            return readStruct(ptr, end, dt);
+        case CTypeParser::CType::Union: {
+            auto size = _parser->getTypeSize(dt);
+            Q_ASSERT(size);
+            auto size_v = size.value();
+            auto ptrend = ptr + size_v;
+            if (ptrend <= end) {
+                auto ms = _parser->unionMembers(dt);
+                QVariantHash ret;
+                for (auto &m : ms) {
+                    auto rptr = ptr;
+                    auto r = readContent(rptr, ptrend, m);
+                    ret.insert(m.var_name, r);
+                }
+                ptr += size_v;
+                return ret;
+            } else {
+                return {};
+            }
+        } break;
+        case CTypeParser::CType::TypeDef: {
+            dt = _parser->resolveTypeName(dt);
+            retry = true;
+        } break;
+        case CTypeParser::CType::Pointer: {
+            if (_parser->pointerMode() == PointerMode::X86) {
+                auto data = getData(ptr, end, QMetaType::VoidStar, m.op.shift,
+                                    m.op.mask, sizeof(quint32));
+                return data;
+            } else {
+                auto data = getData(ptr, end, QMetaType::VoidStar, m.op.shift,
+                                    m.op.mask, sizeof(quint64));
+                return data;
+            }
+        } break;
+        }
+    } while (retry);
+
+    return {};
 }
 
 bool WingCStruct::isValidCStructMetaType(QMetaType::Type type) {

@@ -17,6 +17,7 @@
 
 #include "angellsp.h"
 
+#include "logger.h"
 #include "settings/settings.h"
 #include "utilities.h"
 
@@ -547,7 +548,9 @@ void AngelLsp::sendMessage(const QJsonObject &msg) {
     m_proc->write(out);
     m_proc->waitForBytesWritten(1000);
 
-    qDebug().noquote() << QStringLiteral("[AngelLSP->server] ") << body;
+    if (Logger::instance().logLevel() >= Logger::q4DEBUG) {
+        qDebug().noquote() << QStringLiteral("[AngelLSP->server] ") << body;
+    }
 }
 
 void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
@@ -577,9 +580,11 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
                 loop->quit();
         }
 
-        qDebug().noquote() << method.prepend(QStringLiteral("[AngelLSP|"))
-                                  .append(QStringLiteral("] "))
-                           << payload;
+        if (Logger::instance().logLevel() >= Logger::q4DEBUG) {
+            qDebug().noquote() << method.prepend(QStringLiteral("[AngelLSP|"))
+                                      .append(QStringLiteral("] "))
+                               << payload;
+        }
         return;
     }
 
@@ -705,8 +710,6 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
             return;
         }
 
-        // emit general notification
-        Q_EMIT notificationReceived(method, params);
         return;
     }
 }

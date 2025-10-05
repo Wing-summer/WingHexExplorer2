@@ -48,15 +48,12 @@
 PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
     auto mobj = PluginSystem::metaObject();
     auto total = mobj->methodCount();
-    for (int i = 0; i < total; ++i) {
+
+    // all public slots
+    for (int i = mobj->methodOffset(); i < total; ++i) {
         auto m = mobj->method(i);
-        // all public slots
         if (m.methodType() == QMetaMethod::Slot &&
             m.access() == QMetaMethod::Public) {
-            if (qstrcmp(m.tag(), "WING_API")) {
-                continue;
-            }
-
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
 

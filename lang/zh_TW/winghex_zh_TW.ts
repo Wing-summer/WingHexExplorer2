@@ -390,12 +390,12 @@
         <translation>校驗和</translation>
     </message>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="371"/>
+        <location filename="../../src/control/editorview.cpp" line="367"/>
         <source>Untitled</source>
         <translation>未命名</translation>
     </message>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="956"/>
+        <location filename="../../src/control/editorview.cpp" line="952"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
@@ -2406,186 +2406,186 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3357"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3354"/>
         <source>LoadingPlugin</source>
         <translation>加載插件中：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3375"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3989"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4066"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3372"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3986"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4063"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>加載插件失敗：損壞的插件數據</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4619"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4616"/>
         <source>PluginBlockByManager</source>
         <translation>插件已被管理者封禁</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3796"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3793"/>
         <source>AppClosingCanceled:</source>
         <translation>程式關閉被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3904"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3901"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3926"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3923"/>
         <source>FoundDrvPluginCount</source>
         <translation>總計發現設備拓展插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3967"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3964"/>
         <source>PluginManagerNeedSingleton</source>
         <translation>插件管理者需要保證單例</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3388"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3983"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4060"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3385"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3980"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4057"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加載失敗：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4241"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4238"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加載失敗：非法插件名稱！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4013"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4090"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4262"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4010"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4087"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4259"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4043"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4040"/>
         <source>HexExtNeedSingleton</source>
         <translation>十六進制編輯器拓展需要保證單例</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4271"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4268"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4272"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4269"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4273"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4270"/>
         <source>PluginWidgetRegister</source>
         <translation>註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4307"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4304"/>
         <source>ExtPluginAuthor :</source>
         <translation>設備拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4308"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4305"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>設備拓展註冊插件對象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4324"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4321"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>設備拓展插件加載失敗：初始化插件失敗！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4347"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4344"/>
         <source>ChooseFile</source>
         <translation>選擇檔</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4354"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4359"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4351"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4356"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4355"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4352"/>
         <source>FileNotExist</source>
         <translation>檔不存在！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4360"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4357"/>
         <source>FilePermission</source>
         <translation>因檔許可權無法繼續！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4390"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4387"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4400"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4397"/>
         <source>InvalidNameDockWidget:</source>
         <translation>無效貼邊組件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4408"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4405"/>
         <source>InvalidNullDockWidget:</source>
         <translation>無效空貼邊組件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4521"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4518"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>該操作在非 UI 線程非法</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1580"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1577"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>監測到異常推入的撤銷命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3952"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3949"/>
         <source>UnsafePluginDir</source>
         <translation>不安全的插件目錄，請將插件目錄設置為僅管理員帳戶可寫</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3382"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3986"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4063"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3379"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3983"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4060"/>
         <source>InvalidPluginID</source>
         <translation>加載插件失敗：非法插件識別字</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3385"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3382"/>
         <source>InvalidDupPlugin</source>
         <translation>加載插件失敗：重複的插件識別字</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3869"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3866"/>
         <source>FoundPluginCount</source>
         <translation>總計發現插件數目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3900"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3897"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依賴插件加載失敗總結</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3905"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3902"/>
         <source>- Dependencies:</source>
         <translation>- 依賴：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3907"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3904"/>
         <source>PUID:</source>
         <translation>插件唯一標誌符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3908"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3905"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3915"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3912"/>
         <source>PluginLoadingFinished</source>
         <translation>加載插件完畢！</translation>
     </message>
@@ -3000,38 +3000,38 @@
         <translation>【控制臺】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="627"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="641"/>
         <source>MultiCodeCanNotUndo</source>
         <translation>多行代碼粘貼後將不能修改</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="829"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="843"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="832"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="846"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="837"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="851"/>
         <source>Paste</source>
         <translation>粘貼</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="842"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="863"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="856"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="877"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="848"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="862"/>
         <source>MutiConsole</source>
         <translation>多行控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="856"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="870"/>
         <source>AbortScript</source>
         <translation>終止腳本</translation>
     </message>
@@ -3822,59 +3822,59 @@
         <translation>提供基礎的檔結構分析支持</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="912"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="924"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="937"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="946"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="953"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="967"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="979"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="987"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="994"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1001"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1008"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1015"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1022"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1009"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1021"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1034"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1046"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1058"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1070"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1082"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1094"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1106"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1118"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1130"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1142"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1154"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1166"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1178"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1190"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1201"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1211"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1223"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1043"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1050"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1064"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1076"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1084"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1091"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1098"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1105"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1112"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1119"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1131"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1143"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1155"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1167"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1179"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1191"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1203"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1215"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1227"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1239"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1251"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1263"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1275"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1287"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1298"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1308"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1320"/>
         <source>InvalidParamsCount</source>
         <translation>非法參數個數</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="916"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="928"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="957"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="971"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1026"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1038"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1050"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1062"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1074"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1086"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1098"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1110"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1122"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1134"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1146"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1158"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1170"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1182"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1229"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1013"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1025"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1054"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1068"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1123"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1135"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1147"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1159"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1171"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1183"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1195"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1207"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1219"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1231"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1243"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1255"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1267"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1279"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1326"/>
         <source>InvalidParam</source>
         <translation>非法參數</translation>
     </message>

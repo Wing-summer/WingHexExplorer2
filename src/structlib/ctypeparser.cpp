@@ -658,13 +658,34 @@ CTypeParser::StructResult CTypeParser::addForwardUnion(const QString &name) {
 ///
 std::optional<quint64>
 CTypeParser::getTypeSize(const QString &data_type) const {
-    if (type_maps_.contains(data_type)) {
+    if (data_type.endsWith('*')) {
+        return pointerMode() == PointerMode::X86 ? sizeof(quint32)
+                                                 : sizeof(quint64);
+    } else if (type_maps_.contains(data_type)) {
         return type_maps_.value(data_type).second;
     } else if (enum_defs_.contains(data_type)) {
         return sizeof(qint64);
     } else {
         return std::nullopt;
     }
+}
+
+QString CTypeParser::resolveTypeName(const QString &name) const {
+    QString ret = name;
+
+    auto type = this->type(name);
+    while (type == CType::TypeDef) {
+        auto tdef = type_defs_.value(ret);
+        if (tdef.second) {
+            ret.append('*');
+            break;
+        }
+
+        ret = tdef.first;
+        type = this->type(ret);
+    }
+
+    return ret;
 }
 
 LongMode CTypeParser::longMode() const { return _lmode; }
@@ -794,7 +815,9 @@ CTypeParser::INT_TYPE CTypeParser::constVarValue(const QString &name) const {
 }
 
 QMetaType::Type CTypeParser::metaType(const QString &name) const {
-    if (isBasicType(name)) {
+    if (name.endsWith('*')) {
+        return QMetaType::VoidStar;
+    } else if (isBasicType(name)) {
         return type_maps_.value(name).first;
     } else if (containsConstVar(name)) {
         return QMetaType::LongLong;
@@ -814,6 +837,10 @@ QMetaType::Type CTypeParser::typeMapValue(const QString &name) const {
 }
 
 CTypeParser::CType CTypeParser::resolveType(const QString &name) const {
+    if (name.endsWith('*')) {
+        return CType::Pointer;
+    }
+
     CTypeParser::CType t;
     QString rname = name;
     while (true) {
@@ -833,6 +860,10 @@ CTypeParser::CType CTypeParser::resolveType(const QString &name) const {
 }
 
 CTypeParser::CType CTypeParser::type(const QString &name) const {
+    if (name.endsWith('*')) {
+        return CType::Pointer;
+    }
+
     if (isBasicType(name)) {
         return CType::BasicType;
     }

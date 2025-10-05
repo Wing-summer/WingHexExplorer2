@@ -75,6 +75,7 @@ def main():
     build_path = os.path.abspath(args.folder)
 
     installer_path = os.path.dirname(os.path.abspath(__file__))
+    mkinstaller_path = os.path.abspath(os.path.join(installer_path, ".."))
     projectbase = os.path.abspath(os.path.join(installer_path, "../.."))
     cmake_cache = os.path.join(build_path, "CMakeCache.txt")
 
@@ -155,15 +156,21 @@ def main():
     shutil.copytree(os.path.join(build_path, "lang"),
                     os.path.join(installer_path_exec, "lang"), dirs_exist_ok=True)
 
+    shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
+        installer_path_exec, "lsp"), dirs_exist_ok=True)
+
+    shutil.copyfile(os.path.join(mkinstaller_path, "config.ini"),
+                    os.path.join(installer_path_exec, "config.ini"))
+
     # copying deployment files
     deploy_files = ["qt.conf", "uninstall.sh",
                     "purge.sh", f"{PACKAGE_NAME}.sh"]
     for item in deploy_files:
         shutil.copy2(os.path.join(installer_path, item),
                      os.path.join(installer_path_exec, item))
-        
+
     shutil.copy2(os.path.join(build_path, "WingPlugin", "libWingPlugin.so"),
-                 os.path.join(installer_path_exec, "lib" , "libWingPlugin.so"))
+                 os.path.join(installer_path_exec, "lib", "libWingPlugin.so"))
 
     # finally, copy other files
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
@@ -181,7 +188,7 @@ def main():
     # in the end, start patching
     ld_execs = [filename for filename in os.listdir(os.path.join(
         installer_path_exec, "lib")) if filename.startswith("ld-linux")]
-    
+
     ld_count = len(ld_execs)
     if (ld_count > 1):
         print(
@@ -213,10 +220,11 @@ def main():
 
     print(Fore.GREEN + ">> Deployment finished..." + Style.RESET_ALL)
 
-    if(ld_count == 1):
+    if (ld_count == 1):
         ld_path = os.path.join(installer_path_exec, "lib", ld_exec)
         if (os.access(ld_path, os.X_OK) == False):
-            print(Fore.YELLOW + f"[Warn] {ld_exec} has no executable permission! You should set it for running a deployed program!" + Style.RESET_ALL)
+            print(
+                Fore.YELLOW + f"[Warn] {ld_exec} has no executable permission! You should set it for running a deployed program!" + Style.RESET_ALL)
 
     with open(os.path.join(installer_path_exec, "LD_PATH"), "w") as ld_file:
         ld_file.write(ld_exec)

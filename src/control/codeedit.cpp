@@ -509,3 +509,17 @@ void CodeEdit::contextMenuEvent(QContextMenuEvent *event) {
 
     menu.exec(event->globalPos());
 }
+
+void CodeEdit::mousePressEvent(QMouseEvent *e) {
+    if (isHelpTooltipVisible()) {
+        hideHelpTooltip();
+    }
+    WingCodeEdit::mousePressEvent(e);
+}
+
+void CodeEdit::wheelEvent(QWheelEvent *e) {
+    if (isHelpTooltipVisible()) {
+        hideHelpTooltip();
+    }
+    WingCodeEdit::wheelEvent(e);
+}

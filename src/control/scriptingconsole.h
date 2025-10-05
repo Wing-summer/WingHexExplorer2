@@ -84,8 +84,10 @@ private:
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent *event) override;
-    void handleReturnKey(Qt::KeyboardModifiers mod) override;
-    void keyPressEvent(QKeyEvent *e) override;
+    virtual void handleReturnKey(Qt::KeyboardModifiers mod) override;
+    virtual void keyPressEvent(QKeyEvent *e) override;
+    virtual void mousePressEvent(QMouseEvent *e) override;
+    virtual void wheelEvent(QWheelEvent *e) override;
 
 protected slots:
     virtual void onCompletion(const QModelIndex &index) override;

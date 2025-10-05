@@ -174,10 +174,6 @@ EditorView::EditorView(QWidget *parent)
         // all private slots
         if (m.methodType() == QMetaMethod::Slot &&
             m.access() == QMetaMethod::Private) {
-            if (qstrcmp(m.tag(), "WING_API")) {
-                continue;
-            }
-
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
 

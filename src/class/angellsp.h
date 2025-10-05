@@ -107,9 +107,6 @@ signals:
     void diagnosticsPublished(const QString &url,
                               const QList<LSP::Diagnostics> &diagnostics);
 
-    // other notifications from server
-    void notificationReceived(const QString &method, const QJsonValue &params);
-
     // server process events
     void serverStarted();
     void serverExited();

@@ -171,6 +171,8 @@ public:
     CType resolveType(const QString &name) const;
     std::optional<quint64> getTypeSize(const QString &data_type) const;
 
+    QString resolveTypeName(const QString &name) const;
+
 public:
     void dumpAllTypeDefines(QTextStream &output) const;
 

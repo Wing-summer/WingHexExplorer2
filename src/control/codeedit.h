@@ -54,6 +54,9 @@ protected:
     virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void contextMenuEvent(QContextMenuEvent *event) override;
 
+    virtual void mousePressEvent(QMouseEvent *e) override;
+    virtual void wheelEvent(QWheelEvent *e) override;
+
 private slots:
     void applyEditorSetStyle();
 

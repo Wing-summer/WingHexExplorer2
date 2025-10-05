@@ -97,8 +97,10 @@ void DbgCallStackModel::attachDebugger(asDebugger *debugger) {
             _debugger->disconnect(this, nullptr);
         }
         _debugger = debugger;
-        connect(_debugger, &asDebugger::onPullCallStack, this,
-                [this]() { Q_EMIT layoutChanged(); });
+        if (_debugger) {
+            connect(_debugger, &asDebugger::onPullCallStack, this,
+                    [this]() { Q_EMIT layoutChanged(); });
+        }
         Q_EMIT layoutChanged();
     }
 }

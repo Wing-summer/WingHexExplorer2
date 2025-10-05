@@ -430,6 +430,20 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     }
 }
 
+void ScriptingConsole::mousePressEvent(QMouseEvent *e) {
+    if (isHelpTooltipVisible()) {
+        hideHelpTooltip();
+    }
+    ScriptingConsoleBase::mousePressEvent(e);
+}
+
+void ScriptingConsole::wheelEvent(QWheelEvent *e) {
+    if (isHelpTooltipVisible()) {
+        hideHelpTooltip();
+    }
+    ScriptingConsoleBase::wheelEvent(e);
+}
+
 void ScriptingConsole::onCompletion(const QModelIndex &index) {
     auto completer = this->completer();
     if (completer->widget() != this) {

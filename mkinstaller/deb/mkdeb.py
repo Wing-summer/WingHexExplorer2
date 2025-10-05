@@ -13,6 +13,7 @@ import subprocess
 
 from colorama import Fore, Style
 
+
 def run_command_interactive(command):
     """
     Run a command interactively, printing its stdout in real-time.
@@ -21,8 +22,8 @@ def run_command_interactive(command):
     :return: The return code of the command
     """
     process = subprocess.Popen(
-        command, 
-        stdout=subprocess.PIPE, 
+        command,
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # Capture both stdout and stderr
         text=True  # Ensure the output is in text mode
     )
@@ -32,10 +33,11 @@ def run_command_interactive(command):
         if output == "" and process.poll() is not None:
             break
         if output:
-            print(Fore.GREEN + output.strip() + Style.RESET_ALL) 
+            print(Fore.GREEN + output.strip() + Style.RESET_ALL)
 
     return_code = process.wait()
     return return_code
+
 
 def check_command_exists(command):
     try:
@@ -95,6 +97,7 @@ def main():
     projectdeb = os.path.abspath(args.folder)
 
     buildinstaller = os.path.dirname(os.path.abspath(__file__))
+    mkinstaller = os.path.abspath(os.path.join(buildinstaller, ".."))
     projectbase = os.path.abspath(os.path.join(buildinstaller, "../.."))
 
     if (os.path.exists(os.path.join(projectdeb, "CMakeCache.txt")) == False):
@@ -195,11 +198,17 @@ Homepage: https://www.cnblogs.com/wingsummer/
     shutil.copyfile(os.path.join(buildinstaller, "com.wingsummer.winghexexplorer2.desktop"),
                     os.path.join(desktopPath, "com.wingsummer.winghexexplorer2.desktop"))
 
+    shutil.copyfile(os.path.join(mkinstaller, "config.ini"),
+                    os.path.join(exeBasePath, "config.ini"))
+
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeBasePath, "share"))
 
     shutil.copytree(os.path.join(projectdeb, "lang"),
                     os.path.join(exeBasePath, "lang"))
+
+    shutil.copytree(os.path.join(projectdeb, "lsp"),
+                    os.path.join(exeBasePath, "lsp"))
 
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 
@@ -217,12 +226,14 @@ Homepage: https://www.cnblogs.com/wingsummer/
 
     output_deb_dir = ""
     if args.output is not None:
-        output_deb_dir =  os.path.join(args.output,f"com.wingsummer.winghexexplorer2_{version}_{architecture}.deb") 
+        output_deb_dir = os.path.join(
+            args.output, f"com.wingsummer.winghexexplorer2_{version}_{architecture}.deb")
     else:
-        output_deb_dir =  f"com.wingsummer.winghexexplorer2_{version}_{architecture}.deb" 
+        output_deb_dir = f"com.wingsummer.winghexexplorer2_{version}_{architecture}.deb"
 
-    ret = run_command_interactive(["fakeroot", "dpkg", "-b", exeDebPath, output_deb_dir])
-    
+    ret = run_command_interactive(
+        ["fakeroot", "dpkg", "-b", exeDebPath, output_deb_dir])
+
     exit(ret)
 
 

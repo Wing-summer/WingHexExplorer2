@@ -76,6 +76,7 @@ def main():
     projectdeb = os.path.abspath(args.folder)
 
     buildinstaller = os.path.dirname(os.path.abspath(__file__))
+    mkinstaller = os.path.abspath(os.path.join(buildinstaller, ".."))
     projectbase = os.path.abspath(os.path.join(buildinstaller, "../.."))
 
     cmake_cache = os.path.join(projectdeb, "CMakeCache.txt")
@@ -169,11 +170,17 @@ def main():
                  os.path.join(exeDebPath, "WingPlugin.dll"))
     shutil.copyfile(exeplg_pdb, os.path.join(exeDebPath, "WingPlugin.pdb"))
 
+    shutil.copyfile(os.path.join(mkinstaller, "config.ini"),
+                    os.path.join(exeDebPath, "config.ini"))
+
     shutil.copytree(os.path.join(buildinstaller, "share"),
                     os.path.join(exeDebPath, "share"))
 
     shutil.copytree(os.path.join(projectdeb, "lang"),
                     os.path.join(exeDebPath, "lang"))
+
+    shutil.copytree(os.path.join(projectdeb, "lsp"),
+                    os.path.join(exeDebPath, "lsp"))
 
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
 

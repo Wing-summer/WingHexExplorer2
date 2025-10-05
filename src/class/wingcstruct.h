@@ -31,6 +31,15 @@ class WingCStruct : public WingHex::IWingPlugin {
     Q_INTERFACES(WingHex::IWingPlugin)
 
 private:
+    inline quint64 getShiftAndMaskedPtr(const QByteArray &buffer) {
+        auto buf = Utilities::processEndian(buffer, m_islittle);
+        if (buf.size() == sizeof(quint32)) {
+            return *reinterpret_cast<quint32 *>(buf.data());
+        } else {
+            return *reinterpret_cast<quint64 *>(buf.data());
+        }
+    }
+
     template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
     inline T getShiftAndMasked(const QByteArray &buffer, size_t shift,
                                size_t mask) {
@@ -153,6 +162,9 @@ private:
 
     QVariantHash readStruct(const char *&ptr, const char *end,
                             const QString &type);
+
+    QVariant readContent(const char *&ptr, const char *end,
+                         const VariableDeclaration &m);
 
     bool isValidCStructMetaType(QMetaType::Type type);
     CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);

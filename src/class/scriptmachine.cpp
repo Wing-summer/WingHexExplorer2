@@ -56,75 +56,311 @@
 #include <QProcess>
 #include <QScopeGuard>
 
+namespace {
+class FormatValue {
+public:
+    enum Type { Simple, Object };
+    virtual ~FormatValue() = default;
+    virtual Type type() const = 0;
+    virtual QString rawText() const = 0;
+};
+
+class SimpleValue : public FormatValue {
+public:
+    SimpleValue(const QString &text) : m_text(text.trimmed()) {}
+    Type type() const override { return Simple; }
+    QString rawText() const override { return m_text; }
+
+private:
+    QString m_text;
+};
+
+class ObjectValue : public FormatValue {
+public:
+    Type type() const override { return Object; }
+    QString rawText() const override { return QStringLiteral("{}"); }
+
+    void addPair(const QString &key, QSharedPointer<FormatValue> value) {
+        m_pairs.insert(key, value);
+    }
+
+    const QHash<QString, QSharedPointer<FormatValue>> &pairs() const {
+        return m_pairs;
+    }
+    bool isEmpty() const { return m_pairs.isEmpty(); }
+
+private:
+    QHash<QString, QSharedPointer<FormatValue>> m_pairs;
+};
+
 class StringFormatter {
 public:
-    static QString format(const QString &input, uint indentSize = 4) {
-        QString output;
-        int level = 0;
-        bool inString = false;
-        QChar stringDelim;
-        bool escape = false;
+    static QString format(const QString &input, uint indent) {
+        qsizetype pos = 0;
+        auto result = parseObject(input, pos);
 
-        for (int i = 0; i < input.size(); ++i) {
-            QChar c = input[i];
-
-            if (inString) {
-                output += c;
-                if (escape) {
-                    escape = false;
-                } else if (c == '\\') {
-                    escape = true;
-                } else if (c == stringDelim) {
-                    inString = false;
-                }
-                continue;
-            }
-
-            if (isQuote(c)) {
-                inString = true;
-                stringDelim = c;
-                output += c;
-                continue;
-            }
-
-            switch (c.unicode()) {
-            case '{':
-                output += QStringLiteral("{\n");
-                ++level;
-                output += QString(level * indentSize, ' ');
-                break;
-
-            case '}':
-                output += QStringLiteral("\n");
-                --level;
-                output +=
-                    QString(level * indentSize, ' ') + QStringLiteral("}");
-                break;
-
-            case ',':
-                output +=
-                    QStringLiteral(",\n") + QString(level * indentSize, ' ');
-                break;
-
-            default:
-                if (c.isSpace()) {
-                    // collapse multiple spaces outside strings
-                    if (!output.isEmpty() && !output.endsWith(' ')) {
-                        output += ' ';
-                    }
-                } else {
-                    output += c;
-                }
-                break;
-            }
+        skipWhitespace(input, pos);
+        if (pos < input.length() || !result) {
+            return input;
         }
 
-        return output;
+        if (result->type() == FormatValue::Object) {
+            return formatObject(static_cast<ObjectValue *>(result.data()), 0,
+                                indent);
+        }
+
+        return input;
     }
 
 private:
-    static bool isQuote(QChar c) { return c == '"' || c == '\''; }
+    static QSharedPointer<FormatValue> parseObject(const QString &input,
+                                                   qsizetype &pos) {
+        skipWhitespace(input, pos);
+
+        if (pos >= input.length() || input[pos] != '{') {
+            return nullptr;
+        }
+
+        pos++; // Skip '{'
+        skipWhitespace(input, pos);
+
+        auto object = QSharedPointer<ObjectValue>(new ObjectValue());
+
+        if (pos < input.length() && input[pos] == '}') {
+            pos++;
+            return object;
+        }
+
+        while (pos < input.length()) {
+            skipWhitespace(input, pos);
+
+            // Parse key-value pair
+            QString key = parseKey(input, pos);
+            if (key.isEmpty()) {
+                return nullptr;
+            }
+
+            QSharedPointer<FormatValue> value = parseValue(input, pos);
+            if (!value) {
+                return nullptr;
+            }
+
+            object->addPair(key, value);
+
+            skipWhitespace(input, pos);
+
+            // Check for comma or end
+            if (pos < input.length() && input[pos] == ',') {
+                pos++;
+                skipWhitespace(input, pos);
+                if (pos < input.length() && input[pos] == '}') {
+                    break;
+                }
+            } else if (pos < input.length() && input[pos] == '}') {
+                break;
+            } else if (pos >= input.length()) {
+                return nullptr;
+            }
+        }
+
+        if (pos >= input.length() || input[pos] != '}') {
+            return nullptr;
+        }
+
+        pos++; // Skip '}'
+        return object;
+    }
+
+    static QString parseKey(const QString &input, qsizetype &pos) {
+        skipWhitespace(input, pos);
+
+        if (pos >= input.length() || input[pos] != '[') {
+            return QString();
+        }
+
+        pos++; // Skip '['
+        skipWhitespace(input, pos);
+
+        QString key;
+        while (pos < input.length() && input[pos] != ']') {
+            key += input[pos];
+            pos++;
+        }
+
+        if (pos >= input.length() || input[pos] != ']') {
+            return QString();
+        }
+
+        pos++; // Skip ']'
+        return key.trimmed();
+    }
+
+    static QSharedPointer<FormatValue> parseValue(const QString &input,
+                                                  qsizetype &pos) {
+        skipWhitespace(input, pos);
+
+        // Look for '='
+        if (pos >= input.length() || input[pos] != '=') {
+            return nullptr;
+        }
+
+        pos++; // Skip '='
+        skipWhitespace(input, pos);
+
+        // Check if it's an object
+        if (pos < input.length() && input[pos] == '{') {
+            return parseObject(input, pos);
+        } else {
+            QString simpleValue = parseSimpleValue(input, pos);
+            if (simpleValue.isEmpty()) {
+                return nullptr;
+            }
+            return QSharedPointer<FormatValue>(new SimpleValue(simpleValue));
+        }
+    }
+
+    static QString parseSimpleValue(const QString &input, qsizetype &pos) {
+        qsizetype start = pos;
+        bool inSingleQuote = false;
+        bool inDoubleQuote = false;
+        bool escaped = false;
+        qsizetype bracketDepth = 0;
+        qsizetype parenDepth = 0;
+        qsizetype angleDepth = 0;
+
+        while (pos < input.length()) {
+            QChar c = input[pos];
+
+            if (escaped) {
+                escaped = false;
+                pos++;
+                continue;
+            }
+
+            if (c == '\\') {
+                escaped = true;
+                pos++;
+                continue;
+            }
+
+            if (inSingleQuote) {
+                if (c == '\'') {
+                    inSingleQuote = false;
+                }
+                pos++;
+            } else if (inDoubleQuote) {
+                if (c == '"') {
+                    inDoubleQuote = false;
+                }
+                pos++;
+            } else {
+                if (c == '\'') {
+                    inSingleQuote = true;
+                    pos++;
+                } else if (c == '"') {
+                    inDoubleQuote = true;
+                    pos++;
+                } else if (c == '[') {
+                    bracketDepth++;
+                    pos++;
+                } else if (c == ']') {
+                    if (bracketDepth > 0)
+                        bracketDepth--;
+                    pos++;
+                } else if (c == '(') {
+                    parenDepth++;
+                    pos++;
+                } else if (c == ')') {
+                    if (parenDepth > 0)
+                        parenDepth--;
+                    pos++;
+                } else if (c == '<') {
+                    angleDepth++;
+                    pos++;
+                } else if (c == '>') {
+                    if (angleDepth > 0)
+                        angleDepth--;
+                    pos++;
+                } else if (bracketDepth == 0 && parenDepth == 0 &&
+                           angleDepth == 0) {
+                    if (c == ',' || c == '}') {
+                        break;
+                    } else {
+                        pos++;
+                    }
+                } else {
+                    pos++;
+                }
+            }
+        }
+
+        if (pos == start) {
+            return {};
+        }
+
+        return input.sliced(start, pos - start).trimmed();
+    }
+
+    static QString formatObject(const ObjectValue *object, int indentLevel,
+                                uint indentSize) {
+        if (object->isEmpty()) {
+            return QStringLiteral("{}");
+        }
+
+        QStringList formattedPairs;
+        QString currentIndent = getIndent(indentLevel, indentSize);
+        QString nextIndent = getIndent(indentLevel + 1, indentSize);
+
+        qsizetype maxKeyLength = 0;
+        const auto &pairs = object->pairs();
+        for (auto it = pairs.begin(); it != pairs.end(); ++it) {
+            maxKeyLength = qMax(maxKeyLength, it.key().length() + 2);
+        }
+
+        for (auto it = pairs.begin(); it != pairs.end(); ++it) {
+            QString keyPart = it.key();
+            keyPart.prepend('[').append(']');
+            QString formattedValue;
+
+            if (it.value()->type() == FormatValue::Object) {
+                const ObjectValue *childObject =
+                    static_cast<const ObjectValue *>(it.value().data());
+                formattedValue =
+                    formatObject(childObject, indentLevel + 1, indentSize);
+            } else {
+                formattedValue = formatSimple(
+                    static_cast<const SimpleValue *>(it.value().data()));
+            }
+
+            QString paddedKeyPart = keyPart.leftJustified(maxKeyLength, ' ');
+            formattedPairs.append(nextIndent + paddedKeyPart +
+                                  QStringLiteral(" = ") + formattedValue);
+        }
+
+        return QStringLiteral("{\n") +
+               formattedPairs.join(QStringLiteral(",\n")) + '\n' +
+               currentIndent + '}';
+    }
+
+    static QString formatSimple(const SimpleValue *value) {
+        return value->rawText();
+    }
+
+    static QString getIndent(int level, uint indentSize) {
+        return QString(level * indentSize, ' ');
+    }
+
+    static void skipWhitespace(const QString &input, qsizetype &pos) {
+        while (pos < input.length() && isWhitespace(input[pos])) {
+            pos++;
+        }
+    }
+
+    static bool isWhitespace(QChar c) {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    }
 };
+} // namespace
 
 bool ScriptMachine::init() {
     if (isInited()) {

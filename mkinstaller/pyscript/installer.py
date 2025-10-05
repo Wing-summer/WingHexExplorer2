@@ -71,17 +71,20 @@ def create_dir(dir_path):
 
 def update(build_path):
     if not os.path.exists(INSTALL_PATH):
-        print(Fore.RED + "[Error] The installing path not exists! Please use 'install' instead." + Style.RESET_ALL)
+        print(
+            Fore.RED + "[Error] The installing path not exists! Please use 'install' instead." + Style.RESET_ALL)
         exit(3)
 
     installer_path = os.path.dirname(os.path.abspath(__file__))
+    mkinstaller_path = os.path.abspath(os.path.join(installer_path, ".."))
     project_base = os.path.abspath(os.path.join(installer_path, "../.."))
 
     print(Fore.GREEN + ">> Checking file integrity..." + Style.RESET_ALL)
 
     # 验证构建目录
     if not os.path.isdir(build_path) or not os.path.exists(os.path.join(build_path, "CMakeCache.txt")):
-        print(Fore.RED + "[Error] Not a valid CMake build directory!" + Style.RESET_ALL)
+        print(
+            Fore.RED + "[Error] Not a valid CMake build directory!" + Style.RESET_ALL)
         exit(-1)
 
     # 版本文件检查
@@ -93,7 +96,8 @@ def update(build_path):
     # 可执行文件检查
     exe_src = os.path.join(build_path, PACKAGE_NAME)
     if not os.path.exists(exe_src):
-        print(Fore.RED + f"[Error] {PACKAGE_NAME} executable not found!" + Style.RESET_ALL)
+        print(
+            Fore.RED + f"[Error] {PACKAGE_NAME} executable not found!" + Style.RESET_ALL)
         exit(-3)
 
     # 计算 MD5
@@ -116,10 +120,15 @@ def update(build_path):
                     os.path.join(INSTALL_PATH, "share"), dirs_exist_ok=True)
     shutil.copytree(os.path.join(build_path, "lang"),
                     os.path.join(INSTALL_PATH, "lang"), dirs_exist_ok=True)
+    shutil.copyfile(os.path.join(mkinstaller_path, "config.ini"),
+                    os.path.join(INSTALL_PATH, "config.ini"))
+    shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
+        INSTALL_PATH, "lsp"), dirs_exist_ok=True)
 
     # 其他材料
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
-    material_files = ["LICENSE", "authorband.svg", "licenseband.svg", "screenshot.png", "README.md"]
+    material_files = ["LICENSE", "authorband.svg",
+                      "licenseband.svg", "screenshot.png", "README.md"]
     for f in material_files:
         shutil.copyfile(os.path.join(project_base, f),
                         os.path.join(INSTALL_PATH, f))
@@ -136,7 +145,8 @@ def update(build_path):
 
     # 更新 mime 和图标缓存
     cmds = [
-        ["xdg-mime", "install", os.path.join(INSTALL_PATH, "share", "x-winghex.xml")],
+        ["xdg-mime", "install",
+            os.path.join(INSTALL_PATH, "share", "x-winghex.xml")],
         ["xdg-mime", "default", DESKTOP_FILE_NAME, "application/x-winghex"],
         ["xdg-icon-resource", "install", "--context", "mimetypes", "--size", "32",
          os.path.join(INSTALL_PATH, "share", "winghexpro32.png"), "application-x-winghex"],
@@ -157,7 +167,8 @@ def update(build_path):
 
 def install(build_path):
     if os.path.exists(INSTALL_PATH):
-        print(Fore.RED + "[Error] The installing path exists! Please use 'update' or 'uninstall' first." + Style.RESET_ALL)
+        print(
+            Fore.RED + "[Error] The installing path exists! Please use 'update' or 'uninstall' first." + Style.RESET_ALL)
         exit(3)
     os.makedirs(INSTALL_PATH)
     update(build_path)
@@ -177,10 +188,14 @@ def is_empty(path):
 
 def uninstall():
     cmds = [
-        ["xdg-mime", "uninstall", os.path.join(INSTALL_PATH, "share", "x-winghex.xml")],
-        ["xdg-icon-resource", "uninstall", "--context", "mimetypes", "--size", "32", "application-x-winghex"],
-        ["xdg-icon-resource", "uninstall", "--context", "mimetypes", "--size", "64", "application-x-winghex"],
-        ["xdg-icon-resource", "uninstall", "--context", "mimetypes", "--size", "128", "application-x-winghex"],
+        ["xdg-mime", "uninstall",
+            os.path.join(INSTALL_PATH, "share", "x-winghex.xml")],
+        ["xdg-icon-resource", "uninstall", "--context",
+            "mimetypes", "--size", "32", "application-x-winghex"],
+        ["xdg-icon-resource", "uninstall", "--context",
+            "mimetypes", "--size", "64", "application-x-winghex"],
+        ["xdg-icon-resource", "uninstall", "--context",
+            "mimetypes", "--size", "128", "application-x-winghex"],
         ["update-mime-database", "/usr/share/mime"],
         ["xdg-icon-resource", "forceupdate"],
         ["update-icon-caches", "/usr/share/icons/hicolor"],
@@ -256,14 +271,17 @@ def main():
     INSTALL_PATH = args.install_path
 
     if check_is_running(PACKAGE_NAME):
-        print(Fore.RED + f"[Error] Please exit {PACKAGE_NAME} before installation." + Style.RESET_ALL)
+        print(
+            Fore.RED + f"[Error] Please exit {PACKAGE_NAME} before installation." + Style.RESET_ALL)
         exit(1)
     if not is_root():
-        print(Fore.RED + "[Error] root privilege is required." + Style.RESET_ALL)
+        print(
+            Fore.RED + "[Error] root privilege is required." + Style.RESET_ALL)
         exit(2)
 
     if args.action in ("install", "update") and not args.build:
-        print(Fore.RED + "[Error] --build path is required for install/update." + Style.RESET_ALL)
+        print(
+            Fore.RED + "[Error] --build path is required for install/update." + Style.RESET_ALL)
         exit(2)
 
     if args.action == "install":
@@ -281,4 +299,5 @@ def main():
 if __name__ == "__main__":
     main()
 else:
-    print(Fore.RED + "[Error] Please run this script in main mode" + Style.RESET_ALL)
+    print(
+        Fore.RED + "[Error] Please run this script in main mode" + Style.RESET_ALL)
