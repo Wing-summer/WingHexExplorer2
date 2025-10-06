@@ -2,7 +2,7 @@
 layout: splash
 title: 主页
 header:
-  image: /assets/images/screenshot.png
+  image: /assets/images/header.png
 ---
 
 <h1>
@@ -37,13 +37,42 @@ header:
 - 十六进制视图自由缩放（Ctrl+滚轮），对标题、地址栏和解码字符串栏可以自由显示和隐藏
 - 对常见的数据类型进行实时解码
 - 支持校验和计算
-- 极速查找字节和 ASCII 字符串
+- 极速查找字节和字符串
 - 友好的标注可视化
 - **多选区支持** （按住 <kbd>Shift</kbd> 会增加选区， <kbd>Alt</kbd> 会裁剪选区。在含有多个选区的情况下，不按住任何键拖放的选区会在鼠标释放按键之后消失。按住 <kbd>Ctrl</kbd> 选区会取消原有的选择的内容，同时按住 <kbd>Shift</kbd> 和 <kbd>Alt</kbd> 视为 <kbd>Ctrl</kbd> 的操作）
 - **强大的脚本系统** ，用于批量分析二进制数据（AngelScript）
 - **强大的插件系统** ，实现对软件的较高自由度定制和增强，并提供组件注册和基础的脚本系统函数绑定
-- **内置脚本编辑器** ，提供代码填充和调试功能，并且支持 **ClangFormat** 对代码进行格式化
+- **内置脚本编辑器** ，提供代码填充和调试功能，并且支持代码格式化
 - 内置暗黑和浅色主题
+
+## 功能简介
+
+![软件界面]({{"/assets/images/screenshot.png" | relative_url }}){: .align-center}
+
+功能丰富的软件界面
+{: .text-center}
+
+![控制台]({{"/assets/images/asconsole.png" | relative_url }}){: .align-center}
+
+代码提示和交互式控制台
+{: .text-center}
+
+![脚本开发环境]({{"/assets/images/aside.png" | relative_url }}){: .align-center}
+
+集成的脚本开发环境
+{: .text-center}
+
+![脚本调试]({{"/assets/images/asdebug.png" | relative_url }}){: .align-center}
+
+方便的调试工具
+{: .text-center}
+
+![代码诊断]({{"/assets/images/asdiag.png" | relative_url }}){: .align-center}
+
+即时的代码诊断
+{: .text-center}
+
+> 更多软件功能，敬请等你发现……
 
 ## 发行版下载
 
