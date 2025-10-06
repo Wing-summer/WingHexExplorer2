@@ -15,6 +15,7 @@ makedepends=('git' 'cmake' 'gcc' 'clang' 'qt6-tools' 'qt6-translations' 'nodejs'
 optdepends=('qt6-translations: translations')
 source=("git+$url.git#branch=main")
 sha256sums=('SKIP')
+options=('!strip')
 
 install=winghexexplorer2.install
 
