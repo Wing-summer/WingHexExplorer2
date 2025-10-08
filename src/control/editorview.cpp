@@ -169,7 +169,7 @@ EditorView::EditorView(QWidget *parent)
     // build up call tables
     auto mobj = EditorView::metaObject();
     auto total = mobj->methodCount();
-    for (int i = 0; i < total; ++i) {
+    for (int i = mobj->methodOffset(); i < total; ++i) {
         auto m = mobj->method(i);
         // all private slots
         if (m.methodType() == QMetaMethod::Slot &&

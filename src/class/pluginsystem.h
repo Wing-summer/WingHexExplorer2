@@ -702,8 +702,7 @@ public slots:
                                                 void *ctx);
 
     void __raiseContextException(const QObject *sender,
-                                 const QString &exception,
-                                 bool allowCatch = true);
+                                 const QString &exception, bool allowCatch);
 
 private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,

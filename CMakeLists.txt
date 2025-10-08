@@ -578,14 +578,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     endif()
 endif()
 
-target_compile_options(
-    WingHexExplorer2
-    PRIVATE $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-g>
-            $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:Release>:/Zi>>)
-
-target_link_options(WingHexExplorer2 PRIVATE
-                    $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:Release>:/DEBUG>>)
-
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
@@ -672,22 +664,32 @@ endif()
 target_compile_options(
     WingHexExplorer2
     PRIVATE
-        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-ffunction-sections
+        $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>>:-g1>
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/Z7>
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:
+        -ffunction-sections
         -fdata-sections
         -fvisibility=hidden
-        -fvisibility-inlines-hidden>
-        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-ffunction-sections
+        -fvisibility-inlines-hidden
+        -fno-var-tracking
+        -fno-var-tracking-assignments
+        >
+        $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:
+        -ffunction-sections
         -fdata-sections
         -fvisibility=hidden
-        -fvisibility-inlines-hidden>)
+        -fvisibility-inlines-hidden
+        -fno-var-tracking
+        >)
 
 target_link_options(
     WingHexExplorer2
     PRIVATE
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/DEBUG
+    /OPT:REF
+    /OPT:ICF>
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Wl,--gc-sections>
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>
-    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:MSVC>>:/OPT:REF
-    /OPT:ICF>)
+    $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
 
 if(ANGEL_LSP)
     set(NODE_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp/server")
