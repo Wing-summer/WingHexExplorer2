@@ -32,7 +32,7 @@ public:
 
 protected:
     virtual QList<CodeInfoTip> parseMarcos() override;
-    virtual LspEditorInterace *getEditor() override;
+    virtual LspEditorInterace *getEditor() const override;
 
 private:
     LspEditorInterace *_console;

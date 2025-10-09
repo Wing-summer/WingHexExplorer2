@@ -136,9 +136,10 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 
     QString curOutLine;
     QVector<LineSegmentMap> curSegments;
+
     auto flushCurrLine = [&]() {
         outText += curOutLine;
-        outText += "\n";
+        outText += '\n';
         OutputLineMap olm;
         olm.outLineNumber = ++outLineCounter;
         qint64 running = 1;
@@ -168,34 +169,32 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         }
         curOutLine.append(ch);
     };
-    auto appendSourceRange = [&](const char *p, qint64 len,
-                                 const QString &file) {
-        for (qint64 i = 0; i < len; ++i) {
-            char c = p[i];
-            if (c == '\n') {
+    auto appendSourceRange = [&](const QString &text, const QString &file) {
+        for (int i = 0; i < text.size(); ++i) {
+            QChar ch = text.at(i);
+            if (ch == QChar('\n')) {
                 flushCurrLine();
                 ++srcLine;
                 srcCol = 1;
                 lineHasSignificantToken = false;
             } else {
-                appendCharMapped(QChar::fromLatin1(c), file, srcLine, srcCol);
-                ++srcCol;
+                appendCharMapped(ch, file, srcLine, srcCol);
+                srcCol += 1;
             }
         }
     };
     auto appendReplacementFromOrigin = [&](const QString &rep,
                                            const QString &file, int fileLine,
                                            int fileCol) {
-        QByteArray ba = rep.toUtf8();
-        for (int i = 0; i < ba.size(); ++i) {
-            char c = ba[i];
-            if (c == '\n') {
+        for (int i = 0; i < rep.size(); ++i) {
+            QChar ch = rep.at(i);
+            if (ch == QChar('\n')) {
                 flushCurrLine();
                 ++fileLine;
                 fileCol = 1;
             } else {
-                appendCharMapped(QChar::fromLatin1(c), file, fileLine, fileCol);
-                ++fileCol;
+                appendCharMapped(ch, file, fileLine, fileCol);
+                fileCol += 1;
             }
         }
     };
@@ -683,18 +682,19 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             continue;
         }
 
+        auto tokenText = QString::fromUtf8(tokStart, tlen);
         // active branch: emit tokens, expanding macros and builtins
         if (tokClass == asTC_WHITESPACE) {
-            for (qsizetype i = 0; i < tlen; ++i) {
-                char c = tokStart[i];
-                if (c == '\n') {
+            auto total = tokenText.size();
+            for (qsizetype i = 0; i < total; ++i) {
+                QChar ch = tokenText.at(i);
+                if (ch == QChar('\n')) {
                     flushCurrLine();
                     ++srcLine;
                     srcCol = 1;
                     lineHasSignificantToken = false;
                 } else {
-                    appendCharMapped(QChar::fromLatin1(c), sourceName, srcLine,
-                                     srcCol);
+                    appendCharMapped(ch, sourceName, srcLine, srcCol);
                     ++srcCol;
                 }
             }
@@ -702,23 +702,22 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             continue;
         }
         if (tokClass == asTC_COMMENT) {
-            appendSourceRange(tokStart, tlen, sourceName);
+            appendSourceRange(tokenText, sourceName);
             idx += tlen;
             lineHasSignificantToken = true;
             continue;
         }
         if (tokClass == asTC_VALUE) {
-            appendSourceRange(tokStart, tlen, sourceName);
+            appendSourceRange(tokenText, sourceName);
             idx += tlen;
             lineHasSignificantToken = true;
             continue;
         }
         if (tokClass == asTC_IDENTIFIER || tokClass == asTC_KEYWORD) {
-            auto ident = QString::fromUtf8(tokStart, tlen);
             // builtin macros first
-            if (m_builtinMacros.contains(ident)) {
+            if (m_builtinMacros.contains(tokenText)) {
                 SourcePos sp{sourceName, srcLine, srcCol};
-                QString rep = m_builtinMacros[ident](sp);
+                QString rep = m_builtinMacros[tokenText](sp);
                 appendReplacementFromOrigin(rep, sourceName, srcLine, srcCol);
                 for (int k = 0; k < tlen; ++k) {
                     if (tokStart[k] == '\n') {
@@ -733,9 +732,10 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 continue;
             }
             // host macro
-            if (m_runtimeMacros.contains(ident)) {
+            if (m_runtimeMacros.contains(tokenText)) {
                 QStringList visited;
-                expandMacroInCode(ident, sourceName, srcLine, srcCol, visited);
+                expandMacroInCode(tokenText, sourceName, srcLine, srcCol,
+                                  visited);
                 for (int k = 0; k < tlen; ++k) {
                     if (tokStart[k] == '\n') {
                         ++srcLine;
@@ -749,14 +749,14 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 continue;
             }
             // normal identifier
-            appendSourceRange(tokStart, tlen, sourceName);
+            appendSourceRange(tokenText, sourceName);
             idx += tlen;
             lineHasSignificantToken = true;
             continue;
         }
 
         // fallback: emit as-is
-        appendSourceRange(tokStart, tlen, sourceName);
+        appendSourceRange(tokenText, sourceName);
         idx += tlen;
         lineHasSignificantToken = true;
     } // main loop
@@ -921,7 +921,7 @@ AsPreprocesser::Result AsPreprocesser::preprocess(const QByteArray &source,
                                                   const QString &sourceName) {
     Result res;
     res.checksum = Utilities::getMd5(source);
-    res.source = source;
+    res.source = QString::fromUtf8(source);
     processBuffer(source, sourceName, QFileInfo(sourceName).absolutePath(),
                   res.script, res.mapping);
     return res;

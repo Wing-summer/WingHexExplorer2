@@ -47,24 +47,54 @@ QIcon CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind type) {
     return q_icon_cache->value(type);
 }
 
-void CodeInfoTip::resolve() {
-    if (!comment.isEmpty() && !completion.isEmpty()) {
+QString CodeInfoTip::comment() const {
+    if (_comment.isEmpty()) {
+        resolve();
+    }
+    return _comment;
+}
+
+QString CodeInfoTip::completion() const {
+    if (_completion.isEmpty()) {
+        resolve();
+    }
+    return _completion;
+}
+
+void CodeInfoTip::setComment(const QString &comment) { _comment = comment; }
+
+bool CodeInfoTip::isSnippet() const { return _isSnippet; }
+
+void CodeInfoTip::resolve() const {
+    if (!_comment.isEmpty() && !_completion.isEmpty()) {
         return;
     }
 
     if (value.isNull()) {
-        comment = name;
-        completion = name;
+        _comment = name;
+        _completion = name;
         return;
     }
 
     auto &lsp = AngelLsp::instance();
     auto v = lsp.requestResolve(value);
-    if (comment.isEmpty()) {
-        comment = v["detail"].toString();
+    auto label = v["label"].toString();
+
+    if (_comment.isEmpty()) {
+        _comment = v["detail"].toString();
+
+        if (_comment.isEmpty()) {
+            _comment = label;
+        }
     }
 
-    if (completion.isEmpty()) {
-        completion = v["insertText"].toString();
+    if (_completion.isEmpty()) {
+        _completion = v["insertText"].toString();
+        if (_completion.isEmpty()) {
+            _completion = label;
+        }
     }
+
+    _isSnippet =
+        v["insertTextFormat"].toInt() == int(LSP::InsertTextFormat::Snippet);
 }

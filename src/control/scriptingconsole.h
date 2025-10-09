@@ -46,6 +46,7 @@ public:
     void setIsTerminal(bool newIsTerminal);
 
 public:
+    virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
     virtual CursorPos currentPosition() const override;

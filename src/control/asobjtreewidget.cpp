@@ -70,7 +70,7 @@ void ASObjTreeWidget::setEngine(asIScriptEngine *engine) {
 QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
                                                 QTreeWidgetItem *parent) {
     Q_ASSERT(parent);
-    QStringList contents{node.name, node.comment};
+    QStringList contents{node.name, node.comment()};
     auto c = new QTreeWidgetItem(contents);
     c->setToolTip(0, contents.at(0));
     c->setToolTip(1, contents.at(1));
@@ -128,7 +128,7 @@ void ASObjTreeWidget::addGlobalFunctionCompletion(
         auto ns = fn->GetNamespace();
         fnInfo.name = fn->GetName();
         fnInfo.type = LSP::CompletionItemKind::Function;
-        fnInfo.comment = fn->GetDeclaration(true, true, true);
+        fnInfo.setComment(fn->GetDeclaration(true, true, true));
         c[ns].append(fnInfo);
     }
 }
@@ -153,7 +153,7 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
             CodeInfoTip en;
             en.type = LSP::CompletionItemKind::EnumMember;
             en.name = QString::fromLatin1(e);
-            en.comment = en.name + QStringLiteral(" = ") + QString::number(v);
+            en.setComment(en.name + QStringLiteral(" = ") + QString::number(v));
             einfo.children.append(en);
         }
 
@@ -187,7 +187,7 @@ void ASObjTreeWidget::addClassCompletion(
                 CodeInfoTip fn;
                 fn.type = LSP::CompletionItemKind::Function;
                 fn.name = getFnRealName(b);
-                fn.comment = b->GetDeclaration(true, true, true);
+                fn.setComment(b->GetDeclaration(true, true, true));
                 cls.children.append(fn);
                 b->Release();
             }
@@ -203,7 +203,7 @@ void ASObjTreeWidget::addClassCompletion(
             CodeInfoTip fn;
             fn.type = LSP::CompletionItemKind::Function;
             fn.name = getFnRealName(m);
-            fn.comment = m->GetDeclaration(true, true, true);
+            fn.setComment(m->GetDeclaration(true, true, true));
             cls.children.append(fn);
             m->Release();
         }
@@ -229,7 +229,7 @@ void ASObjTreeWidget::addClassCompletion(
                 prefix = QStringLiteral("(public) ");
             }
 
-            pi.comment = prefix + type + QChar(' ') + pi.name;
+            pi.setComment(prefix + type + QChar(' ') + pi.name);
             cls.children.append(pi);
         }
 

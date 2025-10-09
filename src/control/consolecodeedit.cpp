@@ -89,6 +89,8 @@ ConsoleCodeEdit::~ConsoleCodeEdit() {
     AngelLsp::instance().closeDocument(lspURL());
 }
 
+const WingCodeEdit *ConsoleCodeEdit::editorPtr() const { return this; }
+
 QString ConsoleCodeEdit::lspFileNameURL() const { return lspURL(); }
 
 bool ConsoleCodeEdit::isContentLspUpdated() const { return _ok; }

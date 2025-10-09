@@ -254,8 +254,9 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
         : ((id.modifiers & asTM_INOUTREF) == asTM_INREF)  ? "&in"
         : ((id.modifiers & asTM_INOUTREF) == asTM_OUTREF) ? "&out"
                                                           : "");
-    type_names.emplace(id, std::move(name));
-    return name;
+
+    type_names.emplace(id, name);
+    return type_names.at(id);
 }
 
 void *asIDBCache::ResolvePropertyAddress(const asIDBVarAddr &id,

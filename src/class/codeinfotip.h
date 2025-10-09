@@ -33,14 +33,24 @@ public:
 public:
     QString name;
     LSP::CompletionItemKind type = LSP::CompletionItemKind::Missing;
-    QString comment;
-    QString completion;
 
     QJsonValue value;
     QList<CodeInfoTip> children;
 
 public:
-    void resolve();
+    QString comment() const;
+    QString completion() const;
+
+    void setComment(const QString &comment);
+    bool isSnippet() const;
+
+private:
+    mutable QString _comment;
+    mutable QString _completion;
+    mutable bool _isSnippet = false;
+
+public:
+    void resolve() const;
 };
 
 Q_DECLARE_METATYPE(CodeInfoTip);

@@ -21,6 +21,7 @@
 #include <QString>
 #include <QTextCursor>
 
+#include "WingCodeEdit/wingcodeedit.h"
 #include "WingCodeEdit/wingsignaturetooltip.h"
 
 class LspEditorInterace {
@@ -31,6 +32,8 @@ public:
     };
 
 public:
+    virtual const WingCodeEdit *editorPtr() const = 0;
+
     virtual QString lspFileNameURL() const = 0;
     virtual bool isContentLspUpdated() const = 0;
     virtual CursorPos currentPosition() const = 0;

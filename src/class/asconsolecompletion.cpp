@@ -44,4 +44,4 @@ QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
     return marcos;
 }
 
-LspEditorInterace *AsConsoleCompletion::getEditor() { return _console; }
+LspEditorInterace *AsConsoleCompletion::getEditor() const { return _console; }

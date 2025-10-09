@@ -125,7 +125,9 @@ void asDebugger::removeFileBreakPoint(const QString &file, int lineNbr) {
                               [lineNbr](const asIDBBreakpoint &bp) {
                                   return bp.line == lineNbr;
                               });
-        bps.erase(r);
+        if (r != bps.end()) {
+            bps.erase(r);
+        }
     }
 }
 

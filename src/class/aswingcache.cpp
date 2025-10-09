@@ -63,12 +63,13 @@ asWingCache::GetEvaluator(const asIDBVarAddr &id) const {
             // fetch the base type, see if we have a
             // evaluator for that one
             auto baseType = ctx->GetEngine()->GetTypeInfoByName(name.c_str());
-
-            if (auto f = _evaluators.find(
-                    baseType->GetTypeId() &
-                    (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR));
-                f != _evaluators.end()) {
-                return *f->second;
+            if (baseType) {
+                if (auto f = _evaluators.find(
+                        baseType->GetTypeId() &
+                        (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR));
+                    f != _evaluators.end()) {
+                    return *f->second;
+                }
             }
         } else {
             static const asIDBCustomTypeEvaluator uninitType(d._customEvals);

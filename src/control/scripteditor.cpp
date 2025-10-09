@@ -85,6 +85,8 @@ ScriptEditor::~ScriptEditor() {
 
 QString ScriptEditor::fileName() const { return m_editor->windowFilePath(); }
 
+const WingCodeEdit *ScriptEditor::editorPtr() const { return m_editor; }
+
 QString ScriptEditor::lspFileNameURL() const {
     return Utilities::getUrlString(fileName());
 }

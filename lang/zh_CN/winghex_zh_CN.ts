@@ -3005,33 +3005,33 @@
         <translation>多行代码粘贴后将不能修改</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="843"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="845"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="846"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="848"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="851"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="853"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="856"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="877"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="858"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="862"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="864"/>
         <source>MutiConsole</source>
         <translation>多行控制台</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="870"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
         <source>AbortScript</source>
         <translation>终止脚本</translation>
     </message>

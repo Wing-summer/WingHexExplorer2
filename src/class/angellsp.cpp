@@ -592,7 +592,6 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
     if (msg.contains("method") && msg.contains("id")) {
         QString method = msg["method"].toString();
         int id = msg["id"].toInt();
-        auto params = msg.value("params");
 
         // Implement standard minimal replies the server expects
         if (method == QStringLiteral("client/registerCapability")) {
@@ -609,7 +608,7 @@ void AngelLsp::handleIncomingMessage(const QJsonObject &msg) {
 
             QJsonObject o;
 
-            o["suppressAnalyzerErrors"] = false;
+            o["suppressAnalyzerErrors"] = true;
             o["includePath"] = QJsonArray();
             o["implicitMutualInclusion"] = false;
             o["hoistEnumParentScope"] = false;

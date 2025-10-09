@@ -384,6 +384,8 @@ set(CLASS_SRC
     src/class/aswingcache.h
     src/class/aswingcache.cpp
     src/class/lspeditorinterface.h
+    src/class/stringrangedetect.h
+    src/class/stringrangedetect.cpp
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 

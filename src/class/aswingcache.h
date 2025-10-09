@@ -38,7 +38,9 @@ private:
     // of T from the given type name.
     template <typename T>
     void registerEvaluator(asIScriptEngine *engine, const char *name) {
-        registerEvaluator(engine->GetTypeIdByDecl(name), std::make_unique<T>());
+        auto info = engine->GetTypeInfoByName(name);
+        assert(info);
+        registerEvaluator(info->GetTypeId(), std::make_unique<T>());
     }
 
     // _evaluators don't take up much memory so we'll just

@@ -3005,33 +3005,33 @@
         <translation>Multiple lines of code cannot be modified after pasting.</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="843"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="845"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="846"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="848"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="851"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="853"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="856"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="877"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="858"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
         <source>Clear</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="862"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="864"/>
         <source>MutiConsole</source>
         <translation>Multi-line Console</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="870"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
         <source>AbortScript</source>
         <translation>Terminate script</translation>
     </message>
