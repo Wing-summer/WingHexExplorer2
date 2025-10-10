@@ -78,6 +78,9 @@ private:
 
     bool increaseVersion();
 
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     CodeEdit *m_editor = nullptr;
     quint64 version = 1;

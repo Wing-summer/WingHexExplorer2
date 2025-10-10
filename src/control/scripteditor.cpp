@@ -56,6 +56,7 @@ ScriptEditor::ScriptEditor(QWidget *parent)
         }
         sendDocChange();
     });
+    m_editor->installEventFilter(this);
 
     auto cm = new AsCompletion(m_editor);
     cm->setParent(m_editor);
@@ -103,6 +104,7 @@ bool ScriptEditor::openFile(const QString &filename) {
     m_editor->blockSignals(true); // don't triiger textChanged()
     m_editor->setPlainText(txt);
     m_editor->blockSignals(false);
+    m_editor->zoomReset();
     f.close();
 
     auto oldFileName = this->fileName();
@@ -301,7 +303,8 @@ bool ScriptEditor::formatCode() {
         return block.position() + qMin(loc.character, block.length() - 1);
     };
 
-    for (const QJsonValue &v : r.toArray()) {
+    for (auto &&vj : r.toArray()) {
+        QJsonValue v = vj;
         auto range = AngelLsp::readLSPDocRange(v.toObject());
         TextEdit edit;
         edit.start = calculatePosition(document, range.start);
@@ -326,4 +329,37 @@ bool ScriptEditor::formatCode() {
     cursor.endEditBlock();
 
     return true;
+}
+
+bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == m_editor) {
+        if (event->type() == QEvent::KeyPress) {
+            auto e = static_cast<QKeyEvent *>(event);
+            if (e->modifiers() == Qt::NoModifier && e->key() == Qt::Key_Comma) {
+                auto &lsp = AngelLsp::instance();
+                auto url = lspFileNameURL();
+                auto tc = currentPosition();
+                auto line = tc.blockNumber;
+                auto character = tc.positionInBlock;
+
+                sendDocChange();
+                while (isContentLspUpdated()) {
+                    // wait for a moment
+                }
+
+                auto r = lsp.requestSignatureHelp(url, line, character);
+                auto sigs = r["signatures"].toArray();
+                QList<WingSignatureTooltip::Signature> ss;
+                for (auto &&sig : sigs) {
+                    QJsonValue js = sig;
+                    WingSignatureTooltip::Signature s;
+                    s.label = js["label"].toString();
+                    s.doc = js["documentation"].toString();
+                    ss.append(s);
+                }
+                showFunctionTip(ss);
+            }
+        }
+    }
+    return ads::CDockWidget::eventFilter(watched, event);
 }

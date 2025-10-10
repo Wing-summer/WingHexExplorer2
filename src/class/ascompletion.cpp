@@ -20,7 +20,6 @@
 #include "class/angellsp.h"
 #include "model/codecompletionmodel.h"
 #include "wingcodeedit.h"
-#include "wingsyntaxhighlighter.h"
 
 #include <KSyntaxHighlighting/Format>
 

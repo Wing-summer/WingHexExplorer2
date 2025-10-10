@@ -309,13 +309,13 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                                  tr("AngelLspExited"));
                 });
             } else {
-                QTimer::singleShot(1000, [this]() {
+                QTimer::singleShot(1000, this, [this]() {
                     Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
                                  tr("AngelLspInitFailed"));
                 });
             }
         } else {
-            QTimer::singleShot(1000, [this]() {
+            QTimer::singleShot(1000, this, [this]() {
                 Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
                              tr("AngelLspStartFailed"));
             });
@@ -1133,8 +1133,8 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
             if (mod == nullptr) {
                 return;
             }
-
             auto globals = std::make_shared<asIDBVariable>(*m.debugger());
+            globals->ptr = globals;
 
             // copy from asIDBCache
             auto typeNameFromType = [](const asIDBTypeId &id) -> std::string {
@@ -1206,7 +1206,8 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                 return name;
             };
 
-            for (asUINT n = 0; n < mod->GetGlobalVarCount(); n++) {
+            auto total = mod->GetGlobalVarCount();
+            for (asUINT n = 0; n < total; n++) {
                 const char *name;
                 const char *nameSpace;
                 int typeId;
@@ -1226,18 +1227,17 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                                  name),
                     idKey, viewType);
             }
-
-            for (asUINT n = 0; n < mod->GetEngine()->GetGlobalPropertyCount();
-                 n++) {
+            auto engine = mod->GetEngine();
+            total = engine->GetGlobalPropertyCount();
+            for (asUINT n = 0; n < total; n++) {
                 const char *name;
                 const char *nameSpace;
                 int typeId;
                 void *ptr;
                 bool isConst;
 
-                mod->GetEngine()->GetGlobalPropertyByIndex(
-                    n, &name, &nameSpace, &typeId, &isConst, nullptr, &ptr);
-
+                engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId,
+                                                 &isConst, nullptr, &ptr);
                 asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
                 const auto viewType = typeNameFromType(typeKey);
 

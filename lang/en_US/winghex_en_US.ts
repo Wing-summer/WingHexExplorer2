@@ -2965,73 +2965,73 @@
 <context>
     <name>ScriptingConsole</name>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="78"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="79"/>
         <source>ConsoleMutiLine</source>
         <translation>Console - Multi-line Input</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="216"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="217"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="227"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="228"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="238"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="239"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="338"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="339"/>
         <source>InvalidDelCmd</source>
         <translation>Invalid delete command</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="353"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="354"/>
         <source>NotFoundIgnore:</source>
         <translation>Variable not found, ignored:</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="422"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="423"/>
         <source>[Console]</source>
         <translation>[Console]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="641"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="670"/>
         <source>MultiCodeCanNotUndo</source>
         <translation>Multiple lines of code cannot be modified after pasting.</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="845"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="875"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="848"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="878"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="853"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="883"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="858"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="888"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="909"/>
         <source>Clear</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="864"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="894"/>
         <source>MutiConsole</source>
         <translation>Multi-line Console</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="902"/>
         <source>AbortScript</source>
         <translation>Terminate script</translation>
     </message>
@@ -3793,18 +3793,18 @@
         <translation>A internal plugin that provides AngelScript scripts with the ability to call the host API.</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1312"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1238"/>
         <source>NotSupportedQMetaType:</source>
         <translation>Unsupported QT metadata types:</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1769"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1853"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1695"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1779"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>Get Exception While ScriptCall: (%1) %2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1795"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1721"/>
         <source>InvalidRetType: need </source>
         <translation>Invalid return value: Required </translation>
     </message>

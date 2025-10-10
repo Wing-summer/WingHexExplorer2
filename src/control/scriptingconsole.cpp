@@ -32,6 +32,7 @@
 #include <QClipboard>
 #include <QColor>
 #include <QIcon>
+#include <QJsonArray>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMimeData>
@@ -425,6 +426,34 @@ QString ScriptingConsole::packUpLoggingStr(const QString &message) {
 void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_L) {
         clearConsole();
+    } else if (e->modifiers() == Qt::NoModifier) {
+        QConsoleWidget::keyPressEvent(e);
+        auto key = e->key();
+        if (key == Qt::Key_Comma) {
+            auto &lsp = AngelLsp::instance();
+            auto url = lspFileNameURL();
+            auto tc = currentPosition();
+            auto line = tc.blockNumber;
+            auto character = tc.positionInBlock;
+
+            while (isContentLspUpdated()) {
+                // wait for a moment
+            }
+
+            auto r = lsp.requestSignatureHelp(url, line, character);
+            auto sigs = r["signatures"].toArray();
+            QList<WingSignatureTooltip::Signature> ss;
+            for (auto &&sig : sigs) {
+                QJsonValue js = sig;
+                WingSignatureTooltip::Signature s;
+                s.label = js["label"].toString();
+                s.doc = js["documentation"].toString();
+                ss.append(s);
+            }
+            showFunctionTip(ss);
+        } else if (key == Qt::Key_Semicolon) {
+            hideHelpTooltip();
+        }
     } else {
         QConsoleWidget::keyPressEvent(e);
     }
@@ -680,7 +709,8 @@ void ScriptingConsole::sendDocChange() {
         auto url = lspURL();
         auto txt = currentCodes();
         txt.prepend(QStringLiteral("void f(){\n"))
-            .append(QStringLiteral("\n}"));
+            .append(QStringLiteral("\n}"))
+            .append(ScriptMachine::instance().getGlobalDecls());
 
         // test overflow
         if (increaseVersion()) {

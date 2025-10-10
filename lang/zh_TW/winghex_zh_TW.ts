@@ -2965,73 +2965,73 @@
 <context>
     <name>ScriptingConsole</name>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="78"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="79"/>
         <source>ConsoleMutiLine</source>
         <translation>控制臺-多行輸入</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="216"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="217"/>
         <source>[Info]</source>
         <translation>【資訊】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="227"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="228"/>
         <source>[Warn]</source>
         <translation>【警告】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="238"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="239"/>
         <source>[Error]</source>
         <translation>【錯誤】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="338"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="339"/>
         <source>InvalidDelCmd</source>
         <translation>無效刪除指令</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="353"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="354"/>
         <source>NotFoundIgnore:</source>
         <translation>變數未找到，忽略：</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="422"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="423"/>
         <source>[Console]</source>
         <translation>【控制臺】</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="641"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="670"/>
         <source>MultiCodeCanNotUndo</source>
         <translation>多行代碼粘貼後將不能修改</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="845"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="875"/>
         <source>Copy</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="848"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="878"/>
         <source>Cut</source>
         <translation>剪切</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="853"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="883"/>
         <source>Paste</source>
         <translation>粘貼</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="858"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="888"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="909"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="864"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="894"/>
         <source>MutiConsole</source>
         <translation>多行控制臺</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="902"/>
         <source>AbortScript</source>
         <translation>終止腳本</translation>
     </message>
@@ -3793,18 +3793,18 @@
         <translation>為 AngelScript 腳本提供調用主機 API 能力的內部插件。</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1312"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1238"/>
         <source>NotSupportedQMetaType:</source>
         <translation>不支持的 QT 數據元類型：</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1769"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1853"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1695"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1779"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>腳本調用發生異常：（%1）%2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1795"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1721"/>
         <source>InvalidRetType: need </source>
         <translation>無效返回值：需要 </translation>
     </message>

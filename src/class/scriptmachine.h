@@ -88,7 +88,7 @@ private:
     bool isModuleExists(ConsoleMode mode);
 
 public:
-    asIScriptModule *module(ConsoleMode mode);
+    asIScriptModule *module(ConsoleMode mode) const;
 
     static ScriptMachine &instance();
     void destoryMachine();
@@ -115,6 +115,9 @@ public:
     asIScriptEngine *engine() const;
 
     void outputMessage(const MessageInfo &info);
+
+    QString getTypeNameWithNs(int typeId) const;
+    QString getGlobalDecls() const;
 
 public:
     static void scriptAssert(bool b);
@@ -207,6 +210,7 @@ private:
 
     qint64 lineOffset = 0;
     qint64 colOffset = 0;
+    mutable QString _cachedGlobalStrs;
 
 private:
     void checkDebugger(asIScriptContext *ctx);

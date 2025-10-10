@@ -417,10 +417,6 @@ bool ScriptMachine::configureEngine() {
     _engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE,
                                true); // enum class like
 
-    // We will only initialize the global variables once we're
-    // ready to execute, so disable the automatic initialization
-    _engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-
     // The script compiler will send any compiler messages to the callback
     auto r = _engine->SetMessageCallback(asFUNCTION(messageCallback), this,
                                          asCALL_CDECL);
@@ -654,6 +650,105 @@ void ScriptMachine::outputMessage(const MessageInfo &info) {
     }
 }
 
+QString ScriptMachine::getTypeNameWithNs(int typeId) const {
+    auto type = _engine->GetTypeInfoById(typeId);
+    QString name;
+
+    if (!type) {
+        // a primitive
+        switch (typeId & asTYPEID_MASK_SEQNBR) {
+        case asTYPEID_BOOL:
+            name = QStringLiteral("bool");
+            break;
+        case asTYPEID_INT8:
+            name = QStringLiteral("int8");
+            break;
+        case asTYPEID_INT16:
+            name = QStringLiteral("int16");
+            break;
+        case asTYPEID_INT32:
+            name = QStringLiteral("int32");
+            break;
+        case asTYPEID_INT64:
+            name = QStringLiteral("int64");
+            break;
+        case asTYPEID_UINT8:
+            name = QStringLiteral("uint8");
+            break;
+        case asTYPEID_UINT16:
+            name = QStringLiteral("uint16");
+            break;
+        case asTYPEID_UINT32:
+            name = QStringLiteral("uint32");
+            break;
+        case asTYPEID_UINT64:
+            name = QStringLiteral("uint64");
+            break;
+        case asTYPEID_FLOAT:
+            name = QStringLiteral("float");
+            break;
+        case asTYPEID_DOUBLE:
+            name = QStringLiteral("double");
+            break;
+        default:
+            break;
+        }
+    } else {
+        auto ns = type->GetNamespace();
+        if (ns && strlen(ns)) {
+            name =
+                QString::fromUtf8(ns) + QStringLiteral("::") + type->GetName();
+        } else {
+            name = type->GetName();
+        }
+    }
+
+    return name;
+}
+
+QString ScriptMachine::getGlobalDecls() const {
+    if (!_cachedGlobalStrs.isEmpty()) {
+        return _cachedGlobalStrs;
+    }
+
+    auto mod = module(ScriptMachine::Interactive);
+    if (mod == nullptr) {
+        return {};
+    }
+
+    auto total = mod->GetGlobalVarCount();
+    for (asUINT n = 0; n < total; n++) {
+        const char *name;
+        const char *nameSpace;
+        int typeId;
+        bool isConst;
+
+        mod->GetGlobalVar(n, &name, &nameSpace, &typeId, &isConst);
+        const auto viewType = getTypeNameWithNs(typeId);
+        if (isConst) {
+            _cachedGlobalStrs.append(QStringLiteral("const "));
+        }
+        _cachedGlobalStrs.append(viewType).append(' ').append(name).append(';');
+    }
+    total = _engine->GetGlobalPropertyCount();
+    for (asUINT n = 0; n < total; n++) {
+        const char *name;
+        const char *nameSpace;
+        int typeId;
+        bool isConst;
+
+        _engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId,
+                                          &isConst);
+        const auto viewType = getTypeNameWithNs(typeId);
+        if (isConst) {
+            _cachedGlobalStrs.append(QStringLiteral("const "));
+        }
+        _cachedGlobalStrs.append(viewType).append(' ').append(name).append(';');
+    }
+
+    return _cachedGlobalStrs;
+}
+
 int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
                                  const QString &params, int timeout) {
     if (Utilities::isRoot()) {
@@ -830,21 +925,6 @@ bool ScriptMachine::executeScript(
         info.message = QStringLiteral("Debugging, waiting for commands.");
         info.type = MessageType::Info;
         outputMessage(info);
-    }
-
-    // Once we have the main function, we first need to initialize the
-    // global variables Since we've set up the request context callback we
-    // will be able to debug the initialization without passing in a
-    // pre-created context
-    r = mod->ResetGlobalVars(0);
-    if (r < 0) {
-        MessageInfo info;
-        info.mode = mode;
-        info.message =
-            QStringLiteral("Failed while initializing global variables");
-        info.type = MessageType::Error;
-        outputMessage(info);
-        return false;
     }
 
     // Set up a context to execute the script
@@ -1190,7 +1270,7 @@ asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
     return mod;
 }
 
-asIScriptModule *ScriptMachine::module(ConsoleMode mode) {
+asIScriptModule *ScriptMachine::module(ConsoleMode mode) const {
     switch (mode) {
     case Interactive:
         return _engine->GetModule("WINGCONSOLE", asGM_ONLY_IF_EXISTS);
@@ -1616,14 +1696,8 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                 outputMessage(info);
             }
         }
-
-        if (mod->ResetGlobalVars() < 0) {
-            MessageInfo info;
-            info.mode = mode;
-            info.message = QStringLiteral("GlobalBadDecl");
-            info.type = MessageType::Error;
-            outputMessage(info);
-            return false;
+        if (mode == ScriptMachine::Interactive) {
+            _cachedGlobalStrs.clear();
         }
     }
 

@@ -18,6 +18,9 @@
 #include "consolecodeedit.h"
 #include "class/angellsp.h"
 #include "class/asconsolecompletion.h"
+#include "class/scriptmachine.h"
+
+#include <QJsonArray>
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Repository>
@@ -99,7 +102,9 @@ void ConsoleCodeEdit::sendDocChange() {
     auto &lsp = AngelLsp::instance();
     auto url = lspURL();
     auto txt = toPlainText();
-    txt.prepend(QStringLiteral("void f(){\n")).append(QStringLiteral("\n}"));
+    txt.prepend(QStringLiteral("void f(){\n"))
+        .append(QStringLiteral("\n}"))
+        .append(ScriptMachine::instance().getGlobalDecls());
 
     // test overflow
     if (increaseVersion()) {
@@ -120,10 +125,38 @@ void ConsoleCodeEdit::showFunctionTip(
 
 void ConsoleCodeEdit::clearFunctionTip() { hideHelpTooltip(); }
 
+void ConsoleCodeEdit::keyPressEvent(QKeyEvent *event) {
+    if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_Comma) {
+        auto &lsp = AngelLsp::instance();
+        auto url = lspFileNameURL();
+        auto tc = currentPosition();
+        auto line = tc.blockNumber;
+        auto character = tc.positionInBlock;
+
+        sendDocChange();
+        while (isContentLspUpdated()) {
+            // wait for a moment
+        }
+
+        auto r = lsp.requestSignatureHelp(url, line, character);
+        auto sigs = r["signatures"].toArray();
+        QList<WingSignatureTooltip::Signature> ss;
+        for (auto &&sig : sigs) {
+            QJsonValue js = sig;
+            WingSignatureTooltip::Signature s;
+            s.label = js["label"].toString();
+            s.doc = js["documentation"].toString();
+            ss.append(s);
+        }
+        showFunctionTip(ss);
+    }
+    CodeEdit::keyPressEvent(event);
+}
+
 LspEditorInterace::CursorPos ConsoleCodeEdit::currentPosition() const {
     auto cursor = textCursor();
     LspEditorInterace::CursorPos pos;
-    pos.blockNumber = cursor.blockNumber();
+    pos.blockNumber = cursor.blockNumber() + 1;
     pos.positionInBlock = cursor.positionInBlock();
     return pos;
 }
