@@ -10,11 +10,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_VERSION "2.3.0")
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Network Concurrent
-                                              PrintSupport Xml LinguistTools)
-find_package(
-    Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network Concurrent
-                                              PrintSupport Xml LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
+                                     Xml LinguistTools)
+
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
+    set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
+    set(QT_NO_PRIVATE_MODULE_WARNING ON)
+    find_package(Qt6 REQUIRED GuiPrivate)
+endif()
 
 message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 
@@ -57,21 +60,15 @@ endif()
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
                 -DAPP_ORG="WingCloudStudio" -DAPP_NAME="${PROJECT_NAME}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WINGHEX_VERSION" ${PROJECT_VERSION})
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" ${QT_VERSION_MAJOR})
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QT_VERSION" "6")
 
 if(WIN32)
-    find_package(QT NAMES Qt6 Qt5 REQUIRED AxContainer)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED AxContainer)
+    find_package(Qt6 REQUIRED AxContainer)
     add_definitions(-DNOMINMAX)
 endif()
 
-if(${QT_VERSION_MAJOR} EQUAL 6)
-    if(Qt6Widgets_VERSION VERSION_LESS 6.6.2)
-        message(FATAL_ERROR "Minimum supported Qt6 version is 6.6.2!")
-    endif()
-else()
-    message(
-        FATAL_ERROR "Qt${QT_VERSION_MAJOR} has been dropped and not supported!")
+if(Qt6_VERSION VERSION_LESS 6.6.2)
+    message(FATAL_ERROR "Minimum supported Qt6 version is 6.6.2!")
 endif()
 
 if(MSVC)
@@ -565,30 +562,27 @@ add_custom_target(
         "${CMAKE_CURRENT_BINARY_DIR}/scripts"
         "${CMAKE_CURRENT_BINARY_DIR}/.tmp")
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    if(WIN32)
-        set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
-        find_package(Qt6 REQUIRED COMPONENTS Core)
+if(WIN32)
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/favicon.rc")
+    find_package(Qt6 REQUIRED COMPONENTS Core)
 
-        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
-                          ${PROJECT_SOURCES} ${app_icon_resource_windows})
+    qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES}
+                      ${app_icon_resource_windows})
 
-        target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Core)
-    else()
-        qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION
-                          ${PROJECT_SOURCES})
-    endif()
+    target_link_libraries(WingHexExplorer2 PRIVATE Qt6::Core)
+else()
+    qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES})
 endif()
 
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
-            Qt${QT_VERSION_MAJOR}::Network
-            Qt${QT_VERSION_MAJOR}::Concurrent
-            Qt${QT_VERSION_MAJOR}::PrintSupport
-            Qt${QT_VERSION_MAJOR}::GuiPrivate
-            Qt${QT_VERSION_MAJOR}::CorePrivate
-            Qt${QT_VERSION_MAJOR}::Xml
+    PRIVATE Qt6::Widgets
+            Qt6::Network
+            Qt6::Concurrent
+            Qt6::PrintSupport
+            Qt6::GuiPrivate
+            Qt6::CorePrivate
+            Qt6::Xml
             cpptrace::cpptrace
             QtSingleApplication::QtSingleApplication
             WingPlugin
@@ -597,15 +591,14 @@ target_link_libraries(
             angelscript
             fmt::fmt
             antlr4_static
-            qtadvanceddocking-qt${QT_VERSION_MAJOR})
+            qtadvanceddocking-qt6)
 
 if(WINGHEX_USE_FRAMELESS)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QWKCore QWKWidgets)
 endif()
 
 if(WIN32)
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-                          PRIVATE Qt${QT_VERSION_MAJOR}::AxContainer)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::AxContainer)
 endif()
 
 # emit marco in Qt conflicts with antlr4-cpp
@@ -615,13 +608,6 @@ target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"
                                   "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1. If
-# you are developing for iOS or macOS you should consider setting an explicit,
-# fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER
-                         com.wingsummer.WingHexExplorer2)
-endif()
 set_target_properties(
     WingHexExplorer2
     PROPERTIES ${BUNDLE_ID_OPTION} MACOSX_BUNDLE_BUNDLE_VERSION
@@ -630,28 +616,22 @@ set_target_properties(
                TRUE WIN32_EXECUTABLE
                TRUE)
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(WingHexExplorer2)
-endif()
+qt_finalize_executable(WingHexExplorer2)
 
 add_dependencies(WingHexExplorer2 post_build_tasks build-time-make-directory)
 
-if(${QT_VERSION_MAJOR} EQUAL 6)
-    if(Qt6Widgets_VERSION VERSION_GREATER_EQUAL 6.5.0)
-        install(
-            TARGETS WingHexExplorer2
-            BUNDLE DESTINATION .
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(
+    TARGETS WingHexExplorer2
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-        # Generate the deployment script.
-        qt6_generate_deploy_app_script(
-            TARGET WingHexExplorer2 OUTPUT_SCRIPT deploy_script
-            NO_UNSUPPORTED_PLATFORM_ERROR)
+# Generate the deployment script.
+qt6_generate_deploy_app_script(TARGET WingHexExplorer2 OUTPUT_SCRIPT
+                               deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 
-        # Call the deployment script on "cmake --install".
-        install(SCRIPT ${deploy_script})
-    endif()
-endif()
+# Call the deployment script on "cmake --install".
+install(SCRIPT ${deploy_script})
+
 add_subdirectory(WingPlugin)
 
 include(CheckIPOSupported)

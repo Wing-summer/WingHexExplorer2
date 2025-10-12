@@ -1771,8 +1771,11 @@ void WingAngelAPI::script_unsafe_call(asIScriptGeneric *gen) {
         gen->SetReturnFloat(std::get<float>(ret));
     } else if (std::holds_alternative<double>(ret)) {
         gen->SetReturnFloat(std::get<double>(ret));
-    } else if (std::holds_alternative<void *>(ret)) {
-        gen->SetReturnAddress(std::get<void *>(ret));
+    } else if (std::holds_alternative<WingHex::RefObjPtr>(ret)) {
+        gen->SetReturnObject(std::get<WingHex::RefObjPtr>(ret));
+    } else if (std::holds_alternative<WingHex::ValueObjPtr>(ret)) {
+        auto v = std::get<WingHex::ValueObjPtr>(ret);
+        gen->SetReturnObject(v->data());
     } else if (std::holds_alternative<WingHex::ScriptCallError>(ret)) {
         auto ctx = asGetActiveContext();
         auto err = std::get<WingHex::ScriptCallError>(ret);

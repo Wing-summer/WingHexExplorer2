@@ -109,6 +109,41 @@ public:
     virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
 
 private:
+    struct CINT_TYPE {
+    public:
+        CINT_TYPE(qint64 v)
+            : d(CTypeParser::INT_TYPE(std::in_place_type_t<qint64>(), v)) {}
+        CINT_TYPE(quint64 v)
+            : d(CTypeParser::INT_TYPE(std::in_place_type_t<quint64>(), v)) {}
+        CINT_TYPE(CTypeParser::INT_TYPE v) : d(v) {}
+        ~CINT_TYPE() = default;
+
+    public:
+        bool isInt() const { return std::holds_alternative<qint64>(d); }
+
+        bool isUInt() const { return std::holds_alternative<quint64>(d); }
+
+        qint64 toInt() const {
+            if (isInt()) {
+                return std::get<qint64>(d);
+            } else {
+                return qint64(std::get<quint64>(d));
+            }
+        }
+
+        quint64 toUInt() const {
+            if (isUInt()) {
+                return std::get<quint64>(d);
+            } else {
+                return quint64(std::get<qint64>(d));
+            }
+        }
+
+    public:
+        CTypeParser::INT_TYPE d;
+    };
+
+private:
     // basic
     WING_SERVICE bool parseFromSource(const QString &header);
     WING_SERVICE bool parse(const QString &fileName);
@@ -208,6 +243,7 @@ private:
 
     WingHex::UNSAFE_RET constVarValueInt(const QList<void *> &params);
     WingHex::UNSAFE_RET constVarValueUInt(const QList<void *> &params);
+    WingHex::UNSAFE_RET constVarValue(const QList<void *> &params);
 
     WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);

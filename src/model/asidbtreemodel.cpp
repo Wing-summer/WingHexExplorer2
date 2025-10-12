@@ -17,6 +17,8 @@
 
 #include "asidbtreemodel.h"
 
+#include <QColor>
+
 AsIDBTreeModel::AsIDBTreeModel(QObject *parent) : QAbstractItemModel(parent) {}
 
 void AsIDBTreeModel::setRoot(const asIDBVariable::Ptr &r) {
@@ -313,6 +315,8 @@ QVariant AsIDBTreeModel::data(const QModelIndex &index, int role) const {
         break;
     case Qt::UserRole:
         return getVariableIdentifier(index);
+    case Qt::DecorationRole:
+        break;
     default:
         return {};
     }
@@ -321,29 +325,49 @@ QVariant AsIDBTreeModel::data(const QModelIndex &index, int role) const {
     if (!ip) {
         return {};
     }
-    if (isProxy(ip)) {
-        ProxyNode *p = decodeProxy(ip);
-        if (!p || !p->owner) {
+
+    if (role == Qt::DisplayRole) {
+        if (isProxy(ip)) {
+            ProxyNode *p = decodeProxy(ip);
+            if (!p || !p->owner) {
+                return {};
+            }
+            if (index.column() == 0) {
+                return QStringLiteral("Load more...");
+            } else {
+                return {};
+            }
+        }
+        asIDBVariable *v = decodeVar(ip);
+        auto vp = getPtrFromRaw(v);
+        if (!vp) {
             return {};
         }
         if (index.column() == 0) {
-            return QStringLiteral("Load more...");
-        } else {
-            return {};
+            return QString::fromStdString(vp->identifier.Combine());
         }
-    }
-    asIDBVariable *v = decodeVar(ip);
-    auto vp = getPtrFromRaw(v);
-    if (!vp) {
+        if (!vp->evaluated) {
+            const_cast<asIDBVariable *>(vp.get())->Evaluate();
+        }
+        return QString::fromStdString(vp->value);
+    } else {
+        if (!isProxy(ip)) {
+            asIDBVariable *v = decodeVar(ip);
+            auto vp = getPtrFromRaw(v);
+            if (!vp) {
+                return {};
+            }
+
+            if (index.column() == 1) {
+                // color type
+                if (vp->typeName == "color") {
+                    const QColor *s = vp->address.ResolveAs<const QColor>();
+                    return *s;
+                }
+            }
+        }
         return {};
     }
-    if (index.column() == 0) {
-        return QString::fromStdString(vp->identifier.Combine());
-    }
-    if (!vp->evaluated) {
-        const_cast<asIDBVariable *>(vp.get())->Evaluate();
-    }
-    return QString::fromStdString(vp->value);
 }
 
 Qt::ItemFlags AsIDBTreeModel::flags(const QModelIndex &idx) const {

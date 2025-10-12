@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(QHexView LANGUAGES CXX)
 
 find_package(
-    Qt${QT_VERSION_MAJOR}
+    Qt6
     COMPONENTS Widgets Gui Concurrent
     REQUIRED)
 

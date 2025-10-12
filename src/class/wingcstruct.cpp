@@ -367,6 +367,71 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                       &WingCStruct::constVarValueUInt),
                   this, std::placeholders::_1));
 
+    o->registerObjectType("int_type", sizeof(CINT_TYPE),
+                          asOBJ_VALUE | WingHex::asGetTypeTraits<CINT_TYPE>());
+    o->registerObjectBehaviour(
+        "int_type", WingHex::IWingAngel::asBehaviours::asBEHAVE_CONSTRUCT,
+        "void f(int64 v)",
+        asWINGFUNCTIONPR(
+            [](void *memory, qint64 v) { new (memory) CINT_TYPE(v); },
+            (void *, qint64), void),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+    o->registerObjectBehaviour(
+        "int_type", WingHex::IWingAngel::asBehaviours::asBEHAVE_CONSTRUCT,
+        "void f(const int_type &in)",
+        asWINGFUNCTIONPR(
+            [](CINT_TYPE *self, const CINT_TYPE &other) {
+                new (self) CINT_TYPE(other);
+            },
+            (CINT_TYPE *, const CINT_TYPE &), void),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+    o->registerObjectBehaviour(
+        "int_type", WingHex::IWingAngel::asBehaviours::asBEHAVE_CONSTRUCT,
+        "void f(uint64 v)",
+        asWINGFUNCTIONPR(
+            [](void *memory, quint64 v) { new (memory) CINT_TYPE(v); },
+            (void *, quint64), void),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+    o->registerObjectBehaviour(
+        "int_type", WingHex::IWingAngel::asBehaviours::asBEHAVE_DESTRUCT,
+        "void f()",
+        asWINGFUNCTIONPR([](CINT_TYPE *memory) { memory->~CINT_TYPE(); },
+                         (CINT_TYPE *), void),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_CDECL_OBJFIRST);
+    o->registerObjectMethod(
+        "int_type", "bool isInt() const", asWINGMETHOD(CINT_TYPE, isInt),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "int_type", "bool isUInt() const", asWINGMETHOD(CINT_TYPE, isUInt),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "int_type", "int64 toInt() const", asWINGMETHOD(CINT_TYPE, toInt),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "int_type", "uint64 toUInt() const", asWINGMETHOD(CINT_TYPE, toUInt),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL);
+
+    o->registerObjectEvaluator(
+        "int_type",
+        [](void *result, WingHex::IWingAngel::EvalMode mode)
+            -> WingHex::IWingAngel::EvaluateResult {
+            auto v = static_cast<CINT_TYPE *>(result);
+            WingHex::IWingAngel::EvalResult r;
+            if (v->isInt()) {
+                r.value = QString::number(v->toInt());
+            } else {
+                r.value = QString::number(v->toUInt());
+            }
+            r.expandable = false;
+            return r;
+        });
+    o->registerGlobalFunction(
+        QStringLiteral(
+            "WingCStruct::int_type constVarValue(const string &in type)"),
+        std::bind(
+            QOverload<const QList<void *> &>::of(&WingCStruct::constVarValue),
+            this, std::placeholders::_1));
+
     // nested dictionary is not supported, so unsafe registering will help
     o->registerGlobalFunction(
         QStringLiteral("dictionary@ read(") + getqsizeTypeAsString() +
@@ -1289,7 +1354,7 @@ WingHex::UNSAFE_RET WingCStruct::constVarValueInt(const QList<void *> &params) {
 
     auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(0));
     auto ok = WingHex::resolveUnsafeParamAsOut<bool>(params.at(1));
-    return quint64(constVarValueInt(type, ok));
+    return WingHex::makeUnsafeRet(constVarValueInt(type, ok));
 }
 
 WingHex::UNSAFE_RET
@@ -1303,6 +1368,15 @@ WingCStruct::constVarValueUInt(const QList<void *> &params) {
     return constVarValueUInt(type, ok);
 }
 
+WingHex::UNSAFE_RET WingCStruct::constVarValue(const QList<void *> &params) {
+    if (params.size() != 1) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(0));
+    auto v = _parser->constVarValue(type);
+    return WingHex::makeValueObject<CINT_TYPE>(v);
+}
+
 WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     if (params.size() != 2) {
         return generateScriptCallError(-1, tr("InvalidParamsCount"));
@@ -1312,7 +1386,7 @@ WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
 
     auto ret = read(offset, type);
-    return static_cast<void *>(convert2AsDictionary(ret));
+    return WingHex::makeRefObjPtr(convert2AsDictionary(ret));
 }
 
 QVariant WingCStruct::readRaw(const QVariantList &params) {

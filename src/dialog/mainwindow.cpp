@@ -262,7 +262,9 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                 msg.message = tr("EngineConfigError");
                 m_scriptConsole->onOutput(msg);
 
-                m_scriptConsole->setEnabled(false);
+                m_scriptConsole->setReadOnly(true);
+                m_scriptConsole->verticalScrollBar()->setValue(0);
+                m_scriptConsole->horizontalScrollBar()->setValue(0);
 
                 // configure error, so disable all script feature
                 m_ribbonMaps[WingHex::WingRibbonCatagories::SCRIPT]->setEnabled(
@@ -291,6 +293,32 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
                 m_scriptConsole->initOutput();
                 m_scriptConsole->setMode(QConsoleWidget::Input);
+
+                auto &lsp = AngelLsp::instance();
+                if (lsp.start()) {
+                    auto ret = lsp.initializeSync();
+                    if (!ret.isNull()) {
+                        lsp.initialized();
+                        connect(&lsp, &AngelLsp::serverExited, this, [this]() {
+                            Toast::toast(
+                                this, NAMEICONRES(QStringLiteral("angellsp")),
+                                tr("AngelLspExited"));
+                        });
+                    } else {
+                        QTimer::singleShot(1000, this, [this]() {
+                            Toast::toast(
+                                this, NAMEICONRES(QStringLiteral("angellsp")),
+                                tr("AngelLspInitFailed"));
+                        });
+                    }
+                } else {
+                    QTimer::singleShot(1000, this, [this]() {
+                        Toast::toast(this,
+                                     NAMEICONRES(QStringLiteral("angellsp")),
+                                     tr("AngelLspStartFailed"));
+                    });
+                }
+                m_scriptConsole->enableLSP();
             }
         } else {
             WingMessageBox::critical(this, qAppName(),
@@ -298,29 +326,6 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
             set.setScriptEnabled(false);
             throw CrashCode::ScriptInitFailed;
         }
-
-        auto &lsp = AngelLsp::instance();
-        if (lsp.start()) {
-            auto ret = lsp.initializeSync();
-            if (!ret.isNull()) {
-                lsp.initialized();
-                connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
-                                 tr("AngelLspExited"));
-                });
-            } else {
-                QTimer::singleShot(1000, this, [this]() {
-                    Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
-                                 tr("AngelLspInitFailed"));
-                });
-            }
-        } else {
-            QTimer::singleShot(1000, this, [this]() {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("angellsp")),
-                             tr("AngelLspStartFailed"));
-            });
-        }
-        m_scriptConsole->enableLSP();
     }
 
     // connect settings signals
