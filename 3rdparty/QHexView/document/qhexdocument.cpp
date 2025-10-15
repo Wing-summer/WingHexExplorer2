@@ -20,6 +20,7 @@
 */
 
 #include "qhexdocument.h"
+#include "commands/baseaddrcommand.h"
 #include "commands/bookmark/bookmarkaddcommand.h"
 #include "commands/bookmark/bookmarkclearcommand.h"
 #include "commands/bookmark/bookmarkremovecommand.h"
@@ -289,6 +290,29 @@ bool QHexDocument::ClearBookMark() {
     return true;
 }
 
+bool QHexDocument::SetBaseAddress(quintptr addr) {
+    auto cmd = MakeSetBaseAddr(nullptr, addr);
+    if (cmd) {
+        m_undostack->push(cmd);
+    }
+    return true;
+}
+
+bool QHexDocument::isBaseAddrCmdModified() const {
+    if (m_undostack->isClean()) {
+        return true;
+    }
+    auto end = m_undostack->index();
+    auto start = m_undostack->cleanIndex() + 1;
+    for (int i = start; i <= end; ++i) {
+        auto cmd = m_undostack->command(i);
+        if (cmd->id() == UndoCommandBase::UndoID_SetBaseAddr) {
+            return true;
+        }
+    }
+    return false;
+}
+
 QUndoCommand *QHexDocument::MakeAddBookMark(QUndoCommand *parent, qsizetype pos,
                                             QString comment) {
     if (pos < length()) {
@@ -319,6 +343,11 @@ QUndoCommand *QHexDocument::MakeClearBookMark(QUndoCommand *parent) {
         return nullptr;
     }
     return new BookMarkClearCommand(this, _bookmarks, parent);
+}
+
+QUndoCommand *QHexDocument::MakeSetBaseAddr(QUndoCommand *parent,
+                                            quintptr addr) {
+    return new BaseAddrCommand(this, m_baseaddress, addr, parent);
 }
 
 bool QHexDocument::addBookMark(qsizetype pos, QString comment) {

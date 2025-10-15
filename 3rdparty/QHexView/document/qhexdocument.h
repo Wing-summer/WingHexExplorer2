@@ -71,6 +71,9 @@ public:
     bool RemoveBookMarks(const QList<qsizetype> &pos);
     bool ModBookMark(qsizetype pos, const QString &comment);
     bool ClearBookMark();
+    bool SetBaseAddress(quintptr addr);
+
+    bool isBaseAddrCmdModified() const;
 
     QUndoCommand *MakeAddBookMark(QUndoCommand *parent, qsizetype pos,
                                   QString comment);
@@ -78,6 +81,7 @@ public:
     QUndoCommand *MakeModBookMark(QUndoCommand *parent, qsizetype pos,
                                   QString comment);
     QUndoCommand *MakeClearBookMark(QUndoCommand *parent);
+    QUndoCommand *MakeSetBaseAddr(QUndoCommand *parent, quintptr addr);
 
     //----------------------------------
 

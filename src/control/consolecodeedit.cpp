@@ -104,7 +104,7 @@ void ConsoleCodeEdit::sendDocChange() {
     auto txt = toPlainText();
     txt.prepend(QStringLiteral("void f(){\n"))
         .append(QStringLiteral("\n}"))
-        .append(ScriptMachine::instance().getGlobalDecls());
+        .prepend(ScriptMachine::instance().getGlobalDecls());
 
     // test overflow
     if (increaseVersion()) {

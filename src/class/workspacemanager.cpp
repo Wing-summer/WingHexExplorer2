@@ -57,13 +57,12 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                                 infos.base = nbase;
                         }
 
-                        auto maxbytes =
-                            QFileInfo(file).size(); // 简单排除非法标记
+                        auto maxbytes = QFileInfo(file).size();
 
                         values = jobj.value("metas");
                         if (!values.isUndefined() && values.isArray()) {
                             auto metaitems = values.toArray();
-                            for (auto item : metaitems) {
+                            for (auto &&item : metaitems) {
                                 auto linem = item.toObject();
                                 auto begin = linem.value("begin");
                                 auto end = linem.value("end");
@@ -106,7 +105,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                         values = jobj.value("bookmarks");
                         if (!values.isUndefined() && values.isArray()) {
                             auto array = values.toArray();
-                            for (auto item : array) {
+                            for (auto &&item : array) {
                                 if (!item.isUndefined() && item.isObject()) {
                                     auto sitem = item.toObject();
                                     auto pos = sitem.value("pos");
@@ -129,7 +128,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                         values = jobj.value("plugindata");
                         if (!values.isUndefined() && values.isArray()) {
                             auto array = values.toArray();
-                            for (auto item : array) {
+                            for (auto &&item : array) {
                                 if (!item.isUndefined() && item.isObject()) {
                                     auto sitem = item.toObject();
                                     auto plgobj = sitem.value("key");

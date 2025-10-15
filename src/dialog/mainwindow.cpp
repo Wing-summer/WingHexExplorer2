@@ -2486,7 +2486,7 @@ void MainWindow::on_fill() {
                 return;
 
             auto total = hexeditor->selectionCount();
-            doc->beginMarco(QStringLiteral("FillBytes"));
+            doc->beginMarco(QStringLiteral("[H*?G] {cnt: %1}").arg(total));
             for (int i = 0; i < total; ++i) {
                 auto cursor = hexeditor->cursor();
                 auto pos = cursor->selectionStart(i).offset();
@@ -2512,7 +2512,7 @@ void MainWindow::on_fillzero() {
 
     auto cur = hexeditor->cursor();
     auto total = cur->selectionCount();
-    doc->beginMarco(QStringLiteral("FillZero"));
+    doc->beginMarco(QStringLiteral("[H*0G] {cnt: %1}").arg(total));
     for (int i = 0; i < total; ++i) {
         auto pos = cur->selectionStart(i).offset();
         hexeditor->Replace(pos, QByteArray(cur->selectionLength(i), char(0)));
@@ -2558,15 +2558,15 @@ void MainWindow::on_bookmarkdel() {
     auto cursor = hexeditor->cursor();
     if (cursor->hasSelection()) {
         QList<qsizetype> rmOff;
-
         auto total = cursor->selectionCount();
+        rmOff.reserve(total);
         for (int i = 0; i < total; ++i) {
             rmOff.append(doc->bookMarkRange(cursor->selectionStart(i).offset(),
                                             cursor->selectionEnd(i).offset()));
         }
 
         if (!rmOff.isEmpty()) {
-            doc->beginMarco(QStringLiteral("BookMarkRmRange"));
+            doc->beginMarco(QStringLiteral("[B-G] {cnt: %1}").arg(total));
             for (auto &pos : rmOff) {
                 doc->RemoveBookMark(pos);
             }
@@ -2612,7 +2612,7 @@ void MainWindow::on_metadata() {
             if (m.exec()) {
                 auto total = cur->selectionCount();
                 auto meta = doc->metadata();
-                meta->beginMarco(QStringLiteral("MetaData"));
+                meta->beginMarco(QStringLiteral("[M+G] {cnt: %1}").arg(total));
                 for (int i = 0; i < total; ++i) {
                     auto begin = cur->selectionStart(i).offset();
                     auto end = cur->selectionEnd(i).offset();

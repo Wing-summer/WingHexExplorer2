@@ -101,7 +101,7 @@ void QHexView::setHeaderVisible(bool b) {
 quintptr QHexView::addressBase() { return m_document->baseAddress(); }
 
 void QHexView::setAddressBase(quintptr base) {
-    m_document->setBaseAddress(base);
+    m_document->SetBaseAddress(base);
 }
 
 bool QHexView::isSaved() { return m_document->isDocSaved(); }
@@ -368,7 +368,8 @@ bool QHexView::RemoveSelection(int nibbleindex) {
         return true;
 
     auto total = m_cursor->selectionCount();
-    m_document->beginMarco(QStringLiteral("RemoveSelection"));
+    auto msg = QStringLiteral("[H-G] {cnt: %1}").arg(total);
+    m_document->beginMarco(msg);
     for (int i = 0; i < total; ++i) {
         auto res =
             m_document->Remove(m_cursor, m_cursor->selectionStart(i).offset(),

@@ -650,62 +650,6 @@ void ScriptMachine::outputMessage(const MessageInfo &info) {
     }
 }
 
-QString ScriptMachine::getTypeNameWithNs(int typeId) const {
-    auto type = _engine->GetTypeInfoById(typeId);
-    QString name;
-
-    if (!type) {
-        // a primitive
-        switch (typeId & asTYPEID_MASK_SEQNBR) {
-        case asTYPEID_BOOL:
-            name = QStringLiteral("bool");
-            break;
-        case asTYPEID_INT8:
-            name = QStringLiteral("int8");
-            break;
-        case asTYPEID_INT16:
-            name = QStringLiteral("int16");
-            break;
-        case asTYPEID_INT32:
-            name = QStringLiteral("int32");
-            break;
-        case asTYPEID_INT64:
-            name = QStringLiteral("int64");
-            break;
-        case asTYPEID_UINT8:
-            name = QStringLiteral("uint8");
-            break;
-        case asTYPEID_UINT16:
-            name = QStringLiteral("uint16");
-            break;
-        case asTYPEID_UINT32:
-            name = QStringLiteral("uint32");
-            break;
-        case asTYPEID_UINT64:
-            name = QStringLiteral("uint64");
-            break;
-        case asTYPEID_FLOAT:
-            name = QStringLiteral("float");
-            break;
-        case asTYPEID_DOUBLE:
-            name = QStringLiteral("double");
-            break;
-        default:
-            break;
-        }
-    } else {
-        auto ns = type->GetNamespace();
-        if (ns && strlen(ns)) {
-            name =
-                QString::fromUtf8(ns) + QStringLiteral("::") + type->GetName();
-        } else {
-            name = type->GetName();
-        }
-    }
-
-    return name;
-}
-
 QString ScriptMachine::getGlobalDecls() const {
     if (!_cachedGlobalStrs.isEmpty()) {
         return _cachedGlobalStrs;
@@ -718,34 +662,9 @@ QString ScriptMachine::getGlobalDecls() const {
 
     auto total = mod->GetGlobalVarCount();
     for (asUINT n = 0; n < total; n++) {
-        const char *name;
-        const char *nameSpace;
-        int typeId;
-        bool isConst;
-
-        mod->GetGlobalVar(n, &name, &nameSpace, &typeId, &isConst);
-        const auto viewType = getTypeNameWithNs(typeId);
-        if (isConst) {
-            _cachedGlobalStrs.append(QStringLiteral("const "));
-        }
-        _cachedGlobalStrs.append(viewType).append(' ').append(name).append(';');
+        auto decl = mod->GetGlobalVarDeclaration(n, true);
+        _cachedGlobalStrs.append(decl).append(';');
     }
-    total = _engine->GetGlobalPropertyCount();
-    for (asUINT n = 0; n < total; n++) {
-        const char *name;
-        const char *nameSpace;
-        int typeId;
-        bool isConst;
-
-        _engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId,
-                                          &isConst);
-        const auto viewType = getTypeNameWithNs(typeId);
-        if (isConst) {
-            _cachedGlobalStrs.append(QStringLiteral("const "));
-        }
-        _cachedGlobalStrs.append(viewType).append(' ').append(name).append(';');
-    }
-
     return _cachedGlobalStrs;
 }
 

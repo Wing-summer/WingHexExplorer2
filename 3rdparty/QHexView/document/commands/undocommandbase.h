@@ -46,6 +46,7 @@
 class UndoCommandBase : public QUndoCommand {
 public:
     enum UndoCommandID {         // UndoCmdID
+        UndoID_SetBaseAddr,      // A
         UndoID_BookMarkAdd,      // B+
         UndoID_BookMarkClear,    // B~
         UndoID_BookMarkRemove,   // B-

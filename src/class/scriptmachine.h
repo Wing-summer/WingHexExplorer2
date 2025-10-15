@@ -116,7 +116,6 @@ public:
 
     void outputMessage(const MessageInfo &info);
 
-    QString getTypeNameWithNs(int typeId) const;
     QString getGlobalDecls() const;
 
 public:

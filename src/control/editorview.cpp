@@ -853,7 +853,8 @@ qsizetype EditorView::findAvailCloneIndex() {
 
 bool EditorView::hasMeta() const {
     auto doc = m_hex->document();
-    return doc->metadata()->hasMetadata() || doc->bookMarksCount() > 0;
+    return doc->metadata()->hasMetadata() || doc->bookMarksCount() > 0 ||
+           doc->isBaseAddrCmdModified();
 }
 
 QHash<QString, QByteArray> EditorView::savePluginData() {

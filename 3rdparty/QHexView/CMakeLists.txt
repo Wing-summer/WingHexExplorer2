@@ -51,6 +51,8 @@ add_library(
     document/commands/bookmark/bookmarkremovecommand.h
     document/commands/bookmark/bookmarkreplacecommand.cpp
     document/commands/bookmark/bookmarkreplacecommand.h
+    document/commands/baseaddrcommand.cpp
+    document/commands/baseaddrcommand.h
     document/commands/undocommandbase.h
     document/commands/undocommandbase.cpp
     document/qhexcursor.cpp
