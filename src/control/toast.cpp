@@ -47,6 +47,7 @@ Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
 void Toast::toast(QWidget *parent, const QPixmap &icon,
                   const QString &strContent, int fontPointSize,
                   int nToastInterval) {
+    Q_ASSERT(parent);
     static Toast *toast = nullptr;
 
     if (toast) {
@@ -112,6 +113,8 @@ void Toast::init() {
 
     m_drawFont.setPointSize(20);
     setToastPos(TOAST_POS::BOTTOM);
+    auto w = _parent->width();
+    setMaximumWidth(w * 2 / 3);
 }
 
 void Toast::setToastPos(TOAST_POS pos) {

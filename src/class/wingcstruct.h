@@ -43,40 +43,43 @@ private:
     template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
     inline T getShiftAndMasked(const QByteArray &buffer, size_t shift,
                                size_t mask) {
-        auto buf = Utilities::processEndian(buffer, m_islittle);
         if constexpr (std::is_integral_v<T>) {
             auto len = buffer.size();
-            Q_ASSERT(len >= sizeof(quint8));
+            if (buffer.isEmpty()) {
+                return T();
+            }
 
             if (len >= sizeof(quint64)) {
-                auto r = *reinterpret_cast<const quint64 *>(buf.constData());
+                auto r = *reinterpret_cast<const quint64 *>(buffer.constData());
                 r >>= shift;
                 r &= mask;
                 return T(r);
             }
 
             if (len >= sizeof(quint32)) {
-                auto r = *reinterpret_cast<const quint32 *>(buf.constData());
+                auto r = *reinterpret_cast<const quint32 *>(buffer.constData());
                 r >>= shift;
                 r &= mask;
                 return T(r);
             }
 
             if (len >= sizeof(quint16)) {
-                auto r = *reinterpret_cast<const quint16 *>(buf.constData());
+                auto r = *reinterpret_cast<const quint16 *>(buffer.constData());
                 r >>= shift;
                 r &= mask;
                 return T(r);
             }
 
-            auto r = *reinterpret_cast<const quint8 *>(buf.constData());
+            auto r = *reinterpret_cast<const quint8 *>(buffer.constData());
             r >>= shift;
             r &= mask;
             return T(r);
         } else if constexpr (std::is_same_v<T, float>) {
-            return *reinterpret_cast<const float *>(buf.constData());
+            return *reinterpret_cast<const float *>(buffer.constData());
         } else if constexpr (std::is_same_v<T, double>) {
-            return *reinterpret_cast<const double *>(buf.constData());
+            return *reinterpret_cast<const double *>(buffer.constData());
+        } else {
+            return T();
         }
     }
 
@@ -111,6 +114,7 @@ public:
 private:
     struct CINT_TYPE {
     public:
+        CINT_TYPE() : d(0) {}
         CINT_TYPE(qint64 v)
             : d(CTypeParser::INT_TYPE(std::in_place_type_t<qint64>(), v)) {}
         CINT_TYPE(quint64 v)
@@ -142,6 +146,8 @@ private:
     public:
         CTypeParser::INT_TYPE d;
     };
+
+    using CEnumValue = QPair<CINT_TYPE, QString>;
 
 private:
     // basic
@@ -195,10 +201,10 @@ private:
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
                      size_t shift, size_t mask, qsizetype size);
 
-    QVariantHash readStruct(const char *&ptr, const char *end,
+    QVariantHash readStruct(const char *ptr, const char *end,
                             const QString &type);
 
-    QVariant readContent(const char *&ptr, const char *end,
+    QVariant readContent(const char *ptr, const char *end,
                          const VariableDeclaration &m);
 
     bool isValidCStructMetaType(QMetaType::Type type);

@@ -625,6 +625,19 @@ static CScriptArray *toRawData(const QString &s) {
         "array<char>");
 }
 
+asUINT String_opForBegin(const QString *) { return 0; }
+
+bool String_opForEnd(asUINT iter, const QString *arr) {
+    if (arr == nullptr || arr->length() <= iter)
+        return true;
+
+    return false;
+}
+
+asUINT String_opForNext(asUINT iter, const QString *) { return iter + 1; }
+
+asUINT String_opForValue1(asUINT iter, const QString *) { return iter; }
+
 //=================================================
 
 static void ConstructChar(QChar *thisPointer) { new (thisPointer) QChar(); }
@@ -1081,6 +1094,38 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     r = engine->RegisterObjectMethod("string", "array<char>@ toRawData() const",
                                      asFUNCTION(toRawData),
                                      asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Support for foreach
+    r = engine->RegisterObjectMethod(
+        "string", "uint opForBegin() const",
+        asFUNCTIONPR(String_opForBegin, (const QString *), asUINT),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "bool opForEnd(uint) const",
+        asFUNCTIONPR(String_opForEnd, (asUINT, const QString *), bool),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "uint opForNext(uint) const",
+        asFUNCTIONPR(String_opForNext, (asUINT, const QString *), asUINT),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "const char opForValue0(uint index) const",
+        asMETHODPR(QString, at, (qsizetype) const, const QChar),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "string", "uint opForValue1(uint index) const",
+        asFUNCTIONPR(String_opForValue1, (asUINT, const QString *), asUINT),
+        asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 

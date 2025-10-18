@@ -813,6 +813,7 @@ asIDBObjectTypeEvaluator::Evaluate(asIDBVariable::Ptr var) const /*override*/
     var->expandable = CanExpand(var);
 
     if (type == nullptr) {
+        var->value = "<\?\?\?>";
         return;
     }
 
@@ -890,8 +891,10 @@ void asIDBObjectTypeEvaluator::QueryVariableProperties(
         // TODO 2.0: this causes an issue with Watch variables
         // because of the way dereferencing works. For now, it
         // will add duplicates, and the old var state cache is gone.
+
+        auto rname = fmt::format("[{}]", name);
         var->CreateChildVariable(
-            name, propId,
+            rname, propId,
             cache.GetTypeNameFromType(
                 {propTypeId, isReadOnly ? asTM_CONST : asTM_NONE}));
     }
@@ -910,8 +913,11 @@ void asIDBObjectTypeEvaluator::QueryVariableGetters(
         if (!IsCompatibleGetter(function))
             continue;
 
+        auto rname = fmt::format(
+            "[{}]",
+            std::string(std::string_view(function->GetName()).substr(4)));
         auto child = var->CreateChildVariable(
-            std::string(std::string_view(function->GetName()).substr(4)), {},
+            rname, {},
             cache.GetTypeNameFromType(
                 {function->GetReturnTypeId(), asTM_NONE}));
         child->getter = function;
@@ -923,6 +929,9 @@ bool asIDBObjectTypeEvaluator::CanExpand(asIDBVariable::Ptr var) const {
     auto &dbg = var->dbg;
     auto &cache = *dbg.cache;
     auto type = cache.ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+    if (type == nullptr) {
+        return false;
+    }
 
     if (type->GetPropertyCount())
         return true;
@@ -1056,12 +1065,14 @@ asIDBCache::GetEvaluator(const asIDBVarAddr &id) const {
 
 #undef CHECK_PRIMITIVE_EVAL
 
-    if (type->GetFlags() & asOBJ_ENUM) {
-        static constexpr const asIDBEnumTypeEvaluator enumType;
-        return enumType;
-    } else if (type->GetFlags() & asOBJ_FUNCDEF) {
-        static constexpr const asIDBFuncDefTypeEvaluator funcdefType;
-        return funcdefType;
+    if (type) {
+        if (type->GetFlags() & asOBJ_ENUM) {
+            static constexpr const asIDBEnumTypeEvaluator enumType;
+            return enumType;
+        } else if (type->GetFlags() & asOBJ_FUNCDEF) {
+            static constexpr const asIDBFuncDefTypeEvaluator funcdefType;
+            return funcdefType;
+        }
     }
 
     // finally, just return the base one.

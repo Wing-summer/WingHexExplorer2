@@ -230,6 +230,10 @@ void ScriptingDialog::initConsole() {
                         _reditors.append(e);
                         e->setFocus();
                         e->raise();
+
+                        RecentFileManager::RecentInfo info;
+                        info.fileName = file;
+                        m_recentmanager->addRecentFile(info);
                     } else {
                         e = createFakeEditor(file, _curDbgData[file].source);
                     }
@@ -357,7 +361,11 @@ void ScriptingDialog::buildUpRibbonBar() {
                                         Qt::CaseInsensitive) == 0 ||
                          suffix.compare(QStringLiteral("anglescript"),
                                         Qt::CaseInsensitive) == 0)) {
-                        openFile(file);
+                        if (openFile(file)) {
+                            RecentFileManager::RecentInfo info;
+                            info.fileName = file;
+                            m_recentmanager->addRecentFile(info);
+                        }
                     } else {
                         Toast::toast(this,
                                      NAMEICONRES(QStringLiteral("script")),
@@ -1149,7 +1157,8 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
 
     auto res = editor->openFile(filename);
     if (!res) {
-        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("InvalidFileOrPermission"));
         return nullptr;
     }
 
@@ -1366,7 +1375,13 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
         auto ret = WingMessageBox::question(this, tr("Reload"),
                                             tr("ReloadNeededYesOrNo"));
         if (ret == QMessageBox::Yes) {
-            editor->reload();
+            if (editor->reload()) {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
+                             tr("ReloadSuccessfully"));
+            } else {
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("ReloadUnSuccessfully"));
+            }
         }
     }
 }
@@ -1413,7 +1428,8 @@ void ScriptingDialog::on_newfile() {
         auto editor = new ScriptEditor(this);
         auto res = editor->openFile(filename);
         if (!res) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+            WingMessageBox::critical(this, tr("Error"),
+                                     tr("InvalidFileOrPermission"));
             return;
         }
 
@@ -1433,12 +1449,12 @@ void ScriptingDialog::on_openfile() {
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (!filename.isEmpty()) {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
-        openFile(filename);
+        if (openFile(filename)) {
+            RecentFileManager::RecentInfo info;
+            info.fileName = filename;
+            m_recentmanager->addRecentFile(info);
+        }
     }
-
-    RecentFileManager::RecentInfo info;
-    info.fileName = filename;
-    m_recentmanager->addRecentFile(info);
 }
 
 void ScriptingDialog::on_reload() {

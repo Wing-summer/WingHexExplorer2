@@ -1,7 +1,7 @@
 {
     "Id" : "WingCStruct",
     "SDK": 19,
-    "Version" : "0.0.2",
+    "Version" : "0.1.0",
     "Vendor" : "WingCloudStudio",
     "Author" : "wingsummer",
     "License" : "AGPL-v3.0",

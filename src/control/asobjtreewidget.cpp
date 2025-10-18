@@ -19,10 +19,6 @@
 
 #include "utilities.h"
 
-#include "AngelScript/sdk/angelscript/source/as_objecttype.h"
-#include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
-#include "AngelScript/sdk/angelscript/source/as_scriptfunction.h"
-
 #include <QHeaderView>
 
 ASObjTreeWidget::ASObjTreeWidget(QWidget *parent) : QTreeWidget(parent) {
@@ -91,33 +87,6 @@ void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
     }
 }
 
-QByteArray ASObjTreeWidget::getFnRealName(asIScriptFunction *fn) {
-    auto fun = reinterpret_cast<asCScriptFunction *>(fn);
-    if (fun == nullptr) {
-        return {};
-    }
-
-    asCString str;
-    asCString name = fun->GetName();
-
-    if (name.GetLength() == 0)
-        str += "_unnamed_function_";
-    else if (name.SubString(0, 4) == "$beh" && name.GetLength() == 5) {
-        if (name[4] == '0' + asBEHAVE_CONSTRUCT)
-            str += fun->objectType->name;
-        else if (name[4] == '0' + asBEHAVE_FACTORY)
-            str += fun->returnType.GetTypeInfo()->name;
-        else if (name[4] == '0' + asBEHAVE_DESTRUCT)
-            str += "~" + fun->objectType->name;
-        else
-            str += name;
-    } else {
-        str = name;
-    }
-
-    return QByteArray(str.AddressOf(), QByteArray::size_type(str.GetLength()));
-}
-
 void ASObjTreeWidget::addGlobalFunctionCompletion(
     asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
     Q_ASSERT(engine);
@@ -164,11 +133,10 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
 
 void ASObjTreeWidget::addClassCompletion(
     asIScriptEngine *engine, QHash<QString, QList<CodeInfoTip>> &c) {
-    auto eng = reinterpret_cast<asCScriptEngine *>(engine);
-    Q_ASSERT(eng);
+    Q_ASSERT(engine);
 
     for (asUINT i = 0; i < engine->GetObjectTypeCount(); ++i) {
-        auto obj = eng->registeredObjTypes[i];
+        auto obj = engine->GetObjectTypeByIndex(i);
         obj->AddRef();
 
         CodeInfoTip cls;
@@ -179,57 +147,34 @@ void ASObjTreeWidget::addClassCompletion(
         for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
             asEBehaviours bv;
             auto b = obj->GetBehaviourByIndex(i, &bv);
-
-            switch (bv) {
-            case asBEHAVE_CONSTRUCT: {
-                // only these are supported
+            if (bv == asBEHAVE_CONSTRUCT) {
                 b->AddRef();
                 CodeInfoTip fn;
                 fn.type = LSP::CompletionItemKind::Function;
-                fn.name = getFnRealName(b);
+                fn.name = b->GetDeclaration(false, false, false);
                 fn.setComment(b->GetDeclaration(true, true, true));
                 cls.children.append(fn);
                 b->Release();
-            }
-            default:
-                continue;
             }
         }
 
         for (asUINT i = 0; i < obj->GetMethodCount(); ++i) {
             auto m = obj->GetMethodByIndex(i, true);
-
             m->AddRef();
             CodeInfoTip fn;
             fn.type = LSP::CompletionItemKind::Function;
-            fn.name = getFnRealName(m);
+            fn.name = m->GetName();
             fn.setComment(m->GetDeclaration(true, true, true));
             cls.children.append(fn);
             m->Release();
         }
 
         for (asUINT i = 0; i < obj->GetPropertyCount(); ++i) {
-            auto p = obj->properties[i];
-
+            auto p = obj->GetPropertyDeclaration(i, true);
             CodeInfoTip pi;
             pi.type = LSP::CompletionItemKind::Property;
-            pi.name =
-                QString::fromLatin1(p->name.AddressOf(),
-                                    QByteArray::size_type(p->name.GetLength()));
-            auto tn = p->type.Format(obj->nameSpace);
-            auto type = QString::fromLatin1(
-                tn.AddressOf(), QByteArray::size_type(tn.GetLength()));
-
-            QString prefix;
-            if (p->isPrivate) {
-                prefix = QStringLiteral("(private) ");
-            } else if (p->isProtected) {
-                prefix = QStringLiteral("(protected) ");
-            } else {
-                prefix = QStringLiteral("(public) ");
-            }
-
-            pi.setComment(prefix + type + QChar(' ') + pi.name);
+            pi.name = QString::fromUtf8(p);
+            pi.setComment(p);
             cls.children.append(pi);
         }
 

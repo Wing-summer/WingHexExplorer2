@@ -80,17 +80,22 @@ public:
     Type type() const override { return Object; }
     QString rawText() const override { return QStringLiteral("{}"); }
 
-    void addPair(const QString &key, QSharedPointer<FormatValue> value) {
-        m_pairs.insert(key, value);
+    qsizetype size() const { return m_keys.size(); }
+    const QString &keyAt(int index) const { return m_keys.at(index); }
+    QSharedPointer<FormatValue> valueAt(int index) const {
+        return m_values.at(index);
     }
 
-    const QHash<QString, QSharedPointer<FormatValue>> &pairs() const {
-        return m_pairs;
+    void addPair(const QString &key, QSharedPointer<FormatValue> value) {
+        m_keys.append(key);
+        m_values.append(value);
     }
-    bool isEmpty() const { return m_pairs.isEmpty(); }
+
+    bool isEmpty() const { return m_keys.isEmpty(); }
 
 private:
-    QHash<QString, QSharedPointer<FormatValue>> m_pairs;
+    QStringList m_keys;
+    QVector<QSharedPointer<FormatValue>> m_values;
 };
 
 class StringFormatter {
@@ -312,24 +317,25 @@ private:
         QString nextIndent = getIndent(indentLevel + 1, indentSize);
 
         qsizetype maxKeyLength = 0;
-        const auto &pairs = object->pairs();
-        for (auto it = pairs.begin(); it != pairs.end(); ++it) {
-            maxKeyLength = qMax(maxKeyLength, it.key().length() + 2);
+        auto total = object->size();
+        for (qsizetype i = 0; i < total; ++i) {
+            maxKeyLength = qMax(maxKeyLength, object->keyAt(i).length() + 2);
         }
 
-        for (auto it = pairs.begin(); it != pairs.end(); ++it) {
-            QString keyPart = it.key();
+        for (qsizetype i = 0; i < total; ++i) {
+            QString keyPart = object->keyAt(i);
             keyPart.prepend('[').append(']');
             QString formattedValue;
 
-            if (it.value()->type() == FormatValue::Object) {
+            auto value = object->valueAt(i);
+            if (value->type() == FormatValue::Object) {
                 const ObjectValue *childObject =
-                    static_cast<const ObjectValue *>(it.value().data());
+                    static_cast<const ObjectValue *>(value.data());
                 formattedValue =
                     formatObject(childObject, indentLevel + 1, indentSize);
             } else {
                 formattedValue = formatSimple(
-                    static_cast<const SimpleValue *>(it.value().data()));
+                    static_cast<const SimpleValue *>(value.data()));
             }
 
             QString paddedKeyPart = keyPart.leftJustified(maxKeyLength, ' ');
@@ -711,7 +717,7 @@ ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
     Q_ASSERT(var);
     var->Evaluate();
     if (var->evaluated) {
-        if (var->expandable) {
+        if (var->expandable && var->typeName != "string") {
             var->Expand();
             if (var->expanded) {
                 QStringList r;

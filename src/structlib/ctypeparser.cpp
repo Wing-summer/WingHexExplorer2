@@ -1246,68 +1246,91 @@ void CTypeParser::restoreIncompleteType(const QString &name) {
 
 std::optional<quint64>
 CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
-    // Helper: round 'offset' up to the next multiple of 'align'
+    // Validate alignment (allowed: 1,2,4,8,16)
+    if (!(alignment == 1 || alignment == 2 || alignment == 4 ||
+          alignment == 8 || alignment == 16)) {
+        return std::nullopt;
+    }
+
     auto align_up = [](quint64 offset, int align) -> std::optional<quint64> {
-        quint64 av = align - 1;
+        quint64 av = static_cast<quint64>(align - 1);
         quint64 r;
         if (qAddOverflow(offset, av, &r)) {
             return std::nullopt;
         }
-        return (r / align) * align;
+        return (r / static_cast<quint64>(align)) * static_cast<quint64>(align);
     };
 
     quint64 total = 0;
 
-    // Bitfield‐tracking state
-    //
-    // We'll treat each
-    // bitfield’s storage unit (char=1 byte, int=4 bytes, etc.) as aligned to
-    // exactly 'alignment' bytes.
-    quint64 bitfield_base_size = 0; // size in bytes of current unit
-    quint64 bitfield_capacity = 0;  // bits in that unit = base_size * 8
-    quint64 bitfield_used = 0;      // bits already consumed
-    quint64 bitfield_offset = 0;    // byte offset where that unit starts
-    QString bitfield_type;          // data_type of ongoing bitfield block
+    // Bitfield tracking
+    quint64 bitfield_base_size =
+        0; // current unit size in bytes (one of 1,2,4,8,16)
+    quint64 bitfield_capacity = 0; // bits in that unit
+    quint64 bitfield_used = 0;     // bits used in current unit
+    quint64 bitfield_offset = 0;   // byte offset where that unit starts
+    QString bitfield_type;
+
+    // helper: choose smallest standard unit >= alignment and >= needed bytes
+    auto choose_unit_bytes = [&](quint64 want_bits) -> std::optional<quint64> {
+        quint64 needed_bytes = (want_bits + 7) / 8;
+        const quint64 choices[] = {1, 2, 4, 8, 16};
+        for (quint64 c : choices) {
+            if (c >= static_cast<quint64>(alignment) && c >= needed_bytes) {
+                return c;
+            }
+        }
+        return std::nullopt; // too big to represent
+    };
 
     for (auto &member : members) {
-        if (member.bit_size > 0) {
-            //
-            // Bitfield branch
-            //
-            // Determine this bitfield’s declared storage‐unit size (in bytes).
-            //   e.g. var_size=4 → int (32 bits), var_size=1 → char (8 bits).
-            quint64 this_base_size = member.var_size;
-            quint64 this_capacity = this_base_size * 8;
-            auto want_bits = member.bit_size;
+        // update element_count from array_dims if present (same as before) ...
+        if (!member.array_dims.isEmpty()) {
+            quint64 ec = 1;
+            for (size_t d : member.array_dims) {
+                if (d == 0) {
+                    ec = 0;
+                    break;
+                }
+                if (ec > std::numeric_limits<quint64>::max() / d) {
+                    ec = 0;
+                    break;
+                }
+                ec *= d;
+            }
+            member.element_count = (ec != 0) ? static_cast<size_t>(ec) : 1;
+        }
 
-            // Must start a new unit if:
-            //  1) No unit is active (bitfield_used == 0), or
-            //  2) This bitfield’s var_size differs from the current block’s
-            //  base_size, or 3) Not enough bits remain in the current block.
+        if (member.bit_size > 0) {
+            // defensive: ensure bit_size is sane
+            if (member.bit_size == 0)
+                return std::nullopt;
+
+            quint64 want_bits = static_cast<quint64>(member.bit_size);
+
+            // choose storage unit size based on alignment and want_bits
+            auto maybe_unit = choose_unit_bytes(want_bits);
+            if (!maybe_unit)
+                return std::nullopt;
+            quint64 this_base_size = maybe_unit.value();
+            quint64 this_capacity = this_base_size * 8;
+
+            // Start a new block if no active block, or base_size differs,
+            // or not enough bits remain.
             bool needs_new_block =
                 (bitfield_used == 0) ||
                 (bitfield_base_size != this_base_size) ||
                 (bitfield_used + want_bits > bitfield_capacity);
 
             if (needs_new_block) {
-                // Align 'total' up to exactly 'alignment' bytes (ignore natural
-                // alignment)
-                auto align_req = alignment;
-                if (align_req < 1)
-                    align_req = 1;
-
-                auto au = align_up(total, align_req);
-                if (!au) {
+                auto au = align_up(total, alignment);
+                if (!au)
                     return std::nullopt;
-                }
                 total = au.value();
 
-                // Start a new bitfield storage unit of size 'this_base_size'
                 bitfield_offset = total;
-
-                if (qAddOverflow(total, this_base_size, &total)) {
+                if (qAddOverflow(total, this_base_size, &total))
                     return std::nullopt;
-                }
 
                 bitfield_base_size = this_base_size;
                 bitfield_capacity = this_capacity;
@@ -1315,13 +1338,20 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
                 bitfield_type = member.data_type;
             }
 
-            // Assign offset, mask, and shift for this bitfield:
-            member.offset = bitfield_offset;
-            member.op.shift = bitfield_used;
-            member.op.mask = ((quint64(1) << member.bit_size) - 1);
+            member.offset = static_cast<size_t>(bitfield_offset);
+            member.op.shift = static_cast<size_t>(bitfield_used);
+
+            // mask safe compute
+            quint64 mask64;
+            if (want_bits >= 64) {
+                mask64 = std::numeric_limits<quint64>::max();
+            } else {
+                mask64 = ((quint64(1) << want_bits) - 1ULL);
+            }
+            member.op.mask = static_cast<size_t>(mask64);
+
             bitfield_used += want_bits;
 
-            // If this unit is now exactly full, flush it
             if (bitfield_used >= bitfield_capacity) {
                 bitfield_base_size = 0;
                 bitfield_capacity = 0;
@@ -1330,47 +1360,31 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
             }
 
         } else {
-            //
-            // Non‐bitfield (scalar or array)
-            //
-            // Clear any ongoing bitfield block
+            // non-bitfield: flush bitfield state and place normal field
             bitfield_base_size = 0;
             bitfield_capacity = 0;
             bitfield_used = 0;
             bitfield_type.clear();
 
-            // Compute total block_size (already given by member.var_size).
-            // We do NOT use natural alignment at all; instead align every field
-            // to exactly 'alignment' bytes.
             quint64 block_size = member.var_size;
-
-            // Align 'total' up to exactly 'alignment' bytes
-            auto align_req = alignment;
-            if (align_req < 1)
-                align_req = 1;
-
-            auto au = align_up(total, align_req);
-            if (!au) {
+            if (block_size == 0)
                 return std::nullopt;
-            }
+
+            auto au = align_up(total, alignment);
+            if (!au)
+                return std::nullopt;
             total = au.value();
 
-            member.offset = total;
-
-            if (qAddOverflow(total, block_size, &total)) {
+            member.offset = static_cast<size_t>(total);
+            if (qAddOverflow(total, block_size, &total))
                 return std::nullopt;
-            }
         }
     }
 
-    // Final struct padding
-    //
-    // Align the overall
-    // struct size up to 'alignment' bytes.
+    // final struct padding
     auto au = align_up(total, alignment);
-    if (!au) {
+    if (!au)
         return std::nullopt;
-    }
     total = au.value();
     return total;
 }

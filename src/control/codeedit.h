@@ -59,6 +59,7 @@ protected:
 
 private slots:
     void applyEditorSetStyle();
+    void toggleComment();
 
 private:
     SearchReplaceWidget *m_searchWidget;

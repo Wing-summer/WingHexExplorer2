@@ -94,17 +94,20 @@ inline QString escapeNonPrintable(const QString &input) {
                 }
             } else {
                 if (cp <= 0xFF) {
-                    out += QStringLiteral("\\x%1")
+                    out += QStringLiteral("%1")
                                .arg(cp, 2, 16, QLatin1Char('0'))
-                               .toUpper();
+                               .toUpper()
+                               .prepend(QStringLiteral("\\x"));
                 } else if (cp <= 0xFFFF) {
-                    out += QStringLiteral("\\u%1")
+                    out += QStringLiteral("%1")
                                .arg(cp, 4, 16, QLatin1Char('0'))
-                               .toUpper();
+                               .toUpper()
+                               .prepend(QStringLiteral("\\u"));
                 } else {
-                    out += QStringLiteral("\\U%1")
+                    out += QStringLiteral("%1")
                                .arg(cp, 8, 16, QLatin1Char('0'))
-                               .toUpper();
+                               .toUpper()
+                               .prepend(QStringLiteral("\\U"));
                 }
             }
         }
@@ -116,7 +119,13 @@ class asIDBArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
         asIDBObjectTypeEvaluator::Evaluate(var);
-        var->value = "<array> | " + var->value;
+        if (var->owner.expired()) {
+            if (!CanExpand(var)) {
+                var->value = "{}";
+            }
+        } else {
+            var->value = "<array> | " + var->value;
+        }
     }
     virtual void Expand(asIDBVariable::Ptr var) const override {
         QueryVariableForEach(var, 0);
@@ -126,10 +135,19 @@ public:
 class asIDBStringTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        const QString *s = var->address.ResolveAs<const QString>();
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
+        const QString *s = var->address.ResolveAs<const QString>();
         if (s->isEmpty()) {
             var->value = "<empty>";
+            var->expandable = false;
         } else {
             if (var->owner.expired()) {
                 var->value = s->toStdString();
@@ -137,13 +155,27 @@ public:
                 var->value =
                     fmt::format("\"{}\"", escapeNonPrintable(*s).toStdString());
             }
+            var->expandable = true;
         }
+    }
+
+    virtual void Expand(asIDBVariable::Ptr var) const override {
+        QueryVariableForEach(var, 0);
     }
 };
 
-class asIDBRegExTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBRegExTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QRegularExpression *s =
             var->address.ResolveAs<const QRegularExpression>();
         auto p = s->pattern();
@@ -152,9 +184,18 @@ public:
     }
 };
 
-class asIDBRegMatchTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBRegMatchTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QRegularExpressionMatch *s =
             var->address.ResolveAs<const QRegularExpressionMatch>();
         auto r = s->regularExpression();
@@ -164,17 +205,40 @@ public:
     }
 };
 
-class asIDBCharTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBCharTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QChar *s = var->address.ResolveAs<const QChar>();
-        var->value = s->unicode();
+        if (var->owner.expired()) {
+            var->value = s->unicode();
+        } else {
+            var->value = fmt::format(
+                "'{}'", escapeNonPrintable(QString(*s)).toStdString());
+        }
     }
 };
 
-class asIDBColorTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBColorTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QColor *s = var->address.ResolveAs<const QColor>();
         auto name = s->name();
         name.prepend(QStringLiteral("color<")).append('>');
@@ -182,9 +246,18 @@ public:
     }
 };
 
-class asIDBAnyTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBAnyTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
 
         if (v->GetTypeId() == 0) {
@@ -218,15 +291,29 @@ public:
     }
 };
 
-class asIDBDictionaryTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBDictionaryTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const CScriptDictionary *v =
             var->address.ResolveAs<const CScriptDictionary>();
 
         size_t size = v->GetSize();
-
-        var->value = fmt::format("<dictionary> | {} pairs", size);
+        if (var->owner.expired()) {
+            if (size == 0) {
+                var->value = "{}";
+            }
+        } else {
+            var->value = fmt::format("<dictionary> | {} pairs", size);
+        }
         var->expandable = size != 0;
     }
 
@@ -245,9 +332,18 @@ public:
     }
 };
 
-class asIDBJsonDocumentTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBJsonDocumentTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QJsonDocument *v = var->address.ResolveAs<const QJsonDocument>();
         if (v->isEmpty() || v->isNull()) {
             var->value = "<Json::JsonDocument> {}";
@@ -307,9 +403,18 @@ public:
     }
 };
 
-class asIDBJsonArrayTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBJsonArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QJsonArray *v = var->address.ResolveAs<const QJsonArray>();
         auto len = v->size();
         var->value = fmt::format("<Json::JsonArray> | {} elements", len);
@@ -317,29 +422,22 @@ public:
     }
 
     virtual void Expand(asIDBVariable::Ptr var) const override {
-        const QJsonArray *v = var->address.ResolveAs<const QJsonArray>();
-
-        if (v->isEmpty()) {
-            return;
-        }
-
-        auto total = v->size();
-        auto engine = var->dbg.cache->ctx->GetEngine();
-        auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
-        for (qsizetype i = 0; i < total; i++) {
-            auto temp = v->at(i);
-            auto child = var->CreateChildVariable(
-                fmt::format("[{}]", i), asIDBVarAddr{typeId, false, &temp},
-                var->typeName);
-            child->stackValue = asIDBValue(engine, &temp, typeId, asTM_NONE);
-            child->address.address = child->stackValue.GetPointer<void>();
-        }
+        QueryVariableForEach(var, 0);
     }
 };
 
-class asIDBJsonObjectTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBJsonObjectTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QJsonObject *v = var->address.ResolveAs<const QJsonObject>();
         auto len = v->size();
         var->value = fmt::format("<Json::JsonObject> | {} elements", len);
@@ -368,9 +466,18 @@ public:
     }
 };
 
-class asIDBJsonValueTypeEvaluator : public asIDBTypeEvaluator {
+class asIDBJsonValueTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+
         const QJsonValue *v = var->address.ResolveAs<const QJsonValue>();
         switch (v->type()) {
         case QJsonValue::Null:
@@ -472,8 +579,14 @@ public:
         : evals(evals) {}
 
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        var->typeName =
-            var->dbg.cache->GetTypeNameFromType(var->address.typeId);
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
         if (evals.contains(var->typeName)) {
             auto r = evals[var->typeName];
@@ -534,8 +647,7 @@ public:
 
                 for (auto &&[key, value] : rc.asKeyValueRange()) {
                     QString k = key;
-                    k.prepend(QStringLiteral("[\""))
-                        .append(QStringLiteral("\"]"));
+                    k.prepend(QStringLiteral("[")).append(QStringLiteral("]"));
 
                     auto typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
                     auto temp = value.buffer;
@@ -560,8 +672,9 @@ public:
                         child->stackValue.GetPointer<void>();
                 }
             }
+        } else {
+            asIDBObjectTypeEvaluator::Expand(var);
         }
-        asIDBObjectTypeEvaluator::Expand(var);
     }
 
 private:

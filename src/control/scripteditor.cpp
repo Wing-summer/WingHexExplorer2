@@ -93,7 +93,14 @@ QString ScriptEditor::lspFileNameURL() const {
 }
 
 bool ScriptEditor::openFile(const QString &filename) {
+    auto oldFileName = this->fileName();
     auto &lsp = AngelLsp::instance();
+    if (!Utilities::isTextFile(QFileInfo(filename))) {
+        if (!oldFileName.isEmpty()) {
+            lsp.openDocument(lspFileNameURL(), 0, m_editor->toPlainText());
+        }
+        return false;
+    }
 
     QFile f(filename);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
@@ -106,8 +113,6 @@ bool ScriptEditor::openFile(const QString &filename) {
     m_editor->blockSignals(false);
     m_editor->zoomReset();
     f.close();
-
-    auto oldFileName = this->fileName();
 
     if (!oldFileName.isEmpty()) {
         _watcher.removePath(oldFileName);

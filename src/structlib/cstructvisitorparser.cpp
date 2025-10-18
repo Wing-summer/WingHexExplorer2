@@ -346,6 +346,7 @@ CStructVisitorParser::reportCTypeError(size_t line, size_t charPositionInLine,
 bool CStructVisitorParser::isInteger(const QString &text) {
     auto type = parser->typeMapValue(text);
     switch (type) {
+    case QMetaType::Bool:
     case QMetaType::Int:
     case QMetaType::UInt:
     case QMetaType::LongLong:
@@ -1849,7 +1850,8 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                             sub->assignmentExpression());
                         if (bits.type() == typeid(quint64)) {
                             auto b = std::any_cast<quint64>(bits);
-                            if (b > tbits) {
+                            if (b > tbits || b == 0 ||
+                                b > std::numeric_limits<qint64>::max()) {
                                 reportFiledBitOverflow(
                                     sym->getLine(),
                                     sym->getCharPositionInLine(), dl->tname, b);
@@ -1858,7 +1860,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                             var.bit_size = b;
                         } else if (bits.type() == typeid(qint64)) {
                             auto b = std::any_cast<qint64>(bits);
-                            if (b > tbits) {
+                            if (b > tbits || b <= 0) {
                                 reportFiledBitOverflow(
                                     sym->getLine(),
                                     sym->getCharPositionInLine(), dl->tname, b);
@@ -1895,6 +1897,22 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                     } else {
                         auto info = getDeclarator(d);
                         if (info) {
+                            // array or pointer is not allowed
+                            if (var.bit_size) {
+                                if (info->isPointer ||
+                                    d->assignmentExpression()) {
+                                    auto sym = d->getStart();
+                                    errlis->reportError(
+                                        sym->getLine(),
+                                        sym->getCharPositionInLine(),
+                                        QStringLiteral(
+                                            "Only bit field feature of "
+                                            "completed numberic types "
+                                            "is supported"));
+                                    return std::nullopt;
+                                }
+                            }
+
                             var.is_pointer = info->isPointer;
                             if (info->arrayCount == 0) {
                                 var.array_dims = {0};

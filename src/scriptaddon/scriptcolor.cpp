@@ -30,24 +30,65 @@ static void Color_CopyCtor(void *memory, const QColor &other) {
 static void Color_StringCtor(void *memory, const QString &name) {
     new (memory) QColor(name);
 }
-static void Color_RGBACtor(void *memory, int r, int g, int b, int a) {
-    new (memory) QColor(r, g, b, a);
+static void Color_RGBCtor(void *memory, int r, int g, int b) {
+    new (memory) QColor(r, g, b);
 }
 static void Color_Dtor(void *memory) {
     reinterpret_cast<QColor *>(memory)->~QColor();
 }
 
-// wrappers for setRgb(QRgb) and setRgba(QRgb) and setRgba64(QRgba64)
-// map script-side uint/uint64 -> C++ QRgb/QRgba64
 static void Color_setRgbFromUint(void *obj, unsigned int rgb) {
     reinterpret_cast<QColor *>(obj)->setRgb(static_cast<QRgb>(rgb));
 }
-static void Color_setRgbaFromUint(void *obj, unsigned int rgba) {
-    reinterpret_cast<QColor *>(obj)->setRgba(static_cast<QRgb>(rgba));
+static void Color_setRgb(void *obj, int r, int g, int b) {
+    reinterpret_cast<QColor *>(obj)->setRgb(r, g, b);
 }
-static void Color_setRgba64FromU64(void *obj, quint64 rgba64) {
-    reinterpret_cast<QColor *>(obj)->setRgba64(QRgba64::fromRgba64(rgba64));
+static void Color_getRgb(void *obj, int *r, int *g, int *b) {
+    reinterpret_cast<QColor *>(obj)->getRgb(r, g, b);
 }
+static void Color_setRgbF(void *obj, float r, float g, float b) {
+    reinterpret_cast<QColor *>(obj)->setRgbF(r, g, b);
+}
+static void Color_getRgbF(void *obj, float *r, float *g, float *b) {
+    reinterpret_cast<QColor *>(obj)->getRgbF(r, g, b);
+}
+static void Color_getCmyk(void *obj, int *c, int *m, int *y, int *k) {
+    reinterpret_cast<QColor *>(obj)->getCmyk(c, m, y, k);
+}
+static void Color_getCmykF(void *obj, float *c, float *m, float *y, float *k) {
+    reinterpret_cast<QColor *>(obj)->getCmykF(c, m, y, k);
+}
+static void Color_setCmyk(void *obj, int c, int m, int y, int k) {
+    reinterpret_cast<QColor *>(obj)->setCmyk(c, m, y, k);
+}
+static void Color_setCmykF(void *obj, float c, float m, float y, float k) {
+    reinterpret_cast<QColor *>(obj)->setCmykF(c, m, y, k);
+}
+static void Color_getHsl(void *obj, int *h, int *s, int *l) {
+    reinterpret_cast<QColor *>(obj)->getHsl(h, s, l);
+}
+static void Color_getHslF(void *obj, float *h, float *s, float *l) {
+    reinterpret_cast<QColor *>(obj)->getHslF(h, s, l);
+}
+static void Color_setHsl(void *obj, int h, int s, int l) {
+    reinterpret_cast<QColor *>(obj)->setHsl(h, s, l);
+}
+static void Color_setHslF(void *obj, float h, float s, float l) {
+    reinterpret_cast<QColor *>(obj)->setHslF(h, s, l);
+}
+static void Color_getHsv(void *obj, int *h, int *s, int *v) {
+    reinterpret_cast<QColor *>(obj)->getHsv(h, s, v);
+}
+static void Color_getHsvF(void *obj, float *h, float *s, float *v) {
+    reinterpret_cast<QColor *>(obj)->getHsvF(h, s, v);
+}
+static void Color_setHsv(void *obj, int h, int s, int v) {
+    reinterpret_cast<QColor *>(obj)->setHsv(h, s, v);
+}
+static void Color_setHsvF(void *obj, float h, float s, float v) {
+    reinterpret_cast<QColor *>(obj)->setHsvF(h, s, v);
+}
+static void Color_name(void *obj) { reinterpret_cast<QColor *>(obj)->name(); }
 
 static void Color_ColorsCtor(void *memory, AngelColor::Colors color) {
     static const QColor table[] = {QColorConstants::Svg::aliceblue,
@@ -224,40 +265,32 @@ static CScriptArray *Color_colorNames_wrap() {
     return nullptr;
 }
 
-static QColor Color_fromCmyk_wrap(int c, int m, int y, int k, int a) {
-    return QColor::fromCmyk(c, m, y, k, a);
+static QColor Color_fromCmyk_wrap(int c, int m, int y, int k) {
+    return QColor::fromCmyk(c, m, y, k);
 }
-static QColor Color_fromCmykF_wrap(float c, float m, float y, float k,
-                                   float a) {
-    return QColor::fromCmykF(c, m, y, k, a);
+static QColor Color_fromCmykF_wrap(float c, float m, float y, float k) {
+    return QColor::fromCmykF(c, m, y, k);
 }
-static QColor Color_fromHsl_wrap(int h, int s, int l, int a) {
-    return QColor::fromHsl(h, s, l, a);
+static QColor Color_fromHsl_wrap(int h, int s, int l) {
+    return QColor::fromHsl(h, s, l);
 }
-static QColor Color_fromHslF_wrap(float h, float s, float l, float a) {
-    return QColor::fromHslF(h, s, l, a);
+static QColor Color_fromHslF_wrap(float h, float s, float l) {
+    return QColor::fromHslF(h, s, l);
 }
-static QColor Color_fromHsv_wrap(int h, int s, int v, int a) {
-    return QColor::fromHsv(h, s, v, a);
+static QColor Color_fromHsv_wrap(int h, int s, int v) {
+    return QColor::fromHsv(h, s, v);
 }
-static QColor Color_fromHsvF_wrap(float h, float s, float v, float a) {
-    return QColor::fromHsvF(h, s, v, a);
+static QColor Color_fromHsvF_wrap(float h, float s, float v) {
+    return QColor::fromHsvF(h, s, v);
 }
 static QColor Color_fromRgb_uint_wrap(unsigned int rgb) {
     return QColor::fromRgb(static_cast<QRgb>(rgb));
 }
-static QColor Color_fromRgb_int_wrap(int r, int g, int b, int a) {
-    return QColor::fromRgb(r, g, b, a);
+static QColor Color_fromRgb_int_wrap(int r, int g, int b) {
+    return QColor::fromRgb(r, g, b);
 }
-static QColor Color_fromRgba64_u64_wrap(quint64 rgba64) {
-    return QColor::fromRgba64(QRgba64::fromRgba64(rgba64));
-}
-static QColor Color_fromRgba64_ush_wrap(unsigned short r, unsigned short g,
-                                        unsigned short b, unsigned short a) {
-    return QColor::fromRgba64(r, g, b, a);
-}
-static QColor Color_fromRgbF_wrap(float r, float g, float b, float a) {
-    return QColor::fromRgbF(r, g, b, a);
+static QColor Color_fromRgbF_wrap(float r, float g, float b) {
+    return QColor::fromRgbF(r, g, b);
 }
 static QColor Color_fromRgba_uint_wrap(unsigned int rgba) {
     return QColor::fromRgba(static_cast<QRgb>(rgba));
@@ -276,18 +309,6 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     registerAngelType<AngelColor::Colors>(engine, "colors");
-
-    r = engine->RegisterEnum("format");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterEnumValue("format", "HexArgb",
-                                  QColor::NameFormat::HexArgb);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterEnumValue("format", "HexRgb",
-                                  QColor::NameFormat::HexRgb);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
 
     r = engine->RegisterEnum("spec");
     Q_ASSERT(r >= 0);
@@ -323,37 +344,33 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     // Constructors
-    r = engine->RegisterObjectBehaviour(
-        "color", asBEHAVE_CONSTRUCT, "void f()",
-        asFUNCTIONPR(Color_DefaultCtor, (void *), void), asCALL_CDECL_OBJFIRST);
+    r = engine->RegisterObjectBehaviour("color", asBEHAVE_CONSTRUCT, "void f()",
+                                        asFUNCTION(Color_DefaultCtor),
+                                        asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectBehaviour(
         "color", asBEHAVE_CONSTRUCT, "void f(const color &in)",
-        asFUNCTIONPR(Color_CopyCtor, (void *, const QColor &), void),
-        asCALL_CDECL_OBJFIRST);
+        asFUNCTION(Color_CopyCtor), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectBehaviour(
         "color", asBEHAVE_CONSTRUCT, "void f(const string &in)",
-        asFUNCTIONPR(Color_StringCtor, (void *, const QString &), void),
-        asCALL_CDECL_OBJFIRST);
+        asFUNCTION(Color_StringCtor), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectBehaviour(
         "color", asBEHAVE_CONSTRUCT, "void f(color::colors)",
-        asFUNCTIONPR(Color_ColorsCtor, (void *, AngelColor::Colors), void),
-        asCALL_CDECL_OBJFIRST);
+        asFUNCTION(Color_ColorsCtor), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectBehaviour(
-        "color", asBEHAVE_CONSTRUCT, "void f(int r, int g, int b, int a = 255)",
-        asFUNCTIONPR(Color_RGBACtor, (void *, int, int, int, int), void),
-        asCALL_CDECL_OBJFIRST);
+        "color", asBEHAVE_CONSTRUCT, "void f(int r, int g, int b)",
+        asFUNCTION(Color_RGBCtor), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -372,27 +389,13 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    r = engine->RegisterObjectMethod(
-        "color", "color &opAssign(color::colors)",
-        asFUNCTIONPR(Color_ColorsCtor, (void *, AngelColor::Colors), void),
-        asCALL_CDECL_OBJFIRST);
+    r = engine->RegisterObjectMethod("color", "color &opAssign(color::colors)",
+                                     asFUNCTION(Color_ColorsCtor),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // Methods
-    // simple getters (ints / floats)
-    r = engine->RegisterObjectMethod("color", "int alpha() const",
-                                     asMETHODPR(QColor, alpha, () const, int),
-                                     asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectMethod(
-        "color", "float alphaF() const",
-        asMETHODPR(QColor, alphaF, () const, float), asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
     r = engine->RegisterObjectMethod("color", "int black() const",
                                      asMETHODPR(QColor, black, () const, int),
                                      asCALL_THISCALL);
@@ -606,11 +609,9 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     // name(format)
-    r = engine->RegisterObjectMethod(
-        "color",
-        "string name(color::format format = color::format::HexRgb) const",
-        asMETHODPR(QColor, name, (QColor::NameFormat) const, QString),
-        asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("color", "string name() const",
+                                     asFunctionPtr(Color_name),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -628,79 +629,61 @@ void RegisterColor(asIScriptEngine *engine) {
 
     r = engine->RegisterObjectMethod(
         "color",
-        "void getRgb(int &out r, int &out g, int &out b, int &out a = void) "
+        "void getRgb(int &out r, int &out g, int &out b) "
         "const",
-        asMETHOD(QColor, getRgb), asCALL_THISCALL);
+        asFUNCTION(Color_getRgb), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod("color",
                                      "void getRgbF(float &out r, float &out g, "
-                                     "float &out b, float &out a = void) "
-                                     "const",
-                                     asMETHOD(QColor, getRgbF),
-                                     asCALL_THISCALL);
+                                     "float &out b) const",
+                                     asFUNCTION(Color_getRgbF),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
         "color",
-        "void getCmyk(int &out c, int &out m, int &out y, int &out k, int &out "
-        "a = void) const",
-        asMETHOD(QColor, getCmyk), asCALL_THISCALL);
+        "void getCmyk(int &out c, int &out m, int &out y, int &out k) const",
+        asFUNCTION(Color_getCmyk), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("color",
+                                     "void getCmykF(float &out c, float &out "
+                                     "m, float &out y, float &out k) const",
+                                     asFUNCTION(Color_getCmykF),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "color",
-        "void getCmykF(float &out c, float &out m, float &out y, float &out k, "
-        "float &out a = void) const",
-        asMETHOD(QColor, getCmykF), asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectMethod(
-        "color",
-        "void getHsl(int &out h, int &out s, int &out l, int &out a) const",
-        asMETHOD(QColor, getHsl), asCALL_THISCALL);
+        "color", "void getHsl(int &out h, int &out s, int &out l) const",
+        asFUNCTION(Color_getHsl), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod("color",
                                      "void getHslF(float &out h, float &out s, "
-                                     "float &out l, float &out a = void) "
-                                     "const",
-                                     asMETHOD(QColor, getHslF),
-                                     asCALL_THISCALL);
+                                     "float &out l) const",
+                                     asFUNCTION(Color_getHslF),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "color",
-        "void getHsv(int &out h, int &out s, int &out v, int &out a) const",
-        asMETHOD(QColor, getHsv), asCALL_THISCALL);
+        "color", "void getHsv(int &out h, int &out s, int &out v) const",
+        asFUNCTION(Color_getHsv), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "color",
-        "void getHsvF(float &out h, float &out s, float &out v, float &out a) "
-        "const",
-        asMETHOD(QColor, getHslF), asCALL_THISCALL);
+        "color", "void getHsvF(float &out h, float &out s, float &out v) const",
+        asFUNCTION(Color_getHslF), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // RGB setters and other setters
-    r = engine->RegisterObjectMethod("color", "void setAlpha(int alpha)",
-                                     asMETHODPR(QColor, setAlpha, (int), void),
-                                     asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod(
-        "color", "void setAlphaF(float alpha)",
-        asMETHODPR(QColor, setAlphaF, (float), void), asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
     r = engine->RegisterObjectMethod("color", "void setBlue(int blue)",
                                      asMETHODPR(QColor, setBlue, (int), void),
                                      asCALL_THISCALL);
@@ -736,9 +719,8 @@ void RegisterColor(asIScriptEngine *engine) {
 
     // setRgb int version
     r = engine->RegisterObjectMethod(
-        "color", "void setRgb(int r, int g, int b, int a = 255)",
-        asMETHODPR(QColor, setRgb, (int, int, int, int), void),
-        asCALL_THISCALL);
+        "color", "void setRgb(int r, int g, int b)", asFUNCTION(Color_setRgb),
+        asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     // setRgb(QRgb)
@@ -748,69 +730,47 @@ void RegisterColor(asIScriptEngine *engine) {
         asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    // setRgba(QRgb)
-    r = engine->RegisterObjectMethod(
-        "color", "void setRgba(uint rgba)",
-        asFUNCTIONPR(Color_setRgbaFromUint, (void *, unsigned int), void),
-        asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    // setRgba64(QRgba64)
-    r = engine->RegisterObjectMethod(
-        "color", "void setRgba64(uint64 rgba64)",
-        asFUNCTIONPR(Color_setRgba64FromU64, (void *, quint64), void),
-        asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
 
     // setRgbF
     r = engine->RegisterObjectMethod(
-        "color", "void setRgbF(float r, float g, float b, float a = 1.0)",
-        asMETHODPR(QColor, setRgbF, (float, float, float, float), void),
-        asCALL_THISCALL);
+        "color", "void setRgbF(float r, float g, float b)",
+        asFUNCTION(Color_setRgbF), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // setCmyk / setCmykF
     r = engine->RegisterObjectMethod(
-        "color", "void setCmyk(int c, int m, int y, int k, int a = 255)",
-        asMETHODPR(QColor, setCmyk, (int, int, int, int, int), void),
-        asCALL_THISCALL);
+        "color", "void setCmyk(int c, int m, int y, int k)",
+        asFUNCTION(Color_setCmyk), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "color",
-        "void setCmykF(float c, float m, float y, float k, float a = 1.0)",
-        asMETHODPR(QColor, setCmykF, (float, float, float, float, float), void),
-        asCALL_THISCALL);
+        "color", "void setCmykF(float c, float m, float y, float k)",
+        asFUNCTION(Color_setCmykF), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // setHsl / setHslF
     r = engine->RegisterObjectMethod(
-        "color", "void setHsl(int h, int s, int l, int a = 255)",
-        asMETHODPR(QColor, setHsl, (int, int, int, int), void),
-        asCALL_THISCALL);
+        "color", "void setHsl(int h, int s, int l)", asFUNCTION(Color_setHsl),
+        asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "color", "void setHslF(float h, float s, float l, float a = 1.0)",
-        asMETHODPR(QColor, setHslF, (float, float, float, float), void),
-        asCALL_THISCALL);
+        "color", "void setHslF(float h, float s, float l)",
+        asFUNCTION(Color_setHslF), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // setHsv / setHsvF
     r = engine->RegisterObjectMethod(
-        "color", "void setHsv(int h, int s, int v, int a = 255)",
-        asMETHODPR(QColor, setHsv, (int, int, int, int), void),
-        asCALL_THISCALL);
+        "color", "void setHsv(int h, int s, int v)", asFUNCTION(Color_setHsv),
+        asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
-        "color", "void setHsvF(float h, float s, float v, float a = 1.0)",
-        asMETHODPR(QColor, setHsvF, (float, float, float, float), void),
-        asCALL_THISCALL);
+        "color", "void setHsvF(float h, float s, float v)",
+        asFUNCTION(Color_setHsvF), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -834,39 +794,39 @@ void RegisterColor(asIScriptEngine *engine) {
 
     // fromCmyk / fromCmykF
     r = engine->RegisterGlobalFunction(
-        "color fromCmyk(int c, int m, int y, int k, int a = 255)",
+        "color fromCmyk(int c, int m, int y, int k)",
         asFUNCTION(Color_fromCmyk_wrap), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterGlobalFunction(
-        "color fromCmykF(float c, float m, float y, float k, float a = 1.0)",
+        "color fromCmykF(float c, float m, float y, float k)",
         asFUNCTION(Color_fromCmykF_wrap), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // fromHsl / fromHslF
-    r = engine->RegisterGlobalFunction(
-        "color fromHsl(int h, int s, int l, int a = 255)",
-        asFUNCTION(Color_fromHsl_wrap), asCALL_CDECL);
+    r = engine->RegisterGlobalFunction("color fromHsl(int h, int s, int l)",
+                                       asFUNCTION(Color_fromHsl_wrap),
+                                       asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterGlobalFunction(
-        "color fromHslF(float h, float s, float l, float a = 1.0)",
+        "color fromHslF(float h, float s, float l)",
         asFUNCTION(Color_fromHslF_wrap), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     // fromHsv / fromHsvF
-    r = engine->RegisterGlobalFunction(
-        "color fromHsv(int h, int s, int v, int a = 255)",
-        asFUNCTION(Color_fromHsv_wrap), asCALL_CDECL);
+    r = engine->RegisterGlobalFunction("color fromHsv(int h, int s, int v)",
+                                       asFUNCTION(Color_fromHsv_wrap),
+                                       asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterGlobalFunction(
-        "color fromHsvF(float h, float s, float v, float a = 1.0)",
+        "color fromHsvF(float h, float s, float v)",
         asFUNCTION(Color_fromHsvF_wrap), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -878,9 +838,9 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    r = engine->RegisterGlobalFunction(
-        "color fromRgb(int r, int g, int b, int a = 255)",
-        asFUNCTION(Color_fromRgb_int_wrap), asCALL_CDECL);
+    r = engine->RegisterGlobalFunction("color fromRgb(int r, int g, int b)",
+                                       asFUNCTION(Color_fromRgb_int_wrap),
+                                       asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -890,22 +850,9 @@ void RegisterColor(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    // fromRgba64 variants
-    r = engine->RegisterGlobalFunction("color fromRgba64(uint64 rgba64)",
-                                       asFUNCTION(Color_fromRgba64_u64_wrap),
-                                       asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterGlobalFunction(
-        "color fromRgba64(uint16 r, uint16 g, uint16 b, uint16 a = 65535)",
-        asFUNCTION(Color_fromRgba64_ush_wrap), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
     // fromRgbF
     r = engine->RegisterGlobalFunction(
-        "color fromRgbF(float r, float g, float b, float a = 1.0)",
+        "color fromRgbF(float r, float g, float b)",
         asFUNCTION(Color_fromRgbF_wrap), asCALL_CDECL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);

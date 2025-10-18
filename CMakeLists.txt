@@ -27,9 +27,14 @@ option(WINGHEX_USE_FRAMELESS ON)
 option(BUILD_TEST_PLUGIN OFF)
 option(BUILD_SHARED_MEM_EXT OFF)
 option(ANGEL_LSP ON)
+option(BUILD_TEST OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
+
+if(BUILD_TEST)
+    add_subdirectory(test/TestStructGen)
+endif()
 
 if(DEFINED CMAKE_CXX_BYTE_ORDER AND CMAKE_CXX_BYTE_ORDER)
     if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")

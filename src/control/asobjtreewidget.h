@@ -39,8 +39,6 @@ private:
     void createObjNodes(const QList<CodeInfoTip> &nodes,
                         QTreeWidgetItem *parent);
 
-    QByteArray getFnRealName(asIScriptFunction *fn);
-
 private:
     void addGlobalFunctionCompletion(asIScriptEngine *engine,
                                      QHash<QString, QList<CodeInfoTip>> &c);

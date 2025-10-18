@@ -389,12 +389,22 @@ ErrFile EditorView::openFile(const QString &filename) {
             return ErrFile::Permission;
         }
 
+        bool retry;
         auto readonly = !Utilities::fileCanWrite(filename);
-
-        auto *p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
-        if (Q_UNLIKELY(p == nullptr)) {
-            return ErrFile::Permission;
-        }
+        QHexDocument *p;
+        do {
+            retry = false;
+            p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
+            if (Q_UNLIKELY(p == nullptr)) {
+                if (!readonly) {
+                    // retry to open with readonly
+                    readonly = true;
+                    retry = true;
+                    continue;
+                }
+                return ErrFile::Permission;
+            }
+        } while (retry);
 
         removeMonitorPaths();
 

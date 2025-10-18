@@ -92,8 +92,21 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
-                AppManager::instance()->openFile(rinfo.fileName,
-                                                 rinfo.isWorkSpace);
+                auto ret = AppManager::instance()->openFile(rinfo.fileName,
+                                                            rinfo.isWorkSpace);
+                if (ret == ErrFile::NotExist) {
+                    WingMessageBox::critical(this, tr("Error"),
+                                             tr("FileNotExist"));
+                } else if (ret == ErrFile::Permission) {
+                    WingMessageBox::critical(this, tr("Error"),
+                                             tr("FilePermission"));
+                } else if (ret != ErrFile::Success) {
+                    auto e = QMetaEnum::fromType<ErrFile>();
+                    WingMessageBox::critical(this, tr("Error"),
+                                             tr("UnkownError") +
+                                                 QStringLiteral(" - ") +
+                                                 e.valueToKey(int(ret)));
+                }
             });
     m_recentmanager->apply(this, SettingManager::instance().recentHexFiles());
 
@@ -424,13 +437,7 @@ void MainWindow::buildUpRibbonBar() {
     m_ribbonMaps[RibbonCatagories::ABOUT] =
         buildAboutPage(m_ribbon->addTab(tr("About")));
 
-    connect(m_ribbon, &Ribbon::onDragDropFiles, this,
-            [=](const QStringList &files) {
-                auto app = AppManager::instance();
-                for (auto &f : files) {
-                    app->openFile(f);
-                }
-            });
+    connect(m_ribbon, &Ribbon::onDragDropFiles, this, &MainWindow::openFiles);
 
     // check update if set
     if (set.checkUpdate()) {
@@ -1988,19 +1995,24 @@ void MainWindow::on_openfile() {
         m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
         EditorView *editor = nullptr;
         auto res = openFile(filename, &editor);
-        if (res == ErrFile::NotExist) {
-            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-            return;
-        }
-        if (res == ErrFile::Permission) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-            return;
-        }
-        if (res == ErrFile::AlreadyOpened) {
-            Q_ASSERT(editor);
-            if (editor) {
-                editor->raise();
-                editor->setFocus();
+        if (res != ErrFile::Success) {
+            if (res == ErrFile::NotExist) {
+                WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
+            } else if (res == ErrFile::Permission) {
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("FilePermission"));
+            } else if (res == ErrFile::AlreadyOpened) {
+                Q_ASSERT(editor);
+                if (editor) {
+                    editor->raise();
+                    editor->setFocus();
+                }
+            } else {
+                auto e = QMetaEnum::fromType<ErrFile>();
+                WingMessageBox::critical(this, tr("Error"),
+                                         tr("UnkownError") +
+                                             QStringLiteral(" - ") +
+                                             e.valueToKey(int(res)));
             }
             return;
         }
@@ -2024,19 +2036,22 @@ void MainWindow::on_openworkspace() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
-    if (res == ErrFile::NotExist) {
-        WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-        return;
-    }
-    if (res == ErrFile::Permission) {
-        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-        return;
-    }
-    if (res == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
-        if (editor) {
-            editor->raise();
-            editor->setFocus();
+    if (res != ErrFile::Success) {
+        if (res == ErrFile::NotExist) {
+            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
+        } else if (res == ErrFile::Permission) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        } else if (res == ErrFile::AlreadyOpened) {
+            Q_ASSERT(editor);
+            if (editor) {
+                editor->raise();
+                editor->setFocus();
+            }
+        } else {
+            auto e = QMetaEnum::fromType<ErrFile>();
+            WingMessageBox::critical(this, tr("Error"),
+                                     tr("UnkownError") + QStringLiteral(" - ") +
+                                         e.valueToKey(int(res)));
         }
         return;
     }
@@ -2065,7 +2080,10 @@ void MainWindow::on_reload() {
         break;
     }
     default: {
-        WingMessageBox::critical(this, tr("Error"), tr("ReloadUnSuccessfully"));
+        auto e = QMetaEnum::fromType<ErrFile>();
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("ReloadUnSuccessfully") +
+                                     QStringLiteral(" - ") + e.valueToKey(res));
         break;
     }
     }
@@ -2080,22 +2098,26 @@ void MainWindow::on_save() {
         return;
     }
 
-    auto changedTo = editor->change2WorkSpace();
-    QString ws;
-    auto res = saveEditor(editor, {}, false, false, &ws);
-
     auto isNewFile = editor->isNewFile();
     if (isNewFile) {
         on_saveas();
         return;
     }
 
-    if (res == ErrFile::Permission) {
-        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-        return;
-    }
-    if (res == ErrFile::WorkSpaceUnSaved) {
-        WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
+    auto changedTo = editor->change2WorkSpace();
+    QString ws;
+    auto res = saveEditor(editor, {}, false, false, &ws);
+    if (res != ErrFile::Success) {
+        if (res == ErrFile::Permission) {
+            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+        } else if (res == ErrFile::WorkSpaceUnSaved) {
+            WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
+        } else {
+            auto e = QMetaEnum::fromType<ErrFile>();
+            WingMessageBox::critical(this, tr("Error"),
+                                     tr("UnkownError") + QStringLiteral(" - ") +
+                                         e.valueToKey(int(res)));
+        }
         return;
     }
 
@@ -2137,8 +2159,10 @@ void MainWindow::on_convpro() {
         m_recentmanager->addRecentFile(info);
         Toast::toast(this, NAMEICONRES("convpro"), tr("ConvWorkSpaceSuccess"));
     } else {
-        // should not go there
-        Q_ASSERT(false);
+        auto e = QMetaEnum::fromType<ErrFile>();
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("UnkownError") + QStringLiteral(" - ") +
+                                     e.valueToKey(ret));
     }
 }
 
@@ -2182,7 +2206,10 @@ void MainWindow::on_saveas() {
         break;
     }
     default: {
-        WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
+        auto e = QMetaEnum::fromType<ErrFile>();
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("SaveUnSuccessfully") +
+                                     QStringLiteral(" - ") + e.valueToKey(res));
         break;
     }
     }
@@ -2212,7 +2239,10 @@ void MainWindow::on_exportfile() {
         break;
     }
     default: {
-        WingMessageBox::critical(this, tr("Error"), tr("ExportUnSuccessfully"));
+        auto e = QMetaEnum::fromType<ErrFile>();
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("ExportUnSuccessfully") +
+                                     QStringLiteral(" - ") + e.valueToKey(res));
         break;
     }
     }
@@ -2239,7 +2269,9 @@ void MainWindow::on_savesel() {
         Toast::toast(this, NAMEICONRES(QStringLiteral("savesel")),
                      tr("SaveSelSuccess"));
     } else {
-        WingMessageBox::critical(this, tr("Error"), tr("SaveSelError"));
+        WingMessageBox::critical(this, tr("Error"),
+                                 tr("SaveSelError") + QStringLiteral(" - ") +
+                                     qfile.errorString());
     }
 }
 
@@ -3469,12 +3501,16 @@ void MainWindow::loadFindResult(EditorView *view) {
 }
 
 void MainWindow::openFiles(const QStringList &files) {
-    bool err = false;
     QStringList errof;
     for (auto &file : files) {
-        if (openFile(file, nullptr)) {
-            err = true;
-            errof << file;
+        bool isWs;
+        if (AppManager::instance()->openFile(file, true, &isWs)) {
+            errof.append(file);
+        } else {
+            RecentFileManager::RecentInfo info;
+            info.fileName = file;
+            info.isWorkSpace = isWs;
+            m_recentmanager->addRecentFile(info);
         }
     }
 
@@ -3482,7 +3518,7 @@ void MainWindow::openFiles(const QStringList &files) {
     raise();
     activateWindow();
 
-    if (err) {
+    if (!errof.isEmpty()) {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("ErrOpenFileBelow") + QStringLiteral("\n") +
                                      errof.join('\n'));
@@ -4346,3 +4382,5 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
     }
     return FramelessMainWindow::eventFilter(watched, event);
 }
+
+RecentFileManager *MainWindow::recentManager() const { return m_recentmanager; }

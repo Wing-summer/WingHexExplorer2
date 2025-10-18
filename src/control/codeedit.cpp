@@ -342,6 +342,48 @@ void CodeEdit::applyEditorSetStyle() {
     this->setAutoIndent(set.editorAutoIden());
 }
 
+void CodeEdit::toggleComment() {
+    auto cursor = this->textCursor();
+    if (cursor.hasSelection()) {
+        auto start = cursor.selectionStart();
+        auto end = cursor.selectionEnd();
+        auto cmtbegin = QStringLiteral("/*");
+        auto cmtend = QStringLiteral("*/");
+
+        // only add comment
+        cursor.beginEditBlock();
+        cursor.setPosition(end);
+        cursor.insertText(cmtend);
+        cursor.setPosition(start);
+        cursor.insertText(cmtbegin);
+        cursor.endEditBlock();
+    } else {
+        auto blk = cursor.block();
+        auto txt = blk.text();
+        auto comment = QStringLiteral("//");
+
+        cursor.movePosition(QTextCursor::StartOfLine);
+        auto r = std::find_if_not(txt.begin(), txt.end(),
+                                  [](const QChar &ch) { return ch.isSpace(); });
+        auto len = std::distance(txt.begin(), r);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor,
+                            len);
+        auto oldcur = cursor;
+        if (r == txt.end() || len + 2 > txt.length()) {
+            cursor.insertText(comment);
+        } else {
+            cursor.movePosition(QTextCursor::NextCharacter,
+                                QTextCursor::KeepAnchor, 2);
+            auto sel = cursor.selectedText();
+            if (sel == comment) {
+                cursor.removeSelectedText();
+            } else {
+                oldcur.insertText(comment);
+            }
+        }
+    }
+}
+
 SearchReplaceWidget *CodeEdit::searchWidget() const { return m_searchWidget; }
 
 void CodeEdit::setContentModified(bool b) { Q_EMIT contentModified(b); }
@@ -402,6 +444,11 @@ void CodeEdit::keyPressEvent(QKeyEvent *event) {
                     unHandled = false;
                 }
                 break;
+            case Qt::Key_Slash: {
+                if (event->modifiers() == Qt::ControlModifier) {
+                    toggleComment();
+                }
+            } break;
             default:
                 break;
             }
@@ -454,49 +501,8 @@ void CodeEdit::contextMenuEvent(QContextMenuEvent *event) {
     menu.addSeparator();
 
     menu.addAction(tr("Comment/UnComment"),
-                   QKeySequence(Qt::ControlModifier | Qt::Key_Backslash), this,
-                   [this]() {
-                       auto cursor = this->textCursor();
-                       if (cursor.hasSelection()) {
-                           auto start = cursor.selectionStart();
-                           auto end = cursor.selectionEnd();
-                           auto cmtbegin = QStringLiteral("/*");
-                           auto cmtend = QStringLiteral("*/");
-
-                           // only add comment
-                           cursor.beginEditBlock();
-                           cursor.setPosition(end);
-                           cursor.insertText(cmtend);
-                           cursor.setPosition(start);
-                           cursor.insertText(cmtbegin);
-                           cursor.endEditBlock();
-                       } else {
-                           auto blk = cursor.block();
-                           auto txt = blk.text();
-                           auto comment = QStringLiteral("//");
-
-                           cursor.movePosition(QTextCursor::StartOfLine);
-                           auto r = std::find_if_not(
-                               txt.begin(), txt.end(),
-                               [](const QChar &ch) { return ch.isSpace(); });
-                           auto len = std::distance(txt.begin(), r);
-                           cursor.movePosition(QTextCursor::NextCharacter,
-                                               QTextCursor::MoveAnchor, len);
-                           auto oldcur = cursor;
-                           if (r == txt.end() || len + 2 > txt.length()) {
-                               cursor.insertText(comment);
-                           } else {
-                               cursor.movePosition(QTextCursor::NextCharacter,
-                                                   QTextCursor::KeepAnchor, 2);
-                               auto sel = cursor.selectedText();
-                               if (sel == comment) {
-                                   cursor.removeSelectedText();
-                               } else {
-                                   oldcur.insertText(comment);
-                               }
-                           }
-                       }
-                   });
+                   QKeySequence(Qt::ControlModifier | Qt::Key_Slash), this,
+                   &CodeEdit::toggleComment);
 
     menu.addAction(tr("Fold/UnFold"), this, [this]() {
         if (isCurrentLineFolded()) {

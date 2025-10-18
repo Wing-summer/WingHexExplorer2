@@ -238,6 +238,21 @@ static QJsonArray &QJsonArray_opAddAssign(QJsonArray &arr,
     return arr;
 }
 
+asUINT QJsonArray_opForBegin(const QJsonArray *) { return 0; }
+
+bool QJsonArray_opForEnd(asUINT iter, const QJsonArray *arr) {
+    if (arr == nullptr || arr->count() <= iter)
+        return true;
+
+    return false;
+}
+
+asUINT QJsonArray_opForNext(asUINT iter, const QJsonArray *) {
+    return iter + 1;
+}
+
+asUINT QJsonArray_opForValue1(asUINT iter, const QJsonArray *) { return iter; }
+
 // ------------------------------
 // QJsonObject Wrappers
 // ------------------------------
@@ -650,6 +665,40 @@ void RegisterQJsonArray(asIScriptEngine *engine) {
     r = engine->RegisterObjectMethod(
         "JsonArray", "JsonArray &opAddAssign(const JsonValue &in)",
         asFUNCTION(QJsonArray_opAddAssign), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    // Support for foreach
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "uint opForBegin() const",
+        asFUNCTIONPR(QJsonArray_opForBegin, (const QJsonArray *), asUINT),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "bool opForEnd(uint) const",
+        asFUNCTIONPR(QJsonArray_opForEnd, (asUINT, const QJsonArray *), bool),
+        asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("JsonArray", "uint opForNext(uint) const",
+                                     asFUNCTIONPR(QJsonArray_opForNext,
+                                                  (asUINT, const QJsonArray *),
+                                                  asUINT),
+                                     asCALL_CDECL_OBJLAST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "JsonValue opForValue0(uint index) const",
+        asMETHODPR(QJsonArray, at, (qsizetype) const, QJsonValue),
+        asCALL_THISCALL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod(
+        "JsonArray", "uint opForValue1(uint index) const",
+        asFUNCTIONPR(QJsonArray_opForValue1, (asUINT, const QJsonArray *),
+                     asUINT),
+        asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 }

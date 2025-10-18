@@ -234,6 +234,10 @@ public:
 
     void saveTableContent(QAbstractItemModel *model);
 
+    void openFiles(const QStringList &files);
+
+    RecentFileManager *recentManager() const;
+
 private:
     void updateNumberTable();
     void updateStringDec(const QByteArrayList &content);
@@ -262,8 +266,6 @@ private:
     void updateWindowTitle();
 
     void loadFindResult(EditorView *view);
-
-    void openFiles(const QStringList &files);
 
     void updateEditModeEnabled();
 

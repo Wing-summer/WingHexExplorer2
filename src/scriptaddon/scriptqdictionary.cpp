@@ -253,14 +253,17 @@ void CScriptDictionary::EnumReferences(asIScriptEngine *inEngine) {
     for (it = dict.begin(); it != dict.end(); it++) {
         if (it->second.m_typeId & asTYPEID_MASK_OBJECT) {
             asITypeInfo *subType = engine->GetTypeInfoById(it->second.m_typeId);
-            if ((subType->GetFlags() & asOBJ_VALUE) &&
-                (subType->GetFlags() & asOBJ_GC)) {
-                // For value types we need to forward the enum callback
-                // to the object so it can decide what to do
-                engine->ForwardGCEnumReferences(it->second.m_valueObj, subType);
-            } else {
-                // For others, simply notify the GC about the reference
-                inEngine->GCEnumCallback(it->second.m_valueObj);
+            if (subType) {
+                if ((subType->GetFlags() & asOBJ_VALUE) &&
+                    (subType->GetFlags() & asOBJ_GC)) {
+                    // For value types we need to forward the enum callback
+                    // to the object so it can decide what to do
+                    engine->ForwardGCEnumReferences(it->second.m_valueObj,
+                                                    subType);
+                } else {
+                    // For others, simply notify the GC about the reference
+                    inEngine->GCEnumCallback(it->second.m_valueObj);
+                }
             }
         }
     }

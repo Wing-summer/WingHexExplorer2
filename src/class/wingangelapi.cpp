@@ -1068,7 +1068,7 @@ void WingAngelAPI::qvariantCastOp(
         auto b = isTempBuffered(type);
         if (b) {
             switch (type) {
-            case QMetaType::Type::Bool:
+            case QMetaType::Bool:
                 dic->Set(key, addr, asTYPEID_BOOL);
                 break;
             case QMetaType::Short:
@@ -1078,16 +1078,16 @@ void WingAngelAPI::qvariantCastOp(
                 dic->Set(key, addr, asTYPEID_UINT16);
                 break;
             case QMetaType::Int:
-            case QMetaType::Long:
                 dic->Set(key, addr, asTYPEID_INT32);
                 break;
             case QMetaType::UInt:
-            case QMetaType::ULong:
                 dic->Set(key, addr, asTYPEID_UINT32);
                 break;
+            case QMetaType::Long:
             case QMetaType::LongLong:
                 dic->Set(key, addr, asTYPEID_INT64);
                 break;
+            case QMetaType::ULong:
             case QMetaType::ULongLong:
                 dic->Set(key, addr, asTYPEID_UINT64);
                 break;
@@ -1101,7 +1101,6 @@ void WingAngelAPI::qvariantCastOp(
                 dic->Set(key, addr, asTYPEID_UINT8);
                 break;
             case QMetaType::SChar:
-            case QMetaType::Char:
                 dic->Set(key, addr, asTYPEID_INT8);
                 break;
             default:
@@ -1132,13 +1131,13 @@ void WingAngelAPI::qvariantCastOp(
         fn(&buffer, type);
         break;
     case QMetaType::Int:
-    case QMetaType::Long:
     case QMetaType::UInt:
-    case QMetaType::ULong:
         assignTmpBuffer(buffer, var.toUInt());
         fn(&buffer, type);
         break;
+    case QMetaType::Long:
     case QMetaType::LongLong:
+    case QMetaType::ULong:
     case QMetaType::ULongLong:
         assignTmpBuffer(buffer, var.toULongLong());
         fn(&buffer, type);
@@ -1155,7 +1154,6 @@ void WingAngelAPI::qvariantCastOp(
         assignTmpBuffer(buffer, var.toDouble());
         fn(&buffer, type);
         break;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     case QMetaType::Char16: {
         auto obj = QChar(var.value<char16_t>());
         fn(&obj, type);
@@ -1164,10 +1162,12 @@ void WingAngelAPI::qvariantCastOp(
         auto obj = QChar(var.value<char32_t>());
         fn(&obj, type);
     } break;
-#endif
+    case QMetaType::Char: {
+        auto obj = QChar(var.toChar());
+        fn(&obj, type);
+    } break;
     case QMetaType::UChar:
     case QMetaType::SChar:
-    case QMetaType::Char:
         assignTmpBuffer(buffer, var.value<uchar>());
         break;
     case QMetaType::QString: {
@@ -1389,13 +1389,13 @@ int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
     case QMetaType::UShort:
         return asTYPEID_UINT16;
     case QMetaType::Int:
-    case QMetaType::Long:
         return asTYPEID_INT32;
     case QMetaType::UInt:
-    case QMetaType::ULong:
         return asTYPEID_UINT32;
+    case QMetaType::Long:
     case QMetaType::LongLong:
         return asTYPEID_INT64;
+    case QMetaType::ULong:
     case QMetaType::ULongLong:
         return asTYPEID_UINT64;
     case QMetaType::Float:
@@ -1403,15 +1403,13 @@ int WingAngelAPI::qvariantCastASID(asIScriptEngine *engine,
     case QMetaType::Double:
         return asTYPEID_DOUBLE;
     case QMetaType::QChar:
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    case QMetaType::Char:
     case QMetaType::Char16:
     case QMetaType::Char32:
-#endif
         return engine->GetTypeIdByDecl("char");
     case QMetaType::UChar:
         return asTYPEID_UINT8;
     case QMetaType::SChar:
-    case QMetaType::Char:
         return asTYPEID_INT8;
     case QMetaType::QString:
         return engine->GetTypeIdByDecl("string");
@@ -1440,13 +1438,13 @@ QString WingAngelAPI::qvariantCastASString(const QMetaType::Type &id) {
     case QMetaType::UShort:
         return QStringLiteral("uint16");
     case QMetaType::Int:
-    case QMetaType::Long:
         return QStringLiteral("int32");
     case QMetaType::UInt:
-    case QMetaType::ULong:
         return QStringLiteral("uint32");
+    case QMetaType::Long:
     case QMetaType::LongLong:
         return QStringLiteral("int64");
+    case QMetaType::ULong:
     case QMetaType::ULongLong:
         return QStringLiteral("uint64");
     case QMetaType::Float:
@@ -1454,15 +1452,13 @@ QString WingAngelAPI::qvariantCastASString(const QMetaType::Type &id) {
     case QMetaType::Double:
         return QStringLiteral("double");
     case QMetaType::QChar:
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     case QMetaType::Char16:
     case QMetaType::Char32:
-#endif
+    case QMetaType::Char:
         return QStringLiteral("char");
     case QMetaType::UChar:
         return QStringLiteral("uint8");
     case QMetaType::SChar:
-    case QMetaType::Char:
         return QStringLiteral("int8");
     case QMetaType::QString:
         return QStringLiteral("string");
@@ -1497,7 +1493,6 @@ bool WingAngelAPI::isTempBuffered(QMetaType::Type type) {
     case QMetaType::Double:
     case QMetaType::UChar:
     case QMetaType::SChar:
-    case QMetaType::Char:
         return true;
     default:
         return false;
@@ -1674,7 +1669,6 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
                 break;
             case QMetaType::UChar:
             case QMetaType::SChar:
-            case QMetaType::Char:
                 gen->SetReturnByte(qvariantCastGetValue<uchar>(addr));
                 break;
             default:

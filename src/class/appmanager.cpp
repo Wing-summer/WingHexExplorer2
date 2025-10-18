@@ -114,21 +114,54 @@ AppManager::AppManager(int &argc, char *argv[])
                     return;
                 }
 
+                QStringList failedFile;
                 QDataStream out(&message, QIODevice::ReadOnly);
                 while (!out.atEnd()) {
                     QString param;
                     out >> param;
-                    openFile(param);
+                    bool isWs;
+                    if (openFile(param, true, &isWs) != WingHex::Success) {
+                        failedFile.append(param);
+                    } else {
+                        RecentFileManager::RecentInfo info;
+                        info.fileName = param;
+                        info.isWorkSpace = isWs;
+                        _w->recentManager()->addRecentFile(info);
+                    }
                 }
                 _w->show();
+
+                if (!failedFile.isEmpty()) {
+                    WingMessageBox::critical(_w, tr("Error"),
+                                             tr("ErrOpenFileBelow") +
+                                                 QStringLiteral("\n") +
+                                                 failedFile.join('\n'));
+                }
             });
 
     if (splash)
         splash->setInfoText(tr("OpeningFiles"));
 
     if (args.size() > 1) {
+        QStringList failedFile;
         for (auto var = args.begin() + 1; var != args.end(); ++var) {
-            openFile(*var);
+            auto file = *var;
+            bool isWs;
+            if (openFile(file, true, &isWs) != WingHex::Success) {
+                failedFile.append(file);
+            } else {
+                RecentFileManager::RecentInfo info;
+                info.fileName = file;
+                info.isWorkSpace = isWs;
+                _w->recentManager()->addRecentFile(info);
+            }
+        }
+
+        if (!failedFile.isEmpty()) {
+            WingMessageBox::critical(_w, tr("Error"),
+                                     tr("ErrOpenFileBelow") +
+                                         QStringLiteral("\n") +
+                                         failedFile.join('\n'));
         }
     }
 
@@ -156,9 +189,14 @@ MainWindow *AppManager::mainWindow() const { return _w; }
 
 quint64 AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
 
-void AppManager::openFile(const QString &file, bool autoDetect) {
+ErrFile AppManager::openFile(const QString &file, bool autoDetect,
+                             bool *isWorkSpace) {
     EditorView *editor = nullptr;
     Q_ASSERT(_w);
+
+    if (isWorkSpace) {
+        *isWorkSpace = false;
+    }
 
     ErrFile ret = ErrFile::Error;
     if (autoDetect) {
@@ -167,6 +205,9 @@ void AppManager::openFile(const QString &file, bool autoDetect) {
             auto suffix = finfo.suffix();
             if (suffix.compare(QStringLiteral("wingpro")) == 0) {
                 ret = _w->openWorkSpace(file, &editor);
+                if (isWorkSpace && ret == ErrFile::Success) {
+                    *isWorkSpace = true;
+                }
             } else if (suffix.compare(QStringLiteral("as")) == 0) {
                 _w->openScriptFile(file, splash);
                 ret = ErrFile::Success;
@@ -196,36 +237,6 @@ void AppManager::openFile(const QString &file, bool autoDetect) {
 
         editor->setFocus();
     }
-}
 
-void AppManager::openRawFile(const QString &file) {
-    EditorView *editor = nullptr;
-    Q_ASSERT(_w);
-    auto ret = _w->openFile(file, &editor);
-    if (ret == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
-        if (_w->currentEditor() == editor) {
-            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
-        } else {
-            editor->raise();
-        }
-
-        editor->setFocus();
-    }
-}
-
-void AppManager::openWorkSpace(const QString &ws) {
-    EditorView *editor = nullptr;
-    Q_ASSERT(_w);
-    auto ret = _w->openWorkSpace(ws, &editor);
-    if (ret == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
-        if (_w->currentEditor() == editor) {
-            Toast::toast(_w, NAMEICONRES("openapp"), tr("AlreadyOpened"));
-        } else {
-            editor->raise();
-        }
-
-        editor->setFocus();
-    }
+    return ret;
 }
