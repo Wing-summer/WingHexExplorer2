@@ -239,7 +239,7 @@ public:
     RecentFileManager *recentManager() const;
 
 private:
-    void updateNumberTable();
+    void updateNumberTable(bool force);
     void updateStringDec(const QByteArrayList &content);
     void updateUI();
 

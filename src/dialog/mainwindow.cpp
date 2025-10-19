@@ -552,7 +552,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     connect(m_lazyVisibleFilter, &EventFilter::eventTriggered, this,
             [this](QObject *obj, QEvent *) {
                 if (obj == m_numshowtable) {
-                    updateNumberTable();
+                    updateNumberTable(false);
                 } else if (obj == m_txtDecode) {
                     updateStringDec({});
                 }
@@ -806,7 +806,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aLittleEndian->setChecked(le);
     connect(aLittleEndian, &QAction::triggered, this, [=] {
         m_islittle = true;
-        this->on_locChanged();
+        updateNumberTable(true);
     });
     m_numshowtable->addAction(aLittleEndian);
 
@@ -816,7 +816,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aBigEndian->setChecked(!le);
     connect(aBigEndian, &QAction::triggered, this, [=] {
         m_islittle = false;
-        this->on_locChanged();
+        updateNumberTable(true);
     });
     m_numshowtable->addAction(aBigEndian);
 
@@ -830,7 +830,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aUnsignedHex->setChecked(false);
     connect(aUnsignedHex, &QAction::toggled, this, [=](bool b) {
         m_unsignedHex = b;
-        this->on_locChanged();
+        updateNumberTable(true);
     });
     m_numshowtable->addAction(aUnsignedHex);
 
@@ -2867,7 +2867,7 @@ void MainWindow::on_locChanged() {
                              .arg(sellen)
                              .arg(QString::number(sellen, 16).toUpper()));
 
-    updateNumberTable();
+    updateNumberTable(false);
 
     auto cursor = hexeditor->cursor();
 
@@ -3900,7 +3900,7 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
                  tr("SaveSuccessfully"));
 }
 
-void MainWindow::updateNumberTable() {
+void MainWindow::updateNumberTable(bool force) {
     if (!m_numshowtable->isVisible()) {
         return;
     }
@@ -3914,7 +3914,7 @@ void MainWindow::updateNumberTable() {
     static QHexView *lastView = nullptr;
     static qsizetype lastOff = -1;
     auto off = hexeditor->currentOffset();
-    if (lastView == hexeditor && lastOff == off) {
+    if (!force && lastView == hexeditor && lastOff == off) {
         return;
     } else {
         lastView = hexeditor;
@@ -4007,37 +4007,33 @@ void MainWindow::updateNumberTable() {
                               QString::fromLatin1(tmp));
         _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
                               QString::fromUtf8(tmp));
-        if (Utilities::checkIsLittleEndian()) {
-            if (!m_islittle) {
-                { // utf16
-                    QStringDecoder dec(QStringDecoder::Encoding::Utf16BE);
-                    QString data = dec.decode(tmp);
-                    _numsitem->setNumData(
-                        NumShowModel::NumTableIndex::UTF16_STR, data);
-                }
+        if (m_islittle) {
+            { // utf16
+                QStringDecoder dec(QStringDecoder::Encoding::Utf16LE);
+                QString data = dec.decode(tmp);
+                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                                      data);
+            }
 
-                { // utf32
-                    QStringDecoder dec(QStringDecoder::Encoding::Utf32BE);
-                    QString data = dec.decode(tmp);
-                    _numsitem->setNumData(
-                        NumShowModel::NumTableIndex::UTF16_STR, data);
-                }
+            { // utf32
+                QStringDecoder dec(QStringDecoder::Encoding::Utf32LE);
+                QString data = dec.decode(tmp);
+                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                                      data);
             }
         } else {
-            if (m_islittle) {
-                { // utf16
-                    QStringDecoder dec(QStringDecoder::Encoding::Utf16LE);
-                    QString data = dec.decode(tmp);
-                    _numsitem->setNumData(
-                        NumShowModel::NumTableIndex::UTF16_STR, data);
-                }
+            { // utf16
+                QStringDecoder dec(QStringDecoder::Encoding::Utf16BE);
+                QString data = dec.decode(tmp);
+                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF16_STR,
+                                      data);
+            }
 
-                { // utf32
-                    QStringDecoder dec(QStringDecoder::Encoding::Utf32LE);
-                    QString data = dec.decode(tmp);
-                    _numsitem->setNumData(
-                        NumShowModel::NumTableIndex::UTF16_STR, data);
-                }
+            { // utf32
+                QStringDecoder dec(QStringDecoder::Encoding::Utf32BE);
+                QString data = dec.decode(tmp);
+                _numsitem->setNumData(NumShowModel::NumTableIndex::UTF32_STR,
+                                      data);
             }
         }
     } else {

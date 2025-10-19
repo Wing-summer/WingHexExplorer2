@@ -965,6 +965,7 @@ void CTypeParser::dumpAllTypes(QTextStream &output) const {
     // dump enum definitions
     output << "\nenum definitions:"
            << "\n--------------------" << Qt::endl;
+    dumpEnums(output);
 }
 
 void CTypeParser::dumpTypeDefines(QTextStream &output) const {
