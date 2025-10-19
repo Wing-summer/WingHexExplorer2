@@ -634,7 +634,7 @@ public:
             asQWORD uv;
         };
 
-        switch (type->GetTypedefTypeId()) {
+        switch (type->GetUnderlyingTypeId()) {
         case asTYPEID_INT8:
             v = *var->address.ResolveAs<const int8_t>();
             break;
@@ -662,12 +662,12 @@ public:
         }
 
         for (asUINT e = 0; e < type->GetEnumValueCount(); e++) {
-            int ov = 0;
+            asINT64 ov = 0;
             const char *name = type->GetEnumValueByIndex(e, &ov);
 
             if (ov == v) {
-                if (type->GetTypedefTypeId() >= asTYPEID_UINT8 &&
-                    type->GetTypedefTypeId() <= asTYPEID_UINT64) {
+                if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
+                    type->GetUnderlyingTypeId() <= asTYPEID_UINT64) {
                     var->value = fmt::format("{} ({})", name, uv);
                     return;
                 }
@@ -680,8 +680,8 @@ public:
         std::bitset<32> bits(v);
 
         if (bits.count() == 1) {
-            if (type->GetTypedefTypeId() >= asTYPEID_UINT8 &&
-                type->GetTypedefTypeId() <= asTYPEID_UINT64) {
+            if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
+                type->GetUnderlyingTypeId() <= asTYPEID_UINT64) {
                 var->value = fmt::format("{}", uv);
                 return;
             }
@@ -705,7 +705,7 @@ public:
             asQWORD uv;
         };
 
-        switch (type->GetTypedefTypeId()) {
+        switch (type->GetUnderlyingTypeId()) {
         case asTYPEID_INT8:
             v = *var->address.ResolveAs<const int8_t>();
             break;
@@ -735,8 +735,8 @@ public:
         {
             std::string rawValue;
 
-            if (type->GetTypedefTypeId() >= asTYPEID_UINT8 &&
-                type->GetTypedefTypeId() <= asTYPEID_UINT64)
+            if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
+                type->GetUnderlyingTypeId() <= asTYPEID_UINT64)
                 rawValue = fmt::format("{}", uv);
             else
                 rawValue = fmt::format("{}", v);
@@ -747,7 +747,7 @@ public:
         }
 
         // find bit names
-        int ov = 0;
+        asINT64 ov = 0;
         std::array<const char *, sizeof(ov) * 8> bit_names{};
 
         for (asUINT e = 0; e < type->GetEnumValueCount(); e++) {

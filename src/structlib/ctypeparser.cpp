@@ -942,14 +942,33 @@ bool CTypeParser::setPadAlignment(int newKAlignment) {
     return false;
 }
 
-/// Dump the extracted type definitions
-void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
-    VariableDeclaration var;
-
-    static QString padding(4, ' ');
-
+void CTypeParser::dumpAllTypes(QTextStream &output) const {
     // dump typedef definitions
     output << "\ntypedef definitions:" << "\n--------------------" << Qt::endl;
+    dumpTypeDefines(output);
+
+    // dump numeric const variables or macros
+    output << "\nconstant values:"
+           << "\n--------------------" << Qt::endl;
+    dumpConstants(output);
+
+    // dump struct definitions
+    output << "\nstruct definitions:"
+           << "\n--------------------" << Qt::endl;
+    dumpStructs(output);
+
+    // dump union definitions
+    output << "\nunion definitions:"
+           << "\n--------------------" << Qt::endl;
+    dumpUnions(output);
+
+    // dump enum definitions
+    output << "\nenum definitions:"
+           << "\n--------------------" << Qt::endl;
+}
+
+void CTypeParser::dumpTypeDefines(QTextStream &output) const {
+    static QString padding(4, ' ');
     for (auto it = type_defs_.constKeyValueBegin();
          it != type_defs_.constKeyValueEnd(); ++it) {
         output << padding << it->first << " = " << it->second.first;
@@ -961,10 +980,10 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
         }
         output << Qt::endl;
     }
+}
 
-    // dump numeric const variables or macros
-    output << "\nconstant values:"
-           << "\n--------------------" << Qt::endl;
+void CTypeParser::dumpConstants(QTextStream &output) const {
+    static QString padding(4, ' ');
     for (auto it = const_defs_.constKeyValueBegin();
          it != const_defs_.constKeyValueEnd(); ++it) {
         auto v = it->second;
@@ -978,10 +997,10 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
         }
         output << Qt::endl;
     }
+}
 
-    // dump struct definitions
-    output << "\nstruct definitions:"
-           << "\n--------------------" << Qt::endl;
+void CTypeParser::dumpStructs(QTextStream &output) const {
+    static QString padding(4, ' ');
     for (auto it = struct_defs_.constKeyValueBegin();
          it != struct_defs_.constKeyValueEnd(); ++it) {
 
@@ -993,7 +1012,7 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
 
         auto members = it->second;
         while (!members.empty()) {
-            var = members.front();
+            auto var = members.front();
             output << padding << var.data_type;
 
             if (var.is_pointer)
@@ -1032,10 +1051,10 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
                << ")\n"
                << Qt::endl;
     }
+}
 
-    // dump union definitions
-    output << "\nunion definitions:"
-           << "\n--------------------" << Qt::endl;
+void CTypeParser::dumpUnions(QTextStream &output) const {
+    static QString padding(4, ' ');
     for (auto itu = union_defs_.constKeyValueBegin();
          itu != union_defs_.constKeyValueEnd(); ++itu) {
 
@@ -1047,7 +1066,7 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
 
         auto members = itu->second;
         while (!members.isEmpty()) {
-            var = members.front();
+            auto var = members.front();
             output << padding << var.data_type;
 
             if (var.is_pointer)
@@ -1072,10 +1091,10 @@ void CTypeParser::dumpAllTypeDefines(QTextStream &output) const {
                << ")\n"
                << Qt::endl;
     }
+}
 
-    // dump enum definitions
-    output << "\nenum definitions:"
-           << "\n--------------------" << Qt::endl;
+void CTypeParser::dumpEnums(QTextStream &output) const {
+    static QString padding(4, ' ');
     for (auto itv = enum_defs_.constKeyValueBegin();
          itv != enum_defs_.constKeyValueEnd(); ++itv) {
 
@@ -1287,7 +1306,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
         // update element_count from array_dims if present (same as before) ...
         if (!member.array_dims.isEmpty()) {
             quint64 ec = 1;
-            for (size_t d : member.array_dims) {
+            for (size_t &d : member.array_dims) {
                 if (d == 0) {
                     ec = 0;
                     break;

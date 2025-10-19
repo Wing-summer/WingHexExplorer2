@@ -95,6 +95,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     auto &set = SettingManager::instance();
     m_dock->restoreState(set.scriptDockLayout());
     _savedLayout = set.scriptDockLayout();
+    m_lastusedpath = set.lastUsedScriptPath();
     m_watchModel->reloadExpressionList(set.watchExpressions());
 
     ScriptMachine::RegCallBacks callbacks;
@@ -1786,6 +1787,7 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     _savedLayout = m_dock->saveState();
     auto &set = SettingManager::instance();
     set.setRecentScriptFiles(m_recentmanager->saveRecent());
+    set.setLastUsedScriptPath(m_lastusedpath);
     saveDockLayout();
     FramelessMainWindow::closeEvent(event);
 }

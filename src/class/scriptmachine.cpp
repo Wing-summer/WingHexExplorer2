@@ -446,7 +446,6 @@ bool ScriptMachine::configureEngine() {
     if (r < 0) {
         return false;
     }
-
     r = _engine->RegisterGlobalFunction("void println(const ? &in ...)",
                                         asFUNCTION(println), asCALL_GENERIC);
     Q_ASSERT(r >= 0);
@@ -454,8 +453,49 @@ bool ScriptMachine::configureEngine() {
         return false;
     }
 
-    r = _engine->RegisterGlobalFunction("string getInput()",
-                                        asMETHOD(ScriptMachine, getInput),
+    r = _engine->RegisterGlobalFunction("void warnprint(const ? &in ...)",
+                                        asFUNCTION(warnprint), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+    r = _engine->RegisterGlobalFunction("void warnprintln(const ? &in ...)",
+                                        asFUNCTION(warnprintln),
+                                        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = _engine->RegisterGlobalFunction("void infoprint(const ? &in ...)",
+                                        asFUNCTION(infoprint), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+    r = _engine->RegisterGlobalFunction("void infoprintln(const ? &in ...)",
+                                        asFUNCTION(infoprintln),
+                                        asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = _engine->RegisterGlobalFunction("void errprint(const ? &in ...)",
+                                        asFUNCTION(errprint), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+    r = _engine->RegisterGlobalFunction("void errprintln(const ? &in ...)",
+                                        asFUNCTION(errprintln), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    if (r < 0) {
+        return false;
+    }
+
+    r = _engine->RegisterGlobalFunction("string input()",
+                                        asMETHOD(ScriptMachine, input),
                                         asCALL_THISCALL_ASGLOBAL, this);
     Q_ASSERT(r >= 0);
     if (r < 0) {
@@ -588,7 +628,7 @@ void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
     _debugger->HookContext(ctx, _debugger->HasWork());
 }
 
-void ScriptMachine::print(asIScriptGeneric *args) {
+void ScriptMachine::__output(MessageType type, asIScriptGeneric *args) {
     auto context = asGetActiveContext();
     if (context) {
         ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
@@ -598,7 +638,7 @@ void ScriptMachine::print(asIScriptGeneric *args) {
 
         MessageInfo info;
         info.mode = mode;
-        info.type = MessageType::Print;
+        info.type = type;
 
         for (int i = 0; i < args->GetArgCount(); ++i) {
             void *ref = args->GetArgAddress(i);
@@ -610,7 +650,11 @@ void ScriptMachine::print(asIScriptGeneric *args) {
     }
 }
 
-void ScriptMachine::println(asIScriptGeneric *args) {
+void ScriptMachine::print(asIScriptGeneric *args) {
+    __output(MessageType::Print, args);
+}
+
+void ScriptMachine::__outputln(MessageType type, asIScriptGeneric *args) {
     auto context = asGetActiveContext();
     if (context) {
         ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
@@ -620,7 +664,7 @@ void ScriptMachine::println(asIScriptGeneric *args) {
 
         MessageInfo info;
         info.mode = mode;
-        info.type = MessageType::Print;
+        info.type = type;
 
         for (int i = 0; i < args->GetArgCount(); ++i) {
             void *ref = args->GetArgAddress(i);
@@ -635,7 +679,35 @@ void ScriptMachine::println(asIScriptGeneric *args) {
     }
 }
 
-QString ScriptMachine::getInput() {
+void ScriptMachine::println(asIScriptGeneric *args) {
+    __outputln(MessageType::Print, args);
+}
+
+void ScriptMachine::warnprint(asIScriptGeneric *args) {
+    __output(MessageType::Warn, args);
+}
+
+void ScriptMachine::warnprintln(asIScriptGeneric *args) {
+    __outputln(MessageType::Warn, args);
+}
+
+void ScriptMachine::errprint(asIScriptGeneric *args) {
+    __output(MessageType::Error, args);
+}
+
+void ScriptMachine::errprintln(asIScriptGeneric *args) {
+    __outputln(MessageType::Error, args);
+}
+
+void ScriptMachine::infoprint(asIScriptGeneric *args) {
+    __output(MessageType::Info, args);
+}
+
+void ScriptMachine::infoprintln(asIScriptGeneric *args) {
+    __outputln(MessageType::Info, args);
+}
+
+QString ScriptMachine::input() {
     auto context = asGetActiveContext();
     if (context) {
         ConsoleMode mode = ConsoleMode(reinterpret_cast<asPWORD>(
@@ -879,10 +951,6 @@ bool ScriptMachine::executeScript(
 
     mod->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-
-    asPWORD umode = asPWORD(mode);
-    ctx->SetUserData(reinterpret_cast<void *>(umode),
-                     AsUserDataType::UserData_ContextMode);
 
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
@@ -1225,6 +1293,10 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
         // No free context was available so we'll have to create a new one
         ctx = engine->CreateContext();
     }
+
+    asPWORD umode = asPWORD(p->_curMsgMode);
+    ctx->SetUserData(reinterpret_cast<void *>(umode),
+                     AsUserDataType::UserData_ContextMode);
 
     // Attach the debugger
     p->checkDebugger(ctx);

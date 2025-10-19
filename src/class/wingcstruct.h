@@ -32,11 +32,12 @@ class WingCStruct : public WingHex::IWingPlugin {
 
 private:
     inline quint64 getShiftAndMaskedPtr(const QByteArray &buffer) {
-        auto buf = Utilities::processEndian(buffer, m_islittle);
-        if (buf.size() == sizeof(quint32)) {
-            return *reinterpret_cast<quint32 *>(buf.data());
+        if (buffer.size() == sizeof(quint32)) {
+            return Utilities::processEndian(
+                *reinterpret_cast<const quint32 *>(buffer.data()), m_islittle);
         } else {
-            return *reinterpret_cast<quint64 *>(buf.data());
+            return Utilities::processEndian(
+                *reinterpret_cast<const quint64 *>(buffer.data()), m_islittle);
         }
     }
 
@@ -50,21 +51,27 @@ private:
             }
 
             if (len >= sizeof(quint64)) {
-                auto r = *reinterpret_cast<const quint64 *>(buffer.constData());
+                auto r = Utilities::processEndian(
+                    *reinterpret_cast<const quint64 *>(buffer.constData()),
+                    m_islittle);
                 r >>= shift;
                 r &= mask;
                 return T(r);
             }
 
             if (len >= sizeof(quint32)) {
-                auto r = *reinterpret_cast<const quint32 *>(buffer.constData());
+                auto r = Utilities::processEndian(
+                    *reinterpret_cast<const quint32 *>(buffer.constData()),
+                    m_islittle);
                 r >>= shift;
                 r &= mask;
                 return T(r);
             }
 
             if (len >= sizeof(quint16)) {
-                auto r = *reinterpret_cast<const quint16 *>(buffer.constData());
+                auto r = Utilities::processEndian(
+                    *reinterpret_cast<const quint16 *>(buffer.constData()),
+                    m_islittle);
                 r >>= shift;
                 r &= mask;
                 return T(r);
@@ -75,9 +82,13 @@ private:
             r &= mask;
             return T(r);
         } else if constexpr (std::is_same_v<T, float>) {
-            return *reinterpret_cast<const float *>(buffer.constData());
+            return Utilities::processEndian(
+                *reinterpret_cast<const float *>(buffer.constData()),
+                m_islittle);
         } else if constexpr (std::is_same_v<T, double>) {
-            return *reinterpret_cast<const double *>(buffer.constData());
+            return Utilities::processEndian(
+                *reinterpret_cast<const double *>(buffer.constData()),
+                m_islittle);
         } else {
             return T();
         }
@@ -193,6 +204,16 @@ private:
     WING_SERVICE QVariantHash read(qsizetype offset, const QString &type);
     WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
 
+    WING_SERVICE QString dumpAllTypes();
+    WING_SERVICE QString dumpTypeDefines();
+    WING_SERVICE QString dumpConstants();
+    WING_SERVICE QString dumpStructs();
+    WING_SERVICE QString dumpUnions();
+    WING_SERVICE QString dumpEnums();
+
+    WING_SERVICE QStringList getParsedErrors();
+    WING_SERVICE QStringList getParsedWarns();
+
 private:
     WingHex::MetaType getqsizetypeMetaType() const;
 
@@ -201,11 +222,14 @@ private:
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
                      size_t shift, size_t mask, qsizetype size);
 
+    QVariantHash __read(qsizetype offset, const QString &type,
+                        bool efmtInVariantList);
+
     QVariantHash readStruct(const char *ptr, const char *end,
-                            const QString &type);
+                            const QString &type, bool efmtInVariantList);
 
     QVariant readContent(const char *ptr, const char *end,
-                         const VariableDeclaration &m);
+                         const VariableDeclaration &m, bool efmtInVariantList);
 
     bool isValidCStructMetaType(QMetaType::Type type);
     CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);
@@ -254,10 +278,15 @@ private:
     WingHex::UNSAFE_RET read(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
 
+    QVariant getParsedErrors(const QVariantList &params);
+    QVariant getParsedWarns(const QVariantList &params);
+
 private:
     CTypeParser *_parser = nullptr;
     QList<WingHex::SettingPage *> _setpgs;
     bool m_islittle = Utilities::checkIsLittleEndian();
+
+    QStringList _errors, _warns;
 };
 
 #endif // WINGCSTRUCT_H

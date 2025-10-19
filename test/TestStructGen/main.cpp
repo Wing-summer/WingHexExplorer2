@@ -56,26 +56,10 @@ int main(int argc, char *argv[]) {
             qout << QStringLiteral(">> can not open testh_l.bin") << Qt::endl;
         }
 
-        QDataStream s(&f);
-        s.setByteOrder(QDataStream::ByteOrder::LittleEndian);
-        s.writeRawData(reinterpret_cast<const char *>(&header), sizeof(header));
+        f.write(reinterpret_cast<const char *>(&header), sizeof(header));
         f.close();
 
         qout << QStringLiteral(">> generate testh_l.bin") << Qt::endl;
-    }
-
-    {
-        QFile f(dir.absoluteFilePath(QStringLiteral("testh_b.bin")));
-        if (!f.open(QFile::WriteOnly)) {
-            qout << QStringLiteral("can not open testh_b.bin") << Qt::endl;
-        }
-
-        QDataStream s(&f);
-        s.setByteOrder(QDataStream::ByteOrder::BigEndian);
-        s.writeRawData(reinterpret_cast<const char *>(&header), sizeof(header));
-        f.close();
-
-        qout << QStringLiteral(">> generate testh_b.bin") << Qt::endl;
     }
 
     return 0;

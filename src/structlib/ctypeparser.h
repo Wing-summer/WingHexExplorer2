@@ -174,7 +174,12 @@ public:
     QString resolveTypeName(const QString &name) const;
 
 public:
-    void dumpAllTypeDefines(QTextStream &output) const;
+    void dumpAllTypes(QTextStream &output) const;
+    void dumpTypeDefines(QTextStream &output) const;
+    void dumpConstants(QTextStream &output) const;
+    void dumpStructs(QTextStream &output) const;
+    void dumpUnions(QTextStream &output) const;
+    void dumpEnums(QTextStream &output) const;
 
     void clear();
 

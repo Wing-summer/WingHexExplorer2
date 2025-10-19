@@ -723,152 +723,665 @@ void CScriptDictValue::Set(asIScriptEngine *engine, const double &value) {
     Set(engine, const_cast<double *>(&value), asTYPEID_DOUBLE);
 }
 
+static inline void SetScriptExceptionRange() {
+    asIScriptContext *active = asGetActiveContext();
+    if (active)
+        active->SetException("Safe conversion failed: value out of range");
+}
+
 bool CScriptDictValue::Get(asIScriptEngine *engine, void *value,
                            int typeId) const {
-    // Return the value
+    // ---------------------
+    // Helpers
+    // ---------------------
+    struct CastResult {
+        bool ok;
+        bool isFloat;
+        double dval;
+        asQWORD qword;
+        CastResult() : ok(false), isFloat(false), dval(0.0), qword(0) {}
+    };
+
+    // object or handle -> primitive via opImplConv / opConv
+    auto TryObjectToPrimitive = [this](asIScriptEngine *eng,
+                                       void *storedObjOrHandle,
+                                       int storedTypeId) -> CastResult {
+        CastResult res;
+        if (!eng || !storedObjOrHandle)
+            return res;
+        if ((storedTypeId & asTYPEID_MASK_OBJECT) == 0)
+            return res;
+
+        int actualTypeId = storedTypeId;
+        void *objPtr = nullptr;
+
+        // If stored as handle, dereference to actual object pointer
+        if (storedTypeId & asTYPEID_OBJHANDLE) {
+            actualTypeId =
+                storedTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+            void **maybePtr = reinterpret_cast<void **>(storedObjOrHandle);
+            if (!maybePtr)
+                return res;
+            objPtr = *maybePtr;
+            if (!objPtr)
+                return res;
+        } else {
+            objPtr = storedObjOrHandle;
+        }
+        if (!objPtr)
+            return res;
+
+        asITypeInfo *ti = eng->GetTypeInfoById(actualTypeId);
+        if (!ti)
+            return res;
+
+        // Find opImplConv() first, then opConv()
+        asIScriptFunction *chosen = nullptr;
+        asUINT methodCount = ti->GetMethodCount();
+        for (asUINT i = 0; i < methodCount; ++i) {
+            asIScriptFunction *mf = ti->GetMethodByIndex(i, true);
+            if (!mf)
+                continue;
+            const char *name = mf->GetName();
+            if (!name)
+                continue;
+            if (strcmp(name, "opImplConv") == 0 && mf->GetParamCount() == 0) {
+                chosen = mf;
+                break;
+            }
+        }
+        if (!chosen) {
+            for (asUINT i = 0; i < methodCount; ++i) {
+                asIScriptFunction *mf = ti->GetMethodByIndex(i, true);
+                if (!mf)
+                    continue;
+                const char *name = mf->GetName();
+                if (!name)
+                    continue;
+                if (strcmp(name, "opConv") == 0 && mf->GetParamCount() == 0) {
+                    chosen = mf;
+                    break;
+                }
+            }
+        }
+        if (!chosen)
+            return res;
+
+        asIScriptContext *ctx = eng->CreateContext();
+        if (!ctx)
+            return res;
+        if (ctx->Prepare(chosen) < 0) {
+            ctx->Release();
+            return res;
+        }
+        ctx->SetObject(objPtr);
+        int exec = ctx->Execute();
+        if (exec != asEXECUTION_FINISHED) {
+            asIScriptContext *active = asGetActiveContext();
+            if (active) {
+                const char *ex = ctx->GetExceptionString();
+                if (ex)
+                    active->SetException(ex);
+            }
+            ctx->Release();
+            return res;
+        }
+
+        int retTypeId = chosen->GetReturnTypeId(nullptr);
+        if (retTypeId & asTYPEID_MASK_OBJECT) {
+            ctx->Release();
+            return res;
+        }
+
+        if (retTypeId == asTYPEID_DOUBLE) {
+            res.dval = ctx->GetReturnDouble();
+            res.isFloat = true;
+            res.ok = true;
+        } else if (retTypeId == asTYPEID_FLOAT) {
+            res.dval = double(ctx->GetReturnFloat());
+            res.isFloat = true;
+            res.ok = true;
+        } else {
+            res.qword = ctx->GetReturnQWord();
+            res.isFloat = false;
+            res.ok = true;
+        }
+        ctx->Release();
+        return res;
+    };
+
+    // Read stored primitive into normalized container
+    struct StoredPrim {
+        bool isFloat;
+        double dval;
+        asINT64 sval;
+        asQWORD uval;
+    };
+    auto ReadStoredPrimitive = [this]() -> StoredPrim {
+        StoredPrim out;
+        out.isFloat = false;
+        out.dval = 0.0;
+        out.sval = 0;
+        out.uval = 0;
+        if (m_typeId == asTYPEID_DOUBLE) {
+            out.isFloat = true;
+            out.dval = m_valueFlt;
+            return out;
+        }
+        if (m_typeId == asTYPEID_FLOAT) {
+            out.isFloat = true;
+            out.dval = double(m_valueFlt);
+            return out;
+        }
+        if (m_typeId == asTYPEID_BOOL) {
+            char b;
+            memcpy(&b, &m_valueInt, sizeof(char));
+            out.sval = b ? 1 : 0;
+            out.uval = out.sval;
+            return out;
+        }
+        if (m_typeId == asTYPEID_INT64 || m_typeId == asTYPEID_UINT64) {
+            out.sval = m_valueInt;
+            out.uval = (asQWORD)m_valueInt;
+            return out;
+        }
+        if (m_typeId > asTYPEID_DOUBLE &&
+            (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
+            int tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(int));
+            out.sval = (asINT64)tmp;
+            out.uval = (asQWORD)(uint32_t)tmp;
+            return out;
+        }
+        switch (m_typeId) {
+        case asTYPEID_INT32: {
+            int tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(int));
+            out.sval = tmp;
+            out.uval = (asQWORD)(uint32_t)tmp;
+            break;
+        }
+        case asTYPEID_UINT32: {
+            unsigned tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(unsigned));
+            out.sval = tmp;
+            out.uval = (asQWORD)tmp;
+            break;
+        }
+        case asTYPEID_INT16: {
+            int16_t tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(int16_t));
+            out.sval = (asINT64)tmp;
+            out.uval = (asQWORD)(uint16_t)tmp;
+            break;
+        }
+        case asTYPEID_UINT16: {
+            uint16_t tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(uint16_t));
+            out.sval = (asINT64)tmp;
+            out.uval = (asQWORD)tmp;
+            break;
+        }
+        case asTYPEID_INT8: {
+            int8_t tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(int8_t));
+            out.sval = (asINT64)tmp;
+            out.uval = (asQWORD)(uint8_t)tmp;
+            break;
+        }
+        case asTYPEID_UINT8: {
+            uint8_t tmp;
+            memcpy(&tmp, &m_valueInt, sizeof(uint8_t));
+            out.sval = (asINT64)tmp;
+            out.uval = (asQWORD)tmp;
+            break;
+        }
+        default: {
+            out.sval = m_valueInt;
+            out.uval = (asQWORD)m_valueInt;
+            break;
+        }
+        }
+        return out;
+    };
+
+    // ---------------------
+    // Main logic
+    // ---------------------
     if (typeId & asTYPEID_OBJHANDLE) {
-        // A handle can be retrieved if the stored type is a handle of same or
-        // compatible type or if the stored type is an object that implements
-        // the interface that the handle refer to.
         if ((m_typeId & asTYPEID_MASK_OBJECT)) {
-            // Don't allow the get if the stored handle is to a const, but the
-            // desired handle is not
             if ((m_typeId & asTYPEID_HANDLETOCONST) &&
                 !(typeId & asTYPEID_HANDLETOCONST))
                 return false;
-
-            // RefCastObject will increment the refcount if successful
             engine->RefCastObject(m_valueObj, engine->GetTypeInfoById(m_typeId),
                                   engine->GetTypeInfoById(typeId),
                                   reinterpret_cast<void **>(value));
-
             return true;
         }
     } else if (typeId & asTYPEID_MASK_OBJECT) {
-        // Verify that the copy can be made
+        // Requested an object type.
         bool isCompatible = false;
-
-        // Allow a handle to be value assigned if the wanted type is not a
-        // handle
         if ((m_typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) ==
                 typeId &&
             m_valueObj != 0)
             isCompatible = true;
-
-        // Copy the object into the given reference
         if (isCompatible) {
             engine->AssignScriptObject(value, m_valueObj,
                                        engine->GetTypeInfoById(typeId));
-
             return true;
         }
+
+        // If stored is primitive, try primitive -> object (factory -> opAssign)
+        if ((m_typeId & asTYPEID_MASK_OBJECT) == 0) {
+            asITypeInfo *tgtTi = engine->GetTypeInfoById(typeId);
+            if (!tgtTi)
+                return false;
+            StoredPrim stored = ReadStoredPrimitive();
+
+            // Strategy 1: try factory functions (GetFactoryCount /
+            // GetFactoryByIndex)
+            asUINT facCount = tgtTi->GetFactoryCount();
+            for (asUINT fi = 0; fi < facCount; ++fi) {
+                asIScriptFunction *fac = tgtTi->GetFactoryByIndex(fi);
+                if (!fac)
+                    continue;
+                if (fac->GetParamCount() != 1)
+                    continue;
+
+                // Use GetParam to query param type (GetParam(index, &typeId,
+                // &flags, &name))
+                int paramTypeId = 0;
+                asDWORD paramFlags = 0;
+                fac->GetParam(0, &paramTypeId, &paramFlags, nullptr, nullptr);
+
+                // Skip object-typed params for this path
+                if (paramTypeId & asTYPEID_MASK_OBJECT)
+                    continue;
+
+                // Basic compatibility: numeric/bool -> numeric param allowed
+                auto isIntLike = [&](int tid) -> bool {
+                    if (tid == asTYPEID_INT8 || tid == asTYPEID_UINT8 ||
+                        tid == asTYPEID_INT16 || tid == asTYPEID_UINT16 ||
+                        tid == asTYPEID_INT32 || tid == asTYPEID_UINT32 ||
+                        tid == asTYPEID_INT64 || tid == asTYPEID_UINT64)
+                        return true;
+                    if (tid > asTYPEID_DOUBLE &&
+                        ((tid & asTYPEID_MASK_OBJECT) == 0))
+                        return true; // enum
+                    return false;
+                };
+                auto isFloatLike = [&](int tid) -> bool {
+                    return tid == asTYPEID_FLOAT || tid == asTYPEID_DOUBLE;
+                };
+
+                bool compatible = false;
+                if (paramTypeId == m_typeId)
+                    compatible = true;
+                else if (isIntLike(m_typeId) &&
+                         (isIntLike(paramTypeId) || isFloatLike(paramTypeId)))
+                    compatible = true;
+                else if (isFloatLike(m_typeId) && isFloatLike(paramTypeId))
+                    compatible = true;
+                else if (m_typeId == asTYPEID_BOOL && isIntLike(paramTypeId))
+                    compatible = true;
+                if (!compatible)
+                    continue;
+
+                // Prepare context and set arg
+                asIScriptContext *ctx = engine->CreateContext();
+                if (!ctx)
+                    continue;
+                if (ctx->Prepare(fac) < 0) {
+                    ctx->Release();
+                    continue;
+                }
+
+                // Set argument by type
+                if (paramTypeId == asTYPEID_DOUBLE)
+                    ctx->SetArgDouble(0, stored.isFloat ? stored.dval
+                                                        : double(stored.sval));
+                else if (paramTypeId == asTYPEID_FLOAT)
+                    ctx->SetArgFloat(0, stored.isFloat ? (float)stored.dval
+                                                       : (float)stored.sval);
+                else if (paramTypeId == asTYPEID_INT64 ||
+                         paramTypeId == asTYPEID_UINT64)
+                    ctx->SetArgQWord(0, (asQWORD)stored.sval);
+                else
+                    ctx->SetArgDWord(0,
+                                     (asDWORD)stored.sval); // 32-bit or smaller
+
+                int exec = ctx->Execute();
+                if (exec == asEXECUTION_FINISHED) {
+                    void *retObj = ctx->GetReturnObject();
+                    if (retObj) {
+                        engine->AssignScriptObject(value, retObj, tgtTi);
+                        ctx->Release();
+                        return true;
+                    }
+                } else {
+                    asIScriptContext *active = asGetActiveContext();
+                    if (active) {
+                        const char *ex = ctx->GetExceptionString();
+                        if (ex)
+                            active->SetException(ex);
+                    }
+                }
+                ctx->Release();
+            } // end factories
+
+            // Strategy 2: try opAssign on target type
+            asIScriptFunction *assignMethod = nullptr;
+            asUINT methodCount = tgtTi->GetMethodCount();
+            for (asUINT mi = 0; mi < methodCount; ++mi) {
+                asIScriptFunction *mf = tgtTi->GetMethodByIndex(mi, true);
+                if (!mf)
+                    continue;
+                const char *name = mf->GetName();
+                if (!name)
+                    continue;
+                if (strcmp(name, "opAssign") != 0)
+                    continue;
+                if (mf->GetParamCount() != 1)
+                    continue;
+                int ptype = 0;
+                asDWORD pflags = 0;
+                mf->GetParam(0, &ptype, &pflags, nullptr, nullptr);
+                if (ptype & asTYPEID_MASK_OBJECT)
+                    continue;
+
+                // same compatibility test as above
+                bool compatible = false;
+                if (ptype == m_typeId)
+                    compatible = true;
+                else {
+                    auto isI = [&](int tid) -> bool {
+                        if (tid == asTYPEID_INT8 || tid == asTYPEID_UINT8 ||
+                            tid == asTYPEID_INT16 || tid == asTYPEID_UINT16 ||
+                            tid == asTYPEID_INT32 || tid == asTYPEID_UINT32 ||
+                            tid == asTYPEID_INT64 || tid == asTYPEID_UINT64)
+                            return true;
+                        if (tid > asTYPEID_DOUBLE &&
+                            ((tid & asTYPEID_MASK_OBJECT) == 0))
+                            return true;
+                        return false;
+                    };
+                    auto isF = [&](int tid) -> bool {
+                        return tid == asTYPEID_FLOAT || tid == asTYPEID_DOUBLE;
+                    };
+                    if (isI(m_typeId) && (isI(ptype) || isF(ptype)))
+                        compatible = true;
+                    if (isF(m_typeId) && isF(ptype))
+                        compatible = true;
+                    if (m_typeId == asTYPEID_BOOL && isI(ptype))
+                        compatible = true;
+                }
+                if (compatible) {
+                    assignMethod = mf;
+                    break;
+                }
+            }
+
+            if (assignMethod) {
+                // Create default object
+                void *obj = engine->CreateScriptObject(tgtTi);
+                if (!obj)
+                    return false;
+                asIScriptContext *ctx = engine->CreateContext();
+                if (!ctx) {
+                    engine->ReleaseScriptObject(obj, tgtTi);
+                    return false;
+                }
+                if (ctx->Prepare(assignMethod) < 0) {
+                    ctx->Release();
+                    engine->ReleaseScriptObject(obj, tgtTi);
+                    return false;
+                }
+                ctx->SetObject(obj);
+                int ptype = 0;
+                asDWORD pflags = 0;
+                assignMethod->GetParam(0, &ptype, &pflags, nullptr, nullptr);
+                if (ptype == asTYPEID_DOUBLE)
+                    ctx->SetArgDouble(0, stored.isFloat ? stored.dval
+                                                        : double(stored.sval));
+                else if (ptype == asTYPEID_FLOAT)
+                    ctx->SetArgFloat(0, stored.isFloat ? (float)stored.dval
+                                                       : (float)stored.sval);
+                else if (ptype == asTYPEID_INT64 || ptype == asTYPEID_UINT64)
+                    ctx->SetArgQWord(0, (asQWORD)stored.sval);
+                else
+                    ctx->SetArgDWord(0, (asDWORD)stored.sval);
+
+                int exec = ctx->Execute();
+                if (exec == asEXECUTION_FINISHED) {
+                    engine->AssignScriptObject(value, obj, tgtTi);
+                    ctx->Release();
+                    engine->ReleaseScriptObject(obj,
+                                                tgtTi); // release temporary
+                    return true;
+                } else {
+                    asIScriptContext *active = asGetActiveContext();
+                    if (active) {
+                        const char *ex = ctx->GetExceptionString();
+                        if (ex)
+                            active->SetException(ex);
+                    }
+                }
+                ctx->Release();
+                engine->ReleaseScriptObject(obj, tgtTi);
+            }
+
+            return false; // nothing matched
+        } // end primitive->object attempt
     } else {
+        // Requested primitive type
+        // 1) exact match
         if (m_typeId == typeId) {
             int size = engine->GetSizeOfPrimitiveType(typeId);
             memcpy(value, &m_valueInt, size);
             return true;
         }
 
-        // We know all numbers are stored as either int64 or double, since we
-        // register overloaded functions for those Only bool and enums needs to
-        // be treated separately
+        // 2) stored is object/handle: try object->primitive conversion
+        if (m_typeId & asTYPEID_MASK_OBJECT) {
+            CastResult cr = TryObjectToPrimitive(engine, m_valueObj, m_typeId);
+            if (!cr.ok)
+                return false;
+
+            // Convert CastResult -> requested primitive (truncate float->int)
+            if (typeId == asTYPEID_DOUBLE) {
+                *(double *)value =
+                    cr.isFloat ? cr.dval : double((asINT64)cr.qword);
+                return true;
+            }
+            if (typeId == asTYPEID_FLOAT) {
+                *(float *)value =
+                    cr.isFloat ? (float)cr.dval : (float)(asINT64)cr.qword;
+                return true;
+            }
+            if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64) {
+                *(asINT64 *)value =
+                    cr.isFloat ? (asINT64)cr.dval : (asINT64)cr.qword;
+                return true;
+            }
+            if (typeId == asTYPEID_BOOL) {
+                if (cr.isFloat)
+                    *(bool *)value = (cr.dval != 0.0);
+                else
+                    *(bool *)value = ((asINT64)cr.qword != 0);
+                return true;
+            }
+
+            // smaller ints: range-check (float->int truncates)
+            asINT64 src = cr.isFloat ? (asINT64)cr.dval : (asINT64)cr.qword;
+            if (typeId == asTYPEID_INT32) {
+                if (src < INT32_MIN || src > INT32_MAX) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(int *)value = (int)src;
+                return true;
+            }
+            if (typeId == asTYPEID_UINT32) {
+                if (src < 0 || (asQWORD)src > 0xFFFFFFFFULL) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(unsigned *)value = (unsigned)src;
+                return true;
+            }
+            if (typeId == asTYPEID_INT16) {
+                if (src < INT16_MIN || src > INT16_MAX) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(short *)value = (short)src;
+                return true;
+            }
+            if (typeId == asTYPEID_UINT16) {
+                if (src < 0 || src > 0xFFFF) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(uint16_t *)value = (uint16_t)src;
+                return true;
+            }
+            if (typeId == asTYPEID_INT8) {
+                if (src < INT8_MIN || src > INT8_MAX) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(int8_t *)value = (int8_t)src;
+                return true;
+            }
+            if (typeId == asTYPEID_UINT8) {
+                if (src < 0 || src > 0xFF) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(uint8_t *)value = (uint8_t)src;
+                return true;
+            }
+            if (typeId > asTYPEID_DOUBLE &&
+                (typeId & asTYPEID_MASK_OBJECT) == 0) {
+                if (src < INT32_MIN || src > INT32_MAX) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(int *)value = (int)src;
+                return true;
+            }
+            return false;
+        }
+
+        // 3) both are primitives: convert stored primitive -> requested
+        // primitive
+        StoredPrim stored = ReadStoredPrimitive();
+
         if (typeId == asTYPEID_DOUBLE) {
-            if (m_typeId == asTYPEID_INT64)
-                *(double *)value = double(m_valueInt);
-            else if (m_typeId == asTYPEID_BOOL) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                char localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(char));
-                *(double *)value = localValue ? 1.0 : 0.0;
-            } else if (m_typeId > asTYPEID_DOUBLE &&
-                       (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                int localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(int));
-                *(double *)value = double(localValue); // enums are 32bit
-            } else {
-                // The stored type is an object
-                // TODO: Check if the object has a conversion operator to a
-                // primitive value
-                *(double *)value = 0;
+            if (stored.isFloat)
+                *(double *)value = stored.dval;
+            else
+                *(double *)value = double(stored.sval);
+            return true;
+        }
+        if (typeId == asTYPEID_FLOAT) {
+            if (stored.isFloat)
+                *(float *)value = (float)stored.dval;
+            else
+                *(float *)value = (float)stored.sval;
+            return true;
+        }
+        if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64) {
+            if (stored.isFloat)
+                *(asINT64 *)value = (asINT64)stored.dval;
+            else
+                *(asINT64 *)value = stored.sval;
+            return true;
+        }
+        if (typeId == asTYPEID_BOOL) {
+            if (stored.isFloat)
+                *(bool *)value = (stored.dval != 0.0);
+            else
+                *(bool *)value = (stored.sval != 0);
+            return true;
+        }
+
+        // smaller ints with range checks (float->int truncates)
+        if (typeId == asTYPEID_INT32) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < INT32_MIN || v > INT32_MAX) {
+                SetScriptExceptionRange();
                 return false;
             }
+            *(int *)value = (int)v;
             return true;
-        } else if (typeId == asTYPEID_INT64 || typeId == asTYPEID_UINT64) {
-            if (m_typeId == asTYPEID_DOUBLE)
-                *(asINT64 *)value = asINT64(m_valueFlt);
-            else if (m_typeId == asTYPEID_BOOL) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                char localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(char));
-                *(asINT64 *)value = localValue ? 1 : 0;
-            } else if (m_typeId > asTYPEID_DOUBLE &&
-                       (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                int localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(int));
-                *(asINT64 *)value = localValue; // enums are 32bit
+        }
+        if (typeId == asTYPEID_UINT32) {
+            if (stored.isFloat) {
+                asINT64 v = (asINT64)stored.dval;
+                if (v < 0 || (asQWORD)v > 0xFFFFFFFFULL) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(unsigned *)value = (unsigned)v;
+                return true;
             } else {
-                // The stored type is an object
-                // TODO: Check if the object has a conversion operator to a
-                // primitive value
-                *(asINT64 *)value = 0;
+                if (stored.uval > 0xFFFFFFFFULL) {
+                    SetScriptExceptionRange();
+                    return false;
+                }
+                *(unsigned *)value = (unsigned)stored.uval;
+                return true;
+            }
+        }
+        if (typeId == asTYPEID_INT16) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < INT16_MIN || v > INT16_MAX) {
+                SetScriptExceptionRange();
                 return false;
             }
+            *(short *)value = (short)v;
             return true;
-        } else if (typeId > asTYPEID_DOUBLE &&
-                   (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-            // The desired type is an enum. These are always 32bit integers
-            if (m_typeId == asTYPEID_DOUBLE)
-                *(int *)value = int(m_valueFlt);
-            else if (m_typeId == asTYPEID_INT64)
-                *(int *)value = int(m_valueInt);
-            else if (m_typeId == asTYPEID_BOOL) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                char localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(char));
-                *(int *)value = localValue ? 1 : 0;
-            } else if (m_typeId > asTYPEID_DOUBLE &&
-                       (m_typeId & asTYPEID_MASK_OBJECT) == 0) {
-                // Use memcpy instead of type cast to make sure the code is
-                // endianess agnostic
-                int localValue;
-                memcpy(&localValue, &m_valueInt, sizeof(int));
-                *(int *)value = localValue; // enums are 32bit
-            } else {
-                // The stored type is an object
-                // TODO: Check if the object has a conversion operator to a
-                // primitive value
-                *(int *)value = 0;
+        }
+        if (typeId == asTYPEID_UINT16) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < 0 || v > 0xFFFF) {
+                SetScriptExceptionRange();
                 return false;
             }
+            *(uint16_t *)value = (uint16_t)v;
             return true;
-        } else if (typeId == asTYPEID_BOOL) {
-            if (m_typeId & asTYPEID_OBJHANDLE) {
-                // TODO: Check if the object has a conversion operator to a
-                // primitive value
-                *(bool *)value = m_valueObj ? true : false;
-            } else if (m_typeId & asTYPEID_MASK_OBJECT) {
-                // TODO: Check if the object has a conversion operator to a
-                // primitive value
-                *(bool *)value = true;
-            } else {
-                // Compare only the bytes that were actually set
-                asQWORD zero = 0;
-                int size = engine->GetSizeOfPrimitiveType(m_typeId);
-                *(bool *)value =
-                    memcmp(&m_valueInt, &zero, size) == 0 ? false : true;
+        }
+        if (typeId == asTYPEID_INT8) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < INT8_MIN || v > INT8_MAX) {
+                SetScriptExceptionRange();
+                return false;
             }
+            *(int8_t *)value = (int8_t)v;
+            return true;
+        }
+        if (typeId == asTYPEID_UINT8) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < 0 || v > 0xFF) {
+                SetScriptExceptionRange();
+                return false;
+            }
+            *(uint8_t *)value = (uint8_t)v;
+            return true;
+        }
+        if (typeId > asTYPEID_DOUBLE && (typeId & asTYPEID_MASK_OBJECT) == 0) {
+            asINT64 v = stored.isFloat ? (asINT64)stored.dval : stored.sval;
+            if (v < INT32_MIN || v > INT32_MAX) {
+                SetScriptExceptionRange();
+                return false;
+            }
+            *(int *)value = (int)v;
             return true;
         }
     }
 
-    // It was not possible to retrieve the value using the desired typeId
+    // Could not retrieve as requested type
     return false;
 }
 

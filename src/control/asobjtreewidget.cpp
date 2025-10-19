@@ -116,7 +116,7 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
         einfo.type = LSP::CompletionItemKind::Enum;
 
         for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
-            int v;
+            asINT64 v;
             auto e = etype->GetEnumValueByIndex(i, &v);
 
             CodeInfoTip en;

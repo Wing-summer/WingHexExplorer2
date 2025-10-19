@@ -229,28 +229,6 @@ public:
         return ::qToLittleEndian(source);
     }
 
-    static inline QByteArray qToBigEndian(QByteArray source) {
-        QByteArray result;
-        QBuffer buffer(&result);
-        buffer.open(QIODevice::WriteOnly);
-
-        QDataStream stream(&buffer);
-        stream.setByteOrder(QDataStream::BigEndian);
-        stream.writeRawData(source.constData(), source.size());
-        return result;
-    }
-
-    static inline QByteArray qToLittleEndian(QByteArray source) {
-        QByteArray result;
-        QBuffer buffer(&result);
-        buffer.open(QIODevice::WriteOnly);
-
-        QDataStream stream(&buffer);
-        stream.setByteOrder(QDataStream::LittleEndian);
-        stream.writeRawData(source.constData(), source.size());
-        return result;
-    }
-
     template <typename T>
     static inline T processEndian(T source, bool isLitteEndian) {
         if (checkIsLittleEndian()) {

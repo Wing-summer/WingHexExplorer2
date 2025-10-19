@@ -72,6 +72,7 @@ public:
     QStringList sysHideCats() const;
 
     QString lastUsedPath() const;
+    QString lastUsedScriptPath() const;
     QByteArray scriptDockLayout() const;
     bool useNativeFileDialog() const;
     bool useNativeTitleBar() const;
@@ -111,6 +112,7 @@ public slots:
     void setSysHideCats(const QStringList &newSysHideCats);
     void setUsrHideCats(const QStringList &newUsrHideCats);
     void setLastUsedPath(const QString &newLastUsedPath);
+    void setLastUsedScriptPath(const QString &newLastUsedPath);
     void setScriptDockLayout(const QByteArray &newScriptDockLayout);
     void setUseNativeFileDialog(bool newUseNativeFileDialog);
     void setUseNativeTitleBar(bool newUseNativeTitleBar);
@@ -194,6 +196,7 @@ private:
     QStringList m_enabledExtPlugins;
     QStringList m_enabledDevPlugins;
     QString m_lastUsedPath;
+    QString m_lastUsedScriptPath;
 
     bool m_dontUseSplash = false;
     bool m_useNativeFileDialog = true;

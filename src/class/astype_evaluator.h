@@ -146,7 +146,7 @@ public:
 
         const QString *s = var->address.ResolveAs<const QString>();
         if (s->isEmpty()) {
-            var->value = "<empty>";
+            var->value = "\"\"";
             var->expandable = false;
         } else {
             if (var->owner.expired()) {
@@ -495,7 +495,7 @@ public:
         case QJsonValue::String: {
             auto str = v->toString();
             if (str.isEmpty()) {
-                var->value = "<empty>";
+                var->value = "\"\"";
             } else {
                 if (var->owner.expired()) {
                     var->value = str.toStdString();

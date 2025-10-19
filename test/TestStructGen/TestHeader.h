@@ -25,6 +25,7 @@
 
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_CLANG("-Wunknown-attributes")
+QT_WARNING_DISABLE_GCC("-Wattributes")
 
 enum TestEnum { Test1, Test2, Test3, Test4 };
 

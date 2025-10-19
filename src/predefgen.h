@@ -47,7 +47,7 @@ void printEnumList(const asIScriptEngine *engine, QTextStream &out) {
 
         out << QStringLiteral("enum %1 {\n").arg(toQString(e->GetName()));
         for (int j = 0; j < e->GetEnumValueCount(); ++j) {
-            int value = 0;
+            asINT64 value = 0;
             const char *name =
                 e->GetEnumValueByIndex(static_cast<asUINT>(j), &value);
             const QString qname =
@@ -190,7 +190,8 @@ void printGlobalTypedef(const asIScriptEngine *engine, QTextStream &out) {
         if (!ns.isEmpty())
             out << QStringLiteral("namespace %1 {\n").arg(ns);
 
-        auto underlying = engine->GetTypeDeclaration(type->GetTypedefTypeId());
+        auto underlying =
+            engine->GetTypeDeclaration(type->GetUnderlyingTypeId());
         out << QStringLiteral("typedef %1 %2;\n")
                    .arg(QString::fromStdString(underlying),
                         toQString(type->GetName()));

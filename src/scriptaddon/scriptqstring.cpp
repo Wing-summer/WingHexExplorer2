@@ -28,87 +28,72 @@
 enum DoubleFmt { DFDecimal, DFExponent, DFSignificantDigits };
 
 BEGIN_AS_NAMESPACE
+
 class CQStringFactory : public asIStringFactory {
 public:
     CQStringFactory() {}
-    ~CQStringFactory() {
-        // In destructor, ensure all string constants have been released
-        Q_ASSERT(refCount.isEmpty());
-    }
+    ~CQStringFactory() { Q_ASSERT(stringCache.isEmpty()); }
 
-    // Acquire or create a string constant
     const void *GetStringConstant(const char *data, asUINT length) override {
         asAcquireExclusiveLock();
 
-        // 1) Build a temporary QString (lazy copy happens only if needed)
-        QString temp = QString::fromUtf8(QByteArray(data, length));
+        QString key = QString::fromUtf8(data, length);
 
-        // 2) Check if we already have this string
-        auto ptrIt = cache.find(temp);
-        if (ptrIt != cache.end()) {
-            // Found: increment reference count and return existing pointer
-            refCount[ptrIt.value()]++;
-            const void *p = ptrIt.value();
+        auto it = stringCache.find(key);
+        if (it != stringCache.end()) {
+            it.value()++;
+            const void *result = &it.key();
             asReleaseExclusiveLock();
-            return p;
+            return result;
         }
 
-        // 3) Not found: allocate a new QString on the heap
-        QString *p = new QString(std::move(temp));
-
-        //    - cache maps from string value → pointer for deduplication
-        cache.insert(*p, p);
-        //    - refCount maps from pointer → count for fast release
-        refCount.insert(p, 1);
+        it = stringCache.insert(key, 1);
+        const void *result = &it.key();
 
         asReleaseExclusiveLock();
-        return p;
+        return result;
     }
 
-    // Release a string constant
     int ReleaseStringConstant(const void *str) override {
         if (!str)
             return asERROR;
+
         asAcquireExclusiveLock();
 
-        // Look up the pointer in refCount
-        auto rcIt =
-            refCount.find(reinterpret_cast<QString *>(const_cast<void *>(str)));
-        if (rcIt == refCount.end()) {
+        const QString *qstr = reinterpret_cast<const QString *>(str);
+        auto it = stringCache.find(*qstr);
+
+        if (it == stringCache.end()) {
             asReleaseExclusiveLock();
             return asERROR;
         }
 
-        // Decrement and check for zero
-        if (--rcIt.value() == 0) {
-            // When count reaches zero: remove from both maps and delete
-            QString *p = rcIt.key();
-            refCount.erase(rcIt);
-            cache.remove(*p);
-            delete p;
+        it.value()--;
+        if (it.value() == 0) {
+            stringCache.erase(it);
         }
 
         asReleaseExclusiveLock();
         return asSUCCESS;
     }
 
-    // Retrieve raw UTF‑8 data for the script engine
     int GetRawStringData(const void *str, char *data,
                          asUINT *length) const override {
         if (!str)
             return asERROR;
-        QByteArray buf = reinterpret_cast<const QString *>(str)->toUtf8();
+
+        const QString *qstr = reinterpret_cast<const QString *>(str);
+        QByteArray utf8 = qstr->toUtf8();
+
         if (length)
-            *length = buf.size();
+            *length = utf8.size();
         if (data)
-            memcpy(data, buf.constData(), buf.size());
+            memcpy(data, utf8.constData(), utf8.size());
+
         return asSUCCESS;
     }
 
-    // value -> pointer map for deduplication
-    QHash<QString, QString *> cache;
-    // pointer -> reference count map for quick releases
-    QHash<QString *, int> refCount;
+    QHash<QString, int> stringCache;
 };
 
 static CQStringFactory *stringFactory = nullptr;
@@ -141,7 +126,7 @@ public:
             // the application might crash. Not deleting the cache would
             // lead to a memory leak, but since this is only happens when the
             // application is shutting down anyway, it is not important.
-            if (stringFactory->cache.empty()) {
+            if (stringFactory->stringCache.isEmpty()) {
                 delete stringFactory;
                 stringFactory = nullptr;
             }

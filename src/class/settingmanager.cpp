@@ -30,6 +30,8 @@
 Q_GLOBAL_STATIC_WITH_ARGS(QString, DOCK_LAYOUT, ("dock.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_DOCK_LAYOUT, ("script.layout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LASTUSED_PATH, ("app.lastusedpath"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LASTUSED_SCRIPT_PATH,
+                          ("app.script.lastusedpath"));
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SKIN_THEME, ("skin.theme"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTFAMILY, ("app.fontfamily"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTSIZE, ("app.fontsize"))
@@ -88,11 +90,23 @@ SettingManager::SettingManager() {
 
 QString SettingManager::lastUsedPath() const { return m_lastUsedPath; }
 
+QString SettingManager::lastUsedScriptPath() const {
+    return m_lastUsedScriptPath;
+}
+
 void SettingManager::setLastUsedPath(const QString &newLastUsedPath) {
     if (m_lastUsedPath != newLastUsedPath) {
         HANDLE_CONFIG;
         WRITE_CONFIG(APP_LASTUSED_PATH, newLastUsedPath);
         m_lastUsedPath = newLastUsedPath;
+    }
+}
+
+void SettingManager::setLastUsedScriptPath(const QString &newLastUsedPath) {
+    if (m_lastUsedScriptPath != newLastUsedPath) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_LASTUSED_SCRIPT_PATH, newLastUsedPath);
+        m_lastUsedScriptPath = newLastUsedPath;
     }
 }
 
@@ -186,6 +200,15 @@ void SettingManager::load() {
         if (info.exists() && info.isDir()) {
         } else {
             m_lastUsedPath.clear();
+        }
+    }
+
+    m_lastUsedScriptPath = READ_CONFIG(APP_LASTUSED_SCRIPT_PATH, {}).toString();
+    if (!m_lastUsedScriptPath.isEmpty()) {
+        QFileInfo info(m_lastUsedScriptPath);
+        if (info.exists() && info.isDir()) {
+        } else {
+            m_lastUsedScriptPath.clear();
         }
     }
 

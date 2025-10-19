@@ -160,10 +160,18 @@ protected:
     QString getCallStack(asIScriptContext *context);
 
 private:
+    static void __output(MessageType type, asIScriptGeneric *args);
+    static void __outputln(MessageType type, asIScriptGeneric *args);
     static void print(asIScriptGeneric *args);
     static void println(asIScriptGeneric *args);
+    static void warnprint(asIScriptGeneric *args);
+    static void warnprintln(asIScriptGeneric *args);
+    static void errprint(asIScriptGeneric *args);
+    static void errprintln(asIScriptGeneric *args);
+    static void infoprint(asIScriptGeneric *args);
+    static void infoprintln(asIScriptGeneric *args);
 
-    QString getInput();
+    QString input();
 
     static int execSystemCmd(QString &out, const QString &exe,
                              const QString &params, int timeout);

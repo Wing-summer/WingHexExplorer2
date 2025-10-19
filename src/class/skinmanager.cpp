@@ -42,7 +42,8 @@ SkinManager::SkinManager() {
         qss.setFileName("://light/stylesheet.qss");
         break;
     }
-    qss.open(QFile::ReadOnly | QFile::Text);
+    auto r = qss.open(QFile::ReadOnly | QFile::Text);
+    Q_UNUSED(r);
 #ifdef Q_OS_WIN
     qApp->setStyle(QStyleFactory::create("windowsvista"));
 #else

@@ -29,16 +29,16 @@ WingCStruct::~WingCStruct() {}
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     _parser = new CTypeParser([this](const MsgInfo &info) {
-        auto msg = QStringLiteral("(%1, %2) ")
+        auto msg = QStringLiteral(": [%1, %2] ")
                        .arg(info.line)
                        .arg(info.charPositionInLine) +
                    info.info;
         switch (info.type) {
         case MsgType::Error:
-            logError(msg);
+            _errors.append(msg);
             break;
         case MsgType::Warn:
-            logWarn(msg);
+            _warns.append(msg);
             break;
         }
     });
@@ -134,22 +134,38 @@ WingCStruct::eventOnScriptPragma(const QString &script,
         QFileInfo finc(param);
         if (finc.isAbsolute()) {
             if (parse(param)) {
-                return {};
+                WingHex::PragmaResult r;
+                for (auto &msg : _warns) {
+                    r.warn.append(msg);
+                }
+                return r;
             } else {
                 WingHex::PragmaResult r;
-                r.error.append(
-                    QStringLiteral("Error parsing '%1' with 'Inc'").arg(param));
+                for (auto &msg : _errors) {
+                    r.error.append(msg);
+                }
+                for (auto &msg : _warns) {
+                    r.warn.append(msg);
+                }
                 return r;
             }
         } else {
             QFileInfo finfo(script);
             auto path = finfo.absoluteDir().filePath(param);
             if (parse(path)) {
-                return {};
+                WingHex::PragmaResult r;
+                for (auto &msg : _warns) {
+                    r.warn.append(msg);
+                }
+                return r;
             } else {
                 WingHex::PragmaResult r;
-                r.error.append(
-                    QStringLiteral("Error parsing '%1' with 'Inc'").arg(path));
+                for (auto &msg : _errors) {
+                    r.error.append(msg);
+                }
+                for (auto &msg : _warns) {
+                    r.warn.append(msg);
+                }
                 return r;
             }
         }
@@ -514,17 +530,55 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                   this, std::placeholders::_1),
         QStringLiteral("readRaw"),
         {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+
+    o->registerGlobalFunction(
+        "string dumpAllTypes()", asWINGMETHOD(WingCStruct, dumpAllTypes),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+    o->registerGlobalFunction(
+        "string dumpTypeDefines()", asWINGMETHOD(WingCStruct, dumpTypeDefines),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+    o->registerGlobalFunction(
+        "string dumpConstants()", asWINGMETHOD(WingCStruct, dumpConstants),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+    o->registerGlobalFunction(
+        "string dumpStructs()", asWINGMETHOD(WingCStruct, dumpStructs),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+    o->registerGlobalFunction(
+        "string dumpUnions()", asWINGMETHOD(WingCStruct, dumpUnions),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+    o->registerGlobalFunction(
+        "string dumpEnums()", asWINGMETHOD(WingCStruct, dumpEnums),
+        WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
+
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::getParsedErrors),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("getParsedErrors"));
+    o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
+                              std::bind(QOverload<const QVariantList &>::of(
+                                            &WingCStruct::getParsedWarns),
+                                        this, std::placeholders::_1),
+                              QStringLiteral("getParsedWarns"));
 }
 
 bool WingCStruct::parseFromSource(const QString &header) {
+    _errors.clear();
+    _warns.clear();
     return _parser->parseFromSource(header.toUtf8());
 }
 
 bool WingCStruct::parse(const QString &fileName) {
+    _errors.clear();
+    _warns.clear();
     return _parser->parse(fileName);
 }
 
-void WingCStruct::reset() { _parser->clear(); }
+void WingCStruct::reset() {
+    _errors.clear();
+    _warns.clear();
+    _parser->clear();
+}
 
 bool WingCStruct::setPadAlignment(int padding) {
     return _parser->setPadAlignment(padding);
@@ -640,6 +694,11 @@ QStringList WingCStruct::getMissingDependencise(const QString &name) {
 }
 
 QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
+    return __read(offset, type, true);
+}
+
+QVariantHash WingCStruct::__read(qsizetype offset, const QString &type,
+                                 bool efmtInVariantList) {
     auto rtype = _parser->resolveTypeName(type);
     auto len = sizeOf(rtype);
     if (len <= 0) {
@@ -661,13 +720,12 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
 
     // first read all bytes
     auto raw = readBytes(offset, len);
-    auto data = Utilities::processEndian(raw, m_islittle);
 
     // then slice and parse
-    const auto *pdata = data.data();
-    const auto *pend = pdata + data.length();
+    const auto *pdata = raw.data();
+    const auto *pend = pdata + raw.length();
 
-    return readStruct(pdata, pend, rtype);
+    return readStruct(pdata, pend, rtype, efmtInVariantList);
 }
 
 QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
@@ -682,6 +740,52 @@ QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
 
     return readBytes(offset, len);
 }
+
+QString WingCStruct::dumpAllTypes() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpAllTypes(buffer);
+    return ret;
+}
+
+QString WingCStruct::dumpTypeDefines() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpTypeDefines(buffer);
+    return ret;
+}
+
+QString WingCStruct::dumpConstants() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpConstants(buffer);
+    return ret;
+}
+
+QString WingCStruct::dumpStructs() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpStructs(buffer);
+    return ret;
+}
+
+QString WingCStruct::dumpUnions() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpUnions(buffer);
+    return ret;
+}
+
+QString WingCStruct::dumpEnums() {
+    QString ret;
+    QTextStream buffer(&ret);
+    _parser->dumpEnums(buffer);
+    return ret;
+}
+
+QStringList WingCStruct::getParsedErrors() { return _errors; }
+
+QStringList WingCStruct::getParsedWarns() { return _warns; }
 
 QString WingCStruct::getqsizeTypeAsString() const {
     return sizeof(qsizetype) == sizeof(quint64) ? QStringLiteral("int64")
@@ -752,7 +856,8 @@ QVariant WingCStruct::getData(const char *ptr, const char *end,
 }
 
 QVariantHash WingCStruct::readStruct(const char *ptr, const char *end,
-                                     const QString &type) {
+                                     const QString &type,
+                                     bool efmtInVariantList) {
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
@@ -760,13 +865,15 @@ QVariantHash WingCStruct::readStruct(const char *ptr, const char *end,
     QVariantHash content;
     // then slice and parse
     for (auto &m : struc) {
-        content.insert(m.var_name, readContent(ptr + m.offset, end, m));
+        content.insert(m.var_name,
+                       readContent(ptr + m.offset, end, m, efmtInVariantList));
     }
     return content;
 }
 
 QVariant WingCStruct::readContent(const char *ptr, const char *end,
-                                  const VariableDeclaration &m) {
+                                  const VariableDeclaration &m,
+                                  bool efmtInVariantList) {
 
     bool retry = false;
     auto dt = m.data_type;
@@ -819,9 +926,6 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
                     // is not double or float
                     auto typeID = data.typeId();
 
-                    // if ok, we create a array
-                    CEnumValue rlist;
-
                     if (typeID == QMetaType::Float ||
                         typeID == QMetaType::Double ||
                         typeID == QMetaType::Float16) {
@@ -832,8 +936,63 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
 
                     QString v;
 
-                    if (data.canConvert(QMetaType(QMetaType::LongLong))) {
-                        auto var = data.toLongLong();
+                    if (efmtInVariantList) {
+                        // [0] = int_value, [1] = decoded_enum
+                        QVariantList rlist;
+                        bool ok;
+                        auto var = data.toLongLong(&ok);
+                        auto evs = _parser->enumMembers(m.fmt_type);
+                        for (auto &e : evs) {
+                            auto ev = _parser->constVarValue(e);
+                            if (std::holds_alternative<qint64>(ev)) {
+                                auto rv = std::get<qint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            } else {
+                                auto rv = std::get<quint64>(ev);
+                                if (rv == var) {
+                                    v = e;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!ok) {
+                            auto var = data.toULongLong();
+
+                            auto evs = _parser->enumMembers(m.fmt_type);
+
+                            for (auto &e : evs) {
+                                auto ev = _parser->constVarValue(e);
+                                if (std::holds_alternative<qint64>(ev)) {
+                                    auto rv = std::get<qint64>(ev);
+                                    if (rv == var) {
+                                        v = e;
+                                        break;
+                                    }
+                                } else {
+                                    auto rv = std::get<quint64>(ev);
+                                    if (rv == var) {
+                                        v = e;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        rlist.append(data);
+                        if (v.isEmpty()) {
+                            rlist.append(QStringLiteral("<?>"));
+                        } else {
+                            rlist.append(m.fmt_type + QStringLiteral("::") + v);
+                        }
+                        data = rlist;
+                    } else {
+                        CEnumValue rlist;
+                        bool ok;
+                        auto var = data.toLongLong(&ok);
                         auto evs = _parser->enumMembers(m.fmt_type);
 
                         for (auto &e : evs) {
@@ -854,37 +1013,39 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
                                 }
                             }
                         }
-                    } else {
-                        auto var = data.toULongLong();
-                        auto evs = _parser->enumMembers(m.fmt_type);
+                        if (!ok) {
+                            auto var = data.toULongLong();
+                            auto evs = _parser->enumMembers(m.fmt_type);
 
-                        for (auto &e : evs) {
-                            auto ev = _parser->constVarValue(e);
-                            if (std::holds_alternative<qint64>(ev)) {
-                                auto rv = std::get<qint64>(ev);
-                                if (rv == var) {
-                                    rlist.first = rv;
-                                    v = e;
-                                    break;
-                                }
-                            } else {
-                                auto rv = std::get<quint64>(ev);
-                                if (rv == var) {
-                                    rlist.first = rv;
-                                    v = e;
-                                    break;
+                            for (auto &e : evs) {
+                                auto ev = _parser->constVarValue(e);
+                                if (std::holds_alternative<qint64>(ev)) {
+                                    auto rv = std::get<qint64>(ev);
+                                    if (rv == var) {
+                                        rlist.first = rv;
+                                        v = e;
+                                        break;
+                                    }
+                                } else {
+                                    auto rv = std::get<quint64>(ev);
+                                    if (rv == var) {
+                                        rlist.first = rv;
+                                        v = e;
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (v.isEmpty()) {
-                        rlist.second = QStringLiteral("<?>");
-                    } else {
-                        rlist.second = m.fmt_type + QStringLiteral("::") + v;
-                    }
+                        if (v.isEmpty()) {
+                            rlist.second = QStringLiteral("<?>");
+                        } else {
+                            rlist.second =
+                                m.fmt_type + QStringLiteral("::") + v;
+                        }
 
-                    data = QVariant::fromValue(rlist);
+                        data = QVariant::fromValue(rlist);
+                    }
                 }
                 return data;
             }
@@ -894,7 +1055,7 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
             Q_ASSERT(false);
             break;
         case CTypeParser::CType::Struct:
-            return readStruct(ptr, end, dt);
+            return readStruct(ptr, end, dt, efmtInVariantList);
         case CTypeParser::CType::Union: {
             auto size = _parser->getTypeSize(dt);
             Q_ASSERT(size);
@@ -904,7 +1065,7 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
                 auto ms = _parser->unionMembers(dt);
                 QVariantHash ret;
                 for (auto &m : ms) {
-                    auto r = readContent(ptr, ptrend, m);
+                    auto r = readContent(ptr, ptrend, m, efmtInVariantList);
                     ret.insert(m.var_name, r);
                 }
                 return ret;
@@ -1533,7 +1694,7 @@ WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     auto offset = WingHex::resolveUnsafeParamAs<qsizetype>(params.at(0));
     auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
 
-    auto ret = read(offset, type);
+    auto ret = __read(offset, type, false);
     return WingHex::makeRefObjPtr(convert2AsDictionary(ret));
 }
 
@@ -1551,6 +1712,20 @@ QVariant WingCStruct::readRaw(const QVariantList &params) {
     auto offset = offset_v.value<qsizetype>();
     auto type = type_v.toString();
     return readRaw(offset, type);
+}
+
+QVariant WingCStruct::getParsedErrors(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return getParsedErrors();
+}
+
+QVariant WingCStruct::getParsedWarns(const QVariantList &params) {
+    if (!params.isEmpty()) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    return getParsedWarns();
 }
 
 bool WingCStruct::isLittleEndian() const { return m_islittle; }

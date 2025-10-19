@@ -193,7 +193,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         } else {
             return QStringLiteral("(") + QString::number(message.row) +
                    QStringLiteral(", ") + QString::number(message.col) +
-                   QStringLiteral(")") + message.message;
+                   QStringLiteral(") ") + message.message;
         }
     };
 
@@ -407,7 +407,8 @@ QString ScriptingConsole::getInput() {
     appendCommandPrompt(true);
     _isWaitingRead = true;
     setEditMode(Input);
-    s.status();
+    auto blk = textCursor().block();
+    consoleHighligher()->setBlockAsTextOnly(blk);
     auto d = s.device();
     auto ba = d->bytesAvailable();
     d->skip(ba);

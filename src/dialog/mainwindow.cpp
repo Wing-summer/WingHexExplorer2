@@ -4007,15 +4007,39 @@ void MainWindow::updateNumberTable() {
                               QString::fromLatin1(tmp));
         _numsitem->setNumData(NumShowModel::NumTableIndex::UTF8_STR,
                               QString::fromUtf8(tmp));
-        auto re = processEndian(tmp);
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::UTF16_STR,
-            QString::fromUtf16(reinterpret_cast<const char16_t *>(re.data()),
-                               re.length() / sizeof(char16_t)));
-        _numsitem->setNumData(
-            NumShowModel::NumTableIndex::UTF32_STR,
-            QString::fromUcs4(reinterpret_cast<const char32_t *>(re.data()),
-                              re.length() / sizeof(char32_t)));
+        if (Utilities::checkIsLittleEndian()) {
+            if (!m_islittle) {
+                { // utf16
+                    QStringDecoder dec(QStringDecoder::Encoding::Utf16BE);
+                    QString data = dec.decode(tmp);
+                    _numsitem->setNumData(
+                        NumShowModel::NumTableIndex::UTF16_STR, data);
+                }
+
+                { // utf32
+                    QStringDecoder dec(QStringDecoder::Encoding::Utf32BE);
+                    QString data = dec.decode(tmp);
+                    _numsitem->setNumData(
+                        NumShowModel::NumTableIndex::UTF16_STR, data);
+                }
+            }
+        } else {
+            if (m_islittle) {
+                { // utf16
+                    QStringDecoder dec(QStringDecoder::Encoding::Utf16LE);
+                    QString data = dec.decode(tmp);
+                    _numsitem->setNumData(
+                        NumShowModel::NumTableIndex::UTF16_STR, data);
+                }
+
+                { // utf32
+                    QStringDecoder dec(QStringDecoder::Encoding::Utf32LE);
+                    QString data = dec.decode(tmp);
+                    _numsitem->setNumData(
+                        NumShowModel::NumTableIndex::UTF16_STR, data);
+                }
+            }
+        }
     } else {
         _numsitem->setNumData(NumShowModel::NumTableIndex::ASCII_STR,
                               QString());
@@ -4337,6 +4361,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     auto &set = SettingManager::instance();
     set.setDockLayout(m_dock->saveState());
     set.setRecentFiles(m_recentmanager->saveRecent());
+    set.setLastUsedPath(m_lastusedpath);
 
     PluginSystem::instance().destory();
 
