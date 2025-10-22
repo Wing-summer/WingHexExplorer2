@@ -22,6 +22,7 @@
 #ifndef QHEXBUFFER_H
 #define QHEXBUFFER_H
 
+#include <QBuffer>
 #include <QIODevice>
 #include <QObject>
 
@@ -30,24 +31,56 @@ class QHexBuffer : public QObject {
 
 public:
     explicit QHexBuffer(QObject *parent = nullptr);
+    virtual ~QHexBuffer();
+
+public:
+    // note: QHexBuffer will take the ownership of iodevice
+    virtual bool open(QIODevice *iodevice, bool readonly);
+    // use internal buffer as iodevice
+    bool open(bool readonly);
+
+    virtual bool close();
+
+    // save inplace if iodevice == nullptr
+    // if iodevice != nullptr, you should keep iodevice un-opened
+    // or it will be closed
+    virtual bool save(QIODevice *iodevice) = 0;
+
+public:
+    virtual uchar at(qsizetype idx) const;
+    uchar operator[](qsizetype pos) const;
+
+public:
+    QIODevice *ioDevice() const;
+    bool isOpened() const;
+    bool isReadable() const;
+    bool isWritable() const;
+    QIODevice::OpenMode openMode() const;
+
     bool isEmpty() const;
 
 public:
-    virtual uchar at(qsizetype idx);
-    virtual void replace(qsizetype offset, const QByteArray &data);
-    virtual void read(char *data, qsizetype size);
-    virtual void read(const QByteArray &ba);
+    virtual qsizetype length() const = 0;
+    virtual QByteArray read(qsizetype offset, qsizetype length) const = 0;
+    virtual bool insert(qsizetype offset, const QByteArray &data) = 0;
+    virtual bool remove(qsizetype offset, qsizetype length) = 0;
+    virtual bool replace(qsizetype offset, const QByteArray &data) = 0;
 
 public:
-    virtual qsizetype length() const = 0;
-    virtual void insert(qsizetype offset, const QByteArray &data) = 0;
-    virtual void remove(qsizetype offset, qsizetype length) = 0;
-    virtual QByteArray read(qsizetype offset, qsizetype length) = 0;
-    virtual bool read(QIODevice *iodevice) = 0;
-    virtual void write(QIODevice *iodevice) = 0;
+    virtual qsizetype indexOf(const QByteArray &ba, qsizetype from) const = 0;
+    virtual qsizetype lastIndexOf(const QByteArray &ba,
+                                  qsizetype from) const = 0;
 
-    virtual qsizetype indexOf(const QByteArray &ba, qsizetype from) = 0;
-    virtual qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) = 0;
+    QBuffer *internalBuffer() const;
+
+protected:
+    bool isReadyRead(qsizetype offset) const;
+    bool isReadyReplaceWrite(qsizetype offset, qsizetype length) const;
+    bool isReadyInsert(qsizetype offset) const;
+
+private:
+    QIODevice *_ioDevice = nullptr;
+    QBuffer *m_buffer = nullptr;
 };
 
 #endif // QHEXBUFFER_H

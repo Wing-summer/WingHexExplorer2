@@ -32,7 +32,31 @@ int MetaDataModel::columnCount(const QModelIndex &parent) const {
 
 QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
     switch (role) {
-    case Qt::DisplayRole:
+    case Qt::DisplayRole: {
+        auto r = index.row();
+        const auto &b = _doc->metadata()->getAllMetadata();
+        auto d = b.at(r);
+        switch (index.column()) {
+        case 0: // begin
+            return QStringLiteral("0x") +
+                   QString::number(d.begin, 16).toUpper();
+        case 1: // end
+            return QStringLiteral("0x") + QString::number(d.end, 16).toUpper();
+        case 2: {
+            if (!d.foreground.isValid()) {
+                return QStringLiteral("-");
+            }
+            return d.foreground.name();
+        }
+        case 3:
+            if (!d.background.isValid()) {
+                return QStringLiteral("-");
+            }
+            return d.background.name();
+        case 4:
+            return d.comment;
+        }
+    } break;
     case Qt::ToolTipRole: {
         auto r = index.row();
         const auto &b = _doc->metadata()->getAllMetadata();

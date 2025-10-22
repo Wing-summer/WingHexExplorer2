@@ -830,7 +830,7 @@ bool ScriptMachine::executeScript(
     }
 
     // Compile the script
-    auto mod = createModule(mode);
+    auto mod = createModuleIfNotExist(mode);
     // script-running is not allowed in interactive mode
     if (mod == nullptr) {
         return false;
@@ -1633,13 +1633,20 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         return true;
     }
 
-    QScopeGuard guard([this]() {
-        lineOffset = 0;
-        colOffset = 0;
-    });
-
     asIScriptModule *mod = createModuleIfNotExist(mode);
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
+
+    QScopeGuard guard([mod, this, mode]() {
+        lineOffset = 0;
+        colOffset = 0;
+
+        // Before leaving, allow the engine to clean up remaining objects by
+        // discarding the module and doing a full garbage collection so that
+        // this can also be debugged if desired
+        if (mode != Interactive) {
+            mod->Discard();
+        }
+    });
 
     // first, valid the input
     auto ccode = code.toUtf8();
@@ -1800,6 +1807,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     _engine->GarbageCollect();
 
     func->Release();
+
     return r >= 0;
 }
 

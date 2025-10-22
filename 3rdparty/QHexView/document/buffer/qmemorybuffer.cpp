@@ -23,33 +23,101 @@
 
 QMemoryBuffer::QMemoryBuffer(QObject *parent) : QHexBuffer(parent) {}
 
-uchar QMemoryBuffer::at(qsizetype idx) { return uchar(m_buffer.at(int(idx))); }
+uchar QMemoryBuffer::at(qsizetype idx) const { return uchar(m_buffer.at(idx)); }
 
-qsizetype QMemoryBuffer::length() const { return qsizetype(m_buffer.length()); }
+qsizetype QMemoryBuffer::length() const { return m_buffer.length(); }
 
-void QMemoryBuffer::insert(qsizetype offset, const QByteArray &data) {
-    m_buffer.insert(int(offset), data);
+bool QMemoryBuffer::insert(qsizetype offset, const QByteArray &data) {
+    if (isReadyInsert(offset)) {
+        if (!data.isEmpty()) {
+            m_buffer.insert(offset, data);
+        }
+        return true;
+    }
+    return false;
 }
 
-void QMemoryBuffer::remove(qsizetype offset, qsizetype length) {
-    m_buffer.remove(int(offset), length);
+bool QMemoryBuffer::remove(qsizetype offset, qsizetype length) {
+    if (isReadyReplaceWrite(offset, length)) {
+        if (length) {
+            m_buffer.remove(offset, length);
+        }
+        return true;
+    }
+    return false;
 }
 
-QByteArray QMemoryBuffer::read(qsizetype offset, qsizetype length) {
-    return m_buffer.mid(int(offset), length);
+QByteArray QMemoryBuffer::read(qsizetype offset, qsizetype length) const {
+    if (isReadyRead(offset)) {
+        return m_buffer.mid(offset, length);
+    } else {
+        return {};
+    }
 }
 
-bool QMemoryBuffer::read(QIODevice *device) {
-    m_buffer = device->readAll();
-    return true;
+bool QMemoryBuffer::save(QIODevice *device) {
+    if (device) {
+        if (device->isOpen()) {
+            device->close();
+        }
+        if (device->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            device->write(m_buffer);
+            device->close();
+            return true;
+        }
+    } else {
+        if (!internalBuffer()) {
+            if (isWritable()) {
+                auto d = ioDevice();
+                d->close();
+                // reopen and truncate
+                if (d->open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+                    d->write(m_buffer);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
-void QMemoryBuffer::write(QIODevice *device) { device->write(m_buffer); }
-
-qsizetype QMemoryBuffer::indexOf(const QByteArray &ba, qsizetype from) {
-    return m_buffer.indexOf(ba, int(from));
+qsizetype QMemoryBuffer::indexOf(const QByteArray &ba, qsizetype from) const {
+    if (!isReadable()) {
+        return -1;
+    }
+    return m_buffer.indexOf(ba, from);
 }
 
-qsizetype QMemoryBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) {
-    return m_buffer.lastIndexOf(ba, int(from));
+qsizetype QMemoryBuffer::lastIndexOf(const QByteArray &ba,
+                                     qsizetype from) const {
+    if (!isReadable()) {
+        return -1;
+    }
+    return m_buffer.lastIndexOf(ba, from);
+}
+
+bool QMemoryBuffer::open(QIODevice *iodevice, bool readonly) {
+    if (QHexBuffer::open(iodevice, readonly)) {
+        m_buffer = iodevice->readAll();
+        return true;
+    }
+    return false;
+}
+
+bool QMemoryBuffer::close() {
+    if (QHexBuffer::close()) {
+        m_buffer.clear();
+        return true;
+    }
+    return false;
+}
+
+bool QMemoryBuffer::replace(qsizetype offset, const QByteArray &data) {
+    if (isReadyReplaceWrite(offset, data.length())) {
+        if (!data.isEmpty()) {
+            m_buffer.replace(offset, data.length(), data);
+        }
+        return true;
+    }
+    return false;
 }

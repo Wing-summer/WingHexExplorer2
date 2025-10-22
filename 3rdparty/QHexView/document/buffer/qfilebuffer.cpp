@@ -17,45 +17,168 @@
 #include "qfilebuffer.h"
 #include "QHexEdit2/chunks.h"
 
-QFileBuffer::QFileBuffer(QObject *parent) : QHexBuffer(parent) {
-    _chunks = new Chunks(this);
-}
+#include <QSaveFile>
+
+QFileBuffer::QFileBuffer(QObject *parent) : QHexBuffer(parent) {}
 
 QFileBuffer::~QFileBuffer() {}
 
-uchar QFileBuffer::at(qsizetype idx) {
-    auto data = _chunks->at(idx);
-    return uchar(data);
+bool QFileBuffer::open(QIODevice *iodevice, bool readonly) {
+    if (QHexBuffer::open(iodevice, readonly)) {
+        _chunks = new Chunks(iodevice, this);
+        return true;
+    }
+    return false;
 }
 
-qsizetype QFileBuffer::length() const { return _chunks->size(); }
-
-void QFileBuffer::insert(qsizetype offset, const QByteArray &data) {
-    _chunks->insert(offset, data);
+bool QFileBuffer::close() {
+    if (QHexBuffer::close()) {
+        _chunks->deleteLater();
+        _chunks = nullptr;
+        return true;
+    }
+    return false;
 }
 
-void QFileBuffer::remove(qsizetype offset, qsizetype length) {
-    _chunks->remove(offset, length);
+bool QFileBuffer::save(QIODevice *iodevice) {
+    if (iodevice) {
+        if (iodevice->isOpen()) {
+            iodevice->close();
+        }
+
+        if (iodevice->isSequential()) {
+            if (!iodevice->open(QIODevice::WriteOnly)) {
+                return false;
+            }
+
+            if (_chunks) {
+                auto r = _chunks->write(iodevice);
+                iodevice->close();
+                return r;
+            }
+
+            iodevice->close();
+        } else {
+            if (auto file = qobject_cast<QFile *>(iodevice)) {
+                QSaveFile sf(file->fileName());
+                sf.setDirectWriteFallback(true);
+                auto r = _chunks->write(&sf);
+                if (r) {
+                    sf.commit();
+                } else {
+                    sf.cancelWriting();
+                }
+                return true;
+            } else {
+                // not a QFile?
+                if (!iodevice->open(QIODevice::WriteOnly |
+                                    QIODevice::Truncate)) {
+                    return false;
+                }
+
+                if (_chunks) {
+                    auto r = _chunks->write(iodevice);
+                    iodevice->close();
+                    return r;
+                }
+            }
+        }
+    } else {
+        if (!internalBuffer()) {
+            auto iodevice = this->ioDevice();
+            if (auto file = qobject_cast<QFile *>(iodevice)) {
+                QSaveFile sf(file->fileName());
+                auto r = sf.open(QFile::WriteOnly);
+                if (r) {
+                    r = _chunks->write(&sf);
+                    if (r) {
+                        auto isWritable = file->isWritable();
+                        file->close(); // close temporarily
+                        auto r = sf.commit();
+                        // try to reopen
+                        return file->open(isWritable ? QFile::ReadWrite
+                                                     : QFile::ReadOnly) &&
+                               r;
+                    } else {
+                        sf.cancelWriting();
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                // not a QFile?
+                if (!iodevice->open(QIODevice::WriteOnly |
+                                    QIODevice::Truncate)) {
+                    return false;
+                }
+
+                if (_chunks) {
+                    auto r = _chunks->write(iodevice);
+                    iodevice->close();
+                    return r;
+                }
+            }
+        }
+    }
+    return false;
 }
 
-QByteArray QFileBuffer::read(qsizetype offset, qsizetype length) {
-    return _chunks->data(offset, length);
+uchar QFileBuffer::at(qsizetype idx) const {
+    if (_chunks) {
+        auto data = _chunks->at(idx);
+        return uchar(data);
+    }
+    return 0;
 }
 
-bool QFileBuffer::read(QIODevice *device) {
-    auto d = _chunks->ioDevice();
-    auto ret = _chunks->setIODevice(device);
-    d->setParent(nullptr);
-    d->deleteLater();
-    return ret;
+qsizetype QFileBuffer::length() const {
+    if (_chunks) {
+        return _chunks->size();
+    } else {
+        return -1;
+    }
 }
 
-void QFileBuffer::write(QIODevice *device) { _chunks->write(device); }
-
-qsizetype QFileBuffer::indexOf(const QByteArray &ba, qsizetype from) {
-    return _chunks->indexOf(ba, from);
+QByteArray QFileBuffer::read(qsizetype offset, qsizetype length) const {
+    if (isReadyRead(offset)) {
+        return _chunks->data(offset, length);
+    }
+    return {};
 }
 
-qsizetype QFileBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) {
-    return _chunks->lastIndexOf(ba, from);
+bool QFileBuffer::insert(qsizetype offset, const QByteArray &data) {
+    if (isReadyInsert(offset)) {
+        return _chunks->insert(offset, data);
+    }
+    return false;
+}
+
+bool QFileBuffer::remove(qsizetype offset, qsizetype length) {
+    if (isReadyReplaceWrite(offset, length)) {
+        return _chunks->remove(offset, length);
+    }
+    return false;
+}
+
+bool QFileBuffer::replace(qsizetype offset, const QByteArray &data) {
+    if (isReadyReplaceWrite(offset, data.length())) {
+        return _chunks->overwrite(offset, data);
+    }
+    return false;
+}
+
+qsizetype QFileBuffer::indexOf(const QByteArray &ba, qsizetype from) const {
+    if (_chunks) {
+        return _chunks->indexOf(ba, from);
+    } else {
+        return -1;
+    }
+}
+
+qsizetype QFileBuffer::lastIndexOf(const QByteArray &ba, qsizetype from) const {
+    if (_chunks) {
+        return _chunks->lastIndexOf(ba, from);
+    } else {
+        return -1;
+    }
 }

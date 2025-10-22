@@ -120,7 +120,8 @@ AppManager::AppManager(int &argc, char *argv[])
                     QString param;
                     out >> param;
                     bool isWs;
-                    if (openFile(param, true, &isWs) != WingHex::Success) {
+                    if (openFile(param, true, false, &isWs) !=
+                        WingHex::Success) {
                         failedFile.append(param);
                     } else {
                         RecentFileManager::RecentInfo info;
@@ -147,7 +148,7 @@ AppManager::AppManager(int &argc, char *argv[])
         for (auto var = args.begin() + 1; var != args.end(); ++var) {
             auto file = *var;
             bool isWs;
-            if (openFile(file, true, &isWs) != WingHex::Success) {
+            if (openFile(file, true, false, &isWs) != WingHex::Success) {
                 failedFile.append(file);
             } else {
                 RecentFileManager::RecentInfo info;
@@ -190,7 +191,7 @@ MainWindow *AppManager::mainWindow() const { return _w; }
 quint64 AppManager::currentMSecsSinceEpoch() { return _timer.elapsed(); }
 
 ErrFile AppManager::openFile(const QString &file, bool autoDetect,
-                             bool *isWorkSpace) {
+                             bool skipScripting, bool *isWorkSpace) {
     EditorView *editor = nullptr;
     Q_ASSERT(_w);
 
@@ -208,7 +209,8 @@ ErrFile AppManager::openFile(const QString &file, bool autoDetect,
                 if (isWorkSpace && ret == ErrFile::Success) {
                     *isWorkSpace = true;
                 }
-            } else if (suffix.compare(QStringLiteral("as")) == 0) {
+            } else if (!skipScripting &&
+                       suffix.compare(QStringLiteral("as")) == 0) {
                 _w->openScriptFile(file, splash);
                 ret = ErrFile::Success;
             }

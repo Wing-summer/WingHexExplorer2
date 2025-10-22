@@ -17,8 +17,6 @@ add_library(
     document/buffer/qhexbuffer.h
     document/buffer/qmemorybuffer.cpp
     document/buffer/qmemorybuffer.h
-    document/buffer/qmemoryrefbuffer.cpp
-    document/buffer/qmemoryrefbuffer.h
     document/commands/hex/hexcommand.cpp
     document/commands/hex/hexcommand.h
     document/commands/hex/insertcommand.cpp
@@ -64,6 +62,8 @@ add_library(
     document/qhexrenderer.cpp
     document/qhexrenderer.h
     document/qhexregionobject.h
+    document/qhexundostack.h
+    document/qhexundostack.cpp
     QHexEdit2/chunks.cpp
     QHexEdit2/chunks.h
     qhexview.h

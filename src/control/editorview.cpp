@@ -158,12 +158,6 @@ EditorView::EditorView(QWidget *parent)
 
     m_cloneChildren.fill(nullptr, CLONE_LIMIT);
 
-    connect(m_hex, &QHexView::documentChanged, this,
-            &EditorView::documentChanged);
-
-    connect(&_watcher, &QFileSystemWatcher::fileChanged, this,
-            &EditorView::need2Reload);
-
     applySettings();
 
     // build up call tables
@@ -362,7 +356,6 @@ ErrFile EditorView::newFile(size_t index) {
         return ErrFile::ClonedFile;
     }
 
-    removeMonitorPaths();
     auto istr = QString::number(index);
     auto fname = tr("Untitled") + istr;
     m_hex->setWindowFilePath(fname);
@@ -370,11 +363,12 @@ ErrFile EditorView::newFile(size_t index) {
     m_docType = DocumentType::File;
     m_isWorkSpace = false;
     m_isNewFile = true;
-    auto p = QHexDocument::fromMemory<QFileBuffer>(QByteArray(), false);
+    auto p = QHexDocument::fromInternalBuffer<QFileBuffer>(false);
     p->setDocSaved();
+    connect(p, &QHexDocument::documentSaved, this,
+            &EditorView::updateDocSavedFlag);
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
-    connectDocSavedFlag(this);
     return ErrFile::Success;
 }
 
@@ -406,8 +400,6 @@ ErrFile EditorView::openFile(const QString &filename) {
             }
         } while (retry);
 
-        removeMonitorPaths();
-
         m_hex->setDocument(QSharedPointer<QHexDocument>(p));
         m_hex->setLockedFile(readonly);
         m_hex->setKeepSize(true);
@@ -417,15 +409,14 @@ ErrFile EditorView::openFile(const QString &filename) {
         m_hex->setWindowFilePath(fName);
         m_isNewFile = false;
         p->setDocSaved();
+        connect(p, &QHexDocument::documentSaved, this,
+                &EditorView::updateDocSavedFlag);
 
         this->setWindowTitle(info.fileName());
-        connectDocSavedFlag(this);
 
         auto tab = this->tabWidget();
         tab->setIcon(Utilities::getIconFromFile(style(), fName));
         tab->setToolTip(fName);
-
-        addMonitorPath();
     }
 
     return ErrFile::Success;
@@ -440,6 +431,10 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     auto d = dev->onOpenFile(file);
     if (d == nullptr) {
         return ErrFile::NotExist;
+    }
+
+    if (d->isSequential()) {
+        return ErrFile::InvalidFormat;
     }
 
     bool readonly = true;
@@ -461,8 +456,6 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
         return ErrFile::Error;
     }
 
-    removeMonitorPaths();
-
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->setLockedFile(readonly);
     m_hex->setKeepSize(true);
@@ -481,9 +474,9 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     m_hex->setWindowFilePath(fileName);
     m_isNewFile = false;
     p->setDocSaved();
-
+    connect(p, &QHexDocument::documentSaved, this,
+            &EditorView::updateDocSavedFlag);
     setWindowTitle(fileName);
-    connectDocSavedFlag(this);
 
     auto tab = this->tabWidget();
     tab->setIcon(dev->supportedFileIcon());
@@ -556,7 +549,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         return this->cloneParent()->save(workSpaceName, path, isExport,
                                          workSpaceAttr);
     }
-    auto fileName = path.isEmpty() ? m_hex->windowFilePath() : path;
+
+    bool saveSelf = path.isEmpty();
+    auto fileName = saveSelf ? this->fileName() : path;
     auto doc = m_hex->document();
 
 #ifdef Q_OS_LINUX
@@ -588,16 +583,28 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     };
 #endif
 
-    if (isNewFile()) {
-        if (fileName.isEmpty()) {
+    if (saveSelf) {
+        if (isExport) {
+            return ErrFile::NotExist;
+        }
+        if (isNewFile()) {
             return ErrFile::IsNewFile;
         }
     }
 
-    if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace ||
-        (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
-         (m_isWorkSpace || hasMeta()))) {
+    bool needSaveWS = false;
+    if (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
+        doc->isMetaDataUnsaved()) {
+        needSaveWS = true;
+    } else {
+        if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace) {
+            if (!m_isWorkSpace || doc->isMetaDataUnsaved()) {
+                needSaveWS = true;
+            }
+        }
+    }
 
+    if (needSaveWS) {
 #ifdef Q_OS_LINUX
         Q_ASSERT(!workSpaceName.isEmpty());
         needAdjustWs = !QFile::exists(workSpaceName);
@@ -632,57 +639,72 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
     }
 
-    if (!doc->isDocSaved() || m_hex->windowFilePath() != fileName ||
-        isNewFile()) {
-        if (m_docType == DocumentType::Extension) {
-            if (_dev->isOpen()) {
-                _dev->close();
-            }
-            _dev->open(QIODevice::WriteOnly);
-            if (doc->saveTo(_dev, true)) {
-                doc->setDocSaved();
-                return ErrFile::Success;
-            }
-            _dev->close();
-        } else {
-            QFile file(fileName);
-            if (!file.open(QFile::WriteOnly)) {
-                return ErrFile::Permission;
-            }
+    bool needSave = false;
+    if (!doc->isDocSaved() || isNewFile()) {
+        needSave = true;
+    } else {
+        if (!path.isEmpty()) {
+            needSave = fileName != path;
+        }
+    }
 
-            removeMonitorPaths();
-
-            if (doc->saveTo(&file, !isExport)) {
-                file.close();
-                if (!isExport) {
-                    m_hex->setWindowFilePath(
-                        QFileInfo(fileName).absoluteFilePath());
-
-                    if (isNewFile()) {
-                        auto buffer = new QFileBuffer;
-                        buffer->read(new QFile(fileName));
-                        doc->setBuffer(buffer);
-                    }
-
+    if (needSave) {
+        if (saveSelf) {
+            // when path is empty, only save self
+            if (m_docType == DocumentType::Extension) {
+                if (doc->saveTo(nullptr, true)) {
+                    doc->setDocSaved();
+                    return ErrFile::Success;
+                }
+            } else {
+                if (doc->saveTo(nullptr, true)) {
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
+#ifdef Q_OS_LINUX
+                    adjustPermission();
+#endif
+                    return ErrFile::Success;
                 }
+            }
+        } else {
+            QFile file(path);
+            bool flag = !isExport;
+            if (m_docType == DocumentType::Extension) {
+                if (doc->saveTo(&file, flag)) {
+                    if (flag) {
+                        m_isNewFile = false;
+                        m_docType = DocumentType::File;
+                        doc->setDocSaved();
+                        setFileName(QFileInfo(path).absoluteFilePath());
+                    }
+                    return ErrFile::Success;
+                }
+            } else {
+                if (doc->saveTo(&file, flag)) {
+                    if (flag) {
+                        if (isNewFile()) {
+                            auto buffer = new QFileBuffer;
+                            buffer->open(new QFile(path), false);
+                            doc->setBuffer(buffer);
+                        }
 
-                addMonitorPath();
+                        m_isNewFile = false;
+                        m_docType = DocumentType::File;
+                        doc->setDocSaved();
+                        setFileName(QFileInfo(path).absoluteFilePath());
+                    }
 
 #ifdef Q_OS_LINUX
-                adjustPermission();
+                    adjustPermission();
 #endif
-                return ErrFile::Success;
+                    return ErrFile::Success;
+                }
             }
         }
         return ErrFile::Permission;
-    } else {
-        if (!isExport) {
-            doc->setDocSaved();
-        }
     }
+
 #ifdef Q_OS_LINUX
     adjustPermission();
 #endif
@@ -747,7 +769,7 @@ ErrFile EditorView::closeFile() {
 }
 
 bool EditorView::change2WorkSpace() const {
-    return !m_isWorkSpace && hasMeta();
+    return !m_isWorkSpace && m_hex->document()->isMetaDataUnsaved();
 }
 
 QHexView *EditorView::hexEditor() const { return m_hex; }
@@ -782,55 +804,41 @@ void EditorView::raiseAndSwitchView(const QString &id) {
     switchView(id);
 }
 
-void EditorView::connectDocSavedFlag(EditorView *editor) {
-    connect(editor->m_hex->document().get(), &QHexDocument::documentSaved, this,
-            [=](bool b) {
-                QString fileName;
-                auto fName = m_hex->windowFilePath();
-                if (editor->isNewFile()) {
-                    fileName = fName;
-                } else if (editor->isExtensionFile()) {
-                    auto idx = fName.indexOf('}');
-                    fileName = fName.mid(idx);
-                } else {
-                    fileName = QFileInfo(fName).fileName();
-                }
-                QString content;
-
-                if (b && !checkHasUnsavedState()) {
-                    content = fileName;
-                } else {
-                    content = QStringLiteral("* ") + fileName;
-                }
-
-                editor->setWindowTitle(content);
-                for (int i = 0; i < m_cloneChildren.size(); ++i) {
-                    auto c = m_cloneChildren.at(i);
-                    if (c) {
-                        c->setWindowTitle(content + QStringLiteral(" : ") +
-                                          QString::number(i + 1));
-                    }
-                }
-
-                if (!isNewFile()) {
-                    auto tab = this->tabWidget();
-                    if (tab->icon().isNull()) {
-                        tab->setIcon(
-                            Utilities::getIconFromFile(style(), fName));
-                    }
-                }
-            });
-}
-
-void EditorView::removeMonitorPaths() {
-    auto files = _watcher.files();
-    if (files.isEmpty()) {
-        return;
+void EditorView::updateDocSavedFlag(bool b) {
+    QString fileName;
+    auto fName = this->fileName();
+    if (isNewFile()) {
+        fileName = fName;
+    } else if (isExtensionFile()) {
+        auto idx = fName.indexOf('}');
+        fileName = fName.sliced(idx);
+    } else {
+        fileName = QFileInfo(fName).fileName();
     }
-    _watcher.removePaths(files);
-}
+    QString content;
 
-void EditorView::addMonitorPath() { _watcher.addPath(m_hex->windowFilePath()); }
+    if (b && !checkHasUnsavedState()) {
+        content = fileName;
+    } else {
+        content = QStringLiteral("* ") + fileName;
+    }
+
+    setWindowTitle(content);
+    for (int i = 0; i < m_cloneChildren.size(); ++i) {
+        auto c = m_cloneChildren.at(i);
+        if (c) {
+            c->setWindowTitle(content + QStringLiteral(" : ") +
+                              QString::number(i + 1));
+        }
+    }
+
+    if (!isNewFile()) {
+        auto tab = this->tabWidget();
+        if (tab->icon().isNull()) {
+            tab->setIcon(Utilities::getIconFromFile(style(), fName));
+        }
+    }
+}
 
 bool EditorView::hasCloneChildren() const {
     for (auto &c : m_cloneChildren) {
@@ -861,10 +869,12 @@ qsizetype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
 }
 
-bool EditorView::hasMeta() const {
-    auto doc = m_hex->document();
-    return doc->metadata()->hasMetadata() || doc->bookMarksCount() > 0 ||
-           doc->isBaseAddrCmdModified();
+void EditorView::setFileName(const QString &fileName) {
+    if (isCloneFile()) {
+        this->cloneParent()->setFileName(fileName);
+    }
+    m_hex->setWindowFilePath(fileName);
+    updateDocSavedFlag(true);
 }
 
 QHash<QString, QByteArray> EditorView::savePluginData() {
@@ -2156,11 +2166,8 @@ AppTheme EditorView::currentAppTheme(const QObject *caller) {
 
 EditorView *EditorView::cloneParent() const { return m_cloneParent; }
 
-bool EditorView::isCloned() const { return m_cloneParent != nullptr; }
-
 EditorView *EditorView::clone() {
     if (isCloneFile()) {
-        Q_ASSERT(this->cloneParent());
         return this->cloneParent()->clone();
     }
 

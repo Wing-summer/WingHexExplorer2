@@ -24,24 +24,34 @@
 
 #include "qhexbuffer.h"
 
+#include <QBuffer>
+
 class QMemoryBuffer : public QHexBuffer {
     Q_OBJECT
 
 public:
     explicit QMemoryBuffer(QObject *parent = nullptr);
-    uchar at(qsizetype idx) override;
-    qsizetype length() const override;
-    void insert(qsizetype offset, const QByteArray &data) override;
-    void remove(qsizetype offset, qsizetype length) override;
-    QByteArray read(qsizetype offset, qsizetype length) override;
-    bool read(QIODevice *device) override;
-    void write(QIODevice *device) override;
-
-    qsizetype indexOf(const QByteArray &ba, qsizetype from) override;
-    qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) override;
 
 private:
     QByteArray m_buffer;
+
+    // QHexBuffer interface
+public:
+    // reimplement for faster operation
+    virtual uchar at(qsizetype idx) const override;
+
+    virtual bool open(QIODevice *iodevice, bool readonly) override;
+    virtual bool close() override;
+    virtual bool save(QIODevice *iodevice) override;
+    virtual qsizetype length() const override;
+    virtual QByteArray read(qsizetype offset, qsizetype length) const override;
+    virtual bool insert(qsizetype offset, const QByteArray &data) override;
+    virtual bool remove(qsizetype offset, qsizetype length) override;
+    virtual bool replace(qsizetype offset, const QByteArray &data) override;
+    virtual qsizetype indexOf(const QByteArray &ba,
+                              qsizetype from) const override;
+    virtual qsizetype lastIndexOf(const QByteArray &ba,
+                                  qsizetype from) const override;
 };
 
 #endif // QMEMORYBUFFER_H

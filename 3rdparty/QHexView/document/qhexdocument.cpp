@@ -64,8 +64,9 @@ bool QHexDocument::lineHasBookMark(qsizetype line) {
 }
 
 void QHexDocument::addUndoCommand(QUndoCommand *command) {
-    if (command)
+    if (command) {
         m_undostack->push(command);
+    }
 }
 
 void QHexDocument::setMetabgVisible(bool b) {
@@ -130,29 +131,18 @@ QMap<qsizetype, QString> QHexDocument::removeBookMarkAdjust(qsizetype offset,
         return {};
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto rmbegin = _bookmarks.lowerBound(offset);
-#else
     auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-#endif
-    auto addbegin = _bookmarks.upperBound(offset);
+    auto addbegin = std::as_const(_bookmarks).upperBound(offset);
 
     for (auto p = rmbegin; p != addbegin; ++p) {
         rmbms.insert(p.key(), p.value());
     }
 
-    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+    for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
         bms.insert(p.key() - length, p.value());
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    for (auto it = rmbegin; it != _bookmarks.end();) {
-        it = _bookmarks.erase(it);
-    }
-#else
     _bookmarks.erase(rmbegin, _bookmarks.cend());
-#endif
-
     _bookmarks.insert(bms);
 
     return rmbms;
@@ -166,25 +156,14 @@ void QHexDocument::insertBookMarkAdjustRevert(qsizetype offset,
         return;
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    auto rmbegin = _bookmarks.lowerBound(offset);
-#else
     auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-#endif
-    auto addbegin = _bookmarks.upperBound(offset);
+    auto addbegin = std::as_const(_bookmarks).upperBound(offset);
 
-    for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+    for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
         bms.insert(p.key() - length, p.value());
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    for (auto it = rmbegin; it != _bookmarks.end();) {
-        it = _bookmarks.erase(it);
-    }
-#else
     _bookmarks.erase(rmbegin, _bookmarks.cend());
-#endif
-
     _bookmarks.insert(bms);
 }
 
@@ -193,25 +172,14 @@ void QHexDocument::removeBookMarkAdjustRevert(
     QMap<qsizetype, QString> bms;
 
     if (!_bookmarks.isEmpty()) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        auto rmbegin = _bookmarks.lowerBound(offset);
-#else
         auto rmbegin = std::as_const(_bookmarks).lowerBound(offset);
-#endif
-        auto addbegin = _bookmarks.upperBound(offset);
+        auto addbegin = std::as_const(_bookmarks).upperBound(offset);
 
-        for (auto p = addbegin; p != _bookmarks.end(); ++p) {
+        for (auto p = addbegin; p != _bookmarks.cend(); ++p) {
             bms.insert(p.key() + length, p.value());
         }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        for (auto it = rmbegin; it != _bookmarks.end();) {
-            it = _bookmarks.erase(it);
-        }
-#else
         _bookmarks.erase(rmbegin, _bookmarks.cend());
-#endif
-
         _bookmarks.insert(bms);
     }
 
@@ -220,15 +188,7 @@ void QHexDocument::removeBookMarkAdjustRevert(
 
 bool QHexDocument::isDocSaved() const { return m_undostack->isClean(); }
 
-void QHexDocument::setDocSaved(bool b) {
-    if (b) {
-        m_undostack->setClean();
-    } else {
-        m_undostack->resetClean();
-    }
-
-    Q_EMIT documentSaved(b);
-}
+void QHexDocument::setDocSaved() { m_undostack->setClean(); }
 
 bool QHexDocument::isReadOnly() const { return m_readonly; }
 bool QHexDocument::isKeepSize() const { return m_keepsize; }
@@ -298,15 +258,10 @@ bool QHexDocument::SetBaseAddress(quintptr addr) {
     return true;
 }
 
-bool QHexDocument::isBaseAddrCmdModified() const {
-    if (m_undostack->isClean()) {
-        return true;
-    }
-    auto end = m_undostack->index();
-    auto start = m_undostack->cleanIndex() + 1;
-    for (int i = start; i <= end; ++i) {
-        auto cmd = m_undostack->command(i);
-        if (cmd->id() == UndoCommandBase::UndoID_SetBaseAddr) {
+bool QHexDocument::isMetaDataUnsaved() const {
+    for (int i = UndoCommandBase::UndoID_MetaCmdBegin;
+         i < UndoCommandBase::UndoID_MetaCmdEnd; ++i) {
+        if (m_undostack->hasUnsavedId(i)) {
             return true;
         }
     }
@@ -527,7 +482,6 @@ bool QHexDocument::_insert(qsizetype offset, uchar b) {
 
 bool QHexDocument::_insert(qsizetype offset, const QByteArray &data) {
     m_buffer->insert(offset, data);
-    setDocSaved(false);
     Q_EMIT documentChanged();
     return true;
 }
@@ -538,14 +492,12 @@ bool QHexDocument::_replace(qsizetype offset, uchar b) {
 
 bool QHexDocument::_replace(qsizetype offset, const QByteArray &data) {
     m_buffer->replace(offset, data);
-    setDocSaved(false);
     Q_EMIT documentChanged();
     return true;
 }
 
 bool QHexDocument::_remove(qsizetype offset, qsizetype len) {
     m_buffer->remove(offset, len);
-    setDocSaved(false);
     Q_EMIT documentChanged();
     return true;
 }
@@ -639,10 +591,10 @@ qsizetype QHexDocument::findPreviousExt(qsizetype begin,
 /*======================*/
 
 // modified by wingsummer
-QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
+QHexDocument::QHexDocument(QHexBuffer *buffer)
     : QObject(nullptr), m_baseaddress(0), m_readonly(false), m_keepsize(false),
       m_islocked(false) {
-
+    Q_ASSERT(buffer);
     buffer->setParent(this);
     m_buffer = buffer;
     m_areaindent = DEFAULT_AREA_IDENTATION;
@@ -650,14 +602,14 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
 
     /*=======================*/
     // added by wingsummer
-    m_readonly = readonly;
+    m_readonly = !buffer->isWritable();
     if (m_readonly) {
         m_islocked = true;
         m_keepsize = true;
     }
     /*=======================*/
 
-    m_undostack = new QUndoStack(this);
+    m_undostack = new QHexUndoStack(this);
     m_metadata = new QHexMetadata(m_undostack, this);
     m_metadata->setLineWidth(m_hexlinewidth);
 
@@ -675,6 +627,8 @@ QHexDocument::QHexDocument(QHexBuffer *buffer, bool readonly)
 
     /*=======================*/
 }
+
+QHexDocument::~QHexDocument() { m_buffer->close(); }
 
 bool QHexDocument::isEmpty() const { return m_buffer->isEmpty(); }
 
@@ -858,14 +812,11 @@ QByteArray QHexDocument::read(qsizetype offset, qsizetype len) const {
 }
 
 bool QHexDocument::saveTo(QIODevice *device, bool cleanUndo) {
-    if (!device->isWritable())
-        return false;
-
-    m_buffer->write(device);
-    if (cleanUndo)
+    auto r = m_buffer->save(device);
+    if (cleanUndo) {
         m_undostack->setClean(); // added by wingsummer
-
-    return true;
+    }
+    return r;
 }
 
 qsizetype QHexDocument::findNext(qsizetype begin, const QByteArray &ba) {

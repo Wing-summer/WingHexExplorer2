@@ -19,29 +19,28 @@
 ** =============================================================================
 */
 
-#ifndef QMEMORYREFBUFFER_H
-#define QMEMORYREFBUFFER_H
+#ifndef QHEXUNDOSTACK_H
+#define QHEXUNDOSTACK_H
 
-#include "qbuffer.h"
-#include "qhexbuffer.h"
+#include <QSet>
+#include <QUndoStack>
 
-class QMemoryRefBuffer : public QHexBuffer {
+class QHexUndoStack : public QUndoStack {
     Q_OBJECT
-
 public:
-    explicit QMemoryRefBuffer(QObject *parent = nullptr);
-    qsizetype length() const override;
-    void insert(qsizetype offset, const QByteArray &data) override;
-    void remove(qsizetype offset, qsizetype length) override;
-    QByteArray read(qsizetype offset, qsizetype length) override;
-    bool read(QIODevice *device) override;
-    void write(QIODevice *device) override;
+    explicit QHexUndoStack(QObject *parent = nullptr);
+    virtual ~QHexUndoStack();
 
-    qsizetype indexOf(const QByteArray &ba, qsizetype from) override;
-    qsizetype lastIndexOf(const QByteArray &ba, qsizetype from) override;
+    bool hasUnsavedId(int id) const;
+
+private slots:
+    void recomputeUnsaved();
 
 private:
-    QBuffer *m_buffer;
+    void collectRecursive(const QUndoCommand *cmd, QSet<int> &out) const;
+
+private:
+    QSet<int> m_unsavedCounts;
 };
 
-#endif // QMEMORYREFBUFFER_H
+#endif // QHEXUNDOSTACK_H

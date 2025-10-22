@@ -161,9 +161,10 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                     Q_EMIT triggered(f);
                 } else {
                     auto index = hitems.indexOf(send);
-                    if (index < 0) {
+                    if (index >= 0) {
                         m_menu->removeAction(send);
                         hitems.removeAt(index);
+                        send->deleteLater();
                         m_recents.removeAt(index);
                         Toast::toast(m_parent,
                                      NAMEICONRES(QStringLiteral("clearhis")),

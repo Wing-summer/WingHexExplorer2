@@ -20,38 +20,103 @@
 */
 
 #include "qhexbuffer.h"
-#include <QBuffer>
 
 QHexBuffer::QHexBuffer(QObject *parent) : QObject(parent) {}
 
-uchar QHexBuffer::at(qsizetype idx) {
+QHexBuffer::~QHexBuffer() { QHexBuffer::close(); }
+
+bool QHexBuffer::open(bool readonly) {
+    if (_ioDevice) {
+        return false;
+    }
+    m_buffer = new QBuffer(this);
+    return open(m_buffer, readonly);
+}
+
+bool QHexBuffer::open(QIODevice *iodevice, bool readonly) {
+    if (_ioDevice || !iodevice) {
+        return false;
+    }
+    if (iodevice->isOpen()) {
+        return false;
+    }
+    if (iodevice->open(readonly ? QIODevice::ReadOnly : QIODevice::ReadWrite)) {
+        _ioDevice = iodevice;
+        return true;
+    }
+    return false;
+}
+
+bool QHexBuffer::close() {
+    if (_ioDevice == nullptr) {
+        return true;
+    }
+
+    if (_ioDevice->isOpen()) {
+        _ioDevice->close();
+        delete _ioDevice;
+        _ioDevice = nullptr;
+
+        // intenal buffer?
+        if (m_buffer) {
+            m_buffer = nullptr;
+        }
+        return true;
+    }
+    return false;
+}
+
+uchar QHexBuffer::at(qsizetype idx) const {
     auto data = this->read(idx, 1);
     return uchar(data[0]);
 }
 
-bool QHexBuffer::isEmpty() const { return this->length() <= 0; }
+uchar QHexBuffer::operator[](qsizetype pos) const { return at(pos); }
 
-void QHexBuffer::replace(qsizetype offset, const QByteArray &data) {
-    this->remove(offset, data.length());
-    this->insert(offset, data);
+bool QHexBuffer::isEmpty() const { return this->length() == 0; }
+
+bool QHexBuffer::isReadyRead(qsizetype offset) const {
+    if (_ioDevice && _ioDevice->isOpen() && _ioDevice->isReadable()) {
+        if (offset >= 0 && offset < this->length()) {
+            return true;
+        }
+    }
+    return false;
 }
 
-void QHexBuffer::read(char *data, qsizetype size) {
-    QBuffer *buffer = new QBuffer(this);
-    buffer->setData(data, size);
-
-    if (!buffer->isOpen())
-        buffer->open(QBuffer::ReadWrite);
-
-    this->read(buffer);
+bool QHexBuffer::isReadyReplaceWrite(qsizetype offset, qsizetype length) const {
+    if (_ioDevice && _ioDevice->isOpen() && _ioDevice->isWritable()) {
+        if (offset >= 0 && offset + length <= this->length()) {
+            return true;
+        }
+    }
+    return false;
 }
 
-void QHexBuffer::read(const QByteArray &ba) {
-    QBuffer *buffer = new QBuffer(this);
+bool QHexBuffer::isReadyInsert(qsizetype offset) const {
+    if (_ioDevice && _ioDevice->isOpen() && _ioDevice->isWritable()) {
+        if (offset >= 0 && offset <= this->length()) {
+            return true;
+        }
+    }
+    return false;
+}
 
-    buffer->setData(ba);
-    if (!buffer->isOpen())
-        buffer->open(QBuffer::ReadWrite);
+QBuffer *QHexBuffer::internalBuffer() const { return m_buffer; }
 
-    this->read(buffer);
+QIODevice *QHexBuffer::ioDevice() const { return _ioDevice; }
+
+bool QHexBuffer::isOpened() const { return _ioDevice && _ioDevice->isOpen(); }
+
+bool QHexBuffer::isReadable() const { return openMode() & QIODevice::ReadOnly; }
+
+bool QHexBuffer::isWritable() const {
+    return openMode() & QIODevice::WriteOnly;
+}
+
+QIODevice::OpenMode QHexBuffer::openMode() const {
+    if (_ioDevice == nullptr) {
+        return QIODevice::NotOpen;
+    }
+    return _ioDevice->openMode();
 }

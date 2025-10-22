@@ -18,7 +18,6 @@
 #ifndef EDITORVIEW_H
 #define EDITORVIEW_H
 
-#include <QFileSystemWatcher>
 #include <QReadWriteLock>
 #include <QStackedWidget>
 
@@ -163,8 +162,6 @@ public:
 
     EditorView *cloneParent() const;
 
-    bool isCloned() const;
-
     bool change2WorkSpace() const;
 
     QHexView *hexEditor() const;
@@ -217,7 +214,7 @@ public:
 private:
     inline qsizetype findAvailCloneIndex();
 
-    bool hasMeta() const;
+    void setFileName(const QString &fileName);
 
     QHash<QString, QByteArray> savePluginData();
     bool checkHasUnsavedState() const;
@@ -500,10 +497,8 @@ private:
         parent->addAction(a);
     }
 
-private:
-    void connectDocSavedFlag(EditorView *editor);
-    void removeMonitorPaths();
-    void addMonitorPath();
+private slots:
+    void updateDocSavedFlag(bool b);
 
 signals:
     void sigOnCutFile();
@@ -519,9 +514,6 @@ signals:
     void sigOnMetadata();
     void sigOnBookMark();
     void sigOnCheckSum();
-
-    void need2Reload();
-    void documentChanged();
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -559,7 +551,6 @@ private:
 
     QReadWriteLock _rwlock;
     CallTable _viewFns;
-    QFileSystemWatcher _watcher;
 };
 
 #endif // EDITORVIEW_H

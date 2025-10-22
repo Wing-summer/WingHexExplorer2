@@ -45,20 +45,22 @@
 
 class UndoCommandBase : public QUndoCommand {
 public:
-    enum UndoCommandID {         // UndoCmdID
-        UndoID_SetBaseAddr,      // A
-        UndoID_BookMarkAdd,      // B+
-        UndoID_BookMarkClear,    // B~
-        UndoID_BookMarkRemove,   // B-
-        UndoID_BookMarkReplace,  // B*
-        UndoID_HexAppend,        // H<
-        UndoID_HexReplaceInsert, // H+
-        UndoID_HexRemove,        // H-
-        UndoID_MetaAdd,          // M+
-        UndoID_MetaClear,        // M~
-        UndoID_MetaRemove,       // M-
-        UndoID_MetaRemovePos,    // M-
-        UndoID_MetaReplace       // M*
+    enum UndoCommandID {                          // UndoCmdID
+        UndoID_HexAppend,                         // H<
+        UndoID_HexReplaceInsert,                  // H+
+        UndoID_HexRemove,                         // H-
+        UndoID_MetaCmdBegin,                      // Reserved
+        UndoID_SetBaseAddr = UndoID_MetaCmdBegin, // A
+        UndoID_BookMarkAdd,                       // B+
+        UndoID_BookMarkClear,                     // B~
+        UndoID_BookMarkRemove,                    // B-
+        UndoID_BookMarkReplace,                   // B*
+        UndoID_MetaAdd,                           // M+
+        UndoID_MetaClear,                         // M~
+        UndoID_MetaRemove,                        // M-
+        UndoID_MetaRemovePos,                     // M-
+        UndoID_MetaReplace,                       // M*
+        UndoID_MetaCmdEnd                         // Reserved
     };
 
 public:

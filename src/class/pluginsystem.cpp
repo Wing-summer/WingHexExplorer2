@@ -2830,8 +2830,7 @@ ErrFile PluginSystem::saveAsCurrent(const QObject *sender,
     }
 
     if (view) {
-        _win->saveEditor(view, savename);
-        return ErrFile::Success;
+        return _win->saveEditor(view, savename);
     }
     return ErrFile::Error;
 }
@@ -2974,8 +2973,7 @@ ErrFile PluginSystem::saveAsFile(const QObject *sender, int handle,
     }
 
     if (view) {
-        _win->saveEditor(view, savename);
-        return ErrFile::Success;
+        return _win->saveEditor(view, savename);
     }
     return ErrFile::NotExist;
 }
@@ -3001,8 +2999,7 @@ ErrFile PluginSystem::exportFile(const QObject *sender, int handle,
     }
 
     if (view) {
-        _win->saveEditor(view, savename, true);
-        return ErrFile::Success;
+        return _win->saveEditor(view, savename, true);
     }
     return ErrFile::NotExist;
 }
@@ -3064,8 +3061,7 @@ ErrFile PluginSystem::saveFile(const QObject *sender, int handle) {
     }
 
     if (view) {
-        _win->saveEditor(view, {});
-        return ErrFile::Success;
+        return _win->saveEditor(view, {});
     }
     return ErrFile::NotExist;
 }
@@ -4355,6 +4351,11 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 if (res == ErrFile::Permission) {
                     WingMessageBox::critical(_win, tr("Error"),
                                              tr("FilePermission"));
+                    return;
+                }
+                if (res == ErrFile::InvalidFormat) {
+                    WingMessageBox::critical(_win, tr("Error"),
+                                             tr("FileInvalidFmt"));
                     return;
                 }
 

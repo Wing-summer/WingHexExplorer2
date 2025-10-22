@@ -153,7 +153,6 @@ private:
     void establishSignal(QHexDocument *doc);
 
 signals:
-    void documentChanged(QHexDocument *doc);
     void cursorLocationChanged();
     void cursorSelectionChanged();
     void canUndoChanged(bool canUndo);

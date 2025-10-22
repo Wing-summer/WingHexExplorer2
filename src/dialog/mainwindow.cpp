@@ -92,9 +92,21 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
-                auto ret = AppManager::instance()->openFile(rinfo.fileName,
-                                                            rinfo.isWorkSpace);
-                if (ret == ErrFile::NotExist) {
+                EditorView *editor = nullptr;
+                ErrFile ret;
+                if (rinfo.isWorkSpace) {
+                    ret = openWorkSpace(rinfo.fileName, &editor);
+                } else {
+                    ret = openFile(rinfo.fileName, &editor);
+                }
+
+                if (ret == ErrFile::AlreadyOpened) {
+                    Q_ASSERT(editor);
+                    if (editor) {
+                        editor->raise();
+                        editor->setFocus();
+                    }
+                } else if (ret == ErrFile::NotExist) {
                     WingMessageBox::critical(this, tr("Error"),
                                              tr("FileNotExist"));
                 } else if (ret == ErrFile::Permission) {
@@ -2036,31 +2048,20 @@ void MainWindow::on_openworkspace() {
     m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
-    if (res != ErrFile::Success) {
-        if (res == ErrFile::NotExist) {
-            WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
-        } else if (res == ErrFile::Permission) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-        } else if (res == ErrFile::AlreadyOpened) {
-            Q_ASSERT(editor);
-            if (editor) {
-                editor->raise();
-                editor->setFocus();
-            }
-        } else {
-            auto e = QMetaEnum::fromType<ErrFile>();
-            WingMessageBox::critical(this, tr("Error"),
-                                     tr("UnkownError") + QStringLiteral(" - ") +
-                                         e.valueToKey(int(res)));
+    if (res == ErrFile::AlreadyOpened) {
+        Q_ASSERT(editor);
+        if (editor) {
+            editor->raise();
+            editor->setFocus();
         }
-        return;
+    } else {
+        if (reportErrFileError(res, {}, {}, {})) {
+            RecentFileManager::RecentInfo info;
+            info.fileName = filename;
+            info.isWorkSpace = true;
+            m_recentmanager->addRecentFile(info);
+        }
     }
-
-    RecentFileManager::RecentInfo info;
-    info.fileName = filename;
-    info.isWorkSpace = true;
-    m_recentmanager->addRecentFile(info);
-
     showStatus({});
 }
 
@@ -2073,20 +2074,8 @@ void MainWindow::on_reload() {
         return;
     }
     auto res = editor->reload();
-    switch (res) {
-    case ErrFile::Success: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("reload")),
-                     tr("ReloadSuccessfully"));
-        break;
-    }
-    default: {
-        auto e = QMetaEnum::fromType<ErrFile>();
-        WingMessageBox::critical(this, tr("Error"),
-                                 tr("ReloadUnSuccessfully") +
-                                     QStringLiteral(" - ") + e.valueToKey(res));
-        break;
-    }
-    }
+    reportErrFileError(res, NAMEICONRES(QStringLiteral("reload")),
+                       tr("ReloadSuccessfully"), tr("ReloadUnSuccessfully"));
 }
 
 void MainWindow::on_save() {
@@ -2107,28 +2096,15 @@ void MainWindow::on_save() {
     auto changedTo = editor->change2WorkSpace();
     QString ws;
     auto res = saveEditor(editor, {}, false, false, &ws);
-    if (res != ErrFile::Success) {
-        if (res == ErrFile::Permission) {
-            WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
-        } else if (res == ErrFile::WorkSpaceUnSaved) {
-            WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
-        } else {
-            auto e = QMetaEnum::fromType<ErrFile>();
-            WingMessageBox::critical(this, tr("Error"),
-                                     tr("UnkownError") + QStringLiteral(" - ") +
-                                         e.valueToKey(int(res)));
+    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("save")),
+                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
+        if (changedTo) {
+            RecentFileManager::RecentInfo info;
+            info.fileName = ws;
+            info.isWorkSpace = true;
+            m_recentmanager->addRecentFile(info);
         }
-        return;
     }
-
-    if (changedTo) {
-        RecentFileManager::RecentInfo info;
-        info.fileName = ws;
-        info.isWorkSpace = true;
-        m_recentmanager->addRecentFile(info);
-    }
-    Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
-                 tr("SaveSuccessfully"));
 }
 
 void MainWindow::on_convpro() {
@@ -2151,18 +2127,16 @@ void MainWindow::on_convpro() {
     auto ret = saveEditor(editor, {}, false, true, &workspace);
     if (ret == ErrFile::WorkSpaceUnSaved) {
         WingMessageBox::critical(this, tr("Error"), tr("ConvWorkSpaceFailed"));
-    } else if (ret == ErrFile::Success) {
-        // add to history
-        RecentFileManager::RecentInfo info;
-        info.fileName = workspace;
-        info.isWorkSpace = true;
-        m_recentmanager->addRecentFile(info);
-        Toast::toast(this, NAMEICONRES("convpro"), tr("ConvWorkSpaceSuccess"));
     } else {
-        auto e = QMetaEnum::fromType<ErrFile>();
-        WingMessageBox::critical(this, tr("Error"),
-                                 tr("UnkownError") + QStringLiteral(" - ") +
-                                     e.valueToKey(ret));
+        if (reportErrFileError(ret, NAMEICONRES("convpro"),
+                               tr("ConvWorkSpaceSuccess"),
+                               tr("ConvWorkSpaceFailed"))) {
+            // add to history
+            RecentFileManager::RecentInfo info;
+            info.fileName = workspace;
+            info.isWorkSpace = true;
+            m_recentmanager->addRecentFile(info);
+        }
     }
 }
 
@@ -2190,28 +2164,12 @@ void MainWindow::on_saveas() {
 
     bool isWorkspace = editor->isOriginWorkSpace();
     auto res = saveEditor(editor, filename, false, isWorkspace);
-
-    switch (res) {
-    case ErrFile::Success: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
-                     tr("SaveSuccessfully"));
+    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
+                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
         RecentFileManager::RecentInfo info;
         info.fileName = filename;
         info.isWorkSpace = isWorkspace;
         m_recentmanager->addRecentFile(info);
-        break;
-    }
-    case ErrFile::WorkSpaceUnSaved: {
-        WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
-        break;
-    }
-    default: {
-        auto e = QMetaEnum::fromType<ErrFile>();
-        WingMessageBox::critical(this, tr("Error"),
-                                 tr("SaveUnSuccessfully") +
-                                     QStringLiteral(" - ") + e.valueToKey(res));
-        break;
-    }
     }
 }
 
@@ -2232,20 +2190,8 @@ void MainWindow::on_exportfile() {
 
     bool isWorkspace = editor->isOriginWorkSpace();
     auto res = saveEditor(editor, filename, true, isWorkspace);
-    switch (res) {
-    case ErrFile::Success: {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("export")),
-                     tr("ExportSuccessfully"));
-        break;
-    }
-    default: {
-        auto e = QMetaEnum::fromType<ErrFile>();
-        WingMessageBox::critical(this, tr("Error"),
-                                 tr("ExportUnSuccessfully") +
-                                     QStringLiteral(" - ") + e.valueToKey(res));
-        break;
-    }
-    }
+    reportErrFileError(res, NAMEICONRES(QStringLiteral("export")),
+                       tr("ExportSuccessfully"), tr("ExportUnSuccessfully"));
 }
 
 void MainWindow::on_savesel() {
@@ -3129,7 +3075,8 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             editor->registerView(id, v);
             connect(v, &WingEditorViewWidget::savedStateChanged, this,
                     [editor](bool saved) {
-                        editor->hexEditor()->document()->setDocSaved(saved);
+                        // TODO
+                        // editor->hexEditor()->document()->setDocSaved(saved);
                     });
         }
     }
@@ -3174,46 +3121,24 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
                 return;
             } else if (ret == QMessageBox::Yes) {
                 auto ret = saveEditor(editor, {});
-                switch (ret) {
-                case WingHex::Success:
-                    // ok, no need to report
+                if (ret == WingHex::Success) {
                     closeEditor(editor, false);
-                    break;
-                case WingHex::Permission: {
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("FilePermissionSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
+                } else {
+                    if (ret == WingHex::WorkSpaceUnSaved) {
+                        auto btn = WingMessageBox::critical(
+                            this, tr("Error"), tr("UnknownErrorSure2Quit"),
+                            QMessageBox::Yes | QMessageBox::No);
+                        if (btn == QMessageBox::Yes) {
+                            closeEditor(editor, true);
+                        }
+                    } else {
+                        auto btn = WingMessageBox::critical(
+                            this, tr("Error"), tr("FilePermissionSure2Quit"),
+                            QMessageBox::Yes | QMessageBox::No);
+                        if (btn == QMessageBox::Yes) {
+                            closeEditor(editor, true);
+                        }
                     }
-                } break;
-                case WingHex::Error:
-                case WingHex::UnSaved:
-                case WingHex::NotExist:
-                case WingHex::AlreadyOpened:
-                case WingHex::IsNewFile:
-                case WingHex::ClonedFile:
-                case WingHex::InvalidFormat:
-                case WingHex::TooManyOpenedFile:
-                case WingHex::DevNotFound:
-                case WingHex::NotAllowedInNoneGUIThread: {
-                    // unknown error
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("UnknownErrorSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
-                    }
-                } break;
-                case WingHex::WorkSpaceUnSaved: {
-                    auto btn = WingMessageBox::critical(
-                        this, tr("Error"), tr("WorkSpaceUnSavedSure2Quit"),
-                        QMessageBox::Yes | QMessageBox::No);
-                    if (btn == QMessageBox::Yes) {
-                        closeEditor(editor, true);
-                    }
-                } break;
-                    break;
                 }
             } else {
                 closeEditor(editor, true);
@@ -3322,42 +3247,6 @@ void MainWindow::connectEditorView(EditorView *editor) {
     connect(editor, &EditorView::sigOnPasteHex, this, &MainWindow::on_pastehex);
     connect(editor, &EditorView::sigOnPasteFile, this,
             &MainWindow::on_pastefile);
-
-    editor->setProperty("__RELOAD__", false);
-    connect(editor, &EditorView::need2Reload, this, [editor, this]() {
-        auto fileName = editor->fileName();
-
-        if (editor->isBigFile()) {
-            if (!QFile::exists(fileName)) {
-                activateWindow();
-                raise();
-                editor->raise();
-                WingMessageBox::critical(this, tr("Error"),
-                                         tr("FileCloseBigFile"));
-                closeEditor(editor, true);
-
-            } else {
-                if (currentEditor() == editor) {
-                    editor->reload();
-                } else {
-                    editor->setProperty("__RELOAD__", true);
-                }
-            }
-        } else {
-            editor->hexEditor()->document()->setDocSaved(false);
-            if (currentEditor() == editor) {
-                if (QFile::exists(fileName)) {
-                    auto ret = WingMessageBox::question(
-                        this, tr("Reload"), tr("ReloadNeededYesOrNo"));
-                    if (ret == QMessageBox::Yes) {
-                        editor->reload();
-                    }
-                }
-            } else {
-                editor->setProperty("__RELOAD__", true);
-            }
-        }
-    });
 }
 
 void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
@@ -3383,19 +3272,6 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
 
     auto hexeditor = cur->hexEditor();
-    auto needReload = cur->property("__RELOAD__").toBool();
-    if (needReload) {
-        if (cur->isBigFile()) {
-            cur->reload();
-        } else {
-            auto ret = WingMessageBox::question(this, tr("Reload"),
-                                                tr("ReloadNeededYesOrNo"));
-            if (ret == QMessageBox::Yes) {
-                cur->reload();
-            }
-        }
-        cur->setProperty("__RELOAD__", false);
-    }
     connect(hexeditor, &QHexView::cursorLocationChanged, this,
             &MainWindow::on_locChanged);
     connect(hexeditor, &QHexView::cursorSelectionChanged, this,
@@ -3504,7 +3380,7 @@ void MainWindow::openFiles(const QStringList &files) {
     QStringList errof;
     for (auto &file : files) {
         bool isWs;
-        if (AppManager::instance()->openFile(file, true, &isWs)) {
+        if (AppManager::instance()->openFile(file, true, true, &isWs)) {
             errof.append(file);
         } else {
             RecentFileManager::RecentInfo info;
@@ -4148,6 +4024,58 @@ QMessageBox::StandardButton MainWindow::saveRequest() {
                                        QMessageBox::Yes | QMessageBox::No |
                                            QMessageBox::Cancel);
     return ret;
+}
+
+bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
+                                    const QString &okMsg,
+                                    const QString &errMsg) {
+    switch (err) {
+    case WingHex::AlreadyOpened:
+    case WingHex::UnSaved:
+    case ErrFile::WorkSpaceUnSaved:
+        // these flags are no need to report with GUI
+        break;
+    case ErrFile::Success: {
+        if (!okMsg.isEmpty()) {
+            Toast::toast(this, toastIcon, okMsg);
+        }
+    } break;
+    case WingHex::DevNotFound: {
+        WingMessageBox::critical(this, tr("Error"), tr("DevNotFound"));
+    } break;
+    case WingHex::Permission: {
+        WingMessageBox::critical(this, tr("Error"), tr("FilePermission"));
+    } break;
+    case WingHex::NotExist: {
+        WingMessageBox::critical(this, tr("Error"), tr("FileNotExist"));
+    } break;
+    case WingHex::IsNewFile: {
+        WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
+    } break;
+    case WingHex::InvalidFormat: {
+        WingMessageBox::critical(this, tr("Error"), tr("InvalidFormat"));
+    } break;
+    case WingHex::TooManyOpenedFile: {
+        WingMessageBox::critical(this, tr("Error"), tr("TooManyOpenedFile"));
+    } break;
+    case WingHex::NotAllowedInNoneGUIThread:
+    case WingHex::ClonedFile:
+    case WingHex::Error: {
+        auto e = QMetaEnum::fromType<ErrFile>();
+        if (errMsg.isEmpty()) {
+            WingMessageBox::critical(
+                this, tr("Error"),
+                tr("UnknownError") + QStringLiteral(" - ") + e.valueToKey(err));
+        } else {
+            WingMessageBox::critical(this, tr("Error"),
+                                     errMsg + QStringLiteral(" - ") +
+                                         e.valueToKey(err));
+        }
+        break;
+    } break;
+    }
+
+    return err == WingHex::Success;
 }
 
 ads::CDockAreaWidget *MainWindow::editorViewArea() const {

@@ -188,7 +188,7 @@ QHexView::QHexView(QWidget *parent)
     connect(m_blinktimer, &QTimer::timeout, this, &QHexView::blinkCursor);
 
     this->setDocument(QSharedPointer<QHexDocument>(
-        QHexDocument::fromMemory<QMemoryBuffer>(QByteArray(), false)));
+        QHexDocument::fromInternalBuffer<QMemoryBuffer>(false)));
 }
 
 QHexView::~QHexView() { m_blinktimer->stop(); }
@@ -238,8 +238,6 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
     });
     connect(m_cursor, &QHexCursor::insertionModeChanged, this,
             &QHexView::renderCurrentLine);
-
-    Q_EMIT documentChanged(document.data());
 
     this->adjustScrollBars();
     this->viewport()->update();

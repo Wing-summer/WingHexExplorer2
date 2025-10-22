@@ -38,13 +38,12 @@
  *
  */
 
-// I (wingsummer) made some modifications for supporting QByteArray
-// manipulations, great thanks for Simsys's effort!
+// I (wingsummer) made some modifications, great thanks for Simsys's effort!
 
 #include <QByteArray>
 #include <QList>
-#include <QMutex>
 #include <QObject>
+#include <QRecursiveMutex>
 
 struct Chunk {
     QByteArray data;
@@ -56,7 +55,6 @@ class Chunks : public QObject {
 
 public:
     // Constructors and file settings
-    explicit Chunks(QObject *parent);
     explicit Chunks(QIODevice *ioDevice, QObject *parent);
 
 public:
@@ -87,13 +85,13 @@ public:
     qint64 size() const;
 
 private:
-    int getChunkIndex(qint64 absPos);
+    qsizetype getChunkIndex(qint64 absPos) const;
 
 private:
     QIODevice *_ioDevice;
-    mutable QMutex _mutex;
-    qint64 _size;
-    QList<Chunk> _chunks;
+    mutable QRecursiveMutex _mutex;
+    qint64 _size = 0;
+    mutable QList<Chunk> _chunks;
 };
 
 /** \endcond docNever */

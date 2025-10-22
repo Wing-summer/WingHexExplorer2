@@ -41,8 +41,8 @@ public:
     quint64 currentMSecsSinceEpoch();
 
 public slots:
-    ErrFile openFile(const QString &file, bool autoDetect = true,
-                     bool *isWorkSpace = nullptr);
+    ErrFile openFile(const QString &file, bool autoDetect, bool skipScripting,
+                     bool *isWorkSpace);
 
 private:
     MainWindow *_w = nullptr;

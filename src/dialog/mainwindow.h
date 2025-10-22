@@ -276,6 +276,9 @@ private:
     void loadCacheIcon();
     QMessageBox::StandardButton saveRequest();
 
+    bool reportErrFileError(ErrFile err, const QPixmap &toastIcon,
+                            const QString &okMsg, const QString &errMsg);
+
     inline ads::CDockAreaWidget *editorViewArea() const;
 
     void onOutputBgScriptOutput(const ScriptMachine::MessageInfo &message);
