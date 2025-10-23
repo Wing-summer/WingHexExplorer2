@@ -99,6 +99,7 @@ private:
     void installHexBaseType(asIScriptEngine *engine);
     void installHexReaderAPI(asIScriptEngine *engine);
     void installHexControllerAPI(asIScriptEngine *engine);
+    void installInvokeServiceAPI(asIScriptEngine *engine);
 
 private:
     void registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
@@ -183,6 +184,163 @@ private:
     // =========================================================
 
     void cleanUpHandles(const QVector<int> &handles);
+
+private:
+    enum InvokeInternalType { RetWithParam, RetOnly, ParamOnly };
+
+    static const QtPrivate::QMetaTypeInterface *
+    _invoke_type_helper(int flags, int strTypeID) {
+        constexpr auto idMask = (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR);
+        auto type = flags & idMask;
+        switch (type) {
+        case asTYPEID_BOOL:
+            return QtPrivate::qMetaTypeInterfaceForType<bool>();
+        case asTYPEID_INT8:
+            return QtPrivate::qMetaTypeInterfaceForType<qint8>();
+        case asTYPEID_INT16:
+            return QtPrivate::qMetaTypeInterfaceForType<qint16>();
+        case asTYPEID_INT32:
+            return QtPrivate::qMetaTypeInterfaceForType<qint32>();
+        case asTYPEID_INT64:
+            return QtPrivate::qMetaTypeInterfaceForType<qint64>();
+        case asTYPEID_UINT8:
+            return QtPrivate::qMetaTypeInterfaceForType<quint8>();
+        case asTYPEID_UINT16:
+            return QtPrivate::qMetaTypeInterfaceForType<quint16>();
+        case asTYPEID_UINT32:
+            return QtPrivate::qMetaTypeInterfaceForType<quint32>();
+        case asTYPEID_UINT64:
+            return QtPrivate::qMetaTypeInterfaceForType<quint64>();
+        case asTYPEID_FLOAT:
+            return QtPrivate::qMetaTypeInterfaceForType<float>();
+        case asTYPEID_DOUBLE:
+            return QtPrivate::qMetaTypeInterfaceForType<double>();
+        default:
+            if (type == strTypeID) {
+                return QtPrivate::qMetaTypeInterfaceForType<QString>();
+            }
+        }
+        return nullptr;
+    }
+
+    template <InvokeInternalType T>
+    static bool _invoke_internal(int strTypeID,
+                                 const QMetaMethodReturnArgument &r,
+                                 asIScriptGeneric *generic, const QString &puid,
+                                 const char *method) {
+        auto total = generic->GetArgCount();
+        std::vector<const char *> names;
+        std::vector<const void *> data;
+        std::vector<const QtPrivate::QMetaTypeInterface *> metas;
+
+        if constexpr (T == RetWithParam || T == ParamOnly) {
+            auto paramStart = (T == ParamOnly ? 2 : 3);
+            auto tCount = total - paramStart + 1;
+            names.resize(tCount, nullptr);
+            data.resize(tCount, nullptr);
+            metas.resize(tCount, nullptr);
+
+            names[0] = r.name;
+            data[0] = r.data;
+            metas[0] = r.metaType;
+
+            for (int i = paramStart; i < total; ++i) {
+                auto idx = i + 1 - paramStart;
+                auto addr = generic->GetArgAddress(i);
+                data[idx] = addr;
+                auto id = generic->GetArgTypeId(i);
+                auto idint = _invoke_type_helper(id, strTypeID);
+                if (!idint) {
+                    // throw exception
+                    auto ctx = asGetActiveContext();
+                    if (ctx) {
+                        ctx->SetException(
+                            "[InvokeService] Only primitive types and "
+                            "string are supported");
+                    }
+                    generic->SetReturnByte(false);
+                    return false;
+                }
+                metas[idx] = idint;
+            }
+        } else if constexpr (T == RetOnly) {
+            names.push_back(r.name);
+            data.push_back(r.data);
+            metas.push_back(r.metaType);
+        }
+
+        auto ret = invoke_service(puid, method, names, data, metas);
+        generic->SetReturnByte(ret);
+        return ret;
+    }
+
+    template <typename T>
+    static void _invoke_helper(int strTypeID, void *ptr,
+                               asIScriptGeneric *generic, const QString &puid,
+                               const char *method) {
+        T buffer{};
+        auto r = qReturnArg(buffer);
+        if (_invoke_internal<RetWithParam>(strTypeID, r, generic, puid,
+                                           method)) {
+            *static_cast<T *>(ptr) = buffer;
+        }
+    }
+
+    template <InvokeInternalType T>
+    static void _invoke_helper(int strTypeID, asIScriptGeneric *generic,
+                               const QString &puid, const char *method) {
+        QMetaMethodReturnArgument r{};
+        _invoke_internal<T>(strTypeID, r, generic, puid, method);
+    }
+
+    static void _invoke_service(asIScriptGeneric *generic);
+    static void _invoke_service_p_r(asIScriptGeneric *generic);
+    static void _invoke_service_p_p(asIScriptGeneric *generic);
+
+    template <InvokeInternalType T>
+    static void _invoke_service_p(asIScriptGeneric *generic) {
+        if (generic == nullptr) {
+            return;
+        }
+        // we only support primitive type and string type with AngelScript
+        constexpr auto idMask = (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR);
+        auto strTypeID = generic->GetArgTypeId(0) & idMask;
+
+        const QString *puid =
+            static_cast<const QString *>(generic->GetArgObject(0));
+        const QString *method =
+            static_cast<const QString *>(generic->GetArgObject(1));
+        if (!puid || !method) {
+            // throw exception
+            auto ctx = asGetActiveContext();
+            if (ctx) {
+                ctx->SetException("[InvokeService] null puid or method");
+            }
+            return;
+        }
+
+        if (puid->compare(QStringLiteral("WingAngelAPI"),
+                          Qt::CaseInsensitive) == 0) {
+            // throw exception
+            auto ctx = asGetActiveContext();
+            if (ctx) {
+                ctx->SetException(
+                    "[InvokeService] CANNOT CALL services of WingAngelAPI");
+            }
+            return;
+        }
+
+        auto method_b = method->toUtf8();
+        auto method_param = method_b.data();
+
+        _invoke_helper<T>(strTypeID, generic, *puid, method_param);
+    }
+
+    static bool invoke_service(
+        const QString &puid, const char *method,
+        const std::vector<const char *> &names,
+        const std::vector<const void *> &data,
+        const std::vector<const QtPrivate::QMetaTypeInterface *> &metas);
 
 private:
     CScriptArray *_HexReader_selectedBytes(qsizetype index);

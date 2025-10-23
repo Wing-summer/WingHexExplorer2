@@ -45,7 +45,9 @@ private:
 
     // _evaluators don't take up much memory so we'll just
     // always keep them around.
-    std::unordered_map<int, std::unique_ptr<asIDBTypeEvaluator>> _evaluators;
+    // we only have only one engine, so it's ok to make it static
+    inline static std::unordered_map<int, std::unique_ptr<asIDBTypeEvaluator>>
+        _evaluators;
 };
 
 #endif // ASWINGCACHE_H

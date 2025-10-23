@@ -532,22 +532,28 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
         {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
 
     o->registerGlobalFunction(
-        "string dumpAllTypes()", asWINGMETHOD(WingCStruct, dumpAllTypes),
+        "string dumpAllTypes()",
+        asWINGMETHODPR(WingCStruct, dumpAllTypes, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
     o->registerGlobalFunction(
-        "string dumpTypeDefines()", asWINGMETHOD(WingCStruct, dumpTypeDefines),
+        "string dumpTypeDefines()",
+        asWINGMETHODPR(WingCStruct, dumpTypeDefines, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
     o->registerGlobalFunction(
-        "string dumpConstants()", asWINGMETHOD(WingCStruct, dumpConstants),
+        "string dumpConstants()",
+        asWINGMETHODPR(WingCStruct, dumpConstants, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
     o->registerGlobalFunction(
-        "string dumpStructs()", asWINGMETHOD(WingCStruct, dumpStructs),
+        "string dumpStructs()",
+        asWINGMETHODPR(WingCStruct, dumpStructs, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
     o->registerGlobalFunction(
-        "string dumpUnions()", asWINGMETHOD(WingCStruct, dumpUnions),
+        "string dumpUnions()",
+        asWINGMETHODPR(WingCStruct, dumpUnions, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
     o->registerGlobalFunction(
-        "string dumpEnums()", asWINGMETHOD(WingCStruct, dumpEnums),
+        "string dumpEnums()",
+        asWINGMETHODPR(WingCStruct, dumpEnums, () const, QString),
         WingHex::IWingAngel::asCallConvTypes::asCALL_THISCALL_ASGLOBAL, this);
 
     o->registerGlobalFunction(WingHex::Meta_String | WingHex::Meta_Array,
@@ -741,51 +747,264 @@ QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
     return readBytes(offset, len);
 }
 
-QString WingCStruct::dumpAllTypes() {
+QString WingCStruct::dumpAllTypes() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpAllTypes(buffer);
     return ret;
 }
 
-QString WingCStruct::dumpTypeDefines() {
+QString WingCStruct::dumpTypeDefines() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpTypeDefines(buffer);
     return ret;
 }
 
-QString WingCStruct::dumpConstants() {
+QString WingCStruct::dumpConstants() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpConstants(buffer);
     return ret;
 }
 
-QString WingCStruct::dumpStructs() {
+QString WingCStruct::dumpStructs() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpStructs(buffer);
     return ret;
 }
 
-QString WingCStruct::dumpUnions() {
+QString WingCStruct::dumpUnions() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpUnions(buffer);
     return ret;
 }
 
-QString WingCStruct::dumpEnums() {
+QString WingCStruct::dumpEnums() const {
     QString ret;
     QTextStream buffer(&ret);
     _parser->dumpEnums(buffer);
     return ret;
 }
 
-QStringList WingCStruct::getParsedErrors() { return _errors; }
+QStringList WingCStruct::getParsedErrors() const { return _errors; }
 
-QStringList WingCStruct::getParsedWarns() { return _warns; }
+QStringList WingCStruct::getParsedWarns() const { return _warns; }
+
+bool WingCStruct::parseFromSource(const WingHex::SenderInfo &sender,
+                                  const QString &header) {
+    Q_UNUSED(sender);
+    return parseFromSource(header);
+}
+
+bool WingCStruct::parse(const WingHex::SenderInfo &sender,
+                        const QString &fileName) {
+    Q_UNUSED(sender);
+    return parse(fileName);
+}
+
+void WingCStruct::reset(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    reset();
+}
+
+bool WingCStruct::isLittleEndian(const WingHex::SenderInfo &sender) const {
+    Q_UNUSED(sender);
+    return isLittleEndian();
+}
+
+void WingCStruct::setIsLittleEndian(const WingHex::SenderInfo &sender,
+                                    bool newIslittle) {
+    Q_UNUSED(sender);
+    setIsLittleEndian(newIslittle);
+}
+
+bool WingCStruct::setPadAlignment(const WingHex::SenderInfo &sender,
+                                  int padding) {
+    Q_UNUSED(sender);
+    return setPadAlignment(padding);
+}
+
+int WingCStruct::padAlignment(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return padAlignment();
+}
+
+QStringList WingCStruct::structTypeDefs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return structTypeDefs();
+}
+
+QStringList WingCStruct::unionTypeDefs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return unionTypeDefs();
+}
+
+QStringList WingCStruct::typedefTypeDefs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return typedefTypeDefs();
+}
+
+QStringList WingCStruct::enumTypeDefs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return enumTypeDefs();
+}
+
+QStringList WingCStruct::constVarDefs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return constVarDefs();
+}
+
+quint64 WingCStruct::sizeOf(const WingHex::SenderInfo &sender,
+                            const QString &type) {
+    Q_UNUSED(sender);
+    return sizeOf(type);
+}
+
+bool WingCStruct::containsType(const WingHex::SenderInfo &sender,
+                               const QString &name) {
+    Q_UNUSED(sender);
+    return containsType(name);
+}
+
+bool WingCStruct::isBasicType(const WingHex::SenderInfo &sender,
+                              const QString &name) {
+    Q_UNUSED(sender);
+    return isBasicType(name);
+}
+
+bool WingCStruct::isUnsignedBasicType(const WingHex::SenderInfo &sender,
+                                      const QString &name) {
+    Q_UNUSED(sender);
+    return isUnsignedBasicType(name);
+}
+
+bool WingCStruct::containsEnum(const WingHex::SenderInfo &sender,
+                               const QString &name) {
+    Q_UNUSED(sender);
+    return containsEnum(name);
+}
+
+bool WingCStruct::containsStruct(const WingHex::SenderInfo &sender,
+                                 const QString &name) {
+    Q_UNUSED(sender);
+    return containsStruct(name);
+}
+
+bool WingCStruct::containsUnion(const WingHex::SenderInfo &sender,
+                                const QString &name) {
+    Q_UNUSED(sender);
+    return containsUnion(name);
+}
+
+bool WingCStruct::containsTypeDef(const WingHex::SenderInfo &sender,
+                                  const QString &name) {
+    Q_UNUSED(sender);
+    return containsTypeDef(name);
+}
+
+bool WingCStruct::containsConstVar(const WingHex::SenderInfo &sender,
+                                   const QString &name) {
+    Q_UNUSED(sender);
+    return containsConstVar(name);
+}
+
+bool WingCStruct::isCompletedType(const WingHex::SenderInfo &sender,
+                                  const QString &name) {
+    Q_UNUSED(sender);
+    return isCompletedType(name);
+}
+
+QStringList WingCStruct::enumValueNames(const WingHex::SenderInfo &sender,
+                                        const QString &name) {
+    Q_UNUSED(sender);
+    return enumValueNames(name);
+}
+
+qint64 WingCStruct::constVarValueInt(const WingHex::SenderInfo &sender,
+                                     const QString &name, bool *ok) {
+    Q_UNUSED(sender);
+    return constVarValueInt(name, ok);
+}
+
+quint64 WingCStruct::constVarValueUInt(const WingHex::SenderInfo &sender,
+                                       const QString &name, bool *ok) {
+    Q_UNUSED(sender);
+    return constVarValueUInt(name, ok);
+}
+
+bool WingCStruct::isCompletedStruct(const WingHex::SenderInfo &sender,
+                                    const QString &name) {
+    Q_UNUSED(sender);
+    return isCompletedStruct(name);
+}
+
+bool WingCStruct::isCompletedUnion(const WingHex::SenderInfo &sender,
+                                   const QString &name) {
+    Q_UNUSED(sender);
+    return isCompletedUnion(name);
+}
+
+QStringList
+WingCStruct::getMissingDependencise(const WingHex::SenderInfo &sender,
+                                    const QString &name) {
+    Q_UNUSED(sender);
+    return getMissingDependencise(name);
+}
+
+QVariantHash WingCStruct::read(const WingHex::SenderInfo &sender,
+                               qsizetype offset, const QString &type) {
+    Q_UNUSED(sender);
+    return read(offset, type);
+}
+
+QByteArray WingCStruct::readRaw(const WingHex::SenderInfo &sender,
+                                qsizetype offset, const QString &type) {
+    Q_UNUSED(sender);
+    return readRaw(offset, type);
+}
+
+QString WingCStruct::dumpAllTypes(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpAllTypes();
+}
+
+QString WingCStruct::dumpTypeDefines(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpTypeDefines();
+}
+
+QString WingCStruct::dumpConstants(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpConstants();
+}
+
+QString WingCStruct::dumpStructs(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpStructs();
+}
+
+QString WingCStruct::dumpUnions(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpUnions();
+}
+
+QString WingCStruct::dumpEnums(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return dumpEnums();
+}
+
+QStringList WingCStruct::getParsedErrors(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return getParsedErrors();
+}
+
+QStringList WingCStruct::getParsedWarns(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return getParsedWarns();
+}
 
 QString WingCStruct::getqsizeTypeAsString() const {
     return sizeof(qsizetype) == sizeof(quint64) ? QStringLiteral("int64")

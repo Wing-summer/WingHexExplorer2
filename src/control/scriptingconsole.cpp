@@ -179,13 +179,9 @@ void ScriptingConsole::clearConsole() {
 void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
 
 void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
-    // <type, <row, col>>
-    static QPair<ScriptMachine::MessageType, QPair<int, int>> lastInfo{
-        ScriptMachine::MessageType::Print, {-1, -1}};
-
     auto doc = this->document();
     auto lastLine = doc->lastBlock();
-    auto isNotBlockStart = !lastLine.text().isEmpty();
+    auto isNotBlockStart = lastLine.length() != 0;
 
     auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
         if (message.row <= 0 || message.col <= 0) {
@@ -197,59 +193,40 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         }
     };
 
-    auto isMatchLast = [](const ScriptMachine::MessageInfo &message) -> bool {
-        if (message.row < 0 || message.col < 0) {
-            return false;
-        }
-        return lastInfo.first == message.type &&
-               lastInfo.second.first == message.row &&
-               lastInfo.second.second == message.col;
-    };
-
     switch (message.type) {
     case ScriptMachine::MessageType::Info:
-        if (isMatchLast(message)) {
-            write(message.message);
-        } else {
-            if (isNotBlockStart) {
-                newLine();
-            }
-            stdOutLine(tr("[Info]") + fmtMsg(message));
+        if (isNotBlockStart) {
+            newLine();
         }
+        stdOutLine(tr("[Info]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Warn:
-        if (isMatchLast(message)) {
-            write(message.message);
-        } else {
-            if (isNotBlockStart) {
-                newLine();
-            }
-            stdWarnLine(tr("[Warn]") + fmtMsg(message));
+        if (isNotBlockStart) {
+            newLine();
         }
+        stdWarnLine(tr("[Warn]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Error:
-        if (isMatchLast(message)) {
-            write(message.message);
-        } else {
-            if (isNotBlockStart) {
-                newLine();
-            }
-            stdErrLine(tr("[Error]") + fmtMsg(message));
+        if (isNotBlockStart) {
+            newLine();
         }
+        stdErrLine(tr("[Error]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Print:
-        if (lastInfo.first != message.type && isNotBlockStart) {
+        if (_lastOutputType != ScriptMachine::MessageType::Print) {
             newLine();
         }
         stdOutLine(message.message);
         break;
+    case ScriptMachine::MessageType::Unknown:
+        // should not go there
+        break;
     }
 
-    lastInfo.first = message.type;
-    lastInfo.second = qMakePair(message.row, message.col);
+    _lastOutputType = message.type;
 }
 
 void ScriptingConsole::abortCurrentCode() {

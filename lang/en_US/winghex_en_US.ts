@@ -1685,6 +1685,11 @@
         <translation>Select File</translation>
     </message>
     <message>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4056"/>
+        <source>FileInvalidFmt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="110"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="113"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="117"/>
@@ -2010,7 +2015,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2912"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4172"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4144"/>
         <source>LayoutRestoring...</source>
         <translation>Restoring layout...</translation>
     </message>
@@ -2125,11 +2130,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4056"/>
-        <source>InvalidFormat</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="4059"/>
         <source>TooManyOpenedFile</source>
         <translation type="unfinished"></translation>
@@ -2140,22 +2140,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4124"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4109"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4138"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4117"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4152"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4125"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4261"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4233"/>
         <source>ConfirmAPPSave</source>
         <translation>You attempted to close the program, but unsaved files or workspaces remain. Are you sure you want to save these changes?</translation>
     </message>
@@ -2428,192 +2428,192 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1577"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1578"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3350"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3351"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3368"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3982"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4059"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3369"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3984"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4061"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>Failed to load plugin: Corrupted plugin data</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3375"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3979"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4056"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3376"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3981"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4058"/>
         <source>InvalidPluginID</source>
         <translation>Failed to load plugin: Invalid plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3378"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3379"/>
         <source>InvalidDupPlugin</source>
         <translation>Failed to load plugin: Duplicate plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3381"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3976"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4053"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3382"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3978"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4055"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>Plugin loading failed: Invalid plugin SDK version!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3789"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3790"/>
         <source>AppClosingCanceled:</source>
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3862"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3864"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3893"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3895"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>Summary of Dependency Plugin Loading Failures</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3897"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3899"/>
         <source>- PluginID:</source>
         <translation>- Plugin ID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3898"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3900"/>
         <source>- Dependencies:</source>
         <translation>- Dependencies:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3900"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3902"/>
         <source>PUID:</source>
         <translation>PUID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3901"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3903"/>
         <source>Version:</source>
         <translation>Version:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3908"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3910"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3919"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3921"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3945"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3947"/>
         <source>UnsafePluginDir</source>
         <translation>The plugin directory is insecure. Please configure the plugin directory to be writable only by the administrator account.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3960"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3962"/>
         <source>PluginManagerNeedSingleton</source>
         <translation>Plugin manager must ensure singleton implementation.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4006"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4083"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4255"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4008"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4085"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4257"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4036"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4038"/>
         <source>HexExtNeedSingleton</source>
         <translation>The hex editor extension must ensure singleton implementation.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4234"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4236"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4264"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4266"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4265"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4267"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4266"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4268"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4300"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4302"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4301"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4303"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4317"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4319"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4340"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4342"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4347"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4352"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4357"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4349"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4354"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4359"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4348"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4350"/>
         <source>FileNotExist</source>
         <translation>File does not exist!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4353"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4355"/>
         <source>FilePermission</source>
         <translation>Access denied due to file permissions!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4358"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4360"/>
         <source>FileInvalidFmt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4388"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4390"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4398"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4400"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4406"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4408"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4519"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4521"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4617"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="4619"/>
         <source>PluginBlockByManager</source>
         <translation>The plugin has been disabled by the manager</translation>
     </message>
@@ -2998,68 +2998,68 @@
         <translation>Console - Multi-line Input</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="217"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="201"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="228"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="208"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="239"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="215"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="339"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="316"/>
         <source>InvalidDelCmd</source>
         <translation>Invalid delete command</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="354"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="331"/>
         <source>NotFoundIgnore:</source>
         <translation>Variable not found, ignored:</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="424"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="401"/>
         <source>[Console]</source>
         <translation>[Console]</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="671"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="648"/>
         <source>MultiCodeCanNotUndo</source>
         <translation>Multiple lines of code cannot be modified after pasting.</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="876"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="853"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="879"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="856"/>
         <source>Cut</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="884"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="861"/>
         <source>Paste</source>
         <translation>Paste</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="889"/>
-        <location filename="../../src/control/scriptingconsole.cpp" line="910"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="866"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="887"/>
         <source>Clear</source>
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="895"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="872"/>
         <source>MutiConsole</source>
         <translation>Multi-line Console</translation>
     </message>
     <message>
-        <location filename="../../src/control/scriptingconsole.cpp" line="903"/>
+        <location filename="../../src/control/scriptingconsole.cpp" line="880"/>
         <source>AbortScript</source>
         <translation>Terminate script</translation>
     </message>
@@ -3818,28 +3818,28 @@
 <context>
     <name>WingAngelAPI</name>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="59"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="60"/>
         <source>AngelScriptService</source>
         <translation>AngelScript Service</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="63"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="64"/>
         <source>A internal plugin that provides AngelScript scripts with the ability to call the host API.</source>
         <translation>A internal plugin that provides AngelScript scripts with the ability to call the host API.</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1238"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1269"/>
         <source>NotSupportedQMetaType:</source>
         <translation>Unsupported QT metadata types:</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1689"/>
-        <location filename="../../src/class/wingangelapi.cpp" line="1776"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1720"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1807"/>
         <source>Get Exception While ScriptCall: (%1) %2</source>
         <translation>Get Exception While ScriptCall: (%1) %2</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingangelapi.cpp" line="1715"/>
+        <location filename="../../src/class/wingangelapi.cpp" line="1746"/>
         <source>InvalidRetType: need </source>
         <translation>Invalid return value: Required </translation>
     </message>
@@ -3857,62 +3857,62 @@
         <translation>Providing basic support for analyzing file structures</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="1383"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1395"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1408"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1417"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1424"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1438"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1450"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1458"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1465"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1472"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1479"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1486"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1493"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1505"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1517"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1529"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1541"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1553"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1565"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1577"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1589"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1601"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1613"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1625"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1637"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1649"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1661"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1672"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1682"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1602"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1614"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1627"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1636"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1643"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1657"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1669"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1677"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1684"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1691"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1703"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1719"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1726"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1698"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1705"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1712"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1724"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1736"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1748"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1760"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1772"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1784"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1796"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1808"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1820"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1832"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1844"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1856"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1868"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1880"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1891"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1901"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1910"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1922"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1938"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1945"/>
         <source>InvalidParamsCount</source>
         <translation>Illegal number of parameters</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="1387"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1399"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1428"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1442"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1497"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1509"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1521"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1533"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1545"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1557"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1569"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1581"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1593"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1605"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1617"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1629"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1641"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1653"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1709"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1606"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1618"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1647"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1661"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1716"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1728"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1740"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1752"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1764"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1776"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1788"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1800"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1812"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1824"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1836"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1848"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1860"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1872"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1928"/>
         <source>InvalidParam</source>
         <translation>Invalid parameter</translation>
     </message>

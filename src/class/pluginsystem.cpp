@@ -541,8 +541,9 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
             State = None;
         }
         auto r = std::find_if(
-            _loadedplgs.begin(), _loadedplgs.end(),
-            [=](IWingPlugin *plg) { return getPUID(plg) == rpuid; });
+            _loadedplgs.begin(), _loadedplgs.end(), [=](IWingPlugin *plg) {
+                return rpuid.compare(getPUID(plg), Qt::CaseInsensitive) == 0;
+            });
 
         if (r == _loadedplgs.end()) {
             return false;
@@ -589,7 +590,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     QMetaMethod m;
     // retrive method
     auto len = meta->methodCount();
-    for (int i = 0; i < len; ++i) {
+    for (int i = meta->methodOffset(); i < len; ++i) {
         auto met = meta->method(i);
         if (met.parameterCount() != paramCount) {
             continue;
@@ -3815,8 +3816,9 @@ PluginSystem::processPragma(const QString &section, const QString &plgId,
 
     auto &es = _evplgs[WingHex::IWingPlugin::RegisteredEvent::ScriptPragma];
     auto r =
-        std::find_if(es.constBegin(), es.constEnd(),
-                     [plgId](IWingPlugin *p) { return getPUID(p) == plgId; });
+        std::find_if(es.constBegin(), es.constEnd(), [plgId](IWingPlugin *p) {
+            return plgId.compare(getPUID(p), Qt::CaseInsensitive) == 0;
+        });
     if (r == es.constEnd()) {
         PragmaResult res;
         res.error.append(QStringLiteral("Unknown pragma command %1 with %2")
@@ -4218,7 +4220,7 @@ bool PluginSystem::isPluginLoaded(const WingDependency &d) {
 
 bool PluginSystem::isPluginLoaded(const QString &id) {
     for (auto &info : _pinfos) {
-        if (info.id == id) {
+        if (info.id.compare(id, Qt::CaseInsensitive) == 0) {
             return true;
         }
     }

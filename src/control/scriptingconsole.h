@@ -108,6 +108,8 @@ private:
 
     bool _isTerminal = true;
     bool _isWaitingRead = false;
+    ScriptMachine::MessageType _lastOutputType =
+        ScriptMachine::MessageType::Unknown;
     std::function<QString(void)> _getInputFn;
 };
 

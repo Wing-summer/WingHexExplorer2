@@ -4053,7 +4053,7 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         WingMessageBox::critical(this, tr("Error"), tr("SaveWSError"));
     } break;
     case WingHex::InvalidFormat: {
-        WingMessageBox::critical(this, tr("Error"), tr("InvalidFormat"));
+        WingMessageBox::critical(this, tr("Error"), tr("FileInvalidFmt"));
     } break;
     case WingHex::TooManyOpenedFile: {
         WingMessageBox::critical(this, tr("Error"), tr("TooManyOpenedFile"));
@@ -4084,12 +4084,9 @@ ads::CDockAreaWidget *MainWindow::editorViewArea() const {
 
 void MainWindow::onOutputBgScriptOutput(
     const ScriptMachine::MessageInfo &message) {
-    static QPair<ScriptMachine::MessageType, QPair<int, int>> lastInfo{
-        ScriptMachine::MessageType::Print, {-1, -1}};
-
     auto doc = m_bgScriptOutput->document();
     auto lastLine = doc->lastBlock();
-    auto isNotBlockStart = !lastLine.text().isEmpty();
+    auto isNotBlockStart = lastLine.length() != 0;
 
     auto cursor = m_bgScriptOutput->textCursor();
     cursor.movePosition(QTextCursor::End);
@@ -4100,69 +4097,44 @@ void MainWindow::onOutputBgScriptOutput(
         } else {
             return QStringLiteral("(") + QString::number(message.row) +
                    QStringLiteral(", ") + QString::number(message.col) +
-                   QStringLiteral(")") + message.message;
+                   QStringLiteral(") ") + message.message;
         }
-    };
-
-    auto isMatchLast = [](const ScriptMachine::MessageInfo &message) -> bool {
-        if (message.row < 0 || message.col < 0) {
-            return false;
-        }
-        return lastInfo.first == message.type &&
-               lastInfo.second.first == message.row &&
-               lastInfo.second.second == message.col;
     };
 
     switch (message.type) {
     case ScriptMachine::MessageType::Info:
-        if (isMatchLast(message)) {
-            cursor.insertText(message.message);
-        } else {
-            if (isNotBlockStart) {
-                cursor.insertBlock();
-            }
-            cursor.insertText(tr("[Info]") + fmtMsg(message));
+        if (isNotBlockStart) {
+            cursor.insertBlock();
         }
+        cursor.insertText(tr("[Info]") + fmtMsg(message));
         break;
-    case ScriptMachine::MessageType::Warn:
-        if (isMatchLast(message)) {
-            auto fmt = cursor.charFormat();
-            fmt.setForeground(QColorConstants::Svg::gold);
-            cursor.insertText(message.message, fmt);
-        } else {
-            if (isNotBlockStart) {
-                m_bgScriptOutput->appendPlainText({});
-            }
-            auto fmt = cursor.charFormat();
-            fmt.setForeground(QColorConstants::Svg::gold);
-            cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
+    case ScriptMachine::MessageType::Warn: {
+        if (isNotBlockStart) {
+            m_bgScriptOutput->appendPlainText({});
         }
-        break;
-    case ScriptMachine::MessageType::Error:
-        if (isMatchLast(message)) {
-            auto fmt = cursor.charFormat();
-            fmt.setForeground(Qt::red);
-            cursor.insertText(message.message, fmt);
-        } else {
-            if (isNotBlockStart) {
-                cursor.insertBlock();
-            }
-            auto fmt = cursor.charFormat();
-            fmt.setForeground(Qt::red);
-            cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
+        auto fmt = cursor.charFormat();
+        fmt.setForeground(QColorConstants::Svg::gold);
+        cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
+    } break;
+    case ScriptMachine::MessageType::Error: {
+        if (isNotBlockStart) {
+            cursor.insertBlock();
         }
-        break;
+        auto fmt = cursor.charFormat();
+        fmt.setForeground(Qt::red);
+        cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
+    } break;
     case ScriptMachine::MessageType::Print:
-        if (lastInfo.first != message.type) {
+        if (isNotBlockStart && _lastOutputType != message.type) {
             cursor.insertBlock();
         }
         cursor.insertText(message.message);
         break;
+    case ScriptMachine::MessageType::Unknown:
+        break;
     }
 
-    lastInfo.first = message.type;
-    lastInfo.second = qMakePair(message.row, message.col);
-
+    _lastOutputType = message.type;
     if (!m_bgScriptOutput->isVisible()) {
         _hlAnim->start();
     }

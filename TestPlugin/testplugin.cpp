@@ -403,6 +403,33 @@ QVariantHash TestPlugin::test_h() {
     return hash;
 }
 
+void TestPlugin::test_a(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    test_a();
+}
+
+void TestPlugin::test_b(const WingHex::SenderInfo &sender, const QString &b) {
+    Q_UNUSED(sender);
+    test_b(b);
+}
+
+QString TestPlugin::test_g(const WingHex::SenderInfo &sender) {
+    Q_UNUSED(sender);
+    return test_g();
+}
+
+QString TestPlugin::test_i(const WingHex::SenderInfo &sender,
+                           const QString &i) {
+    Q_UNUSED(sender);
+    logWarn(__FUNCTION__);
+    logWarn(i);
+    return i;
+}
+
+QString TestPlugin::test_j(const WingHex::SenderInfo &sender, int a, int b) {
+    return QString::number(a + b);
+}
+
 bool TestPlugin::createTestShareMem(const QString &nameID) {
     if (_tsharemem) {
         return false;

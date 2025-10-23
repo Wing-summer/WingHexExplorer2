@@ -21,6 +21,7 @@
 #include "WingPlugin/iwingangel.h"
 #include "class/angelscripthelper.h"
 #include "class/logger.h"
+#include "class/pluginsystem.h"
 #include "class/scriptmachine.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
@@ -106,6 +107,7 @@ void WingAngelAPI::installAPI(ScriptMachine *machine) {
 
     installHexReaderAPI(engine);
     installHexControllerAPI(engine);
+    installInvokeServiceAPI(engine);
 
     // plugin script objects will be install later
 }
@@ -377,9 +379,9 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     // HexPosition
-    r = engine->RegisterObjectType("HexPosition", sizeof(WingHex::HexPosition),
-                                   asOBJ_VALUE | asOBJ_POD |
-                                       asGetTypeTraits<WingHex::HexPosition>());
+    r = engine->RegisterObjectType(
+        "HexPosition", sizeof(WingHex::HexPosition),
+        asOBJ_VALUE | asOBJ_POD | ::asGetTypeTraits<WingHex::HexPosition>());
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -967,6 +969,35 @@ void WingAngelAPI::installHexControllerAPI(asIScriptEngine *engine) {
                 "bool closeAll()");
 
     engine->SetDefaultNamespace("");
+}
+
+void WingAngelAPI::installInvokeServiceAPI(asIScriptEngine *engine) {
+    auto r = engine->RegisterGlobalFunction(
+        "bool invokeService(const string&in puid, const string&in method, "
+        "?&out result, const ?&in ...)",
+        asFUNCTION(_invoke_service), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "bool invokeService(const string&in puid, const string&in method, "
+        "?&out result)",
+        asFUNCTION(_invoke_service), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "bool invokeService(const string&in puid, const string&in method)",
+        asFUNCTION(_invoke_service_p_r), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "bool invokeServiceVoid(const string&in puid, const string&in method, "
+        "const ?&in ...)",
+        asFUNCTION(_invoke_service_p_p), asCALL_GENERIC);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 }
 
 void WingAngelAPI::registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
@@ -1971,6 +2002,136 @@ void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {
         }
     }
     _handles = handles;
+}
+
+void WingAngelAPI::_invoke_service(asIScriptGeneric *generic) {
+    if (generic == nullptr) {
+        return;
+    }
+    // we only support primitive type and string type with AngelScript
+    auto argc = generic->GetArgCount();
+    if (argc < 3) {
+        generic->SetReturnByte(false);
+        return;
+    }
+
+    constexpr auto idMask = (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR);
+    auto strTypeID = generic->GetArgTypeId(0) & idMask;
+
+    const QString *puid =
+        static_cast<const QString *>(generic->GetArgObject(0));
+    const QString *method =
+        static_cast<const QString *>(generic->GetArgObject(1));
+    if (!puid || !method) {
+        // throw exception
+        return;
+    }
+
+    if (puid->compare(QStringLiteral("WingAngelAPI"), Qt::CaseInsensitive) ==
+        0) {
+        // throw exception
+        return;
+    }
+
+    auto result = generic->GetArgAddress(2);
+
+    auto method_b = method->toUtf8();
+    auto method_param = method_b.data();
+
+    if (result) {
+        auto rtypeID = generic->GetArgTypeId(2) & idMask;
+        switch (rtypeID) {
+        case asTYPEID_BOOL:
+            _invoke_helper<bool>(strTypeID, result, generic, *puid,
+                                 method_param);
+            return;
+        case asTYPEID_INT8:
+            _invoke_helper<qint8>(strTypeID, result, generic, *puid,
+                                  method_param);
+            return;
+        case asTYPEID_INT16:
+            _invoke_helper<qint16>(strTypeID, result, generic, *puid,
+                                   method_param);
+            return;
+        case asTYPEID_INT32:
+            _invoke_helper<qint32>(strTypeID, result, generic, *puid,
+                                   method_param);
+            return;
+        case asTYPEID_INT64:
+            _invoke_helper<qint64>(strTypeID, result, generic, *puid,
+                                   method_param);
+            return;
+        case asTYPEID_UINT8:
+            _invoke_helper<quint8>(strTypeID, result, generic, *puid,
+                                   method_param);
+            return;
+        case asTYPEID_UINT16:
+            _invoke_helper<quint16>(strTypeID, result, generic, *puid,
+                                    method_param);
+            return;
+        case asTYPEID_UINT32:
+            _invoke_helper<quint32>(strTypeID, result, generic, *puid,
+                                    method_param);
+            return;
+        case asTYPEID_UINT64:
+            _invoke_helper<quint64>(strTypeID, result, generic, *puid,
+                                    method_param);
+            return;
+        case asTYPEID_FLOAT:
+            _invoke_helper<float>(strTypeID, result, generic, *puid,
+                                  method_param);
+            return;
+        case asTYPEID_DOUBLE:
+            _invoke_helper<double>(strTypeID, result, generic, *puid,
+                                   method_param);
+            return;
+        default:
+            if (rtypeID == strTypeID) {
+                _invoke_helper<QString>(strTypeID, result, generic, *puid,
+                                        method_param);
+                return;
+            }
+        }
+    } else {
+        _invoke_helper<RetWithParam>(strTypeID, generic, *puid, method_param);
+        return;
+    }
+
+    generic->SetReturnByte(false);
+}
+
+void WingAngelAPI::_invoke_service_p_r(asIScriptGeneric *generic) {
+    _invoke_service_p<RetOnly>(generic);
+}
+
+void WingAngelAPI::_invoke_service_p_p(asIScriptGeneric *generic) {
+    _invoke_service_p<ParamOnly>(generic);
+}
+
+bool WingAngelAPI::invoke_service(
+    const QString &puid, const char *method,
+    const std::vector<const char *> &names,
+    const std::vector<const void *> &data,
+    const std::vector<const QtPrivate::QMetaTypeInterface *> &metas) {
+    if (puid.isEmpty() || method == nullptr) {
+        return false;
+    }
+
+    auto paramCount = names.size();
+    if (data.size() != paramCount || metas.size() != paramCount) {
+        return false;
+    }
+
+    auto &plgsys = PluginSystem::instance();
+    auto sender = plgsys.angelApi();
+
+    const void *const *parameters = data.data();
+    const char *const *typeNames = names.data();
+    const QtPrivate::QMetaTypeInterface *const *metaTypes = metas.data();
+    return plgsys.invokeServiceImpl(
+        sender, puid,
+        std::make_tuple(method, Qt::DirectConnection, paramCount, parameters,
+                        typeNames, metaTypes));
 }
 
 CScriptArray *WingAngelAPI::_HexReader_selectedBytes(qsizetype index) {

@@ -109,6 +109,15 @@ private:
     QString test_g();
     QVariantHash test_h();
 
+    WING_SERVICE void test_a(const WingHex::SenderInfo &sender);
+    WING_SERVICE void test_b(const WingHex::SenderInfo &sender,
+                             const QString &b);
+    WING_SERVICE QString test_g(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString test_i(const WingHex::SenderInfo &sender,
+                                const QString &i);
+    WING_SERVICE QString test_j(const WingHex::SenderInfo &sender, int a,
+                                int b);
+
     QVector<QColor> colorTable();
     bool createTestShareMem(const QString &nameID);
     void destoryTestShareMem();

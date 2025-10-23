@@ -162,57 +162,134 @@ private:
 
 private:
     // basic
-    WING_SERVICE bool parseFromSource(const QString &header);
-    WING_SERVICE bool parse(const QString &fileName);
-    WING_SERVICE void reset();
+    bool parseFromSource(const QString &header);
+    bool parse(const QString &fileName);
+    void reset();
 
-    WING_SERVICE bool isLittleEndian() const;
-    WING_SERVICE void setIsLittleEndian(bool newIslittle);
+    bool isLittleEndian() const;
+    void setIsLittleEndian(bool newIslittle);
 
-    WING_SERVICE bool setPadAlignment(int padding); // 1, 2, 4, 8, 16
-    WING_SERVICE int padAlignment();
+    bool setPadAlignment(int padding); // 1, 2, 4, 8, 16
+    int padAlignment();
 
     // lookup
-    WING_SERVICE QStringList structTypeDefs();
-    WING_SERVICE QStringList unionTypeDefs();
-    WING_SERVICE QStringList typedefTypeDefs();
-    WING_SERVICE QStringList enumTypeDefs();
-    WING_SERVICE QStringList constVarDefs();
+    QStringList structTypeDefs();
+    QStringList unionTypeDefs();
+    QStringList typedefTypeDefs();
+    QStringList enumTypeDefs();
+    QStringList constVarDefs();
 
-    WING_SERVICE quint64 sizeOf(const QString &type);
-    WING_SERVICE bool containsType(const QString &name);
+    quint64 sizeOf(const QString &type);
+    bool containsType(const QString &name);
 
-    WING_SERVICE bool isBasicType(const QString &name);
-    WING_SERVICE bool isUnsignedBasicType(const QString &name);
+    bool isBasicType(const QString &name);
+    bool isUnsignedBasicType(const QString &name);
 
-    WING_SERVICE bool containsEnum(const QString &name);
-    WING_SERVICE bool containsStruct(const QString &name);
-    WING_SERVICE bool containsUnion(const QString &name);
-    WING_SERVICE bool containsTypeDef(const QString &name);
-    WING_SERVICE bool containsConstVar(const QString &name);
-    WING_SERVICE bool isCompletedType(const QString &name);
+    bool containsEnum(const QString &name);
+    bool containsStruct(const QString &name);
+    bool containsUnion(const QString &name);
+    bool containsTypeDef(const QString &name);
+    bool containsConstVar(const QString &name);
+    bool isCompletedType(const QString &name);
 
-    WING_SERVICE QStringList enumValueNames(const QString &name);
-    WING_SERVICE qint64 constVarValueInt(const QString &name, bool *ok);
-    WING_SERVICE quint64 constVarValueUInt(const QString &name, bool *ok);
+    QStringList enumValueNames(const QString &name);
+    qint64 constVarValueInt(const QString &name, bool *ok);
+    quint64 constVarValueUInt(const QString &name, bool *ok);
 
-    WING_SERVICE bool isCompletedStruct(const QString &name);
-    WING_SERVICE bool isCompletedUnion(const QString &name);
+    bool isCompletedStruct(const QString &name);
+    bool isCompletedUnion(const QString &name);
 
-    WING_SERVICE QStringList getMissingDependencise(const QString &name);
+    QStringList getMissingDependencise(const QString &name);
 
-    WING_SERVICE QVariantHash read(qsizetype offset, const QString &type);
-    WING_SERVICE QByteArray readRaw(qsizetype offset, const QString &type);
+    QVariantHash read(qsizetype offset, const QString &type);
+    QByteArray readRaw(qsizetype offset, const QString &type);
 
-    WING_SERVICE QString dumpAllTypes();
-    WING_SERVICE QString dumpTypeDefines();
-    WING_SERVICE QString dumpConstants();
-    WING_SERVICE QString dumpStructs();
-    WING_SERVICE QString dumpUnions();
-    WING_SERVICE QString dumpEnums();
+    QString dumpAllTypes() const;
+    QString dumpTypeDefines() const;
+    QString dumpConstants() const;
+    QString dumpStructs() const;
+    QString dumpUnions() const;
+    QString dumpEnums() const;
 
-    WING_SERVICE QStringList getParsedErrors();
-    WING_SERVICE QStringList getParsedWarns();
+    QStringList getParsedErrors() const;
+    QStringList getParsedWarns() const;
+
+    // services
+private:
+    // basic
+    WING_SERVICE bool parseFromSource(const WingHex::SenderInfo &sender,
+                                      const QString &header);
+    WING_SERVICE bool parse(const WingHex::SenderInfo &sender,
+                            const QString &fileName);
+    WING_SERVICE void reset(const WingHex::SenderInfo &sender);
+
+    WING_SERVICE bool isLittleEndian(const WingHex::SenderInfo &sender) const;
+    WING_SERVICE void setIsLittleEndian(const WingHex::SenderInfo &sender,
+                                        bool newIslittle);
+
+    WING_SERVICE bool setPadAlignment(const WingHex::SenderInfo &sender,
+                                      int padding); // 1, 2, 4, 8, 16
+    WING_SERVICE int padAlignment(const WingHex::SenderInfo &sender);
+
+    // lookup
+    WING_SERVICE QStringList structTypeDefs(const WingHex::SenderInfo &sender);
+    WING_SERVICE QStringList unionTypeDefs(const WingHex::SenderInfo &sender);
+    WING_SERVICE QStringList typedefTypeDefs(const WingHex::SenderInfo &sender);
+    WING_SERVICE QStringList enumTypeDefs(const WingHex::SenderInfo &sender);
+    WING_SERVICE QStringList constVarDefs(const WingHex::SenderInfo &sender);
+
+    WING_SERVICE quint64 sizeOf(const WingHex::SenderInfo &sender,
+                                const QString &type);
+    WING_SERVICE bool containsType(const WingHex::SenderInfo &sender,
+                                   const QString &name);
+
+    WING_SERVICE bool isBasicType(const WingHex::SenderInfo &sender,
+                                  const QString &name);
+    WING_SERVICE bool isUnsignedBasicType(const WingHex::SenderInfo &sender,
+                                          const QString &name);
+
+    WING_SERVICE bool containsEnum(const WingHex::SenderInfo &sender,
+                                   const QString &name);
+    WING_SERVICE bool containsStruct(const WingHex::SenderInfo &sender,
+                                     const QString &name);
+    WING_SERVICE bool containsUnion(const WingHex::SenderInfo &sender,
+                                    const QString &name);
+    WING_SERVICE bool containsTypeDef(const WingHex::SenderInfo &sender,
+                                      const QString &name);
+    WING_SERVICE bool containsConstVar(const WingHex::SenderInfo &sender,
+                                       const QString &name);
+    WING_SERVICE bool isCompletedType(const WingHex::SenderInfo &sender,
+                                      const QString &name);
+
+    WING_SERVICE QStringList enumValueNames(const WingHex::SenderInfo &sender,
+                                            const QString &name);
+    WING_SERVICE qint64 constVarValueInt(const WingHex::SenderInfo &sender,
+                                         const QString &name, bool *ok);
+    WING_SERVICE quint64 constVarValueUInt(const WingHex::SenderInfo &sender,
+                                           const QString &name, bool *ok);
+
+    WING_SERVICE bool isCompletedStruct(const WingHex::SenderInfo &sender,
+                                        const QString &name);
+    WING_SERVICE bool isCompletedUnion(const WingHex::SenderInfo &sender,
+                                       const QString &name);
+
+    WING_SERVICE QStringList getMissingDependencise(
+        const WingHex::SenderInfo &sender, const QString &name);
+
+    WING_SERVICE QVariantHash read(const WingHex::SenderInfo &sender,
+                                   qsizetype offset, const QString &type);
+    WING_SERVICE QByteArray readRaw(const WingHex::SenderInfo &sender,
+                                    qsizetype offset, const QString &type);
+
+    WING_SERVICE QString dumpAllTypes(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString dumpTypeDefines(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString dumpConstants(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString dumpStructs(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString dumpUnions(const WingHex::SenderInfo &sender);
+    WING_SERVICE QString dumpEnums(const WingHex::SenderInfo &sender);
+
+    WING_SERVICE QStringList getParsedErrors(const WingHex::SenderInfo &sender);
+    WING_SERVICE QStringList getParsedWarns(const WingHex::SenderInfo &sender);
 
 private:
     WingHex::MetaType getqsizetypeMetaType() const;

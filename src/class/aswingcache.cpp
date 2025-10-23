@@ -26,19 +26,24 @@ asWingCache::asWingCache(asDebugger &dbg, asIScriptContext *ctx)
     : asIDBCache(dbg, ctx) {
     auto engine = dbg.workspace->engine;
     Q_ASSERT(engine);
-    registerEvaluator<asIDBCharTypeEvaluator>(engine, "char");
-    registerEvaluator<asIDBStringTypeEvaluator>(engine, "string");
-    registerEvaluator<asIDBArrayTypeEvaluator>(engine, "array");
-    registerEvaluator<asIDBDictionaryTypeEvaluator>(engine, "dictionary");
-    registerEvaluator<asIDBAnyTypeEvaluator>(engine, "any");
-    registerEvaluator<asIDBColorTypeEvaluator>(engine, "color");
-    registerEvaluator<asIDBRegExTypeEvaluator>(engine, "regex::exp");
-    registerEvaluator<asIDBRegMatchTypeEvaluator>(engine, "regex::match");
-    registerEvaluator<asIDBJsonDocumentTypeEvaluator>(engine,
-                                                      "Json::JsonDocument");
-    registerEvaluator<asIDBJsonArrayTypeEvaluator>(engine, "Json::JsonArray");
-    registerEvaluator<asIDBJsonObjectTypeEvaluator>(engine, "Json::JsonObject");
-    registerEvaluator<asIDBJsonValueTypeEvaluator>(engine, "Json::JsonValue");
+    if (_evaluators.empty()) {
+        registerEvaluator<asIDBCharTypeEvaluator>(engine, "char");
+        registerEvaluator<asIDBStringTypeEvaluator>(engine, "string");
+        registerEvaluator<asIDBArrayTypeEvaluator>(engine, "array");
+        registerEvaluator<asIDBDictionaryTypeEvaluator>(engine, "dictionary");
+        registerEvaluator<asIDBAnyTypeEvaluator>(engine, "any");
+        registerEvaluator<asIDBColorTypeEvaluator>(engine, "color");
+        registerEvaluator<asIDBRegExTypeEvaluator>(engine, "regex::exp");
+        registerEvaluator<asIDBRegMatchTypeEvaluator>(engine, "regex::match");
+        registerEvaluator<asIDBJsonDocumentTypeEvaluator>(engine,
+                                                          "Json::JsonDocument");
+        registerEvaluator<asIDBJsonArrayTypeEvaluator>(engine,
+                                                       "Json::JsonArray");
+        registerEvaluator<asIDBJsonObjectTypeEvaluator>(engine,
+                                                        "Json::JsonObject");
+        registerEvaluator<asIDBJsonValueTypeEvaluator>(engine,
+                                                       "Json::JsonValue");
+    }
 }
 
 const asIDBTypeEvaluator &

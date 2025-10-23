@@ -564,5 +564,7 @@ private:
     QString m_lastusedpath;
     bool m_islittle = true;
     bool m_unsignedHex = false;
+    ScriptMachine::MessageType _lastOutputType =
+        ScriptMachine::MessageType::Unknown;
 };
 #endif // MAINWINDOW_H
