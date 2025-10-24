@@ -46,6 +46,7 @@
 #include "fileinfodialog.h"
 #include "finddialog.h"
 #include "metadialog.h"
+#include "metaheaderdialog.h"
 #include "settings/editorsettingdialog.h"
 #include "settings/generalsettingdialog.h"
 #include "settings/lspsettingdialog.h"
@@ -719,6 +720,17 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     });
 
     m_menuFind = new QMenu(m_findresult);
+    auto em = new QAction(tr("ShowDec"), this);
+    em->setCheckable(true);
+    auto fsds = SettingManager::instance().findStrDecShow();
+    em->setChecked(fsds);
+    connect(em, &QAction::toggled, this, [this](bool b) {
+        m_findresult->horizontalHeader()->setSectionHidden(4, !b);
+        SettingManager::instance().setFindStrDecShow(b);
+    });
+
+    m_menuFind->addAction(em);
+    m_menuFind->addSeparator();
     m_menuFind->addMenu(menu);
     menu->setEnabled(false);
     m_menuFind->addAction(
@@ -746,6 +758,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setItemDelegate(new RichTextItemDelegate(m_findresult));
 
     m_findresult->setModel(_findResultModel);
+    m_findresult->horizontalHeader()->setSectionHidden(4, !fsds);
 
     connect(m_findresult, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
@@ -761,12 +774,9 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             });
 
     auto header = m_findresult->horizontalHeader();
-    auto font = QFontMetrics(m_findresult->font());
-    auto len = font.horizontalAdvance('F') * (15 + 16 * 2);
-    if (header->sectionSize(3) < len) {
-        header->resizeSection(3, len);
-    }
-
+    header->setSectionResizeMode(QHeaderView::Interactive);
+    header->setSectionResizeMode(3, QHeaderView::Stretch);
+    header->setSectionResizeMode(4, QHeaderView::Stretch);
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
                               tr("FindResult") + QStringLiteral(" (ASCII)"),
                               m_findresult);
@@ -898,6 +908,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     _bookMarkModel = new BookMarksModel(nullptr);
     auto bookmarks = new QTableViewExt(this);
     Utilities::applyTableViewProperty(bookmarks);
+    bookmarks->horizontalHeader()->setDefaultSectionSize(150);
     bookmarks->setSelectionMode(QTableViewExt::ExtendedSelection);
     bookmarks->setModel(_bookMarkModel);
 
@@ -993,11 +1004,33 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                 hexeditor->cursor()->moveTo(offset);
             });
 
+    metadatas->addAction(newAction(
+        QStringLiteral("mLineInfo"), tr("CustomHeader"), [metadatas]() {
+            QVector<bool> ov(5);
+            auto total = 5;
+            auto header = metadatas->horizontalHeader();
+            for (qsizetype i = 0; i < total; ++i) {
+                ov[i] = header->isSectionHidden(i);
+            }
+            MetaHeaderDialog d(ov);
+            if (d.exec()) {
+                auto data = d.getResults();
+                for (qsizetype i = 0; i < total; ++i) {
+                    header->setSectionHidden(i, data.at(i));
+                }
+                SettingManager::instance().setMetaHeaderHidden(data);
+            }
+        }));
+
+    auto sep = new QAction(metadatas);
+    sep->setSeparator(true);
+    metadatas->addAction(sep);
+
     metadatas->addAction(
         newAction(QStringLiteral("export"), tr("ExportResult"),
                   [this]() { saveTableContent(_metadataModel); }));
 
-    auto sep = new QAction(metadatas);
+    sep = new QAction(metadatas);
     sep->setSeparator(true);
     metadatas->addAction(sep);
 
@@ -1037,6 +1070,12 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                 m_aDelMetaData->setEnabled(
                     metadatas->selectionModel()->hasSelection());
             });
+
+    auto ovdata = SettingManager::instance().metaHeaderHidden();
+    auto header = metadatas->horizontalHeader();
+    for (qsizetype i = 0; i < 5; ++i) {
+        header->setSectionHidden(i, ovdata.at(i));
+    }
 
     auto dw = buildDockWidget(dock, QStringLiteral("MetaData"), tr("MetaData"),
                               metadatas);
@@ -1148,6 +1187,7 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                                  ads::DockWidgetArea area,
                                  ads::CDockAreaWidget *areaw) {
     _scriptObjView = new asIDBTreeView(this);
+    _scriptObjView->header()->setDefaultSectionSize(200);
 
     connect(
         m_scriptConsole, &ScriptingConsole::consoleScriptRunFinished, this,
@@ -2004,7 +2044,7 @@ void MainWindow::on_openfile() {
     auto filename =
         WingFileDialog::getOpenFileName(this, tr("ChooseFile"), m_lastusedpath);
     if (!filename.isEmpty()) {
-        m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+        m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
         EditorView *editor = nullptr;
         auto res = openFile(filename, &editor);
         if (res != ErrFile::Success) {
@@ -2045,7 +2085,7 @@ void MainWindow::on_openworkspace() {
         return;
     }
 
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
     if (res == ErrFile::AlreadyOpened) {
@@ -2160,7 +2200,7 @@ void MainWindow::on_saveas() {
         WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
     if (filename.isEmpty())
         return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     bool isWorkspace = editor->isOriginWorkSpace();
     auto res = saveEditor(editor, filename, false, isWorkspace);
@@ -2186,7 +2226,7 @@ void MainWindow::on_exportfile() {
         this, tr("ChooseExportFile"), m_lastusedpath);
     if (filename.isEmpty())
         return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     bool isWorkspace = editor->isOriginWorkSpace();
     auto res = saveEditor(editor, filename, true, isWorkspace);
@@ -2206,7 +2246,7 @@ void MainWindow::on_savesel() {
                                                     m_lastusedpath);
     if (filename.isEmpty())
         return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     QFile qfile(filename);
     if (qfile.open(QFile::WriteOnly)) {
         auto buffer = hexeditor->selectedBytes().join();
@@ -2763,7 +2803,7 @@ void MainWindow::on_exportfindresult() {
         this, tr("ChooseSaveFile"), m_lastusedpath, {"Json (*.json)"});
     if (filename.isEmpty())
         return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     QFile f(filename);
     if (f.open(QFile::WriteOnly)) {
@@ -3387,6 +3427,7 @@ void MainWindow::openFiles(const QStringList &files) {
             info.fileName = file;
             info.isWorkSpace = isWs;
             m_recentmanager->addRecentFile(info);
+            m_lastusedpath = Utilities::getAbsoluteDirPath(file);
         }
     }
 
@@ -4086,7 +4127,8 @@ void MainWindow::onOutputBgScriptOutput(
     const ScriptMachine::MessageInfo &message) {
     auto doc = m_bgScriptOutput->document();
     auto lastLine = doc->lastBlock();
-    auto isNotBlockStart = lastLine.length() != 0;
+    // each empty block has a QChar::ParagraphSeparator
+    auto isNotBlockStart = lastLine.length() > 1;
 
     auto cursor = m_bgScriptOutput->textCursor();
     cursor.movePosition(QTextCursor::End);

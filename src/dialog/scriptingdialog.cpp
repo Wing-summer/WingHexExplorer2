@@ -352,28 +352,29 @@ void ScriptingDialog::buildUpRibbonBar() {
     buildSettingPage(m_ribbon->addTab(tr("Setting")));
     buildAboutPage(m_ribbon->addTab(tr("About")));
 
-    connect(m_ribbon, &Ribbon::onDragDropFiles, this,
-            [=](const QStringList &files) {
-                for (auto &file : files) {
-                    QFileInfo info(file);
-                    auto suffix = info.suffix();
-                    if (info.exists() && Utilities::isTextFile(info) &&
-                        (suffix.compare(QStringLiteral("as"),
-                                        Qt::CaseInsensitive) == 0 ||
-                         suffix.compare(QStringLiteral("anglescript"),
-                                        Qt::CaseInsensitive) == 0)) {
-                        if (openFile(file)) {
-                            RecentFileManager::RecentInfo info;
-                            info.fileName = file;
-                            m_recentmanager->addRecentFile(info);
-                        }
-                    } else {
-                        Toast::toast(this,
-                                     NAMEICONRES(QStringLiteral("script")),
-                                     tr("InvalidSourceFile"));
+    connect(
+        m_ribbon, &Ribbon::onDragDropFiles, this,
+        [=](const QStringList &files) {
+            for (auto &file : files) {
+                QFileInfo info(file);
+                auto suffix = info.suffix();
+                if (info.exists() && Utilities::isTextFile(info) &&
+                    (suffix.compare(QStringLiteral("as"),
+                                    Qt::CaseInsensitive) == 0 ||
+                     suffix.compare(QStringLiteral("anglescript"),
+                                    Qt::CaseInsensitive) == 0)) {
+                    if (openFile(file)) {
+                        RecentFileManager::RecentInfo info;
+                        info.fileName = file;
+                        m_recentmanager->addRecentFile(info);
+                        m_lastusedpath = Utilities::getAbsoluteDirPath(file);
                     }
+                } else {
+                    Toast::toast(this, NAMEICONRES(QStringLiteral("script")),
+                                 tr("InvalidSourceFile"));
                 }
-            });
+            }
+        });
 }
 
 RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
@@ -1397,7 +1398,7 @@ void ScriptingDialog::on_newfile() {
         this, tr("ChooseFile"), m_lastusedpath,
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (!filename.isEmpty()) {
-        m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+        m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
         if (_curDbgData.contains(filename)) {
             auto ret = WingMessageBox::warning(
                 this, tr("New"), tr("NewFileWithDbgExists"),
@@ -1449,7 +1450,7 @@ void ScriptingDialog::on_openfile() {
         this, tr("ChooseFile"), m_lastusedpath,
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (!filename.isEmpty()) {
-        m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+        m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
         if (openFile(filename)) {
             RecentFileManager::RecentInfo info;
             info.fileName = filename;
@@ -1504,17 +1505,12 @@ void ScriptingDialog::on_saveas() {
         return;
     }
 
-    QString lastPath = editor->fileName();
-    if (lastPath.isEmpty()) {
-        lastPath = m_lastusedpath;
-    }
-
     auto filename = WingFileDialog::getSaveFileName(
         this, tr("ChooseSaveFile"), m_lastusedpath,
         QStringLiteral("AngelScript (*.as *.angelscript)"));
     if (filename.isEmpty())
         return;
-    m_lastusedpath = QFileInfo(filename).absoluteDir().absolutePath();
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
     auto res = editor->save(filename);
     if (res) {

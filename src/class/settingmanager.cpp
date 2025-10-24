@@ -37,6 +37,9 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTFAMILY, ("app.fontfamily"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FONTSIZE, ("app.fontsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_WINDOWSIZE, ("app.windowsize"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_LANGUAGE, ("app.lang"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_FINDSTRDEC_SHOW, ("app.find.strdec"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_METAHEADER_SHOW,
+                          ("app.metaheader.visitems"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_MANAGER, ("plugin.enableman"))
@@ -215,6 +218,18 @@ void SettingManager::load() {
     m_setLayout = READ_CONFIG(OTHER_SET_LAYOUT, {}).toByteArray();
     m_setScriptLayout = READ_CONFIG(OTHER_SET_SCRIPT_LAYOUT, {}).toByteArray();
 
+    READ_CONFIG_BOOL(m_findStrDecShow, APP_FINDSTRDEC_SHOW, true);
+    {
+        uint tmp;
+        READ_CONFIG_INT(tmp, APP_METAHEADER_SHOW, 0);
+        m_metaHeaderHidden.resize(5);
+        for (int i = 0; i < 5; ++i) {
+            auto r = tmp & 1;
+            m_metaHeaderHidden[i] = r;
+            tmp >>= 1;
+        }
+    }
+
     Q_EMIT sigEditorfontSizeChanged(m_editorfontSize);
     Q_EMIT sigCopylimitChanged(m_copylimit);
     Q_EMIT sigDecodeStrlimitChanged(m_decodeStrlimit);
@@ -238,6 +253,33 @@ QVariantList SettingManager::getVarList(
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;
+}
+
+QVector<bool> SettingManager::metaHeaderHidden() const {
+    return m_metaHeaderHidden;
+}
+
+void SettingManager::setMetaHeaderHidden(
+    const QVector<bool> &newMetaHeaderHidden) {
+    if (m_metaHeaderHidden != newMetaHeaderHidden) {
+        HANDLE_CONFIG;
+        int buffer = 0;
+        for (int i = 0; i < 5; ++i) {
+            buffer |= (newMetaHeaderHidden[i] ? (1u << i) : 0);
+        }
+        WRITE_CONFIG(APP_METAHEADER_SHOW, buffer);
+        m_metaHeaderHidden = newMetaHeaderHidden;
+    }
+}
+
+bool SettingManager::findStrDecShow() const { return m_findStrDecShow; }
+
+void SettingManager::setFindStrDecShow(bool newFindStrDecShow) {
+    if (m_findStrDecShow != newFindStrDecShow) {
+        HANDLE_CONFIG;
+        WRITE_CONFIG(APP_FINDSTRDEC_SHOW, newFindStrDecShow);
+        m_findStrDecShow = newFindStrDecShow;
+    }
 }
 
 QStringList SettingManager::watchExpressions() const {

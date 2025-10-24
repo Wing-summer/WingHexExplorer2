@@ -2024,12 +2024,22 @@ void WingAngelAPI::_invoke_service(asIScriptGeneric *generic) {
         static_cast<const QString *>(generic->GetArgObject(1));
     if (!puid || !method) {
         // throw exception
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            ctx->SetException("[InvokeService] Only primitive types and "
+                              "string are supported");
+        }
         return;
     }
 
     if (puid->compare(QStringLiteral("WingAngelAPI"), Qt::CaseInsensitive) ==
         0) {
         // throw exception
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            ctx->SetException(
+                "[InvokeService] CANNOT CALL services of WingAngelAPI");
+        }
         return;
     }
 

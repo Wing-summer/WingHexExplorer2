@@ -84,6 +84,8 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                                     auto nend = end.toString().toLongLong(&b);
                                     if (!b || nend >= maxbytes || nend < 0)
                                         continue;
+                                    if (nbegin > nend)
+                                        continue;
 
                                     QColor fcolor, bcolor;
                                     auto fgn = fgcolor.toString();

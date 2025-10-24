@@ -531,10 +531,11 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
                 State = MustExt;
             } else {
                 // warn and ignored
-                Logger::warning(
-                    QStringLiteral("[PluginSystem::invokeServiceImpl] Cannot "
-                                   "parsing filter: '%1'")
-                        .arg(equest));
+                qWarning().noquote()
+                    << QStringLiteral(
+                           "[PluginSystem::invokeServiceImpl] Cannot "
+                           "parsing filter: '%1'")
+                           .arg(equest);
             }
         } else {
             rpuid = puid;
@@ -621,7 +622,8 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     }
 
     if (!m.isValid()) {
-        qCritical("[PluginSystem::invokeServiceImpl] Invalid MetaMethod");
+        qCritical(
+            "[PluginSystem::invokeServiceImpl] Invalid MetaMethod (Not-Found)");
         return false;
     }
 

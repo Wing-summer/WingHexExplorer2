@@ -35,6 +35,7 @@ asIDBTreeView::asIDBTreeView(QWidget *parent) : QTreeView(parent) {
 asIDBTreeView::asIDBTreeView(AsIDBTreeModel *model, QWidget *parent)
     : QTreeView(parent) {
     Utilities::applyTreeViewProperty(this);
+    header()->setDefaultSectionSize(200);
     if (model) {
         connect(model, &AsIDBTreeModel::modelAboutToBeReset, this,
                 &asIDBTreeView::saveExpansionState);

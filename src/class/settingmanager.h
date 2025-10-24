@@ -90,6 +90,10 @@ public:
     QByteArray settingsLayout() const;
     QByteArray settingsScriptLayout() const;
 
+    QStringList watchExpressions() const;
+    bool findStrDecShow() const;
+    QVector<bool> metaHeaderHidden() const;
+
 public slots:
     void setThemeID(int newThemeID);
     void setDockLayout(const QByteArray &newDockLayout);
@@ -131,15 +135,15 @@ public slots:
 
     void setSettingsLayout(const QByteArray &newSetLayout);
     void setSettingsScriptLayout(const QByteArray &newSetScriptLayout);
+    void setWatchExpressions(const QStringList &newWatchExpressions);
+    void setFindStrDecShow(bool newFindStrDecShow);
+    void setMetaHeaderHidden(const QVector<bool> &newMetaHeaderHidden);
 
 public:
     void checkWriteableAndWarn();
 
     QStringList readPluginRule(const QByteArray &data);
     QByteArray savePluginRule(const QStringList &rules);
-
-    QStringList watchExpressions() const;
-    void setWatchExpressions(const QStringList &newWatchExpressions);
 
 signals:
     void sigEditorfontSizeChanged(int v);
@@ -206,6 +210,9 @@ private:
     qsizetype m_logCount = 20;
 
     int m_scriptTimeout = 60; // min
+
+    QVector<bool> m_metaHeaderHidden; // fixed size = 5
+    bool m_findStrDecShow = true;
 
 private:
     QFont _defaultFont;

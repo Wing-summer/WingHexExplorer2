@@ -413,14 +413,19 @@ QConsoleWidget::History &QConsoleWidget::history() { return history_; }
 QConsoleWidget::History QConsoleWidget::history_;
 
 QConsoleWidget::History::History(void)
-    : pos_(0), active_(false), maxsize_(10000) {}
+    : pos_(0), active_(false), maxsize_(100) {}
 QConsoleWidget::History::~History(void) {}
 
 void QConsoleWidget::History::add(const QString &str) {
     active_ = false;
-    // if (strings_.contains(str)) return;
-    if (strings_.size() == maxsize_)
+    auto idx = strings_.indexOf(str);
+    if (idx >= 0) {
+        strings_.move(idx, 0);
+        return;
+    }
+    if (strings_.size() == maxsize_) {
         strings_.pop_back();
+    }
     strings_.push_front(str);
 }
 

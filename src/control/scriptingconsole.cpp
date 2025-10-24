@@ -70,7 +70,6 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
         if (mod.testFlags(Qt::ControlModifier | Qt::AltModifier)) {
             // pop up a coding dialog
             auto edialog = new FramelessDialogBase;
-            edialog->setAttribute(Qt::WA_DeleteOnClose);
 
             auto editor = new ConsoleCodeEdit(edialog);
             connect(editor, &ConsoleCodeEdit::onCloseEvent, edialog,
@@ -95,8 +94,10 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
                 static QRegularExpression regex("[\\r\\n]");
                 code.remove(regex);
                 history_.add(code);
+                edialog->deleteLater();
             } else {
                 setEditMode(Input);
+                edialog->deleteLater();
                 return;
             }
         }
@@ -181,7 +182,8 @@ void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
 void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     auto doc = this->document();
     auto lastLine = doc->lastBlock();
-    auto isNotBlockStart = lastLine.length() != 0;
+    // each empty block has a QChar::ParagraphSeparator
+    auto isNotBlockStart = lastLine.length() > 1;
 
     auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
         if (message.row <= 0 || message.col <= 0) {
@@ -216,7 +218,8 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         flush();
         break;
     case ScriptMachine::MessageType::Print:
-        if (_lastOutputType != ScriptMachine::MessageType::Print) {
+        if (isNotBlockStart &&
+            _lastOutputType != ScriptMachine::MessageType::Print) {
             newLine();
         }
         stdOutLine(message.message);

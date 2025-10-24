@@ -221,6 +221,8 @@ set(DIALOG_SRC
     src/dialog/fileinfodialog.h
     src/dialog/encodingdialog.cpp
     src/dialog/encodingdialog.h
+    src/dialog/metaheaderdialog.h
+    src/dialog/metaheaderdialog.cpp
     src/dialog/metadialog.cpp
     src/dialog/metadialog.h
     src/dialog/scriptingdialog.h

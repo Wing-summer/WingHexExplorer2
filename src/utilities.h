@@ -292,8 +292,17 @@ public:
         applyItemViewProperty(view);
         view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
         auto hheader = view->horizontalHeader();
+        hheader->setDefaultAlignment(Qt::AlignCenter);
         hheader->setStretchLastSection(true);
         hheader->setHighlightSections(false);
+        auto font = view->font();
+        auto metric = QFontMetrics(font);
+        hheader->setMinimumSectionSize(metric.horizontalAdvance(QChar::Space) *
+                                       15);
+    }
+
+    static QString getAbsoluteDirPath(const QString &fileName) {
+        return QFileInfo(fileName).absoluteDir().absolutePath();
     }
 
     static void applyTreeViewProperty(QTreeView *view) {
@@ -302,6 +311,12 @@ public:
         view->setUniformRowHeights(true);
         auto hheader = view->header();
         hheader->setDefaultAlignment(Qt::AlignCenter);
+        hheader->setStretchLastSection(true);
+        hheader->setHighlightSections(false);
+        auto font = view->font();
+        auto metric = QFontMetrics(font);
+        hheader->setMinimumSectionSize(metric.horizontalAdvance(QChar::Space) *
+                                       15);
     }
 
     template <typename T>
