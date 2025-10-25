@@ -264,10 +264,7 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         auto &lsp = AngelLsp::instance();
 
         // textChanged will emit later so send now
-        editor->sendDocChange();
-        while (editor->isContentLspUpdated()) {
-            // wait for a moment
-        }
+        editor->syncUpdate();
 
         auto url = editor->lspFileNameURL();
         auto r = lsp.requestSignatureHelp(url, line, character);

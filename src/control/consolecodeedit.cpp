@@ -132,11 +132,7 @@ void ConsoleCodeEdit::keyPressEvent(QKeyEvent *event) {
         auto tc = currentPosition();
         auto line = tc.blockNumber;
         auto character = tc.positionInBlock;
-
-        sendDocChange();
-        while (isContentLspUpdated()) {
-            // wait for a moment
-        }
+        syncUpdate();
 
         auto r = lsp.requestSignatureHelp(url, line, character);
         auto sigs = r["signatures"].toArray();

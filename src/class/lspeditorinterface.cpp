@@ -15,35 +15,19 @@
 ** =============================================================================
 */
 
-#ifndef LSPEDITORINTERFACE_H
-#define LSPEDITORINTERFACE_H
+#include "lspeditorinterface.h"
+#include "appmanager.h"
 
-#include <QString>
-#include <QTextCursor>
-
-#include "WingCodeEdit/wingcodeedit.h"
-#include "WingCodeEdit/wingsignaturetooltip.h"
-
-class LspEditorInterace {
-public:
-    struct CursorPos {
-        int blockNumber = -1;
-        int positionInBlock = -1;
-    };
-
-public:
-    virtual const WingCodeEdit *editorPtr() const = 0;
-
-    virtual QString lspFileNameURL() const = 0;
-    virtual bool isContentLspUpdated() const = 0;
-    virtual CursorPos currentPosition() const = 0;
-
-    virtual void sendDocChange() = 0;
-    void syncUpdate();
-
-    virtual void
-    showFunctionTip(const QList<WingSignatureTooltip::Signature> &sigs) = 0;
-    virtual void clearFunctionTip() = 0;
-};
-
-#endif // LSPEDITORINTERFACE_H
+void LspEditorInterace::syncUpdate() {
+    sendDocChange();
+    auto app = AppManager::instance();
+    auto curTime = app->currentMSecsSinceEpoch();
+    while (isContentLspUpdated()) {
+        // wait for a moment
+        // timeout for 100ms
+        if (app->currentMSecsSinceEpoch() - curTime > 100) {
+            sendDocChange();
+        }
+        app->processEvents();
+    }
+}
