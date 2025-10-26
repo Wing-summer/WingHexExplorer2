@@ -25,7 +25,7 @@ BEGIN_AS_NAMESPACE
 // --- helpers for exp (QRegularExpression) ---
 static void Exp_DefaultCtor(void *memory) { new (memory) QRegularExpression(); }
 static void Exp_Ctor_StringOptions(void *memory, const QString &pattern,
-                                   Angel::PatternOptions op) {
+                                   int op) {
     new (memory)
         QRegularExpression(pattern, QRegularExpression::PatternOptions(op));
 }
@@ -41,6 +41,32 @@ static bool Exp_opEquals_wrap(const void *obj,
         reinterpret_cast<const QRegularExpression *>(obj);
     return (*self) == other;
 }
+static int Exp_patternOptions_wrap(const void *obj) {
+    const QRegularExpression *self =
+        reinterpret_cast<const QRegularExpression *>(obj);
+    return self->patternOptions();
+}
+static void Exp_setPatternOptions_wrap(void *obj, int options) {
+    QRegularExpression *self = reinterpret_cast<QRegularExpression *>(obj);
+    self->setPatternOptions(QRegularExpression::PatternOptions(options));
+}
+static QRegularExpressionMatch
+Exp_match_wrap(const void *obj, const QString &subject, qsizetype offset,
+               QRegularExpression::MatchType matchType, int matchOptions) {
+    const QRegularExpression *self =
+        reinterpret_cast<const QRegularExpression *>(obj);
+    return self->match(subject, offset, matchType,
+                       QRegularExpression::MatchOptions(matchOptions));
+}
+static QRegularExpressionMatchIterator
+Exp_globalMatch_wrap(const void *obj, const QString &subject, qsizetype offset,
+                     QRegularExpression::MatchType matchType,
+                     int matchOptions) {
+    const QRegularExpression *self =
+        reinterpret_cast<const QRegularExpression *>(obj);
+    return self->globalMatch(subject, offset, matchType,
+                             QRegularExpression::MatchOptions(matchOptions));
+}
 
 // --- helpers for match (QRegularExpressionMatch) ---
 static void Match_DefaultCtor(void *memory) {
@@ -52,6 +78,44 @@ static void Match_CopyCtor(void *memory, const QRegularExpressionMatch &other) {
 static void Match_Dtor(void *memory) {
     reinterpret_cast<QRegularExpressionMatch *>(memory)
         ->~QRegularExpressionMatch();
+}
+static int Match_matchOptions_wrap(const void *obj) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->matchOptions();
+}
+static QString Match_captured_wrap(const void *obj, const QString &name) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->captured(name);
+}
+static qsizetype Match_capturedEnd_wrap(const void *obj, const QString &name) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->capturedEnd(name);
+}
+static qsizetype Match_capturedLength_wrap(const void *obj,
+                                           const QString &name) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->capturedLength(name);
+}
+static qsizetype Match_capturedStart_wrap(const void *obj,
+                                          const QString &name) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->capturedStart(name);
+}
+static bool Match_hasCaptured_wrap(const void *obj, const QString &name) {
+    const QRegularExpressionMatch *self =
+        reinterpret_cast<const QRegularExpressionMatch *>(obj);
+    return self->hasCaptured(name);
+}
+
+static int Inter_matchOptions_wrap(const void *obj) {
+    const QRegularExpressionMatchIterator *self =
+        reinterpret_cast<const QRegularExpressionMatchIterator *>(obj);
+    return self->matchOptions();
 }
 
 static CScriptArray *
@@ -143,10 +207,10 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     Q_UNUSED(r);
     r = engine->RegisterObjectBehaviour(
         "exp", asBEHAVE_CONSTRUCT,
-        "void f(const string &in, regex::PatternOptions = "
+        "void f(const string &in, int options = "
         "regex::PatternOptions::NoPatternOption)",
-        asFUNCTIONPR(Exp_Ctor_StringOptions,
-                     (void *, const QString &, Angel::PatternOptions), void),
+        asFUNCTIONPR(Exp_Ctor_StringOptions, (void *, const QString &, int),
+                     void),
         asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
@@ -214,11 +278,9 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterObjectMethod(
-        "match", "regex::MatchOptions matchOptions() const",
-        asMETHODPR(QRegularExpressionMatch, matchOptions, () const,
-                   QRegularExpression::MatchOptions),
-        asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("match", "int matchOptions() const",
+                                     asFUNCTION(Match_matchOptions_wrap),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -254,9 +316,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
         "match", "string captured(const string &in name) const",
-        asMETHODPR(QRegularExpressionMatch, captured, (QAnyStringView) const,
-                   QString),
-        asCALL_THISCALL);
+        asFUNCTION(Match_captured_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -269,9 +329,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     // capturedEnd / capturedLength / capturedStart (qsizetype)
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedEnd(const string &in name) const"),
-        asMETHODPR(QRegularExpressionMatch, capturedEnd, (QAnyStringView) const,
-                   qsizetype),
-        asCALL_THISCALL);
+        asFUNCTION(Match_capturedEnd_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -284,9 +342,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
 
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedLength(const string &in name) const"),
-        asMETHODPR(QRegularExpressionMatch, capturedLength,
-                   (QAnyStringView) const, qsizetype),
-        asCALL_THISCALL);
+        asFUNCTION(Match_capturedLength_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -299,9 +355,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
 
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedStart(const string &in name) const"),
-        asMETHODPR(QRegularExpressionMatch, capturedStart,
-                   (QAnyStringView) const, qsizetype),
-        asCALL_THISCALL);
+        asFUNCTION(Match_capturedStart_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -319,9 +373,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     // hasCaptured overloads
     r = engine->RegisterObjectMethod(
         "match", "bool hasCaptured(const string &in name) const",
-        asMETHODPR(QRegularExpressionMatch, hasCaptured, (QAnyStringView) const,
-                   bool),
-        asCALL_THISCALL);
+        asFUNCTION(Match_hasCaptured_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -370,11 +422,9 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         asCALL_THISCALL);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterObjectMethod(
-        "iterator", "regex::MatchOptions matchOptions() const",
-        asMETHODPR(QRegularExpressionMatchIterator, matchOptions, () const,
-                   QRegularExpression::MatchOptions),
-        asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("iterator", "int matchOptions() const",
+                                     asFUNCTION(Inter_matchOptions_wrap),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectMethod(
@@ -470,19 +520,15 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     Q_UNUSED(r);
 
     // patternOptions / setPatternOptions
-    r = engine->RegisterObjectMethod(
-        "exp", "regex::PatternOptions patternOptions() const",
-        asMETHODPR(QRegularExpression, patternOptions, () const,
-                   QRegularExpression::PatternOptions),
-        asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("exp", "int patternOptions() const",
+                                     asFUNCTION(Exp_patternOptions_wrap),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
     r = engine->RegisterObjectMethod(
-        "exp", "void setPatternOptions(regex::PatternOptions options)",
-        asMETHODPR(QRegularExpression, setPatternOptions,
-                   (QRegularExpression::PatternOptions), void),
-        asCALL_THISCALL);
+        "exp", "void setPatternOptions(int options)",
+        asFUNCTION(Exp_setPatternOptions_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -490,13 +536,17 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         "exp",
         "regex::match match(const string &in subject, int offset = 0, "
         "regex::MatchType matchType = regex::MatchType::NormalMatch, "
-        "regex::MatchOptions matchOptions = "
-        "regex::MatchOptions::NoMatchOption) const",
-        asMETHODPR(QRegularExpression, match,
-                   (const QString &, qsizetype, QRegularExpression::MatchType,
-                    QRegularExpression::MatchOptions) const,
-                   QRegularExpressionMatch),
-        asCALL_THISCALL);
+        "int matchOptions = regex::MatchOptions::NoMatchOption) const",
+        asFUNCTION(Exp_match_wrap), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "exp",
+        "regex::iterator globalMatch(const string &in subject, int offset = 0, "
+        "regex::MatchType matchType = regex::MatchType::NormalMatch, "
+        "int matchOptions = regex::MatchOptions::NoMatchOption) const",
+        asFUNCTION(Exp_globalMatch_wrap), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 

@@ -121,6 +121,10 @@ int main(int argc, char *argv[]) {
     QApplication::setOrganizationName(QStringLiteral(APP_ORG));
     QApplication::setApplicationVersion(QStringLiteral(WINGHEX_VERSION));
 
+#ifdef QT_DEBUG
+    QStandardPaths::setTestModeEnabled(true);
+#endif
+
     static_assert(CHAR_BIT == 8, APP_NAME " is only supported with 8-bit char");
 
     try {

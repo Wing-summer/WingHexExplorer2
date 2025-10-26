@@ -121,7 +121,7 @@ bool ScriptEditor::openFile(const QString &filename) {
     m_editor->setWindowFilePath(filename);
     lsp.openDocument(lspFileNameURL(), 0, txt);
     _watcher.addPath(filename);
-
+    m_editor->document()->setModified(false);
     processTitle();
     return true;
 }
@@ -147,12 +147,15 @@ bool ScriptEditor::save(const QString &path) {
 #endif
 
     if (path.isEmpty()) {
-        QFile f(oldFileName);
-        if (!f.open(QFile::WriteOnly | QFile::Text)) {
-            return false;
+        auto doc = m_editor->document();
+        if (doc->isModified()) {
+            QFile f(oldFileName);
+            if (!f.open(QFile::WriteOnly | QFile::Text)) {
+                return false;
+            }
+            f.write(m_editor->toPlainText().toUtf8());
+            doc->setModified(false);
         }
-        f.write(m_editor->toPlainText().toUtf8());
-        m_editor->document()->setModified(false);
         return true;
     }
 
@@ -181,6 +184,7 @@ bool ScriptEditor::save(const QString &path) {
 #endif
 
     m_editor->setWindowFilePath(path);
+    processTitle();
     m_editor->document()->setModified(false);
     return true;
 }

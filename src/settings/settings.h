@@ -18,6 +18,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <QApplication>
 #include <QSettings>
 #include <QString>
 
@@ -30,6 +31,8 @@ inline QString getRealContent(T &value) {
 }
 
 #define HANDLE_CONFIG                                                          \
+    Q_ASSERT(!QApplication::organizationName().isEmpty() &&                    \
+             !QApplication::applicationName().isEmpty());                      \
     QSettings set(QStringLiteral(APP_ORG), QStringLiteral(APP_NAME))
 
 #define CONFIG set

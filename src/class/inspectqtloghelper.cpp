@@ -1,4 +1,6 @@
 #include "inspectqtloghelper.h"
+
+#include "settingmanager.h"
 #include "utilities.h"
 
 #include <QMenu>
@@ -71,16 +73,51 @@ void InspectQtLogHelper::destory() {
 
 void InspectQtLogHelper::showLogWidget() { _logger->show(); }
 
-InspectQtLogHelper::InspectQtLogHelper() {}
+InspectQtLogHelper::InspectQtLogHelper() : _stream(new QTextStream(stdout)) {
+    _stream->device()->setTextModeEnabled(true);
 
-InspectQtLogHelper::~InspectQtLogHelper() {}
+    QString newFileName = QStringLiteral("%1_%2_%3.log")
+                              .arg(APP_NAME, WINGHEX_VERSION,
+                                   QDateTime::currentDateTime().toString(
+                                       QStringLiteral("yyyyMMdd_hhmmsss")));
+    auto logPath = Utilities::getAppDataPath() + QDir::separator() +
+                   QStringLiteral("qtlog");
+
+    QDir logDir;
+    logDir.mkpath(logPath);
+    logDir.setPath(logPath);
+
+    // clean up log files if too much
+    auto logs = logDir.entryInfoList({"*.log"}, QDir::Files, QDir::Time);
+    auto total = logs.size();
+    for (decltype(total) i = SettingManager::instance().logCount() - 1;
+         i < total; ++i) {
+        QFile::remove(logs.at(i).absoluteFilePath());
+    }
+
+    auto path = logDir.absoluteFilePath(newFileName);
+    _file = QSharedPointer<QFile>(new QFile(path));
+    if (_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        _stream->setDevice(_file.get());
+    }
+}
+
+InspectQtLogHelper::~InspectQtLogHelper() {
+    _stream->flush();
+    _file->close();
+}
 
 void InspectQtLogHelper::messageHandler(QtMsgType type,
                                         const QMessageLogContext &context,
                                         const QString &message) {
-    auto logger = InspectQtLogHelper::instance()._ctx;
-    auto msg = qFormatLogMessage(type, context, message);
+    auto &ins = InspectQtLogHelper::instance();
+    auto stream = ins._stream;
+    auto logger = ins._ctx;
     Q_ASSERT(logger);
+
+    auto msg = qFormatLogMessage(type, context, message);
+    *stream << msg << Qt::endl;
+
     switch (type) {
     case QtDebugMsg:
         logger->append(msg);

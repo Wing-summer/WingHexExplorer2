@@ -88,7 +88,9 @@ static void Color_setHsv(void *obj, int h, int s, int v) {
 static void Color_setHsvF(void *obj, float h, float s, float v) {
     reinterpret_cast<QColor *>(obj)->setHsvF(h, s, v);
 }
-static void Color_name(void *obj) { reinterpret_cast<QColor *>(obj)->name(); }
+static QString Color_name(void *obj) {
+    return reinterpret_cast<QColor *>(obj)->name();
+}
 
 static void Color_ColorsCtor(void *memory, AngelColor::Colors color) {
     static const QColor table[] = {QColorConstants::Svg::aliceblue,

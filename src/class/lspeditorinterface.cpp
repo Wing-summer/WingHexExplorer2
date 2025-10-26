@@ -25,8 +25,10 @@ void LspEditorInterace::syncUpdate() {
     while (isContentLspUpdated()) {
         // wait for a moment
         // timeout for 100ms
-        if (app->currentMSecsSinceEpoch() - curTime > 100) {
+        auto nowTime = app->currentMSecsSinceEpoch();
+        if (nowTime - curTime > 100) {
             sendDocChange();
+            curTime = nowTime;
         }
         app->processEvents();
     }

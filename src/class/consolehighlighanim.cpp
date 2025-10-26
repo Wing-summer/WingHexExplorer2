@@ -68,14 +68,6 @@ void ConsoleHighlighAnim::setWidget(QWidget *newW) {
         _w->setStyleSheet({});
     }
     _w = newW;
-    auto ss = QStringLiteral("background-color: rgba(%1, %2, %3, %4);")
-                  .arg(m_highlightColor.red())
-                  .arg(m_highlightColor.green())
-                  .arg(m_highlightColor.blue())
-                  .arg(m_alpha);
-    if (_w) {
-        _w->setStyleSheet(ss);
-    }
 }
 
 void ConsoleHighlighAnim::start() {

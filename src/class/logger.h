@@ -76,6 +76,8 @@ private:
 
     virtual ~Logger();
 
+    void __log(const QString &message);
+
     Q_DISABLE_COPY_MOVE(Logger)
 
 private:

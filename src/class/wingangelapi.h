@@ -367,46 +367,41 @@ private:
     void _MSG_AboutQt(const QString &title);
 
     QMessageBox::StandardButton
-    _MSG_Information(const QString &title, const QString &text,
-                     QMessageBox::StandardButtons buttons,
+    _MSG_Information(const QString &title, const QString &text, int buttons,
                      QMessageBox::StandardButton defaultButton);
 
     QMessageBox::StandardButton
-    _MSG_Question(const QString &title, const QString &text,
-                  QMessageBox::StandardButtons buttons,
+    _MSG_Question(const QString &title, const QString &text, int buttons,
                   QMessageBox::StandardButton defaultButton);
 
     QMessageBox::StandardButton
-    _MSG_Warning(const QString &title, const QString &text,
-                 QMessageBox::StandardButtons buttons,
+    _MSG_Warning(const QString &title, const QString &text, int buttons,
                  QMessageBox::StandardButton defaultButton);
 
     QMessageBox::StandardButton
-    _MSG_Critical(const QString &title, const QString &text,
-                  QMessageBox::StandardButtons buttons,
+    _MSG_Critical(const QString &title, const QString &text, int buttons,
                   QMessageBox::StandardButton defaultButton);
 
     void _MSG_About(const QString &title, const QString &text);
 
     QMessageBox::StandardButton
     _MSG_msgbox(QMessageBox::Icon icon, const QString &title,
-                const QString &text, QMessageBox::StandardButtons buttons,
+                const QString &text, int buttons,
                 QMessageBox::StandardButton defaultButton);
 
 private:
     QString _InputBox_GetText(const QString &title, const QString &label,
                               QLineEdit::EchoMode echo, const QString &text,
-                              bool *ok, Qt::InputMethodHints inputMethodHints);
+                              bool *ok, int inputMethodHints);
 
     QString _InputBox_GetMultiLineText(const QString &title,
                                        const QString &label,
                                        const QString &text, bool *ok,
-                                       Qt::InputMethodHints inputMethodHints);
+                                       int inputMethodHints);
 
     QString _InputBox_getItem(const QString &title, const QString &label,
                               const CScriptArray &items, int current,
-                              bool editable, bool *ok,
-                              Qt::InputMethodHints inputMethodHints);
+                              bool editable, bool *ok, int inputMethodHints);
 
     int _InputBox_GetInt(const QString &title, const QString &label, int value,
                          int minValue, int maxValue, int step, bool *ok);
@@ -417,26 +412,23 @@ private:
 
 private:
     QString _FileDialog_GetExistingDirectory(const QString &caption,
-                                             const QString &dir,
-                                             QFileDialog::Options options);
+                                             const QString &dir, int options);
 
     QString _FileDialog_GetOpenFileName(const QString &caption,
                                         const QString &dir,
                                         const QString &filter,
-                                        QString *selectedFilter,
-                                        QFileDialog::Options options);
+                                        QString *selectedFilter, int options);
 
     CScriptArray *_FileDialog_getOpenFileNames(const QString &caption,
                                                const QString &dir,
                                                const QString &filter,
                                                QString *selectedFilter,
-                                               QFileDialog::Options options);
+                                               int options);
 
     QString _FileDialog_GetSaveFileName(const QString &caption,
                                         const QString &dir,
                                         const QString &filter,
-                                        QString *selectedFilter,
-                                        QFileDialog::Options options);
+                                        QString *selectedFilter, int options);
 
 private:
     QVector<WingScriptInternal::ScriptFnInfo> _sfns;

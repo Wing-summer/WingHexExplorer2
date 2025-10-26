@@ -17,6 +17,8 @@
 
 #include "angellsp.h"
 
+#include "class/wingmessagebox.h"
+#include "control/toast.h"
 #include "logger.h"
 #include "settings/settings.h"
 #include "utilities.h"
@@ -106,7 +108,6 @@ bool AngelLsp::start() {
         return false;
     }
 
-    Q_EMIT serverStarted();
     return true;
 }
 
@@ -140,7 +141,6 @@ void AngelLsp::stop() {
 }
 
 bool AngelLsp::restart() {
-    QSignalBlocker blocker(this);
     if (start()) {
         auto ret = initializeSync();
         if (!ret.isNull()) {
@@ -149,6 +149,22 @@ bool AngelLsp::restart() {
         }
     }
     return false;
+}
+
+void AngelLsp::restartWithGUI(QWidget *parent) {
+    auto ret = WingMessageBox::warning(parent, tr("RestartLSP"),
+                                       tr("Sure2RestartAngelLsp"),
+                                       QMessageBox::Yes | QMessageBox::No);
+    if (ret == QMessageBox::Yes) {
+        auto &lsp = AngelLsp::instance();
+        if (lsp.restart()) {
+            Toast::toast(parent, NAMEICONRES("angelrestart"),
+                         tr("RestartSuccessfully"));
+        } else {
+            WingMessageBox::critical(parent, tr("RestartLSP"),
+                                     tr("RestartFailed"));
+        }
+    }
 }
 
 bool AngelLsp::isActive() const { return m_proc != nullptr; }
@@ -178,6 +194,7 @@ QJsonValue AngelLsp::initializeSync(int timeoutMs) {
 
 void AngelLsp::initialized() {
     sendNotification(QStringLiteral("initialized"), {});
+    Q_EMIT serverStarted();
 }
 
 void AngelLsp::openDocument(const QString &uri, qint64 version,

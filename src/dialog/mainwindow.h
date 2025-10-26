@@ -248,8 +248,6 @@ private:
 private:
     IWingPlugin::FileType getEditorViewFileType(EditorView *view);
 
-    QString saveLog();
-
     ads::CDockWidget *buildDockWidget(ads::CDockManager *dock,
                                       const QString &widgetName,
                                       const QString &displayName,

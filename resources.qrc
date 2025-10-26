@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/com.wingsummer.winghex">
         <file>images/angellsp.png</file>
+        <file>images/angelrestart.png</file>
         <file>images/author.jpg</file>
         <file>images/author.png</file>
         <file>images/bookmark.png</file>

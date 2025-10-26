@@ -113,21 +113,8 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
             Toast::toast(parent, NAMEICONRES("angellsp"),
                          tr("ExportSuccessfully"));
         });
-        connect(ui->btnRestartlsp, &QPushButton::clicked, this, [parent]() {
-            auto ret = WingMessageBox::warning(
-                parent, tr("RestartLSP"), tr("Sure2RestartAngelLsp"),
-                QMessageBox::Yes | QMessageBox::No);
-            if (ret == QMessageBox::Yes) {
-                auto &lsp = AngelLsp::instance();
-                if (lsp.restart()) {
-                    Toast::toast(parent, NAMEICONRES("angellsp"),
-                                 tr("RestartSuccessfully"));
-                } else {
-                    WingMessageBox::critical(parent, tr("RestartLSP"),
-                                             tr("RestartFailed"));
-                }
-            }
-        });
+        connect(ui->btnRestartlsp, &QPushButton::clicked, this,
+                [parent]() { AngelLsp::instance().restartWithGUI(parent); });
 
         auto &lsp = AngelLsp::instance();
         connect(&lsp, &AngelLsp::serverStarted, this,

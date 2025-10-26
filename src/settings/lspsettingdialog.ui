@@ -166,6 +166,10 @@
         <property name="text">
          <string>Restart Angel-lsp</string>
         </property>
+        <property name="icon">
+         <iconset resource="../../resources.qrc">
+          <normaloff>:/com.wingsummer.winghex/images/angelrestart.png</normaloff>:/com.wingsummer.winghex/images/angelrestart.png</iconset>
+        </property>
        </widget>
       </item>
      </layout>
@@ -186,6 +190,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

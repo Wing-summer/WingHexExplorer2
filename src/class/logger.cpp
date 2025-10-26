@@ -57,12 +57,6 @@ Logger::Logger(QObject *parent)
         _stream->setDevice(_file.get());
     }
 
-    connect(this, &Logger::log, this, [this](const QString &message) {
-        static QRegularExpression exp("<[^>]*>");
-        auto str = message;
-        *_stream << str.remove(exp) << Qt::endl;
-    });
-
     if (qEnvironmentVariableIntValue("WING_DEBUG")) {
         setLogLevel(Level::q4DEBUG);
     } else {
@@ -79,6 +73,8 @@ Logger::~Logger() {
     _file->close();
 }
 
+void Logger::__log(const QString &message) { *_stream << message << Qt::endl; }
+
 Logger &Logger::instance() {
     static Logger ins;
     return ins;
@@ -93,37 +89,47 @@ void Logger::logPrint(const QString &message) {
 void Logger::newLine() { logPrint({}); }
 
 void Logger::trace(const QString &message) {
-    if (instance()._level >= q5TRACE) {
-        QString str = message;
-        Q_EMIT instance().log(packDebugStr(tr("[Trace]") + str));
+    auto &ins = instance();
+    auto msg = tr("[Trace]") + message;
+    ins.__log(msg);
+    if (ins._level >= q5TRACE) {
+        Q_EMIT ins.log(packDebugStr(msg));
     }
 }
 
 void Logger::warning(const QString &message) {
-    if (instance()._level >= q2WARN) {
-        QString str = message;
-        Q_EMIT instance().log(packWarnStr(tr("[Warn]") + str));
+    auto &ins = instance();
+    auto msg = tr("[Warn]") + message;
+    ins.__log(msg);
+    if (ins._level >= q2WARN) {
+        Q_EMIT ins.log(packWarnStr(msg));
     }
 }
 
 void Logger::info(const QString &message) {
-    if (instance()._level >= q3INFO) {
-        QString str = message;
-        Q_EMIT instance().log(packInfoStr(tr("[Info]") + str));
+    auto &ins = instance();
+    auto msg = tr("[Info]") + message;
+    ins.__log(msg);
+    if (ins._level >= q3INFO) {
+        Q_EMIT ins.log(packInfoStr(msg));
     }
 }
 
 void Logger::debug(const QString &message) {
-    if (instance()._level >= q4DEBUG) {
-        QString str = message;
-        Q_EMIT instance().log(packDebugStr(tr("[Debug]") + str));
+    auto &ins = instance();
+    auto msg = tr("[Debug]") + message;
+    ins.__log(msg);
+    if (ins._level >= q4DEBUG) {
+        Q_EMIT ins.log(packDebugStr(msg));
     }
 }
 
 void Logger::critical(const QString &message) {
-    if (instance()._level >= q0FATAL) {
-        QString str = message;
-        Q_EMIT instance().log(packErrorStr(tr("[Error]") + str));
+    auto &ins = instance();
+    auto msg = tr("[Error]") + message;
+    ins.__log(msg);
+    if (ins._level >= q0FATAL) {
+        Q_EMIT ins.log(packErrorStr(msg));
     }
 }
 

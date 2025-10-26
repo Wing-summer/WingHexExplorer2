@@ -48,6 +48,7 @@ public slots:
     void shutdownAndExit();
 
     bool restart();
+    void restartWithGUI(QWidget *parent);
 
     bool isActive() const;
 

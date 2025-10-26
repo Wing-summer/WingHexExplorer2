@@ -201,9 +201,7 @@ bool AsCompletion::processTrigger(const QString &trigger,
         }
     }
 
-    while (editor->isContentLspUpdated()) {
-        // wait for a moment
-    }
+    editor->syncUpdate();
 
     auto ret = lsp.requestCompletion(url, line, character, trigger);
     auto nodes = parseCompletion(ret);

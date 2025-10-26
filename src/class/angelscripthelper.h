@@ -39,6 +39,7 @@
 // a helper function to register Qt enums to AngelScript
 template <typename T>
 void registerAngelType(asIScriptEngine *engine, const char *enumName) {
+    static_assert(sizeof(T) == sizeof(int), "sizeof(T) != sizeof(int)");
     auto e = QMetaEnum::fromType<T>();
     auto r = engine->RegisterEnum(enumName);
     Q_ASSERT(r >= 0);

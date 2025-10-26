@@ -627,7 +627,7 @@ asUINT String_opForValue1(asUINT iter, const QString *) { return iter; }
 
 static void ConstructChar(QChar *thisPointer) { new (thisPointer) QChar(); }
 
-static void ConstructCharInt(int v, QChar *thisPointer) {
+static void ConstructCharInt(quint16 v, QChar *thisPointer) {
     new (thisPointer) QChar(v);
 }
 
@@ -663,8 +663,8 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     r = engine->RegisterObjectBehaviour(
-        "char", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ConstructCharInt),
-        asCALL_CDECL_OBJLAST);
+        "char", asBEHAVE_CONSTRUCT, "void f(uint16)",
+        asFUNCTION(ConstructCharInt), asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -1926,12 +1926,6 @@ static void StringJoin_Generic(asIScriptGeneric *gen) {
     new (gen->GetAddressOfReturnLocation()) QString(StringJoin(*array, *delim));
 }
 
-static int StringCompare(const QString &s1, const QString &s2,
-                         bool caseSensitive) {
-    return QString::compare(
-        s1, s2, caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive);
-}
-
 // This is where the utility functions are registered.
 // The string type must have been registered first.
 void RegisterQStringUtils(asIScriptEngine *engine) {
@@ -1945,24 +1939,10 @@ void RegisterQStringUtils(asIScriptEngine *engine) {
             asFUNCTION(StringJoin_Generic), asCALL_GENERIC);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
-
-        r = engine->RegisterGlobalFunction(
-            "int compare(const string &in, const string &in, bool "
-            "caseSensitive = true)",
-            WRAP_FN(StringCompare), asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
     } else {
         r = engine->RegisterGlobalFunction(
             "string join(const array<string> &in, const string &in delim)",
             asFUNCTION(StringJoin), asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
-
-        r = engine->RegisterGlobalFunction(
-            "int compare(const string &in, const string &in, bool "
-            "caseSensitive = true)",
-            asFUNCTION(StringCompare), asCALL_CDECL);
         Q_ASSERT(r >= 0);
         Q_UNUSED(r);
     }

@@ -48,7 +48,6 @@ private:
     enum ToolButtonIndex : uint {
         UNDO_ACTION,
         REDO_ACTION,
-        SAVE_ACTION,
         COPY_ACTION,
         DBG_RUN_ACTION,
         DBG_RUN_DBG_ACTION,

@@ -671,11 +671,10 @@ void ScriptMachine::__outputln(MessageType type, asIScriptGeneric *args) {
             int typeId = args->GetArgTypeId(i);
 
             if (typeId) {
-                info.message.append(m.stringify(ref, typeId)).append('\n');
+                info.message = (m.stringify(ref, typeId).append('\n'));
+                m.outputMessage(info);
             }
         }
-
-        m.outputMessage(info);
     }
 }
 
@@ -811,6 +810,9 @@ ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
             return QString::fromStdString(var->value);
         }
     } else {
+        if (var->expandRefId) {
+            return QStringLiteral("<expand-ref>");
+        }
         return QStringLiteral("<eval-failed>");
     }
 }
@@ -1329,7 +1331,9 @@ void ScriptMachine::debug_break() {
     auto ctx = asGetActiveContext();
     if (ctx) {
         auto &m = ScriptMachine::instance();
-        if (m._ctx[ConsoleMode::Scripting] == ctx) {
+        auto isDbg = reinterpret_cast<asPWORD>(
+            ctx->GetUserData(AsUserDataType::UserData_isDbg));
+        if (isDbg && m._ctx[ConsoleMode::Scripting] == ctx) {
             m._debugger->DebugBreak(ctx);
         } else {
             ctx->SetException("debug::setBreak can be only used in scripting");
@@ -1406,8 +1410,14 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptRegex(engine);
     RegisterQStringUtils(engine);
     RegisterQStringRegExSupport(engine);
+
+    auto r = engine->SetDefaultNamespace("math");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);
+    engine->SetDefaultNamespace("");
+
     RegisterScriptWeakRef(engine);
     RegisterScriptAny(engine);
     RegisterScriptDictionary(engine);

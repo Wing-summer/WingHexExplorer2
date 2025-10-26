@@ -1210,63 +1210,53 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
 
                 auto engine = ScriptMachine::instance().engine();
                 auto type = engine->GetTypeInfoById(id.typeId);
-                const char *rawName;
+                const char *name;
 
                 if (!type) {
                     // a primitive
                     switch (id.typeId & asTYPEID_MASK_SEQNBR) {
                     case asTYPEID_BOOL:
-                        rawName = "bool";
+                        name = "bool";
                         break;
                     case asTYPEID_INT8:
-                        rawName = "int8";
+                        name = "int8";
                         break;
                     case asTYPEID_INT16:
-                        rawName = "int16";
+                        name = "int16";
                         break;
                     case asTYPEID_INT32:
-                        rawName = "int32";
+                        name = "int32";
                         break;
                     case asTYPEID_INT64:
-                        rawName = "int64";
+                        name = "int64";
                         break;
                     case asTYPEID_UINT8:
-                        rawName = "uint8";
+                        name = "uint8";
                         break;
                     case asTYPEID_UINT16:
-                        rawName = "uint16";
+                        name = "uint16";
                         break;
                     case asTYPEID_UINT32:
-                        rawName = "uint32";
+                        name = "uint32";
                         break;
                     case asTYPEID_UINT64:
-                        rawName = "uint64";
+                        name = "uint64";
                         break;
                     case asTYPEID_FLOAT:
-                        rawName = "float";
+                        name = "float";
                         break;
                     case asTYPEID_DOUBLE:
-                        rawName = "double";
+                        name = "double";
                         break;
                     default:
-                        rawName = "???";
+                        name = "???";
                         break;
                     }
                 } else {
-                    rawName = type->GetName();
+                    name = type->GetName();
                 }
 
-                std::string name = fmt::format(
-                    "{}{}{}{}", (id.modifiers & asTM_CONST) ? "const " : "",
-                    rawName,
-                    (id.typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE))
-                        ? "@"
-                        : "",
-                    ((id.modifiers & asTM_INOUTREF) == asTM_INOUTREF) ? "&"
-                    : ((id.modifiers & asTM_INOUTREF) == asTM_INREF)  ? "&in"
-                    : ((id.modifiers & asTM_INOUTREF) == asTM_OUTREF) ? "&out"
-                                                                      : "");
-                type_names.emplace(id, std::move(name));
+                type_names.emplace(id, name);
                 return name;
             };
 
@@ -2967,13 +2957,22 @@ void MainWindow::on_saveLayout() {
 void MainWindow::on_exportlog() {
     showStatus(tr("LogExporting..."));
     QScopeGuard g([this]() { showStatus({}); });
-    auto nfile = saveLog();
-    if (nfile.isEmpty()) {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
-                     tr("ExportLogError"));
-    } else {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
-                     tr("ExportLogSuccess") + nfile);
+
+    auto fileName = WingFileDialog::getSaveFileName(
+        this, tr("ExportLog"), m_lastusedpath, tr("Logs (*.log)"));
+    if (!fileName.isEmpty()) {
+        m_lastusedpath = Utilities::getAbsoluteDirPath(fileName);
+        QFile lfile(fileName);
+        if (lfile.open(QFile::WriteOnly | QFile::NewOnly | QFile::Text)) {
+            auto data = m_logbrowser->toPlainText();
+            lfile.write(data.toUtf8());
+            lfile.close();
+            Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
+                         tr("ExportLogSuccess"));
+        } else {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("log")),
+                         tr("ExportLogError"));
+        }
     }
 }
 
@@ -3045,22 +3044,6 @@ void MainWindow::on_update() {
             }
             this->showStatus({});
         });
-}
-
-QString MainWindow::saveLog() {
-    QDir ndir(Utilities::getAppDataPath());
-    ndir.mkpath(QStringLiteral("log"));
-    QFile lfile(ndir.absolutePath() + QDir::separator() +
-                QStringLiteral("log") + QDir::separator() +
-                QDateTime::currentDateTime().toString(
-                    QStringLiteral("yyyyMMddhhmmsszzz")) +
-                ".log");
-    if (lfile.open(QFile::WriteOnly | QFile::NewOnly)) {
-        lfile.write(m_logbrowser->toPlainText().toUtf8());
-        lfile.close();
-        return lfile.fileName();
-    }
-    return QString();
 }
 
 ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,

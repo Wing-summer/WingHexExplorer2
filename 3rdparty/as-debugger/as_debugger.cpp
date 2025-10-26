@@ -196,67 +196,59 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
         return f->second;
 
     auto type = ctx->GetEngine()->GetTypeInfoById(id.typeId);
-    std::string rawName;
+    std::string name;
 
     if (!type) {
         // a primitive
         switch (id.typeId & asTYPEID_MASK_SEQNBR) {
         case asTYPEID_BOOL:
-            rawName = "bool";
+            name = "bool";
             break;
         case asTYPEID_INT8:
-            rawName = "int8";
+            name = "int8";
             break;
         case asTYPEID_INT16:
-            rawName = "int16";
+            name = "int16";
             break;
         case asTYPEID_INT32:
-            rawName = "int32";
+            name = "int32";
             break;
         case asTYPEID_INT64:
-            rawName = "int64";
+            name = "int64";
             break;
         case asTYPEID_UINT8:
-            rawName = "uint8";
+            name = "uint8";
             break;
         case asTYPEID_UINT16:
-            rawName = "uint16";
+            name = "uint16";
             break;
         case asTYPEID_UINT32:
-            rawName = "uint32";
+            name = "uint32";
             break;
         case asTYPEID_UINT64:
-            rawName = "uint64";
+            name = "uint64";
             break;
         case asTYPEID_FLOAT:
-            rawName = "float";
+            name = "float";
             break;
         case asTYPEID_DOUBLE:
-            rawName = "double";
+            name = "double";
             break;
         default:
-            rawName = "???";
+            name = "???";
             break;
         }
     } else {
         auto ns = type->GetNamespace();
         if (ns && strlen(ns)) {
-            rawName = fmt::format("{}::{}", ns, type->GetName());
+            name = fmt::format("{}::{}", ns, type->GetName());
         } else {
-            rawName = type->GetName();
+            name = type->GetName();
         }
     }
 
-    std::string name = fmt::format(
-        "{}{}{}{}", (id.modifiers & asTM_CONST) ? "const " : "", rawName,
-        (id.typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE)) ? "@" : "",
-        ((id.modifiers & asTM_INOUTREF) == asTM_INOUTREF) ? "&"
-        : ((id.modifiers & asTM_INOUTREF) == asTM_INREF)  ? "&in"
-        : ((id.modifiers & asTM_INOUTREF) == asTM_OUTREF) ? "&out"
-                                                          : "");
-
     type_names.emplace(id, name);
-    return type_names.at(id);
+    return name;
 }
 
 void *asIDBCache::ResolvePropertyAddress(const asIDBVarAddr &id,

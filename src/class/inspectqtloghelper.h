@@ -4,6 +4,7 @@
 #include "dialog/framelessdialogbase.h"
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QTextBrowser>
 
 class InspectQtLogHelper {
@@ -30,6 +31,9 @@ private:
 private:
     FramelessDialogBase *_logger;
     QTextBrowser *_ctx;
+
+    QSharedPointer<QFile> _file = nullptr;
+    QSharedPointer<QTextStream> _stream = nullptr;
 };
 
 #endif // INSPECTQTLOGHELPER_H

@@ -331,6 +331,7 @@ bool ScriptingDialog::about2Close() {
         for (auto &p : m_views) {
             p->closeDockWidget(); // force close
         }
+        m_views.clear();
         return true;
     }
 
@@ -401,7 +402,6 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
                                  &ScriptingDialog::on_save, QKeySequence::Save);
-        m_Tbtneditors.insert(ToolButtonIndex::SAVE_ACTION, a);
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
@@ -605,6 +605,9 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     addPannelAction(pannel, QStringLiteral("angellsp"), tr("AngelLSP"), [=] {
         m_setdialog->showConfig(QStringLiteral("AngelLSP"));
     });
+
+    addPannelAction(pannel, QStringLiteral("angelrestart"), tr("RestartAngel"),
+                    [this] { AngelLsp::instance().restartWithGUI(this); });
 
     return tab;
 }
@@ -1025,7 +1028,6 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     if (old != nullptr) {
         auto editor = old->editor();
         editor->disconnect(SIGNAL(copyAvailable(bool)));
-        editor->disconnect(SIGNAL(contentModified(bool)));
         editor->disconnect(SIGNAL(undoAvailable(bool)));
         editor->disconnect(SIGNAL(redoAvailable(bool)));
         editor->disconnect(SIGNAL(cursorPositionChanged()));
@@ -1036,20 +1038,12 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
         ->setEnabled(editor->document()->isUndoAvailable());
     m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
         ->setEnabled(editor->document()->isRedoAvailable());
-    m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-        ->setEnabled(Utilities::fileCanWrite(cur->fileName()) &&
-                     editor->document()->isModified());
     m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
         ->setEnabled(editor->textCursor().hasSelection());
 
     connect(editor, &CodeEdit::copyAvailable,
             m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
             &QToolButton::setEnabled);
-    connect(editor, &CodeEdit::contentModified, this, [=] {
-        m_Tbtneditors.value(ToolButtonIndex::SAVE_ACTION)
-            ->setEnabled(Utilities::fileCanWrite(cur->fileName()) &&
-                         editor->document()->isModified());
-    });
     connect(editor, &CodeEdit::undoAvailable,
             m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
             &QToolButton::setEnabled);
@@ -1514,7 +1508,6 @@ void ScriptingDialog::on_saveas() {
 
     auto res = editor->save(filename);
     if (res) {
-        setWindowFilePath(editor->fileName());
         updateWindowTitle();
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
