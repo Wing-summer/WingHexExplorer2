@@ -187,8 +187,7 @@ QHexView::QHexView(QWidget *parent)
 
     connect(m_blinktimer, &QTimer::timeout, this, &QHexView::blinkCursor);
 
-    this->setDocument(QSharedPointer<QHexDocument>(
-        QHexDocument::fromInternalBuffer<QMemoryBuffer>(false)));
+    resetDocument();
 }
 
 QHexView::~QHexView() { m_blinktimer->stop(); }
@@ -241,6 +240,11 @@ void QHexView::setDocument(const QSharedPointer<QHexDocument> &document,
 
     this->adjustScrollBars();
     this->viewport()->update();
+}
+
+void QHexView::resetDocument() {
+    this->setDocument(QSharedPointer<QHexDocument>(
+        QHexDocument::fromInternalBuffer<QMemoryBuffer>(false)));
 }
 
 bool QHexView::event(QEvent *e) {
@@ -362,8 +366,13 @@ qsizetype QHexView::findPrevious(qsizetype begin, const QByteArray &ba) {
 }
 
 bool QHexView::RemoveSelection(int nibbleindex) {
-    if (!m_cursor->hasSelection())
+    if (isReadOnly() || isKeepSize()) {
+        return false;
+    }
+
+    if (!m_cursor->hasSelection()) {
         return true;
+    }
 
     auto total = m_cursor->selectionCount();
     auto msg = QStringLiteral("[H-G] {cnt: %1}").arg(total);
@@ -998,20 +1007,17 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
             if (isKeepSize()) {
                 if (cur->insertionMode() == QHexCursor::OverwriteMode) {
                     if (e->key() == Qt::Key_Backspace)
-                        m_document->Replace(m_cursor,
-                                            cur->position().offset() - 1,
+                        m_document->Replace(m_cursor, pos.offset() - 1,
                                             uchar(0), 0);
                     else
-                        m_document->Replace(m_cursor, cur->position().offset(),
-                                            uchar(0), 0);
+                        m_document->Replace(m_cursor, pos.offset(), uchar(0),
+                                            0);
                 }
             } else {
                 if (e->key() == Qt::Key_Backspace)
-                    m_document->Remove(m_cursor, cur->position().offset() - 1,
-                                       1, 1);
+                    m_document->Remove(m_cursor, pos.offset() - 1, 1, 1);
                 else
-                    m_document->Remove(m_cursor, cur->position().offset(), 1,
-                                       0);
+                    m_document->Remove(m_cursor, pos.offset(), 1, 0);
             }
 
         } else {

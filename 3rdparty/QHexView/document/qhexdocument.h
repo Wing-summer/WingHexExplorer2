@@ -158,27 +158,27 @@ public slots:
     bool Replace(QHexCursor *cursor, qsizetype offset, uchar b,
                  int nibbleindex);
     bool Replace(QHexCursor *cursor, qsizetype offset, const QByteArray &data,
-                 int nibbleindex = 0);
+                 int nibbleindex = 1);
     bool Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
-                int nibbleindex = 0);
+                int nibbleindex = 1);
 
     QUndoCommand *MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
-                             qsizetype offset, uchar b, int nibbleindex = 0);
+                             qsizetype offset, uchar b, int nibbleindex = 1);
     QUndoCommand *MakeInsert(QUndoCommand *parent, QHexCursor *cursor,
                              qsizetype offset, const QByteArray &data,
-                             int nibbleindex = 0);
+                             int nibbleindex = 1);
     QUndoCommand *MakeAppend(QUndoCommand *parent, QHexCursor *cursor, uchar b,
-                             int nibbleindex = 0);
+                             int nibbleindex = 1);
     QUndoCommand *MakeAppend(QUndoCommand *parent, QHexCursor *cursor,
-                             const QByteArray &data, int nibbleindex = 0);
+                             const QByteArray &data, int nibbleindex = 1);
     QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,
-                              qsizetype offset, uchar b, int nibbleindex = 0);
+                              qsizetype offset, uchar b, int nibbleindex = 1);
     QUndoCommand *MakeReplace(QUndoCommand *parent, QHexCursor *cursor,
                               qsizetype offset, const QByteArray &data,
-                              int nibbleindex = 0);
+                              int nibbleindex = 1);
     QUndoCommand *MakeRemove(QUndoCommand *parent, QHexCursor *cursor,
                              qsizetype offset, qsizetype len,
-                             int nibbleindex = 0);
+                             int nibbleindex = 1);
 
     void pushMakeUndo(QUndoCommand *cmd);
 
@@ -311,9 +311,9 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
         return nullptr;
     }
 
+    iodevice->close();
     QHexBuffer *hexbuffer = new T();
     if (hexbuffer->open(iodevice, readonly)) {
-        iodevice->close();
         return new QHexDocument(hexbuffer);
     } else {
         iodevice->close();

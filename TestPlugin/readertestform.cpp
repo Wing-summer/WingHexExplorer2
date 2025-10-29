@@ -82,7 +82,7 @@ void ReaderTestForm::on_btnStatus_clicked() {
         QStringLiteral("[Status]") % lf %
         QStringLiteral("isCurrentDocEditing: ") %
         (isCurrentDocEditing() ? strue : sfalse) % lf %
-        QStringLiteral("currentDocFilename: ") % currentDocFilename() % lf %
+        QStringLiteral("currentDocFile: ") % currentDocFile() % lf %
         QStringLiteral("isReadOnly: ") % (isReadOnly() ? strue : sfalse) % lf %
         QStringLiteral("isKeepSize: ") % (isKeepSize() ? strue : sfalse) % lf %
         QStringLiteral("isLocked: ") % (isLocked() ? strue : sfalse) % lf %

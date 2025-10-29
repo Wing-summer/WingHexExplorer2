@@ -99,7 +99,6 @@ private:
 
 private:
     QString _codes;
-
     quint64 version = 1;
 
     ResettableTimer *_timer;

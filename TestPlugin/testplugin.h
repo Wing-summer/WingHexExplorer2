@@ -120,7 +120,7 @@ private:
 
     QVector<QColor> colorTable();
     bool createTestShareMem(const QString &nameID);
-    void destoryTestShareMem();
+    bool destoryTestShareMem();
     void printLogTestSharedMemData();
 
     void setPluginMetaTestEnabled(bool b);

@@ -13,7 +13,7 @@ class HistoryDelDialog : public QWidget {
 
 public:
     explicit HistoryDelDialog(const QList<RecentFileManager::RecentInfo> &files,
-                              bool fileNameOnly, QWidget *parent = nullptr);
+                              bool isScriptFile, QWidget *parent = nullptr);
     virtual ~HistoryDelDialog();
 
 public:
@@ -34,7 +34,7 @@ private:
     FramelessDialogBase *_dialog;
 
     QList<RecentFileManager::RecentInfo> _infos;
-    bool _fileNameOnly;
+    bool _isScriptFile;
 };
 
 #endif // HISTORYDELDIALOG_H

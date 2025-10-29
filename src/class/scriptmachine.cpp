@@ -625,7 +625,13 @@ void ScriptMachine::checkDebugger(asIScriptContext *ctx) {
         return;
     }
     // hook the context
-    _debugger->HookContext(ctx, _debugger->HasWork());
+    if (_debugger->HasWork()) {
+        _debugger->HookContext(ctx, true);
+    } else {
+        _debugger->HookContext(ctx, false);
+        ctx->SetLineCallback(asFUNCTION(ScriptMachine::lineCallback), nullptr,
+                             asCALL_CDECL);
+    }
 }
 
 void ScriptMachine::__output(MessageType type, asIScriptGeneric *args) {
@@ -1175,13 +1181,8 @@ void ScriptMachine::abortScript(ConsoleMode mode) {
     auto ctx = _ctx.value(mode, nullptr);
     if (ctx) {
         ctx->Abort();
+        _ctx[mode] = nullptr;
     }
-}
-
-void ScriptMachine::abortScript() {
-    abortScript(ConsoleMode::Interactive);
-    abortScript(ConsoleMode::Scripting);
-    abortScript(ConsoleMode::Background);
 }
 
 void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
@@ -1304,6 +1305,10 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     p->checkDebugger(ctx);
 
     return ctx;
+}
+
+void ScriptMachine::lineCallback(asIScriptContext *, void *) {
+    QApplication::processEvents();
 }
 
 void ScriptMachine::returnContextCallback(asIScriptEngine *engine,

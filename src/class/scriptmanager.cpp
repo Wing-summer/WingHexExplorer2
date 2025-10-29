@@ -17,6 +17,7 @@
 
 #include "scriptmanager.h"
 
+#include "DockWidgetTab.h"
 #include "dbghelper.h"
 
 #include <QApplication>
@@ -97,6 +98,21 @@ QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
             });
     }
     return menu;
+}
+
+ads::CDockWidgetTab *ScriptManager::indicator() const { return m_indicator; }
+
+void ScriptManager::setIndicator(ads::CDockWidgetTab *newIndicator) {
+    m_indicator = newIndicator;
+}
+
+bool ScriptManager::isScriptFile(const QString &file) {
+    QFileInfo info(file);
+    auto suffix = info.suffix();
+    return info.exists() && Utilities::isTextFile(info) &&
+           (suffix.compare(QStringLiteral("as"), Qt::CaseInsensitive) == 0 ||
+            suffix.compare(QStringLiteral("anglescript"),
+                           Qt::CaseInsensitive) == 0);
 }
 
 QStringList ScriptManager::sysScriptsDbCats() const {
@@ -293,7 +309,10 @@ void ScriptManager::runScript(const QString &filename) {
         }
     }
 
+    Q_ASSERT(m_indicator);
+    m_indicator->setIcon(ICONRES(QStringLiteral("dbgrun")));
     ins.executeScript(ScriptMachine::Background, filename);
+    m_indicator->setIcon({});
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {

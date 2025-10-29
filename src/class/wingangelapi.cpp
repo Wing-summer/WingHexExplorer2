@@ -81,8 +81,8 @@ WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {
 }
 
 void WingAngelAPI::eventPluginFile(PluginFileEvent e, FileType type,
-                                   const QString &newfileName, int handle,
-                                   const QString &oldfileName) {
+                                   const QUrl &newfileName, int handle,
+                                   const QUrl &oldfileName) {
     Q_UNUSED(type);
     Q_UNUSED(newfileName);
     Q_UNUSED(oldfileName);
@@ -425,10 +425,10 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                 asMETHODPR(WingHex::IWingPlugin, isCurrentDocEditing,
                            (void) const, bool),
                 "bool isCurrentDocEditing()");
-    registerAPI(engine,
-                asMETHODPR(WingHex::IWingPlugin, currentDocFilename,
-                           (void) const, QString),
-                "string currentDocFilename()");
+    registerAPI(
+        engine,
+        asMETHODPR(WingHex::IWingPlugin, currentDocFile, (void) const, QString),
+        "string currentDocFile()");
     registerAPI(
         engine,
         asMETHODPR(WingHex::IWingPlugin, isInsertionMode, (void) const, bool),

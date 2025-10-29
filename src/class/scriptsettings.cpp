@@ -171,6 +171,7 @@ void ScriptSettings::setEditorAutoIden(bool newEditorAutoIden) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_AUTO_IDEN, newEditorAutoIden);
         m_editorAutoIden = newEditorAutoIden;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -183,6 +184,7 @@ void ScriptSettings::setConsoleAutoCloseChar(bool newConsoleAutoCloseChar) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_AUTO_CLOSE_CHAR, newConsoleAutoCloseChar);
         m_consoleAutoCloseChar = newConsoleAutoCloseChar;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -195,6 +197,7 @@ void ScriptSettings::setEditorAutoCloseChar(bool newEditorAutoCloseChar) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_AUTO_CLOSE_CHAR, newEditorAutoCloseChar);
         m_editorAutoCloseChar = newEditorAutoCloseChar;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -207,6 +210,7 @@ void ScriptSettings::setConsoleShowWhiteSpace(bool newConsoleShowWhiteSpace) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_SHOW_WHITESPACE, newConsoleShowWhiteSpace);
         m_consoleShowWhiteSpace = newConsoleShowWhiteSpace;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -219,6 +223,7 @@ void ScriptSettings::setEditorShowWhiteSpace(bool newEditorShowWhiteSpace) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_WHITESPACE, newEditorShowWhiteSpace);
         m_editorShowWhiteSpace = newEditorShowWhiteSpace;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -231,6 +236,7 @@ void ScriptSettings::setEditorShowLineEdges(bool newEditorShowLineEdges) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_LONGLINEEDGE, newEditorShowLineEdges);
         m_editorShowLineEdges = newEditorShowLineEdges;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -243,6 +249,7 @@ void ScriptSettings::setEditorShowGuideLine(bool newEditorShowGuidLine) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_INDENTGUIDES, newEditorShowGuidLine);
         m_editorShowGuideLine = newEditorShowGuidLine;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -253,6 +260,7 @@ void ScriptSettings::setEditorFolding(bool newEditorFolding) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_FOLDING, newEditorFolding);
         m_editorFolding = newEditorFolding;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -265,6 +273,7 @@ void ScriptSettings::setEditorShowLineNumber(bool newEditorShowLineNumber) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_SHOW_LINENUMBER, newEditorShowLineNumber);
         m_editorShowLineNumber = newEditorShowLineNumber;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -275,6 +284,7 @@ void ScriptSettings::setEditorWordWrap(bool newEditorWordWrap) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_WORD_WRAP, newEditorWordWrap);
         m_editorWordWrap = newEditorWordWrap;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -285,6 +295,7 @@ void ScriptSettings::setConsoleMatchBraces(bool newConsoleMatchBraces) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_MATCH_BRACES, newConsoleMatchBraces);
         m_consoleMatchBraces = newConsoleMatchBraces;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -295,6 +306,7 @@ void ScriptSettings::setEditorMatchBraces(bool newEditorMatchBraces) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_MATCH_BRACES, newEditorMatchBraces);
         m_editorMatchBraces = newEditorMatchBraces;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -305,6 +317,7 @@ void ScriptSettings::setConsoleInden(int newConsoleInden) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_INDENTATION, newConsoleInden);
         m_consoleInden = newConsoleInden;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -315,6 +328,7 @@ void ScriptSettings::setEditorInden(int newEditorInden) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_INDENTATION, newEditorInden);
         m_editorInden = newEditorInden;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -325,6 +339,7 @@ void ScriptSettings::setConsoleTabWidth(int newConsoleTabWidth) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_TABS_WIDTH, newConsoleTabWidth);
         m_consoleTabWidth = newConsoleTabWidth;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -335,6 +350,7 @@ void ScriptSettings::setEditorTabWidth(int newEditorTabWidth) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_TABS_WIDTH, newEditorTabWidth);
         m_editorTabWidth = newEditorTabWidth;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -345,6 +361,7 @@ void ScriptSettings::setConsoleTheme(const QString &newConsoleTheme) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_THEME, newConsoleTheme);
         m_consoleTheme = newConsoleTheme;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -355,6 +372,7 @@ void ScriptSettings::setEditorTheme(const QString &newEditorTheme) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_THEME, newEditorTheme);
         m_editorTheme = newEditorTheme;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -365,6 +383,7 @@ void ScriptSettings::setConsoleFontSize(int newConsolefontSize) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_FONT_SIZE, newConsolefontSize);
         m_consolefontSize = newConsolefontSize;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -375,6 +394,7 @@ void ScriptSettings::setEditorFontSize(int newEditorfontSize) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_FONT_SIZE, newEditorfontSize);
         m_editorfontSize = newEditorfontSize;
+        Q_EMIT editorSettingsUpdate();
     }
 }
 
@@ -387,6 +407,7 @@ void ScriptSettings::setConsoleFontFamily(const QString &newConsoleFontFamily) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CONSOLE_FONT, newConsoleFontFamily);
         m_consoleFontFamily = newConsoleFontFamily;
+        Q_EMIT consoleSettingUpdate();
     }
 }
 
@@ -397,5 +418,6 @@ void ScriptSettings::setEditorFontFamily(const QString &newEditorFontFamily) {
         HANDLE_CONFIG;
         WRITE_CONFIG(CODEEDIT_FONT, newEditorFontFamily);
         m_editorFontFamily = newEditorFontFamily;
+        Q_EMIT editorSettingsUpdate();
     }
 }

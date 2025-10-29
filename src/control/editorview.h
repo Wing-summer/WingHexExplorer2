@@ -49,9 +49,6 @@ public:
     };
 
 public:
-    static QString getDeviceFileName(const QString &ext, const QString &file);
-
-public:
     // helper functions for plugin system
     template <typename T>
     static T readBasicTypeContent(EditorView *view, qsizetype offset,
@@ -142,11 +139,10 @@ public:
     explicit EditorView(QWidget *parent = nullptr);
     virtual ~EditorView() override;
 
-    QString fileName() const;
+    QUrl fileNameUrl() const;
 
     bool isOriginWorkSpace() const;
     bool isNewFile() const;
-    bool isBigFile() const;
     bool isCloneFile() const;
     bool isExtensionFile() const;
     bool isCommonFile() const;
@@ -197,6 +193,7 @@ public:
     ErrFile newFile(size_t index);
     ErrFile openFile(const QString &filename);
     ErrFile openExtFile(const QString &ext, const QString &file);
+    ErrFile openExtFile(const QUrl &fileName);
     ErrFile openWorkSpace(const QString &filename);
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
@@ -211,10 +208,14 @@ public:
 
     EditorViewContext *editorContext() const;
 
+    static bool isNewFileUrl(const QUrl &url);
+
+    static QString newFileAuthority();
+
 private:
     inline qsizetype findAvailCloneIndex();
 
-    void setFileName(const QString &fileName);
+    void setFileNameUrl(const QUrl &fileName);
 
     QHash<QString, QByteArray> savePluginData();
     bool checkHasUnsavedState() const;
@@ -237,7 +238,7 @@ private slots:
                            const WingHex::MetaCallInfo &infos);
 
 private slots:
-    QString currentDocFilename(const QObject *caller);
+    QString currentDocFile(const QObject *caller);
 
     // document
     bool isReadOnly(const QObject *caller);
@@ -541,13 +542,11 @@ private:
     QMap<QCryptographicHash::Algorithm, QString> _checkSumData;
 
     DocumentType m_docType = DocumentType::InValid;
-    bool m_isWorkSpace = false;
+    QString workSpaceName;
     QHash<QString, QByteArray> _pluginData;
 
-    // only for extension use
-    QString _ext;
     WingHex::WingIODevice *_dev = nullptr;
-    QString _file;
+    QUrl m_fileName;
 
     QReadWriteLock _rwlock;
     CallTable _viewFns;

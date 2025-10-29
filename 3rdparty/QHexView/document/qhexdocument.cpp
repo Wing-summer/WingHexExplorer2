@@ -698,11 +698,11 @@ bool QHexDocument::Insert(QHexCursor *cursor, qsizetype offset,
     auto cmd = MakeInsert(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+        Q_EMIT documentChanged();
     } else {
         return false;
     }
 
-    Q_EMIT documentChanged();
     return true;
 }
 
@@ -717,8 +717,8 @@ void QHexDocument::Append(QHexCursor *cursor, const QByteArray &data,
     auto cmd = MakeAppend(nullptr, cursor, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+        Q_EMIT documentChanged();
     }
-    Q_EMIT documentChanged();
 }
 
 bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
@@ -729,10 +729,10 @@ bool QHexDocument::Replace(QHexCursor *cursor, qsizetype offset,
     auto cmd = MakeReplace(nullptr, cursor, offset, data, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+        Q_EMIT documentChanged();
     } else {
         return false;
     }
-    Q_EMIT documentChanged();
     return true;
 }
 
@@ -743,8 +743,8 @@ bool QHexDocument::Remove(QHexCursor *cursor, qsizetype offset, qsizetype len,
     auto cmd = MakeRemove(nullptr, cursor, offset, len, nibbleindex);
     if (cmd) {
         m_undostack->push(cmd);
+        Q_EMIT documentChanged();
     }
-    Q_EMIT documentChanged();
     return true;
 }
 

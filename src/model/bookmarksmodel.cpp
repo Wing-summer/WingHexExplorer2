@@ -75,6 +75,8 @@ void BookMarksModel::setDocument(QHexDocument *newDoc) {
     if (_doc) {
         connect(_doc, &QHexDocument::bookMarkChanged, this,
                 [=] { Q_EMIT this->layoutChanged(); });
+        connect(_doc, &QHexDocument::destroyed, this,
+                [this]() { _doc = nullptr; });
     }
     endResetModel();
 }

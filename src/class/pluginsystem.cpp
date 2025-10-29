@@ -721,7 +721,7 @@ bool PluginSystem::isCurrentDocEditing(const QObject *sender) {
     return pluginCurrentEditor(plg);
 }
 
-QString PluginSystem::currentDocFilename(const QObject *sender) {
+QString PluginSystem::currentDocFile(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
         return {};
@@ -733,7 +733,7 @@ QString PluginSystem::currentDocFilename(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->fileName();
+        return e->fileNameUrl().url();
     }
     return {};
 }
@@ -2947,7 +2947,7 @@ int PluginSystem::openCurrent(const QObject *sender) {
 
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg), view->fileName(), id,
+            {quintptr(plg), view->fileNameUrl(), id,
              QVariant::fromValue(_win->getEditorViewFileType(view))});
 
         return id;
@@ -3597,7 +3597,7 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
                         }
                         dispatchEvent(
                             IWingPlugin::RegisteredEvent::PluginFileClosed,
-                            {quintptr(v->linkedplg), v->view->fileName(),
+                            {quintptr(v->linkedplg), v->view->fileNameUrl(),
                              getUIDHandle(v->fid),
                              QVariant::fromValue(
                                  _win->getEditorViewFileType(view))});
@@ -3708,7 +3708,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::FileOpened: {
         Q_ASSERT(params.size() == 2);
-        auto fileName = params.at(0).toString();
+        auto fileName = params.at(0).toUrl();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
         for (auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Opened, fileType,
@@ -3717,8 +3717,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::FileSaved: {
         Q_ASSERT(params.size() == 4);
-        auto newFileName = params.at(0).toString();
-        auto oldFileName = params.at(1).toString();
+        auto newFileName = params.at(0).toUrl();
+        auto oldFileName = params.at(1).toUrl();
         auto isExported = params.at(2).toBool();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
         for (auto &plg : _evplgs[event]) {
@@ -3730,8 +3730,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::FileSwitched: {
         Q_ASSERT(params.size() == 2);
-        auto newFileName = params.at(0).toString();
-        auto oldFileName = params.at(1).toString();
+        auto newFileName = params.at(0).toUrl();
+        auto oldFileName = params.at(1).toUrl();
         for (auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Switched,
                                  IWingPlugin::FileType::Invalid, oldFileName,
@@ -4345,29 +4345,20 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 }
 
                 EditorView *view = nullptr;
-                auto res = _win->openExtFile(getPluginID(p), file, &view);
-
-                if (res == ErrFile::NotExist) {
-                    WingMessageBox::critical(_win, tr("Error"),
-                                             tr("FileNotExist"));
-                    return;
-                }
-                if (res == ErrFile::Permission) {
-                    WingMessageBox::critical(_win, tr("Error"),
-                                             tr("FilePermission"));
-                    return;
-                }
-                if (res == ErrFile::InvalidFormat) {
-                    WingMessageBox::critical(_win, tr("Error"),
-                                             tr("FileInvalidFmt"));
-                    return;
-                }
+                auto ext = getPluginID(p);
+                auto res = _win->openExtFile(ext, file, &view);
 
                 if (res == ErrFile::AlreadyOpened) {
                     Q_ASSERT(view);
                     view->raise();
                     view->setFocus();
                     return;
+                } else {
+                    if (_win->reportErrFileError(res, {}, {}, {})) {
+                        RecentFileManager::RecentInfo info;
+                        info.url = Utilities::getDeviceFileName(ext, file);
+                        _win->m_recentmanager->addRecentFile(info);
+                    }
                 }
             }));
 

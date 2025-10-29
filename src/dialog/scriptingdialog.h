@@ -208,6 +208,7 @@ private:
     ScriptEditor *currentEditor() const;
     void swapEditor(ScriptEditor *old, ScriptEditor *cur);
     void updateWindowTitle();
+    void addRecentFile(const QString &fileName);
 
     void updateRunDebugMode(bool disable = false);
 

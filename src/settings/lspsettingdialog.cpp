@@ -142,7 +142,6 @@ void LspSettingDialog::reload() {
     if (SettingManager::instance().scriptEnabled()) {
         auto &lsp = AngelLsp::instance();
         if (lsp.isActive()) {
-            ui->cbEnabled->setEnabled(true);
             ui->gbDebug->setEnabled(true);
             ui->gbFormat->setEnabled(true);
 
@@ -152,10 +151,11 @@ void LspSettingDialog::reload() {
             ui->cbAutoFmt->setChecked(lsp.autofmt());
 
             ui->cbTrace->setCurrentIndex(int(lsp.traceMode()));
+            ui->gbOther->setEnabled(true);
         } else {
-            ui->cbEnabled->setEnabled(false);
             ui->gbDebug->setEnabled(false);
             ui->gbFormat->setEnabled(false);
+            ui->gbOther->setEnabled(false);
         }
     } else {
         setEnabled(false);

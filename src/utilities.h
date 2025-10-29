@@ -95,28 +95,7 @@ public:
 #endif
     }
 
-#ifdef Q_OS_LINUX
-    static bool isFileOwnerRoot(const QString &filePath) {
-        struct stat fileStat;
-        if (stat(filePath.toUtf8(), &fileStat) != 0) {
-            return false;
-        }
-
-        // Check if the owner UID is 0 (root)
-        return fileStat.st_uid == 0;
-    }
-
-    static bool fixUpFilePermissions(const QString &filePath) {
-        // Set permissions to 666 (rw-rw-rw-)
-        if (chmod(filePath.toUtf8(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
-                                         S_IROTH | S_IWOTH) != 0) {
-            return false;
-        }
-        return true;
-    }
-#endif
-
-    static QString processBytesCount(qint64 bytescount) {
+    inline static QString processBytesCount(qint64 bytescount) {
         QStringList B{"B", "KB", "MB", "GB", "TB"};
         auto av = bytescount;
         auto r = av;
@@ -133,7 +112,7 @@ public:
         return QStringLiteral("%1 TB").arg(av);
     }
 
-    static QStringList getEncodings() {
+    inline static QStringList getEncodings() {
         static QStringList encodings;
 
         if (encodings.isEmpty()) {
@@ -163,7 +142,8 @@ public:
         return encodings;
     }
 
-    static QList<QCryptographicHash::Algorithm> supportedHashAlgorithms() {
+    inline static QList<QCryptographicHash::Algorithm>
+    supportedHashAlgorithms() {
         static QList<QCryptographicHash::Algorithm> algorithms;
         if (algorithms.isEmpty()) {
             auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
@@ -178,7 +158,7 @@ public:
         return algorithms;
     }
 
-    static QStringList supportedHashAlgorithmStringList() {
+    inline static QStringList supportedHashAlgorithmStringList() {
         static QStringList hashNames;
         if (hashNames.isEmpty()) {
             auto hashes = Utilities::supportedHashAlgorithms();
@@ -190,7 +170,7 @@ public:
         return hashNames;
     }
 
-    static QByteArray getMd5(const QString &filename) {
+    inline static QByteArray getMd5(const QString &filename) {
         if (filename.isEmpty()) {
             return {};
         }
@@ -205,13 +185,13 @@ public:
         return {};
     }
 
-    static QByteArray getMd5(const QByteArray &data) {
+    inline static QByteArray getMd5(const QByteArray &data) {
         QCryptographicHash hash(QCryptographicHash::Md5);
         hash.addData(data);
         return hash.result();
     }
 
-    static constexpr bool checkIsLittleEndian() {
+    inline static constexpr bool checkIsLittleEndian() {
 #if WING_LITTLE_ENDIAN
         return true;
 #else
@@ -243,7 +223,8 @@ public:
         return source;
     }
 
-    static QIcon getIconFromFile(QStyle *style, const QString &filename) {
+    inline static QIcon getIconFromFile(QStyle *style,
+                                        const QString &filename) {
         QFileIconProvider prov;
         auto qicon = prov.icon(QFileInfo(filename));
         if (qicon.availableSizes().isEmpty()) {
@@ -252,11 +233,11 @@ public:
         return qicon;
     }
 
-    static bool fileCanWrite(QString path) {
+    inline static bool fileCanWrite(QString path) {
         return QFileInfo(path).permission(QFile::WriteUser);
     }
 
-    static void moveToCenter(QWidget *window) {
+    inline static void moveToCenter(QWidget *window) {
         if (window == nullptr)
             return;
         auto screen = qApp->primaryScreen()->availableSize();
@@ -264,22 +245,22 @@ public:
                      (screen.height() - window->height()) / 2);
     }
 
-    static bool isTextFile(const QMimeType &type) {
+    inline static bool isTextFile(const QMimeType &type) {
         return type.inherits(QStringLiteral("text/plain"));
     }
 
-    static bool isTextFile(const QFileInfo &info) {
+    inline static bool isTextFile(const QFileInfo &info) {
         QMimeDatabase db;
         auto t = db.mimeTypeForFile(info, QMimeDatabase::MatchContent);
         return isTextFile(t);
     }
 
-    static QString getAppDataPath() {
+    inline static QString getAppDataPath() {
         return QStandardPaths::writableLocation(
             QStandardPaths::AppDataLocation);
     }
 
-    static void applyItemViewProperty(QAbstractItemView *view) {
+    inline static void applyItemViewProperty(QAbstractItemView *view) {
         view->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);
         view->setSelectionMode(QAbstractItemView::SingleSelection);
         view->setSelectionBehavior(
@@ -288,7 +269,7 @@ public:
         view->setAlternatingRowColors(true);
     }
 
-    static void applyTableViewProperty(QTableView *view) {
+    inline static void applyTableViewProperty(QTableView *view) {
         applyItemViewProperty(view);
         view->verticalHeader()->setDefaultAlignment(Qt::AlignCenter);
         auto hheader = view->horizontalHeader();
@@ -301,11 +282,11 @@ public:
                                        15);
     }
 
-    static QString getAbsoluteDirPath(const QString &fileName) {
+    inline static QString getAbsoluteDirPath(const QString &fileName) {
         return QFileInfo(fileName).absoluteDir().absolutePath();
     }
 
-    static void applyTreeViewProperty(QTreeView *view) {
+    inline static void applyTreeViewProperty(QTreeView *view) {
         applyItemViewProperty(view);
         view->setRootIsDecorated(true);
         view->setUniformRowHeights(true);
@@ -332,8 +313,8 @@ public:
         }
     }
 
-    static QByteArray encodingString(const QString &str,
-                                     const QString &enc = {}) {
+    inline static QByteArray encodingString(const QString &str,
+                                            const QString &enc = {}) {
         auto encoding = enc;
         if (encoding.isEmpty() || encoding.compare(QStringLiteral("ASCII"),
                                                    Qt::CaseInsensitive) == 0) {
@@ -352,7 +333,7 @@ public:
 #endif
     }
 
-    static QString realEncodingName(const QString &enc = {}) {
+    inline static QString realEncodingName(const QString &enc = {}) {
         if (enc.isEmpty() ||
             enc.compare(QStringLiteral("ASCII"), Qt::CaseInsensitive) == 0) {
             return QStringLiteral("ISO-8859-1");
@@ -360,8 +341,8 @@ public:
         return enc;
     }
 
-    static QString decodingString(const QByteArray &buffer,
-                                  const QString &enc = {}) {
+    inline static QString decodingString(const QByteArray &buffer,
+                                         const QString &enc = {}) {
         auto encoding = realEncodingName(enc);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -377,7 +358,7 @@ public:
 #endif
     }
 
-    static bool isValidIdentifier(const QString &str) {
+    inline static bool isValidIdentifier(const QString &str) {
         if (str.isEmpty()) {
             return false;
         }
@@ -394,13 +375,18 @@ public:
         return true;
     }
 
-    static QString getUrlString(const QString &fileName) {
+    inline static QString getUrlString(const QString &fileName) {
         return QUrl::fromLocalFile(fileName).toString(QUrl::FullyEncoded);
     }
 
-    static QString getASPredefPath() {
+    inline static QString getASPredefPath() {
         QDir datap(Utilities::getAppDataPath());
         return datap.absoluteFilePath(QStringLiteral("as.predefined"));
+    }
+
+    inline static QString getDeviceFileName(const QString &ext,
+                                            const QString &file) {
+        return QStringLiteral("wdrv://") + ext + QStringLiteral("/") + file;
     }
 };
 

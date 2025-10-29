@@ -150,7 +150,6 @@ public:
 
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
-    void abortScript();
 
 protected:
     bool configureEngine();
@@ -188,6 +187,7 @@ private:
 
     static asIScriptContext *requestContextCallback(asIScriptEngine *engine,
                                                     void *param);
+    static void lineCallback(asIScriptContext *ctx, void *param);
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 

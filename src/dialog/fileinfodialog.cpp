@@ -16,7 +16,9 @@
 */
 
 #include "fileinfodialog.h"
+#include "class/pluginsystem.h"
 #include "utilities.h"
+
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -26,8 +28,9 @@
 #include <QTextBrowser>
 #include <QVBoxLayout>
 
-FileInfoDialog::FileInfoDialog(QString filename, QWidget *parent)
+FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     : FramelessDialogBase(parent) {
+    Q_ASSERT(editor);
     static const QString dfmt("yyyy/MM/dd hh:mm:ss ddd");
 
     auto widget = new QWidget(this);
@@ -40,34 +43,79 @@ FileInfoDialog::FileInfoDialog(QString filename, QWidget *parent)
     QIcon icon;
     auto b = new QTextBrowser(this);
 
-    if (filename.isEmpty()) {
-        icon = this->style()->standardIcon(QStyle::SP_FileIcon);
-        b->append(tr("FileNew"));
-    } else {
-        QMimeDatabase db;
-        auto t = db.mimeTypeForFile(filename);
-        auto ico = t.iconName();
-        icon = QIcon::fromTheme(ico, QIcon(ico));
-        if (icon.isNull()) {
+    auto url = editor->fileNameUrl();
+    static auto sep = QStringLiteral(" : ");
+    if (url.isLocalFile()) {
+        if (EditorView::isNewFileUrl(url)) {
             icon = this->style()->standardIcon(QStyle::SP_FileIcon);
+            b->append(tr("FileNew"));
+        } else {
+            auto fileName = url.toLocalFile();
+            QMimeDatabase db;
+            auto t = db.mimeTypeForFile(fileName);
+            auto ico = t.iconName();
+            icon = QIcon::fromTheme(ico, QIcon(ico));
+            if (icon.isNull()) {
+                icon = this->style()->standardIcon(QStyle::SP_FileIcon);
+            }
+            QFileInfo finfo(fileName);
+            b->append(tr("FileName") + sep + finfo.fileName());
+            b->append(tr("FilePath") + sep + finfo.filePath());
+            b->append(tr("FileSize") + sep +
+                      Utilities::processBytesCount(finfo.size()));
+            b->append(tr("Mime") + sep + t.name());
+            b->append(tr("Md5") + sep +
+                      Utilities::getMd5(fileName).toHex().toUpper());
+            b->append(
+                tr("FileBirthTime") + sep +
+                finfo.fileTime(QFile::FileTime::FileBirthTime).toString(dfmt));
+            b->append(
+                tr("FileAccessTime") + sep +
+                finfo.fileTime(QFile::FileTime::FileAccessTime).toString(dfmt));
+            b->append(tr("FileModificationTime") + sep +
+                      finfo.fileTime(QFile::FileTime::FileModificationTime)
+                          .toString(dfmt));
+            b->append(tr("LastRead") + sep + finfo.lastRead().toString(dfmt));
+            b->append(tr("LastMod") + sep +
+                      finfo.lastModified().toString(dfmt));
         }
-        QFileInfo finfo(filename);
-        b->append(tr("FileName:") + finfo.fileName());
-        b->append(tr("FilePath:") + finfo.filePath());
-        b->append(tr("FileSize:") + Utilities::processBytesCount(finfo.size()));
-        b->append(tr("Mime:") + t.name());
-        b->append(tr("Md5:") + Utilities::getMd5(filename).toHex().toUpper());
+    } else {
+        auto plgID = url.authority();
+        auto file = url.path();
+        if (file.front() == '/') {
+            file.removeFirst();
+        }
+
+        auto &plgsys = PluginSystem::instance();
+        auto devs = plgsys.devices();
+        auto r =
+            std::find_if(devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
+                return plgID.compare(PluginSystem::getPUID(dev),
+                                     Qt::CaseInsensitive) == 0;
+            });
+
+        IWingDevice *dev = nullptr;
+        if (r != devs.end()) {
+            dev = *r;
+            icon = dev->supportedFileIcon();
+        } else {
+            icon = ICONRES(QStringLiteral("devext"));
+        }
+
+        b->append(tr("FilePath") + sep + url.authority() + url.path());
         b->append(
-            tr("FileBirthTime:") +
-            finfo.fileTime(QFile::FileTime::FileBirthTime).toString(dfmt));
-        b->append(
-            tr("FileAccessTime:") +
-            finfo.fileTime(QFile::FileTime::FileAccessTime).toString(dfmt));
-        b->append(tr("FileModificationTime:") +
-                  finfo.fileTime(QFile::FileTime::FileModificationTime)
-                      .toString(dfmt));
-        b->append(tr("LastRead:") + finfo.lastRead().toString(dfmt));
-        b->append(tr("LastMod:") + finfo.lastModified().toString(dfmt));
+            tr("FileSize") + sep +
+            Utilities::processBytesCount(editor->hexEditor()->documentBytes()));
+
+        if (dev) {
+            auto info = plgsys.getPluginInfo(dev);
+            b->append(tr("Name") + sep + dev->pluginName());
+            b->append(tr("ID") + sep + info.id);
+            b->append(tr("License") + sep + info.license);
+            b->append(tr("Author") + sep + info.author);
+            b->append(tr("Vendor") + sep + info.vendor);
+            b->append(tr("Version") + sep + info.version.toString());
+        }
     }
 
     auto availSizes = icon.availableSizes();

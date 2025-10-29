@@ -54,6 +54,9 @@ public slots:
     void toastTakeEffectReboot();
 
 private:
+    void toastTakeEffectReboot(WingHex::SettingPage *page);
+
+private:
     Ui::SettingDialog *ui;
     QList<WingHex::SettingPage *> m_pages;
     FramelessDialogBase *_dialog = nullptr;

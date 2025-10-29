@@ -27,6 +27,7 @@
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
 #include "class/scriptmachine.h"
+#include "class/scriptmanager.h"
 #include "class/settingmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
@@ -54,7 +55,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     m_recentmanager = new RecentFileManager(m_recentMenu, true);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
             [=](const RecentFileManager::RecentInfo &rinfo) {
-                openFile(rinfo.fileName);
+                openFile(rinfo.url.toLocalFile());
             });
     m_recentmanager->apply(this,
                            SettingManager::instance().recentScriptFiles());
@@ -232,9 +233,7 @@ void ScriptingDialog::initConsole() {
                         e->setFocus();
                         e->raise();
 
-                        RecentFileManager::RecentInfo info;
-                        info.fileName = file;
-                        m_recentmanager->addRecentFile(info);
+                        addRecentFile(file);
                     } else {
                         e = createFakeEditor(file, _curDbgData[file].source);
                     }
@@ -308,6 +307,10 @@ bool ScriptingDialog::about2Close() {
         view->requestCloseDockWidget();
     }
 
+    if (!m_views.isEmpty()) {
+        return false;
+    }
+
     if (unSavedFiles.isEmpty()) {
         return true;
     }
@@ -357,17 +360,9 @@ void ScriptingDialog::buildUpRibbonBar() {
         m_ribbon, &Ribbon::onDragDropFiles, this,
         [=](const QStringList &files) {
             for (auto &file : files) {
-                QFileInfo info(file);
-                auto suffix = info.suffix();
-                if (info.exists() && Utilities::isTextFile(info) &&
-                    (suffix.compare(QStringLiteral("as"),
-                                    Qt::CaseInsensitive) == 0 ||
-                     suffix.compare(QStringLiteral("anglescript"),
-                                    Qt::CaseInsensitive) == 0)) {
+                if (ScriptManager::isScriptFile(file)) {
                     if (openFile(file)) {
-                        RecentFileManager::RecentInfo info;
-                        info.fileName = file;
-                        m_recentmanager->addRecentFile(info);
+                        addRecentFile(file);
                         m_lastusedpath = Utilities::getAbsoluteDirPath(file);
                     }
                 } else {
@@ -897,9 +892,9 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
 }
 
 QMessageBox::StandardButton ScriptingDialog::saveRequest() {
-    auto ret = WingMessageBox::warning(this, qAppName(), tr("ConfirmSave"),
-                                       QMessageBox::Yes | QMessageBox::No |
-                                           QMessageBox::Cancel);
+    auto ret = WingMessageBox::warning(
+        this, qAppName(), tr("ConfirmScriptSave"),
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     return ret;
 }
 
@@ -1078,6 +1073,12 @@ void ScriptingDialog::updateWindowTitle() {
         QFileInfo info(fp);
         this->setWindowTitle(title + QStringLiteral(" - ") + info.fileName());
     }
+}
+
+void ScriptingDialog::addRecentFile(const QString &fileName) {
+    RecentFileManager::RecentInfo info;
+    info.url = QUrl::fromLocalFile(fileName);
+    m_recentmanager->addRecentFile(info);
 }
 
 void ScriptingDialog::updateRunDebugMode(bool disable) {
@@ -1446,9 +1447,7 @@ void ScriptingDialog::on_openfile() {
     if (!filename.isEmpty()) {
         m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
         if (openFile(filename)) {
-            RecentFileManager::RecentInfo info;
-            info.fileName = filename;
-            m_recentmanager->addRecentFile(info);
+            addRecentFile(filename);
         }
     }
 }
@@ -1515,9 +1514,7 @@ void ScriptingDialog::on_saveas() {
         WingMessageBox::critical(this, tr("Error"), tr("SaveUnSuccessfully"));
     }
 
-    RecentFileManager::RecentInfo info;
-    info.fileName = filename;
-    m_recentmanager->addRecentFile(info);
+    addRecentFile(filename);
 }
 
 void ScriptingDialog::on_undofile() {

@@ -79,11 +79,12 @@ qint64 SharedMemory::readData(char *data, qint64 maxSize) {
         return -1;
     }
 
+    auto pos = this->pos();
     const char *sharedMemoryData =
-        static_cast<const char *>(m_sharedMemory.constData());
+        static_cast<const char *>(m_sharedMemory.constData()) + pos;
 
     // Copy the data from shared memory
-    qint64 dataSize = qMin(maxSize, m_sharedMemory.size());
+    qint64 dataSize = qMin(maxSize, m_sharedMemory.size() - pos);
     memcpy(data, sharedMemoryData, dataSize);
 
     return dataSize;
@@ -98,15 +99,11 @@ qint64 SharedMemory::writeData(const char *data, qint64 maxSize) {
         return -1;
     }
 
-    // Ensure the shared memory is large enough
-    if (maxSize > m_sharedMemory.size()) {
-        qWarning() << "Data exceeds shared memory size.";
-        return -1;
-    }
-
     // Copy data to the shared memory
-    char *sharedMemoryData = static_cast<char *>(m_sharedMemory.data());
-    memcpy(sharedMemoryData, data, maxSize);
+    auto pos = this->pos();
+    char *sharedMemoryData = static_cast<char *>(m_sharedMemory.data()) + pos;
+    qint64 dataSize = qMin(maxSize, m_sharedMemory.size() - pos);
+    memcpy(sharedMemoryData, data, dataSize);
 
     return maxSize;
 }

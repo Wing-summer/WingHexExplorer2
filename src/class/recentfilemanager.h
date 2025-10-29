@@ -22,49 +22,40 @@
 #include <QList>
 #include <QMenu>
 #include <QObject>
+#include <QUrl>
 
 class RecentFileManager : public QObject {
     Q_OBJECT
 public:
     struct RecentInfo {
-        QString fileName;
+        QUrl url;
         bool isWorkSpace = false;
 
         bool operator==(const RecentInfo &info) const {
-            return
-#ifdef Q_OS_WIN
-                this->fileName.compare(info.fileName, Qt::CaseInsensitive) == 0
-#else
-                this->fileName == info.fileName
-#endif
-                && this->isWorkSpace == info.isWorkSpace;
+            return this->url == info.url &&
+                   this->isWorkSpace == info.isWorkSpace;
         }
         bool operator!=(const RecentInfo &info) const {
-            return
-#ifdef Q_OS_WIN
-                this->fileName.compare(info.fileName, Qt::CaseInsensitive)
-#else
-                this->fileName != info.fileName
-#endif
-                || this->isWorkSpace != info.isWorkSpace;
+            return this->url != info.url ||
+                   this->isWorkSpace != info.isWorkSpace;
         }
 
         friend QDataStream &operator<<(QDataStream &arch,
                                        const RecentInfo &object) {
-            arch << object.fileName;
+            arch << object.url;
             arch << object.isWorkSpace;
             return arch;
         }
 
         friend QDataStream &operator>>(QDataStream &arch, RecentInfo &object) {
-            arch >> object.fileName;
+            arch >> object.url;
             arch >> object.isWorkSpace;
             return arch;
         }
     };
 
 public:
-    explicit RecentFileManager(QMenu *menu, bool fileNameOnly);
+    explicit RecentFileManager(QMenu *menu, bool isScriptFile);
     ~RecentFileManager();
     void addRecentFile(const RecentInfo &info);
     void clearFile();
@@ -72,8 +63,9 @@ public:
 
     const QList<RecentInfo> &saveRecent() const;
 
-    static QString getDisplayFileName(const RecentInfo &info);
-    static QString getDisplayTooltip(const RecentInfo &info, bool fileNameOnly);
+    static QString getDisplayFileName(const RecentInfo &info,
+                                      bool isScriptFile);
+    static QString getDisplayTooltip(const RecentInfo &info, bool isScriptFile);
 
 signals:
     void triggered(const RecentFileManager::RecentInfo &rinfo);
@@ -87,7 +79,7 @@ private:
     QList<RecentInfo> m_recents;
     QList<QAction *> hitems;
 
-    bool _fileNameOnly;
+    bool _isScriptFile;
 };
 
 Q_DECLARE_METATYPE(RecentFileManager::RecentInfo)

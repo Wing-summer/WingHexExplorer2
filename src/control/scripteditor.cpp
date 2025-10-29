@@ -19,10 +19,6 @@
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 #include "utilities.h"
 
-#ifdef Q_OS_LINUX
-#include "utilities.h"
-#endif
-
 #include <QAction>
 #include <QFile>
 #include <QFileInfo>
@@ -142,10 +138,6 @@ bool ScriptEditor::save(const QString &path) {
         }
     });
 
-#ifdef Q_OS_LINUX
-    auto needAdjustFile = !QFile::exists(path);
-#endif
-
     if (path.isEmpty()) {
         auto doc = m_editor->document();
         if (doc->isModified()) {
@@ -164,24 +156,6 @@ bool ScriptEditor::save(const QString &path) {
         return false;
     }
     f.write(m_editor->toPlainText().toUtf8());
-
-#ifdef Q_OS_LINUX
-    if (Utilities::isRoot()) {
-        // a trick off when root under linux OS
-        // When new file created, change file's permission to 666.
-
-        // Because you cannot open it when you use it in common user
-        // after saving under root user.
-
-        // It's a workaround and not eligent for permission system
-
-        if (needAdjustFile) {
-            if (Utilities::isFileOwnerRoot(path)) {
-                Utilities::fixUpFilePermissions(path);
-            }
-        }
-    }
-#endif
 
     m_editor->setWindowFilePath(path);
     processTitle();
@@ -233,7 +207,7 @@ void ScriptEditor::onSendFullTextChangeCompleted() {
 
 void ScriptEditor::setReadOnly(bool b) {
     m_editor->setReadOnly(b);
-    this->tabWidget()->setIcon(b ? ICONRES("lockon") : QIcon());
+    this->setIcon(b ? ICONRES("lockon") : QIcon());
 }
 
 void ScriptEditor::processTitle() {

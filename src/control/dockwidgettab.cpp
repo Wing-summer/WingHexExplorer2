@@ -36,13 +36,13 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     auto v = qobject_cast<EditorView *>(dw);
     if (v) {
         if (v->isCommonFile()) {
-            initMenuItems(menu, v->fileName());
+            initMenuItems(menu, v->fileNameUrl());
         }
         auto a = new QAction(ICONRES("info"), tr("FileInfo"), menu);
         connect(a, &QAction::triggered, this, [this]() {
             auto editor = qobject_cast<EditorView *>(dockWidget());
             if (editor) {
-                FileInfoDialog d(editor->fileName());
+                FileInfoDialog d(editor);
                 d.exec();
             }
         });
@@ -59,12 +59,15 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     return ads::CDockWidgetTab::buildContextMenu(menu);
 }
 
-void DockWidgetTab::initMenuItems(QMenu *menu, const QString &path) {
+void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
     Q_ASSERT(menu);
-    auto a = new QAction(ICONRES("shell"), tr("ShowInShell"), menu);
-    connect(a, &QAction::triggered, this, [path]() {
-        ShowInShell::showInGraphicalShell(AppManager::instance()->mainWindow(),
-                                          path, false);
-    });
-    menu->addAction(a);
+    if (path.isLocalFile() && !EditorView::isNewFileUrl(path)) {
+        auto a = new QAction(ICONRES("shell"), tr("ShowInShell"), menu);
+        auto file = path.toLocalFile();
+        connect(a, &QAction::triggered, this, [file]() {
+            ShowInShell::showInGraphicalShell(
+                AppManager::instance()->mainWindow(), file, false);
+        });
+        menu->addAction(a);
+    }
 }

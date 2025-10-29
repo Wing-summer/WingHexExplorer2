@@ -25,6 +25,10 @@
 #include "QWingRibbon/ribbonbuttongroup.h"
 #include "utilities.h"
 
+namespace ads {
+class CDockWidgetTab;
+} // namespace ads
+
 class ScriptManager {
     Q_DECLARE_TR_FUNCTIONS(ScriptManager)
 
@@ -103,6 +107,11 @@ private:
 public:
     void runScript(const QString &filename);
 
+    ads::CDockWidgetTab *indicator() const;
+    void setIndicator(ads::CDockWidgetTab *newIndicator);
+
+    static bool isScriptFile(const QString &file);
+
 private:
     explicit ScriptManager();
     virtual ~ScriptManager();
@@ -121,6 +130,8 @@ private:
                                        const QStringList &files, bool isSys);
 
 private:
+    ads::CDockWidgetTab *m_indicator = nullptr;
+
     QString m_sysScriptsPath;
     QString m_usrScriptsPath;
     QStringList m_usrScriptsDbCats;

@@ -45,10 +45,7 @@ WingHex::WingIODevice *SharedMemoryDriver::onOpenFile(const QString &path) {
 }
 
 bool SharedMemoryDriver::onCloseFile(WingHex::WingIODevice *dev) {
-    if (dev->isOpen()) {
-        dev->close();
-    }
-    dev->deleteLater();
+    dev->close();
     return true;
 }
 

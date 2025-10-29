@@ -124,10 +124,7 @@ AppManager::AppManager(int &argc, char *argv[])
                         WingHex::Success) {
                         failedFile.append(param);
                     } else {
-                        RecentFileManager::RecentInfo info;
-                        info.fileName = param;
-                        info.isWorkSpace = isWs;
-                        _w->recentManager()->addRecentFile(info);
+                        _w->addRecentFile(param, isWs);
                     }
                 }
                 _w->show();
@@ -151,10 +148,7 @@ AppManager::AppManager(int &argc, char *argv[])
             if (openFile(file, true, false, &isWs) != WingHex::Success) {
                 failedFile.append(file);
             } else {
-                RecentFileManager::RecentInfo info;
-                info.fileName = file;
-                info.isWorkSpace = isWs;
-                _w->recentManager()->addRecentFile(info);
+                _w->addRecentFile(file, isWs);
             }
         }
 

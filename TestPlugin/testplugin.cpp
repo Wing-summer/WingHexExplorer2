@@ -293,8 +293,7 @@ QVariant TestPlugin::destoryTestShareMem(const QVariantList &params) {
     if (!params.isEmpty()) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
-    destoryTestShareMem();
-    return {};
+    return destoryTestShareMem();
 }
 
 QVariant TestPlugin::printLogTestSharedMemData(const QVariantList &params) {
@@ -453,12 +452,16 @@ bool TestPlugin::createTestShareMem(const QString &nameID) {
     return true;
 }
 
-void TestPlugin::destoryTestShareMem() {
+bool TestPlugin::destoryTestShareMem() {
     if (_tsharemem) {
-        _tsharemem->detach();
+        if (_tsharemem->isAttached()) {
+            return false;
+        }
         _tsharemem->deleteLater();
         _tsharemem = nullptr;
+        return true;
     }
+    return false;
 }
 
 void TestPlugin::printLogTestSharedMemData() {
@@ -560,7 +563,7 @@ void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
         QStringLiteral("createTestShareMem"),
         {qMakePair(WingHex::MetaType::Meta_String, QStringLiteral("nameID"))});
 
-    o->registerGlobalFunction(WingHex::MetaType::Meta_Void,
+    o->registerGlobalFunction(WingHex::MetaType::Meta_Bool,
                               std::bind(QOverload<const QVariantList &>::of(
                                             &TestPlugin::destoryTestShareMem),
                                         this, std::placeholders::_1),

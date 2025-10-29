@@ -16,6 +16,8 @@
 */
 
 #include "recentfilemanager.h"
+#include "class/pluginsystem.h"
+#include "class/scriptmanager.h"
 #include "control/toast.h"
 #include "dialog/historydeldialog.h"
 #include "utilities.h"
@@ -23,8 +25,8 @@
 #include <QFile>
 #include <QMenu>
 
-RecentFileManager::RecentFileManager(QMenu *menu, bool fileNameOnly)
-    : QObject(), m_menu(menu), _fileNameOnly(fileNameOnly) {
+RecentFileManager::RecentFileManager(QMenu *menu, bool isScriptFile)
+    : QObject(), m_menu(menu), _isScriptFile(isScriptFile) {
     Q_ASSERT(menu);
     menu->setToolTipsVisible(true);
 }
@@ -51,7 +53,7 @@ void RecentFileManager::apply(QWidget *parent, const QList<RecentInfo> &files) {
             return;
         }
 
-        HistoryDelDialog hisdlg(m_recents, _fileNameOnly);
+        HistoryDelDialog hisdlg(m_recents, _isScriptFile);
         if (hisdlg.exec()) {
             auto idxs = hisdlg.getResult();
 
@@ -87,26 +89,63 @@ RecentFileManager::saveRecent() const {
 }
 
 bool RecentFileManager::existsPath(const RecentInfo &info) {
-    return QFile::exists(info.fileName);
+    const auto &url = info.url;
+    if (url.isLocalFile()) {
+        auto f = url.toLocalFile();
+        if (_isScriptFile) {
+            if (!ScriptManager::isScriptFile(f)) {
+                return false;
+            }
+        }
+        return QFile::exists(f);
+    } else {
+        if (_isScriptFile) {
+            return false;
+        }
+        auto scheme = url.scheme();
+        if (scheme.compare(QStringLiteral("wdrv"), Qt::CaseInsensitive) == 0) {
+            // plugin extension
+            auto &plgsys = PluginSystem::instance();
+            auto plgID = url.authority();
+            auto devs = plgsys.devices();
+            auto r = std::find_if(
+                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
+                    return plgID.compare(PluginSystem::getPUID(dev),
+                                         Qt::CaseInsensitive) == 0;
+                });
+            return r != devs.end();
+        }
+    }
+    return false;
 }
 
-QString RecentFileManager::getDisplayFileName(const RecentInfo &info) {
-    auto fileName = info.fileName;
+QString RecentFileManager::getDisplayFileName(const RecentInfo &info,
+                                              bool isScriptFile) {
+    auto url = info.url;
     QString displayName;
 
-    QFileInfo finfo(fileName);
-    displayName = finfo.fileName();
+    if (isScriptFile || url.isLocalFile()) {
+        QFileInfo finfo(url.toLocalFile());
+        displayName = finfo.fileName();
+    } else {
+        auto ext = url.authority();
+        auto file = url.path();
+        if (file.front() == '/') {
+            file.removeFirst();
+        }
+        displayName = QStringLiteral("[") + ext + QStringLiteral("] ") + file;
+    }
 
     return displayName;
 }
 
 QString RecentFileManager::getDisplayTooltip(const RecentInfo &info,
-                                             bool fileNameOnly) {
+                                             bool isScriptFile) {
     QString tt;
-    if (fileNameOnly) {
-        tt = info.fileName;
+    if (isScriptFile) {
+        tt = info.url.toLocalFile();
     } else {
-        tt = QStringLiteral("<p>") + tr("[file]") + info.fileName +
+        tt = QStringLiteral("<p>") + tr("[file]") + info.url.toDisplayString() +
              QStringLiteral("</p>");
 
         tt += QStringLiteral("<p>") + tr("[isWorkSpace]") +
@@ -127,20 +166,45 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
         auto a = new QAction(m_menu);
         a->setData(QVariant::fromValue(info));
 
-        QMimeDatabase db;
-        auto mt = db.mimeTypeForFile(info.fileName);
-
-        a->setText(getDisplayFileName(info) + QStringLiteral(" (") + mt.name() +
-                   QStringLiteral(")"));
-        a->setToolTip(getDisplayTooltip(info, _fileNameOnly));
-        if (info.isWorkSpace) {
-            a->setIcon(ICONRES(QStringLiteral("pro")));
-            auto font = a->font();
-            font.setUnderline(true);
-            a->setFont(font);
+        const auto &url = info.url;
+        a->setToolTip(getDisplayTooltip(info, _isScriptFile));
+        if (url.isLocalFile()) {
+            QMimeDatabase db;
+            auto fileName = info.url.toLocalFile();
+            auto mt = db.mimeTypeForFile(fileName);
+            auto title = getDisplayFileName(info, _isScriptFile);
+            if (_isScriptFile) {
+                a->setText(title);
+                a->setIcon(Utilities::getIconFromFile(qApp->style(), fileName));
+            } else {
+                a->setText(title + QStringLiteral(" (") + mt.name() +
+                           QStringLiteral(")"));
+                if (info.isWorkSpace) {
+                    a->setIcon(ICONRES(QStringLiteral("pro")));
+                    auto font = a->font();
+                    font.setUnderline(true);
+                    a->setFont(font);
+                } else {
+                    a->setIcon(
+                        Utilities::getIconFromFile(qApp->style(), fileName));
+                }
+            }
         } else {
-            a->setIcon(
-                Utilities::getIconFromFile(qApp->style(), info.fileName));
+            // plugin extension
+            auto &plgsys = PluginSystem::instance();
+            auto plgID = url.authority();
+            auto devs = plgsys.devices();
+            a->setText(getDisplayFileName(info, false));
+            auto r = std::find_if(
+                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
+                    return plgID.compare(PluginSystem::getPUID(dev),
+                                         Qt::CaseInsensitive) == 0;
+                });
+            if (r != devs.end()) {
+                a->setIcon((*r)->supportedFileIcon());
+            } else {
+                a->setIcon(ICONRES(QStringLiteral("devext")));
+            }
         }
         connect(a, &QAction::triggered, this, [=] {
             auto send = qobject_cast<QAction *>(sender());

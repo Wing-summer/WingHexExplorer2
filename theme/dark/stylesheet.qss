@@ -2999,7 +2999,6 @@ Toast
 {
     qproperty-textcolor: white;
     qproperty-backcolor: black;
-    qproperty-fontPointSize: 18;
 }
 
 QStatusBar::item { border: 0px solid black; }

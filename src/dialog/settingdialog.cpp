@@ -87,10 +87,11 @@ SettingDialog::SettingDialog(QWidget *parent)
             return;
         }
         auto idx = ui->listWidget->currentRow();
-        if (idx > 0) {
-            auto page = m_pages.at(idx);
+        auto page = m_pages.at(idx);
+        if (idx >= 0) {
             page->restore();
         }
+        toastTakeEffectReboot(page);
     });
 
     a = menu->addAction(tr("Restore all"));
@@ -104,6 +105,7 @@ SettingDialog::SettingDialog(QWidget *parent)
         for (auto &p : m_pages) {
             p->restore();
         }
+        toastTakeEffectReboot(nullptr);
     });
     ui->btnRestore->setMenu(menu);
 
@@ -151,8 +153,9 @@ void SettingDialog::showConfig(const QString &id) {
         ui->listWidget->setCurrentRow(0);
     }
     auto r = std::find_if(
-        m_pages.begin(), m_pages.end(),
-        [id](const WingHex::SettingPage *page) { return page->id() == id; });
+        m_pages.begin(), m_pages.end(), [id](const WingHex::SettingPage *page) {
+            return id.compare(page->id(), Qt::CaseInsensitive) == 0;
+        });
     if (r == m_pages.end()) {
         ui->listWidget->setCurrentRow(0);
     }
@@ -210,6 +213,19 @@ void SettingDialog::toastTakeEffectReboot() {
         auto avsize = icon.availableSizes();
         Q_ASSERT(!avsize.isEmpty());
         Toast::toast(_dialog, icon.pixmap(avsize.first()),
+                     tr("TakeEffectRestart"));
+    }
+}
+
+void SettingDialog::toastTakeEffectReboot(WingHex::SettingPage *page) {
+    if (page) {
+        auto icon = page->categoryIcon();
+        auto avsize = icon.availableSizes();
+        Q_ASSERT(!avsize.isEmpty());
+        Toast::toast(_dialog, icon.pixmap(avsize.first()),
+                     tr("TakeEffectRestart"));
+    } else {
+        Toast::toast(_dialog, NAMEICONRES(QStringLiteral("setting")),
                      tr("TakeEffectRestart"));
     }
 }

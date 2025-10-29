@@ -40,10 +40,6 @@ constexpr auto CLONE_LIMIT = 3;
 constexpr auto VIEW_PROPERTY = "__VIEW__";
 constexpr auto VIEW_ID_PROPERTY = "__ID__";
 
-QString EditorView::getDeviceFileName(const QString &ext, const QString &file) {
-    return QStringLiteral("wdrv:///") + ext + QStringLiteral("/") + file;
-}
-
 EditorView::EditorView(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
@@ -198,12 +194,16 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
     view->setProperty(VIEW_PROPERTY, quintptr(this));
     view->setProperty(VIEW_ID_PROPERTY, id);
     view->installEventFilter(this);
+
+    connect(view, &WingEditorViewWidget::savedStateChanged, this,
+            [this]() { updateDocSavedFlag(m_hex->isSaved()); });
+
     applyFunctionTables(view, _viewFns);
     if (!isCloneFile()) {
         if (_pluginData.contains(id)) {
             view->loadState(_pluginData.value(id));
         }
-        view->onWorkSpaceNotify(m_isWorkSpace);
+        view->onWorkSpaceNotify(!workSpaceName.isEmpty());
     }
 }
 
@@ -248,7 +248,9 @@ void EditorView::registerQMenu(QMenu *menu) {
 
 void EditorView::getCheckSum(const QVector<int> &algorithmID) {
     auto hashes = Utilities::supportedHashAlgorithms();
-
+    for (auto &cs : hashes) {
+        _checkSumData.insert(cs, QString());
+    }
     if (m_hex->hasSelection()) {
         auto data = m_hex->selectedBytes();
         for (auto &c : algorithmID) {
@@ -258,22 +260,12 @@ void EditorView::getCheckSum(const QVector<int> &algorithmID) {
             _checkSumData.insert(h, hash.result().toHex().toUpper());
         }
     } else {
-        if (isNewFile()) {
-            auto bytes = m_hex->document()->read(0);
-            for (auto &c : algorithmID) {
-                auto h = hashes.at(c);
-                QCryptographicHash hash(h);
-                hash.addData(bytes);
-                _checkSumData.insert(h, hash.result().toHex().toUpper());
-            }
-        } else {
-            QFile f(fileName());
-            for (auto &c : algorithmID) {
-                auto h = hashes.at(c);
-                QCryptographicHash hash(h);
-                hash.addData(&f);
-                _checkSumData.insert(h, hash.result().toHex().toUpper());
-            }
+        auto io = m_hex->document()->buffer()->ioDevice();
+        for (auto &c : algorithmID) {
+            auto h = hashes.at(c);
+            QCryptographicHash hash(h);
+            hash.addData(io);
+            _checkSumData.insert(h, hash.result().toHex().toUpper());
         }
     }
 }
@@ -358,17 +350,17 @@ ErrFile EditorView::newFile(size_t index) {
 
     auto istr = QString::number(index);
     auto fname = tr("Untitled") + istr;
-    m_hex->setWindowFilePath(fname);
-    this->setWindowTitle(fname);
     m_docType = DocumentType::File;
-    m_isWorkSpace = false;
     m_isNewFile = true;
+    workSpaceName = {};
     auto p = QHexDocument::fromInternalBuffer<QFileBuffer>(false);
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
+    setFileNameUrl(QStringLiteral("file://") + newFileAuthority() +
+                   QStringLiteral("/") + fname);
     return ErrFile::Success;
 }
 
@@ -406,20 +398,27 @@ ErrFile EditorView::openFile(const QString &filename) {
 
         m_docType = DocumentType::File;
         auto fName = info.absoluteFilePath();
-        m_hex->setWindowFilePath(fName);
         m_isNewFile = false;
         p->setDocSaved();
         connect(p, &QHexDocument::documentSaved, this,
                 &EditorView::updateDocSavedFlag);
 
-        this->setWindowTitle(info.fileName());
-
+        this->setIcon(Utilities::getIconFromFile(style(), fName));
         auto tab = this->tabWidget();
-        tab->setIcon(Utilities::getIconFromFile(style(), fName));
         tab->setToolTip(fName);
+        setFileNameUrl(QUrl::fromLocalFile(fName));
     }
 
     return ErrFile::Success;
+}
+
+ErrFile EditorView::openExtFile(const QUrl &fileName) {
+    auto ext = fileName.authority();
+    auto file = fileName.path();
+    if (file.front() == '/') {
+        file.removeFirst();
+    }
+    return openExtFile(ext, file);
 }
 
 ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
@@ -434,6 +433,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     }
 
     if (d->isSequential()) {
+        d->deleteLater();
         return ErrFile::InvalidFormat;
     }
 
@@ -446,6 +446,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
         if (d->open(QIODevice::ReadOnly)) {
             d->close();
         } else {
+            d->deleteLater();
             return ErrFile::Permission;
         }
     }
@@ -453,6 +454,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     auto *p = QHexDocument::fromDevice<QFileBuffer>(d, readonly);
 
     if (Q_UNLIKELY(p == nullptr)) {
+        d->deleteLater();
         return ErrFile::Error;
     }
 
@@ -463,24 +465,22 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
         m_hex->setLockKeepSize(true);
     }
 
-    auto fileName = getDeviceFileName(ext, file);
+    auto fileName = Utilities::getDeviceFileName(ext, file);
 
     // store the additional info to reload
-    _ext = ext;
     _dev = d;
-    _file = file;
 
     m_docType = DocumentType::Extension;
-    m_hex->setWindowFilePath(fileName);
     m_isNewFile = false;
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
-    setWindowTitle(fileName);
 
+    this->setIcon(dev->supportedFileIcon());
     auto tab = this->tabWidget();
-    tab->setIcon(dev->supportedFileIcon());
     tab->setToolTip(fileName);
+
+    setFileNameUrl(fileName);
     return ErrFile::Success;
 }
 
@@ -495,7 +495,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         return ErrFile::NotExist;
     }
 
-    QString file;
+    QUrl file;
     QMap<qsizetype, QString> bookmarks;
     QVector<QHexMetadataItem> metas;
     WorkSpaceInfo infos;
@@ -505,17 +505,24 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         // it's a workspace project
         // we should check the type of "file"
         ErrFile ret;
-        auto extPrefix = QStringLiteral("wdrv:///");
 
-        if (file.startsWith(extPrefix)) {
-            // extension file
-            auto c = file.mid(extPrefix.length());
-            auto ci = c.indexOf('/');
-            auto ext = c.left(ci);
-            ret = openExtFile(ext, file);
+        if (file.isLocalFile()) {
+            // regular file
+            ret = openFile(file.toLocalFile());
+
         } else {
-            // regard as regular files
-            ret = openFile(file);
+            // extension file
+            auto scheme = file.scheme();
+            if (scheme.compare(QStringLiteral("wdrv"), Qt::CaseInsensitive)) {
+                return WingHex::InvalidFormat;
+            }
+
+            auto ext = file.authority();
+            auto f = file.path();
+            if (f.front() == '/') {
+                f.removeFirst();
+            }
+            ret = openExtFile(ext, f);
         }
 
         if (ret != ErrFile::Success) {
@@ -531,10 +538,10 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         doc->setDocSaved();
 
         m_docType = DocumentType::File;
-        m_isWorkSpace = true;
+        workSpaceName = filename;
 
+        this->setIcon(ICONRES(QStringLiteral("pro")));
         auto tab = this->tabWidget();
-        tab->setIcon(ICONRES(QStringLiteral("pro")));
         tab->setStyleSheet(
             QStringLiteral("QLabel {text-decoration: underline;}"));
 
@@ -551,37 +558,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     }
 
     bool saveSelf = path.isEmpty();
-    auto fileName = saveSelf ? this->fileName() : path;
+    auto saveName = QUrl::fromLocalFile(path);
+    auto fileName = saveSelf ? this->fileNameUrl() : saveName;
     auto doc = m_hex->document();
-
-#ifdef Q_OS_LINUX
-    bool needAdjustFile = !QFile::exists(fileName);
-    bool needAdjustWs = false;
-
-    auto adjustPermission = [&]() {
-        if (Utilities::isRoot()) {
-            // a trick off when root under linux OS
-            // When new file created, change file's permission to 666.
-
-            // Because you cannot open it when you use it in common user
-            // after saving under root user.
-
-            // It's a workaround and not eligent for permission system
-
-            if (needAdjustFile) {
-                if (Utilities::isFileOwnerRoot(fileName)) {
-                    Utilities::fixUpFilePermissions(fileName);
-                }
-            }
-
-            if (needAdjustWs) {
-                if (Utilities::isFileOwnerRoot(workSpaceName)) {
-                    Utilities::fixUpFilePermissions(workSpaceName);
-                }
-            }
-        }
-    };
-#endif
 
     if (saveSelf) {
         if (isExport) {
@@ -598,34 +577,29 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         needSaveWS = true;
     } else {
         if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace) {
-            if (!m_isWorkSpace || doc->isMetaDataUnsaved()) {
+            if (workSpaceName.isEmpty() || doc->isMetaDataUnsaved()) {
                 needSaveWS = true;
             }
         }
     }
 
     if (needSaveWS) {
-#ifdef Q_OS_LINUX
-        Q_ASSERT(!workSpaceName.isEmpty());
-        needAdjustWs = !QFile::exists(workSpaceName);
-#endif
-
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
         infos.pluginData = savePluginData();
 
         auto b = WorkSpaceManager::saveWorkSpace(
-            workSpaceName, fileName, doc->bookMarks(),
+            workSpaceName, fileName.url(), doc->bookMarks(),
             doc->metadata()->getAllMetadata(), infos);
         if (!b)
             return ErrFile::WorkSpaceUnSaved;
         if (!isExport) {
-            m_isWorkSpace = true;
+            this->workSpaceName = workSpaceName;
             notifyOnWorkSpace(true);
 
             auto convertTabW = [](EditorView *view) {
+                view->setIcon(ICONRES(QStringLiteral("pro")));
                 auto tab = view->tabWidget();
-                tab->setIcon(ICONRES(QStringLiteral("pro")));
                 tab->setStyleSheet(
                     QStringLiteral("QLabel {text-decoration: underline;}"));
             };
@@ -643,8 +617,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     if (!doc->isDocSaved() || isNewFile()) {
         needSave = true;
     } else {
-        if (!path.isEmpty()) {
-            needSave = fileName != path;
+        if (!saveSelf) {
+            needSave = fileName != saveName;
         }
     }
 
@@ -661,9 +635,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
-#ifdef Q_OS_LINUX
-                    adjustPermission();
-#endif
                     return ErrFile::Success;
                 }
             }
@@ -676,7 +647,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
                         doc->setDocSaved();
-                        setFileName(QFileInfo(path).absoluteFilePath());
+                        setFileNameUrl(QUrl::fromLocalFile(
+                            QFileInfo(path).absoluteFilePath()));
                     }
                     return ErrFile::Success;
                 }
@@ -692,12 +664,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
                         doc->setDocSaved();
-                        setFileName(QFileInfo(path).absoluteFilePath());
+                        setFileNameUrl(QUrl::fromLocalFile(
+                            QFileInfo(path).absoluteFilePath()));
                     }
-
-#ifdef Q_OS_LINUX
-                    adjustPermission();
-#endif
                     return ErrFile::Success;
                 }
             }
@@ -705,9 +674,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         return ErrFile::Permission;
     }
 
-#ifdef Q_OS_LINUX
-    adjustPermission();
-#endif
     return ErrFile::Success;
 }
 
@@ -727,9 +693,13 @@ ErrFile EditorView::reload() {
 
     switch (documentType()) {
     case DocumentType::File:
-        return openFile(m_hex->windowFilePath());
+        if (workSpaceName.isEmpty()) {
+            return openFile(fileNameUrl().toLocalFile());
+        } else {
+            return openWorkSpace(workSpaceName);
+        }
     case DocumentType::Extension:
-        return openExtFile(_ext, _file);
+        return openExtFile(fileNameUrl());
     default:
         break;
     }
@@ -742,7 +712,7 @@ ErrFile EditorView::closeFile() {
         return ErrFile::Success;
     }
 
-    if (m_isWorkSpace) {
+    if (!workSpaceName.isEmpty()) {
         // check whether having plugin metadata
         if (checkHasUnsavedState()) {
             return ErrFile::WorkSpaceUnSaved;
@@ -750,7 +720,7 @@ ErrFile EditorView::closeFile() {
     }
 
     if (m_docType == DocumentType::Extension) {
-        auto dev = PluginSystem::instance().ext2Device(_ext);
+        auto dev = PluginSystem::instance().ext2Device(m_fileName.authority());
         if (dev == nullptr) {
             return ErrFile::Error;
         }
@@ -769,7 +739,7 @@ ErrFile EditorView::closeFile() {
 }
 
 bool EditorView::change2WorkSpace() const {
-    return !m_isWorkSpace && m_hex->document()->isMetaDataUnsaved();
+    return workSpaceName.isEmpty() && m_hex->document()->isMetaDataUnsaved();
 }
 
 QHexView *EditorView::hexEditor() const { return m_hex; }
@@ -806,14 +776,13 @@ void EditorView::raiseAndSwitchView(const QString &id) {
 
 void EditorView::updateDocSavedFlag(bool b) {
     QString fileName;
-    auto fName = this->fileName();
+    auto fName = this->fileNameUrl();
     if (isNewFile()) {
-        fileName = fName;
+        fileName = fName.fileName();
     } else if (isExtensionFile()) {
-        auto idx = fName.indexOf('}');
-        fileName = fName.sliced(idx);
+        fileName = fName.authority() + fName.path();
     } else {
-        fileName = QFileInfo(fName).fileName();
+        fileName = fName.fileName();
     }
     QString content;
 
@@ -832,10 +801,11 @@ void EditorView::updateDocSavedFlag(bool b) {
         }
     }
 
-    if (!isNewFile()) {
-        auto tab = this->tabWidget();
-        if (tab->icon().isNull()) {
-            tab->setIcon(Utilities::getIconFromFile(style(), fName));
+    if (fName.isLocalFile() && !isNewFile()) {
+        auto icon = this->icon();
+        if (icon.isNull()) {
+            this->setIcon(
+                Utilities::getIconFromFile(style(), fName.toLocalFile()));
         }
     }
 }
@@ -869,12 +839,14 @@ qsizetype EditorView::findAvailCloneIndex() {
     return m_cloneChildren.indexOf(nullptr);
 }
 
-void EditorView::setFileName(const QString &fileName) {
+void EditorView::setFileNameUrl(const QUrl &fileName) {
     if (isCloneFile()) {
-        this->cloneParent()->setFileName(fileName);
+        this->cloneParent()->setFileNameUrl(fileName);
     }
-    m_hex->setWindowFilePath(fileName);
-    updateDocSavedFlag(true);
+    if (fileName.isValid()) {
+        m_fileName = fileName;
+        updateDocSavedFlag(true);
+    }
 }
 
 QHash<QString, QByteArray> EditorView::savePluginData() {
@@ -989,11 +961,13 @@ bool EditorView::invokeServiceImpl(const QObject *sender, const QString &puid,
     return PluginSystem::instance().invokeServiceImpl(this, puid, infos);
 }
 
-QString EditorView::currentDocFilename(const QObject *caller) {
+QString EditorView::currentDocFile(const QObject *caller) {
     if (checkErrAndReport(caller, __func__)) {
         return {};
     }
-    return fileName();
+
+    auto file = fileNameUrl();
+    return file.url();
 }
 
 bool EditorView::isReadOnly(const QObject *caller) {
@@ -2205,8 +2179,8 @@ EditorView *EditorView::clone() {
                        QString::number(cloneIndex + 1));
 
     auto tab = ev->tabWidget();
-    tab->setIcon(this->icon());
-    if (m_isWorkSpace) {
+    ev->setIcon(this->icon());
+    if (!workSpaceName.isEmpty()) {
         tab->setStyleSheet(
             QStringLiteral("QLabel {text-decoration: underline;}"));
     }
@@ -2229,13 +2203,6 @@ bool EditorView::isNewFile() const {
         return this->cloneParent()->isNewFile();
     }
     return m_isNewFile;
-}
-
-bool EditorView::isBigFile() const {
-    if (isCloneFile()) {
-        return this->cloneParent()->isBigFile();
-    }
-    return qobject_cast<QFileBuffer *>(m_hex->document()) != nullptr;
 }
 
 bool EditorView::isCloneFile() const {
@@ -2269,15 +2236,15 @@ bool EditorView::isOriginWorkSpace() const {
     if (isCloneFile()) {
         return this->cloneParent()->isOriginWorkSpace();
     }
-    return m_isWorkSpace;
+    return !workSpaceName.isEmpty();
 }
 
-QString EditorView::fileName() const {
+QUrl EditorView::fileNameUrl() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     if (isCloneFile()) {
-        return this->cloneParent()->fileName();
+        return this->cloneParent()->fileNameUrl();
     }
-    return m_hex->windowFilePath();
+    return m_fileName;
 }
 
 bool EditorView::eventFilter(QObject *watched, QEvent *event) {
@@ -2292,3 +2259,13 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
 }
 
 EditorViewContext *EditorView::editorContext() const { return _context; }
+
+bool EditorView::isNewFileUrl(const QUrl &url) {
+    if (!url.isLocalFile()) {
+        return false;
+    }
+    return newFileAuthority().compare(url.authority(), Qt::CaseInsensitive) ==
+           0;
+}
+
+QString EditorView::newFileAuthority() { return QStringLiteral("WingNew"); }

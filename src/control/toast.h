@@ -27,8 +27,6 @@
 class Toast : public QDialog {
     Q_OBJECT
 
-    Q_PROPERTY(int fontPointSize READ fontPointSize WRITE setFontPointSize)
-    Q_PROPERTY(QPixmap icon READ icon WRITE setIcon)
     Q_PROPERTY(QColor backcolor READ backColor WRITE setBackColor)
     Q_PROPERTY(QColor textcolor READ textColor WRITE setTextColor)
 
@@ -38,16 +36,9 @@ public:
     enum TOAST_POS { TOP, CENTER, BOTTOM };
 
     static void toast(QWidget *parent, const QPixmap &icon,
-                      const QString &strContent, int fontPointSize = 20,
-                      int nToastInterval = 1500);
+                      const QString &strContent, int nToastInterval = 1500);
 
     virtual ~Toast();
-
-    void setTextFont(const QFont &font);
-    const QFont &textFont();
-
-    void setFontPointSize(int fontSize);
-    int fontPointSize() const;
 
     void setToastPos(TOAST_POS pos);
     TOAST_POS lastToastPos() const;
@@ -62,6 +53,7 @@ public:
     void setTextColor(const QColor &textColor);
 
 protected:
+    QFont displayFont() const;
     QSize calculateTextSize();
     void init();
     void paintEvent(QPaintEvent *event);
@@ -74,8 +66,6 @@ private:
     int m_nCurrentWindowOpacity;
     int m_nCurrentStayTime;
     int m_nStatus;
-    QFont m_drawFont;
-
     QColor m_textColor = Qt::white;
     QColor m_backColor = Qt::black;
     QPixmap m_icon;

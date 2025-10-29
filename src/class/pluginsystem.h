@@ -432,7 +432,7 @@ public slots:
 
     bool isCurrentDocEditing(const QObject *sender);
 
-    QString currentDocFilename(const QObject *sender);
+    QString currentDocFile(const QObject *sender);
 
 public slots:
     // document

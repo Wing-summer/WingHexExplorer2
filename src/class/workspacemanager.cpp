@@ -23,7 +23,7 @@
 
 WorkSpaceManager::WorkSpaceManager() {}
 
-bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
+bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
                                      QMap<qsizetype, QString> &bookmarks,
                                      QVector<QHexMetadataItem> &metas,
                                      WorkSpaceInfo &infos) {
@@ -44,11 +44,26 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                     auto ff = jobj.value("file");
                     if (!ff.isUndefined() && ff.isString()) {
                         auto fi = ff.toString();
-                        QFileInfo finfo(fi);
-                        file = finfo.isAbsolute()
-                                   ? fi
-                                   : QFileInfo(filename).absolutePath() +
-                                         QDir::separator() + fi;
+                        auto curDir = QFileInfo(filename).absolutePath();
+                        auto url = QUrl::fromUserInput(fi, curDir,
+                                                       QUrl::AssumeLocalFile);
+
+                        qsizetype maxbytes =
+                            std::numeric_limits<qsizetype>::max();
+
+                        if (url.isLocalFile()) {
+                            auto fi = url.toLocalFile();
+                            QFileInfo finfo(url.toLocalFile());
+                            auto path = finfo.isAbsolute()
+                                            ? fi
+                                            : curDir + QDir::separator() + fi;
+                            finfo.setFile(path);
+                            file = QUrl::fromLocalFile(path);
+                            maxbytes = finfo.size();
+                        } else {
+                            file = url;
+                        }
+
                         auto values = jobj.value("base");
                         if (!values.isUndefined() && values.isString()) {
                             auto ba = values.toString();
@@ -56,8 +71,6 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QString &file,
                             if (b)
                                 infos.base = nbase;
                         }
-
-                        auto maxbytes = QFileInfo(file).size();
 
                         values = jobj.value("metas");
                         if (!values.isUndefined() && values.isArray()) {
@@ -168,7 +181,7 @@ QString WorkSpaceManager::getColorString(const QColor &color) {
 }
 
 bool WorkSpaceManager::saveWorkSpace(
-    const QString &filename, const QString &file,
+    const QString &filename, const QUrl &file,
     const QMap<qsizetype, QString> &bookmarklist,
     const QVector<QHexMetadataItem> &metalist, const WorkSpaceInfo &infos) {
     QFile f(filename);
@@ -176,12 +189,17 @@ bool WorkSpaceManager::saveWorkSpace(
         QJsonObject jobj;
         jobj.insert("type", "workspace");
 
-        QString ff = file;
-        QFileInfo fileInfo(file);
-        if (fileInfo.isAbsolute()) {
-            QDir dir(QFileInfo(f).absoluteDir());
-            QFileInfo fi(file);
-            ff = dir.relativeFilePath(fi.absoluteFilePath());
+        QString ff;
+        if (file.isLocalFile()) {
+            ff = file.toLocalFile();
+            QFileInfo fileInfo(ff);
+            if (fileInfo.isAbsolute()) {
+                QDir dir(QFileInfo(f).absoluteDir());
+                QFileInfo fi(ff);
+                ff = dir.relativeFilePath(fi.absoluteFilePath());
+            }
+        } else {
+            ff = file.url();
         }
 
         jobj.insert("file", ff);

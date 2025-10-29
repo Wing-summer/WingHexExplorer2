@@ -57,7 +57,6 @@
 #include "utilities.h"
 
 class PluginSystem;
-class EventFilter;
 
 class MainWindow : public FramelessMainWindow {
     Q_OBJECT
@@ -236,7 +235,7 @@ public:
 
     void openFiles(const QStringList &files);
 
-    RecentFileManager *recentManager() const;
+    void addRecentFile(const QString &fileName, bool isWorkspace = false);
 
 private:
     void updateNumberTable(bool force);
@@ -253,7 +252,7 @@ private:
                                       const QString &displayName,
                                       QWidget *content,
                                       ToolButtonIndex index = TOOL_VIEWS);
-    EditorView *findEditorView(const QString &filename);
+    EditorView *findEditorView(const QUrl &filename);
 
     bool newOpenFileSafeCheck();
     void registerEditorView(EditorView *editor, const QString &ws = {});
@@ -285,7 +284,7 @@ private:
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
-
+    void showEvent(QShowEvent *event) override;
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
@@ -461,6 +460,7 @@ private:
     bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;
     ads::CDockWidget *m_hashtable = nullptr;
+    ads::CDockWidget *m_console = nullptr;
     QMenu *m_menuFind = nullptr;
     QHash<QString, QAction *> m_findEncoding;
 
@@ -469,8 +469,6 @@ private:
     CheckSumModel *_hashModel = nullptr;
     BookMarksModel *_bookMarkModel = nullptr;
     MetaDataModel *_metadataModel = nullptr;
-
-    EventFilter *m_lazyVisibleFilter = nullptr;
 
     QTableViewExt *m_numshowtable = nullptr;
     NumShowModel *_numsitem = nullptr;
@@ -486,10 +484,12 @@ private:
     QAction *m_aDelBookMark = nullptr;
     QAction *m_aDelMetaData = nullptr;
 
+    std::function<void()> _showEvents;
+
     //===================================================
 
-    // QMap<EditorView* , Workspace>
-    QMap<EditorView *, QString> m_views;
+    // QHash<EditorView* , Workspace>
+    QHash<EditorView *, QString> m_views;
 
     QList<QWidget *> m_editStateWidgets;
     QList<QWidget *> m_driverStateWidgets;

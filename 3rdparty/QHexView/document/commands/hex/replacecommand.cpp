@@ -58,6 +58,24 @@ int ReplaceCommand::id() const { return UndoID_HexReplaceInsert; }
 bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
     auto ucmd = dynamic_cast<const ReplaceCommand *>(other);
     if (ucmd) {
+        if (ucmd->m_nibbleindex == 0 &&
+            this->m_offset + this->m_length - 1 == ucmd->m_offset) {
+            auto &last = this->m_data.back();
+            auto front = ucmd->m_data.front();
+
+            last &= 0xF0;
+            front &= 0xF;
+            last |= front;
+
+            if (ucmd->m_data.size() > 1) {
+                this->m_data.append(ucmd->m_data.sliced(1));
+                this->m_olddata.append(ucmd->m_olddata.sliced(1));
+                this->m_length = this->m_data.size();
+                setText(constructText(this->m_offset, this->m_length));
+            }
+            return true;
+        }
+
         if (this->m_offset == ucmd->m_offset) {
             if (this->m_length <= ucmd->m_length) {
                 this->m_olddata = ucmd->m_olddata;
@@ -71,7 +89,7 @@ bool ReplaceCommand::mergeWith(const QUndoCommand *other) {
         }
 
         if (this->m_offset + this->m_length == ucmd->m_offset) {
-            this->m_length += ucmd->m_offset;
+            this->m_length += ucmd->m_length;
             this->m_data.append(ucmd->m_data);
             this->m_olddata.append(ucmd->m_olddata);
             this->m_nibbleindex = ucmd->m_nibbleindex;

@@ -18,12 +18,13 @@
 #ifndef FILEINFODIALOG_H
 #define FILEINFODIALOG_H
 
+#include "control/editorview.h"
 #include "framelessdialogbase.h"
 
 class FileInfoDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
-    FileInfoDialog(QString filename, QWidget *parent = nullptr);
+    FileInfoDialog(EditorView *editor, QWidget *parent = nullptr);
     virtual ~FileInfoDialog();
 };
 

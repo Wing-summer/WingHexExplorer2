@@ -1,31 +1,61 @@
 #include "historydeldialog.h"
 #include "ui_historydeldialog.h"
+
+#include "class/pluginsystem.h"
 #include "utilities.h"
 
 #include <QListWidgetItem>
 
 HistoryDelDialog::HistoryDelDialog(
-    const QList<RecentFileManager::RecentInfo> &files, bool fileNameOnly,
+    const QList<RecentFileManager::RecentInfo> &files, bool isScriptFile,
     QWidget *parent)
     : QWidget(parent), ui(new Ui::HistoryDelDialog), _infos(files),
-      _fileNameOnly(fileNameOnly) {
+      _isScriptFile(isScriptFile) {
     ui->setupUi(this);
 
     for (auto &info : files) {
-        QMimeDatabase db;
-        auto mt = db.mimeTypeForFile(info.fileName);
-        auto name = RecentFileManager::getDisplayFileName(info) +
-                    QStringLiteral(" (") + mt.name() + QStringLiteral(")");
-        auto lw = new QListWidgetItem(name);
+        const auto &url = info.url;
+        auto lw = new QListWidgetItem;
 
-        if (info.isWorkSpace) {
-            lw->setIcon(ICONRES(QStringLiteral("pro")));
-            auto font = lw->font();
-            font.setUnderline(true);
-            lw->setFont(font);
+        if (url.isLocalFile()) {
+            QMimeDatabase db;
+            auto fileName = info.url.toLocalFile();
+            auto mt = db.mimeTypeForFile(fileName);
+            auto title =
+                RecentFileManager::getDisplayFileName(info, _isScriptFile);
+            lw->setText(title);
+            if (_isScriptFile) {
+                lw->setIcon(
+                    Utilities::getIconFromFile(qApp->style(), fileName));
+            } else {
+                lw->setText(title + QStringLiteral(" (") + mt.name() +
+                            QStringLiteral(")"));
+                if (info.isWorkSpace) {
+                    lw->setIcon(ICONRES(QStringLiteral("pro")));
+                    auto font = lw->font();
+                    font.setUnderline(true);
+                    lw->setFont(font);
+                } else {
+                    lw->setIcon(
+                        Utilities::getIconFromFile(qApp->style(), fileName));
+                }
+            }
         } else {
-            lw->setIcon(
-                Utilities::getIconFromFile(qApp->style(), info.fileName));
+            // plugin extension
+            auto &plgsys = PluginSystem::instance();
+            auto plgID = url.authority();
+            auto devs = plgsys.devices();
+            lw->setText(RecentFileManager::getDisplayFileName(info, false));
+            auto r = std::find_if(
+                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
+                    return plgID.compare(PluginSystem::getPUID(dev),
+                                         Qt::CaseInsensitive) == 0;
+                });
+            if (r != devs.end()) {
+                lw->setIcon((*r)->supportedFileIcon());
+            } else {
+                lw->setIcon(ICONRES(QStringLiteral("devext")));
+            }
         }
 
         lw->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable |
@@ -60,7 +90,7 @@ int HistoryDelDialog::exec() { return _dialog->exec(); }
 void HistoryDelDialog::on_lwHistory_currentRowChanged(int currentRow) {
     auto info = _infos.at(currentRow);
     ui->tbInfo->setText(
-        RecentFileManager::getDisplayTooltip(info, _fileNameOnly));
+        RecentFileManager::getDisplayTooltip(info, _isScriptFile));
 }
 
 void HistoryDelDialog::on_buttonBox_accepted() { _dialog->accept(); }

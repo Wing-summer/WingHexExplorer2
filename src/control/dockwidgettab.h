@@ -31,7 +31,7 @@ public:
     virtual QMenu *buildContextMenu(QMenu *menu) override;
 
 private:
-    void initMenuItems(QMenu *menu, const QString &path);
+    void initMenuItems(QMenu *menu, const QUrl &path);
 };
 
 #endif // DOCKWIDGETTAB_H

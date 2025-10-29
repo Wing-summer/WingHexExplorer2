@@ -68,6 +68,11 @@ void ScriptingConsole::handleReturnKey(Qt::KeyboardModifiers mod) {
     setEditMode(Output);
     if (code.isEmpty()) {
         if (mod.testFlags(Qt::ControlModifier | Qt::AltModifier)) {
+            if (ScriptMachine::instance().isRunning(
+                    ScriptMachine::Interactive)) {
+                return;
+            }
+
             // pop up a coding dialog
             auto edialog = new FramelessDialogBase;
 
@@ -875,17 +880,27 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
             ICONRES(QStringLiteral("console")), tr("MutiConsole"),
             QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Enter),
             [this]() {
+                if (ScriptMachine::instance().isRunning(
+                        ScriptMachine::Interactive)) {
+                    return;
+                }
                 replaceCommandLine({});
                 handleReturnKey(Qt::ControlModifier | Qt::AltModifier);
             });
         a->setShortcutContext(Qt::WidgetShortcut);
-        a = menu.addAction(ICONRES(QStringLiteral("dbgstop")),
-                           tr("AbortScript"),
-                           QKeySequence(Qt::ControlModifier | Qt::Key_Q), []() {
-                               ScriptMachine::instance().abortScript(
-                                   ScriptMachine::Background);
-                           });
+        a->setEnabled(
+            !ScriptMachine::instance().isRunning(ScriptMachine::Interactive));
+        a = menu.addAction(
+            ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+            QKeySequence(Qt::ControlModifier | Qt::Key_Q), [this]() {
+                ScriptMachine::instance().abortScript(
+                    _isTerminal ? ScriptMachine::Interactive
+                                : ScriptMachine::Background);
+            });
         a->setShortcutContext(Qt::WidgetShortcut);
+        a->setEnabled(ScriptMachine::instance().isRunning(
+            _isTerminal ? ScriptMachine::Interactive
+                        : ScriptMachine::Background));
     } else {
         a = menu.addAction(ICONRES(QStringLiteral("del")), tr("Clear"),
                            QKeySequence(Qt::ControlModifier | Qt::Key_L), this,

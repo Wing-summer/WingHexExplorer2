@@ -112,6 +112,7 @@ public:
 public slots:
     void setDocument(const QSharedPointer<QHexDocument> &document,
                      QHexCursor *cursor = nullptr);
+    void resetDocument();
     bool RemoveSelection(int nibbleindex = 1);
     bool removeSelection();
 
