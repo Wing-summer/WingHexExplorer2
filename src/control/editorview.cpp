@@ -369,22 +369,21 @@ ErrFile EditorView::openFile(const QString &filename) {
 
     QFileInfo info(filename);
     if (info.exists()) {
-        if (Q_UNLIKELY(!info.permission(QFile::ReadUser))) {
+        if (Q_UNLIKELY(!info.isReadable())) {
             return ErrFile::Permission;
         }
 
+        if (!info.isFile()) {
+            return ErrFile::InvalidFormat;
+        }
+
         bool retry;
-        auto readonly = !Utilities::fileCanWrite(filename);
+        auto readonly = !info.isWritable();
         QHexDocument *p;
         do {
             retry = false;
-            bool isSeqDev = false;
-            p = QHexDocument::fromFile<QFileBuffer>(filename, isSeqDev,
-                                                    readonly);
+            p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
             if (Q_UNLIKELY(p == nullptr)) {
-                if (isSeqDev) {
-                    return ErrFile::InvalidFormat;
-                }
                 if (!readonly) {
                     // retry to open with readonly
                     readonly = true;

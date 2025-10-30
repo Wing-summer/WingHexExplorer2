@@ -233,10 +233,6 @@ public:
         return qicon;
     }
 
-    inline static bool fileCanWrite(QString path) {
-        return QFileInfo(path).permission(QFile::WriteUser);
-    }
-
     inline static void moveToCenter(QWidget *window) {
         if (window == nullptr)
             return;

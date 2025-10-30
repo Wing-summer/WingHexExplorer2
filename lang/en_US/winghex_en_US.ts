@@ -429,7 +429,7 @@
         <translation>Untitled</translation>
     </message>
     <message>
-        <location filename="../../src/control/editorview.cpp" line="953"/>
+        <location filename="../../src/control/editorview.cpp" line="952"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>
@@ -2724,7 +2724,7 @@
         <translation>WingCloudStudio</translation>
     </message>
     <message>
-        <location filename="../../src/utilities.h" line="311"/>
+        <location filename="../../src/utilities.h" line="307"/>
         <source>OptionNeedRestart</source>
         <translation>Restart to take effect</translation>
     </message>

@@ -236,8 +236,7 @@ public:
     template <typename T>
     static QHexDocument *fromDevice(QIODevice *iodevice, bool readonly);
     template <typename T>
-    static QHexDocument *fromFile(const QString &filename, bool &isSequential,
-                                  bool readonly);
+    static QHexDocument *fromFile(const QString &filename, bool readonly);
     template <typename T>
     static QHexDocument *fromInternalBuffer(bool readonly);
 
@@ -324,17 +323,9 @@ QHexDocument *QHexDocument::fromDevice(QIODevice *iodevice, bool readonly) {
 }
 
 template <typename T>
-QHexDocument *QHexDocument::fromFile(const QString &filename,
-                                     bool &isSequential, bool readonly) {
+QHexDocument *QHexDocument::fromFile(const QString &filename, bool readonly) {
     if (!filename.isEmpty()) {
         auto f = new QFile(filename);
-        if (f->isSequential()) {
-            isSequential = true;
-            delete f;
-            return nullptr;
-        }
-        isSequential = false;
-
         QHexBuffer *hexbuffer = new T();
         if (f->open(readonly ? QFile::ReadOnly : QFile::ReadWrite)) {
             f->close();
