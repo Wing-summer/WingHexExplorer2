@@ -335,8 +335,6 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
     }
 }
 
-void EditorView::clearFindResult() { m_findData.clear(); }
-
 void EditorView::triggerGoto() {
     m_goto->activeInput(int(m_hex->currentRow()), int(m_hex->currentColumn()),
                         m_hex->currentOffset(), m_hex->documentBytes(),
@@ -380,8 +378,13 @@ ErrFile EditorView::openFile(const QString &filename) {
         QHexDocument *p;
         do {
             retry = false;
-            p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
+            bool isSeqDev = false;
+            p = QHexDocument::fromFile<QFileBuffer>(filename, isSeqDev,
+                                                    readonly);
             if (Q_UNLIKELY(p == nullptr)) {
+                if (isSeqDev) {
+                    return ErrFile::InvalidFormat;
+                }
                 if (!readonly) {
                     // retry to open with readonly
                     readonly = true;
@@ -808,6 +811,11 @@ void EditorView::updateDocSavedFlag(bool b) {
                 Utilities::getIconFromFile(style(), fName.toLocalFile()));
         }
     }
+}
+
+void EditorView::saveState(QXmlStreamWriter &Stream) const {
+    Q_UNUSED(Stream);
+    // do nothing
 }
 
 bool EditorView::hasCloneChildren() const {

@@ -240,6 +240,9 @@ set(DIALOG_SRC
     src/dialog/historydeldialog.h
     src/dialog/historydeldialog.cpp
     src/dialog/historydeldialog.ui
+    src/dialog/layoutdeldialog.h
+    src/dialog/layoutdeldialog.cpp
+    src/dialog/layoutdeldialog.ui
     src/dialog/crashreport.h
     src/dialog/crashreport.cpp
     src/dialog/crashreport.ui

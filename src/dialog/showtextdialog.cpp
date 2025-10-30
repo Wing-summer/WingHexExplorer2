@@ -227,7 +227,7 @@ void ShowTextDialog::setEncoding(const QString &enc) {
             tr("Loading...") + QStringLiteral(" (") +
             QString::number(100.0 * ss.pos() / total, 'g', 3) +
             QStringLiteral("%)"));
-        qApp->processEvents();
+        QApplication::processEvents();
     }
 
     m_cancelButton->hide();
@@ -243,7 +243,5 @@ void ShowTextDialog::setEncoding(const QString &enc) {
 
 void ShowTextDialog::closeEvent(QCloseEvent *event) {
     m_continue = false;
-    m_edit->clear();
-    buffer.clear();
     FramelessMainWindow::closeEvent(event);
 }

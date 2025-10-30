@@ -41,6 +41,7 @@
 #include "class/wingupdater.h"
 #include "control/toast.h"
 #include "define.h"
+#include "dialog/layoutdeldialog.h"
 #include "encodingdialog.h"
 #include "fileinfodialog.h"
 #include "finddialog.h"
@@ -362,7 +363,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         }
     });
     connect(&set, &SettingManager::sigDecodeStrlimitChanged, this,
-            [this](int v) { _decstrlim = v; });
+            [this](int v) {
+                _decstrlim = v;
+                on_selectionChanged();
+            });
 
     // ok, build up the dialog of setting
     if (splash)
@@ -583,17 +587,16 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     buildUpHexMetaDataDock(m_dock, ads::CenterDockWidgetArea, rightArea);
     buildUpDecodingStrShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
-    ads::CDockAreaWidget *bottomRightArea;
     if (SettingManager::instance().scriptEnabled()) {
+        ads::CDockAreaWidget *bottomRightArea;
         bottomRightArea = buildUpScriptConsoleDock(
             m_dock, ads::RightDockWidgetArea, bottomLeftArea);
         bottomRightArea = buildUpScriptBgOutputDock(
             m_dock, ads::CenterDockWidgetArea, bottomRightArea);
         buildUpScriptObjDock(m_dock, ads::CenterDockWidgetArea,
                              bottomRightArea);
+        m_bottomViewArea = bottomRightArea;
     }
-
-    m_bottomViewArea = bottomRightArea;
 }
 
 void MainWindow::finishBuildDockSystem() {
@@ -1703,7 +1706,7 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
         auto &l = LayoutManager::instance().layouts();
 
         auto menu = new QMenu(this);
-        menu->addAction(newAction(tr("Default"),
+        menu->addAction(newAction(QStringLiteral("icon"), tr("Default"),
                                   [this]() { restoreLayout(_defaultLayout); }));
 
         if (!l.isEmpty()) {
@@ -1712,8 +1715,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
         for (auto p = l.constKeyValueBegin(); p != l.constKeyValueEnd(); ++p) {
             auto layout = p->second;
-            menu->addAction(newAction(
-                p->first, [this, layout]() { restoreLayout(layout); }));
+            menu->addAction(
+                newAction(QStringLiteral("layout"), p->first,
+                          [this, layout]() { restoreLayout(layout); }));
         }
 
         m_toolBtneditors.insert(
@@ -1723,6 +1727,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
         addPannelAction(pannel, QStringLiteral("layoutexport"),
                         tr("SaveLayout"), &MainWindow::on_saveLayout);
+
+        addPannelAction(pannel, QStringLiteral("layoutdel"), tr("DelLayout"),
+                        &MainWindow::on_delLayout);
     }
 
     return tab;
@@ -2452,7 +2459,10 @@ void MainWindow::on_pastehex() {
     if (hexeditor == nullptr) {
         return;
     }
-    hexeditor->Paste(true);
+    if (!hexeditor->Paste(true)) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("copyhex")),
+                     tr("PasteFailedNote"));
+    }
 }
 
 void MainWindow::on_fill() {
@@ -2750,7 +2760,7 @@ void MainWindow::on_clearfindresult() {
     if (editor == nullptr) {
         return;
     }
-    editor->clearFindResult();
+    _findResultModel->clear();
 }
 
 void MainWindow::on_exportfindresult() {
@@ -2903,35 +2913,92 @@ void MainWindow::on_saveLayout() {
     QScopeGuard g([this]() { showStatus({}); });
 
     static auto suffix = QStringLiteral(".wing-layout");
-    bool ok;
-    auto fileID = WingInputDialog::getText(
-        this, tr("SaveLayout"), tr("PleaseInput"), QLineEdit::Normal, {}, &ok);
-    if (ok) {
-        auto layoutDir = LayoutManager::layoutDir();
-        QFile f(layoutDir.absoluteFilePath(fileID + suffix));
-        if (f.open(QFile::WriteOnly)) {
-            auto layout = m_dock->saveState();
-            f.write(layout);
-            f.close();
-
-            // append saved layout
+    while (true) {
+        bool ok;
+        auto fileID =
+            WingInputDialog::getText(this, tr("SaveLayout"), tr("PleaseInput"),
+                                     QLineEdit::Normal, {}, &ok);
+        if (ok) {
+            fileID = fileID.trimmed();
             auto &lm = LayoutManager::instance();
-            auto menu =
-                m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
-            Q_ASSERT(menu);
-            menu->addAction(
-                newAction(lm.getSavedLayoutName(fileID), [this, layout]() {
-                    showStatus(tr("LayoutRestoring..."));
-                    updateUI();
-                    m_dock->restoreState(layout);
-                    showStatus({});
-                }));
+            if (lm.contains(fileID)) {
+                WingMessageBox::critical(this, tr("SaveLayout"),
+                                         tr("DupLayoutID"));
+                continue;
+            }
 
-            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
-                         tr("SaveLayoutSuccess"));
+            auto layoutDir = LayoutManager::layoutDir();
+            QFile f(layoutDir.absoluteFilePath(fileID + suffix));
+            if (f.open(QFile::WriteOnly)) {
+                auto layout = m_dock->saveState();
+                f.write(layout);
+                f.close();
+
+                // append saved layout
+                lm.addLayout(fileID, layout);
+
+                auto menu =
+                    m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
+                Q_ASSERT(menu);
+                auto actions = menu->actions();
+                if (actions.size() <= 1) {
+                    menu->addSeparator();
+                }
+
+                menu->addAction(newAction(
+                    QStringLiteral("layout"), fileID, [this, layout]() {
+                        showStatus(tr("LayoutRestoring..."));
+                        updateUI();
+                        restoreLayout(layout);
+                        showStatus({});
+                    }));
+
+                Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                             tr("SaveLayoutSuccess"));
+            } else {
+                Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
+                             tr("SaveLayoutError"));
+            }
+        }
+        break;
+    }
+}
+
+void MainWindow::on_delLayout() {
+    auto &lm = LayoutManager::instance();
+    if (lm.layoutCount() == 0) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("save")),
+                     tr("NothingToRemove"));
+        return;
+    }
+
+    LayoutDelDialog d(lm.layoutNames(), this);
+    bool ok = true;
+    if (d.exec()) {
+        auto dir = lm.layoutDir();
+        auto menu = m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
+        Q_ASSERT(menu);
+        auto actions = menu->actions();
+        for (auto &l : d.getResult()) {
+            auto r = dir.remove(l + QStringLiteral(".wing-layout"));
+            if (r) {
+                auto r = std::find_if(
+                    actions.begin(), actions.end(),
+                    [l](const QAction *a) { return a->text() == l; });
+                if (r != actions.end()) {
+                    auto a = *r;
+                    menu->removeAction(a);
+                    a->deleteLater();
+                }
+            }
+            ok &= r;
+        }
+        if (ok) {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutdel")),
+                         tr("DelLayoutSuccess"));
         } else {
-            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutexport")),
-                         tr("SaveLayoutError"));
+            Toast::toast(this, NAMEICONRES(QStringLiteral("layoutdel")),
+                         tr("DelLayoutError"));
         }
     }
 }
@@ -3286,8 +3353,13 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             auto fn = cur->fileNameUrl();
             if (cur) {
                 m_sSaved->setToolTip(fn.url());
-                setWindowFilePath(fn.fileName());
-                updateWindowTitle();
+                QString path;
+                if (cur->isExtensionFile()) {
+                    path = fn.authority() + fn.path();
+                } else {
+                    path = fn.fileName();
+                }
+                updateWindowTitle(path);
             }
         }
     });
@@ -3355,14 +3427,12 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         {cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl())});
 }
 
-void MainWindow::updateWindowTitle() {
+void MainWindow::updateWindowTitle(const QString &path) {
     static auto title = tr("WingHexExplorer");
-    auto fp = windowFilePath();
-    if (fp.isEmpty()) {
+    if (path.isEmpty()) {
         this->setWindowTitle(title);
     } else {
-        QFileInfo info(fp);
-        this->setWindowTitle(title + QStringLiteral(" - ") + info.fileName());
+        this->setWindowTitle(title + QStringLiteral(" - ") + path);
     }
 }
 
@@ -3636,7 +3706,15 @@ void MainWindow::updateEditModeEnabled() {
             doc->canRedo());
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
             doc->canUndo());
-        setWindowFilePath(editor->fileNameUrl().fileName());
+
+        auto fn = editor->fileNameUrl();
+        QString path;
+        if (editor->isExtensionFile()) {
+            path = fn.authority() + fn.path();
+        } else {
+            path = fn.fileName();
+        }
+        updateWindowTitle(path);
     } else {
         for (auto &menu : m_hexContextMenu) {
             menu->setProperty("__CONTEXT__", {});
@@ -3652,10 +3730,8 @@ void MainWindow::updateEditModeEnabled() {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
-        setWindowFilePath({});
+        updateWindowTitle({});
     }
-
-    updateWindowTitle();
 }
 
 void MainWindow::setCurrentHexEditorScale(qreal rate) {
@@ -3710,27 +3786,27 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
     }
 
     if (selFilter.startsWith(QStringLiteral("Json"))) {
-        QJsonArray tableData;
+        QJsonArray jsonData;
 
         // Add header row
-        QJsonArray headers;
+        QStringList headers;
         for (int col = 0; col < model->columnCount(); ++col) {
-            headers.append(model->headerData(col, Qt::Horizontal).toString());
+            headers.append(model->headerData(col, Qt::Horizontal, Qt::UserRole)
+                               .toString());
         }
-        tableData.append(headers);
 
         // Add data rows
         for (int row = 0; row < model->rowCount(); ++row) {
-            QJsonArray rowData;
+            QJsonObject rowData;
             for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex index = model->index(row, col);
-                rowData.append(model->data(index).toString());
+                rowData.insert(headers.at(col), model->data(index).toString());
             }
-            tableData.append(rowData);
+            jsonData.append(rowData);
         }
 
         // Create JSON document
-        QJsonDocument jsonDocument(tableData);
+        QJsonDocument jsonDocument(jsonData);
 
         // Write to file
         QFile file(filename);
@@ -3753,7 +3829,8 @@ void MainWindow::saveTableContent(QAbstractItemModel *model) {
         // Write headers
         QStringList headers;
         for (int col = 0; col < model->columnCount(); ++col) {
-            auto content = model->headerData(col, Qt::Horizontal).toString();
+            auto content =
+                model->headerData(col, Qt::Horizontal, Qt::UserRole).toString();
             content.prepend('"').append('"');
             headers << content;
         }
@@ -3964,7 +4041,7 @@ void MainWindow::updateStringDec(const QByteArrayList &content) {
                     .arg(total));
         }
 
-        if (buffer.length() <= 1024 * _decstrlim) {
+        if (buffer.length() <= 1024 * 1024 * _decstrlim) {
             m_txtDecode->insertPlainText(
                 Utilities::decodingString(b, m_encoding));
             m_txtDecode->insertPlainText(QStringLiteral("\n"));

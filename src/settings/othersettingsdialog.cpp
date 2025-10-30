@@ -46,6 +46,13 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 
     reload();
 
+    connect(ui->cbDontShowSplash,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &OtherSettingsDialog::optionNeedRestartChanged);
     connect(ui->cbNativeTitile,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
@@ -62,9 +69,6 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 #endif
             this, &OtherSettingsDialog::optionNeedRestartChanged);
 
-    connect(ui->cbLogLevel, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &OtherSettingsDialog::optionNeedRestartChanged);
-
     auto set = &SettingManager::instance();
     connect(ui->cbDontShowSplash, &QCheckBox::toggled, set,
             &SettingManager::setDontUseSplash);
@@ -76,8 +80,19 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
 #endif
     connect(ui->cbCheckWhenStartup, &QCheckBox::toggled, set,
             &SettingManager::setCheckUpdate);
-    connect(ui->cbLogLevel, &QComboBox::currentIndexChanged, set,
-            &SettingManager::setLogLevel);
+
+    bool ok;
+    auto dbg = qEnvironmentVariableIntValue("WING_DEBUG", &ok);
+    if (dbg && ok) {
+        ui->cbLogLevel->setCurrentIndex(Logger::Level::q4DEBUG);
+        ui->cbLogLevel->setEnabled(false);
+    } else {
+        connect(ui->cbLogLevel,
+                QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                &OtherSettingsDialog::optionNeedRestartChanged);
+        connect(ui->cbLogLevel, &QComboBox::currentIndexChanged, set,
+                &SettingManager::setLogLevel);
+    }
 }
 
 OtherSettingsDialog::~OtherSettingsDialog() { delete ui; }

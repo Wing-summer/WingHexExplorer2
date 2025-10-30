@@ -29,9 +29,17 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnable);
     Utilities::addSpecialMark(ui->cbAllowUsrScript);
+    Utilities::addSpecialMark(ui->lblTimeout);
 
     loadData();
 
+    connect(ui->cbEnable,
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            &QCheckBox::checkStateChanged,
+#else
+            &QCheckBox::stateChanged,
+#endif
+            this, &ScriptSettingDialog::optionNeedRestartChanged);
     connect(ui->cbAllowUsrScript,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             &QCheckBox::checkStateChanged,
@@ -155,6 +163,8 @@ void ScriptSettingDialog::loadData() {
         _sysHideCats = buffer;
         m_sysHideCats.setContents(buffer);
     } else {
+        ui->cbAllowUsrScript->setEnabled(false);
+        ui->sbTimeout->setEnabled(false);
         ui->groupBox_2->setEnabled(false);
     }
 }
@@ -241,5 +251,6 @@ void ScriptSettingDialog::discard() {
             }
         }
     }
+    ui->btnSave->setEnabled(false);
     ui->listWidget->blockSignals(false);
 }

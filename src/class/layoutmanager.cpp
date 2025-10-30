@@ -18,7 +18,6 @@
 #include "layoutmanager.h"
 
 #include "dbghelper.h"
-#include "languagemanager.h"
 #include "utilities.h"
 
 LayoutManager &LayoutManager::instance() {
@@ -26,8 +25,19 @@ LayoutManager &LayoutManager::instance() {
     return ins;
 }
 
-const QHash<QString, QByteArray> LayoutManager::layouts() const {
+const QHash<QString, QByteArray> &LayoutManager::layouts() const {
     return _layouts;
+}
+
+QStringList LayoutManager::layoutNames() const { return _caches; }
+
+void LayoutManager::addLayout(const QString &name, const QByteArray &data) {
+    _layouts.insert(name, data);
+    _caches.append(name);
+}
+
+bool LayoutManager::contains(const QString &name) {
+    return _caches.contains(name, Qt::CaseInsensitive);
 }
 
 QByteArray LayoutManager::layout(const QString &v) const {
@@ -42,22 +52,6 @@ QDir LayoutManager::layoutDir() {
     return pdir.absoluteFilePath(lname);
 }
 
-QString LayoutManager::getSavedLayoutName(const QString &id) {
-    auto pdir = layoutDir();
-    auto trf = QStringLiteral("metatr.ini");
-    auto sep = QStringLiteral("/");
-    auto lid = id;
-
-    QSettings set(pdir.absoluteFilePath(trf), QSettings::IniFormat);
-    auto name = LanguageManager::instance().defaultLocale().name();
-    QString k = set.value(name + sep + id).toString().trimmed();
-    if (!k.isEmpty()) {
-        lid = k;
-    }
-
-    return lid;
-}
-
 LayoutManager::LayoutManager() {
     ASSERT_SINGLETON;
     QDir pdir(Utilities::getAppDataPath());
@@ -70,36 +64,20 @@ LayoutManager::LayoutManager() {
         return;
     }
 
-    // read translation names
-    auto trf = QStringLiteral("metatr.ini");
-    if (pdir.exists(trf)) {
-        process(pdir, std::make_unique<QSettings>(pdir.absoluteFilePath(trf),
-                                                  QSettings::IniFormat));
-    } else {
-        process(pdir, nullptr);
-    }
+    process(pdir);
 }
 
-void LayoutManager::process(const QDir &dir,
-                            const std::unique_ptr<QSettings> &set) {
-    auto name = LanguageManager::instance().defaultLocale().name();
-    auto sep = QStringLiteral("/");
-
+void LayoutManager::process(const QDir &dir) {
     for (auto &l : dir.entryInfoList({"*.wing-layout"}, QDir::Files)) {
-        QString k;
-        if (set) {
-            k = set->value(name + sep + l.baseName()).toString().trimmed();
-        }
-
-        if (k.isEmpty()) {
-            k = l.baseName();
-        }
+        QString k = l.baseName();
 
         QFile f(l.absoluteFilePath());
         if (f.open(QFile::ReadOnly)) {
             auto b = f.readAll();
             if (!b.isEmpty()) {
-                _layouts.insert(k.trimmed(), b);
+                auto n = k.trimmed();
+                _caches.append(n);
+                _layouts.insert(n, b);
             }
         }
     }

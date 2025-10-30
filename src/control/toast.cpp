@@ -97,7 +97,8 @@ void Toast::init() {
 
     setToastPos(TOAST_POS::BOTTOM);
     auto w = _parent->width();
-    setMaximumWidth(w * 3 / 4);
+    constexpr auto PADDING = 100;
+    setMaximumWidth(qMax(PADDING, w - PADDING));
 }
 
 void Toast::setToastPos(TOAST_POS pos) {
@@ -163,11 +164,12 @@ void Toast::paintEvent(QPaintEvent *) {
     auto metric = QFontMetricsF(font);
     if (m_icon.isNull()) {
         painter.setPen(textPen);
-        QRectF rect(PADDING, PADDING, widgetSize.width() - PADDING - PADDING,
+        QRectF rect(PADDING, PADDING,
+                    widgetSize.width() - PADDING - PADDING / 2,
                     widgetSize.height() - PADDING - PADDING);
         painter.drawText(rect, metric.elidedText(m_strContent,
                                                  Qt::TextElideMode::ElideRight,
-                                                 rect.width()));
+                                                 rect.width() + PADDING / 2));
     } else {
         painter.drawPixmap(QRect(PADDING,
                                  int(widgetSize.height() - ICON_SIZE) / 2,
@@ -176,7 +178,7 @@ void Toast::paintEvent(QPaintEvent *) {
 
         painter.setPen(textPen);
         QRectF rect(PADDING + ICON_PADDING, PADDING,
-                    widgetSize.width() - PADDING - PADDING - ICON_PADDING,
+                    widgetSize.width() - PADDING - PADDING / 2 - ICON_PADDING,
                     widgetSize.height() - PADDING - PADDING);
         painter.drawText(rect, metric.elidedText(m_strContent,
                                                  Qt::TextElideMode::ElideRight,

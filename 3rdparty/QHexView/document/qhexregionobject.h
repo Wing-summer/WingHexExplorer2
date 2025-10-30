@@ -72,7 +72,6 @@ struct has_not_equal<
 
 } // namespace REQUIRE_CHECK
 
-#include <optional>
 #include <variant>
 
 #include <QMutex>
@@ -237,8 +236,8 @@ public:
         return result;
     }
 
-    virtual std::variant<bool, std::optional<P>>
-    mergeRegion(const P &sel, QMutex *locker = nullptr) {
+    virtual std::variant<bool, P> mergeRegion(const P &sel,
+                                              QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
         if (canMerge(sel)) {
@@ -274,6 +273,14 @@ class QHexRegionObjectList : public QVector<P> {
     static_assert(std::is_base_of_v<QHexRegionObject<T, P>, P>);
 
 public:
+    struct MergeAddItem {
+        // indices of items changed in old list
+        QVector<qsizetype> changed;
+        // indices of new items inserted in new list
+        QVector<qsizetype> inserted;
+    };
+
+public:
     QHexRegionObjectList() = default;
 
     void mergeRemove(const P &sel) {
@@ -302,51 +309,52 @@ public:
             buffer, [&locker, this](P &s) { mergeAdd(s, &locker); });
     }
 
-    qsizetype mergeAdd(const P &sel, QMutex *locker = nullptr) {
-        std::variant<bool, std::optional<P>> res = false;
+    // @return items changed index in old QHexRegionObjectList
+    MergeAddItem mergeAdd(const P &sel, QMutex *locker = nullptr) {
+        bool res = false;
         Q_ASSERT(sel.isNormalized());
 
-        qsizetype idx = -1;
+        MergeAddItem ret;
+        QList<P> regionSlices;
 
-        auto p = this->begin();
-        for (; p != this->end(); ++p) {
-            res = p->mergeRegion(sel, locker);
-            if (std::holds_alternative<bool>(res)) {
-                auto merged = std::get<bool>(res);
-                if (merged) {
+        auto total = this->size();
+        qsizetype i = 0;
+        for (i = 0; i < total; ++i) {
+            auto p = this->at(i);
+            auto r = p.mergeRegion(sel, locker);
+            if (std::holds_alternative<bool>(r)) {
+                res = std::get<bool>(r);
+                ret.changed.append(i);
+                if (res) {
                     break;
                 }
             } else {
-                auto region = std::get<std::optional<P>>(res);
-                idx = std::distance(this->begin(), p);
-                if (region.has_value()) {
-                    auto v = region.value();
-                    this->insert(
-                        std::distance(this->constBegin(),
-                                      std::upper_bound(this->constBegin(),
-                                                       this->constEnd(), v)),
-                        v);
-                }
+                auto v = std::get<P>(r);
+                ret.changed.append(i);
+                regionSlices.append(v);
                 break;
             }
         }
 
-        if (std::holds_alternative<bool>(res)) {
-            auto merged = std::get<bool>(res);
-            if (merged) {
-                auto idx = std::distance(this->begin(), p);
-                auto m = this->takeAt(idx);
-                mergeAdd(m, locker);
-            } else {
-                this->insert(
-                    std::distance(this->constBegin(),
-                                  std::upper_bound(this->constBegin(),
-                                                   this->constEnd(), sel)),
-                    sel);
-            }
+        for (auto &v : regionSlices) {
+            auto idx = std::distance(
+                this->constBegin(),
+                std::upper_bound(this->constBegin(), this->constEnd(), v));
+            ret.inserted.append(idx);
+            this->insert(idx, v);
         }
 
-        return idx;
+        if (res) {
+            auto m = this->takeAt(i);
+            mergeAdd(m, locker);
+        } else {
+            this->insert(std::distance(this->constBegin(),
+                                       std::upper_bound(this->constBegin(),
+                                                        this->constEnd(), sel)),
+                         sel);
+        }
+
+        return ret;
     }
 };
 

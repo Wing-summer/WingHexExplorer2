@@ -342,11 +342,20 @@ qsizetype QHexDocument::bookMarkPos(qsizetype index) {
 bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
     if (!m_keepsize)
         return false;
-    m_undostack->beginMacro("RemoveBookMarks");
-    for (auto p : pos) {
-        m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
+    if (pos.isEmpty()) {
+        return true;
     }
-    m_undostack->endMacro();
+    if (pos.size() == 1) {
+        auto p = pos.front();
+        m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
+    } else {
+        m_undostack->beginMacro(
+            QStringLiteral("[B-G] {cnt: %1}").arg(pos.size()));
+        for (auto &p : pos) {
+            m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
+        }
+        m_undostack->endMacro();
+    }
     Q_EMIT documentChanged();
     return true;
 }

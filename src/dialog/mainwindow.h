@@ -199,6 +199,7 @@ private slots:
     void on_viewtxt();
     void on_fullScreen();
     void on_saveLayout();
+    void on_delLayout();
     void on_exportlog();
     void on_clslog();
     void on_inspectQt();
@@ -260,7 +261,7 @@ private:
 
     void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
-    void updateWindowTitle();
+    void updateWindowTitle(const QString &path);
 
     void loadFindResult(EditorView *view);
 

@@ -136,6 +136,21 @@ QVariant MetaDataModel::headerData(int section, Qt::Orientation orientation,
         } else {
             return section + 1;
         }
+    } else if (role == Qt::UserRole) {
+        if (orientation == Qt::Horizontal) {
+            switch (section) {
+            case 0: // begin
+                return QStringLiteral("begin");
+            case 1: // end
+                return QStringLiteral("end");
+            case 2:
+                return QStringLiteral("foreground");
+            case 3:
+                return QStringLiteral("background");
+            case 4:
+                return QStringLiteral("comment");
+            }
+        }
     }
     return QVariant();
 }

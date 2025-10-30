@@ -66,7 +66,7 @@ CodeEdit::CodeEdit(QWidget *parent) : WingCodeEdit(parent) {
 
         if (block.isValid()) {
             QTextCursor cursor(block);
-            cursor.movePosition(QTextCursor::EndOfBlock);
+            cursor.movePosition(QTextCursor::StartOfBlock);
             setTextCursor(cursor);
             ensureCursorVisible();
         }

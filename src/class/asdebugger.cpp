@@ -46,7 +46,7 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
 
         if (!isDbg) {
             bool timeOut = false;
-            if (timer < 0) {
+            if (timer <= 0) {
                 timeOut = true;
             } else {
                 if (mode == 0) {

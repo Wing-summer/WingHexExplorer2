@@ -60,14 +60,16 @@ struct QHexMetadataItem : QHexRegionObject<qsizetype, QHexMetadataItem> {
 
     // QHexRegionObject interface
 public:
-    std::variant<bool, std::optional<QHexMetadataItem>>
+    // true: merged successfully
+    // false: not merge yet
+    std::variant<bool, QHexMetadataItem>
     mergeRegion(const QHexMetadataItem &sel,
                 QMutex *locker = nullptr) override {
         if (sel.foreground == this->foreground &&
             sel.background == this->background &&
             sel.comment == this->comment) {
             if (mergeRegionWithoutMetaCheck(sel, locker)) {
-                return std::nullopt;
+                return true;
             }
             return false;
         } else {
@@ -75,10 +77,6 @@ public:
             if (std::holds_alternative<QHexMetadataItem>(ret)) {
                 return std::get<QHexMetadataItem>(ret);
             } else {
-                auto r = std::get<bool>(ret);
-                if (r) {
-                    return std::nullopt;
-                }
                 return false;
             }
         }

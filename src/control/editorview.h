@@ -186,8 +186,6 @@ public:
     FindError find(const FindDialog::Result &result);
     void getCheckSum(const QVector<int> &algorithmID);
 
-    void clearFindResult();
-
     void triggerGoto();
 
     ErrFile newFile(size_t index);
@@ -515,6 +513,9 @@ signals:
     void sigOnMetadata();
     void sigOnBookMark();
     void sigOnCheckSum();
+
+public:
+    virtual void saveState(QXmlStreamWriter &Stream) const override;
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;

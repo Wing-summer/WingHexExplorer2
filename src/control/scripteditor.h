@@ -52,6 +52,8 @@ public:
     virtual void clearFunctionTip() override;
     virtual void sendDocChange() override;
 
+    virtual void saveState(QXmlStreamWriter &Stream) const override;
+
 signals:
     void onToggleMark(int line);
     void need2Reload();

@@ -63,11 +63,18 @@ bool QHexMetadata::ModifyMetadata(const QHexMetadataItem &newmeta,
 }
 
 void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
-    m_undo->beginMacro("RemoveMetadatas");
-    for (auto &item : items) {
-        RemoveMetadata(item);
+    if (items.isEmpty()) {
+        return;
     }
-    m_undo->endMacro();
+    if (items.size() == 1) {
+        RemoveMetadata(items.front());
+    } else {
+        m_undo->beginMacro(QStringLiteral("[M-G] {cnt: %1}").arg(items.size()));
+        for (auto &item : items) {
+            RemoveMetadata(item);
+        }
+        m_undo->endMacro();
+    }
 }
 
 bool QHexMetadata::RemoveMetadata(const QHexMetadataItem &item) {
@@ -550,15 +557,13 @@ QVector<QHexMetadataItem> QHexMetadata::mayBrokenMetaData(qsizetype begin,
 
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
     auto old = m_metadata;
-    auto idx = m_metadata.mergeAdd(mi);
-    if (idx >= 0) {
-        auto meta = m_metadata.at(idx);
-        auto lastMeta = m_metadata.last();
+    auto r = m_metadata.mergeAdd(mi);
+    for (auto &idx : r.changed) {
         removeLineMetadata(old.at(idx));
-        addMetaLines(meta);
-        addMetaLines(lastMeta);
     }
-
+    for (auto &idx : r.inserted) {
+        addMetaLines(m_metadata.at(idx));
+    }
     addMetaLines(mi);
 }
 

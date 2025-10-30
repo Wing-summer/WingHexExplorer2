@@ -139,11 +139,9 @@ void SettingDialog::build() {
 }
 
 void SettingDialog::showConfig(int index) {
-    ui->listWidget->blockSignals(true);
     if (index >= 0 && index < m_pages.size()) {
         ui->listWidget->setCurrentRow(index);
     }
-    ui->listWidget->blockSignals(false);
     Utilities::moveToCenter(this);
     _dialog->exec();
 }

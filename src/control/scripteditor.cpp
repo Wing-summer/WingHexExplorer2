@@ -237,6 +237,11 @@ void ScriptEditor::sendDocChange() {
     }
 }
 
+void ScriptEditor::saveState(QXmlStreamWriter &Stream) const {
+    Q_UNUSED(Stream);
+    // do nothing
+}
+
 bool ScriptEditor::isContentLspUpdated() const { return _ok; }
 
 LspEditorInterace::CursorPos ScriptEditor::currentPosition() const {

@@ -671,7 +671,7 @@ void SettingManager::setCopylimit(qsizetype newCopylimit) {
         HANDLE_CONFIG;
         WRITE_CONFIG(EDITOR_COPY_LIMIT, newCopylimit);
         m_copylimit = newCopylimit;
-        Q_EMIT sigDecodeStrlimitChanged(m_copylimit);
+        Q_EMIT sigCopylimitChanged(m_copylimit);
     }
 }
 

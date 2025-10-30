@@ -23,14 +23,18 @@
 #include <QSettings>
 #include <QString>
 
-#include <memory>
-
 class LayoutManager {
 public:
     static LayoutManager &instance();
 
 public:
-    const QHash<QString, QByteArray> layouts() const;
+    const QHash<QString, QByteArray> &layouts() const;
+
+    QStringList layoutNames() const;
+
+    void addLayout(const QString &name, const QByteArray &data);
+
+    bool contains(const QString &name);
 
     QByteArray layout(const QString &v) const;
 
@@ -38,17 +42,14 @@ public:
 
     static QDir layoutDir();
 
-    // only for exporting layout
-    QString getSavedLayoutName(const QString &id);
-
 private:
     LayoutManager();
 
-    void process(const QDir &dir, const std::unique_ptr<QSettings> &set);
+    void process(const QDir &dir);
 
 private:
     QHash<QString, QByteArray> _layouts;
-
+    QStringList _caches;
     Q_DISABLE_COPY_MOVE(LayoutManager)
 };
 

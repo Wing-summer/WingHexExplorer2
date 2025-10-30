@@ -43,6 +43,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     auto dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
     if (dis && ok) {
         ui->groupBox->setEnabled(false);
+        ui->tabPluginInfo->setEnabled(false);
         ui->tabAPIMon->setEnabled(false);
         ui->tabDevInfo->setEnabled(false);
         ui->tabHexEditorExt->setEnabled(false);
@@ -51,7 +52,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
         if (dis && ok) {
             ui->cbEnablePlugin->setEnabled(false);
-            ui->tabDevInfo->setEnabled(false);
         } else {
             connect(ui->cbEnablePlugin,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -60,6 +60,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
                     &QCheckBox::stateChanged,
 #endif
                     this, &PluginSettingDialog::optionNeedRestartChanged);
+        }
+
+        dis = qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
+        if (dis && ok) {
+            ui->tabDevInfo->setEnabled(false);
         }
 
         dis = qEnvironmentVariableIntValue("WING_DISABLE_MONITOR", &ok);
@@ -337,10 +342,17 @@ PluginSettingDialog::~PluginSettingDialog() { delete ui; }
 void PluginSettingDialog::reload() {
     this->blockSignals(true);
     auto &set = SettingManager::instance();
-    ui->cbEnablePlugin->setChecked(set.enablePlugin());
-    ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
-    ui->cbEnableManager->setChecked(set.enableMonitor());
-    ui->cbEnableHex->setChecked(set.enableHexExt());
+    auto ep = set.enablePlugin();
+    ui->cbEnablePlugin->setChecked(ep);
+    if (ep) {
+        ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
+        ui->cbEnableManager->setChecked(set.enableMonitor());
+        ui->cbEnableHex->setChecked(set.enableHexExt());
+    } else {
+        ui->cbEnablePluginRoot->setEnabled(false);
+        ui->cbEnableManager->setEnabled(false);
+        ui->cbEnableHex->setEnabled(false);
+    }
     this->blockSignals(false);
 }
 
@@ -364,7 +376,7 @@ void PluginSettingDialog::highlightUnsavedChange() {
 
 void PluginSettingDialog::discard() {
     resetChangedList();
-    resetUIChagned();
+    resetUIChanged();
 }
 
 void PluginSettingDialog::restore() {
@@ -424,7 +436,7 @@ void PluginSettingDialog::resetChangedList() {
     _devChanged.setContents(set.enabledDevPlugins());
 }
 
-void PluginSettingDialog::resetUIChagned() {
+void PluginSettingDialog::resetUIChanged() {
     ui->plglist->blockSignals(true);
     ui->devlist->blockSignals(true);
 

@@ -572,14 +572,16 @@ QString ScriptMachine::getCallStack(asIScriptContext *context) {
 }
 
 void ScriptMachine::destoryMachine() {
-    _ctxMgr->AbortAll();
-    delete _ctxMgr;
+    if (_engine) {
+        _ctxMgr->AbortAll();
+        delete _ctxMgr;
 
-    delete _debugger;
-    delete _workspace;
+        delete _debugger;
+        delete _workspace;
 
-    _engine->ShutDownAndRelease();
-    _engine = nullptr;
+        _engine->ShutDownAndRelease();
+        _engine = nullptr;
+    }
 }
 
 void ScriptMachine::setCustomEvals(
@@ -941,7 +943,7 @@ bool ScriptMachine::executeScript(
     if (mode == Background) {
         MessageInfo info;
         info.mode = mode;
-        info.message = QStringLiteral("Run:") + script;
+        info.message = QStringLiteral("Run > ") + script;
         info.type = MessageType::Info;
         outputMessage(info);
     }
@@ -953,7 +955,7 @@ bool ScriptMachine::executeScript(
                      AsUserDataType::UserData_isDbg);
 
     auto timeOutRaw = SettingManager::instance().scriptTimeout();
-    auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
+    auto timeOut = asPWORD(timeOutRaw) * 60000; // min -> ms
     ctx->SetUserData(reinterpret_cast<void *>(timeOut),
                      AsUserDataType::UserData_TimeOut);
 
@@ -1759,7 +1761,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                      AsUserDataType::UserData_isDbg);
 
     auto timeOutRaw = SettingManager::instance().scriptTimeout();
-    auto timeOut = asPWORD(timeOutRaw) * 6000; // min -> ms
+    auto timeOut = asPWORD(timeOutRaw) * 60000; // min -> ms
     ctx->SetUserData(reinterpret_cast<void *>(timeOut),
                      AsUserDataType::UserData_TimeOut);
 

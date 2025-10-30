@@ -62,7 +62,7 @@ private:
     QIcon getGrayIcon(const QString &path);
 
     void resetChangedList();
-    void resetUIChagned();
+    void resetUIChanged();
 
     void loadPluginInfo(const std::optional<WingHex::PluginInfo> &info,
                         const QString &name, const QString &comment,

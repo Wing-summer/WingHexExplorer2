@@ -131,6 +131,21 @@ QVariant FindResultModel::headerData(int section, Qt::Orientation orientation,
         } else {
             return section + 1;
         }
+    } else if (role == Qt::UserRole) {
+        if (orientation == Qt::Horizontal) {
+            switch (section) {
+            case 0:
+                return QStringLiteral("line");
+            case 1:
+                return QStringLiteral("col");
+            case 2:
+                return QStringLiteral("offset");
+            case 3:
+                return QStringLiteral("value");
+            case 4:
+                return QStringLiteral("encoding");
+            }
+        }
     }
     return QVariant();
 }

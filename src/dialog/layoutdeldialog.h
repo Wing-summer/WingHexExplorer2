@@ -15,43 +15,37 @@
 ** =============================================================================
 */
 
-#ifndef HISTORYDELDIALOG_H
-#define HISTORYDELDIALOG_H
+#ifndef LAYOUTDELDIALOG_H
+#define LAYOUTDELDIALOG_H
 
-#include "class/recentfilemanager.h"
 #include "framelessdialogbase.h"
 
 namespace Ui {
-class HistoryDelDialog;
+class LayoutDelDialog;
 }
 
-class HistoryDelDialog : public QWidget {
+class LayoutDelDialog : public QWidget {
     Q_OBJECT
 
 public:
-    explicit HistoryDelDialog(const QList<RecentFileManager::RecentInfo> &files,
-                              bool isScriptFile, QWidget *parent = nullptr);
-    virtual ~HistoryDelDialog();
+    explicit LayoutDelDialog(const QStringList &layouts,
+                             QWidget *parent = nullptr);
+    ~LayoutDelDialog();
 
 public:
-    QVector<int> getResult() const;
-
-public slots:
-    int exec();
+    QStringList getResult() const;
 
 private slots:
-    void on_lwHistory_currentRowChanged(int currentRow);
-
     void on_buttonBox_accepted();
 
     void on_buttonBox_rejected();
 
-private:
-    Ui::HistoryDelDialog *ui;
-    FramelessDialogBase *_dialog;
+public slots:
+    int exec();
 
-    QList<RecentFileManager::RecentInfo> _infos;
-    bool _isScriptFile;
+private:
+    Ui::LayoutDelDialog *ui;
+    FramelessDialogBase *_dialog;
 };
 
-#endif // HISTORYDELDIALOG_H
+#endif // LAYOUTDELDIALOG_H
