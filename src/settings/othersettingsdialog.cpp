@@ -21,6 +21,8 @@
 #include "ui_othersettingsdialog.h"
 #include "utilities.h"
 
+#include <QDesktopServices>
+
 OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     : WingHex::SettingPage(parent), ui(new Ui::OtherSettingsDialog) {
     ui->setupUi(this);
@@ -93,6 +95,11 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
         connect(ui->cbLogLevel, &QComboBox::currentIndexChanged, set,
                 &SettingManager::setLogLevel);
     }
+
+    connect(ui->btnAppData, &QPushButton::clicked, this, []() {
+        QDesktopServices::openUrl(
+            QUrl::fromLocalFile(Utilities::getAppDataPath()));
+    });
 }
 
 OtherSettingsDialog::~OtherSettingsDialog() { delete ui; }

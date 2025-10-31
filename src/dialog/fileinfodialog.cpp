@@ -87,16 +87,9 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
         }
 
         auto &plgsys = PluginSystem::instance();
-        auto devs = plgsys.devices();
-        auto r =
-            std::find_if(devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
-                return plgID.compare(PluginSystem::getPUID(dev),
-                                     Qt::CaseInsensitive) == 0;
-            });
 
-        IWingDevice *dev = nullptr;
-        if (r != devs.end()) {
-            dev = *r;
+        IWingDevice *dev = plgsys.ext2Device(plgID);
+        if (dev) {
             icon = dev->supportedFileIcon();
         } else {
             icon = ICONRES(QStringLiteral("devext"));

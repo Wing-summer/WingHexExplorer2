@@ -822,7 +822,7 @@ QByteArray QHexDocument::read(qsizetype offset, qsizetype len) const {
 
 bool QHexDocument::saveTo(QIODevice *device, bool cleanUndo) {
     auto r = m_buffer->save(device);
-    if (cleanUndo) {
+    if (r && cleanUndo) {
         m_undostack->setClean(); // added by wingsummer
     }
     return r;

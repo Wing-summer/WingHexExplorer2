@@ -195,6 +195,7 @@ private slots:
     void on_exportfindresult();
     void on_locChanged();
     void on_selectionChanged();
+    void on_editableAreaClicked(int area);
 
     void on_viewtxt();
     void on_fullScreen();
@@ -240,7 +241,7 @@ public:
 
 private:
     void updateNumberTable(bool force);
-    void updateStringDec(const QByteArrayList &content);
+    void updateStringDec(const QByteArrayList &content, bool isPreview);
     void updateUI();
 
     void createScriptDialog(SplashDialog *d);
@@ -448,6 +449,7 @@ private:
     Ribbon *m_ribbon = nullptr;
     ads::CDockManager *m_dock = nullptr;
     QLabel *_status = nullptr;
+    QLabel *_editArea = nullptr;
 
     // for show text
     QString m_encoding;

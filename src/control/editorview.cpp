@@ -511,7 +511,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         if (file.isLocalFile()) {
             // regular file
             ret = openFile(file.toLocalFile());
-
+            m_docType = DocumentType::File;
         } else {
             // extension file
             auto scheme = file.scheme();
@@ -525,9 +525,11 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
                 f.removeFirst();
             }
             ret = openExtFile(ext, f);
+            m_docType = DocumentType::Extension;
         }
 
         if (ret != ErrFile::Success) {
+            m_docType = DocumentType::InValid;
             return ret;
         }
 
@@ -539,7 +541,6 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         _pluginData = infos.pluginData;
         doc->setDocSaved();
 
-        m_docType = DocumentType::File;
         workSpaceName = filename;
 
         this->setIcon(ICONRES(QStringLiteral("pro")));
@@ -579,9 +580,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         needSaveWS = true;
     } else {
         if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace) {
-            if (workSpaceName.isEmpty() || doc->isMetaDataUnsaved()) {
-                needSaveWS = true;
-            }
+            needSaveWS = true;
         }
     }
 
@@ -620,7 +619,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         needSave = true;
     } else {
         if (!saveSelf) {
-            needSave = fileName != saveName;
+            needSave = true;
         }
     }
 
@@ -641,33 +640,49 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                 }
             }
         } else {
-            QFile file(path);
+            auto file = new QFile(path);
             bool flag = !isExport;
             if (m_docType == DocumentType::Extension) {
-                if (doc->saveTo(&file, flag)) {
+                if (doc->saveTo(file, flag)) {
                     if (flag) {
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
+
+                        auto buffer = new QFileBuffer;
+                        if (!buffer->open(file, false)) {
+                            delete file;
+                            delete buffer;
+                            return ErrFile::Permission;
+                        }
+                        doc->setBuffer(buffer);
                         doc->setDocSaved();
-                        setFileNameUrl(QUrl::fromLocalFile(
-                            QFileInfo(path).absoluteFilePath()));
+                        auto fName = QFileInfo(path).absoluteFilePath();
+                        setIcon(Utilities::getIconFromFile(style(), fName));
+                        setFileNameUrl(QUrl::fromLocalFile(fName));
+                    } else {
+                        delete file;
                     }
                     return ErrFile::Success;
                 }
             } else {
-                if (doc->saveTo(&file, flag)) {
+                if (doc->saveTo(file, flag)) {
                     if (flag) {
-                        if (isNewFile()) {
-                            auto buffer = new QFileBuffer;
-                            buffer->open(new QFile(path), false);
-                            doc->setBuffer(buffer);
+                        auto buffer = new QFileBuffer;
+                        if (!buffer->open(file, false)) {
+                            delete file;
+                            delete buffer;
+                            return ErrFile::Permission;
                         }
+                        doc->setBuffer(buffer);
 
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
                         doc->setDocSaved();
-                        setFileNameUrl(QUrl::fromLocalFile(
-                            QFileInfo(path).absoluteFilePath()));
+                        auto fName = QFileInfo(path).absoluteFilePath();
+                        setIcon(Utilities::getIconFromFile(style(), fName));
+                        setFileNameUrl(QUrl::fromLocalFile(fName));
+                    } else {
+                        delete file;
                     }
                     return ErrFile::Success;
                 }
@@ -737,6 +752,7 @@ ErrFile EditorView::closeFile() {
         }
     }
 
+    m_hex->resetDocument();
     return ErrFile::Success;
 }
 

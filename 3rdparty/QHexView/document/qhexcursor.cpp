@@ -152,9 +152,6 @@ void QHexCursor::moveTo(qsizetype line, int column, int nibbleindex,
 
     if (clearSelection) {
         m_sels.clear();
-    }
-
-    if (clearSelection) {
         Q_EMIT selectionChanged();
     }
 
@@ -167,12 +164,9 @@ void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
         m_selection.column = qMax(0, column); // fix the bug by wingsummer
         m_selection.lineWidth = m_position.lineWidth;
         m_selection.nibbleindex = 0;
-
         modes.setFlag(SelectionPreview, false);
-        m_preMode = SelectionMode(int(modes));
     } else {
         QHexSelection sel;
-
         sel.begin = m_position;
         sel.begin.nibbleindex = 1;
 
@@ -197,6 +191,7 @@ void QHexCursor::select(qsizetype line, int column, SelectionModes modes) {
         }
     }
 
+    m_preMode = SelectionMode(int(modes));
     Q_EMIT selectionChanged();
 }
 

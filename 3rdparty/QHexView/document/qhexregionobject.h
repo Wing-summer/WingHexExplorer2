@@ -218,8 +218,8 @@ public:
 
             if (sel.end < oldend) {
                 // break into two ranges
-                P s;
-                s.begin = sel.end;
+                P s = *static_cast<const P *>(this);
+                s.begin = next(sel.end);
                 s.end = oldend;
 
                 if (locker) {
@@ -240,25 +240,21 @@ public:
                                               QMutex *locker = nullptr) {
         Q_ASSERT(isValid());
         Q_ASSERT(isNormalized());
-        if (canMerge(sel)) {
-            if (locker) {
-                locker->lock();
-            }
-
-            if (this->begin < sel.end) {
-                this->begin = qMin(this->begin, next(sel.begin));
-                this->end = qMax(next(this->end), sel.end);
-            } else {
-                this->begin = qMin(next(this->begin), sel.begin);
-                this->end = qMax(this->end, next(sel.end));
-            }
-
-            if (locker) {
-                locker->unlock();
-            }
-            return true;
+        if (!canMerge(sel)) {
+            return false;
         }
-        return false;
+
+        if (locker) {
+            locker->lock();
+        }
+
+        this->begin = qMin(this->begin, sel.begin);
+        this->end = qMax(this->end, sel.end);
+
+        if (locker) {
+            locker->unlock();
+        }
+        return true;
     };
 
     bool isValid() const { return _valid; }
@@ -274,9 +270,9 @@ class QHexRegionObjectList : public QVector<P> {
 
 public:
     struct MergeAddItem {
-        // indices of items changed in old list
-        QVector<qsizetype> changed;
-        // indices of new items inserted in new list
+        // original indices (in the list BEFORE this call) that were removed.
+        QVector<qsizetype> removed;
+        // indices in the final list (AFTER this call) of newly inserted.
         QVector<qsizetype> inserted;
     };
 
@@ -299,59 +295,96 @@ public:
 
         // clean up invalid selections
         auto cleanup = [](const P &s) { return !s.isValid(); };
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         this->removeIf(cleanup);
-#else
-        this->erase(std::remove_if(this->begin(), this->end(), cleanup));
-#endif
-
         QtConcurrent::blockingMap(
             buffer, [&locker, this](P &s) { mergeAdd(s, &locker); });
     }
 
-    // @return items changed index in old QHexRegionObjectList
     MergeAddItem mergeAdd(const P &sel, QMutex *locker = nullptr) {
-        bool res = false;
         Q_ASSERT(sel.isNormalized());
-
         MergeAddItem ret;
-        QList<P> regionSlices;
 
-        auto total = this->size();
+        P sel0 = sel;
+        qsizetype removedSoFar = 0;
+        QList<P> regionSlices;
+        QList<P> insertsFromRemoved;
         qsizetype i = 0;
-        for (i = 0; i < total; ++i) {
-            auto p = this->at(i);
-            auto r = p.mergeRegion(sel, locker);
+        while (i < this->size()) {
+            auto &p = this->operator[](i);
+
+            if (sel0.contains(p)) {
+                qsizetype origIndex = static_cast<qsizetype>(i) +
+                                      static_cast<qsizetype>(removedSoFar);
+                ret.removed.append(origIndex);
+
+                this->takeAt(i);
+                ++removedSoFar;
+                continue;
+            }
+
+            auto r = p.mergeRegion(sel0, locker);
             if (std::holds_alternative<bool>(r)) {
-                res = std::get<bool>(r);
-                ret.changed.append(i);
-                if (res) {
-                    break;
+                bool flag = std::get<bool>(r);
+                qsizetype origIndex = static_cast<qsizetype>(i) +
+                                      static_cast<qsizetype>(removedSoFar);
+
+                ret.removed.append(origIndex);
+
+                P taken = this->takeAt(i);
+                ++removedSoFar;
+
+                if (flag) {
+                    sel0 = taken;
+                    continue;
+                } else {
+                    insertsFromRemoved.append(taken);
+                    continue;
                 }
             } else {
                 auto v = std::get<P>(r);
-                ret.changed.append(i);
                 regionSlices.append(v);
                 break;
             }
         }
 
-        for (auto &v : regionSlices) {
-            auto idx = std::distance(
-                this->constBegin(),
-                std::upper_bound(this->constBegin(), this->constEnd(), v));
-            ret.inserted.append(idx);
-            this->insert(idx, v);
+        QVector<P> toInsert;
+        for (auto &v : regionSlices)
+            toInsert.append(v);
+        for (auto &v : insertsFromRemoved)
+            toInsert.append(v);
+
+        auto equal_by_less = [](const P &a, const P &b) -> bool {
+            return !(a < b) && !(b < a);
+        };
+        bool sel_present = false;
+        for (const auto &e : toInsert) {
+            if (equal_by_less(e, sel0)) {
+                sel_present = true;
+                break;
+            }
+        }
+        if (!sel_present)
+            toInsert.append(sel0);
+
+        QVector<P> finalInsert;
+        for (const auto &v : toInsert) {
+            bool found = false;
+            for (const auto &u : finalInsert) {
+                if (equal_by_less(u, v)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                finalInsert.append(v);
         }
 
-        if (res) {
-            auto m = this->takeAt(i);
-            mergeAdd(m, locker);
-        } else {
-            this->insert(std::distance(this->constBegin(),
-                                       std::upper_bound(this->constBegin(),
-                                                        this->constEnd(), sel)),
-                         sel);
+        for (const auto &v : finalInsert) {
+            auto it = std::upper_bound(this->constBegin(), this->constEnd(), v);
+            qsizetype idx =
+                static_cast<qsizetype>(std::distance(this->constBegin(), it));
+            this->insert(idx, v);
+            ret.inserted.append(idx);
         }
 
         return ret;

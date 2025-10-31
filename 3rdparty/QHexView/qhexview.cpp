@@ -125,6 +125,7 @@ void QHexView::getStatus() {
     Q_EMIT metafgVisibleChanged(m_document->metafgVisible());
     Q_EMIT metabgVisibleChanged(m_document->metabgVisible());
     Q_EMIT metaCommentVisibleChanged(m_document->metaCommentVisible());
+    Q_EMIT editableAreaClicked(m_renderer->selectedArea());
 }
 
 void QHexView::establishSignal(QHexDocument *doc) {
@@ -671,8 +672,8 @@ void QHexView::mousePressEvent(QMouseEvent *e) {
         return;
 
     m_renderer->selectArea(abspos);
-
-    if (m_renderer->editableArea(m_renderer->selectedArea())) {
+    auto area = m_renderer->selectedArea();
+    if (m_renderer->editableArea(area)) {
         auto m = getSelectionMode();
         bool clearSelection = false;
         if (m == QHexCursor::SelectionNormal) {
@@ -683,6 +684,7 @@ void QHexView::mousePressEvent(QMouseEvent *e) {
         }
 
         m_cursor->moveTo(position, clearSelection);
+        Q_EMIT editableAreaClicked(area);
     }
 
     e->accept();
@@ -1004,22 +1006,13 @@ bool QHexView::processAction(QHexCursor *cur, QKeyEvent *e) {
                 return true;
 
             // modified by wingsummer
-            if (isKeepSize()) {
-                if (cur->insertionMode() == QHexCursor::OverwriteMode) {
-                    if (e->key() == Qt::Key_Backspace)
-                        m_document->Replace(m_cursor, pos.offset() - 1,
-                                            uchar(0), 0);
-                    else
-                        m_document->Replace(m_cursor, pos.offset(), uchar(0),
-                                            0);
-                }
-            } else {
-                if (e->key() == Qt::Key_Backspace)
+            if (!isKeepSize()) {
+                if (e->key() == Qt::Key_Backspace) {
                     m_document->Remove(m_cursor, pos.offset() - 1, 1, 1);
-                else
+                } else {
                     m_document->Remove(m_cursor, pos.offset(), 1, 0);
+                }
             }
-
         } else {
             this->RemoveSelection();
         }

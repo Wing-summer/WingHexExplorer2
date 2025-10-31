@@ -21,13 +21,7 @@
 
 SharedMemory::SharedMemory(const QString &key, OpenMode mode, QObject *parent)
     : WingHex::WingIODevice(parent), m_key(key), m_mode(mode),
-      m_sharedMemory(key) {
-    if (m_mode == WriteOnly) {
-        if (!m_sharedMemory.create(1024)) {
-            qWarning() << "Unable to create shared memory segment.";
-        }
-    }
-}
+      m_sharedMemory(key) {}
 
 SharedMemory::~SharedMemory() {
     if (m_sharedMemory.isAttached()) {

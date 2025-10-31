@@ -79,6 +79,9 @@
          </item>
          <item>
           <widget class="QSpinBox" name="sbTimeout">
+           <property name="toolTip">
+            <string notr="true">[0, 312480]</string>
+           </property>
            <property name="suffix">
             <string notr="true"> min</string>
            </property>
@@ -90,6 +93,13 @@
            </property>
            <property name="value">
             <number>10</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblTimeout_2">
+           <property name="text">
+            <string>(0 : unlimited)</string>
            </property>
           </widget>
          </item>

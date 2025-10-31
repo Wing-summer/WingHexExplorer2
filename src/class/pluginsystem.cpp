@@ -541,16 +541,26 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
             rpuid = puid;
             State = None;
         }
-        auto r = std::find_if(
-            _loadedplgs.begin(), _loadedplgs.end(), [=](IWingPlugin *plg) {
-                return rpuid.compare(getPUID(plg), Qt::CaseInsensitive) == 0;
-            });
 
-        if (r == _loadedplgs.end()) {
-            return false;
+        static QHash<QString, IWingPluginBase *> cache;
+        IWingPluginBase *rc = nullptr;
+        if (cache.contains(rpuid)) {
+            rc = cache.value(rpuid);
+        } else {
+            auto r =
+                std::find_if(_pinfos.keyBegin(), _pinfos.keyEnd(),
+                             [=](IWingPluginBase *plg) {
+                                 return rpuid.compare(getPUID(plg),
+                                                      Qt::CaseInsensitive) == 0;
+                             });
+
+            if (r == _pinfos.keyEnd()) {
+                return false;
+            }
+            rc = *r;
+            cache.insert(rpuid, rc);
         }
 
-        auto rc = *r;
         switch (State) {
         case None:
             obj = rc;
@@ -3836,13 +3846,20 @@ PluginSystem::processPragma(const QString &section, const QString &plgId,
 }
 
 IWingDevice *PluginSystem::ext2Device(const QString &ext) {
-    auto r =
-        std::find_if(_loadeddevs.begin(), _loadeddevs.end(),
-                     [=](IWingDevice *dev) { return _pinfos[dev].id == ext; });
+    static QHash<QString, IWingDevice *> caches;
+    if (caches.contains(ext)) {
+        return caches.value(ext);
+    }
+    auto r = std::find_if(
+        _loadeddevs.begin(), _loadeddevs.end(), [=](IWingDevice *dev) {
+            return ext.compare(getPUID(dev), Qt::CaseInsensitive) == 0;
+        });
     if (r == _loadeddevs.end()) {
         return nullptr;
     }
-    return *r;
+    auto dev = *r;
+    caches.insert(ext, dev);
+    return dev;
 }
 
 PluginInfo PluginSystem::getPluginInfo(IWingPluginBase *plg) const {

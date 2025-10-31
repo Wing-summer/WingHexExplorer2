@@ -443,23 +443,27 @@ bool TestPlugin::createTestShareMem(const QString &nameID) {
     if (!_tsharemem->create(20)) {
         return false;
     }
-
     auto buffer = _tsharemem->data();
     std::memset(buffer, 0, 20);
     const char data[] = "WingSummer";
     std::memcpy(buffer, data, sizeof(data));
-
     return true;
 }
 
 bool TestPlugin::destoryTestShareMem() {
     if (_tsharemem) {
-        if (_tsharemem->isAttached()) {
-            return false;
+        // don't try to destory the share memory
+        // if it's opened, it will cause freeze
+        // but it's ok with `shmem`
+        bool used = true;
+        auto ret = invokeService(QStringLiteral("shmem"), "isShareMemUsed",
+                                 qReturnArg(used));
+        if (!ret || ret && !used) {
+            _tsharemem->detach();
+            delete _tsharemem;
+            _tsharemem = nullptr;
+            return true;
         }
-        _tsharemem->deleteLater();
-        _tsharemem = nullptr;
-        return true;
     }
     return false;
 }

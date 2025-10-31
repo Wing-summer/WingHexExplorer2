@@ -107,13 +107,7 @@ bool RecentFileManager::existsPath(const RecentInfo &info) {
             // plugin extension
             auto &plgsys = PluginSystem::instance();
             auto plgID = url.authority();
-            auto devs = plgsys.devices();
-            auto r = std::find_if(
-                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
-                    return plgID.compare(PluginSystem::getPUID(dev),
-                                         Qt::CaseInsensitive) == 0;
-                });
-            return r != devs.end();
+            return plgsys.ext2Device(plgID) != nullptr;
         }
     }
     return false;
@@ -158,10 +152,16 @@ QString RecentFileManager::getDisplayTooltip(const RecentInfo &info,
 RecentFileManager::~RecentFileManager() {}
 
 void RecentFileManager::addRecentFile(const RecentInfo &info) {
-    int o = 0;
-    if (existsPath(info) && (o = m_recents.indexOf(info)) < 0) {
+    if (!existsPath(info)) {
+        return;
+    }
+    int o = m_recents.indexOf(info);
+    if (o < 0) {
         while (m_recents.count() >= 10) {
-            m_recents.pop_back();
+            m_recents.removeLast();
+            auto a = hitems.takeLast();
+            m_menu->removeAction(a);
+            delete a;
         }
         auto a = new QAction(m_menu);
         a->setData(QVariant::fromValue(info));
@@ -177,14 +177,15 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                 a->setText(title);
                 a->setIcon(Utilities::getIconFromFile(qApp->style(), fileName));
             } else {
-                a->setText(title + QStringLiteral(" (") + mt.name() +
-                           QStringLiteral(")"));
                 if (info.isWorkSpace) {
+                    a->setText(title);
                     a->setIcon(ICONRES(QStringLiteral("pro")));
                     auto font = a->font();
                     font.setUnderline(true);
                     a->setFont(font);
                 } else {
+                    a->setText(title + QStringLiteral(" (") + mt.name() +
+                               QStringLiteral(")"));
                     a->setIcon(
                         Utilities::getIconFromFile(qApp->style(), fileName));
                 }
@@ -193,15 +194,10 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
             // plugin extension
             auto &plgsys = PluginSystem::instance();
             auto plgID = url.authority();
-            auto devs = plgsys.devices();
             a->setText(getDisplayFileName(info, false));
-            auto r = std::find_if(
-                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
-                    return plgID.compare(PluginSystem::getPUID(dev),
-                                         Qt::CaseInsensitive) == 0;
-                });
-            if (r != devs.end()) {
-                a->setIcon((*r)->supportedFileIcon());
+            auto r = plgsys.ext2Device(plgID);
+            if (r) {
+                a->setIcon(r->supportedFileIcon());
             } else {
                 a->setIcon(ICONRES(QStringLiteral("devext")));
             }
@@ -214,12 +210,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                     auto idx = hitems.indexOf(a);
                     if (idx > 0) {
                         m_menu->removeAction(a);
-
-                        if (hitems.count())
-                            m_menu->insertAction(hitems.first(), a);
-                        else
-                            m_menu->addAction(a);
-
+                        m_menu->insertAction(hitems.first(), a);
                         hitems.move(idx, 0);
                     }
                     Q_EMIT triggered(f);
@@ -237,17 +228,20 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                 }
             }
         });
-        m_recents.push_front(info);
-        if (hitems.count())
+
+        if (hitems.count()) {
             m_menu->insertAction(hitems.first(), a);
-        else
+        } else {
             m_menu->addAction(a);
-        hitems.push_front(a);
+        }
+        m_recents.prepend(info);
+        hitems.prepend(a);
     } else {
         if (hitems.count() > 1) {
             auto a = hitems.at(o);
             m_menu->removeAction(a);
             m_menu->insertAction(hitems.first(), a);
+            m_recents.move(o, 0);
             hitems.move(o, 0);
         }
     }
@@ -261,7 +255,7 @@ void RecentFileManager::clearFile() {
     }
     for (auto &item : hitems) {
         m_menu->removeAction(item);
-        item->deleteLater();
+        delete item;
     }
     m_recents.clear();
     hitems.clear();

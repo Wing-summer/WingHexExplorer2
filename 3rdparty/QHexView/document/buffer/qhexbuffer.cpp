@@ -52,18 +52,15 @@ bool QHexBuffer::close() {
         return true;
     }
 
-    if (_ioDevice->isOpen()) {
-        _ioDevice->close();
-        delete _ioDevice;
-        _ioDevice = nullptr;
+    _ioDevice->close();
+    delete _ioDevice;
+    _ioDevice = nullptr;
 
-        // intenal buffer?
-        if (m_buffer) {
-            m_buffer = nullptr;
-        }
-        return true;
+    // intenal buffer?
+    if (m_buffer) {
+        m_buffer = nullptr;
     }
-    return false;
+    return true;
 }
 
 uchar QHexBuffer::at(qsizetype idx) const {

@@ -14,17 +14,17 @@
         <translation>一个提供羽云十六进制编辑器2的插件打开共享内存的驱动</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="53"/>
+        <location filename="../sharememorydrv.cpp" line="60"/>
         <source>ShareMemory</source>
         <translation>共享内存</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="62"/>
+        <location filename="../sharememorydrv.cpp" line="69"/>
         <source>SharedMemory</source>
         <translation>共享内存</translation>
     </message>
     <message>
-        <location filename="../sharememorydrv.cpp" line="62"/>
+        <location filename="../sharememorydrv.cpp" line="69"/>
         <source>PleaseInputID:</source>
         <translation>请输入标识：</translation>
     </message>

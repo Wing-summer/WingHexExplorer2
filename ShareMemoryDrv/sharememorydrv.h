@@ -46,6 +46,12 @@ public:
     virtual QIcon supportedFileIcon() const override;
     virtual WingHex::WingIODevice *onOpenFile(const QString &path) override;
     virtual bool onCloseFile(WingHex::WingIODevice *dev) override;
+
+private:
+    WING_SERVICE bool isShareMemUsed(const WingHex::SenderInfo &sender);
+
+private:
+    size_t _count = 0;
 };
 
 #endif // SHAREDMEMORYDRIVER_H

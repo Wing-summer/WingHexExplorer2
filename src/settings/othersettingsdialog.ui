@@ -59,6 +59,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnAppData">
+        <property name="text">
+         <string>OpenAppData</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

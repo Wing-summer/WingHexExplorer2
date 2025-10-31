@@ -61,15 +61,10 @@ HistoryDelDialog::HistoryDelDialog(
             // plugin extension
             auto &plgsys = PluginSystem::instance();
             auto plgID = url.authority();
-            auto devs = plgsys.devices();
             lw->setText(RecentFileManager::getDisplayFileName(info, false));
-            auto r = std::find_if(
-                devs.begin(), devs.end(), [plgID](IWingDevice *dev) {
-                    return plgID.compare(PluginSystem::getPUID(dev),
-                                         Qt::CaseInsensitive) == 0;
-                });
-            if (r != devs.end()) {
-                lw->setIcon((*r)->supportedFileIcon());
+            auto r = plgsys.ext2Device(plgID);
+            if (r) {
+                lw->setIcon(r->supportedFileIcon());
             } else {
                 lw->setIcon(ICONRES(QStringLiteral("devext")));
             }

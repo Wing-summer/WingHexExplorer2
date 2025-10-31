@@ -190,19 +190,9 @@ bool QHexMetadata::removeLineMetadata(const QHexMetadataItem &item) {
     for (auto &l : m_linemeta) {
         l.remove(item);
     }
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    m_linemeta.erase(std::remove_if(
-        m_linemeta.begin(), m_linemeta.end(),
-        [](const QHash<QHexMetadataItem, QHexLineMetadata> &item) {
-            return item.isEmpty();
-        }));
-#else
     m_linemeta.removeIf(
         [](const QPair<qsizetype, QHash<QHexMetadataItem, QHexLineMetadata>>
                &item) { return item.second.isEmpty(); });
-#endif
-
     Q_EMIT metadataChanged();
     return true;
 }
@@ -218,13 +208,7 @@ void QHexMetadata::removeMetadata(qsizetype offset) {
         return r;
     };
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    m_metadata.erase(
-        std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
-#else
     m_metadata.removeIf(rmfn);
-#endif
-
     Q_EMIT metadataChanged();
 }
 
@@ -543,22 +527,18 @@ bool QHexMetadata::comment(qsizetype begin, qsizetype end,
 QVector<QHexMetadataItem> QHexMetadata::mayBrokenMetaData(qsizetype begin,
                                                           qsizetype end) {
     QVector<QHexMetadataItem> ret;
-    std::copy_if(
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        m_metadata.begin(), m_metadata.end(),
-#else
-        m_metadata.constBegin(), m_metadata.constEnd(),
-#endif
-        std::back_inserter(ret), [begin, end](const QHexMetadataItem &item) {
-            return !(end < item.begin || begin > item.end);
-        });
+    std::copy_if(m_metadata.constBegin(), m_metadata.constEnd(),
+                 std::back_inserter(ret),
+                 [begin, end](const QHexMetadataItem &item) {
+                     return !(end < item.begin || begin > item.end);
+                 });
     return ret;
 }
 
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
     auto old = m_metadata;
     auto r = m_metadata.mergeAdd(mi);
-    for (auto &idx : r.changed) {
+    for (auto &idx : r.removed) {
         removeLineMetadata(old.at(idx));
     }
     for (auto &idx : r.inserted) {
@@ -607,7 +587,7 @@ bool QHexMetadata::checkValidMetadata(qsizetype begin, qsizetype end,
                                       const QColor &fgcolor,
                                       const QColor &bgcolor,
                                       const QString &comment) {
-    if (begin > end)
+    if (begin > end || begin < 0)
         return false;
 
     if (!fgcolor.isValid() || fgcolor.alpha() != 255) {

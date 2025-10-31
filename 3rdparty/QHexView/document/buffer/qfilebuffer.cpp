@@ -62,13 +62,16 @@ bool QFileBuffer::save(QIODevice *iodevice) {
             if (auto file = qobject_cast<QFile *>(iodevice)) {
                 QSaveFile sf(file->fileName());
                 sf.setDirectWriteFallback(true);
+                if (!sf.open(QIODevice::WriteOnly)) {
+                    return false;
+                }
                 auto r = _chunks->write(&sf);
                 if (r) {
                     sf.commit();
                 } else {
                     sf.cancelWriting();
                 }
-                return true;
+                return r;
             } else {
                 // not a QFile?
                 if (!iodevice->open(QIODevice::WriteOnly |
@@ -107,15 +110,19 @@ bool QFileBuffer::save(QIODevice *iodevice) {
                 return true;
             } else {
                 // not a QFile?
-                if (!iodevice->open(QIODevice::WriteOnly |
+                if (!iodevice->isWritable()) {
+                    // there is no meaning for unwritable device
+                    return false;
+                }
+
+                iodevice->close(); // close first then reopen
+                if (!iodevice->open(QIODevice::ReadWrite |
                                     QIODevice::Truncate)) {
                     return false;
                 }
 
                 if (_chunks) {
-                    auto r = _chunks->write(iodevice);
-                    iodevice->close();
-                    return r;
+                    return _chunks->write(iodevice);
                 }
             }
         }

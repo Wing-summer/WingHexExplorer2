@@ -180,7 +180,7 @@ private:
     quint8 m_lineWidth;
     QHexPosition m_position, m_selection;
 
-    SelectionMode m_preMode;
+    SelectionMode m_preMode = SelectionNormal;
     QHexRegionObjectList<QHexPosition, QHexSelection> m_sels;
 };
 

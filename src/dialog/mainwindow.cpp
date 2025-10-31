@@ -112,16 +112,29 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     // init statusbar
     {
+        _editArea = new QLabel(this);
+        auto font = _editArea->font();
+        auto fm = QFontMetrics(font);
+        _editArea->setAlignment(Qt::AlignCenter);
+        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 5); // ASCII or HEX
+        m_status->addWidget(_editArea);
+
+        auto separator = new QFrame(m_status);
+        separator->setFrameShape(QFrame::VLine);
+        separator->setFrameShadow(QFrame::Sunken);
+        m_status->addWidget(separator);
+
         m_lblloc = new QLabel(QStringLiteral("(0,0)"), this);
-        auto l = new QLabel(tr("loc:"), this);
-        l->setMinimumWidth(50);
-        l->setAlignment(Qt::AlignCenter);
+        auto l = new QLabel(tr("loc"), this);
         m_status->addWidget(l);
         m_status->addWidget(m_lblloc);
 
-        l = new QLabel(tr("sel:"), this);
-        l->setMinimumWidth(50);
-        l->setAlignment(Qt::AlignCenter);
+        separator = new QFrame(m_status);
+        separator->setFrameShape(QFrame::VLine);
+        separator->setFrameShadow(QFrame::Sunken);
+        m_status->addWidget(separator);
+
+        l = new QLabel(tr("sel"), this);
         m_lblsellen = new QLabel(QStringLiteral("0 - 0x0"), this);
         m_status->addWidget(l);
         m_status->addWidget(m_lblsellen);
@@ -129,7 +142,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         _status = new QLabel(m_status);
         m_status->addPermanentWidget(_status);
 
-        auto separator = new QFrame(m_status);
+        separator = new QFrame(m_status);
         separator->setFrameShape(QFrame::VLine);
         separator->setFrameShadow(QFrame::Sunken);
         m_status->addPermanentWidget(separator);
@@ -1072,6 +1085,7 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                                        ads::CDockAreaWidget *areaw) {
     m_txtDecode = new QTextBrowser(this);
     m_txtDecode->setUndoRedoEnabled(false);
+    m_txtDecode->setPlaceholderText(tr("PleaseSelectBytes"));
     m_txtDecode->setProperty("__NAME__", tr("DecodeText"));
     auto dw = buildDockWidget(dock, QStringLiteral("DecodeText"),
                               tr("DecodeText") + QStringLiteral(" (ASCII)"),
@@ -2613,14 +2627,22 @@ void MainWindow::on_metadata() {
             if (m.exec()) {
                 auto total = cur->selectionCount();
                 auto meta = doc->metadata();
-                meta->beginMarco(QStringLiteral("[M+G] {cnt: %1}").arg(total));
-                for (int i = 0; i < total; ++i) {
-                    auto begin = cur->selectionStart(i).offset();
-                    auto end = cur->selectionEnd(i).offset();
+                if (total == 1) {
+                    auto begin = cur->selectionStart(0).offset();
+                    auto end = cur->selectionEnd(0).offset();
                     meta->Metadata(begin, end, m.foreGroundColor(),
                                    m.backGroundColor(), m.comment());
+                } else {
+                    meta->beginMarco(
+                        QStringLiteral("[M+G] {cnt: %1}").arg(total));
+                    for (int i = 0; i < total; ++i) {
+                        auto begin = cur->selectionStart(i).offset();
+                        auto end = cur->selectionEnd(i).offset();
+                        meta->Metadata(begin, end, m.foreGroundColor(),
+                                       m.backGroundColor(), m.comment());
+                    }
+                    meta->endMarco();
                 }
-                meta->endMarco();
                 cur->clearSelection();
             }
         } else {
@@ -2868,11 +2890,19 @@ void MainWindow::on_selectionChanged() {
         }
     }
 
-    updateStringDec(buffer);
+    updateStringDec(buffer, isPreview);
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::SelectionChanged,
         {QVariant::fromValue(buffer), isPreview});
+}
+
+void MainWindow::on_editableAreaClicked(int area) {
+    if (area == QHexRenderer::AsciiArea) {
+        _editArea->setText(QStringLiteral("ASCII"));
+    } else {
+        _editArea->setText(QStringLiteral("HEX"));
+    }
 }
 
 void MainWindow::on_viewtxt() {
@@ -3270,15 +3300,22 @@ void MainWindow::connectEditorView(EditorView *editor) {
                 auto total = hexeditor->selectionCount();
                 if (m.exec()) {
                     auto meta = doc->metadata();
-                    meta->beginMarco(
-                        QStringLiteral("[M+G] {cnt: %1}").arg(total));
-                    for (int i = 0; i < total; ++i) {
-                        auto begin = cur->selectionStart(i).offset();
-                        auto end = cur->selectionEnd(i).offset();
+                    if (total == 1) {
+                        auto begin = cur->selectionStart(0).offset();
+                        auto end = cur->selectionEnd(0).offset();
                         meta->Metadata(begin, end, m.foreGroundColor(),
                                        m.backGroundColor(), m.comment());
+                    } else {
+                        meta->beginMarco(
+                            QStringLiteral("[M+G] {cnt: %1}").arg(total));
+                        for (int i = 0; i < total; ++i) {
+                            auto begin = cur->selectionStart(i).offset();
+                            auto end = cur->selectionEnd(i).offset();
+                            meta->Metadata(begin, end, m.foreGroundColor(),
+                                           m.backGroundColor(), m.comment());
+                        }
+                        meta->endMarco();
                     }
-                    meta->endMarco();
                     cur->clearSelection();
                 }
             } else {
@@ -3321,6 +3358,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         auto hexeditor = old->hexEditor();
         hexeditor->disconnect(SIGNAL(cursorLocationChanged()), this);
         hexeditor->disconnect(SIGNAL(cursorSelectionChanged()), this);
+        hexeditor->disconnect(SIGNAL(editableAreaClicked(int)), this);
         hexeditor->disconnect(SIGNAL(canUndoChanged(bool)), this);
         hexeditor->disconnect(SIGNAL(canRedoChanged(bool)), this);
         hexeditor->disconnect(SIGNAL(documentSaved(bool)), this);
@@ -3339,6 +3377,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
             &MainWindow::on_locChanged);
     connect(hexeditor, &QHexView::cursorSelectionChanged, this,
             &MainWindow::on_selectionChanged);
+    connect(hexeditor, &QHexView::editableAreaClicked, this,
+            &MainWindow::on_editableAreaClicked);
     connect(hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
     });
@@ -3582,27 +3622,34 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
 
     auto url = editor->fileNameUrl();
     QString newName;
-    if (url.isLocalFile()) {
-        if (!EditorView::isNewFileUrl(url)) {
-            auto oldName = url.toLocalFile();
-            newName = filename.isEmpty() ? oldName : filename;
+    if (filename.isEmpty()) {
+        if (url.isLocalFile()) {
+            if (!EditorView::isNewFileUrl(url)) {
+                auto oldName = url.toLocalFile();
+                newName = oldName;
+            }
+        } else {
+            static QRegularExpression regex(QStringLiteral("[/*?:<>|\"\\\\]"));
+            newName = (url.authority() + url.path())
+                          .replace(regex, QStringLiteral("_"));
+            if (!m_lastusedpath.isEmpty()) {
+                newName.prepend(QDir::separator()).prepend(m_lastusedpath);
+            }
         }
     }
 
     QString workspace = m_views.value(editor);
-    if (forceWorkspace || workspace.isEmpty()) {
-        if (forceWorkspace || editor->change2WorkSpace()) {
-            QString curFile;
-            if (!editor->isExtensionFile() && !editor->isNewFile()) {
-                curFile = newName + PROEXT;
-            }
-
-            auto wsfile = getWorkSpaceFileName(curFile);
-            if (wsfile.isEmpty()) {
-                return ErrFile::WorkSpaceUnSaved;
-            }
-            workspace = wsfile;
+    if (forceWorkspace || (workspace.isEmpty() && editor->change2WorkSpace())) {
+        QString curFile;
+        if (!editor->isNewFile()) {
+            curFile = newName + PROEXT;
         }
+
+        auto wsfile = getWorkSpaceFileName(curFile);
+        if (wsfile.isEmpty()) {
+            return ErrFile::WorkSpaceUnSaved;
+        }
+        workspace = wsfile;
     }
 
     if (ws) {
@@ -3615,7 +3662,6 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
                                 : EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     if (ret == ErrFile::Success) {
         m_views[editor] = workspace;
-
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
             {QUrl::fromLocalFile(newName), url, isExport,
@@ -3656,7 +3702,6 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         IWingPlugin::RegisteredEvent::FileClosed,
         {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
 
-    editor->hexEditor()->resetDocument();
     editor->closeDockWidget();
 
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
@@ -3730,6 +3775,7 @@ void MainWindow::updateEditModeEnabled() {
         m_lblloc->setText(QStringLiteral("(0,0)"));
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
+        on_editableAreaClicked(-1);
         updateWindowTitle({});
     }
 }
@@ -4002,36 +4048,16 @@ void MainWindow::updateNumberTable(bool force) {
     }
 }
 
-void MainWindow::updateStringDec(const QByteArrayList &content) {
+void MainWindow::updateStringDec(const QByteArrayList &content,
+                                 bool isPreview) {
     if (!m_txtDecode->isVisible()) {
         return;
     }
 
     QByteArrayList buffer = content;
-    bool isPreview = false;
-
-    if (content.isEmpty()) {
-        auto hexeditor = currentHexView();
-        if (hexeditor == nullptr) {
-            return;
-        }
-
-        auto cursor = hexeditor->cursor();
-        if (cursor->previewSelectionMode() != QHexCursor::SelectionRemove &&
-            cursor->hasPreviewSelection()) {
-            buffer.append(hexeditor->previewSelectedBytes());
-            isPreview = true;
-        }
-
-        if (buffer.isEmpty()) {
-            if (hexeditor->selectionCount() > 0) {
-                buffer = hexeditor->selectedBytes();
-            }
-        }
-    }
+    m_txtDecode->clear();
 
     auto total = buffer.size();
-    m_txtDecode->clear();
     for (int i = 0; i < total; i++) {
         auto b = buffer.at(i);
         if (!isPreview) {
@@ -4399,7 +4425,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             } else if (watched == m_numshowtable) {
                 updateNumberTable(false);
             } else if (watched == m_txtDecode) {
-                updateStringDec({});
+                updateStringDec({}, false);
             }
         } break;
         case QEvent::Hide: {
