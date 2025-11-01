@@ -543,11 +543,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
 
         workSpaceName = filename;
 
-        this->setIcon(ICONRES(QStringLiteral("pro")));
-        auto tab = this->tabWidget();
-        tab->setStyleSheet(
-            QStringLiteral("QLabel {text-decoration: underline;}"));
-
+        applyWorkSpaceStyle(this);
         return ret;
     }
     return ErrFile::Error;
@@ -562,8 +558,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
     bool saveSelf = path.isEmpty();
     auto saveName = QUrl::fromLocalFile(path);
-    auto fileName = saveSelf ? this->fileNameUrl() : saveName;
-    auto doc = m_hex->document();
 
     if (saveSelf) {
         if (isExport) {
@@ -572,7 +566,17 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         if (isNewFile()) {
             return ErrFile::IsNewFile;
         }
+    } else {
+        if (isExport) {
+            if (this->fileNameUrl() == saveName) {
+                return ErrFile::Permission;
+            }
+        }
     }
+
+    auto fileName = saveSelf ? this->fileNameUrl() : saveName;
+    auto doc = m_hex->document();
+    auto orginWorkSpace = this->isWorkSpace();
 
     bool needSaveWS = false;
     if (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
@@ -592,26 +596,10 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         auto b = WorkSpaceManager::saveWorkSpace(
             workSpaceName, fileName.url(), doc->bookMarks(),
             doc->metadata()->getAllMetadata(), infos);
-        if (!b)
+        if (!b) {
             return ErrFile::WorkSpaceUnSaved;
-        if (!isExport) {
-            this->workSpaceName = workSpaceName;
-            notifyOnWorkSpace(true);
-
-            auto convertTabW = [](EditorView *view) {
-                view->setIcon(ICONRES(QStringLiteral("pro")));
-                auto tab = view->tabWidget();
-                tab->setStyleSheet(
-                    QStringLiteral("QLabel {text-decoration: underline;}"));
-            };
-
-            convertTabW(this);
-            for (auto &c : m_cloneChildren) {
-                if (c) {
-                    convertTabW(c);
-                }
-            }
         }
+        this->workSpaceName = workSpaceName;
     }
 
     bool needSave = false;
@@ -629,6 +617,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             if (m_docType == DocumentType::Extension) {
                 if (doc->saveTo(nullptr, true)) {
                     doc->setDocSaved();
+                    if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        notifyOnWorkSpace(true);
+                    }
                     return ErrFile::Success;
                 }
             } else {
@@ -636,6 +627,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
+                    if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        notifyOnWorkSpace(true);
+                    }
                     return ErrFile::Success;
                 }
             }
@@ -656,11 +650,21 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         }
                         doc->setBuffer(buffer);
                         doc->setDocSaved();
+
                         auto fName = QFileInfo(path).absoluteFilePath();
-                        setIcon(Utilities::getIconFromFile(style(), fName));
+                        if (workSpaceName.isEmpty()) {
+                            clearWorkSpaceStyle(this);
+                            setIcon(Utilities::getIconFromFile(style(), fName));
+                        } else {
+                            applyWorkSpaceStyle(this);
+                        }
                         setFileNameUrl(QUrl::fromLocalFile(fName));
                     } else {
                         delete file;
+                    }
+
+                    if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        notifyOnWorkSpace(true);
                     }
                     return ErrFile::Success;
                 }
@@ -679,10 +683,19 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         m_docType = DocumentType::File;
                         doc->setDocSaved();
                         auto fName = QFileInfo(path).absoluteFilePath();
-                        setIcon(Utilities::getIconFromFile(style(), fName));
+                        if (workSpaceName.isEmpty()) {
+                            clearWorkSpaceStyle(this);
+                            setIcon(Utilities::getIconFromFile(style(), fName));
+                        } else {
+                            applyWorkSpaceStyle(this);
+                        }
                         setFileNameUrl(QUrl::fromLocalFile(fName));
                     } else {
                         delete file;
+                    }
+
+                    if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        notifyOnWorkSpace(true);
                     }
                     return ErrFile::Success;
                 }
@@ -969,6 +982,33 @@ bool EditorView::checkThreadAff() {
         return false;
     }
     return true;
+}
+
+void EditorView::applyWorkSpaceStyle(EditorView *view) {
+    view->setIcon(ICONRES(QStringLiteral("pro")));
+    auto tab = view->tabWidget();
+    tab->setStyleSheet(QStringLiteral("QLabel {text-decoration: underline;}"));
+
+    if (!view->isCloneFile()) {
+        for (auto &c : view->m_cloneChildren) {
+            if (c) {
+                applyWorkSpaceStyle(c);
+            }
+        }
+    }
+}
+
+void EditorView::clearWorkSpaceStyle(EditorView *view) {
+    auto tab = view->tabWidget();
+    tab->setStyleSheet({});
+
+    if (!view->isCloneFile()) {
+        for (auto &c : view->m_cloneChildren) {
+            if (c) {
+                clearWorkSpaceStyle(c);
+            }
+        }
+    }
 }
 
 bool EditorView::existsServiceHost(const QObject *caller, const QString &puid) {
@@ -2254,10 +2294,10 @@ QMap<QCryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
 
 void EditorView::setFontSize(qreal size) { m_hex->setFontSize(size); }
 
-bool EditorView::isOriginWorkSpace() const {
+bool EditorView::isWorkSpace() const {
     Q_ASSERT(m_docType != DocumentType::InValid);
     if (isCloneFile()) {
-        return this->cloneParent()->isOriginWorkSpace();
+        return this->cloneParent()->isWorkSpace();
     }
     return !workSpaceName.isEmpty();
 }

@@ -141,7 +141,7 @@ public:
 
     QUrl fileNameUrl() const;
 
-    bool isOriginWorkSpace() const;
+    bool isWorkSpace() const;
     bool isNewFile() const;
     bool isCloneFile() const;
     bool isExtensionFile() const;
@@ -227,6 +227,9 @@ private:
 private:
     bool checkErrAndReport(const QObject *sender, const char *func);
     bool checkThreadAff();
+
+    static void applyWorkSpaceStyle(EditorView *view);
+    static void clearWorkSpaceStyle(EditorView *view);
 
     // all private slots
 private slots:

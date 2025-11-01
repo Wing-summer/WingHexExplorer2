@@ -94,7 +94,7 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
 
         connect(ui->btnExportPredef, &QPushButton::clicked, this, [parent]() {
             auto path = WingFileDialog::getExistingDirectory(
-                parent, tr("ExportPredef"), {});
+                parent, tr("ExportPredef"), qApp->applicationDirPath());
             if (path.isEmpty()) {
                 return;
             }

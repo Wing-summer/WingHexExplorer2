@@ -74,11 +74,7 @@
 #include <QStatusBar>
 #include <QTimer>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QStringDecoder>
-#else
-#include <QTextCodec>
-#endif
 
 constexpr auto EMPTY_FUNC = [] {};
 
@@ -117,6 +113,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto fm = QFontMetrics(font);
         _editArea->setAlignment(Qt::AlignCenter);
         _editArea->setFixedWidth(fm.horizontalAdvance('A') * 5); // ASCII or HEX
+        _editArea->setEnabled(false);
         m_status->addWidget(_editArea);
 
         auto separator = new QFrame(m_status);
@@ -2160,7 +2157,7 @@ void MainWindow::on_convpro() {
         return;
     }
 
-    if (editor->isOriginWorkSpace()) {
+    if (editor->isWorkSpace()) {
         Toast::toast(this, NAMEICONRES("convpro"), tr("AlreadyWorkSpace"));
         return;
     }
@@ -2201,11 +2198,16 @@ void MainWindow::on_saveas() {
         return;
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
-    bool isWorkspace = editor->isOriginWorkSpace();
-    auto res = saveEditor(editor, filename, false, isWorkspace);
+    bool isWorkspace = editor->isWorkSpace();
+    QString ws;
+    auto res = saveEditor(editor, filename, false, isWorkspace, &ws);
     if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
                            tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
-        addRecentFile(filename, isWorkspace);
+        if (ws.isEmpty()) {
+            addRecentFile(filename, false);
+        } else {
+            addRecentFile(ws, true);
+        }
     }
 }
 
@@ -2218,13 +2220,20 @@ void MainWindow::on_exportfile() {
         return;
     }
 
-    auto filename = WingFileDialog::getSaveFileName(
-        this, tr("ChooseExportFile"), m_lastusedpath);
+    QString lastpath;
+    if (editor->isNewFile() || editor->isExtensionFile()) {
+        lastpath = m_lastusedpath;
+    } else {
+        lastpath = editor->fileNameUrl().toLocalFile();
+    }
+
+    auto filename =
+        WingFileDialog::getSaveFileName(this, tr("ChooseExportFile"), lastpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
 
-    bool isWorkspace = editor->isOriginWorkSpace();
+    bool isWorkspace = editor->isWorkSpace();
     auto res = saveEditor(editor, filename, true, isWorkspace);
     reportErrFileError(res, NAMEICONRES(QStringLiteral("export")),
                        tr("ExportSuccessfully"), tr("ExportUnSuccessfully"));
@@ -2234,12 +2243,28 @@ void MainWindow::on_savesel() {
     showStatus(tr("SavingSel..."));
     QScopeGuard g([this]() { showStatus({}); });
 
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
+    auto editor = currentEditor();
+    if (editor == nullptr) {
         return;
     }
-    auto filename = WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"),
-                                                    m_lastusedpath);
+
+    auto hexeditor = editor->hexEditor();
+
+    QString lastpath;
+    if (editor->isNewFile() || editor->isExtensionFile()) {
+        lastpath = m_lastusedpath;
+    } else {
+        QFileInfo finfo(editor->fileNameUrl().toLocalFile());
+        auto dir = finfo.absoluteDir();
+        lastpath = dir.absoluteFilePath(
+            QStringLiteral("sel_%1_%2.bin")
+                .arg(finfo.baseName(),
+                     QDateTime::currentDateTime().toString(
+                         QStringLiteral("yyyyMMdd_hhmmsszzz"))));
+    }
+
+    auto filename =
+        WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
     if (filename.isEmpty())
         return;
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
@@ -2903,6 +2928,7 @@ void MainWindow::on_editableAreaClicked(int area) {
     } else {
         _editArea->setText(QStringLiteral("HEX"));
     }
+    _editArea->setEnabled(currentEditor() != nullptr);
 }
 
 void MainWindow::on_viewtxt() {
@@ -3636,15 +3662,13 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
                 newName.prepend(QDir::separator()).prepend(m_lastusedpath);
             }
         }
+    } else {
+        newName = filename;
     }
 
     QString workspace = m_views.value(editor);
     if (forceWorkspace || (workspace.isEmpty() && editor->change2WorkSpace())) {
-        QString curFile;
-        if (!editor->isNewFile()) {
-            curFile = newName + PROEXT;
-        }
-
+        QString curFile = newName + PROEXT;
         auto wsfile = getWorkSpaceFileName(curFile);
         if (wsfile.isEmpty()) {
             return ErrFile::WorkSpaceUnSaved;

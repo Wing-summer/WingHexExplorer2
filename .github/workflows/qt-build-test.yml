@@ -44,7 +44,7 @@ jobs:
         # Installs the Qt SDK
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.8.1
+          version: 6.10.0
           host: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
           target: 'desktop'
           arch: ${{ matrix.arch }}

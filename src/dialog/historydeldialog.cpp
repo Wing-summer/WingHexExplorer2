@@ -45,14 +45,15 @@ HistoryDelDialog::HistoryDelDialog(
                 lw->setIcon(
                     Utilities::getIconFromFile(qApp->style(), fileName));
             } else {
-                lw->setText(title + QStringLiteral(" (") + mt.name() +
-                            QStringLiteral(")"));
                 if (info.isWorkSpace) {
+                    lw->setText(title);
                     lw->setIcon(ICONRES(QStringLiteral("pro")));
                     auto font = lw->font();
                     font.setUnderline(true);
                     lw->setFont(font);
                 } else {
+                    lw->setText(title + QStringLiteral(" (") + mt.name() +
+                                QStringLiteral(")"));
                     lw->setIcon(
                         Utilities::getIconFromFile(qApp->style(), fileName));
                 }

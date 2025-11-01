@@ -259,7 +259,11 @@ QString QHexRenderer::hexString(qsizetype line, QByteArray *rawline) const {
     if (rawline)
         *rawline = lrawline;
 
-    return toHexSequence(lrawline);
+    auto str = toHexSequence(lrawline);
+    if (lrawline.size() < hexLineWidth()) {
+        str.append(QByteArrayLiteral("\t\t "));
+    }
+    return str;
 }
 
 // modified by wingsummer
@@ -315,11 +319,7 @@ int QHexRenderer::getEndColumnX() const {
 }
 
 qreal QHexRenderer::getCellWidth() const {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-    return m_fontmetrics.horizontalAdvance(" ");
-#else
-    return m_fontmetrics.width(" ");
-#endif
+    return m_fontmetrics.horizontalAdvance(' ');
 }
 
 int QHexRenderer::getNCellsWidth(int n) const {
@@ -755,7 +755,7 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
         if (factor == Hex) {
             begin = getCellWidth() * off * 3 + 1;
             begin += getCellWidth() / 2;
-            width = getCellWidth() * 2 + 2;
+            width = getCellWidth() * 2;
             textcursor.setPosition(off * factor);
         } else {
             begin = getCellWidth() * off + 1;

@@ -94,7 +94,7 @@
 
 > Qt 6 请使用 6.6.2 或更高的版本，其他低版本由于关键库的 API 缺失和自身的一些 Bug，所以请不要使用。QT5 已停止支持，我不会再修复相关问题，但接受 PR 。如果因特殊需要 QT5 版本，请咨询我商业合作和付费技术支持。
 
-&emsp;&emsp;该仓库代码使用 Qt 6.6.2 在最新版 Windows 和 Ubuntu 编译情况： ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
+&emsp;&emsp;该仓库代码使用 Qt 6.10.0 在最新版 Windows 和 Ubuntu 编译情况： ![Status](https://github.com/Wing-summer/WingHexExplorer2/actions/workflows/qt-build-test.yml/badge.svg)
 
 ## WingHexExplorer2
 
