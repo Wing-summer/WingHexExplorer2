@@ -112,8 +112,8 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
         auto font = _editArea->font();
         auto fm = QFontMetrics(font);
         _editArea->setAlignment(Qt::AlignCenter);
-        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 5); // ASCII or HEX
-        _editArea->setEnabled(false);
+        // ASCII or HEX or NONE
+        _editArea->setFixedWidth(fm.horizontalAdvance('A') * 5);
         m_status->addWidget(_editArea);
 
         auto separator = new QFrame(m_status);
@@ -768,7 +768,6 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
             });
 
     auto header = m_findresult->horizontalHeader();
-    header->setSectionResizeMode(QHeaderView::Interactive);
     header->setSectionResizeMode(3, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
     auto dw = buildDockWidget(dock, QStringLiteral("FindResult"),
@@ -2928,7 +2927,6 @@ void MainWindow::on_editableAreaClicked(int area) {
     } else {
         _editArea->setText(QStringLiteral("HEX"));
     }
-    _editArea->setEnabled(currentEditor() != nullptr);
 }
 
 void MainWindow::on_viewtxt() {
@@ -4417,11 +4415,27 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::showEvent(QShowEvent *event) {
     FramelessMainWindow::showEvent(event);
-    if (_showEvents) {
-        _showEvents();
+    static bool firstInit = true;
+    if (firstInit) {
+        if (_showEvents) {
+            _showEvents();
+            _showEvents = {};
+        }
+
+        connect(
+            m_findresult->horizontalHeader(), &QHeaderView::sectionResized,
+            this,
+            [this]() {
+                QTimer::singleShot(0, [this]() {
+                    auto header = m_findresult->horizontalHeader();
+                    header->setSectionResizeMode(QHeaderView::Interactive);
+                });
+            },
+            Qt::SingleShotConnection);
+
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::AppReady, {});
-        _showEvents = {};
+        firstInit = false;
     }
 }
 
