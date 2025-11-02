@@ -728,7 +728,7 @@ bool PluginSystem::isCurrentDocEditing(const QObject *sender) {
         return false;
     }
 
-    return pluginCurrentEditor(plg);
+    return pluginCurrentEditor(plg) != nullptr;
 }
 
 QString PluginSystem::currentDocFile(const QObject *sender) {
@@ -760,8 +760,7 @@ bool PluginSystem::isReadOnly(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->cursor()->insertionMode() ==
-               QHexCursor::InsertMode;
+        return e->hexEditor()->isReadOnly();
     }
     return false;
 }
@@ -778,7 +777,8 @@ bool PluginSystem::isInsertionMode(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->isLocked();
+        return e->hexEditor()->cursor()->insertionMode() ==
+               QHexCursor::InsertMode;
     }
     return false;
 }
@@ -812,7 +812,7 @@ bool PluginSystem::isLocked(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->isDocSaved();
+        return e->hexEditor()->isLocked();
     }
     return false;
 }
@@ -1022,7 +1022,7 @@ bool PluginSystem::addressVisible(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->headerVisible();
+        return e->hexEditor()->addressVisible();
     }
     return false;
 }
@@ -1039,7 +1039,7 @@ bool PluginSystem::headerVisible(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->addressVisible();
+        return e->hexEditor()->headerVisible();
     }
     return false;
 }
