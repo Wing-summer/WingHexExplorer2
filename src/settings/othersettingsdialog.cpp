@@ -83,6 +83,10 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
     connect(ui->cbCheckWhenStartup, &QCheckBox::toggled, set,
             &SettingManager::setCheckUpdate);
 
+#ifdef QT_DEBUG
+    ui->cbLogLevel->setCurrentIndex(Logger::Level::q4DEBUG);
+    ui->cbLogLevel->setEnabled(false);
+#else
     bool ok;
     auto dbg = qEnvironmentVariableIntValue("WING_DEBUG", &ok);
     if (dbg && ok) {
@@ -95,6 +99,7 @@ OtherSettingsDialog::OtherSettingsDialog(QWidget *parent)
         connect(ui->cbLogLevel, &QComboBox::currentIndexChanged, set,
                 &SettingManager::setLogLevel);
     }
+#endif
 
     connect(ui->btnAppData, &QPushButton::clicked, this, []() {
         QDesktopServices::openUrl(

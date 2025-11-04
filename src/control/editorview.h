@@ -36,6 +36,12 @@ using namespace WingHex;
 // only plugin api can be declared with `private slot`
 class EditorView : public ads::CDockWidget {
     Q_OBJECT
+    Q_PROPERTY(bool isWorkSpace READ isWorkSpace)
+    Q_PROPERTY(bool isNewFile READ isNewFile)
+    Q_PROPERTY(bool isCloneFile READ isCloneFile)
+    Q_PROPERTY(bool isExtensionFile READ isExtensionFile)
+    Q_PROPERTY(bool isCommonFile READ isCommonFile)
+    Q_PROPERTY(bool hasCloneChildren READ hasCloneChildren)
 
 public:
     enum class DocumentType { InValid, File, Extension, Cloned };
@@ -147,6 +153,8 @@ public:
     bool isExtensionFile() const;
     bool isCommonFile() const;
 
+    bool isSaved() const;
+
     FindResultModel::FindData &findResult();
     QMap<QCryptographicHash::Algorithm, QString> &checkSumResult();
 
@@ -210,12 +218,14 @@ public:
 
     static QString newFileAuthority();
 
+    void switchViewStackLoop(bool next);
+
 private:
     inline qsizetype findAvailCloneIndex();
 
     void setFileNameUrl(const QUrl &fileName);
 
-    QHash<QString, QByteArray> savePluginData();
+    QMap<QString, QByteArray> savePluginData();
     bool checkHasUnsavedState() const;
 
     FindResultModel::FindInfo readContextFinding(qsizetype offset,
@@ -534,7 +544,7 @@ private:
     QHexView *m_hex = nullptr;
     QMenu *m_menu = nullptr;
 
-    QHash<QString, WingEditorViewWidget *> m_others;
+    QMap<QString, WingEditorViewWidget *> m_others;
     bool m_isNewFile = true;
     QByteArray m_md5;
 
@@ -547,7 +557,7 @@ private:
 
     DocumentType m_docType = DocumentType::InValid;
     QString workSpaceName;
-    QHash<QString, QByteArray> _pluginData;
+    QMap<QString, QByteArray> _pluginData;
 
     WingHex::WingIODevice *_dev = nullptr;
     QUrl m_fileName;

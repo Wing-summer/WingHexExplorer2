@@ -20,7 +20,6 @@
 
 #include "QHexView/document/qhexmetadata.h"
 
-#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -32,7 +31,7 @@
 
 struct WorkSpaceInfo {
     qulonglong base = 0;
-    QHash<QString, QByteArray> pluginData;
+    QMap<QString, QByteArray> pluginData;
 };
 
 class WorkSpaceManager {

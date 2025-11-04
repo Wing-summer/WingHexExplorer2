@@ -138,6 +138,7 @@ private:
 
     void buildUpSettingDialog();
     void installPluginEditorWidgets();
+    void registerGlobalSwitchViewLoop();
 
     void showStatus(const QString &status);
 

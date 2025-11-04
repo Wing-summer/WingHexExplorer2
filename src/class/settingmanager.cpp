@@ -169,11 +169,17 @@ void SettingManager::load() {
 #else
     m_useNativeTitleBar = true;
 #endif
+
+#ifdef QT_DEBUG
+    m_logLevel = Logger::q4DEBUG;
+#else
     READ_CONFIG_INT_POSITIVE(m_logLevel, OTHER_LOG_LEVEL,
                              Logger::defaultLevel());
-    READ_CONFIG_BOOL(m_checkUpdate, OTHER_CHECK_UPDATE, false);
     m_logLevel =
         qBound(int(Logger::LEVEL_BEGIN), m_logLevel, int(Logger::LEVEL_LAST));
+#endif
+
+    READ_CONFIG_BOOL(m_checkUpdate, OTHER_CHECK_UPDATE, false);
 
     READ_CONFIG_INT_POSITIVE(m_logCount, OTHER_LOG_COUNT, 20);
     m_logCount = qBound(qsizetype(20), m_logCount, qsizetype(100));

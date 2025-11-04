@@ -29,6 +29,7 @@
 
 #include <QFile>
 #include <QFileInfo>
+#include <QKeyEvent>
 #include <QVBoxLayout>
 
 #ifdef Q_OS_LINUX
@@ -183,6 +184,8 @@ EditorView::EditorView(QWidget *parent)
     for (auto &cs : Utilities::supportedHashAlgorithms()) {
         _checkSumData.insert(cs, QString());
     }
+
+    this->tabWidget()->installEventFilter(this);
 }
 
 EditorView::~EditorView() {}
@@ -194,17 +197,17 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
     view->setProperty(VIEW_PROPERTY, quintptr(this));
     view->setProperty(VIEW_ID_PROPERTY, id);
     view->installEventFilter(this);
-
-    connect(view, &WingEditorViewWidget::savedStateChanged, this,
-            [this]() { updateDocSavedFlag(m_hex->isSaved()); });
-
     applyFunctionTables(view, _viewFns);
+
     if (!isCloneFile()) {
+        connect(view, &WingEditorViewWidget::savedStateChanged, this,
+                [this]() { updateDocSavedFlag(m_hex->isSaved()); });
+
         if (_pluginData.contains(id)) {
             view->loadState(_pluginData.value(id));
         }
-        view->onWorkSpaceNotify(!workSpaceName.isEmpty());
     }
+    view->onWorkSpaceNotify(isWorkSpace());
 }
 
 void EditorView::switchView(const QString &id) {
@@ -222,13 +225,10 @@ void EditorView::switchView(const QString &id) {
             auto sw = m_others.value(id);
             if (curWidget != sw) {
                 m_stack->setCurrentWidget(sw);
-                if (curWidget->inherits("WingHex::WingEditorViewWidget")) {
-                    auto o = static_cast<WingEditorViewWidget *>(curWidget);
-                    if (o) {
-                        o->toggled(false);
-                    }
+                auto o = qobject_cast<WingEditorViewWidget *>(curWidget);
+                if (o) {
+                    o->toggled(false);
                 }
-
                 sw->toggled(true);
             }
         }
@@ -580,7 +580,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
     bool needSaveWS = false;
     if (workSpaceAttr == SaveWorkSpaceAttr::AutoWorkSpace &&
-        doc->isMetaDataUnsaved()) {
+        (doc->isMetaDataUnsaved() || checkHasUnsavedState())) {
         needSaveWS = true;
     } else {
         if (workSpaceAttr == SaveWorkSpaceAttr::ForceWorkSpace) {
@@ -600,6 +600,12 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         }
         this->workSpaceName = workSpaceName;
+
+        for (auto item : m_others) {
+            if (item->hasUnsavedState()) {
+                item->setSaved();
+            }
+        }
     }
 
     bool needSave = false;
@@ -885,8 +891,8 @@ void EditorView::setFileNameUrl(const QUrl &fileName) {
     }
 }
 
-QHash<QString, QByteArray> EditorView::savePluginData() {
-    QHash<QString, QByteArray> ret;
+QMap<QString, QByteArray> EditorView::savePluginData() {
+    QMap<QString, QByteArray> ret;
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
         if (p->second->hasUnsavedState()) {
@@ -903,14 +909,24 @@ QHash<QString, QByteArray> EditorView::savePluginData() {
 bool EditorView::checkHasUnsavedState() const {
     for (auto item : m_others) {
         if (item->hasUnsavedState()) {
-            auto data = item->saveState();
-            if (data.isEmpty()) {
-                continue;
-            }
             return true;
         }
     }
     return false;
+}
+
+void EditorView::switchViewStackLoop(bool next) {
+    auto curIdx = m_stack->currentIndex();
+    auto delta = next ? 1 : -1;
+    auto total = m_stack->count();
+    curIdx += delta;
+    if (curIdx < 0) {
+        curIdx = total - 1;
+    }
+    if (curIdx >= total) {
+        curIdx = 0;
+    }
+    m_stack->setCurrentIndex(curIdx);
 }
 
 FindResultModel::FindInfo EditorView::readContextFinding(qsizetype offset,
@@ -2252,7 +2268,10 @@ EditorView *EditorView::clone() {
 
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
-        ev->m_others.insert(p->first, p->second->clone());
+        auto cw = p->second->clone();
+        if (cw) {
+            ev->registerView(p->first, cw);
+        }
     }
 
     this->m_cloneChildren[cloneIndex] = ev;
@@ -2286,6 +2305,18 @@ bool EditorView::isCommonFile() const {
     return m_docType == EditorView::DocumentType::File;
 }
 
+bool EditorView::isSaved() const {
+    if (isCloneFile()) {
+        return this->cloneParent()->isSaved();
+    }
+    if (isWorkSpace()) {
+        return m_hex->isSaved() && !m_hex->document()->isMetaDataUnsaved() &&
+               !checkHasUnsavedState();
+    } else {
+        return m_hex->isSaved();
+    }
+}
+
 FindResultModel::FindData &EditorView::findResult() { return m_findData; }
 
 QMap<QCryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
@@ -2311,11 +2342,26 @@ QUrl EditorView::fileNameUrl() const {
 }
 
 bool EditorView::eventFilter(QObject *watched, QEvent *event) {
-    if (event->type() == QEvent::DynamicPropertyChange) {
+    auto type = event->type();
+    if (type == QEvent::DynamicPropertyChange) {
         auto e = static_cast<QDynamicPropertyChangeEvent *>(event);
         if (e->propertyName() == VIEW_PROPERTY ||
             e->propertyName() == VIEW_ID_PROPERTY) {
             std::abort();
+        }
+    } else if (type == QEvent::Wheel) {
+        if (watched == this->tabWidget()) {
+            auto e = static_cast<QWheelEvent *>(event);
+            if (e->modifiers() == Qt::ControlModifier) {
+                auto delta = e->angleDelta();
+                if (delta.x() == 0) {
+                    auto y = delta.y();
+                    if (y != 0) {
+                        switchViewStackLoop(y < 0);
+                        return true;
+                    }
+                }
+            }
         }
     }
     return ads::CDockWidget::eventFilter(watched, event);

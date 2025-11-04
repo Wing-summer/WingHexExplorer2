@@ -409,9 +409,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash)
         splash->setInfoText(tr("SetupWaiting"));
 
+    registerGlobalSwitchViewLoop();
+
     // update status
     updateEditModeEnabled();
-
     qApp->installEventFilter(this);
 
     this->setUpdatesEnabled(true);
@@ -1936,6 +1937,8 @@ void MainWindow::buildUpSettingDialog() {
         }
         usedIDs.append(id);
     }
+    m_settingPages.clear();
+    m_settingPages.squeeze();
 
     connect(otherPage, &SettingPage::optionNeedRestartChanged, m_setdialog,
             QOverload<>::of(&SettingDialog::toastTakeEffectReboot));
@@ -1978,9 +1981,9 @@ void MainWindow::buildUpSettingDialog() {
 }
 
 void MainWindow::installPluginEditorWidgets() {
-    QHash<QString, IWingPlugin *> names;
-    auto &log = Logger::instance();
+    QMap<QString, QPair<IWingPlugin *, QAction *>> names;
 
+    auto &log = Logger::instance();
     auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
 
     decltype(m_editorViewWidgets) newEditorViewWidgets;
@@ -1995,7 +1998,7 @@ void MainWindow::installPluginEditorWidgets() {
                 log.critical(tr("Plugin %1 contains a duplicate ID (%2) that "
                                 "is already registered by plugin %3")
                                  .arg(p->first->pluginName(), id,
-                                      names.value(id)->pluginName()));
+                                      names[id].first->pluginName()));
                 continue;
             }
 
@@ -2007,16 +2010,41 @@ void MainWindow::installPluginEditorWidgets() {
                 editor->switchView(id);
             });
             a->setProperty("__ID__", id);
-            menu->addAction(a);
 
-            names.insert(id, p->first);
+            names.insert(id, qMakePair(p->first, a));
             newCreatorList.append(wctor);
         }
+
+        for (auto &item : names) {
+            menu->addAction(item.second);
+        }
+
         newEditorViewWidgets.insert(p->first, newCreatorList);
         updateUI();
     }
 
     m_editorViewWidgets = newEditorViewWidgets;
+}
+
+void MainWindow::registerGlobalSwitchViewLoop() {
+    auto sc =
+        new QShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_Left), this);
+    sc->setContext(Qt::WindowShortcut);
+    connect(sc, &QShortcut::activated, this, [this]() {
+        auto view = currentEditor();
+        if (view) {
+            view->switchViewStackLoop(false);
+        }
+    });
+
+    sc = new QShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_Right), this);
+    sc->setContext(Qt::WindowShortcut);
+    connect(sc, &QShortcut::activated, this, [this]() {
+        auto view = currentEditor();
+        if (view) {
+            view->switchViewStackLoop(true);
+        }
+    });
 }
 
 void MainWindow::showStatus(const QString &status) {
@@ -3697,16 +3725,15 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         return ErrFile::Error;
     }
     if (!editor->isCloneFile()) {
-        auto hexeditor = editor->hexEditor();
         if (!force) {
-            if (!hexeditor->isSaved()) {
+            if (!editor->isSaved()) {
                 return ErrFile::UnSaved;
             }
         }
     }
 
     auto cret = editor->closeFile();
-    if (cret != ErrFile::Success) {
+    if (cret != ErrFile::Success && !force) {
         return cret;
     }
 
@@ -4359,7 +4386,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         QList<EditorView *> need2CloseView;
         for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); p++) {
             auto editor = *p;
-            bool saved = editor->hexEditor()->isSaved();
+            bool saved = editor->isSaved();
             if (saved) {
                 need2CloseView << editor;
             } else {

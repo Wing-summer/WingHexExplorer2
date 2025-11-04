@@ -30,14 +30,14 @@ RibbonTabContent::RibbonTabContent(QWidget *parent)
             [hb, view](QObject *obj, QEvent *event) {
                 Q_ASSERT(obj == view);
                 auto e = static_cast<QWheelEvent *>(event);
-                bool horizontal =
-                    qAbs(e->angleDelta().x()) > qAbs(e->angleDelta().y());
+                auto adelta = e->angleDelta();
+                bool horizontal = qAbs(adelta.x()) > qAbs(adelta.y());
 
-                if (!horizontal && e->angleDelta().x() != 0) {
+                if (!horizontal && adelta.x() != 0) {
                     return;
                 }
 
-                int delta = e->angleDelta().y() / 2;
+                int delta = adelta.y() / 2;
                 hb->setValue(hb->value() - delta);
             });
     connect(hb, &QScrollBar::valueChanged, this,
