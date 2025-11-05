@@ -186,7 +186,8 @@ public slots:
 public:
     EditorView *clone();
 
-    void registerView(const QString &id, WingHex::WingEditorViewWidget *view);
+    void registerView(const QString &id, WingHex::WingEditorViewWidget *view,
+                      const QIcon &viewIcon);
 
     void switchView(const QString &id);
     void registerQMenu(QMenu *menu);
@@ -197,8 +198,9 @@ public:
     void triggerGoto();
 
     ErrFile newFile(size_t index);
-    ErrFile openFile(const QString &filename);
-    ErrFile openExtFile(const QString &ext, const QString &file);
+    ErrFile openFile(const QString &filename, bool generateCache = true);
+    ErrFile openExtFile(const QString &ext, const QString &file,
+                        bool generateCache = true);
     ErrFile openExtFile(const QUrl &fileName);
     ErrFile openWorkSpace(const QString &filename);
     ErrFile
@@ -511,6 +513,8 @@ private:
 
 private slots:
     void updateDocSavedFlag(bool b);
+    void generateIconBaseCache(const QIcon &baseIcon);
+    void updateIcon();
 
 signals:
     void sigOnCutFile();
@@ -545,6 +549,8 @@ private:
     QMenu *m_menu = nullptr;
 
     QMap<QString, WingEditorViewWidget *> m_others;
+    QHash<WingEditorViewWidget *, QIcon> m_iconOrigin;
+    QHash<QWidget *, QIcon> m_iconCaches;
     bool m_isNewFile = true;
     QByteArray m_md5;
 

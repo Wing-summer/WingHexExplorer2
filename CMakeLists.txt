@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.1")
+set(PROJECT_VERSION "2.3.2")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
@@ -378,6 +378,8 @@ set(CLASS_SRC
     src/class/changedstringlist.cpp
     src/class/editorviewcontext.h
     src/class/editorviewcontext.cpp
+    src/class/compositeiconengine.h
+    src/class/compositeiconengine.cpp
     src/class/consolehighlighanim.h
     src/class/consolehighlighanim.cpp
     src/class/angellsp.h

@@ -2002,7 +2002,15 @@ void MainWindow::installPluginEditorWidgets() {
                 continue;
             }
 
-            auto a = newAction(wctor->icon(), wctor->name(), [this, id] {
+            auto icon = wctor->icon();
+            if (icon.isNull()) {
+                icon = ICONRES(QStringLiteral("win"));
+            }
+            auto name = wctor->name().trimmed();
+            if (name.isEmpty()) {
+                name = p->first->pluginName();
+            }
+            auto a = newAction(icon, name, [this, id] {
                 auto editor = currentEditor();
                 if (editor == nullptr) {
                     return;
@@ -3222,7 +3230,11 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         for (auto &w : p->second) {
             auto v = w->create(editor);
             auto id = w->id();
-            editor->registerView(id, v);
+            auto icon = w->icon();
+            if (icon.isNull()) {
+                icon = ICONRES(QStringLiteral("win"));
+            }
+            editor->registerView(id, v, icon);
         }
     }
 
@@ -3321,7 +3333,7 @@ void MainWindow::registerClonedEditorView(EditorView *editor) {
     menu->addAction(ta);
     ev->setEnabled(true);
 
-    connect(editor, &EditorView::closeRequested, this, [=]() {
+    connect(editor, &EditorView::closeRequested, this, [this, editor]() {
         adjustEditorFocus(editor);
         editor->closeDockWidget();
     });
@@ -3711,6 +3723,9 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
                                 ? EditorView::SaveWorkSpaceAttr::ForceWorkSpace
                                 : EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     if (ret == ErrFile::Success) {
+        if (editor->isCloneFile()) {
+            editor = editor->cloneParent();
+        }
         m_views[editor] = workspace;
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
@@ -3724,14 +3739,16 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     if (editor == nullptr) {
         return ErrFile::Error;
     }
-    if (!editor->isCloneFile()) {
-        if (!force) {
-            if (!editor->isSaved()) {
-                return ErrFile::UnSaved;
-            }
-        }
+    if (editor->isCloneFile()) {
+        editor->requestCloseDockWidget(); // must be success
+        return ErrFile::Success;
     }
 
+    if (!force) {
+        if (!editor->isSaved()) {
+            return ErrFile::UnSaved;
+        }
+    }
     auto cret = editor->closeFile();
     if (cret != ErrFile::Success && !force) {
         return cret;
@@ -4464,6 +4481,20 @@ void MainWindow::showEvent(QShowEvent *event) {
             IWingPlugin::RegisteredEvent::AppReady, {});
         firstInit = false;
     }
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *event) {
+    if (event->modifiers() == Qt::NoModifier) {
+        auto key = event->button();
+        if (key == Qt::XButton1 || key == Qt::XButton2) {
+            auto view = currentEditor();
+            if (view) {
+                view->switchViewStackLoop(key == Qt::XButton2);
+            }
+            event->ignore();
+        }
+    }
+    FramelessMainWindow::mousePressEvent(event);
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {

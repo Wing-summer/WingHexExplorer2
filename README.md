@@ -177,3 +177,4 @@
 ## 插件库
 
 - [WingAsm](https://github.com/Wing-summer/WingAsm) : 一个提供汇编和反汇编的插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。
+- [WingHexNote](https://github.com/Wing-summer/WingHexNote) : 一个羽云十六进制编辑器2的笔记插件，作者 **寂静的羽夏** ，协议 **APGL-v3.0** 。

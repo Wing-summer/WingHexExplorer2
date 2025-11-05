@@ -54,11 +54,15 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
         auto m = mobj->method(i);
         if (m.methodType() == QMetaMethod::Slot &&
             m.access() == QMetaMethod::Public) {
+            auto total = m.parameterCount();
+            if (total < 1 || m.parameterMetaType(0) !=
+                                 QMetaType::fromType<const QObject *>()) {
+                continue;
+            }
+
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
-
-            auto total = m.parameterCount();
-            msig.types.reserve(total);
+            msig.types.reserve(total - 1);
 
             for (int i = 1; i < total; ++i) {
                 auto mt = m.parameterType(i);
@@ -4251,13 +4255,14 @@ void PluginSystem::loadPlugin(IWingPlugin *p, PluginInfo &meta,
     QTranslator *p_tr = nullptr;
 
     try {
-        if (!p->pluginName().trimmed().length()) {
+        auto name = p->pluginName();
+        if (name.trimmed().isEmpty()) {
             throw tr("ErrLoadPluginNoName");
         }
 
         // dependencies had been checked
 
-        Q_EMIT pluginLoading(p->pluginName());
+        Q_EMIT pluginLoading(name);
 
         p_tr = LanguageManager::instance().try2LoadPluginLang(meta.id);
 
@@ -4318,6 +4323,11 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
     QTranslator *p_tr = nullptr;
 
     try {
+        auto name = p->pluginName();
+        if (name.trimmed().isEmpty()) {
+            throw tr("ErrLoadPluginNoName");
+        }
+
         Logger::debug(tr("ExtPluginAuthor :") + meta.author);
         Logger::debug(tr("ExtPluginWidgetRegister"));
 

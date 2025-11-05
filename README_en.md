@@ -178,3 +178,4 @@ Of course, there are other repositories as mirror for Chinese users (which will 
 ## Plugins
 
 - [WingAsm](https://github.com/Wing-summer/WingAsm) : A plugin that provides assembly and disassembly features. Author: **wingsummer**. License: **APGL-v3.0**.
+- [WingHexNote](https://github.com/Wing-summer/WingAsm) : A note plugin for WingHexExplorer2. Author: **wingsummer**. License: **APGL-v3.0**.

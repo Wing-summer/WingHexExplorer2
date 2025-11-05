@@ -20,6 +20,7 @@
 #include "QHexView/document/buffer/qfilebuffer.h"
 #include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
 
+#include "class/compositeiconengine.h"
 #include "class/logger.h"
 #include "class/pluginsystem.h"
 #include "class/qkeysequences.h"
@@ -31,10 +32,6 @@
 #include <QFileInfo>
 #include <QKeyEvent>
 #include <QVBoxLayout>
-
-#ifdef Q_OS_LINUX
-#include <unistd.h>
-#endif
 
 constexpr auto CLONE_LIMIT = 3;
 
@@ -165,11 +162,15 @@ EditorView::EditorView(QWidget *parent)
         // all private slots
         if (m.methodType() == QMetaMethod::Slot &&
             m.access() == QMetaMethod::Private) {
+            auto total = m.parameterCount();
+            if (total < 1 || m.parameterMetaType(0) !=
+                                 QMetaType::fromType<const QObject *>()) {
+                continue;
+            }
+
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
-
-            auto total = m.parameterCount();
-            msig.types.reserve(total);
+            msig.types.reserve(total - 1);
 
             for (int i = 1; i < total; ++i) {
                 auto mt = m.parameterType(i);
@@ -186,11 +187,15 @@ EditorView::EditorView(QWidget *parent)
     }
 
     this->tabWidget()->installEventFilter(this);
+
+    connect(m_stack, &QStackedWidget::currentChanged, this,
+            &EditorView::updateIcon);
 }
 
 EditorView::~EditorView() {}
 
-void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
+void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
+                              const QIcon &viewIcon) {
     Q_ASSERT(view);
     m_others.insert(id, view);
     m_stack->addWidget(view);
@@ -207,6 +212,10 @@ void EditorView::registerView(const QString &id, WingEditorViewWidget *view) {
             view->loadState(_pluginData.value(id));
         }
     }
+    m_iconOrigin.insert(view, viewIcon);
+    m_iconCaches.insert(view,
+                        QIcon(new CompositeIconEngine(
+                            viewIcon, m_iconCaches.value(m_hexContainer))));
     view->onWorkSpaceNotify(isWorkSpace());
 }
 
@@ -359,58 +368,64 @@ ErrFile EditorView::newFile(size_t index) {
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
     setFileNameUrl(QStringLiteral("file://") + newFileAuthority() +
                    QStringLiteral("/") + fname);
+    generateIconBaseCache({});
+    updateIcon();
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openFile(const QString &filename) {
+ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
 
     QFileInfo info(filename);
-    if (info.exists()) {
-        if (Q_UNLIKELY(!info.isReadable())) {
-            return ErrFile::Permission;
-        }
-
-        if (!info.isFile()) {
-            return ErrFile::InvalidFormat;
-        }
-
-        bool retry;
-        auto readonly = !info.isWritable();
-        QHexDocument *p;
-        do {
-            retry = false;
-            p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
-            if (Q_UNLIKELY(p == nullptr)) {
-                if (!readonly) {
-                    // retry to open with readonly
-                    readonly = true;
-                    retry = true;
-                    continue;
-                }
-                return ErrFile::Permission;
-            }
-        } while (retry);
-
-        m_hex->setDocument(QSharedPointer<QHexDocument>(p));
-        m_hex->setLockedFile(readonly);
-        m_hex->setKeepSize(true);
-
-        m_docType = DocumentType::File;
-        auto fName = info.absoluteFilePath();
-        m_isNewFile = false;
-        p->setDocSaved();
-        connect(p, &QHexDocument::documentSaved, this,
-                &EditorView::updateDocSavedFlag);
-
-        this->setIcon(Utilities::getIconFromFile(style(), fName));
-        auto tab = this->tabWidget();
-        tab->setToolTip(fName);
-        setFileNameUrl(QUrl::fromLocalFile(fName));
+    if (!info.exists()) {
+        return ErrFile::NotExist;
     }
 
+    if (Q_UNLIKELY(!info.isReadable())) {
+        return ErrFile::Permission;
+    }
+
+    if (!info.isFile()) {
+        return ErrFile::InvalidFormat;
+    }
+
+    bool retry;
+    auto readonly = !info.isWritable();
+    QHexDocument *p;
+    do {
+        retry = false;
+        p = QHexDocument::fromFile<QFileBuffer>(filename, readonly);
+        if (Q_UNLIKELY(p == nullptr)) {
+            if (!readonly) {
+                // retry to open with readonly
+                readonly = true;
+                retry = true;
+                continue;
+            }
+            return ErrFile::Permission;
+        }
+    } while (retry);
+
+    m_hex->setDocument(QSharedPointer<QHexDocument>(p));
+    m_hex->setLockedFile(readonly);
+    m_hex->setKeepSize(true);
+
+    m_docType = DocumentType::File;
+    auto fName = info.absoluteFilePath();
+    m_isNewFile = false;
+    p->setDocSaved();
+    connect(p, &QHexDocument::documentSaved, this,
+            &EditorView::updateDocSavedFlag);
+
+    auto tab = this->tabWidget();
+    tab->setToolTip(fName);
+    setFileNameUrl(QUrl::fromLocalFile(fName));
+    if (generateCache) {
+        generateIconBaseCache(Utilities::getIconFromFile(style(), fName));
+        updateIcon();
+    }
     return ErrFile::Success;
 }
 
@@ -423,7 +438,8 @@ ErrFile EditorView::openExtFile(const QUrl &fileName) {
     return openExtFile(ext, file);
 }
 
-ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
+ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
+                                bool generateCache) {
     auto dev = PluginSystem::instance().ext2Device(ext);
     if (dev == nullptr) {
         return ErrFile::NotExist;
@@ -478,11 +494,13 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file) {
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
 
-    this->setIcon(dev->supportedFileIcon());
     auto tab = this->tabWidget();
     tab->setToolTip(fileName);
-
     setFileNameUrl(fileName);
+    if (generateCache) {
+        generateIconBaseCache(dev->supportedFileIcon());
+        updateIcon();
+    }
     return ErrFile::Success;
 }
 
@@ -510,7 +528,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
 
         if (file.isLocalFile()) {
             // regular file
-            ret = openFile(file.toLocalFile());
+            ret = openFile(file.toLocalFile(), false);
             m_docType = DocumentType::File;
         } else {
             // extension file
@@ -524,7 +542,7 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
             if (f.front() == '/') {
                 f.removeFirst();
             }
-            ret = openExtFile(ext, f);
+            ret = openExtFile(ext, f, false);
             m_docType = DocumentType::Extension;
         }
 
@@ -624,6 +642,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                 if (doc->saveTo(nullptr, true)) {
                     doc->setDocSaved();
                     if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        applyWorkSpaceStyle(this);
                         notifyOnWorkSpace(true);
                     }
                     return ErrFile::Success;
@@ -634,6 +653,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                     m_docType = DocumentType::File;
                     doc->setDocSaved();
                     if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+                        applyWorkSpaceStyle(this);
                         notifyOnWorkSpace(true);
                     }
                     return ErrFile::Success;
@@ -660,7 +680,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         auto fName = QFileInfo(path).absoluteFilePath();
                         if (workSpaceName.isEmpty()) {
                             clearWorkSpaceStyle(this);
-                            setIcon(Utilities::getIconFromFile(style(), fName));
+                            generateIconBaseCache(
+                                Utilities::getIconFromFile(style(), fName));
+                            updateIcon();
                         } else {
                             applyWorkSpaceStyle(this);
                         }
@@ -691,7 +713,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                         auto fName = QFileInfo(path).absoluteFilePath();
                         if (workSpaceName.isEmpty()) {
                             clearWorkSpaceStyle(this);
-                            setIcon(Utilities::getIconFromFile(style(), fName));
+                            generateIconBaseCache(
+                                Utilities::getIconFromFile(style(), fName));
+                            updateIcon();
                         } else {
                             applyWorkSpaceStyle(this);
                         }
@@ -710,6 +734,10 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         return ErrFile::Permission;
     }
 
+    if (!orginWorkSpace && !workSpaceName.isEmpty()) {
+        applyWorkSpaceStyle(this);
+        notifyOnWorkSpace(true);
+    }
     return ErrFile::Success;
 }
 
@@ -837,14 +865,27 @@ void EditorView::updateDocSavedFlag(bool b) {
                               QString::number(i + 1));
         }
     }
+}
 
-    if (fName.isLocalFile() && !isNewFile()) {
-        auto icon = this->icon();
-        if (icon.isNull()) {
-            this->setIcon(
-                Utilities::getIconFromFile(style(), fName.toLocalFile()));
+void EditorView::generateIconBaseCache(const QIcon &baseIcon) {
+    m_iconCaches.insert(m_hexContainer, baseIcon);
+    if (baseIcon.isNull()) {
+        return;
+    }
+
+    for (auto &w : m_others) {
+        if (w) {
+            m_iconCaches.insert(w, QIcon(new CompositeIconEngine(
+                                       m_iconOrigin.value(w), baseIcon)));
+        } else {
+            m_iconCaches.insert(w, {});
         }
     }
+}
+
+void EditorView::updateIcon() {
+    auto cur = m_stack->currentWidget();
+    this->setIcon(m_iconCaches.value(cur, m_iconCaches.value(m_hexContainer)));
 }
 
 void EditorView::saveState(QXmlStreamWriter &Stream) const {
@@ -1001,7 +1042,8 @@ bool EditorView::checkThreadAff() {
 }
 
 void EditorView::applyWorkSpaceStyle(EditorView *view) {
-    view->setIcon(ICONRES(QStringLiteral("pro")));
+    view->generateIconBaseCache(ICONRES(QStringLiteral("pro")));
+    view->updateIcon();
     auto tab = view->tabWidget();
     tab->setStyleSheet(QStringLiteral("QLabel {text-decoration: underline;}"));
 
@@ -2258,24 +2300,23 @@ EditorView *EditorView::clone() {
                        QString::number(cloneIndex + 1));
 
     auto tab = ev->tabWidget();
-    ev->setIcon(this->icon());
     if (!workSpaceName.isEmpty()) {
         tab->setStyleSheet(
             QStringLiteral("QLabel {text-decoration: underline;}"));
     }
 
     ev->m_docType = DocumentType::Cloned;
-
+    ev->m_iconCaches.insert(ev->m_hexContainer,
+                            this->m_iconCaches.value(this->m_hexContainer));
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
         auto cw = p->second->clone();
         if (cw) {
-            ev->registerView(p->first, cw);
+            ev->registerView(p->first, cw, this->m_iconOrigin.value(p->second));
         }
     }
-
+    ev->updateIcon();
     this->m_cloneChildren[cloneIndex] = ev;
-
     return ev;
 }
 

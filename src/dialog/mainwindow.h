@@ -288,6 +288,7 @@ private:
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
     virtual void showEvent(QShowEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
