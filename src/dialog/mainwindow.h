@@ -263,7 +263,7 @@ private:
 
     void connectEditorView(EditorView *editor);
     void swapEditor(EditorView *old, EditorView *cur);
-    void updateWindowTitle(const QString &path);
+    void updateWindowTitle(EditorView *view);
 
     void loadFindResult(EditorView *view);
 

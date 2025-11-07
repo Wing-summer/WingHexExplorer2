@@ -745,11 +745,12 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
     painter->save();
 
     auto pos = m_document->getLineBookmarksPos(line);
+    auto height = lineHeight() - 2;
+
     for (auto &item : pos) {
         auto off = item % hexLineWidth();
 
         qreal begin, width;
-        auto height = lineHeight();
 
         // add some paddings
         if (factor == Hex) {
@@ -763,16 +764,26 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
             textcursor.setPosition(m_cursor->currentColumn());
         }
 
+        textcursor.movePosition(QTextCursor::NextCharacter);
         auto charformat = textcursor.charFormat();
         auto textOutline = charformat.textOutline();
 
         constexpr auto ALPHA = 180;
+        painter->setBrush(Qt::transparent);
+        painter->setBackground(Qt::transparent);
 
         if (textOutline.style() != Qt::NoPen) {
+            auto color = m_bytesColor;
+            color.setAlpha(ALPHA);
+            QPen pen(color, 2);
+            painter->setPen(pen);
+            painter->drawRect(begin, 1, width, height);
+
             auto outColor = textOutline.color();
             outColor.setAlpha(ALPHA);
-            QPen pen(outColor, 1, Qt::DotLine);
-            painter->setPen(pen);
+            QPen outPen(outColor, 1, Qt::DotLine);
+            painter->setPen(outPen);
+            painter->drawRect(begin, 1, width, height);
         } else {
             if (m_cursor->currentLine() == line &&
                 m_cursor->currentColumn() == off) {
@@ -782,8 +793,8 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
                 painter->setPen(pen);
             } else {
                 auto foreground = charformat.foreground();
-                if (foreground.style() != Qt::NoBrush) {
-                    auto textColor = foreground.color();
+                auto textColor = foreground.color();
+                if (textColor.isValid() && foreground.style() != Qt::NoBrush) {
                     textColor.setAlpha(ALPHA);
                     QPen pen(textColor, 1, Qt::DotLine);
                     painter->setPen(pen);
@@ -794,11 +805,8 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
                     painter->setPen(pen);
                 }
             }
+            painter->drawRect(begin, 1, width, height);
         }
-
-        painter->setBrush(Qt::transparent);
-        painter->setBackground(Qt::transparent);
-        painter->drawRect(begin, 0, width, height);
     }
 
     painter->restore();

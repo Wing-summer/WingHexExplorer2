@@ -153,6 +153,7 @@ public:
     bool isExtensionFile() const;
     bool isCommonFile() const;
 
+    int cloneIndex() const;
     bool isSaved() const;
 
     FindResultModel::FindData &findResult();

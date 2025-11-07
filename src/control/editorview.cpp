@@ -619,7 +619,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         }
         this->workSpaceName = workSpaceName;
 
-        for (auto item : m_others) {
+        for (auto &item : m_others) {
             if (item->hasUnsavedState()) {
                 item->setSaved();
             }
@@ -948,7 +948,7 @@ QMap<QString, QByteArray> EditorView::savePluginData() {
 }
 
 bool EditorView::checkHasUnsavedState() const {
-    for (auto item : m_others) {
+    for (auto &item : m_others) {
         if (item->hasUnsavedState()) {
             return true;
         }
@@ -2344,6 +2344,13 @@ bool EditorView::isCommonFile() const {
         return this->cloneParent()->isCommonFile();
     }
     return m_docType == EditorView::DocumentType::File;
+}
+
+int EditorView::cloneIndex() const {
+    if (isCloneFile()) {
+        return m_cloneParent->m_cloneChildren.indexOf(this);
+    }
+    return -1;
 }
 
 bool EditorView::isSaved() const {

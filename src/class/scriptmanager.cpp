@@ -25,7 +25,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenu>
+#include <QSettings>
 
+#include "languagemanager.h"
 #include "scriptmachine.h"
 #include "settingmanager.h"
 #include "utilities.h"
@@ -69,8 +71,17 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
 QString ScriptManager::readJsonObjString(const QJsonObject &jobj,
                                          const QString &key) {
     auto t = jobj.value(key);
-    if (!t.isUndefined() && t.isString()) {
+    if (t.isString()) {
         return t.toString();
+    } else if (t.isObject()) {
+        auto obj = t.toObject();
+        auto langName = LanguageManager::instance().defaultLocale().name();
+        if (obj.contains(langName)) {
+            auto o = obj[langName];
+            if (o.isString()) {
+                return o.toString();
+            }
+        }
     }
     return {};
 }
@@ -81,21 +92,30 @@ bool ScriptManager::readJsonObjBool(const QJsonObject &jobj,
 }
 
 QMenu *ScriptManager::buildUpScriptDirMenu(QWidget *parent,
+                                           const ScriptDirMeta &meta,
                                            const QStringList &files,
                                            bool isSys) {
     auto menu = new QMenu(parent);
     for (auto &file : files) {
-        menu->addAction(
-            ICONRES(QStringLiteral("script")), QFileInfo(file).fileName(),
-            parent, [=] {
-                if (Utilities::isRoot() && !isSys &&
-                    !SettingManager::instance().allowUsrScriptInRoot()) {
-                    WingMessageBox::critical(nullptr, tr("RunScript"),
-                                             tr("CanNotRunUsrScriptForPolicy"));
-                    return;
-                }
-                ScriptManager::instance().runScript(file);
-            });
+        auto name = QFileInfo(file).baseName();
+        auto icon = ICONRES(QStringLiteral("script"));
+        auto &md = meta.usrMeta;
+
+        if (md.contains(name)) {
+            auto d = md[name];
+            name = d.displayName;
+            icon = d.icon;
+        }
+
+        menu->addAction(icon, name, parent, [=] {
+            if (Utilities::isRoot() && !isSys &&
+                !SettingManager::instance().allowUsrScriptInRoot()) {
+                WingMessageBox::critical(nullptr, tr("RunScript"),
+                                         tr("CanNotRunUsrScriptForPolicy"));
+                return;
+            }
+            ScriptManager::instance().runScript(file);
+        });
     }
     return menu;
 }
@@ -148,11 +168,11 @@ void ScriptManager::refreshUsrScriptsDbCats() {
              scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
             QDir dir(info.absoluteFilePath());
             auto files = dir.entryList({"*.as"}, QDir::Files);
-            m_usrScriptsDbCats << info.fileName();
+            m_usrScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = false;
             meta.isEmptyDir = files.isEmpty();
-            _usrDirMetas.insert(info.fileName(), meta);
+            _usrDirMetas.insert(info.baseName(), meta);
         }
     }
 }
@@ -166,11 +186,11 @@ void ScriptManager::refreshSysScriptsDbCats() {
              sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
             QDir dir(info.absoluteFilePath());
             auto files = dir.entryList({"*.as"}, QDir::Files);
-            m_sysScriptsDbCats << info.fileName();
+            m_sysScriptsDbCats << info.baseName();
             auto meta = ensureDirMeta(info);
             meta.isSys = true;
             meta.isEmptyDir = files.isEmpty();
-            _sysDirMetas.insert(info.fileName(), meta);
+            _sysDirMetas.insert(info.baseName(), meta);
         }
     }
 }
@@ -229,6 +249,31 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
         }
     }
 
+    // loading user custom data
+    if (base.exists(QStringLiteral(".wingmtr"))) {
+        auto langName = LanguageManager::instance().defaultLocale().name();
+        QSettings set(base.absoluteFilePath(QStringLiteral(".wingmtr")),
+                      QSettings::IniFormat);
+        auto sections = set.childGroups();
+        for (auto &sec : sections) {
+            set.beginGroup(sec);
+            auto name = set.value(langName, sec).toString().trimmed();
+            if (name.isEmpty()) {
+                name = sec;
+            }
+            auto iconPath =
+                set.value(QStringLiteral("icon")).toString().trimmed();
+            QFileInfo finfo(base, iconPath);
+            auto path = finfo.absoluteFilePath();
+            QIcon icon(path);
+            if (icon.isNull()) {
+                icon = ICONRES(QStringLiteral("script"));
+            }
+            meta.usrMeta.insert(sec, {icon, name});
+            set.endGroup();
+        }
+    }
+
     meta.rawName = info.fileName();
     return meta;
 }
@@ -262,9 +307,9 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         if (!files.isEmpty()) {
             addPannelAction(group, ICONRES(QStringLiteral("scriptfolder")),
                             meta.name,
-                            buildUpScriptDirMenu(group, files, true));
+                            buildUpScriptDirMenu(group, meta, files, true));
             if (meta.isContextMenu) {
-                auto m = buildUpScriptDirMenu(parent, files, true);
+                auto m = buildUpScriptDirMenu(parent, meta, files, true);
                 m->setTitle(meta.name);
                 m->setIcon(ICONRES(QStringLiteral("scriptfolder")));
                 maps << m;
@@ -283,10 +328,10 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         if (!files.isEmpty()) {
             addPannelAction(group, ICONRES(QStringLiteral("scriptfolderusr")),
                             meta.name,
-                            buildUpScriptDirMenu(group, files, false));
+                            buildUpScriptDirMenu(group, meta, files, false));
 
             if (meta.isContextMenu) {
-                auto m = buildUpScriptDirMenu(parent, files, true);
+                auto m = buildUpScriptDirMenu(parent, meta, files, true);
                 m->setTitle(meta.name);
                 m->setIcon(ICONRES(QStringLiteral("scriptfolderusr")));
                 maps << m;

@@ -3454,16 +3454,10 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
         if (b) {
             auto cur = currentEditor();
-            auto fn = cur->fileNameUrl();
             if (cur) {
+                auto fn = cur->fileNameUrl();
                 m_sSaved->setToolTip(fn.url());
-                QString path;
-                if (cur->isExtensionFile()) {
-                    path = fn.authority() + fn.path();
-                } else {
-                    path = fn.fileName();
-                }
-                updateWindowTitle(path);
+                updateWindowTitle(cur);
             }
         }
     });
@@ -3531,8 +3525,24 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         {cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl())});
 }
 
-void MainWindow::updateWindowTitle(const QString &path) {
+void MainWindow::updateWindowTitle(EditorView *view) {
     static auto title = tr("WingHexExplorer");
+    QString path;
+    if (view) {
+        auto fn = view->fileNameUrl();
+        if (view->isExtensionFile()) {
+            path = fn.authority() + fn.path();
+        } else {
+            path = fn.fileName();
+        }
+
+        auto idx = view->cloneIndex();
+        if (idx >= 0) {
+            path += QString::number(idx + 1)
+                        .prepend(QStringLiteral(" ["))
+                        .append(']');
+        }
+    }
     if (path.isEmpty()) {
         this->setWindowTitle(title);
     } else {
@@ -3817,15 +3827,7 @@ void MainWindow::updateEditModeEnabled() {
             doc->canRedo());
         m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
             doc->canUndo());
-
-        auto fn = editor->fileNameUrl();
-        QString path;
-        if (editor->isExtensionFile()) {
-            path = fn.authority() + fn.path();
-        } else {
-            path = fn.fileName();
-        }
-        updateWindowTitle(path);
+        updateWindowTitle(editor);
     } else {
         for (auto &menu : m_hexContextMenu) {
             menu->setProperty("__CONTEXT__", {});
@@ -3842,7 +3844,7 @@ void MainWindow::updateEditModeEnabled() {
         m_lblsellen->setText(QStringLiteral("0 - 0x0"));
         _numsitem->clear();
         on_editableAreaClicked(-1);
-        updateWindowTitle({});
+        updateWindowTitle(nullptr);
     }
 }
 

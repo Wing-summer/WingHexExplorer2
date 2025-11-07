@@ -33,6 +33,11 @@ class ScriptManager {
     Q_DECLARE_TR_FUNCTIONS(ScriptManager)
 
 public:
+    struct MetaItemInfo {
+        QIcon icon;
+        QString displayName;
+    };
+
     struct ScriptDirMeta {
         QString rawName; // a flag
         QString name;
@@ -42,7 +47,11 @@ public:
         QString comment;
         bool isEmptyDir = false;
         bool isContextMenu = false;
+
+        // === these following are internals
         bool isSys; // a flag
+        // <rawName, displayInfo>
+        QHash<QString, MetaItemInfo> usrMeta;
     };
 
 public:
@@ -127,6 +136,7 @@ private:
     bool readJsonObjBool(const QJsonObject &jobj, const QString &key);
 
     static QMenu *buildUpScriptDirMenu(QWidget *parent,
+                                       const ScriptDirMeta &meta,
                                        const QStringList &files, bool isSys);
 
 private:

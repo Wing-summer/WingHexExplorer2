@@ -955,7 +955,7 @@
     <name>MainWindow</name>
     <message>
         <location filename="../../src/dialog/mainwindow.ui" line="14"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3535"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3529"/>
         <source>WingHexExplorer</source>
         <translation>WingHexExplorer</translation>
     </message>
@@ -1776,12 +1776,12 @@
         <translation>Logs (*.log)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4227"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4229"/>
         <source>FileInvalidFmt</source>
         <translation>Unsupported file format</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4390"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4392"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
@@ -1794,31 +1794,31 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="3220"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="3286"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="3293"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3566"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3926"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3935"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4215"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4218"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4221"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4224"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4227"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4230"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4238"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4241"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3576"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3928"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3937"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4217"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4220"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4223"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4226"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4229"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4232"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4240"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4243"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2093"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4221"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4223"/>
         <source>FileNotExist</source>
         <translation>File does not exist!</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2096"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3926"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3935"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4218"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3928"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3937"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4220"/>
         <source>FilePermission</source>
         <translation>Access denied due to file permissions!</translation>
     </message>
@@ -1858,14 +1858,14 @@
         <translation>Saving...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4224"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4226"/>
         <source>SaveWSError</source>
         <translation>Workspace save error!</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2177"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2240"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3967"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3969"/>
         <source>SaveSuccessfully</source>
         <translation>Saved successfully!</translation>
     </message>
@@ -1899,7 +1899,7 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="2231"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2302"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2868"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3894"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3896"/>
         <source>ChooseSaveFile</source>
         <translation>Please select the file save location:</translation>
     </message>
@@ -2101,7 +2101,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="3040"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4323"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4325"/>
         <source>LayoutRestoring...</source>
         <translation>Restoring layout...</translation>
     </message>
@@ -2171,73 +2171,73 @@
         <translation>An unknown error occurred preventing saving. Are you sure to exit?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3480"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3474"/>
         <source>CopyLimit</source>
         <translation>Copy bytes exceeded limit</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3567"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3577"/>
         <source>ErrOpenFileBelow</source>
         <translation>An error occurred while opening the file (due to insufficient permissions). The following is the file that failed to open:</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3881"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3883"/>
         <source>SaveWorkSpace</source>
         <translation>Save WorkSpace</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3882"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3884"/>
         <source>WingHexWorkSpace (*.wingpro)</source>
         <translation>WingHex WorkSpace (*.wingpro)</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="3888"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="3890"/>
         <source>NothingToSave</source>
         <translation>No saved data</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4143"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4145"/>
         <source>TooManyBytesDecode</source>
         <translation>Exceeding the decoding byte limit...</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4153"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4155"/>
         <source>SetupScriptEditor</source>
         <translation>Building Script Editor</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4194"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4420"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4196"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4422"/>
         <source>ConfirmSave</source>
         <translation>Closing unsaved files or workspaces. Are you sure to save?</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4215"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4217"/>
         <source>DevNotFound</source>
         <translation>No devices found</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4230"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4232"/>
         <source>TooManyOpenedFile</source>
         <translation>Too many files are open to continue!</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4239"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4241"/>
         <source>UnknownError</source>
         <translation>An unknown error occurred</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4288"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4290"/>
         <source>[Info]</source>
         <translation>[Info]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4296"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4298"/>
         <source>[Warn]</source>
         <translation>[Warn]</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4304"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4306"/>
         <source>[Error]</source>
         <translation>[Error]</translation>
     </message>
@@ -2971,22 +2971,22 @@
 <context>
     <name>ScriptManager</name>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="93"/>
+        <location filename="../../src/class/scriptmanager.cpp" line="114"/>
         <source>RunScript</source>
         <translation>Run script</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="94"/>
+        <location filename="../../src/class/scriptmanager.cpp" line="115"/>
         <source>CanNotRunUsrScriptForPolicy</source>
         <translation>Due to security restrictions, user scripts cannot be run in Root mode!</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="303"/>
+        <location filename="../../src/class/scriptmanager.cpp" line="349"/>
         <source>ScriptRunning</source>
         <translation>Script running</translation>
     </message>
     <message>
-        <location filename="../../src/class/scriptmanager.cpp" line="304"/>
+        <location filename="../../src/class/scriptmanager.cpp" line="350"/>
         <source>ScriptRunningRequestLastStop?</source>
         <translation>The script is still running. Do you want to terminate the previous script before proceeding?</translation>
     </message>
