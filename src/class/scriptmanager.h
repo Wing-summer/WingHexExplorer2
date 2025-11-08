@@ -41,6 +41,7 @@ public:
     struct ScriptDirMeta {
         QString rawName; // a flag
         QString name;
+        QIcon icon;
         QString author;
         QString license;
         QString homepage;

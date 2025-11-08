@@ -302,6 +302,8 @@ set(CONTROL_SRC
     src/control/gotolinewidget.cpp
     src/control/codeeditcontrolwidget.h
     src/control/codeeditcontrolwidget.cpp
+    src/control/scriptinfobroswer.h
+    src/control/scriptinfobroswer.cpp
     src/control/consolecodeedit.h
     src/control/consolecodeedit.cpp
     src/control/asidbtreeview.h
@@ -394,8 +396,6 @@ set(CLASS_SRC
     src/class/aswingcache.cpp
     src/class/lspeditorinterface.h
     src/class/lspeditorinterface.cpp
-    src/class/stringrangedetect.h
-    src/class/stringrangedetect.cpp
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 

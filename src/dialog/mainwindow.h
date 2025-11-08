@@ -506,6 +506,7 @@ private:
 
     QReadWriteLock _editorLock;
     EditorView *m_curEditor = nullptr;
+    QList<QMetaObject::Connection> m_curConnections;
 
     SettingDialog *m_setdialog = nullptr;
     SettingDialog *m_scriptsetdlg = nullptr;

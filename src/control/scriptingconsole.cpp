@@ -201,6 +201,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     };
 
     switch (message.type) {
+    case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
         if (isNotBlockStart) {
             newLine();
@@ -229,6 +230,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         }
         stdOutLine(message.message);
         break;
+
     case ScriptMachine::MessageType::Unknown:
         // should not go there
         break;

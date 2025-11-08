@@ -95,13 +95,6 @@ void AsCompletion::clearFunctionTip() {
     editor->clearFunctionTip();
 }
 
-bool AsCompletion::isCursorInString() const {
-    auto edit = getEditor();
-    auto e = edit->editorPtr();
-    const QTextCursor cur = e->textCursor();
-    return _strdet.isInsideString(cur);
-}
-
 QList<CodeInfoTip> AsCompletion::parseCompletion(const QJsonValue &v) {
     if (!v.isArray()) {
         return {};
@@ -129,10 +122,6 @@ QString AsCompletion::wordSeperators() const {
 
 bool AsCompletion::processTrigger(const QString &trigger,
                                   const QString &content) {
-    if (isCursorInString()) {
-        return false;
-    }
-
     if (trigger == *SHARP_TRIGGER) {
         setModel(new CodeCompletionModel(parseMarcos(), this));
         setCompletionPrefix({});

@@ -27,6 +27,7 @@
 #include <QMenu>
 #include <QSettings>
 
+#include "compositeiconengine.h"
 #include "languagemanager.h"
 #include "scriptmachine.h"
 #include "settingmanager.h"
@@ -206,6 +207,7 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
     if (!base.exists(QStringLiteral(".wingasmeta"))) {
         QJsonObject jobj;
         jobj.insert(QStringLiteral("name"), info.fileName());
+        jobj.insert(QStringLiteral("icon"), QLatin1String());
         jobj.insert(QStringLiteral("author"), QLatin1String());
         jobj.insert(QStringLiteral("license"), QLatin1String());
         jobj.insert(QStringLiteral("homepage"), QLatin1String());
@@ -241,6 +243,14 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
                     readJsonObjString(jobj, QStringLiteral("comment"));
                 meta.isContextMenu =
                     readJsonObjBool(jobj, QStringLiteral("hexmenu"));
+
+                // for icon
+                auto iconPath = readJsonObjString(jobj, QStringLiteral("icon"));
+                if (!iconPath.isEmpty()) {
+                    QFileInfo finfo(base, iconPath);
+                    auto path = finfo.absoluteFilePath();
+                    meta.icon = QIcon(path);
+                }
             } else {
                 meta.name = info.fileName();
             }
@@ -297,6 +307,7 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
     auto &stm = SettingManager::instance();
 
     auto hideCats = stm.sysHideCats();
+    auto folder = ICONRES(QStringLiteral("scriptfolder"));
     for (auto &cat : sm.sysScriptsDbCats()) {
         if (hideCats.contains(cat)) {
             continue;
@@ -305,19 +316,25 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         auto meta = sm.sysDirMeta(cat);
         auto files = sm.getSysScriptFileNames(cat);
         if (!files.isEmpty()) {
-            addPannelAction(group, ICONRES(QStringLiteral("scriptfolder")),
-                            meta.name,
+            auto icon = meta.icon;
+            if (icon.isNull()) {
+                icon = folder;
+            } else {
+                icon = QIcon(new CompositeIconEngine(icon, folder));
+            }
+            addPannelAction(group, icon, meta.name,
                             buildUpScriptDirMenu(group, meta, files, true));
             if (meta.isContextMenu) {
                 auto m = buildUpScriptDirMenu(parent, meta, files, true);
                 m->setTitle(meta.name);
-                m->setIcon(ICONRES(QStringLiteral("scriptfolder")));
+                m->setIcon(icon);
                 maps << m;
             }
         }
     }
 
     hideCats = stm.usrHideCats();
+    folder = ICONRES(QStringLiteral("scriptfolderusr"));
     for (auto &cat : sm.usrScriptsDbCats()) {
         if (hideCats.contains(cat)) {
             continue;
@@ -326,14 +343,19 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
         auto meta = sm.usrDirMeta(cat);
         auto files = sm.getUsrScriptFileNames(cat);
         if (!files.isEmpty()) {
-            addPannelAction(group, ICONRES(QStringLiteral("scriptfolderusr")),
-                            meta.name,
+            auto icon = meta.icon;
+            if (icon.isNull()) {
+                icon = folder;
+            } else {
+                icon = QIcon(new CompositeIconEngine(icon, folder));
+            }
+            addPannelAction(group, icon, meta.name,
                             buildUpScriptDirMenu(group, meta, files, false));
 
             if (meta.isContextMenu) {
                 auto m = buildUpScriptDirMenu(parent, meta, files, true);
                 m->setTitle(meta.name);
-                m->setIcon(ICONRES(QStringLiteral("scriptfolderusr")));
+                m->setIcon(icon);
                 maps << m;
             }
         }

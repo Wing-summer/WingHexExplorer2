@@ -104,22 +104,7 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
                 auto var = lw->data(Qt::UserRole);
                 if (var.isValid()) {
                     auto meta = var.value<ScriptManager::ScriptDirMeta>();
-                    auto info = ui->textBrowser;
-                    info->clear();
-                    info->append(tr("RawName:") + meta.rawName);
-                    info->append(tr("Name:") + meta.name);
-                    info->append(tr("Author:") + meta.author);
-                    info->append(tr("License:") + meta.license);
-                    info->append(tr("ContextMenu:") +
-                                 (meta.isContextMenu
-                                      ? QStringLiteral("true")
-                                      : QStringLiteral("false")));
-                    info->append(tr("HomePage:") + meta.homepage);
-                    info->append(tr("Comment:"));
-                    auto cur = info->textCursor();
-                    cur.movePosition(QTextCursor::End);
-                    info->setTextCursor(cur);
-                    info->insertHtml(meta.comment);
+                    ui->textBrowser->updateData(meta);
                 }
             });
 

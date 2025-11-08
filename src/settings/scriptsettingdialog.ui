@@ -137,7 +137,7 @@
         <widget class="QWidget" name="layoutWidget">
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QTextBrowser" name="textBrowser"/>
+           <widget class="ScriptInfoBroswer" name="textBrowser"/>
           </item>
           <item>
            <widget class="QPushButton" name="btnSave">
@@ -158,6 +158,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScriptInfoBroswer</class>
+   <extends>QTextBrowser</extends>
+   <header>control/scriptinfobroswer.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

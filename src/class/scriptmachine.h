@@ -43,7 +43,7 @@ public:
     };
 
 public:
-    enum class MessageType { Unknown, Info, Warn, Error, Print };
+    enum class MessageType { Unknown, Info, Warn, Error, Print, ExecInfo };
 
     struct MessageInfo {
         ConsoleMode mode = ConsoleMode::Background;

@@ -296,6 +296,7 @@ private:
     ads::CDockWidget *m_dbgWatchView = nullptr;
 
     ScriptEditor *m_curEditor = nullptr;
+    QList<QMetaObject::Connection> m_curConnections;
     WingSquiggleInfoModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
 

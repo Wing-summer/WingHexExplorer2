@@ -847,11 +847,11 @@ bool ScriptMachine::executeScript(
     }
 
     QScopeGuard guard([mod, this]() {
+        endEvaluateDefine();
         // Before leaving, allow the engine to clean up remaining objects by
         // discarding the module and doing a full garbage collection so that
         // this can also be debugged if desired
         mod->Discard();
-        endEvaluateDefine();
     });
 
     beginEvaluateDefine();
@@ -944,7 +944,7 @@ bool ScriptMachine::executeScript(
         MessageInfo info;
         info.mode = mode;
         info.message = QStringLiteral("Run > ") + script;
-        info.type = MessageType::Info;
+        info.type = MessageType::ExecInfo;
         outputMessage(info);
     }
 
@@ -1016,7 +1016,7 @@ bool ScriptMachine::executeScript(
     info.mode = mode;
     info.message =
         QStringLiteral("The script exited with ") + QString::number(r);
-    info.type = MessageType::Info;
+    info.type = MessageType::ExecInfo;
     outputMessage(info);
 
     // Return the context after retrieving the return value
@@ -1310,7 +1310,13 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
 }
 
 void ScriptMachine::lineCallback(asIScriptContext *, void *) {
-    QApplication::processEvents();
+    auto app = AppManager::instance();
+    static auto oldTime = app->currentMSecsSinceEpoch();
+    auto curTime = app->currentMSecsSinceEpoch();
+    if (curTime - oldTime >= 50) {
+        QApplication::processEvents();
+        oldTime = curTime;
+    }
 }
 
 void ScriptMachine::returnContextCallback(asIScriptEngine *engine,

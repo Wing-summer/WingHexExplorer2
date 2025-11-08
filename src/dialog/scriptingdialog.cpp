@@ -802,9 +802,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
             [this](CDockWidget *old, CDockWidget *now) {
                 Q_UNUSED(old);
                 auto editview = qobject_cast<ScriptEditor *>(now);
-                if (editview) {
-                    swapEditor(m_curEditor, editview);
-                }
+                swapEditor(m_curEditor, editview);
                 updateEditModeEnabled();
             });
 
@@ -1020,12 +1018,15 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
         return;
     }
 
-    if (old != nullptr) {
-        auto editor = old->editor();
-        editor->disconnect(SIGNAL(copyAvailable(bool)));
-        editor->disconnect(SIGNAL(undoAvailable(bool)));
-        editor->disconnect(SIGNAL(redoAvailable(bool)));
-        editor->disconnect(SIGNAL(cursorPositionChanged()));
+    if (!m_curConnections.isEmpty()) {
+        for (auto &c : m_curConnections) {
+            disconnect(c);
+        }
+        m_curConnections.clear();
+    }
+
+    if (cur == nullptr) {
+        return;
     }
 
     auto editor = cur->editor();
@@ -1036,20 +1037,23 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
         ->setEnabled(editor->textCursor().hasSelection());
 
-    connect(editor, &CodeEdit::copyAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
-            &QToolButton::setEnabled);
-    connect(editor, &CodeEdit::undoAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
-            &QToolButton::setEnabled);
-    connect(editor, &CodeEdit::redoAvailable,
-            m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
-            &QToolButton::setEnabled);
+    m_curConnections << connect(
+        editor, &CodeEdit::copyAvailable,
+        m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
+        &QToolButton::setEnabled);
+    m_curConnections << connect(
+        editor, &CodeEdit::undoAvailable,
+        m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
+        &QToolButton::setEnabled);
+    m_curConnections << connect(
+        editor, &CodeEdit::redoAvailable,
+        m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
+        &QToolButton::setEnabled);
 
-    connect(editor, &CodeEdit::cursorPositionChanged, this,
-            &ScriptingDialog::updateCursorPosition);
-    connect(editor, &CodeEdit::selectionChanged, this,
-            &ScriptingDialog::updateCursorPosition);
+    m_curConnections << connect(editor, &CodeEdit::cursorPositionChanged, this,
+                                &ScriptingDialog::updateCursorPosition);
+    m_curConnections << connect(editor, &CodeEdit::selectionChanged, this,
+                                &ScriptingDialog::updateCursorPosition);
 
     m_curEditor = cur;
     _squinfoModel->setEditor(editor);

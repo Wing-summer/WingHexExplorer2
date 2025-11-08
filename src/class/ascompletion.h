@@ -22,7 +22,6 @@
 #include "class/codeinfotip.h"
 #include "class/lspeditorinterface.h"
 #include "class/resettabletimer.h"
-#include "class/stringrangedetect.h"
 
 class AsCompletion : public WingCompleter {
     Q_OBJECT
@@ -36,9 +35,6 @@ public:
     virtual QString wordSeperators() const override;
 
     void clearFunctionTip();
-
-private:
-    bool isCursorInString() const;
 
 private:
     QList<CodeInfoTip> parseCompletion(const QJsonValue &v);
@@ -63,7 +59,6 @@ private slots:
 
 private:
     QList<CodeInfoTip> _keywordNode;
-    StringRangeDetect _strdet;
 
 protected:
     ResettableTimer *_timer;

@@ -504,11 +504,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
             [this](CDockWidget *old, CDockWidget *now) {
                 Q_UNUSED(old);
                 auto editview = qobject_cast<EditorView *>(now);
-                if (editview) {
-                    _editorLock.lockForWrite();
-                    swapEditor(m_curEditor, editview);
-                    _editorLock.unlock();
-                }
+                swapEditor(m_curEditor, editview);
                 updateEditModeEnabled();
             });
     connect(m_dock, &CDockManager::stateRestored, this, [this]() {
@@ -3418,68 +3414,69 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         return;
     }
 
-    if (old != nullptr) {
-        auto hexeditor = old->hexEditor();
-        hexeditor->disconnect(SIGNAL(cursorLocationChanged()), this);
-        hexeditor->disconnect(SIGNAL(cursorSelectionChanged()), this);
-        hexeditor->disconnect(SIGNAL(editableAreaClicked(int)), this);
-        hexeditor->disconnect(SIGNAL(canUndoChanged(bool)), this);
-        hexeditor->disconnect(SIGNAL(canRedoChanged(bool)), this);
-        hexeditor->disconnect(SIGNAL(documentSaved(bool)), this);
-        hexeditor->disconnect(SIGNAL(documentKeepSize(bool)), this);
-        hexeditor->disconnect(SIGNAL(documentLockedFile(bool)), this);
-        hexeditor->disconnect(SIGNAL(copyLimitRaised()), this);
-        hexeditor->disconnect(SIGNAL(scaleRateChanged()), this);
-        auto doc = hexeditor->document();
-        doc->disconnect(m_aShowMetabg);
-        doc->disconnect(m_aShowMetafg);
-        doc->disconnect(m_aShowMetaComment);
+    if (!m_curConnections.isEmpty()) {
+        for (auto &c : m_curConnections) {
+            disconnect(c);
+        }
+        m_curConnections.clear();
     }
 
+    if (cur == nullptr) {
+        return;
+    }
+
+    _editorLock.lockForWrite();
     auto hexeditor = cur->hexEditor();
-    connect(hexeditor, &QHexView::cursorLocationChanged, this,
-            &MainWindow::on_locChanged);
-    connect(hexeditor, &QHexView::cursorSelectionChanged, this,
-            &MainWindow::on_selectionChanged);
-    connect(hexeditor, &QHexView::editableAreaClicked, this,
-            &MainWindow::on_editableAreaClicked);
-    connect(hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
-        m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
-    });
-    connect(hexeditor, &QHexView::canRedoChanged, this, [this](bool b) {
-        m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(b);
-    });
-    connect(hexeditor, &QHexView::documentSaved, this, [this](bool b) {
-        m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);
-        m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
-        if (b) {
-            auto cur = currentEditor();
-            if (cur) {
-                auto fn = cur->fileNameUrl();
-                m_sSaved->setToolTip(fn.url());
-                updateWindowTitle(cur);
+    m_curConnections << connect(hexeditor, &QHexView::cursorLocationChanged,
+                                this, &MainWindow::on_locChanged);
+    m_curConnections << connect(hexeditor, &QHexView::cursorSelectionChanged,
+                                this, &MainWindow::on_selectionChanged);
+    m_curConnections << connect(hexeditor, &QHexView::editableAreaClicked, this,
+                                &MainWindow::on_editableAreaClicked);
+    m_curConnections << connect(
+        hexeditor, &QHexView::canUndoChanged, this, [this](bool b) {
+            m_toolBtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(b);
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::canRedoChanged, this, [this](bool b) {
+            m_toolBtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(b);
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::documentSaved, this, [this](bool b) {
+            m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);
+            m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
+            if (b) {
+                auto cur = currentEditor();
+                if (cur) {
+                    auto fn = cur->fileNameUrl();
+                    m_sSaved->setToolTip(fn.url());
+                    updateWindowTitle(cur);
+                }
             }
-        }
-    });
-    connect(hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
-        m_iCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
-        m_sCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
-    });
-    connect(hexeditor, &QHexView::documentLockedFile, this, [this](bool b) {
-        m_iLocked->setIcon(b ? _infoLock : _infoUnLock);
-        m_sLocked->setIcon(b ? _infoLock : _infoUnLock);
-    });
-    connect(hexeditor, &QHexView::copyLimitRaised, this, [this] {
-        Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
-                     tr("CopyLimit"));
-    });
-    connect(hexeditor, &QHexView::scaleRateChanged, this, [this] {
-        auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
-        Q_ASSERT(hexeditor);
-        Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
-                     QString::number(hexeditor->scaleRate() * 100) +
-                         QStringLiteral("%"));
-    });
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
+            m_iCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
+            m_sCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::documentLockedFile, this, [this](bool b) {
+            m_iLocked->setIcon(b ? _infoLock : _infoUnLock);
+            m_sLocked->setIcon(b ? _infoLock : _infoUnLock);
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::copyLimitRaised, this, [this] {
+            Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                         tr("CopyLimit"));
+        });
+    m_curConnections << connect(
+        hexeditor, &QHexView::scaleRateChanged, this, [this] {
+            auto hexeditor = qobject_cast<QHexView *>(QObject::sender());
+            Q_ASSERT(hexeditor);
+            Toast::toast(this, NAMEICONRES(QStringLiteral("scale")),
+                         QString::number(hexeditor->scaleRate() * 100) +
+                             QStringLiteral("%"));
+        });
 
     auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
     for (auto &a : menu->actions()) {
@@ -3494,12 +3491,12 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     m_aShowMetabg->setChecked(doc->metabgVisible());
     m_aShowMetafg->setChecked(doc->metafgVisible());
     m_aShowMetaComment->setChecked(doc->metaCommentVisible());
-    connect(doc, &QHexDocument::metabgVisibleChanged, m_aShowMetabg,
-            &QAction::setChecked);
-    connect(doc, &QHexDocument::metafgVisibleChanged, m_aShowMetafg,
-            &QAction::setChecked);
-    connect(doc, &QHexDocument::metaCommentVisibleChanged, m_aShowMetaComment,
-            &QAction::setChecked);
+    m_curConnections << connect(doc, &QHexDocument::metabgVisibleChanged,
+                                m_aShowMetabg, &QAction::setChecked);
+    m_curConnections << connect(doc, &QHexDocument::metafgVisibleChanged,
+                                m_aShowMetafg, &QAction::setChecked);
+    m_curConnections << connect(doc, &QHexDocument::metaCommentVisibleChanged,
+                                m_aShowMetaComment, &QAction::setChecked);
 
     auto icon = hexeditor->isReadOnly() ? _infoReadonly : _infoWriteable;
     m_iReadWrite->setIcon(icon);
@@ -3523,6 +3520,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::FileSwitched,
         {cur->fileNameUrl(), (old ? old->fileNameUrl() : QUrl())});
+
+    _editorLock.unlock();
 }
 
 void MainWindow::updateWindowTitle(EditorView *view) {
@@ -4283,6 +4282,7 @@ void MainWindow::onOutputBgScriptOutput(
     };
 
     switch (message.type) {
+    case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
         if (isNotBlockStart) {
             cursor.insertBlock();
@@ -4316,8 +4316,10 @@ void MainWindow::onOutputBgScriptOutput(
     }
 
     _lastOutputType = message.type;
-    if (!m_bgScriptOutput->isVisible()) {
-        _hlAnim->start();
+    if (message.type != ScriptMachine::MessageType::ExecInfo) {
+        if (!m_bgScriptOutput->isVisible()) {
+            _hlAnim->start();
+        }
     }
 }
 
