@@ -55,7 +55,8 @@ bool WingUpdater::checkUpdate(bool *ok) {
         if (ok) {
             *ok = true;
         }
-        auto ret = versionCompare(version, WINGHEX_VERSION);
+        auto ret =
+            versionCompare(QString::fromLatin1(version), WINGHEX_VERSION);
         return ret;
     } else {
         // Handle errors

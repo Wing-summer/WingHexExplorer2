@@ -33,7 +33,7 @@ QString WingGeneric::argTypeName(uint arg, quint32 *flags) {
     auto e = _gen->GetEngine();
     auto str = e->GetTypeDeclaration(argTypeId(arg, flags));
     if (str) {
-        return str;
+        return QString::fromUtf8(str);
     } else {
         return {};
     }

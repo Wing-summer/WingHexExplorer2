@@ -16,7 +16,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 # 测试模式，启用请配置主程序目录，方便调试
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-option(TEST_MODE TRUE)
+option(WINGHEX_TEST_MODE TRUE)
 
 # For Qt
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
@@ -31,7 +31,7 @@ add_library(TestHexExt SHARED TestHexExt.json testhexext.h testhexext.cpp)
 
 set_target_properties(TestHexExt PROPERTIES SUFFIX ".winghexe")
 
-if(TEST_MODE)
+if(WINGHEX_TEST_MODE)
     # If you want to be able to debug easily every time you compile, please set
     # this variable. Because this test plugin is a subproject of the main
     # project, use CMAKE_BINARY_DIR

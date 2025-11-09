@@ -74,7 +74,8 @@ std::any CStructVisitorParser::visitInclusiveOrExpression(
         } else {
             auto t = v->start;
             reportUnexpectedType(t->getLine(), t->getCharPositionInLine(),
-                                 r.type().name(), {"uint64", "int64"});
+                                 QString::fromUtf8(r.type().name()),
+                                 {"uint64", "int64"});
             return defaultResult();
         }
     }

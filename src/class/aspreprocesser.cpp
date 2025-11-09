@@ -34,7 +34,7 @@
 #include <QVersionNumber>
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QByteArrayList, DEFAULT_MARCO,
+    QStringList, DEFAULT_MARCO,
     ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__AS_FILE__",
       "__AS_FILESYSTEM__", "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__",
@@ -100,9 +100,10 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
                                                         .append('"'));
         auto theme = SkinManager::instance().currentTheme();
         auto te = QMetaEnum::fromType<SkinManager::Theme>();
-        addInfos.insert(
-            QStringLiteral("__THEME__"),
-            QString(te.valueToKey(int(theme))).prepend('"').append('"'));
+        addInfos.insert(QStringLiteral("__THEME__"),
+                        QString::fromLatin1(te.valueToKey(int(theme)))
+                            .prepend('"')
+                            .append('"'));
     }
 
     m_runtimeMacros.insert(addInfos);
@@ -841,7 +842,7 @@ QString AsPreprocesser::expandExpressionForIf(const QString &expr,
         asUINT len = 0;
         auto t =
             engine->ParseToken(codes.data() + pos, codes.size() - pos, &len);
-        auto word = codes.sliced(pos, len);
+        auto word = QString::fromUtf8(codes.sliced(pos, len));
         if (t == asTC_IDENTIFIER) {
             if (m_runtimeMacros.contains(word)) {
                 // get macro value (host provided)

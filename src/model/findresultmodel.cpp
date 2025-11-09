@@ -65,17 +65,19 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
             // range
             auto data = m_data->findData.at(row);
             QString buffer =
-                data.cheader.toHex(' ').toUpper() + QStringLiteral(" <b>");
+                QString::fromLatin1(data.cheader.toHex(' ').toUpper()) +
+                QStringLiteral(" <b>");
             if (!data.hbuffer.isEmpty()) {
-                buffer += data.hbuffer.toHex(' ').toUpper();
+                buffer +=
+                    QString::fromLatin1(data.hbuffer.toHex(' ').toUpper());
                 if (!data.tbuffer.isEmpty()) {
                     buffer += QStringLiteral(" .. ");
                 }
             }
 
-            buffer += data.tbuffer.toHex(' ').toUpper() +
+            buffer += QString::fromLatin1(data.tbuffer.toHex(' ').toUpper()) +
                       QStringLiteral("</b> ") +
-                      data.ctailer.toHex(' ').toUpper();
+                      QString::fromLatin1(data.ctailer.toHex(' ').toUpper());
 
             return buffer;
         }

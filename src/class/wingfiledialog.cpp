@@ -61,45 +61,6 @@ QUrl WingFileDialog::getExistingDirectoryUrl(
     }
 }
 
-void WingFileDialog::getOpenFileContent(
-    const QString &nameFilter,
-    const std::function<void(const QString &, const QByteArray &)>
-        &fileOpenCompleted,
-    const QString &caption, QWidget *parent) {
-    if (SettingManager::instance().useNativeFileDialog()) {
-        return QFileDialog::getOpenFileContent(nameFilter, fileOpenCompleted);
-    } else {
-        QFileDialog *dialog = new QFileDialog();
-        dialog->setOption(QFileDialog::DontUseNativeDialog);
-        dialog->setFileMode(QFileDialog::ExistingFile);
-        dialog->selectNameFilter(nameFilter);
-
-        dialog->setWindowFlag(Qt::Widget);
-
-        FramelessDialogBase d(parent);
-        d.buildUpContent(dialog);
-        d.setWindowTitle(caption);
-        d.resize(dialog->width(), dialog->height());
-
-        auto fileSelected = [=](const QString &fileName) {
-            QByteArray fileContent;
-            if (!fileName.isNull()) {
-                QFile selectedFile(fileName);
-                if (selectedFile.open(QIODevice::ReadOnly))
-                    fileContent = selectedFile.readAll();
-            }
-            fileOpenCompleted(fileName, fileContent);
-        };
-        auto dialogClosed = [dialog, &d](int code) {
-            d.done(code);
-            delete dialog;
-        };
-        QObject::connect(dialog, &QFileDialog::fileSelected, fileSelected);
-        QObject::connect(dialog, &QFileDialog::finished, dialogClosed);
-        dialog->show();
-    }
-}
-
 QString WingFileDialog::getOpenFileName(QWidget *parent, const QString &caption,
                                         const QString &dir,
                                         const QString &filter,
@@ -256,41 +217,6 @@ QUrl WingFileDialog::getSaveFileUrl(QWidget *parent, const QString &caption,
             return dialog->selectedUrls().value(0);
         }
         return QUrl();
-    }
-}
-
-void WingFileDialog::saveFileContent(const QByteArray &fileContent,
-                                     const QString &fileNameHint,
-                                     const QString &caption, QWidget *parent) {
-    if (SettingManager::instance().useNativeFileDialog()) {
-        return QFileDialog::saveFileContent(fileContent, fileNameHint);
-    } else {
-        QFileDialog *dialog = new QFileDialog();
-        dialog->setAcceptMode(QFileDialog::AcceptSave);
-        dialog->setFileMode(QFileDialog::AnyFile);
-        dialog->setOption(QFileDialog::DontUseNativeDialog);
-        dialog->selectFile(fileNameHint);
-        dialog->setWindowFlag(Qt::Widget);
-
-        FramelessDialogBase d(parent);
-        d.buildUpContent(dialog);
-        d.setWindowTitle(caption);
-        d.resize(dialog->width(), dialog->height());
-
-        auto fileSelected = [=](const QString &fileName) {
-            if (!fileName.isNull()) {
-                QFile selectedFile(fileName);
-                if (selectedFile.open(QIODevice::WriteOnly))
-                    selectedFile.write(fileContent);
-            }
-        };
-        auto dialogClosed = [dialog, &d](int code) {
-            d.done(code);
-            delete dialog;
-        };
-        QObject::connect(dialog, &QFileDialog::fileSelected, fileSelected);
-        QObject::connect(dialog, &QFileDialog::finished, dialogClosed);
-        dialog->show();
     }
 }
 

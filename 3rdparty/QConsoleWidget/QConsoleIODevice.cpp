@@ -62,7 +62,7 @@ QConsoleWidget *QConsoleIODevice::widget() const { return widget_; }
 qint64 QConsoleIODevice::readData(char *data, qint64 len) {
     int b = bytesAvailable();
     if (b) {
-        b = qMin((int)len, b);
+        b = qMin(len, b);
         memcpy(data, readbuff_.constData() + readpos_, b);
         readpos_ += b;
     }
@@ -70,8 +70,7 @@ qint64 QConsoleIODevice::readData(char *data, qint64 len) {
 }
 
 qint64 QConsoleIODevice::writeData(const char *data, qint64 len) {
-    QByteArray ba(data, (int)len);
-    widget_->write(ba);
+    widget_->write(QString::fromLatin1(data, len));
     writtenSinceLastEmit_ += len;
     if (!signalsBlocked()) {
         Q_EMIT bytesWritten(writtenSinceLastEmit_);

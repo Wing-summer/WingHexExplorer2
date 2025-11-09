@@ -24,15 +24,15 @@ message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
 option(WINGHEX_USE_FRAMELESS ON)
-option(BUILD_TEST_PLUGIN OFF)
-option(BUILD_SHARED_MEM_EXT OFF)
-option(ANGEL_LSP ON)
-option(BUILD_TEST OFF)
+option(WINGHEX_BUILD_TEST_PLUGIN OFF)
+option(WINGHEX_BUILD_SHARED_MEM_EXT OFF)
+option(WINGHEX_ANGEL_LSP ON)
+option(WINGHEX_BUILD_TEST OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
 
-if(BUILD_TEST)
+if(WINGHEX_BUILD_TEST)
     add_subdirectory(test/TestStructGen)
 endif()
 
@@ -51,14 +51,14 @@ else()
     message(FATAL_ERROR "CMAKE_CXX_BYTE_ORDER not set or empty")
 endif()
 
-if(BUILD_TEST_PLUGIN)
+if(WINGHEX_BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestBadPlugin)
     add_subdirectory(TestHexExt)
     add_subdirectory(TestManager)
 endif()
 
-if(BUILD_SHARED_MEM_EXT)
+if(WINGHEX_BUILD_SHARED_MEM_EXT)
     add_subdirectory(ShareMemoryDrv)
 endif()
 
@@ -587,6 +587,14 @@ else()
     qt_add_executable(WingHexExplorer2 MANUAL_FINALIZATION ${PROJECT_SOURCES})
 endif()
 
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
+    target_compile_definitions(
+        WingHexExplorer2
+        PRIVATE QT_NO_CONTEXTLESS_CONNECT
+                QT_NO_NARROWING_CONVERSIONS_IN_CONNECT
+                QT_RESTRICTED_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII)
+endif()
+
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
     PRIVATE Qt6::Widgets
@@ -686,7 +694,7 @@ target_link_options(
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Wl,--gc-sections>
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
 
-if(ANGEL_LSP)
+if(WINGHEX_ANGEL_LSP)
     set(NODE_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp/server")
     set(BUILD_BIN_DIR "${CMAKE_BINARY_DIR}/lsp")
     set(BUILD_BIN_BUILD_DIR "${CMAKE_BINARY_DIR}/lsp-build")
@@ -766,6 +774,6 @@ if(ANGEL_LSP)
         COMMAND ${PKG_CMD}
         COMMENT "Packaging with pkg"
         VERBATIM)
-    add_custom_target(build_angel_lsp ALL DEPENDS ${OUT_BIN})
-    add_dependencies(WingHexExplorer2 build_angel_lsp)
+    add_custom_target(build_WINGHEX_ANGEL_LSP ALL DEPENDS ${OUT_BIN})
+    add_dependencies(WingHexExplorer2 build_WINGHEX_ANGEL_LSP)
 endif()

@@ -562,10 +562,11 @@ QString ScriptMachine::getCallStack(asIScriptContext *context) {
         int line, column;
         func = context->GetFunction(i);
         line = context->GetLineNumber(i, &column, &scriptSection);
-        str += (QStringLiteral("\t") + scriptSection + QStringLiteral(":") +
-                func->GetDeclaration() + QStringLiteral(":") +
-                QString::number(line) + QStringLiteral(",") +
-                QString::number(column) + QStringLiteral("\n"));
+        str +=
+            (QStringLiteral("\t") + QString::fromUtf8(scriptSection) +
+             QStringLiteral(":") + QString::fromUtf8(func->GetDeclaration()) +
+             QStringLiteral(":") + QString::number(line) + QStringLiteral(",") +
+             QString::number(column) + QStringLiteral("\n"));
     }
 
     return str;
@@ -768,7 +769,7 @@ int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
     ps.setArguments(QProcess::splitCommand(params));
     ps.start();
     if (ps.waitForFinished(timeout)) {
-        out = ps.readAllStandardOutput();
+        out = QString::fromUtf8(ps.readAllStandardOutput());
         return ps.exitCode();
     } else {
         ps.kill();
@@ -883,7 +884,7 @@ bool ScriptMachine::executeScript(
         });
 
     _curMsgMode = mode;
-    auto r = builder.loadSectionFromFile(script.toUtf8());
+    auto r = builder.loadSectionFromFile(script);
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
@@ -999,7 +1000,7 @@ bool ScriptMachine::executeScript(
             info.mode = mode;
             info.message =
                 QStringLiteral("The script terminated unexpectedly (") +
-                e.valueToKey(r) + QStringLiteral(")");
+                QString::fromLatin1(e.valueToKey(r)) + QStringLiteral(")");
             info.type = MessageType::Error;
             outputMessage(info);
             r = -1;
@@ -1206,8 +1207,8 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     info.mode = ins->_curMsgMode;
     info.row = msg->row + ins->lineOffset;
     info.col = msg->col + ins->colOffset;
-    info.section = msg->section;
-    info.message = msg->message;
+    info.section = QString::fromUtf8(msg->section);
+    info.message = QString::fromUtf8(msg->message);
     info.type = t;
     ins->outputMessage(info);
 }
@@ -1718,7 +1719,8 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
             if (r < 0) {
                 MessageInfo info;
                 info.mode = mode;
-                info.message = QStringLiteral("BadDecl:") + s;
+                info.message =
+                    QStringLiteral("BadDecl:") + QString::fromUtf8(s);
                 info.type = MessageType::Error;
                 outputMessage(info);
             }
@@ -1812,7 +1814,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
             info.mode = mode;
             info.message =
                 QStringLiteral("The script terminated unexpectedly (") +
-                e.valueToKey(r) + QStringLiteral(")");
+                QString::fromLatin1(e.valueToKey(r)) + QStringLiteral(")");
             info.type = MessageType::Error;
             outputMessage(info);
             r = -1;
@@ -1843,7 +1845,7 @@ QString ScriptMachine::scriptGetExceptionInfo() {
     if (msg == 0)
         return {};
 
-    return QString(msg);
+    return QString::fromUtf8(msg);
 }
 
 void ScriptMachine::registerExceptionRoutines(asIScriptEngine *engine) {

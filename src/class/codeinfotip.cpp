@@ -39,7 +39,7 @@ QIcon CodeInfoTip::getDisplayIcon(LSP::CompletionItemKind type) {
         for (int i = 0; i < total; ++i) {
             auto k = e.key(i);
             auto v = LSP::CompletionItemKind(e.value(i));
-            q_icon_cache->insert(v, getIcon(k));
+            q_icon_cache->insert(v, getIcon(QString::fromLatin1(k)));
         }
         setup = true;
     }

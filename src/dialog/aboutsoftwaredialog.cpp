@@ -57,5 +57,5 @@ QString AboutSoftwareDialog::readContent(const QString &path) {
     auto ret = file.open(QFile::ReadOnly);
     Q_ASSERT(ret);
     Q_UNUSED(ret);
-    return file.readAll();
+    return QString::fromUtf8(file.readAll());
 }

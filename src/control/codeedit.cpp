@@ -127,7 +127,8 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
             auto e = QMetaEnum::fromType<SnippetProcessor::TM_CODE>();
             auto total = e.keyCount();
             for (int i = 0; i < total; ++i) {
-                maps.insert(e.key(i), SnippetProcessor::TM_CODE(e.value(i)));
+                maps.insert(QString::fromLatin1(e.key(i)),
+                            SnippetProcessor::TM_CODE(e.value(i)));
             }
         }
 

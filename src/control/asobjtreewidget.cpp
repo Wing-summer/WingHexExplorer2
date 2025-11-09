@@ -94,10 +94,11 @@ void ASObjTreeWidget::addGlobalFunctionCompletion(
     for (asUINT i = 0; i < engine->GetGlobalFunctionCount(); ++i) {
         auto fn = engine->GetGlobalFunctionByIndex(i);
         CodeInfoTip fnInfo;
-        auto ns = fn->GetNamespace();
-        fnInfo.name = fn->GetName();
+        auto ns = QString::fromUtf8(fn->GetNamespace());
+        fnInfo.name = QString::fromUtf8(fn->GetName());
         fnInfo.type = LSP::CompletionItemKind::Function;
-        fnInfo.setComment(fn->GetDeclaration(true, true, true));
+        fnInfo.setComment(
+            QString::fromUtf8(fn->GetDeclaration(true, true, true)));
         c[ns].append(fnInfo);
     }
 }
@@ -111,8 +112,8 @@ void ASObjTreeWidget::addEnumCompletion(asIScriptEngine *engine,
         etype->AddRef();
 
         CodeInfoTip einfo;
-        QString ns = etype->GetNamespace();
-        einfo.name = etype->GetName();
+        auto ns = QString::fromUtf8(etype->GetNamespace());
+        einfo.name = QString::fromUtf8(etype->GetName());
         einfo.type = LSP::CompletionItemKind::Enum;
 
         for (asUINT i = 0; i < etype->GetEnumValueCount(); ++i) {
@@ -141,8 +142,8 @@ void ASObjTreeWidget::addClassCompletion(
 
         CodeInfoTip cls;
         cls.type = LSP::CompletionItemKind::Class;
-        cls.name = obj->GetName();
-        QString ns = obj->GetNamespace();
+        cls.name = QString::fromUtf8(obj->GetName());
+        auto ns = QString::fromUtf8(obj->GetNamespace());
 
         for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
             asEBehaviours bv;
@@ -151,8 +152,10 @@ void ASObjTreeWidget::addClassCompletion(
                 b->AddRef();
                 CodeInfoTip fn;
                 fn.type = LSP::CompletionItemKind::Function;
-                fn.name = b->GetDeclaration(false, false, false);
-                fn.setComment(b->GetDeclaration(true, true, true));
+                fn.name =
+                    QString::fromUtf8(b->GetDeclaration(false, false, false));
+                fn.setComment(
+                    QString::fromUtf8(b->GetDeclaration(true, true, true)));
                 cls.children.append(fn);
                 b->Release();
             }
@@ -163,18 +166,20 @@ void ASObjTreeWidget::addClassCompletion(
             m->AddRef();
             CodeInfoTip fn;
             fn.type = LSP::CompletionItemKind::Function;
-            fn.name = m->GetName();
-            fn.setComment(m->GetDeclaration(true, true, true));
+            fn.name = QString::fromUtf8(m->GetName());
+            fn.setComment(
+                QString::fromUtf8(m->GetDeclaration(true, true, true)));
             cls.children.append(fn);
             m->Release();
         }
 
         for (asUINT i = 0; i < obj->GetPropertyCount(); ++i) {
             auto p = obj->GetPropertyDeclaration(i, true);
+            auto name = QString::fromUtf8(p);
             CodeInfoTip pi;
             pi.type = LSP::CompletionItemKind::Property;
-            pi.name = QString::fromUtf8(p);
-            pi.setComment(p);
+            pi.name = name;
+            pi.setComment(name);
             cls.children.append(pi);
         }
 

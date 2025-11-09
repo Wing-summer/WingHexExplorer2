@@ -60,7 +60,7 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
     str.remove(regex);
     toast = new Toast(str, icon, nToastInterval, parent);
 
-    connect(toast, &Toast::destroyed, [&] { toast = nullptr; });
+    connect(toast, &Toast::destroyed, toast, [&] { toast = nullptr; });
 
     auto e0 = new EventFilter(QEvent::Move, toast);
     auto e1 = new EventFilter(QEvent::Resize, toast);

@@ -42,7 +42,7 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
 
     ui->cbWinState->addItems({tr("Normal"), tr("Maximized"), tr("FullScreen")});
 
-    ui->lblQtVersion->setText(QLibraryInfo::build());
+    ui->lblQtVersion->setText(QString::fromLatin1(QLibraryInfo::build()));
     ui->lblOS->setText(QSysInfo::prettyProductName());
     ui->lblSoftVersion->setText(WINGHEX_VERSION);
     ui->lblScriptVersion->setText(ANGELSCRIPT_VERSION_STRING);

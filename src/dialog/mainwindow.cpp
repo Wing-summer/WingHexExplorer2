@@ -1908,18 +1908,20 @@ void MainWindow::buildUpSettingDialog() {
         if (id.isEmpty()) {
             id = name;
             auto plg = page->property("__plg__").value<IWingPlugin *>();
-            Logger::warning(
-                QStringLiteral("[") + plg->metaObject()->className() +
-                QStringLiteral("::") + name + QStringLiteral("] ") +
-                QStringLiteral(":") + tr("SetPageIDEmptyTryUseName"));
+            Logger::warning(QStringLiteral("[") +
+                            QString::fromUtf8(plg->metaObject()->className()) +
+                            QStringLiteral("::") + name + QStringLiteral("] ") +
+                            QStringLiteral(":") +
+                            tr("SetPageIDEmptyTryUseName"));
         }
 
         if (usedIDs.contains(id, Qt::CaseInsensitive)) {
             auto plg = page->property("__plg__").value<IWingPlugin *>();
-            Logger::critical(
-                QStringLiteral("[") + plg->metaObject()->className() +
-                QStringLiteral("::") + name + QStringLiteral("] ") +
-                QStringLiteral(":") + tr("SetPageDupNameIgnored"));
+            Logger::critical(QStringLiteral("[") +
+                             QString::fromUtf8(plg->metaObject()->className()) +
+                             QStringLiteral("::") + name +
+                             QStringLiteral("] ") + QStringLiteral(":") +
+                             tr("SetPageDupNameIgnored"));
             continue;
         }
 
@@ -2098,10 +2100,10 @@ void MainWindow::on_openfile() {
                 }
             } else {
                 auto e = QMetaEnum::fromType<ErrFile>();
-                WingMessageBox::critical(this, tr("Error"),
-                                         tr("UnkownError") +
-                                             QStringLiteral(" - ") +
-                                             e.valueToKey(int(res)));
+                WingMessageBox::critical(
+                    this, tr("Error"),
+                    tr("UnkownError") + QStringLiteral(" - ") +
+                        QString::fromLatin1(e.valueToKey(int(res))));
             }
             return;
         }
@@ -4237,11 +4239,13 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         if (errMsg.isEmpty()) {
             WingMessageBox::critical(
                 this, tr("Error"),
-                tr("UnknownError") + QStringLiteral(" - ") + e.valueToKey(err));
+                tr("UnknownError") + QStringLiteral(" - ") +
+                    QString::fromLatin1(e.valueToKey(err)));
         } else {
-            WingMessageBox::critical(this, tr("Error"),
-                                     errMsg + QStringLiteral(" - ") +
-                                         e.valueToKey(err));
+            WingMessageBox::critical(
+                this, tr("Error"),
+                errMsg + QStringLiteral(" - ") +
+                    QString::fromLatin1(e.valueToKey(err)));
         }
         break;
     } break;

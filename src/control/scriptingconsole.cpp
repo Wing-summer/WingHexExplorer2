@@ -304,7 +304,8 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                     auto decl = mod->GetGlobalVarDeclaration(i);
                     if (decl && mod->GetGlobalVar(i, &name, nullptr, &typeID) ==
                                     asSUCCESS) {
-                        stdOutLine(decl + QStringLiteral(";"));
+                        stdOutLine(QString::fromUtf8(decl) +
+                                   QStringLiteral(";"));
                         newLine();
                     }
                 }
@@ -483,7 +484,8 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
             auto e = QMetaEnum::fromType<SnippetProcessor::TM_CODE>();
             auto total = e.keyCount();
             for (int i = 0; i < total; ++i) {
-                maps.insert(e.key(i), SnippetProcessor::TM_CODE(e.value(i)));
+                maps.insert(QString::fromLatin1(e.key(i)),
+                            SnippetProcessor::TM_CODE(e.value(i)));
             }
         }
 
@@ -881,7 +883,7 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
         a = menu.addAction(
             ICONRES(QStringLiteral("console")), tr("MutiConsole"),
             QKeySequence(Qt::ControlModifier | Qt::AltModifier | Qt::Key_Enter),
-            [this]() {
+            this, [this]() {
                 if (ScriptMachine::instance().isRunning(
                         ScriptMachine::Interactive)) {
                     return;
@@ -894,7 +896,7 @@ void ScriptingConsole::contextMenuEvent(QContextMenuEvent *event) {
             !ScriptMachine::instance().isRunning(ScriptMachine::Interactive));
         a = menu.addAction(
             ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
-            QKeySequence(Qt::ControlModifier | Qt::Key_Q), [this]() {
+            QKeySequence(Qt::ControlModifier | Qt::Key_Q), this, [this]() {
                 ScriptMachine::instance().abortScript(
                     _isTerminal ? ScriptMachine::Interactive
                                 : ScriptMachine::Background);

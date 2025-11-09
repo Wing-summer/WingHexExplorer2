@@ -116,7 +116,6 @@ public:
         static QStringList encodings;
 
         if (encodings.isEmpty()) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             for (auto e = 0; e < int(QStringConverter::Encoding::LastEncoding);
                  ++e) {
                 auto ee = QStringConverter::nameForEncoding(
@@ -124,19 +123,9 @@ public:
                 if (ee == QStringLiteral("ISO-8859-1")) {
                     encodings << QStringLiteral("ASCII");
                 } else {
-                    encodings << ee;
+                    encodings << QString::fromLatin1(ee);
                 }
             }
-#else
-            for (auto &e : QTextCodec::availableCodecs()) {
-                if (e == QStringLiteral("ISO-8859-1")) {
-                    encodings << QStringLiteral("ASCII");
-                } else {
-                    encodings << e;
-                }
-            }
-#endif
-            encodings.sort();
         }
 
         return encodings;
@@ -164,7 +153,7 @@ public:
             auto hashes = Utilities::supportedHashAlgorithms();
             auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
             for (auto &hash : hashes) {
-                hashNames << hashe.valueToKey(hash);
+                hashNames << QString::fromLatin1(hashe.valueToKey(hash));
             }
         }
         return hashNames;

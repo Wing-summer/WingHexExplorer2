@@ -80,7 +80,6 @@ PluginSystem::~PluginSystem() {}
 
 void PluginSystem::toast(const QObject *sender, const QPixmap &icon,
                          const QString &message) {
-    Q_UNUSED(sender);
     if (!checkThreadAff()) {
         return;
     }
@@ -89,7 +88,8 @@ void PluginSystem::toast(const QObject *sender, const QPixmap &icon,
         return;
     }
 
-    if (passByFailedGuard(sender, __func__, {icon, message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::toast)>(sender, __func__,
+                                                          icon, message)) {
         return;
     }
 
@@ -97,28 +97,32 @@ void PluginSystem::toast(const QObject *sender, const QPixmap &icon,
 }
 
 void PluginSystem::logTrace(const QObject *sender, const QString &message) {
-    if (passByFailedGuard(sender, __func__, {message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::logTrace)>(sender, __func__,
+                                                             message)) {
         return;
     }
     Logger::trace(packLogMessage(sender->metaObject()->className(), message));
 }
 
 void PluginSystem::logDebug(const QObject *sender, const QString &message) {
-    if (passByFailedGuard(sender, __func__, {message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::logDebug)>(sender, __func__,
+                                                             message)) {
         return;
     }
     Logger::debug(packLogMessage(sender->metaObject()->className(), message));
 }
 
 void PluginSystem::logInfo(const QObject *sender, const QString &message) {
-    if (passByFailedGuard(sender, __func__, {message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::logInfo)>(sender, __func__,
+                                                            message)) {
         return;
     }
     Logger::info(packLogMessage(sender->metaObject()->className(), message));
 }
 
 void PluginSystem::logError(const QObject *sender, const QString &message) {
-    if (passByFailedGuard(sender, __func__, {message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::logError)>(sender, __func__,
+                                                             message)) {
         return;
     }
     Logger::critical(
@@ -126,12 +130,12 @@ void PluginSystem::logError(const QObject *sender, const QString &message) {
 }
 
 bool PluginSystem::raiseDockWidget(const QObject *sender, QWidget *w) {
-    Q_UNUSED(sender);
     if (!checkThreadAff()) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {QVariant::fromValue(w)})) {
+    if (passByFailedGuard<decltype(&PluginSystem::raiseDockWidget)>(
+            sender, __func__, w)) {
         return false;
     }
 
@@ -143,12 +147,12 @@ bool PluginSystem::raiseDockWidget(const QObject *sender, QWidget *w) {
 }
 
 QDialog *PluginSystem::createDialog(const QObject *sender, QWidget *content) {
-    Q_UNUSED(sender);
     if (!checkThreadAff()) {
         return nullptr;
     }
 
-    if (passByFailedGuard(sender, __func__, {QVariant::fromValue(content)})) {
+    if (passByFailedGuard<decltype(&PluginSystem::createDialog)>(
+            sender, __func__, content)) {
         return nullptr;
     }
 
@@ -165,10 +169,9 @@ QDialog *PluginSystem::createDialog(const QObject *sender, QWidget *content) {
 
 void PluginSystem::msgAboutQt(const QObject *sender, QWidget *parent,
                               const QString &title) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgAboutQt)>(
+                sender, __func__, parent, title)) {
             return;
         }
 
@@ -181,12 +184,10 @@ PluginSystem::msgInformation(const QObject *sender, QWidget *parent,
                              const QString &title, const QString &text,
                              QMessageBox::StandardButtons buttons,
                              QMessageBox::StandardButton defaultButton) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text,
-                               QVariant::fromValue(buttons),
-                               QVariant::fromValue(defaultButton)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgInformation)>(
+                sender, __func__, parent, title, text, buttons,
+                defaultButton)) {
             return QMessageBox::StandardButton::NoButton;
         }
 
@@ -201,12 +202,10 @@ PluginSystem::msgQuestion(const QObject *sender, QWidget *parent,
                           const QString &title, const QString &text,
                           QMessageBox::StandardButtons buttons,
                           QMessageBox::StandardButton defaultButton) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text,
-                               QVariant::fromValue(buttons),
-                               QVariant::fromValue(defaultButton)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgQuestion)>(
+                sender, __func__, parent, title, text, buttons,
+                defaultButton)) {
             return QMessageBox::StandardButton::NoButton;
         }
 
@@ -221,12 +220,10 @@ PluginSystem::msgWarning(const QObject *sender, QWidget *parent,
                          const QString &title, const QString &text,
                          QMessageBox::StandardButtons buttons,
                          QMessageBox::StandardButton defaultButton) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text,
-                               QVariant::fromValue(buttons),
-                               QVariant::fromValue(defaultButton)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgWarning)>(
+                sender, __func__, parent, title, text, buttons,
+                defaultButton)) {
             return QMessageBox::StandardButton::NoButton;
         }
 
@@ -241,12 +238,10 @@ PluginSystem::msgCritical(const QObject *sender, QWidget *parent,
                           const QString &title, const QString &text,
                           QMessageBox::StandardButtons buttons,
                           QMessageBox::StandardButton defaultButton) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text,
-                               QVariant::fromValue(buttons),
-                               QVariant::fromValue(defaultButton)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgCritical)>(
+                sender, __func__, parent, title, text, buttons,
+                defaultButton)) {
             return QMessageBox::StandardButton::NoButton;
         }
 
@@ -258,10 +253,9 @@ PluginSystem::msgCritical(const QObject *sender, QWidget *parent,
 
 void PluginSystem::msgAbout(const QObject *sender, QWidget *parent,
                             const QString &title, const QString &text) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgAbout)>(
+                sender, __func__, parent, title, text)) {
             return;
         }
 
@@ -274,12 +268,10 @@ PluginSystem::msgbox(const QObject *sender, QWidget *parent,
                      QMessageBox::Icon icon, const QString &title,
                      const QString &text, QMessageBox::StandardButtons buttons,
                      QMessageBox::StandardButton defaultButton) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, text,
-                               QVariant::fromValue(buttons),
-                               QVariant::fromValue(defaultButton)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::msgbox)>(
+                sender, __func__, parent, icon, title, text, buttons,
+                defaultButton)) {
             return QMessageBox::StandardButton::NoButton;
         }
 
@@ -294,13 +286,10 @@ QString PluginSystem::dlgGetText(const QObject *sender, QWidget *parent,
                                  QLineEdit::EchoMode echo, const QString &text,
                                  bool *ok,
                                  Qt::InputMethodHints inputMethodHints) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, label,
-                               QVariant::fromValue(echo), text,
-                               QVariant::fromValue(ok),
-                               QVariant::fromValue(inputMethodHints)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetText)>(
+                sender, __func__, parent, title, label, echo, text, ok,
+                inputMethodHints)) {
             return {};
         }
 
@@ -315,12 +304,10 @@ PluginSystem::dlgGetMultiLineText(const QObject *sender, QWidget *parent,
                                   const QString &title, const QString &label,
                                   const QString &text, bool *ok,
                                   Qt::InputMethodHints inputMethodHints) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, label, text,
-                               QVariant::fromValue(ok),
-                               QVariant::fromValue(inputMethodHints)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetMultiLineText)>(
+                sender, __func__, parent, title, label, text, ok,
+                inputMethodHints)) {
             return {};
         }
 
@@ -335,12 +322,10 @@ QString PluginSystem::dlgGetItem(const QObject *sender, QWidget *parent,
                                  const QStringList &items, int current,
                                  bool editable, bool *ok,
                                  Qt::InputMethodHints inputMethodHints) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, label, items,
-                               current, editable, QVariant::fromValue(ok),
-                               QVariant::fromValue(inputMethodHints)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetItem)>(
+                sender, __func__, parent, title, label, items, current,
+                editable, ok, inputMethodHints)) {
             return {};
         }
 
@@ -354,12 +339,10 @@ int PluginSystem::dlgGetInt(const QObject *sender, QWidget *parent,
                             const QString &title, const QString &label,
                             int value, int minValue, int maxValue, int step,
                             bool *ok) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, label, value,
-                               minValue, maxValue, step,
-                               QVariant::fromValue(ok)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetInt)>(
+                sender, __func__, parent, title, label, value, minValue,
+                maxValue, step, ok)) {
             return 0;
         }
 
@@ -374,12 +357,10 @@ double PluginSystem::dlgGetDouble(const QObject *sender, QWidget *parent,
                                   double value, double minValue,
                                   double maxValue, int decimals, bool *ok,
                                   double step) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), title, label, value,
-                               minValue, maxValue, decimals,
-                               QVariant::fromValue(ok), step})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetDouble)>(
+                sender, __func__, parent, title, label, value, minValue,
+                maxValue, decimals, ok, step)) {
             return 0;
         }
 
@@ -394,11 +375,9 @@ QString PluginSystem::dlgGetExistingDirectory(const QObject *sender,
                                               const QString &caption,
                                               const QString &dir,
                                               QFileDialog::Options options) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), caption, dir,
-                               QVariant::fromValue(options)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetExistingDirectory)>(
+                sender, __func__, parent, caption, dir, options)) {
             return {};
         }
 
@@ -414,14 +393,10 @@ QString PluginSystem::dlgGetOpenFileName(const QObject *sender, QWidget *parent,
                                          const QString &filter,
                                          QString *selectedFilter,
                                          QFileDialog::Options options) {
-    if (checkErrAllAllowAndReport(sender, __func__)) {
-        return {};
-    }
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), caption, dir,
-                               filter, QVariant::fromValue(selectedFilter),
-                               QVariant::fromValue(options)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetOpenFileName)>(
+                sender, __func__, parent, caption, dir, filter, selectedFilter,
+                options)) {
             return {};
         }
 
@@ -435,12 +410,10 @@ QStringList PluginSystem::dlgGetOpenFileNames(
     const QObject *sender, QWidget *parent, const QString &caption,
     const QString &dir, const QString &filter, QString *selectedFilter,
     QFileDialog::Options options) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), caption, dir,
-                               filter, QVariant::fromValue(selectedFilter),
-                               QVariant::fromValue(options)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetOpenFileNames)>(
+                sender, __func__, parent, caption, dir, filter, selectedFilter,
+                options)) {
             return {};
         }
 
@@ -456,14 +429,10 @@ QString PluginSystem::dlgGetSaveFileName(const QObject *sender, QWidget *parent,
                                          const QString &filter,
                                          QString *selectedFilter,
                                          QFileDialog::Options options) {
-    if (checkErrAllAllowAndReport(sender, __func__)) {
-        return {};
-    }
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {QVariant::fromValue(parent), caption, dir,
-                               filter, QVariant::fromValue(selectedFilter),
-                               QVariant::fromValue(options)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetSaveFileName)>(
+                sender, __func__, parent, caption, dir, filter, selectedFilter,
+                options)) {
             return {};
         }
 
@@ -475,10 +444,9 @@ QString PluginSystem::dlgGetSaveFileName(const QObject *sender, QWidget *parent,
 
 QColor PluginSystem::dlgGetColor(const QObject *sender, const QString &caption,
                                  QWidget *parent) {
-    Q_UNUSED(sender);
     if (checkThreadAff()) {
-        if (passByFailedGuard(sender, __func__,
-                              {caption, QVariant::fromValue(parent)})) {
+        if (passByFailedGuard<decltype(&PluginSystem::dlgGetColor)>(
+                sender, __func__, caption, parent)) {
             return {};
         }
 
@@ -493,25 +461,22 @@ QColor PluginSystem::dlgGetColor(const QObject *sender, const QString &caption,
 
 bool PluginSystem::existsServiceHost(const QObject *sender,
                                      const QString &puid) {
-    if (passByFailedGuard(sender, __func__, {puid})) {
+    if (passByFailedGuard<decltype(&PluginSystem::existsServiceHost)>(
+            sender, __func__, puid)) {
         return false;
     }
 
     return std::find_if(_loadedplgs.begin(), _loadedplgs.end(),
                         [puid, this](IWingPlugin *plg) {
-                            return getPluginID(plg) == puid;
+                            return puid.compare(getPluginID(plg),
+                                                Qt::CaseInsensitive) == 0;
                         }) != _loadedplgs.end();
 }
 
 bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
                                      const WingHex::MetaCallInfo &infos) {
-    auto p = checkPluginAndReport(sender, __func__);
-    if (p == nullptr) {
-        return false;
-    }
-
-    if (passByFailedGuard(sender, __func__,
-                          {puid, QVariant::fromValue(infos)})) {
+    if (passByFailedGuard<decltype(&PluginSystem::invokeServiceImpl)>(
+            sender, __func__, puid, infos)) {
         return false;
     }
 
@@ -642,8 +607,11 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     }
 
     SenderInfo info;
-    info.plgcls = meta->className();
-    info.puid = getPUID(p);
+    info.plgcls = QString::fromUtf8(meta->className());
+    if (auto p =
+            qobject_cast<IWingPluginBase *>(const_cast<QObject *>(sender))) {
+        info.puid = getPUID(p);
+    }
 
     auto meta_name = "WING_META";
     // property first
@@ -653,7 +621,7 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
     } else {
         auto iidx = meta->indexOfClassInfo(meta_name);
         if (iidx >= 0) {
-            info.meta = QString(meta->classInfo(iidx).value());
+            info.meta = QString::fromUtf8(meta->classInfo(iidx).value());
         }
     }
 
@@ -728,7 +696,8 @@ bool PluginSystem::isCurrentDocEditing(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::isCurrentDocEditing)>(
+            sender, __func__)) {
         return false;
     }
 
@@ -741,7 +710,8 @@ QString PluginSystem::currentDocFile(const QObject *sender) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::currentDocFile)>(sender,
+                                                                   __func__)) {
         return {};
     }
 
@@ -755,18 +725,19 @@ QString PluginSystem::currentDocFile(const QObject *sender) {
 bool PluginSystem::isReadOnly(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return false;
+        return true;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return {};
+    if (passByFailedGuard<decltype(&PluginSystem::isReadOnly)>(sender,
+                                                               __func__)) {
+        return true;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->isReadOnly();
     }
-    return false;
+    return true;
 }
 
 bool PluginSystem::isInsertionMode(const QObject *sender) {
@@ -775,7 +746,8 @@ bool PluginSystem::isInsertionMode(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::isInsertionMode)>(sender,
+                                                                    __func__)) {
         return false;
     }
 
@@ -790,45 +762,48 @@ bool PluginSystem::isInsertionMode(const QObject *sender) {
 bool PluginSystem::isKeepSize(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return false;
+        return true;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return false;
+    if (passByFailedGuard<decltype(&PluginSystem::isKeepSize)>(sender,
+                                                               __func__)) {
+        return true;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->isKeepSize();
     }
-    return false;
+    return true;
 }
 
 bool PluginSystem::isLocked(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return false;
+        return true;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return false;
+    if (passByFailedGuard<decltype(&PluginSystem::isLocked)>(sender,
+                                                             __func__)) {
+        return true;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->hexEditor()->isLocked();
     }
-    return false;
+    return true;
 }
 
 qsizetype PluginSystem::documentLines(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::documentLines)>(sender,
+                                                                  __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -841,11 +816,12 @@ qsizetype PluginSystem::documentLines(const QObject *sender) {
 qsizetype PluginSystem::documentBytes(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::documentBytes)>(sender,
+                                                                  __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -858,11 +834,12 @@ qsizetype PluginSystem::documentBytes(const QObject *sender) {
 qsizetype PluginSystem::currentRow(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::currentRow)>(sender,
+                                                               __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -875,11 +852,12 @@ qsizetype PluginSystem::currentRow(const QObject *sender) {
 qsizetype PluginSystem::currentColumn(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::currentColumn)>(sender,
+                                                                  __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -892,11 +870,12 @@ qsizetype PluginSystem::currentColumn(const QObject *sender) {
 qsizetype PluginSystem::currentOffset(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::currentOffset)>(sender,
+                                                                  __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -909,11 +888,12 @@ qsizetype PluginSystem::currentOffset(const QObject *sender) {
 qsizetype PluginSystem::selectedLength(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::selectedLength)>(sender,
+                                                                   __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -929,7 +909,8 @@ QByteArray PluginSystem::selectedBytes(const QObject *sender, qsizetype index) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {index})) {
+    if (passByFailedGuard<decltype(&PluginSystem::selectedBytes)>(
+            sender, __func__, index)) {
         return {};
     }
 
@@ -946,7 +927,8 @@ QByteArrayList PluginSystem::selectionBytes(const QObject *sender) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::selectionBytes)>(sender,
+                                                                   __func__)) {
         return {};
     }
 
@@ -961,19 +943,21 @@ qsizetype PluginSystem::selectionLength(const QObject *sender,
                                         qsizetype index) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {index})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::selectionLength)>(
+            sender, __func__, index)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-
         auto cursor = e->hexEditor()->cursor();
         if (index >= 0 && index < cursor->selectionCount()) {
             return cursor->selectionLength(index);
+        } else {
+            return -1;
         }
     }
     return 0;
@@ -982,11 +966,12 @@ qsizetype PluginSystem::selectionLength(const QObject *sender,
 qsizetype PluginSystem::selectionCount(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::selectionCount)>(sender,
+                                                                   __func__)) {
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -1003,7 +988,8 @@ bool PluginSystem::stringVisible(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::stringVisible)>(sender,
+                                                                  __func__)) {
         return false;
     }
 
@@ -1020,7 +1006,8 @@ bool PluginSystem::addressVisible(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::addressVisible)>(sender,
+                                                                   __func__)) {
         return false;
     }
 
@@ -1037,7 +1024,8 @@ bool PluginSystem::headerVisible(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::headerVisible)>(sender,
+                                                                  __func__)) {
         return false;
     }
 
@@ -1054,8 +1042,9 @@ quintptr PluginSystem::addressBase(const QObject *sender) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
-        return false;
+    if (passByFailedGuard<decltype(&PluginSystem::addressBase)>(sender,
+                                                                __func__)) {
+        return 0;
     }
 
     auto e = pluginCurrentEditor(plg);
@@ -1071,7 +1060,8 @@ bool PluginSystem::isModified(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::isModified)>(sender,
+                                                               __func__)) {
         return false;
     }
 
@@ -1088,7 +1078,8 @@ qint8 PluginSystem::readInt8(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readInt8)>(sender, __func__,
+                                                             offset)) {
         return 0;
     }
 
@@ -1101,7 +1092,8 @@ qint16 PluginSystem::readInt16(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readInt16)>(sender, __func__,
+                                                              offset)) {
         return 0;
     }
 
@@ -1114,7 +1106,8 @@ qint32 PluginSystem::readInt32(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readInt32)>(sender, __func__,
+                                                              offset)) {
         return 0;
     }
 
@@ -1127,7 +1120,8 @@ qint64 PluginSystem::readInt64(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readInt64)>(sender, __func__,
+                                                              offset)) {
         return 0;
     }
 
@@ -1140,7 +1134,8 @@ quint8 PluginSystem::readUInt8(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readUInt8)>(sender, __func__,
+                                                              offset)) {
         return 0;
     }
 
@@ -1153,7 +1148,8 @@ quint16 PluginSystem::readUInt16(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readUInt16)>(sender, __func__,
+                                                               offset)) {
         return 0;
     }
 
@@ -1166,7 +1162,8 @@ quint32 PluginSystem::readUInt32(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readUInt32)>(sender, __func__,
+                                                               offset)) {
         return 0;
     }
 
@@ -1179,7 +1176,8 @@ quint64 PluginSystem::readUInt64(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readUInt64)>(sender, __func__,
+                                                               offset)) {
         return 0;
     }
 
@@ -1192,8 +1190,9 @@ float PluginSystem::readFloat(const QObject *sender, qsizetype offset) {
         return qQNaN();
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
-        return 0;
+    if (passByFailedGuard<decltype(&PluginSystem::readFloat)>(sender, __func__,
+                                                              offset)) {
+        return qQNaN();
     }
 
     return readBasicTypeContent<float>(plg, offset);
@@ -1205,7 +1204,8 @@ double PluginSystem::readDouble(const QObject *sender, qsizetype offset) {
         return qQNaN();
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readDouble)>(sender, __func__,
+                                                               offset)) {
         return qQNaN();
     }
 
@@ -1219,7 +1219,8 @@ QString PluginSystem::readString(const QObject *sender, qsizetype offset,
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, encoding})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readString)>(
+            sender, __func__, offset, encoding)) {
         return {};
     }
 
@@ -1249,7 +1250,8 @@ QByteArray PluginSystem::readBytes(const QObject *sender, qsizetype offset,
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, count})) {
+    if (passByFailedGuard<decltype(&PluginSystem::readBytes)>(sender, __func__,
+                                                              offset, count)) {
         return {};
     }
 
@@ -1270,15 +1272,19 @@ qsizetype PluginSystem::findNext(const QObject *sender, qsizetype begin,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {begin, ba})) {
+    if (passByFailedGuard<decltype(&PluginSystem::findNext)>(sender, __func__,
+                                                             begin, ba)) {
         return 0;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->findNext(begin, ba);
+        _rwlock.lockForRead();
+        auto ret = e->hexEditor()->document()->findNext(begin, ba);
+        _rwlock.unlock();
+        return ret;
     }
-    return qsizetype(-1);
+    return -1;
 }
 
 qsizetype PluginSystem::findPrevious(const QObject *sender, qsizetype begin,
@@ -1288,15 +1294,19 @@ qsizetype PluginSystem::findPrevious(const QObject *sender, qsizetype begin,
         return 0;
     }
 
-    if (passByFailedGuard(sender, __func__, {begin, ba})) {
+    if (passByFailedGuard<decltype(&PluginSystem::findPrevious)>(
+            sender, __func__, begin, ba)) {
         return 0;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->findPrevious(begin, ba);
+        _rwlock.lockForRead();
+        auto ret = e->hexEditor()->document()->findPrevious(begin, ba);
+        _rwlock.unlock();
+        return ret;
     }
-    return qsizetype(-1);
+    return -1;
 }
 
 QString PluginSystem::bookMarkComment(const QObject *sender, qsizetype pos) {
@@ -1305,7 +1315,8 @@ QString PluginSystem::bookMarkComment(const QObject *sender, qsizetype pos) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {pos})) {
+    if (passByFailedGuard<decltype(&PluginSystem::bookMarkComment)>(
+            sender, __func__, pos)) {
         return {};
     }
 
@@ -1322,7 +1333,8 @@ bool PluginSystem::existBookMark(const QObject *sender, qsizetype pos) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {pos})) {
+    if (passByFailedGuard<decltype(&PluginSystem::existBookMark)>(
+            sender, __func__, pos)) {
         return false;
     }
 
@@ -1343,7 +1355,8 @@ bool PluginSystem::switchDocument(const QObject *sender, int handle) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle})) {
+    if (passByFailedGuard<decltype(&PluginSystem::switchDocument)>(
+            sender, __func__, handle)) {
         return false;
     }
 
@@ -1368,7 +1381,8 @@ bool PluginSystem::raiseDocument(const QObject *sender, int handle) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle})) {
+    if (passByFailedGuard<decltype(&PluginSystem::raiseDocument)>(
+            sender, __func__, handle)) {
         return false;
     }
 
@@ -1398,7 +1412,8 @@ bool PluginSystem::setLockedFile(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setLockedFile)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -1419,7 +1434,8 @@ bool PluginSystem::setKeepSize(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setKeepSize)>(sender,
+                                                                __func__, b)) {
         return false;
     }
 
@@ -1440,7 +1456,8 @@ bool PluginSystem::setStringVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setStringVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -1462,7 +1479,8 @@ bool PluginSystem::setAddressVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setAddressVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -1484,7 +1502,8 @@ bool PluginSystem::setHeaderVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setHeaderVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -1506,7 +1525,8 @@ bool PluginSystem::setAddressBase(const QObject *sender, quintptr base) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {base})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setAddressBase)>(
+            sender, __func__, base)) {
         return false;
     }
 
@@ -1524,7 +1544,8 @@ bool PluginSystem::beginMarco(const QObject *sender, const QString &txt) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {txt})) {
+    if (passByFailedGuard<decltype(&PluginSystem::beginMarco)>(sender, __func__,
+                                                               txt)) {
         return false;
     }
 
@@ -1535,6 +1556,7 @@ bool PluginSystem::beginMarco(const QObject *sender, const QString &txt) {
 
     auto r = pluginContextById(plg, fid);
     if (r) {
+        _rwlock.lockForWrite();
         auto &u = m_viewBindings[r->view];
 
         auto rtxt = txt.trimmed();
@@ -1548,6 +1570,7 @@ bool PluginSystem::beginMarco(const QObject *sender, const QString &txt) {
             u.undoStackPlg.append(qMakePair(
                 new QUndoCommand(rtxt, u.undoStackPlg.last().first), plg));
         }
+        _rwlock.unlock();
     }
     return true;
 }
@@ -1558,7 +1581,8 @@ bool PluginSystem::endMarco(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::endMarco)>(sender,
+                                                             __func__)) {
         return false;
     }
 
@@ -1569,14 +1593,17 @@ bool PluginSystem::endMarco(const QObject *sender) {
 
     auto r = pluginContextById(plg, fid);
     if (r) {
+        _rwlock.lockForWrite();
         auto &u = m_viewBindings[r->view];
         auto &undo = u.undoStackPlg;
 
         if (undo.isEmpty()) {
+            _rwlock.unlock();
             return false;
         } else {
             auto &l = undo.last();
             if (l.second != plg) {
+                _rwlock.unlock();
                 return false;
             }
 
@@ -1587,6 +1614,7 @@ bool PluginSystem::endMarco(const QObject *sender) {
                 });
 
             if (r == undo.rend()) {
+                _rwlock.unlock();
                 return false;
             }
 
@@ -1599,12 +1627,15 @@ bool PluginSystem::endMarco(const QObject *sender) {
             if (undo.isEmpty()) {
                 auto e = pluginCurrentEditor(plg);
                 if (e == nullptr) {
+                    _rwlock.unlock();
                     return false;
                 }
                 auto doc = e->hexEditor()->document();
                 doc->pushMakeUndo(cmdl.first);
+                _rwlock.unlock();
                 return true;
             }
+            _rwlock.unlock();
             return true;
         }
     }
@@ -1617,7 +1648,8 @@ bool PluginSystem::isMacroEmpty(const QObject *sender) {
         return true;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::isMacroEmpty)>(sender,
+                                                                 __func__)) {
         return true;
     }
 
@@ -1642,7 +1674,8 @@ bool PluginSystem::resetMarco(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::resetMarco)>(sender,
+                                                               __func__)) {
         return false;
     }
 
@@ -1671,7 +1704,8 @@ bool PluginSystem::writeInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeInt8)>(sender, __func__,
+                                                              offset, value)) {
         return false;
     }
 
@@ -1685,7 +1719,8 @@ bool PluginSystem::writeInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeInt16)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1699,7 +1734,8 @@ bool PluginSystem::writeInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeInt32)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1713,7 +1749,8 @@ bool PluginSystem::writeInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeInt64)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1727,7 +1764,8 @@ bool PluginSystem::writeUInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeUInt8)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1741,7 +1779,8 @@ bool PluginSystem::writeUInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeUInt16)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1755,7 +1794,8 @@ bool PluginSystem::writeUInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeUInt32)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1769,7 +1809,8 @@ bool PluginSystem::writeUInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeUInt64)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1783,7 +1824,8 @@ bool PluginSystem::writeFloat(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeFloat)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1797,7 +1839,8 @@ bool PluginSystem::writeDouble(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeDouble)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1811,7 +1854,8 @@ bool PluginSystem::writeString(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value, encoding})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeString)>(
+            sender, __func__, offset, value, encoding)) {
         return false;
     }
 
@@ -1840,7 +1884,8 @@ bool PluginSystem::writeBytes(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, data})) {
+    if (passByFailedGuard<decltype(&PluginSystem::writeBytes)>(sender, __func__,
+                                                               offset, data)) {
         return false;
     }
 
@@ -1867,7 +1912,8 @@ bool PluginSystem::insertInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertInt8)>(sender, __func__,
+                                                               offset, value)) {
         return false;
     }
 
@@ -1881,7 +1927,8 @@ bool PluginSystem::insertInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertInt16)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1895,7 +1942,8 @@ bool PluginSystem::insertInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertInt32)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1909,7 +1957,8 @@ bool PluginSystem::insertInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertInt64)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1923,7 +1972,8 @@ bool PluginSystem::insertUInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertUInt8)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1937,7 +1987,8 @@ bool PluginSystem::insertUInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertUInt16)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1951,7 +2002,8 @@ bool PluginSystem::insertUInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertUInt32)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1965,7 +2017,8 @@ bool PluginSystem::insertUInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertUInt64)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1979,7 +2032,8 @@ bool PluginSystem::insertFloat(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertFloat)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -1993,7 +2047,8 @@ bool PluginSystem::insertDouble(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertDouble)>(
+            sender, __func__, offset, value)) {
         return false;
     }
 
@@ -2007,7 +2062,8 @@ bool PluginSystem::insertString(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, value, encoding})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertString)>(
+            sender, __func__, offset, value, encoding)) {
         return false;
     }
 
@@ -2036,7 +2092,8 @@ bool PluginSystem::insertBytes(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, data})) {
+    if (passByFailedGuard<decltype(&PluginSystem::insertBytes)>(
+            sender, __func__, offset, data)) {
         return false;
     }
 
@@ -2062,7 +2119,8 @@ bool PluginSystem::appendInt8(const QObject *sender, qint8 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendInt8)>(sender, __func__,
+                                                               value)) {
         return false;
     }
 
@@ -2075,7 +2133,8 @@ bool PluginSystem::appendInt16(const QObject *sender, qint16 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendInt16)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2088,7 +2147,8 @@ bool PluginSystem::appendInt32(const QObject *sender, qint32 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendInt32)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2101,7 +2161,8 @@ bool PluginSystem::appendInt64(const QObject *sender, qint64 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendInt64)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2114,7 +2175,8 @@ bool PluginSystem::appendUInt8(const QObject *sender, quint8 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendUInt8)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2127,7 +2189,8 @@ bool PluginSystem::appendUInt16(const QObject *sender, quint16 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendUInt16)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2140,7 +2203,8 @@ bool PluginSystem::appendUInt32(const QObject *sender, quint32 value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendUInt32)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2161,7 +2225,8 @@ bool PluginSystem::appendFloat(const QObject *sender, float value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendFloat)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2174,7 +2239,8 @@ bool PluginSystem::appendDouble(const QObject *sender, double value) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendDouble)>(
+            sender, __func__, value)) {
         return false;
     }
 
@@ -2188,7 +2254,8 @@ bool PluginSystem::appendString(const QObject *sender, const QString &value,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {value, encoding})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendString)>(
+            sender, __func__, value, encoding)) {
         return false;
     }
 
@@ -2217,7 +2284,8 @@ bool PluginSystem::appendBytes(const QObject *sender, const QByteArray &data) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {data})) {
+    if (passByFailedGuard<decltype(&PluginSystem::appendBytes)>(
+            sender, __func__, data)) {
         return false;
     }
 
@@ -2244,7 +2312,8 @@ bool PluginSystem::removeBytes(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, len})) {
+    if (passByFailedGuard<decltype(&PluginSystem::removeBytes)>(
+            sender, __func__, offset, len)) {
         return false;
     }
 
@@ -2277,8 +2346,10 @@ bool PluginSystem::moveTo(const QObject *sender, qsizetype line,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__,
-                          {line, column, nibbleindex, clearSelection})) {
+    if (passByFailedGuard<
+            decltype(QOverload<const QObject *, qsizetype, qsizetype, int,
+                               bool>::of(&PluginSystem::moveTo))>(
+            sender, __func__, line, column, nibbleindex, clearSelection)) {
         return false;
     }
 
@@ -2302,7 +2373,9 @@ bool PluginSystem::moveTo(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset, clearSelection})) {
+    if (passByFailedGuard<decltype(QOverload<const QObject *, qsizetype,
+                                             bool>::of(&PluginSystem::moveTo))>(
+            sender, __func__, offset, clearSelection)) {
         return false;
     }
 
@@ -2325,8 +2398,8 @@ bool PluginSystem::select(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__,
-                          {offset, length, QVariant::fromValue(mode)})) {
+    if (passByFailedGuard<decltype(&PluginSystem::select)>(
+            sender, __func__, offset, length, mode)) {
         return false;
     }
 
@@ -2362,7 +2435,8 @@ bool PluginSystem::setInsertionMode(const QObject *sender, bool isinsert) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {isinsert})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setInsertionMode)>(
+            sender, __func__, isinsert)) {
         return false;
     }
 
@@ -2387,8 +2461,11 @@ bool PluginSystem::metadata(const QObject *sender, qsizetype begin,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__,
-                          {begin, length, fgcolor, bgcolor, comment})) {
+    if (passByFailedGuard<
+            decltype(QOverload<const QObject *, qsizetype, qsizetype,
+                               const QColor &, const QColor &,
+                               const QString &>::of(&PluginSystem::metadata))>(
+            sender, __func__, begin, length, fgcolor, bgcolor, comment)) {
         return false;
     }
 
@@ -2417,7 +2494,8 @@ bool PluginSystem::removeMetadata(const QObject *sender, qsizetype offset) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {offset})) {
+    if (passByFailedGuard<decltype(&PluginSystem::removeMetadata)>(
+            sender, __func__, offset)) {
         return false;
     }
 
@@ -2444,7 +2522,8 @@ bool PluginSystem::clearMetadata(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::clearMetadata)>(sender,
+                                                                  __func__)) {
         return false;
     }
 
@@ -2471,7 +2550,8 @@ bool PluginSystem::setMetaVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setMetaVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -2496,7 +2576,8 @@ bool PluginSystem::setMetafgVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setMetafgVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -2519,7 +2600,8 @@ bool PluginSystem::setMetabgVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setMetabgVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -2542,7 +2624,8 @@ bool PluginSystem::setMetaCommentVisible(const QObject *sender, bool b) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {b})) {
+    if (passByFailedGuard<decltype(&PluginSystem::setMetaCommentVisible)>(
+            sender, __func__, b)) {
         return false;
     }
 
@@ -2566,7 +2649,8 @@ bool PluginSystem::addBookMark(const QObject *sender, qsizetype pos,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {pos, comment})) {
+    if (passByFailedGuard<decltype(&PluginSystem::addBookMark)>(
+            sender, __func__, pos, comment)) {
         return false;
     }
 
@@ -2594,7 +2678,8 @@ bool PluginSystem::modBookMark(const QObject *sender, qsizetype pos,
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {pos, comment})) {
+    if (passByFailedGuard<decltype(&PluginSystem::modBookMark)>(
+            sender, __func__, pos, comment)) {
         return false;
     }
 
@@ -2621,7 +2706,8 @@ bool PluginSystem::removeBookMark(const QObject *sender, qsizetype pos) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {pos})) {
+    if (passByFailedGuard<decltype(&PluginSystem::removeBookMark)>(
+            sender, __func__, pos)) {
         return false;
     }
 
@@ -2648,7 +2734,8 @@ bool PluginSystem::clearBookMark(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::clearBookMark)>(sender,
+                                                                  __func__)) {
         return false;
     }
 
@@ -2675,7 +2762,8 @@ bool PluginSystem::closeAllFiles(const QObject *sender) {
         return false;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::closeAllFiles)>(sender,
+                                                                  __func__)) {
         return false;
     }
 
@@ -2692,7 +2780,8 @@ bool PluginSystem::closeAllFiles(const QObject *sender) {
 void PluginSystem::__raiseContextException(const QObject *sender,
                                            const QString &exception,
                                            bool allowCatch) {
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::__raiseContextException)>(
+            sender, __func__, exception, allowCatch)) {
         return;
     }
 
@@ -2705,7 +2794,8 @@ void PluginSystem::__raiseContextException(const QObject *sender,
 
 IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
                                                  void *ctx) {
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::__createParamContext)>(
+            sender, __func__, ctx)) {
         return nullptr;
     }
 
@@ -2714,32 +2804,6 @@ IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
         return new WingGeneric(gen);
     }
     return nullptr;
-}
-
-bool PluginSystem::passByFailedGuard(const QObject *sender, const char *func,
-                                     const QVariantList &params) {
-    if (_manager && sender != _manager) {
-        auto ret = !_manager->enterGuard(sender->metaObject(), func, params);
-        if (ret) {
-            qCritical("[GuardBlock] '%s' was blocked", func);
-        }
-        return ret;
-    }
-    return false;
-}
-
-bool PluginSystem::checkErrAllAllowAndReport(const QObject *sender,
-                                             const char *func) {
-    QObject *s = const_cast<QObject *>(sender);
-    auto p = qobject_cast<WingHex::IWingPlugin *>(s);
-    if (p == nullptr) {
-        auto p = qobject_cast<WingHex::IWingDevice *>(s);
-        if (p == nullptr) {
-            qCritical("[EvilCall] Invalid sender called '%s'", func);
-            return true;
-        }
-    }
-    return false;
 }
 
 const std::optional<PluginInfo> &PluginSystem::hexEditorExtensionInfo() const {
@@ -2837,7 +2901,8 @@ ErrFile PluginSystem::saveAsCurrent(const QObject *sender,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {savename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::saveAsCurrent)>(
+            sender, __func__, savename)) {
         return ErrFile::Permission;
     }
 
@@ -2863,7 +2928,8 @@ ErrFile PluginSystem::exportCurrent(const QObject *sender,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {savename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::exportCurrent)>(
+            sender, __func__, savename)) {
         return ErrFile::Permission;
     }
 
@@ -2890,7 +2956,8 @@ ErrFile PluginSystem::saveCurrent(const QObject *sender) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::saveCurrent)>(sender,
+                                                                __func__)) {
         return ErrFile::Permission;
     }
 
@@ -2917,7 +2984,8 @@ ErrFile PluginSystem::closeCurrent(const QObject *sender, bool force) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {force})) {
+    if (passByFailedGuard<decltype(&PluginSystem::closeCurrent)>(
+            sender, __func__, force)) {
         return ErrFile::Permission;
     }
 
@@ -2947,7 +3015,8 @@ int PluginSystem::openCurrent(const QObject *sender) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::openCurrent)>(sender,
+                                                                __func__)) {
         return ErrFile::Permission;
     }
 
@@ -2980,7 +3049,8 @@ ErrFile PluginSystem::saveAsFile(const QObject *sender, int handle,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle, savename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::saveAsFile)>(
+            sender, __func__, handle, savename)) {
         return ErrFile::Permission;
     }
 
@@ -3006,7 +3076,8 @@ ErrFile PluginSystem::exportFile(const QObject *sender, int handle,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle, savename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::exportFile)>(
+            sender, __func__, handle, savename)) {
         return ErrFile::Permission;
     }
 
@@ -3032,7 +3103,8 @@ int PluginSystem::openWorkSpace(const QObject *sender,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {filename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::openWorkSpace)>(
+            sender, __func__, filename)) {
         return ErrFile::Permission;
     }
 
@@ -3068,7 +3140,8 @@ ErrFile PluginSystem::saveFile(const QObject *sender, int handle) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle})) {
+    if (passByFailedGuard<decltype(&PluginSystem::saveFile)>(sender, __func__,
+                                                             handle)) {
         return ErrFile::Permission;
     }
 
@@ -3093,7 +3166,8 @@ ErrFile PluginSystem::closeFile(const QObject *sender, int handle, bool force) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle, force})) {
+    if (passByFailedGuard<decltype(&PluginSystem::closeFile)>(sender, __func__,
+                                                              handle, force)) {
         return ErrFile::Permission;
     }
 
@@ -3113,7 +3187,8 @@ ErrFile PluginSystem::closeHandle(const QObject *sender, int handle) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {handle})) {
+    if (passByFailedGuard<decltype(QOverload<const QObject *, int>::of(
+            &PluginSystem::closeHandle))>(sender, __func__, handle)) {
         return ErrFile::Permission;
     }
 
@@ -3134,7 +3209,8 @@ int PluginSystem::openExtFile(const QObject *sender, const QString &ext,
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {ext, file})) {
+    if (passByFailedGuard<decltype(&PluginSystem::openExtFile)>(
+            sender, __func__, ext, file)) {
         return ErrFile::Permission;
     }
 
@@ -3170,7 +3246,8 @@ int PluginSystem::openFile(const QObject *sender, const QString &filename) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {filename})) {
+    if (passByFailedGuard<decltype(&PluginSystem::openFile)>(sender, __func__,
+                                                             filename)) {
         return ErrFile::Permission;
     }
 
@@ -3205,7 +3282,7 @@ int PluginSystem::newFile(const QObject *sender) {
         return ErrFile::Error;
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::newFile)>(sender, __func__)) {
         return ErrFile::Permission;
     }
 
@@ -3236,7 +3313,8 @@ HexPosition PluginSystem::selectionEnd(const QObject *sender, qsizetype index) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {index})) {
+    if (passByFailedGuard<decltype(&PluginSystem::selectionEnd)>(
+            sender, __func__, index)) {
         return {};
     }
 
@@ -3262,7 +3340,8 @@ HexPosition PluginSystem::selectionStart(const QObject *sender,
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {index})) {
+    if (passByFailedGuard<decltype(&PluginSystem::selectionStart)>(
+            sender, __func__, index)) {
         return {};
     }
 
@@ -3287,7 +3366,8 @@ HexPosition PluginSystem::currentPos(const QObject *sender) {
         return {};
     }
 
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::currentPos)>(sender,
+                                                               __func__)) {
         return {};
     }
 
@@ -3304,7 +3384,8 @@ HexPosition PluginSystem::currentPos(const QObject *sender) {
 }
 
 AppTheme PluginSystem::currentAppTheme(const QObject *sender) {
-    if (passByFailedGuard(sender, __func__, {})) {
+    if (passByFailedGuard<decltype(&PluginSystem::currentAppTheme)>(sender,
+                                                                    __func__)) {
         return WingHex::AppTheme::Invalid;
     }
 
@@ -3319,7 +3400,8 @@ AppTheme PluginSystem::currentAppTheme(const QObject *sender) {
 }
 
 void PluginSystem::logWarn(const QObject *sender, const QString &message) {
-    if (passByFailedGuard(sender, __func__, {message})) {
+    if (passByFailedGuard<decltype(&PluginSystem::logWarn)>(sender, __func__,
+                                                            message)) {
         return;
     }
 
@@ -4339,7 +4421,8 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
             std::unique_ptr<QSettings> setp(nullptr);
             if (setdir.has_value()) {
                 setp = std::make_unique<QSettings>(
-                    setdir->absoluteFilePath(p->metaObject()->className()),
+                    setdir->absoluteFilePath(
+                        QString::fromUtf8(p->metaObject()->className())),
                     QSettings::Format::IniFormat);
             }
 
@@ -4545,7 +4628,8 @@ bool PluginSystem::checkThreadAff() {
 }
 
 QString PluginSystem::packLogMessage(const char *header, const QString &msg) {
-    return QStringLiteral("{") + header + QStringLiteral("} ") + msg;
+    return QStringLiteral("{") + QString::fromUtf8(header) +
+           QStringLiteral("} ") + msg;
 }
 
 PluginSystem &PluginSystem::instance() {

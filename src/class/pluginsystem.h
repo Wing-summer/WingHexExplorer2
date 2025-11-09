@@ -708,10 +708,47 @@ private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
 
-    bool passByFailedGuard(const QObject *sender, const char *func,
-                           const QVariantList &params);
+public:
+    inline static QVariant to_variant(const QVariant &v) { return v; }
 
-    bool checkErrAllAllowAndReport(const QObject *sender, const char *func);
+    template <typename T>
+    inline static QVariant to_variant(T &&v) {
+        return QVariant::fromValue(std::forward<T>(v));
+    }
+
+    template <typename... Args>
+    inline static QVariantList makeVariantList(Args &&...args) {
+        QVariantList list;
+        list.reserve(sizeof...(Args));
+        (list.append(to_variant(std::forward<Args>(args))), ...);
+        return list;
+    }
+
+    template <typename FuncT, typename... GivenArgs>
+    inline bool passByFailedGuard(const QObject *sender, const char *func,
+                                  GivenArgs &&...givenArgs) {
+        using FnInfo = QtPrivate::FunctionPointer<FuncT>;
+        using GivenArgsList =
+            QtPrivate::List<typename QtPrivate::RemoveRef<GivenArgs>::Type...>;
+        static_assert(FnInfo::ArgumentCount - 1 == GivenArgsList::size,
+                      "argument count mismatch");
+        static_assert(
+            QtPrivate::CheckCompatibleArguments<typename FnInfo::Arguments::Cdr,
+                                                GivenArgsList>::value,
+            "argument types are not compatible with function signature");
+
+        if (_manager && sender != _manager) {
+            auto params =
+                makeVariantList(std::forward<GivenArgs>(givenArgs)...);
+            auto ret = !_manager->enterGuard(sender->metaObject(),
+                                             QString::fromLatin1(func), params);
+            if (ret) {
+                qCritical("[GuardBlock] '%s' was blocked", func);
+            }
+            return ret;
+        }
+        return false;
+    }
 
 private:
     CallTable _plgFns;

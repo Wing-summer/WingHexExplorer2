@@ -65,7 +65,8 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
                       Utilities::processBytesCount(finfo.size()));
             b->append(tr("Mime") + sep + t.name());
             b->append(tr("Md5") + sep +
-                      Utilities::getMd5(fileName).toHex().toUpper());
+                      QString::fromLatin1(
+                          Utilities::getMd5(fileName).toHex().toUpper()));
             b->append(
                 tr("FileBirthTime") + sep +
                 finfo.fileTime(QFile::FileTime::FileBirthTime).toString(dfmt));

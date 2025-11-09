@@ -33,16 +33,16 @@ public:
         QByteArray ctailer;
 
         inline QString generateRange() const {
-            QString buffer = cheader.toHex(' ').toUpper();
+            auto buffer = cheader.toHex(' ').toUpper();
             if (!hbuffer.isEmpty()) {
                 buffer += hbuffer.toHex(' ').toUpper();
                 if (!tbuffer.isEmpty()) {
-                    buffer += QStringLiteral(" .. ");
+                    buffer += QByteArrayLiteral(" .. ");
                 }
             }
             buffer +=
                 tbuffer.toHex(' ').toUpper() + ctailer.toHex(' ').toUpper();
-            return buffer;
+            return QString::fromLatin1(buffer);
         }
 
         inline QString generateDecoding(const QString &encoding) const {

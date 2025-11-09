@@ -33,7 +33,7 @@ QtLocalPeer::QtLocalPeer(QObject *parent, const QString &appId)
 #endif
         prefix = id.section(QLatin1Char('/'), -1);
     }
-    static QRegularExpression regex("[^a-zA-Z]");
+    static QRegularExpression regex(QStringLiteral("[^a-zA-Z]"));
     prefix.remove(regex);
     prefix.truncate(6);
 

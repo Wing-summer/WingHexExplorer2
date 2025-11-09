@@ -36,12 +36,6 @@ public:
         QFileDialog::Options options = QFileDialog::ShowDirsOnly,
         const QStringList &supportedSchemes = QStringList());
 
-    static void getOpenFileContent(
-        const QString &nameFilter,
-        const std::function<void(const QString &, const QByteArray &)>
-            &fileOpenCompleted,
-        const QString &caption = QString(), QWidget *parent = nullptr);
-
     static QString getOpenFileName(
         QWidget *parent = nullptr, const QString &caption = QString(),
         const QString &dir = QString(), const QString &filter = QString(),
@@ -83,11 +77,6 @@ public:
                    QString *selectedFilter = nullptr,
                    QFileDialog::Options options = QFileDialog::Options(),
                    const QStringList &supportedSchemes = QStringList());
-
-    static void saveFileContent(const QByteArray &fileContent,
-                                const QString &fileNameHint,
-                                const QString &caption = QString(),
-                                QWidget *parent = nullptr);
 
 private:
     WingFileDialog();

@@ -152,9 +152,9 @@ bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale) {
                                      QStringLiteral(".qm")) {
                 _data.trFiles = reader.fileData(file.filePath);
             } else if (file.filePath == QStringLiteral("about.md")) {
-                _data.about = reader.fileData(file.filePath);
+                _data.about = QString::fromUtf8(reader.fileData(file.filePath));
             } else if (file.filePath == QStringLiteral("devs.md")) {
-                _data.dev = reader.fileData(file.filePath);
+                _data.dev = QString::fromUtf8(reader.fileData(file.filePath));
             }
         }
     }

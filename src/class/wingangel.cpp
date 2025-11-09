@@ -241,8 +241,8 @@ WingAngel::registerGlobalFunction(uint retMetaType, const ScriptFn &fn,
     if (sig.isEmpty()) {
         Logger::critical(QStringLiteral("[WingAngel::registerGlobalFunction] "
                                         "getScriptFnSig failed (") +
-                         _plgsess + QStringLiteral("::") + fnName +
-                         QStringLiteral(")"));
+                         QString::fromUtf8(_plgsess) + QStringLiteral("::") +
+                         fnName + QStringLiteral(")"));
         return WingHex::asRetCodes::asINVALID_ARG;
     }
 
@@ -334,7 +334,8 @@ WingAngel::registerGlobalFunction(const QString &decl,
 void WingAngel::registerScriptMarco(const QString &marco) {
     if (Utilities::isValidIdentifier(marco)) {
         static auto sep = QStringLiteral("_");
-        _scriptMarcos.append(sep + _plgsess + sep + marco + sep);
+        _scriptMarcos.append(sep + QString::fromUtf8(_plgsess) + sep + marco +
+                             sep);
     } else {
         Logger::critical(QStringLiteral(
             "[WingAngel::registerScriptMarco] isValidIdentifier failed"));

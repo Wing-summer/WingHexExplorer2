@@ -34,7 +34,7 @@ LspSettingDialog::LspSettingDialog(QWidget *parent)
     auto e = QMetaEnum::fromType<AngelLsp::TraceMode>();
     auto total = e.keyCount();
     for (int i = 0; i < total; ++i) {
-        ui->cbTrace->addItem(e.key(i));
+        ui->cbTrace->addItem(QString::fromLatin1(e.key(i)));
     }
     ui->cbTrace->setCurrentIndex(0);
 

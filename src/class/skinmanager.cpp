@@ -49,7 +49,7 @@ SkinManager::SkinManager() {
 #else
     qApp->setStyle(QStyleFactory::create("fusion"));
 #endif
-    qApp->setStyleSheet(qss.readAll());
+    qApp->setStyleSheet(QString::fromUtf8(qss.readAll()));
     qss.close();
 }
 

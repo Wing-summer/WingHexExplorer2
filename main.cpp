@@ -27,7 +27,7 @@
 #include <QSettings>
 
 void loadEnvConfig(int argc, char *argv[]) {
-    QFileInfo info(argv[0]);
+    QFileInfo info(QString::fromUtf8(argv[0]));
     QDir appDir(info.absoluteDir());
 
     if (!appDir.exists(QStringLiteral("config.ini"))) {

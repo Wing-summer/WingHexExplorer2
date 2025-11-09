@@ -274,7 +274,8 @@ void QEditConfig::reload() {
         ui->spnFontSize->setValue(set.consoleFontSize());
         ui->spnTabWidth->setValue(set.consoleTabWidth());
 
-        ui->cbIndentation->setCurrentText(e.valueToKey(set.consoleInden()));
+        ui->cbIndentation->setCurrentText(
+            QString::fromLatin1(e.valueToKey(set.consoleInden())));
         ui->chkMatchBraces->setChecked(set.consoleMatchBraces());
         ui->chkShowWhitespace->setChecked(set.consoleShowWhiteSpace());
         ui->chkAutoCloseChar->setChecked(set.consoleAutoCloseChar());
@@ -291,7 +292,8 @@ void QEditConfig::reload() {
         ui->spnFontSize->setValue(set.editorFontSize());
         ui->spnTabWidth->setValue(set.editorTabWidth());
 
-        ui->cbIndentation->setCurrentText(e.valueToKey(set.editorInden()));
+        ui->cbIndentation->setCurrentText(
+            QString::fromLatin1(e.valueToKey(set.editorInden())));
         ui->chkShowLineNumber->setChecked(set.editorShowLineNumber());
         ui->chkShowFolding->setChecked(set.editorFolding());
         ui->chkShowIndentGuides->setChecked(set.editorShowGuideLine());

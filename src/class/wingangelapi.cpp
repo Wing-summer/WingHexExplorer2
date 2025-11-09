@@ -1253,7 +1253,8 @@ void WingAngelAPI::qvariantCastOp(
     case QMetaType::Void:
         break;
     default:
-        Logger::critical(tr("NotSupportedQMetaType:") + QMetaType(type).name());
+        Logger::critical(tr("NotSupportedQMetaType:") +
+                         QString::fromLatin1(QMetaType(type).name()));
         break;
     }
 }
@@ -1923,8 +1924,8 @@ WingAngelAPI::retriveAsDictionary(const WingHex::SenderInfo &sender,
         auto info = engine->GetTypeInfoById(it.GetTypeId());
         QString type;
         if (info) {
-            type =
-                info->GetNamespace() + QStringLiteral("::") + info->GetName();
+            type = QString::fromUtf8(info->GetNamespace() +
+                                     QByteArrayLiteral("::") + info->GetName());
         }
         ret.insert(it.GetKey(), qMakePair(type, it.GetAddressOfValue()));
     }
