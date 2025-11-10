@@ -43,6 +43,8 @@ class EditorView : public ads::CDockWidget {
     Q_PROPERTY(bool isCommonFile READ isCommonFile)
     Q_PROPERTY(bool hasCloneChildren READ hasCloneChildren)
 
+    friend class PluginSystem;
+
 public:
     enum class DocumentType { InValid, File, Extension, Cloned };
 
@@ -54,7 +56,7 @@ public:
         ForceWorkSpace
     };
 
-public:
+private:
     // helper functions for plugin system
     template <typename T>
     static T readBasicTypeContent(EditorView *view, qsizetype offset,
@@ -62,11 +64,10 @@ public:
         Q_ASSERT(view);
         Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
 
-        lock.lockForRead();
+        QReadLocker l(&lock);
         auto buffer = view->hexEditor()->document()->read(offset, sizeof(T));
         if (buffer.size() == sizeof(T)) {
             auto pb = reinterpret_cast<const T *>(buffer.constData());
-            lock.unlock();
             return *pb;
         }
 
@@ -90,9 +91,8 @@ public:
         auto cmd = doc->MakeInsert(uc, editor->cursor(), offset,
                                    QByteArray(buffer, sizeof(T)));
         if (uc == nullptr && cmd) {
-            lock.lockForWrite();
+            QWriteLocker l(&lock);
             doc->pushMakeUndo(cmd);
-            lock.unlock();
             return true;
         }
 
@@ -112,9 +112,8 @@ public:
         auto cmd = doc->MakeReplace(uc, editor->cursor(), offset,
                                     QByteArray(buffer, sizeof(T)));
         if (uc == nullptr && cmd) {
-            lock.lockForWrite();
+            QWriteLocker l(&lock);
             doc->pushMakeUndo(cmd);
-            lock.unlock();
             return true;
         }
 
@@ -133,9 +132,8 @@ public:
         auto cmd = doc->MakeAppend(uc, editor->cursor(),
                                    QByteArray(buffer, sizeof(T)));
         if (uc == nullptr && cmd) {
-            lock.lockForWrite();
+            QWriteLocker l(&lock);
             doc->pushMakeUndo(cmd);
-            lock.unlock();
             return true;
         }
         return false;

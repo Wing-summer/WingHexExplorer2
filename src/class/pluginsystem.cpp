@@ -361,7 +361,7 @@ double PluginSystem::dlgGetDouble(const QObject *sender, QWidget *parent,
         if (passByFailedGuard<decltype(&PluginSystem::dlgGetDouble)>(
                 sender, __func__, parent, title, label, value, minValue,
                 maxValue, decimals, ok, step)) {
-            return 0;
+            return qQNaN();
         }
 
         return WingInputDialog::getDouble(parent, title, label, value, minValue,
@@ -717,7 +717,7 @@ QString PluginSystem::currentDocFile(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->fileNameUrl().url();
+        return e->currentDocFile(this);
     }
     return {};
 }
@@ -735,7 +735,7 @@ bool PluginSystem::isReadOnly(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->isReadOnly();
+        return e->isReadOnly(this);
     }
     return true;
 }
@@ -753,8 +753,7 @@ bool PluginSystem::isInsertionMode(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->cursor()->insertionMode() ==
-               QHexCursor::InsertMode;
+        return e->isInsertionMode(this);
     }
     return false;
 }
@@ -772,7 +771,7 @@ bool PluginSystem::isKeepSize(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->isKeepSize();
+        return e->isKeepSize(this);
     }
     return true;
 }
@@ -790,7 +789,7 @@ bool PluginSystem::isLocked(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->isLocked();
+        return e->isLocked(this);
     }
     return true;
 }
@@ -808,7 +807,7 @@ qsizetype PluginSystem::documentLines(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->renderer()->documentLines();
+        return e->documentLines(this);
     }
     return 0;
 }
@@ -826,7 +825,7 @@ qsizetype PluginSystem::documentBytes(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->documentBytes();
+        return e->documentBytes(this);
     }
     return 0;
 }
@@ -844,7 +843,7 @@ qsizetype PluginSystem::currentRow(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->currentRow();
+        return e->currentRow(this);
     }
     return 0;
 }
@@ -862,7 +861,7 @@ qsizetype PluginSystem::currentColumn(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->currentColumn();
+        return e->currentColumn(this);
     }
     return 0;
 }
@@ -880,7 +879,7 @@ qsizetype PluginSystem::currentOffset(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->cursor()->position().offset();
+        return e->currentOffset(this);
     }
     return 0;
 }
@@ -898,7 +897,7 @@ qsizetype PluginSystem::selectedLength(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->cursor()->currentSelectionLength();
+        return e->selectedLength(this);
     }
     return 0;
 }
@@ -915,8 +914,8 @@ QByteArray PluginSystem::selectedBytes(const QObject *sender, qsizetype index) {
     }
 
     auto e = pluginCurrentEditor(plg);
-    if (e && index >= 0 && index < e->hexEditor()->cursor()->selectionCount()) {
-        return e->hexEditor()->selectedBytes(index);
+    if (e) {
+        return e->selectedBytes(this, index);
     }
     return {};
 }
@@ -934,7 +933,7 @@ QByteArrayList PluginSystem::selectionBytes(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->selectedBytes();
+        return e->selectionBytes(this);
     }
     return {};
 }
@@ -953,12 +952,7 @@ qsizetype PluginSystem::selectionLength(const QObject *sender,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        if (index >= 0 && index < cursor->selectionCount()) {
-            return cursor->selectionLength(index);
-        } else {
-            return -1;
-        }
+        return e->selectionLength(this, index);
     }
     return 0;
 }
@@ -976,8 +970,7 @@ qsizetype PluginSystem::selectionCount(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        return cursor->selectionCount();
+        return e->selectionCount(this);
     }
     return 0;
 }
@@ -995,7 +988,7 @@ bool PluginSystem::stringVisible(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->asciiVisible();
+        return e->stringVisible(this);
     }
     return false;
 }
@@ -1013,7 +1006,7 @@ bool PluginSystem::addressVisible(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->addressVisible();
+        return e->addressVisible(this);
     }
     return false;
 }
@@ -1031,7 +1024,7 @@ bool PluginSystem::headerVisible(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->headerVisible();
+        return e->headerVisible(this);
     }
     return false;
 }
@@ -1049,7 +1042,7 @@ quintptr PluginSystem::addressBase(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->addressBase();
+        return e->addressBase(this);
     }
     return 0;
 }
@@ -1067,9 +1060,9 @@ bool PluginSystem::isModified(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return !e->hexEditor()->isSaved();
+        return !e->isSaved();
     }
-    return 0;
+    return false;
 }
 
 qint8 PluginSystem::readInt8(const QObject *sender, qsizetype offset) {
@@ -1083,7 +1076,11 @@ qint8 PluginSystem::readInt8(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<qint8>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readInt8(this, offset);
+    }
+    return 0;
 }
 
 qint16 PluginSystem::readInt16(const QObject *sender, qsizetype offset) {
@@ -1097,7 +1094,11 @@ qint16 PluginSystem::readInt16(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<qint16>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readInt16(this, offset);
+    }
+    return 0;
 }
 
 qint32 PluginSystem::readInt32(const QObject *sender, qsizetype offset) {
@@ -1111,7 +1112,11 @@ qint32 PluginSystem::readInt32(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<qint32>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readInt32(this, offset);
+    }
+    return 0;
 }
 
 qint64 PluginSystem::readInt64(const QObject *sender, qsizetype offset) {
@@ -1125,7 +1130,11 @@ qint64 PluginSystem::readInt64(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<qint64>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readInt64(this, offset);
+    }
+    return 0;
 }
 
 quint8 PluginSystem::readUInt8(const QObject *sender, qsizetype offset) {
@@ -1139,7 +1148,11 @@ quint8 PluginSystem::readUInt8(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<quint8>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readUInt8(this, offset);
+    }
+    return 0;
 }
 
 quint16 PluginSystem::readUInt16(const QObject *sender, qsizetype offset) {
@@ -1153,7 +1166,11 @@ quint16 PluginSystem::readUInt16(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<quint16>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readUInt16(this, offset);
+    }
+    return 0;
 }
 
 quint32 PluginSystem::readUInt32(const QObject *sender, qsizetype offset) {
@@ -1167,7 +1184,11 @@ quint32 PluginSystem::readUInt32(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<quint32>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readUInt32(this, offset);
+    }
+    return 0;
 }
 
 quint64 PluginSystem::readUInt64(const QObject *sender, qsizetype offset) {
@@ -1181,7 +1202,11 @@ quint64 PluginSystem::readUInt64(const QObject *sender, qsizetype offset) {
         return 0;
     }
 
-    return readBasicTypeContent<quint64>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readUInt64(this, offset);
+    }
+    return 0;
 }
 
 float PluginSystem::readFloat(const QObject *sender, qsizetype offset) {
@@ -1195,7 +1220,11 @@ float PluginSystem::readFloat(const QObject *sender, qsizetype offset) {
         return qQNaN();
     }
 
-    return readBasicTypeContent<float>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readFloat(this, offset);
+    }
+    return qQNaN();
 }
 
 double PluginSystem::readDouble(const QObject *sender, qsizetype offset) {
@@ -1209,7 +1238,11 @@ double PluginSystem::readDouble(const QObject *sender, qsizetype offset) {
         return qQNaN();
     }
 
-    return readBasicTypeContent<double>(plg, offset);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->readDouble(this, offset);
+    }
+    return qQNaN();
 }
 
 QString PluginSystem::readString(const QObject *sender, qsizetype offset,
@@ -1226,21 +1259,9 @@ QString PluginSystem::readString(const QObject *sender, qsizetype offset,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        _rwlock.lockForRead();
-        auto hexeditor = e->hexEditor();
-        auto doc = hexeditor->document();
-        auto pos = doc->findNext(offset, QByteArray(1, 0));
-        if (pos < 0) {
-            pos = doc->findNext(offset, QByteArray(1, '\n'));
-            if (pos < 0) {
-                return QString();
-            }
-        }
-        auto buffer = doc->read(offset, int(pos - offset));
-        _rwlock.unlock();
-        return Utilities::decodingString(buffer, encoding);
+        return e->readString(this, offset, encoding);
     }
-    return QString();
+    return {};
 }
 
 QByteArray PluginSystem::readBytes(const QObject *sender, qsizetype offset,
@@ -1257,10 +1278,7 @@ QByteArray PluginSystem::readBytes(const QObject *sender, qsizetype offset,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        _rwlock.lockForRead();
-        auto ret = e->hexEditor()->document()->read(offset, count);
-        _rwlock.unlock();
-        return ret;
+        return e->readBytes(this, offset, count);
     }
     return {};
 }
@@ -1269,20 +1287,17 @@ qsizetype PluginSystem::findNext(const QObject *sender, qsizetype begin,
                                  const QByteArray &ba) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return false;
+        return -1;
     }
 
     if (passByFailedGuard<decltype(&PluginSystem::findNext)>(sender, __func__,
                                                              begin, ba)) {
-        return 0;
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        _rwlock.lockForRead();
-        auto ret = e->hexEditor()->document()->findNext(begin, ba);
-        _rwlock.unlock();
-        return ret;
+        return e->findNext(this, begin, ba);
     }
     return -1;
 }
@@ -1291,20 +1306,17 @@ qsizetype PluginSystem::findPrevious(const QObject *sender, qsizetype begin,
                                      const QByteArray &ba) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
-        return 0;
+        return -1;
     }
 
     if (passByFailedGuard<decltype(&PluginSystem::findPrevious)>(
             sender, __func__, begin, ba)) {
-        return 0;
+        return -1;
     }
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        _rwlock.lockForRead();
-        auto ret = e->hexEditor()->document()->findPrevious(begin, ba);
-        _rwlock.unlock();
-        return ret;
+        return e->findPrevious(this, begin, ba);
     }
     return -1;
 }
@@ -1322,7 +1334,7 @@ QString PluginSystem::bookMarkComment(const QObject *sender, qsizetype pos) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->bookMark(pos);
+        return e->bookMarkComment(this, pos);
     }
     return {};
 }
@@ -1340,7 +1352,7 @@ bool PluginSystem::existBookMark(const QObject *sender, qsizetype pos) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->existBookMark(pos);
+        return e->existBookMark(this, pos);
     }
     return false;
 }
@@ -1419,7 +1431,7 @@ bool PluginSystem::setLockedFile(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->setLockedFile(b);
+        return e->setLockedFile(this, b);
     }
     return false;
 }
@@ -1441,7 +1453,7 @@ bool PluginSystem::setKeepSize(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        return e->hexEditor()->document()->setKeepSize(b);
+        return e->setKeepSize(this, b);
     }
     return false;
 }
@@ -1463,8 +1475,7 @@ bool PluginSystem::setStringVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->setAsciiVisible(b);
-        return true;
+        return e->setStringVisible(this, b);
     }
     return false;
 }
@@ -1486,8 +1497,7 @@ bool PluginSystem::setAddressVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->setAddressVisible(b);
-        return true;
+        return e->setAddressBase(this, b);
     }
     return false;
 }
@@ -1509,8 +1519,7 @@ bool PluginSystem::setHeaderVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->setHeaderVisible(b);
-        return true;
+        return e->setHeaderVisible(this, b);
     }
     return false;
 }
@@ -1532,8 +1541,7 @@ bool PluginSystem::setAddressBase(const QObject *sender, quintptr base) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->setAddressBase(base);
-        return true;
+        return e->setAddressBase(this, base);
     }
     return false;
 }
@@ -1556,7 +1564,6 @@ bool PluginSystem::beginMarco(const QObject *sender, const QString &txt) {
 
     auto r = pluginContextById(plg, fid);
     if (r) {
-        _rwlock.lockForWrite();
         auto &u = m_viewBindings[r->view];
 
         auto rtxt = txt.trimmed();
@@ -1570,7 +1577,6 @@ bool PluginSystem::beginMarco(const QObject *sender, const QString &txt) {
             u.undoStackPlg.append(qMakePair(
                 new QUndoCommand(rtxt, u.undoStackPlg.last().first), plg));
         }
-        _rwlock.unlock();
     }
     return true;
 }
@@ -1593,17 +1599,14 @@ bool PluginSystem::endMarco(const QObject *sender) {
 
     auto r = pluginContextById(plg, fid);
     if (r) {
-        _rwlock.lockForWrite();
         auto &u = m_viewBindings[r->view];
         auto &undo = u.undoStackPlg;
 
         if (undo.isEmpty()) {
-            _rwlock.unlock();
             return false;
         } else {
             auto &l = undo.last();
             if (l.second != plg) {
-                _rwlock.unlock();
                 return false;
             }
 
@@ -1614,7 +1617,6 @@ bool PluginSystem::endMarco(const QObject *sender) {
                 });
 
             if (r == undo.rend()) {
-                _rwlock.unlock();
                 return false;
             }
 
@@ -1627,15 +1629,12 @@ bool PluginSystem::endMarco(const QObject *sender) {
             if (undo.isEmpty()) {
                 auto e = pluginCurrentEditor(plg);
                 if (e == nullptr) {
-                    _rwlock.unlock();
                     return false;
                 }
                 auto doc = e->hexEditor()->document();
                 doc->pushMakeUndo(cmdl.first);
-                _rwlock.unlock();
                 return true;
             }
-            _rwlock.unlock();
             return true;
         }
     }
@@ -1709,7 +1708,11 @@ bool PluginSystem::writeInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeInt8(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeInt16(const QObject *sender, qsizetype offset,
@@ -1724,7 +1727,11 @@ bool PluginSystem::writeInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeInt16(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeInt32(const QObject *sender, qsizetype offset,
@@ -1739,7 +1746,11 @@ bool PluginSystem::writeInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeInt32(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeInt64(const QObject *sender, qsizetype offset,
@@ -1754,7 +1765,11 @@ bool PluginSystem::writeInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeInt64(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeUInt8(const QObject *sender, qsizetype offset,
@@ -1769,7 +1784,11 @@ bool PluginSystem::writeUInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeUInt8(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeUInt16(const QObject *sender, qsizetype offset,
@@ -1784,7 +1803,11 @@ bool PluginSystem::writeUInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeUInt16(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeUInt32(const QObject *sender, qsizetype offset,
@@ -1799,7 +1822,11 @@ bool PluginSystem::writeUInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeUInt32(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeUInt64(const QObject *sender, qsizetype offset,
@@ -1814,7 +1841,11 @@ bool PluginSystem::writeUInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeUInt64(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeFloat(const QObject *sender, qsizetype offset,
@@ -1829,7 +1860,11 @@ bool PluginSystem::writeFloat(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeFloat(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeDouble(const QObject *sender, qsizetype offset,
@@ -1844,7 +1879,11 @@ bool PluginSystem::writeDouble(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return writeBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->writeDouble(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::writeString(const QObject *sender, qsizetype offset,
@@ -1861,18 +1900,7 @@ bool PluginSystem::writeString(const QObject *sender, qsizetype offset,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-
-        auto unicode = Utilities::encodingString(value, encoding);
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeReplace(uc, editor->cursor(), offset, unicode);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->writeString(this, offset, value, encoding);
     }
     return false;
 }
@@ -1891,16 +1919,7 @@ bool PluginSystem::writeBytes(const QObject *sender, qsizetype offset,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeReplace(uc, editor->cursor(), offset, data);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->writeBytes(this, offset, data);
     }
     return false;
 }
@@ -1917,7 +1936,11 @@ bool PluginSystem::insertInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertInt8(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertInt16(const QObject *sender, qsizetype offset,
@@ -1932,7 +1955,11 @@ bool PluginSystem::insertInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertInt16(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertInt32(const QObject *sender, qsizetype offset,
@@ -1947,7 +1974,11 @@ bool PluginSystem::insertInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertInt32(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertInt64(const QObject *sender, qsizetype offset,
@@ -1962,7 +1993,11 @@ bool PluginSystem::insertInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertInt64(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertUInt8(const QObject *sender, qsizetype offset,
@@ -1977,7 +2012,11 @@ bool PluginSystem::insertUInt8(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertUInt8(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertUInt16(const QObject *sender, qsizetype offset,
@@ -1992,7 +2031,11 @@ bool PluginSystem::insertUInt16(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertUInt16(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertUInt32(const QObject *sender, qsizetype offset,
@@ -2007,7 +2050,11 @@ bool PluginSystem::insertUInt32(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertUInt32(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertUInt64(const QObject *sender, qsizetype offset,
@@ -2022,7 +2069,11 @@ bool PluginSystem::insertUInt64(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertUInt64(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertFloat(const QObject *sender, qsizetype offset,
@@ -2037,7 +2088,11 @@ bool PluginSystem::insertFloat(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertFloat(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertDouble(const QObject *sender, qsizetype offset,
@@ -2052,7 +2107,11 @@ bool PluginSystem::insertDouble(const QObject *sender, qsizetype offset,
         return false;
     }
 
-    return insertBasicTypeContent(plg, offset, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->insertDouble(this, offset, value);
+    }
+    return false;
 }
 
 bool PluginSystem::insertString(const QObject *sender, qsizetype offset,
@@ -2069,18 +2128,7 @@ bool PluginSystem::insertString(const QObject *sender, qsizetype offset,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-
-        auto unicode = Utilities::encodingString(value, encoding);
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeInsert(uc, editor->cursor(), offset, unicode);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->insertString(this, offset, value, encoding);
     }
     return false;
 }
@@ -2099,16 +2147,7 @@ bool PluginSystem::insertBytes(const QObject *sender, qsizetype offset,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeInsert(uc, editor->cursor(), offset, data);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->insertBytes(this, offset, data);
     }
     return false;
 }
@@ -2124,7 +2163,11 @@ bool PluginSystem::appendInt8(const QObject *sender, qint8 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendInt8(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendInt16(const QObject *sender, qint16 value) {
@@ -2138,7 +2181,11 @@ bool PluginSystem::appendInt16(const QObject *sender, qint16 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendInt16(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendInt32(const QObject *sender, qint32 value) {
@@ -2152,7 +2199,11 @@ bool PluginSystem::appendInt32(const QObject *sender, qint32 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendInt32(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendInt64(const QObject *sender, qint64 value) {
@@ -2166,7 +2217,11 @@ bool PluginSystem::appendInt64(const QObject *sender, qint64 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendInt64(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendUInt8(const QObject *sender, quint8 value) {
@@ -2180,7 +2235,11 @@ bool PluginSystem::appendUInt8(const QObject *sender, quint8 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendUInt8(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendUInt16(const QObject *sender, quint16 value) {
@@ -2194,7 +2253,11 @@ bool PluginSystem::appendUInt16(const QObject *sender, quint16 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendUInt16(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendUInt32(const QObject *sender, quint32 value) {
@@ -2208,7 +2271,11 @@ bool PluginSystem::appendUInt32(const QObject *sender, quint32 value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendUInt32(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendUInt64(const QObject *sender, quint64 value) {
@@ -2216,7 +2283,11 @@ bool PluginSystem::appendUInt64(const QObject *sender, quint64 value) {
     if (plg == nullptr) {
         return false;
     }
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendUInt64(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendFloat(const QObject *sender, float value) {
@@ -2230,7 +2301,11 @@ bool PluginSystem::appendFloat(const QObject *sender, float value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendFloat(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendDouble(const QObject *sender, double value) {
@@ -2244,7 +2319,11 @@ bool PluginSystem::appendDouble(const QObject *sender, double value) {
         return false;
     }
 
-    return appendBasicTypeContent(plg, value);
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->appendDouble(this, value);
+    }
+    return false;
 }
 
 bool PluginSystem::appendString(const QObject *sender, const QString &value,
@@ -2261,19 +2340,7 @@ bool PluginSystem::appendString(const QObject *sender, const QString &value,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-        auto offset = doc->length();
-
-        auto unicode = Utilities::encodingString(value, encoding);
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeInsert(uc, editor->cursor(), offset, unicode);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->appendString(this, value, encoding);
     }
     return false;
 }
@@ -2291,16 +2358,7 @@ bool PluginSystem::appendBytes(const QObject *sender, const QByteArray &data) {
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeAppend(uc, editor->cursor(), data);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->appendBytes(this, data);
     }
     return false;
 }
@@ -2319,17 +2377,7 @@ bool PluginSystem::removeBytes(const QObject *sender, qsizetype offset,
 
     auto e = getCurrentPluginView(plg);
     if (e) {
-        auto editor = e->hexEditor();
-        auto doc = editor->document();
-
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeRemove(uc, editor->cursor(), offset, len);
-        if (uc == nullptr && cmd) {
-            _rwlock.lockForWrite();
-            doc->pushMakeUndo(cmd);
-            _rwlock.unlock();
-            return true;
-        }
+        return e->removeBytes(this, offset, len);
     }
     return false;
 }
@@ -2355,9 +2403,7 @@ bool PluginSystem::moveTo(const QObject *sender, qsizetype line,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->cursor()->moveTo(line, column, nibbleindex,
-                                         clearSelection);
-        return true;
+        return e->moveTo(this, line, column, nibbleindex, clearSelection);
     }
     return false;
 }
@@ -2381,8 +2427,7 @@ bool PluginSystem::moveTo(const QObject *sender, qsizetype offset,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->cursor()->moveTo(offset, clearSelection);
-        return true;
+        return e->moveTo(this, offset, clearSelection);
     }
     return false;
 }
@@ -2405,22 +2450,7 @@ bool PluginSystem::select(const QObject *sender, qsizetype offset,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        cursor->moveTo(offset);
-        QHexCursor::SelectionMode smode;
-        switch (mode) {
-        case WingHex::SelectionMode::Add:
-            smode = QHexCursor::SelectionAdd;
-            break;
-        case WingHex::SelectionMode::Remove:
-            smode = QHexCursor::SelectionRemove;
-            break;
-        case WingHex::SelectionMode::Single:
-            smode = QHexCursor::SelectionNormal;
-            break;
-        }
-        cursor->select(length, smode);
-        return true;
+        return e->select(this, offset, length, mode);
     }
     return false;
 }
@@ -2442,9 +2472,7 @@ bool PluginSystem::setInsertionMode(const QObject *sender, bool isinsert) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        e->hexEditor()->cursor()->setInsertionMode(
-            isinsert ? QHexCursor::InsertMode : QHexCursor::OverwriteMode);
-        return true;
+        return e->setInsertionMode(this, isinsert);
     }
     return false;
 }
@@ -2471,15 +2499,7 @@ bool PluginSystem::metadata(const QObject *sender, qsizetype begin,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->metadata()->MakeMetadata(uc, begin, begin + length - 1,
-                                                 fgcolor, bgcolor, comment);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->metadata(this, begin, length, fgcolor, bgcolor, comment);
     }
     return false;
 }
@@ -2501,13 +2521,7 @@ bool PluginSystem::removeMetadata(const QObject *sender, qsizetype offset) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->metadata()->MakeRemoveMetadata(uc, offset);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->removeMetadata(this, offset);
     }
     return false;
 }
@@ -2529,13 +2543,7 @@ bool PluginSystem::clearMetadata(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->metadata()->MakeClear(uc);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->clearMetadata(this);
     }
     return false;
 }
@@ -2557,11 +2565,7 @@ bool PluginSystem::setMetaVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        doc->setMetafgVisible(b);
-        doc->setMetabgVisible(b);
-        doc->setMetaCommentVisible(b);
-        return true;
+        return e->setMetaVisible(this, b);
     }
     return false;
 }
@@ -2583,9 +2587,7 @@ bool PluginSystem::setMetafgVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        doc->setMetafgVisible(b);
-        return true;
+        return e->setMetafgVisible(this, b);
     }
     return false;
 }
@@ -2607,9 +2609,7 @@ bool PluginSystem::setMetabgVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        doc->setMetabgVisible(b);
-        return true;
+        return e->setMetabgVisible(this, b);
     }
     return false;
 }
@@ -2631,9 +2631,7 @@ bool PluginSystem::setMetaCommentVisible(const QObject *sender, bool b) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        doc->setMetaCommentVisible(b);
-        return true;
+        return e->setMetaCommentVisible(this, b);
     }
     return false;
 }
@@ -2656,13 +2654,7 @@ bool PluginSystem::addBookMark(const QObject *sender, qsizetype pos,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeAddBookMark(uc, pos, comment);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->addBookMark(this, pos, comment);
     }
     return false;
 }
@@ -2685,13 +2677,7 @@ bool PluginSystem::modBookMark(const QObject *sender, qsizetype pos,
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeModBookMark(uc, pos, comment);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->modBookMark(this, pos, comment);
     }
     return false;
 }
@@ -2713,13 +2699,7 @@ bool PluginSystem::removeBookMark(const QObject *sender, qsizetype pos) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeRemoveBookMark(uc, pos);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->removeBookMark(this, pos);
     }
     return false;
 }
@@ -2741,13 +2721,7 @@ bool PluginSystem::clearBookMark(const QObject *sender) {
 
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto doc = e->hexEditor()->document();
-        auto uc = currentUndoCmd(e);
-        auto cmd = doc->MakeClearBookMark(uc);
-        if (uc == nullptr && cmd) {
-            doc->pushMakeUndo(cmd);
-            return true;
-        }
+        return e->clearBookMark(this);
     }
     return false;
 }
@@ -2790,6 +2764,18 @@ void PluginSystem::__raiseContextException(const QObject *sender,
         auto info = exception.toUtf8();
         ctx->SetException(info, allowCatch);
     }
+}
+
+bool PluginSystem::__passByFailedGuard(const QObject *sender, const char *func,
+                                       const QVariantList &params) {
+    if (_manager && sender != _manager) {
+        auto ret = !_manager->enterGuard(sender->metaObject(),
+                                         QString::fromLatin1(func), params);
+        if (ret)
+            qCritical("[GuardBlock] '%s' was blocked", func);
+        return ret;
+    }
+    return false;
 }
 
 IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
@@ -3318,19 +3304,11 @@ HexPosition PluginSystem::selectionEnd(const QObject *sender, qsizetype index) {
         return {};
     }
 
-    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        if (index >= 0 && index < cursor->selectionCount()) {
-            auto qpos = cursor->selectionEnd(index);
-            pos.line = qpos.line;
-            pos.column = qpos.column;
-            pos.lineWidth = qpos.lineWidth;
-            pos.nibbleindex = qpos.nibbleindex;
-        }
+        return e->selectionEnd(this, index);
     }
-    return pos;
+    return {};
 }
 
 HexPosition PluginSystem::selectionStart(const QObject *sender,
@@ -3345,19 +3323,11 @@ HexPosition PluginSystem::selectionStart(const QObject *sender,
         return {};
     }
 
-    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        if (index >= 0 && index < cursor->selectionCount()) {
-            auto qpos = cursor->selectionStart(index);
-            pos.line = qpos.line;
-            pos.column = qpos.column;
-            pos.lineWidth = qpos.lineWidth;
-            pos.nibbleindex = qpos.nibbleindex;
-        }
+        return e->selectionStart(this, index);
     }
-    return pos;
+    return {};
 }
 
 HexPosition PluginSystem::currentPos(const QObject *sender) {
@@ -3371,16 +3341,11 @@ HexPosition PluginSystem::currentPos(const QObject *sender) {
         return {};
     }
 
-    HexPosition pos;
     auto e = pluginCurrentEditor(plg);
     if (e) {
-        auto cursor = e->hexEditor()->cursor();
-        pos.line = cursor->currentLine();
-        pos.column = cursor->currentColumn();
-        pos.lineWidth = e->hexEditor()->document()->hexLineWidth();
-        pos.nibbleindex = cursor->currentNibble();
+        return e->currentPos(this);
     }
-    return pos;
+    return {};
 }
 
 AppTheme PluginSystem::currentAppTheme(const QObject *sender) {

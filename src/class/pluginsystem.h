@@ -280,57 +280,6 @@ public:
 
     const std::optional<PluginInfo> &hexEditorExtensionInfo() const;
 
-private:
-    template <typename T>
-    T readBasicTypeContent(IWingPlugin *plg, qsizetype offset) {
-        Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = pluginCurrentEditor(plg);
-        if (e) {
-            return EditorView::readBasicTypeContent<T>(e, offset, _rwlock);
-        }
-
-        if constexpr (std::is_floating_point_v<T>) {
-            return qQNaN();
-        } else {
-            return T(0);
-        }
-    }
-
-    template <typename T>
-    bool insertBasicTypeContent(IWingPlugin *plg, qsizetype offset,
-                                const T &value) {
-        Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = getCurrentPluginView(plg);
-        if (e) {
-            return EditorView::insertBasicTypeContent<T>(
-                e, offset, value, currentUndoCmd(e), _rwlock);
-        }
-        return false;
-    }
-
-    template <typename T>
-    bool writeBasicTypeContent(IWingPlugin *plg, qsizetype offset,
-                               const T &value) {
-        Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = getCurrentPluginView(plg);
-        if (e) {
-            return EditorView::writeBasicTypeContent<T>(
-                e, offset, value, currentUndoCmd(e), _rwlock);
-        }
-        return false;
-    }
-
-    template <typename T>
-    bool appendBasicTypeContent(IWingPlugin *plg, const T &value) {
-        Q_STATIC_ASSERT(std::is_integral_v<T> || std::is_floating_point_v<T>);
-        auto e = getCurrentPluginView(plg);
-        if (e) {
-            return EditorView::appendBasicTypeContent<T>(
-                e, value, currentUndoCmd(e), _rwlock);
-        }
-        return false;
-    }
-
 signals:
     void pluginLoading(const QString &plgName);
 
@@ -737,18 +686,12 @@ public:
                                                 GivenArgsList>::value,
             "argument types are not compatible with function signature");
 
-        if (_manager && sender != _manager) {
-            auto params =
-                makeVariantList(std::forward<GivenArgs>(givenArgs)...);
-            auto ret = !_manager->enterGuard(sender->metaObject(),
-                                             QString::fromLatin1(func), params);
-            if (ret) {
-                qCritical("[GuardBlock] '%s' was blocked", func);
-            }
-            return ret;
-        }
-        return false;
+        auto params = makeVariantList(std::forward<GivenArgs>(givenArgs)...);
+        return __passByFailedGuard(sender, func, params);
     }
+
+    bool __passByFailedGuard(const QObject *sender, const char *func,
+                             const QVariantList &params);
 
 private:
     CallTable _plgFns;
@@ -784,8 +727,6 @@ private:
 
     QStringList _scriptMarcos;
     QList<IWingPlugin *> _pragmaedPlg;
-
-    QReadWriteLock _rwlock;
 
 private:
     QString _curLoadingPlg;

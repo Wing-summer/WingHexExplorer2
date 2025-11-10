@@ -656,12 +656,15 @@ install(SCRIPT ${deploy_script})
 add_subdirectory(WingPlugin)
 
 include(CheckIPOSupported)
-check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
-if(_ipo_supported)
-    set_property(TARGET WingHexExplorer2
-                 PROPERTY INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
-    set_property(TARGET WingHexExplorer2
-                 PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+check_ipo_supported(
+    RESULT ipo_supported
+    OUTPUT ipo_error
+    LANGUAGES CXX)
+if(ipo_supported)
+    set_property(TARGET WingHexExplorer2 PROPERTY INTERPROCEDURAL_OPTIMIZATION
+                                                  ON)
+else()
+    message(WARNING "IPO is not supported: ${ipo_error}")
 endif()
 
 target_compile_options(
@@ -774,6 +777,6 @@ if(WINGHEX_ANGEL_LSP)
         COMMAND ${PKG_CMD}
         COMMENT "Packaging with pkg"
         VERBATIM)
-    add_custom_target(build_WINGHEX_ANGEL_LSP ALL DEPENDS ${OUT_BIN})
-    add_dependencies(WingHexExplorer2 build_WINGHEX_ANGEL_LSP)
+    add_custom_target(build_angel_lsp ALL DEPENDS ${OUT_BIN})
+    add_dependencies(WingHexExplorer2 build_angel_lsp)
 endif()
