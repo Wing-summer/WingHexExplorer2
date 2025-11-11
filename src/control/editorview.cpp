@@ -1094,10 +1094,6 @@ QString EditorView::currentDocFile(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::currentDocFile)>(
-                caller, __func__)) {
-            return {};
-        }
     }
 
     auto file = fileNameUrl();
@@ -1110,10 +1106,6 @@ bool EditorView::isReadOnly(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return true;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::isReadOnly)>(
-                caller, __func__)) {
-            return true;
-        }
     }
 
     return m_hex->isReadOnly();
@@ -1123,10 +1115,6 @@ bool EditorView::isInsertionMode(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::isInsertionMode)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -1141,10 +1129,6 @@ bool EditorView::isKeepSize(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::isKeepSize)>(
-                caller, __func__)) {
-            return true;
-        }
     }
 
     return m_hex->isKeepSize();
@@ -1154,10 +1138,6 @@ bool EditorView::isLocked(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return true;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::isLocked)>(
-                caller, __func__)) {
             return true;
         }
     }
@@ -1171,10 +1151,6 @@ qsizetype EditorView::documentLines(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return -1;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::documentLines)>(
-                caller, __func__)) {
-            return -1;
-        }
     }
 
     return m_hex->documentLines();
@@ -1184,10 +1160,6 @@ qsizetype EditorView::documentBytes(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return -1;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::documentBytes)>(
-                caller, __func__)) {
             return -1;
         }
     }
@@ -1201,10 +1173,6 @@ qsizetype EditorView::currentRow(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return -1;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::currentRow)>(
-                caller, __func__)) {
-            return -1;
-        }
     }
 
     return m_hex->currentRow();
@@ -1214,10 +1182,6 @@ qsizetype EditorView::currentColumn(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return -1;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::currentColumn)>(
-                caller, __func__)) {
             return -1;
         }
     }
@@ -1231,10 +1195,6 @@ qsizetype EditorView::currentOffset(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return -1;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::currentOffset)>(
-                caller, __func__)) {
-            return -1;
-        }
     }
 
     return m_hex->currentOffset();
@@ -1244,10 +1204,6 @@ qsizetype EditorView::selectedLength(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return -1;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectedLength)>(
-                caller, __func__)) {
             return -1;
         }
     }
@@ -1261,10 +1217,6 @@ QByteArray EditorView::selectedBytes(const QObject *caller, qsizetype index) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectedBytes)>(
-                caller, __func__, index)) {
-            return {};
-        }
     }
 
     return m_hex->selectedBytes(index);
@@ -1276,10 +1228,6 @@ QByteArrayList EditorView::selectionBytes(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectionBytes)>(
-                caller, __func__)) {
-            return {};
-        }
     }
 
     return m_hex->selectedBytes();
@@ -1289,10 +1237,6 @@ qsizetype EditorView::selectionLength(const QObject *caller, qsizetype index) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return -1;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectionLength)>(
-                caller, __func__, index)) {
             return -1;
         }
     }
@@ -1310,10 +1254,6 @@ qsizetype EditorView::selectionCount(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return -1;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectionCount)>(
-                caller, __func__)) {
-            return -1;
-        }
     }
 
     return m_hex->selectionCount();
@@ -1323,10 +1263,6 @@ bool EditorView::stringVisible(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::stringVisible)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -1340,10 +1276,6 @@ bool EditorView::addressVisible(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::addressVisible)>(
-                caller, __func__)) {
-            return false;
-        }
     }
 
     return m_hex->addressVisible();
@@ -1353,10 +1285,6 @@ bool EditorView::headerVisible(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::headerVisible)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -1370,10 +1298,6 @@ quintptr EditorView::addressBase(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return 0;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::addressBase)>(
-                caller, __func__)) {
-            return 0;
-        }
     }
 
     return m_hex->addressBase();
@@ -1383,10 +1307,6 @@ bool EditorView::isModified(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::isModified)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -1400,10 +1320,6 @@ qint8 EditorView::readInt8(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return 0;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readInt8)>(
-                caller, __func__, offset)) {
-            return 0;
-        }
     }
 
     return readBasicTypeContent<qint8>(this, offset, _rwlock);
@@ -1413,10 +1329,6 @@ qint16 EditorView::readInt16(const QObject *caller, qsizetype offset) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return 0;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readInt16)>(
-                caller, __func__, offset)) {
             return 0;
         }
     }
@@ -1430,10 +1342,6 @@ qint32 EditorView::readInt32(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return 0;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readInt32)>(
-                caller, __func__, offset)) {
-            return 0;
-        }
     }
 
     return readBasicTypeContent<qint32>(this, offset, _rwlock);
@@ -1443,10 +1351,6 @@ qint64 EditorView::readInt64(const QObject *caller, qsizetype offset) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return 0;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readInt64)>(
-                caller, __func__, offset)) {
             return 0;
         }
     }
@@ -1460,10 +1364,6 @@ quint8 EditorView::readUInt8(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return 0;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readUInt8)>(
-                caller, __func__, offset)) {
-            return 0;
-        }
     }
 
     return readBasicTypeContent<quint8>(this, offset, _rwlock);
@@ -1473,10 +1373,6 @@ quint16 EditorView::readUInt16(const QObject *caller, qsizetype offset) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return 0;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readUInt16)>(
-                caller, __func__, offset)) {
             return 0;
         }
     }
@@ -1490,10 +1386,6 @@ quint32 EditorView::readUInt32(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return 0;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readUInt32)>(
-                caller, __func__, offset)) {
-            return 0;
-        }
     }
 
     return readBasicTypeContent<quint32>(this, offset, _rwlock);
@@ -1503,10 +1395,6 @@ quint64 EditorView::readUInt64(const QObject *caller, qsizetype offset) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return 0;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readUInt64)>(
-                caller, __func__, offset)) {
             return 0;
         }
     }
@@ -1520,10 +1408,6 @@ float EditorView::readFloat(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return qQNaN();
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readFloat)>(
-                caller, __func__, offset)) {
-            return qQNaN();
-        }
     }
 
     return readBasicTypeContent<float>(this, offset, _rwlock);
@@ -1533,10 +1417,6 @@ double EditorView::readDouble(const QObject *caller, qsizetype offset) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return qQNaN();
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readDouble)>(
-                caller, __func__, offset)) {
             return qQNaN();
         }
     }
@@ -1549,10 +1429,6 @@ QString EditorView::readString(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return {};
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readString)>(
-                caller, __func__, offset, encoding)) {
             return {};
         }
     }
@@ -1577,10 +1453,6 @@ QByteArray EditorView::readBytes(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::readBytes)>(
-                caller, __func__, offset, count)) {
-            return {};
-        }
     }
 
     QReadLocker locker(&_rwlock);
@@ -1592,10 +1464,6 @@ qsizetype EditorView::findNext(const QObject *caller, qsizetype begin,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return -1;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::findNext)>(
-                caller, __func__, begin, ba)) {
             return -1;
         }
     }
@@ -1610,10 +1478,6 @@ qsizetype EditorView::findPrevious(const QObject *caller, qsizetype begin,
         if (checkErrAndReport(caller, __func__)) {
             return -1;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::findPrevious)>(
-                caller, __func__, begin, ba)) {
-            return -1;
-        }
     }
 
     return m_hex->document()->findPrevious(begin, ba);
@@ -1625,10 +1489,6 @@ QString EditorView::bookMarkComment(const QObject *caller, qsizetype pos) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::bookMarkComment)>(
-                caller, __func__, pos)) {
-            return {};
-        }
     }
 
     return m_hex->document()->bookMark(pos);
@@ -1638,10 +1498,6 @@ bool EditorView::existBookMark(const QObject *caller, qsizetype pos) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::existBookMark)>(
-                caller, __func__, pos)) {
             return false;
         }
     }
@@ -1658,10 +1514,6 @@ bool EditorView::setLockedFile(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setLockedFile)>(
-                caller, __func__, b)) {
-            return false;
-        }
     }
 
     return m_hex->setLockedFile(b);
@@ -1676,10 +1528,6 @@ bool EditorView::setKeepSize(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setKeepSize)>(
-                caller, __func__, b)) {
-            return false;
-        }
     }
 
     return m_hex->setKeepSize(b);
@@ -1692,10 +1540,6 @@ bool EditorView::setStringVisible(const QObject *caller, bool b) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setStringVisible)>(
-                caller, __func__, b)) {
             return false;
         }
     }
@@ -1713,10 +1557,6 @@ bool EditorView::setAddressVisible(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setAddressVisible)>(
-                caller, __func__, b)) {
-            return false;
-        }
     }
 
     m_hex->setAddressVisible(b);
@@ -1730,10 +1570,6 @@ bool EditorView::setHeaderVisible(const QObject *caller, bool b) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setHeaderVisible)>(
-                caller, __func__, b)) {
             return false;
         }
     }
@@ -1751,10 +1587,6 @@ bool EditorView::setAddressBase(const QObject *caller, quintptr base) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setAddressBase)>(
-                caller, __func__, base)) {
-            return false;
-        }
     }
 
     m_hex->setAddressBase(base);
@@ -1768,10 +1600,6 @@ bool EditorView::beginMarco(const QObject *caller, const QString &txt) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::beginMarco)>(
-                caller, __func__, txt)) {
             return false;
         }
     }
@@ -1789,10 +1617,6 @@ bool EditorView::endMarco(const QObject *caller) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::endMarco)>(
-                caller, __func__)) {
-            return false;
-        }
     }
 
     m_hex->document()->endMarco();
@@ -1804,10 +1628,6 @@ bool EditorView::writeInt8(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeInt8)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -1822,10 +1642,6 @@ bool EditorView::writeInt16(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeInt16)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -1836,10 +1652,6 @@ bool EditorView::writeInt32(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeInt32)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -1854,10 +1666,6 @@ bool EditorView::writeInt64(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeInt64)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -1868,10 +1676,6 @@ bool EditorView::writeUInt8(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeUInt8)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -1886,10 +1690,6 @@ bool EditorView::writeUInt16(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeUInt16)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -1900,10 +1700,6 @@ bool EditorView::writeUInt32(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeUInt32)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -1918,10 +1714,6 @@ bool EditorView::writeUInt64(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeUInt64)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -1932,10 +1724,6 @@ bool EditorView::writeFloat(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeFloat)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -1950,10 +1738,6 @@ bool EditorView::writeDouble(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeDouble)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return writeBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -1964,10 +1748,6 @@ bool EditorView::writeString(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeString)>(
-                caller, __func__, offset, value, encoding)) {
             return false;
         }
     }
@@ -1990,10 +1770,6 @@ bool EditorView::writeBytes(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::writeBytes)>(
-                caller, __func__, offset, data)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2013,10 +1789,6 @@ bool EditorView::insertInt8(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertInt8)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2027,10 +1799,6 @@ bool EditorView::insertInt16(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertInt16)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -2045,10 +1813,6 @@ bool EditorView::insertInt32(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertInt32)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2059,10 +1823,6 @@ bool EditorView::insertInt64(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertInt64)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -2077,10 +1837,6 @@ bool EditorView::insertUInt8(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertUInt8)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2091,10 +1847,6 @@ bool EditorView::insertUInt16(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertUInt16)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -2109,10 +1861,6 @@ bool EditorView::insertUInt32(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertUInt32)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2123,10 +1871,6 @@ bool EditorView::insertUInt64(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertUInt64)>(
-                caller, __func__, offset, value)) {
             return false;
         }
     }
@@ -2141,10 +1885,6 @@ bool EditorView::insertFloat(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertFloat)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2157,10 +1897,6 @@ bool EditorView::insertDouble(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertDouble)>(
-                caller, __func__, offset, value)) {
-            return false;
-        }
     }
 
     return insertBasicTypeContent(this, offset, value, nullptr, _rwlock);
@@ -2171,10 +1907,6 @@ bool EditorView::insertString(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertString)>(
-                caller, __func__, offset, value, encoding)) {
             return false;
         }
     }
@@ -2197,10 +1929,6 @@ bool EditorView::insertBytes(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::insertBytes)>(
-                caller, __func__, offset, data)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2219,10 +1947,6 @@ bool EditorView::appendInt8(const QObject *caller, qint8 value) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendInt8)>(
-                caller, __func__, value)) {
-            return false;
-        }
     }
 
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
@@ -2232,10 +1956,6 @@ bool EditorView::appendInt16(const QObject *caller, qint16 value) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendInt16)>(
-                caller, __func__, value)) {
             return false;
         }
     }
@@ -2249,10 +1969,6 @@ bool EditorView::appendInt32(const QObject *caller, qint32 value) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendInt32)>(
-                caller, __func__, value)) {
-            return false;
-        }
     }
 
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
@@ -2262,10 +1978,6 @@ bool EditorView::appendInt64(const QObject *caller, qint64 value) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendInt64)>(
-                caller, __func__, value)) {
             return false;
         }
     }
@@ -2279,10 +1991,6 @@ bool EditorView::appendUInt8(const QObject *caller, quint8 value) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendUInt8)>(
-                caller, __func__, value)) {
-            return false;
-        }
     }
 
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
@@ -2292,10 +2000,6 @@ bool EditorView::appendUInt16(const QObject *caller, quint16 value) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendUInt16)>(
-                caller, __func__, value)) {
             return false;
         }
     }
@@ -2309,10 +2013,6 @@ bool EditorView::appendUInt32(const QObject *caller, quint32 value) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendUInt32)>(
-                caller, __func__, value)) {
-            return false;
-        }
     }
 
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
@@ -2322,10 +2022,6 @@ bool EditorView::appendUInt64(const QObject *caller, quint64 value) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendUInt64)>(
-                caller, __func__, value)) {
             return false;
         }
     }
@@ -2339,10 +2035,6 @@ bool EditorView::appendFloat(const QObject *caller, float value) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendFloat)>(
-                caller, __func__, value)) {
-            return false;
-        }
     }
 
     return appendBasicTypeContent(this, value, nullptr, _rwlock);
@@ -2352,10 +2044,6 @@ bool EditorView::appendDouble(const QObject *caller, double value) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendDouble)>(
-                caller, __func__, value)) {
             return false;
         }
     }
@@ -2368,10 +2056,6 @@ bool EditorView::appendString(const QObject *caller, const QString &value,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendString)>(
-                caller, __func__, value, encoding)) {
             return false;
         }
     }
@@ -2393,10 +2077,6 @@ bool EditorView::appendBytes(const QObject *caller, const QByteArray &data) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::appendBytes)>(
-                caller, __func__, data)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2414,10 +2094,6 @@ bool EditorView::removeBytes(const QObject *caller, qsizetype offset,
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::removeBytes)>(
-                caller, __func__, offset, len)) {
             return false;
         }
     }
@@ -2442,12 +2118,6 @@ bool EditorView::moveTo(const QObject *caller, qsizetype line, qsizetype column,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<
-                decltype(QOverload<const QObject *, qsizetype, qsizetype, int,
-                                   bool>::of(&EditorView::moveTo))>(
-                caller, __func__, line, column, nibbleindex, clearSelection)) {
-            return false;
-        }
     }
 
     m_hex->cursor()->moveTo(line, column, nibbleindex, clearSelection);
@@ -2464,12 +2134,6 @@ bool EditorView::moveTo(const QObject *caller, qsizetype offset,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<
-                decltype(QOverload<const QObject *, qsizetype, bool>::of(
-                    &EditorView::moveTo))>(caller, __func__, offset,
-                                           clearSelection)) {
-            return false;
-        }
     }
 
     m_hex->cursor()->moveTo(offset, clearSelection);
@@ -2484,10 +2148,6 @@ bool EditorView::select(const QObject *caller, qsizetype offset,
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::select)>(
-                caller, __func__, offset, length, mode)) {
             return false;
         }
     }
@@ -2519,10 +2179,6 @@ bool EditorView::setInsertionMode(const QObject *caller, bool isinsert) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setInsertionMode)>(
-                caller, __func__, isinsert)) {
-            return false;
-        }
     }
 
     m_hex->cursor()->setInsertionMode(isinsert ? QHexCursor::InsertMode
@@ -2539,10 +2195,6 @@ bool EditorView::metadata(const QObject *caller, qsizetype begin,
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::metadata)>(
-                caller, __func__, begin, length, fgcolor, bgcolor, comment)) {
             return false;
         }
     }
@@ -2567,10 +2219,6 @@ bool EditorView::removeMetadata(const QObject *caller, qsizetype offset) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::removeMetadata)>(
-                caller, __func__, offset)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2590,10 +2238,6 @@ bool EditorView::clearMetadata(const QObject *caller) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::clearMetadata)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -2617,10 +2261,6 @@ bool EditorView::setMetaVisible(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setMetaVisible)>(
-                caller, __func__, b)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2639,10 +2279,6 @@ bool EditorView::setMetafgVisible(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setMetafgVisible)>(
-                caller, __func__, b)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2657,10 +2293,6 @@ bool EditorView::setMetabgVisible(const QObject *caller, bool b) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::setMetabgVisible)>(
-                caller, __func__, b)) {
             return false;
         }
     }
@@ -2679,11 +2311,6 @@ bool EditorView::setMetaCommentVisible(const QObject *caller, bool b) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<
-                decltype(&EditorView::setMetaCommentVisible)>(caller, __func__,
-                                                              b)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2699,10 +2326,6 @@ bool EditorView::addBookMark(const QObject *caller, qsizetype pos,
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::addBookMark)>(
-                caller, __func__, pos, comment)) {
             return false;
         }
     }
@@ -2726,10 +2349,6 @@ bool EditorView::modBookMark(const QObject *caller, qsizetype pos,
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::modBookMark)>(
-                caller, __func__, pos, comment)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2750,10 +2369,6 @@ bool EditorView::removeBookMark(const QObject *caller, qsizetype pos) {
         if (checkErrAndReport(caller, __func__)) {
             return false;
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::removeBookMark)>(
-                caller, __func__, pos)) {
-            return false;
-        }
     }
 
     auto doc = m_hex->document();
@@ -2772,10 +2387,6 @@ bool EditorView::clearBookMark(const QObject *caller) {
             return false;
         }
         if (checkErrAndReport(caller, __func__)) {
-            return false;
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::clearBookMark)>(
-                caller, __func__)) {
             return false;
         }
     }
@@ -2808,10 +2419,6 @@ HexPosition EditorView::selectionEnd(const QObject *caller, qsizetype index) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectionEnd)>(
-                caller, __func__, index)) {
-            return {};
-        }
     }
 
     HexPosition pos;
@@ -2832,10 +2439,6 @@ HexPosition EditorView::selectionStart(const QObject *caller, qsizetype index) {
         if (checkErrAndReport(caller, __func__)) {
             return {};
         }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::selectionStart)>(
-                caller, __func__, index)) {
-            return {};
-        }
     }
 
     HexPosition pos;
@@ -2854,10 +2457,6 @@ HexPosition EditorView::currentPos(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
-            return {};
-        }
-        if (plgsys.passByFailedGuard<decltype(&EditorView::currentPos)>(
-                caller, __func__)) {
             return {};
         }
     }

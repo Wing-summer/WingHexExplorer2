@@ -33,7 +33,6 @@
 
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/iwinghexeditorplugin.h"
-#include "WingPlugin/iwingmanager.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 
@@ -115,8 +114,6 @@ public:
         LackDependencies
     };
 
-    enum class BlockReason { Disabled, BlockedByManager };
-
 private:
     struct PluginFileContext {
         SharedUniqueId fid;
@@ -194,8 +191,6 @@ private:
 
     void checkDirRootSafe(const QDir &dir);
 
-    void try2LoadManagerPlugin();
-
     void try2LoadHexExtPlugin();
 
     template <typename T>
@@ -268,15 +263,11 @@ public:
     // fpr crash checking
     QString currentLoadingPlugin() const;
 
-    IWingManager *monitorManager() const;
-
     IWingHexEditorPlugin *hexEditorExtension() const;
 
-    QMap<BlockReason, QList<PluginInfo>> blockedPlugins() const;
+    QList<PluginInfo> blockedPlugins() const;
 
-    QMap<BlockReason, QList<PluginInfo>> blockedDevPlugins() const;
-
-    const std::optional<PluginInfo> &monitorManagerInfo() const;
+    QList<PluginInfo> blockedDevPlugins() const;
 
     const std::optional<PluginInfo> &hexEditorExtensionInfo() const;
 
@@ -657,42 +648,6 @@ private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);
 
-public:
-    inline static QVariant to_variant(const QVariant &v) { return v; }
-
-    template <typename T>
-    inline static QVariant to_variant(T &&v) {
-        return QVariant::fromValue(std::forward<T>(v));
-    }
-
-    template <typename... Args>
-    inline static QVariantList makeVariantList(Args &&...args) {
-        QVariantList list;
-        list.reserve(sizeof...(Args));
-        (list.append(to_variant(std::forward<Args>(args))), ...);
-        return list;
-    }
-
-    template <typename FuncT, typename... GivenArgs>
-    inline bool passByFailedGuard(const QObject *sender, const char *func,
-                                  GivenArgs &&...givenArgs) {
-        using FnInfo = QtPrivate::FunctionPointer<FuncT>;
-        using GivenArgsList =
-            QtPrivate::List<typename QtPrivate::RemoveRef<GivenArgs>::Type...>;
-        static_assert(FnInfo::ArgumentCount - 1 == GivenArgsList::size,
-                      "argument count mismatch");
-        static_assert(
-            QtPrivate::CheckCompatibleArguments<typename FnInfo::Arguments::Cdr,
-                                                GivenArgsList>::value,
-            "argument types are not compatible with function signature");
-
-        auto params = makeVariantList(std::forward<GivenArgs>(givenArgs)...);
-        return __passByFailedGuard(sender, func, params);
-    }
-
-    bool __passByFailedGuard(const QObject *sender, const char *func,
-                             const QVariantList &params);
-
 private:
     CallTable _plgFns;
 
@@ -707,8 +662,8 @@ private:
 
     QStringList _enabledExtIDs;
     QStringList _enabledDevIDs;
-    QMap<BlockReason, QList<PluginInfo>> _blkplgs;
-    QMap<BlockReason, QList<PluginInfo>> _blkdevs;
+    QList<PluginInfo> _blkplgs;
+    QList<PluginInfo> _blkdevs;
 
     QMap<IWingPlugin::RegisteredEvent, QList<IWingPlugin *>> _evplgs;
 
@@ -716,9 +671,6 @@ private:
     QHash<EditorView *, ViewBind> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
-
-    IWingManager *_manager = nullptr;
-    std::optional<PluginInfo> _manInfo;
 
     IWingHexEditorPlugin *_hexExt = nullptr;
     std::optional<PluginInfo> _manHexInfo;

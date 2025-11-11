@@ -59,8 +59,6 @@ public:
 private:
     void createPluginStandardMenu(QListWidget *widget);
 
-    QIcon getGrayIcon(const QString &path);
-
     void resetChangedList();
     void resetUIChanged();
 

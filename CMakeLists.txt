@@ -53,9 +53,7 @@ endif()
 
 if(WINGHEX_BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
-    add_subdirectory(TestBadPlugin)
     add_subdirectory(TestHexExt)
-    add_subdirectory(TestManager)
 endif()
 
 if(WINGHEX_BUILD_SHARED_MEM_EXT)
@@ -698,10 +696,10 @@ target_link_options(
     $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:Clang>>:-Wl,--gc-sections>)
 
 if(WINGHEX_ANGEL_LSP)
-    set(NODE_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp/server")
+    set(NODE_ROOT_SUBDIR "${CMAKE_SOURCE_DIR}/3rdparty/angel-lsp")
+    set(NODE_SUBDIR "${NODE_ROOT_SUBDIR}/server")
     set(BUILD_BIN_DIR "${CMAKE_BINARY_DIR}/lsp")
     set(BUILD_BIN_BUILD_DIR "${CMAKE_BINARY_DIR}/lsp-build")
-
     if(WIN32)
         set(OUT_NAME "angelscript-ls.exe")
     else()
@@ -767,16 +765,42 @@ if(WINGHEX_ANGEL_LSP)
         COMMENT "Building JS bundle with esbuild -> ${DIST_JS}"
         VERBATIM)
 
-    add_custom_command(
-        OUTPUT ${OUT_BIN}
-        DEPENDS ${DIST_JS}
-        WORKING_DIRECTORY ${NODE_SUBDIR}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_BIN_DIR}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_BIN_BUILD_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo "[3] packaging with pkg/npm exec/npx"
-        COMMAND ${PKG_CMD}
-        COMMENT "Packaging with pkg"
-        VERBATIM)
+    if(WIN32)
+        add_custom_command(
+            OUTPUT ${OUT_BIN}
+            DEPENDS ${DIST_JS}
+            WORKING_DIRECTORY ${NODE_SUBDIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E echo
+                    "[3] packaging with pkg/npm exec/npx"
+            COMMAND ${PKG_CMD}
+            COMMENT "[4] Packaging with pkg"
+            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_ROOT_SUBDIR}/package.json"
+                    "${BUILD_BIN_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_SUBDIR}/modIcon_win.js"
+                    "${BUILD_BIN_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_SUBDIR}/icon.ico"
+                    "${BUILD_BIN_DIR}"
+            COMMAND ${NODE_EXE} "${BUILD_BIN_DIR}/modIcon_win.js"
+            COMMAND ${CMAKE_COMMAND} -E remove "${BUILD_BIN_DIR}/modIcon_win.js"
+                    "${BUILD_BIN_DIR}/icon.ico" "${BUILD_BIN_DIR}/package.json"
+            COMMENT "[5] Modifying exe icon"
+            VERBATIM)
+    else()
+        add_custom_command(
+            OUTPUT ${OUT_BIN}
+            DEPENDS ${DIST_JS}
+            WORKING_DIRECTORY ${NODE_SUBDIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E echo
+                    "[3] packaging with pkg/npm exec/npx"
+            COMMAND ${PKG_CMD}
+            COMMENT "[4] Packaging with pkg"
+            VERBATIM)
+    endif()
+
     add_custom_target(build_angel_lsp ALL DEPENDS ${OUT_BIN})
     add_dependencies(WingHexExplorer2 build_angel_lsp)
 endif()

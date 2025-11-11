@@ -34,7 +34,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnablePlugin);
     Utilities::addSpecialMark(ui->cbEnablePluginRoot);
-    Utilities::addSpecialMark(ui->cbEnableManager);
     Utilities::addSpecialMark(ui->cbEnableHex);
 
     reload();
@@ -44,7 +43,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     if (dis && ok) {
         ui->groupBox->setEnabled(false);
         ui->tabPluginInfo->setEnabled(false);
-        ui->tabAPIMon->setEnabled(false);
         ui->tabDevInfo->setEnabled(false);
         ui->tabHexEditorExt->setEnabled(false);
         return;
@@ -67,22 +65,9 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             ui->tabDevInfo->setEnabled(false);
         }
 
-        dis = qEnvironmentVariableIntValue("WING_DISABLE_MONITOR", &ok);
-        if (dis && ok) {
-            ui->cbEnableManager->setEnabled(false);
-        } else {
-            connect(ui->cbEnableManager,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                    &QCheckBox::checkStateChanged,
-#else
-                    &QCheckBox::stateChanged,
-#endif
-                    this, &PluginSettingDialog::optionNeedRestartChanged);
-        }
-
         dis = qEnvironmentVariableIntValue("WING_DISABLE_HEXEXT", &ok);
         if (dis && ok) {
-            ui->cbEnableManager->setEnabled(false);
+            ui->cbEnableHex->setEnabled(false);
         } else {
             connect(ui->cbEnableHex,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -129,28 +114,13 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     pico = ICONRES("plugindis");
     auto blkplgs = plgsys.blockedPlugins();
-    auto dblkplgs = blkplgs[PluginSystem::BlockReason::Disabled];
-    for (auto &meta : dblkplgs) {
+    for (auto &meta : blkplgs) {
         auto lwi = new QListWidgetItem(pico, meta.id);
         auto flags = lwi->flags();
         flags.setFlag(Qt::ItemIsUserCheckable);
         lwi->setFlags(flags);
         lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
         lwi->setCheckState(Qt::Unchecked);
-        ui->plglist->addItem(lwi);
-    }
-
-    pico = getGrayIcon(NAMEICONRES("plugin"));
-    dblkplgs = blkplgs[PluginSystem::BlockReason::BlockedByManager];
-    for (auto &meta : dblkplgs) {
-        auto lwi = new QListWidgetItem(pico, meta.id);
-        auto flags = lwi->flags();
-        flags.setFlag(Qt::ItemIsUserCheckable, false);
-        lwi->setFlags(flags);
-        auto font = lwi->font();
-        font.setStrikeOut(true);
-        lwi->setFont(font);
-        lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
         ui->plglist->addItem(lwi);
     }
 
@@ -173,8 +143,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     pico = ICONRES("devextdis");
     auto blkdevs = plgsys.blockedDevPlugins();
-    auto dblkdevs = blkdevs[PluginSystem::BlockReason::Disabled];
-    for (auto &meta : dblkdevs) {
+    for (auto &meta : blkdevs) {
         auto lwi = new QListWidgetItem(pico, meta.id);
         auto flags = lwi->flags();
         flags.setFlag(Qt::ItemIsUserCheckable);
@@ -183,28 +152,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         lwi->setCheckState(Qt::Unchecked);
         ui->devlist->addItem(lwi);
     }
-
-    pico = getGrayIcon(NAMEICONRES("devext"));
-    dblkdevs = blkdevs[PluginSystem::BlockReason::BlockedByManager];
-    for (auto &meta : dblkdevs) {
-        auto lwi = new QListWidgetItem(pico, meta.id);
-        auto flags = lwi->flags();
-        flags.setFlag(Qt::ItemIsUserCheckable, false);
-        lwi->setFlags(flags);
-        auto font = lwi->font();
-        font.setStrikeOut(true);
-        lwi->setFont(font);
-        lwi->setData(PLUIGN_META, QVariant::fromValue(meta));
-        ui->devlist->addItem(lwi);
-    }
-
-    auto minfo = plgsys.monitorManagerInfo();
-    QString mcomment;
-    auto mp = plgsys.monitorManager();
-    if (mp) {
-        mcomment = mp->comment();
-    }
-    loadPluginInfo(minfo, {}, mcomment, {}, ui->txtm);
 
     auto hinfo = plgsys.hexEditorExtensionInfo();
     QString hcomment;
@@ -219,8 +166,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
             &SettingManager::setEnablePlugin);
     connect(ui->cbEnablePluginRoot, &QCheckBox::toggled, set,
             &SettingManager::setEnablePlgInRoot);
-    connect(ui->cbEnableManager, &QCheckBox::toggled, set,
-            &SettingManager::setEnableMonitor);
     connect(ui->cbEnableHex, &QCheckBox::toggled, set,
             &SettingManager::setEnableHexExt);
 
@@ -346,11 +291,9 @@ void PluginSettingDialog::reload() {
     ui->cbEnablePlugin->setChecked(ep);
     if (ep) {
         ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
-        ui->cbEnableManager->setChecked(set.enableMonitor());
         ui->cbEnableHex->setChecked(set.enableHexExt());
     } else {
         ui->cbEnablePluginRoot->setEnabled(false);
-        ui->cbEnableManager->setEnabled(false);
         ui->cbEnableHex->setEnabled(false);
     }
     this->blockSignals(false);
@@ -413,21 +356,6 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
     widget->addAction(a);
     widget->addAction(tr("DiscardChanges"), this,
                       &PluginSettingDialog::discard);
-}
-
-QIcon PluginSettingDialog::getGrayIcon(const QString &path) {
-    QImage dpico(path);
-    for (int y = 0; y < dpico.height(); ++y) {
-        auto row = reinterpret_cast<QRgb *>(dpico.scanLine(y));
-        for (int x = 0; x < dpico.width(); ++x) {
-            auto c = row[x];
-            if (c) {
-                auto p = qGray(c);
-                row[x] = qRgba(p, p, p, qAlpha(c));
-            }
-        }
-    }
-    return QIcon(QPixmap::fromImage(dpico));
 }
 
 void PluginSettingDialog::resetChangedList() {

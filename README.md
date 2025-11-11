@@ -106,7 +106,7 @@
 
 &emsp;&emsp;如果你想将本软件的代码用于闭源的商业代码，想要解除`GPL`系列的必须开源的限制，请必须亲自咨询我，商讨商业授权相关事宜。
 
-&emsp;&emsp;对于插件开发相关的，对应的开源协议就不一样了。只针对本仓库下的`WingPlugin`的代码遵守`BSD 3-Clause`协议，以允许闭源商业开发。对于本仓库下的`TestPlugin`/`TestBadPlugin`/`TestHexExt`/`TestManager`的代码（除`TranslationUtils.cmake`这一个文件遵守`BSD 3-Clause`）遵守`MIT`协议。
+&emsp;&emsp;对于插件开发相关的，对应的开源协议就不一样了。只针对本仓库下的`WingPlugin`的代码遵守`BSD 3-Clause`协议，以允许闭源商业开发。对于本仓库下的`TestPlugin`/`TestHexExt`的代码（除`TranslationUtils.cmake`这一个文件遵守`BSD 3-Clause`）遵守`MIT`协议。
 
 ### 使用声明
 

@@ -2421,7 +2421,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="81"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="314"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="259"/>
         <source>PluginInfo</source>
         <translation>Plugin Information</translation>
     </message>
@@ -2438,7 +2438,7 @@
     </message>
     <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="146"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="322"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="267"/>
         <source>DevExtInfo</source>
         <translation>Device Extension Information</translation>
     </message>
@@ -2448,104 +2448,98 @@
         <translation>Device Extension:</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="208"/>
-        <source>APIMonitor</source>
-        <translation>API Monitor</translation>
-    </message>
-    <message>
         <location filename="../../src/settings/pluginsettingdialog.ui" line="226"/>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="263"/>
         <source>Enable</source>
         <translation>Enable</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.ui" line="245"/>
+        <location filename="../../src/settings/pluginsettingdialog.ui" line="208"/>
         <source>EditorExtension</source>
         <translation>Editor Extension</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="361"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="304"/>
         <source>Plugin</source>
         <translation>Plugin</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="390"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="333"/>
         <source>SelectEnable</source>
         <translation>Enable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="398"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="341"/>
         <source>SelectDisable</source>
         <translation>Disable Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="409"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="352"/>
         <source>SelectAll</source>
         <translation>Select all</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="410"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="353"/>
         <source>SelectClear</source>
         <translation>Clear Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="414"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="357"/>
         <source>DiscardChanges</source>
         <translation>Discard the changes</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="486"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="414"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="488"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="416"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="489"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="417"/>
         <source>License</source>
         <translation>License</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="490"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="418"/>
         <source>Author</source>
         <translation>Author</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="491"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="419"/>
         <source>Vendor</source>
         <translation>Vendor</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="493"/>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="504"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="421"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="432"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="495"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="423"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="499"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="427"/>
         <source>Dependencies</source>
         <translation>Dependencies</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="501"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="429"/>
         <source>PUID</source>
         <translation>PUID</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="510"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="438"/>
         <source>Comment</source>
         <translation>Comment</translation>
     </message>
     <message>
-        <location filename="../../src/settings/pluginsettingdialog.cpp" line="513"/>
+        <location filename="../../src/settings/pluginsettingdialog.cpp" line="441"/>
         <source>NoPluginLoaded</source>
         <translation>No plugins are currently loaded.</translation>
     </message>
@@ -2553,173 +2547,159 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1624"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1247"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3414"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2628"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3432"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4054"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4131"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2646"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3254"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>Failed to load plugin: Corrupted plugin data</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3439"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4051"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4128"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2653"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3251"/>
         <source>InvalidPluginID</source>
         <translation>Failed to load plugin: Invalid plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3442"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2656"/>
         <source>InvalidDupPlugin</source>
         <translation>Failed to load plugin: Duplicate plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3445"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4048"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4125"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2659"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3248"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>Plugin loading failed: Invalid plugin SDK version!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3853"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3052"/>
         <source>AppClosingCanceled:</source>
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3934"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3133"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3965"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3164"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>Summary of Dependency Plugin Loading Failures</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3969"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3168"/>
         <source>- PluginID:</source>
         <translation>- Plugin ID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3970"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3169"/>
         <source>- Dependencies:</source>
         <translation>- Dependencies:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3972"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3171"/>
         <source>PUID:</source>
         <translation>PUID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3973"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3172"/>
         <source>Version:</source>
         <translation>Version:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3980"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3179"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3991"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3190"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4017"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3216"/>
         <source>UnsafePluginDir</source>
         <translation>The plugin directory is insecure. Please configure the plugin directory to be writable only by the administrator account.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4032"/>
-        <source>PluginManagerNeedSingleton</source>
-        <translation>Plugin manager must ensure singleton implementation.</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4078"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4155"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4328"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3278"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3451"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4108"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3231"/>
         <source>HexExtNeedSingleton</source>
         <translation>The hex editor extension must ensure singleton implementation.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4307"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="4375"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3430"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3498"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4337"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3460"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4338"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3461"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4339"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3462"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4378"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3501"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4379"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3502"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4396"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3519"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4419"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3542"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4458"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3581"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4468"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3591"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4476"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3599"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4589"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3712"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="4688"/>
-        <source>PluginBlockByManager</source>
-        <translation>The plugin has been disabled by the manager</translation>
     </message>
 </context>
 <context>
@@ -3822,7 +3802,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="399"/>
+        <location filename="../../src/class/settingmanager.cpp" line="387"/>
         <source>ConfigUnableSave</source>
         <translation>The program will be unable to save the configuration. Please check the permissions for the configuration file.</translation>
     </message>

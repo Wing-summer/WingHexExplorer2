@@ -42,7 +42,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, APP_METAHEADER_SHOW,
                           ("app.metaheader.visitems"))
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE, ("plugin.enableplugin"))
-Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_MANAGER, ("plugin.enableman"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_HEXEXT,
                           ("plugin.enablehexext"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, PLUGIN_ENABLE_ROOT,
@@ -138,7 +137,6 @@ void SettingManager::load() {
 
     READ_CONFIG_BOOL(m_enablePlugin, PLUGIN_ENABLE, true);
     READ_CONFIG_BOOL(m_enablePlgInRoot, PLUGIN_ENABLE_ROOT, false);
-    READ_CONFIG_BOOL(m_enableMonitor, PLUGIN_ENABLE_MANAGER, true);
     READ_CONFIG_BOOL(m_enableHexExt, PLUGIN_ENABLE_HEXEXT, true);
 
     {
@@ -331,16 +329,6 @@ void SettingManager::setEnableHexExt(bool newEnableHexExt) {
         HANDLE_CONFIG;
         WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, newEnableHexExt);
         m_enableHexExt = newEnableHexExt;
-    }
-}
-
-bool SettingManager::enableMonitor() const { return m_enableMonitor; }
-
-void SettingManager::setEnableMonitor(bool newEnableMonitor) {
-    if (m_enableMonitor != newEnableMonitor) {
-        HANDLE_CONFIG;
-        WRITE_CONFIG(PLUGIN_ENABLE_MANAGER, newEnableMonitor);
-        m_enableMonitor = newEnableMonitor;
     }
 }
 
@@ -623,7 +611,6 @@ void SettingManager::__reset(SETTINGS cat) {
     if (cat.testFlag(SETTING::PLUGIN)) {
         WRITE_CONFIG(PLUGIN_ENABLE, true);
         WRITE_CONFIG(PLUGIN_ENABLE_ROOT, false);
-        WRITE_CONFIG(PLUGIN_ENABLE_MANAGER, true);
         WRITE_CONFIG(PLUGIN_ENABLE_HEXEXT, true);
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_DEV, {});
         WRITE_CONFIG(PLUGIN_ENABLEDPLUGINS_EXT, {});
