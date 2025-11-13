@@ -2926,33 +2926,11 @@ void MainWindow::on_locChanged() {
 }
 
 void MainWindow::on_selectionChanged() {
-    auto hexeditor = currentHexView();
-    if (hexeditor == nullptr) {
-        return;
-    }
-
     on_locChanged();
-
-    auto cursor = hexeditor->cursor();
-    QByteArrayList buffer;
-    bool isPreview = false;
-    if (cursor->previewSelectionMode() != QHexCursor::SelectionRemove &&
-        cursor->hasPreviewSelection()) {
-        buffer.append(hexeditor->previewSelectedBytes());
-        isPreview = true;
-    }
-
-    if (buffer.isEmpty()) {
-        if (hexeditor->selectionCount() > 0) {
-            buffer = hexeditor->selectedBytes();
-        }
-    }
-
-    updateStringDec(buffer, isPreview);
-
+    auto pair = updateStringDec();
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::SelectionChanged,
-        {QVariant::fromValue(buffer), isPreview});
+        {QVariant::fromValue(pair.first), pair.second});
 }
 
 void MainWindow::on_editableAreaClicked(int area) {
@@ -4117,14 +4095,32 @@ void MainWindow::updateNumberTable(bool force) {
     }
 }
 
-void MainWindow::updateStringDec(const QByteArrayList &content,
-                                 bool isPreview) {
+QPair<QByteArrayList, bool> MainWindow::updateStringDec() {
     if (!m_txtDecode->isVisible()) {
-        return;
+        return {};
     }
 
-    QByteArrayList buffer = content;
+    auto hexeditor = currentHexView();
+    if (hexeditor == nullptr) {
+        return {};
+    }
+
     m_txtDecode->clear();
+
+    auto cursor = hexeditor->cursor();
+    QByteArrayList buffer;
+    bool isPreview = false;
+    if (cursor->previewSelectionMode() != QHexCursor::SelectionRemove &&
+        cursor->hasPreviewSelection()) {
+        buffer.append(hexeditor->previewSelectedBytes());
+        isPreview = true;
+    }
+
+    if (buffer.isEmpty()) {
+        if (hexeditor->selectionCount() > 0) {
+            buffer = hexeditor->selectedBytes();
+        }
+    }
 
     auto total = buffer.size();
     for (int i = 0; i < total; i++) {
@@ -4146,6 +4142,8 @@ void MainWindow::updateStringDec(const QByteArrayList &content,
                     .arg(tr("TooManyBytesDecode")));
         }
     }
+
+    return qMakePair(buffer, isPreview);
 }
 
 void MainWindow::updateUI() { QApplication::processEvents(); }
@@ -4529,7 +4527,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             } else if (watched == m_numshowtable) {
                 updateNumberTable(false);
             } else if (watched == m_txtDecode) {
-                updateStringDec({}, false);
+                updateStringDec();
             }
         } break;
         case QEvent::Hide: {

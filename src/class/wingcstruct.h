@@ -214,6 +214,11 @@ private:
     QStringList getParsedErrors() const;
     QStringList getParsedWarns() const;
 
+    QStringList structOrUnionMemberNames(const QString &type) const;
+    QStringList structOrUnionMemberDataTypes(const QString &type) const;
+    QStringList structOrUnionMemberDecls(const QString &type) const;
+    QStringList structOrUnionMemberDeclWithoutNames(const QString &type) const;
+
     // services
 private:
     // basic
@@ -291,6 +296,16 @@ private:
     WING_SERVICE QStringList getParsedErrors(const WingHex::SenderInfo &sender);
     WING_SERVICE QStringList getParsedWarns(const WingHex::SenderInfo &sender);
 
+    // for query struct/union internals
+    WING_SERVICE QStringList structOrUnionMemberNames(
+        const WingHex::SenderInfo &sender, const QString &type);
+    WING_SERVICE QStringList structOrUnionMemberDataTypes(
+        const WingHex::SenderInfo &sender, const QString &type);
+    WING_SERVICE QStringList structOrUnionMemberDecls(
+        const WingHex::SenderInfo &sender, const QString &type);
+    WING_SERVICE QStringList structOrUnionMemberDeclWithoutNames(
+        const WingHex::SenderInfo &sender, const QString &type);
+
 private:
     WingHex::MetaType getqsizetypeMetaType() const;
 
@@ -357,6 +372,11 @@ private:
 
     QVariant getParsedErrors(const QVariantList &params);
     QVariant getParsedWarns(const QVariantList &params);
+
+    QVariant structOrUnionMemberNames(const QVariantList &params);
+    QVariant structOrUnionMemberDataTypes(const QVariantList &params);
+    QVariant structOrUnionMemberDecls(const QVariantList &params);
+    QVariant structOrUnionMemberDeclWithoutNames(const QVariantList &params);
 
 private:
     CTypeParser *_parser = nullptr;

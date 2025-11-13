@@ -27,8 +27,6 @@
 #include <QTimerEvent>
 #include <QWindow>
 
-#include "class/eventfilter.h"
-
 int Toast::LENGTH_LONG = 4000;
 int Toast::LENGTH_SHORT = 1500;
 static const int TIMER_INTERVAL = 50;
@@ -59,22 +57,7 @@ void Toast::toast(QWidget *parent, const QPixmap &icon,
     auto str = strContent;
     str.remove(regex);
     toast = new Toast(str, icon, nToastInterval, parent);
-
     connect(toast, &Toast::destroyed, toast, [&] { toast = nullptr; });
-
-    auto e0 = new EventFilter(QEvent::Move, toast);
-    auto e1 = new EventFilter(QEvent::Resize, toast);
-
-    auto callback = [](QObject *, QEvent *) {
-        if (toast) {
-            toast->setToastPos(toast->lastToastPos());
-        }
-    };
-    connect(e0, &EventFilter::eventTriggered, toast, callback);
-    connect(e1, &EventFilter::eventTriggered, toast, callback);
-
-    parent->installEventFilter(e0);
-    parent->installEventFilter(e1);
 
     toast->show();
 }
@@ -89,12 +72,8 @@ QSize Toast::calculateTextSize() {
 }
 
 void Toast::init() {
-    setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
-                   Qt::WindowSystemMenuHint | Qt::BypassWindowManagerHint |
-                   Qt::WindowTransparentForInput);
-    setAttribute(Qt::WA_TranslucentBackground);
+    setWindowFlags(Qt::Popup);
     setAttribute(Qt::WA_ShowWithoutActivating);
-
     setToastPos(TOAST_POS::BOTTOM);
     auto w = _parent->width();
     constexpr auto PADDING = 100;
@@ -146,16 +125,9 @@ void Toast::paintEvent(QPaintEvent *) {
     QSize widgetSize = size();
 
     QPen textPen(Qt::PenStyle::SolidLine);
-
     textPen.setColor(m_textColor);
     textPen.setJoinStyle(Qt::PenJoinStyle::RoundJoin);
-
-    QPen emptyPen(Qt::PenStyle::NoPen);
-
-    painter.setPen(emptyPen);
-    painter.setBrush(m_backColor);
-    painter.drawRoundedRect(0, 0, widgetSize.width(), widgetSize.height(), 10,
-                            10);
+    painter.fillRect(this->rect(), m_backColor);
 
     auto font = this->displayFont();
     painter.setFont(font);

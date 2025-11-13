@@ -242,7 +242,7 @@ public:
 
 private:
     void updateNumberTable(bool force);
-    void updateStringDec(const QByteArrayList &content, bool isPreview);
+    QPair<QByteArrayList, bool> updateStringDec();
     void updateUI();
 
     void createScriptDialog(SplashDialog *d);

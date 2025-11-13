@@ -566,6 +566,35 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                                             &WingCStruct::getParsedWarns),
                                         this, std::placeholders::_1),
                               QStringLiteral("getParsedWarns"));
+
+    o->registerGlobalFunction(
+        WingHex::Meta_String | WingHex::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::structOrUnionMemberNames),
+                  this, std::placeholders::_1),
+        QStringLiteral("structOrUnionMemberNames"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_String | WingHex::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::structOrUnionMemberDataTypes),
+                  this, std::placeholders::_1),
+        QStringLiteral("structOrUnionMemberDataTypes"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_String | WingHex::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::structOrUnionMemberDecls),
+                  this, std::placeholders::_1),
+        QStringLiteral("structOrUnionMemberDecls"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+    o->registerGlobalFunction(
+        WingHex::Meta_String | WingHex::Meta_Array,
+        std::bind(QOverload<const QVariantList &>::of(
+                      &WingCStruct::structOrUnionMemberDeclWithoutNames),
+                  this, std::placeholders::_1),
+        QStringLiteral("structOrUnionMemberDeclWithoutNames"),
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
 }
 
 bool WingCStruct::parseFromSource(const QString &header) {
@@ -793,6 +822,126 @@ QStringList WingCStruct::getParsedErrors() const { return _errors; }
 
 QStringList WingCStruct::getParsedWarns() const { return _warns; }
 
+QStringList WingCStruct::structOrUnionMemberNames(const QString &type) const {
+    QStringList buffer;
+    auto t = _parser->resolveTypeName(type);
+    if (_parser->containsStruct(t)) {
+        auto r = _parser->structMembers(t);
+        for (auto &m : r) {
+            buffer.append(m.var_name);
+        }
+    } else if (_parser->containsUnion(t)) {
+        auto r = _parser->unionMembers(t);
+        for (auto &m : r) {
+            buffer.append(m.var_name);
+        }
+    }
+
+    return buffer;
+}
+
+QStringList
+WingCStruct::structOrUnionMemberDataTypes(const QString &type) const {
+    QStringList buffer;
+    auto t = _parser->resolveTypeName(type);
+    if (_parser->containsStruct(t)) {
+        auto r = _parser->structMembers(t);
+        for (auto &m : r) {
+            buffer.append(m.data_type);
+        }
+    } else if (_parser->containsUnion(t)) {
+        auto r = _parser->unionMembers(t);
+        for (auto &m : r) {
+            buffer.append(m.data_type);
+        }
+    }
+    return buffer;
+}
+
+QStringList WingCStruct::structOrUnionMemberDecls(const QString &type) const {
+    QStringList buffer;
+    static QString padding(4, ' ');
+    auto t = _parser->resolveTypeName(type);
+
+    auto op = [](const VariableDeclaration &m) -> QString {
+        QString buffer;
+        QTextStream output(&buffer);
+        output << m.data_type;
+
+        if (m.is_pointer)
+            output << QStringLiteral("* ");
+
+        output << padding;
+        if (m.var_name.isEmpty()) {
+            output << '?';
+        } else {
+            output << m.var_name;
+        }
+
+        for (auto &dim : m.array_dims) {
+            output << '[' << dim << ']';
+        }
+
+        if (m.bit_size) {
+            output << QStringLiteral(" : ") << m.bit_size;
+        }
+        return buffer;
+    };
+
+    if (_parser->containsStruct(t)) {
+        auto r = _parser->structMembers(t);
+        for (auto &m : r) {
+            buffer.append(op(m));
+        }
+    } else if (_parser->containsUnion(t)) {
+        auto r = _parser->unionMembers(t);
+        for (auto &m : r) {
+            buffer.append(op(m));
+        }
+    }
+    return buffer;
+}
+
+QStringList
+WingCStruct::structOrUnionMemberDeclWithoutNames(const QString &type) const {
+    QStringList buffer;
+    static QString padding(4, ' ');
+    auto t = _parser->resolveTypeName(type);
+
+    auto op = [](const VariableDeclaration &m) -> QString {
+        QString buffer;
+        QTextStream output(&buffer);
+        output << m.data_type;
+
+        if (m.is_pointer)
+            output << QStringLiteral("* ");
+
+        output << padding;
+
+        for (auto &dim : m.array_dims) {
+            output << '[' << dim << ']';
+        }
+
+        if (m.bit_size) {
+            output << QStringLiteral(" : ") << m.bit_size;
+        }
+        return buffer;
+    };
+
+    if (_parser->containsStruct(t)) {
+        auto r = _parser->structMembers(t);
+        for (auto &m : r) {
+            buffer.append(op(m));
+        }
+    } else if (_parser->containsUnion(t)) {
+        auto r = _parser->unionMembers(t);
+        for (auto &m : r) {
+            buffer.append(op(m));
+        }
+    }
+    return buffer;
+}
+
 bool WingCStruct::parseFromSource(const WingHex::SenderInfo &sender,
                                   const QString &header) {
     Q_UNUSED(sender);
@@ -1004,6 +1153,33 @@ QStringList WingCStruct::getParsedErrors(const WingHex::SenderInfo &sender) {
 QStringList WingCStruct::getParsedWarns(const WingHex::SenderInfo &sender) {
     Q_UNUSED(sender);
     return getParsedWarns();
+}
+
+QStringList
+WingCStruct::structOrUnionMemberNames(const WingHex::SenderInfo &sender,
+                                      const QString &type) {
+    Q_UNUSED(sender);
+    return structOrUnionMemberNames(type);
+}
+
+QStringList
+WingCStruct::structOrUnionMemberDataTypes(const WingHex::SenderInfo &sender,
+                                          const QString &type) {
+    Q_UNUSED(sender);
+    return structOrUnionMemberDataTypes(type);
+}
+
+QStringList
+WingCStruct::structOrUnionMemberDecls(const WingHex::SenderInfo &sender,
+                                      const QString &type) {
+    Q_UNUSED(sender);
+    return structOrUnionMemberDecls(type);
+}
+
+QStringList WingCStruct::structOrUnionMemberDeclWithoutNames(
+    const WingHex::SenderInfo &sender, const QString &type) {
+    Q_UNUSED(sender);
+    return structOrUnionMemberDeclWithoutNames(type);
 }
 
 QString WingCStruct::getqsizeTypeAsString() const {
@@ -1945,6 +2121,55 @@ QVariant WingCStruct::getParsedWarns(const QVariantList &params) {
         return getScriptCallError(-1, tr("InvalidParamsCount"));
     }
     return getParsedWarns();
+}
+
+QVariant WingCStruct::structOrUnionMemberNames(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return structOrUnionMemberNames(type);
+}
+
+QVariant WingCStruct::structOrUnionMemberDataTypes(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return structOrUnionMemberDataTypes(type);
+}
+
+QVariant WingCStruct::structOrUnionMemberDecls(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return structOrUnionMemberDecls(type);
+}
+
+QVariant
+WingCStruct::structOrUnionMemberDeclWithoutNames(const QVariantList &params) {
+    if (params.size() != 1) {
+        return getScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+    auto type_v = params.at(0);
+    if (!type_v.canConvert<QString>()) {
+        return getScriptCallError(-2, tr("InvalidParam"));
+    }
+    auto type = type_v.toString();
+    return structOrUnionMemberDeclWithoutNames(type);
 }
 
 bool WingCStruct::isLittleEndian() const { return m_islittle; }

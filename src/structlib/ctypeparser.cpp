@@ -61,9 +61,11 @@ CTypeParser::CTypeParser(const std::function<void(const MsgInfo &)> &msgcb)
 
 void CTypeParser::initialize() {
 
-#define ADD_TYPE(T, MT) type_maps_.insert(#T, qMakePair(MT, sizeof(T)))
+#define ADD_TYPE(T, MT)                                                        \
+    type_maps_.insert(QStringLiteral(#T), qMakePair(MT, sizeof(T)))
 
-#define ADD_TYPE_S(T, MT, S) type_maps_.insert(#T, qMakePair(MT, S))
+#define ADD_TYPE_S(T, MT, S)                                                   \
+    type_maps_.insert(QStringLiteral(#T), qMakePair(MT, S))
 
     ADD_TYPE(uchar, QMetaType::UChar);
     ADD_TYPE(ushort, QMetaType::UShort);
@@ -912,18 +914,23 @@ PointerMode CTypeParser::pointerMode() const { return _pmode; }
 void CTypeParser::setPointerMode(PointerMode newPmode) {
     switch (newPmode) {
     case PointerMode::X86:
-        type_maps_["intptr_t"] = qMakePair(QMetaType::Long, sizeof(quint32));
-        type_maps_["uintptr_t"] = qMakePair(QMetaType::ULong, sizeof(quint32));
-        type_maps_["intptr"] = qMakePair(QMetaType::Long, sizeof(quint32));
-        type_maps_["uintptr"] = qMakePair(QMetaType::ULong, sizeof(quint32));
+        type_maps_[QStringLiteral("intptr_t")] =
+            qMakePair(QMetaType::Long, sizeof(quint32));
+        type_maps_[QStringLiteral("uintptr_t")] =
+            qMakePair(QMetaType::ULong, sizeof(quint32));
+        type_maps_[QStringLiteral("intptr")] =
+            qMakePair(QMetaType::Long, sizeof(quint32));
+        type_maps_[QStringLiteral("uintptr")] =
+            qMakePair(QMetaType::ULong, sizeof(quint32));
         break;
     case PointerMode::X64:
-        type_maps_["intptr_t"] =
+        type_maps_[QStringLiteral("intptr_t")] =
             qMakePair(QMetaType::LongLong, sizeof(quint64));
-        type_maps_["uintptr_t"] =
+        type_maps_[QStringLiteral("uintptr_t")] =
             qMakePair(QMetaType::ULongLong, sizeof(quint64));
-        type_maps_["intptr"] = qMakePair(QMetaType::LongLong, sizeof(quint64));
-        type_maps_["uintptr"] =
+        type_maps_[QStringLiteral("intptr")] =
+            qMakePair(QMetaType::LongLong, sizeof(quint64));
+        type_maps_[QStringLiteral("uintptr")] =
             qMakePair(QMetaType::ULongLong, sizeof(quint64));
         break;
     }
@@ -944,27 +951,28 @@ bool CTypeParser::setPadAlignment(int newKAlignment) {
 
 void CTypeParser::dumpAllTypes(QTextStream &output) const {
     // dump typedef definitions
-    output << "\ntypedef definitions:" << "\n--------------------" << Qt::endl;
+    output << QStringLiteral("\ntypedef definitions:")
+           << QStringLiteral("\n--------------------") << Qt::endl;
     dumpTypeDefines(output);
 
     // dump numeric const variables or macros
-    output << "\nconstant values:"
-           << "\n--------------------" << Qt::endl;
+    output << QStringLiteral("\nconstant values:")
+           << QStringLiteral("\n--------------------") << Qt::endl;
     dumpConstants(output);
 
     // dump struct definitions
-    output << "\nstruct definitions:"
-           << "\n--------------------" << Qt::endl;
+    output << QStringLiteral("\nstruct definitions:")
+           << QStringLiteral("\n--------------------") << Qt::endl;
     dumpStructs(output);
 
     // dump union definitions
-    output << "\nunion definitions:"
-           << "\n--------------------" << Qt::endl;
+    output << QStringLiteral("\nunion definitions:")
+           << QStringLiteral("\n--------------------") << Qt::endl;
     dumpUnions(output);
 
     // dump enum definitions
-    output << "\nenum definitions:"
-           << "\n--------------------" << Qt::endl;
+    output << QStringLiteral("\nenum definitions:")
+           << QStringLiteral("\n--------------------") << Qt::endl;
     dumpEnums(output);
 }
 
@@ -972,12 +980,13 @@ void CTypeParser::dumpTypeDefines(QTextStream &output) const {
     static QString padding(4, ' ');
     for (auto it = type_defs_.constKeyValueBegin();
          it != type_defs_.constKeyValueEnd(); ++it) {
-        output << padding << it->first << " = " << it->second.first;
+        output << padding << it->first << QStringLiteral(" = ")
+               << it->second.first;
         if (it->second.second) {
             output << '*';
         }
         if (!isCompletedType(it->first)) {
-            output << " [?]";
+            output << QStringLiteral(" [?]");
         }
         output << Qt::endl;
     }
@@ -988,13 +997,13 @@ void CTypeParser::dumpConstants(QTextStream &output) const {
     for (auto it = const_defs_.constKeyValueBegin();
          it != const_defs_.constKeyValueEnd(); ++it) {
         auto v = it->second;
-        output << padding << it->first << padding << " = ";
+        output << padding << it->first << padding << QStringLiteral(" = ");
         if (std::holds_alternative<qint64>(v)) {
             output << std::get<qint64>(v);
         } else if (std::holds_alternative<quint64>(v)) {
             output << std::get<quint64>(v);
         } else {
-            output << "?";
+            output << '?';
         }
         output << Qt::endl;
     }
@@ -1005,11 +1014,11 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
     for (auto it = struct_defs_.constKeyValueBegin();
          it != struct_defs_.constKeyValueEnd(); ++it) {
 
-        output << "struct " << it->first;
+        output << QStringLiteral("struct ") << it->first;
         if (!isCompletedType(it->first)) {
-            output << " [?]";
+            output << QStringLiteral(" [?]");
         }
-        output << ":" << Qt::endl;
+        output << ':' << Qt::endl;
 
         auto members = it->second;
         while (!members.empty()) {
@@ -1017,7 +1026,7 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
             output << padding << var.data_type;
 
             if (var.is_pointer)
-                output << "* ";
+                output << QStringLiteral("* ");
 
             output << padding;
             if (var.var_name.isEmpty()) {
@@ -1027,19 +1036,21 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
             }
 
             for (auto &dim : var.array_dims) {
-                output << "[" << dim << "]";
+                output << '[' << dim << ']';
             }
 
             if (var.bit_size) {
-                output << " : " << var.bit_size;
+                output << QStringLiteral(" : ") << var.bit_size;
             }
 
-            output << padding << "(off: " << var.offset
-                   << ", size: " << var.var_size << ")";
+            output << padding << QStringLiteral("(off: ") << var.offset
+                   << QStringLiteral(", size: ") << var.var_size << ')';
 
             if (var.bit_size) {
-                output << " { mask: " << QString::number(var.op.mask, 16)
-                       << ", shift: " << var.op.shift << " }";
+                output << QStringLiteral(" { mask: ")
+                       << QString::number(var.op.mask, 16)
+                       << QStringLiteral(", shift: ") << var.op.shift
+                       << QStringLiteral(" }");
             }
 
             output << Qt::endl;
@@ -1048,8 +1059,8 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
         }
 
         auto type = it->first;
-        output << padding << "(size = " << type_maps_.value(type).second
-               << ")\n"
+        output << padding << QStringLiteral("(size = ")
+               << type_maps_.value(type).second << QStringLiteral(")\n")
                << Qt::endl;
     }
 }
@@ -1059,11 +1070,11 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
     for (auto itu = union_defs_.constKeyValueBegin();
          itu != union_defs_.constKeyValueEnd(); ++itu) {
 
-        output << "union " << itu->first;
+        output << QStringLiteral("union ") << itu->first;
         if (!isCompletedType(itu->first)) {
-            output << " [?]";
+            output << QStringLiteral(" [?]");
         }
-        output << ":" << Qt::endl;
+        output << ':' << Qt::endl;
 
         auto members = itu->second;
         while (!members.isEmpty()) {
@@ -1071,7 +1082,7 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
             output << padding << var.data_type;
 
             if (var.is_pointer)
-                output << "* ";
+                output << QStringLiteral("* ");
 
             output << padding;
             if (var.var_name.isEmpty()) {
@@ -1081,15 +1092,15 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
             }
 
             for (auto &dim : var.array_dims) {
-                output << "[" << dim << "]";
+                output << '[' << dim << ']';
             }
 
-            output << padding << "(" << var.var_size << ")" << Qt::endl;
+            output << padding << '(' << var.var_size << ')' << Qt::endl;
 
             members.pop_front();
         }
-        output << padding << "(size = " << type_maps_.value(itu->first).second
-               << ")\n"
+        output << padding << QStringLiteral("(size = ")
+               << type_maps_.value(itu->first).second << QStringLiteral(")\n")
                << Qt::endl;
     }
 }
@@ -1099,18 +1110,18 @@ void CTypeParser::dumpEnums(QTextStream &output) const {
     for (auto itv = enum_defs_.constKeyValueBegin();
          itv != enum_defs_.constKeyValueEnd(); ++itv) {
 
-        output << "enum " << itv->first << ":" << Qt::endl;
+        output << QStringLiteral("enum ") << itv->first << ':' << Qt::endl;
 
         auto members = itv->second;
         for (auto &n : members) {
-            output << padding << n << "(";
+            output << padding << n << '(';
             auto value = const_defs_.value(n);
             if (std::holds_alternative<quint64>(value)) {
                 output << std::get<quint64>(value) << 'u';
             } else {
                 output << std::get<qint64>(value);
             }
-            output << ")" << Qt::endl;
+            output << ')' << Qt::endl;
         }
 
         output << '\n' << Qt::endl;
