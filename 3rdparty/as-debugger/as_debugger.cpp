@@ -1211,17 +1211,43 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
                     // Check if a given breakpoint fall on a line with code or
                     // else adjust it to the next line
                     if (bp.needAdjust) {
-                        int line = func->FindNextLineWithCode(bp.line);
-                        if (line >= 0) {
+                        // Use GetLineEntryCount and GetLineEntry to build a
+                        // list of valid lines This will also work for functions
+                        // compiled from multiple sections, e.g. inlined
+                        // functions, injected code, etc.
+                        int lowestLine = bp.line + 1;
+                        int nextLine = bp.line - 1;
+
+                        // The function may be declared earlier than the
+                        // breakpoint even though the first line of code is only
+                        // after it
+                        int row;
+                        const char *sectionName;
+                        func->GetDeclaredAt(&sectionName, &row, 0);
+
+                        if (row < lowestLine)
+                            lowestLine = row;
+
+                        int lineEntries = func->GetLineEntryCount();
+                        for (int i = 0; i < lineEntries; i++) {
+                            func->GetLineEntry(i, &row, 0, &sectionName, 0);
+                            if (row < lowestLine)
+                                lowestLine = row;
+                            if (row >= bp.line &&
+                                (row < nextLine || nextLine < bp.line))
+                                nextLine = row;
+                        }
+
+                        if (lowestLine <= bp.line && nextLine >= bp.line) {
                             bp.needAdjust = false;
-                            if (line != bp.line) {
+                            if (nextLine != bp.line) {
                                 // Moving break point to next line with code
                                 auto old = bp.line;
                                 // Move the breakpoint to the next line
-                                bp.line = line;
+                                bp.line = nextLine;
 
                                 if (debugger->onAdjustBreakPoint) {
-                                    debugger->onAdjustBreakPoint(old, line,
+                                    debugger->onAdjustBreakPoint(old, nextLine,
                                                                  section);
                                 }
                             }
@@ -1246,12 +1272,14 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
             auto func = ctx->GetFunction(0);
 
             if (func) {
-                func->GetDeclaredAt(nullptr, &decl_row, nullptr);
-
                 if (debugger->function_breakpoints.find(func->GetName()) !=
-                        debugger->function_breakpoints.end() &&
-                    row == func->FindNextLineWithCode(decl_row))
-                    break_from_bp = true;
+                    debugger->function_breakpoints.end()) {
+                    auto curRow = 0;
+                    func->GetLineEntry(0, &curRow, nullptr, nullptr, nullptr);
+                    if (curRow == row) {
+                        break_from_bp = true;
+                    }
+                }
             }
         }
     }

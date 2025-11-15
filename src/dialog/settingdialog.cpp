@@ -71,7 +71,6 @@ SettingDialog::SettingDialog(QWidget *parent)
     _dialog = new FramelessDialogBase(parent);
     _dialog->installEventFilter(this);
     _dialog->buildUpContent(this);
-    _dialog->setWindowTitle(this->windowTitle());
 
     ui->btnRestore->setStyleSheet(
         QStringLiteral("QToolButton::down-arrow {width:10px; height:10px; "

@@ -90,6 +90,7 @@ MetaDialog::MetaDialog(QWidget *parent)
 
     buildUpContent(widget);
     setWindowTitle(tr("Metadata"));
+    setWindowIcon(ICONRES("metadata"));
 }
 
 void MetaDialog::on_accept() {

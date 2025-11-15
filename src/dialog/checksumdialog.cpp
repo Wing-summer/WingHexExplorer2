@@ -51,7 +51,8 @@ CheckSumDialog::CheckSumDialog(QWidget *parent) : FramelessDialogBase(parent) {
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setWindowTitle(tr("CheckSum"));
+    setWindowTitle(tr("CheckSum"));
+    setWindowIcon(ICONRES("sum"));
 }
 
 const QVector<int> &CheckSumDialog::getResults() { return _result; }

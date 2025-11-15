@@ -71,6 +71,9 @@ void FramelessDialogBase::buildUpContent(QWidget *content) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(WIN_WIDGET);
 
+    setWindowTitle(content->windowTitle());
+    setWindowIcon(content->windowIcon());
+
 #ifdef QT_DEBUG
     m_isBuilt = true;
 #endif

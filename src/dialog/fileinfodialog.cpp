@@ -134,6 +134,7 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     buildUpContent(widget);
 
     setWindowTitle(tr("FileInfo"));
+    setWindowIcon(ICONRES("info"));
     this->resize(500, 450);
 }
 

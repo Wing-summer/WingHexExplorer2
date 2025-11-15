@@ -27,8 +27,7 @@ SplashDialog::SplashDialog(QWidget *parent)
         QStringLiteral("<html><head/><body><p><span style=\" font-size:16pt; "
                        "font-weight:600;\">%1</span></p></body></html>")
             .arg(qAppName()));
-    setWindowFlags(Qt::CustomizeWindowHint | Qt::FramelessWindowHint |
-                   Qt::Window);
+    setWindowFlags(Qt::SplashScreen | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setModal(true);
     show();

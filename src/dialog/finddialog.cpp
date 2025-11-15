@@ -137,7 +137,8 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     layout->addWidget(dbbox);
 
     buildUpContent(widget);
-    this->setWindowTitle(tr("find"));
+    setWindowTitle(tr("find"));
+    setWindowIcon(ICONRES("find"));
 
     m_lineeditor->setFocus();
 }

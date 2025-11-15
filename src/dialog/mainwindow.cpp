@@ -2720,33 +2720,28 @@ void MainWindow::on_metadataedit() {
     if (hexeditor->documentBytes() > 0) {
         MetaDialog m(this);
         auto cur = hexeditor->cursor();
-        if (cur->currentSelectionLength() > 0) {
-            auto mc = doc->metadata()->get(cur->position().offset());
+        auto mc = doc->metadata()->get(cur->position().offset());
 
-            if (mc.has_value()) {
-                auto meta = mc.value();
-                auto begin = meta.begin;
-                auto end = meta.end;
-                m.setForeGroundColor(meta.foreground);
-                m.setBackGroundColor(meta.background);
-                m.setComment(meta.comment);
-                if (m.exec()) {
-                    auto mi = hexeditor->document()->metadata();
-                    QHexMetadataItem o;
-                    o.begin = begin;
-                    o.end = end;
-                    o.foreground = m.foreGroundColor();
-                    o.background = m.backGroundColor();
-                    o.comment = m.comment();
-                    mi->ModifyMetadata(meta, o);
-                }
-            } else {
-                Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                             tr("NoMetaData"));
+        if (mc.has_value()) {
+            auto meta = mc.value();
+            auto begin = meta.begin;
+            auto end = meta.end;
+            m.setForeGroundColor(meta.foreground);
+            m.setBackGroundColor(meta.background);
+            m.setComment(meta.comment);
+            if (m.exec()) {
+                auto mi = hexeditor->document()->metadata();
+                QHexMetadataItem o;
+                o.begin = begin;
+                o.end = end;
+                o.foreground = m.foreGroundColor();
+                o.background = m.backGroundColor();
+                o.comment = m.comment();
+                mi->ModifyMetadata(meta, o);
             }
         } else {
             Toast::toast(this, NAMEICONRES(QStringLiteral("metadata")),
-                         tr("NoSelection"));
+                         tr("NoMetaData"));
         }
     }
 }
