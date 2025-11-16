@@ -4065,83 +4065,83 @@
 <context>
     <name>ads::CDockAreaTitleBar</name>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="823"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="824"/>
         <source>Detach</source>
         <translation>Detach</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="823"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="824"/>
         <source>Detach Group</source>
         <translation>Detach Group</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="828"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="885"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="829"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="886"/>
         <source>Unpin (Dock)</source>
         <translation>Unpin (Dock)</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="828"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="890"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="829"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="891"/>
         <source>Pin Group</source>
         <translation>Pin Group</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="834"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="835"/>
         <source>Pin Group To...</source>
         <translation>Pin Group To...</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="836"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="837"/>
         <source>Top</source>
         <translation>Top</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="837"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="838"/>
         <source>Left</source>
         <translation>Left</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="838"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="839"/>
         <source>Right</source>
         <translation>Right</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="839"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="840"/>
         <source>Bottom</source>
         <translation>Bottom</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="847"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="902"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="848"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="903"/>
         <source>Minimize</source>
         <translation>Minimize</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="848"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="852"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="902"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="849"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="853"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="903"/>
         <source>Close</source>
         <translation>Close</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="852"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="911"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="853"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="912"/>
         <source>Close Group</source>
         <translation>Close Group</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="858"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="859"/>
         <source>Close Other Groups</source>
         <translation>Close Other Groups</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="894"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="895"/>
         <source>Pin Active Tab (Press Ctrl to Pin Group)</source>
         <translation>Pin Active Tab (Press Ctrl to Pin Group)</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="907"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="908"/>
         <source>Close Active Tab</source>
         <translation>Close Active Tab</translation>
     </message>

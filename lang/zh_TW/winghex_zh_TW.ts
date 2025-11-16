@@ -4065,83 +4065,83 @@
 <context>
     <name>ads::CDockAreaTitleBar</name>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="823"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="824"/>
         <source>Detach</source>
         <translation>脫離</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="823"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="824"/>
         <source>Detach Group</source>
         <translation>脫離標籤組</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="828"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="885"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="829"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="886"/>
         <source>Unpin (Dock)</source>
         <translation>解除固定</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="828"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="890"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="829"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="891"/>
         <source>Pin Group</source>
         <translation>固定標籤組</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="834"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="835"/>
         <source>Pin Group To...</source>
         <translation>固定組至…</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="836"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="837"/>
         <source>Top</source>
         <translation>頂部</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="837"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="838"/>
         <source>Left</source>
         <translation>左側</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="838"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="839"/>
         <source>Right</source>
         <translation>右側</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="839"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="840"/>
         <source>Bottom</source>
         <translation>底部</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="847"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="902"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="848"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="903"/>
         <source>Minimize</source>
         <translation>最小化</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="848"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="852"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="902"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="849"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="853"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="903"/>
         <source>Close</source>
         <translation>關閉</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="852"/>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="911"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="853"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="912"/>
         <source>Close Group</source>
         <translation>關閉標籤組</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="858"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="859"/>
         <source>Close Other Groups</source>
         <translation>關閉其他組</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="894"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="895"/>
         <source>Pin Active Tab (Press Ctrl to Pin Group)</source>
         <translation>固定活動選項卡（按 Ctrl 固定組）</translation>
     </message>
     <message>
-        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="907"/>
+        <location filename="../../3rdparty/Qt-Advanced-Docking-System/src/DockAreaTitleBar.cpp" line="908"/>
         <source>Close Active Tab</source>
         <translation>關閉活動標籤</translation>
     </message>
