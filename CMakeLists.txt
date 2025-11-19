@@ -460,6 +460,8 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptqstring.cpp
     src/scriptaddon/scriptqdictionary.h
     src/scriptaddon/scriptqdictionary.cpp
+    src/scriptaddon/scripturl.h
+    src/scriptaddon/scripturl.cpp
     src/scriptaddon/scriptregex.h
     src/scriptaddon/scriptregex.cpp
     src/scriptaddon/scriptcolor.h

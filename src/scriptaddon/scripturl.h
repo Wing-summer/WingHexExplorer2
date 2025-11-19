@@ -15,8 +15,8 @@
 ** =============================================================================
 */
 
-#ifndef SCRIPTENV_H
-#define SCRIPTENV_H
+#ifndef SCRIPTURL_H
+#define SCRIPTURL_H
 
 #ifndef ANGELSCRIPT_H
 // Avoid having to inform include path if header is already include before
@@ -25,8 +25,8 @@
 
 BEGIN_AS_NAMESPACE
 
-void RegisterEnv(asIScriptEngine *engine);
+void RegisterScriptUrl(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 
-#endif // SCRIPTENV_H
+#endif // SCRIPTURL_H

@@ -493,8 +493,7 @@ private:
 
     //===================================================
 
-    // QHash<EditorView* , Workspace>
-    QHash<EditorView *, QString> m_views;
+    LinkedList<EditorView *> m_views;
 
     QList<QWidget *> m_editStateWidgets;
     QList<QWidget *> m_driverStateWidgets;

@@ -361,14 +361,12 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
             [this](int v) {
-                auto views = m_views.keys();
-                for (auto &p : views) {
+                for (auto &p : m_views) {
                     p->setFontSize(qreal(v));
                 }
             });
     connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
-        auto views = m_views.keys();
-        for (auto &p : views) {
+        for (auto &p : m_views) {
             p->setCopyLimit(v);
         }
     });
@@ -3176,8 +3174,7 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 }
 
 EditorView *MainWindow::findEditorView(const QUrl &filename) {
-    auto views = m_views.keys();
-    for (auto &p : views) {
+    for (auto &p : m_views) {
         if (p->fileNameUrl() == filename) {
             return p;
         }
@@ -3278,7 +3275,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         }
     });
 
-    m_views.insert(editor, ws);
+    m_views.append(editor);
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
     Q_ASSERT(menu);
@@ -3617,15 +3614,18 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
 
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     // different from other common files
-    for (auto p = m_views.constKeyValueBegin(); p != m_views.constKeyValueEnd();
-         ++p) {
+    for (auto &p : m_views) {
+        if (!p->isWorkSpace()) {
+            continue;
+        }
+        auto ws = p->workSpaceName();
 #ifdef Q_OS_WIN
-        if (p->second.compare(file, Qt::CaseInsensitive) == 0) {
+        if (ws.compare(file, Qt::CaseInsensitive) == 0) {
 #else
-        if (p->second == file) {
+        if (ws == file) {
 #endif
             if (editor) {
-                *editor = p->first;
+                *editor = p;
             }
             return ErrFile::AlreadyOpened;
         }
@@ -3688,7 +3688,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
         newName = filename;
     }
 
-    QString workspace = m_views.value(editor);
+    QString workspace = editor->workSpaceName();
     if (forceWorkspace || (workspace.isEmpty() && editor->change2WorkSpace())) {
         QString curFile = newName + PROEXT;
         auto wsfile = getWorkSpaceFileName(curFile);
@@ -3710,7 +3710,6 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
         if (editor->isCloneFile()) {
             editor = editor->cloneParent();
         }
-        m_views[editor] = workspace;
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::FileSaved,
             {QUrl::fromLocalFile(newName), url, isExport,
@@ -3843,8 +3842,7 @@ EditorView *MainWindow::currentEditor() {
 void MainWindow::adjustEditorFocus(EditorView *closedEditor) {
     if (m_dock->focusedDockWidget() == closedEditor) {
         if (!m_views.isEmpty()) {
-            for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); ++p) {
-                auto ev = *p;
+            for (auto &ev : m_views) {
                 if (ev != closedEditor && ev->isCurrentTab()) {
                     ev->setFocus();
                 }
@@ -4331,13 +4329,11 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
 
         // remove temperaily
         QVector<EditorView *> hiddenView;
-        for (auto pview = m_views.keyBegin(); pview != m_views.keyEnd();
-             pview++) {
-            auto view = *pview;
+        for (auto &view : m_views) {
             if (view->isClosed()) {
                 hiddenView.append(view);
             }
-            m_dock->removeDockWidget(*pview);
+            m_dock->removeDockWidget(view);
         }
 
         m_dock->restoreState(layout);
@@ -4345,9 +4341,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
         // add back
         auto centeralWidget = m_dock->centralWidget();
         auto area = centeralWidget->dockAreaWidget();
-        for (auto pview = m_views.keyBegin(); pview != m_views.keyEnd();
-             pview++) {
-            auto view = *pview;
+        for (auto &view : m_views) {
             m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
             if (hiddenView.contains(view)) {
                 view->toggleView(false);
@@ -4402,8 +4396,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     if (!m_views.isEmpty()) {
         bool unSavedFiles = false;
         QList<EditorView *> need2CloseView;
-        for (auto p = m_views.keyBegin(); p != m_views.keyEnd(); p++) {
-            auto editor = *p;
+        for (auto &editor : m_views) {
             bool saved = editor->isSaved();
             if (saved) {
                 need2CloseView << editor;
@@ -4421,10 +4414,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                 this, qAppName(), tr("ConfirmSave"),
                 QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
             if (ret == QMessageBox::Yes) {
-                for (auto pview = m_views.constKeyValueBegin();
-                     pview != m_views.constKeyValueEnd(); ++pview) {
-                    pview->first->save(pview->second, {});
-                    closeEditor(pview->first, true);
+                for (auto &view : m_views) {
+                    view->save(view->workSpaceName());
+                    closeEditor(view, true);
                 }
 
                 if (!m_views.isEmpty()) {
@@ -4432,8 +4424,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                     return;
                 }
             } else if (ret == QMessageBox::No) {
-                auto views = m_views.keys();
-                for (auto &p : views) {
+                for (auto &p : m_views) {
                     closeEditor(p, true);
                 }
             } else {

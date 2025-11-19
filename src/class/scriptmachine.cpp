@@ -50,6 +50,7 @@
 #include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
+#include "scriptaddon/scripturl.h"
 
 #include <QClipboard>
 #include <QMimeData>
@@ -1443,6 +1444,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptFile(engine);
     RegisterScriptDateTime(engine);
     RegisterScriptFileSystem(engine);
+    RegisterScriptUrl(engine);
 
     engine->SetDefaultAccessMask(0x1);
     registerExceptionRoutines(engine);

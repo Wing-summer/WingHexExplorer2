@@ -71,6 +71,28 @@ Q_DECL_UNUSED static inline QIcon ICONRES(const QString &name) {
     }
 }
 
+template <typename T>
+class LinkedList : public std::list<T> {
+    using std::list<T>::list;
+
+public:
+    inline bool contains(const T &var) const {
+        return std::find(this->begin(), this->end(), var) != this->end();
+    }
+
+    inline void append(const T &var) { this->push_back(var); }
+    inline void append(T &&var) { this->push_back(var); }
+
+    inline bool isEmpty() const { return this->empty(); }
+
+    inline void removeOne(const T &var) {
+        auto r = std::find(this->begin(), this->end(), var);
+        if (r != this->end()) {
+            this->erase(r);
+        }
+    }
+};
+
 class Utilities {
 public:
     static inline bool isRoot() {

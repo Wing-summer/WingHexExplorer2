@@ -151,6 +151,8 @@ public:
     bool isExtensionFile() const;
     bool isCommonFile() const;
 
+    QString workSpaceName() const;
+
     int cloneIndex() const;
     bool isSaved() const;
 
@@ -250,7 +252,10 @@ private slots:
                            const WingHex::MetaCallInfo &infos);
 
 private slots:
-    QString currentDocFile(const QObject *caller);
+    QUrl currentDocFile(const QObject *caller);
+    QString currentDocFileName(const QObject *caller);
+    QUrl currentDocWorkSpace(const QObject *caller);
+    QString currentDocWorkSpaceName(const QObject *caller);
 
     // document
     bool isReadOnly(const QObject *caller);
@@ -561,7 +566,7 @@ private:
     QMap<QCryptographicHash::Algorithm, QString> _checkSumData;
 
     DocumentType m_docType = DocumentType::InValid;
-    QString workSpaceName;
+    QString m_workSpaceName;
     QMap<QString, QByteArray> _pluginData;
 
     WingHex::WingIODevice *_dev = nullptr;

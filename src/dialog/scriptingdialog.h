@@ -311,7 +311,7 @@ private:
     QPair<QString, int> _lastCurLine = {QString(), -1};
     bool _needRestart = false;
 
-    QList<ScriptEditor *> m_views;
+    LinkedList<ScriptEditor *> m_views;
     QString m_lastusedpath;
 
     QHash<QString, AsPreprocesser::Result> _curDbgData;

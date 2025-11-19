@@ -39,7 +39,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__AS_FILE__",
       "__AS_FILESYSTEM__", "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__",
       "__WING_REGEX__", "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
-      "__WING_PRINT_LN__", "__WING_CLIPBOARD__"}));
+      "__WING_PRINT_LN__", "__WING_CLIPBOARD__", "__WING_URL__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);

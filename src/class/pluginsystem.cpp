@@ -557,7 +557,7 @@ bool PluginSystem::isCurrentDocEditing(const QObject *sender) {
     return pluginCurrentEditor(plg) != nullptr;
 }
 
-QString PluginSystem::currentDocFile(const QObject *sender) {
+QUrl PluginSystem::currentDocFile(const QObject *sender) {
     auto plg = checkPluginAndReport(sender, __func__);
     if (plg == nullptr) {
         return {};
@@ -566,6 +566,45 @@ QString PluginSystem::currentDocFile(const QObject *sender) {
     auto e = pluginCurrentEditor(plg);
     if (e) {
         return e->currentDocFile(this);
+    }
+    return {};
+}
+
+QString PluginSystem::currentDocFileName(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->currentDocFileName(this);
+    }
+    return {};
+}
+
+QUrl PluginSystem::currentDocWorkSpace(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->currentDocWorkSpace(this);
+    }
+    return {};
+}
+
+QString PluginSystem::currentDocWorkSpaceName(const QObject *sender) {
+    auto plg = checkPluginAndReport(sender, __func__);
+    if (plg == nullptr) {
+        return {};
+    }
+
+    auto e = pluginCurrentEditor(plg);
+    if (e) {
+        return e->currentDocWorkSpaceName(this);
     }
     return {};
 }
@@ -2223,7 +2262,7 @@ ErrFile PluginSystem::exportCurrent(const QObject *sender,
     }
 
     if (view) {
-        auto ws = _win->m_views.value(view);
+        auto ws = view->workSpaceName();
         return view->save(ws, savename, true,
                           EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     }
@@ -2246,7 +2285,7 @@ ErrFile PluginSystem::saveCurrent(const QObject *sender) {
     }
 
     if (view) {
-        auto ws = _win->m_views.value(view);
+        auto ws = view->workSpaceName();
         return view->save(ws, {}, false,
                           EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
     }

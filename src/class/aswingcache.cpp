@@ -33,6 +33,7 @@ asWingCache::asWingCache(asDebugger &dbg, asIScriptContext *ctx)
         registerEvaluator<asIDBDictionaryTypeEvaluator>(engine, "dictionary");
         registerEvaluator<asIDBAnyTypeEvaluator>(engine, "any");
         registerEvaluator<asIDBColorTypeEvaluator>(engine, "color");
+        registerEvaluator<asIDBUrlTypeEvaluator>(engine, "url");
         registerEvaluator<asIDBRegExTypeEvaluator>(engine, "regex::exp");
         registerEvaluator<asIDBRegMatchTypeEvaluator>(engine, "regex::match");
         registerEvaluator<asIDBJsonDocumentTypeEvaluator>(engine,

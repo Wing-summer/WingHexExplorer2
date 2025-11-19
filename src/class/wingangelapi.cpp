@@ -427,8 +427,20 @@ void WingAngelAPI::installHexReaderAPI(asIScriptEngine *engine) {
                 "bool isCurrentDocEditing()");
     registerAPI(
         engine,
-        asMETHODPR(WingHex::IWingPlugin, currentDocFile, (void) const, QString),
-        "string currentDocFile()");
+        asMETHODPR(WingHex::IWingPlugin, currentDocFile, (void) const, QUrl),
+        "url currentDocFile()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentDocFileName,
+                           (void) const, QString),
+                "string currentDocFileName()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentDocWorkSpace,
+                           (void) const, QUrl),
+                "url currentDocWorkSpace()");
+    registerAPI(engine,
+                asMETHODPR(WingHex::IWingPlugin, currentDocWorkSpaceName,
+                           (void) const, QString),
+                "string currentDocWorkSpaceName()");
     registerAPI(
         engine,
         asMETHODPR(WingHex::IWingPlugin, isInsertionMode, (void) const, bool),

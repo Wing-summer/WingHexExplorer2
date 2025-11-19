@@ -361,7 +361,7 @@ ErrFile EditorView::newFile(size_t index) {
     auto fname = tr("Untitled") + istr;
     m_docType = DocumentType::File;
     m_isNewFile = true;
-    workSpaceName.clear();
+    m_workSpaceName.clear();
     auto p = QHexDocument::fromInternalBuffer<QFileBuffer>(false);
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
@@ -417,6 +417,7 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     m_docType = DocumentType::File;
     auto fName = info.absoluteFilePath();
     m_isNewFile = false;
+    m_workSpaceName.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
@@ -492,6 +493,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
 
     m_docType = DocumentType::Extension;
     m_isNewFile = false;
+    m_workSpaceName.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
             &EditorView::updateDocSavedFlag);
@@ -561,7 +563,9 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
         _pluginData = infos.pluginData;
         doc->setDocSaved();
 
-        workSpaceName = filename;
+        // Don't use filename because it's pointer of origin workSpace
+        // It will be empty after openFile or openExtFile
+        m_workSpaceName = finfo.absoluteFilePath();
 
         applyWorkSpaceStyle(this);
         return ret;
@@ -619,7 +623,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
         if (!b) {
             return ErrFile::WorkSpaceUnSaved;
         }
-        this->workSpaceName = workSpaceName;
+        this->m_workSpaceName = workSpaceName;
 
         for (auto &item : m_others) {
             if (item->hasUnsavedState()) {
@@ -759,10 +763,10 @@ ErrFile EditorView::reload() {
 
     switch (documentType()) {
     case DocumentType::File:
-        if (workSpaceName.isEmpty()) {
+        if (m_workSpaceName.isEmpty()) {
             return openFile(fileNameUrl().toLocalFile());
         } else {
-            return openWorkSpace(workSpaceName);
+            return openWorkSpace(m_workSpaceName);
         }
     case DocumentType::Extension:
         return openExtFile(fileNameUrl());
@@ -778,7 +782,7 @@ ErrFile EditorView::closeFile() {
         return ErrFile::Success;
     }
 
-    if (!workSpaceName.isEmpty()) {
+    if (!m_workSpaceName.isEmpty()) {
         // check whether having plugin metadata
         if (checkHasUnsavedState()) {
             return ErrFile::WorkSpaceUnSaved;
@@ -806,7 +810,7 @@ ErrFile EditorView::closeFile() {
 }
 
 bool EditorView::change2WorkSpace() const {
-    return workSpaceName.isEmpty() && m_hex->document()->isMetaDataUnsaved();
+    return m_workSpaceName.isEmpty() && m_hex->document()->isMetaDataUnsaved();
 }
 
 QHexView *EditorView::hexEditor() const { return m_hex; }
@@ -1088,7 +1092,18 @@ bool EditorView::invokeServiceImpl(const QObject *sender, const QString &puid,
     return PluginSystem::instance().invokeServiceImpl(sender, puid, infos);
 }
 
-QString EditorView::currentDocFile(const QObject *caller) {
+QUrl EditorView::currentDocFile(const QObject *caller) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (checkErrAndReport(caller, __func__)) {
+            return {};
+        }
+    }
+
+    return fileNameUrl();
+}
+
+QString EditorView::currentDocFileName(const QObject *caller) {
     auto &plgsys = PluginSystem::instance();
     if (caller != &plgsys) {
         if (checkErrAndReport(caller, __func__)) {
@@ -1098,6 +1113,36 @@ QString EditorView::currentDocFile(const QObject *caller) {
 
     auto file = fileNameUrl();
     return file.url();
+}
+
+QUrl EditorView::currentDocWorkSpace(const QObject *caller) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (checkErrAndReport(caller, __func__)) {
+            return {};
+        }
+    }
+
+    if (isWorkSpace()) {
+        return QUrl::fromLocalFile(m_workSpaceName);
+    } else {
+        return {};
+    }
+}
+
+QString EditorView::currentDocWorkSpaceName(const QObject *caller) {
+    auto &plgsys = PluginSystem::instance();
+    if (caller != &plgsys) {
+        if (checkErrAndReport(caller, __func__)) {
+            return {};
+        }
+    }
+
+    if (isWorkSpace()) {
+        return m_workSpaceName;
+    } else {
+        return {};
+    }
 }
 
 bool EditorView::isReadOnly(const QObject *caller) {
@@ -2677,7 +2722,7 @@ EditorView *EditorView::clone() {
                        QString::number(cloneIndex + 1));
 
     auto tab = ev->tabWidget();
-    if (!workSpaceName.isEmpty()) {
+    if (!m_workSpaceName.isEmpty()) {
         tab->setStyleSheet(
             QStringLiteral("QLabel {text-decoration: underline;}"));
     }
@@ -2755,7 +2800,7 @@ bool EditorView::isWorkSpace() const {
     if (isCloneFile()) {
         return this->cloneParent()->isWorkSpace();
     }
-    return !workSpaceName.isEmpty();
+    return !m_workSpaceName.isEmpty();
 }
 
 QUrl EditorView::fileNameUrl() const {
@@ -2791,6 +2836,8 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     }
     return ads::CDockWidget::eventFilter(watched, event);
 }
+
+QString EditorView::workSpaceName() const { return m_workSpaceName; }
 
 EditorViewContext *EditorView::editorContext() const { return _context; }
 

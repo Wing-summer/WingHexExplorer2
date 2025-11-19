@@ -227,6 +227,67 @@ public:
     }
 };
 
+class asIDBUrlTypeEvaluator : public asIDBObjectTypeEvaluator {
+public:
+    virtual void Evaluate(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
+        if (type == nullptr) {
+            return;
+        }
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+        var->expandable = true;
+
+        const QUrl *s = var->address.ResolveAs<const QUrl>();
+        var->value = fmt::format("url<\"{}\">", s->fileName().toStdString());
+    }
+
+    virtual void Expand(asIDBVariable::Ptr var) const override {
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto ctx = cache.ctx;
+        auto type = ctx->GetEngine()->GetTypeInfoByName("string");
+        if (type == nullptr) {
+            return;
+        }
+        auto typeID = type->GetTypeId();
+        const QUrl *s = var->address.ResolveAs<const QUrl>();
+
+        {
+            // scheme
+            auto child = var->CreateChildVariable(
+                "[scheme]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
+            child->evaluated = true;
+            child->value = fmt::format("\"{}\"", s->scheme().toStdString());
+        }
+        {
+            // authority
+            auto child = var->CreateChildVariable(
+                "[authority]", {},
+                cache.GetTypeNameFromType({typeID, asTM_NONE}));
+            child->evaluated = true;
+            child->value = fmt::format("\"{}\"", s->authority().toStdString());
+        }
+        {
+            // path
+            auto child = var->CreateChildVariable(
+                "[path]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
+            child->evaluated = true;
+            child->value = fmt::format("\"{}\"", s->path().toStdString());
+        }
+        {
+            // fileName
+            auto child = var->CreateChildVariable(
+                "[fileName]", {},
+                cache.GetTypeNameFromType({typeID, asTM_NONE}));
+            child->evaluated = true;
+            child->value = fmt::format("\"{}\"", s->fileName().toStdString());
+        }
+    }
+};
+
 class asIDBColorTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
