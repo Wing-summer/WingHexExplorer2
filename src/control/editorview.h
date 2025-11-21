@@ -228,7 +228,7 @@ private:
 
     void setFileNameUrl(const QUrl &fileName);
 
-    QMap<QString, QByteArray> savePluginData();
+    void savePluginData();
     bool checkHasUnsavedState() const;
 
     FindResultModel::FindInfo readContextFinding(qsizetype offset,

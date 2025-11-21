@@ -615,7 +615,8 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     if (needSaveWS) {
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
-        infos.pluginData = savePluginData();
+        savePluginData();
+        infos.pluginData = _pluginData;
 
         auto b = WorkSpaceManager::saveWorkSpace(
             workSpaceName, fileName.url(), doc->bookMarks(),
@@ -764,9 +765,11 @@ ErrFile EditorView::reload() {
     switch (documentType()) {
     case DocumentType::File:
         if (m_workSpaceName.isEmpty()) {
-            return openFile(fileNameUrl().toLocalFile());
+            auto fileName = fileNameUrl();
+            return openFile(fileName.toLocalFile());
         } else {
-            return openWorkSpace(m_workSpaceName);
+            auto fileName = m_workSpaceName;
+            return openWorkSpace(fileName);
         }
     case DocumentType::Extension:
         return openExtFile(fileNameUrl());
@@ -938,19 +941,14 @@ void EditorView::setFileNameUrl(const QUrl &fileName) {
     }
 }
 
-QMap<QString, QByteArray> EditorView::savePluginData() {
-    QMap<QString, QByteArray> ret;
+void EditorView::savePluginData() {
     for (auto p = m_others.constKeyValueBegin();
          p != m_others.constKeyValueEnd(); ++p) {
         if (p->second->hasUnsavedState()) {
             auto data = p->second->saveState();
-            if (data.isEmpty()) {
-                continue;
-            }
-            ret.insert(p->first, data);
+            _pluginData.insert(p->first, data);
         }
     }
-    return ret;
 }
 
 bool EditorView::checkHasUnsavedState() const {
