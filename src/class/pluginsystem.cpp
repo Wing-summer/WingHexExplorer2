@@ -3585,8 +3585,8 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
                 auto ext = getPluginID(p);
                 auto res = _win->openExtFile(ext, file, &view);
 
-                if (res == ErrFile::AlreadyOpened) {
-                    Q_ASSERT(view);
+                if (res == ErrFile::AlreadyOpened &&
+                    view != _win->m_curEditor) {
                     view->raise();
                     view->setFocus();
                     return;

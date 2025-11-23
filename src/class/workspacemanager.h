@@ -38,14 +38,18 @@ class WorkSpaceManager {
 
 public:
     explicit WorkSpaceManager();
-    bool static saveWorkSpace(const QString &filename, const QUrl &file,
+    static bool saveWorkSpace(const QString &filename, const QUrl &file,
                               const QMap<qsizetype, QString> &bookmarks,
                               const QVector<QHexMetadataItem> &metas,
                               const WorkSpaceInfo &infos);
-    bool static loadWorkSpace(const QString &filename, QUrl &file,
+    static bool loadWorkSpace(const QString &filename, QUrl &file,
                               QMap<qsizetype, QString> &bookmarks,
                               QVector<QHexMetadataItem> &metas,
-                              WorkSpaceInfo &infos);
+                              WorkSpaceInfo &infos, QJsonDocument doc = {});
+
+    static QJsonDocument loadWorkSpace(const QString &filename);
+    static QUrl loadWorkSpaceDocFile(const QString &filename,
+                                     const QJsonDocument &doc);
 
 private:
     QString static getColorString(const QColor &color);

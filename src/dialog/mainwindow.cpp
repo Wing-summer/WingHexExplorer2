@@ -39,6 +39,7 @@
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "class/wingupdater.h"
+#include "class/workspacemanager.h"
 #include "control/toast.h"
 #include "define.h"
 #include "dialog/layoutdeldialog.h"
@@ -248,8 +249,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     ret = openExtFile(ext, file, &editor);
                 }
 
-                if (ret == ErrFile::AlreadyOpened) {
-                    Q_ASSERT(editor);
+                if (ret == ErrFile::AlreadyOpened && editor != m_curEditor) {
                     if (editor) {
                         editor->raise();
                         editor->setFocus();
@@ -2090,8 +2090,7 @@ void MainWindow::on_openfile() {
             } else if (res == ErrFile::Permission) {
                 WingMessageBox::critical(this, tr("Error"),
                                          tr("FilePermission"));
-            } else if (res == ErrFile::AlreadyOpened) {
-                Q_ASSERT(editor);
+            } else if (res == ErrFile::AlreadyOpened && editor != m_curEditor) {
                 if (editor) {
                     editor->raise();
                     editor->setFocus();
@@ -2123,8 +2122,7 @@ void MainWindow::on_openworkspace() {
     m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
     EditorView *editor = nullptr;
     auto res = openWorkSpace(filename, &editor);
-    if (res == ErrFile::AlreadyOpened) {
-        Q_ASSERT(editor);
+    if (res == ErrFile::AlreadyOpened && editor != m_curEditor) {
         if (editor) {
             editor->raise();
             editor->setFocus();
@@ -3488,6 +3486,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     m_curEditor = cur;
     hexeditor->getStatus();
+    updateNumberTable(true);
+    updateStringDec();
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::FileSwitched,
@@ -3614,16 +3614,16 @@ ErrFile MainWindow::openExtFile(const QString &ext, const QString &file,
 
 ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     // different from other common files
+    auto wsDoc = WorkSpaceManager::loadWorkSpace(file);
+    if (wsDoc.isEmpty()) {
+        return ErrFile::InvalidFormat;
+    }
+    auto fName = WorkSpaceManager::loadWorkSpaceDocFile(file, wsDoc);
+    if (!fName.isValid()) {
+        return ErrFile::InvalidFormat;
+    }
     for (auto &p : m_views) {
-        if (!p->isWorkSpace()) {
-            continue;
-        }
-        auto ws = p->workSpaceName();
-#ifdef Q_OS_WIN
-        if (ws.compare(file, Qt::CaseInsensitive) == 0) {
-#else
-        if (ws == file) {
-#endif
+        if (p->fileNameUrl() == fName) {
             if (editor) {
                 *editor = p;
             }
@@ -3640,7 +3640,7 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     auto filename = finfo.absoluteFilePath();
 
     auto ev = new EditorView(this);
-    auto res = ev->openWorkSpace(filename);
+    auto res = ev->openWorkSpace(filename, wsDoc);
 
     if (res != ErrFile::Success) {
         delete ev;
@@ -3809,6 +3809,7 @@ void MainWindow::updateEditModeEnabled() {
         _bookMarkModel->setDocument(nullptr);
         _metadataModel->setDocument(nullptr);
         _hashModel->clearData();
+        m_txtDecode->clear();
         m_aDelBookMark->setEnabled(false);
         m_aDelMetaData->setEnabled(false);
         _undoView->setStack(nullptr);
@@ -4195,7 +4196,6 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
                                     const QString &okMsg,
                                     const QString &errMsg) {
     switch (err) {
-    case WingHex::AlreadyOpened:
     case WingHex::UnSaved:
     case ErrFile::WorkSpaceUnSaved:
         // these flags are no need to report with GUI
@@ -4204,6 +4204,10 @@ bool MainWindow::reportErrFileError(ErrFile err, const QPixmap &toastIcon,
         if (!okMsg.isEmpty()) {
             Toast::toast(this, toastIcon, okMsg);
         }
+    } break;
+    case WingHex::AlreadyOpened: {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("file")),
+                     tr("AlreadyOpened"));
     } break;
     case WingHex::DevNotFound: {
         WingMessageBox::critical(this, tr("Error"), tr("DevNotFound"));

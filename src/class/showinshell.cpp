@@ -23,6 +23,11 @@
 #include <QProcess>
 #include <QStandardPaths>
 
+#ifdef Q_OS_LINUX
+#include <QDBusInterface>
+#include <QUrl>
+#endif
+
 #include "wingmessagebox.h"
 
 #ifdef Q_OS_WIN
@@ -95,11 +100,45 @@ bool ShowInShell::showInWindowsShell(const QString &filePath, bool deselect) {
 }
 #endif
 
+#ifdef Q_OS_LINUX
+bool openFreedesktopFileManager(const QString &path) {
+    if (!QDBusConnection::sessionBus().isConnected()) {
+        return false;
+    }
+    const QLatin1String serviceName =
+        QLatin1String("org.freedesktop.FileManager1");
+    const QLatin1String objectPath =
+        QLatin1String("/org/freedesktop/FileManager1");
+    const QLatin1String interfaceName =
+        QLatin1String("org.freedesktop.FileManager1");
+    QStringList uriList = {QUrl::fromLocalFile(path).toString()};
+    QString startupId;
+    QDBusInterface iface(serviceName, objectPath, interfaceName,
+                         QDBusConnection::sessionBus());
+    if (!iface.isValid()) {
+        return false;
+    }
+    QDBusMessage reply =
+        iface.call(QLatin1String("ShowItems"), uriList, startupId);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+        qDebug() << "Received DBus error:" << reply.errorName()
+                 << reply.errorMessage();
+        return false;
+    }
+    return true;
+}
+#else
+bool openFreedesktopFileManager(const QString &path) {
+    Q_UNUSED(path);
+    return false;
+}
+#endif
+
 bool ShowInShell::showInGraphicalShell(QWidget *parent, const QString &pathIn,
                                        bool deselect) {
     const QFileInfo fileInfo(pathIn);
     // Mac, Windows support folder or file.
-    if (HostOsInfo::isWindowsHost()) {
+    if constexpr (HostOsInfo::isWindowsHost()) {
         if (showInWindowsShell(pathIn, deselect))
             return true;
         const auto explorer =
@@ -120,22 +159,25 @@ bool ShowInShell::showInGraphicalShell(QWidget *parent, const QString &pathIn,
             param += QLatin1String("/select,");
         param += QDir::toNativeSeparators(fileInfo.canonicalFilePath());
         return QProcess::startDetached(explorer, param);
-    } else if (HostOsInfo::isMacHost()) {
+    } else if constexpr (HostOsInfo::isMacHost()) {
         QStringList openArgs;
         openArgs << QLatin1String("-R") << fileInfo.canonicalFilePath();
         int rc = QProcess::execute(QLatin1String("/usr/bin/open"), openArgs);
         return rc != -2 && rc != 1;
     } else {
-        // we cannot select a file here, because no file browser really
-        // supports it...
-        const QString folder = fileInfo.isDir() ? fileInfo.absoluteFilePath()
-                                                : fileInfo.absolutePath();
-        const QString app = QLatin1String("xdg-open");
-        QProcess browserProc;
-        bool success = browserProc.startDetached(app, {folder});
-        const QString error =
-            QString::fromLocal8Bit(browserProc.readAllStandardError());
-        success = success && error.isEmpty();
-        return success;
+        if (!openFreedesktopFileManager(pathIn)) {
+            // ok, fall back to xdg-open
+            const QString folder = fileInfo.isDir()
+                                       ? fileInfo.absoluteFilePath()
+                                       : fileInfo.absolutePath();
+            const QString app = QLatin1String("xdg-open");
+            QProcess browserProc;
+            bool success = browserProc.startDetached(app, {folder});
+            const QString error =
+                QString::fromLocal8Bit(browserProc.readAllStandardError());
+            success = success && error.isEmpty();
+            return success;
+        }
+        return true;
     }
 }

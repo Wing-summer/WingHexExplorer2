@@ -508,7 +508,8 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
     return ErrFile::Success;
 }
 
-ErrFile EditorView::openWorkSpace(const QString &filename) {
+ErrFile EditorView::openWorkSpace(const QString &filename,
+                                  const QJsonDocument &doc) {
     if (isCloneFile()) {
         return ErrFile::ClonedFile;
     }
@@ -524,8 +525,8 @@ ErrFile EditorView::openWorkSpace(const QString &filename) {
     QVector<QHexMetadataItem> metas;
     WorkSpaceInfo infos;
 
-    if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas,
-                                        infos)) {
+    if (WorkSpaceManager::loadWorkSpace(filename, file, bookmarks, metas, infos,
+                                        doc)) {
         // it's a workspace project
         // we should check the type of "file"
         ErrFile ret;

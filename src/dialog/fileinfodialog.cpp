@@ -16,7 +16,9 @@
 */
 
 #include "fileinfodialog.h"
+#include "class/compositeiconengine.h"
 #include "class/pluginsystem.h"
+#include "class/showinshell.h"
 #include "utilities.h"
 
 #include <QDateTime>
@@ -36,15 +38,29 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
     auto widget = new QWidget(this);
     auto layout = new QVBoxLayout(widget);
 
+    constexpr auto ICON_SIZE = 64;
+
     auto l = new QLabel(this);
-    l->setFixedHeight(50);
+    l->setFixedHeight(ICON_SIZE);
     l->setAlignment(Qt::AlignCenter);
 
     QIcon icon;
     auto b = new QTextBrowser(this);
+    b->setOpenLinks(false);
+    connect(b, &QTextBrowser::anchorClicked, this, [this](const QUrl &url) {
+        ShowInShell::showInGraphicalShell(this, url.toLocalFile(), false);
+    });
+
+    auto resetBrowserCursor = [](QTextBrowser *b) {
+        auto cursor = b->textCursor();
+        cursor.setCharFormat({});
+        b->setTextCursor(cursor);
+    };
 
     auto url = editor->fileNameUrl();
     static auto sep = QStringLiteral(" : ");
+    static auto link = QStringLiteral("<a href=\"%1\" title=\"%3\">%2</a>");
+    auto tt = tr("ShowInShell");
     if (url.isLocalFile()) {
         if (EditorView::isNewFileUrl(url)) {
             icon = this->style()->standardIcon(QStyle::SP_FileIcon);
@@ -58,9 +74,22 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
             if (icon.isNull()) {
                 icon = this->style()->standardIcon(QStyle::SP_FileIcon);
             }
+
             QFileInfo finfo(fileName);
+
             b->append(tr("FileName") + sep + finfo.fileName());
-            b->append(tr("FilePath") + sep + finfo.filePath());
+            b->append(tr("FilePath") + sep);
+            b->insertHtml(
+                link.arg(url.toString(QUrl::FullyDecoded), fileName, tt));
+            resetBrowserCursor(b);
+            if (editor->isWorkSpace()) {
+                auto ws = editor->workSpaceName();
+                QFileInfo winfo(ws);
+                b->append(tr("Workspace") + sep + winfo.fileName());
+                b->append(tr("WorkspacePath") + sep);
+                b->insertHtml(link.arg(Utilities::getUrlString(ws), ws, tt));
+                resetBrowserCursor(b);
+            }
             b->append(tr("FileSize") + sep +
                       Utilities::processBytesCount(finfo.size()));
             b->append(tr("Mime") + sep + t.name());
@@ -100,6 +129,14 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
         b->append(
             tr("FileSize") + sep +
             Utilities::processBytesCount(editor->hexEditor()->documentBytes()));
+        if (editor->isWorkSpace()) {
+            auto ws = editor->workSpaceName();
+            QFileInfo winfo(ws);
+            b->append(tr("Workspace") + sep + winfo.fileName());
+            b->append(tr("WorkspacePath") + sep);
+            b->insertHtml(link.arg(Utilities::getUrlString(ws), ws, tt));
+            resetBrowserCursor(b);
+        }
 
         if (dev) {
             auto info = plgsys.getPluginInfo(dev);
@@ -112,20 +149,20 @@ FileInfoDialog::FileInfoDialog(EditorView *editor, QWidget *parent)
         }
     }
 
-    auto availSizes = icon.availableSizes();
-    QList<int> availLens;
-    for (auto &size : availSizes) {
-        if (size.width() != size.height()) {
-            continue;
-        }
-        availLens << size.width();
+    QPixmap ico;
+    if (editor->isWorkSpace()) {
+        CompositeIconEngine engine(ICONRES("pro"), icon);
+        ico = engine.pixmap({ICON_SIZE, ICON_SIZE}, QIcon::Normal,
+                            QIcon::State::Off);
+    } else {
+        QPixmap pixmap(ICON_SIZE, ICON_SIZE);
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        icon.paint(&painter, QRect(0, 0, ICON_SIZE, ICON_SIZE));
+        ico = pixmap;
     }
-    std::sort(availLens.begin(), availLens.end(), std::greater<int>());
-    auto ico = icon.pixmap(availLens.front(), availLens.front())
-                   .toImage()
-                   .scaled(50, 50, Qt::AspectRatioMode::KeepAspectRatio,
-                           Qt::TransformationMode::SmoothTransformation);
-    l->setPixmap(QPixmap::fromImage(ico));
+
+    l->setPixmap(ico);
 
     layout->addWidget(l, Qt::AlignHCenter);
     layout->addSpacing(10);

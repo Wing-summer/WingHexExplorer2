@@ -86,8 +86,8 @@ void Toast::setToastPos(TOAST_POS pos) {
     QSize fontsize = calculateTextSize();
 
     auto font = this->displayFont();
-    auto ICON_SIZE = font.pointSizeF();
-    auto ICON_PADDING = ICON_SIZE + 5;
+    auto metric = QFontMetricsF(font);
+    auto ICON_PADDING = fontsize.height() + metric.horizontalAdvance(' ');
 
     QSizeF windowSize;
     if (m_icon.isNull()) {
@@ -131,9 +131,9 @@ void Toast::paintEvent(QPaintEvent *) {
 
     auto font = this->displayFont();
     painter.setFont(font);
-    auto ICON_SIZE = font.pointSizeF();
-    auto ICON_PADDING = ICON_SIZE + 5;
     auto metric = QFontMetricsF(font);
+    auto ICON_SIZE = metric.height();
+    auto ICON_PADDING = metric.horizontalAdvance(' ');
     if (m_icon.isNull()) {
         painter.setPen(textPen);
         QRectF rect(PADDING, PADDING,
@@ -143,14 +143,13 @@ void Toast::paintEvent(QPaintEvent *) {
                                                  Qt::TextElideMode::ElideRight,
                                                  rect.width() + PADDING / 2));
     } else {
-        painter.drawPixmap(QRect(PADDING,
-                                 int(widgetSize.height() - ICON_SIZE) / 2,
-                                 ICON_SIZE, ICON_SIZE),
-                           m_icon);
+        painter.drawPixmap(QRectF(PADDING, PADDING, ICON_SIZE, ICON_SIZE),
+                           m_icon, {});
 
         painter.setPen(textPen);
-        QRectF rect(PADDING + ICON_PADDING, PADDING,
-                    widgetSize.width() - PADDING - PADDING / 2 - ICON_PADDING,
+        QRectF rect(PADDING + ICON_SIZE + ICON_PADDING, PADDING,
+                    widgetSize.width() - PADDING - PADDING - ICON_SIZE -
+                        ICON_PADDING,
                     widgetSize.height() - PADDING - PADDING);
         painter.drawText(rect, metric.elidedText(m_strContent,
                                                  Qt::TextElideMode::ElideRight,
@@ -201,7 +200,7 @@ void Toast::setTextColor(const QColor &textColor) { m_textColor = textColor; }
 
 QFont Toast::displayFont() const {
     auto font = this->font();
-    font.setPointSizeF(font.pointSizeF() * 1.5);
+    font.setPointSizeF(font.pointSizeF() * 1.8);
     return font;
 }
 

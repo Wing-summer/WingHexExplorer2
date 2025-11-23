@@ -18,6 +18,7 @@
 #ifndef EDITORVIEW_H
 #define EDITORVIEW_H
 
+#include <QJsonDocument>
 #include <QReadWriteLock>
 #include <QStackedWidget>
 
@@ -203,7 +204,8 @@ public:
     ErrFile openExtFile(const QString &ext, const QString &file,
                         bool generateCache = true);
     ErrFile openExtFile(const QUrl &fileName);
-    ErrFile openWorkSpace(const QString &filename);
+    ErrFile openWorkSpace(const QString &filename,
+                          const QJsonDocument &doc = {});
     ErrFile
     save(const QString &workSpaceName, const QString &path = QString(),
          bool isExport = false,

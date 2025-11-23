@@ -36,7 +36,11 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     auto v = qobject_cast<EditorView *>(dw);
     if (v) {
         if (v->isCommonFile()) {
-            initMenuItems(menu, v->fileNameUrl());
+            if (v->isWorkSpace()) {
+                initMenuItems(menu, QUrl::fromLocalFile(v->workSpaceName()));
+            } else {
+                initMenuItems(menu, v->fileNameUrl());
+            }
         }
         auto a = new QAction(ICONRES("info"), tr("FileInfo"), menu);
         connect(a, &QAction::triggered, this, [this]() {

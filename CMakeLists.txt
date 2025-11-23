@@ -70,6 +70,10 @@ if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
+if(LINUX)
+    find_package(Qt6 REQUIRED DBus)
+endif()
+
 if(Qt6_VERSION VERSION_LESS 6.6.2)
     message(FATAL_ERROR "Minimum supported Qt6 version is 6.6.2!")
 endif()
@@ -620,6 +624,10 @@ endif()
 
 if(WIN32)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::AxContainer)
+endif()
+
+if(LINUX)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::DBus)
 endif()
 
 # emit marco in Qt conflicts with antlr4-cpp

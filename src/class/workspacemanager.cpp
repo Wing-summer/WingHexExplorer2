@@ -26,13 +26,123 @@ WorkSpaceManager::WorkSpaceManager() {}
 bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
                                      QMap<qsizetype, QString> &bookmarks,
                                      QVector<QHexMetadataItem> &metas,
-                                     WorkSpaceInfo &infos) {
+                                     WorkSpaceInfo &infos, QJsonDocument doc) {
+    if (doc.isEmpty()) {
+        doc = loadWorkSpace(filename);
+    }
+
+    if (doc.isEmpty()) {
+        return false;
+    }
+
+    bool b;
+    file = loadWorkSpaceDocFile(filename, doc);
+    if (file.isValid()) {
+        auto jobj = doc.object();
+        qsizetype maxbytes = std::numeric_limits<qsizetype>::max();
+        auto values = jobj.value("base");
+        if (!values.isUndefined() && values.isString()) {
+            auto ba = values.toString();
+            auto nbase = ba.toULongLong(&b);
+            if (b)
+                infos.base = nbase;
+        }
+
+        values = jobj.value("metas");
+        if (!values.isUndefined() && values.isArray()) {
+            auto metaitems = values.toArray();
+            for (auto &&item : metaitems) {
+                auto linem = item.toObject();
+                auto begin = linem.value("begin");
+                auto end = linem.value("end");
+                auto comment = linem.value("comment");
+                auto fgcolor = linem.value("fgcolor");
+                auto bgcolor = linem.value("bgcolor");
+                if (!begin.isUndefined() && begin.isString() &&
+                    !end.isUndefined() && end.isString() &&
+                    !comment.isUndefined() && comment.isString() &&
+                    !fgcolor.isUndefined() && fgcolor.isString() &&
+                    !bgcolor.isUndefined() && bgcolor.isString()) {
+                    auto nbegin = begin.toString().toLongLong(&b);
+                    if (!b || nbegin >= maxbytes || nbegin < 0)
+                        continue;
+                    auto nend = end.toString().toLongLong(&b);
+                    if (!b || nend >= maxbytes || nend < 0)
+                        continue;
+                    if (nbegin > nend)
+                        continue;
+
+                    QColor fcolor, bcolor;
+                    auto fgn = fgcolor.toString();
+                    fcolor = QColor(fgn);
+
+                    auto bgn = bgcolor.toString();
+                    bcolor = QColor(bgn);
+
+                    QHexMetadataItem metaitem;
+                    metaitem.begin = nbegin;
+                    metaitem.end = nend;
+                    metaitem.comment = comment.toString();
+                    metaitem.foreground = fcolor;
+                    metaitem.background = bcolor;
+                    metas.append(metaitem);
+                }
+            }
+        }
+        values = jobj.value("bookmarks");
+        if (!values.isUndefined() && values.isArray()) {
+            auto array = values.toArray();
+            for (auto &&item : array) {
+                if (!item.isUndefined() && item.isObject()) {
+                    auto sitem = item.toObject();
+                    auto pos = sitem.value("pos");
+                    auto comment = sitem.value("comment");
+                    if (!pos.isUndefined() && pos.isString() &&
+                        !comment.isUndefined() && comment.isString()) {
+                        auto b = false;
+                        auto ipos = pos.toString().toLongLong(&b);
+                        if (!b || ipos < 0 || ipos >= maxbytes)
+                            continue;
+                        bookmarks.insert(ipos, comment.toString());
+                    }
+                }
+            }
+        }
+
+        values = jobj.value("plugindata");
+        if (!values.isUndefined() && values.isArray()) {
+            auto array = values.toArray();
+            for (auto &&item : array) {
+                if (!item.isUndefined() && item.isObject()) {
+                    auto sitem = item.toObject();
+                    auto plgobj = sitem.value("key");
+                    auto valueobj = sitem.value("value");
+                    if (!plgobj.isUndefined() && plgobj.isString() &&
+                        !valueobj.isUndefined() && valueobj.isString()) {
+                        auto plg = plgobj.toString();
+                        auto value = QByteArray::fromBase64(
+                            valueobj.toString().toLatin1());
+                        if (plg.isEmpty() || value.isEmpty()) {
+                            continue;
+                        }
+                        infos.pluginData.insert(plg, value);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+QJsonDocument WorkSpaceManager::loadWorkSpace(const QString &filename) {
     bool b = false;
     QFile f(filename);
     if (f.exists()) {
         QJsonParseError err;
         if (!f.open(QFile::ReadOnly))
-            return false;
+            return {};
         QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
         f.close();
         if (err.error == QJsonParseError::NoError) {
@@ -41,136 +151,35 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
             if (!t.isUndefined() && t.isString()) {
                 auto type = t.toString();
                 if (!QString::compare(type, "workspace", Qt::CaseInsensitive)) {
-                    auto ff = jobj.value("file");
-                    if (!ff.isUndefined() && ff.isString()) {
-                        auto fi = ff.toString();
-                        auto curDir = QFileInfo(filename).absolutePath();
-                        auto url = QUrl::fromUserInput(fi, curDir,
-                                                       QUrl::AssumeLocalFile);
-
-                        qsizetype maxbytes =
-                            std::numeric_limits<qsizetype>::max();
-
-                        if (url.isLocalFile()) {
-                            auto fi = url.toLocalFile();
-                            QFileInfo finfo(url.toLocalFile());
-                            auto path = finfo.isAbsolute()
-                                            ? fi
-                                            : curDir + QDir::separator() + fi;
-                            finfo.setFile(path);
-                            file = QUrl::fromLocalFile(path);
-                            maxbytes = finfo.size();
-                        } else {
-                            file = url;
-                        }
-
-                        auto values = jobj.value("base");
-                        if (!values.isUndefined() && values.isString()) {
-                            auto ba = values.toString();
-                            auto nbase = ba.toULongLong(&b);
-                            if (b)
-                                infos.base = nbase;
-                        }
-
-                        values = jobj.value("metas");
-                        if (!values.isUndefined() && values.isArray()) {
-                            auto metaitems = values.toArray();
-                            for (auto &&item : metaitems) {
-                                auto linem = item.toObject();
-                                auto begin = linem.value("begin");
-                                auto end = linem.value("end");
-                                auto comment = linem.value("comment");
-                                auto fgcolor = linem.value("fgcolor");
-                                auto bgcolor = linem.value("bgcolor");
-                                if (!begin.isUndefined() && begin.isString() &&
-                                    !end.isUndefined() && end.isString() &&
-                                    !comment.isUndefined() &&
-                                    comment.isString() &&
-                                    !fgcolor.isUndefined() &&
-                                    fgcolor.isString() &&
-                                    !bgcolor.isUndefined() &&
-                                    bgcolor.isString()) {
-                                    auto nbegin =
-                                        begin.toString().toLongLong(&b);
-                                    if (!b || nbegin >= maxbytes || nbegin < 0)
-                                        continue;
-                                    auto nend = end.toString().toLongLong(&b);
-                                    if (!b || nend >= maxbytes || nend < 0)
-                                        continue;
-                                    if (nbegin > nend)
-                                        continue;
-
-                                    QColor fcolor, bcolor;
-                                    auto fgn = fgcolor.toString();
-                                    fcolor = QColor(fgn);
-
-                                    auto bgn = bgcolor.toString();
-                                    bcolor = QColor(bgn);
-
-                                    QHexMetadataItem metaitem;
-                                    metaitem.begin = nbegin;
-                                    metaitem.end = nend;
-                                    metaitem.comment = comment.toString();
-                                    metaitem.foreground = fcolor;
-                                    metaitem.background = bcolor;
-                                    metas.append(metaitem);
-                                }
-                            }
-                        }
-                        values = jobj.value("bookmarks");
-                        if (!values.isUndefined() && values.isArray()) {
-                            auto array = values.toArray();
-                            for (auto &&item : array) {
-                                if (!item.isUndefined() && item.isObject()) {
-                                    auto sitem = item.toObject();
-                                    auto pos = sitem.value("pos");
-                                    auto comment = sitem.value("comment");
-                                    if (!pos.isUndefined() && pos.isString() &&
-                                        !comment.isUndefined() &&
-                                        comment.isString()) {
-                                        auto b = false;
-                                        auto ipos =
-                                            pos.toString().toLongLong(&b);
-                                        if (!b || ipos < 0 || ipos >= maxbytes)
-                                            continue;
-                                        bookmarks.insert(ipos,
-                                                         comment.toString());
-                                    }
-                                }
-                            }
-                        }
-
-                        values = jobj.value("plugindata");
-                        if (!values.isUndefined() && values.isArray()) {
-                            auto array = values.toArray();
-                            for (auto &&item : array) {
-                                if (!item.isUndefined() && item.isObject()) {
-                                    auto sitem = item.toObject();
-                                    auto plgobj = sitem.value("key");
-                                    auto valueobj = sitem.value("value");
-                                    if (!plgobj.isUndefined() &&
-                                        plgobj.isString() &&
-                                        !valueobj.isUndefined() &&
-                                        valueobj.isString()) {
-                                        auto plg = plgobj.toString();
-                                        auto value = QByteArray::fromBase64(
-                                            valueobj.toString().toLatin1());
-                                        if (plg.isEmpty() || value.isEmpty()) {
-                                            continue;
-                                        }
-                                        infos.pluginData.insert(plg, value);
-                                    }
-                                }
-                            }
-                        }
-
-                        return true;
-                    }
+                    return doc;
                 }
             }
         }
     }
-    return false;
+    return {};
+}
+
+QUrl WorkSpaceManager::loadWorkSpaceDocFile(const QString &filename,
+                                            const QJsonDocument &doc) {
+    auto jobj = doc.object();
+    auto ff = jobj.value("file");
+    QUrl file;
+    if (!ff.isUndefined() && ff.isString()) {
+        auto fi = ff.toString();
+        auto curDir = QFileInfo(filename).absolutePath();
+        auto url = QUrl::fromUserInput(fi, curDir, QUrl::AssumeLocalFile);
+        if (url.isLocalFile()) {
+            auto fi = url.toLocalFile();
+            QFileInfo finfo(url.toLocalFile());
+            auto path =
+                finfo.isAbsolute() ? fi : curDir + QDir::separator() + fi;
+            finfo.setFile(path);
+            file = QUrl::fromLocalFile(path);
+        } else {
+            file = url;
+        }
+    }
+    return file;
 }
 
 QString WorkSpaceManager::getColorString(const QColor &color) {
