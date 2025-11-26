@@ -23,11 +23,11 @@ message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
 
 install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
 
-option(WINGHEX_USE_FRAMELESS ON)
-option(WINGHEX_BUILD_TEST_PLUGIN OFF)
-option(WINGHEX_BUILD_SHARED_MEM_EXT OFF)
-option(WINGHEX_ANGEL_LSP ON)
-option(WINGHEX_BUILD_TEST OFF)
+option(WINGHEX_USE_FRAMELESS "Enable custom titlebar support" ON)
+option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
+option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
+option(WINGHEX_ANGEL_LSP "Build LS for AngelScript" ON)
+option(WINGHEX_BUILD_TEST "Build test data generator for WingCStruct" OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")

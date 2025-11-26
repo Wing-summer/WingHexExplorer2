@@ -203,13 +203,6 @@ void RegisterScriptUrl(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-    r = engine->RegisterGlobalFunction(
-        "url fromUserInput(const string &in userInput, "
-        "const string &in workDirectory)",
-        asFUNCTION(QUrl_fromUserInput), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
     // validity / errors
     r = engine->RegisterObjectMethod("url", "bool isValid() const",
                                      asFUNCTION(QUrl_isValid),
@@ -381,11 +374,7 @@ void RegisterScriptUrl(asIScriptEngine *engine) {
                                      asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-    r = engine->RegisterGlobalFunction("url fromLocalFile(const string &in)",
-                                       asFUNCTION(QUrl_fromLocalFile_str),
-                                       asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+
     r = engine->RegisterObjectMethod("url", "string toLocalFile() const",
                                      asFUNCTION(QUrl_toLocalFile),
                                      asCALL_CDECL_OBJFIRST);
@@ -410,4 +399,21 @@ void RegisterScriptUrl(asIScriptEngine *engine) {
                                      asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
+
+    r = engine->SetDefaultNamespace("url");
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    r = engine->RegisterGlobalFunction("url fromLocalFile(const string &in)",
+                                       asFUNCTION(QUrl_fromLocalFile_str),
+                                       asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterGlobalFunction(
+        "url fromUserInput(const string &in userInput, "
+        "const string &in workDirectory)",
+        asFUNCTION(QUrl_fromUserInput), asCALL_CDECL);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+    engine->SetDefaultNamespace("");
 }

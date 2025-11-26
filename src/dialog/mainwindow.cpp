@@ -1791,7 +1791,7 @@ RibbonTabContent *MainWindow::buildSettingPage(RibbonTabContent *tab) {
     {
         auto pannel = tab->addGroup(tr("General"));
         addPannelAction(
-            pannel, QStringLiteral("general"), tr("General"),
+            pannel, QStringLiteral("general"), tr("Setting"),
             &MainWindow::on_settingGeneral,
             shortcuts.keySequence(QKeySequences::Key::SETTING_GENERAL));
 
@@ -1846,7 +1846,8 @@ void MainWindow::buildUpSettingDialog() {
     QString id;
     auto &set = SettingManager::instance();
 
-    m_setdialog = new SettingDialog(this);
+    m_setdialog = new SettingDialog(ICONRES(QStringLiteral("general")),
+                                    tr("Setting"), this);
     updateUI();
 
     auto generalPage = new GeneralSettingDialog(m_setdialog);
@@ -1951,7 +1952,8 @@ void MainWindow::buildUpSettingDialog() {
     });
 
     // script settings
-    m_scriptsetdlg = new SettingDialog(this);
+    m_scriptsetdlg = new SettingDialog(ICONRES(QStringLiteral("scriptset")),
+                                       tr("ScriptSetting"), this);
     auto edit = new QEditConfig(false, m_scriptsetdlg);
     m_scriptsetdlg->addPage(edit);
     connect(edit, &SettingPage::optionNeedRestartChanged, m_scriptsetdlg,

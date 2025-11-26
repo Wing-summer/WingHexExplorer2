@@ -30,7 +30,8 @@
 #include <QPushButton>
 #include <QTimer>
 
-SettingDialog::SettingDialog(QWidget *parent)
+SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
+                             QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingDialog) {
     ui->setupUi(this);
 
@@ -71,6 +72,8 @@ SettingDialog::SettingDialog(QWidget *parent)
     _dialog = new FramelessDialogBase(parent);
     _dialog->installEventFilter(this);
     _dialog->buildUpContent(this);
+    _dialog->setWindowIcon(icon);
+    _dialog->setWindowTitle(title);
 
     ui->btnRestore->setStyleSheet(
         QStringLiteral("QToolButton::down-arrow {width:10px; height:10px; "

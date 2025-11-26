@@ -30,7 +30,8 @@ class SettingDialog : public QWidget {
     Q_OBJECT
 
 public:
-    explicit SettingDialog(QWidget *parent = nullptr);
+    explicit SettingDialog(const QIcon &icon, const QString &title,
+                           QWidget *parent = nullptr);
     virtual ~SettingDialog();
 
 public:
