@@ -807,12 +807,7 @@
         <translation>Clear</translation>
     </message>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="36"/>
-        <source>TopMost</source>
-        <translation>Top Most</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="56"/>
+        <location filename="../../src/class/inspectqtloghelper.cpp" line="44"/>
         <source>Inspect</source>
         <translation>Inspect</translation>
     </message>
@@ -1805,7 +1800,12 @@
         <translation>Unsupported file format</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4391"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4343"/>
+        <source>LayoutRestoreBreak</source>
+        <translation>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4406"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
@@ -2230,7 +2230,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="4191"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4420"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4435"/>
         <source>ConfirmSave</source>
         <translation>Closing unsaved files or workspaces. Are you sure to save?</translation>
     </message>
@@ -3578,7 +3578,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="916"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1763"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1777"/>
         <source>ScriptStillRunning</source>
         <translation>The script is still running. Are you sure to exit?</translation>
     </message>
@@ -3678,8 +3678,13 @@
         <translation>Code formatting failed</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1672"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1692"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1646"/>
+        <source>LayoutRestoreBreak</source>
+        <translation>The editing views are not in the same area. Restoring the layout will disrupt the current simultaneous editing view arrangement. After restoration, they will be merged. Confirm to proceed?</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1686"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1706"/>
         <source>CannotSave2RunScript</source>
         <translation>Unable to save, therefore unable to continue running the script.</translation>
     </message>

@@ -1636,6 +1636,20 @@ void ScriptingDialog::on_restoreLayout() {
     }
 
     auto curEditor = m_curEditor;
+    if (m_views.size() > 1) {
+        auto notSameContainer = std::any_of(
+            m_views.begin(), m_views.end(), [curEditor](ScriptEditor *view) {
+                return curEditor->dockAreaWidget() != view->dockAreaWidget();
+            });
+        if (notSameContainer) {
+            auto ret = WingMessageBox::warning(
+                this, qAppName(), tr("LayoutRestoreBreak"),
+                QMessageBox::Yes | QMessageBox::No);
+            if (ret == QMessageBox::No) {
+                return;
+            }
+        }
+    }
 
     // remove temperaily
     QVector<ScriptEditor *> hiddenView;

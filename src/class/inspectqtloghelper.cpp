@@ -31,18 +31,6 @@ void InspectQtLogHelper::init() {
     QObject::connect(a, &QAction::triggered, qApp, [this]() { _ctx->clear(); });
     menu->addAction(a);
 
-    auto af = ma.at(0);
-    af = menu->insertSeparator(af);
-    a = new QAction(tr("TopMost"), menu);
-    a->setCheckable(true);
-    QObject::connect(a, &QAction::toggled, qApp, [this](bool b) {
-        _logger->setWindowFlag(Qt::WindowStaysOnTopHint, b);
-        if (!_logger->isVisible()) {
-            _logger->setVisible(true);
-        }
-    });
-    menu->insertAction(af, a);
-
     for (auto &a : ma) {
         a->setEnabled(true);
     }

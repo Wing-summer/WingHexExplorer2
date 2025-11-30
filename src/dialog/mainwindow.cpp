@@ -4332,6 +4332,21 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
         m_dock->restoreState(layout);
     } else {
         auto curEditor = m_curEditor;
+        if (m_views.size() > 1) {
+            auto notSameContainer = std::any_of(
+                m_views.begin(), m_views.end(), [curEditor](EditorView *view) {
+                    return curEditor->dockAreaWidget() !=
+                           view->dockAreaWidget();
+                });
+            if (notSameContainer) {
+                auto ret = WingMessageBox::warning(
+                    this, qAppName(), tr("LayoutRestoreBreak"),
+                    QMessageBox::Yes | QMessageBox::No);
+                if (ret == QMessageBox::No) {
+                    return;
+                }
+            }
+        }
 
         // remove temperaily
         QVector<EditorView *> hiddenView;

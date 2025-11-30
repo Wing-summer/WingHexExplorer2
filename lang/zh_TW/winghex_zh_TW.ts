@@ -807,12 +807,7 @@
         <translation>清空</translation>
     </message>
     <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="36"/>
-        <source>TopMost</source>
-        <translation>窗口置頂</translation>
-    </message>
-    <message>
-        <location filename="../../src/class/inspectqtloghelper.cpp" line="56"/>
+        <location filename="../../src/class/inspectqtloghelper.cpp" line="44"/>
         <source>Inspect</source>
         <translation>監視</translation>
     </message>
@@ -1900,7 +1895,7 @@
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="4191"/>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4420"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4435"/>
         <source>ConfirmSave</source>
         <translation>正在關閉未保存的檔或工作區，你確定保存嗎？</translation>
     </message>
@@ -1940,7 +1935,12 @@
         <translation>【錯誤】</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/mainwindow.cpp" line="4391"/>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4343"/>
+        <source>LayoutRestoreBreak</source>
+        <translation>編輯視圖不在同一區域，恢復佈局會破壞現有的同時可見編輯視圖的佈局，恢復後會合並，確認繼續？</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/mainwindow.cpp" line="4406"/>
         <source>ScriptStillRunning</source>
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>
@@ -3576,14 +3576,19 @@
         <translation>代碼格式化失敗</translation>
     </message>
     <message>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1672"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1692"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1646"/>
+        <source>LayoutRestoreBreak</source>
+        <translation>編輯視圖不在同一區域，恢復佈局會破壞現有的同時可見編輯視圖的佈局，恢復後會合並，確認繼續？</translation>
+    </message>
+    <message>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1686"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1706"/>
         <source>CannotSave2RunScript</source>
         <translation>無法保存，故無法繼續運行腳本。</translation>
     </message>
     <message>
         <location filename="../../src/dialog/scriptingdialog.cpp" line="916"/>
-        <location filename="../../src/dialog/scriptingdialog.cpp" line="1763"/>
+        <location filename="../../src/dialog/scriptingdialog.cpp" line="1777"/>
         <source>ScriptStillRunning</source>
         <translation>腳本仍在運行，你確定要退出嗎？</translation>
     </message>
