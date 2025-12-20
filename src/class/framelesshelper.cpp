@@ -25,6 +25,8 @@
 #include <QVBoxLayout>
 #include <QWKWidgets/widgetwindowagent.h>
 
+#include "skinmanager.h"
+
 FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
     : QObject(parent) {
     Q_ASSERT(parent);
@@ -79,6 +81,12 @@ FramelessHelper::FramelessHelper(QWidget *parent, bool isDialog)
     }
 
     windowAgent->setHitTestVisible(m_windowBar, false);
+
+#ifdef Q_OS_WIN
+    windowAgent->setWindowAttribute(QStringLiteral("dark-mode"),
+                                    SkinManager::instance().currentTheme() ==
+                                        SkinManager::Theme::Dark);
+#endif
 
 #ifndef Q_OS_MAC
     connect(m_windowBar, &QWK::WindowBar::minimizeRequested, parent,

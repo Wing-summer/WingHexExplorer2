@@ -87,7 +87,7 @@ void Toast::setToastPos(TOAST_POS pos) {
 
     auto font = this->displayFont();
     auto metric = QFontMetricsF(font);
-    auto ICON_PADDING = fontsize.height() + metric.horizontalAdvance(' ');
+    auto ICON_PADDING = metric.height() + metric.horizontalAdvance(' ');
 
     QSizeF windowSize;
     if (m_icon.isNull()) {
@@ -111,8 +111,8 @@ void Toast::setToastPos(TOAST_POS pos) {
 
     m_pos = pos;
 
-    setGeometry(int(windowsX), int(windowsY), int(windowSize.width()),
-                int(windowSize.height()));
+    setGeometry(qRound(windowsX), qRound(windowsY), qCeil(windowSize.width()),
+                qCeil(windowSize.height()));
 }
 
 Toast::TOAST_POS Toast::lastToastPos() const { return m_pos; }
@@ -136,12 +136,11 @@ void Toast::paintEvent(QPaintEvent *) {
     auto ICON_PADDING = metric.horizontalAdvance(' ');
     if (m_icon.isNull()) {
         painter.setPen(textPen);
-        QRectF rect(PADDING, PADDING,
-                    widgetSize.width() - PADDING - PADDING / 2,
+        QRectF rect(PADDING, PADDING, widgetSize.width() - PADDING - PADDING,
                     widgetSize.height() - PADDING - PADDING);
         painter.drawText(rect, metric.elidedText(m_strContent,
                                                  Qt::TextElideMode::ElideRight,
-                                                 rect.width() + PADDING / 2));
+                                                 rect.width()));
     } else {
         painter.drawPixmap(QRectF(PADDING, PADDING, ICON_SIZE, ICON_SIZE),
                            m_icon, {});

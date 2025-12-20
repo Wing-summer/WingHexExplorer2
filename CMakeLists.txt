@@ -785,7 +785,7 @@ if(WINGHEX_ANGEL_LSP)
             COMMAND ${CMAKE_COMMAND} -E echo
                     "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
-            COMMENT "[4] Packaging with pkg"
+            COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
             COMMAND ${CMAKE_COMMAND} -E copy "${NODE_ROOT_SUBDIR}/package.json"
                     "${BUILD_BIN_DIR}"
             COMMAND ${CMAKE_COMMAND} -E copy "${NODE_SUBDIR}/modIcon_win.js"
@@ -795,7 +795,7 @@ if(WINGHEX_ANGEL_LSP)
             COMMAND ${NODE_EXE} "${BUILD_BIN_DIR}/modIcon_win.js"
             COMMAND ${CMAKE_COMMAND} -E remove "${BUILD_BIN_DIR}/modIcon_win.js"
                     "${BUILD_BIN_DIR}/icon.ico" "${BUILD_BIN_DIR}/package.json"
-            COMMENT "[5] Modifying exe icon"
+            COMMAND ${CMAKE_COMMAND} -E echo "[5] Modifying exe icon"
             VERBATIM)
     else()
         add_custom_command(
@@ -807,7 +807,7 @@ if(WINGHEX_ANGEL_LSP)
             COMMAND ${CMAKE_COMMAND} -E echo
                     "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
-            COMMENT "[4] Packaging with pkg"
+            COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
             VERBATIM)
     endif()
 

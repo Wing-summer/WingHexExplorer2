@@ -2823,9 +2823,14 @@ QAbstractButton#qt_dockwidget_floatbutton
  *  ---------------
  */
 
-QWK--WindowBar
+QWK--WindowBar[bar-active=true]
 {
-    background-color: rgb(29, 32, 35)
+    background-color: #15181A;
+}
+
+QWK--WindowBar[bar-active=false]
+{
+    background-color: #1D2023;
 }
 
 QWK--WindowBar>QLabel#win-title-label {
