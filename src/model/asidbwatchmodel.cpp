@@ -43,8 +43,20 @@ void AsIDBWatchModel::addWatchExpression(const QString &expression) {
     }
     auto p = std::make_shared<WatchItem>();
     p->expression = exp.toStdString();
-    p->result = asIDBExpected<asIDBVariable::WeakPtr>{};
     p->expanded = false;
+
+    bool evaluated = false;
+    if (_dbg) {
+        auto &cache = _dbg->cache;
+        if (cache) {
+            p->result = cache->ResolveExpression(p->expression, 0);
+            evaluated = true;
+        }
+    }
+
+    if (!evaluated) {
+        p->result = asIDBExpected<asIDBVariable::WeakPtr>{};
+    }
 
     m_watchItems.append(std::move(p));
 
@@ -160,7 +172,6 @@ void AsIDBWatchModel::refresh() {
             for (int i = 0; i < m_watchItems.size(); ++i) {
                 m_watchItems[i]->result =
                     asIDBExpected<asIDBVariable::WeakPtr>("error evaluated");
-                ;
             }
             auto newRoots = buildRootsFromWatchItems();
             replaceRoots(newRoots);

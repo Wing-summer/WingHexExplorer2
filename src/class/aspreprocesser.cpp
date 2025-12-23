@@ -330,7 +330,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         while (p < s.size() && s[p].isSpace())
             p++;
         QString rest = s.mid(p);
-        static QRegularExpression re(R"(^(\w+)\b(.*)$)");
+        static QRegularExpression re(QStringLiteral(R"(^(\w+)\b(.*)$)"));
         auto m = re.match(rest);
         QString kw = m.hasMatch() ? m.captured(1) : QString();
         QString args = m.hasMatch() ? m.captured(2) : QString();
@@ -341,7 +341,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             flushCurrLine();
         };
 
-        if (kw == "define" || kw == "undef") {
+        if (kw == QStringLiteral("define") || kw == QStringLiteral("undef")) {
             // Always forbidden in script
             PreprocError e{
                 PreprocErrorCode::ERR_SOURCE_DEFINE_FORBIDDEN,
@@ -355,47 +355,45 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "pragma") {
+        if (kw == QStringLiteral("pragma")) {
             if (pragmaCallback) {
                 auto r = pragmaCallback(args, this, m_currentSource);
-                if (r) {
-                    auto c = r->info;
-                    if (!c.isEmpty()) {
-                        PreprocError e{PreprocErrorCode::ERR_SUCCESS,
-                                       Severity::Info,
-                                       m_currentSource,
-                                       dStartLine,
-                                       dStartCol,
-                                       c};
-                        errorReport(e);
-                    }
-                    c = r->warn;
-                    if (!c.isEmpty()) {
-                        PreprocError e{PreprocErrorCode::ERR_SUCCESS,
-                                       Severity::Info,
-                                       m_currentSource,
-                                       dStartLine,
-                                       dStartCol,
-                                       c};
-                        errorReport(e);
-                    }
-                    c = r->error;
-                    if (!c.isEmpty()) {
-                        PreprocError e{PreprocErrorCode::ERR_ERROR,
-                                       Severity::Error,
-                                       m_currentSource,
-                                       dStartLine,
-                                       dStartCol,
-                                       c};
-                        errorReport(e);
-                    }
+                auto c = r.info;
+                if (!c.isEmpty()) {
+                    PreprocError e{PreprocErrorCode::ERR_SUCCESS,
+                                   Severity::Info,
+                                   m_currentSource,
+                                   dStartLine,
+                                   dStartCol,
+                                   c};
+                    errorReport(e);
+                }
+                c = r.warn;
+                if (!c.isEmpty()) {
+                    PreprocError e{PreprocErrorCode::ERR_SUCCESS,
+                                   Severity::Info,
+                                   m_currentSource,
+                                   dStartLine,
+                                   dStartCol,
+                                   c};
+                    errorReport(e);
+                }
+                c = r.error;
+                if (!c.isEmpty()) {
+                    PreprocError e{PreprocErrorCode::ERR_ERROR,
+                                   Severity::Error,
+                                   m_currentSource,
+                                   dStartLine,
+                                   dStartCol,
+                                   c};
+                    errorReport(e);
                 }
             }
             emitBlankLine();
             return;
         }
 
-        if (kw == "include") {
+        if (kw == QStringLiteral("include")) {
             // parse include token
             QString incPath;
             bool isAngled = false;
@@ -446,7 +444,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "if") {
+        if (kw == QStringLiteral("if")) {
             QString expanded = expandExpressionForIf(args, m_currentSource,
                                                      dStartLine, dStartCol);
             auto er = evalExpression(expanded, m_currentSource, dStartLine,
@@ -468,7 +466,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "ifdef") {
+        if (kw == QStringLiteral("ifdef")) {
             QByteArray ba = args.toUtf8();
             QString name = parseFirstIdentifierInBA(ba);
             if (name.isEmpty()) {
@@ -502,7 +500,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "ifndef") {
+        if (kw == QStringLiteral("ifndef")) {
             QByteArray ba = args.toUtf8();
             QString name = parseFirstIdentifierInBA(ba);
             if (name.isEmpty()) {
@@ -534,7 +532,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "elif") {
+        if (kw == QStringLiteral("elif")) {
             if (condStack.isEmpty()) {
                 PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
                                Severity::Error,
@@ -566,7 +564,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "else") {
+        if (kw == QStringLiteral("else")) {
             if (condStack.isEmpty()) {
                 PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
                                Severity::Error,
@@ -588,7 +586,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
             return;
         }
 
-        if (kw == "endif") {
+        if (kw == QStringLiteral("endif")) {
             if (condStack.isEmpty()) {
                 PreprocError e{PreprocErrorCode::ERR_ELIF_ELSE_WITHOUT_IF,
                                Severity::Error,

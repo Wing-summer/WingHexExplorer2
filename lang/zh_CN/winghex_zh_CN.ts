@@ -2576,7 +2576,7 @@
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="2685"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3293"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3301"/>
         <source>InvalidPluginBrokenInfo</source>
         <translation>加载插件失败：损坏的插件数据</translation>
     </message>
@@ -2586,90 +2586,90 @@
         <translation>程序关闭被取消：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3207"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3215"/>
         <source>- PluginID:</source>
         <translation>- 插件 ID：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3229"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3237"/>
         <source>FoundDrvPluginCount</source>
         <translation>总计发现设备拓展插件数目：</translation>
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="2698"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3287"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3295"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>插件加载失败：非法插件 SDK 版本！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3469"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3537"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3477"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3545"/>
         <source>ErrLoadPluginNoName</source>
         <translation>插件加载失败：非法插件名称！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3317"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3490"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3325"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3498"/>
         <source>ErrLoadInitPlugin</source>
         <translation>插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3270"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3278"/>
         <source>HexExtNeedSingleton</source>
         <translation>十六进制编辑器拓展需要保证单例</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3499"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3507"/>
         <source>PluginName :</source>
         <translation>插件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3500"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3508"/>
         <source>PluginAuthor :</source>
         <translation>插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3501"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3509"/>
         <source>PluginWidgetRegister</source>
         <translation>注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3540"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3548"/>
         <source>ExtPluginAuthor :</source>
         <translation>设备拓展插件作者：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3541"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3549"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>设备拓展注册插件对象中……</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3558"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3566"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>设备拓展插件加载失败：初始化插件失败！</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3581"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3589"/>
         <source>ChooseFile</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3620"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3628"/>
         <source>EmptyNameDockWidget:</source>
         <translation>空的贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3630"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3638"/>
         <source>InvalidNameDockWidget:</source>
         <translation>无效贴边组件名：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3638"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3646"/>
         <source>InvalidNullDockWidget:</source>
         <translation>无效空贴边组件：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3751"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3759"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>该操作在非 UI 线程非法</translation>
     </message>
@@ -2679,13 +2679,13 @@
         <translation>监测到异常推入的撤销命令</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3255"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3263"/>
         <source>UnsafePluginDir</source>
         <translation>不安全的插件目录，请将插件目录设置为仅管理员账户可写</translation>
     </message>
     <message>
         <location filename="../../src/class/pluginsystem.cpp" line="2692"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3290"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3298"/>
         <source>InvalidPluginID</source>
         <translation>加载插件失败：非法插件标识符</translation>
     </message>
@@ -2695,32 +2695,32 @@
         <translation>加载插件失败：重复的插件标识符</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3172"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3180"/>
         <source>FoundPluginCount</source>
         <translation>总计发现插件数目：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3203"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3211"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>有依赖插件加载失败总结</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3208"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3216"/>
         <source>- Dependencies:</source>
         <translation>- 依赖：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3210"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3218"/>
         <source>PUID:</source>
         <translation>插件唯一标志符：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3211"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3219"/>
         <source>Version:</source>
         <translation>版本：</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3218"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3226"/>
         <source>PluginLoadingFinished</source>
         <translation>加载插件完毕！</translation>
     </message>
@@ -3980,70 +3980,70 @@
         <translation>提供基础的文件结构分析支持</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="1778"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1790"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1803"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1812"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1819"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1833"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1845"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1853"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1860"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1867"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1874"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1881"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1888"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1900"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1912"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1924"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1936"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1948"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1960"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1972"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1984"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1996"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2008"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2020"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2032"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2044"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2056"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2067"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2077"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2086"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2098"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2114"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2121"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2128"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2140"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2152"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2165"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1775"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1787"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1800"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1809"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1816"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1830"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1842"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1850"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1857"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1864"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1871"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1878"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1885"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1897"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1909"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1921"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1933"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1945"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1957"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1969"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1981"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1993"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2005"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2017"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2029"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2041"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2053"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2064"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2074"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2083"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2095"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2111"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2118"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2125"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2137"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2149"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2162"/>
         <source>InvalidParamsCount</source>
         <translation>非法参数个数</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="1782"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1794"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1823"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1837"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1892"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1904"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1916"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1928"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1940"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1952"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1964"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1976"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1988"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2000"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2012"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2024"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2036"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2048"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2104"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2132"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2144"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2156"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2169"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1779"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1791"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1820"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1834"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1889"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1901"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1913"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1925"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1937"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1949"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1961"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1973"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1985"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1997"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2009"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2021"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2033"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2045"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2101"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2129"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2141"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2153"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2166"/>
         <source>InvalidParam</source>
         <translation>非法参数</translation>
     </message>

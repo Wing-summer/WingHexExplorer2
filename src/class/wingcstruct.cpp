@@ -182,12 +182,9 @@ WingCStruct::eventOnScriptPragma(const QString &script,
                 QStringLiteral("Unsupported '%1' with 'Long'").arg(param));
             return r;
         }
-    } else {
-        WingHex::PragmaResult r;
-        r.error.append(QStringLiteral("Unsupported pragma command: %1")
-                           .arg(comments.join(' ')));
-        return r;
     }
+
+    return std::nullopt;
 }
 
 void WingCStruct::eventOnScriptPragmaInit() { reset(); }

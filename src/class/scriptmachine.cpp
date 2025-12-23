@@ -1387,10 +1387,9 @@ QString ScriptMachine::debug_backtrace() {
     return {};
 }
 
-std::optional<PragmaResult>
-ScriptMachine::pragmaCallback(const QString &pragmaText,
-                              AsPreprocesser *builder,
-                              const QString &sectionname) {
+PragmaResult ScriptMachine::pragmaCallback(const QString &pragmaText,
+                                           AsPreprocesser *builder,
+                                           const QString &sectionname) {
     asIScriptEngine *engine = builder->getEngine();
 
     // Filter the pragmaText so only what is of interest remains

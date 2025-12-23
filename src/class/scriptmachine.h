@@ -191,9 +191,9 @@ private:
     static void returnContextCallback(asIScriptEngine *engine,
                                       asIScriptContext *ctx, void *param);
 
-    static std::optional<WingHex::PragmaResult>
-    pragmaCallback(const QString &pragmaText, AsPreprocesser *builder,
-                   const QString &sectionname);
+    static WingHex::PragmaResult pragmaCallback(const QString &pragmaText,
+                                                AsPreprocesser *builder,
+                                                const QString &sectionname);
 
     static void debug_break();
 

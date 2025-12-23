@@ -717,7 +717,8 @@ if(WINGHEX_ANGEL_LSP)
     endif()
 
     set(SRC_JS "${NODE_SUBDIR}/src/server.ts")
-    set(DIST_JS "${BUILD_BIN_BUILD_DIR}/dist/angelscript-language-server.js")
+    set(DIST_DIR "${BUILD_BIN_BUILD_DIR}/dist")
+    set(DIST_JS "${DIST_DIR}/angelscript-language-server.js")
     set(OUT_BIN "${BUILD_BIN_DIR}/${OUT_NAME}")
 
     find_program(NODE_EXE NAMES node)
@@ -767,12 +768,17 @@ if(WINGHEX_ANGEL_LSP)
     add_custom_command(
         OUTPUT ${DIST_JS}
         WORKING_DIRECTORY ${NODE_SUBDIR}
+        COMMAND ${CMAKE_COMMAND} -E echo "[0] prepare building folder"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_DIR}"
         COMMAND ${CMAKE_COMMAND} -E echo "[1] npm ci (local deps)"
-        COMMAND ${NPM_EXE} ci --silent
+        COMMAND ${NPM_EXE} ci
         COMMAND ${CMAKE_COMMAND} -E echo "[2] building with esbuild"
         COMMAND ${NPX_EXE} tsc
         COMMAND ${ESBUILD_CMD}
-        COMMENT "Building JS bundle with esbuild -> ${DIST_JS}"
+        COMMAND ${CMAKE_COMMAND} -E echo
+                "Building JS bundle with esbuild -> ${DIST_JS}"
         VERBATIM)
 
     if(WIN32)
@@ -780,8 +786,6 @@ if(WINGHEX_ANGEL_LSP)
             OUTPUT ${OUT_BIN}
             DEPENDS ${DIST_JS}
             WORKING_DIRECTORY ${NODE_SUBDIR}
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
             COMMAND ${CMAKE_COMMAND} -E echo
                     "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
@@ -802,8 +806,6 @@ if(WINGHEX_ANGEL_LSP)
             OUTPUT ${OUT_BIN}
             DEPENDS ${DIST_JS}
             WORKING_DIRECTORY ${NODE_SUBDIR}
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILD_BIN_BUILD_DIR}"
             COMMAND ${CMAKE_COMMAND} -E echo
                     "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}

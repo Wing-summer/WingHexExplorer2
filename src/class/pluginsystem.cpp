@@ -3111,10 +3111,9 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     return true;
 }
 
-std::optional<PragmaResult>
-PluginSystem::processPragma(const QString &section, const QString &plgId,
-                            const QStringList &params) {
-
+PragmaResult PluginSystem::processPragma(const QString &section,
+                                         const QString &plgId,
+                                         const QStringList &params) {
     auto &es = _evplgs[WingHex::IWingPlugin::RegisteredEvent::ScriptPragma];
     auto r =
         std::find_if(es.constBegin(), es.constEnd(), [plgId](IWingPlugin *p) {
@@ -3122,8 +3121,8 @@ PluginSystem::processPragma(const QString &section, const QString &plgId,
         });
     if (r == es.constEnd()) {
         PragmaResult res;
-        res.error.append(QStringLiteral("Unknown pragma command %1 with %2")
-                             .arg(params.join(' '), plgId));
+        res.error.append(
+            QStringLiteral("Unknown pragma module '%1'").arg(plgId));
         return res;
     }
     auto plg = *r;
@@ -3131,7 +3130,16 @@ PluginSystem::processPragma(const QString &section, const QString &plgId,
         plg->eventOnScriptPragmaInit();
         _pragmaedPlg.append(plg);
     }
-    return plg->eventOnScriptPragma(section, params);
+
+    auto ret = plg->eventOnScriptPragma(section, params);
+    if (ret) {
+        return ret.value();
+    } else {
+        PragmaResult res;
+        res.error.append(QStringLiteral("Unknown pragma command %1 with %2")
+                             .arg(params.join(' '), plgId));
+        return res;
+    }
 }
 
 IWingDevice *PluginSystem::ext2Device(const QString &ext) {

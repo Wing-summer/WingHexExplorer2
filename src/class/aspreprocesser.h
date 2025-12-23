@@ -67,7 +67,7 @@ public:
         const QString &file, qint64 line, qint64 column, PreprocErrorCode code,
         Severity severity, const QString &message)>;
 
-    using CPragamaCallback = std::function<std::optional<WingHex::PragmaResult>(
+    using CPragamaCallback = std::function<WingHex::PragmaResult(
         const QString &pragmaText, AsPreprocesser *builder,
         const QString &sectionname)>;
 
