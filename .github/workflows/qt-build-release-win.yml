@@ -29,6 +29,7 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2022_64'
         modules: 'qtactiveqt'
+        tools: 'tools_ninja'
         cache: true
 
     - name: Set up Node.js
@@ -45,10 +46,12 @@ jobs:
         $destinationPath = "C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl"
         Start-Process powershell -ArgumentList "Copy-Item -Path '$sourcePath' -Destination '$destinationPath' -Force" -Verb runAs
 
+    - uses: ilammy/msvc-dev-cmd@v1
+      
     - name: Configure CMake
        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWINGHEX_USE_FRAMELESS=ON -DWINGHEX_BUILD_TEST_PLUGIN=OFF -DWINGHEX_BUILD_SHARED_MEM_EXT=OFF -DWINGHEX_ANGEL_LSP=ON
+      run: cmake -G Ninja -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWINGHEX_USE_FRAMELESS=ON -DWINGHEX_BUILD_TEST_PLUGIN=OFF -DWINGHEX_BUILD_SHARED_MEM_EXT=OFF -DWINGHEX_ANGEL_LSP=ON
     
     - name: Build
        # Build your program with the given configuration

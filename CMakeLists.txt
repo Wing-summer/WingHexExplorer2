@@ -790,15 +790,8 @@ if(WINGHEX_ANGEL_LSP)
                     "[3] packaging with pkg/npm exec/npx"
             COMMAND ${PKG_CMD}
             COMMAND ${CMAKE_COMMAND} -E echo "[4] Packaging with pkg"
-            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_ROOT_SUBDIR}/package.json"
-                    "${BUILD_BIN_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_SUBDIR}/modIcon_win.js"
-                    "${BUILD_BIN_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${NODE_SUBDIR}/icon.ico"
-                    "${BUILD_BIN_DIR}"
-            COMMAND ${NODE_EXE} "${BUILD_BIN_DIR}/modIcon_win.js"
-            COMMAND ${CMAKE_COMMAND} -E remove "${BUILD_BIN_DIR}/modIcon_win.js"
-                    "${BUILD_BIN_DIR}/icon.ico" "${BUILD_BIN_DIR}/package.json"
+            COMMAND ${NODE_EXE} "${NODE_SUBDIR}/modIcon_win.js"
+                    "--basedir=${BUILD_BIN_DIR}"
             COMMAND ${CMAKE_COMMAND} -E echo "[5] Modifying exe icon"
             VERBATIM)
     else()
