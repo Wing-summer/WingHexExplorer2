@@ -2674,16 +2674,13 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
             cret = checkPluginMetadata(m, std::is_same_v<T, IWingPlugin>);
             meta = m;
         } else {
-            cret = PluginStatus::BrokenVersion;
+            cret = PluginStatus::InvalidPlugin;
         }
 
         switch (cret) {
         case PluginStatus::Valid:
             // OK and success
             break;
-        case PluginStatus::BrokenVersion:
-            Logger::critical(tr("InvalidPluginBrokenInfo"));
-            return std::nullopt;
         case PluginStatus::LackDependencies: {
             _lazyplgs.append(fileName);
             return meta;
@@ -2696,6 +2693,9 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
             return std::nullopt;
         case PluginStatus::SDKVersion:
             Logger::critical(tr("ErrLoadPluginSDKVersion"));
+            return std::nullopt;
+        case PluginStatus::InvalidPlugin:
+            Logger::critical(tr("InvalidPlugin"));
             return std::nullopt;
         }
 
@@ -2849,7 +2849,7 @@ PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
         return PluginStatus::DupID;
     }
     if (meta.version.isNull()) {
-        return PluginStatus::BrokenVersion;
+        return PluginStatus::InvalidPlugin;
     }
     if (isPlg) {
         for (auto &d : meta.dependencies) {
@@ -3174,8 +3174,6 @@ void PluginSystem::loadExtPlugin() {
                    QStringLiteral("plugin"));
     plugindir.setNameFilters({"*.wingplg"});
 
-    checkDirRootSafe(plugindir);
-
     auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 
@@ -3231,8 +3229,6 @@ void PluginSystem::loadDevicePlugin() {
                 QStringLiteral("devdrv"));
     devdir.setNameFilters({"*.wingdrv"});
 
-    checkDirRootSafe(devdir);
-
     auto plgs = devdir.entryInfoList();
     Logger::info(tr("FoundDrvPluginCount") + QString::number(plgs.count()));
     if (!plgs.isEmpty()) {
@@ -3248,21 +3244,6 @@ void PluginSystem::loadDevicePlugin() {
 
     for (auto &item : plgs) {
         loadPlugin<IWingDevice>(item, udir);
-    }
-}
-
-void PluginSystem::checkDirRootSafe(const QDir &dir) {
-    if (!Utilities::isRoot()) {
-        auto testFileName =
-            dir.absoluteFilePath(QUuid::createUuid().toString(QUuid::Id128));
-
-        QFile f(testFileName);
-        if (f.open(QFile::WriteOnly)) {
-            f.close();
-            f.remove();
-            Logger::warning(QStringLiteral("<i><u>") + tr("UnsafePluginDir") +
-                            QStringLiteral("</u></i>"));
-        }
     }
 }
 
@@ -3297,8 +3278,8 @@ void PluginSystem::try2LoadHexExtPlugin() {
     case PluginStatus::InvalidID:
         Logger::critical(tr("InvalidPluginID"));
         return;
-    case PluginStatus::BrokenVersion:
-        Logger::critical(tr("InvalidPluginBrokenInfo"));
+    case PluginStatus::InvalidPlugin:
+        Logger::critical(tr("InvalidPlugin"));
         return;
     case PluginStatus::DupID:
     case PluginStatus::LackDependencies:

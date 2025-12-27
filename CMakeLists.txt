@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.2")
+set(PROJECT_VERSION "2.3.3")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
@@ -350,6 +350,10 @@ set(CLASS_SRC
     src/class/aspreprocesser.cpp
     src/class/layoutmanager.h
     src/class/layoutmanager.cpp
+    src/class/cryptographichash.h
+    src/class/cryptographichash.cpp
+    src/class/crcalgorithm.h
+    src/class/crcalgorithm.cpp
     src/class/wingupdater.h
     src/class/wingupdater.cpp
     src/class/richtextitemdelegate.h
@@ -460,6 +464,8 @@ set(SETTING_SRC
     src/settings/qeditconfig.ui)
 
 set(SCRIPT_ADDON_SRC
+    src/scriptaddon/scriptcrypto.h
+    src/scriptaddon/scriptcrypto.cpp
     src/scriptaddon/scriptqstring.h
     src/scriptaddon/scriptqstring.cpp
     src/scriptaddon/scriptqdictionary.h

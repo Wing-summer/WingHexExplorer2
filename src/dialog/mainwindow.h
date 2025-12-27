@@ -462,7 +462,6 @@ private:
 
     ConsoleHighlighAnim *_hlAnim = nullptr;
 
-    bool m_isfinding = false;
     ads::CDockWidget *m_find = nullptr;
     ads::CDockWidget *m_hashtable = nullptr;
     ads::CDockWidget *m_console = nullptr;
@@ -471,8 +470,11 @@ private:
 
     QTableViewExt *m_findresult = nullptr;
     FindResultModel *_findResultModel = nullptr;
+    QTableViewExt *m_hash = nullptr;
     CheckSumModel *_hashModel = nullptr;
+    QTableViewExt *m_bookMark = nullptr;
     BookMarksModel *_bookMarkModel = nullptr;
+    QTableViewExt *m_metadata = nullptr;
     MetaDataModel *_metadataModel = nullptr;
 
     QTableViewExt *m_numshowtable = nullptr;

@@ -19,17 +19,18 @@
 #define CHECKSUMMODEL_H
 
 #include <QAbstractTableModel>
-#include <QCryptographicHash>
+
+#include "class/cryptographichash.h"
 
 class CheckSumModel : public QAbstractTableModel {
     Q_OBJECT
 public:
     explicit CheckSumModel(QObject *parent = nullptr);
 
-    QString checkSumData(QCryptographicHash::Algorithm algorithm) const;
+    QString checkSumData(CryptographicHash::Algorithm algorithm) const;
 
-    void updateCheckSumData(
-        const QMap<QCryptographicHash::Algorithm, QString> &data);
+    void
+    updateCheckSumData(const QMap<CryptographicHash::Algorithm, QString> &data);
 
     void clearData();
 
@@ -42,7 +43,7 @@ public:
                                 int role) const override;
 
 private:
-    QMap<QCryptographicHash::Algorithm, QString> _checkSumData;
+    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
 };
 
 #endif // CHECKSUMMODEL_H

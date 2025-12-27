@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: 寂静的羽夏(wingsummer)
 Package: com.wingsummer.winghexexplorer
 Architecture: amd64
-Version: 1.5.5
+Version: 2.3.3
 Depends: python3
 Section: utils
 Description: 一个基于 QT 和 DTK 开发的强大的开源免费的十六进制编辑器

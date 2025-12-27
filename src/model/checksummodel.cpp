@@ -16,21 +16,20 @@
 */
 
 #include "checksummodel.h"
-#include "utilities.h"
 
 CheckSumModel::CheckSumModel(QObject *parent) : QAbstractTableModel(parent) {
-    for (auto &cs : Utilities::supportedHashAlgorithms()) {
+    for (auto &cs : CryptographicHash::supportedHashAlgorithms()) {
         _checkSumData.insert(cs, QString());
     }
 }
 
 QString
-CheckSumModel::checkSumData(QCryptographicHash::Algorithm algorithm) const {
+CheckSumModel::checkSumData(CryptographicHash::Algorithm algorithm) const {
     return _checkSumData.value(algorithm);
 }
 
 void CheckSumModel::updateCheckSumData(
-    const QMap<QCryptographicHash::Algorithm, QString> &data) {
+    const QMap<CryptographicHash::Algorithm, QString> &data) {
     beginResetModel();
     _checkSumData = data;
     endResetModel();
@@ -40,9 +39,8 @@ void CheckSumModel::clearData() {
     for (auto p = _checkSumData.begin(); p != _checkSumData.end(); ++p) {
         p->clear();
     }
-    Q_EMIT dataChanged(
-        this->index(0, 0),
-        this->index(Utilities::supportedHashAlgorithms().size() - 1, 0));
+    Q_EMIT dataChanged(this->index(0, 0),
+                       this->index(_checkSumData.size() - 1, 0));
 }
 
 int CheckSumModel::rowCount(const QModelIndex &parent) const {
@@ -59,8 +57,7 @@ QVariant CheckSumModel::data(const QModelIndex &index, int role) const {
     switch (role) {
     case Qt::DisplayRole:
     case Qt::ToolTipRole: {
-        auto r =
-            _checkSumData.value(QCryptographicHash::Algorithm(index.row()));
+        auto r = _checkSumData.value(CryptographicHash::Algorithm(index.row()));
         if (index.column() == 0) {
             return r.isEmpty() ? QStringLiteral("-") : r;
         }
@@ -80,7 +77,8 @@ QVariant CheckSumModel::headerData(int section, Qt::Orientation orientation,
                 return tr("Checksum");
             }
         } else {
-            return Utilities::supportedHashAlgorithmStringList().at(section);
+            return CryptographicHash::supportedHashAlgorithmStringList().at(
+                section);
         }
     }
     return QVariant();

@@ -81,41 +81,34 @@ def update(build_path):
 
     print(Fore.GREEN + ">> Checking file integrity..." + Style.RESET_ALL)
 
-    # 验证构建目录
     if not os.path.isdir(build_path) or not os.path.exists(os.path.join(build_path, "CMakeCache.txt")):
         print(
             Fore.RED + "[Error] Not a valid CMake build directory!" + Style.RESET_ALL)
         exit(-1)
 
-    # 版本文件检查
     for vf in ("WINGHEX_VERSION", "QT_VERSION"):
         if not os.path.exists(os.path.join(build_path, vf)):
             print(Fore.RED + f"[Error] {vf} file not found!" + Style.RESET_ALL)
             exit(-1)
 
-    # 可执行文件检查
     exe_src = os.path.join(build_path, PACKAGE_NAME)
     if not os.path.exists(exe_src):
         print(
             Fore.RED + f"[Error] {PACKAGE_NAME} executable not found!" + Style.RESET_ALL)
         exit(-3)
 
-    # 计算 MD5
     with open(exe_src, 'rb') as f:
         md5sum = hashlib.md5(f.read()).hexdigest().upper()
     print(Fore.GREEN + ">> Get MD5: " + md5sum + Style.RESET_ALL)
     print(Fore.GREEN + ">> Installing..." + Style.RESET_ALL)
 
-    # 复制核心文件
     shutil.copy2(exe_src, os.path.join(INSTALL_PATH, PACKAGE_NAME))
     shutil.copy2(os.path.join(build_path, "WingPlugin", "libWingPlugin.so"),
                  os.path.join(INSTALL_PATH, "libWingPlugin.so"))
 
-    # 目录结构
-    for sub in ("plugin", "scripts", "aslib"):
+    for sub in ("plugin", "scripts"):
         create_dir(os.path.join(INSTALL_PATH, sub))
 
-    # 共享资源与多语言
     shutil.copytree(os.path.join(installer_path, "share"),
                     os.path.join(INSTALL_PATH, "share"), dirs_exist_ok=True)
     shutil.copytree(os.path.join(build_path, "lang"),
@@ -125,7 +118,6 @@ def update(build_path):
     shutil.copytree(os.path.join(build_path, "lsp"), os.path.join(
         INSTALL_PATH, "lsp"), dirs_exist_ok=True)
 
-    # 其他材料
     print(Fore.GREEN + ">> Copying License and other materials..." + Style.RESET_ALL)
     material_files = ["LICENSE", "authorband.svg",
                       "licenseband.svg", "screenshot.png", "README.md"]
@@ -135,15 +127,12 @@ def update(build_path):
     shutil.copyfile(os.path.join(project_base, "images", "author.jpg"),
                     os.path.join(INSTALL_PATH, "author.jpg"))
 
-    # 写 md5sums
     with open(os.path.join(INSTALL_PATH, "md5sums"), 'w') as md5f:
         md5f.write(md5sum)
 
-    # 桌面文件
     shutil.copyfile(os.path.join(installer_path, DESKTOP_FILE_NAME),
                     os.path.join(APP_DESKTOP_PATH, DESKTOP_FILE_NAME))
 
-    # 更新 mime 和图标缓存
     cmds = [
         ["xdg-mime", "install",
             os.path.join(INSTALL_PATH, "share", "x-winghex.xml")],
@@ -266,7 +255,6 @@ def main():
                         help=f"Installation directory (default: {DEFAULT_INSTALL_PATH})")
     args = parser.parse_args()
 
-    # 覆盖全局变量
     global INSTALL_PATH
     INSTALL_PATH = args.install_path
 

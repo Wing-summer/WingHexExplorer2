@@ -38,7 +38,7 @@
 
 // a helper function to register Qt enums to AngelScript
 template <typename T>
-void registerAngelType(asIScriptEngine *engine, const char *enumName) {
+inline void registerAngelType(asIScriptEngine *engine, const char *enumName) {
     static_assert(sizeof(T) == sizeof(int), "sizeof(T) != sizeof(int)");
     auto e = QMetaEnum::fromType<T>();
     auto r = engine->RegisterEnum(enumName);
@@ -51,7 +51,8 @@ void registerAngelType(asIScriptEngine *engine, const char *enumName) {
 }
 
 template <typename Func>
-CScriptArray *retarrayWrapperFunction(Func &&getRet, const char *angelType) {
+inline CScriptArray *retarrayWrapperFunction(Func &&getRet,
+                                             const char *angelType) {
     // context, which can be used to obtain a pointer to the
     // engine.
     asIScriptContext *ctx = asGetActiveContext();
@@ -78,8 +79,70 @@ CScriptArray *retarrayWrapperFunction(Func &&getRet, const char *angelType) {
 }
 
 template <typename Func>
-CScriptArray *byteArrayWrapperFunction(Func &&fn) {
+inline CScriptArray *byteArrayWrapperFunction(Func &&fn) {
     return retarrayWrapperFunction(fn, "array<byte>");
+}
+
+inline QStringList cArray2QStringList(const CScriptArray &array,
+                                      bool *ok = nullptr) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+        auto stringID = engine->GetTypeIdByDecl("string");
+        Q_ASSERT(stringID >= 0);
+        bool b = array.GetElementTypeId() == stringID;
+        if (ok) {
+            *ok = b;
+        }
+        if (!b) {
+            return {};
+        }
+
+        QStringList buffer;
+        buffer.reserve(array.GetSize());
+        for (asUINT i = 0; i < array.GetSize(); ++i) {
+            auto item = reinterpret_cast<const QString *>(array.At(i));
+            buffer.append(*item);
+        }
+        return buffer;
+    }
+    return {};
+}
+
+inline QByteArray cArray2ByteArray(const CScriptArray &array,
+                                   bool *ok = nullptr) {
+    // If called from the script, there will always be an active
+    // context, which can be used to obtain a pointer to the engine.
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        asIScriptEngine *engine = ctx->GetEngine();
+        Q_ASSERT(engine);
+        auto byteID = engine->GetTypeIdByDecl("byte");
+        Q_ASSERT(byteID >= 0);
+        bool b = array.GetElementTypeId() == byteID;
+        if (ok) {
+            *ok = b;
+        }
+        if (!b) {
+            return {};
+        }
+
+        auto len = array.GetSize();
+
+        QByteArray buffer;
+        buffer.resize(len);
+        array.AddRef();
+
+        std::memcpy(buffer.data(),
+                    const_cast<CScriptArray &>(array).GetBuffer(), len);
+
+        array.Release();
+        return buffer;
+    }
+    return {};
 }
 
 #endif // ANGELSCRIPTHELPER_H

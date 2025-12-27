@@ -108,7 +108,7 @@ public:
     enum class PluginStatus {
         Valid,
         SDKVersion,
-        BrokenVersion,
+        InvalidPlugin,
         InvalidID,
         DupID,
         LackDependencies
@@ -188,8 +188,6 @@ private:
     void loadExtPlugin();
 
     void loadDevicePlugin();
-
-    void checkDirRootSafe(const QDir &dir);
 
     void try2LoadHexExtPlugin();
 

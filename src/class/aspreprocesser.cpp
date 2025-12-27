@@ -39,7 +39,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(
       "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__AS_FILE__",
       "__AS_FILESYSTEM__", "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__",
       "__WING_REGEX__", "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
-      "__WING_PRINT_LN__", "__WING_CLIPBOARD__", "__WING_URL__"}));
+      "__WING_PRINT_LN__", "__WING_CLIPBOARD__", "__WING_URL__",
+      "__WING_CRYPTO__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -396,8 +397,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
         if (kw == QStringLiteral("include")) {
             // parse include token
             QString incPath;
-            bool isAngled = false;
-            if (!parseIncludePathToken(args, incPath, isAngled)) {
+            if (!parseIncludePathToken(args, incPath)) {
                 // bad include syntax -> report error and emit blank line
                 PreprocError e{
                     PreprocErrorCode::ERR_IF_PARSE,
@@ -405,24 +405,17 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                     m_currentSource,
                     dStartLine,
                     dStartCol,
-                    QStringLiteral("Bad #include syntax: %1, Use #include "
-                                   "\"file\" or #include <file>")
+                    QStringLiteral("Bad #include syntax: %1, use "
+                                   "#include \"file\" pattern instead")
                         .arg(args.trimmed())};
                 errorReport(e);
                 emitBlankLine();
                 return;
             }
 
-            // Resolve path:
-            QString resolved;
-            if (!isAngled) {
-                // for "": first try current file dir, then includePaths
-                QString curDir = QFileInfo(m_currentSource).absolutePath();
-                resolved = resolveIncludeFile(incPath, curDir);
-            } else {
-                // for <>: search only includePaths
-                resolved = resolveIncludeFile(incPath, {});
-            }
+            // Resolve path
+            QString curDir = QFileInfo(m_currentSource).absolutePath();
+            auto resolved = resolveIncludeFile(incPath, curDir);
 
             if (resolved.isEmpty()) {
                 PreprocError e{
@@ -775,16 +768,11 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
 }
 
 bool AsPreprocesser::parseIncludePathToken(const QString &args,
-                                           QString &outPath, bool &isAngled) {
+                                           QString &outPath) {
     QString s = args.trimmed();
-    if (s.size() >= 2 && s.front() == '\"' && s.back() == '\"') {
+    if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') ||
+                          (s.front() == '\'' && s.back() == '\''))) {
         outPath = s.sliced(1, s.size() - 2);
-        isAngled = false;
-        return true;
-    }
-    if (s.size() >= 2 && s.front() == '<' && s.back() == '>') {
-        outPath = s.sliced(1, s.size() - 2);
-        isAngled = true;
         return true;
     }
     return false;
@@ -796,25 +784,13 @@ QString AsPreprocesser::resolveIncludeFile(const QString &filename,
     bool isAbsolute = info.isAbsolute();
     bool hasNoExt = info.suffix().isEmpty();
     QString inc;
-    if (!currentDir.isEmpty()) {
-        if (isAbsolute) {
-            inc = filename;
-        } else {
-            QDir pwd(currentDir);
-            inc = pwd.absoluteFilePath(filename);
-        }
-    } else {
-        // absolute include is not allowed in #include<>
-        if (isAbsolute) {
-            return {};
-        }
+    Q_ASSERT(!currentDir.isEmpty());
 
-        QDir dir(qApp->applicationDirPath());
-        if (!dir.cd(QStringLiteral("aslib"))) {
-            // someone crash the software
-            return {};
-        }
-        inc = dir.absoluteFilePath(filename);
+    if (isAbsolute) {
+        inc = filename;
+    } else {
+        QDir pwd(currentDir);
+        inc = pwd.absoluteFilePath(filename);
     }
 
     if (hasNoExt) {

@@ -182,9 +182,11 @@ EditorView::EditorView(QWidget *parent)
     }
 
     // checksum table data
-    for (auto &cs : Utilities::supportedHashAlgorithms()) {
+    _checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
+    for (auto &cs : CryptographicHash::supportedHashAlgorithms()) {
         _checkSumData.insert(cs, QString());
     }
+    _scrollPoints.assign(ScrollDataPoints::PreallocatedSize, QPoint{0, 0});
 
     this->tabWidget()->installEventFilter(this);
 
@@ -255,28 +257,41 @@ void EditorView::registerQMenu(QMenu *menu) {
     m_menu->addMenu(menu);
 }
 
+bool EditorView::isFindBusy() const {
+    if (m_findMutex.tryLock(10)) {
+        m_findMutex.unlock();
+        return false;
+    }
+    return true;
+}
+
 void EditorView::getCheckSum(const QVector<int> &algorithmID) {
-    auto hashes = Utilities::supportedHashAlgorithms();
+    auto hashes = CryptographicHash::supportedHashAlgorithms();
     for (auto &cs : hashes) {
         _checkSumData.insert(cs, QString());
     }
+
+    _checkSumVisible.assign(decltype(_checkSumVisible)::PreallocatedSize,
+                            false);
+
     if (m_hex->hasSelection()) {
         auto data = m_hex->selectedBytes();
         for (auto &c : algorithmID) {
             auto h = hashes.at(c);
-            QCryptographicHash hash(h);
-            hash.addData(data.join());
+            _checkSumVisible[c] = true;
             _checkSumData.insert(
-                h, QString::fromLatin1((hash.result().toHex().toUpper())));
+                h,
+                QString::fromLatin1(
+                    CryptographicHash::hash(data.join(), h).toHex().toUpper()));
         }
     } else {
         auto io = m_hex->document()->buffer()->ioDevice();
         for (auto &c : algorithmID) {
             auto h = hashes.at(c);
-            QCryptographicHash hash(h);
-            hash.addData(io);
+            _checkSumVisible[c] = true;
             _checkSumData.insert(
-                h, QString::fromLatin1(hash.result().toHex().toUpper()));
+                h, QString::fromLatin1(
+                       CryptographicHash::hash(io, h).toHex().toUpper()));
         }
     }
 }
@@ -2788,7 +2803,7 @@ bool EditorView::isSaved() const {
 
 FindResultModel::FindData &EditorView::findResult() { return m_findData; }
 
-QMap<QCryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
+QMap<CryptographicHash::Algorithm, QString> &EditorView::checkSumResult() {
     return _checkSumData;
 }
 
@@ -2834,6 +2849,18 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
         }
     }
     return ads::CDockWidget::eventFilter(watched, event);
+}
+
+EditorView::ScrollDataPoints &EditorView::scrollPoints() {
+    return _scrollPoints;
+}
+
+const CryptoAlgorithms &EditorView::checkSumVisible() const {
+    return _checkSumVisible;
+}
+
+void EditorView::resetCheckSumVisible() {
+    _checkSumVisible.assign(CryptoAlgorithms::PreallocatedSize, true);
 }
 
 QString EditorView::workSpaceName() const { return m_workSpaceName; }

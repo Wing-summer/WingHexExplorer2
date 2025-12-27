@@ -106,11 +106,6 @@ private:
                      const char *sig);
 
 private:
-    QStringList cArray2QStringList(const CScriptArray &array, int stringID,
-                                   bool *ok = nullptr);
-    QByteArray cArray2ByteArray(const CScriptArray &array, int byteID,
-                                bool *ok = nullptr);
-
     qsizetype getAsTypeSize(int typeId, void *data);
 
     template <typename T>

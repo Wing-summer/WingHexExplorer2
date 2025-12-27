@@ -46,6 +46,7 @@
 #include "class/settingmanager.h"
 #include "define.h"
 #include "scriptaddon/scriptcolor.h"
+#include "scriptaddon/scriptcrypto.h"
 #include "scriptaddon/scriptenv.h"
 #include "scriptaddon/scriptjson.h"
 #include "scriptaddon/scriptqstring.h"
@@ -1419,13 +1420,18 @@ PragmaResult ScriptMachine::pragmaCallback(const QString &pragmaText,
 void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     // all modules can access
     engine->SetDefaultAccessMask(0x3);
+
+    auto r = engine->RegisterTypedef("byte", "uint8"); // register alias
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
     RegisterScriptArray(engine, true);
     RegisterQString(engine);
     RegisterScriptRegex(engine);
     RegisterQStringUtils(engine);
     RegisterQStringRegExSupport(engine);
 
-    auto r = engine->SetDefaultNamespace("math");
+    r = engine->SetDefaultNamespace("math");
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
     RegisterScriptMath(engine);
@@ -1444,6 +1450,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptDateTime(engine);
     RegisterScriptFileSystem(engine);
     RegisterScriptUrl(engine);
+    RegisterScriptCrypto(engine);
 
     engine->SetDefaultAccessMask(0x1);
     registerExceptionRoutines(engine);

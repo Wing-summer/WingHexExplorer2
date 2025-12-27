@@ -20,12 +20,12 @@
 
 #include "framelessdialogbase.h"
 
-#include <QListWidget>
+#include <QTreeWidget>
 
 class CheckSumDialog : public FramelessDialogBase {
     Q_OBJECT
 public:
-    explicit CheckSumDialog(QWidget *parent = nullptr);
+    explicit CheckSumDialog(QVector<int> &cs, QWidget *parent = nullptr);
 
     const QVector<int> &getResults();
 
@@ -33,9 +33,21 @@ private slots:
     void on_accept();
     void on_reject();
 
+    void onItemChanged(QTreeWidgetItem *item, int column);
+    void onItemClicked(QTreeWidgetItem *item, int /*column*/);
+
 private:
-    QListWidget *hashlist = nullptr;
+    static void collectCheckedLeaves(QTreeWidgetItem *item, QList<int> &out);
+
+    void populateData(QVector<int> &cs);
+
+    void updateCheckStatus(QTreeWidgetItem *parent);
+
+private:
+    QTreeWidget *hashlist = nullptr;
+    QTreeWidgetItem *m_pressedItem;
     QVector<int> _result;
+    bool m_updating = false;
 };
 
 #endif // CHECKSUMDIALOG_H

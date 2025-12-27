@@ -857,34 +857,48 @@ ads::CDockAreaWidget *
 MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                                   ads::DockWidgetArea area,
                                   ads::CDockAreaWidget *areaw) {
-    auto hashtable = new QTableViewExt(this);
-    Utilities::applyTableViewProperty(hashtable);
-    hashtable->setColumnWidth(0, 350);
+    m_hash = new QTableViewExt(this);
+    Utilities::applyTableViewProperty(m_hash);
+    m_hash->setColumnWidth(0, 350);
 
     _hashModel = new CheckSumModel(this);
-    hashtable->setModel(_hashModel);
+    m_hash->setModel(_hashModel);
 
-    hashtable->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
+    m_hash->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
     auto a = newAction(ICONRES(QStringLiteral("copy")), tr("Copy"), [=] {
-        auto r = hashtable->currentIndex();
+        auto r = m_hash->currentIndex();
         qApp->clipboard()->setText(
-            _hashModel->checkSumData(QCryptographicHash::Algorithm(r.row())));
+            _hashModel->checkSumData(CryptographicHash::Algorithm(r.row())));
         Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
                      tr("CopyToClipBoard"));
     });
-    hashtable->addAction(a);
-    a = newAction(QStringLiteral("del"), tr("Clear"),
-                  [=]() { _hashModel->clearData(); });
-    hashtable->addAction(a);
-    connect(hashtable->selectionModel(),
-            &QItemSelectionModel::currentRowChanged, a,
-            [=](const QModelIndex &current, const QModelIndex &) {
+    m_hash->addAction(a);
+    a = newAction(QStringLiteral("del"), tr("Clear"), [=]() {
+        auto cur = currentEditor();
+        if (cur) {
+            auto &cs = cur->checkSumResult();
+            for (auto &d : cs) {
+                d.clear();
+            }
+            cur->resetCheckSumVisible();
+        }
+
+        _hashModel->clearData();
+        auto header = m_hash->verticalHeader();
+        auto total = int(CryptographicHash::Algorithm::NumAlgorithms);
+        for (int i = 0; i < total; ++i) {
+            header->showSection(i);
+        }
+    });
+    m_hash->addAction(a);
+    connect(m_hash->selectionModel(), &QItemSelectionModel::currentRowChanged,
+            a, [=](const QModelIndex &current, const QModelIndex &) {
                 a->setEnabled(current.isValid());
             });
 
     auto dw = buildDockWidget(dock, QStringLiteral("CheckSum"), tr("CheckSum"),
-                              hashtable);
+                              m_hash);
     m_hashtable = dw;
     return dock->addDockWidget(area, dw, areaw);
 }
@@ -894,13 +908,13 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
     _bookMarkModel = new BookMarksModel(nullptr);
-    auto bookmarks = new QTableViewExt(this);
-    Utilities::applyTableViewProperty(bookmarks);
-    bookmarks->horizontalHeader()->setDefaultSectionSize(150);
-    bookmarks->setSelectionMode(QTableViewExt::ExtendedSelection);
-    bookmarks->setModel(_bookMarkModel);
+    m_bookMark = new QTableViewExt(this);
+    Utilities::applyTableViewProperty(m_bookMark);
+    m_bookMark->horizontalHeader()->setDefaultSectionSize(150);
+    m_bookMark->setSelectionMode(QTableViewExt::ExtendedSelection);
+    m_bookMark->setModel(_bookMarkModel);
 
-    connect(bookmarks, &QTableView::doubleClicked, this,
+    connect(m_bookMark, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -913,25 +927,25 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
                 hexeditor->cursor()->moveTo(offset);
             });
 
-    bookmarks->addAction(
+    m_bookMark->addAction(
         newAction(QStringLiteral("export"), tr("ExportResult"),
                   [this]() { saveTableContent(_bookMarkModel); }));
 
-    auto sep = new QAction(bookmarks);
+    auto sep = new QAction(m_bookMark);
     sep->setSeparator(true);
-    bookmarks->addAction(sep);
+    m_bookMark->addAction(sep);
 
     m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
-                                 tr("DeleteBookMark"), bookmarks);
+                                 tr("DeleteBookMark"), m_bookMark);
     connect(m_aDelBookMark, &QAction::triggered, this, [=] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
         }
-        auto s = bookmarks->selectionModel()->selectedRows();
+        auto s = m_bookMark->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
 
-        auto model = bookmarks->model();
+        auto model = m_bookMark->model();
 
         QList<qsizetype> pos;
         for (auto &item : s) {
@@ -940,29 +954,29 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
             pos.append(offset);
         }
 
-        bookmarks->clearSelection();
+        m_bookMark->clearSelection();
         doc->RemoveBookMarks(pos);
         Q_EMIT model->layoutChanged();
     });
     m_aDelBookMark->setEnabled(false);
-    bookmarks->addAction(m_aDelBookMark);
+    m_bookMark->addAction(m_aDelBookMark);
 
     auto a = new QAction(ICONRES(QStringLiteral("bookmarkcls")),
-                         tr("ClearBookMark"), bookmarks);
+                         tr("ClearBookMark"), m_bookMark);
     connect(a, &QAction::triggered, this, &MainWindow::on_bookmarkcls);
-    bookmarks->addAction(a);
+    m_bookMark->addAction(a);
 
-    bookmarks->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
+    m_bookMark->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    connect(bookmarks->selectionModel(), &QItemSelectionModel::selectionChanged,
-            m_aDelBookMark,
+    connect(m_bookMark->selectionModel(),
+            &QItemSelectionModel::selectionChanged, m_aDelBookMark,
             [=](const QItemSelection &, const QItemSelection &) {
                 m_aDelBookMark->setEnabled(
-                    bookmarks->selectionModel()->hasSelection());
+                    m_bookMark->selectionModel()->hasSelection());
             });
 
     auto dw = buildDockWidget(dock, QStringLiteral("BookMark"), tr("BookMark"),
-                              bookmarks);
+                              m_bookMark);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -971,13 +985,13 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                                    ads::DockWidgetArea area,
                                    ads::CDockAreaWidget *areaw) {
     _metadataModel = new MetaDataModel(nullptr);
-    auto metadatas = new QTableViewExt(this);
-    Utilities::applyTableViewProperty(metadatas);
-    metadatas->setSelectionMode(QTableViewExt::ExtendedSelection);
+    m_metadata = new QTableViewExt(this);
+    Utilities::applyTableViewProperty(m_metadata);
+    m_metadata->setSelectionMode(QTableViewExt::ExtendedSelection);
 
-    metadatas->setModel(_metadataModel);
+    m_metadata->setModel(_metadataModel);
 
-    connect(metadatas, &QTableView::doubleClicked, this,
+    connect(m_metadata, &QTableView::doubleClicked, this,
             [=](const QModelIndex &index) {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
@@ -985,18 +999,18 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
                 }
                 hexeditor->renderer()->enableCursor(true);
 
-                auto model = metadatas->model();
+                auto model = m_metadata->model();
                 auto offIndex = model->index(index.row(), 0);
                 auto offset =
                     model->data(offIndex, Qt::UserRole).value<qsizetype>();
                 hexeditor->cursor()->moveTo(offset);
             });
 
-    metadatas->addAction(newAction(
-        QStringLiteral("mLineInfo"), tr("CustomHeader"), [metadatas]() {
+    m_metadata->addAction(
+        newAction(QStringLiteral("mLineInfo"), tr("CustomHeader"), [=]() {
             QVector<bool> ov(5);
             auto total = 5;
-            auto header = metadatas->horizontalHeader();
+            auto header = m_metadata->horizontalHeader();
             for (qsizetype i = 0; i < total; ++i) {
                 ov[i] = header->isSectionHidden(i);
             }
@@ -1010,26 +1024,26 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
             }
         }));
 
-    auto sep = new QAction(metadatas);
+    auto sep = new QAction(m_metadata);
     sep->setSeparator(true);
-    metadatas->addAction(sep);
+    m_metadata->addAction(sep);
 
-    metadatas->addAction(
+    m_metadata->addAction(
         newAction(QStringLiteral("export"), tr("ExportResult"),
                   [this]() { saveTableContent(_metadataModel); }));
 
-    sep = new QAction(metadatas);
+    sep = new QAction(m_metadata);
     sep->setSeparator(true);
-    metadatas->addAction(sep);
+    m_metadata->addAction(sep);
 
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
-                                 tr("DeleteMetadata"), metadatas);
+                                 tr("DeleteMetadata"), m_metadata);
     connect(m_aDelMetaData, &QAction::triggered, this, [=] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
         }
-        auto s = metadatas->selectionModel()->selectedRows();
+        auto s = m_metadata->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
 
         const auto &mds = doc->metadata()->getAllMetadata();
@@ -1039,34 +1053,34 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
             pmetas.push_back(mds.at(item.row()));
         }
 
-        metadatas->clearSelection();
+        m_metadata->clearSelection();
         hexeditor->document()->metadata()->RemoveMetadatas(pmetas);
-        Q_EMIT metadatas->model()->layoutChanged();
+        Q_EMIT m_metadata->model()->layoutChanged();
     });
     m_aDelMetaData->setEnabled(false);
-    metadatas->addAction(m_aDelMetaData);
+    m_metadata->addAction(m_aDelMetaData);
 
     auto a = new QAction(ICONRES(QStringLiteral("metadatacls")),
-                         tr("ClearMetadata"), metadatas);
+                         tr("ClearMetadata"), m_metadata);
     connect(a, &QAction::triggered, this, &MainWindow::on_metadatacls);
-    metadatas->addAction(a);
-    metadatas->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
+    m_metadata->addAction(a);
+    m_metadata->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    connect(metadatas->selectionModel(), &QItemSelectionModel::selectionChanged,
-            m_aDelMetaData,
+    connect(m_metadata->selectionModel(),
+            &QItemSelectionModel::selectionChanged, m_aDelMetaData,
             [=](const QItemSelection &, const QItemSelection &) {
                 m_aDelMetaData->setEnabled(
-                    metadatas->selectionModel()->hasSelection());
+                    m_metadata->selectionModel()->hasSelection());
             });
 
     auto ovdata = SettingManager::instance().metaHeaderHidden();
-    auto header = metadatas->horizontalHeader();
+    auto header = m_metadata->horizontalHeader();
     for (qsizetype i = 0; i < 5; ++i) {
         header->setSectionHidden(i, ovdata.at(i));
     }
 
     auto dw = buildDockWidget(dock, QStringLiteral("MetaData"), tr("MetaData"),
-                              metadatas);
+                              m_metadata);
     return dock->addDockWidget(area, dw, areaw);
 }
 
@@ -2054,7 +2068,8 @@ void MainWindow::registerGlobalSwitchViewLoop() {
 }
 
 void MainWindow::showStatus(const QString &status) {
-    if (status.isEmpty() && m_isfinding) {
+    auto editor = currentEditor();
+    if (status.isEmpty() && editor && editor->isFindBusy()) {
         _status->setText(tr("Finding..."));
     } else {
         _status->setText(status);
@@ -2417,7 +2432,6 @@ void MainWindow::on_findfile() {
         showStatus(tr("Finding..."));
         ExecAsync<EditorView::FindError>(
             [this, r, editor]() -> EditorView::FindError {
-                m_isfinding = true;
                 return editor->find(r);
             },
             [this, editor](EditorView::FindError err) {
@@ -2447,8 +2461,6 @@ void MainWindow::on_findfile() {
                 }
 
                 m_find->raise();
-
-                m_isfinding = false;
                 this->showStatus({});
             });
     }
@@ -2478,11 +2490,38 @@ void MainWindow::on_checksum() {
     if (editor == nullptr) {
         return;
     }
-    CheckSumDialog d;
+
+    if (editor->isFindBusy()) {
+        Toast::toast(this, NAMEICONRES(QStringLiteral("sum")),
+                     tr("FindFininishBusy"));
+        return;
+    }
+
+    static QVector<int> cs([]() -> QVector<int> {
+        QVector<int> ret;
+        auto total = int(CryptographicHash::Algorithm::NumAlgorithms);
+        ret.reserve(total);
+        for (int i = 0; i < total; ++i) {
+            ret.append(i);
+        }
+        return ret;
+    }());
+
+    CheckSumDialog d(cs);
     if (d.exec()) {
-        auto cs = d.getResults();
+        cs = d.getResults();
         editor->getCheckSum(cs);
         _hashModel->updateCheckSumData(editor->checkSumResult());
+
+        auto header = m_hash->verticalHeader();
+        auto total = int(CryptographicHash::Algorithm::NumAlgorithms);
+        for (int i = 0; i < total; ++i) {
+            header->hideSection(i);
+        }
+        for (auto &c : cs) {
+            header->showSection(c);
+        }
+
         m_hashtable->raise();
     }
 }
@@ -3393,6 +3432,28 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         m_curConnections.clear();
     }
 
+    if (old) {
+        auto &dbp = old->scrollPoints();
+        dbp[int(EditorView::ScrollPoint::FindResult)] =
+            QPoint(m_findresult->horizontalScrollBar()->value(),
+                   m_findresult->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::CheckSum)] =
+            QPoint(m_hash->horizontalScrollBar()->value(),
+                   m_hash->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::UndoStack)] =
+            QPoint(_undoView->horizontalScrollBar()->value(),
+                   _undoView->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::BookMark)] =
+            QPoint(m_bookMark->horizontalScrollBar()->value(),
+                   m_bookMark->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::MetaData)] =
+            QPoint(m_metadata->horizontalScrollBar()->value(),
+                   m_metadata->verticalScrollBar()->value());
+        dbp[int(EditorView::ScrollPoint::DecodeStr)] =
+            QPoint(m_txtDecode->horizontalScrollBar()->value(),
+                   m_txtDecode->verticalScrollBar()->value());
+    }
+
     if (cur == nullptr) {
         return;
     }
@@ -3475,9 +3536,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     m_sReadWrite->setIcon(icon);
 
     loadFindResult(cur);
-
     _bookMarkModel->setDocument(doc);
     _metadataModel->setDocument(doc);
+
+    auto header = m_hash->verticalHeader();
+    const auto &headerV = cur->checkSumVisible();
+    auto total = headerV.size();
+    for (int i = 0; i < total; ++i) {
+        header->setSectionHidden(i, !headerV[i]);
+    }
     _hashModel->updateCheckSumData(cur->checkSumResult());
 
     for (auto &menu : m_hexContextMenu) {
@@ -3490,6 +3557,34 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     hexeditor->getStatus();
     updateNumberTable(true);
     updateStringDec();
+
+    // reload new scroll offset
+    QTimer::singleShot(0, [this, cur]() {
+        auto &dbp = cur->scrollPoints();
+        auto p = dbp[int(EditorView::ScrollPoint::FindResult)];
+        m_findresult->horizontalScrollBar()->setValue(p.x());
+        m_findresult->verticalScrollBar()->setValue(p.y());
+
+        p = dbp[int(EditorView::ScrollPoint::CheckSum)];
+        m_hash->horizontalScrollBar()->setValue(p.x());
+        m_hash->verticalScrollBar()->setValue(p.y());
+
+        p = dbp[int(EditorView::ScrollPoint::UndoStack)];
+        _undoView->horizontalScrollBar()->setValue(p.x());
+        _undoView->verticalScrollBar()->setValue(p.y());
+
+        p = dbp[int(EditorView::ScrollPoint::BookMark)];
+        m_bookMark->horizontalScrollBar()->setValue(p.x());
+        m_bookMark->verticalScrollBar()->setValue(p.y());
+
+        p = dbp[int(EditorView::ScrollPoint::MetaData)];
+        m_metadata->horizontalScrollBar()->setValue(p.x());
+        m_metadata->verticalScrollBar()->setValue(p.y());
+
+        p = dbp[int(EditorView::ScrollPoint::DecodeStr)];
+        m_txtDecode->horizontalScrollBar()->setValue(p.x());
+        m_txtDecode->verticalScrollBar()->setValue(p.y());
+    });
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::FileSwitched,

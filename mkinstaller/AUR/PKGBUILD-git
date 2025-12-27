@@ -65,7 +65,7 @@ package() {
     install -Dm755 build/WingHexExplorer2 "$_optdir/WingHexExplorer2"
     install -Dm644 build/WingPlugin/libWingPlugin.so "$_optdir/libWingPlugin.so"
 
-    for _sub in plugin scripts aslib; do
+    for _sub in plugin scripts; do
         mkdir -p "$_optdir/$_sub"
     done
 

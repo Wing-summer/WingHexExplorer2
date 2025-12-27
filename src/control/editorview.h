@@ -26,6 +26,7 @@
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
+#include "class/cryptographichash.h"
 #include "class/editorviewcontext.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
@@ -33,6 +34,9 @@
 #include "utilities.h"
 
 using namespace WingHex;
+
+using CryptoAlgorithms =
+    QVarLengthArray<bool, int(CryptographicHash::Algorithm::NumAlgorithms)>;
 
 // only plugin api can be declared with `private slot`
 class EditorView : public ads::CDockWidget {
@@ -56,6 +60,19 @@ public:
         AutoWorkSpace,
         ForceWorkSpace
     };
+
+    enum class ScrollPoint {
+        FindResult,
+        CheckSum,
+        UndoStack,
+        BookMark,
+        MetaData,
+        DecodeStr,
+        MaxCount
+    };
+
+    using ScrollDataPoints =
+        QVarLengthArray<QPoint, int(ScrollPoint::MaxCount)>;
 
 private:
     // helper functions for plugin system
@@ -158,7 +175,7 @@ public:
     bool isSaved() const;
 
     FindResultModel::FindData &findResult();
-    QMap<QCryptographicHash::Algorithm, QString> &checkSumResult();
+    QMap<CryptographicHash::Algorithm, QString> &checkSumResult();
 
     bool hasCloneChildren() const;
 
@@ -182,6 +199,11 @@ public:
 
     void notifyOnWorkSpace(bool b);
 
+    const CryptoAlgorithms &checkSumVisible() const;
+    void resetCheckSumVisible();
+
+    ScrollDataPoints &scrollPoints();
+
 public slots:
     void raiseAndSwitchView(const QString &id);
 
@@ -195,6 +217,7 @@ public:
     void registerQMenu(QMenu *menu);
 
     FindError find(const FindDialog::Result &result);
+    bool isFindBusy() const;
     void getCheckSum(const QVector<int> &algorithmID);
 
     void triggerGoto();
@@ -563,9 +586,12 @@ private:
     QVector<EditorView *> m_cloneChildren;
     EditorView *m_cloneParent = nullptr;
 
-    QMutex m_findMutex;
+    mutable QMutex m_findMutex;
     FindResultModel::FindData m_findData;
-    QMap<QCryptographicHash::Algorithm, QString> _checkSumData;
+
+    CryptoAlgorithms _checkSumVisible;
+    QMap<CryptographicHash::Algorithm, QString> _checkSumData;
+    ScrollDataPoints _scrollPoints;
 
     DocumentType m_docType = DocumentType::InValid;
     QString m_workSpaceName;

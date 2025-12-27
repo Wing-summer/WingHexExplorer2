@@ -143,8 +143,7 @@ private:
                        const QString &currentDir, QString &outText,
                        Mapping &outMap);
 
-    static bool parseIncludePathToken(const QString &args, QString &outPath,
-                                      bool &isAngled);
+    static bool parseIncludePathToken(const QString &args, QString &outPath);
 
     QString resolveIncludeFile(const QString &filename,
                                const QString &currentDir);

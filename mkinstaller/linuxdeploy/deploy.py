@@ -145,7 +145,6 @@ def main():
 
     create_dir(os.path.join(installer_path_exec, "plugin"))
     create_dir(os.path.join(installer_path_exec, "scripts"))
-    create_dir(os.path.join(installer_path_exec, "aslib"))
 
     shutil.copyfile(version_file_src, os.path.join(
         installer_path_exec, "VERSION"))

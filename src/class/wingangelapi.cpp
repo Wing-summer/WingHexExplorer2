@@ -361,12 +361,8 @@ void WingAngelAPI::installHexBaseType(asIScriptEngine *engine) {
     registerAngelType<WingHex::ErrFile>(engine, "ErrFile");
     registerAngelType<WingHex::SelectionMode>(engine, "SelectionMode");
 
-    int r = engine->RegisterTypedef("byte", "uint8");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
     // HexPosition
-    r = engine->RegisterObjectType(
+    auto r = engine->RegisterObjectType(
         "HexPosition", sizeof(WingHex::HexPosition),
         asOBJ_VALUE | asOBJ_POD | ::asGetTypeTraits<WingHex::HexPosition>());
     Q_ASSERT(r >= 0);
@@ -1005,48 +1001,6 @@ void WingAngelAPI::registerAPI(asIScriptEngine *engine, const asSFuncPtr &fn,
         engine->RegisterGlobalFunction(sig, fn, asCALL_THISCALL_ASGLOBAL, this);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-}
-
-QStringList WingAngelAPI::cArray2QStringList(const CScriptArray &array,
-                                             int stringID, bool *ok) {
-    bool b = array.GetElementTypeId() == stringID;
-    if (ok) {
-        *ok = b;
-    }
-    if (!b) {
-        return {};
-    }
-
-    QStringList buffer;
-    buffer.reserve(array.GetSize());
-    for (asUINT i = 0; i < array.GetSize(); ++i) {
-        auto item = reinterpret_cast<const QString *>(array.At(i));
-        buffer.append(*item);
-    }
-    return buffer;
-}
-
-QByteArray WingAngelAPI::cArray2ByteArray(const CScriptArray &array, int byteID,
-                                          bool *ok) {
-    bool b = array.GetElementTypeId() == byteID;
-    if (ok) {
-        *ok = b;
-    }
-    if (!b) {
-        return {};
-    }
-
-    auto len = array.GetSize();
-
-    QByteArray buffer;
-    buffer.resize(len);
-    array.AddRef();
-
-    std::memcpy(buffer.data(), const_cast<CScriptArray &>(array).GetBuffer(),
-                len);
-
-    array.Release();
-    return buffer;
 }
 
 qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
@@ -2188,99 +2142,51 @@ CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
 
 qsizetype WingAngelAPI::_HexReader_findNext(qsizetype begin,
                                             const CScriptArray &ba) {
-    // If called from the script, there will always be an active
-    // context, which can be used to obtain a pointer to the engine.
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        bool ok = false;
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        Q_ASSERT(byteID);
-        auto bab = cArray2ByteArray(ba, byteID, &ok);
+    bool ok = false;
+    auto bab = cArray2ByteArray(ba, &ok);
+    if (ok) {
         return findNext(begin, bab);
-    } else {
-        return qsizetype(-1);
     }
+    return qsizetype(-1);
 }
 
 qsizetype WingAngelAPI::_HexReader_findPrevious(qsizetype begin,
                                                 const CScriptArray &ba) {
-    // If called from the script, there will always be an active
-    // context, which can be used to obtain a pointer to the engine.
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-
-        bool ok = false;
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        auto bab = cArray2ByteArray(ba, byteID, &ok);
-        if (ok) {
-            return findPrevious(begin, bab);
-        } else {
-            return qsizetype(-1);
-        }
-    } else {
-        return qsizetype(-1);
+    bool ok = false;
+    auto bab = cArray2ByteArray(ba, &ok);
+    if (ok) {
+        return findPrevious(begin, bab);
     }
+    return qsizetype(-1);
 }
 
 bool WingAngelAPI::_HexController_writeBytes(qsizetype offset,
                                              const CScriptArray &ba) {
-    // If called from the script, there will always be an active
-    // context, which can be used to obtain a pointer to the engine.
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-        bool ok = false;
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        Q_ASSERT(byteID);
-        auto bab = cArray2ByteArray(ba, byteID, &ok);
-        if (!ok) {
-            return false;
-        }
-        return writeBytes(offset, bab);
-    } else {
+    bool ok = false;
+    auto bab = cArray2ByteArray(ba, &ok);
+    if (!ok) {
         return false;
     }
+    return writeBytes(offset, bab);
 }
 
 bool WingAngelAPI::_HexController_insertBytes(qsizetype offset,
                                               const CScriptArray &ba) {
-    // If called from the script, there will always be an active
-    // context, which can be used to obtain a pointer to the engine.
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-        bool ok = false;
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        Q_ASSERT(byteID);
-        auto bab = cArray2ByteArray(ba, byteID, &ok);
-        if (!ok) {
-            return false;
-        }
-        return insertBytes(offset, bab);
-    } else {
+    bool ok = false;
+    auto bab = cArray2ByteArray(ba, &ok);
+    if (!ok) {
         return false;
     }
+    return insertBytes(offset, bab);
 }
 
 bool WingAngelAPI::_HexController_appendBytes(const CScriptArray &ba) {
-    // If called from the script, there will always be an active
-    // context, which can be used to obtain a pointer to the engine.
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        asIScriptEngine *engine = ctx->GetEngine();
-        bool ok = false;
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        Q_ASSERT(byteID);
-        auto bab = cArray2ByteArray(ba, byteID, &ok);
-        if (!ok) {
-            return false;
-        }
-        return appendBytes(bab);
+    bool ok = false;
+    auto bab = cArray2ByteArray(ba, &ok);
+    if (!ok) {
+        return false;
     }
-    return false;
+    return appendBytes(bab);
 }
 
 void WingAngelAPI::_UI_Toast(const QString &message, const QString &icon) {
@@ -2361,27 +2267,18 @@ QString WingAngelAPI::_InputBox_getItem(const QString &title,
                                         const CScriptArray &items, int current,
                                         bool editable, bool *ok,
                                         int inputMethodHints) {
-    asIScriptContext *ctx = asGetActiveContext();
-    if (ctx) {
-        auto engine = ctx->GetEngine();
-        Q_ASSERT(engine);
-        auto stringID = engine->GetTypeIdByDecl("string");
-        Q_ASSERT(stringID >= 0);
-
-        bool o = false;
-        auto ret = cArray2QStringList(items, stringID, &o);
-        if (o) {
-            return WingInputDialog::getItem(
-                nullptr, title, label, ret, current, editable, ok,
-                Qt::InputMethodHints(inputMethodHints));
-        } else {
-            if (ok) {
-                *ok = false;
-            }
-            return {};
+    bool o = false;
+    auto ret = cArray2QStringList(items, &o);
+    if (o) {
+        return WingInputDialog::getItem(nullptr, title, label, ret, current,
+                                        editable, ok,
+                                        Qt::InputMethodHints(inputMethodHints));
+    } else {
+        if (ok) {
+            *ok = false;
         }
+        return {};
     }
-    return {};
 }
 
 int WingAngelAPI::_InputBox_GetInt(const QString &title, const QString &label,

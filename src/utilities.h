@@ -153,34 +153,6 @@ public:
         return encodings;
     }
 
-    inline static QList<QCryptographicHash::Algorithm>
-    supportedHashAlgorithms() {
-        static QList<QCryptographicHash::Algorithm> algorithms;
-        if (algorithms.isEmpty()) {
-            auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
-            for (int i = 0; i < hashe.keyCount(); ++i) {
-                auto e = hashe.value(i);
-                if (e >= 0 && QCryptographicHash::hashLength(
-                                  QCryptographicHash::Algorithm(e))) {
-                    algorithms << QCryptographicHash::Algorithm(e);
-                }
-            }
-        }
-        return algorithms;
-    }
-
-    inline static QStringList supportedHashAlgorithmStringList() {
-        static QStringList hashNames;
-        if (hashNames.isEmpty()) {
-            auto hashes = Utilities::supportedHashAlgorithms();
-            auto hashe = QMetaEnum::fromType<QCryptographicHash::Algorithm>();
-            for (auto &hash : hashes) {
-                hashNames << QString::fromLatin1(hashe.valueToKey(hash));
-            }
-        }
-        return hashNames;
-    }
-
     inline static QByteArray getMd5(const QString &filename) {
         if (filename.isEmpty()) {
             return {};
