@@ -71,6 +71,8 @@ ScriptEditor::ScriptEditor(QWidget *parent)
     _timer = new ResettableTimer(this);
     connect(_timer, &ResettableTimer::timeoutTriggered, this,
             &ScriptEditor::onSendFullTextChangeCompleted);
+
+    m_instances.append(this);
 }
 
 ScriptEditor::~ScriptEditor() {
@@ -78,6 +80,7 @@ ScriptEditor::~ScriptEditor() {
     if (!fileName.isEmpty()) {
         AngelLsp::instance().closeDocument(Utilities::getUrlString(fileName));
     }
+    m_instances.removeOne(this);
 }
 
 QString ScriptEditor::fileName() const { return m_editor->windowFilePath(); }
@@ -319,6 +322,10 @@ bool ScriptEditor::formatCode() {
     return true;
 }
 
+bool ScriptEditor::isModified() const {
+    return m_editor->document()->isModified();
+}
+
 bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     if (watched == m_editor) {
         if (event->type() == QEvent::KeyPress) {
@@ -351,3 +358,13 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
     }
     return ads::CDockWidget::eventFilter(watched, event);
 }
+
+const LinkedList<ScriptEditor *> &ScriptEditor::instances() {
+    return m_instances;
+}
+
+QIcon ScriptEditor::editorIcon() const { return ICONRES("angellsp"); }
+
+QString ScriptEditor::infoFileName() const { return fileName(); }
+
+QString ScriptEditor::infoTooltip() const { return fileName(); }

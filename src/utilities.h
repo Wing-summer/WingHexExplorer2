@@ -118,7 +118,7 @@ public:
     }
 
     inline static QString processBytesCount(qint64 bytescount) {
-        QStringList B{"B", "KB", "MB", "GB", "TB"};
+        static QStringList B{"B", "KB", "MB", "GB", "TB"};
         auto av = bytescount;
         auto r = av;
 
@@ -175,7 +175,7 @@ public:
     }
 
     inline static constexpr bool checkIsLittleEndian() {
-#if WING_LITTLE_ENDIAN
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
         return true;
 #else
         return false;

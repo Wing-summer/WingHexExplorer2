@@ -192,9 +192,11 @@ EditorView::EditorView(QWidget *parent)
 
     connect(m_stack, &QStackedWidget::currentChanged, this,
             &EditorView::updateIcon);
+
+    m_instances.append(this);
 }
 
-EditorView::~EditorView() {}
+EditorView::~EditorView() { m_instances.removeOne(this); }
 
 void EditorView::registerView(const QString &id, WingEditorViewWidget *view,
                               const QIcon &viewIcon) {
@@ -865,15 +867,7 @@ void EditorView::raiseAndSwitchView(const QString &id) {
 }
 
 void EditorView::updateDocSavedFlag(bool b) {
-    QString fileName;
-    auto fName = this->fileNameUrl();
-    if (isNewFile()) {
-        fileName = fName.fileName();
-    } else if (isExtensionFile()) {
-        fileName = fName.authority() + fName.path();
-    } else {
-        fileName = fName.fileName();
-    }
+    QString fileName = this->infoFileName();
     QString content;
 
     if (b && !checkHasUnsavedState()) {
@@ -2851,6 +2845,8 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
     return ads::CDockWidget::eventFilter(watched, event);
 }
 
+const LinkedList<EditorView *> &EditorView::instances() { return m_instances; }
+
 EditorView::ScrollDataPoints &EditorView::scrollPoints() {
     return _scrollPoints;
 }
@@ -2876,3 +2872,23 @@ bool EditorView::isNewFileUrl(const QUrl &url) {
 }
 
 QString EditorView::newFileAuthority() { return QStringLiteral("WingNew"); }
+
+QIcon EditorView::editorIcon() const { return this->icon(); }
+
+QString EditorView::infoFileName() const {
+    QString fileName;
+    auto fName = this->fileNameUrl();
+    if (isNewFile()) {
+        fileName = fName.fileName();
+    } else if (isExtensionFile()) {
+        fileName = fName.authority() + fName.path();
+    } else {
+        fileName = fName.fileName();
+    }
+    return fileName;
+}
+
+QString EditorView::infoTooltip() const {
+    auto tab = this->tabWidget();
+    return tab->toolTip();
+}

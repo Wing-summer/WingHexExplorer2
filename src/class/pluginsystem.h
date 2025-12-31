@@ -195,9 +195,7 @@ private:
     std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
                                          const QDir &setdir);
 
-    bool closeEditor(IWingPlugin *plg, int handle, bool force);
-
-    bool closeHandle(IWingPlugin *plg, int handle);
+    EditorView *closeHandle(IWingPlugin *plg, int handle);
 
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
@@ -590,38 +588,13 @@ public slots:
 
 public slots:
     // mainwindow
-    int newFile(const QObject *sender);
+    int openFile(const QObject *sender, const QUrl &file);
 
-    int openFile(const QObject *sender, const QString &filename);
-
-    int openExtFile(const QObject *sender, const QString &ext,
-                    const QString &file);
-
-    int openWorkSpace(const QObject *sender, const QString &filename);
-
-    WingHex::ErrFile closeHandle(const QObject *sender, int handle);
-
-    WingHex::ErrFile closeFile(const QObject *sender, int handle, bool force);
-
-    WingHex::ErrFile saveFile(const QObject *sender, int handle);
-
-    WingHex::ErrFile exportFile(const QObject *sender, int handle,
-                                const QString &savename);
-
-    WingHex::ErrFile saveAsFile(const QObject *sender, int handle,
-                                const QString &savename);
+    WingHex::ErrFile closeFile(const QObject *sender, int handle);
 
     int openCurrent(const QObject *sender);
 
-    WingHex::ErrFile closeCurrent(const QObject *sender, bool force);
-
-    WingHex::ErrFile saveCurrent(const QObject *sender);
-
-    WingHex::ErrFile exportCurrent(const QObject *sender,
-                                   const QString &savename);
-
-    WingHex::ErrFile saveAsCurrent(const QObject *sender,
-                                   const QString &savename);
+    WingHex::ErrFile closeCurrent(const QObject *sender);
 
 public slots:
     // bookmark
@@ -634,9 +607,6 @@ public slots:
     bool removeBookMark(const QObject *sender, qsizetype pos);
 
     bool clearBookMark(const QObject *sender);
-
-    // extension
-    bool closeAllFiles(const QObject *sender);
 
     // generic call support
     WingHex::IWingGeneric *__createParamContext(const QObject *sender,

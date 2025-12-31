@@ -15,26 +15,23 @@
 ** =============================================================================
 */
 
-#ifndef DOCKWIDGETTAB_H
-#define DOCKWIDGETTAB_H
+#ifndef EDITORINFO_H
+#define EDITORINFO_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
+#include <QIcon>
+#include <QString>
 
-class DockWidgetTab : public ads::CDockWidgetTab {
-    Q_OBJECT
-
+class EditorInfo {
 public:
-    DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent = nullptr);
-
-    // CDockAreaTitleBar interface
-public:
-    virtual QMenu *buildContextMenu(QMenu *menu) override;
-
-private:
-    void initMenuItems(QMenu *menu, const QUrl &path);
-
-    QAction *createAutoHideToAction(const QString &Title,
-                                    ads::SideBarLocation Location, QMenu *Menu);
+    virtual QIcon editorIcon() const = 0;
+    virtual QString infoFileName() const = 0;
+    virtual QString infoTooltip() const = 0;
 };
 
-#endif // DOCKWIDGETTAB_H
+class EditorsCtl {
+public:
+    virtual bool save(EditorInfo *info) = 0;
+    virtual void discard(EditorInfo *info) = 0;
+};
+
+#endif // EDITORINFO_H

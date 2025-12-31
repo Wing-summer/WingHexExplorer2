@@ -23,11 +23,11 @@
 
 #include <QtEndian>
 
-quint16 CrcAlgorithm::crc16table[] = {
+Q_CONSTINIT quint16 CrcAlgorithm::crc16table[] = {
     0x0000, 0x1081, 0x2102, 0x3183, 0x4204, 0x5285, 0x6306, 0x7387,
     0x8408, 0x9489, 0xa50a, 0xb58b, 0xc60c, 0xd68d, 0xe70e, 0xf78f};
 
-quint32 CrcAlgorithm::crc32table[]{
+Q_CONSTINIT quint32 CrcAlgorithm::crc32table[]{
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
     0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -72,7 +72,7 @@ quint32 CrcAlgorithm::crc32table[]{
     0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d};
 
-quint64 CrcAlgorithm::crc64table[]{
+Q_CONSTINIT quint64 CrcAlgorithm::crc64table[]{
     0x0000000000000000ULL, 0x42F0E1EBA9EA3693ULL, 0x85E1C3D753D46D26ULL,
     0xC711223CFA3E5BB5ULL, 0x493366450E42ECDFULL, 0x0BC387AEA7A8DA4CULL,
     0xCCD2A5925D9681F9ULL, 0x8E224479F47CB76AULL, 0x9266CC8A1C85D9BEULL,

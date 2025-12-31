@@ -15,26 +15,31 @@
 ** =============================================================================
 */
 
-#ifndef DOCKWIDGETTAB_H
-#define DOCKWIDGETTAB_H
+#ifndef MUTISAVEBUTTONDELEGATE_H
+#define MUTISAVEBUTTONDELEGATE_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
+#include <QStyledItemDelegate>
 
-class DockWidgetTab : public ads::CDockWidgetTab {
+class MutiSaveButtonDelegate : public QStyledItemDelegate {
     Q_OBJECT
-
 public:
-    DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent = nullptr);
+    explicit MutiSaveButtonDelegate(QObject *parent = nullptr);
 
-    // CDockAreaTitleBar interface
-public:
-    virtual QMenu *buildContextMenu(QMenu *menu) override;
+    void paint(QPainter *p, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override;
+
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const override;
+
+    bool editorEvent(QEvent *event, QAbstractItemModel *model,
+                     const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override;
 
 private:
-    void initMenuItems(QMenu *menu, const QUrl &path);
+    static QRect getFileIconRect(const QRect &rect);
 
-    QAction *createAutoHideToAction(const QString &Title,
-                                    ads::SideBarLocation Location, QMenu *Menu);
+signals:
+    void buttonClicked(const QModelIndex &index);
 };
 
-#endif // DOCKWIDGETTAB_H
+#endif // MUTISAVEBUTTONDELEGATE_H

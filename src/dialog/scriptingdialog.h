@@ -42,8 +42,9 @@
 #include <QTableView>
 #include <QTextBrowser>
 
-class ScriptingDialog : public FramelessMainWindow {
+class ScriptingDialog : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
+
 private:
     enum ToolButtonIndex : uint {
         UNDO_ACTION,
@@ -233,10 +234,13 @@ private:
 public:
     ScriptEditor *openFile(const QString &filename);
 
+    bool try2CloseScriptViews(const LinkedList<ScriptEditor *> views);
+
 private slots:
     void on_newfile();
     void on_openfile();
     void on_reload();
+    void on_exit();
 
     void on_save();
     void on_saveas();
@@ -283,6 +287,8 @@ private:
                                    const QString &text);
     void destoryFakeEditor();
 
+    void destoryEditor(ScriptEditor *editor);
+
 private:
     ads::CDockManager *m_dock = nullptr;
     ads::CDockAreaWidget *m_editorViewArea = nullptr;
@@ -311,7 +317,6 @@ private:
     QPair<QString, int> _lastCurLine = {QString(), -1};
     bool _needRestart = false;
 
-    LinkedList<ScriptEditor *> m_views;
     QString m_lastusedpath;
 
     QHash<QString, AsPreprocesser::Result> _curDbgData;
@@ -327,6 +332,11 @@ private:
     ScriptEditor *_fakeEditor = nullptr;
 
     QLabel *_status = nullptr;
+
+    // EditorsCtl interface
+public:
+    virtual bool save(EditorInfo *info) override;
+    virtual void discard(EditorInfo *info) override;
 };
 
 #endif // SCRIPTINGDIALOG_H

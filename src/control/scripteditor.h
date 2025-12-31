@@ -19,15 +19,19 @@
 #define SCRIPTEDITOR_H
 
 #include "Qt-Advanced-Docking-System/src/DockWidget.h"
+#include "class/editorinfo.h"
 #include "class/lspeditorinterface.h"
 #include "class/resettabletimer.h"
 #include "control/codeedit.h"
+#include "utilities.h"
 
 #include <QFileSystemWatcher>
 
 class asIScriptEngine;
 
-class ScriptEditor : public ads::CDockWidget, public LspEditorInterace {
+class ScriptEditor : public ads::CDockWidget,
+                     public LspEditorInterace,
+                     public EditorInfo {
     Q_OBJECT
 
 public:
@@ -37,12 +41,15 @@ public:
     CodeEdit *editor() const;
 
     bool formatCode();
+    bool isModified() const;
 
     quint64 getVersion() const;
 
     QString fileName() const;
 
 public:
+    static const LinkedList<ScriptEditor *> &instances();
+
     virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;
@@ -84,6 +91,8 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    inline static LinkedList<ScriptEditor *> m_instances;
+
     CodeEdit *m_editor = nullptr;
     quint64 version = 1;
 
@@ -92,6 +101,12 @@ private:
     bool _lastSent = true;
 
     QFileSystemWatcher _watcher;
+
+    // EditorInfo interface
+public:
+    virtual QIcon editorIcon() const override;
+    virtual QString infoFileName() const override;
+    virtual QString infoTooltip() const override;
 };
 
 #endif // SCRIPTEDITOR_H

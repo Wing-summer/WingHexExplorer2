@@ -34,6 +34,7 @@
         <file>images/devextdis.png</file>
         <file>images/edit.png</file>
         <file>images/encoding.png</file>
+        <file>images/exit.png</file>
         <file>images/export.png</file>
         <file>images/file.png</file>
         <file>images/fill.png</file>
@@ -53,10 +54,8 @@
         <file>images/lockon.png</file>
         <file>images/log.png</file>
         <file>images/mAddr.png</file>
-        <file>images/mColInfo.png</file>
-        <file>images/mLineInfo.png</file>
-        <file>images/mStr.png</file>
         <file>images/mark.png</file>
+        <file>images/mColInfo.png</file>
         <file>images/metadata.png</file>
         <file>images/metadatacls.png</file>
         <file>images/metadatadel.png</file>
@@ -64,6 +63,8 @@
         <file>images/metadatah.png</file>
         <file>images/metahide.png</file>
         <file>images/metashow.png</file>
+        <file>images/mLineInfo.png</file>
+        <file>images/mStr.png</file>
         <file>images/new.png</file>
         <file>images/open.png</file>
         <file>images/openapp.png</file>
@@ -117,11 +118,11 @@
         <file>images/win.png</file>
         <file>images/workspace.png</file>
         <file>images/writable.png</file>
-        <file>src/LICENSE.md</file>
-        <file>src/TESTCODE.as</file>
         <file>src/class/WingAngelAPI.json</file>
         <file>src/class/WingCStruct.json</file>
         <file>src/components.md</file>
+        <file>src/LICENSE.md</file>
+        <file>src/TESTCODE.as</file>
         <file>src/translist.md</file>
     </qresource>
     <qresource prefix="/qeditor">
@@ -142,11 +143,13 @@
         <file>images/completion/Constructor.svg</file>
         <file>images/completion/Enum.svg</file>
         <file>images/completion/EnumMember.svg</file>
+        <file>images/completion/error.svg</file>
         <file>images/completion/Event.svg</file>
         <file>images/completion/Field.svg</file>
         <file>images/completion/File.svg</file>
         <file>images/completion/Folder.svg</file>
         <file>images/completion/Function.svg</file>
+        <file>images/completion/hint.svg</file>
         <file>images/completion/Information.svg</file>
         <file>images/completion/Interface.svg</file>
         <file>images/completion/Keyword.svg</file>
@@ -163,8 +166,6 @@
         <file>images/completion/Unit.svg</file>
         <file>images/completion/Value.svg</file>
         <file>images/completion/Variable.svg</file>
-        <file>images/completion/error.svg</file>
-        <file>images/completion/hint.svg</file>
         <file>images/completion/warn.svg</file>
     </qresource>
     <qresource prefix="/WingScript/Angelscript/syntax">

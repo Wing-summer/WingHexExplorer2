@@ -15,26 +15,46 @@
 ** =============================================================================
 */
 
-#ifndef DOCKWIDGETTAB_H
-#define DOCKWIDGETTAB_H
+#ifndef MUTISAVEDIALOG_H
+#define MUTISAVEDIALOG_H
 
-#include "Qt-Advanced-Docking-System/src/DockWidgetTab.h"
+#include "class/editorinfo.h"
+#include "framelessdialogbase.h"
 
-class DockWidgetTab : public ads::CDockWidgetTab {
+#include <QVector>
+
+namespace Ui {
+class MutiSaveDialog;
+}
+
+class MutiSaveDialog : public QWidget {
     Q_OBJECT
 
 public:
-    DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent = nullptr);
+    enum StatusCode {
+        SAVE_CANCEL = QDialog::Rejected,
+        SAVE_SAVE = QDialog::Accepted,
+        SAVE_DISCARD,
+        SAVE_NOOP
+    };
 
-    // CDockAreaTitleBar interface
 public:
-    virtual QMenu *buildContextMenu(QMenu *menu) override;
+    explicit MutiSaveDialog(const QVector<EditorInfo *> &editors,
+                            EditorsCtl *edctl, QWidget *parent = nullptr);
+    ~MutiSaveDialog();
+
+public slots:
+    int exec();
+
+private slots:
+    void onClickFileButton(const QModelIndex &index);
 
 private:
-    void initMenuItems(QMenu *menu, const QUrl &path);
+    Ui::MutiSaveDialog *ui;
+    FramelessDialogBase *_dialog;
 
-    QAction *createAutoHideToAction(const QString &Title,
-                                    ads::SideBarLocation Location, QMenu *Menu);
+    QVector<EditorInfo *> _editors;
+    EditorsCtl *_esctl = nullptr;
 };
 
-#endif // DOCKWIDGETTAB_H
+#endif // MUTISAVEDIALOG_H

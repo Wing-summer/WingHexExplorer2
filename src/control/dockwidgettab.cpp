@@ -25,6 +25,32 @@
 #include "editorview.h"
 #include "scripteditor.h"
 
+template <typename T,
+          typename = std::enable_if<std::is_same_v<T, EditorView> ||
+                                    std::is_same_v<T, ScriptEditor>>>
+void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
+                    QWidget *parent) {
+    Q_ASSERT(parent);
+    menu->addAction(DockWidgetTab::tr("CloseAllOthers"), parent,
+                    [dockWidget]() {
+                        auto app = AppManager::instance();
+                        LinkedList<T *> cviews;
+                        for (auto &view : T::instances()) {
+                            if (view->isClosed()) {
+                                continue;
+                            }
+                            if (view != dockWidget) {
+                                cviews.append(view);
+                            }
+                        }
+                        if constexpr (std::is_same_v<T, EditorView>) {
+                            app->mainWindow()->try2CloseHexViews(cviews);
+                        } else {
+                            app->mainWindow()->try2CloseScriptViews(cviews);
+                        }
+                    });
+}
+
 DockWidgetTab::DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent)
     : ads::CDockWidgetTab(DockWidget, parent) {}
 
@@ -33,8 +59,11 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
         menu = new QMenu(this);
     }
     auto dw = dockWidget();
+    enum class State { None, EditorView, ScriptView } state = State::None;
+
     auto v = qobject_cast<EditorView *>(dw);
     if (v) {
+        state = State::EditorView;
         if (v->isCommonFile()) {
             if (v->isWorkSpace()) {
                 initMenuItems(menu, QUrl::fromLocalFile(v->workSpaceName()));
@@ -55,12 +84,38 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
     } else {
         auto v = qobject_cast<ScriptEditor *>(dw);
         if (v) {
+            state = State::ScriptView;
             initMenuItems(menu, v->fileName());
             menu->addSeparator();
         }
     }
 
-    return ads::CDockWidgetTab::buildContextMenu(menu);
+    Q_ASSERT(ads::CDockManager::testAutoHideConfigFlag(
+        ads::CDockManager::AutoHideFeatureEnabled));
+    menu->addAction(ads::CDockWidgetTab::tr("Pin"), this,
+                    SLOT(autoHideDockWidget()));
+    auto dmenu = menu->addMenu(ads::CDockWidgetTab::tr("Pin To..."));
+    createAutoHideToAction(ads::CDockWidgetTab::tr("Top"), ads::SideBarTop,
+                           dmenu);
+    createAutoHideToAction(ads::CDockWidgetTab::tr("Left"), ads::SideBarLeft,
+                           dmenu);
+    createAutoHideToAction(ads::CDockWidgetTab::tr("Right"), ads::SideBarRight,
+                           dmenu);
+    createAutoHideToAction(ads::CDockWidgetTab::tr("Bottom"),
+                           ads::SideBarBottom, dmenu);
+
+    menu->addSeparator();
+
+    if (state == State::EditorView) {
+        createCloseExt<EditorView>(dw, menu, this);
+    } else if (state == State::ScriptView) {
+        createCloseExt<ScriptEditor>(dw, menu, this);
+    }
+
+    menu->addAction(ads::CDockWidgetTab::tr("Close"), this,
+                    SIGNAL(closeRequested()));
+
+    return menu;
 }
 
 void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
@@ -74,4 +129,14 @@ void DockWidgetTab::initMenuItems(QMenu *menu, const QUrl &path) {
         });
         menu->addAction(a);
     }
+}
+
+QAction *DockWidgetTab::createAutoHideToAction(const QString &Title,
+                                               ads::SideBarLocation Location,
+                                               QMenu *Menu) {
+    auto a = Menu->addAction(Title);
+    a->setProperty(ads::internal::LocationProperty, Location);
+    connect(a, SIGNAL(triggered(bool)), this,
+            SLOT(onAutoHideToActionClicked()));
+    return a;
 }

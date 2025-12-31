@@ -33,6 +33,7 @@
 #include "class/winginputdialog.h"
 #include "class/wingmessagebox.h"
 #include "control/toast.h"
+#include "dialog/mutisavedialog.h"
 #include "model/asidbwatchmodel.h"
 
 #include <QDesktopServices>
@@ -113,13 +114,13 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     auto &lsp = AngelLsp::instance();
     connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
         // only happened when restarting
-        for (auto &view : m_views) {
+        for (auto &view : ScriptEditor::instances()) {
             view->onReconnectLsp();
             view->setCompleterEnabled(true);
         }
     });
     connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-        for (auto &view : m_views) {
+        for (auto &view : ScriptEditor::instances()) {
             view->setCompleterEnabled(false);
         }
     });
@@ -288,14 +289,15 @@ void ScriptingDialog::initConsole() {
 }
 
 bool ScriptingDialog::about2Close() {
-    if (m_views.isEmpty()) {
+    const auto &views = ScriptEditor::instances();
+    if (views.isEmpty()) {
         return true;
     }
 
     QStringList unSavedFiles;
     QList<ScriptEditor *> need2CloseView;
 
-    for (auto &view : m_views) {
+    for (auto &view : views) {
         if (view->editor()->document()->isModified()) {
             unSavedFiles << view->fileName();
         } else {
@@ -307,7 +309,7 @@ bool ScriptingDialog::about2Close() {
         view->requestCloseDockWidget();
     }
 
-    if (!m_views.isEmpty()) {
+    if (!views.isEmpty()) {
         return false;
     }
 
@@ -325,16 +327,14 @@ bool ScriptingDialog::about2Close() {
                                       QMessageBox::Yes | QMessageBox::No |
                                           QMessageBox::Cancel);
     if (ret == QMessageBox::Yes) {
-        for (auto &p : m_views) {
+        for (auto &p : views) {
             p->requestCloseDockWidget();
         }
-
-        return m_views.isEmpty();
+        return views.isEmpty();
     } else if (ret == QMessageBox::No) {
-        for (auto &p : m_views) {
+        for (auto &p : views) {
             p->closeDockWidget(); // force close
         }
-        m_views.clear();
         return true;
     }
 
@@ -390,6 +390,9 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
         m_editStateWidgets << addPannelAction(pannel, QStringLiteral("reload"),
                                               tr("Reload"),
                                               &ScriptingDialog::on_reload);
+
+        addPannelAction(pannel, QStringLiteral("exit"), tr("Exit"),
+                        &ScriptingDialog::on_exit);
     }
 
     {
@@ -862,8 +865,8 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
 }
 
 bool ScriptingDialog::newOpenFileSafeCheck() {
-    if (m_views.size() >=
-        std::numeric_limits<decltype(m_views)::size_type>::max() - 1) {
+    const auto &views = ScriptEditor::instances();
+    if (views.size() >= std::numeric_limits<size_t>::max() - 1) {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Too much opened files"));
         return false;
@@ -907,7 +910,6 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
     connect(editor, &ScriptEditor::closeRequested, this, [this] {
         auto editor = qobject_cast<ScriptEditor *>(sender());
         Q_ASSERT(editor);
-        Q_ASSERT(m_views.contains(editor));
 
         auto &m = ScriptMachine::instance();
         if (m.isRunning(ScriptMachine::Scripting) &&
@@ -920,7 +922,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             on_stopscript();
         }
 
-        if (editor->editor()->document()->isModified()) {
+        if (editor->isModified()) {
             auto ret = saveRequest();
             if (ret == QMessageBox::Cancel) {
                 return;
@@ -937,25 +939,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             }
         }
 
-        m_views.removeOne(editor);
-        if (currentEditor() == editor) {
-            m_curEditor = nullptr;
-        }
-        m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-            ->setEnabled(m_views.size() != 0);
-
-        if (m_dock->focusedDockWidget() == editor) {
-            if (!m_views.isEmpty()) {
-                for (auto &p : m_views) {
-                    if (p != editor && p->isCurrentTab()) {
-                        p->setFocus();
-                    }
-                }
-            }
-        }
-
-        editor->deleteDockWidget();
-        updateEditModeEnabled();
+        destoryEditor(editor);
     });
 
     connect(editor, &ScriptEditor::onToggleMark, this, [=](int lineIndex) {
@@ -974,8 +958,6 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
             editor->setProperty("__RELOAD__", true);
         }
     });
-
-    m_views.append(editor);
 
     auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
@@ -1129,7 +1111,8 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 }
 
 ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
-    for (auto &p : m_views) {
+    const auto &views = ScriptEditor::instances();
+    for (auto &p : views) {
 #ifdef Q_OS_WIN
         if (p->fileName().compare(filename, Qt::CaseInsensitive) == 0) {
 #else
@@ -1171,6 +1154,64 @@ ScriptEditor *ScriptingDialog::openFile(const QString &filename) {
     m_dock->addDockWidget(ads::CenterDockWidgetArea, editor, editorViewArea());
     editor->setFocus();
     return editor;
+}
+
+bool ScriptingDialog::try2CloseScriptViews(
+    const LinkedList<ScriptEditor *> views) {
+    auto &runner = ScriptMachine::instance();
+    if (runner.isRunning(ScriptMachine::Scripting)) {
+        if (WingMessageBox::warning(
+                this, this->windowTitle(), tr("ScriptStillRunning"),
+                QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+            return false;
+        }
+        on_stopscript();
+    }
+
+    for (auto &editor : views) {
+        bool saved = !editor->isModified();
+        if (saved) {
+            destoryEditor(editor);
+        }
+    }
+
+    QVector<EditorInfo *> infos;
+    infos.reserve(views.size());
+    for (auto &view : views) {
+        if (!view->isClosed()) {
+            infos.append(view);
+        }
+    }
+    if (!infos.isEmpty()) {
+        MutiSaveDialog sd(infos, this, this);
+        auto ret = MutiSaveDialog::StatusCode(sd.exec());
+        switch (ret) {
+        case MutiSaveDialog::SAVE_DISCARD: {
+            for (auto &editor : views) {
+                destoryEditor(editor);
+            }
+        } break;
+        case MutiSaveDialog::SAVE_SAVE: {
+            for (auto &editor : views) {
+                if (editor->save()) {
+                    destoryEditor(editor);
+                }
+            }
+
+            if (!views.isEmpty()) {
+                WingMessageBox::critical(this, qAppName(),
+                                         tr("SaveUnSuccessfully"));
+                return false;
+            }
+        } break;
+        case MutiSaveDialog::SAVE_CANCEL:
+            return false;
+        case MutiSaveDialog::SAVE_NOOP:
+            break;
+        }
+    }
+
+    return true;
 }
 
 void ScriptingDialog::runDbgCommand(asIDBAction action) {
@@ -1469,14 +1510,16 @@ void ScriptingDialog::on_reload() {
     }
 }
 
+void ScriptingDialog::on_exit() {
+    const auto &views = ScriptEditor::instances();
+    if (try2CloseScriptViews(views)) {
+        close();
+    }
+}
+
 void ScriptingDialog::on_save() {
     auto editor = currentEditor();
     if (editor == nullptr) {
-        return;
-    }
-
-    if (editor->fileName().isEmpty()) {
-        on_saveas();
         return;
     }
 
@@ -1630,15 +1673,16 @@ void ScriptingDialog::on_fullScreen() {
 }
 
 void ScriptingDialog::on_restoreLayout() {
-    if (m_views.isEmpty()) {
+    const auto &views = ScriptEditor::instances();
+    if (views.isEmpty()) {
         m_dock->restoreState(_defaultLayout);
         return;
     }
 
     auto curEditor = m_curEditor;
-    if (m_views.size() > 1) {
+    if (views.size() > 1) {
         auto notSameContainer = std::any_of(
-            m_views.begin(), m_views.end(), [curEditor](ScriptEditor *view) {
+            views.begin(), views.end(), [curEditor](ScriptEditor *view) {
                 return curEditor->dockAreaWidget() != view->dockAreaWidget();
             });
         if (notSameContainer) {
@@ -1653,7 +1697,7 @@ void ScriptingDialog::on_restoreLayout() {
 
     // remove temperaily
     QVector<ScriptEditor *> hiddenView;
-    for (auto &view : m_views) {
+    for (auto &view : views) {
         if (view->isClosed()) {
             hiddenView.append(view);
         }
@@ -1665,7 +1709,7 @@ void ScriptingDialog::on_restoreLayout() {
     // add back
     auto centeralWidget = m_dock->centralWidget();
     auto area = centeralWidget->dockAreaWidget();
-    for (auto &view : m_views) {
+    for (auto &view : views) {
         m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
         if (hiddenView.contains(view)) {
             view->toggleView(false);
@@ -1700,7 +1744,8 @@ void ScriptingDialog::on_runscript() {
 }
 
 void ScriptingDialog::on_rundbgscript() {
-    for (auto &editor : m_views) {
+    const auto &views = ScriptEditor::instances();
+    for (auto &editor : views) {
         if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
                                      tr("CannotSave2RunScript"));
@@ -1782,7 +1827,8 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
-    if (!m_views.isEmpty()) {
+    const auto &views = ScriptEditor::instances();
+    if (!views.isEmpty()) {
         event->ignore();
         this->hide();
         return;
@@ -1838,8 +1884,49 @@ void ScriptingDialog::destoryFakeEditor() {
     }
 }
 
+void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
+    Q_ASSERT(editor);
+    const auto &views = ScriptEditor::instances();
+    if (currentEditor() == editor) {
+        m_curEditor = nullptr;
+    }
+    m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
+        ->setEnabled(views.size() != 0);
+
+    if (m_dock->focusedDockWidget() == editor) {
+        if (!views.isEmpty()) {
+            for (auto &p : views) {
+                if (p != editor && p->isCurrentTab()) {
+                    p->setFocus();
+                }
+            }
+        }
+    }
+
+    editor->deleteDockWidget();
+    updateEditModeEnabled();
+}
+
 QPixmap ScriptingDialog::markFromPath(const QString &name) {
     return QPixmap(
         QStringLiteral(":/com.wingsummer.winghex/images/scriptdbg/") + name +
         QStringLiteral(".png"));
+}
+
+bool ScriptingDialog::save(EditorInfo *info) {
+    auto editor = dynamic_cast<ScriptEditor *>(info);
+    if (editor == nullptr) {
+        return false;
+    }
+
+    return editor->save();
+}
+
+void ScriptingDialog::discard(EditorInfo *info) {
+    auto editor = dynamic_cast<ScriptEditor *>(info);
+    if (editor == nullptr) {
+        return;
+    }
+
+    destoryEditor(editor);
 }

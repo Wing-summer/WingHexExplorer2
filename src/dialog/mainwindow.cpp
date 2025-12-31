@@ -43,6 +43,7 @@
 #include "control/toast.h"
 #include "define.h"
 #include "dialog/layoutdeldialog.h"
+#include "dialog/mutisavedialog.h"
 #include "encodingdialog.h"
 #include "fileinfodialog.h"
 #include "finddialog.h"
@@ -361,12 +362,14 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     // connect settings signals
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
             [this](int v) {
-                for (auto &p : m_views) {
+                const auto &views = EditorView::instances();
+                for (auto &p : views) {
                     p->setFontSize(qreal(v));
                 }
             });
     connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
-        for (auto &p : m_views) {
+        const auto &views = EditorView::instances();
+        for (auto &p : views) {
             p->setCopyLimit(v);
         }
     });
@@ -2175,21 +2178,7 @@ void MainWindow::on_save() {
         return;
     }
 
-    auto isNewFile = editor->isNewFile();
-    if (isNewFile) {
-        on_saveas();
-        return;
-    }
-
-    auto changedTo = editor->change2WorkSpace();
-    QString ws;
-    auto res = saveEditor(editor, {}, false, false, &ws);
-    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("save")),
-                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
-        if (changedTo) {
-            addRecentFile(ws, true);
-        }
-    }
+    __save(editor);
 }
 
 void MainWindow::on_convpro() {
@@ -2231,30 +2220,7 @@ void MainWindow::on_saveas() {
         return;
     }
 
-    QString lastpath;
-    if (editor->isNewFile() || editor->isExtensionFile()) {
-        lastpath = m_lastusedpath;
-    } else {
-        lastpath = editor->fileNameUrl().toLocalFile();
-    }
-
-    auto filename =
-        WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
-    if (filename.isEmpty())
-        return;
-    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
-
-    bool isWorkspace = editor->isWorkSpace();
-    QString ws;
-    auto res = saveEditor(editor, filename, false, isWorkspace, &ws);
-    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
-                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
-        if (ws.isEmpty()) {
-            addRecentFile(filename, false);
-        } else {
-            addRecentFile(ws, true);
-        }
-    }
+    __saveas(editor);
 }
 
 void MainWindow::on_exportfile() {
@@ -3193,6 +3159,61 @@ void MainWindow::on_update() {
         });
 }
 
+bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
+    if (!views.isEmpty()) {
+        for (auto &editor : views) {
+            bool saved = editor->isSaved();
+            if (saved) {
+                closeEditor(editor, true);
+            }
+        }
+
+        QVector<EditorInfo *> infos;
+        infos.reserve(views.size());
+        for (auto &view : views) {
+            if (!view->isClosed()) {
+                infos.append(view);
+            }
+        }
+        if (!infos.isEmpty()) {
+            MutiSaveDialog sd(infos, this, this);
+            auto ret = MutiSaveDialog::StatusCode(sd.exec());
+            switch (ret) {
+            case MutiSaveDialog::SAVE_DISCARD: {
+                for (auto &editor : views) {
+                    closeEditor(editor, true);
+                }
+            } break;
+            case MutiSaveDialog::SAVE_SAVE: {
+                for (auto &editor : views) {
+                    if (__save(editor)) {
+                        closeEditor(editor, true);
+                    }
+                }
+
+                if (!views.isEmpty()) {
+                    WingMessageBox::critical(this, qAppName(),
+                                             tr("SaveUnSuccessfully"));
+                    return false;
+                }
+            } break;
+            case MutiSaveDialog::SAVE_CANCEL:
+                return false;
+            case MutiSaveDialog::SAVE_NOOP:
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+bool MainWindow::try2CloseScriptViews(const LinkedList<ScriptEditor *> views) {
+    if (m_scriptDialog) {
+        return m_scriptDialog->try2CloseScriptViews(views);
+    }
+    return false;
+}
+
 ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
                                               const QString &widgetName,
                                               const QString &displayName,
@@ -3213,7 +3234,8 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 }
 
 EditorView *MainWindow::findEditorView(const QUrl &filename) {
-    for (auto &p : m_views) {
+    const auto &views = EditorView::instances();
+    for (auto &p : views) {
         if (p->fileNameUrl() == filename) {
             return p;
         }
@@ -3222,8 +3244,8 @@ EditorView *MainWindow::findEditorView(const QUrl &filename) {
 }
 
 bool MainWindow::newOpenFileSafeCheck() {
-    if (m_views.size() >=
-        std::numeric_limits<decltype(m_views)::size_type>::max() - 1) {
+    const auto &views = EditorView::instances();
+    if (views.size() >= std::numeric_limits<size_t>::max() - 1) {
         WingMessageBox::critical(this, tr("Error"),
                                  tr("Too much opened files"));
         return false;
@@ -3261,7 +3283,6 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     connect(editor, &EditorView::closeRequested, this, [this] {
         auto editor = qobject_cast<EditorView *>(sender());
         Q_ASSERT(editor);
-        Q_ASSERT(m_views.contains(editor));
 
         // the plugin view should explain itself why preventing closing
         if (!editor->processWingEditorViewClosing()) {
@@ -3286,7 +3307,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             } else if (ret == QMessageBox::Yes) {
                 auto ret = saveEditor(editor, {});
                 if (ret == WingHex::Success) {
-                    closeEditor(editor, false);
+                    closeEditor(editor, true);
                 } else {
                     if (ret == WingHex::WorkSpaceUnSaved) {
                         auto btn = WingMessageBox::critical(
@@ -3309,12 +3330,12 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             }
         }
 
-        if (m_views.isEmpty()) {
+        const auto &views = EditorView::instances();
+        if (views.isEmpty()) {
             updateEditModeEnabled();
         }
     });
 
-    m_views.append(editor);
     auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
     auto menu = ev->menu();
     Q_ASSERT(menu);
@@ -3558,33 +3579,35 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     updateNumberTable(true);
     updateStringDec();
 
-    // reload new scroll offset
-    QTimer::singleShot(0, [this, cur]() {
-        auto &dbp = cur->scrollPoints();
-        auto p = dbp[int(EditorView::ScrollPoint::FindResult)];
-        m_findresult->horizontalScrollBar()->setValue(p.x());
-        m_findresult->verticalScrollBar()->setValue(p.y());
+    if (old) {
+        // reload new scroll offset
+        QTimer::singleShot(0, [this, cur]() {
+            auto &dbp = cur->scrollPoints();
+            auto p = dbp[int(EditorView::ScrollPoint::FindResult)];
+            m_findresult->horizontalScrollBar()->setValue(p.x());
+            m_findresult->verticalScrollBar()->setValue(p.y());
 
-        p = dbp[int(EditorView::ScrollPoint::CheckSum)];
-        m_hash->horizontalScrollBar()->setValue(p.x());
-        m_hash->verticalScrollBar()->setValue(p.y());
+            p = dbp[int(EditorView::ScrollPoint::CheckSum)];
+            m_hash->horizontalScrollBar()->setValue(p.x());
+            m_hash->verticalScrollBar()->setValue(p.y());
 
-        p = dbp[int(EditorView::ScrollPoint::UndoStack)];
-        _undoView->horizontalScrollBar()->setValue(p.x());
-        _undoView->verticalScrollBar()->setValue(p.y());
+            p = dbp[int(EditorView::ScrollPoint::UndoStack)];
+            _undoView->horizontalScrollBar()->setValue(p.x());
+            _undoView->verticalScrollBar()->setValue(p.y());
 
-        p = dbp[int(EditorView::ScrollPoint::BookMark)];
-        m_bookMark->horizontalScrollBar()->setValue(p.x());
-        m_bookMark->verticalScrollBar()->setValue(p.y());
+            p = dbp[int(EditorView::ScrollPoint::BookMark)];
+            m_bookMark->horizontalScrollBar()->setValue(p.x());
+            m_bookMark->verticalScrollBar()->setValue(p.y());
 
-        p = dbp[int(EditorView::ScrollPoint::MetaData)];
-        m_metadata->horizontalScrollBar()->setValue(p.x());
-        m_metadata->verticalScrollBar()->setValue(p.y());
+            p = dbp[int(EditorView::ScrollPoint::MetaData)];
+            m_metadata->horizontalScrollBar()->setValue(p.x());
+            m_metadata->verticalScrollBar()->setValue(p.y());
 
-        p = dbp[int(EditorView::ScrollPoint::DecodeStr)];
-        m_txtDecode->horizontalScrollBar()->setValue(p.x());
-        m_txtDecode->verticalScrollBar()->setValue(p.y());
-    });
+            p = dbp[int(EditorView::ScrollPoint::DecodeStr)];
+            m_txtDecode->horizontalScrollBar()->setValue(p.x());
+            m_txtDecode->verticalScrollBar()->setValue(p.y());
+        });
+    }
 
     PluginSystem::instance().dispatchEvent(
         IWingPlugin::RegisteredEvent::FileSwitched,
@@ -3719,13 +3742,11 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     if (!fName.isValid()) {
         return ErrFile::InvalidFormat;
     }
-    for (auto &p : m_views) {
-        if (p->fileNameUrl() == fName) {
-            if (editor) {
-                *editor = p;
-            }
-            return ErrFile::AlreadyOpened;
-        }
+
+    auto p = findEditorView(fName);
+    if (p && editor) {
+        *editor = p;
+        return ErrFile::AlreadyOpened;
     }
 
     // ok, going on
@@ -3828,13 +3849,13 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
         if (!editor->isSaved()) {
             return ErrFile::UnSaved;
         }
-    }
-    auto cret = editor->closeFile();
-    if (cret != ErrFile::Success && !force) {
-        return cret;
+
+        auto cret = editor->closeFile();
+        if (cret != ErrFile::Success) {
+            return cret;
+        }
     }
 
-    m_views.remove(editor);
     if (currentEditor() == editor) {
         _editorLock.lockForWrite();
         m_curEditor = nullptr;
@@ -3844,16 +3865,17 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     auto fileName = editor->fileNameUrl();
     auto &plgsys = PluginSystem::instance();
     plgsys.cleanUpEditorViewHandle(editor);
-    plgsys.dispatchEvent(
-        IWingPlugin::RegisteredEvent::FileClosed,
-        {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
 
     editor->closeDockWidget();
 
+    const auto &views = EditorView::instances();
     m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-        ->setEnabled(m_views.size() != 0);
-
+        ->setEnabled(views.size() != 0);
     adjustEditorFocus(editor);
+
+    plgsys.dispatchEvent(
+        IWingPlugin::RegisteredEvent::FileClosed,
+        {fileName, QVariant::fromValue(getEditorViewFileType(editor))});
     return ErrFile::Success;
 }
 
@@ -3939,8 +3961,9 @@ EditorView *MainWindow::currentEditor() {
 
 void MainWindow::adjustEditorFocus(EditorView *closedEditor) {
     if (m_dock->focusedDockWidget() == closedEditor) {
-        if (!m_views.isEmpty()) {
-            for (auto &ev : m_views) {
+        const auto &views = EditorView::instances();
+        if (!views.isEmpty()) {
+            for (auto &ev : views) {
                 if (ev != closedEditor && ev->isCurrentTab()) {
                     ev->setFocus();
                 }
@@ -4423,13 +4446,14 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
     showStatus(tr("LayoutRestoring..."));
     updateUI();
 
-    if (m_views.isEmpty()) {
+    const auto &views = EditorView::instances();
+    if (views.isEmpty()) {
         m_dock->restoreState(layout);
     } else {
         auto curEditor = m_curEditor;
-        if (m_views.size() > 1) {
+        if (views.size() > 1) {
             auto notSameContainer = std::any_of(
-                m_views.begin(), m_views.end(), [curEditor](EditorView *view) {
+                views.begin(), views.end(), [curEditor](EditorView *view) {
                     return curEditor->dockAreaWidget() !=
                            view->dockAreaWidget();
                 });
@@ -4445,7 +4469,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
 
         // remove temperaily
         QVector<EditorView *> hiddenView;
-        for (auto &view : m_views) {
+        for (auto &view : views) {
             if (view->isClosed()) {
                 hiddenView.append(view);
             }
@@ -4457,7 +4481,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
         // add back
         auto centeralWidget = m_dock->centralWidget();
         auto area = centeralWidget->dockAreaWidget();
-        for (auto &view : m_views) {
+        for (auto &view : views) {
             m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
             if (hiddenView.contains(view)) {
                 view->toggleView(false);
@@ -4508,46 +4532,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         sm.abortScript(ScriptMachine::Background);
     }
 
-    // then checking itself
-    if (!m_views.isEmpty()) {
-        bool unSavedFiles = false;
-        QList<EditorView *> need2CloseView;
-        for (auto &editor : m_views) {
-            bool saved = editor->isSaved();
-            if (saved) {
-                need2CloseView << editor;
-            } else {
-                unSavedFiles = true;
-            }
-        }
-
-        for (auto &view : need2CloseView) {
-            closeEditor(view, true);
-        }
-
-        if (unSavedFiles) {
-            auto ret = WingMessageBox::warning(
-                this, qAppName(), tr("ConfirmSave"),
-                QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-            if (ret == QMessageBox::Yes) {
-                for (auto &view : m_views) {
-                    view->save(view->workSpaceName());
-                    closeEditor(view, true);
-                }
-
-                if (!m_views.isEmpty()) {
-                    event->ignore();
-                    return;
-                }
-            } else if (ret == QMessageBox::No) {
-                for (auto &p : m_views) {
-                    closeEditor(p, true);
-                }
-            } else {
-                event->ignore();
-                return;
-            }
-        }
+    const auto &views = EditorView::instances();
+    if (!try2CloseHexViews(views)) {
+        event->ignore();
     }
 
     auto &lsp = AngelLsp::instance();
@@ -4656,4 +4643,75 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
         }
     }
     return FramelessMainWindow::eventFilter(watched, event);
+}
+
+bool MainWindow::__save(EditorView *editor) {
+    auto isNewFile = editor->isNewFile();
+    if (isNewFile) {
+        return __saveas(editor);
+    }
+
+    auto changedTo = editor->change2WorkSpace();
+    QString ws;
+    auto res = saveEditor(editor, {}, false, false, &ws);
+    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("save")),
+                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
+        if (changedTo) {
+            addRecentFile(ws, true);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool MainWindow::__saveas(EditorView *editor) {
+    QString lastpath;
+    if (editor->isNewFile() || editor->isExtensionFile()) {
+        lastpath = m_lastusedpath;
+    } else {
+        lastpath = editor->fileNameUrl().toLocalFile();
+    }
+
+    auto filename =
+        WingFileDialog::getSaveFileName(this, tr("ChooseSaveFile"), lastpath);
+    if (filename.isEmpty()) {
+        return false;
+    }
+
+    m_lastusedpath = Utilities::getAbsoluteDirPath(filename);
+    bool isWorkspace = editor->isWorkSpace();
+    QString ws;
+    auto res = saveEditor(editor, filename, false, isWorkspace, &ws);
+    if (reportErrFileError(res, NAMEICONRES(QStringLiteral("saveas")),
+                           tr("SaveSuccessfully"), tr("SaveUnSuccessfully"))) {
+        if (ws.isEmpty()) {
+            addRecentFile(filename, false);
+        } else {
+            addRecentFile(ws, true);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool MainWindow::save(EditorInfo *info) {
+    auto view = dynamic_cast<EditorView *>(info);
+    if (view == nullptr) {
+        return false;
+    }
+
+    auto ret = __save(view);
+    if (ret) {
+        closeEditor(view, true);
+    }
+    return ret;
+}
+
+void MainWindow::discard(EditorInfo *info) {
+    auto view = dynamic_cast<EditorView *>(info);
+    if (view == nullptr) {
+        return;
+    }
+
+    closeEditor(view, true);
 }

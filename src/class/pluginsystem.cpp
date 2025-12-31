@@ -2117,26 +2117,6 @@ bool PluginSystem::clearBookMark(const QObject *sender) {
     return false;
 }
 
-bool PluginSystem::closeAllFiles(const QObject *sender) {
-    if (!checkThreadAff()) {
-        return false;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return false;
-    }
-
-    auto &map = m_plgviewMap[plg];
-    auto &maps = map.contexts;
-    for (auto &item : maps) {
-        closeEditor(plg, getUIDHandle(item->fid), true);
-    }
-    map.currentFID = -1;
-    maps.clear();
-    return true;
-}
-
 void PluginSystem::__raiseContextException(const QObject *sender,
                                            const QString &exception,
                                            bool allowCatch) {
@@ -2223,76 +2203,7 @@ IWingPlugin *PluginSystem::checkPluginAndReport(const QObject *sender,
     return p;
 }
 
-ErrFile PluginSystem::saveAsCurrent(const QObject *sender,
-                                    const QString &savename) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    auto view = getCurrentPluginView(plg);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
-    if (view) {
-        return _win->saveEditor(view, savename);
-    }
-    return ErrFile::Error;
-}
-
-ErrFile PluginSystem::exportCurrent(const QObject *sender,
-                                    const QString &savename) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    auto view = getCurrentPluginView(plg);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
-    if (view) {
-        auto ws = view->workSpaceName();
-        return view->save(ws, savename, true,
-                          EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
-    }
-    return ErrFile::Error;
-}
-
-ErrFile PluginSystem::saveCurrent(const QObject *sender) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    auto view = getCurrentPluginView(plg);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
-    if (view) {
-        auto ws = view->workSpaceName();
-        return view->save(ws, {}, false,
-                          EditorView::SaveWorkSpaceAttr::AutoWorkSpace);
-    }
-    return ErrFile::Error;
-}
-
-ErrFile PluginSystem::closeCurrent(const QObject *sender, bool force) {
+ErrFile PluginSystem::closeCurrent(const QObject *sender) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2311,11 +2222,18 @@ ErrFile PluginSystem::closeCurrent(const QObject *sender, bool force) {
         return ErrFile::NotExist;
     }
 
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
+    auto &maps = m_plgviewMap[plg].contexts;
+    auto ret =
+        std::find_if(maps.begin(), maps.end(),
+                     [view](const QSharedPointer<PluginFileContext> &content) {
+                         return content->view == view;
+                     });
+    if (ret == maps.end()) {
+        return ErrFile::NotExist;
     }
 
-    return _win->closeEditor(view, force);
+    maps.erase(ret);
+    return ErrFile::Success;
 }
 
 int PluginSystem::openCurrent(const QObject *sender) {
@@ -2335,7 +2253,6 @@ int PluginSystem::openCurrent(const QObject *sender) {
         }
 
         auto id = assginHandleForOpenPluginView(plg, view);
-
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::PluginFileOpened,
             {quintptr(plg), view->fileNameUrl(), id,
@@ -2346,8 +2263,7 @@ int PluginSystem::openCurrent(const QObject *sender) {
     return ErrFile::Error;
 }
 
-ErrFile PluginSystem::saveAsFile(const QObject *sender, int handle,
-                                 const QString &savename) {
+ErrFile PluginSystem::closeFile(const QObject *sender, int handle) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2357,127 +2273,18 @@ ErrFile PluginSystem::saveAsFile(const QObject *sender, int handle,
         return ErrFile::Error;
     }
 
-    auto view = handle2EditorView(plg, handle);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
+    auto view = closeHandle(plg, handle);
     if (view) {
-        return _win->saveEditor(view, savename);
-    }
-    return ErrFile::NotExist;
-}
-
-ErrFile PluginSystem::exportFile(const QObject *sender, int handle,
-                                 const QString &savename) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    auto view = handle2EditorView(plg, handle);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
-    if (view) {
-        return _win->saveEditor(view, savename, true);
-    }
-    return ErrFile::NotExist;
-}
-
-int PluginSystem::openWorkSpace(const QObject *sender,
-                                const QString &filename) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    EditorView *view = nullptr;
-    if (!checkPluginCanOpenedFile(plg)) {
-        return ErrFile::TooManyOpenedFile;
-    }
-    auto ret = _win->openWorkSpace(filename, &view);
-    if (view) {
-        if (ret == ErrFile::AlreadyOpened) {
-            return ErrFile::AlreadyOpened;
-        }
-        auto id = assginHandleForOpenPluginView(plg, view);
-
         PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg), filename, id,
+            IWingPlugin::RegisteredEvent::PluginFileClosed,
+            {quintptr(plg), view->fileNameUrl(), handle,
              QVariant::fromValue(_win->getEditorViewFileType(view))});
-
-        return id;
-    } else {
-        return ret;
-    }
-}
-
-ErrFile PluginSystem::saveFile(const QObject *sender, int handle) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    auto view = handle2EditorView(plg, handle);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
-    }
-
-    if (view) {
-        return _win->saveEditor(view, {});
-    }
-    return ErrFile::NotExist;
-}
-
-ErrFile PluginSystem::closeFile(const QObject *sender, int handle, bool force) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    if (closeEditor(plg, handle, force)) {
-        return ErrFile::Success;
-    }
-    return ErrFile::NotExist;
-}
-
-ErrFile PluginSystem::closeHandle(const QObject *sender, int handle) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    if (closeHandle(plg, handle)) {
         return WingHex::ErrFile::Success;
     }
     return WingHex::ErrFile::NotExist;
 }
 
-int PluginSystem::openExtFile(const QObject *sender, const QString &ext,
-                              const QString &file) {
+int PluginSystem::openFile(const QObject *sender, const QUrl &file) {
     if (!checkThreadAff()) {
         return ErrFile::NotAllowedInNoneGUIThread;
     }
@@ -2487,84 +2294,17 @@ int PluginSystem::openExtFile(const QObject *sender, const QString &ext,
         return ErrFile::Error;
     }
 
-    EditorView *view = nullptr;
     if (!checkPluginCanOpenedFile(plg)) {
         return ErrFile::TooManyOpenedFile;
     }
-    auto ret = _win->openExtFile(ext, file, &view);
-    if (view) {
-        if (ret == ErrFile::AlreadyOpened) {
-            return ErrFile::AlreadyOpened;
-        }
-        auto id = assginHandleForOpenPluginView(plg, view);
 
+    auto view = _win->findEditorView(file);
+    if (view) {
+        auto id = assginHandleForOpenPluginView(plg, view);
         PluginSystem::instance().dispatchEvent(
             IWingPlugin::RegisteredEvent::PluginFileOpened,
             {quintptr(plg), file, id,
              QVariant::fromValue(_win->getEditorViewFileType(view))});
-
-        return id;
-    } else {
-        return ret;
-    }
-}
-
-int PluginSystem::openFile(const QObject *sender, const QString &filename) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    EditorView *view = nullptr;
-    if (!checkPluginCanOpenedFile(plg)) {
-        return ErrFile::TooManyOpenedFile;
-    }
-    auto ret = _win->openFile(filename, &view);
-    if (view) {
-        if (ret == ErrFile::AlreadyOpened) {
-            return ErrFile::AlreadyOpened;
-        }
-        auto id = assginHandleForOpenPluginView(plg, view);
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg), filename, id,
-             QVariant::fromValue(_win->getEditorViewFileType(view))});
-
-        return id;
-    } else {
-        return ret;
-    }
-}
-
-int PluginSystem::newFile(const QObject *sender) {
-    if (!checkThreadAff()) {
-        return ErrFile::NotAllowedInNoneGUIThread;
-    }
-
-    auto plg = checkPluginAndReport(sender, __func__);
-    if (plg == nullptr) {
-        return ErrFile::Error;
-    }
-
-    if (!checkPluginCanOpenedFile(plg)) {
-        return ErrFile::TooManyOpenedFile;
-    }
-    auto view = _win->newfileGUI();
-    if (view) {
-        auto id = assginHandleForOpenPluginView(plg, view);
-        m_plgviewMap[plg].currentFID = id;
-
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg),
-             {},
-             id,
-             QVariant::fromValue(_win->getEditorViewFileType(view))});
-
         return id;
     } else {
         return ErrFile::Error;
@@ -2909,47 +2649,9 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
     }
 }
 
-bool PluginSystem::closeEditor(IWingPlugin *plg, int handle, bool force) {
-    if (handle >= 0) {
-        auto &vm = m_plgviewMap[plg];
-        auto &handles = vm.contexts;
-        auto r = std::find_if(
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            handles.cbegin(), handles.cend(),
-#else
-            handles.begin(), handles.end(),
-#endif
-            [handle](const QSharedPointer<PluginFileContext> &d) {
-                return equalCompareHandle(d->fid, handle);
-            });
-        if (r == handles.end()) {
-            return false;
-        }
-        auto sharedc = *r;
-
-        auto &vb = m_viewBindings[sharedc->view];
-        auto &bind = vb.linkedplg;
-        bind.removeOne(plg);
-        if (bind.isEmpty()) {
-            _win->closeEditor(sharedc->view, force);
-            m_viewBindings.remove(sharedc->view);
-        }
-
-        if (vm.currentFID == handle) {
-            vm.currentFID = -1;
-        }
-
-        handles.erase(r);
-    } else {
-        return false;
-    }
-
-    return true;
-}
-
-bool PluginSystem::closeHandle(IWingPlugin *plg, int handle) {
+EditorView *PluginSystem::closeHandle(IWingPlugin *plg, int handle) {
     if (handle < 0) {
-        return false;
+        return nullptr;
     }
     auto &vm = m_plgviewMap[plg];
     auto &handles = vm.contexts;
@@ -2963,21 +2665,21 @@ bool PluginSystem::closeHandle(IWingPlugin *plg, int handle) {
             return equalCompareHandle(d->fid, handle);
         });
     if (r == handles.end()) {
-        return false;
+        return nullptr;
     }
     auto sharedc = *r;
-
-    auto &bind = m_viewBindings[sharedc->view].linkedplg;
+    auto view = sharedc->view;
+    auto &bind = m_viewBindings[view].linkedplg;
     bind.removeOne(plg);
     if (bind.isEmpty()) {
-        m_viewBindings.remove(sharedc->view);
+        m_viewBindings.remove(view);
     }
 
     if (vm.currentFID == handle) {
         vm.currentFID = -1;
     }
     handles.erase(r);
-    return true;
+    return view;
 }
 
 bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,

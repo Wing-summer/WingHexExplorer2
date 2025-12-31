@@ -27,6 +27,7 @@
 #include "WingPlugin/iwingdevice.h"
 #include "WingPlugin/wingeditorviewwidget.h"
 #include "class/cryptographichash.h"
+#include "class/editorinfo.h"
 #include "class/editorviewcontext.h"
 #include "dialog/finddialog.h"
 #include "gotowidget.h"
@@ -39,7 +40,7 @@ using CryptoAlgorithms =
     QVarLengthArray<bool, int(CryptographicHash::Algorithm::NumAlgorithms)>;
 
 // only plugin api can be declared with `private slot`
-class EditorView : public ads::CDockWidget {
+class EditorView : public ads::CDockWidget, public EditorInfo {
     Q_OBJECT
     Q_PROPERTY(bool isWorkSpace READ isWorkSpace)
     Q_PROPERTY(bool isNewFile READ isNewFile)
@@ -208,6 +209,8 @@ public slots:
     void raiseAndSwitchView(const QString &id);
 
 public:
+    static const LinkedList<EditorView *> &instances();
+
     EditorView *clone();
 
     void registerView(const QString &id, WingHex::WingEditorViewWidget *view,
@@ -602,6 +605,15 @@ private:
 
     QReadWriteLock _rwlock;
     CallTable _viewFns;
+
+private:
+    inline static LinkedList<EditorView *> m_instances;
+
+    // EditorInfo interface
+public:
+    virtual QIcon editorIcon() const override;
+    virtual QString infoFileName() const override;
+    virtual QString infoTooltip() const override;
 };
 
 #endif // EDITORVIEW_H

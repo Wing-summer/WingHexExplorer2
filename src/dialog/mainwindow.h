@@ -58,7 +58,7 @@
 
 class PluginSystem;
 
-class MainWindow : public FramelessMainWindow {
+class MainWindow : public FramelessMainWindow, public EditorsCtl {
     Q_OBJECT
 
     friend class PluginSystem;
@@ -215,6 +215,10 @@ private slots:
     void on_sponsor();
     void on_wiki();
     void on_update();
+
+public:
+    bool try2CloseHexViews(const LinkedList<EditorView *> views);
+    bool try2CloseScriptViews(const LinkedList<ScriptEditor *> views);
 
 public:
     ErrFile openFile(const QString &file, EditorView **editor);
@@ -495,8 +499,6 @@ private:
 
     //===================================================
 
-    LinkedList<EditorView *> m_views;
-
     QList<QWidget *> m_editStateWidgets;
     QList<QWidget *> m_driverStateWidgets;
 
@@ -571,5 +573,14 @@ private:
     bool m_unsignedHex = false;
     ScriptMachine::MessageType _lastOutputType =
         ScriptMachine::MessageType::Unknown;
+
+    // EditorsCtl interface
+public:
+    bool __save(EditorView *editor);
+    bool __saveas(EditorView *editor);
+
+    virtual bool save(EditorInfo *info) override;
+    virtual void discard(EditorInfo *info) override;
 };
+
 #endif // MAINWINDOW_H

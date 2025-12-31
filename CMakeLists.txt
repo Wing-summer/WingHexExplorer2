@@ -36,21 +36,6 @@ if(WINGHEX_BUILD_TEST)
     add_subdirectory(test/TestStructGen)
 endif()
 
-if(DEFINED CMAKE_CXX_BYTE_ORDER AND CMAKE_CXX_BYTE_ORDER)
-    if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
-        add_definitions(-DWING_LITTLE_ENDIAN=0)
-    elseif(CMAKE_CXX_BYTE_ORDER STREQUAL "LITTLE_ENDIAN")
-        add_definitions(-DWING_LITTLE_ENDIAN=1)
-    else()
-        message(
-            FATAL_ERROR
-                "CMAKE_CXX_BYTE_ORDER defined but unknown value: ${CMAKE_CXX_BYTE_ORDER}"
-        )
-    endif()
-else()
-    message(FATAL_ERROR "CMAKE_CXX_BYTE_ORDER not set or empty")
-endif()
-
 if(WINGHEX_BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
     add_subdirectory(TestHexExt)
@@ -250,6 +235,9 @@ set(DIALOG_SRC
     src/dialog/crashreport.ui
     src/dialog/showtextdialog.cpp
     src/dialog/showtextdialog.h
+    src/dialog/mutisavedialog.h
+    src/dialog/mutisavedialog.cpp
+    src/dialog/mutisavedialog.ui
     src/dialog/definitiondownload.cpp
     src/dialog/definitiondownload.h)
 
@@ -402,6 +390,9 @@ set(CLASS_SRC
     src/class/aswingcache.cpp
     src/class/lspeditorinterface.h
     src/class/lspeditorinterface.cpp
+    src/class/editorinfo.h
+    src/class/mutisavebuttondelegate.h
+    src/class/mutisavebuttondelegate.cpp
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 

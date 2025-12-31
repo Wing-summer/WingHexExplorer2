@@ -69,6 +69,7 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
         return {};
     }
 
+    auto oldPos = _ioDevice->pos(); // save the pos state
     while (maxSize > 0) {
         chunk.absPos = LLONG_MAX;
         bool chunksLoopOngoing = true;
@@ -116,6 +117,7 @@ QByteArray Chunks::data(qint64 pos, qint64 maxSize) const {
             pos += readBuffer.size();
         }
     }
+    _ioDevice->seek(oldPos); // restore it
     return buffer;
 }
 
@@ -290,6 +292,7 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
     }
 
     if (foundIdx == -1) {
+        auto oldPos = _ioDevice->pos();
         QMutexLocker locker(&_mutex);
         Chunk newChunk;
         qint64 readAbsPos = absPos - ioDelta;
@@ -299,6 +302,7 @@ qsizetype Chunks::getChunkIndex(qint64 absPos) const {
         newChunk.absPos = absPos - (readAbsPos - readPos);
         _chunks.insert(insertIdx, newChunk);
         foundIdx = insertIdx;
+        _ioDevice->seek(oldPos);
     }
     return foundIdx;
 }
