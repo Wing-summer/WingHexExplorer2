@@ -16,20 +16,64 @@
 */
 
 #include "cryptographichash.h"
-#include "crcalgorithm.h"
+
+#include "CRaC/include/crac.h"
 
 #include <QFile>
 #include <QMetaEnum>
 #include <QtEndian>
 
+template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
+static inline QByteArray getDisplayArray(const T &data) {
+    auto r = qToBigEndian(data);
+    return QByteArray(reinterpret_cast<const char *>(&r), sizeof(T));
+}
+
 QByteArray CryptographicHash::hash(const QByteArray &data, Algorithm method) {
-    if (method == Algorithm::Crc16) {
-        return CrcAlgorithm::hash16(data);
-    } else if (method == Algorithm::Crc32) {
-        return CrcAlgorithm::hash(data);
-    } else if (method == Algorithm::Crc64) {
-        return CrcAlgorithm::hash64(data);
-    } else {
+    switch (method) {
+    case Algorithm::CRC8: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC8::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC8_MAXIM: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC8_MAXIM::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC16: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC16::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC16_CCITT_FALSE: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC16_CCITT_FALSE::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC16_MODBUS: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC16_MODBUS::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC32: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC32::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC32_C: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC32_C::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::CRC64: {
+        auto input = reinterpret_cast<const uint8_t *>(data.constData());
+        auto ret = crac::CRC64::calc(input, data.size());
+        return getDisplayArray(ret);
+    }
+    case Algorithm::NumAlgorithms:
+        return {};
+    default:
         QCryptographicHash hash(QCryptographicHash::Md5);
         hash.addData(data);
         return hash.result();
@@ -43,11 +87,19 @@ CryptographicHash::supportedHashAlgorithms() {
         auto hashe = QMetaEnum::fromType<CryptographicHash::Algorithm>();
         for (int i = 0; i < hashe.keyCount(); ++i) {
             auto e = CryptographicHash::Algorithm(hashe.value(i));
-            if (e == CryptographicHash::Algorithm::Crc16 ||
-                e == CryptographicHash::Algorithm::Crc32 ||
-                e == CryptographicHash::Algorithm::Crc64) {
+            switch (e) {
+            case Algorithm::CRC8:
+            case Algorithm::CRC8_MAXIM:
+            case Algorithm::CRC16:
+            case Algorithm::CRC16_CCITT_FALSE:
+            case Algorithm::CRC16_MODBUS:
+            case Algorithm::CRC32:
+            case Algorithm::CRC32_C:
+            case Algorithm::CRC64:
                 algorithms << e;
-            } else {
+                break;
+            default:
+                QCryptographicHash hash(QCryptographicHash::Md5);
                 auto r = toQAlgorithm(e);
                 if (r != QCryptographicHash::NumAlgorithms) {
                     if (QCryptographicHash::hashLength(r)) {
@@ -72,35 +124,55 @@ QStringList CryptographicHash::supportedHashAlgorithmStringList() {
     return hashNames;
 }
 
-QByteArray CryptographicHash::hash(QIODevice *device, Algorithm method) {
-    if (method == Algorithm::Crc16) {
-        if (device->seek(0)) {
-            return CrcAlgorithm::hash16(device);
-        } else {
-            return {};
-        }
-    } else if (method == Algorithm::Crc32) {
-        if (device->seek(0)) {
-            return CrcAlgorithm::hash(device);
-        } else {
-            return {};
-        }
-    } else if (method == Algorithm::Crc64) {
-        if (device->seek(0)) {
-            return CrcAlgorithm::hash64(device);
-        } else {
-            return {};
-        }
-    }
+template <typename T>
+QByteArray block_cacl_ba(QIODevice *device) {
+    if (device->reset()) {
+        auto block = T::get_block_eng();
+        char buffer[1024];
+        int length;
 
-    auto r = toQAlgorithm(method);
-    if (r == QCryptographicHash::NumAlgorithms) {
+        while ((length = device->read(buffer, sizeof(buffer))) > 0) {
+            block.update(reinterpret_cast<const uint8_t *>(buffer), length);
+        }
+
+        return getDisplayArray(block.final());
+    }
+    return {};
+}
+
+QByteArray CryptographicHash::hash(QIODevice *device, Algorithm method) {
+    if (device == nullptr) {
         return {};
     }
 
-    QCryptographicHash hash(r);
-    if (device->seek(0) && hash.addData(device)) {
-        return hash.result();
+    switch (method) {
+    case Algorithm::CRC8:
+        return block_cacl_ba<crac::CRC8>(device);
+    case Algorithm::CRC8_MAXIM:
+        return block_cacl_ba<crac::CRC8_MAXIM>(device);
+    case Algorithm::CRC16:
+        return block_cacl_ba<crac::CRC16>(device);
+    case Algorithm::CRC16_CCITT_FALSE:
+        return block_cacl_ba<crac::CRC16_CCITT_FALSE>(device);
+    case Algorithm::CRC16_MODBUS:
+        return block_cacl_ba<crac::CRC16_MODBUS>(device);
+    case Algorithm::CRC32:
+        return block_cacl_ba<crac::CRC32>(device);
+    case Algorithm::CRC32_C:
+        return block_cacl_ba<crac::CRC32_C>(device);
+    case Algorithm::CRC64:
+        return block_cacl_ba<crac::CRC64>(device);
+    default: {
+        auto r = toQAlgorithm(method);
+        if (r == QCryptographicHash::NumAlgorithms) {
+            return {};
+        }
+
+        QCryptographicHash hash(r);
+        if (device->reset() && hash.addData(device)) {
+            return hash.result();
+        }
+    }
     }
 
     return {};

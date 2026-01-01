@@ -2847,6 +2847,13 @@ bool EditorView::eventFilter(QObject *watched, QEvent *event) {
 
 const LinkedList<EditorView *> &EditorView::instances() { return m_instances; }
 
+bool EditorView::isAllClosed() {
+    return m_instances.isEmpty() ||
+           std::all_of(
+               m_instances.begin(), m_instances.end(),
+               [](EditorView *editor) -> bool { return editor->isClosed(); });
+}
+
 EditorView::ScrollDataPoints &EditorView::scrollPoints() {
     return _scrollPoints;
 }

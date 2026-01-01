@@ -740,22 +740,6 @@ QFrame[frameShape="6"]  /* QFrame::StyledPanel == 0x0006 */
     border-radius: 0.23em;
 }
 
-/* Provide highlighting for frame objects. */
-QFrame[frameShape="2"]:hover,
-QFrame[frameShape="3"]:hover,
-QFrame[frameShape="4"]:hover,
-QFrame[frameShape="5"]:hover,
-QFrame[frameShape="6"]:hover
-{
-    border: 0.04em solid #3daee9;
-}
-
-/* Don't provide an outline if we have a widget that takes up the space. */
-QFrame[frameShape] QAbstractItemView:hover
-{
-    border: 0em solid black;
-}
-
 /**
  *  Note: I can't really change the background of the toolbars
  *  independently, since KDE Breeze has different colors for the

@@ -26,15 +26,21 @@ public:
     enum class Algorithm {
         Md4,
         Md5,
-        Crc16,
-        Crc32,
-        Crc64,
 
         Sha1,
         Sha224,
         Sha256,
         Sha384,
         Sha512,
+
+        CRC8,
+        CRC8_MAXIM,
+        CRC16,
+        CRC16_CCITT_FALSE,
+        CRC16_MODBUS,
+        CRC32,
+        CRC32_C,
+        CRC64,
 
         Keccak_224,
         Keccak_256,

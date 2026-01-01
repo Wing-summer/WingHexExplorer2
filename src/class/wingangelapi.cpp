@@ -73,26 +73,6 @@ void WingAngelAPI::onRegisterScriptObj(WingHex::IWingAngel *o) {
     o->registerScriptMarcos({"EXEC_BASE", "AS_ARRAY_EXT", "AS_DICTIONARY_EXT"});
 }
 
-WingHex::IWingPlugin::RegisteredEvents WingAngelAPI::registeredEvents() const {
-    RegisteredEvents evs;
-    evs.setFlag(RegisteredEvent::PluginFileOpened);
-    evs.setFlag(RegisteredEvent::PluginFileClosed);
-    return evs;
-}
-
-void WingAngelAPI::eventPluginFile(PluginFileEvent e, FileType type,
-                                   const QUrl &newfileName, int handle,
-                                   const QUrl &oldfileName) {
-    Q_UNUSED(type);
-    Q_UNUSED(newfileName);
-    Q_UNUSED(oldfileName);
-    if (e == PluginFileEvent::PluginOpened) {
-        _handles.append(handle);
-    } else if (e == PluginFileEvent::PluginClosed) {
-        _handles.removeOne(handle);
-    }
-}
-
 void WingAngelAPI::installAPI(ScriptMachine *machine) {
     Q_ASSERT(machine);
     auto engine = machine->engine();
@@ -1757,23 +1737,16 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
         f.close();
     }
 
-    auto handles = _handles;
-    ScriptMachine::instance().executeScript(ScriptMachine::Background,
-                                            f.fileName());
-    cleanUpHandles(handles);
-
-    return false;
+    return ScriptMachine::instance().executeScript(ScriptMachine::Background,
+                                                   f.fileName());
 }
 
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
 
     auto exec = [this, fileName]() -> bool {
-        auto handles = _handles;
-        auto ret = ScriptMachine::instance().executeScript(
+        return ScriptMachine::instance().executeScript(
             ScriptMachine::Background, fileName);
-        cleanUpHandles(handles);
-        return ret;
     };
 
     if (QThread::currentThread() != qApp->thread()) {
@@ -1789,11 +1762,8 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
     auto exec = [this, code]() -> bool {
-        auto handles = _handles;
-        auto ret = ScriptMachine::instance().executeCode(
-            ScriptMachine::Background, code);
-        cleanUpHandles(handles);
-        return ret;
+        return ScriptMachine::instance().executeCode(ScriptMachine::Background,
+                                                     code);
     };
 
     if (QThread::currentThread() != qApp->thread()) {
@@ -1895,15 +1865,6 @@ void *WingAngelAPI::newAsDictionary(
     }
 
     return dic;
-}
-
-void WingAngelAPI::cleanUpHandles(const QVector<int> &handles) {
-    for (auto &h : _handles) {
-        if (!handles.contains(h)) {
-            closeFile(h);
-        }
-    }
-    _handles = handles;
 }
 
 void WingAngelAPI::_invoke_service(asIScriptGeneric *generic) {

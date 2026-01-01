@@ -363,6 +363,13 @@ const LinkedList<ScriptEditor *> &ScriptEditor::instances() {
     return m_instances;
 }
 
+bool ScriptEditor::isAllClosed() {
+    return m_instances.isEmpty() ||
+           std::all_of(
+               m_instances.begin(), m_instances.end(),
+               [](ScriptEditor *editor) -> bool { return editor->isClosed(); });
+}
+
 QIcon ScriptEditor::editorIcon() const { return ICONRES("angellsp"); }
 
 QString ScriptEditor::infoFileName() const { return fileName(); }

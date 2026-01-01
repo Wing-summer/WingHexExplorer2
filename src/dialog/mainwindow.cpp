@@ -3330,8 +3330,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
             }
         }
 
-        const auto &views = EditorView::instances();
-        if (views.isEmpty()) {
+        if (EditorView::isAllClosed()) {
             updateEditModeEnabled();
         }
     });
@@ -4451,7 +4450,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
         m_dock->restoreState(layout);
     } else {
         auto curEditor = m_curEditor;
-        if (views.size() > 1) {
+        if (curEditor) {
             auto notSameContainer = std::any_of(
                 views.begin(), views.end(), [curEditor](EditorView *view) {
                     return curEditor->dockAreaWidget() !=

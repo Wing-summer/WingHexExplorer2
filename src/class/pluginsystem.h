@@ -173,8 +173,10 @@ public:
     QStringList scriptMarcos() const;
 
 public:
-    void scriptPragmaBegin();
+    QSet<int> scriptHandles() const;
+    void cleanScriptHandles(const QSet<int> &handles);
 
+    void scriptPragmaBegin();
     qsizetype pluginAPICount() const;
 
 public:
@@ -195,11 +197,14 @@ private:
     std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
                                          const QDir &setdir);
 
+    static QString packLoadPlgMessage(const QString &header,
+                                      const QString &content);
+
     EditorView *closeHandle(IWingPlugin *plg, int handle);
 
     bool checkPluginCanOpenedFile(IWingPlugin *plg);
 
-    bool checkPluginHasAlreadyOpened(IWingPlugin *plg, EditorView *view);
+    int checkIDPluginAlreadyOpened(IWingPlugin *plg, EditorView *view);
 
     EditorView *getCurrentPluginView(IWingPlugin *plg);
 
@@ -650,6 +655,8 @@ private:
 
     QStringList _scriptMarcos;
     QList<IWingPlugin *> _pragmaedPlg;
+
+    bool _handleDirty = false;
 
 private:
     QString _curLoadingPlg;

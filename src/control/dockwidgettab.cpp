@@ -19,6 +19,8 @@
 
 #include <QMenu>
 
+#include "DockAreaWidget.h"
+
 #include "class/appmanager.h"
 #include "class/showinshell.h"
 #include "dialog/fileinfodialog.h"
@@ -31,24 +33,113 @@ template <typename T,
 void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
                     QWidget *parent) {
     Q_ASSERT(parent);
-    menu->addAction(DockWidgetTab::tr("CloseAllOthers"), parent,
-                    [dockWidget]() {
-                        auto app = AppManager::instance();
-                        LinkedList<T *> cviews;
-                        for (auto &view : T::instances()) {
-                            if (view->isClosed()) {
-                                continue;
-                            }
-                            if (view != dockWidget) {
-                                cviews.append(view);
-                            }
-                        }
-                        if constexpr (std::is_same_v<T, EditorView>) {
-                            app->mainWindow()->try2CloseHexViews(cviews);
-                        } else {
-                            app->mainWindow()->try2CloseScriptViews(cviews);
-                        }
-                    });
+    auto cmenu = new QMenu(DockWidgetTab::tr("CloseGroup"), parent);
+    cmenu->addAction(DockWidgetTab::tr("Left"), parent, [dockWidget]() {
+        auto app = AppManager::instance();
+        LinkedList<T *> cviews;
+
+        auto area = dockWidget->dockAreaWidget();
+        auto total = area->dockWidgetsCount();
+        for (qsizetype i = 0; i < total; ++i) {
+            auto w = area->dockWidget(i);
+            if (w == dockWidget) {
+                break;
+            }
+
+            if (w->isClosed()) {
+                continue;
+            }
+
+            auto view = qobject_cast<T *>(w);
+            if (view) {
+                cviews.append(view);
+            }
+        }
+
+        if (cviews.isEmpty()) {
+            return;
+        }
+
+        if constexpr (std::is_same_v<T, EditorView>) {
+            app->mainWindow()->try2CloseHexViews(cviews);
+        } else {
+            app->mainWindow()->try2CloseScriptViews(cviews);
+        }
+    });
+    cmenu->addAction(DockWidgetTab::tr("Right"), parent, [dockWidget]() {
+        auto app = AppManager::instance();
+        LinkedList<T *> cviews;
+
+        auto area = dockWidget->dockAreaWidget();
+        auto total = area->dockWidgetsCount();
+        for (qsizetype i = total - 1; i >= 0; --i) {
+            auto w = area->dockWidget(i);
+            if (w == dockWidget) {
+                break;
+            }
+
+            if (w->isClosed()) {
+                continue;
+            }
+
+            auto view = qobject_cast<T *>(w);
+            if (view) {
+                cviews.append(view);
+            }
+        }
+
+        if (cviews.isEmpty()) {
+            return;
+        }
+
+        if constexpr (std::is_same_v<T, EditorView>) {
+            app->mainWindow()->try2CloseHexViews(cviews);
+        } else {
+            app->mainWindow()->try2CloseScriptViews(cviews);
+        }
+    });
+    cmenu->addAction(DockWidgetTab::tr("All"), parent, [dockWidget]() {
+        auto app = AppManager::instance();
+        LinkedList<T *> cviews;
+
+        auto area = dockWidget->dockAreaWidget();
+        auto total = area->dockWidgetsCount();
+        for (qsizetype i = 0; i < total; ++i) {
+            auto w = area->dockWidget(i);
+            if (w->isClosed()) {
+                continue;
+            }
+
+            auto view = qobject_cast<T *>(w);
+            if (view) {
+                cviews.append(view);
+            }
+        }
+
+        if constexpr (std::is_same_v<T, EditorView>) {
+            app->mainWindow()->try2CloseHexViews(cviews);
+        } else {
+            app->mainWindow()->try2CloseScriptViews(cviews);
+        }
+    });
+    cmenu->addAction(DockWidgetTab::tr("Others"), parent, [dockWidget]() {
+        auto app = AppManager::instance();
+        LinkedList<T *> cviews;
+        for (auto &view : T::instances()) {
+            if (view->isClosed()) {
+                continue;
+            }
+            if (view != dockWidget) {
+                cviews.append(view);
+            }
+        }
+        if constexpr (std::is_same_v<T, EditorView>) {
+            app->mainWindow()->try2CloseHexViews(cviews);
+        } else {
+            app->mainWindow()->try2CloseScriptViews(cviews);
+        }
+    });
+    menu->addMenu(cmenu);
 }
 
 DockWidgetTab::DockWidgetTab(ads::CDockWidget *DockWidget, QWidget *parent)

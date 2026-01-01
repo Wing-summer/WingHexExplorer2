@@ -968,6 +968,10 @@ bool ScriptMachine::executeScript(
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
 
+    // collect the handle info
+    auto &api = PluginSystem::instance();
+    auto handles = api.scriptHandles();
+
     // Execute the script until completion
     // The script may create co-routines. These will automatically
     // be managed by the context manager
@@ -1028,6 +1032,7 @@ bool ScriptMachine::executeScript(
     // Before leaving, allow the engine to clean up remaining objects by
     // discarding the module and doing a full garbage collection so that
     // this can also be debugged if desired
+    api.cleanScriptHandles(handles);
     _engine->GarbageCollect();
 
     if (isDbg) {

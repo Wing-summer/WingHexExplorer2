@@ -56,16 +56,10 @@ public:
     virtual const QString pluginName() const override;
     virtual const QString pluginComment() const override;
 
-    virtual RegisteredEvents registeredEvents() const override;
-
     virtual QString retranslate(const QString &str) override;
 
 private:
     virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
-
-    virtual void eventPluginFile(PluginFileEvent e, FileType type,
-                                 const QUrl &newfileName, int handle,
-                                 const QUrl &oldfileName) override;
 
 public:
     void installAPI(ScriptMachine *machine);
@@ -177,8 +171,6 @@ private:
         const QHash<QString, QPair<WingHex::MetaType, void *>> &content);
 
     // =========================================================
-
-    void cleanUpHandles(const QVector<int> &handles);
 
 private:
     enum InvokeInternalType { RetWithParam, RetOnly, ParamOnly };
@@ -428,8 +420,6 @@ private:
 private:
     QVector<WingScriptInternal::ScriptFnInfo> _sfns;
     QVector<WingHex::UNSAFE_SCFNPTR> _usfns;
-
-    QVector<int> _handles;
 };
 
 #endif // WINGANGELAPI_H

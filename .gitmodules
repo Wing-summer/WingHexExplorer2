@@ -26,3 +26,6 @@
 [submodule "3rdparty/fmt"]
 	path = 3rdparty/fmt
 	url = git@github.com:Wing-summer/fmt.git
+[submodule "3rdparty/CRaC"]
+	path = 3rdparty/CRaC
+	url = git@github.com:Wing-summer/CRaC.git

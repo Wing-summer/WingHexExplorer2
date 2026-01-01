@@ -46,6 +46,7 @@ GeneralSettingDialog::GeneralSettingDialog(QWidget *parent)
     ui->lblOS->setText(QSysInfo::prettyProductName() + QStringLiteral(" - ") +
                        QApplication::platformName());
     ui->lblSoftVersion->setText(WINGHEX_VERSION);
+    ui->lblPlgSDKVersion->setNum(WingHex::SDKVERSION);
     ui->lblScriptVersion->setText(ANGELSCRIPT_VERSION_STRING);
 
     Utilities::addSpecialMark(ui->lblLanguage);

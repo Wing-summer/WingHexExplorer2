@@ -340,8 +340,6 @@ set(CLASS_SRC
     src/class/layoutmanager.cpp
     src/class/cryptographichash.h
     src/class/cryptographichash.cpp
-    src/class/crcalgorithm.h
-    src/class/crcalgorithm.cpp
     src/class/wingupdater.h
     src/class/wingupdater.cpp
     src/class/richtextitemdelegate.h

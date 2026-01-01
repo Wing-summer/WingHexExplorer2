@@ -2213,27 +2213,16 @@ ErrFile PluginSystem::closeCurrent(const QObject *sender) {
         return ErrFile::Error;
     }
 
-    auto view = getCurrentPluginView(plg);
-    if (!checkPluginHasAlreadyOpened(plg, view)) {
-        return ErrFile::Error;
+    auto handle = m_plgviewMap[plg].currentFID;
+    auto view = closeHandle(plg, handle);
+    if (view) {
+        PluginSystem::instance().dispatchEvent(
+            IWingPlugin::RegisteredEvent::PluginFileClosed,
+            {quintptr(plg), view->fileNameUrl(), handle,
+             QVariant::fromValue(_win->getEditorViewFileType(view))});
+        return WingHex::ErrFile::Success;
     }
-
-    if (view == nullptr) {
-        return ErrFile::NotExist;
-    }
-
-    auto &maps = m_plgviewMap[plg].contexts;
-    auto ret =
-        std::find_if(maps.begin(), maps.end(),
-                     [view](const QSharedPointer<PluginFileContext> &content) {
-                         return content->view == view;
-                     });
-    if (ret == maps.end()) {
-        return ErrFile::NotExist;
-    }
-
-    maps.erase(ret);
-    return ErrFile::Success;
+    return ErrFile::Error;
 }
 
 int PluginSystem::openCurrent(const QObject *sender) {
@@ -2248,16 +2237,14 @@ int PluginSystem::openCurrent(const QObject *sender) {
 
     auto view = getCurrentPluginView(plg);
     if (view) {
-        if (checkPluginHasAlreadyOpened(plg, view)) {
-            return ErrFile::AlreadyOpened;
+        auto id = checkIDPluginAlreadyOpened(plg, view);
+        if (id < 0) {
+            id = assginHandleForOpenPluginView(plg, view);
+            PluginSystem::instance().dispatchEvent(
+                IWingPlugin::RegisteredEvent::PluginFileOpened,
+                {quintptr(plg), view->fileNameUrl(), id,
+                 QVariant::fromValue(_win->getEditorViewFileType(view))});
         }
-
-        auto id = assginHandleForOpenPluginView(plg, view);
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg), view->fileNameUrl(), id,
-             QVariant::fromValue(_win->getEditorViewFileType(view))});
-
         return id;
     }
     return ErrFile::Error;
@@ -2300,11 +2287,14 @@ int PluginSystem::openFile(const QObject *sender, const QUrl &file) {
 
     auto view = _win->findEditorView(file);
     if (view) {
-        auto id = assginHandleForOpenPluginView(plg, view);
-        PluginSystem::instance().dispatchEvent(
-            IWingPlugin::RegisteredEvent::PluginFileOpened,
-            {quintptr(plg), file, id,
-             QVariant::fromValue(_win->getEditorViewFileType(view))});
+        auto id = checkIDPluginAlreadyOpened(plg, view);
+        if (id < 0) {
+            id = assginHandleForOpenPluginView(plg, view);
+            PluginSystem::instance().dispatchEvent(
+                IWingPlugin::RegisteredEvent::PluginFileOpened,
+                {quintptr(plg), file, id,
+                 QVariant::fromValue(_win->getEditorViewFileType(view))});
+        }
         return id;
     } else {
         return ErrFile::Error;
@@ -2372,6 +2362,24 @@ QString PluginSystem::currentLoadingPlugin() const { return _curLoadingPlg; }
 
 QStringList PluginSystem::scriptMarcos() const { return _scriptMarcos; }
 
+QSet<int> PluginSystem::scriptHandles() const {
+    static QSet<int> ret;
+    if (_handleDirty) {
+        ret.clear();
+        for (auto &ctx : m_plgviewMap[_angelplg].contexts) {
+            ret.insert(getUIDHandle(ctx->fid));
+        }
+    }
+    return ret;
+}
+
+void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
+    auto diff = scriptHandles() - handles;
+    for (const auto &h : std::as_const(diff)) {
+        closeHandle(_angelplg, h);
+    }
+}
+
 void PluginSystem::scriptPragmaBegin() { _pragmaedPlg.clear(); }
 
 qsizetype PluginSystem::pluginAPICount() const { return _plgFns.size(); }
@@ -2404,13 +2412,15 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
 
         QScopeGuard g([this]() { _curLoadingPlg.clear(); });
         QPluginLoader loader(fileName, this);
-        Logger::info(tr("LoadingPlugin") + fileinfo.fileName());
+        auto fName = fileinfo.fileName();
+        Logger::info(tr("LoadingPlugin") + fName);
 
         auto lmeta = loader.metaData();
         PluginStatus cret;
         std::optional<PluginInfo> meta;
-        if (lmeta.contains("MetaData")) {
-            auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
+        if (lmeta.contains(QStringLiteral("MetaData"))) {
+            auto m = parsePluginMetadata(
+                lmeta[QStringLiteral("MetaData")].toObject());
             cret = checkPluginMetadata(m, std::is_same_v<T, IWingPlugin>);
             meta = m;
         } else {
@@ -2426,16 +2436,17 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
             return meta;
         } break;
         case PluginStatus::InvalidID:
-            Logger::critical(tr("InvalidPluginID"));
+            Logger::critical(packLoadPlgMessage(fName, tr("InvalidPluginID")));
             return std::nullopt;
         case PluginStatus::DupID:
-            Logger::critical(tr("InvalidDupPlugin"));
+            Logger::critical(packLoadPlgMessage(fName, tr("InvalidDupPlugin")));
             return std::nullopt;
         case PluginStatus::SDKVersion:
-            Logger::critical(tr("ErrLoadPluginSDKVersion"));
+            Logger::critical(
+                packLoadPlgMessage(fName, tr("ErrLoadPluginSDKVersion")));
             return std::nullopt;
         case PluginStatus::InvalidPlugin:
-            Logger::critical(tr("InvalidPlugin"));
+            Logger::critical(packLoadPlgMessage(fName, tr("InvalidPlugin")));
             return std::nullopt;
         }
 
@@ -2454,7 +2465,7 @@ std::optional<PluginInfo> PluginSystem::loadPlugin(const QFileInfo &fileinfo,
 
         auto p = qobject_cast<T *>(loader.instance());
         if (Q_UNLIKELY(p == nullptr)) {
-            Logger::critical(loader.errorString());
+            Logger::critical(packLoadPlgMessage(fName, loader.errorString()));
         } else {
             retranslateMetadata(p, m);
             loadPlugin(p, m, setdir);
@@ -2526,6 +2537,10 @@ int PluginSystem::assginHandleForOpenPluginView(IWingPlugin *plg,
     m_plgviewMap[plg].currentFID = handle;
     m_plgviewMap[plg].contexts.append(context);
     m_viewBindings[view].linkedplg.append(plg);
+
+    if (plg == _angelplg) {
+        _handleDirty = true;
+    }
 
     return handle;
 }
@@ -2608,15 +2623,18 @@ bool PluginSystem::checkPluginCanOpenedFile(IWingPlugin *plg) {
     return m_plgviewMap[plg].contexts.size() <= UCHAR_MAX;
 }
 
-bool PluginSystem::checkPluginHasAlreadyOpened(IWingPlugin *plg,
-                                               EditorView *view) {
+int PluginSystem::checkIDPluginAlreadyOpened(IWingPlugin *plg,
+                                             EditorView *view) {
     auto &maps = m_plgviewMap[plg].contexts;
-    auto ret =
+    auto r =
         std::find_if(maps.begin(), maps.end(),
                      [view](const QSharedPointer<PluginFileContext> &content) {
                          return content->view == view;
                      });
-    return ret != maps.end();
+    if (r != maps.end()) {
+        return getUIDHandle((*r)->fid);
+    }
+    return -1;
 }
 
 void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
@@ -2967,21 +2985,33 @@ void PluginSystem::try2LoadHexExtPlugin() {
     QPluginLoader loader(path);
 
     auto lmeta = loader.metaData();
-    auto m = parsePluginMetadata(lmeta["MetaData"].toObject());
+    PluginStatus cret;
+    std::optional<PluginInfo> meta;
+    if (lmeta.contains(QStringLiteral("MetaData"))) {
+        auto m =
+            parsePluginMetadata(lmeta[QStringLiteral("MetaData")].toObject());
+        cret = checkPluginMetadata(m, false);
+        meta = m;
+    } else {
+        cret = PluginStatus::InvalidPlugin;
+    }
 
-    auto cret = checkPluginMetadata(m, false);
+    auto m = meta.value();
 
     switch (cret) {
     case PluginStatus::Valid:
         break;
     case PluginStatus::SDKVersion:
-        Logger::critical(tr("ErrLoadPluginSDKVersion"));
+        Logger::critical(
+            packLoadPlgMessage(mplg.fileName(), tr("ErrLoadPluginSDKVersion")));
         return;
     case PluginStatus::InvalidID:
-        Logger::critical(tr("InvalidPluginID"));
+        Logger::critical(
+            packLoadPlgMessage(mplg.fileName(), tr("InvalidPluginID")));
         return;
     case PluginStatus::InvalidPlugin:
-        Logger::critical(tr("InvalidPlugin"));
+        Logger::critical(
+            packLoadPlgMessage(mplg.fileName(), tr("InvalidPlugin")));
         return;
     case PluginStatus::DupID:
     case PluginStatus::LackDependencies:
@@ -3005,7 +3035,8 @@ void PluginSystem::try2LoadHexExtPlugin() {
 
         if (!p->init(setp)) {
             setp->deleteLater();
-            Logger::critical(tr("ErrLoadInitPlugin"));
+            Logger::critical(
+                packLoadPlgMessage(mplg.fileName(), tr("ErrLoadInitPlugin")));
             return;
         }
 
@@ -3025,6 +3056,11 @@ void PluginSystem::try2LoadHexExtPlugin() {
         registeredSettingPages(QVariant::fromValue(p),
                                p->registeredSettingPages());
     }
+}
+
+QString PluginSystem::packLoadPlgMessage(const QString &header,
+                                         const QString &content) {
+    return QStringLiteral("{ %1 } %2").arg(header, content);
 }
 
 void PluginSystem::registerPluginDetectMarco(const QString &id) {

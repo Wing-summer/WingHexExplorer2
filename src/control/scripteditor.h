@@ -49,7 +49,9 @@ public:
 
 public:
     static const LinkedList<ScriptEditor *> &instances();
+    static bool isAllClosed();
 
+public:
     virtual const WingCodeEdit *editorPtr() const override;
     virtual QString lspFileNameURL() const override;
     virtual bool isContentLspUpdated() const override;

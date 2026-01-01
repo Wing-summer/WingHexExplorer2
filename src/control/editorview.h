@@ -210,7 +210,9 @@ public slots:
 
 public:
     static const LinkedList<EditorView *> &instances();
+    static bool isAllClosed();
 
+public:
     EditorView *clone();
 
     void registerView(const QString &id, WingHex::WingEditorViewWidget *view,

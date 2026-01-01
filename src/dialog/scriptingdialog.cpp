@@ -1827,8 +1827,7 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
         on_stopscript();
     }
 
-    const auto &views = ScriptEditor::instances();
-    if (!views.isEmpty()) {
+    if (ScriptEditor::isAllClosed()) {
         event->ignore();
         this->hide();
         return;
