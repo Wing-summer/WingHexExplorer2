@@ -36,7 +36,7 @@ jobs:
 
       - name: Initialize CodeQL (only on Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: cpp
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Perform CodeQL analysis (produce SARIF)
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           output: codeql-results
           upload: false
@@ -107,7 +107,7 @@ jobs:
 
       - name: Upload filtered SARIF to GitHub Code Scanning
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: codeql-results/cpp.sarif
 
