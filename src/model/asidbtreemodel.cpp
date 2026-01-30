@@ -333,7 +333,7 @@ QVariant AsIDBTreeModel::data(const QModelIndex &index, int role) const {
                 return {};
             }
             if (index.column() == 0) {
-                return QStringLiteral("Load more...");
+                return tr("LoadMore...");
             } else {
                 return {};
             }

@@ -18,7 +18,6 @@
 #ifndef SCRIPTMACHINE_H
 #define SCRIPTMACHINE_H
 
-#include "AngelScript/sdk/add_on/contextmgr/contextmgr.h"
 #include "AngelScript/sdk/angelscript/include/angelscript.h"
 
 #include "WingPlugin/iwingangel.h"
@@ -26,6 +25,7 @@
 #include "class/aspreprocesser.h"
 
 #include "asdebugger.h"
+#include "scriptaddon/contextmgr.h"
 
 #include <QObject>
 #include <QQueue>
@@ -110,6 +110,11 @@ public:
     void registerCallBack(ConsoleMode mode, const RegCallBacks &callbacks);
 
 public:
+    bool isAngelChar(int typeID) const;
+    bool isAngelString(int typeID) const;
+    bool isAngelArray(int typeID) const;
+
+public:
     asDebugger *debugger() const;
 
     asIScriptEngine *engine() const;
@@ -161,13 +166,22 @@ protected:
 private:
     static void __output(MessageType type, asIScriptGeneric *args);
     static void __outputln(MessageType type, asIScriptGeneric *args);
+    static void __outputfmt(MessageType type, asIScriptGeneric *args);
+
     static void print(asIScriptGeneric *args);
+    static void printf(asIScriptGeneric *args);
     static void println(asIScriptGeneric *args);
+
     static void warnprint(asIScriptGeneric *args);
+    static void warnprintf(asIScriptGeneric *args);
     static void warnprintln(asIScriptGeneric *args);
+
     static void errprint(asIScriptGeneric *args);
+    static void errprintf(asIScriptGeneric *args);
     static void errprintln(asIScriptGeneric *args);
+
     static void infoprint(asIScriptGeneric *args);
+    static void infoprintf(asIScriptGeneric *args);
     static void infoprintln(asIScriptGeneric *args);
 
     QString input();
@@ -178,7 +192,10 @@ private:
     static QString beautify(const QString &str, uint indent);
 
     QString stringify(void *ref, int typeId);
-    QString stringify_helper(const std::shared_ptr<asIDBVariable> &var);
+    std::string stringify_helper(const std::shared_ptr<asIDBVariable> &var);
+
+public:
+    std::string stringify_std(void *ref, int typeId);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);
@@ -196,7 +213,7 @@ private:
                                                 const QString &sectionname);
 
     static void debug_break();
-
+    static quint64 debug_elapsedTime();
     static QString debug_backtrace();
 
     void exceptionCallback(asIScriptContext *context);
@@ -211,12 +228,11 @@ private:
 
     QQueue<asIScriptContext *> _ctxPool;
 
+    QHash<int, QMetaType::Type> _asMetaCaches;
+
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;
-    ConsoleMode _curMsgMode = ConsoleMode::Interactive;
 
-    qint64 lineOffset = 0;
-    qint64 colOffset = 0;
     mutable QString _cachedGlobalStrs;
 
 private:

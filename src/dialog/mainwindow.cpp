@@ -3496,8 +3496,9 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
     m_curConnections << connect(
         hexeditor, &QHexView::documentSaved, this, [this](bool b) {
-            m_iSaved->setIcon(b ? _infoSaved : _infoUnsaved);
-            m_sSaved->setIcon(b ? _infoSaved : _infoUnsaved);
+            const auto &icon = b ? _infoSaved : _infoUnsaved;
+            m_iSaved->setIcon(icon);
+            m_sSaved->setIcon(icon);
             if (b) {
                 auto cur = currentEditor();
                 if (cur) {
@@ -3509,13 +3510,15 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
     m_curConnections << connect(
         hexeditor, &QHexView::documentKeepSize, this, [this](bool b) {
-            m_iCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
-            m_sCanOver->setIcon(b ? _infoCannotOver : _infoCanOver);
+            const auto &icon = b ? _infoCannotOver : _infoCanOver;
+            m_iCanOver->setIcon(icon);
+            m_sCanOver->setIcon(icon);
         });
     m_curConnections << connect(
         hexeditor, &QHexView::documentLockedFile, this, [this](bool b) {
-            m_iLocked->setIcon(b ? _infoLock : _infoUnLock);
-            m_sLocked->setIcon(b ? _infoLock : _infoUnLock);
+            const auto &icon = b ? _infoLock : _infoUnLock;
+            m_iLocked->setIcon(icon);
+            m_sLocked->setIcon(icon);
         });
     m_curConnections << connect(
         hexeditor, &QHexView::copyLimitRaised, this, [this] {
@@ -4628,12 +4631,16 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
         } break;
         case QEvent::MouseButtonDblClick: {
             if (watched == m_sLocked) {
-                if (m_sLocked->isEnabled()) {
-                    m_iLocked->click();
+                auto e = currentHexView();
+                if (e) {
+                    e->setLockedFile(!e->isLocked());
+                    return true;
                 }
             } else if (watched == m_sCanOver) {
-                if (m_sCanOver->isEnabled()) {
-                    m_iCanOver->click();
+                auto e = currentHexView();
+                if (e) {
+                    e->setKeepSize(!e->isKeepSize());
+                    return true;
                 }
             }
         } break;

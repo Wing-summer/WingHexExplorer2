@@ -8,15 +8,14 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.3")
+set(PROJECT_VERSION "2.3.4")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
 
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
-    set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
     set(QT_NO_PRIVATE_MODULE_WARNING ON)
-    find_package(Qt6 REQUIRED GuiPrivate)
+    find_package(Qt6 REQUIRED GuiPrivate CorePrivate WidgetsPrivate)
 endif()
 
 message("Build ${PROJECT_NAME} with ${CMAKE_BUILD_TYPE}.")
@@ -76,7 +75,7 @@ if(WINGHEX_USE_FRAMELESS)
 endif()
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-set(ADS_VERSION 4.3.1)
+set(ADS_VERSION 4.5.0)
 option(BUILD_EXAMPLES "Build the examples" FALSE)
 option(BUILD_STATIC "Build the static library" TRUE)
 
@@ -141,8 +140,6 @@ set(ANGEL_SCRIPT_ADDON_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/AngelScript/sdk/add_on")
 set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/autowrapper/aswrappedcall.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/contextmgr/contextmgr.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptarray/scriptarray.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptgrid/scriptgrid.cpp
@@ -155,16 +152,8 @@ set(ANGEL_SCRIPT_ADDON
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmath.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmathcomplex.cpp
     ${ANGEL_SCRIPT_ADDON_ROOT}/scriptmath/scriptmathcomplex.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/serializer/serializer.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/serializer/serializer.h
     ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/datetime/datetime.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfile.h
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.cpp
-    ${ANGEL_SCRIPT_ADDON_ROOT}/scriptfile/scriptfilesystem.h)
+    ${ANGEL_SCRIPT_ADDON_ROOT}/weakref/weakref.h)
 
 add_subdirectory(3rdparty/qtsingleapplication)
 add_subdirectory(3rdparty/fmt)
@@ -348,8 +337,6 @@ set(CLASS_SRC
     src/class/showinshell.cpp
     src/class/dockcomponentsfactory.h
     src/class/dockcomponentsfactory.cpp
-    src/class/diffutil.h
-    src/class/diffutil.cpp
     src/class/crashhandler.h
     src/class/crashhandler.cpp
     src/class/pluginsystem.h
@@ -389,6 +376,7 @@ set(CLASS_SRC
     src/class/lspeditorinterface.h
     src/class/lspeditorinterface.cpp
     src/class/editorinfo.h
+    src/class/fmtlibext.h
     src/class/mutisavebuttondelegate.h
     src/class/mutisavebuttondelegate.cpp
     src/class/snippetprocessor.h
@@ -453,6 +441,10 @@ set(SETTING_SRC
     src/settings/qeditconfig.ui)
 
 set(SCRIPT_ADDON_SRC
+    src/scriptaddon/contextmgr.cpp
+    src/scriptaddon/contextmgr.h
+    src/scriptaddon/scriptdatetime.h
+    src/scriptaddon/scriptdatetime.cpp
     src/scriptaddon/scriptcrypto.h
     src/scriptaddon/scriptcrypto.cpp
     src/scriptaddon/scriptqstring.h
@@ -467,6 +459,10 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptcolor.cpp
     src/scriptaddon/scriptjson.h
     src/scriptaddon/scriptjson.cpp
+    src/scriptaddon/scriptfile.h
+    src/scriptaddon/scriptfilesystem.cpp
+    src/scriptaddon/scriptfilesystem.h
+    src/scriptaddon/scriptfile.cpp
     src/scriptaddon/scriptenv.h
     src/scriptaddon/scriptenv.cpp
     src/scriptaddon/scriptany.cpp

@@ -36,65 +36,17 @@ UserDefinedLiteral:
     | UserDefinedCharacterLiteral
 ;
 
-/*Angelscript*/
-
 Cast: 'cast';
-
-Int    : 'int';
-Int8   : 'int8';
-Int16  : 'int16';
-Int32  : 'int32';
-Int64  : 'int64';
-UInt   : 'uint';
-UInt8  : 'uint8';
-UInt16 : 'uint16';
-UInt32 : 'uint32';
-UInt64 : 'uint64';
-Float  : 'float';
-Double : 'double';
-Bool   : 'bool';
-
-/*Keywords*/
 
 Auto: 'auto';
 
-Break: 'break';
-
-Case: 'case';
-
-Catch: 'catch';
-
-Char: 'char';
-
 Const: 'const';
-
-Continue: 'continue';
-
-Default: 'default';
-
-Do: 'do';
-
-Else: 'else';
 
 False_: 'false';
 
-For: 'for';
-
-If: 'if';
-
 Nullptr: 'null';
 
-Return: 'return';
-
-Short: 'short';
-
-Switch: 'switch';
-
 True_: 'true';
-
-Void: 'void';
-
-While: 'while';
 
 /*Operators*/
 

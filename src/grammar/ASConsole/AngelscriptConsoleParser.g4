@@ -30,32 +30,74 @@
 
 parser grammar AngelscriptConsoleParser;
 
-options {
-    tokenVocab = AngelscriptConsoleLexer;
-}
+options { tokenVocab = AngelscriptConsoleLexer; }
 
-/* Basic concepts */
 script
     : scriptItem* EOF
     ;
 
-scriptItem
-    : declSpecifierSeq initDeclaratorList Semi  
-    | statement                          
+emptyDeclaration_
+    : Semi
     ;
 
-/* Angelscript */
+scriptItem
+    : declSpecifierSeq initDeclaratorList Semi
+    | emptyDeclaration_
+    ;
+
+declSpecifierSeq
+    : declSpecifier+
+    ;
+
+declSpecifier
+    : typeSpecifier
+    ;
+
+typeSpecifier
+    : trailingTypeSpecifier
+    ;
+
+arraySpecifier
+    : LeftBracket constantExpression? RightBracket
+    ;
+
+trailingTypeSpecifier
+    : simpleTypeSpecifier arraySpecifier*
+    | Const
+    ;
+
+simpleTypeSpecifier
+    : Identifier
+    | asGeneric
+    ;
+
 asGeneric
     : Identifier Less simpleTypeSpecifierList Greater
     ;
 
 simpleTypeSpecifierList
-    : declSpecifierSeq (Comma declSpecifierSeq)*
+    : simpleTypeSpecifier (Comma simpleTypeSpecifier)*
     ;
 
-booleanLiteral
-    : False_
-    | True_
+constantExpression
+    : IntegerLiteral
+    ;
+
+initDeclaratorList
+    : initDeclarator (Comma initDeclarator)*
+    ;
+
+initDeclarator
+    : Identifier initializer?
+    ;
+
+expressionList
+    : initializerList
+    ;
+
+initializer
+    : braceOrEqualInitializer
+    | LeftParen expressionList RightParen
     ;
 
 /* Expressions */
@@ -64,7 +106,6 @@ primaryExpression
     : literal+
     | LeftParen expression RightParen
     | idExpression
-    | lambdaExpression
     ;
 
 idExpression
@@ -85,43 +126,38 @@ nestedNameSpecifier
     | nestedNameSpecifier Identifier Doublecolon
     ;
 
-lambdaExpression
-    : lambdaIntroducer lambdaDeclarator? compoundStatement
+typedefName
+    : Identifier
     ;
 
-lambdaIntroducer
-    : LeftBracket lambdaCapture? RightBracket
+theTypeName
+    : typedefName
     ;
 
-lambdaCapture
-    : captureList
-    | captureDefault (Comma captureList)?
+decltypeSpecifier
+    : LeftParen (expression | Auto) RightParen
     ;
 
-captureDefault
-    : And
-    | Assign
+namespaceName
+    : Identifier
     ;
 
-captureList
-    : capture (Comma capture)*
+qualifiednamespacespecifier
+    : nestedNameSpecifier? namespaceName
     ;
 
-capture
-    : simpleCapture
-    | initcapture
+pseudoDestructorName
+    : nestedNameSpecifier? (theTypeName Doublecolon)? Tilde theTypeName
+    | nestedNameSpecifier Doublecolon Tilde theTypeName
+    | Tilde decltypeSpecifier
     ;
 
-simpleCapture
-    : And? Identifier
+typeSpecifierSeq
+    : typeSpecifier+
     ;
 
-initcapture
-    : And? Identifier initializer
-    ;
-
-lambdaDeclarator
-    : LeftParen parameterDeclarationClause? RightParen
+theTypeId
+    : typeSpecifierSeq
     ;
 
 postfixExpression
@@ -133,20 +169,6 @@ postfixExpression
     | postfixExpression (PlusPlus | MinusMinus)
     | Cast Less theTypeId Greater LeftParen expression RightParen
     | LeftParen (expression | theTypeId) RightParen
-    ;
-
-/*
- add a middle layer to eliminate duplicated function declarations
- */
-
-expressionList
-    : initializerList
-    ;
-
-pseudoDestructorName
-    : nestedNameSpecifier? (theTypeName Doublecolon)? Tilde theTypeName
-    | nestedNameSpecifier Doublecolon Tilde theTypeName
-    | Tilde decltypeSpecifier
     ;
 
 unaryExpression
@@ -163,15 +185,6 @@ unaryOperator
     | Tilde
     | Minus
     | Not
-    ;
-
-newPlacement
-    : LeftParen expressionList RightParen
-    ;
-
-newInitializer_
-    : LeftParen expressionList? RightParen
-    | bracedInitList
     ;
 
 castExpression
@@ -228,6 +241,10 @@ conditionalExpression
     : logicalOrExpression (Question expression Colon assignmentExpression)?
     ;
 
+expression
+    : assignmentExpression (Comma assignmentExpression)*
+    ;
+
 assignmentExpression
     : conditionalExpression
     | logicalOrExpression assignmentOperator initializerClause
@@ -245,235 +262,6 @@ assignmentOperator
     | AndAssign
     | XorAssign
     | OrAssign
-    ;
-
-expression
-    : assignmentExpression (Comma assignmentExpression)*
-    ;
-
-constantExpression
-    : conditionalExpression
-    ;
-
-/* Statements */
-statement
-    : labeledStatement
-    | declaration
-    | expressionStatement
-    | compoundStatement
-    | selectionStatement
-    | iterationStatement
-    | jumpStatement
-    ;
-
-labeledStatement
-    : (Identifier | Case constantExpression | Default) Colon statement
-    ;
-
-expressionStatement
-    : expression? Semi
-    ;
-
-compoundStatement
-    : LeftBrace statementSeq? RightBrace
-    ;
-
-statementSeq
-    : statement+
-    ;
-
-selectionStatement
-    : If LeftParen condition RightParen statement (Else statement)?
-    | Switch LeftParen condition RightParen statement
-    ;
-
-condition
-    : expression
-    | declSpecifierSeq declarator ( Assign initializerClause | bracedInitList)
-    ;
-
-iterationStatement
-    : While LeftParen condition RightParen statement
-    | Do statement While LeftParen expression RightParen Semi
-    | For LeftParen (
-        forInitStatement condition? Semi expression?
-        | forRangeDeclaration Colon forRangeInitializer
-    ) RightParen statement
-    ;
-
-forInitStatement
-    : expressionStatement
-    | simpleDeclaration
-    ;
-
-forRangeDeclaration
-    : declSpecifierSeq Identifier
-    ;
-
-forRangeInitializer
-    : expression
-    | bracedInitList
-    ;
-
-jumpStatement
-    : (Break | Continue | Return) Semi
-    ;
-
-/* Declarations */
-
-declarationseq
-    : declaration+
-    ;
-
-declaration
-    : simpleDeclaration
-    | emptyDeclaration_
-    ;
-
-aliasDeclaration
-    : Identifier Assign theTypeId Semi
-    ;
-
-simpleDeclaration
-    : declSpecifierSeq (initDeclaratorList | assignmentExpression)? Semi
-    ;
-
-emptyDeclaration_
-    : Semi
-    ;
-
-declSpecifier
-    : typeSpecifier
-    ;
-
-declSpecifierSeq
-    : declSpecifier+
-    ;
-
-typedefName
-    : Identifier
-    ;
-
-typeSpecifier
-    : trailingTypeSpecifier
-    ;
-
-arraySpecifier
-    : LeftBracket constantExpression? RightBracket
-    ;
-
-trailingTypeSpecifier
-    : simpleTypeSpecifier arraySpecifier*
-    | Const
-    ;
-
-typeSpecifierSeq
-    : typeSpecifier+
-    ;
-
-trailingTypeSpecifierSeq
-    : trailingTypeSpecifier+
-    ;
-
-simpleTypeSpecifier
-    : nestedNameSpecifier? theTypeName
-    | asGeneric
-    | Int
-    | Int8
-    | Int16
-    | Int32
-    | Int64
-    | UInt
-    | UInt8
-    | UInt16
-    | UInt32
-    | UInt64
-    | Float
-    | Double
-    | Bool
-    | Void
-    | Auto
-    | decltypeSpecifier
-    ;
-
-theTypeName
-    : typedefName
-    ;
-
-decltypeSpecifier
-    : LeftParen (expression | Auto) RightParen
-    ;
-
-namespaceName
-    : Identifier
-    ;
-
-qualifiednamespacespecifier
-    : nestedNameSpecifier? namespaceName
-    ;
-
-balancedTokenSeq
-    : balancedtoken+
-    ;
-
-balancedtoken
-    : LeftParen balancedTokenSeq RightParen
-    | LeftBracket balancedTokenSeq RightBracket
-    | LeftBrace balancedTokenSeq RightBrace
-    | ~(LeftParen | RightParen | LeftBrace | RightBrace | LeftBracket | RightBracket)+
-    ;
-
-/* Declarators */
-
-initDeclaratorList
-    : initDeclarator (Comma initDeclarator)*
-    ;
-
-initDeclarator
-    : Identifier initializer?
-    ;
-
-declarator
-    : declaratorDef parametersAndQualifiers
-    ;
-
-declaratorDef
-    : declaratorid
-    | declaratorDef (parametersAndQualifiers | LeftBracket constantExpression? RightBracket)
-    ;
-
-parametersAndQualifiers
-    : LeftParen parameterDeclarationClause? RightParen Const? refqualifier?
-    ;
-
-refqualifier
-    : And
-    | AndAnd
-    ;
-
-declaratorid
-    : idExpression
-    ;
-
-theTypeId
-    : typeSpecifierSeq
-    ;
-
-parameterDeclarationClause
-    : parameterDeclarationList
-    ;
-
-parameterDeclarationList
-    : parameterDeclaration (Comma parameterDeclaration)*
-    ;
-
-parameterDeclaration
-    : declSpecifierSeq Identifier? (Assign initializerClause)?
-    ;
-
-initializer
-    : braceOrEqualInitializer
-    | LeftParen expressionList RightParen
     ;
 
 braceOrEqualInitializer
@@ -494,47 +282,6 @@ bracedInitList
     : (LeftBrace | LeftBracket) (initializerList Comma?)? (RightBrace | RightBracket)
     ;
 
-/* Lexer token groupings referenced in parser (kept as parser rules here) */
-
-theOperator
-    :
-    | Plus
-    | Minus
-    | Star
-    | Div
-    | Mod
-    | Xor
-    | And
-    | Or
-    | Tilde
-    | Not
-    | Assign
-    | Greater
-    | Less
-    | GreaterEqual
-    | PlusAssign
-    | MinusAssign
-    | StarAssign
-    | ModAssign
-    | XorAssign
-    | AndAssign
-    | OrAssign
-    | Less Less
-    | Greater Greater
-    | RightShiftAssign
-    | LeftShiftAssign
-    | Equal
-    | NotEqual
-    | LessEqual
-    | AndAnd
-    | OrOr
-    | PlusPlus
-    | MinusMinus
-    | Comma
-    | LeftParen RightParen
-    | LeftBracket RightBracket
-    ;
-
 literal
     : IntegerLiteral
     | CharacterLiteral
@@ -543,4 +290,9 @@ literal
     | booleanLiteral
     | UserDefinedLiteral
     | Nullptr
+    ;
+
+booleanLiteral
+    : False_
+    | True_
     ;

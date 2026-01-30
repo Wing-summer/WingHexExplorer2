@@ -35,12 +35,13 @@
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QStringList, DEFAULT_MARCO,
-    ({"__AS_ARRAY__", "__AS_ANY__", "__AS_GRID__", "__AS_HANDLE__",
-      "__AS_MATH__", "__AS_WEAKREF__", "__AS_COROUTINE__", "__AS_FILE__",
-      "__AS_FILESYSTEM__", "__WING_STRING__", "__WING_COLOR__", "__WING_JSON__",
-      "__WING_REGEX__", "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
-      "__WING_PRINT_LN__", "__WING_CLIPBOARD__", "__WING_URL__",
-      "__WING_CRYPTO__"}));
+    ({"__AS_ARRAY__",      "__AS_ANY__",          "__AS_GRID__",
+      "__AS_HANDLE__",     "__AS_MATH__",         "__AS_WEAKREF__",
+      "__AS_COROUTINE__",  "__WING_FILE__",       "__WING_FILESYSTEM__",
+      "__WING_STRING__",   "__WING_COLOR__",      "__WING_JSON__",
+      "__WING_REGEX__",    "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
+      "__WING_PRINT_LN__", "__WING_PRINTF__",     "__WING_CLIPBOARD__",
+      "__WING_URL__",      "__WING_CRYPTO__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);

@@ -28,13 +28,26 @@ enum class CrashCode : int {
 };
 
 namespace AsUserDataType {
-enum AsUserDataType {
+enum AsUserDataType : unsigned int {
+    // internal user data
     UserData_API,
     UserData_PluginFn,
-    UserData_isDbg,
+
+    // copyable context attribute
+    UserData_CopyAttr_Begin = 10,
+    UserData_isDbg = UserData_CopyAttr_Begin,
     UserData_ContextMode,
     UserData_Timer,
-    UserData_TimeOut
+    UserData_TimeOut,
+    UserData_Section_StringPtr,
+    UserData_CopyAttr_End,
+
+    // The AngelScript add-ons have reserved the numbers 1000
+    // through 1999 for this purpose.
+    UserData_Revserved_Begin = 1000,
+    // const asPWORD CONTEXT_MGR = 1002;
+    UserData_ContextMgr = 1002,
+    UserData_Revserved_End = 1999
 };
 }
 

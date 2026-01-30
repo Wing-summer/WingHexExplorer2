@@ -30,13 +30,9 @@ std::any AngelScriptConsoleVisitor::visitScript(
     }
 
     _declCode.clear();
-    _execCode.clear();
 
     for (auto &item : context->scriptItem()) {
-        if (item->statement()) {
-            _execCode = getSrcCode(item->getStart(), context->getStop());
-            break;
-        } else {
+        if (item->declSpecifierSeq()) {
             _declCode.append(getSrcCode(item));
         }
     }
@@ -58,7 +54,5 @@ QByteArray AngelScriptConsoleVisitor::getSrcCode(antlr4::Token *start,
     }
     return {};
 }
-
-QByteArray AngelScriptConsoleVisitor::execCode() const { return _execCode; }
 
 QByteArrayList AngelScriptConsoleVisitor::declCode() const { return _declCode; }

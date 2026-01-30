@@ -32,15 +32,12 @@ public:
 
     QByteArrayList declCode() const;
 
-    QByteArray execCode() const;
-
 private:
     QByteArray getSrcCode(antlr4::ParserRuleContext *content);
     QByteArray getSrcCode(antlr4::Token *start, antlr4::Token *end);
 
 private:
     QByteArrayList _declCode;
-    QByteArray _execCode;
 
     antlr4::CommonTokenStream &_codes;
 };

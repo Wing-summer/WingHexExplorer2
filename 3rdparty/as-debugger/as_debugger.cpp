@@ -820,15 +820,20 @@ asIDBObjectTypeEvaluator::Evaluate(asIDBVariable::Ptr var) const /*override*/
                 return;
             }
 
-            if (var->value.empty())
-                var->value = fmt::format("{{{}}}", var->typeName);
+            if (var->value.empty()) {
+                var->value = fmt::format("{}<#{}>", var->typeName,
+                                         fmt::ptr(var->address.address));
+            }
         } else {
             dbg.internal_execution = true;
             size_t numElements = it.CalculateLength(ctx);
             dbg.internal_execution = false;
 
-            if (var->value.empty())
-                var->value = fmt::format("{} elements", numElements);
+            if (var->value.empty()) {
+                var->value =
+                    fmt::format("{}<#{}>[{}]", var->typeName,
+                                fmt::ptr(var->address.address), numElements);
+            }
 
             if (numElements)
                 var->expandable = true;

@@ -124,10 +124,10 @@ QStringList_to_ScriptArray_string(const QStringList &list) {
     if (ctx) {
         auto engine = ctx->GetEngine();
         auto arrType = engine->GetTypeInfoByDecl("array<string>");
-        CScriptArray *arr = CScriptArray::Create(arrType, asUINT(list.size()));
-        for (asUINT i = 0; i < list.size(); ++i) {
-            auto s = list.at(i);
-            arr->SetValue(i, &s);
+        auto total = list.size();
+        CScriptArray *arr = CScriptArray::Create(arrType, total);
+        for (asUINT i = 0; i < total; ++i) {
+            reinterpret_cast<QString *>(arr->At(i))->assign(list.at(i));
         }
         return arr;
     }

@@ -24,6 +24,8 @@
 #include "as-debugger/as_debugger.h"
 #include "src/scriptaddon/scriptqdictionary.h"
 
+#include "fmtlibext.h"
+
 #include <QChar>
 #include <QColor>
 #include <QJsonArray>
@@ -32,88 +34,6 @@
 #include <QJsonValue>
 #include <QRegularExpression>
 #include <QString>
-
-inline QString escapeNonPrintable(const QString &input) {
-    QString out;
-    out.reserve(input.size() * 6);
-
-    const QChar *data = input.constData();
-    int len = input.size();
-
-    for (int i = 0; i < len; ++i) {
-        uint u = data[i].unicode();
-        uint cp = u;
-
-        if (u >= 0xD800 && u <= 0xDBFF && (i + 1) < len) {
-            uint low = data[i + 1].unicode();
-            if (low >= 0xDC00 && low <= 0xDFFF) {
-                cp = 0x10000 + (((u - 0xD800) << 10) | (low - 0xDC00));
-                ++i;
-            }
-        }
-
-        switch (cp) {
-        case '\\':
-            out += QStringLiteral("\\\\");
-            break;
-        case '\n':
-            out += QStringLiteral("\\n");
-            break;
-        case '\r':
-            out += QStringLiteral("\\r");
-            break;
-        case '\t':
-            out += QStringLiteral("\\t");
-            break;
-        case '\b':
-            out += QStringLiteral("\\b");
-            break;
-        case '\f':
-            out += QStringLiteral("\\f");
-            break;
-        case '\v':
-            out += QStringLiteral("\\v");
-            break;
-        case '\"':
-            out += QStringLiteral("\\\"");
-            break;
-        case '\'':
-            out += QStringLiteral("\\\'");
-            break;
-        default:
-            if (cp >= 0x20 && cp != 0x7F) {
-                if (cp <= 0xFFFF) {
-                    out += QChar(static_cast<ushort>(cp));
-                } else {
-                    uint v = cp - 0x10000;
-                    QChar high = QChar(static_cast<ushort>(0xD800 + (v >> 10)));
-                    QChar low =
-                        QChar(static_cast<ushort>(0xDC00 + (v & 0x3FF)));
-                    out += high;
-                    out += low;
-                }
-            } else {
-                if (cp <= 0xFF) {
-                    out += QStringLiteral("%1")
-                               .arg(cp, 2, 16, QLatin1Char('0'))
-                               .toUpper()
-                               .prepend(QStringLiteral("\\x"));
-                } else if (cp <= 0xFFFF) {
-                    out += QStringLiteral("%1")
-                               .arg(cp, 4, 16, QLatin1Char('0'))
-                               .toUpper()
-                               .prepend(QStringLiteral("\\u"));
-                } else {
-                    out += QStringLiteral("%1")
-                               .arg(cp, 8, 16, QLatin1Char('0'))
-                               .toUpper()
-                               .prepend(QStringLiteral("\\U"));
-                }
-            }
-        }
-    }
-    return out;
-}
 
 class asIDBArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
@@ -146,14 +66,13 @@ public:
 
         const QString *s = var->address.ResolveAs<const QString>();
         if (s->isEmpty()) {
-            var->value = "\"\"";
+            var->value = R"("")";
             var->expandable = false;
         } else {
             if (var->owner.expired()) {
                 var->value = s->toStdString();
             } else {
-                var->value =
-                    fmt::format("\"{}\"", escapeNonPrintable(*s).toStdString());
+                var->value = fmt::format(R"("{}")", escapeNonPrintable(*s));
             }
             var->expandable = true;
         }
@@ -179,8 +98,7 @@ public:
         const QRegularExpression *s =
             var->address.ResolveAs<const QRegularExpression>();
         auto p = s->pattern();
-        p.prepend(QStringLiteral("exp<")).append('>');
-        var->value = p.toStdString();
+        var->value = fmt::format("exp<{}>", s->pattern());
     }
 };
 
@@ -199,9 +117,7 @@ public:
         const QRegularExpressionMatch *s =
             var->address.ResolveAs<const QRegularExpressionMatch>();
         auto r = s->regularExpression();
-        auto p = r.pattern();
-        p.prepend(QStringLiteral("match<")).append('>');
-        var->value = p.toStdString();
+        var->value = fmt::format("match<{}>", r.pattern());
     }
 };
 
@@ -221,8 +137,7 @@ public:
         if (var->owner.expired()) {
             var->value = s->unicode();
         } else {
-            var->value = fmt::format(
-                "'{}'", escapeNonPrintable(QString(*s)).toStdString());
+            var->value = fmt::format("'{}'", escapeNonPrintable(QString(*s)));
         }
     }
 };
@@ -241,7 +156,7 @@ public:
         var->expandable = true;
 
         const QUrl *s = var->address.ResolveAs<const QUrl>();
-        var->value = fmt::format("url<\"{}\">", s->fileName().toStdString());
+        var->value = fmt::format(R"(url<"{}">)", s->fileName());
     }
 
     virtual void Expand(asIDBVariable::Ptr var) const override {
@@ -260,7 +175,7 @@ public:
             auto child = var->CreateChildVariable(
                 "[scheme]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format("\"{}\"", s->scheme().toStdString());
+            child->value = fmt::format(R"("{}")", s->scheme());
         }
         {
             // authority
@@ -268,14 +183,14 @@ public:
                 "[authority]", {},
                 cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format("\"{}\"", s->authority().toStdString());
+            child->value = fmt::format(R"("{}")", s->authority());
         }
         {
             // path
             auto child = var->CreateChildVariable(
                 "[path]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format("\"{}\"", s->path().toStdString());
+            child->value = fmt::format(R"("{}")", s->path());
         }
         {
             // fileName
@@ -283,7 +198,7 @@ public:
                 "[fileName]", {},
                 cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format("\"{}\"", s->fileName().toStdString());
+            child->value = fmt::format(R"("{}")", s->fileName());
         }
     }
 };
@@ -301,9 +216,7 @@ public:
         var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
         const QColor *s = var->address.ResolveAs<const QColor>();
-        auto name = s->name();
-        name.prepend(QStringLiteral("color<")).append('>');
-        var->value = name.toStdString();
+        var->value = fmt::format("color<{}>", s->name());
     }
 };
 
@@ -384,7 +297,7 @@ public:
 
         for (auto &kvp : *v) {
             auto child = var->CreateChildVariable(
-                fmt::format("[\"{}\"]", kvp.GetKey().toStdString()),
+                fmt::format("[\"{}\"]", kvp.GetKey()),
                 {kvp.GetTypeId(), false,
                  const_cast<void *>(kvp.GetAddressOfValue())},
                 var->dbg.cache->GetTypeNameFromType(kvp.GetTypeId()));
@@ -451,11 +364,9 @@ public:
             for (auto p = obj.begin(); p != obj.end(); p++) {
                 auto key = p.key();
                 QJsonValue temp = p.value();
-                key.prepend(QStringLiteral("[\""))
-                    .append(QStringLiteral("\"]"));
                 auto child = var->CreateChildVariable(
-                    key.toStdString(), asIDBVarAddr{typeId, false, &temp},
-                    var->typeName);
+                    fmt::format(R"(["{}"])", key),
+                    asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
                 child->address.address = child->stackValue.GetPointer<void>();
@@ -517,10 +428,9 @@ public:
         for (auto p = v->begin(); p != v->end(); p++) {
             auto key = p.key();
             QJsonValue temp = p.value();
-            key.prepend(QStringLiteral("[\"")).append(QStringLiteral("\"]"));
             auto child = var->CreateChildVariable(
-                key.toStdString(), asIDBVarAddr{typeId, false, &temp},
-                var->typeName);
+                fmt::format(R"(["{}"])", key),
+                asIDBVarAddr{typeId, false, &temp}, var->typeName);
             child->stackValue = asIDBValue(engine, &temp, typeId, asTM_NONE);
             child->address.address = child->stackValue.GetPointer<void>();
         }
@@ -561,8 +471,8 @@ public:
                 if (var->owner.expired()) {
                     var->value = str.toStdString();
                 } else {
-                    var->value = fmt::format(
-                        "\"{}\"", escapeNonPrintable(str).toStdString());
+                    var->value =
+                        fmt::format(R"("{}")", escapeNonPrintable(str));
                 }
             }
             var->expandable = false;
@@ -619,11 +529,9 @@ public:
             for (auto p = obj.begin(); p != obj.end(); p++) {
                 auto key = p.key();
                 QJsonValue temp = p.value();
-                key.prepend(QStringLiteral("[\""))
-                    .append(QStringLiteral("\"]"));
                 auto child = var->CreateChildVariable(
-                    key.toStdString(), asIDBVarAddr{typeId, false, &temp},
-                    var->typeName);
+                    fmt::format(R"(["{}"])", key),
+                    asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
                 child->address.address = child->stackValue.GetPointer<void>();
@@ -707,14 +615,12 @@ public:
                         ret);
 
                 for (auto &&[key, value] : rc.asKeyValueRange()) {
-                    QString k = key;
-                    k.prepend(QStringLiteral("[")).append(QStringLiteral("]"));
-
+                    auto k = fmt::format(R"([{}])", key);
                     auto typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
                     auto temp = value.buffer;
                     if (temp) {
                         auto child = var->CreateChildVariable(
-                            k.toStdString(), asIDBVarAddr{typeId, false, temp},
+                            k, asIDBVarAddr{typeId, false, temp},
                             var->typeName);
                         child->stackValue =
                             asIDBValue(engine, temp, typeId, asTM_NONE);
@@ -724,8 +630,7 @@ public:
                     }
 
                     auto child = var->CreateChildVariable(
-                        k.toStdString(),
-                        asIDBVarAddr{asTYPEID_VOID, false, nullptr},
+                        k, asIDBVarAddr{asTYPEID_VOID, false, nullptr},
                         var->typeName);
                     child->stackValue =
                         asIDBValue(engine, nullptr, asTYPEID_VOID, asTM_NONE);

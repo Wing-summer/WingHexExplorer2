@@ -13,24 +13,19 @@ class  AngelscriptConsoleLexer : public antlr4::Lexer {
 public:
   enum {
     IntegerLiteral = 1, CharacterLiteral = 2, FloatingLiteral = 3, StringLiteral = 4, 
-    UserDefinedLiteral = 5, Cast = 6, Int = 7, Int8 = 8, Int16 = 9, Int32 = 10, 
-    Int64 = 11, UInt = 12, UInt8 = 13, UInt16 = 14, UInt32 = 15, UInt64 = 16, 
-    Float = 17, Double = 18, Bool = 19, Auto = 20, Break = 21, Case = 22, 
-    Catch = 23, Char = 24, Const = 25, Continue = 26, Default = 27, Do = 28, 
-    Else = 29, False_ = 30, For = 31, If = 32, Nullptr = 33, Return = 34, 
-    Short = 35, Switch = 36, True_ = 37, Void = 38, While = 39, LeftParen = 40, 
-    RightParen = 41, LeftBracket = 42, RightBracket = 43, LeftBrace = 44, 
-    RightBrace = 45, Plus = 46, Minus = 47, Star = 48, Div = 49, Mod = 50, 
-    Xor = 51, And = 52, Or = 53, Tilde = 54, Not = 55, Assign = 56, Less = 57, 
-    Greater = 58, PlusAssign = 59, MinusAssign = 60, StarAssign = 61, DivAssign = 62, 
-    ModAssign = 63, XorAssign = 64, AndAssign = 65, OrAssign = 66, LeftShiftAssign = 67, 
-    RightShiftAssign = 68, Equal = 69, NotEqual = 70, LessEqual = 71, GreaterEqual = 72, 
-    AndAnd = 73, OrOr = 74, PlusPlus = 75, MinusMinus = 76, Comma = 77, 
-    Question = 78, Colon = 79, Doublecolon = 80, Semi = 81, Dot = 82, Identifier = 83, 
-    DecimalLiteral = 84, OctalLiteral = 85, HexadecimalLiteral = 86, BinaryLiteral = 87, 
-    Integersuffix = 88, UserDefinedIntegerLiteral = 89, UserDefinedFloatingLiteral = 90, 
-    UserDefinedStringLiteral = 91, UserDefinedCharacterLiteral = 92, Whitespace = 93, 
-    Newline = 94, BlockComment = 95, LineComment = 96
+    UserDefinedLiteral = 5, Cast = 6, Auto = 7, Const = 8, False_ = 9, Nullptr = 10, 
+    True_ = 11, LeftParen = 12, RightParen = 13, LeftBracket = 14, RightBracket = 15, 
+    LeftBrace = 16, RightBrace = 17, Plus = 18, Minus = 19, Star = 20, Div = 21, 
+    Mod = 22, Xor = 23, And = 24, Or = 25, Tilde = 26, Not = 27, Assign = 28, 
+    Less = 29, Greater = 30, PlusAssign = 31, MinusAssign = 32, StarAssign = 33, 
+    DivAssign = 34, ModAssign = 35, XorAssign = 36, AndAssign = 37, OrAssign = 38, 
+    LeftShiftAssign = 39, RightShiftAssign = 40, Equal = 41, NotEqual = 42, 
+    LessEqual = 43, GreaterEqual = 44, AndAnd = 45, OrOr = 46, PlusPlus = 47, 
+    MinusMinus = 48, Comma = 49, Question = 50, Colon = 51, Doublecolon = 52, 
+    Semi = 53, Dot = 54, Identifier = 55, DecimalLiteral = 56, OctalLiteral = 57, 
+    HexadecimalLiteral = 58, BinaryLiteral = 59, Integersuffix = 60, UserDefinedIntegerLiteral = 61, 
+    UserDefinedFloatingLiteral = 62, UserDefinedStringLiteral = 63, UserDefinedCharacterLiteral = 64, 
+    Whitespace = 65, Newline = 66, BlockComment = 67, LineComment = 68
   };
 
   explicit AngelscriptConsoleLexer(antlr4::CharStream *input);

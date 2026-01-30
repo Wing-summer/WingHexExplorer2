@@ -49,6 +49,10 @@ static QString QJsonDocument_ToJson(const QJsonDocument &doc,
     return QString::fromUtf8(doc.toJson(format));
 }
 
+static QString QJsonDocument_ToString(const QJsonDocument &doc) {
+    return QString::fromUtf8(doc.toJson());
+}
+
 static QJsonObject QJsonDocument_Object(const QJsonDocument &doc) {
     return doc.object();
 }
@@ -342,6 +346,12 @@ void RegisterQJsonDocument(asIScriptEngine *engine) {
         "JsonDocument",
         "string toJson(JsonFormat format = Json::JsonFormat::Indented) const",
         asFUNCTION(QJsonDocument_ToJson), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonDocument", "string toString() const",
+                                     asFUNCTION(QJsonDocument_ToString),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 

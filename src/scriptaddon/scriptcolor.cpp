@@ -259,8 +259,7 @@ static CScriptArray *Color_colorNames_wrap() {
         auto *arr = CScriptArray::Create(arrType, asUINT(names.size()));
 
         for (asUINT i = 0; i < names.size(); ++i) {
-            auto s = names.at(i);
-            arr->SetValue(i, &s);
+            reinterpret_cast<QString *>(arr->At(i))->assign(names.at(i));
         }
         return arr;
     }
