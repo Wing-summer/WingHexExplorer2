@@ -21,15 +21,12 @@
 #include "grammar/ASConsole/AngelscriptConsoleParser.h"
 
 #include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
-#include "AngelScript/sdk/add_on/scriptdictionary/scriptdictionary.h"
-
 #include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
 #include "AngelScript/sdk/add_on/scripthandle/scripthandle.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmath.h"
 #include "AngelScript/sdk/add_on/scriptmath/scriptmathcomplex.h"
 #include "AngelScript/sdk/add_on/weakref/weakref.h"
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
-#include "scriptaddon/scriptany.h"
 
 #include "class/angelscriptconsolevisitor.h"
 #include "class/appmanager.h"
@@ -38,6 +35,8 @@
 #include "class/pluginsystem.h"
 #include "class/settingmanager.h"
 #include "define.h"
+
+#include "scriptaddon/scriptany.h"
 #include "scriptaddon/scriptcolor.h"
 #include "scriptaddon/scriptcrypto.h"
 #include "scriptaddon/scriptdatetime.h"
@@ -45,6 +44,7 @@
 #include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptfilesystem.h"
 #include "scriptaddon/scriptjson.h"
+#include "scriptaddon/scriptqdictionary.h"
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptregex.h"
 #include "scriptaddon/scripturl.h"
@@ -626,7 +626,7 @@ void ScriptMachine::destoryMachine() {
 }
 
 void ScriptMachine::setCustomEvals(
-    const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals) {
+    const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals) {
     _debugger->setCustomEvals(evals);
 }
 
@@ -773,28 +773,9 @@ void ScriptMachine::__outputfmt(MessageType type, asIScriptGeneric *args) {
             case asTYPEID_DOUBLE:
                 store.push_back(*static_cast<double *>(ref));
                 break;
-            default: {
-                if (typeId & asTYPEID_TEMPLATE) {
-                    auto e = m.engine();
-                    auto t = e->GetTypeInfoById(typeId);
-                    t = e->GetTypeInfoByName(t->GetName());
-                    Q_ASSERT(t);
-                    typeId = t->GetTypeId();
-                }
-
-                auto &cache = m._asMetaCaches;
-                auto rid = cache.value(typeId, QMetaType::Void);
-                if (rid == QMetaType::QChar) {
-                    store.push_back(*static_cast<QChar *>(ref));
-                } else if (rid == QMetaType::QString) {
-                    store.push_back(*static_cast<QString *>(ref));
-                } else if (rid == QMetaType::QVariantList) {
-                    store.push_back(
-                        CScriptArrayView(static_cast<CScriptArray *>(ref)));
-                } else {
-                    store.push_back(m.stringify_std(ref, typeId));
-                }
-            } break;
+            default:
+                store.push_back(m.stringify_helper(ref, typeId));
+                break;
             }
         }
 
@@ -922,57 +903,153 @@ QString ScriptMachine::beautify(const QString &str, uint indent) {
 }
 
 QString ScriptMachine::stringify(void *ref, int typeId) {
-    return QString::fromStdString(stringify_std(ref, typeId));
+    return QString::fromStdString(stringify_helper(ref, typeId));
 }
 
-std::string ScriptMachine::stringify_std(void *ref, int typeId) {
-    if (_debugger && typeId) {
-        auto var = std::make_shared<asIDBVariable>(*_debugger);
-        var->ptr = var;
-        auto &m = ScriptMachine::instance();
-        var->typeName = m._debugger->cache->GetTypeNameFromType(typeId);
-        var->address.typeId = typeId;
-        var->address.address = ref;
-        return stringify_helper(var);
+std::string ScriptMachine::getAsTypeName(int typeId) {
+    auto type = _engine->GetTypeInfoById(typeId);
+    std::string name;
+
+    if (!type) {
+        // a primitive
+        switch (typeId & asTYPEID_MASK_SEQNBR) {
+        case asTYPEID_BOOL:
+            name = "bool";
+            break;
+        case asTYPEID_INT8:
+            name = "int8";
+            break;
+        case asTYPEID_INT16:
+            name = "int16";
+            break;
+        case asTYPEID_INT32:
+            name = "int32";
+            break;
+        case asTYPEID_INT64:
+            name = "int64";
+            break;
+        case asTYPEID_UINT8:
+            name = "uint8";
+            break;
+        case asTYPEID_UINT16:
+            name = "uint16";
+            break;
+        case asTYPEID_UINT32:
+            name = "uint32";
+            break;
+        case asTYPEID_UINT64:
+            name = "uint64";
+            break;
+        case asTYPEID_FLOAT:
+            name = "float";
+            break;
+        case asTYPEID_DOUBLE:
+            name = "double";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+    } else {
+        auto ns = type->GetNamespace();
+        if (ns && strlen(ns)) {
+            name = fmt::format(FMT_STRING("{}::{}"), ns, type->GetName());
+        } else {
+            name = type->GetName();
+        }
     }
-    return {};
+    return name;
 }
 
-std::string
-ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
-    Q_ASSERT(var);
-    auto &m = ScriptMachine::instance();
-    auto e = m.engine();
-    auto typeId = var->address.typeId;
+std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
+    Q_ASSERT(ref && typeId);
+
+    switch (typeId & asTYPEID_MASK_SEQNBR) {
+    case asTYPEID_BOOL:
+        return fmt::to_string(*static_cast<bool *>(ref));
+    case asTYPEID_INT8:
+        return fmt::to_string(*static_cast<qint8 *>(ref));
+    case asTYPEID_INT16:
+        return fmt::to_string(*static_cast<qint16 *>(ref));
+    case asTYPEID_INT32:
+        return fmt::to_string(*static_cast<qint32 *>(ref));
+    case asTYPEID_INT64:
+        return fmt::to_string(*static_cast<qint64 *>(ref));
+    case asTYPEID_UINT8:
+        return fmt::to_string(*static_cast<quint8 *>(ref));
+    case asTYPEID_UINT16:
+        return fmt::to_string(*static_cast<quint16 *>(ref));
+    case asTYPEID_UINT32:
+        return fmt::to_string(*static_cast<quint32 *>(ref));
+    case asTYPEID_UINT64:
+        return fmt::to_string(*static_cast<quint64 *>(ref));
+    case asTYPEID_FLOAT:
+        return fmt::to_string(*static_cast<float *>(ref));
+    case asTYPEID_DOUBLE:
+        return fmt::to_string(*static_cast<double *>(ref));
+    }
+
+    auto key = typeId;
     if (typeId & asTYPEID_TEMPLATE) {
-        auto t = e->GetTypeInfoById(typeId);
-        t = e->GetTypeInfoByName(t->GetName());
+        auto t = _engine->GetTypeInfoById(typeId);
+        t = _engine->GetTypeInfoByName(t->GetName());
         Q_ASSERT(t);
-        typeId = t->GetTypeId();
+        key = t->GetTypeId();
     }
-
-    auto &cache = m._asMetaCaches;
-    auto rid = cache.value(typeId, QMetaType::Void);
+    auto rid = _asMetaCaches.value(key, QMetaType::Void);
     if (rid == QMetaType::QChar) {
-        auto pch = var->address.ResolveAs<QChar *>();
+        // char
+        auto pch = resolveObjAs<QChar *>(ref, typeId);
         return QString(*pch).toStdString();
     } else if (rid == QMetaType::QString) {
-        return var->address.ResolveAs<QString>()->toStdString();
+        // string
+        return resolveObjAs<QString>(ref, typeId)->toStdString();
     } else if (rid == QMetaType::QVariantList) {
-        return fmt::format(
-            "{}", CScriptArrayView(var->address.ResolveAs<CScriptArray>()));
+        // array<?>
+        return fmt::to_string(
+            CScriptArrayView(resolveObjAs<CScriptArray>(ref, typeId)));
+    } else if (rid == QMetaType::QVariantMap) {
+        // dictionary
+        auto dic = resolveObjAs<CScriptDictionary>(ref, typeId);
+        std::vector<std::string> buffer;
+        buffer.reserve(dic->GetSize());
+        for (auto it = dic->begin(); it != dic->end(); ++it) {
+            std::string r;
+            if (isAngelString(it.GetTypeId())) {
+                r = fmt::format(
+                    FMT_STRING(R"(["{}"] = {:?})"), it.GetKey(),
+                    stringify_helper(const_cast<void *>(it.GetAddressOfValue()),
+                                     it.GetTypeId()));
+            } else {
+                r = fmt::format(
+                    FMT_STRING(R"(["{}"] = {})"), it.GetKey(),
+                    stringify_helper(const_cast<void *>(it.GetAddressOfValue()),
+                                     it.GetTypeId()));
+            }
+            buffer.emplace_back(r);
+        }
+        return fmt::format(FMT_STRING("{{{}}}"), fmt::join(buffer, ", "));
+    } else if (rid == QMetaType::QVariantPair) {
+        // dictonaryValue
+        auto dicv = resolveObjAs<CScriptDictValue>(ref, typeId);
+        return stringify_helper(const_cast<void *>(dicv->GetAddressOfValue()),
+                                dicv->GetTypeId());
+    } else if (rid == QMetaType::QVariant) {
+        // any
+        auto obj = resolveObjAs<CScriptAny>(ref, typeId);
+        return stringify_helper(obj->value.valueObj, obj->value.typeId);
     }
 
     // if type has toString() function
     asIScriptContext *ctx = asGetActiveContext();
     if (ctx) {
-        auto info = e->GetTypeInfoById(var->address.typeId);
+        auto info = _engine->GetTypeInfoById(typeId);
         if (info) {
             auto func = info->GetMethodByDecl("string toString() const");
             if (func) {
                 ctx->PushState();
                 ctx->Prepare(func);
-                ctx->SetObject(var->address.ResolveAs<void>());
+                ctx->SetObject(resolveObjAs<void>(ref, typeId));
                 ctx->Execute();
                 auto rstr = *static_cast<QString *>(ctx->GetReturnObject());
                 ctx->PopState();
@@ -981,35 +1058,8 @@ ScriptMachine::stringify_helper(const std::shared_ptr<asIDBVariable> &var) {
         }
     }
 
-    var->Evaluate();
-    if (var->evaluated) {
-        if (var->expandable) {
-            var->Expand();
-            if (var->expanded) {
-                std::vector<std::string> r;
-                r.reserve(var->indexedProps.size() + var->namedProps.size());
-                for (auto &item : var->indexedProps) {
-                    auto istr = stringify_helper(item);
-                    r.push_back(fmt::format("{} = {}",
-                                            item->identifier.Combine(), istr));
-                }
-                for (auto &item : var->namedProps) {
-                    auto istr = stringify_helper(item);
-                    r.push_back(fmt::format("{} = {}",
-                                            item->identifier.Combine(), istr));
-                }
-                return fmt::format("{{{}}}", fmt::join(r, ","));
-            } else {
-                return fmt::format("{}<#{}>", var->typeName,
-                                   fmt::ptr(var->address.address));
-            }
-        }
-
-        return var->value;
-    }
-
-    return fmt::format("{}<#{}>", var->typeName,
-                       fmt::ptr(var->address.address));
+    return fmt::format(FMT_STRING("{}<#{}>"), getAsTypeName(typeId),
+                       fmt::ptr(ref));
 }
 
 bool ScriptMachine::executeScript(
@@ -1039,6 +1089,7 @@ bool ScriptMachine::executeScript(
         // discarding the module and doing a full garbage collection so that
         // this can also be debugged if desired
         mod->Discard();
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
     });
 
     beginEvaluateDefine();
@@ -1068,6 +1119,10 @@ bool ScriptMachine::executeScript(
             info.type = MessageType::Error;
             outputMessage(info);
         });
+
+    asPWORD umode = asPWORD(mode);
+    _engine->SetUserData(reinterpret_cast<void *>(umode),
+                         AsUserDataType::UserData_ContextMode);
 
     auto r = builder.loadSectionFromFile(script);
     if (r < 0) {
@@ -1140,7 +1195,7 @@ bool ScriptMachine::executeScript(
 
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-    ctx->SetUserData(reinterpret_cast<void *>(mode),
+    ctx->SetUserData(reinterpret_cast<void *>(umode),
                      AsUserDataType::UserData_ContextMode);
     ctx->SetUserData(reinterpret_cast<void *>(
                          AppManager::instance()->currentMSecsSinceEpoch()),
@@ -1376,9 +1431,15 @@ void ScriptMachine::abortScript(ConsoleMode mode) {
 }
 
 void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
+    ConsoleMode mode;
+    auto ins = static_cast<ScriptMachine *>(param);
     auto ctx = asGetActiveContext();
-    if (ctx == nullptr) {
-        return;
+    if (ctx) {
+        mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
+    } else {
+        mode = ConsoleMode(reinterpret_cast<asPWORD>(
+            ins->engine()->GetUserData(AsUserDataType::UserData_ContextMode)));
     }
 
     MessageType t = MessageType::Print;
@@ -1393,9 +1454,6 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
         t = MessageType::Info;
         break;
     }
-    auto ins = static_cast<ScriptMachine *>(param);
-    auto mode = ConsoleMode(reinterpret_cast<asPWORD>(
-        ctx->GetUserData(AsUserDataType::UserData_ContextMode)));
 
     MessageInfo info;
     info.mode = mode;
@@ -1674,6 +1732,18 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     type = engine->GetTypeInfoByName("array");
     Q_ASSERT(type);
     cache.insert(type->GetTypeId(), QMetaType::QVariantList);
+
+    type = engine->GetTypeInfoByName("dictionary");
+    Q_ASSERT(type);
+    cache.insert(type->GetTypeId(), QMetaType::QVariantMap);
+
+    type = engine->GetTypeInfoByName("dictionaryValue");
+    Q_ASSERT(type);
+    cache.insert(type->GetTypeId(), QMetaType::QVariantPair);
+
+    type = engine->GetTypeInfoByName("any");
+    Q_ASSERT(type);
+    cache.insert(type->GetTypeId(), QMetaType::QVariant);
 }
 
 void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
@@ -1915,6 +1985,7 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
         if (mode != Interactive) {
             mod->Discard();
         }
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
     });
 
     // first, valid the input
@@ -1967,14 +2038,13 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     // ok, wrap the codes
     ccode.prepend("void f(){\n").append("\n}");
 
+    asPWORD umode = asPWORD(mode);
+    _engine->SetUserData(reinterpret_cast<void *>(umode),
+                         AsUserDataType::UserData_ContextMode);
+
     // start to compile
     auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
     if (cr < 0) {
-        MessageInfo info;
-        info.mode = mode;
-        info.message = QStringLiteral("Script failed to build");
-        info.type = MessageType::Error;
-        outputMessage(info);
         return false;
     }
 
@@ -1990,7 +2060,6 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
 
     ctx->SetUserData(reinterpret_cast<void *>(isDbg),
                      AsUserDataType::UserData_isDbg);
-    asPWORD umode = asPWORD(mode);
     ctx->SetUserData(reinterpret_cast<void *>(umode),
                      AsUserDataType::UserData_ContextMode);
     ctx->SetUserData(reinterpret_cast<void *>(

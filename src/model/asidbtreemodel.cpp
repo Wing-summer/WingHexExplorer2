@@ -395,7 +395,7 @@ QVariant AsIDBTreeModel::getVariableIdentifier(const QModelIndex &index) const {
         if (vp) {
             return QStringLiteral("var_%1_%2")
                 .arg(QString::fromStdString(vp->identifier.Combine()),
-                     QString::fromStdString(vp->typeName));
+                     QString::fromUtf8(vp->typeName));
         }
     }
 

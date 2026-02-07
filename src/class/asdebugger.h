@@ -44,7 +44,7 @@ public:
 
 public:
     void setCustomEvals(
-        const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals);
+        const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals);
 
 public:
     void addFileBreakPoint(const QString &file, int lineNbr);
@@ -71,7 +71,7 @@ protected:
     CreateCache(asIScriptContext *ctx) override;
 
 private:
-    QHash<std::string, WingHex::IWingAngel::Evaluator> _customEvals;
+    QHash<std::string_view, WingHex::IWingAngel::Evaluator> _customEvals;
 };
 
 #endif // ASDEBUGGER_H

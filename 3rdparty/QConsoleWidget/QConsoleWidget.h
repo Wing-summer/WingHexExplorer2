@@ -108,6 +108,11 @@ protected:
     QString currentCommandLine() const;
 
 protected:
+    virtual void dragMoveEvent(QDragMoveEvent *e) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void insertFromMimeData(const QMimeData *source) override;
+
+protected:
     static History history_;
     ConsoleMode mode_;
     int inpos_;

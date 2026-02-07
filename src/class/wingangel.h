@@ -90,7 +90,7 @@ public:
                            asCallConvTypes callConv, void *auxiliary) override;
 
 public:
-    QHash<std::string, WingHex::IWingAngel::Evaluator> customEvals() const;
+    QHash<std::string_view, Evaluator> customEvals() const;
 
     QList<int> excludeEvalIDs() const;
     void setExcludeEvalIDs(const QList<int> &newExcludeEvals);
@@ -113,7 +113,9 @@ private:
     QStringList &_scriptMarcos;
 
     QList<int> _excludeEvalIDs;
-    QHash<std::string, WingHex::IWingAngel::Evaluator> _customEvals;
+
+    QByteArrayList _customEvalKeys;
+    QHash<std::string_view, WingHex::IWingAngel::Evaluator> _customEvals;
 };
 
 #endif // WINGANGEL_H

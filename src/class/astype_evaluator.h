@@ -38,14 +38,14 @@
 class asIDBArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        asIDBObjectTypeEvaluator::Evaluate(var);
-        if (var->owner.expired()) {
-            if (!CanExpand(var)) {
-                var->value = "{}";
-            }
-        } else {
-            var->value = "<array> | " + var->value;
-        }
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
+        auto arr = var->address.ResolveAs<CScriptArray>();
+        var->expandable = !arr->IsEmpty();
+        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
+        var->value = fmt::format(
+            FMT_STRING("array<{}>[{}]"),
+            cache.GetTypeNameFromType(arr->GetElementTypeId()), arr->GetSize());
     }
     virtual void Expand(asIDBVariable::Ptr var) const override {
         QueryVariableForEach(var, 0);
@@ -69,11 +69,8 @@ public:
             var->value = R"("")";
             var->expandable = false;
         } else {
-            if (var->owner.expired()) {
-                var->value = s->toStdString();
-            } else {
-                var->value = fmt::format(R"("{}")", escapeNonPrintable(*s));
-            }
+            var->value =
+                fmt::format(FMT_STRING(R"("{}")"), escapeNonPrintable(*s));
             var->expandable = true;
         }
     }
@@ -98,7 +95,7 @@ public:
         const QRegularExpression *s =
             var->address.ResolveAs<const QRegularExpression>();
         auto p = s->pattern();
-        var->value = fmt::format("exp<{}>", s->pattern());
+        var->value = fmt::format(FMT_STRING("exp</{}/>"), s->pattern());
     }
 };
 
@@ -117,7 +114,7 @@ public:
         const QRegularExpressionMatch *s =
             var->address.ResolveAs<const QRegularExpressionMatch>();
         auto r = s->regularExpression();
-        var->value = fmt::format("match<{}>", r.pattern());
+        var->value = fmt::format(FMT_STRING("match</{}/>"), r.pattern());
     }
 };
 
@@ -134,11 +131,8 @@ public:
         var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
         const QChar *s = var->address.ResolveAs<const QChar>();
-        if (var->owner.expired()) {
-            var->value = s->unicode();
-        } else {
-            var->value = fmt::format("'{}'", escapeNonPrintable(QString(*s)));
-        }
+        var->value =
+            fmt::format(FMT_STRING("'{}'"), escapeNonPrintable(QString(*s)));
     }
 };
 
@@ -156,7 +150,7 @@ public:
         var->expandable = true;
 
         const QUrl *s = var->address.ResolveAs<const QUrl>();
-        var->value = fmt::format(R"(url<"{}">)", s->fileName());
+        var->value = fmt::format(FMT_STRING(R"(url<"{}">)"), s->fileName());
     }
 
     virtual void Expand(asIDBVariable::Ptr var) const override {
@@ -175,7 +169,7 @@ public:
             auto child = var->CreateChildVariable(
                 "[scheme]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format(R"("{}")", s->scheme());
+            child->value = fmt::format(FMT_STRING(R"("{}")"), s->scheme());
         }
         {
             // authority
@@ -183,14 +177,14 @@ public:
                 "[authority]", {},
                 cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format(R"("{}")", s->authority());
+            child->value = fmt::format(FMT_STRING(R"("{}")"), s->authority());
         }
         {
             // path
             auto child = var->CreateChildVariable(
                 "[path]", {}, cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format(R"("{}")", s->path());
+            child->value = fmt::format(FMT_STRING(R"("{}")"), s->path());
         }
         {
             // fileName
@@ -198,7 +192,7 @@ public:
                 "[fileName]", {},
                 cache.GetTypeNameFromType({typeID, asTM_NONE}));
             child->evaluated = true;
-            child->value = fmt::format(R"("{}")", s->fileName());
+            child->value = fmt::format(FMT_STRING(R"("{}")"), s->fileName());
         }
     }
 };
@@ -216,7 +210,7 @@ public:
         var->typeName = cache.GetTypeNameFromType(var->address.typeId);
 
         const QColor *s = var->address.ResolveAs<const QColor>();
-        var->value = fmt::format("color<{}>", s->name());
+        var->value = fmt::format(FMT_STRING("color<{}>"), s->name());
     }
 };
 
@@ -235,12 +229,13 @@ public:
         const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
 
         if (v->GetTypeId() == 0) {
-            var->value = "<no stored value>";
+            var->value = "any<null>";
             return;
         }
 
-        var->value = fmt::format(
-            "any<{}>", var->dbg.cache->GetTypeNameFromType(v->GetTypeId()));
+        var->value =
+            fmt::format(FMT_STRING("any<{}>"),
+                        var->dbg.cache->GetTypeNameFromType(v->GetTypeId()));
         var->expandable = true;
     }
 
@@ -267,37 +262,13 @@ public:
 
 class asIDBDictionaryTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
-    virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        auto &dbg = var->dbg;
-        auto &cache = *dbg.cache;
-        auto ctx = cache.ctx;
-        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
-        if (type == nullptr) {
-            return;
-        }
-        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
-
-        const CScriptDictionary *v =
-            var->address.ResolveAs<const CScriptDictionary>();
-
-        size_t size = v->GetSize();
-        if (var->owner.expired()) {
-            if (size == 0) {
-                var->value = "{}";
-            }
-        } else {
-            var->value = fmt::format("<dictionary> | {} pairs", size);
-        }
-        var->expandable = size != 0;
-    }
-
     virtual void Expand(asIDBVariable::Ptr var) const override {
         const CScriptDictionary *v =
             var->address.ResolveAs<const CScriptDictionary>();
 
         for (auto &kvp : *v) {
             auto child = var->CreateChildVariable(
-                fmt::format("[\"{}\"]", kvp.GetKey()),
+                fmt::format(FMT_STRING("[\"{}\"]"), kvp.GetKey()),
                 {kvp.GetTypeId(), false,
                  const_cast<void *>(kvp.GetAddressOfValue())},
                 var->dbg.cache->GetTypeNameFromType(kvp.GetTypeId()));
@@ -320,19 +291,20 @@ public:
 
         const QJsonDocument *v = var->address.ResolveAs<const QJsonDocument>();
         if (v->isEmpty() || v->isNull()) {
-            var->value = "<Json::JsonDocument> {}";
+            var->value = "Json::JsonDocument<null>";
         } else {
             if (v->isArray()) {
                 auto arr = v->array();
                 auto len = arr.size();
                 var->value = fmt::format(
-                    "<Json::JsonDocument.JsonArray> | {} elements", len);
+                    FMT_STRING("Json::JsonDocument<Json::JsonArray>[{}]"), len);
                 var->expandable = len > 0;
             } else if (v->isObject()) {
                 auto obj = v->object();
                 auto len = obj.size();
                 var->value = fmt::format(
-                    "<Json::JsonDocument.JsonObject> | {} elements", len);
+                    FMT_STRING("Json::JsonDocument<Json::JsonObject>[{}]"),
+                    len);
                 var->expandable = len > 0;
             }
         }
@@ -347,14 +319,16 @@ public:
 
         auto engine = var->dbg.cache->ctx->GetEngine();
         auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
+        auto &dbg = var->dbg;
+        auto &cache = *dbg.cache;
         if (v->isArray()) {
             auto arr = v->array();
             auto total = arr.size();
             for (qsizetype i = 0; i < total; i++) {
                 QJsonValue temp = arr.at(i);
                 auto child = var->CreateChildVariable(
-                    fmt::format("[{}]", i), asIDBVarAddr{typeId, false, &temp},
-                    var->typeName);
+                    fmt::format(FMT_STRING("[{}]"), i),
+                    asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
                 child->address.address = child->stackValue.GetPointer<void>();
@@ -365,7 +339,7 @@ public:
                 auto key = p.key();
                 QJsonValue temp = p.value();
                 auto child = var->CreateChildVariable(
-                    fmt::format(R"(["{}"])", key),
+                    fmt::format(FMT_STRING(R"(["{}"])"), key),
                     asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
@@ -377,22 +351,6 @@ public:
 
 class asIDBJsonArrayTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
-    virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        auto &dbg = var->dbg;
-        auto &cache = *dbg.cache;
-        auto ctx = cache.ctx;
-        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
-        if (type == nullptr) {
-            return;
-        }
-        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
-
-        const QJsonArray *v = var->address.ResolveAs<const QJsonArray>();
-        auto len = v->size();
-        var->value = fmt::format("<Json::JsonArray> | {} elements", len);
-        var->expandable = len > 0;
-    }
-
     virtual void Expand(asIDBVariable::Ptr var) const override {
         QueryVariableForEach(var, 0);
     }
@@ -400,22 +358,6 @@ public:
 
 class asIDBJsonObjectTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
-    virtual void Evaluate(asIDBVariable::Ptr var) const override {
-        auto &dbg = var->dbg;
-        auto &cache = *dbg.cache;
-        auto ctx = cache.ctx;
-        auto type = ctx->GetEngine()->GetTypeInfoById(var->address.typeId);
-        if (type == nullptr) {
-            return;
-        }
-        var->typeName = cache.GetTypeNameFromType(var->address.typeId);
-
-        const QJsonObject *v = var->address.ResolveAs<const QJsonObject>();
-        auto len = v->size();
-        var->value = fmt::format("<Json::JsonObject> | {} elements", len);
-        var->expandable = len > 0;
-    }
-
     virtual void Expand(asIDBVariable::Ptr var) const override {
         const QJsonObject *v = var->address.ResolveAs<const QJsonObject>();
 
@@ -429,7 +371,7 @@ public:
             auto key = p.key();
             QJsonValue temp = p.value();
             auto child = var->CreateChildVariable(
-                fmt::format(R"(["{}"])", key),
+                fmt::format(FMT_STRING(R"(["{}"])"), key),
                 asIDBVarAddr{typeId, false, &temp}, var->typeName);
             child->stackValue = asIDBValue(engine, &temp, typeId, asTM_NONE);
             child->address.address = child->stackValue.GetPointer<void>();
@@ -452,15 +394,15 @@ public:
         const QJsonValue *v = var->address.ResolveAs<const QJsonValue>();
         switch (v->type()) {
         case QJsonValue::Null:
-            var->value = "Json::JsonValue<null>";
+            var->value = "null";
             var->expandable = false;
             break;
         case QJsonValue::Bool:
-            var->value = v->toBool() ? "true" : "false";
+            var->value = fmt::to_string(v->toBool());
             var->expandable = false;
             break;
         case QJsonValue::Double:
-            var->value = fmt::format("{}", v->toDouble());
+            var->value = fmt::to_string(v->toDouble());
             var->expandable = false;
             break;
         case QJsonValue::String: {
@@ -468,27 +410,21 @@ public:
             if (str.isEmpty()) {
                 var->value = "\"\"";
             } else {
-                if (var->owner.expired()) {
-                    var->value = str.toStdString();
-                } else {
-                    var->value =
-                        fmt::format(R"("{}")", escapeNonPrintable(str));
-                }
+                var->value =
+                    fmt::format(FMT_STRING(R"("{}")"), escapeNonPrintable(str));
             }
             var->expandable = false;
         } break;
         case QJsonValue::Array: {
             auto arr = v->toArray();
             auto len = arr.size();
-            var->value =
-                fmt::format("<Json::JsonValue.JsonArray> | {} elements", len);
+            var->value = fmt::format(FMT_STRING("Json::JsonArray[{}]"), len);
             var->expandable = len > 0;
         } break;
         case QJsonValue::Object: {
             auto obj = v->toObject();
             auto len = obj.size();
-            var->value =
-                fmt::format("<Json::JsonValue.JsonObject> | {} elements", len);
+            var->value = fmt::format(FMT_STRING("Json::JsonObject[{}]"), len);
             var->expandable = len > 0;
         } break;
         case QJsonValue::Undefined:
@@ -515,8 +451,8 @@ public:
             for (qsizetype i = 0; i < total; i++) {
                 QJsonValue temp = arr.at(i);
                 auto child = var->CreateChildVariable(
-                    fmt::format("[{}]", i), asIDBVarAddr{typeId, false, &temp},
-                    var->typeName);
+                    fmt::format(FMT_STRING("[{}]"), i),
+                    asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
                 child->address.address = child->stackValue.GetPointer<void>();
@@ -530,7 +466,7 @@ public:
                 auto key = p.key();
                 QJsonValue temp = p.value();
                 auto child = var->CreateChildVariable(
-                    fmt::format(R"(["{}"])", key),
+                    fmt::format(FMT_STRING(R"(["{}"])"), key),
                     asIDBVarAddr{typeId, false, &temp}, var->typeName);
                 child->stackValue =
                     asIDBValue(engine, &temp, typeId, asTM_NONE);
@@ -544,7 +480,7 @@ public:
 class asIDBCustomTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     asIDBCustomTypeEvaluator(
-        const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals)
+        const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals)
         : evals(evals) {}
 
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
@@ -589,7 +525,7 @@ public:
                     auto temp = data.buffer;
                     if (temp) {
                         auto child = var->CreateChildVariable(
-                            fmt::format("[{}]", i),
+                            fmt::format(FMT_STRING("[{}]"), i),
                             asIDBVarAddr{typeId, false, temp}, var->typeName);
                         child->stackValue =
                             asIDBValue(engine, temp, typeId, asTM_NONE);
@@ -599,7 +535,7 @@ public:
                     }
 
                     auto child = var->CreateChildVariable(
-                        fmt::format("[{}]", i),
+                        fmt::format(FMT_STRING("[{}]"), i),
                         asIDBVarAddr{asTYPEID_VOID, false, nullptr},
                         var->typeName);
                     child->stackValue =
@@ -615,7 +551,7 @@ public:
                         ret);
 
                 for (auto &&[key, value] : rc.asKeyValueRange()) {
-                    auto k = fmt::format(R"([{}])", key);
+                    auto k = fmt::format(FMT_STRING(R"([{}])"), key);
                     auto typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
                     auto temp = value.buffer;
                     if (temp) {
@@ -644,7 +580,7 @@ public:
     }
 
 private:
-    QHash<std::string, WingHex::IWingAngel::Evaluator> evals;
+    QHash<std::string_view, WingHex::IWingAngel::Evaluator> evals;
 };
 
 #endif // ASTYPE_EVALUATOR_H

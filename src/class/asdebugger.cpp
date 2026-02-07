@@ -89,7 +89,7 @@ asDebugger::asDebugger(asIDBWorkspace *workspace)
 asDebugger::~asDebugger() {}
 
 void asDebugger::setCustomEvals(
-    const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals) {
+    const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals) {
     _customEvals = evals;
 }
 

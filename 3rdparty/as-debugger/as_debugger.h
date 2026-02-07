@@ -106,7 +106,7 @@ struct asIDBVarName {
 
     inline std::string Combine() const {
         if (!ns.empty())
-            return fmt::format("{}::{}", ns, name);
+            return fmt::format(FMT_STRING("{}::{}"), ns, name);
         return name;
     }
 };
@@ -151,7 +151,7 @@ struct asIDBVariable {
     bool evaluated = false;
     bool expandable = false;
     std::string value;
-    std::string typeName;
+    std::string_view typeName;
     asIDBValue stackValue;
 
     // if it's a getter, this will be set.
@@ -323,7 +323,7 @@ public:
     virtual void Refresh();
 
     // get a safe view into a cached type string.
-    virtual const std::string GetTypeNameFromType(asIDBTypeId id);
+    virtual const std::string_view GetTypeNameFromType(asIDBTypeId id);
 
     // for the given type + property data, fetch the address of the
     // value that this property points to.
@@ -597,5 +597,5 @@ template <typename T>
 /*virtual*/ void asIDBPrimitiveTypeEvaluator<T>::Evaluate(
     asIDBVariable::Ptr var) const /*override*/
 {
-    var->value = fmt::format("{}", *var->address.ResolveAs<const T>());
+    var->value = fmt::to_string(*var->address.ResolveAs<const T>());
 }

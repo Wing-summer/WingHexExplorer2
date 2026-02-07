@@ -33,14 +33,19 @@ SkinManager::SkinManager() {
 
     QFile qss;
     switch (Theme(theme)) {
-    case Theme::Dark:
+    case Theme::Dark: {
         setTheme(Theme::Dark);
         qss.setFileName("://dark/stylesheet.qss");
-        break;
-    case Theme::Light:
+        auto palette = qApp->palette();
+        palette.setColor(QPalette::Active, QPalette::Link,
+                         QColor::fromRgb(88, 147, 248));
+        qApp->setPalette(palette);
+    } break;
+    case Theme::Light: {
         setTheme(Theme::Light);
         qss.setFileName("://light/stylesheet.qss");
-        break;
+
+    } break;
     }
     auto r = qss.open(QFile::ReadOnly | QFile::Text);
     Q_UNUSED(r);

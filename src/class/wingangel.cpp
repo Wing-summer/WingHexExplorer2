@@ -358,7 +358,7 @@ WingAngel::registerGlobalFunction(const char *declaration,
     return returnValue(ret);
 }
 
-QHash<std::string, WingHex::IWingAngel::Evaluator>
+QHash<std::string_view, WingHex::IWingAngel::Evaluator>
 WingAngel::customEvals() const {
     return _customEvals;
 }
@@ -421,12 +421,12 @@ WingHex::asRetCodes WingAngel::registerObjectEvaluator(const char *obj,
                 return WingHex::asRetCodes::asALREADY_REGISTERED;
             }
 
-            std::string key = _plgsess.toStdString() + "::" + obj;
-            if (_customEvals.contains(key)) {
+            QByteArray key = _plgsess + QByteArrayLiteral("::") + obj;
+            auto &r = _customEvalKeys.emplaceBack(key);
+            if (_customEvals.contains(r)) {
                 return WingHex::asRetCodes::asALREADY_REGISTERED;
             }
-
-            _customEvals.insert(key, ev);
+            _customEvals.insert(r, ev);
             return WingHex::asRetCodes::asSUCCESS;
         } break;
         }

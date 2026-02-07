@@ -1217,66 +1217,6 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
             auto globals = std::make_shared<asIDBVariable>(*m.debugger());
             globals->ptr = globals;
 
-            // copy from asIDBCache
-            auto typeNameFromType = [](const asIDBTypeId &id) -> std::string {
-                static asIDBTypeNameMap type_names; // cached name
-                auto ret = type_names.find(id);
-                if (ret != type_names.end()) {
-                    return ret->second;
-                }
-
-                auto engine = ScriptMachine::instance().engine();
-                auto type = engine->GetTypeInfoById(id.typeId);
-                const char *name;
-
-                if (!type) {
-                    // a primitive
-                    switch (id.typeId & asTYPEID_MASK_SEQNBR) {
-                    case asTYPEID_BOOL:
-                        name = "bool";
-                        break;
-                    case asTYPEID_INT8:
-                        name = "int8";
-                        break;
-                    case asTYPEID_INT16:
-                        name = "int16";
-                        break;
-                    case asTYPEID_INT32:
-                        name = "int32";
-                        break;
-                    case asTYPEID_INT64:
-                        name = "int64";
-                        break;
-                    case asTYPEID_UINT8:
-                        name = "uint8";
-                        break;
-                    case asTYPEID_UINT16:
-                        name = "uint16";
-                        break;
-                    case asTYPEID_UINT32:
-                        name = "uint32";
-                        break;
-                    case asTYPEID_UINT64:
-                        name = "uint64";
-                        break;
-                    case asTYPEID_FLOAT:
-                        name = "float";
-                        break;
-                    case asTYPEID_DOUBLE:
-                        name = "double";
-                        break;
-                    default:
-                        name = "???";
-                        break;
-                    }
-                } else {
-                    name = type->GetName();
-                }
-
-                type_names.emplace(id, name);
-                return name;
-            };
-
             auto total = mod->GetGlobalVarCount();
             for (asUINT n = 0; n < total; n++) {
                 const char *name;
@@ -1288,9 +1228,7 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
                 mod->GetGlobalVar(n, &name, &nameSpace, &typeId, &isConst);
                 ptr = mod->GetAddressOfGlobalVar(n);
 
-                asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
-                const auto viewType = typeNameFromType(typeKey);
-
+                const auto viewType = m.getAsTypeName(typeId);
                 asIDBVarAddr idKey{typeId, isConst, ptr};
 
                 globals->CreateChildVariable(
@@ -1309,14 +1247,11 @@ MainWindow::buildUpScriptObjDock(ads::CDockManager *dock,
 
                 engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId,
                                                  &isConst, nullptr, &ptr);
-                asIDBTypeId typeKey{typeId, isConst ? asTM_CONST : asTM_NONE};
-                const auto viewType = typeNameFromType(typeKey);
-
+                const auto viewType = m.getAsTypeName(typeId);
                 asIDBVarAddr idKey{typeId, isConst, ptr};
-
                 std::string localName =
                     (nameSpace && nameSpace[0])
-                        ? fmt::format("{}::{}", nameSpace, name)
+                        ? fmt::format(FMT_STRING("{}::{}"), nameSpace, name)
                         : name;
 
                 globals->CreateChildVariable(std::move(localName), idKey,

@@ -6,6 +6,7 @@ The following components are all third-party components used by the software. Th
 * [angel-lsp](https://github.com/sashi0034/angel-lsp) (MIT)
 * [antlr4](https://github.com/antlr/antlr4) (BSD-3-Clause)
 * [as-debugger](https://github.com/Paril/quake2-angelscript) (GPL-2.0)
+* [BreezeStyle](https://github.com/Alexhuszagh/BreezeStyleSheets) (MIT, **FORK**)
 * [cpptrace](https://github.com/jeremy-rifkin/cpptrace) (MIT)
 * [CRaC](https://github.com/pstolarz/CRaC) (BSD-2-Clause)
 * [fmt](https://github.com/fmtlib/fmt) (MIT)

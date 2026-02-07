@@ -94,7 +94,7 @@ public:
     void destoryMachine();
 
     void setCustomEvals(
-        const QHash<std::string, WingHex::IWingAngel::Evaluator> &evals);
+        const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals);
 
 public:
     bool init();
@@ -156,6 +156,8 @@ public:
     void abortDbgScript();
     void abortScript(ScriptMachine::ConsoleMode mode);
 
+    std::string getAsTypeName(int typeId);
+
 protected:
     bool configureEngine();
     void beginEvaluateDefine();
@@ -192,10 +194,19 @@ private:
     static QString beautify(const QString &str, uint indent);
 
     QString stringify(void *ref, int typeId);
-    std::string stringify_helper(const std::shared_ptr<asIDBVariable> &var);
+
+    template <typename T>
+    static inline T *resolveObjAs(void *address, int typeId) {
+        if (!address)
+            return nullptr;
+        else if (typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE)) {
+            return *reinterpret_cast<T **>(address);
+        }
+        return reinterpret_cast<T *>(address);
+    }
 
 public:
-    std::string stringify_std(void *ref, int typeId);
+    std::string stringify_helper(void *ref, int typeId);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);

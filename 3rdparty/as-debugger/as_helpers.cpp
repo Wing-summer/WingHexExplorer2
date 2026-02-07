@@ -150,8 +150,8 @@ asIDBObjectIteratorHelper::asIDBObjectIteratorHelper(asITypeInfo *type,
 
     if (!opForValue) {
         for (int i = 0;; i++) {
-            auto f =
-                type->GetMethodByName(fmt::format("opForValue{}", i).c_str());
+            auto f = type->GetMethodByName(
+                fmt::format(FMT_STRING("opForValue{}"), i).c_str());
 
             if (!f)
                 break;

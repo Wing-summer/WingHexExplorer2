@@ -351,6 +351,8 @@ QString QConsoleWidget::currentCommandLine() const {
     return textCursor.selectedText();
 }
 
+void QConsoleWidget::dragMoveEvent(QDragMoveEvent *e) { e->ignore(); }
+
 int QConsoleWidget::currentHeaderPos() const { return inpos_; }
 
 int QConsoleWidget::write(const QString &message) {
@@ -494,4 +496,21 @@ QTextStream &errChannel(QTextStream &s) {
     if (d)
         d->setCurrentWriteChannel(QConsoleWidget::StandardError);
     return s;
+}
+
+void QConsoleWidget::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::MiddleButton) {
+        copy();
+        QTextCursor cursor = cursorForPosition(event->pos());
+        setTextCursor(cursor);
+        paste();
+        return;
+    }
+    WingCodeEdit::mousePressEvent(event);
+}
+
+void QConsoleWidget::insertFromMimeData(const QMimeData *source) {
+    if (isSelectionInEditZone()) {
+        WingCodeEdit::insertFromMimeData(source);
+    }
 }

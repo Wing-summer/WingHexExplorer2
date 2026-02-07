@@ -62,13 +62,13 @@ asWingCache::GetEvaluator(const asIDBVarAddr &id) const {
     auto type = ctx->GetEngine()->GetTypeInfoById(id.typeId);
     if (type) {
         auto &d = static_cast<asDebugger &>(dbg);
-        std::string name = d.cache->GetTypeNameFromType(id.typeId);
+        auto name = d.cache->GetTypeNameFromType(id.typeId);
 
         // are we a template?
         if (id.typeId & asTYPEID_TEMPLATE) {
             // fetch the base type, see if we have a
             // evaluator for that one
-            auto baseType = ctx->GetEngine()->GetTypeInfoByName(name.c_str());
+            auto baseType = ctx->GetEngine()->GetTypeInfoByName(name.data());
             if (baseType) {
                 if (auto f = _evaluators.find(
                         baseType->GetTypeId() &

@@ -70,8 +70,8 @@ void asIDBVariable::Expand() {
 
     if (ctx->GetState() != asEXECUTION_FINISHED) {
         var->get_evaluated = var->CreateChildVariable(var->identifier, {}, "");
-        var->get_evaluated->value =
-            fmt::format("Exception thrown ({})", ctx->GetExceptionString());
+        var->get_evaluated->value = fmt::format(
+            FMT_STRING("Exception thrown ({})"), ctx->GetExceptionString());
         var->get_evaluated->evaluated = true;
     } else {
         asDWORD returnFlags;
@@ -169,9 +169,9 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
 
         asIDBTypeId typeKey{typeId, modifiers};
 
-        std::string localName = (name && *name)
-                                    ? fmt::format("{} (&{})", name, n)
-                                    : fmt::format("&{}", n);
+        std::string localName =
+            (name && *name) ? fmt::format(FMT_STRING("{} (&{})"), name, n)
+                            : fmt::format(FMT_STRING("&{}"), n);
 
         const auto viewType = cache.GetTypeNameFromType(typeKey);
 
@@ -191,12 +191,13 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
 
 /*virtual*/ void asIDBCache::Refresh() {}
 
-/*virtual*/ const std::string asIDBCache::GetTypeNameFromType(asIDBTypeId id) {
+/*virtual*/ const std::string_view
+asIDBCache::GetTypeNameFromType(asIDBTypeId id) {
     if (auto f = type_names.find(id); f != type_names.end())
         return f->second;
 
     auto type = ctx->GetEngine()->GetTypeInfoById(id.typeId);
-    std::string name;
+    std::string_view name;
 
     if (!type) {
         // a primitive
@@ -241,13 +242,14 @@ void asIDBScope::CalcLocals(asIDBDebugger &dbg, asIScriptFunction *function,
     } else {
         auto ns = type->GetNamespace();
         if (ns && strlen(ns)) {
-            name = fmt::format("{}::{}", ns, type->GetName());
+            auto nc = fmt::format(FMT_STRING("{}::{}"), ns, type->GetName());
+            auto it = type_names.emplace(id, nc);
+            return it.first->second;
         } else {
             name = type->GetName();
         }
     }
 
-    type_names.emplace(id, name);
     return name;
 }
 
@@ -584,9 +586,10 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
 
         asIDBVarAddr idKey{typeId, isConst, ptr};
 
-        std::string localName = (nameSpace && nameSpace[0])
-                                    ? fmt::format("{}::{}", nameSpace, name)
-                                    : name;
+        std::string localName =
+            (nameSpace && nameSpace[0])
+                ? fmt::format(FMT_STRING("{}::{}"), nameSpace, name)
+                : name;
 
         globals->CreateChildVariable(std::move(localName), idKey, viewType);
     }
@@ -660,11 +663,11 @@ public:
             if (ov == v) {
                 if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
                     type->GetUnderlyingTypeId() <= asTYPEID_UINT64) {
-                    var->value = fmt::format("{} ({})", name, uv);
+                    var->value = fmt::format(FMT_STRING("{} ({})"), name, uv);
                     return;
                 }
 
-                var->value = fmt::format("{} ({})", name, v);
+                var->value = fmt::format(FMT_STRING("{} ({})"), name, v);
                 return;
             }
         }
@@ -674,15 +677,15 @@ public:
         if (bits.count() == 1) {
             if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
                 type->GetUnderlyingTypeId() <= asTYPEID_UINT64) {
-                var->value = fmt::format("{}", uv);
+                var->value = fmt::to_string(uv);
                 return;
             }
 
-            var->value = fmt::format("{}", v);
+            var->value = fmt::to_string(v);
             return;
         }
 
-        var->value = fmt::format("{} bits", bits.count());
+        var->value = fmt::format(FMT_STRING("{} bits"), bits.count());
         var->expandable = true;
     }
 
@@ -729,9 +732,9 @@ public:
 
             if (type->GetUnderlyingTypeId() >= asTYPEID_UINT8 &&
                 type->GetUnderlyingTypeId() <= asTYPEID_UINT64)
-                rawValue = fmt::format("{}", uv);
+                rawValue = fmt::to_string(uv);
             else
-                rawValue = fmt::format("{}", v);
+                rawValue = fmt::to_string(v);
 
             auto child = var->CreateChildVariable("value", {}, "");
             child->value = std::move(rawValue);
@@ -773,11 +776,12 @@ public:
                 if (bit_names[e])
                     bitEntry = bit_names[e];
                 else
-                    bitEntry = fmt::format("{}", 1 << e);
+                    bitEntry = fmt::to_string(1 << e);
 
                 auto child = var->CreateChildVariable(
-                    fmt::format("[{:{}}]", e, type->GetSize() == 1 ? 1 : 2), {},
-                    "");
+                    fmt::format(FMT_STRING("[{:{}}]"), e,
+                                type->GetSize() == 1 ? 1 : 2),
+                    {}, "");
                 child->value = std::move(bitEntry);
                 child->evaluated = true;
             }
@@ -821,7 +825,7 @@ asIDBObjectTypeEvaluator::Evaluate(asIDBVariable::Ptr var) const /*override*/
             }
 
             if (var->value.empty()) {
-                var->value = fmt::format("{}<#{}>", var->typeName,
+                var->value = fmt::format(FMT_STRING("{}<#{}>"), var->typeName,
                                          fmt::ptr(var->address.address));
             }
         } else {
@@ -830,9 +834,8 @@ asIDBObjectTypeEvaluator::Evaluate(asIDBVariable::Ptr var) const /*override*/
             dbg.internal_execution = false;
 
             if (var->value.empty()) {
-                var->value =
-                    fmt::format("{}<#{}>[{}]", var->typeName,
-                                fmt::ptr(var->address.address), numElements);
+                var->value = fmt::format(FMT_STRING("{}[{}]"), var->typeName,
+                                         numElements);
             }
 
             if (numElements)
@@ -889,7 +892,7 @@ void asIDBObjectTypeEvaluator::QueryVariableProperties(
         // because of the way dereferencing works. For now, it
         // will add duplicates, and the old var state cache is gone.
 
-        auto rname = fmt::format("[{}]", name);
+        auto rname = fmt::format(FMT_STRING("[{}]"), name);
         var->CreateChildVariable(
             rname, propId,
             cache.GetTypeNameFromType(
@@ -911,7 +914,7 @@ void asIDBObjectTypeEvaluator::QueryVariableGetters(
             continue;
 
         auto rname = fmt::format(
-            "[{}]",
+            FMT_STRING("[{}]"),
             std::string(std::string_view(function->GetName()).substr(4)));
         auto child = var->CreateChildVariable(
             rname, {},
@@ -986,10 +989,10 @@ void asIDBObjectTypeEvaluator::QueryVariableForEach(asIDBVariable::Ptr var,
         // if we're a multi-element, the root is fake
         // and just exists to store the element id.
         if (multiElement) {
-            indexVar =
-                var->CreateChildVariable(fmt::format("[{}]", elementId), {},
-                                         "" // FIXME: could show types as tuple?
-                );
+            indexVar = var->CreateChildVariable(
+                fmt::format(FMT_STRING("[{}]"), elementId), {},
+                "" // FIXME: could show types as tuple?
+            );
             indexVar->expanded = indexVar->evaluated = true;
         }
 
@@ -1007,7 +1010,7 @@ void asIDBObjectTypeEvaluator::QueryVariableForEach(asIDBVariable::Ptr var,
             auto child =
                 (multiElement ? indexVar : var)
                     ->CreateChildVariable(
-                        fmt::format("[{}]",
+                        fmt::format(FMT_STRING("[{}]"),
                                     multiElement ? visibleOffset : elementId),
                         {typeId, (returnFlags & asTM_CONST) != 0, nullptr},
                         dbg.cache->GetTypeNameFromType(

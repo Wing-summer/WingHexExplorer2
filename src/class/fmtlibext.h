@@ -256,13 +256,13 @@ format_element_with_spec(void *elemPtr, int typeId,
     default: {
         if (m.isAngelChar(typeId)) {
             store.push_back(*static_cast<QChar *>(elemPtr));
-        } else if (m.isAngelChar(typeId)) {
+        } else if (m.isAngelString(typeId)) {
             store.push_back(*static_cast<QString *>(elemPtr));
         } else if (m.isAngelArray(typeId)) {
             store.push_back(
                 CScriptArrayView(static_cast<CScriptArray *>(elemPtr)));
         } else {
-            store.push_back(m.stringify_std(elemPtr, typeId));
+            store.push_back(m.stringify_helper(elemPtr, typeId));
         }
     } break;
     }
