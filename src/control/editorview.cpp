@@ -375,7 +375,7 @@ ErrFile EditorView::newFile(size_t index) {
     }
 
     auto istr = QString::number(index);
-    auto fname = tr("Untitled") + istr;
+    QString fname = tr("Untitled") + istr;
     m_docType = DocumentType::File;
     m_isNewFile = true;
     m_workSpaceName.clear();
@@ -385,8 +385,8 @@ ErrFile EditorView::newFile(size_t index) {
             &EditorView::updateDocSavedFlag);
     m_hex->setDocument(QSharedPointer<QHexDocument>(p));
     m_hex->cursor()->setInsertionMode(QHexCursor::InsertMode);
-    setFileNameUrl(QStringLiteral("file://") + newFileAuthority() +
-                   QStringLiteral("/") + fname);
+    setFileNameUrl(QString(QStringLiteral("file://") + newFileAuthority() +
+                           QStringLiteral("/") + fname));
     generateIconBaseCache({});
     updateIcon();
     return ErrFile::Success;

@@ -14,6 +14,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)
 
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10.0)
+    set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
     set(QT_NO_PRIVATE_MODULE_WARNING ON)
     find_package(Qt6 REQUIRED GuiPrivate CorePrivate WidgetsPrivate)
 endif()
@@ -27,6 +28,8 @@ option(WINGHEX_BUILD_TEST_PLUGIN "Build test plugins" OFF)
 option(WINGHEX_BUILD_SHARED_MEM_EXT "Build ShareMemoryDrv plugin" OFF)
 option(WINGHEX_ANGEL_LSP "Build LS for AngelScript" ON)
 option(WINGHEX_BUILD_TEST "Build test data generator for WingCStruct" OFF)
+option(WINGHEX_OPTIMIZE_FOR_NATIVE
+       "Build with native optimization(less portable)" OFF)
 
 add_definitions(-DAS_NO_THREADS)
 add_definitions(-DWING_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}")
@@ -42,6 +45,19 @@ endif()
 
 if(WINGHEX_BUILD_SHARED_MEM_EXT)
     add_subdirectory(ShareMemoryDrv)
+endif()
+
+if(WINGHEX_OPTIMIZE_FOR_NATIVE)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+    if(COMPILER_SUPPORTS_MARCH_NATIVE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    else()
+        check_cxx_compiler_flag("-mcpu=native" COMPILER_SUPPORTS_MCPU)
+        if(COMPILER_SUPPORTS_MCPU)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
+        endif()
+    endif()
 endif()
 
 add_definitions(-DWINGHEX_VERSION="${PROJECT_VERSION}"
@@ -623,6 +639,8 @@ endif()
 
 # emit marco in Qt conflicts with antlr4-cpp
 target_compile_definitions(WingHexExplorer2 PRIVATE QT_NO_EMIT)
+# for QStrign contraction optimization
+target_compile_definitions(WingHexExplorer2 PRIVATE QT_USE_QSTRINGBUILDER)
 
 target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty"

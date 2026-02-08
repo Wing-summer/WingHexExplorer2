@@ -46,7 +46,7 @@ LanguageManager::LanguageManager() {
                  {"zh_TW", QStringLiteral("繁體中文")},
                  {"en_US", QStringLiteral("English")}};
 
-    auto langPath =
+    QString langPath =
         qApp->applicationDirPath() + QDir::separator() + QStringLiteral("lang");
 
     QDir langDir(langPath);

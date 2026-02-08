@@ -946,8 +946,9 @@ int AsPreprocesser::loadScriptSection(const QString &filename) {
 
     if (!f.open(QFile::ReadOnly)) {
         // Write a message to the engine's message callback
-        auto msg = QStringLiteral("Failed to open script file '") +
-                   QFileInfo(filename).absoluteFilePath() + QStringLiteral("'");
+        QString msg = QStringLiteral("Failed to open script file '") +
+                      QFileInfo(filename).absoluteFilePath() +
+                      QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
         return -1;

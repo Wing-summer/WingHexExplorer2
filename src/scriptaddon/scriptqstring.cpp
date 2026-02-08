@@ -303,6 +303,8 @@ static int StringCmp(const QString &a, const QString &b) {
     return cmp;
 }
 
+static QString StringAdd(const QString &a, const QString &b) { return a + b; }
+
 // This function returns the index of the first position where the one of the
 // bytes in substring exists in the input string. If the characters in the
 // substring doesn't exist in the input string -1 is returned.
@@ -777,22 +779,11 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     r = engine->RegisterObjectMethod(
-        "string", "string opAdd(const string &in) const",
-        asFUNCTIONPR(operator+, (const QString &, const QString &), QString),
+        "string", "string opAdd(const string &in) const", asFUNCTION(StringAdd),
         asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
-#else
-    r = engine->RegisterObjectMethod(
-        "string", "string opAdd(const string &in) const",
-        asFUNCTIONPR(operator+, (const QString &, const QString &),
-                     const QString),
-        asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-#endif
 
     r = engine->RegisterObjectMethod("string", "uint length() const",
                                      asFUNCTION(StringLength),
@@ -1384,70 +1375,70 @@ static void AddAssignBool2StringGeneric(asIScriptGeneric *gen) {
 static void AddString2DoubleGeneric(asIScriptGeneric *gen) {
     QString *a = static_cast<QString *>(gen->GetObject());
     double *b = static_cast<double *>(gen->GetAddressOfArg(0));
-    auto ret_val = *a + QString::number(*b);
+    QString ret_val = *a + QString::number(*b);
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddString2FloatGeneric(asIScriptGeneric *gen) {
     QString *a = static_cast<QString *>(gen->GetObject());
     float *b = static_cast<float *>(gen->GetAddressOfArg(0));
-    auto ret_val = *a + QString::number(*b);
+    QString ret_val = *a + QString::number(*b);
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddString2IntGeneric(asIScriptGeneric *gen) {
     QString *a = static_cast<QString *>(gen->GetObject());
     asINT64 *b = static_cast<asINT64 *>(gen->GetAddressOfArg(0));
-    auto ret_val = *a + QString::number(*b);
+    QString ret_val = *a + QString::number(*b);
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddString2UIntGeneric(asIScriptGeneric *gen) {
     QString *a = static_cast<QString *>(gen->GetObject());
     asQWORD *b = static_cast<asQWORD *>(gen->GetAddressOfArg(0));
-    auto ret_val = *a + QString::number(*b);
+    QString ret_val = *a + QString::number(*b);
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddString2BoolGeneric(asIScriptGeneric *gen) {
     QString *a = static_cast<QString *>(gen->GetObject());
     bool *b = static_cast<bool *>(gen->GetAddressOfArg(0));
-    auto ret_val = *a + QString::number(*b);
+    QString ret_val = *a + QString::number(*b);
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddDouble2StringGeneric(asIScriptGeneric *gen) {
     double *a = static_cast<double *>(gen->GetAddressOfArg(0));
     QString *b = static_cast<QString *>(gen->GetObject());
-    auto ret_val = QString::number(*a) + *b;
+    QString ret_val = QString::number(*a) + *b;
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddFloat2StringGeneric(asIScriptGeneric *gen) {
     float *a = static_cast<float *>(gen->GetAddressOfArg(0));
     QString *b = static_cast<QString *>(gen->GetObject());
-    auto ret_val = QString::number(*a) + *b;
+    QString ret_val = QString::number(*a) + *b;
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddInt2StringGeneric(asIScriptGeneric *gen) {
     asINT64 *a = static_cast<asINT64 *>(gen->GetAddressOfArg(0));
     QString *b = static_cast<QString *>(gen->GetObject());
-    auto ret_val = QString::number(*a) + *b;
+    QString ret_val = QString::number(*a) + *b;
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddUInt2StringGeneric(asIScriptGeneric *gen) {
     asQWORD *a = static_cast<asQWORD *>(gen->GetAddressOfArg(0));
     QString *b = static_cast<QString *>(gen->GetObject());
-    auto ret_val = QString::number(*a) + *b;
+    QString ret_val = QString::number(*a) + *b;
     gen->SetReturnObject(&ret_val);
 }
 
 static void AddBool2StringGeneric(asIScriptGeneric *gen) {
     bool *a = static_cast<bool *>(gen->GetAddressOfArg(0));
     QString *b = static_cast<QString *>(gen->GetObject());
-    auto ret_val = QString::number(*a) + *b;
+    QString ret_val = QString::number(*a) + *b;
     gen->SetReturnObject(&ret_val);
 }
 #endif

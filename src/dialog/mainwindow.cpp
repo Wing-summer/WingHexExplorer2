@@ -3733,7 +3733,7 @@ ErrFile MainWindow::saveEditor(EditorView *editor, const QString &filename,
             }
         } else {
             static QRegularExpression regex(QStringLiteral("[/*?:<>|\"\\\\]"));
-            newName = (url.authority() + url.path())
+            newName = QString(url.authority() + url.path())
                           .replace(regex, QStringLiteral("_"));
             if (!m_lastusedpath.isEmpty()) {
                 newName.prepend(QDir::separator()).prepend(m_lastusedpath);

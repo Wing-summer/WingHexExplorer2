@@ -68,8 +68,8 @@ InspectQtLogHelper::InspectQtLogHelper() : _stream(new QTextStream(stdout)) {
                               .arg(APP_NAME, WINGHEX_VERSION,
                                    QDateTime::currentDateTime().toString(
                                        QStringLiteral("yyyyMMdd_hhmmsss")));
-    auto logPath = Utilities::getAppDataPath() + QDir::separator() +
-                   QStringLiteral("qtlog");
+    QString logPath = Utilities::getAppDataPath() + QDir::separator() +
+                      QStringLiteral("qtlog");
 
     QDir logDir;
     logDir.mkpath(logPath);

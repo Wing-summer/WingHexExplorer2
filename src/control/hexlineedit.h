@@ -149,7 +149,7 @@ public:
     qsizetype undoLimit() const;
 
 public slots:
-    void setMode(Mode m);
+    void setMode(HexLineEdit::Mode m);
     void setHexText(const QString &hexish);
 
     void undo();

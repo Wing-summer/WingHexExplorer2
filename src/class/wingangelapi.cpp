@@ -1625,7 +1625,7 @@ void WingAngelAPI::script_call(asIScriptGeneric *gen) {
     auto rr = qvariantCastASString(type);
 
     if (r != rr) {
-        auto msg = tr("InvalidRetType: need ") + r;
+        QString msg = tr("InvalidRetType: need ") + r;
         ctx->SetException(msg.toUtf8());
         return;
     }

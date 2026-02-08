@@ -29,10 +29,10 @@ WingCStruct::~WingCStruct() {}
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     _parser = new CTypeParser([this](const MsgInfo &info) {
-        auto msg = QStringLiteral(": [%1, %2] ")
-                       .arg(info.line)
-                       .arg(info.charPositionInLine) +
-                   info.info;
+        QString msg = QStringLiteral(": [%1, %2] ")
+                          .arg(info.line)
+                          .arg(info.charPositionInLine) +
+                      info.info;
         switch (info.type) {
         case MsgType::Error:
             _errors.append(msg);
@@ -1378,7 +1378,8 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
                         if (v.isEmpty()) {
                             rlist.append(QStringLiteral("<?>"));
                         } else {
-                            rlist.append(m.fmt_type + QStringLiteral("::") + v);
+                            rlist.append(
+                                QString(m.fmt_type + QStringLiteral("::") + v));
                         }
                         data = rlist;
                     } else {
@@ -1638,7 +1639,7 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
                     // ignore
                     break;
                 }
-                auto arrType =
+                QString arrType =
                     QStringLiteral("array<") + idStr + QStringLiteral(">");
                 auto arrTypeID = engine->GetTypeIdByDecl(arrType.toUtf8());
                 if (arrTypeID < 0) {

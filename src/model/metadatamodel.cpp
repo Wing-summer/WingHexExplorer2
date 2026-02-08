@@ -38,10 +38,11 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         auto d = b.at(r);
         switch (index.column()) {
         case 0: // begin
-            return QStringLiteral("0x") +
-                   QString::number(d.begin, 16).toUpper();
+            return QString(QStringLiteral("0x") + QString::number(d.begin, 16))
+                .toUpper();
         case 1: // end
-            return QStringLiteral("0x") + QString::number(d.end, 16).toUpper();
+            return QString(QStringLiteral("0x") + QString::number(d.end, 16))
+                .toUpper();
         case 2: {
             if (!d.foreground.isValid()) {
                 return QStringLiteral("-");
@@ -63,11 +64,11 @@ QVariant MetaDataModel::data(const QModelIndex &index, int role) const {
         auto d = b.at(r);
         switch (index.column()) {
         case 0: // begin
-            return QString::number(d.begin) + QStringLiteral(" - 0x") +
-                   QString::number(d.begin, 16).toUpper();
+            return QString(QString::number(d.begin) + QStringLiteral(" - 0x") +
+                           QString::number(d.begin, 16).toUpper());
         case 1: // end
-            return QString::number(d.end) + QStringLiteral(" - 0x") +
-                   QString::number(d.end, 16).toUpper();
+            return QString(QString::number(d.end) + QStringLiteral(" - 0x") +
+                           QString::number(d.end, 16).toUpper());
         case 2: {
             if (!d.foreground.isValid()) {
                 return QStringLiteral("-");

@@ -59,8 +59,8 @@ QVariant FindResultModel::data(const QModelIndex &index, int role) const {
         case 1: // col
             return r.col;
         case 2: // offset
-            return QStringLiteral("0x") +
-                   QString::number(r.offset, 16).toUpper();
+            return QString(QStringLiteral("0x") +
+                           QString::number(r.offset, 16).toUpper());
         case 3: {
             // range
             auto data = m_data->findData.at(row);

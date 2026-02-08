@@ -36,7 +36,7 @@ Logger::Logger(QObject *parent)
                               .arg(APP_NAME, WINGHEX_VERSION,
                                    QDateTime::currentDateTime().toString(
                                        QStringLiteral("yyyyMMdd_hhmmsss")));
-    auto logPath =
+    QString logPath =
         Utilities::getAppDataPath() + QDir::separator() + QStringLiteral("log");
 
     QDir logDir;
@@ -90,7 +90,7 @@ void Logger::newLine() { logPrint({}); }
 
 void Logger::trace(const QString &message) {
     auto &ins = instance();
-    auto msg = tr("[Trace]") + message;
+    QString msg = tr("[Trace]") + message;
     ins.__log(msg);
     if (ins._level >= q5TRACE) {
         Q_EMIT ins.log(packDebugStr(msg));
@@ -99,7 +99,7 @@ void Logger::trace(const QString &message) {
 
 void Logger::warning(const QString &message) {
     auto &ins = instance();
-    auto msg = tr("[Warn]") + message;
+    QString msg = tr("[Warn]") + message;
     ins.__log(msg);
     if (ins._level >= q2WARN) {
         Q_EMIT ins.log(packWarnStr(msg));
@@ -108,7 +108,7 @@ void Logger::warning(const QString &message) {
 
 void Logger::info(const QString &message) {
     auto &ins = instance();
-    auto msg = tr("[Info]") + message;
+    QString msg = tr("[Info]") + message;
     ins.__log(msg);
     if (ins._level >= q3INFO) {
         Q_EMIT ins.log(packInfoStr(msg));
@@ -117,7 +117,7 @@ void Logger::info(const QString &message) {
 
 void Logger::debug(const QString &message) {
     auto &ins = instance();
-    auto msg = tr("[Debug]") + message;
+    QString msg = tr("[Debug]") + message;
     ins.__log(msg);
     if (ins._level >= q4DEBUG) {
         Q_EMIT ins.log(packDebugStr(msg));
@@ -126,7 +126,7 @@ void Logger::debug(const QString &message) {
 
 void Logger::critical(const QString &message) {
     auto &ins = instance();
-    auto msg = tr("[Error]") + message;
+    QString msg = tr("[Error]") + message;
     ins.__log(msg);
     if (ins._level >= q0FATAL) {
         Q_EMIT ins.log(packErrorStr(msg));
