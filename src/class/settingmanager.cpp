@@ -68,6 +68,10 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_TIMEOUT, ("script.timeout"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_USRHIDECATS, ("script.usrHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_SYSHIDECATS, ("script.sysHideCats"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_WATCH_VARS, ("script.watchexps"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE_FILE_OVERWRITE,
+                          ("script.filewrite"))
+Q_GLOBAL_STATIC_WITH_ARGS(QString, SCRIPT_ENABLE_FILESYS_WRITE,
+                          ("script.filesyswrite"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USESYS_FILEDIALOG,
                           ("sys.nativeDialog"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, OTHER_USE_NATIVE_TITLEBAR,
@@ -201,6 +205,11 @@ void SettingManager::load() {
     m_sysHideCats = READ_CONFIG(SCRIPT_SYSHIDECATS, {}).toStringList();
     m_watchExpressions = READ_CONFIG(SCRIPT_WATCH_VARS, {}).toStringList();
 
+    READ_CONFIG_BOOL(m_scriptFileEnableOverwrite, SCRIPT_ENABLE_FILE_OVERWRITE,
+                     false);
+    READ_CONFIG_BOOL(m_scriptFileSystemWrite, SCRIPT_ENABLE_FILESYS_WRITE,
+                     false);
+
     m_lastUsedPath = READ_CONFIG(APP_LASTUSED_PATH, {}).toString();
     if (!m_lastUsedPath.isEmpty()) {
         QFileInfo info(m_lastUsedPath);
@@ -274,6 +283,18 @@ void SettingManager::setMetaHeaderHidden(
         WRITE_CONFIG(APP_METAHEADER_SHOW, buffer);
         m_metaHeaderHidden = newMetaHeaderHidden;
     }
+}
+
+void SettingManager::setScriptFileEnableOverwrite(bool b) {
+    HANDLE_CONFIG;
+    WRITE_CONFIG(SCRIPT_ENABLE_FILE_OVERWRITE, b);
+    m_scriptFileEnableOverwrite = b;
+}
+
+void SettingManager::setScriptFileSystemWrite(bool b) {
+    HANDLE_CONFIG;
+    WRITE_CONFIG(SCRIPT_ENABLE_FILESYS_WRITE, b);
+    m_scriptFileSystemWrite = b;
 }
 
 bool SettingManager::findStrDecShow() const { return m_findStrDecShow; }
@@ -361,6 +382,14 @@ void SettingManager::setEnabledExtPlugins(
 }
 
 int SettingManager::scriptTimeout() const { return m_scriptTimeout; }
+
+bool SettingManager::scriptFileEnableOverwrite() const {
+    return m_scriptFileEnableOverwrite;
+}
+
+bool SettingManager::scriptFileSystemWrite() const {
+    return m_scriptFileSystemWrite;
+}
 
 void SettingManager::setScriptTimeout(int newScriptTimeout) {
     newScriptTimeout = qBound(0, newScriptTimeout, 312480);
@@ -628,6 +657,8 @@ void SettingManager::__reset(SETTINGS cat) {
         WRITE_CONFIG(SCRIPT_ENABLE, true);
         WRITE_CONFIG(SCRIPT_TIMEOUT, 10);
         WRITE_CONFIG(SCRIPT_ALLOW_USRSCRIPT_INROOT, false);
+        WRITE_CONFIG(SCRIPT_ENABLE_FILE_OVERWRITE, false);
+        WRITE_CONFIG(SCRIPT_ENABLE_FILESYS_WRITE, false);
         WRITE_CONFIG(SCRIPT_USRHIDECATS, QStringList());
         WRITE_CONFIG(SCRIPT_SYSHIDECATS, QStringList());
     }

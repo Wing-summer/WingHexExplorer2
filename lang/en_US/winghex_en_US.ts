@@ -3115,57 +3115,67 @@
         <translation>Allow execution of user repository scripts with admin</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="76"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="58"/>
+        <source>ScriptFile overwritable</source>
+        <translation>Allow file to be overwritten with scripting</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="65"/>
+        <source>ScriptFileSystem writable</source>
+        <translation>Allow files or directories to be removed with scripting</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="90"/>
         <source>Timeout</source>
         <translation>Timeout</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="102"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="116"/>
         <source>(0 : unlimited)</source>
         <translation>(0 : unlimited)</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="128"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="142"/>
         <source>DataBase</source>
         <translation>Database</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="148"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="162"/>
         <source>Save</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="161"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="169"/>
         <source>[Empty]</source>
         <translation>[Empty]</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="176"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="184"/>
         <source>SelectShow</source>
         <translation>Show Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="181"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="189"/>
         <source>SelectHide</source>
         <translation>Hide Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="189"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="197"/>
         <source>SelectAll</source>
         <translation>Select all</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="190"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="198"/>
         <source>SelectClear</source>
         <translation>Clear Selection</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="194"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="202"/>
         <source>DiscardChanges</source>
         <translation>Discard changes</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="200"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="208"/>
         <source>Script</source>
         <translation>Script</translation>
     </message>
@@ -3902,7 +3912,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="387"/>
+        <location filename="../../src/class/settingmanager.cpp" line="416"/>
         <source>ConfigUnableSave</source>
         <translation>The program will be unable to save the configuration. Please check the permissions for the configuration file.</translation>
     </message>

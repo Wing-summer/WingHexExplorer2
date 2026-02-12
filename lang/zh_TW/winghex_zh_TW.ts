@@ -3100,37 +3100,37 @@
 <context>
     <name>ScriptSettingDialog</name>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="176"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="184"/>
         <source>SelectShow</source>
         <translation>顯示所選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="181"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="189"/>
         <source>SelectHide</source>
         <translation>隱藏所選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="189"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="197"/>
         <source>SelectAll</source>
         <translation>全選</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="190"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="198"/>
         <source>SelectClear</source>
         <translation>清空選擇</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="194"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="202"/>
         <source>DiscardChanges</source>
         <translation>丟棄修改</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="200"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="208"/>
         <source>Script</source>
         <translation>腳本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.cpp" line="161"/>
+        <location filename="../../src/settings/scriptsettingdialog.cpp" line="169"/>
         <source>[Empty]</source>
         <translation>[空]</translation>
     </message>
@@ -3150,22 +3150,32 @@
         <translation>允許在管理員許可權下執行用戶倉庫腳本</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="76"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="58"/>
+        <source>ScriptFile overwritable</source>
+        <translation>允許腳本覆寫檔</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="65"/>
+        <source>ScriptFileSystem writable</source>
+        <translation>允許腳本刪除檔和文件夾</translation>
+    </message>
+    <message>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="90"/>
         <source>Timeout</source>
         <translation>超時</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="102"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="116"/>
         <source>(0 : unlimited)</source>
         <translation>（0：無限制）</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="128"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="142"/>
         <source>DataBase</source>
         <translation>倉庫</translation>
     </message>
     <message>
-        <location filename="../../src/settings/scriptsettingdialog.ui" line="148"/>
+        <location filename="../../src/settings/scriptsettingdialog.ui" line="162"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
@@ -3902,7 +3912,7 @@
 <context>
     <name>SettingManager</name>
     <message>
-        <location filename="../../src/class/settingmanager.cpp" line="387"/>
+        <location filename="../../src/class/settingmanager.cpp" line="416"/>
         <source>ConfigUnableSave</source>
         <translation>程式將無法保存配置，請檢查配置檔許可權。</translation>
     </message>

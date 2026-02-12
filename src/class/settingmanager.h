@@ -83,6 +83,9 @@ public:
     qsizetype logCount() const;
     int scriptTimeout() const;
 
+    bool scriptFileEnableOverwrite() const;
+    bool scriptFileSystemWrite() const;
+
     QStringList enabledExtPlugins() const;
     QStringList enabledDevPlugins() const;
 
@@ -136,6 +139,9 @@ public slots:
     void setWatchExpressions(const QStringList &newWatchExpressions);
     void setFindStrDecShow(bool newFindStrDecShow);
     void setMetaHeaderHidden(const QVector<bool> &newMetaHeaderHidden);
+
+    void setScriptFileEnableOverwrite(bool b);
+    void setScriptFileSystemWrite(bool b);
 
 public:
     void checkWriteableAndWarn();
@@ -198,6 +204,9 @@ private:
     QStringList m_enabledDevPlugins;
     QString m_lastUsedPath;
     QString m_lastUsedScriptPath;
+
+    bool m_scriptFileEnableOverwrite = false;
+    bool m_scriptFileSystemWrite = false;
 
     bool m_dontUseSplash = false;
     bool m_useNativeFileDialog = true;

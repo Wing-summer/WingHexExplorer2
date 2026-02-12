@@ -81,6 +81,10 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
             &SettingManager::setScriptEnabled);
     connect(ui->cbAllowUsrScript, &QCheckBox::toggled, set,
             &SettingManager::setAllowUsrScriptInRoot);
+    connect(ui->cbFileWrite, &QCheckBox::toggled, set,
+            &SettingManager::setScriptFileEnableOverwrite);
+    connect(ui->cbFileSysWrite, &QCheckBox::toggled, set,
+            &SettingManager::setScriptFileSystemWrite);
     connect(ui->sbTimeout, &QSpinBox::valueChanged, set,
             &SettingManager::setScriptTimeout);
 
@@ -120,6 +124,8 @@ void ScriptSettingDialog::loadData() {
     ui->listWidget->clear();
     ui->cbEnable->setChecked(set.scriptEnabled());
     ui->cbAllowUsrScript->setChecked(set.allowUsrScriptInRoot());
+    ui->cbFileWrite->setChecked(set.scriptFileEnableOverwrite());
+    ui->cbFileSysWrite->setChecked(set.scriptFileSystemWrite());
     ui->sbTimeout->setValue(set.scriptTimeout());
     this->blockSignals(false);
 
@@ -149,6 +155,8 @@ void ScriptSettingDialog::loadData() {
         m_sysHideCats.setContents(buffer);
     } else {
         ui->cbAllowUsrScript->setEnabled(false);
+        ui->cbFileWrite->setEnabled(false);
+        ui->cbFileSysWrite->setEnabled(false);
         ui->sbTimeout->setEnabled(false);
         ui->groupBox_2->setEnabled(false);
     }

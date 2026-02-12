@@ -24,9 +24,6 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: The file system should have a way to allow the application to define in
-//       which sub directories it is allowed to make changes and/or read
-
 CScriptFileSystem *ScriptFileSystem_Factory() {
     return new CScriptFileSystem();
 }
@@ -301,11 +298,19 @@ bool CScriptFileSystem::MakeDir(const QString &path) {
 }
 
 bool CScriptFileSystem::RemoveDir(const QString &path) {
+    if (!ENABLE_WRITE) {
+        qCritical("filesystem::removeDir is prohibited by settings");
+        return false;
+    }
     QDir dir(currentPath);
     return dir.rmpath(path);
 }
 
 bool CScriptFileSystem::DeleteFile(const QString &path) {
+    if (!ENABLE_WRITE) {
+        qCritical("filesystem::deleteFile is prohibited by settings");
+        return false;
+    }
     return QFile::remove(getRealAbsPath(path));
 }
 
@@ -314,6 +319,10 @@ bool CScriptFileSystem::CopyFile(const QString &source, const QString &target) {
 }
 
 bool CScriptFileSystem::MoveFile(const QString &source, const QString &target) {
+    if (!ENABLE_WRITE) {
+        qCritical("filesystem::moveFile is prohibited by settings");
+        return false;
+    }
     auto src = getRealAbsPath(source);
     auto dest = getRealAbsPath(target);
     return QFile::rename(source, dest);

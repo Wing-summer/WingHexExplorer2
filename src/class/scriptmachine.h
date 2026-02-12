@@ -114,6 +114,12 @@ public:
     bool isAngelString(int typeID) const;
     bool isAngelArray(int typeID) const;
 
+    void setFileEnableOverwrite(bool b);
+    void setFileSystemWrite(bool b);
+
+    bool fileEnableOverwrite() const;
+    bool fileSystemWrite() const;
+
 public:
     asDebugger *debugger() const;
 

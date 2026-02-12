@@ -37,6 +37,9 @@ BEGIN_AS_NAMESPACE
 
 class CScriptFile {
 public:
+    inline static bool ENABLE_OVERWRITE = false;
+
+public:
     CScriptFile();
 
     void AddRef() const;

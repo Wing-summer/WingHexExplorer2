@@ -32,6 +32,9 @@ BEGIN_AS_NAMESPACE
 
 class CScriptFileSystem {
 public:
+    inline static bool ENABLE_WRITE = false;
+
+public:
     CScriptFileSystem();
 
     void AddRef() const;

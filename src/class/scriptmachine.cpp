@@ -1877,6 +1877,22 @@ bool ScriptMachine::isAngelArray(int typeID) const {
            QMetaType::QVariantList;
 }
 
+void ScriptMachine::setFileEnableOverwrite(bool b) {
+    CScriptFile::ENABLE_OVERWRITE = b;
+}
+
+void ScriptMachine::setFileSystemWrite(bool b) {
+    CScriptFileSystem::ENABLE_WRITE = b;
+}
+
+bool ScriptMachine::fileEnableOverwrite() const {
+    return CScriptFile::ENABLE_OVERWRITE;
+}
+
+bool ScriptMachine::fileSystemWrite() const {
+    return CScriptFileSystem::ENABLE_WRITE;
+}
+
 void ScriptMachine::scriptAssert(bool b) {
     auto ctx = asGetActiveContext();
     if (ctx) {
