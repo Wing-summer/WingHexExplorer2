@@ -120,7 +120,7 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
         tc.removeSelectedText();
     }
 
-    auto resolver = [this](const QString &name) -> QString {
+    static auto resolver = [this](const QString &name) -> QString {
         static QHash<QString, SnippetProcessor::TM_CODE> maps;
 
         if (maps.isEmpty()) {
@@ -139,8 +139,8 @@ void CodeEdit::onCompletion(const QModelIndex &index) {
         auto en = maps.value(name);
         switch (en) {
         case SnippetProcessor::TM_CODE::TM_SELECTED_TEXT: {
-            auto completer = this->completer();
-            return completer->completionPrefix();
+            auto tc = textCursor();
+            return tc.selectedText();
         }
         case SnippetProcessor::TM_CODE::TM_CURRENT_LINE: {
             auto tc = textCursor();

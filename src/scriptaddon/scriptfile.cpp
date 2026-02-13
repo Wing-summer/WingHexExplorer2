@@ -259,8 +259,10 @@ bool CScriptFile::Open(const QString &filename, int mode) {
     auto m = QFile::OpenMode(mode);
     if (!ENABLE_OVERWRITE) {
         if (file.exists() && m.testFlag(QFile::WriteOnly)) {
-            qCritical(
-                "file::open is prohibited by settings with overwrite mode");
+            constexpr auto msg =
+                "file::open is prohibited by settings with overwrite mode";
+            ctx->SetException(msg);
+            qCritical(msg);
             return false;
         }
     }

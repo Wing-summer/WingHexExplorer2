@@ -200,24 +200,30 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         }
     };
 
-    switch (message.type) {
+    auto msgtype = message.type;
+
+    if (_lastOutputType == ScriptMachine::MessageType::Unknown) {
+        _lastOutputType = msgtype;
+    }
+
+    switch (msgtype) {
     case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
-        if (isNotBlockStart) {
+        if (isNotBlockStart || _lastOutputType != msgtype) {
             newLine();
         }
         stdOutLine(tr("[Info]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Warn:
-        if (isNotBlockStart) {
+        if (isNotBlockStart || _lastOutputType != msgtype) {
             newLine();
         }
         stdWarnLine(tr("[Warn]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Error:
-        if (isNotBlockStart) {
+        if (isNotBlockStart || _lastOutputType != msgtype) {
             newLine();
         }
         stdErrLine(tr("[Error]") + fmtMsg(message));
@@ -236,7 +242,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         break;
     }
 
-    _lastOutputType = message.type;
+    _lastOutputType = msgtype;
 }
 
 void ScriptingConsole::abortCurrentCode() {
@@ -477,7 +483,7 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
         tc.removeSelectedText();
     }
 
-    auto resolver = [this](const QString &name) -> QString {
+    static auto resolver = [this](const QString &name) -> QString {
         static QHash<QString, SnippetProcessor::TM_CODE> maps;
 
         if (maps.isEmpty()) {
@@ -496,8 +502,8 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
         auto en = maps.value(name);
         switch (en) {
         case SnippetProcessor::TM_CODE::TM_SELECTED_TEXT: {
-            auto completer = this->completer();
-            return completer->completionPrefix();
+            auto tc = textCursor();
+            return tc.selectedText();
         }
         case SnippetProcessor::TM_CODE::TM_CURRENT_LINE: {
             auto tc = textCursor();
@@ -508,39 +514,21 @@ void ScriptingConsole::onCompletion(const QModelIndex &index) {
             tc.movePosition(QTextCursor::PreviousWord, QTextCursor::KeepAnchor);
             return tc.selectedText();
         }
-        case SnippetProcessor::TM_CODE::TM_LINE_INDEX: {
-            auto tc = textCursor();
-            return QString::number(tc.blockNumber());
-        }
+        case SnippetProcessor::TM_CODE::TM_LINE_INDEX:
         case SnippetProcessor::TM_CODE::TM_LINE_NUMBER: {
-            auto tc = textCursor();
-            return QString::number(tc.blockNumber() + 1);
+            return QStringLiteral("-1");
         }
-        case SnippetProcessor::TM_CODE::TM_FILENAME: {
-            // Assuming fileName is stored in it
-            return windowFilePath();
-        }
+        case SnippetProcessor::TM_CODE::TM_FILENAME:
         case SnippetProcessor::TM_CODE::RELATIVE_FILEPATH:
-        case SnippetProcessor::TM_CODE::TM_FILENAME_BASE: {
-            auto fileName = windowFilePath();
-            QFileInfo info(fileName);
-            return info.fileName();
-        }
-        case SnippetProcessor::TM_CODE::TM_DIRECTORY: {
-            auto fileName = windowFilePath();
-            QFileInfo info(fileName);
-            return info.filePath();
-        }
-        case SnippetProcessor::TM_CODE::TM_FILEPATH: {
-            auto fileName = windowFilePath();
-            QFileInfo info(fileName);
-            return info.absoluteFilePath();
+        case SnippetProcessor::TM_CODE::TM_FILENAME_BASE:
+        case SnippetProcessor::TM_CODE::TM_DIRECTORY:
+        case SnippetProcessor::TM_CODE::TM_FILEPATH:
+        case SnippetProcessor::TM_CODE::WORKSPACE_NAME:
+        case SnippetProcessor::TM_CODE::WORKSPACE_FOLDER: {
+            return {};
         }
         case SnippetProcessor::TM_CODE::CLIPBOARD:
             return QApplication::clipboard()->text();
-        case SnippetProcessor::TM_CODE::WORKSPACE_NAME:
-        case SnippetProcessor::TM_CODE::WORKSPACE_FOLDER:
-            return {};
         case SnippetProcessor::TM_CODE::CURRENT_YEAR: {
             auto date = QDate::currentDate();
             return date.toString(QStringLiteral("yyyy"));

@@ -51,14 +51,9 @@ protected:
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
-    QList<CodeInfoTip> keywordNode() const;
-
 private slots:
     void onCodeComplete();
     void onActivatedCodeComplete(const QModelIndex &index);
-
-private:
-    QList<CodeInfoTip> _keywordNode;
 
 protected:
     ResettableTimer *_timer;

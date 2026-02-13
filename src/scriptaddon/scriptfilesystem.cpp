@@ -299,7 +299,12 @@ bool CScriptFileSystem::MakeDir(const QString &path) {
 
 bool CScriptFileSystem::RemoveDir(const QString &path) {
     if (!ENABLE_WRITE) {
-        qCritical("filesystem::removeDir is prohibited by settings");
+        constexpr auto msg = "filesystem::removeDir is prohibited by settings";
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            ctx->SetException(msg);
+        }
+        qCritical(msg);
         return false;
     }
     QDir dir(currentPath);
@@ -308,7 +313,12 @@ bool CScriptFileSystem::RemoveDir(const QString &path) {
 
 bool CScriptFileSystem::DeleteFile(const QString &path) {
     if (!ENABLE_WRITE) {
-        qCritical("filesystem::deleteFile is prohibited by settings");
+        constexpr auto msg = "filesystem::deleteFile is prohibited by settings";
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            ctx->SetException(msg);
+        }
+        qCritical(msg);
         return false;
     }
     return QFile::remove(getRealAbsPath(path));
@@ -320,7 +330,12 @@ bool CScriptFileSystem::CopyFile(const QString &source, const QString &target) {
 
 bool CScriptFileSystem::MoveFile(const QString &source, const QString &target) {
     if (!ENABLE_WRITE) {
-        qCritical("filesystem::moveFile is prohibited by settings");
+        constexpr auto msg = "filesystem::moveFile is prohibited by settings";
+        auto ctx = asGetActiveContext();
+        if (ctx) {
+            ctx->SetException(msg);
+        }
+        qCritical(msg);
         return false;
     }
     auto src = getRealAbsPath(source);

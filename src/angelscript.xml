@@ -74,6 +74,10 @@
         </list>
         <contexts>
             <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+                <!-- scientific / exponent floats (support e/E + optional sign) -->
+                <RegExpr attribute="Float" context="Float Suffixes" String="\b\d+\.\d+([eE][+-]?\d+)?\b"/>
+                <RegExpr attribute="Float" context="Float Suffixes" String="\b\d+([eE][+-]?\d+)\b"/>
+
                 <keyword attribute="Keyword" context="#stay" String="keywords"/>
                 <keyword attribute="Data Type" context="#stay" String="types" />
                 <Float attribute="Float" context="Float Suffixes"/>
@@ -82,6 +86,7 @@
                 <Int attribute="Decimal" context="Int Suffixes"/>
 
                 <StringDetect attribute="Text Block" context="TextBlock" String="&quot;&quot;&quot;"/>
+                <!-- use numeric character ref for backslash to avoid XML quoting issues -->
                 <DetectChar attribute="String" context="StringDouble" char="&quot;"/>
                 <DetectChar attribute="String" context="StringSingle" char="&apos;"/>
 
@@ -107,22 +112,24 @@
             </context>
 
             <context attribute="String" lineEndContext="#pop" name="StringDouble">
-                <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
+                <!-- detect escaped character (use numeric backslash char reference in XML) -->
+                <DetectChar context="StringEscapedChar" char="&#92;" lookAhead="true"/>
                 <DetectChar attribute="String" context="#pop" char="&quot;"/>
             </context>
 
             <context attribute="String" lineEndContext="#pop" name="StringSingle">
-                <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
+                <DetectChar context="StringEscapedChar" char="&#92;" lookAhead="true"/>
                 <DetectChar attribute="String" context="#pop" char="&apos;"/>
             </context>
 
             <context attribute="String" lineEndContext="#pop" name="StringEscapedChar">
                 <HlCStringChar attribute="String Char" context="#pop"/>
-                <RegExpr attribute="String Char" context="#pop" String="\\u+[0-9a-fA-F]{4}"/>
+                <!-- unicode escape sequence: match \uFFFF (4 hex digits) -->
+                <RegExpr attribute="String Char" context="#pop" String="\\u[0-9a-fA-F]{4}"/>
             </context>
 
             <context attribute="Text Block" lineEndContext="#stay" name="TextBlock">
-                <DetectChar context="StringEscapedChar" char="\" lookAhead="1"/>
+                <DetectChar context="StringEscapedChar" char="&#92;" lookAhead="true"/>
                 <StringDetect attribute="Text Block" context="#pop" String="&quot;&quot;&quot;"/>
             </context>
 

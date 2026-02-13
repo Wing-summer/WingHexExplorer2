@@ -18,6 +18,7 @@
 #include "ascompletion.h"
 
 #include "class/angellsp.h"
+#include "class/snippetprocessor.h"
 #include "model/codecompletionmodel.h"
 #include "wingcodeedit.h"
 
@@ -44,27 +45,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, SEMI_COLON_TRIGGER, (";"))
 Q_GLOBAL_STATIC_WITH_ARGS(QString, SHARP_TRIGGER, ("#"))
 
 AsCompletion::AsCompletion(WingCodeEdit *p) : WingCompleter(p) {
-    QStringList kws{
-        "const",     "in",        "inout",    "out",      "auto",
-        "public",    "protected", "private",  "void",     "int8",
-        "int16",     "int",       "int64",    "uint8",    "uint16",
-        "uint",      "uint64",    "float",    "double",   "bool",
-        "enum",      "for",       "while",    "do",       "if",
-        "else",      "switch",    "break",    "continue", "try",
-        "catch",     "throw",     "abstract", "delete",   "cast",
-        "class",     "final",     "property", "external", "function",
-        "interface", "shared",    "this",     "explicit", "override",
-        "namespace", "get",       "set",      "super",    "mixin",
-        "false",     "true",      "null",     "typename", "return",
-        "typedef",   "funcdef",   "from",     "import",   "not",
-        "xor",       "or",        "is"};
-    for (auto &k : kws) {
-        CodeInfoTip t;
-        t.type = LSP::CompletionItemKind::Keyword;
-        t.name = k;
-        _keywordNode.append(t);
-    }
-
     setTriggerList({*DOT_TRIGGER, *DBL_COLON_TRIGGER,
                     // unleash the power of call tips
                     *LEFT_PARE_TRIGGER,
@@ -195,10 +175,6 @@ bool AsCompletion::processTrigger(const QString &trigger,
     auto ret = lsp.requestCompletion(url, line, character, trigger);
     auto nodes = parseCompletion(ret);
 
-    if (trigger.isEmpty()) {
-        nodes.append(_keywordNode);
-    }
-
     setModel(new CodeCompletionModel(nodes, this));
     setCompletionPrefix(prefix);
     _ok = false;
@@ -266,7 +242,20 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
             ss.append(s);
         }
         editor->showFunctionTip(ss);
+    } else {
+        auto comp = v.completion();
+        if (v.isSnippet()) {
+            static constexpr auto resolver = [](const QString &) -> QString {
+                static QString str('w'); // any char is ok
+                return str;
+            };
+            SnippetProcessor snipt(resolver);
+            auto r = snipt.process(comp);
+            comp = r.expandedText;
+        }
+        if (comp.endsWith(*DBL_COLON_TRIGGER)) {
+            trigger(*DBL_COLON_TRIGGER, comp,
+                    editor->editorPtr()->cursorRect());
+        }
     }
 }
-
-QList<CodeInfoTip> AsCompletion::keywordNode() const { return _keywordNode; }

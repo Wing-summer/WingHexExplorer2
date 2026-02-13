@@ -309,11 +309,7 @@ bool ScriptingDialog::about2Close() {
         view->requestCloseDockWidget();
     }
 
-    if (!views.isEmpty()) {
-        return false;
-    }
-
-    if (unSavedFiles.isEmpty()) {
+    if (ScriptEditor::isAllClosed() && unSavedFiles.isEmpty()) {
         return true;
     }
 
@@ -338,7 +334,7 @@ bool ScriptingDialog::about2Close() {
         return true;
     }
 
-    return false;
+    return ScriptEditor::isAllClosed();
 }
 
 void ScriptingDialog::saveDockLayout() {

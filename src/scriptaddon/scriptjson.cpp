@@ -174,8 +174,31 @@ static QJsonObject QJsonValue_ToQJsonObject(const QJsonValue &val) {
     return val.toObject();
 }
 
-static QString QJsonValue_ToString(const QJsonValue &val) {
+static QString QJsonValue_ToStringValue(const QJsonValue &val) {
     return val.toString();
+}
+
+static QString QJsonObject_ToString(const QJsonObject &);
+static QString QJsonArray_ToString(const QJsonArray &);
+
+static QString QJsonValue_ToString(const QJsonValue &val) {
+    switch (val.type()) {
+    case QJsonValue::Null:
+        return QStringLiteral("null");
+    case QJsonValue::Bool:
+        return val.toBool() ? QStringLiteral("true") : QStringLiteral("false");
+    case QJsonValue::Double:
+        return QString::number(val.toDouble());
+    case QJsonValue::String:
+        return val.toString();
+    case QJsonValue::Array:
+        return QJsonArray_ToString(val.toArray());
+    case QJsonValue::Object:
+        return QJsonObject_ToString(val.toObject());
+    case QJsonValue::Undefined:
+        return QStringLiteral("undefined");
+    }
+    return {};
 }
 
 static QJsonValue QJsonValue_opIndex(const QJsonValue &obj,
@@ -257,6 +280,11 @@ asUINT QJsonArray_opForNext(asUINT iter, const QJsonArray *) {
 
 asUINT QJsonArray_opForValue1(asUINT iter, const QJsonArray *) { return iter; }
 
+static QString QJsonArray_ToString(const QJsonArray &arr) {
+    auto doc = QJsonDocument(arr);
+    return QString::fromUtf8(doc.toJson());
+}
+
 // ------------------------------
 // QJsonObject Wrappers
 // ------------------------------
@@ -295,6 +323,11 @@ static bool QJsonObject_IsEmpty(const QJsonObject &obj) {
 }
 
 static int QJsonObject_Size(const QJsonObject &obj) { return obj.size(); }
+
+static QString QJsonObject_ToString(const QJsonObject &obj) {
+    QJsonDocument doc(obj);
+    return QString::fromUtf8(doc.toJson());
+}
 
 // ------------------------------
 // Register functions
@@ -498,6 +531,12 @@ void RegisterQJsonValue(asIScriptEngine *engine) {
     r = engine->RegisterObjectMethod("JsonValue", "bool isUndefined() const",
                                      asFUNCTION(QJsonValue_IsUndefined),
                                      asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod(
+        "JsonValue", "string toStringValue() const",
+        asFUNCTION(QJsonValue_ToStringValue), asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 
@@ -711,6 +750,11 @@ void RegisterQJsonArray(asIScriptEngine *engine) {
         asCALL_CDECL_OBJLAST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("JsonArray", "string toString() const",
+                                     asFUNCTION(QJsonArray_ToString),
+                                     asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
 }
 
 void RegisterQJsonObject(asIScriptEngine *engine) {
@@ -775,6 +819,12 @@ void RegisterQJsonObject(asIScriptEngine *engine) {
     r = engine->RegisterObjectMethod(
         "JsonObject", "JsonValue opIndex(const string &in key) const",
         asFUNCTION(QJsonObject_opIndex), asCALL_CDECL_OBJFIRST);
+    Q_ASSERT(r >= 0);
+    Q_UNUSED(r);
+
+    r = engine->RegisterObjectMethod("JsonObject", "string toString() const",
+                                     asFUNCTION(QJsonObject_ToString),
+                                     asCALL_CDECL_OBJFIRST);
     Q_ASSERT(r >= 0);
     Q_UNUSED(r);
 }
