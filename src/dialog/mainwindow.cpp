@@ -3697,6 +3697,12 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     auto ev = new EditorView(this);
     auto res = ev->openWorkSpace(filename, wsDoc);
 
+    bool failed = (res != ErrFile::Success && res != ErrFile::WorkSpaceUnSaved);
+    if (failed) {
+        delete ev;
+        return res;
+    }
+
     registerEditorView(ev, file);
     if (editor) {
         *editor = ev;
@@ -3706,11 +3712,6 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
 
     if (res == ErrFile::WorkSpaceUnSaved) {
         WingMessageBox::warning(this, qAppName(), tr("ChecksumFailed"));
-    } else {
-        if (res != ErrFile::Success) {
-            delete ev;
-            return res;
-        }
     }
     return ErrFile::Success;
 }
