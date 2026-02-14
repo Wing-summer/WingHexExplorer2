@@ -126,6 +126,7 @@ QStringList CryptographicHash::supportedHashAlgorithmStringList() {
 
 template <typename T>
 QByteArray block_cacl_ba(QIODevice *device) {
+    qint64 savedPos = device->pos();
     if (device->reset()) {
         auto block = T::get_block_eng();
         char buffer[1024];
@@ -134,7 +135,7 @@ QByteArray block_cacl_ba(QIODevice *device) {
         while ((length = device->read(buffer, sizeof(buffer))) > 0) {
             block.update(reinterpret_cast<const uint8_t *>(buffer), length);
         }
-
+        device->seek(savedPos);
         return getDisplayArray(block.final());
     }
     return {};
@@ -168,10 +169,14 @@ QByteArray CryptographicHash::hash(QIODevice *device, Algorithm method) {
             return {};
         }
 
+        QByteArray result;
+        qint64 savedPos = device->pos();
         QCryptographicHash hash(r);
         if (device->reset() && hash.addData(device)) {
-            return hash.result();
+            result = hash.result();
         }
+        device->seek(savedPos);
+        return result;
     }
     }
 

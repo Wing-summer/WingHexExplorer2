@@ -48,6 +48,12 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
                 infos.base = nbase;
         }
 
+        values = jobj.value("checksum");
+        if (values.isString()) {
+            auto cs = values.toString();
+            infos.checkSum = QByteArray::fromHex(cs.toUtf8());
+        }
+
         values = jobj.value("metas");
         if (!values.isUndefined() && values.isArray()) {
             auto metaitems = values.toArray();
@@ -130,6 +136,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
                 }
             }
         }
+
         return true;
     }
 
@@ -213,6 +220,7 @@ bool WorkSpaceManager::saveWorkSpace(
 
         jobj.insert("file", ff);
         jobj.insert("base", QString::number(infos.base));
+        jobj.insert("checksum", QString::fromUtf8(infos.checkSum.toHex()));
 
         QJsonArray metas;
         for (auto &meta : metalist) {

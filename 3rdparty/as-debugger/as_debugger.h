@@ -1,7 +1,7 @@
 // MIT Licensed
 // see https://github.com/Paril/angelscript-debugger
-
-#pragma once
+#ifndef AS_DEBUGGER_H
+#define AS_DEBUGGER_H
 
 #include <angelscript.h>
 #include <atomic>
@@ -599,3 +599,5 @@ template <typename T>
 {
     var->value = fmt::to_string(*var->address.ResolveAs<const T>());
 }
+
+#endif

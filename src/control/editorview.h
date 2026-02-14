@@ -267,6 +267,8 @@ private:
     void applyFunctionTables(WingHex::WingEditorViewWidget *view,
                              const CallTable &fns);
 
+    QByteArray computeFileFingerprint(QIODevice *device);
+
 private:
     bool checkErrAndReport(const QObject *sender, const char *func);
     bool checkThreadAff();
@@ -586,7 +588,7 @@ private:
     QHash<WingEditorViewWidget *, QIcon> m_iconOrigin;
     QHash<QWidget *, QIcon> m_iconCaches;
     bool m_isNewFile = true;
-    QByteArray m_md5;
+    bool m_checkSumInvalid = false;
 
     QVector<EditorView *> m_cloneChildren;
     EditorView *m_cloneParent = nullptr;

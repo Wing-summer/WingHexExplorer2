@@ -3697,17 +3697,21 @@ ErrFile MainWindow::openWorkSpace(const QString &file, EditorView **editor) {
     auto ev = new EditorView(this);
     auto res = ev->openWorkSpace(filename, wsDoc);
 
-    if (res != ErrFile::Success) {
-        delete ev;
-        return res;
-    }
-
     registerEditorView(ev, file);
     if (editor) {
         *editor = ev;
     }
     m_dock->addDockWidget(ads::CenterDockWidgetArea, ev, editorViewArea());
     ev->setFocus();
+
+    if (res == ErrFile::WorkSpaceUnSaved) {
+        WingMessageBox::warning(this, qAppName(), tr("ChecksumFailed"));
+    } else {
+        if (res != ErrFile::Success) {
+            delete ev;
+            return res;
+        }
+    }
     return ErrFile::Success;
 }
 

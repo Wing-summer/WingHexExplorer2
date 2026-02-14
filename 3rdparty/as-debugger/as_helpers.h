@@ -1,7 +1,7 @@
 // MIT Licensed
 // see https://github.com/Paril/angelscript-debugger
-
-#pragma once
+#ifndef AS_HELPER_H
+#define AS_HELPER_H
 
 #include <angelscript.h>
 #include <string>
@@ -513,3 +513,5 @@ inline std::string to_base64(std::string_view data) {
     return encode_into<std::string>(std::begin(data), std::end(data));
 }
 } // namespace base64
+
+#endif

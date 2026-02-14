@@ -31,6 +31,7 @@
 
 struct WorkSpaceInfo {
     qulonglong base = 0;
+    QByteArray checkSum;
     QMap<QString, QByteArray> pluginData;
 };
 

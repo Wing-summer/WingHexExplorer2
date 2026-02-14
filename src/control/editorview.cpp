@@ -378,6 +378,7 @@ ErrFile EditorView::newFile(size_t index) {
     QString fname = tr("Untitled") + istr;
     m_docType = DocumentType::File;
     m_isNewFile = true;
+    m_checkSumInvalid = false;
     m_workSpaceName.clear();
     auto p = QHexDocument::fromInternalBuffer<QFileBuffer>(false);
     p->setDocSaved();
@@ -434,6 +435,7 @@ ErrFile EditorView::openFile(const QString &filename, bool generateCache) {
     m_docType = DocumentType::File;
     auto fName = info.absoluteFilePath();
     m_isNewFile = false;
+    m_checkSumInvalid = false;
     m_workSpaceName.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
@@ -510,6 +512,7 @@ ErrFile EditorView::openExtFile(const QString &ext, const QString &file,
 
     m_docType = DocumentType::Extension;
     m_isNewFile = false;
+    m_checkSumInvalid = false;
     m_workSpaceName.clear();
     p->setDocSaved();
     connect(p, &QHexDocument::documentSaved, this,
@@ -575,16 +578,32 @@ ErrFile EditorView::openWorkSpace(const QString &filename,
 
         // apply the content
         auto doc = m_hex->document();
+
         doc->applyBookMarks(bookmarks);
         doc->setBaseAddress(infos.base);
         doc->metadata()->applyMetas(metas);
         _pluginData = infos.pluginData;
         doc->setDocSaved();
 
+        // checksum valid
+        auto buffer = doc->buffer();
+        auto nb = computeFileFingerprint(buffer->ioDevice());
+        if (infos.checkSum.isEmpty()) {
+            // we will automatic resave checksum to project file
+            infos.checkSum = nb;
+            WorkSpaceManager::saveWorkSpace(filename, file, bookmarks, metas,
+                                            infos);
+        } else {
+            if (nb != infos.checkSum) {
+                ret = WingHex::WorkSpaceUnSaved;
+                m_checkSumInvalid = true;
+                updateDocSavedFlag(false);
+            }
+        }
+
         // Don't use filename because it's pointer of origin workSpace
         // It will be empty after openFile or openExtFile
         m_workSpaceName = finfo.absoluteFilePath();
-
         applyWorkSpaceStyle(this);
         return ret;
     }
@@ -633,6 +652,9 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
     if (needSaveWS) {
         WorkSpaceInfo infos;
         infos.base = doc->baseAddress();
+        auto buffer = doc->buffer();
+        infos.checkSum = computeFileFingerprint(buffer->ioDevice());
+
         savePluginData();
         infos.pluginData = _pluginData;
 
@@ -643,12 +665,14 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         }
         this->m_workSpaceName = workSpaceName;
-
         for (auto &item : m_others) {
             if (item->hasUnsavedState()) {
                 item->setSaved();
             }
         }
+
+        m_checkSumInvalid = false;
+        updateDocSavedFlag(true);
     }
 
     bool needSave = false;
@@ -962,6 +986,9 @@ void EditorView::savePluginData() {
 }
 
 bool EditorView::checkHasUnsavedState() const {
+    if (m_checkSumInvalid) {
+        return true;
+    }
     for (auto &item : m_others) {
         if (item->hasUnsavedState()) {
             return true;
@@ -1035,6 +1062,76 @@ void EditorView::applyFunctionTables(WingEditorViewWidget *view,
                                      const CallTable &fns) {
     view->setProperty("__CALL_TABLE__", QVariant::fromValue(fns));
     view->setProperty("__CALL_POINTER__", quintptr(this));
+}
+
+QByteArray EditorView::computeFileFingerprint(QIODevice *device) {
+    Q_ASSERT(device);
+
+    if (!device->isOpen() || !device->isReadable())
+        return {};
+
+    auto savedPos = device->pos();
+    auto fileSize = device->size();
+    if (fileSize < 0) {
+        device->seek(savedPos);
+        return {};
+    }
+
+    constexpr qsizetype CHECKSUM_LIMIT = 1024ll * 1024 * 512; // 512MB
+    constexpr qsizetype CHECKSUM_LIMIT_QUATOR = CHECKSUM_LIMIT / 4;
+
+    constexpr static auto block_cacl = [](QIODevice *device,
+                                          qsizetype pos) -> QByteArray {
+        qint64 savedPos = device->pos();
+        if (device->seek(pos)) {
+            QCryptographicHash hash(QCryptographicHash::Md5);
+            char buffer[1024];
+            std::memset(buffer, 0, sizeof(buffer));
+            QByteArrayView bufferView(buffer);
+            int length;
+
+            static_assert(CHECKSUM_LIMIT_QUATOR % sizeof(buffer) == 0,
+                          "aligned buffer count");
+            constexpr auto total = CHECKSUM_LIMIT_QUATOR / sizeof(buffer);
+            for (int i = 0; i < total; ++i) {
+                if ((length = device->read(buffer, sizeof(buffer))) > 0) {
+                    hash.addData(bufferView);
+                }
+            }
+
+            device->seek(savedPos);
+            return hash.result();
+        }
+        return {};
+    };
+
+    QByteArray finalResult;
+    if (fileSize <= CHECKSUM_LIMIT) {
+        finalResult =
+            CryptographicHash::hash(device, CryptographicHash::Algorithm::Md5);
+    } else {
+        qint64 denom = 3;
+        qint64 span = fileSize - CHECKSUM_LIMIT_QUATOR;
+        qint64 step = span / denom;
+
+        QByteArray partDigests;
+        partDigests.reserve(16 * 4);
+
+        for (int i = 0; i < 4; ++i) {
+            qint64 start = i * step;
+            partDigests.append(block_cacl(device, start));
+        }
+
+        QCryptographicHash finalHash(QCryptographicHash::Md5);
+        finalHash.addData(partDigests);
+        char numBuffer[sizeof(fileSize)];
+        qToLittleEndian(fileSize, numBuffer);
+        finalHash.addData(QByteArrayView(numBuffer));
+        finalResult = finalHash.result();
+    }
+
+    device->seek(savedPos);
+    return finalResult;
 }
 
 bool EditorView::checkErrAndReport(const QObject *sender, const char *func) {

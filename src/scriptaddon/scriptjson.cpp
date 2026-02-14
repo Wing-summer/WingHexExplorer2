@@ -50,7 +50,7 @@ static QString QJsonDocument_ToJson(const QJsonDocument &doc,
 }
 
 static QString QJsonDocument_ToString(const QJsonDocument &doc) {
-    return QString::fromUtf8(doc.toJson());
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 }
 
 static QJsonObject QJsonDocument_Object(const QJsonDocument &doc) {
@@ -282,7 +282,7 @@ asUINT QJsonArray_opForValue1(asUINT iter, const QJsonArray *) { return iter; }
 
 static QString QJsonArray_ToString(const QJsonArray &arr) {
     auto doc = QJsonDocument(arr);
-    return QString::fromUtf8(doc.toJson());
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 }
 
 // ------------------------------
@@ -326,7 +326,7 @@ static int QJsonObject_Size(const QJsonObject &obj) { return obj.size(); }
 
 static QString QJsonObject_ToString(const QJsonObject &obj) {
     QJsonDocument doc(obj);
-    return QString::fromUtf8(doc.toJson());
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 }
 
 // ------------------------------

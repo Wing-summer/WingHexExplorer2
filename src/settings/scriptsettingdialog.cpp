@@ -29,7 +29,6 @@ ScriptSettingDialog::ScriptSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnable);
     Utilities::addSpecialMark(ui->cbAllowUsrScript);
-    Utilities::addSpecialMark(ui->lblTimeout);
 
     loadData();
 
