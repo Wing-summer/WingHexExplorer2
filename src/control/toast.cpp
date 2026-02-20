@@ -91,22 +91,20 @@ void Toast::setToastPos(TOAST_POS pos) {
 
     QSizeF windowSize;
     if (m_icon.isNull()) {
-        windowSize = QSizeF(fontsize.width() + PADDING * 2,
+        windowSize = QSizeF(fontsize.width() + PADDING * 2 + 1,
                             fontsize.height() + PADDING * 2);
     } else {
-        windowSize = QSizeF((fontsize.width() + ICON_PADDING) + PADDING * 2,
+        windowSize = QSizeF((fontsize.width() + ICON_PADDING) + PADDING * 2 + 1,
                             fontsize.height() + PADDING * 2);
     }
-    auto windowsX =
-        screenRect.left() + (screenRect.width() - windowSize.width()) / 2;
+    auto windowsX = (screenRect.width() - windowSize.width()) / 2;
     auto windowsY = 0.0;
     if (pos == TOAST_POS::TOP) {
-        windowsY = screenRect.top() + screenRect.height() / 6;
+        windowsY = screenRect.height() / 6;
     } else if (pos == TOAST_POS::BOTTOM) {
-        windowsY = screenRect.top() + screenRect.height() * 4 / 5;
+        windowsY = screenRect.height() * 5 / 6;
     } else {
-        windowsY =
-            screenRect.top() + (screenRect.height() - windowSize.height()) / 2;
+        windowsY = (screenRect.height() - windowSize.height()) / 2;
     }
 
     m_pos = pos;

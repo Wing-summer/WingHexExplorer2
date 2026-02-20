@@ -3518,7 +3518,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
 
     if (old) {
         // reload new scroll offset
-        QTimer::singleShot(0, [this, cur]() {
+        QTimer::singleShot(0, this, [this, cur]() {
             auto &dbp = cur->scrollPoints();
             auto p = dbp[int(EditorView::ScrollPoint::FindResult)];
             m_findresult->horizontalScrollBar()->setValue(p.x());
@@ -4507,7 +4507,7 @@ void MainWindow::showEvent(QShowEvent *event) {
             m_findresult->horizontalHeader(), &QHeaderView::sectionResized,
             this,
             [this]() {
-                QTimer::singleShot(0, [this]() {
+                QTimer::singleShot(0, this, [this]() {
                     auto header = m_findresult->horizontalHeader();
                     header->setSectionResizeMode(QHeaderView::Interactive);
                 });
