@@ -169,7 +169,7 @@ public:
     QMetaType::Type typeMapValue(const QString &name) const;
     CType type(const QString &name) const;
     CType resolveType(const QString &name) const;
-    std::optional<quint64> getTypeSize(const QString &data_type) const;
+    std::optional<qint64> getTypeSize(const QString &data_type) const;
 
     QString resolveTypeName(const QString &name) const;
 
@@ -187,10 +187,10 @@ private:
     QStringList
     getMissingDependencise(const QVector<VariableDeclaration> &members);
 
-    std::optional<quint64> padStruct(QVector<VariableDeclaration> &members,
-                                     int alignment);
-    quint64 calcUnionSize(const QVector<VariableDeclaration> &members,
-                          int alignment) const;
+    std::optional<qint64> padStruct(QVector<VariableDeclaration> &members,
+                                    int alignment);
+    qint64 calcUnionSize(const QVector<VariableDeclaration> &members,
+                         int alignment) const;
 
     Q_REQUIRED_RESULT bool
     storeStructUnionDef(const bool is_struct, const QString &type_name,
@@ -228,7 +228,7 @@ private:
 
     /// Size of C data types and also user-defined struct/union types
     /// @note All enum types have fixed size, so they're not stored
-    QHash<QString, QPair<QMetaType::Type, quint64>> type_maps_;
+    QHash<QString, QPair<QMetaType::Type, qint64>> type_maps_;
 
     /// names awaiting definition
     QHash<QString, IncompleteType> referencedIncomplete_;

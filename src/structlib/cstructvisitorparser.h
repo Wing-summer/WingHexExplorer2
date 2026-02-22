@@ -79,8 +79,8 @@ private:
     struct Declarator {
         QString retName;
         bool isPointer = false;
-        size_t arrayCount = 1;
-        size_t bitField = 0;
+        qint64 arrayCount = 1;
+        qint64 bitField = 0;
         CStructParser::DirectDeclaratorContext *next = nullptr;
     };
 
@@ -90,7 +90,7 @@ private:
     static QString
     getFinalDeclaratorName(CStructParser::DirectDeclaratorContext *ctx);
 
-    std::optional<size_t> safeMultiply(const QVector<size_t> &vec);
+    std::optional<qint64> safeMultiply(const QVector<qint64> &vec);
 
 private:
     CTypeParser *parser;
@@ -135,6 +135,8 @@ public:
 private:
     std::variant<std::monostate, qint64, quint64>
     parseIntegerConstant(const std::string &text);
+
+    void reportOutofRangeError(size_t line, size_t charPositionInLine);
 
     void reportNumOutofRangeError(size_t line, size_t charPositionInLine,
                                   const QString &num);

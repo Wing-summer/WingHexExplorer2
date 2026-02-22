@@ -224,6 +224,12 @@ CStructVisitorParser::parseIntegerConstant(const std::string &text) {
     return {};
 }
 
+void CStructVisitorParser::reportOutofRangeError(size_t line,
+                                                 size_t charPositionInLine) {
+    errlis->reportError(line, charPositionInLine,
+                        QStringLiteral("out of range"));
+}
+
 void CStructVisitorParser::reportNumOutofRangeError(size_t line,
                                                     size_t charPositionInLine,
                                                     const QString &num) {
@@ -1617,15 +1623,15 @@ QString CStructVisitorParser::getFinalDeclaratorName(
     return {};
 }
 
-std::optional<size_t>
-CStructVisitorParser::safeMultiply(const QVector<size_t> &vec) {
+std::optional<qint64>
+CStructVisitorParser::safeMultiply(const QVector<qint64> &vec) {
     if (vec.isEmpty()) {
         return 0;
     }
 
-    size_t result = 1;
+    qint64 result = 1;
     for (const auto &value : vec) {
-        size_t temp;
+        qint64 temp;
         if (qMulOverflow(result, value, &temp)) {
             return std::nullopt;
         }
@@ -1666,9 +1672,18 @@ CStructVisitorParser::getDeclarator(
         auto r = visitAssignmentExpression(sym);
         if (r.type() == typeid(quint64)) {
             auto v = std::any_cast<quint64>(r);
+            if (v > std::numeric_limits<qint64>::max()) {
+                auto t = sym->getStart();
+                reportOutofRangeError(t->getLine(), t->getCharPositionInLine());
+                return std::nullopt;
+            }
             dor.arrayCount = v;
         } else if (r.type() == typeid(qint64)) {
             auto v = std::any_cast<qint64>(r);
+            if (v < 0) {
+                auto t = sym->getStart();
+                reportOutofRangeError(t->getLine(), t->getCharPositionInLine());
+            }
             dor.arrayCount = v;
         } else {
             auto t = sym->getStart();
@@ -1923,7 +1938,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                             }
                             auto nestedInfo = getDeclarator(info->next);
 
-                            QVector<size_t> dims;
+                            QVector<qint64> dims;
                             dims.append(info->arrayCount);
 
                             if (nestedInfo) {
@@ -1999,7 +2014,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                         visitAssignmentExpression(sub->assignmentExpression());
                     if (bits.type() == typeid(quint64)) {
                         auto b = std::any_cast<quint64>(bits);
-                        if (b > tbits) {
+                        if (b > tbits || b == 0) {
                             reportFiledBitOverflow(sym->getLine(),
                                                    sym->getCharPositionInLine(),
                                                    dl->tname, b);
@@ -2008,7 +2023,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                         var.bit_size = b;
                     } else if (bits.type() == typeid(qint64)) {
                         auto b = std::any_cast<qint64>(bits);
-                        if (b > tbits) {
+                        if (b > tbits || b <= 0) {
                             reportFiledBitOverflow(sym->getLine(),
                                                    sym->getCharPositionInLine(),
                                                    dl->tname, b);
@@ -2090,7 +2105,8 @@ CStructVisitorParser::parseEnum(CStructParser::EnumSpecifierContext *ctx) {
             } else {
                 auto tk = value->getStart();
                 reportUnexpectedType(tk->getLine(), tk->getCharPositionInLine(),
-                                     QStringLiteral("<unknown>"), {"int64"});
+                                     QStringLiteral("<unknown>"),
+                                     {"int64", "uint64"});
                 return std::nullopt;
             }
         }

@@ -20,16 +20,16 @@ struct VariableDeclaration {
                          ///< user-defined type
     QString fmt_type;    /// [[type]] can only use with basic numberic type
     QString var_name;    ///< variable name
-    size_t offset = 0;   ///< member offset in struct: -1 for non-struct
-    size_t bit_size = 0; // int v : bit_size , 0 for no bit_size exists
+    qint64 offset = 0;   ///< member offset in struct: -1 for non-struct
+    qint64 bit_size = 0; // int v : bit_size , 0 for no bit_size exists
     struct {
-        size_t shift = 0;
+        qint64 shift = 0;
         size_t mask = std::numeric_limits<size_t>::max(); // mask for bit_field
     } op;
-    QVector<size_t> array_dims; ///< array size: empty for non-array
+    QVector<qint64> array_dims; ///< array size: empty for non-array
     bool is_pointer = false;    ///< true when it's a pointer
-    size_t var_size = 0;        ///< total size in bytes
-    size_t element_count = 1;   ///< cached element_count
+    qint64 var_size = 0;        ///< total size in bytes
+    qint64 element_count = 1;   ///< cached element_count
 };
 
 enum class MsgType { Error, Warn };

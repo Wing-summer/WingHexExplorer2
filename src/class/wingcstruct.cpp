@@ -266,7 +266,7 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                               QStringLiteral("constVarDefs"));
 
     o->registerGlobalFunction(
-        WingHex::Meta_UInt64,
+        WingHex::Meta_Int64,
         std::bind(QOverload<const QVariantList &>::of(&WingCStruct::sizeOf),
                   this, std::placeholders::_1),
         QStringLiteral("sizeOf"),
@@ -630,7 +630,7 @@ QStringList WingCStruct::enumTypeDefs() { return _parser->enumTypeDefs(); }
 
 QStringList WingCStruct::constVarDefs() { return _parser->constVarDefs(); }
 
-quint64 WingCStruct::sizeOf(const QString &type) {
+qint64 WingCStruct::sizeOf(const QString &type) {
     auto r = _parser->getTypeSize(type);
     if (r) {
         return r.value();
@@ -1003,8 +1003,8 @@ QStringList WingCStruct::constVarDefs(const WingHex::SenderInfo &sender) {
     return constVarDefs();
 }
 
-quint64 WingCStruct::sizeOf(const WingHex::SenderInfo &sender,
-                            const QString &type) {
+qint64 WingCStruct::sizeOf(const WingHex::SenderInfo &sender,
+                           const QString &type) {
     Q_UNUSED(sender);
     return sizeOf(type);
 }
@@ -1185,7 +1185,7 @@ QString WingCStruct::getqsizeTypeAsString() const {
 }
 
 QVariant WingCStruct::getData(const char *ptr, const char *end,
-                              QMetaType::Type type, size_t shift, size_t mask,
+                              QMetaType::Type type, qint64 shift, qint64 mask,
                               qsizetype size) {
     if (ptr + size > end) {
         return {};
@@ -1297,9 +1297,9 @@ QVariant WingCStruct::readContent(const char *ptr, const char *end,
                 }
                 return l;
             } else {
-                qsizetype size;
+                qint64 size;
                 if (m.bit_size) {
-                    auto div = std::div(m.bit_size, 8);
+                    auto div = std::div(m.bit_size, qint64(8));
                     size = div.quot;
                     if (div.rem) {
                         size++;

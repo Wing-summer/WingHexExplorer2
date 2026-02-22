@@ -179,7 +179,7 @@ private:
     QStringList enumTypeDefs();
     QStringList constVarDefs();
 
-    quint64 sizeOf(const QString &type);
+    qint64 sizeOf(const QString &type);
     bool containsType(const QString &name);
 
     bool isBasicType(const QString &name);
@@ -243,8 +243,8 @@ private:
     WING_SERVICE QStringList enumTypeDefs(const WingHex::SenderInfo &sender);
     WING_SERVICE QStringList constVarDefs(const WingHex::SenderInfo &sender);
 
-    WING_SERVICE quint64 sizeOf(const WingHex::SenderInfo &sender,
-                                const QString &type);
+    WING_SERVICE qint64 sizeOf(const WingHex::SenderInfo &sender,
+                               const QString &type);
     WING_SERVICE bool containsType(const WingHex::SenderInfo &sender,
                                    const QString &name);
 
@@ -312,7 +312,7 @@ private:
     QString getqsizeTypeAsString() const;
 
     QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
-                     size_t shift, size_t mask, qsizetype size);
+                     qint64 shift, qint64 mask, qsizetype size);
 
     QVariantHash __read(qsizetype offset, const QString &type,
                         bool efmtInVariantList);

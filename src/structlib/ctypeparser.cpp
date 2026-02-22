@@ -36,6 +36,8 @@
 #include <antlr4-runtime.h>
 #include <array>
 
+constexpr auto STURCT_SIZE_LIMIT = 102400; // 100KB
+
 // Struct = QMetaType::User
 
 CTypeParser::~CTypeParser() {}
@@ -658,8 +660,7 @@ CTypeParser::StructResult CTypeParser::addForwardUnion(const QString &name) {
 /// @note Shouldn't return 0 for unknown data type since "void" type has zero
 /// length
 ///
-std::optional<quint64>
-CTypeParser::getTypeSize(const QString &data_type) const {
+std::optional<qint64> CTypeParser::getTypeSize(const QString &data_type) const {
     if (data_type.endsWith('*')) {
         return pointerMode() == PointerMode::X86 ? sizeof(quint32)
                                                  : sizeof(quint64);
@@ -1157,15 +1158,15 @@ QStringList CTypeParser::getMissingDependencise(
     return missingDeps;
 }
 
-quint64 CTypeParser::calcUnionSize(const QList<VariableDeclaration> &members,
-                                   int alignment) const {
-    quint64 size = 0;
+qint64 CTypeParser::calcUnionSize(const QList<VariableDeclaration> &members,
+                                  int alignment) const {
+    qint64 size = 0;
     for (auto it = members.begin(); it != members.end(); ++it) {
         size = qMax(size, it->var_size);
     }
 
     if (0 != size % alignment) {
-        size = static_cast<quint64>(ceil(size * 1.0 / alignment) * alignment);
+        size = static_cast<qint64>(ceil(size * 1.0 / alignment) * alignment);
     }
 
     return size;
@@ -1180,7 +1181,7 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
                                       const QString &type_name,
                                       QVector<VariableDeclaration> &members,
                                       qsizetype alignment) {
-    quint64 size = 0;
+    qint64 size = 0;
     if (members.isEmpty()) {
         size = 1;
         if (is_struct) {
@@ -1205,6 +1206,7 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
             m.var_size = total * s.value();
         }
         if (is_struct) {
+            // size limit will be applied into padStruct
             auto os = padStruct(members, alignment);
             if (!os) {
                 return false;
@@ -1213,7 +1215,9 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
             struct_defs_[type_name] = members;
         } else {
             size = calcUnionSize(members, alignment);
-            Q_ASSERT(size >= 0);
+            if (size > STURCT_SIZE_LIMIT) {
+                return false;
+            }
             union_defs_[type_name] = members;
         }
     }
@@ -1275,7 +1279,7 @@ void CTypeParser::restoreIncompleteType(const QString &name) {
     }
 }
 
-std::optional<quint64>
+std::optional<qint64>
 CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
     // Validate alignment (allowed: 1,2,4,8,16)
     if (!(alignment == 1 || alignment == 2 || alignment == 4 ||
@@ -1283,31 +1287,31 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
         return std::nullopt;
     }
 
-    auto align_up = [](quint64 offset, int align) -> std::optional<quint64> {
-        quint64 av = static_cast<quint64>(align - 1);
-        quint64 r;
+    auto align_up = [](qint64 offset, int align) -> std::optional<qint64> {
+        qint64 av = align - 1;
+        qint64 r;
         if (qAddOverflow(offset, av, &r)) {
             return std::nullopt;
         }
-        return (r / static_cast<quint64>(align)) * static_cast<quint64>(align);
+        return (r / align) * align;
     };
 
-    quint64 total = 0;
+    qint64 total = 0;
 
     // Bitfield tracking
-    quint64 bitfield_base_size =
+    qint64 bitfield_base_size =
         0; // current unit size in bytes (one of 1,2,4,8,16)
-    quint64 bitfield_capacity = 0; // bits in that unit
-    quint64 bitfield_used = 0;     // bits used in current unit
-    quint64 bitfield_offset = 0;   // byte offset where that unit starts
+    qint64 bitfield_capacity = 0; // bits in that unit
+    qint64 bitfield_used = 0;     // bits used in current unit
+    qint64 bitfield_offset = 0;   // byte offset where that unit starts
     QString bitfield_type;
 
     // helper: choose smallest standard unit >= alignment and >= needed bytes
-    auto choose_unit_bytes = [&](quint64 want_bits) -> std::optional<quint64> {
-        quint64 needed_bytes = (want_bits + 7) / 8;
-        const quint64 choices[] = {1, 2, 4, 8, 16};
-        for (quint64 c : choices) {
-            if (c >= static_cast<quint64>(alignment) && c >= needed_bytes) {
+    auto choose_unit_bytes = [&](qint64 want_bits) -> std::optional<qint64> {
+        qint64 needed_bytes = (want_bits + 7) / 8;
+        const qint64 choices[] = {1, 2, 4, 8, 16};
+        for (qint64 c : choices) {
+            if (c >= alignment && c >= needed_bytes) {
                 return c;
             }
         }
@@ -1317,19 +1321,19 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
     for (auto &member : members) {
         // update element_count from array_dims if present (same as before) ...
         if (!member.array_dims.isEmpty()) {
-            quint64 ec = 1;
-            for (size_t &d : member.array_dims) {
+            qint64 ec = 1;
+            for (qint64 &d : member.array_dims) {
                 if (d == 0) {
                     ec = 0;
                     break;
                 }
-                if (ec > std::numeric_limits<quint64>::max() / d) {
+                if (ec > std::numeric_limits<qint64>::max() / d) {
                     ec = 0;
                     break;
                 }
                 ec *= d;
             }
-            member.element_count = (ec != 0) ? static_cast<size_t>(ec) : 1;
+            member.element_count = (ec != 0) ? ec : 1;
         }
 
         if (member.bit_size > 0) {
@@ -1337,14 +1341,15 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
             if (member.bit_size == 0)
                 return std::nullopt;
 
-            quint64 want_bits = static_cast<quint64>(member.bit_size);
+            qint64 want_bits = member.bit_size;
 
             // choose storage unit size based on alignment and want_bits
             auto maybe_unit = choose_unit_bytes(want_bits);
-            if (!maybe_unit)
+            if (!maybe_unit) {
                 return std::nullopt;
-            quint64 this_base_size = maybe_unit.value();
-            quint64 this_capacity = this_base_size * 8;
+            }
+            qint64 this_base_size = maybe_unit.value();
+            qint64 this_capacity = this_base_size * 8;
 
             // Start a new block if no active block, or base_size differs,
             // or not enough bits remain.
@@ -1355,13 +1360,19 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
 
             if (needs_new_block) {
                 auto au = align_up(total, alignment);
-                if (!au)
+                if (!au) {
                     return std::nullopt;
+                }
                 total = au.value();
 
                 bitfield_offset = total;
-                if (qAddOverflow(total, this_base_size, &total))
+                if (qAddOverflow(total, this_base_size, &total)) {
                     return std::nullopt;
+                }
+
+                if (total > STURCT_SIZE_LIMIT) {
+                    return std::nullopt;
+                }
 
                 bitfield_base_size = this_base_size;
                 bitfield_capacity = this_capacity;
@@ -1369,17 +1380,17 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
                 bitfield_type = member.data_type;
             }
 
-            member.offset = static_cast<size_t>(bitfield_offset);
-            member.op.shift = static_cast<size_t>(bitfield_used);
+            member.offset = bitfield_offset;
+            member.op.shift = bitfield_used;
 
             // mask safe compute
-            quint64 mask64;
+            size_t mask64;
             if (want_bits >= 64) {
-                mask64 = std::numeric_limits<quint64>::max();
+                mask64 = std::numeric_limits<size_t>::max();
             } else {
-                mask64 = ((quint64(1) << want_bits) - 1ULL);
+                mask64 = ((size_t(1) << want_bits) - 1ULL);
             }
-            member.op.mask = static_cast<size_t>(mask64);
+            member.op.mask = mask64;
 
             bitfield_used += want_bits;
 
@@ -1397,25 +1408,38 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
             bitfield_used = 0;
             bitfield_type.clear();
 
-            quint64 block_size = member.var_size;
-            if (block_size == 0)
+            qint64 block_size = member.var_size;
+            if (block_size == 0) {
                 return std::nullopt;
+            }
 
             auto au = align_up(total, alignment);
-            if (!au)
+            if (!au) {
                 return std::nullopt;
+            }
             total = au.value();
 
-            member.offset = static_cast<size_t>(total);
-            if (qAddOverflow(total, block_size, &total))
+            member.offset = total;
+            if (qAddOverflow(total, block_size, &total)) {
                 return std::nullopt;
+            }
+
+            if (total > STURCT_SIZE_LIMIT) {
+                return std::nullopt;
+            }
         }
     }
 
     // final struct padding
     auto au = align_up(total, alignment);
-    if (!au)
+    if (!au) {
         return std::nullopt;
+    }
     total = au.value();
+
+    if (total > STURCT_SIZE_LIMIT) {
+        return std::nullopt;
+    }
+
     return total;
 }
