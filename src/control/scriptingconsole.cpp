@@ -182,6 +182,11 @@ void ScriptingConsole::clearConsole() {
     setTextCursor(cur);
 }
 
+void ScriptingConsole::clear() {
+    _lastOutputType = ScriptMachine::MessageType::Unknown;
+    ScriptingConsoleBase::clear();
+}
+
 void ScriptingConsole::processKeyEvent(QKeyEvent *e) { keyPressEvent(e); }
 
 void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {

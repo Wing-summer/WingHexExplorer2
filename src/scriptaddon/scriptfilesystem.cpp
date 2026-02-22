@@ -16,7 +16,6 @@
 */
 
 #include "scriptfilesystem.h"
-#include "AngelScript/sdk/add_on/autowrapper/aswrappedcall.h"
 
 #include "define.h"
 
@@ -108,91 +107,8 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine) {
     assert(r >= 0);
 }
 
-void RegisterScriptFileSystem_Generic(asIScriptEngine *engine) {
-    int r;
-
-    assert(engine->GetTypeInfoByName("string"));
-    assert(engine->GetTypeInfoByDecl("array<string>"));
-    assert(engine->GetTypeInfoByName("datetime"));
-
-    r = engine->RegisterObjectType("filesystem", 0, asOBJ_REF);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour(
-        "filesystem", asBEHAVE_FACTORY, "filesystem @f()",
-        WRAP_FN(ScriptFileSystem_Factory), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour(
-        "filesystem", asBEHAVE_ADDREF, "void f()",
-        WRAP_MFN(CScriptFileSystem, AddRef), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectBehaviour(
-        "filesystem", asBEHAVE_RELEASE, "void f()",
-        WRAP_MFN(CScriptFileSystem, Release), asCALL_GENERIC);
-    assert(r >= 0);
-
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool changeCurrentPath(const string &in)",
-        WRAP_MFN(CScriptFileSystem, ChangeCurrentPath), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "string getCurrentPath() const",
-        WRAP_MFN(CScriptFileSystem, GetCurrentPath), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "array<string> @getDirs() const",
-        WRAP_MFN(CScriptFileSystem, GetDirs), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "array<string> @getFiles() const",
-        WRAP_MFN(CScriptFileSystem, GetFiles), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool isDir(const string &in) const",
-        WRAP_MFN(CScriptFileSystem, IsDir), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool isLink(const string &in) const",
-        WRAP_MFN(CScriptFileSystem, IsLink), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "int64 getSize(const string &in) const",
-        WRAP_MFN(CScriptFileSystem, GetSize), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool makeDir(const string &in)",
-        WRAP_MFN(CScriptFileSystem, MakeDir), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool removeDir(const string &in)",
-        WRAP_MFN(CScriptFileSystem, RemoveDir), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool deleteFile(const string &in)",
-        WRAP_MFN(CScriptFileSystem, DeleteFile), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool copyFile(const string &in, const string &in)",
-        WRAP_MFN(CScriptFileSystem, CopyFile), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "bool moveFile(const string &in, const string &in)",
-        WRAP_MFN(CScriptFileSystem, MoveFile), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "datetime getCreateDateTime(const string &in) const",
-        WRAP_MFN(CScriptFileSystem, GetCreateDateTime), asCALL_GENERIC);
-    assert(r >= 0);
-    r = engine->RegisterObjectMethod(
-        "filesystem", "datetime getModifyDateTime(const string &in) const",
-        WRAP_MFN(CScriptFileSystem, GetModifyDateTime), asCALL_GENERIC);
-    assert(r >= 0);
-}
-
 void RegisterScriptFileSystem(asIScriptEngine *engine) {
-    if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
-        RegisterScriptFileSystem_Generic(engine);
-    else
-        RegisterScriptFileSystem_Native(engine);
+    RegisterScriptFileSystem_Native(engine);
 }
 
 CScriptFileSystem::CScriptFileSystem() {
@@ -340,7 +256,7 @@ bool CScriptFileSystem::MoveFile(const QString &source, const QString &target) {
     }
     auto src = getRealAbsPath(source);
     auto dest = getRealAbsPath(target);
-    return QFile::rename(source, dest);
+    return QFile::rename(src, dest);
 }
 
 QString CScriptFileSystem::GetCurrentPath() const { return currentPath; }

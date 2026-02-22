@@ -3849,10 +3849,10 @@ IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
 void MainWindow::updateEditModeEnabled() {
     auto editor = currentEditor();
     auto b = (editor != nullptr);
-
     for (auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
+    m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(b);
 
     if (b) {
         auto hexeditor = editor->hexEditor();

@@ -65,6 +65,8 @@ public slots:
 
     void clearConsole();
 
+    void clear();
+
     void processKeyEvent(QKeyEvent *e);
 
     void onOutput(const ScriptMachine::MessageInfo &message);

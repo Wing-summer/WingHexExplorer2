@@ -68,8 +68,6 @@ public:
 };
 
 void RegisterScriptAny(asIScriptEngine *engine);
-void RegisterScriptAny_Native(asIScriptEngine *engine);
-void RegisterScriptAny_Generic(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 

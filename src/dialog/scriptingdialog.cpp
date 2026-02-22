@@ -773,6 +773,24 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
         WingSquiggleInfoModel::SeverityLevel::Warning,
         QIcon(QStringLiteral(":/completion/images/completion/warn.svg")));
     dview->setModel(_squinfoModel);
+    connect(dview, &QListView::doubleClicked, _squinfoModel,
+            [this](const QModelIndex &index) {
+                auto editor = currentEditor();
+                auto e = editor->editor();
+                auto doc = e->document();
+
+                auto pos = _squinfoModel->squiggleInfoPosStart(index.row());
+                auto block = doc->findBlockByNumber(pos.first - 1);
+
+                if (block.isValid()) {
+                    QTextCursor cursor(block);
+                    cursor.movePosition(QTextCursor::StartOfBlock);
+                    cursor.movePosition(QTextCursor::NextCharacter,
+                                        QTextCursor::MoveAnchor, pos.second);
+                    e->setTextCursor(cursor);
+                    e->ensureCursorVisible();
+                }
+            });
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
                               tr("Diagnosis"), dview);
     return dock->addDockWidget(area, dw, areaw);

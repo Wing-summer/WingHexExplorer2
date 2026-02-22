@@ -258,10 +258,6 @@ void RegisterScriptDictionary(asIScriptEngine *engine);
 // using native calling conventions
 void RegisterScriptDictionary_Native(asIScriptEngine *engine);
 
-// Use this one instead if native calling conventions
-// are not supported on the target platform
-void RegisterScriptDictionary_Generic(asIScriptEngine *engine);
-
 END_AS_NAMESPACE
 
 #endif
