@@ -773,9 +773,21 @@ void ScriptMachine::__outputfmt(MessageType type, asIScriptGeneric *args) {
             case asTYPEID_DOUBLE:
                 store.push_back(*static_cast<double *>(ref));
                 break;
-            default:
-                store.push_back(m.stringify_helper(ref, typeId));
-                break;
+            default: {
+                if (m.isAngelChar(typeId)) {
+                    // char
+                    store.push_back(*resolveObjAs<QChar>(ref, typeId));
+                } else if (m.isAngelString(typeId)) {
+                    // string
+                    store.push_back(*resolveObjAs<QString>(ref, typeId));
+                } else if (m.isAngelArray(typeId)) {
+                    // array<?>
+                    store.push_back(CScriptArrayView(
+                        resolveObjAs<CScriptArray>(ref, typeId)));
+                } else {
+                    store.push_back(m.stringify_helper(ref, typeId));
+                }
+            } break;
             }
         }
 

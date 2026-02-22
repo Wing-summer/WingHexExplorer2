@@ -255,9 +255,12 @@ format_element_with_spec(void *elemPtr, int typeId,
         break;
     default: {
         if (m.isAngelChar(typeId)) {
-            store.push_back(*static_cast<QChar *>(elemPtr));
+            QString r(3, '\'');
+            r[1] = *static_cast<QChar *>(elemPtr);
+            store.push_back(r);
         } else if (m.isAngelString(typeId)) {
-            store.push_back(*static_cast<QString *>(elemPtr));
+            auto str = *static_cast<QString *>(elemPtr);
+            store.push_back(str.prepend('"').append('"'));
         } else if (m.isAngelArray(typeId)) {
             store.push_back(
                 CScriptArrayView(static_cast<CScriptArray *>(elemPtr)));
