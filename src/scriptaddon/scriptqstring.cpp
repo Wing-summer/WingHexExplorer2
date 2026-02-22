@@ -21,9 +21,10 @@
 #include "angelscript.h"
 #include "class/angelscripthelper.h"
 
-#include <QHash>
 #include <QMetaEnum>
 #include <QString>
+
+#include <unordered_map>
 
 enum DoubleFmt { DFDecimal, DFExponent, DFSignificantDigits };
 
@@ -32,48 +33,32 @@ BEGIN_AS_NAMESPACE
 class CQStringFactory : public asIStringFactory {
 public:
     CQStringFactory() {}
-    ~CQStringFactory() { Q_ASSERT(stringCache.isEmpty()); }
+    ~CQStringFactory() { Q_ASSERT(stringCache.empty()); }
 
     const void *GetStringConstant(const char *data, asUINT length) override {
-        asAcquireExclusiveLock();
-
-        QString key = QString::fromUtf8(data, length);
-
-        auto it = stringCache.find(key);
-        if (it != stringCache.end()) {
-            it.value()++;
-            const void *result = &it.key();
-            asReleaseExclusiveLock();
-            return result;
-        }
-
-        it = stringCache.insert(key, 1);
-        const void *result = &it.key();
-
-        asReleaseExclusiveLock();
-        return result;
+        auto str = QString::fromUtf8(data, length);
+        auto it = stringCache.find(str);
+        if (it != stringCache.end())
+            it->second++;
+        else
+            it = stringCache.emplace(str, 1).first;
+        return reinterpret_cast<const void *>(&it->first);
     }
 
     int ReleaseStringConstant(const void *str) override {
         if (!str)
             return asERROR;
 
-        asAcquireExclusiveLock();
-
         const QString *qstr = reinterpret_cast<const QString *>(str);
         auto it = stringCache.find(*qstr);
 
-        if (it == stringCache.end()) {
-            asReleaseExclusiveLock();
-            return asERROR;
+        if (it != stringCache.end()) {
+            it->second--;
+            if (it->second == 0) {
+                stringCache.erase(it);
+            }
         }
 
-        it.value()--;
-        if (it.value() == 0) {
-            stringCache.erase(it);
-        }
-
-        asReleaseExclusiveLock();
         return asSUCCESS;
     }
 
@@ -82,18 +67,29 @@ public:
         if (!str)
             return asERROR;
 
-        const QString *qstr = reinterpret_cast<const QString *>(str);
-        QByteArray utf8 = qstr->toUtf8();
+        static const QString *qstr = nullptr;
+        static QByteArray cache;
+        auto nstr = reinterpret_cast<const QString *>(str);
 
-        if (length)
-            *length = utf8.size();
-        if (data)
-            memcpy(data, utf8.constData(), utf8.size());
+        if (qstr != nstr) {
+            qstr = nstr;
+            cache = qstr->toUtf8();
+        }
+
+        if (length) {
+            *length = cache.size();
+        }
+        if (data) {
+            memcpy(data, cache.constData(), cache.size());
+            qstr = nullptr;
+            cache.clear();
+            cache.squeeze();
+        }
 
         return asSUCCESS;
     }
 
-    QHash<QString, int> stringCache;
+    std::unordered_map<QString, int> stringCache;
 };
 
 static CQStringFactory *stringFactory = nullptr;
@@ -126,7 +122,7 @@ public:
             // the application might crash. Not deleting the cache would
             // lead to a memory leak, but since this is only happens when the
             // application is shutting down anyway, it is not important.
-            if (stringFactory->stringCache.isEmpty()) {
+            if (stringFactory->stringCache.empty()) {
                 delete stringFactory;
                 stringFactory = nullptr;
             }
