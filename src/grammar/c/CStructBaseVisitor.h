@@ -75,6 +75,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitTypeDefinition(CStructParser::TypeDefinitionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitDeclaration(CStructParser::DeclarationContext *ctx) override {
     return visitChildren(ctx);
   }

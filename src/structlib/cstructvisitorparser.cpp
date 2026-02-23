@@ -1430,19 +1430,27 @@ CStructVisitorParser::visitDeclaration(CStructParser::DeclarationContext *ctx) {
     }
 
     if (ctx->TypeDef()) {
-        auto ex = ctx->Identifier();
-        auto iden = QString::fromStdString(ex->getText());
+        QVector<QPair<QString, bool>> idens;
+        auto typedefs = ctx->typeDefinition();
+        idens.reserve(typedefs.size());
+        for (auto &ctx : typedefs) {
+            auto ex = ctx->Identifier();
+            auto iden = QString::fromStdString(ex->getText());
 
-        if (parser->containsType(iden) || parser->containsConstVar(iden)) {
-            // error report
-            auto t = ex->getSymbol();
-            reportDupDeclError(t->getLine(), t->getCharPositionInLine(), iden);
-            return defaultResult();
+            if (parser->containsType(iden) || parser->containsConstVar(iden)) {
+                // error report
+                auto t = ex->getSymbol();
+                reportDupDeclError(t->getLine(), t->getCharPositionInLine(),
+                                   iden);
+                return defaultResult();
+            }
+            idens.append(qMakePair(iden, ctx->pointer() != nullptr));
         }
-
         auto spec = getSpecifier(ctx->typeSpecifier());
         if (spec) {
-            parser->defineTypedef(iden, spec->tname, ctx->pointer() != nullptr);
+            for (auto &&[iden, isPointer] : idens) {
+                parser->defineTypedef(iden, spec->tname, isPointer);
+            }
         }
         return defaultResult();
     } else {

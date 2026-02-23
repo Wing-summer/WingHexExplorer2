@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_VERSION "2.3.4")
+set(PROJECT_VERSION "2.3.5")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent PrintSupport
                                      Xml LinguistTools)

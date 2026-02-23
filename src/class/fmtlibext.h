@@ -80,13 +80,9 @@ class CScriptArrayView {
 public:
     inline explicit CScriptArrayView(CScriptArray *arr) noexcept : arr_(arr) {
         Q_ASSERT(arr);
-        arr->AddRef();
     }
 
-    inline ~CScriptArrayView() {
-        arr_->Release();
-        arr_ = nullptr;
-    }
+    inline ~CScriptArrayView() { arr_ = nullptr; }
 
     inline CScriptArray *data() const { return arr_; }
 

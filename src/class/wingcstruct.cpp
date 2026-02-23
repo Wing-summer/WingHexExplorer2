@@ -29,7 +29,7 @@ WingCStruct::~WingCStruct() {}
 bool WingCStruct::init(const std::unique_ptr<QSettings> &set) {
     Q_UNUSED(set);
     _parser = new CTypeParser([this](const MsgInfo &info) {
-        QString msg = QStringLiteral(": [%1, %2] ")
+        QString msg = QStringLiteral(" [%1, %2] ")
                           .arg(info.line)
                           .arg(info.charPositionInLine) +
                       info.info;
@@ -124,7 +124,7 @@ WingCStruct::eventOnScriptPragma(const QString &script,
     } else if (cmd == QStringLiteral("Inc")) {
         if ((param.startsWith("\"") && param.endsWith("\"")) ||
             (param.startsWith('\'') && param.endsWith("\'"))) {
-            param = param.mid(1, param.length() - 2);
+            param.slice(1, param.length() - 2);
         } else {
             WingHex::PragmaResult r;
             r.error.append(QStringLiteral("Invalid syntax with 'Inc'"));
@@ -135,18 +135,12 @@ WingCStruct::eventOnScriptPragma(const QString &script,
         if (finc.isAbsolute()) {
             if (parse(param)) {
                 WingHex::PragmaResult r;
-                for (auto &msg : _warns) {
-                    r.warn.append(msg);
-                }
+                r.warn = _warns.join('\n');
                 return r;
             } else {
                 WingHex::PragmaResult r;
-                for (auto &msg : _errors) {
-                    r.error.append(msg);
-                }
-                for (auto &msg : _warns) {
-                    r.warn.append(msg);
-                }
+                r.error = _errors.join('\n');
+                r.warn = _warns.join('\n');
                 return r;
             }
         } else {
@@ -154,18 +148,12 @@ WingCStruct::eventOnScriptPragma(const QString &script,
             auto path = finfo.absoluteDir().filePath(param);
             if (parse(path)) {
                 WingHex::PragmaResult r;
-                for (auto &msg : _warns) {
-                    r.warn.append(msg);
-                }
+                r.warn = _warns.join('\n');
                 return r;
             } else {
                 WingHex::PragmaResult r;
-                for (auto &msg : _errors) {
-                    r.error.append(msg);
-                }
-                for (auto &msg : _warns) {
-                    r.warn.append(msg);
-                }
+                r.error = _errors.join('\n');
+                r.warn = _warns.join('\n');
                 return r;
             }
         }

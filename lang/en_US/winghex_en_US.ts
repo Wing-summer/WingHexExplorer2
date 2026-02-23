@@ -4062,18 +4062,19 @@
         <translation>Providing basic support for analyzing file structures</translation>
     </message>
     <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="1764"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1776"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1788"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1801"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1810"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1817"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1789"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1798"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1805"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1819"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1831"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1843"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1851"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1858"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1865"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1872"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1879"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1839"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1846"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1853"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1860"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1867"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1874"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1886"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1898"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1910"/>
@@ -4088,25 +4089,25 @@
         <location filename="../../src/class/wingcstruct.cpp" line="2018"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2030"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2042"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2054"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2065"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2075"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2053"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2063"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2072"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2084"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2096"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2112"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2119"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2100"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2107"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2114"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2126"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2138"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2150"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2163"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2151"/>
         <source>InvalidParamsCount</source>
         <translation>Illegal number of parameters</translation>
     </message>
     <message>
+        <location filename="../../src/class/wingcstruct.cpp" line="1768"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1780"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1792"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1821"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="1835"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1809"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1823"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="1878"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1890"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1902"/>
         <location filename="../../src/class/wingcstruct.cpp" line="1914"/>
@@ -4120,12 +4121,11 @@
         <location filename="../../src/class/wingcstruct.cpp" line="2010"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2022"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2034"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2046"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2102"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2090"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2118"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2130"/>
         <location filename="../../src/class/wingcstruct.cpp" line="2142"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2154"/>
-        <location filename="../../src/class/wingcstruct.cpp" line="2167"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="2155"/>
         <source>InvalidParam</source>
         <translation>Invalid parameter</translation>
     </message>

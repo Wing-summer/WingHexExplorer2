@@ -98,9 +98,13 @@ assignmentExpression
     | inclusiveOrExpression
     ;
 
+typeDefinition
+    : pointer? Identifier
+    ;
+
 declaration
     : declarationSpecifier ';'
-    | 'typedef' typeSpecifier pointer? Identifier ';'
+    | 'typedef' typeSpecifier typeDefinition (',' typeDefinition)* ';'
     ;
 
 declarationSpecifier

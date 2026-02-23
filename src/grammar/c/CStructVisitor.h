@@ -49,6 +49,8 @@ public:
 
     virtual std::any visitAssignmentExpression(CStructParser::AssignmentExpressionContext *context) = 0;
 
+    virtual std::any visitTypeDefinition(CStructParser::TypeDefinitionContext *context) = 0;
+
     virtual std::any visitDeclaration(CStructParser::DeclarationContext *context) = 0;
 
     virtual std::any visitDeclarationSpecifier(CStructParser::DeclarationSpecifierContext *context) = 0;

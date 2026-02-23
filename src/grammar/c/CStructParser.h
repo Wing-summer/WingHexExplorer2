@@ -31,15 +31,16 @@ public:
     RuleCastExpression = 6, RuleMultiplicativeExpression = 7, RuleAdditiveExpression = 8, 
     RuleShiftExpression = 9, RuleAndExpression = 10, RuleExclusiveOrExpression = 11, 
     RuleInclusiveOrExpression = 12, RuleAssignmentExpressionDef = 13, RuleAssignmentExpression = 14, 
-    RuleDeclaration = 15, RuleDeclarationSpecifier = 16, RuleTypeSpecifier = 17, 
-    RuleStructOrUnionSpecifier = 18, RuleStructOrUnion = 19, RuleAlignAsAttr = 20, 
-    RuleBasicTypeFmt = 21, RuleStructDeclarationList = 22, RuleStructDeclaration = 23, 
-    RuleSpecifierQualifierList = 24, RuleStructDeclaratorList = 25, RuleStructDeclarator = 26, 
-    RuleEnumSpecifier = 27, RuleEnumeratorList = 28, RuleEnumerator = 29, 
-    RuleEnumerationConstant = 30, RuleDeclarator = 31, RuleDirectDeclarator = 32, 
-    RulePointer = 33, RuleIdentifierList = 34, RuleTypeName = 35, RuleAbstractDeclarator = 36, 
-    RuleDirectAbstractDeclarator = 37, RuleCompilationUnit = 38, RuleTranslationUnit = 39, 
-    RuleExternalDeclaration = 40, RuleDefineDecl = 41
+    RuleTypeDefinition = 15, RuleDeclaration = 16, RuleDeclarationSpecifier = 17, 
+    RuleTypeSpecifier = 18, RuleStructOrUnionSpecifier = 19, RuleStructOrUnion = 20, 
+    RuleAlignAsAttr = 21, RuleBasicTypeFmt = 22, RuleStructDeclarationList = 23, 
+    RuleStructDeclaration = 24, RuleSpecifierQualifierList = 25, RuleStructDeclaratorList = 26, 
+    RuleStructDeclarator = 27, RuleEnumSpecifier = 28, RuleEnumeratorList = 29, 
+    RuleEnumerator = 30, RuleEnumerationConstant = 31, RuleDeclarator = 32, 
+    RuleDirectDeclarator = 33, RulePointer = 34, RuleIdentifierList = 35, 
+    RuleTypeName = 36, RuleAbstractDeclarator = 37, RuleDirectAbstractDeclarator = 38, 
+    RuleCompilationUnit = 39, RuleTranslationUnit = 40, RuleExternalDeclaration = 41, 
+    RuleDefineDecl = 42
   };
 
   explicit CStructParser(antlr4::TokenStream *input);
@@ -74,6 +75,7 @@ public:
   class InclusiveOrExpressionContext;
   class AssignmentExpressionDefContext;
   class AssignmentExpressionContext;
+  class TypeDefinitionContext;
   class DeclarationContext;
   class DeclarationSpecifierContext;
   class TypeSpecifierContext;
@@ -359,6 +361,20 @@ public:
 
   AssignmentExpressionContext* assignmentExpression();
 
+  class  TypeDefinitionContext : public antlr4::ParserRuleContext {
+  public:
+    TypeDefinitionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *Identifier();
+    PointerContext *pointer();
+
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  TypeDefinitionContext* typeDefinition();
+
   class  DeclarationContext : public antlr4::ParserRuleContext {
   public:
     DeclarationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -367,8 +383,10 @@ public:
     antlr4::tree::TerminalNode *Semi();
     antlr4::tree::TerminalNode *TypeDef();
     TypeSpecifierContext *typeSpecifier();
-    antlr4::tree::TerminalNode *Identifier();
-    PointerContext *pointer();
+    std::vector<TypeDefinitionContext *> typeDefinition();
+    TypeDefinitionContext* typeDefinition(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> Comma();
+    antlr4::tree::TerminalNode* Comma(size_t i);
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
