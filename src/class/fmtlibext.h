@@ -76,19 +76,23 @@ inline QString escapeNonPrintable(const QString &input) {
     return out;
 }
 
-class CScriptArrayView {
+template <typename T>
+class CScriptObjectView {
 public:
-    inline explicit CScriptArrayView(CScriptArray *arr) noexcept : arr_(arr) {
-        Q_ASSERT(arr);
+    inline explicit CScriptObjectView(T *data) noexcept : data_(data) {
+        Q_ASSERT(data);
     }
 
-    inline ~CScriptArrayView() { arr_ = nullptr; }
+    inline ~CScriptObjectView() noexcept { data_ = nullptr; }
 
-    inline CScriptArray *data() const { return arr_; }
+    inline T *data() const noexcept { return data_; }
 
 private:
-    CScriptArray *arr_ = nullptr;
+    T *data_ = nullptr;
 };
+
+using CScriptArrayView = CScriptObjectView<CScriptArray>;
+using CScriptDictionaryView = CScriptObjectView<CScriptDictionary>;
 
 namespace fmt {
 
@@ -357,6 +361,11 @@ struct formatter<CScriptArrayView> {
         }
         return out;
     }
+};
+
+template <>
+struct formatter<CScriptDictionaryView> {
+    // TODO
 };
 
 } // namespace fmt

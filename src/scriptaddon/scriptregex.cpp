@@ -17,6 +17,7 @@
 
 #include "scriptregex.h"
 #include "class/angelscripthelper.h"
+#include "define.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -187,8 +188,7 @@ static void Iter_Dtor(void *memory) {
 
 void RegisterScriptRegex(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("regex");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAngelType<Angel::PatternOptions>(engine, "PatternOptions");
     registerAngelType<Angel::MatchOptions>(engine, "MatchOptions");
@@ -198,13 +198,13 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
     r = engine->RegisterObjectType("exp", sizeof(QRegularExpression),
                                    asOBJ_VALUE |
                                        asGetTypeTraits<QRegularExpression>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "exp", asBEHAVE_CONSTRUCT, "void f()",
         asFUNCTIONPR(Exp_DefaultCtor, (void *), void), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "exp", asBEHAVE_CONSTRUCT,
         "void f(const string &in, int options = "
@@ -212,38 +212,36 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         asFUNCTIONPR(Exp_Ctor_StringOptions, (void *, const QString &, int),
                      void),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "exp", asBEHAVE_CONSTRUCT, "void f(const regex::exp &in)",
         asFUNCTIONPR(Exp_CopyCtor, (void *, const QRegularExpression &), void),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour("exp", asBEHAVE_DESTRUCT, "void f()",
                                         asFUNCTIONPR(Exp_Dtor, (void *), void),
                                         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "exp", "regex::exp &opAssign(const regex::exp &in)",
         asMETHODPR(QRegularExpression, operator=, (const QRegularExpression &),
                    QRegularExpression &),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // ---- QRegularExpressionMatch ("match") ----
     r = engine->RegisterObjectType(
         "match", sizeof(QRegularExpressionMatch),
         asOBJ_VALUE | asGetTypeTraits<QRegularExpressionMatch>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "match", asBEHAVE_CONSTRUCT, "void f()",
         asFUNCTIONPR(Match_DefaultCtor, (void *), void), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // copy ctor
     r = engine->RegisterObjectBehaviour(
@@ -251,15 +249,13 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         asFUNCTIONPR(Match_CopyCtor, (void *, const QRegularExpressionMatch &),
                      void),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // destructor
     r = engine->RegisterObjectBehaviour(
         "match", asBEHAVE_DESTRUCT, "void f()",
         asFUNCTIONPR(Match_Dtor, (void *), void), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // assignment
     r = engine->RegisterObjectMethod(
@@ -268,172 +264,164 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                    (const QRegularExpressionMatch &),
                    QRegularExpressionMatch &),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "match", "regex::exp regularExpression() const",
         asMETHODPR(QRegularExpressionMatch, regularExpression, () const,
                    QRegularExpression),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("match", "int matchOptions() const",
                                      asFUNCTION(Match_matchOptions_wrap),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "regex::MatchType matchType() const",
         asMETHODPR(QRegularExpressionMatch, matchType, () const,
                    QRegularExpression::MatchType),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "bool hasMatch() const",
         asMETHODPR(QRegularExpressionMatch, hasMatch, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "bool hasPartialMatch() const",
         asMETHODPR(QRegularExpressionMatch, hasPartialMatch, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "bool isValid() const",
         asMETHODPR(QRegularExpressionMatch, isValid, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "int lastCapturedIndex() const",
         asMETHODPR(QRegularExpressionMatch, lastCapturedIndex, () const, int),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "string captured(const string &in name) const",
         asFUNCTION(Match_captured_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "string captured(int nth = 0) const",
         asMETHODPR(QRegularExpressionMatch, captured, (int) const, QString),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // capturedEnd / capturedLength / capturedStart (qsizetype)
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedEnd(const string &in name) const"),
         asFUNCTION(Match_capturedEnd_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedEnd(int nth = 0) const"),
         asMETHODPR(QRegularExpressionMatch, capturedEnd, (int) const,
                    qsizetype),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedLength(const string &in name) const"),
         asFUNCTION(Match_capturedLength_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedLength(int nth = 0) const"),
         asMETHODPR(QRegularExpressionMatch, capturedLength, (int) const,
                    qsizetype),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedStart(const string &in name) const"),
         asFUNCTION(Match_capturedStart_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", QSIZETYPE_WRAP("capturedStart(int nth = 0) const"),
         asMETHODPR(QRegularExpressionMatch, capturedStart, (int) const,
                    qsizetype),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "array<string>@ capturedTexts() const",
         asFunctionPtr(Match_capturedTexts_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     // hasCaptured overloads
     r = engine->RegisterObjectMethod(
         "match", "bool hasCaptured(const string &in name) const",
         asFUNCTION(Match_hasCaptured_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "match", "bool hasCaptured(int nth) const",
         asMETHODPR(QRegularExpressionMatch, hasCaptured, (int) const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Register iterator type and its methods
     r = engine->RegisterObjectType(
         "iterator", sizeof(QRegularExpressionMatchIterator),
         asOBJ_VALUE | asGetTypeTraits<QRegularExpressionMatchIterator>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // ctor / copy / dtor
     r = engine->RegisterObjectBehaviour(
         "iterator", asBEHAVE_CONSTRUCT, "void f()",
         asFUNCTIONPR(Iter_DefaultCtor, (void *), void), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "iterator", asBEHAVE_CONSTRUCT, "void f(const regex::iterator &in)",
         asFUNCTIONPR(Iter_CopyCtor,
                      (void *, const QRegularExpressionMatchIterator &), void),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "iterator", asBEHAVE_DESTRUCT, "void f()",
         asFUNCTIONPR(Iter_Dtor, (void *), void), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // methods on iterator
     r = engine->RegisterObjectMethod(
         "iterator", "bool hasNext() const",
         asMETHODPR(QRegularExpressionMatchIterator, hasNext, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "iterator", "bool isValid() const",
         asMETHODPR(QRegularExpressionMatchIterator, isValid, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("iterator", "int matchOptions() const",
                                      asFUNCTION(Inter_matchOptions_wrap),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "iterator", "regex::MatchType matchType() const",
         asMETHODPR(QRegularExpressionMatchIterator, matchType, () const,
                    QRegularExpression::MatchType),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // next / peekNext
     r = engine->RegisterObjectMethod("iterator", "regex::match next()",
@@ -441,15 +429,14 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                                                 next, (),
                                                 QRegularExpressionMatch),
                                      asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "iterator", "regex::match peekNext() const",
         asMETHODPR(QRegularExpressionMatchIterator, peekNext, () const,
                    QRegularExpressionMatch),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // regularExpression()
     r = engine->RegisterObjectMethod(
@@ -457,8 +444,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         asMETHODPR(QRegularExpressionMatchIterator, regularExpression, () const,
                    QRegularExpression),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // assignment operator
     r = engine->RegisterObjectMethod(
@@ -467,70 +453,60 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                    (const QRegularExpressionMatchIterator &),
                    QRegularExpressionMatchIterator &),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // QRegularExpression...
     r = engine->RegisterObjectMethod(
         "exp", "void setPattern(const string &in)",
         asMETHODPR(QRegularExpression, setPattern, (const QString &), void),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "string pattern() const",
         asMETHODPR(QRegularExpression, pattern, () const, QString),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "bool isValid() const",
         asMETHODPR(QRegularExpression, isValid, () const, bool),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "string errorString() const",
         asMETHODPR(QRegularExpression, errorString, () const, QString),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "int captureCount() const",
         asMETHODPR(QRegularExpression, captureCount, () const, int),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "array<string>@ namedCaptureGroups() const",
         asFUNCTION(Exp_namedCaptureGroups_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", QSIZETYPE_WRAP("patternErrorOffset() const"),
         asMETHODPR(QRegularExpression, patternErrorOffset, () const, qsizetype),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // patternOptions / setPatternOptions
     r = engine->RegisterObjectMethod("exp", "int patternOptions() const",
                                      asFUNCTION(Exp_patternOptions_wrap),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "void setPatternOptions(int options)",
         asFUNCTION(Exp_setPatternOptions_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp",
@@ -538,8 +514,7 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         "regex::MatchType matchType = regex::MatchType::NormalMatch, "
         "int matchOptions = regex::MatchOptions::NoMatchOption) const",
         asFUNCTION(Exp_match_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp",
@@ -547,29 +522,26 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
         "regex::MatchType matchType = regex::MatchType::NormalMatch, "
         "int matchOptions = regex::MatchOptions::NoMatchOption) const",
         asFUNCTION(Exp_globalMatch_wrap), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "exp", "bool opEquals(const regex::exp &in) const",
         asFUNCTIONPR(Exp_opEquals_wrap,
                      (const void *, const QRegularExpression &), bool),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Global helper functions: anchoredPattern, escape, fromWildcard,
     // wildcardToRegularExpression
     r = engine->RegisterGlobalFunction(
         "string anchoredPattern(const string &in expression)",
         asFUNCTION(Exp_anchoredPattern_wrap), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("string escape(const string &in str)",
                                        asFUNCTION(Exp_escape_wrap),
                                        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // fromWildcard: use int for case-sensitivity and options to avoid requiring
     // enum bindings
@@ -577,15 +549,13 @@ void RegisterScriptRegex(asIScriptEngine *engine) {
                                        "pattern, int cs = 0, int options = 0)",
                                        asFUNCTION(Exp_fromWildcard_wrap),
                                        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "string wildcardToRegularExpression(const string &in pattern, int "
         "options = 0)",
         asFUNCTION(Exp_wildcardToRegularExpression_wrap), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }

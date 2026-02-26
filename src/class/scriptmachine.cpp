@@ -44,8 +44,10 @@
 #include "scriptaddon/scriptfile.h"
 #include "scriptaddon/scriptfilesystem.h"
 #include "scriptaddon/scriptjson.h"
+#include "scriptaddon/scriptoptbox.h"
 #include "scriptaddon/scriptqdictionary.h"
 #include "scriptaddon/scriptqstring.h"
+#include "scriptaddon/scriptreflection.h"
 #include "scriptaddon/scriptregex.h"
 #include "scriptaddon/scripturl.h"
 
@@ -57,318 +59,6 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QScopeGuard>
-
-namespace {
-class FormatValue {
-public:
-    enum Type { Simple, Object };
-    virtual ~FormatValue() = default;
-    virtual Type type() const = 0;
-    virtual QString rawText() const = 0;
-};
-
-class SimpleValue : public FormatValue {
-public:
-    SimpleValue(const QString &text) : m_text(text.trimmed()) {}
-    Type type() const override { return Simple; }
-    QString rawText() const override { return m_text; }
-
-private:
-    QString m_text;
-};
-
-class ObjectValue : public FormatValue {
-public:
-    Type type() const override { return Object; }
-    QString rawText() const override { return QStringLiteral("{}"); }
-
-    qsizetype size() const { return m_keys.size(); }
-    const QString &keyAt(int index) const { return m_keys.at(index); }
-    QSharedPointer<FormatValue> valueAt(int index) const {
-        return m_values.at(index);
-    }
-
-    void addPair(const QString &key, QSharedPointer<FormatValue> value) {
-        m_keys.append(key);
-        m_values.append(value);
-    }
-
-    bool isEmpty() const { return m_keys.isEmpty(); }
-
-private:
-    QStringList m_keys;
-    QVector<QSharedPointer<FormatValue>> m_values;
-};
-
-class StringFormatter {
-public:
-    static QString format(const QString &input, uint indent) {
-        qsizetype pos = 0;
-        auto result = parseObject(input, pos);
-
-        skipWhitespace(input, pos);
-        if (pos < input.length() || !result) {
-            return input;
-        }
-
-        if (result->type() == FormatValue::Object) {
-            return formatObject(static_cast<ObjectValue *>(result.data()), 0,
-                                indent);
-        }
-
-        return input;
-    }
-
-private:
-    static QSharedPointer<FormatValue> parseObject(const QString &input,
-                                                   qsizetype &pos) {
-        skipWhitespace(input, pos);
-
-        if (pos >= input.length() || input[pos] != '{') {
-            return nullptr;
-        }
-
-        pos++; // Skip '{'
-        skipWhitespace(input, pos);
-
-        auto object = QSharedPointer<ObjectValue>(new ObjectValue());
-
-        if (pos < input.length() && input[pos] == '}') {
-            pos++;
-            return object;
-        }
-
-        while (pos < input.length()) {
-            skipWhitespace(input, pos);
-
-            // Parse key-value pair
-            QString key = parseKey(input, pos);
-            if (key.isEmpty()) {
-                return nullptr;
-            }
-
-            QSharedPointer<FormatValue> value = parseValue(input, pos);
-            if (!value) {
-                return nullptr;
-            }
-
-            object->addPair(key, value);
-
-            skipWhitespace(input, pos);
-
-            // Check for comma or end
-            if (pos < input.length() && input[pos] == ',') {
-                pos++;
-                skipWhitespace(input, pos);
-                if (pos < input.length() && input[pos] == '}') {
-                    break;
-                }
-            } else if (pos < input.length() && input[pos] == '}') {
-                break;
-            } else if (pos >= input.length()) {
-                return nullptr;
-            }
-        }
-
-        if (pos >= input.length() || input[pos] != '}') {
-            return nullptr;
-        }
-
-        pos++; // Skip '}'
-        return object;
-    }
-
-    static QString parseKey(const QString &input, qsizetype &pos) {
-        skipWhitespace(input, pos);
-
-        if (pos >= input.length() || input[pos] != '[') {
-            return QString();
-        }
-
-        pos++; // Skip '['
-        skipWhitespace(input, pos);
-
-        QString key;
-        while (pos < input.length() && input[pos] != ']') {
-            key += input[pos];
-            pos++;
-        }
-
-        if (pos >= input.length() || input[pos] != ']') {
-            return QString();
-        }
-
-        pos++; // Skip ']'
-        return key.trimmed();
-    }
-
-    static QSharedPointer<FormatValue> parseValue(const QString &input,
-                                                  qsizetype &pos) {
-        skipWhitespace(input, pos);
-
-        // Look for '='
-        if (pos >= input.length() || input[pos] != '=') {
-            return nullptr;
-        }
-
-        pos++; // Skip '='
-        skipWhitespace(input, pos);
-
-        // Check if it's an object
-        if (pos < input.length() && input[pos] == '{') {
-            return parseObject(input, pos);
-        } else {
-            QString simpleValue = parseSimpleValue(input, pos);
-            if (simpleValue.isEmpty()) {
-                return nullptr;
-            }
-            return QSharedPointer<FormatValue>(new SimpleValue(simpleValue));
-        }
-    }
-
-    static QString parseSimpleValue(const QString &input, qsizetype &pos) {
-        qsizetype start = pos;
-        bool inSingleQuote = false;
-        bool inDoubleQuote = false;
-        bool escaped = false;
-        qsizetype bracketDepth = 0;
-        qsizetype parenDepth = 0;
-        qsizetype angleDepth = 0;
-
-        while (pos < input.length()) {
-            QChar c = input[pos];
-
-            if (escaped) {
-                escaped = false;
-                pos++;
-                continue;
-            }
-
-            if (c == '\\') {
-                escaped = true;
-                pos++;
-                continue;
-            }
-
-            if (inSingleQuote) {
-                if (c == '\'') {
-                    inSingleQuote = false;
-                }
-                pos++;
-            } else if (inDoubleQuote) {
-                if (c == '"') {
-                    inDoubleQuote = false;
-                }
-                pos++;
-            } else {
-                if (c == '\'') {
-                    inSingleQuote = true;
-                    pos++;
-                } else if (c == '"') {
-                    inDoubleQuote = true;
-                    pos++;
-                } else if (c == '[') {
-                    bracketDepth++;
-                    pos++;
-                } else if (c == ']') {
-                    if (bracketDepth > 0)
-                        bracketDepth--;
-                    pos++;
-                } else if (c == '(') {
-                    parenDepth++;
-                    pos++;
-                } else if (c == ')') {
-                    if (parenDepth > 0)
-                        parenDepth--;
-                    pos++;
-                } else if (c == '<') {
-                    angleDepth++;
-                    pos++;
-                } else if (c == '>') {
-                    if (angleDepth > 0)
-                        angleDepth--;
-                    pos++;
-                } else if (bracketDepth == 0 && parenDepth == 0 &&
-                           angleDepth == 0) {
-                    if (c == ',' || c == '}') {
-                        break;
-                    } else {
-                        pos++;
-                    }
-                } else {
-                    pos++;
-                }
-            }
-        }
-
-        if (pos == start) {
-            return {};
-        }
-
-        return input.sliced(start, pos - start).trimmed();
-    }
-
-    static QString formatObject(const ObjectValue *object, int indentLevel,
-                                uint indentSize) {
-        if (object->isEmpty()) {
-            return QStringLiteral("{}");
-        }
-
-        QStringList formattedPairs;
-        QString currentIndent = getIndent(indentLevel, indentSize);
-        QString nextIndent = getIndent(indentLevel + 1, indentSize);
-
-        qsizetype maxKeyLength = 0;
-        auto total = object->size();
-        for (qsizetype i = 0; i < total; ++i) {
-            maxKeyLength = qMax(maxKeyLength, object->keyAt(i).length() + 2);
-        }
-
-        for (qsizetype i = 0; i < total; ++i) {
-            QString keyPart = object->keyAt(i);
-            keyPart.prepend('[').append(']');
-            QString formattedValue;
-
-            auto value = object->valueAt(i);
-            if (value->type() == FormatValue::Object) {
-                const ObjectValue *childObject =
-                    static_cast<const ObjectValue *>(value.data());
-                formattedValue =
-                    formatObject(childObject, indentLevel + 1, indentSize);
-            } else {
-                formattedValue = formatSimple(
-                    static_cast<const SimpleValue *>(value.data()));
-            }
-
-            QString paddedKeyPart = keyPart.leftJustified(maxKeyLength, ' ');
-            formattedPairs.append(nextIndent + paddedKeyPart +
-                                  QStringLiteral(" = ") + formattedValue);
-        }
-
-        return QStringLiteral("{\n") +
-               formattedPairs.join(QStringLiteral(",\n")) + '\n' +
-               currentIndent + '}';
-    }
-
-    static QString formatSimple(const SimpleValue *value) {
-        return value->rawText();
-    }
-
-    static QString getIndent(int level, uint indentSize) {
-        return QString(level * indentSize, ' ');
-    }
-
-    static void skipWhitespace(const QString &input, qsizetype &pos) {
-        while (pos < input.length() && isWhitespace(input[pos])) {
-            pos++;
-        }
-    }
-
-    static bool isWhitespace(QChar c) {
-        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-    }
-};
-} // namespace
 
 bool ScriptMachine::init() {
     if (isInited()) {
@@ -428,7 +118,7 @@ bool ScriptMachine::configureEngine() {
     // The script compiler will send any compiler messages to the callback
     auto r = _engine->SetMessageCallback(asFUNCTION(messageCallback), this,
                                          asCALL_CDECL);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -445,21 +135,21 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction(
         "void print(const ? &in obj, const ? &in ...)", asFUNCTION(print),
         asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void printf(const string &in fmt, const ? &in ...)",
         asFUNCTION(printf), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void println(const ? &in obj, const ? &in ...)", asFUNCTION(println),
         asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -467,21 +157,21 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction(
         "void warnprint(const ? &in obj, const ? &in ...)",
         asFUNCTION(warnprint), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void warnprintf(const string &in fmt, const ? &in ...)",
         asFUNCTION(warnprintf), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void warnprintln(const ? &in obj, const ? &in ...)",
         asFUNCTION(warnprintln), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -489,21 +179,21 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction(
         "void infoprint(const ? &in obj, const ? &in ...)",
         asFUNCTION(infoprint), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void infoprintf(const string &in fmt, const ? &in ...)",
         asFUNCTION(infoprintf), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void infoprintln(const ? &in obj, const ? &in ...)",
         asFUNCTION(infoprintln), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -511,21 +201,21 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction(
         "void errprint(const ? &in obj, const ? &in ...)", asFUNCTION(errprint),
         asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void errprintf(const string &in fmt, const ? &in ...)",
         asFUNCTION(errprintf), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
     r = _engine->RegisterGlobalFunction(
         "void errprintln(const ? &in obj, const ? &in ...)",
         asFUNCTION(errprintln), asCALL_GENERIC);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -533,7 +223,7 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction("string input()",
                                         asMETHOD(ScriptMachine, input),
                                         asCALL_THISCALL_ASGLOBAL, this);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -541,15 +231,7 @@ bool ScriptMachine::configureEngine() {
     r = _engine->RegisterGlobalFunction("string stringify(? &in obj)",
                                         asMETHOD(ScriptMachine, stringify),
                                         asCALL_THISCALL_ASGLOBAL, this);
-    Q_ASSERT(r >= 0);
-    if (r < 0) {
-        return false;
-    }
-
-    r = _engine->RegisterGlobalFunction(
-        "string beautify(const string &in str, uint indent = 4)",
-        asFUNCTION(beautify), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -558,7 +240,7 @@ bool ScriptMachine::configureEngine() {
         "int exec(string &out output, const string &in exe, "
         "const string &in params = \"\", int timeout = 3000)",
         asFUNCTION(execSystemCmd), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -574,7 +256,7 @@ bool ScriptMachine::configureEngine() {
     // allow us to debug internal script calls made by the engine
     r = _engine->SetContextCallbacks(requestContextCallback,
                                      returnContextCallback, this);
-    Q_ASSERT(r >= 0);
+    ASSERT(r >= 0);
     if (r < 0) {
         return false;
     }
@@ -910,10 +592,6 @@ int ScriptMachine::execSystemCmd(QString &out, const QString &exe,
     }
 }
 
-QString ScriptMachine::beautify(const QString &str, uint indent) {
-    return StringFormatter::format(str, indent);
-}
-
 QString ScriptMachine::stringify(void *ref, int typeId) {
     return QString::fromStdString(stringify_helper(ref, typeId));
 }
@@ -974,7 +652,10 @@ std::string ScriptMachine::getAsTypeName(int typeId) {
 }
 
 std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
-    Q_ASSERT(ref && typeId);
+    ASSERT(ref && typeId);
+    if (ref == nullptr) {
+        return {};
+    }
 
     switch (typeId & asTYPEID_MASK_SEQNBR) {
     case asTYPEID_BOOL:
@@ -1001,26 +682,18 @@ std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
         return fmt::to_string(*static_cast<double *>(ref));
     }
 
-    auto key = typeId;
-    if (typeId & asTYPEID_TEMPLATE) {
-        auto t = _engine->GetTypeInfoById(typeId);
-        t = _engine->GetTypeInfoByName(t->GetName());
-        Q_ASSERT(t);
-        key = t->GetTypeId();
-    }
-    auto rid = _asMetaCaches.value(key, QMetaType::Void);
-    if (rid == QMetaType::QChar) {
+    if (isAngelChar(typeId)) {
         // char
         auto pch = resolveObjAs<QChar *>(ref, typeId);
         return QString(*pch).toStdString();
-    } else if (rid == QMetaType::QString) {
+    } else if (isAngelString(typeId)) {
         // string
         return resolveObjAs<QString>(ref, typeId)->toStdString();
-    } else if (rid == QMetaType::QVariantList) {
+    } else if (isAngelArray(typeId)) {
         // array<?>
         return fmt::to_string(
             CScriptArrayView(resolveObjAs<CScriptArray>(ref, typeId)));
-    } else if (rid == QMetaType::QVariantMap) {
+    } else if (isAngelDictionary(typeId)) {
         // dictionary
         auto dic = resolveObjAs<CScriptDictionary>(ref, typeId);
         std::vector<std::string> buffer;
@@ -1041,15 +714,16 @@ std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
             buffer.emplace_back(r);
         }
         return fmt::format(FMT_STRING("{{{}}}"), fmt::join(buffer, ", "));
-    } else if (rid == QMetaType::QVariantPair) {
+    } else if (isAngelDicValue(typeId)) {
         // dictonaryValue
         auto dicv = resolveObjAs<CScriptDictValue>(ref, typeId);
         return stringify_helper(const_cast<void *>(dicv->GetAddressOfValue()),
                                 dicv->GetTypeId());
-    } else if (rid == QMetaType::QVariant) {
+    } else if (isAngelAny(typeId)) {
         // any
         auto obj = resolveObjAs<CScriptAny>(ref, typeId);
-        return stringify_helper(obj->value.valueObj, obj->value.typeId);
+        return stringify_helper(const_cast<void *>(obj->GetAddressOfValue()),
+                                obj->GetTypeId());
     }
 
     // if type has toString() function
@@ -1078,7 +752,7 @@ bool ScriptMachine::executeScript(
     ConsoleMode mode, const QString &script, bool isInDebug, int *retCode,
     std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
         sections) {
-    Q_ASSERT(mode != Interactive);
+    ASSERT(mode != Interactive);
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
         return false;
@@ -1128,7 +802,19 @@ bool ScriptMachine::executeScript(
             info.row = error.line;
             info.col = error.column;
             info.message = error.message;
-            info.type = MessageType::Error;
+
+            switch (error.severity) {
+            case AsPreprocesser::Severity::Info:
+                info.type = MessageType::Info;
+                break;
+            case AsPreprocesser::Severity::Warning:
+                info.type = MessageType::Warn;
+                break;
+            case AsPreprocesser::Severity::Error:
+                info.type = MessageType::Error;
+                break;
+            }
+
             outputMessage(info);
         });
 
@@ -1294,7 +980,7 @@ bool ScriptMachine::executeScript(
 }
 
 void ScriptMachine::beginEvaluateDefine() {
-    Q_ASSERT(_eMod == nullptr);
+    ASSERT(_eMod == nullptr);
     if (_eMod == nullptr) {
         _eMod = _engine->GetModule("WINGDEF", asGM_ALWAYS_CREATE);
         _eMod->SetAccessMask(0x2);
@@ -1302,7 +988,7 @@ void ScriptMachine::beginEvaluateDefine() {
 }
 
 QVariant ScriptMachine::evaluateDefine(const QString &code) {
-    Q_ASSERT(_eMod);
+    ASSERT(_eMod);
     if (!_eMod) {
         return {};
     }
@@ -1553,7 +1239,7 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
                                                         void *param) {
     asIScriptContext *ctx = nullptr;
     auto p = reinterpret_cast<ScriptMachine *>(param);
-    Q_ASSERT(p);
+    ASSERT(p);
 
     // Check if there is a free context available in the pool
     if (p->_ctxPool.size()) {
@@ -1594,7 +1280,7 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
         ctx->Unprepare();
 
         auto p = reinterpret_cast<ScriptMachine *>(param);
-        Q_ASSERT(p);
+        ASSERT(p);
 
         // Place the context into the pool for when it will be needed again
         p->_ctxPool.push_back(ctx);
@@ -1690,8 +1376,7 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     engine->SetDefaultAccessMask(0x3);
 
     auto r = engine->RegisterTypedef("byte", "uint8"); // register alias
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     RegisterScriptArray(engine, true);
     RegisterQString(engine);
@@ -1700,8 +1385,8 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterQStringRegExSupport(engine);
 
     r = engine->SetDefaultNamespace("math");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);
     engine->SetDefaultNamespace("");
@@ -1719,6 +1404,8 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     RegisterScriptFileSystem(engine);
     RegisterScriptUrl(engine);
     RegisterScriptCrypto(engine);
+    RegisterASReflection(engine);
+    RegisterOptBox(engine);
 
     engine->SetDefaultAccessMask(0x1);
     registerExceptionRoutines(engine);
@@ -1726,117 +1413,126 @@ void ScriptMachine::registerEngineAddon(asIScriptEngine *engine) {
     registerEngineClipboard(engine);
     registerEngineDebug(engine);
 
-    // cache some typeids
-    auto &m = ScriptMachine::instance();
-    auto &cache = m._asMetaCaches;
+    // cache typeids and typeinfos we all must use
     auto type = engine->GetTypeInfoByName("char");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::Char);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_CharTypeInfo);
 
     type = engine->GetTypeInfoByName("string");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QString);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_StringTypeInfo);
 
     type = engine->GetTypeInfoByName("datetime");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QDateTime);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_DateTimeTypeInfo);
 
     type = engine->GetTypeInfoByName("array");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QVariantList);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_ArrayTypeInfo);
 
     type = engine->GetTypeInfoByName("dictionary");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QVariantMap);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_DictionaryTypeInfo);
 
     type = engine->GetTypeInfoByName("dictionaryValue");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QVariantPair);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_DictionaryValueTypeInfo);
 
     type = engine->GetTypeInfoByName("any");
-    Q_ASSERT(type);
-    cache.insert(type->GetTypeId(), QMetaType::QVariant);
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_AnyTypeInfo);
+
+    type = engine->GetTypeInfoByName("json::value");
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_JsonValueTypeInfo);
+
+    type = engine->GetTypeInfoByDecl("array<byte>");
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_ByteArrayTypeInfo);
+
+    type = engine->GetTypeInfoByDecl("array<string>");
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_StringListTypeInfo);
+
+    type = engine->GetTypeInfoByDecl("array<char>");
+    ASSERT(type);
+    engine->SetUserData(type, AsUserDataType::UserData_CharArrayTypeInfo);
 }
 
 void ScriptMachine::registerEngineAssert(asIScriptEngine *engine) {
     int r;
 
     // The string type must be available
-    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+    ASSERT(engine->GetTypeInfoByDecl("string"));
 
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
         r = engine->RegisterGlobalFunction("void assert(bool expression)",
                                            asFUNCTION(scriptAssert),
                                            asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
 
         r = engine->RegisterGlobalFunction(
             "void assert_x(bool expression, const string &in msg)",
             asFUNCTION(scriptAssert_X), asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
     } else {
         r = engine->RegisterGlobalFunction("void assert(bool expression)",
                                            WRAP_FN(scriptAssert),
                                            asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
 
         r = engine->RegisterGlobalFunction(
             "void assert_x(bool expression, const string &in msg)",
             WRAP_FN(scriptAssert_X), asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
     }
 }
 
 void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("clipboard");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // The string type must be available
-    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+    ASSERT(engine->GetTypeInfoByDecl("string"));
 
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
         r = engine->RegisterGlobalFunction(
             "void setText(const string &in text)", asFUNCTION(clip_setText),
             asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "string text()", asFUNCTION(clip_getText), asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "void setBinary(const uint8[]@ data)", asFUNCTION(clip_setBinary),
             asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "uint8[]@ getBinary()", asFUNCTION(clip_getBinary), asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
     } else {
         r = engine->RegisterGlobalFunction(
             "void setText(const string &in text)", WRAP_FN(clip_setText),
             asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "string text()", asFUNCTION(clip_getText), asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "void setBinary(const uint8[]@ data)", WRAP_FN(clip_setBinary),
             asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
+
         r = engine->RegisterGlobalFunction(
             "uint8[]@ getBinary()", WRAP_FN(clip_getBinary), asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
     }
 
     engine->SetDefaultNamespace("");
@@ -1844,23 +1540,19 @@ void ScriptMachine::registerEngineClipboard(asIScriptEngine *engine) {
 
 void ScriptMachine::registerEngineDebug(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("debug");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction("void setBreak()",
                                        asFUNCTION(debug_break), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "uint64 elapsedTime()", asFUNCTION(debug_elapsedTime), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "string backtrace()", asFUNCTION(debug_backtrace), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }
@@ -1871,22 +1563,45 @@ void ScriptMachine::registerCallBack(ConsoleMode mode,
 }
 
 bool ScriptMachine::isAngelChar(int typeID) const {
-    return _asMetaCaches.value(typeID, QMetaType::Void) == QMetaType::Char;
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+    return typeID == type->GetTypeId();
 }
 
 bool ScriptMachine::isAngelString(int typeID) const {
-    return _asMetaCaches.value(typeID, QMetaType::Void) == QMetaType::QString;
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_StringTypeInfo));
+    return typeID == type->GetTypeId();
 }
 
 bool ScriptMachine::isAngelArray(int typeID) const {
     if (typeID & asTYPEID_TEMPLATE) {
         auto t = _engine->GetTypeInfoById(typeID);
         t = _engine->GetTypeInfoByName(t->GetName());
-        Q_ASSERT(t);
+        ASSERT(t);
         typeID = t->GetTypeId();
     }
-    return _asMetaCaches.value(typeID, QMetaType::Void) ==
-           QMetaType::QVariantList;
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_ArrayTypeInfo));
+    return typeID == type->GetTypeId();
+}
+
+bool ScriptMachine::isAngelDictionary(int typeID) const {
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_DictionaryTypeInfo));
+    return typeID == type->GetTypeId();
+}
+
+bool ScriptMachine::isAngelDicValue(int typeID) const {
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_DictionaryValueTypeInfo));
+    return typeID == type->GetTypeId();
+}
+
+bool ScriptMachine::isAngelAny(int typeID) const {
+    auto type = static_cast<asITypeInfo *>(
+        _engine->GetUserData(AsUserDataType::UserData_AnyTypeInfo));
+    return typeID == type->GetTypeId();
 }
 
 void ScriptMachine::setFileEnableOverwrite(bool b) {
@@ -2166,32 +1881,28 @@ void ScriptMachine::registerExceptionRoutines(asIScriptEngine *engine) {
     int r;
 
     // The string type must be available
-    Q_ASSERT(engine->GetTypeInfoByDecl("string"));
+    ASSERT(engine->GetTypeInfoByDecl("string"));
 
     if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0) {
         r = engine->RegisterGlobalFunction("void throw(const string &in)",
                                            asFUNCTION(scriptThrow),
                                            asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
 
         r = engine->RegisterGlobalFunction("string getExceptionInfo()",
                                            asFUNCTION(scriptGetExceptionInfo),
                                            asCALL_CDECL);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
 
     } else {
         r = engine->RegisterGlobalFunction("void throw(const string &in)",
                                            WRAP_FN(scriptThrow),
                                            asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
 
         r = engine->RegisterGlobalFunction("string getExceptionInfo()",
                                            WRAP_FN(scriptGetExceptionInfo),
                                            asCALL_GENERIC);
-        Q_ASSERT(r >= 0);
-        Q_UNUSED(r);
+        ASSERT(r >= 0);
     }
 }

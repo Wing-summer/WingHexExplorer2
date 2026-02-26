@@ -19,6 +19,8 @@
 #define ANGELSCRIPTHELPER_H
 
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
+#include "define.h"
+
 #include <QMetaEnum>
 #include <QtGlobal>
 
@@ -51,8 +53,11 @@ inline void registerAngelType(asIScriptEngine *engine, const char *enumName) {
 }
 
 template <typename Func>
-inline CScriptArray *retarrayWrapperFunction(Func &&getRet,
-                                             const char *angelType) {
+inline CScriptArray *retarrayWrapperFunction(Func &&getRet, asITypeInfo *t) {
+    if (!t) {
+        return nullptr;
+    }
+
     // context, which can be used to obtain a pointer to the
     // engine.
     asIScriptContext *ctx = asGetActiveContext();
@@ -60,13 +65,6 @@ inline CScriptArray *retarrayWrapperFunction(Func &&getRet,
         asIScriptEngine *engine = ctx->GetEngine();
 
         auto ret = getRet();
-
-        // The script array needs to know its type to properly handle the
-        // elements. Note that the object type should be cached to avoid
-        // performance issues if the function is called frequently.
-        asITypeInfo *t = engine->GetTypeInfoByDecl(angelType);
-        Q_ASSERT(t);
-
         auto array = CScriptArray::Create(t, ret.size());
         for (typename decltype(ret)::size_type i = 0; i < ret.size(); ++i) {
             auto v = ret.at(i);
@@ -80,7 +78,14 @@ inline CScriptArray *retarrayWrapperFunction(Func &&getRet,
 
 template <typename Func>
 inline CScriptArray *byteArrayWrapperFunction(Func &&fn) {
-    return retarrayWrapperFunction(fn, "array<byte>");
+    asIScriptContext *ctx = asGetActiveContext();
+    if (ctx) {
+        return retarrayWrapperFunction(
+            fn, static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+                    AsUserDataType::UserData_ByteArrayTypeInfo)));
+    } else {
+        return nullptr;
+    }
 }
 
 inline QStringList cArray2QStringList(const CScriptArray &array,
@@ -91,7 +96,9 @@ inline QStringList cArray2QStringList(const CScriptArray &array,
     if (ctx) {
         auto engine = ctx->GetEngine();
         Q_ASSERT(engine);
-        auto stringID = engine->GetTypeIdByDecl("string");
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_StringTypeInfo));
+        auto stringID = type->GetTypeId();
         Q_ASSERT(stringID >= 0);
         bool b = array.GetElementTypeId() == stringID;
         if (ok) {
@@ -120,8 +127,7 @@ inline QByteArray cArray2ByteArray(const CScriptArray &array,
     if (ctx) {
         asIScriptEngine *engine = ctx->GetEngine();
         Q_ASSERT(engine);
-        auto byteID = engine->GetTypeIdByDecl("byte");
-        Q_ASSERT(byteID >= 0);
+        constexpr auto byteID = asTYPEID_UINT8;
         bool b = array.GetElementTypeId() == byteID;
         if (ok) {
             *ok = b;

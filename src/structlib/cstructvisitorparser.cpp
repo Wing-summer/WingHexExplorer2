@@ -257,6 +257,13 @@ void CStructVisitorParser::reportDupError(size_t line,
         QStringLiteral("\"%1\" is duplicated declaration").arg(var));
 }
 
+void CStructVisitorParser::reportTooManyMembersError(size_t line,
+                                                     size_t charPositionInLine,
+                                                     const QString &var) {
+    errlis->reportError(line, charPositionInLine,
+                        QStringLiteral("Too many members of \"%1\"").arg(var));
+}
+
 void CStructVisitorParser::reportUnexpectedType(size_t line,
                                                 size_t charPositionInLine,
                                                 const QString &var,
@@ -1854,6 +1861,17 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                 var.data_type = dl->tname;
                 var.fmt_type = fmttype;
 
+                if (name) {
+                    if (var.data_type == decl.name) {
+                        auto sym = m->getStart();
+                        errlis->reportError(
+                            sym->getLine(), sym->getCharPositionInLine(),
+                            QStringLiteral("recursive defination type '%1'")
+                                .arg(var.data_type));
+                        return std::nullopt;
+                    }
+                }
+
                 auto declor = sub->declarator();
                 if (declor) {
                     // bit field
@@ -1912,6 +1930,14 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                                            var.var_name);
                             return std::nullopt;
                         }
+                        if (decl.members.size() >=
+                            std::numeric_limits<uint>::max()) {
+                            auto sym = d->getStart();
+                            reportTooManyMembersError(
+                                sym->getLine(), sym->getCharPositionInLine(),
+                                var.var_name);
+                            return std::nullopt;
+                        }
 
                         decl.members.append(var);
 
@@ -1939,6 +1965,16 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
 
                             var.is_pointer = info->isPointer;
                             if (info->arrayCount == 0) {
+                                if (decl.members.size() >=
+                                    std::numeric_limits<uint>::max()) {
+                                    auto sym = d->getStart();
+                                    reportTooManyMembersError(
+                                        sym->getLine(),
+                                        sym->getCharPositionInLine(),
+                                        var.var_name);
+                                    return std::nullopt;
+                                }
+
                                 var.array_dims = {0};
                                 decl.members.append(var);
                                 used_names.append(var.var_name);
@@ -1994,6 +2030,14 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                                 return std::nullopt;
                             }
 
+                            if (decl.members.size() >=
+                                std::numeric_limits<uint>::max()) {
+                                auto sym = d->getStart();
+                                reportTooManyMembersError(
+                                    sym->getLine(),
+                                    sym->getCharPositionInLine(), var.var_name);
+                                return std::nullopt;
+                            }
                             decl.members.append(var);
 
                             if (!var.var_name.isEmpty()) {

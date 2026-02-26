@@ -19,6 +19,7 @@
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "angelscript.h"
 #include "class/angelscripthelper.h"
+#include "define.h"
 
 #include <QMetaEnum>
 #include <QString>
@@ -32,7 +33,7 @@ BEGIN_AS_NAMESPACE
 class CQStringFactory : public asIStringFactory {
 public:
     CQStringFactory() {}
-    ~CQStringFactory() { Q_ASSERT(stringCache.empty()); }
+    ~CQStringFactory() { ASSERT(stringCache.empty()); }
 
     const void *GetStringConstant(const char *data, asUINT length) override {
         auto str = QString::fromUtf8(data, length);
@@ -522,13 +523,19 @@ static bool stringStartsWith(const QString &substr, bool caseSensitive,
 //      bool caseSensitive = true)
 static CScriptArray *stringSplit(const QString &sep, bool skipEmpty,
                                  bool caseSensitive, const QString &str) {
-    return retarrayWrapperFunction(
-        [&]() -> QStringList {
-            return str.split(
-                sep, skipEmpty ? Qt::SkipEmptyParts : Qt::KeepEmptyParts,
-                caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive);
-        },
-        "array<string>");
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        return retarrayWrapperFunction(
+            [&]() -> QStringList {
+                return str.split(
+                    sep, skipEmpty ? Qt::SkipEmptyParts : Qt::KeepEmptyParts,
+                    caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive);
+            },
+            static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+                AsUserDataType::UserData_StringListTypeInfo)));
+    } else {
+        return nullptr;
+    }
 }
 
 static QString fromAscii(CScriptArray *array) {
@@ -595,16 +602,22 @@ static void prependStr(const QString &str, QString &s) { s.prepend(str); }
 static void prependCh(const QChar &ch, QString &s) { s.prepend(ch); }
 
 static CScriptArray *toRawData(const QString &s) {
-    return retarrayWrapperFunction(
-        [s]() {
-            QList<QChar> data;
-            data.reserve(s.length());
-            for (auto &ch : s) {
-                data.append(ch);
-            }
-            return data;
-        },
-        "array<char>");
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        return retarrayWrapperFunction(
+            [s]() {
+                QList<QChar> data;
+                data.reserve(s.length());
+                for (auto &ch : s) {
+                    data.append(ch);
+                }
+                return data;
+            },
+            static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+                AsUserDataType::UserData_CharArrayTypeInfo)));
+    } else {
+        return nullptr;
+    }
 }
 
 asUINT String_opForBegin(const QString *) { return 0; }
@@ -646,57 +659,53 @@ static void DestructChar(QChar *thisPointer) { thisPointer->~QChar(); }
 
 void RegisterQString_Native(asIScriptEngine *engine) {
     int r = 0;
-    Q_UNUSED(r);
 
     // register the char type
     r = engine->RegisterObjectType("char", sizeof(QChar),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS |
                                        asGetTypeTraits<QChar>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour("char", asBEHAVE_CONSTRUCT, "void f()",
                                         asFUNCTION(ConstructChar),
                                         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "char", asBEHAVE_CONSTRUCT, "void f(uint16)",
         asFUNCTION(ConstructCharInt), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
         "char", asBEHAVE_CONSTRUCT, "void f(const char &in)",
         asFUNCTION(CopyConstructChar), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour("char", asBEHAVE_DESTRUCT, "void f()",
                                         asFUNCTION(DestructChar),
                                         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     r = engine->RegisterObjectMethod(
         "char", "int16 unicode() const",
         asMETHODPR(QChar, unicode, () const, ushort), asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
 #else
     r = engine->RegisterObjectMethod(
         "char", "int16 unicode() const",
         asMETHODPR(QChar, unicode, () const, char16_t), asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
 #endif
 
     r = engine->RegisterObjectMethod(
         "char", "char &opAssign(const char &in)",
         asMETHODPR(QChar, operator=, (const QChar &), QChar &),
         asCALL_THISCALL);
-    Q_UNUSED(r);
-    Q_ASSERT(r >= 0);
+
+    ASSERT(r >= 0);
 
     // Register the string type
 #if AS_CAN_USE_CPP11
@@ -704,103 +713,96 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     // determine the correct flags to use
     r = engine->RegisterObjectType("string", sizeof(QString),
                                    asOBJ_VALUE | asGetTypeTraits<QString>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
 #else
     r = engine->RegisterObjectType("string", sizeof(QString),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
 #endif
 
     r = engine->RegisterObjectBehaviour(
         "char", asBEHAVE_CONSTRUCT, "void f(const string &in)",
         asFUNCTION(ConstructCharString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterStringFactory("string", GetQStringFactorySingleton());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Register the object operator overloads
     r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,
                                         "void f()", asFUNCTION(ConstructString),
                                         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "string", asBEHAVE_CONSTRUCT, "void f(const string &in)",
         asFUNCTION(CopyConstructString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()",
                                         asFUNCTION(DestructString),
                                         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "string", asBEHAVE_CONSTRUCT, "void f(const char &in)",
         asFUNCTION(ConstructStringChar), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string &opAssign(const string &in)",
         asMETHODPR(QString, operator=, (const QString &), QString &),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     // Need to use a wrapper on Mac OS X 10.7/XCode 4.3 and CLang/LLVM,
     // otherwise the linker fails
     r = engine->RegisterObjectMethod(
         "string", "string &opAddAssign(const string &in)",
         asFUNCTION(AddAssignStringToString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     //	r = engine->RegisterObjectMethod("string", "string &opAddAssign(const
     // string &in)", asMETHODPR(string, operator+=, (const string&), string&),
-    // asCALL_THISCALL); Q_ASSERT( r >= 0 );
+    // asCALL_THISCALL); ASSERT( r >= 0 );
 
     // Need to use a wrapper for operator== otherwise gcc 4.7 fails to compile
     r = engine->RegisterObjectMethod(
         "string", "bool opEquals(const string &in) const",
         asFUNCTIONPR(StringEquals, (const QString &, const QString &), bool),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "int opCmp(const string &in) const", asFUNCTION(StringCmp),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string", "string opAdd(const string &in) const", asFUNCTION(StringAdd),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "uint length() const",
                                      asFUNCTION(StringLength),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "void resize(uint)",
                                      asFUNCTION(StringResize),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Need to use a wrapper on Mac OS X 10.7/XCode 4.3 and CLang/LLVM,
     // otherwise the linker fails
     //	r = engine->RegisterObjectMethod("string", "bool isEmpty() const",
-    // asMETHOD(string, empty), asCALL_THISCALL); Q_ASSERT( r >= 0 );
+    // asMETHOD(string, empty), asCALL_THISCALL); ASSERT( r >= 0 );
     r = engine->RegisterObjectMethod("string", "bool isEmpty() const",
                                      asFUNCTION(StringIsEmpty),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Register the index operator, both as a mutator and as an inspector
     // Note that we don't register the operator[] directly, as it doesn't do
@@ -808,404 +810,389 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     r = engine->RegisterObjectMethod("string", "char &opIndex(uint)",
                                      asFUNCTION(StringCharAt),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "const char &opIndex(uint) const", asFUNCTION(StringCharAt),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
 #if AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE == 0
     // Automatic conversion from values
     r = engine->RegisterObjectMethod("string", "string &opAssign(double)",
                                      asFUNCTION(AssignDoubleToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)",
                                      asFUNCTION(AddAssignDoubleToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd(double) const",
                                      asFUNCTION(AddStringDouble),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const",
                                      asFUNCTION(AddDoubleString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string", "string &opAssign(const char &in)",
         asFUNCTION(AssignCharToString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string &opAddAssign(const char &in)",
         asFUNCTION(AddAssignCharToString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string opAdd(const char &in) const",
         asFUNCTION(AddStringChar), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string opAdd_r(const char &in) const",
         asFUNCTION(AddCharString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "string &opAssign(float)",
                                      asFUNCTION(AssignCharToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)",
                                      asFUNCTION(AddAssignFloatToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd(float) const",
                                      asFUNCTION(AddStringFloat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd_r(float) const",
                                      asFUNCTION(AddFloatString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "string &opAssign(int64)",
                                      asFUNCTION(AssignInt64ToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)",
                                      asFUNCTION(AddAssignInt64ToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd(int64) const",
                                      asFUNCTION(AddStringInt64),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd_r(int64) const",
                                      asFUNCTION(AddInt64String),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "string &opAssign(uint64)",
                                      asFUNCTION(AssignUInt64ToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint64)",
                                      asFUNCTION(AddAssignUInt64ToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd(uint64) const",
                                      asFUNCTION(AddStringUInt64),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd_r(uint64) const",
                                      asFUNCTION(AddUInt64String),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("string", "string &opAssign(bool)",
                                      asFUNCTION(AssignBoolToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string &opAddAssign(bool)",
                                      asFUNCTION(AddAssignBoolToString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd(bool) const",
                                      asFUNCTION(AddStringBool),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string opAdd_r(bool) const",
                                      asFUNCTION(AddBoolString),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
 #endif
 
     // Utilities
     r = engine->RegisterObjectMethod(
         "string", "void append(const string &in str)", asFUNCTION(appendStr),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "void append(const char &in ch)",
                                      asFUNCTION(appendCh),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "void prepend(const string &in str)", asFUNCTION(prependStr),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "void prepend(const char &in ch)", asFUNCTION(prependCh),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string substr(uint start = 0, int count = -1) const",
         asFUNCTION(StringSubString), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "int findFirstOf(const string &in, uint start = 0) const",
         asFUNCTION(StringFindFirstOf), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "int findLastOf(const string &in, uint start = 0) const",
         asFUNCTION(StringFindLastOf), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string", "void insert(uint pos, const string &in other)",
         asFUNCTION(StringInsert), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "void erase(uint pos, int count = -1)",
         asFUNCTION(StringErase), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string",
         "int compare(const string &in val, bool caseSensitive = true) const",
         asFUNCTION(stringCompare), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "bool contains(const string &in val, bool caseSensitive = true) const",
         asFUNCTION(stringContains), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "bool endsWith(const string &in val, bool caseSensitive = true) const",
         asFUNCTION(stringEndsWith), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "string repeated(" QSIZETYPE " times)",
         asFUNCTION(stringRepeated), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "string replace(const string &in before,const string &in after, "
         "bool caseSensitive = true)",
         asFUNCTION(stringReplace), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "string simplified()",
                                      asFUNCTION(stringSimplified),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "bool startsWith(const string &in, bool caseSensitive = true)",
         asFUNCTION(stringStartsWith), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "array<string>@ split(const string &in, bool skipEmpty = false, "
         "bool caseSensitive = true)",
         asFUNCTION(stringSplit), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string", "array<uint8>@ toAsciiArray() const",
         asFUNCTION(toAsciiArray), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "array<uint8>@ toUtf8Array() const", asFUNCTION(toUtf8Array),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "array<uint8>@ toUtf16Array() const",
         asFUNCTION(toUtf16Array), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "array<uint8>@ toUcs4Array() const", asFUNCTION(toUcs4Array),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("string", "array<char>@ toRawData() const",
                                      asFUNCTION(toRawData),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Support for foreach
     r = engine->RegisterObjectMethod(
         "string", "uint opForBegin() const",
         asFUNCTIONPR(String_opForBegin, (const QString *), asUINT),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "bool opForEnd(uint) const",
         asFUNCTIONPR(String_opForEnd, (asUINT, const QString *), bool),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "uint opForNext(uint) const",
         asFUNCTIONPR(String_opForNext, (asUINT, const QString *), asUINT),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "const char opForValue0(uint index) const",
         asMETHODPR(QString, at, (qsizetype) const, const QChar),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "uint opForValue1(uint index) const",
         asFUNCTIONPR(String_opForValue1, (asUINT, const QString *), asUINT),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Global functions
     r = engine->SetDefaultNamespace("string");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterEnum("DoubleFmt");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterEnumValue("DoubleFmt", "DFDecimal",
                                   DoubleFmt::DFDecimal);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterEnumValue("DoubleFmt", "DFExponent",
                                   DoubleFmt::DFExponent);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterEnumValue("DoubleFmt", "DFSignificantDigits",
                                   DoubleFmt::DFSignificantDigits);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction("string number(int64 val, int base=10)",
                                        asFUNCTION(Int64toString), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("string number(uint64 val, int base=10)",
                                        asFUNCTION(UInt64String), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("string number(int32 val, int base=10)",
                                        asFUNCTION(Int32toString), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("string number(uint32 val, int base=10)",
                                        asFUNCTION(UInt32toString),
                                        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string number(float val, string::DoubleFmt "
         "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
         asFUNCTION(Float2String), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string number(double val, string::DoubleFmt "
         "format=string::DoubleFmt::DFSignificantDigits, int precision=6)",
         asFUNCTION(Double2String), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("int parseInt(const string &in, int "
                                        "base = 10, bool &out ok = void)",
                                        asFUNCTION(parseInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("uint parseUInt(const string &in, "
                                        "int base = 10, bool &out ok = void)",
                                        asFUNCTION(parseUInt), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("int64 parseInt64(const string &in, int "
                                        "base = 10, bool &out ok = void)",
                                        asFUNCTION(parseInt64), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("uint64 parseUInt64(const string &in, "
                                        "int base = 10, bool &out ok = void)",
                                        asFUNCTION(parseUInt64), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "float parseFloat(const string &in, bool &out ok = void)",
         asFUNCTION(parseFloat), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "double parseDouble(const string &in, bool &out ok = void)",
         asFUNCTION(parseDouble), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "string fromAscii(const array<uint8> &in array)", asFUNCTION(fromAscii),
         asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string fromUtf8(const array<uint8> &in array)", asFUNCTION(fromUtf8),
         asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string fromUtf16(const array<uint8> &in array)", asFUNCTION(fromUtf16),
         asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string fromUcs4(const array<uint8> &in array)", asFUNCTION(fromUcs4),
         asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction(
         "string fromRawData(const array<char> &in array)",
         asFUNCTION(fromRawData), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }
@@ -1248,14 +1235,12 @@ static QString StringJoin(const CScriptArray &array, const QString &delim) {
 // The string type must have been registered first.
 void RegisterQStringUtils(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("string");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "string join(const array<string> &in, const string &in delim)",
         asFUNCTION(StringJoin), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }
@@ -1295,43 +1280,47 @@ static bool stringContainsReg(const QRegularExpression &exp,
 // array<string>@ split(const regex::exp &exp, bool skipEmpty = false)
 static CScriptArray *stringSplitReg(const QRegularExpression &exp,
                                     bool skipEmpty, const QString &str) {
-    return retarrayWrapperFunction(
-        [&]() -> QStringList {
-            return str.split(exp, skipEmpty ? Qt::SkipEmptyParts
-                                            : Qt::KeepEmptyParts);
-        },
-        "array<string>");
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        return retarrayWrapperFunction(
+            [&]() -> QStringList {
+                return str.split(exp, skipEmpty ? Qt::SkipEmptyParts
+                                                : Qt::KeepEmptyParts);
+            },
+            static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+                AsUserDataType::UserData_StringListTypeInfo)));
+    } else {
+        return nullptr;
+    }
 }
 
 void RegisterQStringRegExSupport(asIScriptEngine *engine) {
-    Q_ASSERT(engine->GetTypeInfoByName("regex::exp"));
+    ASSERT(engine->GetTypeInfoByName("regex::exp"));
 
     int r = engine->SetDefaultNamespace("string");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "string", "int findFirstOf(const regex::exp &in, uint start = 0) const",
         asFUNCTION(StringFindFirstOfReg), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "int findLastOf(const regex::exp &in, int start = -1) const",
         asFUNCTION(StringFindLastOfReg), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string", "bool contains(const regex::exp &in) const",
         asFUNCTION(stringContainsReg), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "string",
         "array<string>@ split(const regex::exp &in, "
         "bool skipEmpty = false)",
         asFUNCTION(stringSplitReg), asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }

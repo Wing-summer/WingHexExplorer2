@@ -306,7 +306,10 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
                     return WingInputDialog::getText(this, tr("InputRequest"),
                                                     tr("PleaseInput"));
                 };
-                callbacks.clearFn = [this]() { m_bgScriptOutput->clear(); };
+                callbacks.clearFn = [this]() {
+                    m_bgScriptOutput->clear();
+                    _lastOutputType = ScriptMachine::MessageType::Unknown;
+                };
                 callbacks.printMsgFn =
                     std::bind(&MainWindow::onOutputBgScriptOutput, this,
                               std::placeholders::_1);
@@ -4342,24 +4345,28 @@ void MainWindow::onOutputBgScriptOutput(
         }
     };
 
-    switch (message.type) {
+    auto msgtype = message.type;
+    if (_lastOutputType == ScriptMachine::MessageType::Unknown) {
+        _lastOutputType = msgtype;
+    }
+    switch (msgtype) {
     case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
-        if (isNotBlockStart) {
+        if (isNotBlockStart || _lastOutputType != msgtype) {
             cursor.insertBlock();
         }
         cursor.insertText(tr("[Info]") + fmtMsg(message), {});
         break;
     case ScriptMachine::MessageType::Warn: {
-        if (isNotBlockStart) {
-            m_bgScriptOutput->appendPlainText({});
+        if (isNotBlockStart || _lastOutputType != msgtype) {
+            cursor.insertBlock();
         }
         auto fmt = cursor.charFormat();
         fmt.setForeground(QColorConstants::Svg::gold);
         cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
     } break;
     case ScriptMachine::MessageType::Error: {
-        if (isNotBlockStart) {
+        if (isNotBlockStart || _lastOutputType != msgtype) {
             cursor.insertBlock();
         }
         auto fmt = cursor.charFormat();
@@ -4367,7 +4374,7 @@ void MainWindow::onOutputBgScriptOutput(
         cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
     } break;
     case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart && _lastOutputType != message.type) {
+        if (isNotBlockStart || _lastOutputType != message.type) {
             cursor.insertBlock();
         }
         cursor.insertText(message.message, {});

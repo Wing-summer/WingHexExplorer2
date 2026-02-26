@@ -22,9 +22,9 @@
 
 #include "WingPlugin/iwingangel.h"
 #include "as-debugger/as_debugger.h"
-#include "src/scriptaddon/scriptqdictionary.h"
-
+#include "define.h"
 #include "fmtlibext.h"
+#include "src/scriptaddon/scriptqdictionary.h"
 
 #include <QChar>
 #include <QColor>
@@ -157,7 +157,8 @@ public:
         auto &dbg = var->dbg;
         auto &cache = *dbg.cache;
         auto ctx = cache.ctx;
-        auto type = ctx->GetEngine()->GetTypeInfoByName("string");
+        auto type = static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+            AsUserDataType::UserData_StringTypeInfo));
         if (type == nullptr) {
             return;
         }
@@ -241,20 +242,8 @@ public:
 
     virtual void Expand(asIDBVariable::Ptr var) const override {
         const CScriptAny *v = var->address.ResolveAs<const CScriptAny>();
-
         auto tid = v->GetTypeId();
-
-        asIDBVarAddr id(tid, false, nullptr);
-
-        if (tid == asTYPEID_DOUBLE)
-            id.address = (void *)&v->value.valueFlt;
-        else if (tid == asTYPEID_INT64)
-            id.address = (void *)&v->value.valueInt;
-        else if (tid & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE))
-            id.address = (void *)&v->value.valueObj;
-        else
-            id.address = v->value.valueObj;
-
+        asIDBVarAddr id(tid, false, const_cast<void *>(v->GetAddressOfValue()));
         var->CreateChildVariable(
             "value", id, var->dbg.cache->GetTypeNameFromType(v->GetTypeId()));
     }
@@ -291,20 +280,19 @@ public:
 
         const QJsonDocument *v = var->address.ResolveAs<const QJsonDocument>();
         if (v->isEmpty() || v->isNull()) {
-            var->value = "Json::JsonDocument<null>";
+            var->value = "json::document<null>";
         } else {
             if (v->isArray()) {
                 auto arr = v->array();
                 auto len = arr.size();
                 var->value = fmt::format(
-                    FMT_STRING("Json::JsonDocument<Json::JsonArray>[{}]"), len);
+                    FMT_STRING("json::document<json::array>[{}]"), len);
                 var->expandable = len > 0;
             } else if (v->isObject()) {
                 auto obj = v->object();
                 auto len = obj.size();
                 var->value = fmt::format(
-                    FMT_STRING("Json::JsonDocument<Json::JsonObject>[{}]"),
-                    len);
+                    FMT_STRING("json::document<json::object>[{}]"), len);
                 var->expandable = len > 0;
             }
         }
@@ -318,7 +306,9 @@ public:
         }
 
         auto engine = var->dbg.cache->ctx->GetEngine();
-        auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_JsonValueTypeInfo));
+        auto typeId = type->GetTypeId();
         auto &dbg = var->dbg;
         auto &cache = *dbg.cache;
         if (v->isArray()) {
@@ -366,7 +356,9 @@ public:
         }
 
         auto engine = var->dbg.cache->ctx->GetEngine();
-        auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_JsonValueTypeInfo));
+        auto typeId = type->GetTypeId();
         for (auto p = v->begin(); p != v->end(); p++) {
             auto key = p.key();
             QJsonValue temp = p.value();
@@ -418,13 +410,13 @@ public:
         case QJsonValue::Array: {
             auto arr = v->toArray();
             auto len = arr.size();
-            var->value = fmt::format(FMT_STRING("Json::JsonArray[{}]"), len);
+            var->value = fmt::format(FMT_STRING("json::array[{}]"), len);
             var->expandable = len > 0;
         } break;
         case QJsonValue::Object: {
             auto obj = v->toObject();
             auto len = obj.size();
-            var->value = fmt::format(FMT_STRING("Json::JsonObject[{}]"), len);
+            var->value = fmt::format(FMT_STRING("json::object[{}]"), len);
             var->expandable = len > 0;
         } break;
         case QJsonValue::Undefined:
@@ -447,7 +439,9 @@ public:
             auto arr = v->toArray();
             auto total = arr.size();
             auto engine = var->dbg.cache->ctx->GetEngine();
-            auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
+            auto type = static_cast<asITypeInfo *>(engine->GetUserData(
+                AsUserDataType::UserData_JsonValueTypeInfo));
+            auto typeId = type->GetTypeId();
             for (qsizetype i = 0; i < total; i++) {
                 QJsonValue temp = arr.at(i);
                 auto child = var->CreateChildVariable(
@@ -461,7 +455,9 @@ public:
         case QJsonValue::Object: {
             auto obj = v->toObject();
             auto engine = var->dbg.cache->ctx->GetEngine();
-            auto typeId = engine->GetTypeIdByDecl("Json::JsonValue");
+            auto type = static_cast<asITypeInfo *>(engine->GetUserData(
+                AsUserDataType::UserData_JsonValueTypeInfo));
+            auto typeId = type->GetTypeId();
             for (auto p = obj.begin(); p != obj.end(); p++) {
                 auto key = p.key();
                 QJsonValue temp = p.value();
@@ -521,7 +517,6 @@ public:
                     auto data = rc.at(i);
 
                     auto typeId = engine->GetTypeIdByDecl(data.type.toUtf8());
-
                     auto temp = data.buffer;
                     if (temp) {
                         auto child = var->CreateChildVariable(

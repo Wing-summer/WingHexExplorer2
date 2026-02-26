@@ -24,87 +24,89 @@
 BEGIN_AS_NAMESPACE
 
 CScriptFileSystem *ScriptFileSystem_Factory() {
-    return new CScriptFileSystem();
+    auto mem =
+        static_cast<CScriptFileSystem *>(asAllocMem(sizeof(CScriptFileSystem)));
+    return new (mem) CScriptFileSystem();
 }
 
 void RegisterScriptFileSystem_Native(asIScriptEngine *engine) {
     int r;
 
-    assert(engine->GetTypeInfoByName("string"));
-    assert(engine->GetTypeInfoByDecl("array<string>"));
-    assert(engine->GetTypeInfoByName("datetime"));
+    ASSERT(engine->GetTypeInfoByName("string"));
+    ASSERT(engine->GetTypeInfoByDecl("array<string>"));
+    ASSERT(engine->GetTypeInfoByName("datetime"));
 
     r = engine->RegisterObjectType("filesystem", 0, asOBJ_REF);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "filesystem", asBEHAVE_FACTORY, "filesystem @f()",
         asFUNCTION(ScriptFileSystem_Factory), asCALL_CDECL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "filesystem", asBEHAVE_ADDREF, "void f()",
         asMETHOD(CScriptFileSystem, AddRef), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "filesystem", asBEHAVE_RELEASE, "void f()",
         asMETHOD(CScriptFileSystem, Release), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "filesystem", "bool changeCurrentPath(const string &in)",
         asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "string getCurrentPath() const",
         asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "array<string> @getDirs() const",
         asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "array<string> @getFiles() const",
         asMETHOD(CScriptFileSystem, GetFiles), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool isDir(const string &in) const",
         asMETHOD(CScriptFileSystem, IsDir), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool isLink(const string &in) const",
         asMETHOD(CScriptFileSystem, IsLink), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "int64 getSize(const string &in) const",
         asMETHOD(CScriptFileSystem, GetSize), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool makeDir(const string &in)",
         asMETHOD(CScriptFileSystem, MakeDir), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool removeDir(const string &in)",
         asMETHOD(CScriptFileSystem, RemoveDir), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool deleteFile(const string &in)",
         asMETHOD(CScriptFileSystem, DeleteFile), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool copyFile(const string &in, const string &in)",
         asMETHOD(CScriptFileSystem, CopyFile), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "bool moveFile(const string &in, const string &in)",
         asMETHOD(CScriptFileSystem, MoveFile), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "datetime getCreateDateTime(const string &in) const",
         asMETHOD(CScriptFileSystem, GetCreateDateTime), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "filesystem", "datetime getModifyDateTime(const string &in) const",
         asMETHOD(CScriptFileSystem, GetModifyDateTime), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 }
 
 void RegisterScriptFileSystem(asIScriptEngine *engine) {
@@ -134,8 +136,10 @@ CScriptFileSystem::~CScriptFileSystem() {}
 void CScriptFileSystem::AddRef() const { asAtomicInc(refCount); }
 
 void CScriptFileSystem::Release() const {
-    if (asAtomicDec(refCount) == 0)
-        delete this;
+    if (asAtomicDec(refCount) == 0) {
+        this->~CScriptFileSystem();
+        asFreeMem(const_cast<CScriptFileSystem *>(this));
+    }
 }
 
 CScriptArray *CScriptFileSystem::GetFiles() const {

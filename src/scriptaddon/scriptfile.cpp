@@ -24,192 +24,195 @@
 
 BEGIN_AS_NAMESPACE
 
-CScriptFile *ScriptFile_Factory() { return new CScriptFile(); }
+CScriptFile *ScriptFile_Factory() {
+    auto mem = static_cast<CScriptFile *>(asAllocMem(sizeof(CScriptFile)));
+    return new (mem) CScriptFile();
+}
 
 void RegisterScriptFile_Native(asIScriptEngine *engine) {
     int r;
 
     r = engine->RegisterObjectType("file", 0, asOBJ_REF);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour("file", asBEHAVE_FACTORY, "file @f()",
                                         asFUNCTION(ScriptFile_Factory),
                                         asCALL_CDECL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour("file", asBEHAVE_ADDREF, "void f()",
                                         asMETHOD(CScriptFile, AddRef),
                                         asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour("file", asBEHAVE_RELEASE, "void f()",
                                         asMETHOD(CScriptFile, Release),
                                         asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "file", "bool open(const string &in path, int mode)",
         asMETHOD(CScriptFile, Open), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "file", "void close()", asMETHOD(CScriptFile, Close), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 getSize() const",
                                      asMETHOD(CScriptFile, GetSize),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "bool IsOpen() const",
                                      asMETHOD(CScriptFile, IsOpen),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "bool isEndOfFile() const",
                                      asMETHOD(CScriptFile, IsEOF),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "string readString()",
                                      asMETHOD(CScriptFile, ReadString),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "array<uint8>@ readByteArray()",
                                      asMETHOD(CScriptFile, ReadByteArray),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "string readLine()",
                                      asMETHOD(CScriptFile, ReadLine),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "file", "array<uint8>@ readLineByteArray()",
         asMETHOD(CScriptFile, ReadLineByteArray), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int8 readInt8()",
                                      asMETHOD(CScriptFile, ReadInt8),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int16 readInt16()",
                                      asMETHOD(CScriptFile, ReadInt16),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int32 readInt32()",
                                      asMETHOD(CScriptFile, ReadInt32),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 readInt64()",
                                      asMETHOD(CScriptFile, ReadInt64),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "uint8 readUInt8()",
                                      asMETHOD(CScriptFile, ReadUInt8),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "uint16 readUInt16()",
                                      asMETHOD(CScriptFile, ReadUInt16),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "uint32 readUInt32()",
                                      asMETHOD(CScriptFile, ReadUInt32),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "uint64 readUInt64()",
                                      asMETHOD(CScriptFile, ReadUInt64),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "float readFloat()",
                                      asMETHOD(CScriptFile, ReadFloat),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "double readDouble()",
                                      asMETHOD(CScriptFile, ReadDouble),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "file", "int writeString(const string &in)",
         asMETHOD(CScriptFile, WriteString), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "file", "int writeByteArray(const array<uint8> &in)",
         asMETHOD(CScriptFile, WriteByteArray), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeInt8(int8)",
                                      asMETHOD(CScriptFile, WriteInt8),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeInt16(int16)",
                                      asMETHOD(CScriptFile, WriteInt16),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeInt32(int32)",
                                      asMETHOD(CScriptFile, WriteInt32),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeInt64(int64)",
                                      asMETHOD(CScriptFile, WriteInt64),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeUInt8(uint8)",
                                      asMETHOD(CScriptFile, WriteUInt8),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeUInt16(uint16)",
                                      asMETHOD(CScriptFile, WriteUInt16),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeUInt32(uint32)",
                                      asMETHOD(CScriptFile, WriteUInt32),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeUInt64(uint64)",
                                      asMETHOD(CScriptFile, WriteUInt64),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeFloat(float)",
                                      asMETHOD(CScriptFile, WriteFloat),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 writeDouble(double)",
                                      asMETHOD(CScriptFile, WriteDouble),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 getPos() const",
                                      asMETHOD(CScriptFile, GetPos),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "bool setPos(int64)",
                                      asMETHOD(CScriptFile, SetPos),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("file", "int64 movePos(int64)",
                                      asMETHOD(CScriptFile, MovePos),
                                      asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectProperty(
         "file", "bool mostSignificantByteFirst",
         asOFFSET(CScriptFile, mostSignificantByteFirst));
-    assert(r >= 0);
+    ASSERT(r >= 0);
 
     // register enum flags
     r = engine->SetDefaultNamespace("file");
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnum("mode");
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "NotOpen", QFile::NotOpen);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "ReadOnly", QFile::ReadOnly);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "WriteOnly", QFile::WriteOnly);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "ReadWrite", QFile::ReadWrite);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "Append", QFile::Append);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "Truncate", QFile::Truncate);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "Text", QFile::Text);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "Unbuffered", QFile::Unbuffered);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "NewOnly", QFile::NewOnly);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterEnumValue("mode", "ExistingOnly", QFile::ExistingOnly);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     engine->SetDefaultNamespace("");
 }
 
@@ -232,8 +235,10 @@ CScriptFile::~CScriptFile() { Close(); }
 void CScriptFile::AddRef() const { asAtomicInc(refCount); }
 
 void CScriptFile::Release() const {
-    if (asAtomicDec(refCount) == 0)
-        delete this;
+    if (asAtomicDec(refCount) == 0) {
+        this->~CScriptFile();
+        asFreeMem(const_cast<CScriptFile *>(this));
+    }
 }
 
 bool CScriptFile::Open(const QString &filename, int mode) {

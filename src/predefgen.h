@@ -21,19 +21,11 @@
 #include <QDebug>
 #include <QFile>
 #include <QIODevice>
-#include <QString>
-#include <QStringView>
 #include <QTextStream>
-
-#include <cassert>
-#include <string>
 
 #include "angelscript.h"
 
 namespace {
-static QString toQString(const char *s) {
-    return s ? QString::fromUtf8(s) : QString();
-}
 
 void printEnumList(const asIScriptEngine *engine, QTextStream &out) {
     for (int i = 0; i < engine->GetEnumCount(); ++i) {
@@ -41,25 +33,24 @@ void printEnumList(const asIScriptEngine *engine, QTextStream &out) {
         if (!e)
             continue;
 
-        const QString ns = toQString(e->GetNamespace());
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 {\n").arg(ns);
+        auto ns = e->GetNamespace();
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " {\n";
 
-        out << QStringLiteral("enum %1 {\n").arg(toQString(e->GetName()));
+        out << "enum " << e->GetName() << " {\n";
         for (int j = 0; j < e->GetEnumValueCount(); ++j) {
             asINT64 value = 0;
             const char *name =
                 e->GetEnumValueByIndex(static_cast<asUINT>(j), &value);
-            const QString qname =
-                name ? QString::fromUtf8(name) : QStringLiteral("<unnamed>");
 
-            out << '\t' << qname << " = " << QString::number(value);
+            out << '\t' << (name ? name : "<unnamed>") << " = " << value;
             if (j < e->GetEnumValueCount() - 1)
                 out << ',';
             out << '\n';
         }
         out << "}\n";
-        if (!ns.isEmpty())
+        if (hasNs)
             out << "}\n";
     }
 }
@@ -70,11 +61,13 @@ void printClassTypeList(const asIScriptEngine *engine, QTextStream &out) {
         if (!t)
             continue;
 
-        const QString ns = toQString(t->GetNamespace());
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 {\n").arg(ns);
+        auto ns = t->GetNamespace();
 
-        out << QStringLiteral("class %1").arg(toQString(t->GetName()));
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " {\n";
+
+        out << "class " << t->GetName();
 
         if (t->GetSubTypeCount() > 0) {
             out << '<';
@@ -82,12 +75,20 @@ void printClassTypeList(const asIScriptEngine *engine, QTextStream &out) {
                 if (sub > 0)
                     out << ", ";
                 const auto st = t->GetSubType(sub);
-                out << toQString(st->GetName());
+                out << st->GetName();
             }
             out << '>';
         }
 
         out << "{\n";
+
+        for (int j = 0; j < t->GetFactoryCount(); ++j) {
+            asEBehaviours behaviours;
+            const auto f = t->GetFactoryByIndex(j);
+            if (!f)
+                continue;
+            out << '\t' << f->GetDeclaration(false, true, true) << ";\n";
+        }
 
         for (int j = 0; j < t->GetBehaviourCount(); ++j) {
             asEBehaviours behaviours;
@@ -97,10 +98,7 @@ void printClassTypeList(const asIScriptEngine *engine, QTextStream &out) {
 
             if (behaviours == asBEHAVE_CONSTRUCT ||
                 behaviours == asBEHAVE_DESTRUCT) {
-                // Store declaration in std::string to accept either const char*
-                // or std::string return types
-                std::string decl = f->GetDeclaration(false, true, true);
-                out << '\t' << QString::fromStdString(decl) << ";\n";
+                out << '\t' << f->GetDeclaration(false, true, true) << ";\n";
             }
         }
 
@@ -108,13 +106,11 @@ void printClassTypeList(const asIScriptEngine *engine, QTextStream &out) {
             const auto m = t->GetMethodByIndex(j);
             if (!m)
                 continue;
-            std::string decl = m->GetDeclaration(false, true, true);
-            out << '\t' << QString::fromStdString(decl) << ";\n";
+            out << '\t' << m->GetDeclaration(false, true, true) << ";\n";
         }
 
         for (int j = 0; j < t->GetPropertyCount(); ++j) {
-            std::string propDecl = t->GetPropertyDeclaration(j, true);
-            out << '\t' << QString::fromStdString(propDecl) << ";\n";
+            out << '\t' << t->GetPropertyDeclaration(j, true) << ";\n";
         }
 
         for (int j = 0; j < t->GetChildFuncdefCount(); ++j) {
@@ -124,13 +120,11 @@ void printClassTypeList(const asIScriptEngine *engine, QTextStream &out) {
             const auto sig = fd->GetFuncdefSignature();
             if (!sig)
                 continue;
-            std::string fdDecl = sig->GetDeclaration(false);
-            out << '\t' << "funcdef " << QString::fromStdString(fdDecl)
-                << ";\n";
+            out << '\t' << "funcdef " << sig->GetDeclaration(false) << ";\n";
         }
 
         out << "}\n";
-        if (!ns.isEmpty())
+        if (hasNs)
             out << "}\n";
     }
 }
@@ -141,14 +135,14 @@ void printGlobalFunctionList(const asIScriptEngine *engine, QTextStream &out) {
         if (!f)
             continue;
 
-        const QString ns = toQString(f->GetNamespace());
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 { ").arg(ns);
+        auto ns = f->GetNamespace();
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " { ";
 
-        std::string decl = f->GetDeclaration(false, false, true);
-        out << QString::fromStdString(decl) << ';';
+        out << f->GetDeclaration(false, false, true) << ';';
 
-        if (!ns.isEmpty())
+        if (hasNs)
             out << " }";
         out << '\n';
     }
@@ -157,24 +151,22 @@ void printGlobalFunctionList(const asIScriptEngine *engine, QTextStream &out) {
 void printGlobalPropertyList(const asIScriptEngine *engine, QTextStream &out) {
     for (int i = 0; i < engine->GetGlobalPropertyCount(); ++i) {
         const char *name = nullptr;
-        const char *ns0 = nullptr;
+        const char *ns = nullptr;
         int typeId = 0;
-        engine->GetGlobalPropertyByIndex(i, &name, &ns0, &typeId, nullptr,
+        engine->GetGlobalPropertyByIndex(i, &name, &ns, &typeId, nullptr,
                                          nullptr, nullptr, nullptr);
 
-        // GetTypeDeclaration commonly returns a std::string or const char*;
-        // store into std::string first
-        std::string t = engine->GetTypeDeclaration(typeId, true);
-        if (t.empty())
+        auto t = engine->GetTypeDeclaration(typeId, true);
+        if (qstrlen(t) == 0)
             continue;
 
-        const QString ns = toQString(ns0);
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 { ").arg(ns);
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " { ";
 
-        out << QString::fromStdString(t) << ' ' << toQString(name) << ';';
+        out << t << ' ' << name << ';';
 
-        if (!ns.isEmpty())
+        if (hasNs)
             out << " }";
         out << '\n';
     }
@@ -186,17 +178,16 @@ void printGlobalTypedef(const asIScriptEngine *engine, QTextStream &out) {
         if (!type)
             continue;
 
-        const QString ns = toQString(type->GetNamespace());
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 {\n").arg(ns);
+        auto ns = type->GetNamespace();
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " {\n";
 
         auto underlying =
             engine->GetTypeDeclaration(type->GetUnderlyingTypeId());
-        out << QStringLiteral("typedef %1 %2;\n")
-                   .arg(QString::fromStdString(underlying),
-                        toQString(type->GetName()));
+        out << "typedef " << underlying << ' ' << type->GetName() << ";\n";
 
-        if (!ns.isEmpty())
+        if (hasNs)
             out << "}\n";
     }
 }
@@ -212,46 +203,43 @@ void printFuncdef(const asIScriptEngine *engine, QTextStream &out) {
             continue;
         }
 
-        const QString ns = toQString(fn->GetNamespace());
-        if (!ns.isEmpty())
-            out << QStringLiteral("namespace %1 {\n").arg(ns);
+        auto ns = fn->GetNamespace();
+        bool hasNs = qstrlen(ns) > 0;
+        if (hasNs)
+            out << "namespace " << ns << " {\n";
 
-        out << QStringLiteral("funcdef %1;\n")
-                   .arg(toQString(fn->GetDeclaration()));
+        out << "funcdef " << fn->GetDeclaration() << ";\n";
 
-        if (!ns.isEmpty())
+        if (hasNs)
             out << "}\n";
     }
 }
 
 void printMarcos(QTextStream &out) {
     // marco, type
-    static QHash<QString, QString> marcos;
-    static QString INT_TYPE = QStringLiteral("int");
-    static QString STRING_TYPE = QStringLiteral("string");
+    static QHash<QLatin1String, QString> marcos;
+    static QLatin1String INT_TYPE = QLatin1String("int");
+    static QLatin1String STRING_TYPE = QLatin1String("string");
     if (marcos.isEmpty()) {
-        marcos.insert(QStringLiteral("__LINE__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__SECTION__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__SECTION_BASE__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__WING_VERSION__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__WING_VERSION_MAJOR__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__WING_VERSION_MINOR__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__WING_VERSION_PATCH__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MAJOR__"),
-                      INT_TYPE);
-        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_MINOR__"),
-                      INT_TYPE);
-        marcos.insert(QStringLiteral("__ANGELSCRIPT_VERSION_PATCH__"),
-                      INT_TYPE);
-        marcos.insert(QStringLiteral("__WINGHEX_APPNAME__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__WINGHEX_AUTHOR__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__QT_VERSION__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__QT_VERSION_MAJOR__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__QT_VERSION_MINOR__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__QT_VERSION_PATCH__"), INT_TYPE);
-        marcos.insert(QStringLiteral("__LANG__"), STRING_TYPE);
-        marcos.insert(QStringLiteral("__THEME__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__LINE__"), INT_TYPE);
+        marcos.insert(QLatin1String("__SECTION__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__SECTION_BASE__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__WING_VERSION__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__WING_VERSION_MAJOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__WING_VERSION_MINOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__WING_VERSION_PATCH__"), INT_TYPE);
+        marcos.insert(QLatin1String("__ANGELSCRIPT_VERSION__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__ANGELSCRIPT_VERSION_MAJOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__ANGELSCRIPT_VERSION_MINOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__ANGELSCRIPT_VERSION_PATCH__"), INT_TYPE);
+        marcos.insert(QLatin1String("__WINGHEX_APPNAME__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__WINGHEX_AUTHOR__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__QT_VERSION__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__QT_VERSION_MAJOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__QT_VERSION_MINOR__"), INT_TYPE);
+        marcos.insert(QLatin1String("__QT_VERSION_PATCH__"), INT_TYPE);
+        marcos.insert(QLatin1String("__LANG__"), STRING_TYPE);
+        marcos.insert(QLatin1String("__THEME__"), STRING_TYPE);
     }
     for (auto &&item : marcos.asKeyValueRange()) {
         out << item.second << ' ' << item.first << ';' << Qt::endl;

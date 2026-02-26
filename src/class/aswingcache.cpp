@@ -37,13 +37,10 @@ asWingCache::asWingCache(asDebugger &dbg, asIScriptContext *ctx)
         registerEvaluator<asIDBRegExTypeEvaluator>(engine, "regex::exp");
         registerEvaluator<asIDBRegMatchTypeEvaluator>(engine, "regex::match");
         registerEvaluator<asIDBJsonDocumentTypeEvaluator>(engine,
-                                                          "Json::JsonDocument");
-        registerEvaluator<asIDBJsonArrayTypeEvaluator>(engine,
-                                                       "Json::JsonArray");
-        registerEvaluator<asIDBJsonObjectTypeEvaluator>(engine,
-                                                        "Json::JsonObject");
-        registerEvaluator<asIDBJsonValueTypeEvaluator>(engine,
-                                                       "Json::JsonValue");
+                                                          "json::document");
+        registerEvaluator<asIDBJsonArrayTypeEvaluator>(engine, "json::array");
+        registerEvaluator<asIDBJsonObjectTypeEvaluator>(engine, "json::object");
+        registerEvaluator<asIDBJsonValueTypeEvaluator>(engine, "json::value");
     }
 }
 

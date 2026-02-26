@@ -16,6 +16,7 @@
 */
 
 #include "scriptjson.h"
+#include "define.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -32,6 +33,15 @@ static void QJsonDocument_DefaultConstruct(void *memory) {
 
 static void QJsonDocument_CopyConstruct(void *memory,
                                         const QJsonDocument &other) {
+    new (memory) QJsonDocument(other);
+}
+
+static void QJsonDocument_ObjConstruct(void *memory, const QJsonObject &other) {
+    new (memory) QJsonDocument(other);
+}
+
+static void QJsonDocument_ArrayConstruct(void *memory,
+                                         const QJsonArray &other) {
     new (memory) QJsonDocument(other);
 }
 
@@ -339,500 +349,435 @@ void RegisterQJsonDocument(asIScriptEngine *engine) {
     // Register QJsonDocument as a value type.
     // The flag asOBJ_APP_CLASS_CDAK is used for types with a Constructor,
     // Destructor, Assignment operator, and Copy constructor.
-    r = engine->RegisterObjectType("JsonDocument", sizeof(QJsonDocument),
+    r = engine->RegisterObjectType("document", sizeof(QJsonDocument),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
                                        asGetTypeTraits<QJsonDocument>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonDocument", asBEHAVE_CONSTRUCT, "void f()",
+        "document", asBEHAVE_CONSTRUCT, "void f()",
         asFUNCTION(QJsonDocument_DefaultConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonDocument", asBEHAVE_CONSTRUCT, "void f(const JsonDocument &in)",
+        "document", asBEHAVE_CONSTRUCT, "void f(const json::document &in)",
         asFUNCTION(QJsonDocument_CopyConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "document", asBEHAVE_CONSTRUCT, "void f(const json::object &in)",
+        asFUNCTION(QJsonDocument_ObjConstruct), asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
+    r = engine->RegisterObjectBehaviour(
+        "document", asBEHAVE_CONSTRUCT, "void f(const json::array &in)",
+        asFUNCTION(QJsonDocument_ArrayConstruct), asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonDocument", asBEHAVE_DESTRUCT, "void f()",
+        "document", asBEHAVE_DESTRUCT, "void f()",
         asFUNCTION(QJsonDocument_Destruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterEnum("JsonFormat");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterEnumValue("JsonFormat", "Indented",
+    r = engine->RegisterEnum("Format");
+    ASSERT(r >= 0);
+
+    r = engine->RegisterEnumValue("Format", "Indented",
                                   QJsonDocument::Indented);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterEnumValue("JsonFormat", "Compact",
-                                  QJsonDocument::Compact);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterEnumValue("Format", "Compact", QJsonDocument::Compact);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonDocument",
-        "string toJson(JsonFormat format = Json::JsonFormat::Indented) const",
+        "document",
+        "string toJson(json::Format format = json::Format::Indented) const",
         asFUNCTION(QJsonDocument_ToJson), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonDocument", "string toString() const",
+    r = engine->RegisterObjectMethod("document", "string toString() const",
                                      asFUNCTION(QJsonDocument_ToString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonDocument", "bool isArray() const",
+    r = engine->RegisterObjectMethod("document", "bool isArray() const",
                                      asFUNCTION(QJsonDocument_IsArray),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonDocument", "bool isEmpty() const",
+    r = engine->RegisterObjectMethod("document", "bool isEmpty() const",
                                      asFUNCTION(QJsonDocument_IsEmpty),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonDocument", "bool isNull() const",
+    r = engine->RegisterObjectMethod("document", "bool isNull() const",
                                      asFUNCTION(QJsonDocument_IsNull),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonDocument", "bool isObject() const",
+    r = engine->RegisterObjectMethod("document", "bool isObject() const",
                                      asFUNCTION(QJsonDocument_IsObject),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("document", "json::object object() const",
+                                     asFUNCTION(QJsonDocument_Object),
+                                     asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonDocument", "JsonObject object() const",
-        asFUNCTION(QJsonDocument_Object), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-
-    r = engine->RegisterObjectMethod(
-        "JsonDocument", "void setArray(const JsonArray &in array)",
+        "document", "void setArray(const json::array &in array)",
         asFUNCTION(QJsonDocument_SetArray), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonDocument", "void setObject(const JsonObject &in obj)",
+        "document", "void setObject(const json::object &in obj)",
         asFUNCTION(QJsonDocument_SetObject), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // opIndex for getting values
     r = engine->RegisterObjectMethod(
-        "JsonDocument", "JsonValue opIndex(const string &in key) const",
+        "document", "json::value &opIndex(const string &in key) const",
         asFUNCTION(QJsonDocument_opIndex), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonDocument", "JsonValue opIndex(int index) const",
+        "document", "json::value opIndex(int index) const",
         asFUNCTION(QJsonDocument_opIndexInt), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // global function
     r = engine->RegisterGlobalFunction(
-        "JsonDocument fromJson(const string &in)",
+        "json::document fromJson(const string &in)",
         asFUNCTION(QJsonDocument_FromJson), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 // Register QJsonValue with AngelScript
 void RegisterQJsonValue(asIScriptEngine *engine) {
     int r;
-    r = engine->RegisterObjectType("JsonValue", sizeof(QJsonValue),
+    r = engine->RegisterObjectType("value", sizeof(QJsonValue),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
                                        asGetTypeTraits<QJsonValue>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Constructors / Destructor
-    r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f()",
-        asFUNCTION(QJsonValue_DefaultConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour("value", asBEHAVE_CONSTRUCT, "void f()",
+                                        asFUNCTION(QJsonValue_DefaultConstruct),
+                                        asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonValue &in)",
+        "value", asBEHAVE_CONSTRUCT, "void f(const json::value &in)",
         asFUNCTION(QJsonValue_CopyConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(bool)",
+        "value", asBEHAVE_CONSTRUCT, "void f(bool)",
         asFUNCTION(QJsonValue_ConstructBool), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(int)",
+        "value", asBEHAVE_CONSTRUCT, "void f(int)",
         asFUNCTION(QJsonValue_ConstructInt), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(double)",
+        "value", asBEHAVE_CONSTRUCT, "void f(double)",
         asFUNCTION(QJsonValue_ConstructDouble), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const string &in)",
+        "value", asBEHAVE_CONSTRUCT, "void f(const string &in)",
         asFUNCTION(QJsonValue_ConstructString), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_DESTRUCT, "void f()",
-        asFUNCTION(QJsonValue_Destruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour("value", asBEHAVE_DESTRUCT, "void f()",
+                                        asFUNCTION(QJsonValue_Destruct),
+                                        asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     // Methods
-    r = engine->RegisterObjectMethod("JsonValue", "bool isNull() const",
+    r = engine->RegisterObjectMethod("value", "bool isNull() const",
                                      asFUNCTION(QJsonValue_IsNull),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isBool() const",
+    r = engine->RegisterObjectMethod("value", "bool isBool() const",
                                      asFUNCTION(QJsonValue_IsBool),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isDouble() const",
+    r = engine->RegisterObjectMethod("value", "bool isDouble() const",
                                      asFUNCTION(QJsonValue_IsDouble),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isString() const",
+    r = engine->RegisterObjectMethod("value", "bool isString() const",
                                      asFUNCTION(QJsonValue_IsString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isUndefined() const",
+    r = engine->RegisterObjectMethod("value", "bool isUndefined() const",
                                      asFUNCTION(QJsonValue_IsUndefined),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod(
-        "JsonValue", "string toStringValue() const",
-        asFUNCTION(QJsonValue_ToStringValue), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("value", "string toStringValue() const",
+                                     asFUNCTION(QJsonValue_ToStringValue),
+                                     asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "string toString() const",
+    r = engine->RegisterObjectMethod("value", "string toString() const",
                                      asFUNCTION(QJsonValue_ToString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool toBool() const",
+    r = engine->RegisterObjectMethod("value", "bool toBool() const",
                                      asFUNCTION(QJsonValue_ToBool),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "double toDouble() const",
+    r = engine->RegisterObjectMethod("value", "double toDouble() const",
                                      asFUNCTION(QJsonValue_ToDouble),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "int toInt() const",
+    r = engine->RegisterObjectMethod("value", "int toInt() const",
                                      asFUNCTION(QJsonValue_ToInt),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // opIndex for getting values
     r = engine->RegisterObjectMethod(
-        "JsonValue", "JsonValue opIndex(const string &in key) const",
+        "value", "value opIndex(const string &in key) const",
         asFUNCTION(QJsonValue_opIndex), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod(
-        "JsonValue", "JsonValue opIndex(int index) const",
-        asFUNCTION(QJsonValue_opIndexInt), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectMethod("value", "value opIndex(int index) const",
+                                     asFUNCTION(QJsonValue_opIndexInt),
+                                     asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 }
 
 void RegisterQJsonValue_End(asIScriptEngine *engine) {
     auto r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonArray &in)",
+        "value", asBEHAVE_CONSTRUCT, "void f(const array &in)",
         asFUNCTION(QJsonValue_ConstructQJsonArray), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonValue", asBEHAVE_CONSTRUCT, "void f(const JsonObject &in)",
+        "value", asBEHAVE_CONSTRUCT, "void f(const object &in)",
         asFUNCTION(QJsonValue_ConstructQJsonObject), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isArray() const",
+    r = engine->RegisterObjectMethod("value", "bool isArray() const",
                                      asFUNCTION(QJsonValue_IsArray),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "bool isObject() const",
+    r = engine->RegisterObjectMethod("value", "bool isObject() const",
                                      asFUNCTION(QJsonValue_IsObject),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "JsonArray toArray() const",
+    r = engine->RegisterObjectMethod("value", "array toArray() const",
                                      asFUNCTION(QJsonValue_ToArray),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonValue", "JsonObject toObject() const",
+    r = engine->RegisterObjectMethod("value", "object toObject() const",
                                      asFUNCTION(QJsonValue_ToQJsonObject),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 // Register QJsonArray with AngelScript
 void RegisterQJsonArray(asIScriptEngine *engine) {
     int r;
-    r = engine->RegisterObjectType("JsonArray", sizeof(QJsonArray),
+    r = engine->RegisterObjectType("array", sizeof(QJsonArray),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
                                        asGetTypeTraits<QJsonArray>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Constructors / Destructor
-    r = engine->RegisterObjectBehaviour(
-        "JsonArray", asBEHAVE_CONSTRUCT, "void f()",
-        asFUNCTION(QJsonArray_DefaultConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour("array", asBEHAVE_CONSTRUCT, "void f()",
+                                        asFUNCTION(QJsonArray_DefaultConstruct),
+                                        asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonArray", asBEHAVE_CONSTRUCT, "void f(const JsonArray &in)",
+        "array", asBEHAVE_CONSTRUCT, "void f(const array &in)",
         asFUNCTION(QJsonArray_CopyConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectBehaviour(
-        "JsonArray", asBEHAVE_DESTRUCT, "void f()",
-        asFUNCTION(QJsonArray_Destruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour("array", asBEHAVE_DESTRUCT, "void f()",
+                                        asFUNCTION(QJsonArray_Destruct),
+                                        asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     // Methods
-    r = engine->RegisterObjectMethod("JsonArray", "int size() const",
+    r = engine->RegisterObjectMethod("array", "int size() const",
                                      asFUNCTION(QJsonArray_Size),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonArray", "bool isEmpty() const",
+    r = engine->RegisterObjectMethod("array", "bool isEmpty() const",
                                      asFUNCTION(QJsonArray_IsEmpty),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonArray", "JsonValue at(int) const",
+    r = engine->RegisterObjectMethod("array", "value at(int) const",
                                      asFUNCTION(QJsonArray_At),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "void append(const JsonValue &in val)",
+        "array", "void append(const value &in val)",
         asFUNCTION(QJsonArray_Append), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "void prepend(const JsonValue &in val)",
+        "array", "void prepend(const value &in val)",
         asFUNCTION(QJsonArray_Prepend), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "void insert(int index, const JsonValue &in val)",
+        "array", "void insert(int index, const value &in val)",
         asFUNCTION(QJsonArray_Insert), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "void replace(int index, const JsonValue &in val)",
+        "array", "void replace(int index, const value &in val)",
         asFUNCTION(QJsonArray_Replace), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonArray", "void removeAt(int index)",
+    r = engine->RegisterObjectMethod("array", "void removeAt(int index)",
                                      asFUNCTION(QJsonArray_RemoveAt),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonArray", "void removeFirst()",
+    r = engine->RegisterObjectMethod("array", "void removeFirst()",
                                      asFUNCTION(QJsonArray_RemoveFirst),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonArray", "void removeLast()",
+    r = engine->RegisterObjectMethod("array", "void removeLast()",
                                      asFUNCTION(QJsonArray_RemoveLast),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "JsonArray opAdd(const JsonValue &in) const",
+        "array", "array opAdd(const value &in) const",
         asFUNCTION(QJsonArray_opAdd), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonArray", "JsonArray &opAddAssign(const JsonValue &in)",
+        "array", "array &opAddAssign(const value &in)",
         asFUNCTION(QJsonArray_opAddAssign), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // Support for foreach
     r = engine->RegisterObjectMethod(
-        "JsonArray", "uint opForBegin() const",
+        "array", "uint opForBegin() const",
         asFUNCTIONPR(QJsonArray_opForBegin, (const QJsonArray *), asUINT),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
-        "JsonArray", "bool opForEnd(uint) const",
+        "array", "bool opForEnd(uint) const",
         asFUNCTIONPR(QJsonArray_opForEnd, (asUINT, const QJsonArray *), bool),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod("JsonArray", "uint opForNext(uint) const",
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("array", "uint opForNext(uint) const",
                                      asFUNCTIONPR(QJsonArray_opForNext,
                                                   (asUINT, const QJsonArray *),
                                                   asUINT),
                                      asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
-        "JsonArray", "JsonValue opForValue0(uint index) const",
+        "array", "value opForValue0(uint index) const",
         asMETHODPR(QJsonArray, at, (qsizetype) const, QJsonValue),
         asCALL_THISCALL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
-        "JsonArray", "uint opForValue1(uint index) const",
+        "array", "uint opForValue1(uint index) const",
         asFUNCTIONPR(QJsonArray_opForValue1, (asUINT, const QJsonArray *),
                      asUINT),
         asCALL_CDECL_OBJLAST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
-    r = engine->RegisterObjectMethod("JsonArray", "string toString() const",
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("array", "string toString() const",
                                      asFUNCTION(QJsonArray_ToString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 void RegisterQJsonObject(asIScriptEngine *engine) {
     int r;
 
-    r = engine->RegisterObjectType("JsonObject", sizeof(QJsonObject),
+    r = engine->RegisterObjectType("object", sizeof(QJsonObject),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_CDAK |
                                        asGetTypeTraits<QJsonObject>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonObject", asBEHAVE_CONSTRUCT, "void f()",
+        "object", asBEHAVE_CONSTRUCT, "void f()",
         asFUNCTION(QJsonObject_Construct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
-        "JsonObject", asBEHAVE_CONSTRUCT, "void f(const JsonObject &in)",
+        "object", asBEHAVE_CONSTRUCT, "void f(const object &in)",
         asFUNCTION(QJsonObject_CopyConstruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectBehaviour(
-        "JsonObject", asBEHAVE_DESTRUCT, "void f()",
-        asFUNCTION(QJsonObject_Destruct), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    r = engine->RegisterObjectBehaviour("object", asBEHAVE_DESTRUCT, "void f()",
+                                        asFUNCTION(QJsonObject_Destruct),
+                                        asCALL_CDECL_OBJFIRST);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonObject", "bool hasKey(const string &in key) const",
+        "object", "bool hasKey(const string &in key) const",
         asFUNCTION(QJsonObject_HasKey), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonObject",
-        "void set(const string &in key, const JsonValue &in value)",
+        "object", "void set(const string &in key, const value &in value)",
         asFUNCTION(QJsonObject_SetValue), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
-        "JsonObject", "void remove(const string &in key)",
+        "object", "void remove(const string &in key)",
         asFUNCTION(QJsonObject_Remove), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonObject", "bool isEmpty() const",
+    r = engine->RegisterObjectMethod("object", "bool isEmpty() const",
                                      asFUNCTION(QJsonObject_IsEmpty),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonObject", "int size() const",
+    r = engine->RegisterObjectMethod("object", "int size() const",
                                      asFUNCTION(QJsonObject_Size),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // opIndex for getting values
     r = engine->RegisterObjectMethod(
-        "JsonObject", "JsonValue opIndex(const string &in key) const",
+        "object", "value opIndex(const string &in key) const",
         asFUNCTION(QJsonObject_opIndex), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
-    r = engine->RegisterObjectMethod("JsonObject", "string toString() const",
+    r = engine->RegisterObjectMethod("object", "string toString() const",
                                      asFUNCTION(QJsonObject_ToString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 }
 
 void RegisterQJson(asIScriptEngine *engine) {
-    auto r = engine->SetDefaultNamespace("Json");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    auto r = engine->SetDefaultNamespace("json");
+    ASSERT(r >= 0);
+
     RegisterQJsonValue(engine);
     RegisterQJsonArray(engine);
     RegisterQJsonObject(engine);

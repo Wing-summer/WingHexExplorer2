@@ -37,7 +37,7 @@ private:
     // A quick shortcut to make a templated instantiation
     // of T from the given type name.
     template <typename T>
-    void registerEvaluator(asIScriptEngine *engine, const char *name) {
+    inline void registerEvaluator(asIScriptEngine *engine, const char *name) {
         auto info = engine->GetTypeInfoByName(name);
         assert(info);
         registerEvaluator(info->GetTypeId(), std::make_unique<T>());

@@ -1,6 +1,6 @@
 #include "scriptdatetime.h"
+#include "define.h"
 
-#include <assert.h>
 #include <new>
 
 using namespace std;
@@ -217,104 +217,104 @@ void RegisterScriptDateTime(asIScriptEngine *engine) {
     int r = engine->RegisterObjectType("datetime", sizeof(CDateTime),
                                        asOBJ_VALUE | asOBJ_POD |
                                            asGetTypeTraits<CDateTime>());
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour("datetime", asBEHAVE_CONSTRUCT,
                                         "void f()", asFUNCTION(Construct),
                                         asCALL_CDECL_OBJLAST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "datetime", asBEHAVE_CONSTRUCT, "void f(const datetime &in)",
         asFUNCTION(ConstructCopy), asCALL_CDECL_OBJFIRST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "datetime", asBEHAVE_CONSTRUCT,
         "void f(uint, uint, uint, uint = 0, uint = 0, uint = 0)",
         asFUNCTION(ConstructSet), asCALL_CDECL_OBJFIRST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime &opAssign(const datetime &in)",
         asMETHOD(CDateTime, operator=), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_year() const property",
         asMETHOD(CDateTime, getYear), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_month() const property",
         asMETHOD(CDateTime, getMonth), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_day() const property",
         asMETHOD(CDateTime, getDay), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_hour() const property",
         asMETHOD(CDateTime, getHour), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_minute() const property",
         asMETHOD(CDateTime, getMinute), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_second() const property",
         asMETHOD(CDateTime, getSecond), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "uint get_weekDay() const property",
         asMETHOD(CDateTime, getWeekDay), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "bool setDate(uint year, uint month, uint day)",
         asMETHOD(CDateTime, setDate), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "bool setTime(uint hour, uint minute, uint second)",
         asMETHOD(CDateTime, setTime), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "int64 opSub(const datetime &in) const",
         asMETHODPR(CDateTime, operator-, (const CDateTime &other) const,
                    asINT64),
         asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime opAdd(int64 seconds) const",
         asMETHOD(CDateTime, operator+), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime opAdd_r(int64 seconds) const",
         asFUNCTIONPR(operator+, (asINT64 seconds, const CDateTime &other),
                      CDateTime),
         asCALL_CDECL_OBJLAST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime &opAddAssign(int64 seconds)",
         asMETHOD(CDateTime, operator+=), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime opSub(int64 seconds) const",
         asMETHODPR(CDateTime, operator-, (asINT64) const, CDateTime),
         asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime opSub_r(int64 seconds) const",
         asFUNCTIONPR(operator-, (asINT64 seconds, const CDateTime &other),
                      CDateTime),
         asCALL_CDECL_OBJLAST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "datetime &opSubAssign(int64 seconds)",
         asMETHOD(CDateTime, operator-=), asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod(
         "datetime", "bool opEquals(const datetime &in) const",
         asMETHODPR(CDateTime, operator==, (const CDateTime &other) const, bool),
         asCALL_THISCALL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("datetime",
                                      "int opCmp(const datetime &in) const",
                                      asFUNCTION(opCmp), asCALL_CDECL_OBJFIRST);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 }
 
 END_AS_NAMESPACE

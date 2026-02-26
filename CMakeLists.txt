@@ -480,6 +480,10 @@ set(SCRIPT_ADDON_SRC
     src/scriptaddon/scriptfilesystem.h
     src/scriptaddon/scriptfile.cpp
     src/scriptaddon/scriptenv.h
+    src/scriptaddon/scriptreflection.h
+    src/scriptaddon/scriptreflection.cpp
+    src/scriptaddon/scriptoptbox.h
+    src/scriptaddon/scriptoptbox.cpp
     src/scriptaddon/scriptenv.cpp
     src/scriptaddon/scriptany.cpp
     src/scriptaddon/scriptany.h)

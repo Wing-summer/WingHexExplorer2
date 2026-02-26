@@ -202,6 +202,10 @@ private:
     QStringList getMissingDependencise(const QString &name);
 
     QVariantHash read(qsizetype offset, const QString &type);
+    QVariant readMember(qsizetype offset, const QString &type,
+                        const QString &member);
+    QVariantHash readMembers(qsizetype offset, const QString &type,
+                             const QStringList &members);
     QByteArray readRaw(qsizetype offset, const QString &type);
 
     QString dumpAllTypes() const;
@@ -283,6 +287,12 @@ private:
 
     WING_SERVICE QVariantHash read(const WingHex::SenderInfo &sender,
                                    qsizetype offset, const QString &type);
+    WING_SERVICE QVariant readMember(const WingHex::SenderInfo &sender,
+                                     qsizetype offset, const QString &type,
+                                     const QString &member);
+    WING_SERVICE QVariantHash readMembers(const WingHex::SenderInfo &sender,
+                                          qsizetype offset, const QString &type,
+                                          const QStringList &members);
     WING_SERVICE QByteArray readRaw(const WingHex::SenderInfo &sender,
                                     qsizetype offset, const QString &type);
 
@@ -317,8 +327,24 @@ private:
     QVariantHash __read(qsizetype offset, const QString &type,
                         bool efmtInVariantList);
 
+    QVariant __readMember(qsizetype offset, const QString &type,
+                          const QString &member, bool efmtInVariantList);
+
+    QVariantHash __readMembers(qsizetype offset, const QString &type,
+                               const std::function<QString(uint)> &members,
+                               uint total, bool efmtInVariantList);
+
     QVariantHash readStruct(const char *ptr, const char *end,
                             const QString &type, bool efmtInVariantList);
+
+    QVariant readStructMember(const char *ptr, const char *end,
+                              const QString &type, const QString &member,
+                              bool efmtInVariantList);
+
+    QVariantHash readStructMembers(const char *ptr, const char *end,
+                                   const QString &type,
+                                   const std::function<QString(uint)> &members,
+                                   uint total, bool efmtInVariantList);
 
     QVariant readContent(const char *ptr, const char *end,
                          const VariableDeclaration &m, bool efmtInVariantList);
@@ -368,6 +394,8 @@ private:
     WingHex::UNSAFE_RET constVarValue(const QList<void *> &params);
 
     WingHex::UNSAFE_RET read(const QList<void *> &params);
+    WingHex::UNSAFE_RET readMember(const QList<void *> &params);
+    WingHex::UNSAFE_RET readMembers(const QList<void *> &params);
     QVariant readRaw(const QVariantList &params);
 
     QVariant getParsedErrors(const QVariantList &params);

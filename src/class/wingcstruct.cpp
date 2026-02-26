@@ -18,9 +18,12 @@
 #include "wingcstruct.h"
 
 #include "WingPlugin/iwingangel.h"
-#include "scriptaddon/scriptqdictionary.h"
+#include "define.h"
 #include "utilities.h"
 #include "wingangelapi.h"
+
+#include "scriptaddon/scriptany.h"
+#include "scriptaddon/scriptqdictionary.h"
 
 WingCStruct::WingCStruct() : WingHex::IWingPlugin() {}
 
@@ -132,31 +135,18 @@ WingCStruct::eventOnScriptPragma(const QString &script,
         }
 
         QFileInfo finc(param);
+        QString path;
         if (finc.isAbsolute()) {
-            if (parse(param)) {
-                WingHex::PragmaResult r;
-                r.warn = _warns.join('\n');
-                return r;
-            } else {
-                WingHex::PragmaResult r;
-                r.error = _errors.join('\n');
-                r.warn = _warns.join('\n');
-                return r;
-            }
+            path = param;
         } else {
             QFileInfo finfo(script);
-            auto path = finfo.absoluteDir().filePath(param);
-            if (parse(path)) {
-                WingHex::PragmaResult r;
-                r.warn = _warns.join('\n');
-                return r;
-            } else {
-                WingHex::PragmaResult r;
-                r.error = _errors.join('\n');
-                r.warn = _warns.join('\n');
-                return r;
-            }
+            path = finfo.absoluteDir().filePath(param);
         }
+        parse(path);
+        WingHex::PragmaResult r;
+        r.error = _errors.join('\n');
+        r.warn = _warns.join('\n');
+        return r;
     } else if (cmd == QStringLiteral("Long")) {
         if (param == QStringLiteral("LLP64")) {
             _parser->setLongmode(LongMode::LLP64);
@@ -508,6 +498,18 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
             (" offset, const string &in type)"),
         std::bind(QOverload<const QList<void *> &>::of(&WingCStruct::read),
                   this, std::placeholders::_1));
+    o->registerGlobalFunction(
+        QStringLiteral("any@ readMember(") + getqsizeTypeAsString() +
+            (" offset, const string &in type, const string &in member)"),
+        std::bind(
+            QOverload<const QList<void *> &>::of(&WingCStruct::readMember),
+            this, std::placeholders::_1));
+    o->registerGlobalFunction(
+        QStringLiteral("dictionary@ readMembers(") + getqsizeTypeAsString() +
+            (" offset, const string &in type, const string[] &in members)"),
+        std::bind(
+            QOverload<const QList<void *> &>::of(&WingCStruct::readMembers),
+            this, std::placeholders::_1));
 
     o->registerGlobalFunction(
         WingHex::Meta_Byte | WingHex::Meta_Array,
@@ -579,7 +581,7 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                       &WingCStruct::structOrUnionMemberDeclWithoutNames),
                   this, std::placeholders::_1),
         QStringLiteral("structOrUnionMemberDeclWithoutNames"),
-        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});
+        {qMakePair(WingHex::Meta_String, QStringLiteral("type"))});    
 }
 
 bool WingCStruct::parseFromSource(const QString &header) {
@@ -717,6 +719,22 @@ QVariantHash WingCStruct::read(qsizetype offset, const QString &type) {
     return __read(offset, type, true);
 }
 
+QVariant WingCStruct::readMember(qsizetype offset, const QString &type,
+                                 const QString &member) {
+    return __readMember(offset, type, member, true);
+}
+
+QVariantHash WingCStruct::readMembers(qsizetype offset, const QString &type,
+                                      const QStringList &members) {
+    if (members.size() > std::numeric_limits<uint>::max()) {
+        return {};
+    }
+    return __readMembers(
+        offset, type,
+        [members](uint index) -> QString { return members.at(index); },
+        members.size(), true);
+}
+
 QVariantHash WingCStruct::__read(qsizetype offset, const QString &type,
                                  bool efmtInVariantList) {
     auto rtype = _parser->resolveTypeName(type);
@@ -746,6 +764,72 @@ QVariantHash WingCStruct::__read(qsizetype offset, const QString &type,
     const auto *pend = pdata + raw.length();
 
     return readStruct(pdata, pend, rtype, efmtInVariantList);
+}
+
+QVariant WingCStruct::__readMember(qsizetype offset, const QString &type,
+                                   const QString &member,
+                                   bool efmtInVariantList) {
+    auto rtype = _parser->resolveTypeName(type);
+    auto len = sizeOf(rtype);
+    if (len <= 0) {
+        return {};
+    }
+
+    if (!isCurrentDocEditing()) {
+        return {};
+    }
+
+    if (offset < 0) {
+        return {};
+    }
+
+    auto doclen = documentBytes();
+    if (doclen < 0 || offset + len > doclen) {
+        return {};
+    }
+
+    // first read all bytes
+    auto raw = readBytes(offset, len);
+
+    // then slice and parse
+    const auto *pdata = raw.data();
+    const auto *pend = pdata + raw.length();
+
+    return readStructMember(pdata, pend, rtype, member, efmtInVariantList);
+}
+
+QVariantHash
+WingCStruct::__readMembers(qsizetype offset, const QString &type,
+                           const std::function<QString(uint)> &members,
+                           uint total, bool efmtInVariantList) {
+    auto rtype = _parser->resolveTypeName(type);
+    auto len = sizeOf(rtype);
+    if (len <= 0) {
+        return {};
+    }
+
+    if (!isCurrentDocEditing()) {
+        return {};
+    }
+
+    if (offset < 0) {
+        return {};
+    }
+
+    auto doclen = documentBytes();
+    if (doclen < 0 || offset + len > doclen) {
+        return {};
+    }
+
+    // first read all bytes
+    auto raw = readBytes(offset, len);
+
+    // then slice and parse
+    const auto *pdata = raw.data();
+    const auto *pend = pdata + raw.length();
+
+    return readStructMembers(pdata, pend, rtype, members, total,
+                             efmtInVariantList);
 }
 
 QByteArray WingCStruct::readRaw(qsizetype offset, const QString &type) {
@@ -1094,6 +1178,20 @@ QVariantHash WingCStruct::read(const WingHex::SenderInfo &sender,
     return read(offset, type);
 }
 
+QVariant WingCStruct::readMember(const WingHex::SenderInfo &sender,
+                                 qsizetype offset, const QString &type,
+                                 const QString &member) {
+    Q_UNUSED(sender);
+    return readMember(offset, type, member);
+}
+
+QVariantHash WingCStruct::readMembers(const WingHex::SenderInfo &sender,
+                                      qsizetype offset, const QString &type,
+                                      const QStringList &members) {
+    Q_UNUSED(sender);
+    return readMembers(offset, type, members);
+}
+
 QByteArray WingCStruct::readRaw(const WingHex::SenderInfo &sender,
                                 qsizetype offset, const QString &type) {
     Q_UNUSED(sender);
@@ -1248,6 +1346,51 @@ QVariantHash WingCStruct::readStruct(const char *ptr, const char *end,
         content.insert(m.var_name,
                        readContent(ptr + m.offset, end, m, efmtInVariantList));
     }
+    return content;
+}
+
+QVariant WingCStruct::readStructMember(const char *ptr, const char *end,
+                                       const QString &type,
+                                       const QString &member,
+                                       bool efmtInVariantList) {
+    if (!_parser->isCompletedStruct(type)) {
+        return {};
+    }
+    auto struc = _parser->structMembers(type);
+    auto r = std::find_if(struc.begin(), struc.end(),
+                          [member](const VariableDeclaration &decl) {
+                              return decl.var_name == member;
+                          });
+    if (r != struc.end()) {
+        return readContent(ptr + r->offset, end, *r, efmtInVariantList);
+    }
+    return {};
+}
+
+QVariantHash
+WingCStruct::readStructMembers(const char *ptr, const char *end,
+                               const QString &type,
+                               const std::function<QString(uint)> &members,
+                               uint total, bool efmtInVariantList) {
+    if (!_parser->isCompletedStruct(type)) {
+        return {};
+    }
+    auto struc = _parser->structMembers(type);
+
+    QSet<QString> mems;
+    for (uint i = 0; i < total; ++i) {
+        mems.insert(members(i));
+    }
+
+    QVariantHash content;
+
+    for (auto &m : struc) {
+        if (mems.contains(m.var_name)) {
+            content.insert(m.var_name, readContent(ptr + m.offset, end, m,
+                                                   efmtInVariantList));
+        }
+    }
+
     return content;
 }
 
@@ -1577,21 +1720,27 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
         case QMetaType::Char: {
             auto v = var.value<char>();
             QChar ch(v);
-            auto id = engine->GetTypeIdByDecl("char");
+            auto type = static_cast<asITypeInfo *>(
+                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+            auto id = type->GetTypeId();
             dic->Set(p->first, &ch, id);
             break;
         }
         case QMetaType::Char16: {
             auto v = var.value<char16_t>();
             QChar ch(v);
-            auto id = engine->GetTypeIdByDecl("char");
+            auto type = static_cast<asITypeInfo *>(
+                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+            auto id = type->GetTypeId();
             dic->Set(p->first, &ch, id);
             break;
         }
         case QMetaType::Char32: {
             auto v = var.value<char32_t>();
             QChar ch(v);
-            auto id = engine->GetTypeIdByDecl("char");
+            auto type = static_cast<asITypeInfo *>(
+                engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+            auto id = type->GetTypeId();
             dic->Set(p->first, &ch, id);
             break;
         }
@@ -1641,21 +1790,33 @@ CScriptDictionary *WingCStruct::convert2AsDictionary(const QVariantHash &hash) {
             break;
         }
         case QMetaType::QVariantHash: {
-            auto id = engine->GetTypeIdByDecl("dictionary");
+            auto type = static_cast<asITypeInfo *>(engine->GetUserData(
+                AsUserDataType::UserData_DictionaryTypeInfo));
+            auto id = type->GetTypeId();
             dic->Set(p->first, convert2AsDictionary(var.toHash()), id);
             break;
         }
         default:
             if (QMetaType::fromType<CEnumValue>().id() == int(type)) {
-                auto id = engine->GetTypeIdByDecl("WingCStruct::EnumValue");
-                Q_ASSERT(id >= 0);
-                auto v = var.value<CEnumValue>();
-                dic->Set(p->first, &v, id);
+                static auto type =
+                    engine->GetTypeInfoByName("WingCStruct::EnumValue");
+                Q_ASSERT(type);
+                if (type) {
+                    auto id = type->GetTypeId();
+                    Q_ASSERT(id >= 0);
+                    auto v = var.value<CEnumValue>();
+                    dic->Set(p->first, &v, id);
+                }
             } else if (QMetaType::fromType<CINT_TYPE>().id() == int(type)) {
-                auto id = engine->GetTypeIdByDecl("WingCStruct::IntType");
-                Q_ASSERT(id >= 0);
-                auto v = var.value<CEnumValue>();
-                dic->Set(p->first, &v, id);
+                static auto type =
+                    engine->GetTypeInfoByName("WingCStruct::IntType");
+                Q_ASSERT(type);
+                if (type) {
+                    auto id = type->GetTypeId();
+                    Q_ASSERT(id >= 0);
+                    auto v = var.value<CEnumValue>();
+                    dic->Set(p->first, &v, id);
+                }
             }
             break;
         }
@@ -2076,6 +2237,210 @@ WingHex::UNSAFE_RET WingCStruct::read(const QList<void *> &params) {
     auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
 
     auto ret = __read(offset, type, false);
+    return WingHex::makeRefObjPtr(convert2AsDictionary(ret));
+}
+
+WingHex::UNSAFE_RET WingCStruct::readMember(const QList<void *> &params) {
+    if (params.size() != 3) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    auto ctx = asGetActiveContext();
+    if (ctx == nullptr) {
+        return {};
+    }
+
+    auto offset = WingHex::resolveUnsafeParamAs<qsizetype>(params.at(0));
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
+    auto member = WingHex::resolveUnsafeParamAsIn<QString>(params.at(2));
+
+    auto ret = __readMember(offset, type, member, false);
+    auto engine = ctx->GetEngine();
+    auto any = new CScriptAny(engine);
+
+    auto meta =
+        ret.isNull() ? QMetaType::Type::Void : QMetaType::Type(ret.typeId());
+
+    switch (meta) {
+    case QMetaType::Bool: {
+        auto v = ret.toBool();
+        any->Store(&v, asTYPEID_BOOL);
+        break;
+    }
+    case QMetaType::UChar: {
+        auto v = ret.value<uchar>();
+        any->Store(&v, asTYPEID_UINT8);
+        break;
+    }
+    case QMetaType::SChar: {
+        auto v = ret.value<uchar>();
+        any->Store(&v, asTYPEID_INT8);
+        break;
+    }
+    case QMetaType::Short: {
+        auto v = ret.value<short>();
+        static_assert(sizeof(short) == 2, "sizeof(short) != 2");
+        any->Store(&v, asTYPEID_INT16);
+        break;
+    }
+    case QMetaType::UShort: {
+        auto v = ret.value<ushort>();
+        static_assert(sizeof(short) == 2, "sizeof(short) != 2");
+        any->Store(&v, asTYPEID_UINT16);
+        break;
+    }
+    case QMetaType::Int:
+    case QMetaType::Long: {
+        auto v = ret.toInt();
+        any->Store(&v, asTYPEID_INT32);
+    }
+    case QMetaType::LongLong: {
+        auto v = ret.toLongLong();
+        any->Store(&v, asTYPEID_INT64);
+        break;
+    }
+    case QMetaType::UInt:
+    case QMetaType::ULong: {
+        auto v = ret.toUInt();
+        any->Store(&v, asTYPEID_UINT32);
+        break;
+    }
+    case QMetaType::ULongLong: {
+        auto v = ret.toULongLong();
+        any->Store(&v, asTYPEID_UINT64);
+        break;
+    }
+    case QMetaType::Double: {
+        auto v = ret.toDouble();
+        any->Store(&v, asTYPEID_DOUBLE);
+        break;
+    }
+    case QMetaType::Float: {
+        auto v = ret.toFloat();
+        any->Store(&v, asTYPEID_FLOAT);
+        break;
+    }
+    case QMetaType::Char: {
+        auto v = ret.value<char>();
+        QChar ch(v);
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+        auto id = type->GetTypeId();
+        any->Store(&ch, id);
+        break;
+    }
+    case QMetaType::Char16: {
+        auto v = ret.value<char16_t>();
+        QChar ch(v);
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+        auto id = type->GetTypeId();
+        any->Store(&ch, id);
+        break;
+    }
+    case QMetaType::Char32: {
+        auto v = ret.value<char32_t>();
+        QChar ch(v);
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_CharTypeInfo));
+        auto id = type->GetTypeId();
+        any->Store(&ch, id);
+        break;
+    }
+    case QMetaType::QVariantList: {
+        // note: empty list is not allowed!
+        // If empty, it will be ignored
+        auto v = ret.toList();
+        if (!v.isEmpty()) {
+            // reguard the first element type is the specilization
+            auto var = v.first();
+            auto type = var.isNull() ? QMetaType::Type::Void
+                                     : QMetaType::Type(var.typeId());
+            if (type == QMetaType::Type::Void) {
+                // ignore
+                break;
+            }
+            if (!isValidCStructMetaType(type)) {
+                // ignore
+                break;
+            }
+
+            QString idStr;
+
+            if (QMetaType::fromType<CEnumValue>().id() == int(type)) {
+                idStr = QStringLiteral("WingCStruct::EnumValue");
+            } else if (QMetaType::fromType<CINT_TYPE>().id() == int(type)) {
+                idStr = QStringLiteral("WingCStruct::IntType");
+            } else {
+                idStr = WingAngelAPI::qvariantCastASString(type);
+            }
+
+            if (idStr.isEmpty()) {
+                // ignore
+                break;
+            }
+            QString arrType =
+                QStringLiteral("array<") + idStr + QStringLiteral(">");
+            auto arrTypeID = engine->GetTypeIdByDecl(arrType.toUtf8());
+            if (arrTypeID < 0) {
+                // ignore
+                break;
+            }
+
+            any->Store(convert2AsArray(v, type, arrTypeID), arrTypeID);
+        }
+        break;
+    }
+    case QMetaType::QVariantHash: {
+        auto type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_DictionaryTypeInfo));
+        auto id = type->GetTypeId();
+        any->Store(convert2AsDictionary(ret.toHash()), id);
+        break;
+    }
+    default:
+        if (QMetaType::fromType<CEnumValue>().id() == int(meta)) {
+            static auto type =
+                engine->GetTypeInfoByName("WingCStruct::EnumValue");
+            Q_ASSERT(type);
+            if (type) {
+                auto id = type->GetTypeId();
+                Q_ASSERT(id >= 0);
+                auto v = ret.value<CEnumValue>();
+                any->Store(&v, id);
+            }
+        } else if (QMetaType::fromType<CINT_TYPE>().id() == int(meta)) {
+            static auto type =
+                engine->GetTypeInfoByName("WingCStruct::IntType");
+            Q_ASSERT(type);
+            if (type) {
+                auto id = type->GetTypeId();
+                Q_ASSERT(id >= 0);
+                auto v = ret.value<CEnumValue>();
+                any->Store(&v, id);
+            }
+        }
+        break;
+    }
+
+    return WingHex::makeRefObjPtr(any);
+}
+
+WingHex::UNSAFE_RET WingCStruct::readMembers(const QList<void *> &params) {
+    if (params.size() != 3) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    auto offset = WingHex::resolveUnsafeParamAs<qsizetype>(params.at(0));
+    auto type = WingHex::resolveUnsafeParamAsIn<QString>(params.at(1));
+    auto members = WingHex::resolveUnsafeParamAs<CScriptArray *>(params.at(2));
+
+    auto ret = __readMembers(
+        offset, type,
+        [members](uint index) {
+            return *reinterpret_cast<QString *>(members->At(index));
+        },
+        members->GetSize(), false);
     return WingHex::makeRefObjPtr(convert2AsDictionary(ret));
 }
 

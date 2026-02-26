@@ -960,7 +960,8 @@ qsizetype WingAngelAPI::getAsTypeSize(int typeId, void *data) {
         typeId &= ~asTYPEID_OBJHANDLE;
         asIScriptContext *ctx = asGetActiveContext();
         auto engine = ctx->GetEngine();
-        asITypeInfo *type = engine->GetTypeInfoByName("string");
+        asITypeInfo *type = static_cast<asITypeInfo *>(
+            engine->GetUserData(AsUserDataType::UserData_StringTypeInfo));
         if (type->GetTypeId() == typeId) {
             return reinterpret_cast<QString *>(data)->length() + 1;
         }
@@ -2224,13 +2225,19 @@ QString WingAngelAPI::_FileDialog_GetOpenFileName(const QString &caption,
 CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
     const QString &caption, const QString &dir, const QString &filter,
     QString *selectedFilter, int options) {
-    return retarrayWrapperFunction(
-        [&]() -> QStringList {
-            return WingFileDialog::getOpenFileNames(
-                nullptr, caption, dir, filter, selectedFilter,
-                QFileDialog::Options(options));
-        },
-        "array<string>");
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        return retarrayWrapperFunction(
+            [&]() -> QStringList {
+                return WingFileDialog::getOpenFileNames(
+                    nullptr, caption, dir, filter, selectedFilter,
+                    QFileDialog::Options(options));
+            },
+            static_cast<asITypeInfo *>(ctx->GetEngine()->GetUserData(
+                AsUserDataType::UserData_StringListTypeInfo)));
+    } else {
+        return nullptr;
+    }
 }
 
 QString WingAngelAPI::_FileDialog_GetSaveFileName(const QString &caption,

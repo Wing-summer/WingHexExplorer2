@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #include "contextmgr.h"
 #include "define.h"
 
@@ -111,7 +109,7 @@ CContextMgr::~CContextMgr() {
 
     for (n = 0; n < m_freeThreads.size(); n++) {
         if (m_freeThreads[n]) {
-            assert(m_freeThreads[n]->coRoutines.size() == 0);
+            ASSERT(m_freeThreads[n]->coRoutines.size() == 0);
 
             delete m_freeThreads[n];
         }
@@ -311,7 +309,7 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 }
 
 void CContextMgr::SetSleeping(asIScriptContext *ctx, asUINT milliSeconds) {
-    assert(m_getTimeFunc != 0);
+    ASSERT(m_getTimeFunc != 0);
 
     // Find the context and update the timeStamp
     // for when the context is to be continued
@@ -330,28 +328,28 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine) {
     int r;
 
     // Must set the get time callback function for this to work
-    assert(m_getTimeFunc != 0);
+    ASSERT(m_getTimeFunc != 0);
 
     // Register the sleep function
     r = engine->RegisterGlobalFunction("void sleep(uint)",
                                        asFUNCTION(ScriptSleep), asCALL_CDECL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 }
 
 void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine) {
     int r;
 
     // The dictionary add-on must have been registered already
-    assert(engine->GetTypeInfoByDecl("dictionary"));
+    ASSERT(engine->GetTypeInfoByDecl("dictionary"));
     r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield),
                                        asCALL_CDECL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterFuncdef("void coroutine(dictionary@)");
-    assert(r >= 0);
+    ASSERT(r >= 0);
     r = engine->RegisterGlobalFunction(
         "void createCoRoutine(coroutine @+, dictionary @+)",
         asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL);
-    assert(r >= 0);
+    ASSERT(r >= 0);
 }
 
 void CContextMgr::SetGetTimeCallback(TIMEFUNC_t func) { m_getTimeFunc = func; }

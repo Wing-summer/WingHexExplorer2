@@ -36,7 +36,7 @@ public:
     enum TOAST_POS { TOP, CENTER, BOTTOM };
 
     static void toast(QWidget *parent, const QPixmap &icon,
-                      const QString &strContent, int nToastInterval = 1500);
+                      const QString &strContent, int nToastInterval = 2000);
 
     virtual ~Toast();
 
@@ -66,6 +66,7 @@ private:
     int m_nCurrentWindowOpacity;
     int m_nCurrentStayTime;
     int m_nStatus;
+    int m_nFadeStep;
     QColor m_textColor = Qt::white;
     QColor m_backColor = Qt::black;
     QPixmap m_icon;

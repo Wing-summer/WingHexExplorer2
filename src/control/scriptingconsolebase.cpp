@@ -94,16 +94,15 @@ void ScriptingConsoleBase::initOutput() {
     newLine();
     stdWarnLine(tr(">>>> Powered by AngelScript <<<<"));
     newLine();
-    newLine();
     appendCommandPrompt();
 }
 
 void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
     QString commandPrompt;
 
-    auto cursor = this->textCursor();
-    if (!cursor.atBlockStart()) {
-        cursor.insertBlock();
+    auto doc = this->document();
+    if (!doc->isEmpty()) {
+        newLine();
     }
 
     if (storeOnly) {
@@ -114,7 +113,7 @@ void ScriptingConsoleBase::appendCommandPrompt(bool storeOnly) {
 
     _lastCommandPrompt = storeOnly;
     auto id = write(commandPrompt);
-    auto blk = document()->findBlockByNumber(id);
+    auto blk = doc->findBlockByNumber(id);
     auto h = consoleHighligher();
     h->setBlockAsCodeWithPrefix(blk, commandPrompt.length());
 }

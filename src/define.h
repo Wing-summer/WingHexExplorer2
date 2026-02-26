@@ -18,6 +18,9 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
+#include <QtAssert>
+#include <qtpreprocessorsupport.h>
+
 enum class CrashCode : int {
     AlreadyStart,
     LanguageFile,
@@ -32,9 +35,21 @@ enum AsUserDataType : unsigned int {
     // internal user data
     UserData_API,
     UserData_PluginFn,
+    UserData_CustomExprTypeCaches,
+    UserData_StringTypeInfo,
+    UserData_DateTimeTypeInfo,
+    UserData_JsonValueTypeInfo,
+    UserData_ByteArrayTypeInfo,
+    UserData_StringListTypeInfo,
+    UserData_CharArrayTypeInfo,
+    UserData_CharTypeInfo,
+    UserData_DictionaryTypeInfo,
+    UserData_DictionaryValueTypeInfo,
+    UserData_AnyTypeInfo,
+    UserData_ArrayTypeInfo,
 
     // copyable context attribute
-    UserData_CopyAttr_Begin = 10,
+    UserData_CopyAttr_Begin = 100,
     UserData_isDbg = UserData_CopyAttr_Begin,
     UserData_ContextMode,
     UserData_Timer,
@@ -50,5 +65,7 @@ enum AsUserDataType : unsigned int {
     UserData_Revserved_End = 1999
 };
 }
+
+inline void ASSERT(bool b) { Q_ASSERT(b); }
 
 #endif // DEFINE_H

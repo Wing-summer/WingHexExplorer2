@@ -16,6 +16,7 @@
 */
 
 #include "scripturl.h"
+#include "define.h"
 
 #include <QUrl>
 
@@ -150,270 +151,247 @@ static bool QUrl_matches_default(const QUrl *self, const QUrl &url) {
 void RegisterScriptUrl(asIScriptEngine *engine) {
     auto r = engine->RegisterObjectType("url", sizeof(QUrl),
                                         asOBJ_VALUE | asGetTypeTraits<QUrl>());
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour("url", asBEHAVE_CONSTRUCT, "void f()",
                                         asFUNCTION(QUrl_default_ctor),
                                         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour("url", asBEHAVE_DESTRUCT, "void f()",
                                         asFUNCTION(QUrl_default_dtor),
                                         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectBehaviour(
         "url", asBEHAVE_CONSTRUCT, "void f(const string &in)",
         asFUNCTION(QUrl_ctor_fromQString), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectBehaviour(
         "url", asBEHAVE_CONSTRUCT, "void f(const url &in)",
         asFUNCTION(QUrl_copy_ctor), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "url &opAssign(const url &in)",
                                      asFUNCTION(QUrl_assign),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "void setUrl(const string &in)",
                                      asFUNCTION(QUrl_setUrl_noMode),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string url() const",
                                      asFUNCTION(QUrl_url_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "string toString() const",
                                      asFUNCTION(QUrl_toString_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string toDisplayString() const",
                                      asFUNCTION(QUrl_toDisplayString_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // validity / errors
     r = engine->RegisterObjectMethod("url", "bool isValid() const",
                                      asFUNCTION(QUrl_isValid),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string errorString() const",
                                      asFUNCTION(QUrl_errorString),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "bool isEmpty() const",
                                      asFUNCTION(QUrl_isEmpty),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "url", "void clear()", asFUNCTION(QUrl_clear), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // scheme / authority / userinfo / username / password / host / port / path
     // / filename
     r = engine->RegisterObjectMethod("url", "void setScheme(const string &in)",
                                      asFUNCTION(QUrl_setScheme),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string scheme() const",
                                      asFUNCTION(QUrl_scheme),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "url", "void setAuthority(const string &in)",
         asFUNCTION(QUrl_setAuthority_noMode), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string authority() const",
                                      asFUNCTION(QUrl_authority_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "url", "void setUserInfo(const string &in)",
         asFUNCTION(QUrl_setUserInfo_noMode), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string userInfo() const",
                                      asFUNCTION(QUrl_userInfo_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "url", "void setUserName(const string &in)",
         asFUNCTION(QUrl_setUserName_noMode), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string userName() const",
                                      asFUNCTION(QUrl_userName_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod(
         "url", "void setPassword(const string &in)",
         asFUNCTION(QUrl_setPassword_noMode), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string password() const",
                                      asFUNCTION(QUrl_password_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "void setHost(const string &in)",
                                      asFUNCTION(QUrl_setHost_noMode),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string host() const",
                                      asFUNCTION(QUrl_host_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "void setPort(int)",
                                      asFUNCTION(QUrl_setPort),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "int port() const",
                                      asFUNCTION(QUrl_port_default),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "void setPath(const string &in)",
                                      asFUNCTION(QUrl_setPath_noMode),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string path() const",
                                      asFUNCTION(QUrl_path_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string fileName() const",
                                      asFUNCTION(QUrl_fileName_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // query / fragment
     r = engine->RegisterObjectMethod("url", "bool hasQuery() const",
                                      asFUNCTION(QUrl_hasQuery),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "void setQuery(const string &in)",
                                      asFUNCTION(QUrl_setQuery_str),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string query() const",
                                      asFUNCTION(QUrl_query_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "bool hasFragment() const",
                                      asFUNCTION(QUrl_hasFragment),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "string fragment() const",
                                      asFUNCTION(QUrl_fragment_noFormat),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "url", "void setFragment(const string &in)",
         asFUNCTION(QUrl_setFragment_noMode), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // resolved / relative / parent / localfile
     r = engine->RegisterObjectMethod("url", "url resolved(const url &in) const",
                                      asFUNCTION(QUrl_resolved),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "bool isRelative() const",
                                      asFUNCTION(QUrl_isRelative),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod(
         "url", "bool isParentOf(const url &in) const",
         asFUNCTION(QUrl_isParentOf), asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "bool isLocalFile() const",
                                      asFUNCTION(QUrl_isLocalFile),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterObjectMethod("url", "string toLocalFile() const",
                                      asFUNCTION(QUrl_toLocalFile),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // comparisons
     r = engine->RegisterObjectMethod(
         "url", "bool opEquals(const url &in) const", asFUNCTION(QUrl_opEquals),
         asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterObjectMethod("url", "bool opCmp(const url &in) const",
                                      asFUNCTION(QUrl_opLess),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     // matches
     r = engine->RegisterObjectMethod("url", "bool matches(const url &in) const",
                                      asFUNCTION(QUrl_matches_default),
                                      asCALL_CDECL_OBJFIRST);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->SetDefaultNamespace("url");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     r = engine->RegisterGlobalFunction("url fromLocalFile(const string &in)",
                                        asFUNCTION(QUrl_fromLocalFile_str),
                                        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "url fromUserInput(const string &in userInput, "
         "const string &in workDirectory)",
         asFUNCTION(QUrl_fromUserInput), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
+
     engine->SetDefaultNamespace("");
 }

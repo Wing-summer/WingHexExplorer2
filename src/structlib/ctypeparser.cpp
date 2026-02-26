@@ -1201,7 +1201,16 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
                 _msgcb(info);
             }
             auto s = getTypeSize(m.data_type);
-            Q_ASSERT(s);
+            if (!s) {
+                MsgInfo info;
+                info.type = MsgType::Warn;
+                info.info =
+                    QStringLiteral(
+                        "Cannot store '%1' because of invalid size of '%2'")
+                        .arg(type_name, m.data_type);
+                _msgcb(info);
+                return false;
+            }
             auto total = m.element_count;
             m.var_size = total * s.value();
         }

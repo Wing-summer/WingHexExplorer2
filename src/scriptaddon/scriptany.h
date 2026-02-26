@@ -1,4 +1,19 @@
-// copy from angelscript/addon and make 'value' publid
+/*==============================================================================
+** Copyright (C) 2026-2029 WingSummer
+**
+** This program is free software: you can redistribute it and/or modify it under
+** the terms of the GNU Affero General Public License as published by the Free
+** Software Foundation, version 3.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+** details.
+**
+** You should have received a copy of the GNU Affero General Public License
+** along with this program. If not, see <https://www.gnu.org/licenses/>.
+** =============================================================================
+*/
 
 #ifndef SCRIPTANY_H
 #define SCRIPTANY_H
@@ -8,13 +23,17 @@
 #include <angelscript.h>
 #endif
 
+#include "scriptqdictionary.h"
+
 BEGIN_AS_NAMESPACE
 
-class CScriptAny {
+// we using CScriptDictValue as a replacement of any
+
+class CScriptAny : public CScriptDictValue {
 public:
     // Constructors
     CScriptAny(asIScriptEngine *engine);
-    CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine);
+    CScriptAny(asIScriptEngine *engine, void *value, int typeId);
 
     // Memory management
     int AddRef() const;
@@ -26,23 +45,21 @@ public:
 
     // Store the value, either as variable type, integer number, or real number
     void Store(void *ref, int refTypeId);
-    void Store(asINT64 &value);
-    void Store(double &value);
+    void Store(const asQWORD &value);
+    void Store(const asINT64 &value);
+    void Store(const double &value);
 
     // Retrieve the stored value, either as variable type, integer number, or
     // real number
     bool Retrieve(void *ref, int refTypeId) const;
+    bool Retrieve(asQWORD &value) const;
     bool Retrieve(asINT64 &value) const;
     bool Retrieve(double &value) const;
-
-    // Get the type id of the stored value
-    int GetTypeId() const;
 
     // GC methods
     int GetRefCount();
     void SetFlag();
     bool GetFlag();
-    void EnumReferences(asIScriptEngine *engine);
     void ReleaseAllHandles(asIScriptEngine *engine);
 
 protected:
@@ -52,19 +69,6 @@ protected:
     mutable int refCount;
     mutable bool gcFlag;
     asIScriptEngine *engine;
-
-    // The structure for holding the values
-    struct valueStruct {
-        union {
-            asINT64 valueInt;
-            double valueFlt;
-            void *valueObj;
-        };
-        int typeId;
-    };
-
-public:
-    valueStruct value;
 };
 
 void RegisterScriptAny(asIScriptEngine *engine);

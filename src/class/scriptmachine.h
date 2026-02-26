@@ -113,6 +113,9 @@ public:
     bool isAngelChar(int typeID) const;
     bool isAngelString(int typeID) const;
     bool isAngelArray(int typeID) const;
+    bool isAngelDictionary(int typeID) const;
+    bool isAngelDicValue(int typeID) const;
+    bool isAngelAny(int typeID) const;
 
     void setFileEnableOverwrite(bool b);
     void setFileSystemWrite(bool b);
@@ -197,8 +200,6 @@ private:
     static int execSystemCmd(QString &out, const QString &exe,
                              const QString &params, int timeout);
 
-    static QString beautify(const QString &str, uint indent);
-
     QString stringify(void *ref, int typeId);
 
     template <typename T>
@@ -244,8 +245,6 @@ private:
     asIScriptModule *_eMod = nullptr;
 
     QQueue<asIScriptContext *> _ctxPool;
-
-    QHash<int, QMetaType::Type> _asMetaCaches;
 
     QMap<ConsoleMode, RegCallBacks> _regcalls;
     QMap<ConsoleMode, asIScriptContext *> _ctx;

@@ -41,7 +41,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(
       "__WING_STRING__",   "__WING_COLOR__",      "__WING_JSON__",
       "__WING_REGEX__",    "__WING_DICTIONARY__", "__WING_PRINT_VAR__",
       "__WING_PRINT_LN__", "__WING_PRINTF__",     "__WING_CLIPBOARD__",
-      "__WING_URL__",      "__WING_CRYPTO__"}));
+      "__WING_URL__",      "__WING_CRYPTO__",     "__WING_REFLECTION__",
+      "__WING_OPTBOX__"}));
 
 AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
     Q_ASSERT(engine);
@@ -373,7 +374,7 @@ void AsPreprocesser::processBuffer(const QByteArray &buf,
                 c = r.warn;
                 if (!c.isEmpty()) {
                     PreprocError e{PreprocErrorCode::ERR_SUCCESS,
-                                   Severity::Info,
+                                   Severity::Warning,
                                    m_currentSource,
                                    dStartLine,
                                    dStartCol,

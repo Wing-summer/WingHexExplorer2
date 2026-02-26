@@ -16,6 +16,7 @@
 */
 
 #include "scriptenv.h"
+#include "define.h"
 
 #include <QString>
 #include <QtGlobal>
@@ -38,34 +39,29 @@ static int readEnvironmentVarInt(const QString &env, bool *ok) {
 
 void RegisterEnv(asIScriptEngine *engine) {
     auto r = engine->SetDefaultNamespace("env");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "string readEnvironmentVar(const string &in name, const string "
         "&in defaultValue = \"\")",
         asFUNCTION(readEnvironmentVar), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "bool isEnvironmentVarSet(const string &in name)",
         asFUNCTION(isEnvironmentVarSet), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction(
         "bool isEnvironmentVarEmpty(const string &in name)",
         asFUNCTION(isEnvironmentVarEmpty), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     r = engine->RegisterGlobalFunction("int readEnvironmentVarInt(const string "
                                        "&in name, bool &out ok = void)",
                                        asFUNCTION(readEnvironmentVarInt),
                                        asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }

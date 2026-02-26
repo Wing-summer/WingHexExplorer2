@@ -145,6 +145,18 @@ void ASObjTreeWidget::addClassCompletion(
         cls.name = QString::fromUtf8(obj->GetName());
         auto ns = QString::fromUtf8(obj->GetNamespace());
 
+        for (asUINT i = 0; i < obj->GetFactoryCount(); ++i) {
+            auto b = obj->GetFactoryByIndex(i);
+            b->AddRef();
+            CodeInfoTip fn;
+            fn.type = LSP::CompletionItemKind::Function;
+            fn.name = QString::fromUtf8(b->GetDeclaration(false, false, false));
+            fn.setComment(
+                QString::fromUtf8(b->GetDeclaration(true, true, true)));
+            cls.children.append(fn);
+            b->Release();
+        }
+
         for (asUINT i = 0; i < obj->GetBehaviourCount(); ++i) {
             asEBehaviours bv;
             auto b = obj->GetBehaviourByIndex(i, &bv);

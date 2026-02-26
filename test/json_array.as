@@ -1,11 +1,11 @@
 // json_array.as
-// Test: Json::JsonArray append/at
 void main() {
-    Json::JsonArray arr;
-    arr.append(Json::JsonValue(1));
-    arr.append(Json::JsonValue("two"));
+    json::array arr;
+    arr.append(1);
+    arr.append(json::value("two"));
     assert(arr.size() == 2);
-    Json::JsonValue a0 = arr.at(0);
+    json::value a0 = arr.at(0);
     assert(a0.toInt() == 1);
+    print(arr);
     println("json_array OK");
 }

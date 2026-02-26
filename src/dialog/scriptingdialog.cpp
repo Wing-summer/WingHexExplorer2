@@ -1488,7 +1488,7 @@ void ScriptingDialog::on_newfile() {
                                      tr("InvalidFileOrPermission"));
             return;
         }
-
+        addRecentFile(filename);
         registerEditorView(editor);
         m_dock->addDockWidget(ads::CenterDockWidgetArea, editor,
                               editorViewArea());

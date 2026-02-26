@@ -19,6 +19,7 @@
 
 #include "class/angelscripthelper.h"
 #include "class/cryptographichash.h"
+#include "define.h"
 
 static CScriptArray *crypto_hash(const CScriptArray &data,
                                  CryptographicHash::Algorithm method) {
@@ -33,8 +34,7 @@ static CScriptArray *crypto_hash(const CScriptArray &data,
 
 void RegisterScriptCrypto(asIScriptEngine *engine) {
     int r = engine->SetDefaultNamespace("crypto");
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     registerAngelType<CryptographicHash::Algorithm>(engine, "algorithm");
 
@@ -42,8 +42,7 @@ void RegisterScriptCrypto(asIScriptEngine *engine) {
         "array<byte>@ hash(const array<byte> &in data, "
         "crypto::algorithm method)",
         asFUNCTION(crypto_hash), asCALL_CDECL);
-    Q_ASSERT(r >= 0);
-    Q_UNUSED(r);
+    ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");
 }

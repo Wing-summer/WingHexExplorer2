@@ -1,15 +1,15 @@
 // json_doc_tests.as
-// Test JsonDocument operations
+// Test document operations
 void main() {
-    Json::JsonDocument doc;
-    Json::JsonArray arr;
-    arr.append(Json::JsonValue(1));
+    json::document doc;
+    json::array arr;
+    arr.append(json::jsonValue(1));
     doc.setArray(arr);
     assert(doc.isArray());
-    string j = doc.toJson(Json::JsonFormat::Compact);
+    string j = doc.tojson(json::jsonFormat::Compact);
     println("json compact: " + j);
-    Json::JsonObject obj;
-    obj.set("k", Json::JsonValue("v"));
+    json::object obj;
+    obj.set("k", json::jsonValue("v"));
     doc.setObject(obj);
     assert(doc.isObject());
     println("json_doc_tests OK");

@@ -147,6 +147,9 @@ private:
     void reportDupError(size_t line, size_t charPositionInLine,
                         const QString &var);
 
+    void reportTooManyMembersError(size_t line, size_t charPositionInLine,
+                                   const QString &var);
+
     void reportUnexpectedType(size_t line, size_t charPositionInLine,
                               const QString &var, const QStringList &expected);
 

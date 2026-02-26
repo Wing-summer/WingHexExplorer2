@@ -35,9 +35,9 @@ static const int PADDING = 10;
 Toast::Toast(const QString &strContent, const QPixmap &icon, int nToastInterval,
              QWidget *parent)
     : QDialog(parent), m_strContent(strContent),
-      m_nToastInterval(nToastInterval * TIMER_INTERVAL / 1000),
-      m_nCurrentWindowOpacity(0), m_nCurrentStayTime(0), m_nStatus(0),
-      m_icon(icon), _parent(parent) {
+      m_nToastInterval(nToastInterval), m_nCurrentWindowOpacity(0),
+      m_nCurrentStayTime(0), m_nStatus(0), m_nFadeStep(0), m_icon(icon),
+      _parent(parent) {
     Q_ASSERT(parent);
     init();
 }
@@ -78,16 +78,15 @@ void Toast::init() {
     auto w = _parent->width();
     constexpr auto PADDING = 100;
     setMaximumWidth(qMax(PADDING, w - PADDING));
+    setWindowOpacity(1.0);
 }
 
 void Toast::setToastPos(TOAST_POS pos) {
     Q_ASSERT(_parent);
-    QRect screenRect = _parent->geometry();
-    QSize fontsize = calculateTextSize();
 
-    auto font = this->displayFont();
-    auto metric = QFontMetricsF(font);
-    auto ICON_PADDING = metric.height() + metric.horizontalAdvance(' ');
+    QSize fontsize = calculateTextSize();
+    auto metric = QFontMetricsF(displayFont());
+    qreal ICON_PADDING = metric.height() + metric.horizontalAdvance(' ');
 
     QSizeF windowSize;
     if (m_icon.isNull()) {
@@ -97,19 +96,22 @@ void Toast::setToastPos(TOAST_POS pos) {
         windowSize = QSizeF((fontsize.width() + ICON_PADDING) + PADDING * 2 + 1,
                             fontsize.height() + PADDING * 2);
     }
-    auto windowsX = (screenRect.width() - windowSize.width()) / 2;
-    auto windowsY = 0.0;
+
+    double localX = (_parent->width() - windowSize.width()) / 2.0;
+    double localY;
     if (pos == TOAST_POS::TOP) {
-        windowsY = screenRect.height() / 6;
+        localY = _parent->height() / 6.0;
     } else if (pos == TOAST_POS::BOTTOM) {
-        windowsY = screenRect.height() * 5 / 6;
+        localY = _parent->height() * 5 / 6.0 - windowSize.height();
     } else {
-        windowsY = (screenRect.height() - windowSize.height()) / 2;
+        localY = (_parent->height() - windowSize.height()) / 2.0;
     }
 
     m_pos = pos;
 
-    setGeometry(qRound(windowsX), qRound(windowsY), qCeil(windowSize.width()),
+    QPoint globalPos =
+        _parent->mapToGlobal(QPoint(qRound(localX), qRound(localY)));
+    setGeometry(globalPos.x(), globalPos.y(), qCeil(windowSize.width()),
                 qCeil(windowSize.height()));
 }
 
@@ -155,36 +157,50 @@ void Toast::paintEvent(QPaintEvent *) {
 }
 
 void Toast::showEvent(QShowEvent *) {
+    if (windowHandle() && _parent && _parent->window() &&
+        _parent->window()->windowHandle()) {
+        windowHandle()->setTransientParent(_parent->window()->windowHandle());
+    }
     if (m_nStatus == 0x00) {
         m_nCurrentStayTime = 0;
-        m_nCurrentWindowOpacity = 0;
+        m_nCurrentWindowOpacity = 100;
         startTimer(TIMER_INTERVAL);
-        m_nStatus = 0x01;
+        m_nStatus = 0x02;
     }
 }
 
 void Toast::timerEvent(QTimerEvent *e) {
-    if (m_nStatus == 0x01) {
-        if (m_nCurrentWindowOpacity < 100) {
-            m_nCurrentWindowOpacity += 10;
-            update();
-        } else {
-            m_nStatus = 0x02;
-        }
-    } else if (m_nStatus == 0x02) {
+    constexpr int FADE_STEP = 10;
+    constexpr int FADE_MS = 400;
+
+    if (m_nStatus == 0x02) {
         if (m_nCurrentStayTime < m_nToastInterval) {
             m_nCurrentStayTime += TIMER_INTERVAL;
-        } else {
-            m_nStatus = 0x03;
+            return;
         }
-    } else if (m_nStatus == 0x03) {
+
+        int fadeSteps = (FADE_MS + TIMER_INTERVAL - 1) / TIMER_INTERVAL;
+        fadeSteps = qMax(1, fadeSteps);
+        m_nFadeStep = (100 + fadeSteps - 1) / fadeSteps;
+        if (m_nFadeStep < 1)
+            m_nFadeStep = 1;
+        m_nStatus = 0x03;
+        return;
+    }
+
+    if (m_nStatus == 0x03) {
         if (m_nCurrentWindowOpacity > 0) {
-            m_nCurrentWindowOpacity -= 10;
+            m_nCurrentWindowOpacity -= m_nFadeStep;
+            if (m_nCurrentWindowOpacity < 0)
+                m_nCurrentWindowOpacity = 0;
+            setWindowOpacity(qMax(0.0, m_nCurrentWindowOpacity / 100.0));
             update();
-        } else {
-            m_nStatus = 0x04;
+            return;
         }
-    } else if (m_nStatus == 0x04) {
+        m_nStatus = 0x04;
+    }
+
+    if (m_nStatus == 0x04) {
         m_nStatus = 0x00;
         killTimer(e->timerId());
         this->deleteLater();

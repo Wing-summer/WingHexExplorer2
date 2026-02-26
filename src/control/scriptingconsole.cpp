@@ -235,7 +235,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         flush();
         break;
     case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart &&
+        if (isNotBlockStart ||
             _lastOutputType != ScriptMachine::MessageType::Print) {
             newLine();
         }
