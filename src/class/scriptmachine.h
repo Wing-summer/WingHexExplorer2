@@ -203,17 +203,17 @@ private:
     QString stringify(void *ref, int typeId);
 
     template <typename T>
-    static inline T *resolveObjAs(void *address, int typeId) {
+    static inline const T *resolveObjAs(const void *address, int typeId) {
         if (!address)
             return nullptr;
         else if (typeId & (asTYPEID_HANDLETOCONST | asTYPEID_OBJHANDLE)) {
-            return *reinterpret_cast<T **>(address);
+            return *reinterpret_cast<const T *const *>(address);
         }
-        return reinterpret_cast<T *>(address);
+        return reinterpret_cast<const T *>(address);
     }
 
 public:
-    std::string stringify_helper(void *ref, int typeId);
+    std::string stringify_helper(const void *ref, int typeId);
 
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);

@@ -1016,7 +1016,8 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
          it != struct_defs_.constKeyValueEnd(); ++it) {
 
         output << QStringLiteral("struct ") << it->first;
-        if (!isCompletedType(it->first)) {
+        bool isCompleted = isCompletedType(it->first);
+        if (!isCompleted) {
             output << QStringLiteral(" [?]");
         }
         output << ':' << Qt::endl;
@@ -1044,8 +1045,10 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
                 output << QStringLiteral(" : ") << var.bit_size;
             }
 
-            output << padding << QStringLiteral("(off: ") << var.offset
-                   << QStringLiteral(", size: ") << var.var_size << ')';
+            if (isCompleted) {
+                output << padding << QStringLiteral("(off: ") << var.offset
+                       << QStringLiteral(", size: ") << var.var_size << ')';
+            }
 
             if (var.bit_size) {
                 output << QStringLiteral(" { mask: ")
@@ -1059,10 +1062,13 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
             members.pop_front();
         }
 
-        auto type = it->first;
-        output << padding << QStringLiteral("(size = ")
-               << type_maps_.value(type).second << QStringLiteral(")\n")
-               << Qt::endl;
+        if (isCompleted) {
+            auto type = it->first;
+            output << padding << QStringLiteral("(size = ")
+                   << type_maps_.value(type).second << QStringLiteral(")\n");
+        }
+
+        output << Qt::endl;
     }
 }
 
@@ -1072,7 +1078,8 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
          itu != union_defs_.constKeyValueEnd(); ++itu) {
 
         output << QStringLiteral("union ") << itu->first;
-        if (!isCompletedType(itu->first)) {
+        bool isCompleted = isCompletedType(itu->first);
+        if (!isCompleted) {
             output << QStringLiteral(" [?]");
         }
         output << ':' << Qt::endl;
@@ -1095,14 +1102,19 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
             for (auto &dim : var.array_dims) {
                 output << '[' << dim << ']';
             }
-
-            output << padding << '(' << var.var_size << ')' << Qt::endl;
+            if (isCompleted) {
+                output << padding << '(' << var.var_size << ')';
+            }
+            output << Qt::endl;
 
             members.pop_front();
         }
-        output << padding << QStringLiteral("(size = ")
-               << type_maps_.value(itu->first).second << QStringLiteral(")\n")
-               << Qt::endl;
+        if (isCompleted) {
+            output << padding << QStringLiteral("(size = ")
+                   << type_maps_.value(itu->first).second
+                   << QStringLiteral(")\n");
+        }
+        output << Qt::endl;
     }
 }
 

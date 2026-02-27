@@ -214,28 +214,28 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     switch (msgtype) {
     case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             newLine();
         }
         stdOutLine(tr("[Info]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Warn:
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             newLine();
         }
         stdWarnLine(tr("[Warn]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Error:
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             newLine();
         }
         stdErrLine(tr("[Error]") + fmtMsg(message));
         flush();
         break;
     case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart ||
+        if (isNotBlockStart &&
             _lastOutputType != ScriptMachine::MessageType::Print) {
             newLine();
         }

@@ -525,7 +525,7 @@ static CScriptArray *stringSplit(const QString &sep, bool skipEmpty,
                                  bool caseSensitive, const QString &str) {
     auto ctx = asGetActiveContext();
     if (ctx) {
-        return retarrayWrapperFunction(
+        return retArrayWrapperFunction(
             [&]() -> QStringList {
                 return str.split(
                     sep, skipEmpty ? Qt::SkipEmptyParts : Qt::KeepEmptyParts,
@@ -544,7 +544,7 @@ static QString fromAscii(CScriptArray *array) {
 }
 
 static CScriptArray *toAsciiArray(const QString &s) {
-    return byteArrayWrapperFunction([s]() { return s.toLatin1(); });
+    return byteArrayWrapper(s.toLatin1());
 }
 
 static QString fromUtf8(CScriptArray *array) {
@@ -553,7 +553,7 @@ static QString fromUtf8(CScriptArray *array) {
 }
 
 static CScriptArray *toUtf8Array(const QString &s) {
-    return byteArrayWrapperFunction([s]() { return s.toUtf8(); });
+    return byteArrayWrapper(s.toUtf8());
 }
 
 static QString fromUtf16(CScriptArray *array) {
@@ -577,7 +577,11 @@ static QString fromUcs4(CScriptArray *array) {
 }
 
 static CScriptArray *toUcs4Array(const QString &s) {
-    return byteArrayWrapperFunction([s]() { return s.toUcs4(); });
+    return byteArrayWrapperFunction([s]() {
+        auto data = s.toUcs4();
+        return QByteArray(reinterpret_cast<const char *>(data.data()),
+                          s.size() * sizeof(uint));
+    });
 }
 
 static QString fromRawData(CScriptArray *array) {
@@ -604,7 +608,7 @@ static void prependCh(const QChar &ch, QString &s) { s.prepend(ch); }
 static CScriptArray *toRawData(const QString &s) {
     auto ctx = asGetActiveContext();
     if (ctx) {
-        return retarrayWrapperFunction(
+        return retArrayWrapperFunction(
             [s]() {
                 QList<QChar> data;
                 data.reserve(s.length());
@@ -1282,7 +1286,7 @@ static CScriptArray *stringSplitReg(const QRegularExpression &exp,
                                     bool skipEmpty, const QString &str) {
     auto ctx = asGetActiveContext();
     if (ctx) {
-        return retarrayWrapperFunction(
+        return retArrayWrapperFunction(
             [&]() -> QStringList {
                 return str.split(exp, skipEmpty ? Qt::SkipEmptyParts
                                                 : Qt::KeepEmptyParts);

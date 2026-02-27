@@ -176,7 +176,7 @@ QMenu *DockWidgetTab::buildContextMenu(QMenu *menu) {
         auto v = qobject_cast<ScriptEditor *>(dw);
         if (v) {
             state = State::ScriptView;
-            initMenuItems(menu, v->fileName());
+            initMenuItems(menu, v->lspFileNameURL());
             menu->addSeparator();
         }
     }

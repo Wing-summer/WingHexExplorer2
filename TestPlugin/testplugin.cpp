@@ -615,6 +615,8 @@ void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
         WingHex::IWingAngel::asCallConvTypes::asCALL_GENERIC);
 
     // register test object
+    // must add asOBJ_APP_CLASS_ALLINTS on linux
+    // this class is a wrapper for int
     struct TestObj {
         TestObj() : _v(0) {}
         TestObj(int v) : _v(v) {}

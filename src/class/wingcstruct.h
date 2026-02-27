@@ -19,8 +19,7 @@
 #define WINGCSTRUCT_H
 
 #include "WingPlugin/iwingplugin.h"
-#include "structlib/ctypeparser.h"
-#include "utilities.h"
+#include "structparser.h"
 
 class CScriptDictionary;
 class asIScriptEngine;
@@ -29,70 +28,6 @@ class CScriptArray;
 class WingCStruct : public WingHex::IWingPlugin {
     Q_OBJECT
     Q_INTERFACES(WingHex::IWingPlugin)
-
-private:
-    inline quint64 getShiftAndMaskedPtr(const QByteArray &buffer) {
-        if (buffer.size() == sizeof(quint32)) {
-            return Utilities::processEndian(
-                *reinterpret_cast<const quint32 *>(buffer.data()), m_islittle);
-        } else {
-            return Utilities::processEndian(
-                *reinterpret_cast<const quint64 *>(buffer.data()), m_islittle);
-        }
-    }
-
-    template <typename T, typename = std::enable_if<std::is_arithmetic_v<T>>>
-    inline T getShiftAndMasked(const QByteArray &buffer, size_t shift,
-                               size_t mask) {
-        if constexpr (std::is_integral_v<T>) {
-            auto len = buffer.size();
-            if (buffer.isEmpty()) {
-                return T();
-            }
-
-            if (len >= sizeof(quint64)) {
-                auto r = Utilities::processEndian(
-                    *reinterpret_cast<const quint64 *>(buffer.constData()),
-                    m_islittle);
-                r >>= shift;
-                r &= mask;
-                return T(r);
-            }
-
-            if (len >= sizeof(quint32)) {
-                auto r = Utilities::processEndian(
-                    *reinterpret_cast<const quint32 *>(buffer.constData()),
-                    m_islittle);
-                r >>= shift;
-                r &= mask;
-                return T(r);
-            }
-
-            if (len >= sizeof(quint16)) {
-                auto r = Utilities::processEndian(
-                    *reinterpret_cast<const quint16 *>(buffer.constData()),
-                    m_islittle);
-                r >>= shift;
-                r &= mask;
-                return T(r);
-            }
-
-            auto r = *reinterpret_cast<const quint8 *>(buffer.constData());
-            r >>= shift;
-            r &= mask;
-            return T(r);
-        } else if constexpr (std::is_same_v<T, float>) {
-            return Utilities::processEndian(
-                *reinterpret_cast<const float *>(buffer.constData()),
-                m_islittle);
-        } else if constexpr (std::is_same_v<T, double>) {
-            return Utilities::processEndian(
-                *reinterpret_cast<const double *>(buffer.constData()),
-                m_islittle);
-        } else {
-            return T();
-        }
-    }
 
 public:
     explicit WingCStruct();
@@ -110,130 +45,28 @@ public:
 
     // IWingPlugin interface
 public:
-    virtual RegisteredEvents registeredEvents() const override;
     virtual QList<WingHex::SettingPage *>
     registeredSettingPages() const override;
-    virtual std::optional<WingHex::PragmaResult>
-    eventOnScriptPragma(const QString &script,
-                        const QStringList &comments) override;
-    virtual void eventOnScriptPragmaInit() override;
 
     // IWingPluginCoreBase interface
 public:
     virtual void onRegisterScriptObj(WingHex::IWingAngel *o) override;
 
-private:
-    struct CINT_TYPE {
-    public:
-        CINT_TYPE() : d(0) {}
-        CINT_TYPE(qint64 v)
-            : d(CTypeParser::INT_TYPE(std::in_place_type_t<qint64>(), v)) {}
-        CINT_TYPE(quint64 v)
-            : d(CTypeParser::INT_TYPE(std::in_place_type_t<quint64>(), v)) {}
-        CINT_TYPE(CTypeParser::INT_TYPE v) : d(v) {}
-        ~CINT_TYPE() = default;
-
-    public:
-        bool isInt() const { return std::holds_alternative<qint64>(d); }
-
-        bool isUInt() const { return std::holds_alternative<quint64>(d); }
-
-        qint64 toInt() const {
-            if (isInt()) {
-                return std::get<qint64>(d);
-            } else {
-                return qint64(std::get<quint64>(d));
-            }
-        }
-
-        quint64 toUInt() const {
-            if (isUInt()) {
-                return std::get<quint64>(d);
-            } else {
-                return quint64(std::get<qint64>(d));
-            }
-        }
-
-    public:
-        CTypeParser::INT_TYPE d;
-    };
-
-    using CEnumValue = QPair<CINT_TYPE, QString>;
-
-private:
-    // basic
-    bool parseFromSource(const QString &header);
-    bool parse(const QString &fileName);
-    void reset();
-
-    bool isLittleEndian() const;
-    void setIsLittleEndian(bool newIslittle);
-
-    bool setPadAlignment(int padding); // 1, 2, 4, 8, 16
-    int padAlignment();
-
-    // lookup
-    QStringList structTypeDefs();
-    QStringList unionTypeDefs();
-    QStringList typedefTypeDefs();
-    QStringList enumTypeDefs();
-    QStringList constVarDefs();
-
-    qint64 sizeOf(const QString &type);
-    bool containsType(const QString &name);
-
-    bool isBasicType(const QString &name);
-    bool isUnsignedBasicType(const QString &name);
-
-    bool containsEnum(const QString &name);
-    bool containsStruct(const QString &name);
-    bool containsUnion(const QString &name);
-    bool containsTypeDef(const QString &name);
-    bool containsConstVar(const QString &name);
-    bool isCompletedType(const QString &name);
-
-    QStringList enumValueNames(const QString &name);
-    qint64 constVarValueInt(const QString &name, bool *ok);
-    quint64 constVarValueUInt(const QString &name, bool *ok);
-
-    bool isCompletedStruct(const QString &name);
-    bool isCompletedUnion(const QString &name);
-
-    QStringList getMissingDependencise(const QString &name);
-
-    QVariantHash read(qsizetype offset, const QString &type);
-    QVariant readMember(qsizetype offset, const QString &type,
-                        const QString &member);
-    QVariantHash readMembers(qsizetype offset, const QString &type,
-                             const QStringList &members);
-    QByteArray readRaw(qsizetype offset, const QString &type);
-
-    QString dumpAllTypes() const;
-    QString dumpTypeDefines() const;
-    QString dumpConstants() const;
-    QString dumpStructs() const;
-    QString dumpUnions() const;
-    QString dumpEnums() const;
-
-    QStringList getParsedErrors() const;
-    QStringList getParsedWarns() const;
-
-    QStringList structOrUnionMemberNames(const QString &type) const;
-    QStringList structOrUnionMemberDataTypes(const QString &type) const;
-    QStringList structOrUnionMemberDecls(const QString &type) const;
-    QStringList structOrUnionMemberDeclWithoutNames(const QString &type) const;
-
     // services
 private:
+    // acquire
+    WING_SERVICE bool createParser(const WingHex::SenderInfo &sender);
+    WING_SERVICE void destroyParser(const WingHex::SenderInfo &sender);
+
     // basic
     WING_SERVICE bool parseFromSource(const WingHex::SenderInfo &sender,
                                       const QString &header);
     WING_SERVICE bool parse(const WingHex::SenderInfo &sender,
                             const QString &fileName);
-    WING_SERVICE void reset(const WingHex::SenderInfo &sender);
+    WING_SERVICE bool reset(const WingHex::SenderInfo &sender);
 
     WING_SERVICE bool isLittleEndian(const WingHex::SenderInfo &sender) const;
-    WING_SERVICE void setIsLittleEndian(const WingHex::SenderInfo &sender,
+    WING_SERVICE bool setIsLittleEndian(const WingHex::SenderInfo &sender,
                                         bool newIslittle);
 
     WING_SERVICE bool setPadAlignment(const WingHex::SenderInfo &sender,
@@ -316,102 +149,17 @@ private:
     WING_SERVICE QStringList structOrUnionMemberDeclWithoutNames(
         const WingHex::SenderInfo &sender, const QString &type);
 
+    WING_SERVICE QString resolveTypeName(const WingHex::SenderInfo &sender,
+                                         const QString &type);
+
 private:
     WingHex::MetaType getqsizetypeMetaType() const;
-
     QString getqsizeTypeAsString() const;
 
-    QVariant getData(const char *ptr, const char *end, QMetaType::Type type,
-                     qint64 shift, qint64 mask, qsizetype size);
-
-    QVariantHash __read(qsizetype offset, const QString &type,
-                        bool efmtInVariantList);
-
-    QVariant __readMember(qsizetype offset, const QString &type,
-                          const QString &member, bool efmtInVariantList);
-
-    QVariantHash __readMembers(qsizetype offset, const QString &type,
-                               const std::function<QString(uint)> &members,
-                               uint total, bool efmtInVariantList);
-
-    QVariantHash readStruct(const char *ptr, const char *end,
-                            const QString &type, bool efmtInVariantList);
-
-    QVariant readStructMember(const char *ptr, const char *end,
-                              const QString &type, const QString &member,
-                              bool efmtInVariantList);
-
-    QVariantHash readStructMembers(const char *ptr, const char *end,
-                                   const QString &type,
-                                   const std::function<QString(uint)> &members,
-                                   uint total, bool efmtInVariantList);
-
-    QVariant readContent(const char *ptr, const char *end,
-                         const VariableDeclaration &m, bool efmtInVariantList);
-
-    bool isValidCStructMetaType(QMetaType::Type type);
-    CScriptDictionary *convert2AsDictionary(const QVariantHash &hash);
-    CScriptArray *convert2AsArray(const QVariantList &array,
-                                  QMetaType::Type type, int id);
-
 private:
-    // wrapper for WingAngelApi
-    QVariant parseFromSource(const QVariantList &params);
-    QVariant parse(const QVariantList &params);
-    QVariant reset(const QVariantList &params);
+    QHash<QString, StructParser *> _parsers;
 
-    QVariant isLittleEndian(const QVariantList &params);
-    QVariant setIsLittleEndian(const QVariantList &params);
-
-    QVariant setPadAlignment(const QVariantList &params);
-    QVariant padAlignment(const QVariantList &params);
-
-    QVariant structTypeDefs(const QVariantList &params);
-    QVariant unionTypeDefs(const QVariantList &params);
-    QVariant typedefTypeDefs(const QVariantList &params);
-    QVariant enumTypeDefs(const QVariantList &params);
-    QVariant constVarDefs(const QVariantList &params);
-
-    QVariant sizeOf(const QVariantList &params);
-    QVariant containsType(const QVariantList &params);
-    QVariant isBasicType(const QVariantList &params);
-    QVariant isUnsignedBasicType(const QVariantList &params);
-    QVariant containsEnum(const QVariantList &params);
-    QVariant containsStruct(const QVariantList &params);
-    QVariant containsUnion(const QVariantList &params);
-    QVariant containsTypeDef(const QVariantList &params);
-    QVariant containsConstVar(const QVariantList &params);
-    QVariant isCompletedType(const QVariantList &params);
-
-    QVariant enumValueNames(const QVariantList &params);
-    QVariant isCompletedStruct(const QVariantList &params);
-    QVariant isCompletedUnion(const QVariantList &params);
-
-    QVariant getMissingDependencise(const QVariantList &params);
-
-    WingHex::UNSAFE_RET constVarValueInt(const QList<void *> &params);
-    WingHex::UNSAFE_RET constVarValueUInt(const QList<void *> &params);
-    WingHex::UNSAFE_RET constVarValue(const QList<void *> &params);
-
-    WingHex::UNSAFE_RET read(const QList<void *> &params);
-    WingHex::UNSAFE_RET readMember(const QList<void *> &params);
-    WingHex::UNSAFE_RET readMembers(const QList<void *> &params);
-    QVariant readRaw(const QVariantList &params);
-
-    QVariant getParsedErrors(const QVariantList &params);
-    QVariant getParsedWarns(const QVariantList &params);
-
-    QVariant structOrUnionMemberNames(const QVariantList &params);
-    QVariant structOrUnionMemberDataTypes(const QVariantList &params);
-    QVariant structOrUnionMemberDecls(const QVariantList &params);
-    QVariant structOrUnionMemberDeclWithoutNames(const QVariantList &params);
-
-private:
-    CTypeParser *_parser = nullptr;
     QList<WingHex::SettingPage *> _setpgs;
-    bool m_islittle = Utilities::checkIsLittleEndian();
-
-    QStringList _errors, _warns;
 };
 
 #endif // WINGCSTRUCT_H

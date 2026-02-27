@@ -18,6 +18,8 @@
 #include "scriptreflection.h"
 #include "define.h"
 
+#include "scriptaddon/scriptqdictionary.h"
+
 #include <QString>
 #include <QStringList>
 
@@ -382,6 +384,57 @@ static void Generic_FromType_Template(asIScriptGeneric *gen) {
     gen->SetReturnObject(new (mem) ASType(subtype));
 }
 
+// Generic entry for: dictionary@ getClassMembers(const ?&in obj)
+static void getClassMembers_Generic(asIScriptGeneric *gen) {
+    asIScriptEngine *engine = gen->GetEngine();
+    CScriptDictionary *dict = CScriptDictionary::Create(engine);
+
+    int argTypeId = gen->GetArgTypeId(0);
+
+    const int realTypeId = argTypeId & ~asTYPEID_OBJHANDLE;
+    asITypeInfo *ti = engine->GetTypeInfoById(realTypeId);
+    if (!ti) {
+        gen->SetReturnObject(dict);
+        return;
+    }
+
+    asDWORD typeFlags = ti->GetFlags();
+    if (!(typeFlags & asOBJ_SCRIPT_OBJECT)) {
+        gen->SetReturnObject(dict);
+        return;
+    }
+
+    bool isHandle = (argTypeId & asTYPEID_OBJHANDLE) != 0;
+    asIScriptObject *scriptObj = nullptr;
+    if (isHandle) {
+        scriptObj = reinterpret_cast<asIScriptObject *>(gen->GetArgObject(0));
+    } else {
+        scriptObj = reinterpret_cast<asIScriptObject *>(gen->GetArgAddress(0));
+    }
+
+    if (scriptObj == nullptr) {
+        gen->SetReturnObject(dict);
+        return;
+    }
+
+    asUINT propCount = ti->GetPropertyCount();
+    for (asUINT i = 0; i < propCount; ++i) {
+        const char *propName = nullptr;
+        int propTypeId = 0;
+        ti->GetProperty(i, &propName, &propTypeId);
+        if (!propName)
+            continue;
+
+        void *propAddr = scriptObj->GetAddressOfProperty(i);
+        if (!propAddr) {
+            continue;
+        }
+
+        dict->Set(QString::fromUtf8(propName), propAddr, propTypeId);
+    }
+    gen->SetReturnObject(dict);
+}
+
 void RegisterASReflection(asIScriptEngine *engine) {
     int r;
 
@@ -519,6 +572,12 @@ void RegisterASReflection(asIScriptEngine *engine) {
     r = engine->RegisterGlobalFunction("ASType@ fromType<T>()",
                                        asFUNCTION(Generic_FromType_Template),
                                        asCALL_GENERIC);
+    ASSERT(r >= 0);
+
+    // for script classes
+    r = engine->RegisterGlobalFunction(
+        "dictionary@ getClassMembers(const ?&in)",
+        asFUNCTION(getClassMembers_Generic), asCALL_GENERIC);
     ASSERT(r >= 0);
 
     engine->SetDefaultNamespace("");

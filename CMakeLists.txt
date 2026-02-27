@@ -398,8 +398,10 @@ set(CLASS_SRC
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 
-set(INTERNAL_PLG_SRC src/class/wingangelapi.h src/class/wingangelapi.cpp
-                     src/class/wingcstruct.h src/class/wingcstruct.cpp)
+set(INTERNAL_PLG_SRC
+    src/class/wingangelapi.h src/class/wingangelapi.cpp src/class/wingcstruct.h
+    src/class/wingcstruct.cpp src/class/structparser.h
+    src/class/structparser.cpp)
 
 if(WINGHEX_USE_FRAMELESS)
     set(WIDGET_FRAME_SRC

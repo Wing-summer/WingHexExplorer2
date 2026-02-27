@@ -466,6 +466,10 @@ void ScriptMachine::__outputfmt(MessageType type, asIScriptGeneric *args) {
                     // array<?>
                     store.push_back(CScriptArrayView(
                         resolveObjAs<CScriptArray>(ref, typeId)));
+                } else if (m.isAngelDictionary(typeId)) {
+                    // dictionary
+                    store.push_back(CScriptDictionaryView(
+                        resolveObjAs<CScriptDictionary>(ref, typeId)));
                 } else {
                     store.push_back(m.stringify_helper(ref, typeId));
                 }
@@ -651,7 +655,7 @@ std::string ScriptMachine::getAsTypeName(int typeId) {
     return name;
 }
 
-std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
+std::string ScriptMachine::stringify_helper(const void *ref, int typeId) {
     ASSERT(ref && typeId);
     if (ref == nullptr) {
         return {};
@@ -659,27 +663,27 @@ std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
 
     switch (typeId & asTYPEID_MASK_SEQNBR) {
     case asTYPEID_BOOL:
-        return fmt::to_string(*static_cast<bool *>(ref));
+        return fmt::to_string(*static_cast<const bool *>(ref));
     case asTYPEID_INT8:
-        return fmt::to_string(*static_cast<qint8 *>(ref));
+        return fmt::to_string(*static_cast<const qint8 *>(ref));
     case asTYPEID_INT16:
-        return fmt::to_string(*static_cast<qint16 *>(ref));
+        return fmt::to_string(*static_cast<const qint16 *>(ref));
     case asTYPEID_INT32:
-        return fmt::to_string(*static_cast<qint32 *>(ref));
+        return fmt::to_string(*static_cast<const qint32 *>(ref));
     case asTYPEID_INT64:
-        return fmt::to_string(*static_cast<qint64 *>(ref));
+        return fmt::to_string(*static_cast<const qint64 *>(ref));
     case asTYPEID_UINT8:
-        return fmt::to_string(*static_cast<quint8 *>(ref));
+        return fmt::to_string(*static_cast<const quint8 *>(ref));
     case asTYPEID_UINT16:
-        return fmt::to_string(*static_cast<quint16 *>(ref));
+        return fmt::to_string(*static_cast<const quint16 *>(ref));
     case asTYPEID_UINT32:
-        return fmt::to_string(*static_cast<quint32 *>(ref));
+        return fmt::to_string(*static_cast<const quint32 *>(ref));
     case asTYPEID_UINT64:
-        return fmt::to_string(*static_cast<quint64 *>(ref));
+        return fmt::to_string(*static_cast<const quint64 *>(ref));
     case asTYPEID_FLOAT:
-        return fmt::to_string(*static_cast<float *>(ref));
+        return fmt::to_string(*static_cast<const float *>(ref));
     case asTYPEID_DOUBLE:
-        return fmt::to_string(*static_cast<double *>(ref));
+        return fmt::to_string(*static_cast<const double *>(ref));
     }
 
     if (isAngelChar(typeId)) {
@@ -695,25 +699,8 @@ std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
             CScriptArrayView(resolveObjAs<CScriptArray>(ref, typeId)));
     } else if (isAngelDictionary(typeId)) {
         // dictionary
-        auto dic = resolveObjAs<CScriptDictionary>(ref, typeId);
-        std::vector<std::string> buffer;
-        buffer.reserve(dic->GetSize());
-        for (auto it = dic->begin(); it != dic->end(); ++it) {
-            std::string r;
-            if (isAngelString(it.GetTypeId())) {
-                r = fmt::format(
-                    FMT_STRING(R"(["{}"] = {:?})"), it.GetKey(),
-                    stringify_helper(const_cast<void *>(it.GetAddressOfValue()),
-                                     it.GetTypeId()));
-            } else {
-                r = fmt::format(
-                    FMT_STRING(R"(["{}"] = {})"), it.GetKey(),
-                    stringify_helper(const_cast<void *>(it.GetAddressOfValue()),
-                                     it.GetTypeId()));
-            }
-            buffer.emplace_back(r);
-        }
-        return fmt::format(FMT_STRING("{{{}}}"), fmt::join(buffer, ", "));
+        return fmt::to_string(CScriptDictionaryView(
+            resolveObjAs<CScriptDictionary>(ref, typeId)));
     } else if (isAngelDicValue(typeId)) {
         // dictonaryValue
         auto dicv = resolveObjAs<CScriptDictValue>(ref, typeId);
@@ -735,7 +722,8 @@ std::string ScriptMachine::stringify_helper(void *ref, int typeId) {
             if (func) {
                 ctx->PushState();
                 ctx->Prepare(func);
-                ctx->SetObject(resolveObjAs<void>(ref, typeId));
+                ctx->SetObject(
+                    const_cast<void *>(resolveObjAs<void>(ref, typeId)));
                 ctx->Execute();
                 auto rstr = *static_cast<QString *>(ctx->GetReturnObject());
                 ctx->PopState();

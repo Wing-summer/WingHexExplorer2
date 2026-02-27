@@ -600,6 +600,10 @@ void RegisterOptBox(asIScriptEngine *engine) {
                                         asMETHOD(OptBox, AddRef),
                                         asCALL_THISCALL);
     ASSERT(r >= 0);
+    r = engine->RegisterObjectBehaviour("optbox", asBEHAVE_RELEASE, "void f()",
+                                        asMETHOD(OptBox, Release),
+                                        asCALL_THISCALL);
+    ASSERT(r >= 0);
     r = engine->RegisterObjectBehaviour(
         "optbox", asBEHAVE_FACTORY, "optbox@ f(const string&in)",
         asFUNCTION(ScriptOptBoxFactory_Generic), asCALL_GENERIC);
@@ -607,10 +611,6 @@ void RegisterOptBox(asIScriptEngine *engine) {
     r = engine->RegisterObjectBehaviour(
         "optbox", asBEHAVE_FACTORY, "optbox@ f(const json::document&in)",
         asFUNCTION(ScriptOptBoxFactory_Json_Generic), asCALL_GENERIC);
-    ASSERT(r >= 0);
-    r = engine->RegisterObjectBehaviour("optbox", asBEHAVE_RELEASE, "void f()",
-                                        asMETHOD(OptBox, Release),
-                                        asCALL_THISCALL);
     ASSERT(r >= 0);
     r = engine->RegisterObjectMethod("optbox", "dictionary@ exec() const",
                                      asMETHOD(OptBox, exec), asCALL_THISCALL);

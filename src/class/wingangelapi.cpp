@@ -2009,8 +2009,7 @@ bool WingAngelAPI::invoke_service(
 }
 
 CScriptArray *WingAngelAPI::_HexReader_selectedBytes(qsizetype index) {
-    return byteArrayWrapperFunction(
-        [this, index]() -> QByteArray { return selectedBytes(index); });
+    return byteArrayWrapper(selectedBytes(index));
 }
 
 CScriptArray *WingAngelAPI::_HexReader_selectionBytes() {
@@ -2046,8 +2045,7 @@ CScriptArray *WingAngelAPI::_HexReader_selectionBytes() {
 
 CScriptArray *WingAngelAPI::_HexReader_readBytes(qsizetype offset,
                                                  qsizetype len) {
-    return byteArrayWrapperFunction(
-        [this, offset, len]() -> QByteArray { return readBytes(offset, len); });
+    return byteArrayWrapper(readBytes(offset, len));
 }
 
 qsizetype WingAngelAPI::_HexReader_findNext(qsizetype begin,
@@ -2227,7 +2225,7 @@ CScriptArray *WingAngelAPI::_FileDialog_getOpenFileNames(
     QString *selectedFilter, int options) {
     auto ctx = asGetActiveContext();
     if (ctx) {
-        return retarrayWrapperFunction(
+        return retArrayWrapperFunction(
             [&]() -> QStringList {
                 return WingFileDialog::getOpenFileNames(
                     nullptr, caption, dir, filter, selectedFilter,

@@ -28,8 +28,7 @@ static CScriptArray *crypto_hash(const CScriptArray &data,
     if (!ok) {
         return nullptr;
     }
-    return byteArrayWrapperFunction(
-        [&]() -> QByteArray { return CryptographicHash::hash(bab, method); });
+    return byteArrayWrapper(CryptographicHash::hash(bab, method));
 }
 
 void RegisterScriptCrypto(asIScriptEngine *engine) {

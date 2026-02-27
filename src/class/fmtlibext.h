@@ -24,9 +24,14 @@
 
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "class/scriptmachine.h"
+#include "class/scriptsettings.h"
 #include "scriptaddon/scriptdatetime.h"
+#include "scriptaddon/scriptqdictionary.h"
 
+#include <QFont>
+#include <QFontMetrics>
 #include <QString>
+#include <string>
 
 inline QString escapeNonPrintable(const QChar &ch) {
     const ushort code = ch.unicode();
@@ -79,16 +84,16 @@ inline QString escapeNonPrintable(const QString &input) {
 template <typename T>
 class CScriptObjectView {
 public:
-    inline explicit CScriptObjectView(T *data) noexcept : data_(data) {
+    inline explicit CScriptObjectView(const T *data) noexcept : data_(data) {
         Q_ASSERT(data);
     }
 
     inline ~CScriptObjectView() noexcept { data_ = nullptr; }
 
-    inline T *data() const noexcept { return data_; }
+    inline const T *data() const noexcept { return data_; }
 
 private:
-    T *data_ = nullptr;
+    const T *data_ = nullptr;
 };
 
 using CScriptArrayView = CScriptObjectView<CScriptArray>;
@@ -205,7 +210,7 @@ struct formatter<CDateTime, Char> {
 };
 
 static format_context::iterator
-format_element_with_spec(void *elemPtr, int typeId,
+format_element_with_spec(const void *elemPtr, int typeId,
                          const std::string &underlying_spec,
                          format_context &ctx) {
     std::string fmt_str = "{";
@@ -221,49 +226,54 @@ format_element_with_spec(void *elemPtr, int typeId,
 
     switch (typeId) {
     case asTYPEID_BOOL:
-        store.push_back(*static_cast<bool *>(elemPtr));
+        store.push_back(*static_cast<const bool *>(elemPtr));
         break;
     case asTYPEID_INT8:
-        store.push_back(*static_cast<qint8 *>(elemPtr));
+        store.push_back(*static_cast<const qint8 *>(elemPtr));
         break;
     case asTYPEID_INT16:
-        store.push_back(*static_cast<qint16 *>(elemPtr));
+        store.push_back(*static_cast<const qint16 *>(elemPtr));
         break;
     case asTYPEID_INT32:
-        store.push_back(*static_cast<qint32 *>(elemPtr));
+        store.push_back(*static_cast<const qint32 *>(elemPtr));
         break;
     case asTYPEID_INT64:
-        store.push_back(*static_cast<qint64 *>(elemPtr));
+        store.push_back(*static_cast<const qint64 *>(elemPtr));
         break;
     case asTYPEID_UINT8:
-        store.push_back(*static_cast<quint8 *>(elemPtr));
+        store.push_back(*static_cast<const quint8 *>(elemPtr));
         break;
     case asTYPEID_UINT16:
-        store.push_back(*static_cast<quint16 *>(elemPtr));
+        store.push_back(*static_cast<const quint16 *>(elemPtr));
         break;
     case asTYPEID_UINT32:
-        store.push_back(*static_cast<quint32 *>(elemPtr));
+        store.push_back(*static_cast<const quint32 *>(elemPtr));
         break;
     case asTYPEID_UINT64:
-        store.push_back(*static_cast<quint64 *>(elemPtr));
+        store.push_back(*static_cast<const quint64 *>(elemPtr));
         break;
     case asTYPEID_FLOAT:
-        store.push_back(*static_cast<float *>(elemPtr));
+        store.push_back(*static_cast<const float *>(elemPtr));
         break;
     case asTYPEID_DOUBLE:
-        store.push_back(*static_cast<double *>(elemPtr));
+        store.push_back(*static_cast<const double *>(elemPtr));
         break;
     default: {
         if (m.isAngelChar(typeId)) {
-            QString r(3, '\'');
-            r[1] = *static_cast<QChar *>(elemPtr);
-            store.push_back(r);
+            store.push_back(
+                escapeNonPrintable(*static_cast<const QChar *>(elemPtr))
+                    .prepend('\'')
+                    .append('\''));
         } else if (m.isAngelString(typeId)) {
-            auto str = *static_cast<QString *>(elemPtr);
+            auto str =
+                escapeNonPrintable(*static_cast<const QString *>(elemPtr));
             store.push_back(str.prepend('"').append('"'));
         } else if (m.isAngelArray(typeId)) {
             store.push_back(
-                CScriptArrayView(static_cast<CScriptArray *>(elemPtr)));
+                CScriptArrayView(static_cast<const CScriptArray *>(elemPtr)));
+        } else if (m.isAngelDictionary(typeId)) {
+            store.push_back(CScriptDictionaryView(
+                static_cast<const CScriptDictionary *>(elemPtr)));
         } else {
             store.push_back(m.stringify_helper(elemPtr, typeId));
         }
@@ -283,40 +293,51 @@ struct formatter<CScriptArrayView> {
     } range_type_ = NONE;
     std::string underlying_spec_;
 
-    // ["n"][range_type][":" underlying_spec]
-    constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
+    // parse: collect entire inner-spec up to '}', then extract flags anywhere
+    // and leave the rest as underlying_spec_
+    auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
         auto it = ctx.begin();
         auto end = ctx.end();
 
-        // optional 'n'
-        if (it != end && *it == 'n') {
-            no_brackets_ = true;
-            ++it;
-        }
+        // find end of this format spec (position of closing '}', or end)
+        auto spec_end = it;
+        while (spec_end != end && *spec_end != '}')
+            ++spec_end;
 
-        // optional range_type: 's' or '?s'
-        if (it != end) {
-            if (*it == '?' && std::next(it) != end && *std::next(it) == 's') {
-                range_type_ = AS_DEBUG_STRING;
-                it += 2;
-            } else if (*it == 's') {
+        std::string spec(it, spec_end); // full spec substring
+
+        // find and remove "?s" first
+        auto pos = spec.find("?s");
+        if (pos != std::string::npos) {
+            range_type_ = AS_DEBUG_STRING;
+            spec.erase(pos, 2);
+        } else {
+            // find 's'
+            pos = spec.find('s');
+            if (pos != std::string::npos) {
                 range_type_ = AS_STRING;
-                ++it;
+                spec.erase(pos, 1);
             }
         }
 
-        // optional ':' underlying_spec (we capture until '}' or end of spec)
-        if (it != end && *it == ':') {
-            ++it; // skip ':'
-            auto spec_begin = it;
-            // read until closing '}' or end
-            while (it != end && *it != '}')
-                ++it;
-            underlying_spec_.assign(spec_begin, it);
+        // find 'n'
+        pos = spec.find('n');
+        if (pos != std::string::npos) {
+            no_brackets_ = true;
+            spec.erase(pos, 1);
         }
 
-        // return iterator to the end of parse (fmt expects it)
-        return it;
+        // If there's a leading ':' leftover (some users might write ":x"),
+        // strip it.
+        if (!spec.empty() && spec.front() == ':')
+            spec.erase(0, 1);
+
+        // Remaining spec is the underlying_spec (may be empty)
+        underlying_spec_ = spec;
+
+        // return iterator to the closing brace (fmt expects iterator pointing
+        // to the end of what we parsed)
+        return spec_end;
     }
 
     template <typename FormatContext>
@@ -352,6 +373,7 @@ struct formatter<CScriptArrayView> {
                 out = fmt::format_to(out, ", ");
             }
             const void *elemPtr = arr->At(i);
+            // pass through underlying_spec_ to element formatting
             out = format_element_with_spec(const_cast<void *>(elemPtr), typeId,
                                            underlying_spec_, ctx);
         }
@@ -363,9 +385,162 @@ struct formatter<CScriptArrayView> {
     }
 };
 
+inline static thread_local int g_dict_pretty_level = 0;
+inline static constexpr int g_dict_indent_width = 4;
+
 template <>
 struct formatter<CScriptDictionaryView> {
-    // TODO
+    bool no_brackets_ = false;
+    bool pretty_align_ = false;
+    std::string underlying_spec_;
+
+    auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin();
+        auto end = ctx.end();
+
+        auto spec_end = it;
+        while (spec_end != end && *spec_end != '}')
+            ++spec_end;
+
+        std::string spec(it, spec_end);
+
+        // detect 'h' -> pretty align
+        auto pos = spec.find('h');
+        if (pos != std::string::npos) {
+            pretty_align_ = true;
+            spec.erase(pos, 1);
+        }
+
+        // detect 'n' -> remove outer braces
+        pos = spec.find('n');
+        if (pos != std::string::npos) {
+            no_brackets_ = true;
+            spec.erase(pos, 1);
+        }
+
+        // strip leading ':' if user wrote something like ":x"
+        if (!spec.empty() && spec.front() == ':')
+            spec.erase(0, 1);
+
+        underlying_spec_ = spec;
+        return spec_end;
+    }
+
+    template <typename FormatContext>
+    auto format(const CScriptDictionaryView &dicv, FormatContext &ctx) const
+        -> decltype(ctx.out()) {
+        auto out = ctx.out();
+        auto dict = dicv.data();
+        auto &m = ScriptMachine::instance();
+
+        // collect entries using your iterator API
+        struct E {
+            std::string key_disp; // formatted key display like ["..."]
+            void *val_ptr;
+            int val_type;
+        };
+        std::vector<E> entries;
+        entries.reserve(dict->GetSize());
+
+        for (auto it = dict->begin(); it != dict->end(); ++it) {
+            auto key = it.GetKey();
+            void *vptr = const_cast<void *>(it.GetAddressOfValue());
+            int vtype = it.GetTypeId();
+
+            std::string key_disp = fmt::format(R"(["{}"])", key);
+            entries.push_back({std::move(key_disp), vptr, vtype});
+        }
+
+        // --- pretty aligned multi-line printing ---
+        if (pretty_align_) {
+            ++g_dict_pretty_level;
+            const int indent = g_dict_pretty_level * g_dict_indent_width;
+            const int item_indent = indent;
+
+            auto &set = ScriptSettings::instance();
+            auto dfont = QFont(set.consoleFontFamily());
+            dfont.setPointSize(set.consoleFontSize());
+            auto metrics = QFontMetrics(dfont);
+            auto spacew = metrics.horizontalAdvance(' ');
+
+            std::vector<int> key_widths;
+            key_widths.reserve(entries.size());
+            int max_key_width = 0;
+            for (auto &e : entries) {
+                int w = metrics.horizontalAdvance(
+                            QString::fromStdString(e.key_disp)) /
+                        spacew;
+                key_widths.push_back(w);
+                if (w > max_key_width)
+                    max_key_width = w;
+            }
+
+            if (!no_brackets_) {
+                out = fmt::format_to(out, "{{\n");
+            }
+
+            for (size_t i = 0; i < entries.size(); ++i) {
+                const auto &e = entries[i];
+                int kw = key_widths[i];
+
+                out = fmt::format_to(out, "{}", std::string(item_indent, ' '));
+                out = fmt::format_to(out, "{}", e.key_disp);
+
+                int pad = max_key_width - kw;
+                if (pad > 0) {
+                    out = fmt::format_to(out, "{}", std::string(pad, ' '));
+                }
+
+                out = fmt::format_to(out, " = ");
+
+                if (m.isAngelDictionary(e.val_type)) {
+                    std::string child_spec;
+                    if (!underlying_spec_.empty()) {
+                        child_spec = "{:" + underlying_spec_ + "h}";
+                    } else {
+                        child_spec = "{:h}";
+                    }
+                    auto childView = CScriptDictionaryView(
+                        static_cast<CScriptDictionary *>(e.val_ptr));
+                    out = fmt::format_to(out, child_spec, childView);
+                } else {
+                    out = format_element_with_spec(e.val_ptr, e.val_type,
+                                                   underlying_spec_, ctx);
+                }
+
+                if (i + 1 < entries.size())
+                    out = fmt::format_to(out, "\n");
+            }
+
+            if (!no_brackets_) {
+                out = fmt::format_to(
+                    out, "\n{}}}",
+                    std::string((g_dict_pretty_level - 1) * g_dict_indent_width,
+                                ' '));
+            }
+
+            --g_dict_pretty_level;
+        } else {
+            if (!no_brackets_)
+                out = fmt::format_to(out, "{{");
+
+            for (size_t i = 0; i < entries.size(); ++i) {
+                const auto &e = entries[i];
+                if (i)
+                    out = fmt::format_to(out, ", ");
+
+                out = fmt::format_to(out, "{}", e.key_disp);
+                out = fmt::format_to(out, " = ");
+                out = format_element_with_spec(e.val_ptr, e.val_type,
+                                               underlying_spec_, ctx);
+            }
+
+            if (!no_brackets_)
+                out = fmt::format_to(out, "}}");
+        }
+
+        return out;
+    }
 };
 
 } // namespace fmt

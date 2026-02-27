@@ -28,6 +28,10 @@ public:
 
     // IWingGeneric interface
 public:
+    void *auxiliary() const override;
+    void *object() const override;
+    int objectTypeId() const override;
+
     int argCount() const override;
     int argTypeId(uint arg, quint32 *flags) const override;
     QString argTypeName(uint arg, quint32 *flags) override;

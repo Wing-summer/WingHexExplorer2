@@ -658,6 +658,7 @@ QString WingAngel::type2AngelScriptString(uint type, bool isArg,
 }
 
 WingHex::asRetCodes WingAngel::returnValue(int ret) {
+    Q_ASSERT(ret >= 0);
     if (ret < 0) {
         return WingHex::asRetCodes(ret);
     } else {

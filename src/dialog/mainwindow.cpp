@@ -4352,13 +4352,13 @@ void MainWindow::onOutputBgScriptOutput(
     switch (msgtype) {
     case ScriptMachine::MessageType::ExecInfo:
     case ScriptMachine::MessageType::Info:
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             cursor.insertBlock();
         }
         cursor.insertText(tr("[Info]") + fmtMsg(message), {});
         break;
     case ScriptMachine::MessageType::Warn: {
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             cursor.insertBlock();
         }
         auto fmt = cursor.charFormat();
@@ -4366,7 +4366,7 @@ void MainWindow::onOutputBgScriptOutput(
         cursor.insertText(tr("[Warn]") + fmtMsg(message), fmt);
     } break;
     case ScriptMachine::MessageType::Error: {
-        if (isNotBlockStart || _lastOutputType != msgtype) {
+        if (isNotBlockStart) {
             cursor.insertBlock();
         }
         auto fmt = cursor.charFormat();
@@ -4374,7 +4374,7 @@ void MainWindow::onOutputBgScriptOutput(
         cursor.insertText(tr("[Error]") + fmtMsg(message), fmt);
     } break;
     case ScriptMachine::MessageType::Print:
-        if (isNotBlockStart || _lastOutputType != message.type) {
+        if (isNotBlockStart && _lastOutputType != message.type) {
             cursor.insertBlock();
         }
         cursor.insertText(message.message, {});

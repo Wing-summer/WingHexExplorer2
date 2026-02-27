@@ -21,6 +21,12 @@
 
 WingGeneric::WingGeneric(asIScriptGeneric *gen) : _gen(gen) {}
 
+void *WingGeneric::auxiliary() const { return _gen->GetAuxiliary(); }
+
+void *WingGeneric::object() const { return _gen->GetObject(); }
+
+int WingGeneric::objectTypeId() const { return _gen->GetObjectTypeId(); }
+
 int WingGeneric::argCount() const { return _gen->GetArgCount(); }
 
 int WingGeneric::argTypeId(uint arg, quint32 *flags) const {

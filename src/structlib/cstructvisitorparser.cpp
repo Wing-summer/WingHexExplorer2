@@ -345,7 +345,8 @@ CStructVisitorParser::reportCTypeError(size_t line, size_t charPositionInLine,
     case CTypeParser::StructResult::OutofMemory:
         errlis->reportError(
             line, charPositionInLine,
-            QStringLiteral("\"%1\" is too large type").arg(identifier));
+            QStringLiteral("\"%1\" is invalid 'sizeof' struct or union type")
+                .arg(identifier));
         break;
     case CTypeParser::StructResult::CountOfLimit:
         errlis->reportError(
