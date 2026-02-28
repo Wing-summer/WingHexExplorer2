@@ -74,6 +74,7 @@ QSize Toast::calculateTextSize() {
 void Toast::init() {
     setWindowFlags(Qt::Popup);
     setAttribute(Qt::WA_ShowWithoutActivating);
+    setAttribute(Qt::WA_TranslucentBackground);
     setToastPos(TOAST_POS::BOTTOM);
     auto w = _parent->width();
     constexpr auto PADDING = 100;

@@ -35,7 +35,6 @@ enum AsUserDataType : unsigned int {
     // internal user data
     UserData_API,
     UserData_PluginFn,
-    UserData_CustomExprTypeCaches,
     UserData_StringTypeInfo,
     UserData_DateTimeTypeInfo,
     UserData_JsonValueTypeInfo,

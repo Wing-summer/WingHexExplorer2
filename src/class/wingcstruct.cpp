@@ -25,6 +25,8 @@
 #include "utilities.h"
 #include "wingangelapi.h"
 
+#include <QScopedPointer>
+
 class ScriptStructParser : public StructParser {
 public:
     ScriptStructParser(WingCStruct *api) : StructParser(api), m_ref(1) {}
@@ -312,16 +314,34 @@ private:
 WING_DECLARE_STATIC_API;
 
 static void ScriptStructParser_ConstVarValue(WingHex::asIWingGeneric *gen) {
-    auto g = createParamContext(gen);
+    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
     auto self = static_cast<ScriptStructParser *>(g->object());
     auto param = static_cast<QString *>(g->argObject(0));
     *(CINT_TYPE *)g->addressOfReturnLocation() = self->constVarValue(*param);
 };
 
+static void CINT_TYPE_Construct_Default(CINT_TYPE *self) {
+    new (self) CINT_TYPE();
+}
+
+static void CINT_TYPE_Construct_Copy(const CINT_TYPE &other, CINT_TYPE *self) {
+    new (self) CINT_TYPE(other);
+}
+
+static void CINT_TYPE_Construct_FromInt(qint64 v, CINT_TYPE *self) {
+    new (self) CINT_TYPE(v);
+}
+
+static void CINT_TYPE_Construct_FromUInt(quint64 v, CINT_TYPE *self) {
+    new (self) CINT_TYPE(v);
+}
+
+static void CINT_TYPE_Destruct(CINT_TYPE *self) { self->~CINT_TYPE(); }
+
 static WingCStruct *self = nullptr;
 
 static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = createParamContext(gen);
+    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
     auto mem = static_cast<ScriptStructParser *>(
         asAllocMem(sizeof(ScriptStructParser)));
 
@@ -330,11 +350,10 @@ static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
 };
 
 static void ScriptStructParser_String_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = createParamContext(gen);
+    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
     auto param = static_cast<QString *>(g->argObject(0));
     auto mem = static_cast<ScriptStructParser *>(
         asAllocMem(sizeof(ScriptStructParser)));
-
     *(ScriptStructParser **)g->addressOfReturnLocation() =
         new (mem) ScriptStructParser(self);
 
@@ -385,35 +404,24 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
                               WingHex::asGetTypeTraits<CINT_TYPE>());
     o->registerObjectBehaviour(
         "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f()",
-        asWINGFUNCTIONPR([](void *memory) { new (memory) CINT_TYPE(); },
-                         (void *), void),
-        asCallConvTypes::asCALL_CDECL_OBJFIRST);
+        asWINGFUNCTION(CINT_TYPE_Construct_Default),
+        asCallConvTypes::asCALL_CDECL_OBJLAST);
     o->registerObjectBehaviour(
         "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(int64 v)",
-        asWINGFUNCTIONPR(
-            [](void *memory, qint64 v) { new (memory) CINT_TYPE(v); },
-            (void *, qint64), void),
-        asCallConvTypes::asCALL_CDECL_OBJFIRST);
-    o->registerObjectBehaviour("IntType",
-                               WingHex::IWingAngel::asBEHAVE_CONSTRUCT,
-                               "void f(const IntType &in)",
-                               asWINGFUNCTIONPR(
-                                   [](CINT_TYPE *self, const CINT_TYPE &other) {
-                                       new (self) CINT_TYPE(other);
-                                   },
-                                   (CINT_TYPE *, const CINT_TYPE &), void),
-                               asCallConvTypes::asCALL_CDECL_OBJFIRST);
+        asWINGFUNCTION(CINT_TYPE_Construct_FromInt),
+        asCallConvTypes::asCALL_CDECL_OBJLAST);
+    o->registerObjectBehaviour(
+        "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT,
+        "void f(const IntType &in)", asWINGFUNCTION(CINT_TYPE_Construct_Copy),
+        asCallConvTypes::asCALL_CDECL_OBJLAST);
     o->registerObjectBehaviour(
         "IntType", WingHex::IWingAngel::asBEHAVE_CONSTRUCT, "void f(uint64 v)",
-        asWINGFUNCTIONPR(
-            [](void *memory, quint64 v) { new (memory) CINT_TYPE(v); },
-            (void *, quint64), void),
-        asCallConvTypes::asCALL_CDECL_OBJFIRST);
-    o->registerObjectBehaviour(
-        "IntType", WingHex::IWingAngel::asBEHAVE_DESTRUCT, "void f()",
-        asWINGFUNCTIONPR([](CINT_TYPE *memory) { memory->~CINT_TYPE(); },
-                         (CINT_TYPE *), void),
-        asCallConvTypes::asCALL_CDECL_OBJFIRST);
+        asWINGFUNCTION(CINT_TYPE_Construct_FromUInt),
+        asCallConvTypes::asCALL_CDECL_OBJLAST);
+    o->registerObjectBehaviour("IntType",
+                               WingHex::IWingAngel::asBEHAVE_DESTRUCT,
+                               "void f()", asWINGFUNCTION(CINT_TYPE_Destruct),
+                               asCallConvTypes::asCALL_CDECL_OBJLAST);
     o->registerObjectMethod("IntType", "bool isInt() const",
                             asWINGMETHOD(CINT_TYPE, isInt),
                             asCallConvTypes::asCALL_THISCALL);

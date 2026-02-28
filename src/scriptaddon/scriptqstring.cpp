@@ -665,6 +665,7 @@ void RegisterQString_Native(asIScriptEngine *engine) {
     int r = 0;
 
     // register the char type
+    checkAsRegisterClassAllInts<QChar>();
     r = engine->RegisterObjectType("char", sizeof(QChar),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS |
                                        asGetTypeTraits<QChar>());

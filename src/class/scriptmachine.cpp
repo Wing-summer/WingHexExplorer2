@@ -688,7 +688,7 @@ std::string ScriptMachine::stringify_helper(const void *ref, int typeId) {
 
     if (isAngelChar(typeId)) {
         // char
-        auto pch = resolveObjAs<QChar *>(ref, typeId);
+        auto pch = resolveObjAs<QChar>(ref, typeId);
         return QString(*pch).toStdString();
     } else if (isAngelString(typeId)) {
         // string

@@ -167,4 +167,13 @@ inline QByteArray cArray2ByteArray(const CScriptArray &array,
     return {};
 }
 
+template <typename T>
+inline void checkAsRegisterClassAllInts() {
+    static_assert(std::is_trivially_copyable_v<T>,
+                  "T must be trivially copyable");
+    static_assert(std::is_trivially_destructible_v<T>,
+                  "T must be trivially destructible");
+    static_assert(std::is_standard_layout_v<T>, "T must be standard layout");
+}
+
 #endif // ANGELSCRIPTHELPER_H

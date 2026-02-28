@@ -52,6 +52,45 @@ void RegisterScriptAny(asIScriptEngine *engine) {
     RegisterScriptAny_Native(engine);
 }
 
+static void CScriptAny_opCast(void *ref, int typeId, CScriptAny *obj) {
+    obj->Retrieve(ref, typeId);
+}
+
+static asINT64 CScriptAny_opConvInt(CScriptAny *obj) {
+    asINT64 value = 0;
+    CScriptAny_opCast(&value, asTYPEID_INT64, obj);
+    return value;
+}
+
+static asQWORD CScriptAny_opConvUInt(CScriptAny *obj) {
+    asQWORD value = 0;
+    CScriptAny_opCast(&value, asTYPEID_UINT64, obj);
+    return value;
+}
+
+static double CScriptAny_opConvDouble(CScriptAny *obj) {
+    double value = 0;
+    CScriptAny_opCast(&value, asTYPEID_DOUBLE, obj);
+    return value;
+}
+
+static CScriptAny &CScriptAny_opAssign(void *ref, int typeId, CScriptAny *obj) {
+    obj->Store(ref, typeId);
+    return *obj;
+}
+
+static CScriptAny &CScriptAny_opAssign(double val, CScriptAny *obj) {
+    return CScriptAny_opAssign(&val, asTYPEID_DOUBLE, obj);
+}
+
+static CScriptAny &CScriptAny_opAssign(asINT64 val, CScriptAny *obj) {
+    return CScriptAny_opAssign(&val, asTYPEID_INT64, obj);
+}
+
+static CScriptAny &CScriptAny_opAssign(asQWORD val, CScriptAny *obj) {
+    return CScriptAny_opAssign(&val, asTYPEID_UINT64, obj);
+}
+
 void RegisterScriptAny_Native(asIScriptEngine *engine) {
     int r;
     r = engine->RegisterObjectType("any", sizeof(CScriptAny),
@@ -126,6 +165,63 @@ void RegisterScriptAny_Native(asIScriptEngine *engine) {
         "any", "bool retrieve(double&out) const",
         asMETHODPR(CScriptAny, Retrieve, (double &) const, bool),
         asCALL_THISCALL);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "void opCast(?&out)",
+        asFUNCTIONPR(CScriptAny_opCast, (void *, int, CScriptAny *), void),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "void opConv(?&out)",
+        asFUNCTIONPR(CScriptAny_opCast, (void *, int, CScriptAny *), void),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "int64 opConv()",
+        asFUNCTIONPR(CScriptAny_opConvInt, (CScriptAny *), asINT64),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "uint64 opConv()",
+        asFUNCTIONPR(CScriptAny_opConvUInt, (CScriptAny *), asQWORD),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "double opConv()",
+        asFUNCTIONPR(CScriptAny_opConvDouble, (CScriptAny *), double),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("any", "any &opAssign(const ?&in)",
+                                     asFUNCTIONPR(CScriptAny_opAssign,
+                                                  (void *, int, CScriptAny *),
+                                                  CScriptAny &),
+                                     asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod(
+        "any", "any &opAssign(double)",
+        asFUNCTIONPR(CScriptAny_opAssign, (double, CScriptAny *), CScriptAny &),
+        asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("any", "any &opAssign(int64)",
+                                     asFUNCTIONPR(CScriptAny_opAssign,
+                                                  (asINT64, CScriptAny *),
+                                                  CScriptAny &),
+                                     asCALL_CDECL_OBJLAST);
+    ASSERT(r >= 0);
+
+    r = engine->RegisterObjectMethod("any", "any &opAssign(uint64)",
+                                     asFUNCTIONPR(CScriptAny_opAssign,
+                                                  (asQWORD, CScriptAny *),
+                                                  CScriptAny &),
+                                     asCALL_CDECL_OBJLAST);
     ASSERT(r >= 0);
 
     // Register GC behaviours

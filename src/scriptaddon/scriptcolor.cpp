@@ -337,6 +337,7 @@ void RegisterColor(asIScriptEngine *engine) {
     engine->SetDefaultNamespace("");
 
     // color class
+    checkAsRegisterClassAllInts<QColor>();
     r = engine->RegisterObjectType("color", sizeof(QColor),
                                    asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS |
                                        asOBJ_APP_CLASS_UNION |

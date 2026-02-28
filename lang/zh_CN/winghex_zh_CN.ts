@@ -4052,12 +4052,12 @@
 <context>
     <name>WingCStruct</name>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="364"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="383"/>
         <source>WingCStruct</source>
         <translation>羽云文件结构分析器</translation>
     </message>
     <message>
-        <location filename="../../src/class/wingcstruct.cpp" line="367"/>
+        <location filename="../../src/class/wingcstruct.cpp" line="386"/>
         <source>Providing basic support for analyzing file structures</source>
         <translation>提供基础的文件结构分析支持</translation>
     </message>
