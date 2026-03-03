@@ -1164,32 +1164,47 @@ MainWindow::buildUpScriptBgOutputDock(ads::CDockManager *dock,
 
     _hlAnim = new ConsoleHighlighAnim(m_bgScriptOutput);
 
-    auto a = newAction(
-        ICONRES(QStringLiteral("mStr")), tr("SelectAll"),
-        [this]() { m_bgScriptOutput->selectAll(); }, QKeySequence::SelectAll);
-    a->setShortcutContext(Qt::WidgetShortcut);
-    m_bgScriptOutput->addAction(a);
-    a = newAction(
-        ICONRES(QStringLiteral("copy")), tr("Copy"),
-        [this]() { m_bgScriptOutput->copy(); }, QKeySequence::Copy);
-    a->setShortcutContext(Qt::WidgetShortcut);
-    m_bgScriptOutput->addAction(a);
-    a = newAction(ICONRES(QStringLiteral("del")), tr("Clear"),
-                  [this]() { m_bgScriptOutput->clear(); });
-    a->setShortcutContext(Qt::WidgetShortcut);
-    m_bgScriptOutput->addAction(a);
-    a = new QAction(this);
-    a->setSeparator(true);
-    m_bgScriptOutput->addAction(a);
-    a = newAction(
-        ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
-        []() {
-            ScriptMachine::instance().abortScript(ScriptMachine::Background);
-        },
-        QKeySequence(Qt::ControlModifier | Qt::Key_Q));
-    a->setShortcutContext(Qt::WidgetShortcut);
-    m_bgScriptOutput->addAction(a);
-    m_bgScriptOutput->setContextMenuPolicy(Qt::ActionsContextMenu);
+    connect(m_bgScriptOutput, &QPlainTextEdit::customContextMenuRequested, this,
+            [this](const QPoint &pos) {
+                QMenu menu;
+                auto a = newAction(
+                    ICONRES(QStringLiteral("mStr")), tr("SelectAll"),
+                    [this]() { m_bgScriptOutput->selectAll(); },
+                    QKeySequence::SelectAll);
+                a->setShortcutContext(Qt::WidgetShortcut);
+                menu.addAction(a);
+                a = newAction(
+                    ICONRES(QStringLiteral("copy")), tr("Copy"),
+                    [this]() { m_bgScriptOutput->copy(); }, QKeySequence::Copy);
+                a->setShortcutContext(Qt::WidgetShortcut);
+                menu.addAction(a);
+                a = newAction(ICONRES(QStringLiteral("del")), tr("Clear"),
+                              [this]() { m_bgScriptOutput->clear(); });
+                menu.addAction(a);
+                menu.addSeparator();
+                menu.addAction(a);
+                a = newAction(
+                    ICONRES(QStringLiteral("dbgstop")), tr("AbortScript"),
+                    []() {
+                        ScriptMachine::instance().abortScript(
+                            ScriptMachine::Background);
+                    },
+                    QKeySequence(Qt::ControlModifier | Qt::Key_Q));
+                a->setShortcutContext(Qt::WidgetShortcut);
+                a->setEnabled(ScriptMachine::instance().isRunning(
+                    ScriptMachine::Background));
+                menu.addAction(a);
+                menu.exec(m_bgScriptOutput->mapToGlobal(pos));
+            });
+
+    auto sc = new QShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_Q),
+                            m_bgScriptOutput);
+    sc->setContext(Qt::WidgetShortcut);
+    connect(sc, &QShortcut::activated, m_bgScriptOutput, []() {
+        ScriptMachine::instance().abortScript(ScriptMachine::Background);
+    });
+
+    m_bgScriptOutput->setContextMenuPolicy(Qt::CustomContextMenu);
 
     auto dw = buildDockWidget(dock, QStringLiteral("BgScriptOutput"),
                               tr("BgScriptOutput"), m_bgScriptOutput);

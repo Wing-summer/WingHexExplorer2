@@ -23,6 +23,7 @@
 #include "class/logger.h"
 #include "class/pluginsystem.h"
 #include "class/scriptmachine.h"
+#include "class/scriptmanager.h"
 #include "class/wingfiledialog.h"
 #include "class/winginputdialog.h"
 #include "define.h"
@@ -1736,10 +1737,11 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
     if (f.open()) {
         f.write(code.toUtf8());
         f.close();
+    } else {
+        return false;
     }
 
-    return ScriptMachine::instance().executeScript(ScriptMachine::Background,
-                                                   f.fileName());
+    return execScript(sender, f.fileName());
 }
 
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
@@ -1747,7 +1749,9 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
 
     auto exec = [this, fileName]() -> bool {
         return ScriptMachine::instance().executeScript(
-            ScriptMachine::Background, fileName);
+            ScriptMachine::Background, fileName, false, {},
+            [this]() { ScriptManager::instance().setIndicatorBusy(true); },
+            [this]() { ScriptManager::instance().setIndicatorBusy(false); });
     };
 
     if (QThread::currentThread() != qApp->thread()) {
@@ -1762,18 +1766,16 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
 
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
-    auto exec = [this, code]() -> bool {
-        return ScriptMachine::instance().executeCode(ScriptMachine::Background,
-                                                     code);
+    auto exec = [this, code]() -> void {
+        ScriptMachine::instance().executeCode(ScriptMachine::Background, code);
     };
 
     if (QThread::currentThread() != qApp->thread()) {
-        bool ret = false;
-        QMetaObject::invokeMethod(qApp, exec, Qt::BlockingQueuedConnection,
-                                  &ret);
-        return ret;
+        return QMetaObject::invokeMethod(qApp, exec,
+                                         Qt::BlockingQueuedConnection);
     } else {
-        return exec();
+        exec();
+        return true;
     }
 }
 

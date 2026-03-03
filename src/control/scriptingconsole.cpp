@@ -392,12 +392,13 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
         } else {
             _codes.append('\n').append(exec);
         }
-        ScriptMachine::instance().executeCode(ScriptMachine::Interactive,
-                                              _codes);
-        _codes.clear();
-        appendCommandPrompt();
-        setEditMode(Input);
-        Q_EMIT consoleScriptRunFinished();
+        ScriptMachine::instance().executeCode(
+            ScriptMachine::Interactive, _codes, [this]() {
+                _codes.clear();
+                appendCommandPrompt();
+                setEditMode(Input);
+                Q_EMIT consoleScriptRunFinished();
+            });
     }
 }
 

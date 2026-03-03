@@ -127,6 +127,17 @@ void ScriptManager::setIndicator(ads::CDockWidgetTab *newIndicator) {
     m_indicator = newIndicator;
 }
 
+void ScriptManager::setIndicatorBusy(bool b) {
+    if (m_indicator == nullptr) {
+        return;
+    }
+    if (b) {
+        m_indicator->setIcon(ICONRES(QStringLiteral("dbgrun")));
+    } else {
+        m_indicator->setIcon({});
+    }
+}
+
 bool ScriptManager::isScriptFile(const QString &file) {
     QFileInfo info(file);
     auto suffix = info.suffix();
@@ -367,8 +378,8 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
 void ScriptManager::runScript(const QString &filename) {
     auto &ins = ScriptMachine::instance();
     if (ins.isRunning(ScriptMachine::Background)) {
-        auto ret = QMessageBox::question(nullptr, tr("ScriptRunning"),
-                                         tr("ScriptRunningRequestLastStop?"));
+        auto ret = WingMessageBox::question(
+            nullptr, tr("ScriptRunning"), tr("ScriptRunningRequestLastStop?"));
         if (ret == QMessageBox::Yes) {
             ins.abortScript(ScriptMachine::Background);
         } else {
@@ -377,9 +388,10 @@ void ScriptManager::runScript(const QString &filename) {
     }
 
     Q_ASSERT(m_indicator);
-    m_indicator->setIcon(ICONRES(QStringLiteral("dbgrun")));
-    ins.executeScript(ScriptMachine::Background, filename);
-    m_indicator->setIcon({});
+    ins.executeScript(
+        ScriptMachine::Background, filename, false, {},
+        [this]() { setIndicatorBusy(true); },
+        [this]() { setIndicatorBusy(false); });
 }
 
 QStringList ScriptManager::usrScriptsDbCats() const {

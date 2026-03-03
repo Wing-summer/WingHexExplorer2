@@ -461,6 +461,8 @@ set(SETTING_SRC
 set(SCRIPT_ADDON_SRC
     src/scriptaddon/contextmgr.cpp
     src/scriptaddon/contextmgr.h
+    src/scriptaddon/scriptrunable.h
+    src/scriptaddon/scriptrunable.cpp
     src/scriptaddon/scriptdatetime.h
     src/scriptaddon/scriptdatetime.cpp
     src/scriptaddon/scriptcrypto.h

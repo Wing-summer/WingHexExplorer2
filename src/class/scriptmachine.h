@@ -40,6 +40,7 @@ public:
         Interactive = 1, // in a shell
         Scripting,       // in scripting dialog
         Background,      // run codes from other way
+        Console_MaxCount
     };
 
 public:
@@ -152,13 +153,17 @@ public:
     bool isDebugMode(ConsoleMode mode = Scripting);
 
 public:
-    bool executeCode(ScriptMachine::ConsoleMode mode, const QString &code);
+    void executeCode(ScriptMachine::ConsoleMode mode, const QString &code,
+                     const std::function<void()> &onFinished = {});
+
     // only scripting mode can be debugged
     bool executeScript(
         ScriptMachine::ConsoleMode mode, const QString &script,
-        bool isInDebug = false, int *retCode = nullptr,
+        bool isInDebug = false,
         std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
-            sections = {});
+            sections = {},
+        const std::function<void()> &beginexec = {},
+        const std::function<void()> &onFinished = {});
 
     QVariant evaluateDefine(const QString &code);
 
@@ -241,13 +246,13 @@ private:
 
 private:
     asIScriptEngine *_engine = nullptr;
-    CContextMgr *_ctxMgr = nullptr;
     asIScriptModule *_eMod = nullptr;
 
     QQueue<asIScriptContext *> _ctxPool;
 
-    QMap<ConsoleMode, RegCallBacks> _regcalls;
-    QMap<ConsoleMode, asIScriptContext *> _ctx;
+    QVector<RegCallBacks> _regcalls;
+    QVector<asIScriptContext *> _ctx;
+    QVector<CContextMgr *> _ctxMgr;
 
     mutable QString _cachedGlobalStrs;
 

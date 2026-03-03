@@ -120,6 +120,8 @@ public:
     ads::CDockWidgetTab *indicator() const;
     void setIndicator(ads::CDockWidgetTab *newIndicator);
 
+    void setIndicatorBusy(bool b);
+
     static bool isScriptFile(const QString &file);
 
 private:

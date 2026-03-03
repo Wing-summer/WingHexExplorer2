@@ -364,8 +364,8 @@ void SearchReplaceWidget::performReplaceAll(ReplaceAllMode mode) {
     searchCursor = m_editor->textSearch(searchCursor, m_searchParams, true,
                                         false, &m_regexMatch);
     if (searchCursor.isNull()) {
-        QMessageBox::information(this, QString(),
-                                 tr("The specified text was not found"));
+        WingMessageBox::information(this, QString(),
+                                    tr("The specified text was not found"));
         return;
     } else if (mode == InSelection &&
                searchCursor.selectionEnd() >

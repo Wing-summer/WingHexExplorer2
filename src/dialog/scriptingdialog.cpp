@@ -1246,7 +1246,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_watchModel->attachDebugger(dbg);
 
     ScriptMachine::instance().executeScript(
-        ScriptMachine::Scripting, fileName, true, nullptr,
+        ScriptMachine::Scripting, fileName, true,
         [this](const QHash<QString, AsPreprocesser::Result> &sdata) -> void {
             _curDbgData = sdata;
 
@@ -1268,48 +1268,49 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             }
 
             PluginSystem::instance().scriptPragmaBegin();
-            updateRunDebugMode();
-        });
-
-    for (auto &e : _reditors) {
-        e->setReadOnly(false);
-    }
-
-    this->updateRunDebugMode();
-    m_callstack->attachDebugger(nullptr);
-    m_watchModel->attachDebugger(nullptr);
-    m_varshow->refreshWithNewRoots({});
-    m_gvarshow->refreshWithNewRoots({});
-
-    // clean up
-    if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
-        // remove the last mark
-        if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
-            auto lastCur = findEditorView(_lastCurLine.first);
-            auto e = lastCur->editor();
-            auto symID = e->symbolMark(_lastCurLine.second);
-
-            const auto bpMark = QStringLiteral("bp");
-            const auto curSym = QStringLiteral("cur");
-            const auto hitCur = QStringLiteral("curbp");
-
-            if (symID == curSym) {
-                e->removeSymbolMark(_lastCurLine.second);
-            } else if (symID == hitCur) {
-                e->addSymbolMark(_lastCurLine.second, bpMark);
+        },
+        [this]() { this->updateRunDebugMode(); },
+        [this, fileName]() {
+            for (auto &e : _reditors) {
+                e->setReadOnly(false);
             }
-        }
-        _lastCurLine.first.clear();
-        _lastCurLine.second = -1;
-    }
-    _reditors.clear();
-    _curDbgData.clear();
-    destoryFakeEditor();
 
-    if (_needRestart) {
-        _needRestart = false;
-        startDebugScript(fileName);
-    }
+            this->updateRunDebugMode();
+            m_callstack->attachDebugger(nullptr);
+            m_watchModel->attachDebugger(nullptr);
+            m_varshow->refreshWithNewRoots({});
+            m_gvarshow->refreshWithNewRoots({});
+
+            // clean up
+            if (!(_lastCurLine.first.isEmpty() || _lastCurLine.second < 0)) {
+                // remove the last mark
+                if (!_lastCurLine.first.isEmpty() && _lastCurLine.second >= 0) {
+                    auto lastCur = findEditorView(_lastCurLine.first);
+                    auto e = lastCur->editor();
+                    auto symID = e->symbolMark(_lastCurLine.second);
+
+                    const auto bpMark = QStringLiteral("bp");
+                    const auto curSym = QStringLiteral("cur");
+                    const auto hitCur = QStringLiteral("curbp");
+
+                    if (symID == curSym) {
+                        e->removeSymbolMark(_lastCurLine.second);
+                    } else if (symID == hitCur) {
+                        e->addSymbolMark(_lastCurLine.second, bpMark);
+                    }
+                }
+                _lastCurLine.first.clear();
+                _lastCurLine.second = -1;
+            }
+            _reditors.clear();
+            _curDbgData.clear();
+            destoryFakeEditor();
+
+            if (_needRestart) {
+                _needRestart = false;
+                startDebugScript(fileName);
+            }
+        });
 }
 
 void ScriptingDialog::addBreakPoint(ScriptEditor *editor, int line) {
@@ -1744,16 +1745,21 @@ void ScriptingDialog::on_runscript() {
                                      tr("CannotSave2RunScript"));
             return;
         }
-        m_consoleout->clear();
-        PluginSystem::instance().scriptPragmaBegin();
 
-        editor->setReadOnly(true);
-        ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
-                                                editor->fileName());
-        editor->setReadOnly(false);
-        m_outConsole->raise();
-        destoryFakeEditor();
-        updateRunDebugMode();
+        ScriptMachine::instance().executeScript(
+            ScriptMachine::Scripting, editor->fileName(), false, {},
+            [this, editor]() {
+                m_consoleout->clear();
+                PluginSystem::instance().scriptPragmaBegin();
+                editor->setReadOnly(true);
+                updateRunDebugMode();
+            },
+            [this, editor]() {
+                editor->setReadOnly(false);
+                m_outConsole->raise();
+                destoryFakeEditor();
+                updateRunDebugMode();
+            });
     }
 }
 

@@ -49,6 +49,7 @@
 #include "scriptaddon/scriptqstring.h"
 #include "scriptaddon/scriptreflection.h"
 #include "scriptaddon/scriptregex.h"
+#include "scriptaddon/scriptrunable.h"
 #include "scriptaddon/scripturl.h"
 
 #include "class/fmtlibext.h"
@@ -77,6 +78,11 @@ bool ScriptMachine::init() {
     // create the debugger
     _workspace = new asIDBFileWorkspace("", _engine);
     _debugger = new asDebugger(_workspace);
+
+    _regcalls.resize(Console_MaxCount, {});
+    _ctx.resize(Console_MaxCount, nullptr);
+    _ctxMgr.resize(Console_MaxCount, nullptr);
+
     return true;
 }
 
@@ -245,12 +251,11 @@ bool ScriptMachine::configureEngine() {
         return false;
     }
 
-    _ctxMgr = new CContextMgr;
-    _ctxMgr->RegisterCoRoutineSupport(_engine);
-    _ctxMgr->SetGetTimeCallback([]() -> asUINT {
+    CContextMgr::RegisterCoRoutineSupport(_engine);
+    CContextMgr::SetGetTimeCallback([]() -> asUINT {
         return AppManager::instance()->currentMSecsSinceEpoch();
     });
-    _ctxMgr->RegisterThreadSupport(_engine);
+    CContextMgr::RegisterThreadSupport(_engine);
 
     // Tell the engine to use our context pool. This will also
     // allow us to debug internal script calls made by the engine
@@ -296,14 +301,21 @@ void ScriptMachine::printf(asIScriptGeneric *args) {
 
 void ScriptMachine::destoryMachine() {
     if (_engine) {
-        _ctxMgr->AbortAll();
-        delete _ctxMgr;
-
+        _engine->SetContextCallbacks(nullptr, nullptr);
         delete _debugger;
         delete _workspace;
 
+        for (auto &mgr : _ctxMgr) {
+            if (mgr) {
+                mgr->AbortAll();
+                delete mgr;
+            }
+        }
+        _ctx.clear();
+
         _engine->ShutDownAndRelease();
         _engine = nullptr;
+        _ctxPool.clear();
     }
 }
 
@@ -737,10 +749,18 @@ std::string ScriptMachine::stringify_helper(const void *ref, int typeId) {
 }
 
 bool ScriptMachine::executeScript(
-    ConsoleMode mode, const QString &script, bool isInDebug, int *retCode,
+    ConsoleMode mode, const QString &script, bool isInDebug,
     std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
-        sections) {
+        sections,
+    const std::function<void()> &beginexec,
+    const std::function<void()> &onFinished) {
+
     ASSERT(mode != Interactive);
+    // script-running is not allowed in interactive mode
+    if (mode == Interactive) {
+        return false;
+    }
+
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
         return false;
@@ -752,19 +772,9 @@ bool ScriptMachine::executeScript(
 
     // Compile the script
     auto mod = createModuleIfNotExist(mode);
-    // script-running is not allowed in interactive mode
     if (mod == nullptr) {
         return false;
     }
-
-    QScopeGuard guard([mod, this]() {
-        endEvaluateDefine();
-        // Before leaving, allow the engine to clean up remaining objects by
-        // discarding the module and doing a full garbage collection so that
-        // this can also be debugged if desired
-        mod->Discard();
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-    });
 
     beginEvaluateDefine();
 
@@ -817,6 +827,7 @@ bool ScriptMachine::executeScript(
         info.message = QStringLiteral("Script failed to pre-processed");
         info.type = MessageType::Error;
         outputMessage(info);
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         return false;
     }
 
@@ -827,6 +838,7 @@ bool ScriptMachine::executeScript(
         info.message = QStringLiteral("Script failed to build");
         info.type = MessageType::Error;
         outputMessage(info);
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         return false;
     }
 
@@ -844,6 +856,7 @@ bool ScriptMachine::executeScript(
             QStringLiteral("Cannot find 'int main()' or 'void main()'");
         info.type = MessageType::Error;
         outputMessage(info);
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
         return false;
     }
 
@@ -861,12 +874,25 @@ bool ScriptMachine::executeScript(
         outputMessage(info);
     }
 
+    endEvaluateDefine();
+
     // Set up a context to execute the script
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
-    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    auto ctxMgr = new CContextMgr;
+    asIScriptContext *ctx = ctxMgr->SetMainFunction(_engine, func, mode);
+    _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+    if (ctx == nullptr) {
+        MessageInfo info;
+        info.mode = mode;
+        info.message = QStringLiteral("Cannot prepare context for execution.");
+        info.type = MessageType::Error;
+        outputMessage(info);
+        delete ctxMgr;
+        return false;
+    }
 
-    _ctx[mode] = ctx;
+    ctxMgr->setScriptName(script);
 
     if (mode == Background) {
         MessageInfo info;
@@ -890,8 +916,6 @@ bool ScriptMachine::executeScript(
     auto timeOut = asPWORD(timeOutRaw) * 60000; // min -> ms
     ctx->SetUserData(reinterpret_cast<void *>(timeOut),
                      AsUserDataType::UserData_TimeOut);
-    ctx->SetUserData(const_cast<QString *>(&script),
-                     AsUserDataType::UserData_Section_StringPtr);
 
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
@@ -900,71 +924,86 @@ bool ScriptMachine::executeScript(
     auto &api = PluginSystem::instance();
     auto handles = api.scriptHandles();
 
-    // Execute the script until completion
-    // The script may create co-routines. These will automatically
-    // be managed by the context manager
-    while (_ctxMgr->ExecuteScripts()) {
-        qApp->processEvents();
+    if (beginexec) {
+        beginexec();
     }
 
-    _ctx[mode] = nullptr;
+    _ctx[mode] = ctx;
+    _ctxMgr[mode] = ctxMgr;
 
-    // Check if the main script finished normally
-    r = ctx->GetState();
-    if (r != asEXECUTION_FINISHED) {
-        if (r == asEXECUTION_EXCEPTION) {
-            r = -1;
-        } else if (r == asEXECUTION_ABORTED) {
-            MessageInfo info;
-            info.mode = mode;
-            info.message = QStringLiteral("The script was aborted");
-            info.type = MessageType::Error;
-            outputMessage(info);
-            r = -1;
-        } else {
-            auto e = QMetaEnum::fromType<asEContextState>();
+    auto runner = new ScriptRunable(ctxMgr, mode);
+    QObject::connect(
+        runner, &QObject::destroyed, runner,
+        [this, ctx, mode, handles, func, mod, onFinished]() {
+            _ctx[mode] = nullptr;
+
+            // Check if the main script finished normally
+            int r = ctx->GetState();
+            if (r != asEXECUTION_FINISHED) {
+                if (r == asEXECUTION_EXCEPTION) {
+                    r = -1;
+                } else if (r == asEXECUTION_ABORTED) {
+                    MessageInfo info;
+                    info.mode = mode;
+                    info.message = QStringLiteral("The script was aborted");
+                    info.type = MessageType::Error;
+                    outputMessage(info);
+                    r = -1;
+                } else {
+                    auto e = QMetaEnum::fromType<asEContextState>();
+                    MessageInfo info;
+                    info.mode = mode;
+                    info.message =
+                        QStringLiteral("The script terminated unexpectedly (") +
+                        QString::fromLatin1(e.valueToKey(r)) +
+                        QStringLiteral(")");
+                    info.type = MessageType::Error;
+                    outputMessage(info);
+                    r = -1;
+                }
+            } else {
+                // Get the return value from the script
+                if (func->GetReturnTypeId() == asTYPEID_INT32) {
+                    r = *(int *)ctx->GetAddressOfReturnValue();
+                } else
+                    r = 0;
+            }
+
             MessageInfo info;
             info.mode = mode;
             info.message =
-                QStringLiteral("The script terminated unexpectedly (") +
-                QString::fromLatin1(e.valueToKey(r)) + QStringLiteral(")");
-            info.type = MessageType::Error;
+                QStringLiteral("The script exited with ") + QString::number(r);
+            info.type = MessageType::ExecInfo;
             outputMessage(info);
-            r = -1;
-        }
-    } else {
-        // Get the return value from the script
-        if (func->GetReturnTypeId() == asTYPEID_INT32) {
-            r = *(int *)ctx->GetAddressOfReturnValue();
-        } else
-            r = 0;
-    }
 
-    MessageInfo info;
-    info.mode = mode;
-    info.message =
-        QStringLiteral("The script exited with ") + QString::number(r);
-    info.type = MessageType::ExecInfo;
-    outputMessage(info);
+            // Return the context after retrieving the return value
+            auto mgr = _ctxMgr[mode];
+            mgr->DoneWithContext(ctx);
+            _ctxMgr[mode] = nullptr;
 
-    // Return the context after retrieving the return value
-    _ctxMgr->DoneWithContext(ctx);
+            // Before leaving, allow the engine to clean up remaining objects by
+            // discarding the module and doing a full garbage collection so that
+            // this can also be debugged if desired
 
-    // Before leaving, allow the engine to clean up remaining objects by
-    // discarding the module and doing a full garbage collection so that
-    // this can also be debugged if desired
-    api.cleanScriptHandles(handles);
-    _engine->GarbageCollect();
+            auto &api = PluginSystem::instance();
+            api.cleanScriptHandles(handles);
 
-    if (isDbg) {
-        _debugger->reset();
-    }
+            auto isDbg = mod->GetUserData(AsUserDataType::UserData_isDbg);
+            if (isDbg) {
+                _debugger->reset();
+            }
 
-    if (retCode) {
-        *retCode = r;
-    }
+            // Before leaving, allow the engine to clean up remaining objects by
+            // discarding the module and doing a full garbage collection so that
+            // this can also be debugged if desired
+            mod->Discard();
 
-    return r >= 0;
+            if (onFinished) {
+                onFinished();
+            }
+        });
+    runner->start();
+    return true;
 }
 
 void ScriptMachine::beginEvaluateDefine() {
@@ -995,7 +1034,15 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
     // Set up a context to execute the script
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
-    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    asIScriptContext *ctx = _engine->RequestContext();
+    if (!ctx)
+        return {};
+
+    int r = ctx->Prepare(func);
+    if (r < 0) {
+        _engine->ReturnContext(ctx);
+        return {};
+    }
 
     ctx->SetUserData(reinterpret_cast<void *>(asPWORD(
                          AppManager::instance()->currentMSecsSinceEpoch())),
@@ -1014,13 +1061,12 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
     // Execute the script until completion
     // The script may create co-routines. These will automatically
     // be managed by the context manager
-    while (_ctxMgr->ExecuteScripts()) {
-        qApp->processEvents();
+    while (ctx->Execute() == asEXECUTION_ACTIVE) {
     }
 
     QVariant result;
     // Check if the main script finished normally
-    int r = ctx->GetState();
+    r = ctx->GetState();
     if (r == asEXECUTION_FINISHED) {
         auto ret = reinterpret_cast<CScriptAny *>(ctx->GetReturnObject());
         int typeID = ret->GetTypeId();
@@ -1088,7 +1134,7 @@ QVariant ScriptMachine::evaluateDefine(const QString &code) {
     func->Release();
 
     // Return the context after retrieving the return value
-    _ctxMgr->DoneWithContext(ctx);
+    _engine->ReturnContext(ctx);
     _engine->GarbageCollect();
 
     return result;
@@ -1109,10 +1155,9 @@ void ScriptMachine::abortDbgScript() {
 }
 
 void ScriptMachine::abortScript(ConsoleMode mode) {
-    auto ctx = _ctx.value(mode, nullptr);
-    if (ctx) {
-        ctx->Abort();
-        _ctx[mode] = nullptr;
+    auto ctxMgr = _ctxMgr[mode];
+    if (ctxMgr) {
+        ctxMgr->AbortAll();
     }
 }
 
@@ -1182,6 +1227,8 @@ asIScriptModule *ScriptMachine::createModule(ConsoleMode mode) {
         mod = _engine->GetModule("WINGSRV", asGM_ALWAYS_CREATE);
         mod->SetAccessMask(0x1);
         break;
+    default:
+        break;
     }
 
     return mod;
@@ -1202,6 +1249,8 @@ asIScriptModule *ScriptMachine::createModuleIfNotExist(ConsoleMode mode) {
         mod = _engine->GetModule("WINGSRV", asGM_CREATE_IF_NOT_EXISTS);
         mod->SetAccessMask(0x1);
         break;
+    default:
+        break;
     }
 
     return mod;
@@ -1215,6 +1264,8 @@ asIScriptModule *ScriptMachine::module(ConsoleMode mode) const {
         return _engine->GetModule("WINGSCRIPT", asGM_ONLY_IF_EXISTS);
     case Background:
         return _engine->GetModule("WINGSRV", asGM_ONLY_IF_EXISTS);
+    default:
+        break;
     }
     return nullptr;
 }
@@ -1230,12 +1281,11 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     ASSERT(p);
 
     // Check if there is a free context available in the pool
-    if (p->_ctxPool.size()) {
-        ctx = p->_ctxPool.back();
-        p->_ctxPool.pop_back();
-    } else {
+    if (p->_ctxPool.isEmpty()) {
         // No free context was available so we'll have to create a new one
         ctx = engine->CreateContext();
+    } else {
+        ctx = p->_ctxPool.dequeue();
     }
 
     // Attach the debugger
@@ -1244,14 +1294,9 @@ asIScriptContext *ScriptMachine::requestContextCallback(asIScriptEngine *engine,
     return ctx;
 }
 
-void ScriptMachine::lineCallback(asIScriptContext *, void *) {
-    auto app = AppManager::instance();
-    static auto oldTime = app->currentMSecsSinceEpoch();
-    auto curTime = app->currentMSecsSinceEpoch();
-    if (curTime - oldTime >= 50) {
-        QApplication::processEvents();
-        oldTime = curTime;
-    }
+void ScriptMachine::lineCallback(asIScriptContext *ctx, void *) {
+    // return the control
+    ctx->Suspend();
 }
 
 void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
@@ -1259,19 +1304,24 @@ void ScriptMachine::returnContextCallback(asIScriptEngine *engine,
     Q_UNUSED(engine);
 
     if (ctx) {
-        // We can also check for possible script exceptions here if so desired
+        if (ctx->GetState() == asEXECUTION_SUSPENDED) {
+            ctx->Abort();
+        }
 
         // Unprepare the context to free any objects it may still hold (e.g.
         // return value) This must be done before making the context available
         // for re-use, as the clean up may trigger other script executions, e.g.
         // if a destructor needs to call a function.
-        ctx->Unprepare();
+        if (ctx->Unprepare() < 0) {
+            ctx->Release();
+            return;
+        }
 
         auto p = reinterpret_cast<ScriptMachine *>(param);
         ASSERT(p);
 
         // Place the context into the pool for when it will be needed again
-        p->_ctxPool.push_back(ctx);
+        p->_ctxPool.enqueue(ctx);
     }
 }
 
@@ -1696,28 +1746,19 @@ asIScriptEngine *ScriptMachine::engine() const { return _engine; }
 
 asDebugger *ScriptMachine::debugger() const { return _debugger; }
 
-bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
+void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
+                                const std::function<void()> &onFinished) {
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
-        return false;
+        return;
     }
 
     if (code.isEmpty()) {
-        return true;
+        return;
     }
 
     asIScriptModule *mod = createModuleIfNotExist(mode);
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, false);
-
-    QScopeGuard guard([mod, this, mode]() {
-        // Before leaving, allow the engine to clean up remaining objects by
-        // discarding the module and doing a full garbage collection so that
-        // this can also be debugged if desired
-        if (mode != Interactive) {
-            mod->Discard();
-        }
-        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
-    });
 
     // first, valid the input
     auto ccode = code.toUtf8();
@@ -1756,14 +1797,14 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
                 _cachedGlobalStrs.clear();
             }
         }
-        return true;
+        return;
     }
 
     asIScriptFunction *func = nullptr;
 
     ccode = code.toUtf8();
     if (ccode.isEmpty()) {
-        return true;
+        return;
     }
 
     // ok, wrap the codes
@@ -1776,13 +1817,25 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     // start to compile
     auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
     if (cr < 0) {
-        return false;
+        _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        return;
     }
 
     // Set up a context to execute the script
     // The context manager will request the context from the
     // pool, which will automatically attach the debugger
-    asIScriptContext *ctx = _ctxMgr->AddContext(_engine, func, true);
+    auto ctxMgr = new CContextMgr;
+    asIScriptContext *ctx = ctxMgr->SetMainFunction(_engine, func, mode);
+    _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+    if (ctx == nullptr) {
+        MessageInfo info;
+        info.mode = mode;
+        info.message = QStringLiteral("Cannot prepare context for execution.");
+        info.type = MessageType::Error;
+        outputMessage(info);
+        delete ctxMgr;
+        return;
+    }
     _ctx[mode] = ctx;
 
     asPWORD isDbg = 0;
@@ -1804,53 +1857,59 @@ bool ScriptMachine::executeCode(ConsoleMode mode, const QString &code) {
     ctx->SetExceptionCallback(asMETHOD(ScriptMachine, exceptionCallback), this,
                               asCALL_THISCALL);
 
-    // Execute the script until completion
-    // The script may create co-routines. These will automatically
-    // be managed by the context manager
-    while (_ctxMgr->ExecuteScripts()) {
-        qApp->processEvents();
-    }
+    _ctx[mode] = ctx;
+    _ctxMgr[mode] = ctxMgr;
 
-    _ctx[mode] = nullptr;
+    auto runner = new ScriptRunable(ctxMgr, mode);
+    QObject::connect(
+        runner, &QObject::destroyed, runner,
+        [this, ctx, mode, func, mod, onFinished]() {
+            _ctx[mode] = nullptr;
 
-    // Check if the main script finished normally
-    int r = ctx->GetState();
-    if (r != asEXECUTION_FINISHED) {
-        if (r == asEXECUTION_EXCEPTION) {
-            r = -1;
-        } else if (r == asEXECUTION_ABORTED) {
-            MessageInfo info;
-            info.mode = mode;
-            info.message = QStringLiteral("The script was aborted");
-            info.type = MessageType::Error;
-            outputMessage(info);
-            r = -1;
-        } else {
-            auto e = QMetaEnum::fromType<asEContextState>();
-            MessageInfo info;
-            info.mode = mode;
-            info.message =
-                QStringLiteral("The script terminated unexpectedly (") +
-                QString::fromLatin1(e.valueToKey(r)) + QStringLiteral(")");
-            info.type = MessageType::Error;
-            outputMessage(info);
-            r = -1;
-        }
-    } else {
-        r = 0;
-    }
+            // Check if the main script finished normally
+            int r = ctx->GetState();
+            if (r != asEXECUTION_FINISHED) {
+                if (r == asEXECUTION_EXCEPTION) {
+                } else if (r == asEXECUTION_ABORTED) {
+                    MessageInfo info;
+                    info.mode = mode;
+                    info.message = QStringLiteral("The script was aborted");
+                    info.type = MessageType::Error;
+                    outputMessage(info);
+                } else {
+                    auto e = QMetaEnum::fromType<asEContextState>();
+                    MessageInfo info;
+                    info.mode = mode;
+                    info.message =
+                        QStringLiteral("The script terminated unexpectedly (") +
+                        QString::fromLatin1(e.valueToKey(r)) +
+                        QStringLiteral(")");
+                    info.type = MessageType::Error;
+                    outputMessage(info);
+                }
+            }
 
-    // Return the context after retrieving the return value
-    _ctxMgr->DoneWithContext(ctx);
+            // Return the context after retrieving the return value
+            auto mgr = _ctxMgr[mode];
+            mgr->DoneWithContext(ctx);
+            _ctxMgr[mode] = nullptr;
 
-    // Before leaving, allow the engine to clean up remaining objects by
-    // discarding the module and doing a full garbage collection so that
-    // this can also be debugged if desired
-    _engine->GarbageCollect();
+            // Before leaving, allow the engine to clean up remaining objects by
+            // discarding the module and doing a full garbage collection so that
+            // this can also be debugged if desired
+            if (mode != Interactive) {
+                mod->Discard();
+            } else {
+                func->Release();
+                _engine->GarbageCollect();
+            }
 
-    func->Release();
+            if (onFinished) {
+                onFinished();
+            }
+        });
 
-    return r >= 0;
+    runner->start();
 }
 
 QString ScriptMachine::scriptGetExceptionInfo() {
