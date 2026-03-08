@@ -2,6 +2,7 @@
 // see https://github.com/Paril/angelscript-debugger
 
 #include "as_debugger.h"
+
 #include <array>
 #include <bitset>
 #include <charconv>

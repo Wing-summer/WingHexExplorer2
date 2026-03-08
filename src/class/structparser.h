@@ -100,8 +100,8 @@ public:
     bool isCompletedType(const QString &name);
 
     QStringList enumValueNames(const QString &name);
-    qint64 constVarValueInt(const QString &name, bool *ok);
-    quint64 constVarValueUInt(const QString &name, bool *ok);
+    qint64 constVarValueInt(const QString &name);
+    quint64 constVarValueUInt(const QString &name);
     CINT_TYPE constVarValue(const QString &name) const;
 
     bool isCompletedStruct(const QString &name);
@@ -134,6 +134,12 @@ public:
     QStringList structOrUnionMemberDeclWithoutNames(const QString &type) const;
 
     QString resolveTypeName(const QString &name) const;
+
+    int recursiveDepth() const;
+    void setRecursiveDepth(int newRecursiveDepth);
+
+    quint32 structSizeLimit() const;
+    void setStructSizeLimit(quint32 newStructSizeLimit);
 
 private:
     quint64 getShiftAndMaskedPtr(const QByteArray &buffer);
@@ -196,19 +202,22 @@ private:
                      qint64 shift, qint64 mask, qsizetype size);
 
     QVariantHash readStruct(const char *ptr, const char *end,
-                            const QString &type, bool efmtInVariantList);
+                            const QString &type, bool efmtInVariantList,
+                            int depth);
 
     QVariant readStructMember(const char *ptr, const char *end,
                               const QString &type, const QString &member,
-                              bool efmtInVariantList);
+                              bool efmtInVariantList, int depth);
 
     QVariantHash readStructMembers(const char *ptr, const char *end,
                                    const QString &type,
                                    const std::function<QString(uint)> &members,
-                                   uint total, bool efmtInVariantList);
+                                   uint total, bool efmtInVariantList,
+                                   int depth);
 
     QVariant readContent(const char *ptr, const char *end,
-                         const VariableDeclaration &m, bool efmtInVariantList);
+                         const VariableDeclaration &m, bool efmtInVariantList,
+                         int depth);
 
 protected:
     bool isValidCStructMetaType(QMetaType::Type type);
@@ -219,6 +228,7 @@ protected:
 private:
     WingCStruct *_api = nullptr;
     CTypeParser *_parser = nullptr;
+    int _recursiveDepth = 3;
     QStringList _errors, _warns;
     bool m_islittle = Utilities::checkIsLittleEndian();
 };

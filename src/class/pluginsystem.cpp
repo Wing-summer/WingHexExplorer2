@@ -16,7 +16,7 @@
 */
 
 #include "pluginsystem.h"
-#include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
+#include "class/asscriptobjects.h"
 #include "class/languagemanager.h"
 #include "class/logger.h"
 #include "class/settingmanager.h"
@@ -32,7 +32,12 @@
 #include "dialog/colorpickerdialog.h"
 #include "dialog/framelessdialogbase.h"
 #include "dialog/mainwindow.h"
+#include "fmtlibext.h"
 #include "predefgen.h"
+#include "scriptaddon/scriptany.h"
+
+#include "AngelScript/sdk/add_on/scriptgrid/scriptgrid.h"
+#include "Qt-Advanced-Docking-System/src/DockAreaWidget.h"
 
 #include <QDir>
 #include <QFileInfoList>
@@ -72,6 +77,31 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
             _plgFns.insert(msig, m);
         }
     }
+
+    WingHex::ASScriptArray::_deleter = [](void *data) {
+        if (data) {
+            auto d = static_cast<CScriptArray *>(data);
+            d->Release();
+        }
+    };
+    WingHex::ASScriptDictionary::_deleter = [](void *data) {
+        if (data) {
+            auto d = static_cast<CScriptDictionary *>(data);
+            d->Release();
+        }
+    };
+    WingHex::ASScriptGrid::_deleter = [](void *data) {
+        if (data) {
+            auto d = static_cast<CScriptGrid *>(data);
+            d->Release();
+        }
+    };
+    WingHex::ASScriptAny::_deleter = [](void *data) {
+        if (data) {
+            auto d = static_cast<CScriptAny *>(data);
+            d->Release();
+        }
+    };
 }
 
 PluginSystem::~PluginSystem() {}
@@ -2127,6 +2157,55 @@ void PluginSystem::__raiseContextException(const QObject *sender,
     }
 }
 
+ASScript2DArray *PluginSystem::__createScript2DArray(const QObject *sender,
+                                                     const QString &type) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        auto elementType = fmt::format(FMT_STRING("array<{}>"), type);
+        auto typeInfo = engine->GetTypeInfoByDecl(elementType.c_str());
+        if (!typeInfo) {
+            return nullptr;
+        }
+        return new ScriptGrid(CScriptGrid::Create(typeInfo));
+    }
+    return nullptr;
+}
+
+ASScriptAny *PluginSystem::__createScriptAny(const QObject *sender) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        return new ScriptAny(new CScriptAny(engine));
+    }
+    return nullptr;
+}
+
+ASScriptDictionary *
+PluginSystem::__createScriptDictionary(const QObject *sender) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        return new ScriptDictionary(CScriptDictionary::Create(engine));
+    }
+    return nullptr;
+}
+
+ASScriptArray *PluginSystem::__createScriptArray(const QObject *sender,
+                                                 const QString &type) {
+    auto ctx = asGetActiveContext();
+    if (ctx) {
+        auto engine = ctx->GetEngine();
+        auto elementType = fmt::format(FMT_STRING("array<{}>"), type);
+        auto typeInfo = engine->GetTypeInfoByDecl(elementType.c_str());
+        if (!typeInfo) {
+            return nullptr;
+        }
+        return new ScriptArray(CScriptArray::Create(typeInfo));
+    }
+    return nullptr;
+}
+
 IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
                                                  void *ctx) {
     auto gen = reinterpret_cast<asIScriptGeneric *>(ctx);
@@ -2151,8 +2230,7 @@ QList<PluginInfo> PluginSystem::blockedPlugins() const { return _blkplgs; }
 void PluginSystem::doneRegisterScriptObj() {
     Q_ASSERT(_angelplg);
     // ok, then, we will register all script objects
-    auto api =
-        QScopedPointer<WingAngel>(new WingAngel(_angelplg, _scriptMarcos));
+    auto api = QScopedPointer(new WingAngel(_angelplg, _scriptMarcos));
 
     // don't register evalutors for internal types
     auto &m = ScriptMachine::instance();

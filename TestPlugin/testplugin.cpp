@@ -277,6 +277,28 @@ WingHex::UNSAFE_RET TestPlugin::colorTable(const QList<void *> &params) {
     return generateScriptCallError(-2, tr("AllocArrayFailed"));
 }
 
+WingHex::UNSAFE_RET TestPlugin::colorTableNew(const QList<void *> &params) {
+    if (!params.isEmpty()) {
+        return generateScriptCallError(-1, tr("InvalidParamsCount"));
+    }
+
+    auto ctbl = colorTable();
+
+    auto array = QScopedPointer(
+        WingHex::runGlobalAPI(CreateScriptArray, QStringLiteral("color")));
+    if (array) {
+        auto total = ctbl.size();
+        array->resize(total);
+        for (int i = 0; i < total; ++i) {
+            auto d = ctbl.at(i);
+            array->setValue(i, &d);
+        }
+        return array->takeReturn();
+    }
+
+    return generateScriptCallError(-2, tr("AllocArrayFailed"));
+}
+
 QVector<QColor> TestPlugin::colorTable() {
     return {Qt::red, Qt::green, Qt::blue};
 }
@@ -329,7 +351,7 @@ QVariant TestPlugin::testCrash(const QVariantList &params) {
 }
 
 void TestPlugin::testGenericAdd(WingHex::asIWingGeneric *param) {
-    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(param));
+    auto g = QScopedPointer(WingHex::runGlobalAPI(CreateParamContext, param));
 
     auto arg0 = g->argDWord(0);
     auto arg1 = g->argDWord(1);
@@ -338,7 +360,7 @@ void TestPlugin::testGenericAdd(WingHex::asIWingGeneric *param) {
 }
 
 void TestPlugin::testRaiseScriptException(WingHex::asIWingGeneric *) {
-    raiseContextException(__func__, true);
+    WingHex::runGlobalAPI(RaiseContextException, __func__, true);
 }
 
 void TestPlugin::test_a() { logDebug(__FUNCTION__); }
@@ -584,6 +606,10 @@ void TestPlugin::onRegisterScriptObj(WingHex::IWingAngel *o) {
         QStringLiteral("array<color>@ colorTable()"),
         std::bind(QOverload<const QList<void *> &>::of(&TestPlugin::colorTable),
                   this, std::placeholders::_1));
+    o->registerGlobalFunction(QStringLiteral("array<color>@ colorTableNew()"),
+                              std::bind(QOverload<const QList<void *> &>::of(
+                                            &TestPlugin::colorTableNew),
+                                        this, std::placeholders::_1));
 
     o->registerGlobalFunction(
         WingHex::MetaType::Meta_Void,

@@ -395,6 +395,8 @@ set(CLASS_SRC
     src/class/fmtlibext.h
     src/class/mutisavebuttondelegate.h
     src/class/mutisavebuttondelegate.cpp
+    src/class/asscriptobjects.h
+    src/class/asscriptobjects.cpp
     src/class/snippetprocessor.h
     src/class/snippetprocessor.cpp)
 

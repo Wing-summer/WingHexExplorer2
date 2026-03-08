@@ -306,12 +306,13 @@
         <location filename="../testplugin.cpp" line="246"/>
         <location filename="../testplugin.cpp" line="253"/>
         <location filename="../testplugin.cpp" line="260"/>
-        <location filename="../testplugin.cpp" line="286"/>
-        <location filename="../testplugin.cpp" line="294"/>
-        <location filename="../testplugin.cpp" line="301"/>
-        <location filename="../testplugin.cpp" line="309"/>
-        <location filename="../testplugin.cpp" line="318"/>
-        <location filename="../testplugin.cpp" line="325"/>
+        <location filename="../testplugin.cpp" line="282"/>
+        <location filename="../testplugin.cpp" line="308"/>
+        <location filename="../testplugin.cpp" line="316"/>
+        <location filename="../testplugin.cpp" line="323"/>
+        <location filename="../testplugin.cpp" line="331"/>
+        <location filename="../testplugin.cpp" line="340"/>
+        <location filename="../testplugin.cpp" line="347"/>
         <source>InvalidParamsCount</source>
         <translation>无效参数个数</translation>
     </message>
@@ -323,6 +324,7 @@
     </message>
     <message>
         <location filename="../testplugin.cpp" line="277"/>
+        <location filename="../testplugin.cpp" line="299"/>
         <source>AllocArrayFailed</source>
         <translation>分配数组失败</translation>
     </message>

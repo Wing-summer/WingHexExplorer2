@@ -26,6 +26,7 @@
 #include "fmtlibext.h"
 #include "src/scriptaddon/scriptqdictionary.h"
 
+#include <QCache>
 #include <QChar>
 #include <QColor>
 #include <QJsonArray>
@@ -94,7 +95,6 @@ public:
 
         const QRegularExpression *s =
             var->address.ResolveAs<const QRegularExpression>();
-        auto p = s->pattern();
         var->value = fmt::format(FMT_STRING("exp</{}/>"), s->pattern());
     }
 };
@@ -477,7 +477,7 @@ class asIDBCustomTypeEvaluator : public asIDBObjectTypeEvaluator {
 public:
     asIDBCustomTypeEvaluator(
         const QHash<std::string_view, WingHex::IWingAngel::Evaluator> &evals)
-        : evals(evals) {}
+        : evals(evals), typeIDCache(10) {}
 
     virtual void Evaluate(asIDBVariable::Ptr var) const override {
         auto &dbg = var->dbg;
@@ -515,8 +515,16 @@ public:
                 auto total = rc.size();
                 for (qsizetype i = 0; i < total; ++i) {
                     auto data = rc.at(i);
-
-                    auto typeId = engine->GetTypeIdByDecl(data.type.toUtf8());
+                    auto rId = typeIDCache.object(data.type);
+                    int typeId;
+                    if (rId) {
+                        typeId = *rId;
+                    } else {
+                        typeId = engine->GetTypeIdByDecl(data.type.toUtf8());
+                        if (typeId != asINVALID_TYPE) {
+                            typeIDCache.insert(data.type, new int(typeId));
+                        }
+                    }
                     auto temp = data.buffer;
                     if (temp) {
                         auto child = var->CreateChildVariable(
@@ -547,7 +555,16 @@ public:
 
                 for (auto &&[key, value] : rc.asKeyValueRange()) {
                     auto k = fmt::format(FMT_STRING(R"([{}])"), key);
-                    auto typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
+                    auto rId = typeIDCache.object(value.type);
+                    int typeId;
+                    if (rId) {
+                        typeId = *rId;
+                    } else {
+                        typeId = engine->GetTypeIdByDecl(value.type.toUtf8());
+                        if (typeId != asINVALID_TYPE) {
+                            typeIDCache.insert(value.type, new int(typeId));
+                        }
+                    }
                     auto temp = value.buffer;
                     if (temp) {
                         auto child = var->CreateChildVariable(
@@ -576,6 +593,7 @@ public:
 
 private:
     QHash<std::string_view, WingHex::IWingAngel::Evaluator> evals;
+    mutable QCache<QString, int> typeIDCache;
 };
 
 #endif // ASTYPE_EVALUATOR_H

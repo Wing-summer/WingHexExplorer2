@@ -183,6 +183,9 @@ public:
 
     void clear();
 
+    quint32 structSizeLimit() const;
+    void setStructSizeLimit(quint32 newStructSizeLimit);
+
 private:
     QStringList
     getMissingDependencise(const QVector<VariableDeclaration> &members);
@@ -267,6 +270,7 @@ private:
 
 private:
     quint64 _anomyIndex = 0;
+    quint32 _structSizeLimit = 102400;
 };
 
 #endif // _TYPE_PARSER_H_

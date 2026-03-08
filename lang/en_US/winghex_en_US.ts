@@ -2640,152 +2640,152 @@
 <context>
     <name>PluginSystem</name>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="1286"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="1316"/>
         <source>UnexpectedUndoCmdPushDetected</source>
         <translation>Detected an abnormally pushed undo command</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2416"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2494"/>
         <source>LoadingPlugin</source>
         <translation>Loading plugins:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2439"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3010"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2517"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3088"/>
         <source>InvalidPluginID</source>
         <translation>Failed to load plugin: Invalid plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2449"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3014"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2527"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3092"/>
         <source>InvalidPlugin</source>
         <translation>Invalid plugin</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2442"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2520"/>
         <source>InvalidDupPlugin</source>
         <translation>Failed to load plugin: Duplicate plugin identifier</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2446"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3006"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2524"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3084"/>
         <source>ErrLoadPluginSDKVersion</source>
         <translation>Plugin loading failed: Invalid plugin SDK version!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2811"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2889"/>
         <source>AppClosingCanceled:</source>
         <translation>Program shutdown canceled:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2898"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="2976"/>
         <source>FoundPluginCount</source>
         <translation>Total number of plugins found:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2929"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3007"/>
         <source>PluginLoadingFailedSummary</source>
         <translation>Summary of Dependency Plugin Loading Failures</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2933"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3011"/>
         <source>- PluginID:</source>
         <translation>- Plugin ID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2934"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3012"/>
         <source>- Dependencies:</source>
         <translation>- Dependencies:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2936"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3014"/>
         <source>PUID:</source>
         <translation>PUID:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2937"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3015"/>
         <source>Version:</source>
         <translation>Version:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2944"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3022"/>
         <source>PluginLoadingFinished</source>
         <translation>Plugins loaded!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2953"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3031"/>
         <source>FoundDrvPluginCount</source>
         <translation>Total number of device extension plugins discovered:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3039"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3217"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3117"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3295"/>
         <source>ErrLoadInitPlugin</source>
         <translation>Plugin loading failed: Initialization failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="2979"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3057"/>
         <source>HexExtNeedSingleton</source>
         <translation>The hex editor extension must ensure singleton implementation.</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3196"/>
-        <location filename="../../src/class/pluginsystem.cpp" line="3264"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3274"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3342"/>
         <source>ErrLoadPluginNoName</source>
         <translation>Plugin loading failed: Invalid plugin name!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3226"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3304"/>
         <source>PluginName :</source>
         <translation>Plugin Name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3227"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3305"/>
         <source>PluginAuthor :</source>
         <translation>Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3228"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3306"/>
         <source>PluginWidgetRegister</source>
         <translation>Registering plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3267"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3345"/>
         <source>ExtPluginAuthor :</source>
         <translation>Device Extension Plugin Author:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3268"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3346"/>
         <source>ExtPluginWidgetRegister</source>
         <translation>Registering device extension plugin objects...</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3285"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3363"/>
         <source>ErrLoadInitExtPlugin</source>
         <translation>Device Extension Plugin Loading Failed: Initialization Failed!</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3308"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3386"/>
         <source>ChooseFile</source>
         <translation>Select File</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3347"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3425"/>
         <source>EmptyNameDockWidget:</source>
         <translation>Empty dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3357"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3435"/>
         <source>InvalidNameDockWidget:</source>
         <translation>Invalid dock widget name:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3365"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3443"/>
         <source>InvalidNullDockWidget:</source>
         <translation>Invalid empty dock widget:</translation>
     </message>
     <message>
-        <location filename="../../src/class/pluginsystem.cpp" line="3478"/>
+        <location filename="../../src/class/pluginsystem.cpp" line="3556"/>
         <source>Not allowed operation in non-UI thread</source>
         <translation>Not allowed operation in non-UI thread</translation>
     </message>

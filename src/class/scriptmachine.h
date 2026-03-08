@@ -223,6 +223,8 @@ public:
 private:
     static void messageCallback(const asSMessageInfo *msg, void *param);
 
+    static void translateAppException(asIScriptContext *ctx, void *userParam);
+
     static void cleanUpPluginSysIDFunction(asIScriptFunction *fn);
 
     static asIScriptContext *requestContextCallback(asIScriptEngine *engine,

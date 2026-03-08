@@ -36,8 +36,6 @@
 #include <antlr4-runtime.h>
 #include <array>
 
-constexpr auto STURCT_SIZE_LIMIT = 102400; // 100KB
-
 // Struct = QMetaType::User
 
 CTypeParser::~CTypeParser() {}
@@ -232,6 +230,12 @@ void CTypeParser::initialize() {
 #undef ADD_TYPE_S
 
     base_types_ = type_maps_.keys();
+}
+
+quint32 CTypeParser::structSizeLimit() const { return _structSizeLimit; }
+
+void CTypeParser::setStructSizeLimit(quint32 newStructSizeLimit) {
+    _structSizeLimit = qBound(1024u, newStructSizeLimit, 1024u * 1024u);
 }
 
 bool CTypeParser::parse(const QString &file) {
@@ -1236,7 +1240,7 @@ bool CTypeParser::storeStructUnionDef(const bool is_struct,
             struct_defs_[type_name] = members;
         } else {
             size = calcUnionSize(members, alignment);
-            if (size > STURCT_SIZE_LIMIT) {
+            if (size > _structSizeLimit) {
                 return false;
             }
             union_defs_[type_name] = members;
@@ -1391,7 +1395,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
                     return std::nullopt;
                 }
 
-                if (total > STURCT_SIZE_LIMIT) {
+                if (total > _structSizeLimit) {
                     return std::nullopt;
                 }
 
@@ -1445,7 +1449,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
                 return std::nullopt;
             }
 
-            if (total > STURCT_SIZE_LIMIT) {
+            if (total > _structSizeLimit) {
                 return std::nullopt;
             }
         }
@@ -1458,7 +1462,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
     }
     total = au.value();
 
-    if (total > STURCT_SIZE_LIMIT) {
+    if (total > _structSizeLimit) {
         return std::nullopt;
     }
 

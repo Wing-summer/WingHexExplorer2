@@ -620,6 +620,14 @@ public slots:
     void __raiseContextException(const QObject *sender,
                                  const QString &exception, bool allowCatch);
 
+    WingHex::ASScriptArray *__createScriptArray(const QObject *sender,
+                                                const QString &type);
+    WingHex::ASScriptDictionary *
+    __createScriptDictionary(const QObject *sender);
+    WingHex::ASScriptAny *__createScriptAny(const QObject *sender);
+    WingHex::ASScript2DArray *__createScript2DArray(const QObject *sender,
+                                                    const QString &type);
+
 private:
     WingHex::IWingPlugin *checkPluginAndReport(const QObject *sender,
                                                const char *func);

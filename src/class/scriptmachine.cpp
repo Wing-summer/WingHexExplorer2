@@ -29,6 +29,7 @@
 #include "AngelScript/sdk/angelscript/source/as_scriptengine.h"
 
 #include "class/angelscriptconsolevisitor.h"
+#include "class/angelscripthelper.h"
 #include "class/appmanager.h"
 #include "class/asbuilder.h"
 #include "class/logger.h"
@@ -128,6 +129,9 @@ bool ScriptMachine::configureEngine() {
     if (r < 0) {
         return false;
     }
+
+    _engine->SetTranslateAppExceptionCallback(asFUNCTION(translateAppException),
+                                              this, asCALL_CDECL);
 
     _engine->SetFunctionUserDataCleanupCallback(
         &ScriptMachine::cleanUpPluginSysIDFunction,
@@ -613,58 +617,7 @@ QString ScriptMachine::stringify(void *ref, int typeId) {
 }
 
 std::string ScriptMachine::getAsTypeName(int typeId) {
-    auto type = _engine->GetTypeInfoById(typeId);
-    std::string name;
-
-    if (!type) {
-        // a primitive
-        switch (typeId & asTYPEID_MASK_SEQNBR) {
-        case asTYPEID_BOOL:
-            name = "bool";
-            break;
-        case asTYPEID_INT8:
-            name = "int8";
-            break;
-        case asTYPEID_INT16:
-            name = "int16";
-            break;
-        case asTYPEID_INT32:
-            name = "int32";
-            break;
-        case asTYPEID_INT64:
-            name = "int64";
-            break;
-        case asTYPEID_UINT8:
-            name = "uint8";
-            break;
-        case asTYPEID_UINT16:
-            name = "uint16";
-            break;
-        case asTYPEID_UINT32:
-            name = "uint32";
-            break;
-        case asTYPEID_UINT64:
-            name = "uint64";
-            break;
-        case asTYPEID_FLOAT:
-            name = "float";
-            break;
-        case asTYPEID_DOUBLE:
-            name = "double";
-            break;
-        default:
-            name = "???";
-            break;
-        }
-    } else {
-        auto ns = type->GetNamespace();
-        if (ns && strlen(ns)) {
-            name = fmt::format(FMT_STRING("{}::{}"), ns, type->GetName());
-        } else {
-            name = type->GetName();
-        }
-    }
-    return name;
+    return getAsTypeNameById(_engine, typeId);
 }
 
 std::string ScriptMachine::stringify_helper(const void *ref, int typeId) {
@@ -758,21 +711,25 @@ bool ScriptMachine::executeScript(
     ASSERT(mode != Interactive);
     // script-running is not allowed in interactive mode
     if (mode == Interactive) {
+        onFinished();
         return false;
     }
 
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
+        onFinished();
         return false;
     }
 
     if (script.isEmpty()) {
+        onFinished();
         return true;
     }
 
     // Compile the script
     auto mod = createModuleIfNotExist(mode);
     if (mod == nullptr) {
+        onFinished();
         return false;
     }
 
@@ -828,6 +785,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        onFinished();
         return false;
     }
 
@@ -839,6 +797,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        onFinished();
         return false;
     }
 
@@ -857,6 +816,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        onFinished();
         return false;
     }
 
@@ -889,6 +849,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         delete ctxMgr;
+        onFinished();
         return false;
     }
 
@@ -1194,6 +1155,22 @@ void ScriptMachine::messageCallback(const asSMessageInfo *msg, void *param) {
     info.message = QString::fromUtf8(msg->message);
     info.type = t;
     ins->outputMessage(info);
+}
+
+void ScriptMachine::translateAppException(asIScriptContext *ctx,
+                                          void *userParam) {
+    Q_UNUSED(userParam);
+    try {
+        // Retrow the original exception so we can catch it again
+        throw;
+    } catch (const std::exception &e) {
+        // Tell the VM the type of exception that occurred
+        ctx->SetException(e.what());
+    } catch (...) {
+        // The callback must not allow any exception to be thrown, but it is not
+        // necessary to explicitly set an exception string if the default
+        // exception string is sufficient
+    }
 }
 
 void ScriptMachine::cleanUpPluginSysIDFunction(asIScriptFunction *) {
@@ -1750,10 +1727,12 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                                 const std::function<void()> &onFinished) {
     if (QThread::currentThread() != qApp->thread()) {
         Logger::warning(QStringLiteral("Code must be exec in the main thread"));
+        onFinished();
         return;
     }
 
     if (code.isEmpty()) {
+        onFinished();
         return;
     }
 
@@ -1797,6 +1776,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
                 _cachedGlobalStrs.clear();
             }
         }
+        onFinished();
         return;
     }
 
@@ -1804,6 +1784,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
 
     ccode = code.toUtf8();
     if (ccode.isEmpty()) {
+        onFinished();
         return;
     }
 
@@ -1818,6 +1799,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
     auto cr = mod->CompileFunction(nullptr, ccode, 0, 0, &func);
     if (cr < 0) {
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        onFinished();
         return;
     }
 
@@ -1834,6 +1816,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
         info.type = MessageType::Error;
         outputMessage(info);
         delete ctxMgr;
+        onFinished();
         return;
     }
     _ctx[mode] = ctx;

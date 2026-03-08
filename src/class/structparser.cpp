@@ -132,33 +132,21 @@ QStringList StructParser::enumValueNames(const QString &name) {
     return _parser->enumMembers(rname);
 }
 
-qint64 StructParser::constVarValueInt(const QString &name, bool *ok) {
+qint64 StructParser::constVarValueInt(const QString &name) {
     auto v = _parser->constVarValue(name);
     if (std::holds_alternative<qint64>(v)) {
-        if (ok) {
-            *ok = true;
-        }
         return std::get<qint64>(v);
     } else {
-        if (ok) {
-            *ok = false;
-        }
-        return 0;
+        return qint64(std::get<quint64>(v));
     }
 }
 
-quint64 StructParser::constVarValueUInt(const QString &name, bool *ok) {
+quint64 StructParser::constVarValueUInt(const QString &name) {
     auto v = _parser->constVarValue(name);
     if (std::holds_alternative<quint64>(v)) {
-        if (ok) {
-            *ok = true;
-        }
         return std::get<quint64>(v);
     } else {
-        if (ok) {
-            *ok = false;
-        }
-        return 0;
+        return quint64(std::get<qint64>(v));
     }
 }
 
@@ -452,7 +440,7 @@ QVariantHash StructParser::__read(qsizetype offset, const QString &type,
     const auto *pdata = raw.data();
     const auto *pend = pdata + raw.length();
 
-    return readStruct(pdata, pend, rtype, efmtInVariantList);
+    return readStruct(pdata, pend, rtype, efmtInVariantList, 1);
 }
 
 QVariant StructParser::__readMember(qsizetype offset, const QString &type,
@@ -484,7 +472,7 @@ QVariant StructParser::__readMember(qsizetype offset, const QString &type,
     const auto *pdata = raw.data();
     const auto *pend = pdata + raw.length();
 
-    return readStructMember(pdata, pend, rtype, member, efmtInVariantList);
+    return readStructMember(pdata, pend, rtype, member, efmtInVariantList, 1);
 }
 
 QVariantHash
@@ -515,7 +503,7 @@ StructParser::__readMembers(qsizetype offset, const QString &type,
     const auto *pend = pdata + raw.length();
 
     return readStructMembers(pdata, pend, rtype, members, total,
-                             efmtInVariantList);
+                             efmtInVariantList, 1);
 }
 
 QByteArray StructParser::__readRaw(qsizetype offset, const QString &type) {
@@ -551,7 +539,7 @@ QByteArray StructParser::__readRaw(qsizetype offset, const QString &type) {
 
 QVariantHash StructParser::readStruct(const char *ptr, const char *end,
                                       const QString &type,
-                                      bool efmtInVariantList) {
+                                      bool efmtInVariantList, int depth) {
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
@@ -559,8 +547,8 @@ QVariantHash StructParser::readStruct(const char *ptr, const char *end,
     QVariantHash content;
     // then slice and parse
     for (auto &m : struc) {
-        content.insert(m.var_name,
-                       readContent(ptr + m.offset, end, m, efmtInVariantList));
+        content.insert(m.var_name, readContent(ptr + m.offset, end, m,
+                                               efmtInVariantList, depth));
     }
     return content;
 }
@@ -568,7 +556,7 @@ QVariantHash StructParser::readStruct(const char *ptr, const char *end,
 QVariant StructParser::readStructMember(const char *ptr, const char *end,
                                         const QString &type,
                                         const QString &member,
-                                        bool efmtInVariantList) {
+                                        bool efmtInVariantList, int depth) {
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
@@ -578,7 +566,7 @@ QVariant StructParser::readStructMember(const char *ptr, const char *end,
                               return decl.var_name == member;
                           });
     if (r != struc.end()) {
-        return readContent(ptr + r->offset, end, *r, efmtInVariantList);
+        return readContent(ptr + r->offset, end, *r, efmtInVariantList, depth);
     }
     return {};
 }
@@ -587,7 +575,7 @@ QVariantHash
 StructParser::readStructMembers(const char *ptr, const char *end,
                                 const QString &type,
                                 const std::function<QString(uint)> &members,
-                                uint total, bool efmtInVariantList) {
+                                uint total, bool efmtInVariantList, int depth) {
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
@@ -603,7 +591,7 @@ StructParser::readStructMembers(const char *ptr, const char *end,
     for (auto &m : struc) {
         if (mems.contains(m.var_name)) {
             content.insert(m.var_name, readContent(ptr + m.offset, end, m,
-                                                   efmtInVariantList));
+                                                   efmtInVariantList, depth));
         }
     }
 
@@ -612,7 +600,10 @@ StructParser::readStructMembers(const char *ptr, const char *end,
 
 QVariant StructParser::readContent(const char *ptr, const char *end,
                                    const VariableDeclaration &m,
-                                   bool efmtInVariantList) {
+                                   bool efmtInVariantList, int depth) {
+    if (depth >= _recursiveDepth) {
+        throw std::runtime_error("Excessive recursion depth for struct reads");
+    }
 
     bool retry = false;
     auto dt = m.data_type;
@@ -795,7 +786,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
             Q_ASSERT(false);
             break;
         case CTypeParser::CType::Struct:
-            return readStruct(ptr, end, dt, efmtInVariantList);
+            return readStruct(ptr, end, dt, efmtInVariantList, depth + 1);
         case CTypeParser::CType::Union: {
             auto size = _parser->getTypeSize(dt);
             Q_ASSERT(size);
@@ -805,7 +796,8 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
                 auto ms = _parser->unionMembers(dt);
                 QVariantHash ret;
                 for (auto &m : ms) {
-                    auto r = readContent(ptr, ptrend, m, efmtInVariantList);
+                    auto r = readContent(ptr, ptrend, m, efmtInVariantList,
+                                         depth + 1);
                     ret.insert(m.var_name, r);
                 }
                 return ret;
@@ -1130,4 +1122,18 @@ CScriptArray *StructParser::convert2AsArray(const QVariantList &array,
     }
 
     return arr;
+}
+
+int StructParser::recursiveDepth() const { return _recursiveDepth; }
+
+void StructParser::setRecursiveDepth(int newRecursiveDepth) {
+    _recursiveDepth = qBound(2, newRecursiveDepth, 5);
+}
+
+quint32 StructParser::structSizeLimit() const {
+    return _parser->structSizeLimit();
+}
+
+void StructParser::setStructSizeLimit(quint32 newStructSizeLimit) {
+    _parser->setStructSizeLimit(newStructSizeLimit);
 }

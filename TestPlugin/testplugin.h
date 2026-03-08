@@ -85,6 +85,8 @@ private:
 
     WingHex::UNSAFE_RET colorTable(const QList<void *> &params);
 
+    WingHex::UNSAFE_RET colorTableNew(const QList<void *> &params);
+
     QVariant createTestShareMem(const QVariantList &params);
     QVariant destoryTestShareMem(const QVariantList &params);
     QVariant printLogTestSharedMemData(const QVariantList &params);

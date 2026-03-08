@@ -106,9 +106,9 @@ private:
     WING_SERVICE QStringList enumValueNames(const WingHex::SenderInfo &sender,
                                             const QString &name);
     WING_SERVICE qint64 constVarValueInt(const WingHex::SenderInfo &sender,
-                                         const QString &name, bool *ok);
+                                         const QString &name);
     WING_SERVICE quint64 constVarValueUInt(const WingHex::SenderInfo &sender,
-                                           const QString &name, bool *ok);
+                                           const QString &name);
 
     WING_SERVICE bool isCompletedStruct(const WingHex::SenderInfo &sender,
                                         const QString &name);
@@ -151,6 +151,15 @@ private:
 
     WING_SERVICE QString resolveTypeName(const WingHex::SenderInfo &sender,
                                          const QString &type);
+
+    WING_SERVICE int recursiveDepth(const WingHex::SenderInfo &sender) const;
+    WING_SERVICE void setRecursiveDepth(const WingHex::SenderInfo &sender,
+                                        int newRecursiveDepth);
+
+    WING_SERVICE quint32
+    structSizeLimit(const WingHex::SenderInfo &sender) const;
+    WING_SERVICE void setStructSizeLimit(const WingHex::SenderInfo &sender,
+                                         quint32 newStructSizeLimit);
 
 private:
     WingHex::MetaType getqsizetypeMetaType() const;

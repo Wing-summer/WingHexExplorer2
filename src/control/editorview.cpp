@@ -1592,7 +1592,11 @@ QString EditorView::readString(const QObject *caller, qsizetype offset,
             return {};
         }
     }
-    auto buffer = doc->read(offset, int(pos - offset));
+    auto len = pos - offset;
+    if (len > 1024 * 1024 * copyLimit()) {
+        return {};
+    }
+    auto buffer = doc->read(offset, len);
     return Utilities::decodingString(buffer, encoding);
 }
 
@@ -1604,7 +1608,9 @@ QByteArray EditorView::readBytes(const QObject *caller, qsizetype offset,
             return {};
         }
     }
-
+    if (count > 1024 * 1024 * copyLimit()) {
+        return {};
+    }
     QReadLocker locker(&_rwlock);
     return m_hex->document()->read(offset, count);
 }
@@ -1617,7 +1623,7 @@ qsizetype EditorView::findNext(const QObject *caller, qsizetype begin,
             return -1;
         }
     }
-
+    QReadLocker locker(&_rwlock);
     return m_hex->document()->findNext(begin, ba);
 }
 
@@ -1629,7 +1635,7 @@ qsizetype EditorView::findPrevious(const QObject *caller, qsizetype begin,
             return -1;
         }
     }
-
+    QReadLocker locker(&_rwlock);
     return m_hex->document()->findPrevious(begin, ba);
 }
 

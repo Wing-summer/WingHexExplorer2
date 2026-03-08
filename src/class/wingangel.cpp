@@ -599,6 +599,7 @@ QString WingAngel::type2AngelScriptString(uint type, bool isArg,
         break;
     case WingHex::Meta_String:
         retype = QStringLiteral("string");
+        complexType = true;
         break;
     case WingHex::Meta_Char:
         retype = QStringLiteral("char");
@@ -613,6 +614,7 @@ QString WingAngel::type2AngelScriptString(uint type, bool isArg,
     case WingHex::Meta_Map:
     case WingHex::Meta_Hash:
         retype = QStringLiteral("dictionary");
+        isContainer = true;
         complexType = true;
         break;
     default:
@@ -645,10 +647,6 @@ QString WingAngel::type2AngelScriptString(uint type, bool isArg,
                     return {};
                 }
 
-                retype.append(QStringLiteral("@"));
-            }
-
-            if (complexType) {
                 retype.append(QStringLiteral("@"));
             }
         }

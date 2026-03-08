@@ -21,6 +21,8 @@
 #include "AngelScript/sdk/add_on/scriptarray/scriptarray.h"
 #include "define.h"
 
+#include <fmt/format.h>
+
 #include <QMetaEnum>
 #include <QtGlobal>
 
@@ -174,6 +176,61 @@ inline void checkAsRegisterClassAllInts() {
     static_assert(std::is_trivially_destructible_v<T>,
                   "T must be trivially destructible");
     static_assert(std::is_standard_layout_v<T>, "T must be standard layout");
+}
+
+inline std::string getAsTypeNameById(asIScriptEngine *engine, int typeId) {
+    auto type = engine->GetTypeInfoById(typeId);
+    std::string name;
+
+    if (!type) {
+        // a primitive
+        switch (typeId & asTYPEID_MASK_SEQNBR) {
+        case asTYPEID_BOOL:
+            name = "bool";
+            break;
+        case asTYPEID_INT8:
+            name = "int8";
+            break;
+        case asTYPEID_INT16:
+            name = "int16";
+            break;
+        case asTYPEID_INT32:
+            name = "int32";
+            break;
+        case asTYPEID_INT64:
+            name = "int64";
+            break;
+        case asTYPEID_UINT8:
+            name = "uint8";
+            break;
+        case asTYPEID_UINT16:
+            name = "uint16";
+            break;
+        case asTYPEID_UINT32:
+            name = "uint32";
+            break;
+        case asTYPEID_UINT64:
+            name = "uint64";
+            break;
+        case asTYPEID_FLOAT:
+            name = "float";
+            break;
+        case asTYPEID_DOUBLE:
+            name = "double";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+    } else {
+        auto ns = type->GetNamespace();
+        if (ns && strlen(ns)) {
+            name = fmt::format(FMT_STRING("{}::{}"), ns, type->GetName());
+        } else {
+            name = type->GetName();
+        }
+    }
+    return name;
 }
 
 #endif // ANGELSCRIPTHELPER_H

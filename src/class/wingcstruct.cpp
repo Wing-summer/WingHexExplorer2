@@ -314,7 +314,7 @@ private:
 WING_DECLARE_STATIC_API;
 
 static void ScriptStructParser_ConstVarValue(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
+    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
     auto self = static_cast<ScriptStructParser *>(g->object());
     auto param = static_cast<QString *>(g->argObject(0));
     *(CINT_TYPE *)g->addressOfReturnLocation() = self->constVarValue(*param);
@@ -341,7 +341,7 @@ static void CINT_TYPE_Destruct(CINT_TYPE *self) { self->~CINT_TYPE(); }
 static WingCStruct *self = nullptr;
 
 static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
+    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
     auto mem = static_cast<ScriptStructParser *>(
         asAllocMem(sizeof(ScriptStructParser)));
 
@@ -350,7 +350,7 @@ static void ScriptStructParser_Factory(WingHex::asIWingGeneric *gen) {
 };
 
 static void ScriptStructParser_String_Factory(WingHex::asIWingGeneric *gen) {
-    auto g = QScopedPointer<WingHex::IWingGeneric>(createParamContext(gen));
+    auto g = QScopedPointer(runGlobalAPI(CreateParamContext, gen));
     auto param = static_cast<QString *>(g->argObject(0));
     auto mem = static_cast<ScriptStructParser *>(
         asAllocMem(sizeof(ScriptStructParser)));
@@ -631,21 +631,32 @@ void WingCStruct::onRegisterScriptObj(WingHex::IWingAngel *o) {
         "string[]@ getMissingDependencise(const string&in type) const",
         asWINGMETHOD(ScriptStructParser, getMissingDependencise),
         asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "int64 constVarValueInt(const string &in type, "
-                            "bool &out ok = void) const",
-                            asWINGMETHOD(ScriptStructParser, constVarValueInt),
-                            asCallConvTypes::asCALL_THISCALL);
-    o->registerObjectMethod("parser",
-                            "uint64 constVarValueUInt(const string &in type, "
-                            "bool &out ok = void) const",
-                            asWINGMETHOD(ScriptStructParser, constVarValueUInt),
-                            asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "parser", "int64 constVarValueInt(const string &in type) const",
+        asWINGMETHOD(ScriptStructParser, constVarValueInt),
+        asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "parser", "uint64 constVarValueUInt(const string &in type) const",
+        asWINGMETHOD(ScriptStructParser, constVarValueUInt),
+        asCallConvTypes::asCALL_THISCALL);
     o->registerObjectMethod(
         "parser",
         "WingCStruct::IntType constVarValue(const string &in type) const",
         asWINGFUNCTION(ScriptStructParser_ConstVarValue),
         asCallConvTypes::asCALL_GENERIC);
+    o->registerObjectMethod("parser", "int recursiveDepth() const",
+                            asWINGMETHOD(ScriptStructParser, recursiveDepth),
+                            asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod("parser", "void setRecursiveDepth(int)",
+                            asWINGMETHOD(ScriptStructParser, setRecursiveDepth),
+                            asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod("parser", "uint32 structSizeLimit() const",
+                            asWINGMETHOD(ScriptStructParser, structSizeLimit),
+                            asCallConvTypes::asCALL_THISCALL);
+    o->registerObjectMethod(
+        "parser", "void setStructSizeLimit(uint32)",
+        asWINGMETHOD(ScriptStructParser, setStructSizeLimit),
+        asCallConvTypes::asCALL_THISCALL);
 
     static_assert(sizeof(qsizetype) == sizeof(quint64));
 
@@ -937,21 +948,21 @@ QStringList WingCStruct::enumValueNames(const WingHex::SenderInfo &sender,
 }
 
 qint64 WingCStruct::constVarValueInt(const WingHex::SenderInfo &sender,
-                                     const QString &name, bool *ok) {
+                                     const QString &name) {
     auto parser = _parsers.value(sender.puid, nullptr);
     if (!parser) {
         return 0;
     }
-    return parser->constVarValueInt(name, ok);
+    return parser->constVarValueInt(name);
 }
 
 quint64 WingCStruct::constVarValueUInt(const WingHex::SenderInfo &sender,
-                                       const QString &name, bool *ok) {
+                                       const QString &name) {
     auto parser = _parsers.value(sender.puid, nullptr);
     if (!parser) {
         return 0;
     }
-    return parser->constVarValueUInt(name, ok);
+    return parser->constVarValueUInt(name);
 }
 
 bool WingCStruct::isCompletedStruct(const WingHex::SenderInfo &sender,
@@ -989,7 +1000,11 @@ QVariantHash WingCStruct::read(const WingHex::SenderInfo &sender,
         return {};
     }
 
-    return parser->__read(offset, type, true);
+    try {
+        return parser->__read(offset, type, true);
+    } catch (...) {
+        return {};
+    }
 }
 
 QVariant WingCStruct::readMember(const WingHex::SenderInfo &sender,
@@ -999,7 +1014,11 @@ QVariant WingCStruct::readMember(const WingHex::SenderInfo &sender,
     if (!parser) {
         return {};
     }
-    return parser->__readMember(offset, type, member, true);
+    try {
+        return parser->__readMember(offset, type, member, true);
+    } catch (...) {
+        return {};
+    }
 }
 
 QVariantHash WingCStruct::readMembers(const WingHex::SenderInfo &sender,
@@ -1010,10 +1029,14 @@ QVariantHash WingCStruct::readMembers(const WingHex::SenderInfo &sender,
         return {};
     }
 
-    return parser->__readMembers(
-        offset, type,
-        [members](uint index) -> QString { return members.at(index); },
-        members.size(), true);
+    try {
+        return parser->__readMembers(
+            offset, type,
+            [members](uint index) -> QString { return members.at(index); },
+            members.size(), true);
+    } catch (...) {
+        return {};
+    }
 }
 
 QByteArray WingCStruct::readRaw(const WingHex::SenderInfo &sender,
@@ -1176,6 +1199,40 @@ QString WingCStruct::resolveTypeName(const WingHex::SenderInfo &sender,
     }
 
     return parser->resolveTypeName(type);
+}
+
+int WingCStruct::recursiveDepth(const WingHex::SenderInfo &sender) const {
+    auto parser = _parsers.value(sender.puid, nullptr);
+    if (!parser) {
+        return -1;
+    }
+    return parser->recursiveDepth();
+}
+
+void WingCStruct::setRecursiveDepth(const WingHex::SenderInfo &sender,
+                                    int newRecursiveDepth) {
+    auto parser = _parsers.value(sender.puid, nullptr);
+    if (!parser) {
+        return;
+    }
+    return parser->setRecursiveDepth(newRecursiveDepth);
+}
+
+quint32 WingCStruct::structSizeLimit(const WingHex::SenderInfo &sender) const {
+    auto parser = _parsers.value(sender.puid, nullptr);
+    if (!parser) {
+        return 0;
+    }
+    return parser->structSizeLimit();
+}
+
+void WingCStruct::setStructSizeLimit(const WingHex::SenderInfo &sender,
+                                     quint32 newStructSizeLimit) {
+    auto parser = _parsers.value(sender.puid, nullptr);
+    if (!parser) {
+        return;
+    }
+    return parser->setStructSizeLimit(newStructSizeLimit);
 }
 
 WingHex::MetaType WingCStruct::getqsizetypeMetaType() const {
