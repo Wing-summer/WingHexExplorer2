@@ -1746,11 +1746,10 @@ bool WingAngelAPI::execScriptCode(const WingHex::SenderInfo &sender,
 
 bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
                               const QString &fileName) {
-
     auto exec = [this, fileName]() -> bool {
+        ScriptManager::instance().setIndicatorBusy(true);
         return ScriptMachine::instance().executeScript(
             ScriptMachine::Background, fileName, false, {},
-            [this]() { ScriptManager::instance().setIndicatorBusy(true); },
             [this]() { ScriptManager::instance().setIndicatorBusy(false); });
     };
 
@@ -1767,7 +1766,10 @@ bool WingAngelAPI::execScript(const WingHex::SenderInfo &sender,
 bool WingAngelAPI::execCode(const WingHex::SenderInfo &sender,
                             const QString &code) {
     auto exec = [this, code]() -> void {
-        ScriptMachine::instance().executeCode(ScriptMachine::Background, code);
+        ScriptManager::instance().setIndicatorBusy(true);
+        ScriptMachine::instance().executeCode(
+            ScriptMachine::Background, code,
+            [this]() { ScriptManager::instance().setIndicatorBusy(false); });
     };
 
     if (QThread::currentThread() != qApp->thread()) {

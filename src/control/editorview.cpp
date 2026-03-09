@@ -689,7 +689,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             // when path is empty, only save self
             if (m_docType == DocumentType::Extension) {
                 if (doc->saveTo(nullptr, true)) {
-                    doc->setDocSaved();
                     if (!orginWorkSpace && !workSpaceName.isEmpty()) {
                         applyWorkSpaceStyle(this);
                         notifyOnWorkSpace(true);
@@ -700,7 +699,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                 if (doc->saveTo(nullptr, true)) {
                     m_isNewFile = false;
                     m_docType = DocumentType::File;
-                    doc->setDocSaved();
                     if (!orginWorkSpace && !workSpaceName.isEmpty()) {
                         applyWorkSpaceStyle(this);
                         notifyOnWorkSpace(true);
@@ -712,7 +710,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             auto file = new QFile(path);
             bool flag = !isExport;
             if (m_docType == DocumentType::Extension) {
-                if (doc->saveTo(file, flag)) {
+                if (doc->saveTo(file, false)) {
                     if (flag) {
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
@@ -724,7 +722,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                             return ErrFile::Permission;
                         }
                         doc->setBuffer(buffer);
-                        doc->setDocSaved();
 
                         auto fName = QFileInfo(path).absoluteFilePath();
                         if (workSpaceName.isEmpty()) {
@@ -736,6 +733,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                             applyWorkSpaceStyle(this);
                         }
                         setFileNameUrl(QUrl::fromLocalFile(fName));
+                        doc->setDocSaved();
                     } else {
                         delete file;
                     }
@@ -746,7 +744,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                     return ErrFile::Success;
                 }
             } else {
-                if (doc->saveTo(file, flag)) {
+                if (doc->saveTo(file, false)) {
                     if (flag) {
                         auto buffer = new QFileBuffer;
                         if (!buffer->open(file, false)) {
@@ -758,7 +756,6 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
 
                         m_isNewFile = false;
                         m_docType = DocumentType::File;
-                        doc->setDocSaved();
                         auto fName = QFileInfo(path).absoluteFilePath();
                         if (workSpaceName.isEmpty()) {
                             clearWorkSpaceStyle(this);
@@ -769,6 +766,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
                             applyWorkSpaceStyle(this);
                         }
                         setFileNameUrl(QUrl::fromLocalFile(fName));
+                        doc->setDocSaved();
                     } else {
                         delete file;
                     }

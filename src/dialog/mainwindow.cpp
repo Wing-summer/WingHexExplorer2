@@ -188,7 +188,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     buildUpContent(cw);
 
-    m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
+    m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
     // ok, preparing for starting...
     this->setWindowIcon(Utilities::isRoot()
@@ -391,7 +391,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     if (splash)
         splash->setInfoText(tr("SetupPlgWidgets"));
     installPluginEditorWidgets();
-    auto plgview = m_toolBtneditors.value(PLUGIN_VIEWS);
+    auto plgview = m_toolBtneditors[PLUGIN_VIEWS];
     plgview->setEnabled(!plgview->menu()->isEmpty());
 
     finishBuildDockSystem();
@@ -434,6 +434,7 @@ void MainWindow::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
 
     loadCacheIcon();
+    m_toolBtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
 
     using RibbonCatagories = WingHex::WingRibbonCatagories;
 
@@ -1316,10 +1317,9 @@ RibbonTabContent *MainWindow::buildFilePage(RibbonTabContent *tab) {
             shortcuts.keySequence(QKeySequences::Key::OPEN_WORKSPACE));
 
         auto menu = new QMenu(this);
-        m_toolBtneditors.insert(
-            ToolButtonIndex::OPEN_EXT,
+        m_toolBtneditors[ToolButtonIndex::OPEN_EXT] =
             addPannelAction(pannel, QStringLiteral("openother"), tr("OpenExt"),
-                            EMPTY_FUNC, {}, menu));
+                            EMPTY_FUNC, {}, menu);
 
         addPannelAction(pannel, QStringLiteral("recent"), tr("RecentFiles"),
                         EMPTY_FUNC, {}, m_recentMenu);
@@ -1367,13 +1367,13 @@ RibbonTabContent *MainWindow::buildEditPage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
                                  &MainWindow::on_undofile, QKeySequence::Undo);
-        m_toolBtneditors.insert(ToolButtonIndex::UNDO_ACTION, a);
+        m_toolBtneditors[ToolButtonIndex::UNDO_ACTION] = a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
                             &MainWindow::on_redofile,
                             shortcuts.keySequence(QKeySequences::Key::REDO));
-        m_toolBtneditors.insert(ToolButtonIndex::REDO_ACTION, a);
+        m_toolBtneditors[ToolButtonIndex::REDO_ACTION] = a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("cut"), tr("Cut"),
@@ -1589,10 +1589,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
 
     {
         auto pannel = tab->addGroup(tr("Window"));
-        m_toolBtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
-                                addPannelAction(pannel, QStringLiteral("file"),
-                                                tr("Editor"), EMPTY_FUNC, {},
-                                                new QMenu(this)));
+        m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS] =
+            addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
+                            EMPTY_FUNC, {}, new QMenu(this));
         auto edwins = new QMenu(this);
         edwins->addAction(newAction(QStringLiteral("file"), tr("Hex"), [this] {
             auto editor = currentEditor();
@@ -1601,21 +1600,16 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
             }
             editor->switchView({});
         }));
-        m_toolBtneditors.insert(ToolButtonIndex::EDITOR_WINS,
-                                addPannelAction(pannel, QStringLiteral("win"),
-                                                tr("View"), EMPTY_FUNC, {},
-                                                edwins));
-        m_toolBtneditors.insert(
-            ToolButtonIndex::TOOL_VIEWS,
+        m_toolBtneditors[ToolButtonIndex::EDITOR_WINS] = addPannelAction(
+            pannel, QStringLiteral("win"), tr("View"), EMPTY_FUNC, {}, edwins);
+        m_toolBtneditors[ToolButtonIndex::TOOL_VIEWS] =
             addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
-                            EMPTY_FUNC, {}, new QMenu(this)));
+                            EMPTY_FUNC, {}, new QMenu(this));
 
-        m_toolBtneditors.insert(ToolButtonIndex::PLUGIN_VIEWS,
-                                addPannelAction(pannel, QStringLiteral("edit"),
-                                                tr("Plugin"), EMPTY_FUNC, {},
-                                                new QMenu(this)));
-        m_editStateWidgets << m_toolBtneditors.value(
-            ToolButtonIndex::EDITOR_WINS);
+        m_toolBtneditors[ToolButtonIndex::PLUGIN_VIEWS] =
+            addPannelAction(pannel, QStringLiteral("edit"), tr("Plugin"),
+                            EMPTY_FUNC, {}, new QMenu(this));
+        m_editStateWidgets << m_toolBtneditors[ToolButtonIndex::EDITOR_WINS];
     }
 
     {
@@ -1695,10 +1689,9 @@ RibbonTabContent *MainWindow::buildViewPage(RibbonTabContent *tab) {
                           [this, layout]() { restoreLayout(layout); }));
         }
 
-        m_toolBtneditors.insert(
-            ToolButtonIndex::LAYOUT_ACTION,
+        m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION] =
             addPannelAction(pannel, QStringLiteral("layout"),
-                            tr("RestoreLayout"), EMPTY_FUNC, {}, menu));
+                            tr("RestoreLayout"), EMPTY_FUNC, {}, menu);
 
         addPannelAction(pannel, QStringLiteral("layoutexport"),
                         tr("SaveLayout"), &MainWindow::on_saveLayout);
@@ -1952,7 +1945,7 @@ void MainWindow::installPluginEditorWidgets() {
     QMap<QString, QPair<IWingPlugin *, QAction *>> names;
 
     auto &log = Logger::instance();
-    auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
+    auto menu = m_toolBtneditors[EDITOR_WINS]->menu();
 
     decltype(m_editorViewWidgets) newEditorViewWidgets;
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
@@ -3182,7 +3175,7 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
                     CDockWidget::DockWidgetPinnable);
 
     dw->setWidget(content);
-    m_toolBtneditors.value(index)->menu()->addAction(dw->toggleViewAction());
+    m_toolBtneditors[index]->menu()->addAction(dw->toggleViewAction());
     return dw;
 }
 
@@ -3288,7 +3281,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         }
     });
 
-    auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto ev = m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS];
     auto menu = ev->menu();
     Q_ASSERT(menu);
     auto ta = editor->toggleViewAction();
@@ -3306,7 +3299,7 @@ void MainWindow::registerClonedEditorView(EditorView *editor) {
         editor->registerQMenu(m);
     }
 
-    auto ev = m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto ev = m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS];
     auto menu = ev->menu();
     Q_ASSERT(menu);
     auto ta = editor->toggleViewAction();
@@ -3487,7 +3480,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
                              QStringLiteral("%"));
         });
 
-    auto menu = m_toolBtneditors.value(EDITOR_WINS)->menu();
+    auto menu = m_toolBtneditors[EDITOR_WINS]->menu();
     for (auto &a : menu->actions()) {
         auto id = a->property("__ID__").toString();
         if (id.isEmpty()) {
@@ -3829,8 +3822,8 @@ ErrFile MainWindow::closeEditor(EditorView *editor, bool force) {
     editor->closeDockWidget();
 
     const auto &views = EditorView::instances();
-    m_toolBtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-        ->setEnabled(views.size() != 0);
+    m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(views.size() !=
+                                                                0);
     adjustEditorFocus(editor);
 
     plgsys.dispatchEvent(

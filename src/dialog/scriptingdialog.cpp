@@ -86,7 +86,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
 
     updateEditModeEnabled();
 
-    m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)->setEnabled(false);
+    m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(false);
 
     // ok, preparing for starting...
     updateWindowTitle();
@@ -344,6 +344,7 @@ void ScriptingDialog::saveDockLayout() {
 
 void ScriptingDialog::buildUpRibbonBar() {
     m_ribbon = new Ribbon(this);
+    m_Tbtneditors.resize(TOOL_BUTTON_IDX_MAX, nullptr);
     buildFilePage(m_ribbon->addTab(tr("File")));
     m_editStateWidgets << buildEditPage(m_ribbon->addTab(tr("Edit")));
     buildViewPage(m_ribbon->addTab(tr("View")));
@@ -396,12 +397,13 @@ RibbonTabContent *ScriptingDialog::buildFilePage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("save"), tr("Save"),
                                  &ScriptingDialog::on_save, QKeySequence::Save);
+        m_Tbtneditors[ToolButtonIndex::SAVE_ACTION] = a;
         m_editStateWidgets << a;
 
         a = addPannelAction(pannel, QStringLiteral("saveas"), tr("SaveAs"),
                             &ScriptingDialog::on_saveas,
                             shortcuts.keySequence(QKeySequences::Key::SAVE_AS));
-
+        m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION] = a;
         m_editStateWidgets << a;
     }
     return tab;
@@ -415,12 +417,12 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 
         auto a = addPannelAction(pannel, QStringLiteral("undo"), tr("Undo"),
                                  &ScriptingDialog::on_undofile);
-        m_Tbtneditors.insert(ToolButtonIndex::UNDO_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::UNDO_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Undo);
 
         a = addPannelAction(pannel, QStringLiteral("redo"), tr("Redo"),
                             &ScriptingDialog::on_redofile);
-        m_Tbtneditors.insert(ToolButtonIndex::REDO_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::REDO_ACTION] = a;
         setPannelActionToolTip(a,
                                shortcuts.keySequence(QKeySequences::Key::REDO));
 
@@ -430,7 +432,7 @@ RibbonTabContent *ScriptingDialog::buildEditPage(RibbonTabContent *tab) {
 
         a = addPannelAction(pannel, QStringLiteral("copy"), tr("Copy"),
                             &ScriptingDialog::on_copyfile);
-        m_Tbtneditors.insert(ToolButtonIndex::COPY_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::COPY_ACTION] = a;
         setPannelActionToolTip(a, QKeySequence::Copy);
 
         a = addPannelAction(pannel, QStringLiteral("paste"), tr("Paste"),
@@ -472,14 +474,12 @@ RibbonTabContent *ScriptingDialog::buildViewPage(RibbonTabContent *tab) {
     updateUI();
     {
         auto pannel = tab->addGroup(tr("Window"));
-        m_Tbtneditors.insert(ToolButtonIndex::EDITOR_VIEWS,
-                             addPannelAction(pannel, QStringLiteral("file"),
-                                             tr("Editor"), EMPTY_FUNC, {},
-                                             new QMenu(this)));
-        m_Tbtneditors.insert(ToolButtonIndex::TOOL_VIEWS,
-                             addPannelAction(pannel, QStringLiteral("general"),
-                                             tr("Tools"), EMPTY_FUNC, {},
-                                             new QMenu(this)));
+        m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS] =
+            addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
+                            EMPTY_FUNC, {}, new QMenu(this));
+        m_Tbtneditors[ToolButtonIndex::TOOL_VIEWS] =
+            addPannelAction(pannel, QStringLiteral("general"), tr("Tools"),
+                            EMPTY_FUNC, {}, new QMenu(this));
     }
 
     {
@@ -503,50 +503,47 @@ RibbonTabContent *ScriptingDialog::buildDebugPage(RibbonTabContent *tab) {
         auto a = addPannelAction(pannel, QStringLiteral("dbgrun"), tr("Run"),
                                  &ScriptingDialog::on_runscript);
         addPerformClickShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_F5));
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_RUN_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION] = a;
 
         a = addPannelAction(pannel, QStringLiteral("dbgdebug"),
                             tr("RunWithDbg"),
                             &ScriptingDialog::on_rundbgscript);
         setPannelActionToolTip(a, dbgkey);
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_RUN_DBG_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION] = a;
 
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_PAUSE_ACTION,
-                             addPannelAction(pannel, QStringLiteral("dbgpause"),
-                                             tr("Pause"),
-                                             &ScriptingDialog::on_pausescript));
+        m_Tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION] =
+            addPannelAction(pannel, QStringLiteral("dbgpause"), tr("Pause"),
+                            &ScriptingDialog::on_pausescript);
 
         a = addPannelAction(pannel, QStringLiteral("dbgcontinue"),
                             tr("Continue"),
                             &ScriptingDialog::on_continuescript);
         setPannelActionToolTip(a, dbgkey);
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_CONTINUE_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION] = a;
 
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_STOP_ACTION,
-                             addPannelAction(pannel, QStringLiteral("dbgstop"),
-                                             tr("Stop"),
-                                             &ScriptingDialog::on_stopscript));
+        m_Tbtneditors[ToolButtonIndex::DBG_STOP_ACTION] =
+            addPannelAction(pannel, QStringLiteral("dbgstop"), tr("Stop"),
+                            &ScriptingDialog::on_stopscript);
 
-        m_Tbtneditors.insert(
-            ToolButtonIndex::DBG_RESTART_ACTION,
+        m_Tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION] =
             addPannelAction(pannel, QStringLiteral("dbgrestart"), tr("Restart"),
-                            &ScriptingDialog::on_restartscript));
+                            &ScriptingDialog::on_restartscript);
 
         a = addPannelAction(pannel, QStringLiteral("dbgstepinto"),
                             tr("StepInto"), &ScriptingDialog::on_stepinscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F11));
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPINTO_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION] = a;
 
         a = addPannelAction(pannel, QStringLiteral("dbgstepover"),
                             tr("StepOver"),
                             &ScriptingDialog::on_stepoverscript);
         addPerformClickShortcut(a, QKeySequence(Qt::Key_F10));
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPOVER_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION] = a;
 
         a = addPannelAction(pannel, QStringLiteral("dbgstepout"), tr("StepOut"),
                             &ScriptingDialog::on_stepoutscript);
         addPerformClickShortcut(a, QKeySequence(Qt::SHIFT | Qt::Key_F11));
-        m_Tbtneditors.insert(ToolButtonIndex::DBG_STEPOUT_ACTION, a);
+        m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION] = a;
 
         m_editStateWidgets << pannel;
     }
@@ -902,7 +899,7 @@ ads::CDockWidget *ScriptingDialog::buildDockWidget(ads::CDockManager *dock,
                     CDockWidget::DockWidgetPinnable);
 
     dw->setWidget(content);
-    m_Tbtneditors.value(index)->menu()->addAction(dw->toggleViewAction());
+    m_Tbtneditors[index]->menu()->addAction(dw->toggleViewAction());
     return dw;
 }
 
@@ -973,7 +970,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         }
     });
 
-    auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+    auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
     auto menu = ev->menu();
     Q_ASSERT(menu);
     auto ta = editor->toggleViewAction();
@@ -994,6 +991,11 @@ void ScriptingDialog::updateEditModeEnabled() {
     }
 
     if (b) {
+        if (editor == _fakeEditor) {
+            m_Tbtneditors[ToolButtonIndex::SAVE_ACTION]->setEnabled(false);
+            m_Tbtneditors[ToolButtonIndex::SAVEAS_ACTION]->setEnabled(false);
+        }
+
         auto fn = editor->fileName();
         setWindowFilePath(fn);
         m_status->setToolTip(fn);
@@ -1026,25 +1028,22 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     auto editor = cur->editor();
-    m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION)
-        ->setEnabled(editor->document()->isUndoAvailable());
-    m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION)
-        ->setEnabled(editor->document()->isRedoAvailable());
-    m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION)
-        ->setEnabled(editor->textCursor().hasSelection());
+    m_Tbtneditors[ToolButtonIndex::UNDO_ACTION]->setEnabled(
+        editor->document()->isUndoAvailable());
+    m_Tbtneditors[ToolButtonIndex::REDO_ACTION]->setEnabled(
+        editor->document()->isRedoAvailable());
+    m_Tbtneditors[ToolButtonIndex::COPY_ACTION]->setEnabled(
+        editor->textCursor().hasSelection());
 
-    m_curConnections << connect(
-        editor, &CodeEdit::copyAvailable,
-        m_Tbtneditors.value(ToolButtonIndex::COPY_ACTION),
-        &QToolButton::setEnabled);
-    m_curConnections << connect(
-        editor, &CodeEdit::undoAvailable,
-        m_Tbtneditors.value(ToolButtonIndex::UNDO_ACTION),
-        &QToolButton::setEnabled);
-    m_curConnections << connect(
-        editor, &CodeEdit::redoAvailable,
-        m_Tbtneditors.value(ToolButtonIndex::REDO_ACTION),
-        &QToolButton::setEnabled);
+    m_curConnections << connect(editor, &CodeEdit::copyAvailable,
+                                m_Tbtneditors[ToolButtonIndex::COPY_ACTION],
+                                &QToolButton::setEnabled);
+    m_curConnections << connect(editor, &CodeEdit::undoAvailable,
+                                m_Tbtneditors[ToolButtonIndex::UNDO_ACTION],
+                                &QToolButton::setEnabled);
+    m_curConnections << connect(editor, &CodeEdit::redoAvailable,
+                                m_Tbtneditors[ToolButtonIndex::REDO_ACTION],
+                                &QToolButton::setEnabled);
 
     m_curConnections << connect(editor, &CodeEdit::cursorPositionChanged, this,
                                 &ScriptingDialog::updateCursorPosition);
@@ -1093,23 +1092,19 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
     auto dbg = runner.debugger();
     isPaused = dbg->action == asIDBAction::Pause;
 
-    m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_ACTION)->setEnabled(!isRun);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_RUN_DBG_ACTION)
-        ->setEnabled(!isRun);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_RESTART_ACTION)
-        ->setEnabled(isRun && isDbg);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_STOP_ACTION)->setEnabled(isRun);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_PAUSE_ACTION)
-        ->setEnabled(isRun && isDbg && !isPaused);
+    m_Tbtneditors[ToolButtonIndex::DBG_RUN_ACTION]->setEnabled(!isRun);
+    m_Tbtneditors[ToolButtonIndex::DBG_RUN_DBG_ACTION]->setEnabled(!isRun);
+    m_Tbtneditors[ToolButtonIndex::DBG_RESTART_ACTION]->setEnabled(isRun &&
+                                                                   isDbg);
+    m_Tbtneditors[ToolButtonIndex::DBG_STOP_ACTION]->setEnabled(isRun);
+    m_Tbtneditors[ToolButtonIndex::DBG_PAUSE_ACTION]->setEnabled(
+        isRun && isDbg && !isPaused);
 
     auto dbgop = isRun && isDbg && isPaused && enable;
-    m_Tbtneditors.value(ToolButtonIndex::DBG_CONTINUE_ACTION)
-        ->setEnabled(dbgop);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_STEPINTO_ACTION)
-        ->setEnabled(dbgop);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_STEPOVER_ACTION)
-        ->setEnabled(dbgop);
-    m_Tbtneditors.value(ToolButtonIndex::DBG_STEPOUT_ACTION)->setEnabled(dbgop);
+    m_Tbtneditors[ToolButtonIndex::DBG_CONTINUE_ACTION]->setEnabled(dbgop);
+    m_Tbtneditors[ToolButtonIndex::DBG_STEPINTO_ACTION]->setEnabled(dbgop);
+    m_Tbtneditors[ToolButtonIndex::DBG_STEPOVER_ACTION]->setEnabled(dbgop);
+    m_Tbtneditors[ToolButtonIndex::DBG_STEPOUT_ACTION]->setEnabled(dbgop);
 
     if (isRun) {
         if (isDbg) {
@@ -1245,6 +1240,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
     m_callstack->attachDebugger(dbg);
     m_watchModel->attachDebugger(dbg);
 
+    this->updateRunDebugMode();
     ScriptMachine::instance().executeScript(
         ScriptMachine::Scripting, fileName, true,
         [this](const QHash<QString, AsPreprocesser::Result> &sdata) -> void {
@@ -1269,7 +1265,6 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
 
             PluginSystem::instance().scriptPragmaBegin();
         },
-        [this]() { this->updateRunDebugMode(); },
         [this, fileName]() {
             for (auto &e : _reditors) {
                 e->setReadOnly(false);
@@ -1569,6 +1564,7 @@ void ScriptingDialog::on_saveas() {
 
     auto res = editor->save(filename);
     if (res) {
+        setWindowFilePath(filename);
         updateWindowTitle();
         Toast::toast(this, NAMEICONRES(QStringLiteral("saveas")),
                      tr("SaveSuccessfully"));
@@ -1746,20 +1742,18 @@ void ScriptingDialog::on_runscript() {
             return;
         }
 
-        ScriptMachine::instance().executeScript(
-            ScriptMachine::Scripting, editor->fileName(), false, {},
-            [this, editor]() {
-                m_consoleout->clear();
-                PluginSystem::instance().scriptPragmaBegin();
-                editor->setReadOnly(true);
-                updateRunDebugMode();
-            },
-            [this, editor]() {
-                editor->setReadOnly(false);
-                m_outConsole->raise();
-                destoryFakeEditor();
-                updateRunDebugMode();
-            });
+        m_consoleout->clear();
+        PluginSystem::instance().scriptPragmaBegin();
+        editor->setReadOnly(true);
+        updateRunDebugMode();
+        ScriptMachine::instance().executeScript(ScriptMachine::Scripting,
+                                                editor->fileName(), false, {},
+                                                [this, editor]() {
+                                                    editor->setReadOnly(false);
+                                                    m_outConsole->raise();
+                                                    destoryFakeEditor();
+                                                    updateRunDebugMode();
+                                                });
     }
 }
 
@@ -1874,7 +1868,7 @@ ScriptEditor *ScriptingDialog::createFakeEditor(const QString &fileName,
         tab->setStyleSheet(
             QStringLiteral("QLabel{text-decoration:line-through;}"));
 
-        auto ev = m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS);
+        auto ev = m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS];
         auto menu = ev->menu();
         Q_ASSERT(menu);
         auto ta = _fakeEditor->toggleViewAction();
@@ -1909,8 +1903,7 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
     if (currentEditor() == editor) {
         m_curEditor = nullptr;
     }
-    m_Tbtneditors.value(ToolButtonIndex::EDITOR_VIEWS)
-        ->setEnabled(views.size() != 0);
+    m_Tbtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(views.size() != 0);
 
     if (m_dock->focusedDockWidget() == editor) {
         if (!views.isEmpty()) {

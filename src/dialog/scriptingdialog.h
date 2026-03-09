@@ -47,8 +47,10 @@ class ScriptingDialog : public FramelessMainWindow, public EditorsCtl {
 
 private:
     enum ToolButtonIndex : uint {
-        UNDO_ACTION,
+        UNDO_ACTION = 0,
         REDO_ACTION,
+        SAVE_ACTION,
+        SAVEAS_ACTION,
         COPY_ACTION,
         DBG_RUN_ACTION,
         DBG_RUN_DBG_ACTION,
@@ -60,7 +62,8 @@ private:
         DBG_STEPOVER_ACTION,
         DBG_STEPOUT_ACTION,
         EDITOR_VIEWS,
-        TOOL_VIEWS
+        TOOL_VIEWS,
+        TOOL_BUTTON_IDX_MAX
     };
 
 public:
@@ -306,7 +309,7 @@ private:
     WingSquiggleInfoModel *_squinfoModel = nullptr;
     QList<QWidget *> m_editStateWidgets;
 
-    QMap<ToolButtonIndex, QToolButton *> m_Tbtneditors;
+    QVector<QToolButton *> m_Tbtneditors;
 
     QMenu *m_recentMenu = nullptr;
     RecentFileManager *m_recentmanager = nullptr;

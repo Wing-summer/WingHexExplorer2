@@ -25,7 +25,6 @@
 #include <QFutureWatcher>
 #include <QListView>
 #include <QMainWindow>
-#include <QMap>
 #include <QPixmap>
 #include <QReadWriteLock>
 #include <QShortcut>
@@ -78,7 +77,7 @@ private:
     };
 
     enum ToolButtonIndex : uint {
-        EDITOR_VIEWS,
+        EDITOR_VIEWS = 0,
         TOOL_VIEWS,
         PLUGIN_VIEWS,
         EDITOR_WINS,
@@ -86,6 +85,7 @@ private:
         REDO_ACTION,
         OPEN_EXT,
         LAYOUT_ACTION,
+        TOOL_BUTTON_IDX_MAX
     };
 
 private:
@@ -490,7 +490,7 @@ private:
     QUndoView *_undoView = nullptr;
     asIDBTreeView *_scriptObjView = nullptr;
 
-    QMap<ToolButtonIndex, QToolButton *> m_toolBtneditors;
+    QVector<QToolButton *> m_toolBtneditors;
 
     QAction *m_aDelBookMark = nullptr;
     QAction *m_aDelMetaData = nullptr;

@@ -705,7 +705,6 @@ bool ScriptMachine::executeScript(
     ConsoleMode mode, const QString &script, bool isInDebug,
     std::function<void(const QHash<QString, AsPreprocesser::Result> &)>
         sections,
-    const std::function<void()> &beginexec,
     const std::function<void()> &onFinished) {
 
     ASSERT(mode != Interactive);
@@ -785,6 +784,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        endEvaluateDefine();
         onFinished();
         return false;
     }
@@ -797,6 +797,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        endEvaluateDefine();
         onFinished();
         return false;
     }
@@ -816,6 +817,7 @@ bool ScriptMachine::executeScript(
         info.type = MessageType::Error;
         outputMessage(info);
         _engine->SetUserData(0, AsUserDataType::UserData_ContextMode);
+        endEvaluateDefine();
         onFinished();
         return false;
     }
@@ -884,10 +886,6 @@ bool ScriptMachine::executeScript(
     // collect the handle info
     auto &api = PluginSystem::instance();
     auto handles = api.scriptHandles();
-
-    if (beginexec) {
-        beginexec();
-    }
 
     _ctx[mode] = ctx;
     _ctxMgr[mode] = ctxMgr;
