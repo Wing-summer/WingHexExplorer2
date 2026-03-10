@@ -437,11 +437,13 @@ private:
                 if (name.isEmpty()) {
                     qWarning("[optbox::createWidget] Cannot create widget "
                              "without a name.");
+                    delete w;
                     return {};
                 }
                 if (_usedObjNames.contains(name) || usedNames.contains(name)) {
                     qWarning("[optbox::createWidget] Cannot create widget with "
                              "a used name.");
+                    delete w;
                     return {};
                 }
                 usedNames.append(name);
@@ -450,6 +452,10 @@ private:
                 cb->setChecked(dv);
                 _data.insert(cb, ControlType::Bool);
                 layout->addWidget(cb);
+            }
+            if (usedNames.isEmpty()) {
+                delete w;
+                return {};
             }
             _usedObjNames.append(usedNames);
             ret.widget = w;
@@ -477,17 +483,16 @@ private:
                 if (name.isEmpty()) {
                     qWarning("[optbox::createWidget] Cannot create widget "
                              "without a name.");
+                    delete w;
                     return {};
                 }
                 if (usedNames.contains(name)) {
                     qWarning("[optbox::createWidget] Cannot create widget with "
                              "a used name.");
+                    delete w;
                     return {};
                 }
                 usedNames.append(name);
-                if (dv.isEmpty()) {
-                    dv = name;
-                }
                 rb->setObjectName(name);
                 rb->setToolTip(obj.value("tooltip").toString());
                 QObject::connect(
@@ -501,6 +506,14 @@ private:
                 }
                 layout->addWidget(rb);
                 group.addButton(rb);
+            }
+            if (usedNames.isEmpty()) {
+                delete w;
+                return {};
+            }
+            if (dv.isEmpty() || !usedNames.contains(dv)) {
+                dv = usedNames.first();
+                group.button(-2)->setChecked(true);
             }
             w->setProperty(PROPERTY_DEFAULT, dv);
             ret.widget = w;
