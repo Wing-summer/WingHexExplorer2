@@ -439,8 +439,15 @@ struct formatter<CScriptDictionaryView> {
             void *val_ptr;
             int val_type;
         };
+
+        auto size = dict->GetSize();
+        if (size == 0) {
+            out = fmt::format_to(out, "{{}}");
+            return out;
+        }
+
         std::vector<E> entries;
-        entries.reserve(dict->GetSize());
+        entries.reserve(size);
 
         for (auto it = dict->begin(); it != dict->end(); ++it) {
             auto key = it.GetKey();

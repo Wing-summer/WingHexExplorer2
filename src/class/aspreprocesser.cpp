@@ -942,14 +942,35 @@ void AsPreprocesser::clearAll() {
 }
 
 int AsPreprocesser::loadScriptSection(const QString &filename) {
-    // Open the script file
+    if (modifiedScripts.size() >= 100) {
+        engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+                             "Too many included files");
+        return -1;
+    }
+
+    QFileInfo finfo(filename);
     QFile f(filename);
+    if (!finfo.isFile() || f.isSequential()) {
+        QString msg = QStringLiteral("Failed to open file '") +
+                      finfo.absoluteFilePath() + QStringLiteral("'");
+        engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+                             msg.toUtf8());
+        return -1;
+    }
+
+    // Open the script file
+    if (f.size() > 1024 * 1024) {
+        QString msg = QStringLiteral("Failed to open huge script file '") +
+                      finfo.absoluteFilePath() + QStringLiteral("'");
+        engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
+                             msg.toUtf8());
+        return -1;
+    }
 
     if (!f.open(QFile::ReadOnly)) {
         // Write a message to the engine's message callback
         QString msg = QStringLiteral("Failed to open script file '") +
-                      QFileInfo(filename).absoluteFilePath() +
-                      QStringLiteral("'");
+                      finfo.absoluteFilePath() + QStringLiteral("'");
         engine->WriteMessage(filename.toUtf8(), 0, 0, asMSGTYPE_ERROR,
                              msg.toUtf8());
         return -1;

@@ -163,8 +163,11 @@ public:
                     dic->Set(w->objectName(), &b, asTYPEID_BOOL);
                 } break;
                 case ControlType::BoolOptItems: {
-                    bool b = w->property(PROPERTY_VALUE).toBool();
-                    dic->Set(w->objectName(), &b, asTYPEID_BOOL);
+                    QString v = w->property(PROPERTY_VALUE).toString();
+                    auto engine = ctx->GetEngine();
+                    auto type = static_cast<asITypeInfo *>(engine->GetUserData(
+                        AsUserDataType::UserData_StringTypeInfo));
+                    dic->Set(w->objectName(), &v, type->GetTypeId());
                 } break;
                 case ControlType::Int: {
                     int v = w->property("value").toInt();
@@ -418,32 +421,49 @@ private:
             auto layout = new QHBoxLayout(w);
             layout->setParent(w);
             auto data = obj.value("data").toArray();
+            QStringList usedNames;
+            usedNames.reserve(data.size());
             for (auto p = data.begin(); p != data.end(); p++) {
                 if (!p->isObject()) {
                     qWarning("[optbox::createWidget] Invalid data for 'bools'");
                     continue;
                 }
                 auto obj = p->toObject();
-                auto cb = new QCheckBox;
+                auto cb = new QCheckBox(w);
                 cb->setText(obj.value("text").toString());
                 auto dv = obj.value("value").toBool();
                 cb->setProperty(PROPERTY_DEFAULT, dv);
-                cb->setObjectName(obj.value("name").toString());
+                auto name = obj.value("name").toString();
+                if (name.isEmpty()) {
+                    qWarning("[optbox::createWidget] Cannot create widget "
+                             "without a name.");
+                    return {};
+                }
+                if (_usedObjNames.contains(name) || usedNames.contains(name)) {
+                    qWarning("[optbox::createWidget] Cannot create widget with "
+                             "a used name.");
+                    return {};
+                }
+                usedNames.append(name);
+                cb->setObjectName(name);
                 cb->setToolTip(obj.value("tooltip").toString());
                 cb->setChecked(dv);
                 _data.insert(cb, ControlType::Bool);
                 layout->addWidget(cb);
             }
+            _usedObjNames.append(usedNames);
             ret.widget = w;
         } break;
         case ControlType::BoolOptItems: {
             auto w = new QWidget;
-            auto layout = QHBoxLayout(w);
+            auto layout = new QHBoxLayout(w);
+            layout->setParent(w);
             auto dv = obj.value("value").toString();
-            w->setProperty(PROPERTY_DEFAULT, dv);
             auto group = QButtonGroup(w);
             group.setExclusive(true);
             auto data = obj.value("data").toArray();
+            QStringList usedNames;
+            usedNames.reserve(data.size());
             for (auto p = data.begin(); p != data.end(); p++) {
                 if (!p->isObject()) {
                     qWarning(
@@ -451,22 +471,38 @@ private:
                     continue;
                 }
                 auto obj = p->toObject();
-                auto rb = new QRadioButton;
+                auto rb = new QRadioButton(w);
                 rb->setText(obj.value("text").toString());
                 auto name = obj.value("name").toString();
+                if (name.isEmpty()) {
+                    qWarning("[optbox::createWidget] Cannot create widget "
+                             "without a name.");
+                    return {};
+                }
+                if (usedNames.contains(name)) {
+                    qWarning("[optbox::createWidget] Cannot create widget with "
+                             "a used name.");
+                    return {};
+                }
+                usedNames.append(name);
+                if (dv.isEmpty()) {
+                    dv = name;
+                }
                 rb->setObjectName(name);
                 rb->setToolTip(obj.value("tooltip").toString());
-                if (name == dv) {
-                    rb->setChecked(true);
-                }
                 QObject::connect(
                     rb, &QRadioButton::toggled, w, [rb, w](bool b) {
                         if (b) {
                             w->setProperty(PROPERTY_VALUE, rb->objectName());
                         }
                     });
+                if (name == dv) {
+                    rb->setChecked(true);
+                }
+                layout->addWidget(rb);
                 group.addButton(rb);
             }
+            w->setProperty(PROPERTY_DEFAULT, dv);
             ret.widget = w;
             _data.insert(w, type);
         } break;

@@ -33,6 +33,8 @@
 #include "class/angellsp.h"
 #include "class/ascompletion.h"
 
+constexpr auto SCRIPT_LIMIT = 1024 * 1024;
+
 ScriptEditor::ScriptEditor(QWidget *parent)
     : ads::CDockWidget(nullptr, QString(), parent) {
     this->setFeatures(
@@ -102,6 +104,10 @@ bool ScriptEditor::openFile(const QString &filename) {
     }
 
     QFile f(filename);
+    if (f.size() > SCRIPT_LIMIT) {
+        return false;
+    }
+
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
         return false;
     }
@@ -148,7 +154,12 @@ bool ScriptEditor::save(const QString &path) {
             if (!f.open(QFile::WriteOnly | QFile::Text)) {
                 return false;
             }
-            f.write(m_editor->toPlainText().toUtf8());
+
+            auto data = m_editor->toPlainText().toUtf8();
+            if (data.size() > SCRIPT_LIMIT) {
+                return false;
+            }
+            f.write(data);
             doc->setModified(false);
         }
         return true;
@@ -158,7 +169,11 @@ bool ScriptEditor::save(const QString &path) {
     if (!f.open(QFile::WriteOnly | QFile::Text)) {
         return false;
     }
-    f.write(m_editor->toPlainText().toUtf8());
+    auto data = m_editor->toPlainText().toUtf8();
+    if (data.size() > SCRIPT_LIMIT) {
+        return false;
+    }
+    f.write(data);
 
     m_editor->setWindowFilePath(path);
     processTitle();

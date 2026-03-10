@@ -15,6 +15,22 @@ int main() {
     obj.set("name", "leString");
     objs.append(obj);
 
+    obj.set("type", "boolopt");
+    obj.set("title", "Testopt");
+    obj.set("name", "optTestGroup");
+
+    json::array subarr;
+    json::object subobj;
+    subobj.set("name", "optA");
+    subobj.set("text", "A");
+    subarr.append(subobj);
+    subobj.set("name", "optB");
+    subobj.set("text", "B");
+    subarr.append(subobj);
+    obj.set("data", subarr);
+        
+    objs.append(obj);
+
     json::object entryobj;
     entryobj.set("type", "group");
     entryobj.set("title", "Test");
