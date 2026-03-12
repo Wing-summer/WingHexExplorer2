@@ -454,6 +454,7 @@ private:
                 layout->addWidget(cb);
             }
             if (usedNames.isEmpty()) {
+                qWarning("[optbox::buildUpForm] Empty contents for 'bools'");
                 delete w;
                 return {};
             }
@@ -508,6 +509,7 @@ private:
                 group.addButton(rb);
             }
             if (usedNames.isEmpty()) {
+                qWarning("[optbox::buildUpForm] Empty contents for 'boolopt'");
                 delete w;
                 return {};
             }

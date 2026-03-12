@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -196,13 +196,31 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
     auto isNotBlockStart = lastLine.length() > 1;
 
     auto fmtMsg = [](const ScriptMachine::MessageInfo &message) -> QString {
-        if (message.row <= 0 || message.col <= 0) {
-            return message.message;
-        } else {
-            return QStringLiteral("(") + QString::number(message.row) +
-                   QStringLiteral(", ") + QString::number(message.col) +
-                   QStringLiteral(") ") + message.message;
+        QString msgend;
+        if (!message.section.isEmpty()) {
+            QFileInfo finfo(message.section);
+            msgend =
+                QStringLiteral(" [") + finfo.fileName() + QStringLiteral("]");
         }
+        if (message.row <= 0 || message.col <= 0) {
+            return message.message + msgend;
+        } else {
+            QString header =
+                QStringLiteral("(") + QString::number(message.row) +
+                QStringLiteral(", ") + QString::number(message.col) +
+                QStringLiteral(") ");
+            return header + message.message + msgend;
+        }
+    };
+
+    auto packMetaData =
+        [](const ScriptMachine::MessageInfo &message) -> WingEditorMetaInfo {
+        WingEditorMetaInfo info;
+        info.isClickable = true;
+        info.section = message.section;
+        info.goToLine = message.row;
+        info.goToCol = message.col;
+        return info;
     };
 
     auto msgtype = message.type;
@@ -217,21 +235,21 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
         if (isNotBlockStart) {
             newLine();
         }
-        stdOutLine(tr("[Info]") + fmtMsg(message));
+        stdOutLine(tr("[Info]") + fmtMsg(message), packMetaData(message));
         flush();
         break;
     case ScriptMachine::MessageType::Warn:
         if (isNotBlockStart) {
             newLine();
         }
-        stdWarnLine(tr("[Warn]") + fmtMsg(message));
+        stdWarnLine(tr("[Warn]") + fmtMsg(message), packMetaData(message));
         flush();
         break;
     case ScriptMachine::MessageType::Error:
         if (isNotBlockStart) {
             newLine();
         }
-        stdErrLine(tr("[Error]") + fmtMsg(message));
+        stdErrLine(tr("[Error]") + fmtMsg(message), packMetaData(message));
         flush();
         break;
     case ScriptMachine::MessageType::Print:
@@ -240,6 +258,7 @@ void ScriptingConsole::onOutput(const ScriptMachine::MessageInfo &message) {
             newLine();
         }
         stdOutLine(message.message);
+        flush();
         break;
 
     case ScriptMachine::MessageType::Unknown:

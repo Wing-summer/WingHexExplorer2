@@ -38,6 +38,8 @@ public:
 public:
     void setContentModified(bool b);
 
+    void gotoLine(int line);
+
 signals:
     void contentModified(bool b);
 

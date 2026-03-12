@@ -35,9 +35,9 @@ public:
     WingConsoleHighligher *consoleHighligher() const;
 
 public slots:
-    void stdOutLine(const QString &str);
-    void stdErrLine(const QString &str);
-    void stdWarnLine(const QString &str);
+    void stdOutLine(const QString &str, const WingEditorMetaInfo &info = {});
+    void stdErrLine(const QString &str, const WingEditorMetaInfo &info = {});
+    void stdWarnLine(const QString &str, const WingEditorMetaInfo &info = {});
     void newLine();
     void flush();
 

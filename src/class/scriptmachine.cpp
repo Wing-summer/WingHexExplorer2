@@ -756,6 +756,7 @@ bool ScriptMachine::executeScript(
             info.row = error.line;
             info.col = error.column;
             info.message = error.message;
+            info.section = error.file;
 
             switch (error.severity) {
             case AsPreprocesser::Severity::Info:
@@ -780,6 +781,7 @@ bool ScriptMachine::executeScript(
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
+        info.section = script;
         info.message = QStringLiteral("Script failed to pre-processed");
         info.type = MessageType::Error;
         outputMessage(info);
@@ -793,6 +795,7 @@ bool ScriptMachine::executeScript(
     if (r < 0) {
         MessageInfo info;
         info.mode = mode;
+        info.section = script;
         info.message = QStringLiteral("Script failed to build");
         info.type = MessageType::Error;
         outputMessage(info);
@@ -812,6 +815,7 @@ bool ScriptMachine::executeScript(
     if (func == nullptr) {
         MessageInfo info;
         info.mode = mode;
+        info.section = script;
         info.message =
             QStringLiteral("Cannot find 'int main()' or 'void main()'");
         info.type = MessageType::Error;
@@ -831,6 +835,7 @@ bool ScriptMachine::executeScript(
         // Allow the user to initialize the debugging before moving on
         MessageInfo info;
         info.mode = mode;
+        info.section = script;
         info.message = QStringLiteral("Debugging, waiting for commands.");
         info.type = MessageType::Info;
         outputMessage(info);
@@ -847,6 +852,7 @@ bool ScriptMachine::executeScript(
     if (ctx == nullptr) {
         MessageInfo info;
         info.mode = mode;
+        info.section = script;
         info.message = QStringLiteral("Cannot prepare context for execution.");
         info.type = MessageType::Error;
         outputMessage(info);
@@ -893,7 +899,7 @@ bool ScriptMachine::executeScript(
     auto runner = new ScriptRunable(ctxMgr, mode);
     QObject::connect(
         runner, &QObject::destroyed, runner,
-        [this, ctx, mode, handles, func, mod, onFinished]() {
+        [this, ctx, script, mode, handles, func, mod, onFinished]() {
             _ctx[mode] = nullptr;
 
             // Check if the main script finished normally
@@ -904,6 +910,7 @@ bool ScriptMachine::executeScript(
                 } else if (r == asEXECUTION_ABORTED) {
                     MessageInfo info;
                     info.mode = mode;
+                    info.section = script;
                     info.message = QStringLiteral("The script was aborted");
                     info.type = MessageType::Error;
                     outputMessage(info);
@@ -912,6 +919,7 @@ bool ScriptMachine::executeScript(
                     auto e = QMetaEnum::fromType<asEContextState>();
                     MessageInfo info;
                     info.mode = mode;
+                    info.section = script;
                     info.message =
                         QStringLiteral("The script terminated unexpectedly (") +
                         QString::fromLatin1(e.valueToKey(r)) +
@@ -930,6 +938,7 @@ bool ScriptMachine::executeScript(
 
             MessageInfo info;
             info.mode = mode;
+            info.section = script;
             info.message =
                 QStringLiteral("The script exited with ") + QString::number(r);
             info.type = MessageType::ExecInfo;

@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -20,6 +20,13 @@
 
 #include "WingCodeEdit/wingsyntaxhighlighter.h"
 
+struct WingEditorMetaInfo {
+    bool isClickable = false;
+    QString section;
+    int goToLine = -1;
+    int goToCol = -1;
+};
+
 class WingConsoleHighligher : public WingSyntaxHighlighter {
     Q_OBJECT
 public:
@@ -29,11 +36,16 @@ public:
     virtual WingTextBlockUserData *createTextBlockUserData() override;
 
 public:
-    void setBlockAsTextOnly(QTextBlock &block);
-    void setBlockAsTextWithFormat(QTextBlock &block,
-                                  const QTextCharFormat &fmt);
-    void setBlockAsCodeWithPrefix(QTextBlock &block, int codePrefix = 0);
+    void setBlockAsTextOnly(QTextBlock &block,
+                            const WingEditorMetaInfo &info = {});
+    void setBlockAsTextWithFormat(QTextBlock &block, const QTextCharFormat &fmt,
+                                  const WingEditorMetaInfo &info = {});
+    void setBlockAsCodeWithPrefix(QTextBlock &block, int codePrefix = 0,
+                                  const WingEditorMetaInfo &info = {});
+    void setBlockEditorMetaInfo(QTextBlock &block,
+                                const WingEditorMetaInfo &info);
 
+    WingEditorMetaInfo blockEditorMetaInfo(const QTextBlock &block);
     int blockPrefixLength(const QTextBlock &block);
 
 protected:

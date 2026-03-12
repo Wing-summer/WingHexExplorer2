@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2024-2027 WingSummer
+** Copyright (C) 2026-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -32,6 +32,7 @@ public:
     } type = Type::CodeWithPrefix;
     int prefixLength = 0;
     QTextCharFormat fmt;
+    WingEditorMetaInfo meta;
 };
 
 WingConsoleHighligher::WingConsoleHighligher(QTextDocument *document)
@@ -41,7 +42,8 @@ WingTextBlockUserData *WingConsoleHighligher::createTextBlockUserData() {
     return new ConsoleTextBlockUserData;
 }
 
-void WingConsoleHighligher::setBlockAsTextOnly(QTextBlock &block) {
+void WingConsoleHighligher::setBlockAsTextOnly(QTextBlock &block,
+                                               const WingEditorMetaInfo &info) {
     auto data = dynamic_cast<ConsoleTextBlockUserData *>(block.userData());
     if (data == nullptr) {
         data = new ConsoleTextBlockUserData;
@@ -50,11 +52,13 @@ void WingConsoleHighligher::setBlockAsTextOnly(QTextBlock &block) {
     data->type = ConsoleTextBlockUserData::Type::TextOnly;
     data->prefixLength = 0;
     data->fmt = {};
+    data->meta = info;
     rehighlightBlock(block);
 }
 
 void WingConsoleHighligher::setBlockAsTextWithFormat(
-    QTextBlock &block, const QTextCharFormat &fmt) {
+    QTextBlock &block, const QTextCharFormat &fmt,
+    const WingEditorMetaInfo &info) {
     auto data = dynamic_cast<ConsoleTextBlockUserData *>(block.userData());
     if (data == nullptr) {
         data = new ConsoleTextBlockUserData;
@@ -63,11 +67,12 @@ void WingConsoleHighligher::setBlockAsTextWithFormat(
     data->type = ConsoleTextBlockUserData::Type::TextWithFormat;
     data->prefixLength = 0;
     data->fmt = fmt;
+    data->meta = info;
     rehighlightBlock(block);
 }
 
-void WingConsoleHighligher::setBlockAsCodeWithPrefix(QTextBlock &block,
-                                                     int codePrefix) {
+void WingConsoleHighligher::setBlockAsCodeWithPrefix(
+    QTextBlock &block, int codePrefix, const WingEditorMetaInfo &info) {
     auto data = dynamic_cast<ConsoleTextBlockUserData *>(block.userData());
     if (data == nullptr) {
         data = new ConsoleTextBlockUserData;
@@ -76,7 +81,29 @@ void WingConsoleHighligher::setBlockAsCodeWithPrefix(QTextBlock &block,
     data->type = ConsoleTextBlockUserData::Type::CodeWithPrefix;
     data->prefixLength = codePrefix;
     data->fmt = {};
+    data->meta = info;
     rehighlightBlock(block);
+}
+
+void WingConsoleHighligher::setBlockEditorMetaInfo(
+    QTextBlock &block, const WingEditorMetaInfo &info) {
+    auto data = dynamic_cast<ConsoleTextBlockUserData *>(block.userData());
+    if (data == nullptr) {
+        data = new ConsoleTextBlockUserData;
+        block.setUserData(data);
+    }
+    data->meta = info;
+    rehighlightBlock(block);
+}
+
+WingEditorMetaInfo
+WingConsoleHighligher::blockEditorMetaInfo(const QTextBlock &block) {
+    auto data =
+        dynamic_cast<const ConsoleTextBlockUserData *>(block.userData());
+    if (data == nullptr) {
+        return {};
+    }
+    return data->meta;
 }
 
 int WingConsoleHighligher::blockPrefixLength(const QTextBlock &block) {

@@ -36,8 +36,11 @@
 #include "dialog/mutisavedialog.h"
 #include "model/asidbwatchmodel.h"
 
+#include <QClipboard>
 #include <QDesktopServices>
 #include <QHeaderView>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QListView>
 #include <QPainter>
@@ -719,6 +722,7 @@ ScriptingDialog::buildUpOutputShowDock(ads::CDockManager *dock,
     m_consoleout = new ScriptingConsole(this);
     m_consoleout->setMode(ScriptingConsole::Output);
     m_consoleout->setIsTerminal(false);
+    m_consoleout->viewport()->installEventFilter(this);
     auto dw = buildDockWidget(dock, QStringLiteral("ConsoleOutput"),
                               tr("ConsoleOutput"), m_consoleout);
     m_outConsole = dw;
@@ -773,21 +777,63 @@ ScriptingDialog::buildDiagnosisDock(ads::CDockManager *dock,
     connect(dview, &QListView::doubleClicked, _squinfoModel,
             [this](const QModelIndex &index) {
                 auto editor = currentEditor();
-                auto e = editor->editor();
-                auto doc = e->document();
-
-                auto pos = _squinfoModel->squiggleInfoPosStart(index.row());
-                auto block = doc->findBlockByNumber(pos.first - 1);
-
-                if (block.isValid()) {
-                    QTextCursor cursor(block);
-                    cursor.movePosition(QTextCursor::StartOfBlock);
-                    cursor.movePosition(QTextCursor::NextCharacter,
-                                        QTextCursor::MoveAnchor, pos.second);
-                    e->setTextCursor(cursor);
-                    e->ensureCursorVisible();
+                if (editor) {
+                    auto pos = _squinfoModel->squiggleInfoPosStart(index.row());
+                    editorGotoPos(editor, pos.first, pos.second);
                 }
             });
+
+    dview->setContextMenuPolicy(Qt::ActionsContextMenu);
+    auto a = newAction(
+        tr("Copy"),
+        [this, dview]() {
+            auto idx = dview->currentIndex();
+            auto r = idx.row();
+            if (r >= 0) {
+                auto clip = qApp->clipboard();
+                clip->setText(_squinfoModel->squiggleInfoText(r));
+                Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                             tr("CopyToClipBoard"));
+            }
+        },
+        QKeySequence::Copy);
+    a->setIcon(ICONRES("copy"));
+    dview->addAction(a);
+    a = newAction(tr("Copy(Json)"), [this, dview]() {
+        auto idx = dview->currentIndex();
+        auto r = idx.row();
+        if (r >= 0) {
+            QJsonObject json;
+            auto e =
+                QMetaEnum::fromType<WingSquiggleInfoModel::SeverityLevel>();
+            json.insert(QLatin1String("level"),
+                        e.valueToKey(
+                            uint(_squinfoModel->squiggleInfoSeverityLevel(r))));
+            auto pos = _squinfoModel->squiggleInfoPosStart(r);
+            QJsonObject startpos;
+            startpos.insert(QLatin1String("line"), pos.first);
+            startpos.insert(QLatin1String("column"), pos.second);
+            json.insert(QLatin1String("start"), startpos);
+
+            pos = _squinfoModel->squiggleInfoPosStop(r);
+            QJsonObject endpos;
+            endpos.insert(QLatin1String("line"), pos.first);
+            endpos.insert(QLatin1String("column"), pos.second);
+            json.insert(QLatin1String("end"), endpos);
+
+            json.insert(QLatin1String("message"),
+                        _squinfoModel->squiggleInfoText(r));
+
+            QJsonDocument doc(json);
+            auto clip = qApp->clipboard();
+            clip->setText(QString::fromUtf8(doc.toJson()));
+            Toast::toast(this, NAMEICONRES(QStringLiteral("copy")),
+                         tr("CopyToClipBoard"));
+        }
+    });
+    a->setIcon(ICONRES("copy"));
+    dview->addAction(a);
+
     auto dw = buildDockWidget(dock, QStringLiteral("Diagnosis"),
                               tr("Diagnosis"), dview);
     return dock->addDockWidget(area, dw, areaw);
@@ -1440,6 +1486,23 @@ void ScriptingDialog::reloadEditor(ScriptEditor *editor) {
 
 void ScriptingDialog::updateUI() { QApplication::processEvents(); }
 
+void ScriptingDialog::editorGotoPos(ScriptEditor *editor, int line, int col) {
+    Q_ASSERT(editor);
+    auto e = editor->editor();
+    auto doc = e->document();
+    auto block = doc->findBlockByNumber(line - 1);
+
+    if (block.isValid()) {
+        QTextCursor cursor(block);
+        cursor.movePosition(QTextCursor::StartOfBlock);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor,
+                            col - 1);
+        e->setTextCursor(cursor);
+        e->ensureCursorVisible();
+        e->setFocus();
+    }
+}
+
 void ScriptingDialog::on_newfile() {
     if (!newOpenFileSafeCheck()) {
         return;
@@ -1855,6 +1918,32 @@ void ScriptingDialog::closeEvent(QCloseEvent *event) {
     FramelessMainWindow::closeEvent(event);
 }
 
+bool ScriptingDialog::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == m_consoleout->viewport()) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto e = static_cast<QMouseEvent *>(event);
+            if (e->modifiers() == Qt::AltModifier) {
+                auto cursor = m_consoleout->cursorForPosition(e->pos());
+                auto block = cursor.block();
+                auto h = m_consoleout->consoleHighligher();
+                if (h) {
+                    auto info = h->blockEditorMetaInfo(block);
+                    if (info.isClickable) {
+                        auto view = findEditorView(info.section);
+                        if (!view) {
+                            view = openFile(info.section);
+                        }
+                        if (view) {
+                            editorGotoPos(view, info.goToLine, info.goToCol);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return FramelessMainWindow::eventFilter(watched, event);
+}
+
 ScriptEditor *ScriptingDialog::createFakeEditor(const QString &fileName,
                                                 const QString &text) {
     if (_fakeEditor == nullptr) {
@@ -1941,4 +2030,23 @@ void ScriptingDialog::discard(EditorInfo *info) {
     }
 
     destoryEditor(editor);
+}
+
+void ScriptingDialog::keyPressEvent(QKeyEvent *event) {
+    if (event->modifiers() == Qt::AltModifier) {
+        auto pos = QCursor::pos();
+        auto rpos = m_consoleout->mapFromGlobal(pos);
+        if (rpos.x() >= 0 && rpos.y() >= 0) {
+            auto cursor = m_consoleout->cursorForPosition(rpos);
+            auto block = cursor.block();
+            auto h = m_consoleout->consoleHighligher();
+            if (h) {
+                auto info = h->blockEditorMetaInfo(block);
+                if (info.isClickable) {
+                    QToolTip::showText(pos, tr("Goto"), nullptr, {}, 3000);
+                }
+            }
+        }
+    }
+    FramelessMainWindow::keyPressEvent(event);
 }

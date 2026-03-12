@@ -234,6 +234,8 @@ private:
 
     void updateUI();
 
+    void editorGotoPos(ScriptEditor *editor, int line, int col);
+
 public:
     ScriptEditor *openFile(const QString &filename);
 
@@ -283,7 +285,9 @@ private slots:
     void on_removebreakpoint();
 
 protected:
-    void closeEvent(QCloseEvent *event) override;
+    virtual void closeEvent(QCloseEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     ScriptEditor *createFakeEditor(const QString &fileName,

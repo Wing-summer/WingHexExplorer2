@@ -34,7 +34,8 @@ ScriptingConsoleBase::ScriptingConsoleBase(QWidget *parent)
     _s.setDevice(this->device());
 }
 
-void ScriptingConsoleBase::stdOutLine(const QString &str) {
+void ScriptingConsoleBase::stdOutLine(const QString &str,
+                                      const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
@@ -47,11 +48,12 @@ void ScriptingConsoleBase::stdOutLine(const QString &str) {
     auto h = consoleHighligher();
     for (int i = 0; i < total; ++i) {
         auto blk = doc->findBlockByNumber(id + i);
-        h->setBlockAsTextOnly(blk);
+        h->setBlockAsTextOnly(blk, info);
     }
 }
 
-void ScriptingConsoleBase::stdErrLine(const QString &str) {
+void ScriptingConsoleBase::stdErrLine(const QString &str,
+                                      const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
@@ -64,11 +66,12 @@ void ScriptingConsoleBase::stdErrLine(const QString &str) {
     auto h = consoleHighligher();
     for (int i = 0; i < total; ++i) {
         auto blk = doc->findBlockByNumber(id + i);
-        h->setBlockAsTextWithFormat(blk, _errCharFmt);
+        h->setBlockAsTextWithFormat(blk, _errCharFmt, info);
     }
 }
 
-void ScriptingConsoleBase::stdWarnLine(const QString &str) {
+void ScriptingConsoleBase::stdWarnLine(const QString &str,
+                                       const WingEditorMetaInfo &info) {
     if (str.isEmpty()) {
         return;
     }
@@ -81,7 +84,7 @@ void ScriptingConsoleBase::stdWarnLine(const QString &str) {
     auto h = consoleHighligher();
     for (int i = 0; i < total; ++i) {
         auto blk = doc->findBlockByNumber(id + i);
-        h->setBlockAsTextWithFormat(blk, _warnCharFmt);
+        h->setBlockAsTextWithFormat(blk, _warnCharFmt, info);
     }
 }
 
