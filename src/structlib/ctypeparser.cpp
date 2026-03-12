@@ -241,15 +241,19 @@ void CTypeParser::setStructSizeLimit(quint32 newStructSizeLimit) {
 bool CTypeParser::parse(const QString &file) {
     clear();
 
-    auto fname = file.toStdString();
+    QFileInfo finfo(file);
+    if (!finfo.isFile() || finfo.size() > 1024 * 1024) {
+        return false;
+    }
 
-    std::ifstream fs(fname);
+    auto path = file.toUtf8();
+    std::ifstream fs(std::filesystem::u8path(path.data()));
     if (!fs.is_open()) {
         return false;
     }
 
     antlr4::ANTLRInputStream input(fs);
-    input.name = fname;
+    input.name = path;
 
     CStructLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
