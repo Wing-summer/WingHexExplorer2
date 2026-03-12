@@ -32,7 +32,6 @@
 #include <QVariant>
 
 #include "WingPlugin/iwingdevice.h"
-#include "WingPlugin/iwinghexeditorplugin.h"
 #include "class/wingangelapi.h"
 #include "control/editorview.h"
 
@@ -191,8 +190,6 @@ private:
 
     void loadDevicePlugin();
 
-    void try2LoadHexExtPlugin();
-
     template <typename T>
     std::optional<PluginInfo> loadPlugin(const QFileInfo &filename,
                                          const QDir &setdir);
@@ -264,13 +261,9 @@ public:
     // fpr crash checking
     QString currentLoadingPlugin() const;
 
-    IWingHexEditorPlugin *hexEditorExtension() const;
-
     QList<PluginInfo> blockedPlugins() const;
 
     QList<PluginInfo> blockedDevPlugins() const;
-
-    const std::optional<PluginInfo> &hexEditorExtensionInfo() const;
 
 signals:
     void pluginLoading(const QString &plgName);
@@ -655,9 +648,6 @@ private:
     QHash<EditorView *, ViewBind> m_viewBindings;
 
     UniqueIdGenerator m_idGen;
-
-    IWingHexEditorPlugin *_hexExt = nullptr;
-    std::optional<PluginInfo> _manHexInfo;
 
     WingAngelAPI *_angelplg = nullptr;
 

@@ -372,67 +372,60 @@ bool PluginSystem::existsServiceHost(const QObject *sender,
 bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
                                      const WingHex::MetaCallInfo &infos) {
     QObject *obj = nullptr;
-    if (puid.compare(QStringLiteral("[HEXE]"), Qt::CaseInsensitive) == 0) {
-        obj = _hexExt;
+    QString rpuid;
+    auto question = puid.indexOf('?');
+    enum { None, MustPlugin, MustExt } State = None;
+
+    if (question >= 0) {
+        rpuid = puid.sliced(0, question);
+        auto equest = puid.sliced(question + 1);
+        if (equest.compare(QStringLiteral("[PLG]"))) {
+            State = MustPlugin;
+        } else if (equest.compare(QStringLiteral("[EXT]"))) {
+            State = MustExt;
+        } else {
+            // warn and ignored
+            qWarning().noquote()
+                << QStringLiteral("[PluginSystem::invokeServiceImpl] Cannot "
+                                  "parsing filter: '%1'")
+                       .arg(equest);
+        }
     } else {
-        QString rpuid;
-        auto question = puid.indexOf('?');
-        enum { None, MustPlugin, MustExt } State = None;
+        rpuid = puid;
+        State = None;
+    }
 
-        if (question >= 0) {
-            rpuid = puid.sliced(0, question);
-            auto equest = puid.sliced(question + 1);
-            if (equest.compare(QStringLiteral("[PLG]"))) {
-                State = MustPlugin;
-            } else if (equest.compare(QStringLiteral("[EXT]"))) {
-                State = MustExt;
-            } else {
-                // warn and ignored
-                qWarning().noquote()
-                    << QStringLiteral(
-                           "[PluginSystem::invokeServiceImpl] Cannot "
-                           "parsing filter: '%1'")
-                           .arg(equest);
-            }
-        } else {
-            rpuid = puid;
-            State = None;
+    static QHash<QString, IWingPluginBase *> cache;
+    IWingPluginBase *rc = nullptr;
+    if (cache.contains(rpuid)) {
+        rc = cache.value(rpuid);
+    } else {
+        auto r = std::find_if(
+            _pinfos.keyBegin(), _pinfos.keyEnd(), [=](IWingPluginBase *plg) {
+                return rpuid.compare(getPUID(plg), Qt::CaseInsensitive) == 0;
+            });
+
+        if (r == _pinfos.keyEnd()) {
+            return false;
         }
+        rc = *r;
+        cache.insert(rpuid, rc);
+    }
 
-        static QHash<QString, IWingPluginBase *> cache;
-        IWingPluginBase *rc = nullptr;
-        if (cache.contains(rpuid)) {
-            rc = cache.value(rpuid);
-        } else {
-            auto r =
-                std::find_if(_pinfos.keyBegin(), _pinfos.keyEnd(),
-                             [=](IWingPluginBase *plg) {
-                                 return rpuid.compare(getPUID(plg),
-                                                      Qt::CaseInsensitive) == 0;
-                             });
-
-            if (r == _pinfos.keyEnd()) {
-                return false;
-            }
-            rc = *r;
-            cache.insert(rpuid, rc);
-        }
-
-        switch (State) {
-        case None:
+    switch (State) {
+    case None:
+        obj = rc;
+        break;
+    case MustPlugin:
+        if (qobject_cast<IWingPlugin *>(rc)) {
             obj = rc;
-            break;
-        case MustPlugin:
-            if (qobject_cast<IWingPlugin *>(rc)) {
-                obj = rc;
-            }
-            break;
-        case MustExt:
-            if (qobject_cast<IWingDevice *>(rc)) {
-                obj = rc;
-            }
-            break;
         }
+        break;
+    case MustExt:
+        if (qobject_cast<IWingDevice *>(rc)) {
+            obj = rc;
+        }
+        break;
     }
 
     if (obj == nullptr) {
@@ -2215,14 +2208,6 @@ IWingGeneric *PluginSystem::__createParamContext(const QObject *sender,
     return nullptr;
 }
 
-const std::optional<PluginInfo> &PluginSystem::hexEditorExtensionInfo() const {
-    return _manHexInfo;
-}
-
-IWingHexEditorPlugin *PluginSystem::hexEditorExtension() const {
-    return _hexExt;
-}
-
 QList<PluginInfo> PluginSystem::blockedDevPlugins() const { return _blkdevs; }
 
 QList<PluginInfo> PluginSystem::blockedPlugins() const { return _blkplgs; }
@@ -3045,97 +3030,6 @@ void PluginSystem::loadDevicePlugin() {
     }
 }
 
-void PluginSystem::try2LoadHexExtPlugin() {
-    QDir dir(qApp->applicationDirPath());
-
-    auto mplgs = dir.entryInfoList({"*.winghexe"}, QDir::Files);
-    if (mplgs.isEmpty()) {
-        return;
-    }
-
-    if (mplgs.size() > 1) {
-        Logger::warning(tr("HexExtNeedSingleton"));
-        return;
-    }
-
-    auto mplg = mplgs.front();
-    auto path = mplg.absoluteFilePath();
-    QPluginLoader loader(path);
-
-    auto lmeta = loader.metaData();
-    PluginStatus cret;
-    std::optional<PluginInfo> meta;
-    if (lmeta.contains(QStringLiteral("MetaData"))) {
-        auto m =
-            parsePluginMetadata(lmeta[QStringLiteral("MetaData")].toObject());
-        cret = checkPluginMetadata(m, false);
-        meta = m;
-    } else {
-        cret = PluginStatus::InvalidPlugin;
-    }
-
-    auto m = meta.value();
-
-    switch (cret) {
-    case PluginStatus::Valid:
-        break;
-    case PluginStatus::SDKVersion:
-        Logger::critical(
-            packLoadPlgMessage(mplg.fileName(), tr("ErrLoadPluginSDKVersion")));
-        return;
-    case PluginStatus::InvalidID:
-        Logger::critical(
-            packLoadPlgMessage(mplg.fileName(), tr("InvalidPluginID")));
-        return;
-    case PluginStatus::InvalidPlugin:
-        Logger::critical(
-            packLoadPlgMessage(mplg.fileName(), tr("InvalidPlugin")));
-        return;
-    case PluginStatus::DupID:
-    case PluginStatus::LackDependencies:
-        // monitor is the first plugin to load and
-        // should not have any dependency
-        Q_ASSERT(false);
-        return;
-    }
-
-    auto p = qobject_cast<IWingHexEditorPlugin *>(loader.instance());
-    if (p) {
-        QDir udir(Utilities::getAppDataPath());
-        auto plgset = QStringLiteral("plgset");
-        udir.mkdir(plgset);
-        if (!udir.cd(plgset)) {
-            throw CrashCode::PluginSetting;
-        }
-
-        auto setp = std::make_unique<QSettings>(udir.absoluteFilePath(m.id),
-                                                QSettings::Format::IniFormat);
-
-        if (!p->init(setp)) {
-            setp->deleteLater();
-            Logger::critical(
-                packLoadPlgMessage(mplg.fileName(), tr("ErrLoadInitPlugin")));
-            return;
-        }
-
-        applyFunctionTables(p, _plgFns);
-        _hexExt = p;
-        registerPluginDetectMarco(m.id);
-
-        // translate the meta-data
-        m.author = p->retranslate(m.author);
-        m.vendor = p->retranslate(m.vendor);
-        m.license = p->retranslate(m.license);
-
-        _manHexInfo = m;
-
-        registerHexContextMenu(p);
-        registerRibbonTools(p->registeredRibbonTools());
-        registeredSettingPages(QVariant::fromValue(p),
-                               p->registeredSettingPages());
-    }
-}
-
 QString PluginSystem::packLoadPlgMessage(const QString &header,
                                          const QString &content) {
     return QStringLiteral("{ %1 } %2").arg(header, content);
@@ -3584,15 +3478,6 @@ void PluginSystem::loadAllPlugins() {
         qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN_SYSTEM", &ok);
     auto marco_Enabled = !ok || (ok && !disAll);
 
-    if (marco_Enabled) {
-        if (enableSet) {
-            auto dis = qEnvironmentVariableIntValue("WING_DISABLE_HEXEXT", &ok);
-            if (set.enableHexExt() && (!ok || (ok && !dis))) {
-                try2LoadHexExtPlugin();
-            }
-        }
-    }
-
     _enabledExtIDs = set.enabledExtPlugins();
     _enabledDevIDs = set.enabledDevPlugins();
 
@@ -3703,15 +3588,6 @@ void PluginSystem::destory() {
         delete item;
     }
     _loadeddevs.clear();
-
-    if (_hexExt && _manHexInfo) {
-        auto set =
-            std::make_unique<QSettings>(udir.absoluteFilePath(_manHexInfo->id),
-                                        QSettings::Format::IniFormat);
-        _hexExt->unload(set);
-        delete _hexExt;
-        _manHexInfo.reset();
-    }
 }
 
 EditorView *PluginSystem::pluginCurrentEditor(IWingPlugin *plg) const {

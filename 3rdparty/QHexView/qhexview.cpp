@@ -332,13 +332,6 @@ QPoint QHexView::absolutePosition(const QPoint &pos) const {
     return pos + shift;
 }
 
-bool QHexView::disableInternalPaint() const { return m_disableInternalPaint; }
-
-void QHexView::setDisableInternalPaint(bool newDisableInternalPaint) {
-    m_disableInternalPaint = newDisableInternalPaint;
-    update();
-}
-
 QHexCursor *QHexView::cursor() const { return m_cursor; }
 
 qsizetype QHexView::copyLimit() const { return m_copylimit; }
@@ -813,16 +806,13 @@ void QHexView::paintEvent(QPaintEvent *e) {
     const qsizetype begin = firstVisible + std::max(first - headerCount, 0);
     const qsizetype end = firstVisible + std::max(lastPlusOne - headerCount, 0);
 
-    Q_EMIT onPaintCustomEventBegin();
     auto xOff = this->horizontalScrollBar()->value();
-    if (Q_LIKELY(!m_disableInternalPaint)) {
-        painter.save();
-        painter.translate(-xOff + m.left(), m.top());
-        m_renderer->render(&painter, begin, end, firstVisible);
-        m_renderer->renderFrame(&painter);
-        m_renderer->renderAdditonalFrame(&painter, m.top() > 0, m.left() > 0);
-        painter.restore();
-    }
+    painter.save();
+    painter.translate(-xOff + m.left(), m.top());
+    m_renderer->render(&painter, begin, end, firstVisible);
+    m_renderer->renderFrame(&painter);
+    m_renderer->renderAdditonalFrame(&painter, m.top() > 0, m.left() > 0);
+    painter.restore();
     Q_EMIT onPaintCustomEvent(xOff, firstVisible, begin, end);
 }
 

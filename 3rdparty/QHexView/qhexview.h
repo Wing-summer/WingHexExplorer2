@@ -106,9 +106,6 @@ public:
     qsizetype copyLimit() const;
     QHexCursor *cursor() const;
 
-    bool disableInternalPaint() const;
-    void setDisableInternalPaint(bool newDisableInternalPaint);
-
 public slots:
     void setDocument(const QSharedPointer<QHexDocument> &document,
                      QHexCursor *cursor = nullptr);
@@ -182,7 +179,6 @@ signals:
     void selBackgroundColorChanged();
     void borderColorChanged();
 
-    void onPaintCustomEventBegin();
     void onPaintCustomEvent(int XOffset, qsizetype firstVisible,
                             qsizetype begin, qsizetype end);
 
@@ -232,7 +228,6 @@ private:
 
     qreal m_fontSize;
     qreal m_scaleRate = 1.0;
-    bool m_disableInternalPaint = false;
 
     qsizetype m_copylimit = 1; // MB
 };

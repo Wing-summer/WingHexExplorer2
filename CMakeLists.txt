@@ -40,7 +40,6 @@ endif()
 
 if(WINGHEX_BUILD_TEST_PLUGIN)
     add_subdirectory(TestPlugin)
-    add_subdirectory(TestHexExt)
 endif()
 
 if(WINGHEX_BUILD_SHARED_MEM_EXT)

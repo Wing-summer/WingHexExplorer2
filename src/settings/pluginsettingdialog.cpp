@@ -34,7 +34,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
 
     Utilities::addSpecialMark(ui->cbEnablePlugin);
     Utilities::addSpecialMark(ui->cbEnablePluginRoot);
-    Utilities::addSpecialMark(ui->cbEnableHex);
 
     reload();
 
@@ -44,7 +43,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->groupBox->setEnabled(false);
         ui->tabPluginInfo->setEnabled(false);
         ui->tabDevInfo->setEnabled(false);
-        ui->tabHexEditorExt->setEnabled(false);
         return;
     } else {
         dis = qEnvironmentVariableIntValue("WING_DISABLE_PLUGIN", &ok);
@@ -63,19 +61,6 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         dis = qEnvironmentVariableIntValue("WING_DISABLE_EXTDRV", &ok);
         if (dis && ok) {
             ui->tabDevInfo->setEnabled(false);
-        }
-
-        dis = qEnvironmentVariableIntValue("WING_DISABLE_HEXEXT", &ok);
-        if (dis && ok) {
-            ui->cbEnableHex->setEnabled(false);
-        } else {
-            connect(ui->cbEnableHex,
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                    &QCheckBox::checkStateChanged,
-#else
-                    &QCheckBox::stateChanged,
-#endif
-                    this, &PluginSettingDialog::optionNeedRestartChanged);
         }
     }
 
@@ -153,21 +138,11 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
         ui->devlist->addItem(lwi);
     }
 
-    auto hinfo = plgsys.hexEditorExtensionInfo();
-    QString hcomment;
-    auto hp = plgsys.hexEditorExtension();
-    if (hp) {
-        hcomment = hp->comment();
-    }
-    loadPluginInfo(hinfo, {}, hcomment, {}, ui->txtext);
-
     auto set = &SettingManager::instance();
     connect(ui->cbEnablePlugin, &QCheckBox::toggled, set,
             &SettingManager::setEnablePlugin);
     connect(ui->cbEnablePluginRoot, &QCheckBox::toggled, set,
             &SettingManager::setEnablePlgInRoot);
-    connect(ui->cbEnableHex, &QCheckBox::toggled, set,
-            &SettingManager::setEnableHexExt);
 
     connect(ui->plglist, &QListWidget::itemChanged, this,
             [this](QListWidgetItem *item) {
@@ -291,10 +266,8 @@ void PluginSettingDialog::reload() {
     ui->cbEnablePlugin->setChecked(ep);
     if (ep) {
         ui->cbEnablePluginRoot->setChecked(set.enablePlgInRoot());
-        ui->cbEnableHex->setChecked(set.enableHexExt());
     } else {
         ui->cbEnablePluginRoot->setEnabled(false);
-        ui->cbEnableHex->setEnabled(false);
     }
     this->blockSignals(false);
 }
