@@ -247,7 +247,13 @@ bool CTypeParser::parse(const QString &file) {
     }
 
     auto path = file.toUtf8();
+
+#ifdef Q_OS_WINDOWS
+    std::ifstream fs(file.toStdWString());
+#else
     std::ifstream fs(std::filesystem::u8path(path.data()));
+#endif
+
     if (!fs.is_open()) {
         return false;
     }
