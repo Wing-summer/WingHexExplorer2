@@ -2111,7 +2111,7 @@
         <location filename="../../src/dialog/mainwindow.cpp" line="2283"/>
         <location filename="../../src/dialog/mainwindow.cpp" line="2474"/>
         <source>UnCopyToClipBoard</source>
-        <translation>由於保持大小限制，數據剪切到複製板失敗！</translation>
+        <translation>由於保持大小限制，數據拷貝到複製板失敗！</translation>
     </message>
     <message>
         <location filename="../../src/dialog/mainwindow.cpp" line="2022"/>
