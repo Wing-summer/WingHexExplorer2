@@ -1,5 +1,5 @@
 /*==============================================================================
-** Copyright (C) 2026-2029 WingSummer
+** Copyright (C) 2024-2029 WingSummer
 **
 ** This program is free software: you can redistribute it and/or modify it under
 ** the terms of the GNU Affero General Public License as published by the Free
@@ -250,7 +250,7 @@ void RegisterScriptAny_Native(asIScriptEngine *engine) {
 CScriptAny &CScriptAny::operator=(const CScriptAny &other) {
     // Hold on to the object type reference so it isn't destroyed too early
     if ((other.m_typeId & asTYPEID_MASK_OBJECT)) {
-        asITypeInfo *ti = engine->GetTypeInfoById(other.m_typeId);
+        asITypeInfo *ti = m_engine->GetTypeInfoById(other.m_typeId);
         if (ti)
             ti->AddRef();
     }
@@ -261,12 +261,12 @@ CScriptAny &CScriptAny::operator=(const CScriptAny &other) {
     if (m_typeId & asTYPEID_OBJHANDLE) {
         // For handles, copy the pointer and increment the reference count
         m_valueObj = m_valueObj;
-        engine->AddRefScriptObject(m_valueObj,
-                                   engine->GetTypeInfoById(m_typeId));
+        m_engine->AddRefScriptObject(m_valueObj,
+                                     m_engine->GetTypeInfoById(m_typeId));
     } else if (m_typeId & asTYPEID_MASK_OBJECT) {
         // Create a copy of the object
-        m_valueObj = engine->CreateScriptObjectCopy(
-            other.m_valueObj, engine->GetTypeInfoById(m_typeId));
+        m_valueObj = m_engine->CreateScriptObjectCopy(
+            other.m_valueObj, m_engine->GetTypeInfoById(m_typeId));
     } else {
         // Primitives can be copied directly
         m_valueInt = m_valueInt;
@@ -284,8 +284,7 @@ int CScriptAny::CopyFrom(const CScriptAny *other) {
     return 0;
 }
 
-CScriptAny::CScriptAny(asIScriptEngine *engine) {
-    this->engine = engine;
+CScriptAny::CScriptAny(asIScriptEngine *engine) : CScriptDictValue(engine) {
     refCount = 1;
     gcFlag = false;
 
@@ -294,8 +293,8 @@ CScriptAny::CScriptAny(asIScriptEngine *engine) {
                                               engine->GetTypeInfoByName("any"));
 }
 
-CScriptAny::CScriptAny(asIScriptEngine *engine, void *ref, int refTypeId) {
-    this->engine = engine;
+CScriptAny::CScriptAny(asIScriptEngine *engine, void *ref, int refTypeId)
+    : CScriptDictValue(engine, ref, refTypeId) {
     refCount = 1;
     gcFlag = false;
 
@@ -308,7 +307,7 @@ CScriptAny::CScriptAny(asIScriptEngine *engine, void *ref, int refTypeId) {
 
 CScriptAny::~CScriptAny() { FreeObject(); }
 
-void CScriptAny::FreeObject() { FreeValue(engine); }
+void CScriptAny::FreeObject() { FreeValue(); }
 
 void CScriptAny::ReleaseAllHandles(asIScriptEngine * /*engine*/) {
     FreeObject();
@@ -332,25 +331,23 @@ int CScriptAny::Release() const {
     return refCount;
 }
 
-void CScriptAny::Store(void *ref, int refTypeId) {
-    Set(engine, ref, refTypeId);
-}
+void CScriptAny::Store(void *ref, int refTypeId) { Set(ref, refTypeId); }
 
-void CScriptAny::Store(const asQWORD &value) { Set(engine, value); }
+void CScriptAny::Store(const asQWORD &value) { Set(value); }
 
-void CScriptAny::Store(const asINT64 &value) { Set(engine, value); }
+void CScriptAny::Store(const asINT64 &value) { Set(value); }
 
-void CScriptAny::Store(const double &value) { Set(engine, value); }
+void CScriptAny::Store(const double &value) { Set(value); }
 
 bool CScriptAny::Retrieve(void *ref, int refTypeId) const {
-    return Get(engine, ref, refTypeId);
+    return Get(ref, refTypeId);
 }
 
-bool CScriptAny::Retrieve(asQWORD &value) const { return Get(engine, value); }
+bool CScriptAny::Retrieve(asQWORD &value) const { return Get(value); }
 
-bool CScriptAny::Retrieve(asINT64 &value) const { return Get(engine, value); }
+bool CScriptAny::Retrieve(asINT64 &value) const { return Get(value); }
 
-bool CScriptAny::Retrieve(double &value) const { return Get(engine, value); }
+bool CScriptAny::Retrieve(double &value) const { return Get(value); }
 
 int CScriptAny::GetRefCount() { return refCount; }
 

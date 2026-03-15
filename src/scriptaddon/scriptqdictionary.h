@@ -59,6 +59,7 @@ public:
     // needs to receive the script engine pointer in all operations. The engine
     // pointer is not kept as member in order to keep the size down
     CScriptDictValue();
+    CScriptDictValue(asIScriptEngine *engine);
     CScriptDictValue(asIScriptEngine *engine, void *value, int typeId);
 
     // Destructor must not be called without first calling FreeValue, otherwise
@@ -66,18 +67,18 @@ public:
     ~CScriptDictValue();
 
     // Replace the stored value
-    void Set(asIScriptEngine *engine, void *value, int typeId);
-    void Set(asIScriptEngine *engine, const asQWORD &value);
-    void Set(asIScriptEngine *engine, const asINT64 &value);
-    void Set(asIScriptEngine *engine, const double &value);
-    void Set(asIScriptEngine *engine, CScriptDictValue &value);
+    void Set(void *value, int typeId);
+    void Set(const asQWORD &value);
+    void Set(const asINT64 &value);
+    void Set(const double &value);
+    void Set(CScriptDictValue &value);
 
     // Gets the stored value. Returns false if the value isn't compatible with
     // the informed typeId
-    bool Get(asIScriptEngine *engine, void *value, int typeId) const;
-    bool Get(asIScriptEngine *engine, asQWORD &value) const;
-    bool Get(asIScriptEngine *engine, asINT64 &value) const;
-    bool Get(asIScriptEngine *engine, double &value) const;
+    bool Get(void *value, int typeId) const;
+    bool Get(asQWORD &value) const;
+    bool Get(asINT64 &value) const;
+    bool Get(double &value) const;
 
     // Returns the address of the stored value for inspection
     const void *GetAddressOfValue() const;
@@ -86,7 +87,10 @@ public:
     int GetTypeId() const;
 
     // Free the stored value
-    void FreeValue(asIScriptEngine *engine);
+    void FreeValue();
+
+    // GC callback
+    void ReleaseReferences(asIScriptEngine *engine);
 
     // GC callback
     void EnumReferences(asIScriptEngine *engine);
@@ -99,6 +103,7 @@ protected:
         double m_valueFlt;
         void *m_valueObj;
     };
+    asIScriptEngine *m_engine;
     int m_typeId;
 };
 
