@@ -301,8 +301,6 @@ CScriptAny::CScriptAny(asIScriptEngine *engine, void *ref, int refTypeId)
     // Notify the garbage collector of this object
     engine->NotifyGarbageCollectorOfNewObject(this,
                                               engine->GetTypeInfoByName("any"));
-
-    Store(ref, refTypeId);
 }
 
 CScriptAny::~CScriptAny() { FreeObject(); }
