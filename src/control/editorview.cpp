@@ -148,6 +148,18 @@ EditorView::EditorView(QWidget *parent)
                 continue;
             }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+            WingHex::FunctionSig msig;
+            msig.fnName = m.nameView();
+            msig.types.fill(0);
+            msig.typesCount = total - 1;
+            Q_ASSERT(msig.types.size() >= msig.typesCount);
+
+            for (int i = 1; i < total; ++i) {
+                auto mt = m.parameterType(i);
+                msig.types[i - 1] = mt;
+            }
+#else
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
             msig.types.reserve(total - 1);
@@ -156,6 +168,7 @@ EditorView::EditorView(QWidget *parent)
                 auto mt = m.parameterType(i);
                 msig.types.append(mt);
             }
+#endif
 
             _viewFns.insert(msig, m);
         }
@@ -163,7 +176,7 @@ EditorView::EditorView(QWidget *parent)
 
     // checksum table data
     _checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
-    for (auto &cs : CryptographicHash::supportedHashAlgorithms()) {
+    for (const auto &cs : CryptographicHash::supportedHashAlgorithms()) {
         _checkSumData.insert(cs, QString());
     }
     _scrollPoints.assign(ScrollDataPoints::PreallocatedSize, QPoint{0, 0});
@@ -249,7 +262,7 @@ bool EditorView::isFindBusy() const {
 
 void EditorView::getCheckSum(const QVector<int> &algorithmID) {
     auto hashes = CryptographicHash::supportedHashAlgorithms();
-    for (auto &cs : hashes) {
+    for (const auto &cs : hashes) {
         _checkSumData.insert(cs, QString());
     }
 
@@ -258,7 +271,7 @@ void EditorView::getCheckSum(const QVector<int> &algorithmID) {
 
     if (m_hex->hasSelection()) {
         auto data = m_hex->selectedBytes();
-        for (auto &c : algorithmID) {
+        for (const auto &c : algorithmID) {
             auto h = hashes.at(c);
             _checkSumVisible[c] = true;
             _checkSumData.insert(
@@ -268,7 +281,7 @@ void EditorView::getCheckSum(const QVector<int> &algorithmID) {
         }
     } else {
         auto io = m_hex->document()->buffer()->ioDevice();
-        for (auto &c : algorithmID) {
+        for (const auto &c : algorithmID) {
             auto h = hashes.at(c);
             _checkSumVisible[c] = true;
             _checkSumData.insert(
@@ -324,7 +337,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         }
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
-        for (auto &ritem : results) {
+        for (const auto &ritem : results) {
             FindResultModel::FindResult r;
             r.offset = ritem;
             r.line = r.offset / lineWidth;
@@ -645,7 +658,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         }
         this->m_workSpaceName = workSpaceName;
-        for (auto &item : m_others) {
+        for (const auto &item : m_others) {
             if (item->hasUnsavedState()) {
                 item->setSaved();
             }
@@ -822,7 +835,7 @@ ErrFile EditorView::closeFile() {
         }
     }
 
-    for (auto &c : m_cloneChildren) {
+    for (const auto &c : m_cloneChildren) {
         if (c) {
             c->closeDockWidget();
         }
@@ -849,7 +862,7 @@ bool EditorView::isWingEditorViewEnabled(const QString &id) const {
 }
 
 bool EditorView::processWingEditorViewClosing() {
-    for (auto &o : m_others) {
+    for (const auto &o : m_others) {
         if (!o->onClosing()) {
             return false;
         }
@@ -858,7 +871,7 @@ bool EditorView::processWingEditorViewClosing() {
 }
 
 void EditorView::notifyOnWorkSpace(bool b) {
-    for (auto &o : m_others) {
+    for (const auto &o : m_others) {
         o->onWorkSpaceNotify(b);
     }
 }
@@ -894,7 +907,7 @@ void EditorView::generateIconBaseCache(const QIcon &baseIcon) {
         return;
     }
 
-    for (auto &w : m_others) {
+    for (const auto &w : m_others) {
         if (w) {
             m_iconCaches.insert(w, QIcon(new CompositeIconEngine(
                                        m_iconOrigin.value(w), baseIcon)));
@@ -915,7 +928,7 @@ void EditorView::saveState(QXmlStreamWriter &Stream) const {
 }
 
 bool EditorView::hasCloneChildren() const {
-    for (auto &c : m_cloneChildren) {
+    for (const auto &c : m_cloneChildren) {
         if (c) {
             return true;
         }
@@ -924,7 +937,7 @@ bool EditorView::hasCloneChildren() const {
 }
 
 void EditorView::closeAllClonedChildren() {
-    for (auto &c : m_cloneChildren) {
+    for (const auto &c : m_cloneChildren) {
         if (c) {
             c->deleteDockWidget();
         }
@@ -967,7 +980,7 @@ bool EditorView::checkHasUnsavedState() const {
     if (m_checkSumInvalid) {
         return true;
     }
-    for (auto &item : m_others) {
+    for (const auto &item : m_others) {
         if (item->hasUnsavedState()) {
             return true;
         }
@@ -1137,7 +1150,7 @@ void EditorView::applyWorkSpaceStyle(EditorView *view) {
     tab->setStyleSheet(QStringLiteral("QLabel {text-decoration: underline;}"));
 
     if (!view->isCloneFile()) {
-        for (auto &c : view->m_cloneChildren) {
+        for (const auto &c : view->m_cloneChildren) {
             if (c) {
                 applyWorkSpaceStyle(c);
             }
@@ -1150,7 +1163,7 @@ void EditorView::clearWorkSpaceStyle(EditorView *view) {
     tab->setStyleSheet({});
 
     if (!view->isCloneFile()) {
-        for (auto &c : view->m_cloneChildren) {
+        for (const auto &c : view->m_cloneChildren) {
             if (c) {
                 clearWorkSpaceStyle(c);
             }

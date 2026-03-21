@@ -1252,7 +1252,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
                 // QMap or QHash ?
                 if (flag) {
                     QVariantHash hash;
-                    for (auto &it : *values) {
+                    for (const auto &it : *values) {
                         // Determine the name of the key
                         auto key = it.GetKey();
 
@@ -1265,7 +1265,7 @@ QVariant WingAngelAPI::qvariantGet(asIScriptEngine *engine, const void *raw,
                     return hash;
                 } else {
                     QVariantMap map;
-                    for (auto &it : *values) {
+                    for (const auto &it : *values) {
                         // Determine the name of the key
                         auto key = it.GetKey();
 
@@ -1809,7 +1809,7 @@ WingAngelAPI::retriveAsDictionary(const WingHex::SenderInfo &sender,
     auto dictionary = reinterpret_cast<CScriptDictionary *>(dic);
     auto engine = dictionary->GetEngine();
 
-    for (auto &it : *dictionary) {
+    for (const auto &it : *dictionary) {
         auto info = engine->GetTypeInfoById(it.GetTypeId());
         QString type;
         if (info) {

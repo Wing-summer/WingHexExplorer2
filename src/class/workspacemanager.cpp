@@ -57,7 +57,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
         values = jobj.value("metas");
         if (!values.isUndefined() && values.isArray()) {
             auto metaitems = values.toArray();
-            for (auto &&item : metaitems) {
+            for (const auto &&item : metaitems) {
                 auto linem = item.toObject();
                 auto begin = linem.value("begin");
                 auto end = linem.value("end");
@@ -98,7 +98,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
         values = jobj.value("bookmarks");
         if (!values.isUndefined() && values.isArray()) {
             auto array = values.toArray();
-            for (auto &&item : array) {
+            for (const auto &&item : array) {
                 if (!item.isUndefined() && item.isObject()) {
                     auto sitem = item.toObject();
                     auto pos = sitem.value("pos");
@@ -118,7 +118,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
         values = jobj.value("plugindata");
         if (!values.isUndefined() && values.isArray()) {
             auto array = values.toArray();
-            for (auto &&item : array) {
+            for (const auto &&item : array) {
                 if (!item.isUndefined() && item.isObject()) {
                     auto sitem = item.toObject();
                     auto plgobj = sitem.value("key");
@@ -223,7 +223,7 @@ bool WorkSpaceManager::saveWorkSpace(
         jobj.insert("checksum", QString::fromUtf8(infos.checkSum.toHex()));
 
         QJsonArray metas;
-        for (auto &meta : metalist) {
+        for (const auto &meta : metalist) {
             QJsonObject obj;
             obj.insert("begin", QString::number(meta.begin));
             obj.insert("end", QString::number(meta.end));

@@ -408,7 +408,7 @@ void QHexRenderer::applyMetadata(QTextCursor &textcursor, qsizetype line,
         return;
 
     const QHexLineMetadata &linemetadata = metadata->gets(line);
-    for (auto &mi : linemetadata) {
+    for (const auto &mi : linemetadata) {
         QTextCharFormat charformat;
 
         QColor bg, fg;
@@ -747,7 +747,7 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
     auto pos = m_document->getLineBookmarksPos(line);
     auto height = lineHeight() - 2;
 
-    for (auto &item : pos) {
+    for (const auto &item : pos) {
         auto off = item % hexLineWidth();
 
         qreal begin, width;

@@ -38,7 +38,7 @@ void loadEnvConfig(int argc, char *argv[]) {
     QSettings set(path, QSettings::IniFormat);
 
     // General
-    for (auto &kv : set.childKeys()) {
+    for (const auto &kv : set.childKeys()) {
         qputenv(qPrintable(kv), set.value(kv).toByteArray());
     }
 
@@ -113,16 +113,16 @@ void loadEnvConfig(int argc, char *argv[]) {
     constexpr auto syslen = std::char_traits<char>::length(WING_SYSTEM_NAME);
     if (syslen) {
         set.beginGroup(WING_SYSTEM_NAME);
-        for (auto &kv : set.childKeys()) {
+        for (const auto &kv : set.childKeys()) {
             qputenv(qPrintable(kv), set.value(kv).toByteArray());
         }
         set.endGroup();
     }
 
-    for (auto &g : groups) {
+    for (const auto &g : groups) {
         if (evaluate(env, g)) {
             set.beginGroup(g);
-            for (auto &kv : set.childKeys()) {
+            for (const auto &kv : set.childKeys()) {
                 qputenv(qPrintable(kv), set.value(kv).toByteArray());
             }
             set.endGroup();

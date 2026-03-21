@@ -1332,21 +1332,21 @@ static double CScriptDictValue_opConvDouble(CScriptDictValue *obj) {
 static void CScriptDictValue_opConvDouble_Generic(asIScriptGeneric *gen) {
     CScriptDictValue *self = (CScriptDictValue *)gen->GetObject();
     double value;
-    self->Get(gen->GetEngine(), value);
+    self->Get(value);
     *(double *)gen->GetAddressOfReturnLocation() = value;
 }
 
 static void CScriptDictValue_opConvInt_Generic(asIScriptGeneric *gen) {
     CScriptDictValue *self = (CScriptDictValue *)gen->GetObject();
     asINT64 value;
-    self->Get(gen->GetEngine(), value);
+    self->Get(value);
     *(asINT64 *)gen->GetAddressOfReturnLocation() = value;
 }
 
 static void CScriptDictValue_opConvUInt_Generic(asIScriptGeneric *gen) {
     CScriptDictValue *self = (CScriptDictValue *)gen->GetObject();
     asQWORD value;
-    self->Get(gen->GetEngine(), value);
+    self->Get(value);
     *(asQWORD *)gen->GetAddressOfReturnLocation() = value;
 }
 

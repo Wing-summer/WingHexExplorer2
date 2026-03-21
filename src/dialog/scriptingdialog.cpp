@@ -58,7 +58,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     m_recentMenu = new QMenu(this);
     m_recentmanager = new RecentFileManager(m_recentMenu, true);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
-            [=](const RecentFileManager::RecentInfo &rinfo) {
+            [this](const RecentFileManager::RecentInfo &rinfo) {
                 openFile(rinfo.url.toLocalFile());
             });
     m_recentmanager->apply(this,
@@ -117,13 +117,13 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
     auto &lsp = AngelLsp::instance();
     connect(&lsp, &AngelLsp::serverStarted, this, [this]() {
         // only happened when restarting
-        for (auto &view : ScriptEditor::instances()) {
+        for (const auto &view : ScriptEditor::instances()) {
             view->onReconnectLsp();
             view->setCompleterEnabled(true);
         }
     });
     connect(&lsp, &AngelLsp::serverExited, this, [this]() {
-        for (auto &view : ScriptEditor::instances()) {
+        for (const auto &view : ScriptEditor::instances()) {
             view->setCompleterEnabled(false);
         }
     });
@@ -157,7 +157,7 @@ ScriptingDialog::ScriptingDialog(SettingDialog *setdlg, QWidget *parent)
                         }
                         return WingCodeEdit::SeverityLevel::Information;
                     };
-                    for (auto &d : diagnostics) {
+                    for (const auto &d : diagnostics) {
                         editor->addSquiggle(
                             lsps(d.severity),
                             {d.range.start.line + 1, d.range.start.character},
@@ -185,14 +185,14 @@ void ScriptingDialog::initConsole() {
     auto dbg = machine.debugger();
     Q_ASSERT(dbg);
     connect(dbg, &asDebugger::onAdjustBreakPointLine, this,
-            [=](const QString &file, int oldLineNbr, int newLineNbr) {
+            [this](const QString &file, int oldLineNbr, int newLineNbr) {
                 auto editor = findEditorView(file);
                 if (editor) {
                     removeBreakPoint(editor, oldLineNbr);
                     addBreakPoint(editor, newLineNbr);
                 }
             });
-    connect(dbg, &asDebugger::onPullVariables, this, [=]() {
+    connect(dbg, &asDebugger::onPullVariables, this, [this]() {
         auto dbg = ScriptMachine::instance().debugger();
         auto &cache = dbg->cache;
         cache->CacheGlobals();
@@ -207,7 +207,7 @@ void ScriptingDialog::initConsole() {
     });
     connect(
         dbg, &asDebugger::onRunCurrentLine, this,
-        [=](const QString &file, int lineNr) {
+        [this](const QString &file, int lineNr) {
             ScriptEditor *e = nullptr;
 #ifdef Q_OS_WIN
             if (file.compare(m_curEditor->fileName(), Qt::CaseInsensitive)) {
@@ -300,7 +300,7 @@ bool ScriptingDialog::about2Close() {
     QStringList unSavedFiles;
     QList<ScriptEditor *> need2CloseView;
 
-    for (auto &view : views) {
+    for (const auto &view : views) {
         if (view->editor()->document()->isModified()) {
             unSavedFiles << view->fileName();
         } else {
@@ -308,7 +308,7 @@ bool ScriptingDialog::about2Close() {
         }
     }
 
-    for (auto &view : need2CloseView) {
+    for (const auto &view : need2CloseView) {
         view->requestCloseDockWidget();
     }
 
@@ -326,12 +326,12 @@ bool ScriptingDialog::about2Close() {
                                       QMessageBox::Yes | QMessageBox::No |
                                           QMessageBox::Cancel);
     if (ret == QMessageBox::Yes) {
-        for (auto &p : views) {
+        for (const auto &p : views) {
             p->requestCloseDockWidget();
         }
         return views.isEmpty();
     } else if (ret == QMessageBox::No) {
-        for (auto &p : views) {
+        for (const auto &p : views) {
             p->closeDockWidget(); // force close
         }
         return true;
@@ -358,8 +358,8 @@ void ScriptingDialog::buildUpRibbonBar() {
 
     connect(
         m_ribbon, &Ribbon::onDragDropFiles, this,
-        [=](const QStringList &files) {
-            for (auto &file : files) {
+        [this](const QStringList &files) {
+            for (const auto &file : files) {
                 if (ScriptManager::isScriptFile(file)) {
                     if (openFile(file)) {
                         addRecentFile(file);
@@ -591,12 +591,13 @@ RibbonTabContent *ScriptingDialog::buildSettingPage(RibbonTabContent *tab) {
     updateUI();
     auto pannel = tab->addGroup(tr("Settings"));
 
-    addPannelAction(pannel, QStringLiteral("file"), tr("Editor"),
-                    [=] { m_setdialog->showConfig(QStringLiteral("Edit")); });
-    addPannelAction(pannel, QStringLiteral("console"), tr("Console"), [=] {
+    addPannelAction(pannel, QStringLiteral("file"), tr("Editor"), [this] {
+        m_setdialog->showConfig(QStringLiteral("Edit"));
+    });
+    addPannelAction(pannel, QStringLiteral("console"), tr("Console"), [this] {
         m_setdialog->showConfig(QStringLiteral("Console"));
     });
-    addPannelAction(pannel, QStringLiteral("angellsp"), tr("AngelLSP"), [=] {
+    addPannelAction(pannel, QStringLiteral("angellsp"), tr("AngelLSP"), [this] {
         m_setdialog->showConfig(QStringLiteral("AngelLSP"));
     });
 
@@ -852,6 +853,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
     CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
                                 true);
+    CDockManager::setConfigFlag(CDockManager::DontLoadInternalStyle, true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
@@ -908,7 +910,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
-    for (auto &item : m_dock->openedDockAreas()) {
+    for (const auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
             updateUI();
             auto d = item->dockWidget(i);
@@ -999,7 +1001,7 @@ void ScriptingDialog::registerEditorView(ScriptEditor *editor) {
         destoryEditor(editor);
     });
 
-    connect(editor, &ScriptEditor::onToggleMark, this, [=](int lineIndex) {
+    connect(editor, &ScriptEditor::onToggleMark, this, [this](int lineIndex) {
         auto editor = qobject_cast<ScriptEditor *>(sender());
         Q_ASSERT(editor);
         toggleBreakPoint(editor, lineIndex);
@@ -1032,7 +1034,7 @@ void ScriptingDialog::updateEditModeEnabled() {
     auto editor = currentEditor();
     auto b = (editor != nullptr);
 
-    for (auto &item : m_editStateWidgets) {
+    for (const auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
 
@@ -1063,7 +1065,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     if (!m_curConnections.isEmpty()) {
-        for (auto &c : m_curConnections) {
+        for (const auto &c : m_curConnections) {
             disconnect(c);
         }
         m_curConnections.clear();
@@ -1167,7 +1169,7 @@ void ScriptingDialog::updateRunDebugMode(bool disable) {
 
 ScriptEditor *ScriptingDialog::findEditorView(const QString &filename) {
     const auto &views = ScriptEditor::instances();
-    for (auto &p : views) {
+    for (const auto &p : views) {
 #ifdef Q_OS_WIN
         if (p->fileName().compare(filename, Qt::CaseInsensitive) == 0) {
 #else
@@ -1223,7 +1225,7 @@ bool ScriptingDialog::try2CloseScriptViews(
         on_stopscript();
     }
 
-    for (auto &editor : views) {
+    for (const auto &editor : views) {
         bool saved = !editor->isModified();
         if (saved) {
             destoryEditor(editor);
@@ -1232,7 +1234,7 @@ bool ScriptingDialog::try2CloseScriptViews(
 
     QVector<EditorInfo *> infos;
     infos.reserve(views.size());
-    for (auto &view : views) {
+    for (const auto &view : views) {
         if (!view->isClosed()) {
             infos.append(view);
         }
@@ -1242,12 +1244,12 @@ bool ScriptingDialog::try2CloseScriptViews(
         auto ret = MutiSaveDialog::StatusCode(sd.exec());
         switch (ret) {
         case MutiSaveDialog::SAVE_DISCARD: {
-            for (auto &editor : views) {
+            for (const auto &editor : views) {
                 destoryEditor(editor);
             }
         } break;
         case MutiSaveDialog::SAVE_SAVE: {
-            for (auto &editor : views) {
+            for (const auto &editor : views) {
                 if (editor->save()) {
                     destoryEditor(editor);
                 }
@@ -1293,7 +1295,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             _curDbgData = sdata;
 
             auto dbg = ScriptMachine::instance().debugger();
-            for (auto &&[file, data] : sdata.asKeyValueRange()) {
+            for (const auto &&[file, data] : sdata.asKeyValueRange()) {
                 auto view = findEditorView(file);
                 if (view) {
                     auto e = view->editor();
@@ -1312,7 +1314,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             PluginSystem::instance().scriptPragmaBegin();
         },
         [this, fileName]() {
-            for (auto &e : _reditors) {
+            for (const auto &e : _reditors) {
                 e->setReadOnly(false);
             }
 
@@ -1771,7 +1773,7 @@ void ScriptingDialog::on_restoreLayout() {
 
     // remove temperaily
     QVector<ScriptEditor *> hiddenView;
-    for (auto &view : views) {
+    for (const auto &view : views) {
         if (view->isClosed()) {
             hiddenView.append(view);
         }
@@ -1783,7 +1785,7 @@ void ScriptingDialog::on_restoreLayout() {
     // add back
     auto centeralWidget = m_dock->centralWidget();
     auto area = centeralWidget->dockAreaWidget();
-    for (auto &view : views) {
+    for (const auto &view : views) {
         m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
         if (hiddenView.contains(view)) {
             view->toggleView(false);
@@ -1822,7 +1824,7 @@ void ScriptingDialog::on_runscript() {
 
 void ScriptingDialog::on_rundbgscript() {
     const auto &views = ScriptEditor::instances();
-    for (auto &editor : views) {
+    for (const auto &editor : views) {
         if (!editor->save()) {
             WingMessageBox::critical(this, qAppName(),
                                      tr("CannotSave2RunScript"));
@@ -1996,7 +1998,7 @@ void ScriptingDialog::destoryEditor(ScriptEditor *editor) {
 
     if (m_dock->focusedDockWidget() == editor) {
         if (!views.isEmpty()) {
-            for (auto &p : views) {
+            for (const auto &p : views) {
                 if (p != editor && p->isCurrentTab()) {
                     p->setFocus();
                 }

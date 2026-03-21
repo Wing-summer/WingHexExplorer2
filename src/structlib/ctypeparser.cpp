@@ -73,7 +73,10 @@ void CTypeParser::initialize() {
     ADD_TYPE(ulong, QMetaType::ULong);
 
     using byte = unsigned char;
+#if __cplusplus < 202002L
     using char8_t = unsigned char;
+#endif
+
     using int8 = qint8;
     using int16 = qint16;
     using int32 = qint32;
@@ -475,7 +478,7 @@ CTypeParser::defineEnum(const QString &name,
 
     enum_defs_.insert(name, values.keys());
     type_maps_.insert(name, qMakePair(QMetaType::LongLong, sizeof(qint64)));
-    for (auto &&v : values.asKeyValueRange()) {
+    for (const auto &&v : values.asKeyValueRange()) {
         const_defs_.insert(v.first, v.second);
     }
     restoreIncompleteType(name);
@@ -1051,7 +1054,7 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
                 output << var.var_name;
             }
 
-            for (auto &dim : var.array_dims) {
+            for (const auto &dim : var.array_dims) {
                 output << '[' << dim << ']';
             }
 
@@ -1113,7 +1116,7 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
                 output << var.var_name;
             }
 
-            for (auto &dim : var.array_dims) {
+            for (auto dim : var.array_dims) {
                 output << '[' << dim << ']';
             }
             if (isCompleted) {
@@ -1140,7 +1143,7 @@ void CTypeParser::dumpEnums(QTextStream &output) const {
         output << QStringLiteral("enum ") << itv->first << ':' << Qt::endl;
 
         auto members = itv->second;
-        for (auto &n : members) {
+        for (const auto &n : members) {
             output << padding << n << '(';
             auto value = const_defs_.value(n);
             if (std::holds_alternative<quint64>(value)) {
@@ -1172,7 +1175,7 @@ void CTypeParser::clear() {
 QStringList CTypeParser::getMissingDependencise(
     const QVector<VariableDeclaration> &members) {
     QStringList missingDeps;
-    for (auto &m : members) {
+    for (const auto &m : members) {
         if (m.is_pointer) {
             continue;
         } else {
@@ -1309,7 +1312,7 @@ void CTypeParser::restoreIncompleteType(const QString &name) {
             }
             return false;
         });
-    for (auto &c : ct) {
+    for (const auto &c : ct) {
         restoreIncompleteType(c);
     }
 }
@@ -1357,7 +1360,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
         // update element_count from array_dims if present (same as before) ...
         if (!member.array_dims.isEmpty()) {
             qint64 ec = 1;
-            for (qint64 &d : member.array_dims) {
+            for (qint64 d : member.array_dims) {
                 if (d == 0) {
                     ec = 0;
                     break;

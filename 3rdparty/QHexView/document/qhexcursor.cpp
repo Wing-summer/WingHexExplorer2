@@ -74,7 +74,7 @@ qsizetype QHexCursor::currentSelectionLength() const {
             QVector<qsizetype>::parameter_type
 #endif
             >::of(&QVector<qsizetype>::append));
-    for (auto &item : res) {
+    for (const auto &item : res) {
         len += item;
     }
     return len;
@@ -94,7 +94,7 @@ bool QHexCursor::isLineSelected(qsizetype line) const {
         return true;
     }
 
-    for (auto &sel : m_sels) {
+    for (const auto &sel : m_sels) {
         if (isLineSelected(sel, line)) {
             return true;
         }
@@ -111,7 +111,7 @@ bool QHexCursor::isSelected(const QHexPosition &pos) const {
         return true;
     }
 
-    for (auto &sel : m_sels) {
+    for (const auto &sel : m_sels) {
         if (sel.contains(pos)) {
             return true;
         }

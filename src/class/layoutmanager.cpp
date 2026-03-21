@@ -68,7 +68,7 @@ LayoutManager::LayoutManager() {
 }
 
 void LayoutManager::process(const QDir &dir) {
-    for (auto &l : dir.entryInfoList({"*.wing-layout"}, QDir::Files)) {
+    for (const auto &l : dir.entryInfoList({"*.wing-layout"}, QDir::Files)) {
         QString k = l.baseName();
 
         QFile f(l.absoluteFilePath());

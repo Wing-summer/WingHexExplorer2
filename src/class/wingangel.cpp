@@ -343,7 +343,7 @@ void WingAngel::registerScriptMarco(const QString &marco) {
 }
 
 void WingAngel::registerScriptMarcos(const QStringList &marcos) {
-    for (auto &m : marcos) {
+    for (const auto &m : marcos) {
         registerScriptMarco(m);
     }
 }
@@ -533,7 +533,7 @@ QString WingAngel::getScriptFnSig(uint retMetaType, const ScriptFn &fn,
     sig += ret + QStringLiteral(" ") + fnName + QStringLiteral("(");
 
     QStringList _params;
-    for (auto &param : params) {
+    for (const auto &param : params) {
         auto ret = type2AngelScriptString(param.first, true);
         if (ret.isEmpty()) {
             return {};

@@ -228,7 +228,7 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
 
     m_recentmanager = new RecentFileManager(m_recentMenu, false);
     connect(m_recentmanager, &RecentFileManager::triggered, this,
-            [=](const RecentFileManager::RecentInfo &rinfo) {
+            [this](const RecentFileManager::RecentInfo &rinfo) {
                 EditorView *editor = nullptr;
                 ErrFile ret;
                 const auto &url = rinfo.url;
@@ -366,13 +366,13 @@ MainWindow::MainWindow(SplashDialog *splash) : FramelessMainWindow() {
     connect(&set, &SettingManager::sigEditorfontSizeChanged, this,
             [this](int v) {
                 const auto &views = EditorView::instances();
-                for (auto &p : views) {
+                for (const auto &p : views) {
                     p->setFontSize(qreal(v));
                 }
             });
     connect(&set, &SettingManager::sigCopylimitChanged, this, [this](int v) {
         const auto &views = EditorView::instances();
-        for (auto &p : views) {
+        for (const auto &p : views) {
             p->setCopyLimit(v);
         }
     });
@@ -497,6 +497,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     CDockManager::setConfigFlag(CDockManager::FocusHighlighting, true);
     CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons,
                                 true);
+    CDockManager::setConfigFlag(CDockManager::DontLoadInternalStyle, true);
 
     CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
 
@@ -515,7 +516,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     connect(m_dock, &CDockManager::stateRestored, this, [this]() {
         // no allowing floating widgets
         QList<CDockWidget *> _dws;
-        for (auto &dw : m_dock->dockWidgetsMap()) {
+        for (const auto &dw : m_dock->dockWidgetsMap()) {
             if (dw->dockAreaWidget() == nullptr) {
                 _dws.append(dw);
             }
@@ -540,7 +541,7 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
         auto darea = m_dock->centralWidget()->dockAreaWidget();
         auto dw = _dws.takeFirst();
         darea = replaceDW(dw, darea);
-        for (auto &dw : _dws) {
+        for (const auto &dw : _dws) {
             replaceDW(dw, darea);
         }
     });
@@ -621,7 +622,7 @@ void MainWindow::finishBuildDockSystem() {
     }
 
     // set the first tab visible
-    for (auto &item : m_dock->openedDockAreas()) {
+    for (const auto &item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
             updateUI();
             auto d = item->dockWidget(i);
@@ -643,7 +644,7 @@ ads::CDockAreaWidget *MainWindow::buildUpLogDock(ads::CDockManager *dock,
     m_logbrowser->setUndoRedoEnabled(false);
 
     auto a = newAction(
-        ICONRES("copy"), tr("Copy"), [=]() { m_logbrowser->copy(); },
+        ICONRES("copy"), tr("Copy"), [this]() { m_logbrowser->copy(); },
         QKeySequence::Copy);
     a->setShortcutContext(Qt::WidgetShortcut);
     m_logbrowser->addAction(a);
@@ -677,7 +678,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->setContextMenuPolicy(
         Qt::ContextMenuPolicy::CustomContextMenu);
 
-    auto se = [=]() {
+    static auto se = [this]() {
         if (_findResultModel->isValid()) {
             m_find->setWindowTitle(tr("FindResult") + QStringLiteral(" (") +
                                    _findResultModel->encoding() +
@@ -692,8 +693,8 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     auto aGroup = new QActionGroup(menu);
     aGroup->setParent(menu);
     auto langs = Utilities::getEncodings();
-    for (auto &l : langs) {
-        auto a = newCheckableAction(menu, l, [=]() {
+    for (const auto &l : langs) {
+        auto a = newCheckableAction(menu, l, [this, l]() {
             _findResultModel->setEncoding(l);
             se();
         });
@@ -705,15 +706,16 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
         aGroup->deleteLater();
     }
 
-    connect(_findResultModel, &FindResultModel::modelReset, menu, [=]() {
-        auto r = _findResultModel->isValid();
-        menu->setEnabled(r);
-        if (r) {
-            m_findEncoding.value(_findResultModel->encoding())
-                ->setChecked(true);
-        }
-        se();
-    });
+    connect(_findResultModel, &FindResultModel::modelReset, menu,
+            [this, menu]() {
+                auto r = _findResultModel->isValid();
+                menu->setEnabled(r);
+                if (r) {
+                    m_findEncoding.value(_findResultModel->encoding())
+                        ->setChecked(true);
+                }
+                se();
+            });
 
     m_menuFind = new QMenu(m_findresult);
     auto em = new QAction(tr("ShowDec"), this);
@@ -747,7 +749,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
                                     &MainWindow::on_clearfindresult));
 
     connect(m_findresult, &QTableViewExt::customContextMenuRequested, this,
-            [=](const QPoint &pos) {
+            [this](const QPoint &pos) {
                 m_menuFind->popup(m_findresult->viewport()->mapToGlobal(pos));
             });
 
@@ -757,7 +759,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     m_findresult->horizontalHeader()->setSectionHidden(4, !fsds);
 
     connect(m_findresult, &QTableView::doubleClicked, this,
-            [=](const QModelIndex &index) {
+            [this](const QModelIndex &index) {
                 auto editor = currentEditor();
                 auto e = editor->hexEditor();
                 auto fm = editor->findResult();
@@ -794,7 +796,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     auto a = new QAction(this);
     a->setText(tr("Copy"));
     a->setIcon(ICONRES("copy"));
-    connect(a, &QAction::triggered, this, [=] {
+    connect(a, &QAction::triggered, this, [this] {
         auto r = m_numshowtable->currentIndex().row();
         qApp->clipboard()->setText(
             _numsitem->numData(NumShowModel::NumTableIndex(r)));
@@ -821,7 +823,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aLittleEndian->setText(tr("LittleEndian"));
     aLittleEndian->setCheckable(true);
     aLittleEndian->setChecked(le);
-    connect(aLittleEndian, &QAction::triggered, this, [=] {
+    connect(aLittleEndian, &QAction::triggered, this, [this] {
         m_islittle = true;
         updateNumberTable(true);
     });
@@ -831,7 +833,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aBigEndian->setText(tr("BigEndian"));
     aBigEndian->setCheckable(true);
     aBigEndian->setChecked(!le);
-    connect(aBigEndian, &QAction::triggered, this, [=] {
+    connect(aBigEndian, &QAction::triggered, this, [this] {
         m_islittle = false;
         updateNumberTable(true);
     });
@@ -845,7 +847,7 @@ MainWindow::buildUpNumberShowDock(ads::CDockManager *dock,
     aUnsignedHex->setText(tr("UnsignedHex"));
     aUnsignedHex->setCheckable(true);
     aUnsignedHex->setChecked(false);
-    connect(aUnsignedHex, &QAction::toggled, this, [=](bool b) {
+    connect(aUnsignedHex, &QAction::toggled, this, [this](bool b) {
         m_unsignedHex = b;
         updateNumberTable(true);
     });
@@ -873,7 +875,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
 
     m_hash->setContextMenuPolicy(Qt::ContextMenuPolicy::ActionsContextMenu);
 
-    auto a = newAction(ICONRES(QStringLiteral("copy")), tr("Copy"), [=] {
+    auto a = newAction(ICONRES(QStringLiteral("copy")), tr("Copy"), [this] {
         auto r = m_hash->currentIndex();
         qApp->clipboard()->setText(
             _hashModel->checkSumData(CryptographicHash::Algorithm(r.row())));
@@ -881,7 +883,7 @@ MainWindow::buildUpHashResultDock(ads::CDockManager *dock,
                      tr("CopyToClipBoard"));
     });
     m_hash->addAction(a);
-    a = newAction(QStringLiteral("del"), tr("Clear"), [=]() {
+    a = newAction(QStringLiteral("del"), tr("Clear"), [this]() {
         auto cur = currentEditor();
         if (cur) {
             auto &cs = cur->checkSumResult();
@@ -922,7 +924,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
     m_bookMark->setModel(_bookMarkModel);
 
     connect(m_bookMark, &QTableView::doubleClicked, this,
-            [=](const QModelIndex &index) {
+            [this](const QModelIndex &index) {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
                     return;
@@ -944,7 +946,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
     m_aDelBookMark = new QAction(ICONRES(QStringLiteral("bookmarkdel")),
                                  tr("DeleteBookMark"), m_bookMark);
-    connect(m_aDelBookMark, &QAction::triggered, this, [=] {
+    connect(m_aDelBookMark, &QAction::triggered, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
@@ -955,7 +957,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
         auto model = m_bookMark->model();
 
         QList<qsizetype> pos;
-        for (auto &item : s) {
+        for (const auto &item : s) {
             auto offIndex = model->index(item.row(), 0);
             auto offset = model->data(offIndex).value<qsizetype>();
             pos.append(offset);
@@ -977,7 +979,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
 
     connect(m_bookMark->selectionModel(),
             &QItemSelectionModel::selectionChanged, m_aDelBookMark,
-            [=](const QItemSelection &, const QItemSelection &) {
+            [this](const QItemSelection &, const QItemSelection &) {
                 m_aDelBookMark->setEnabled(
                     m_bookMark->selectionModel()->hasSelection());
             });
@@ -999,7 +1001,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
     m_metadata->setModel(_metadataModel);
 
     connect(m_metadata, &QTableView::doubleClicked, this,
-            [=](const QModelIndex &index) {
+            [this](const QModelIndex &index) {
                 auto hexeditor = currentHexView();
                 if (hexeditor == nullptr) {
                     return;
@@ -1014,7 +1016,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
             });
 
     m_metadata->addAction(
-        newAction(QStringLiteral("mLineInfo"), tr("CustomHeader"), [=]() {
+        newAction(QStringLiteral("mLineInfo"), tr("CustomHeader"), [this]() {
             QVector<bool> ov(5);
             auto total = 5;
             auto header = m_metadata->horizontalHeader();
@@ -1045,7 +1047,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
     m_aDelMetaData = new QAction(ICONRES(QStringLiteral("metadatadel")),
                                  tr("DeleteMetadata"), m_metadata);
-    connect(m_aDelMetaData, &QAction::triggered, this, [=] {
+    connect(m_aDelMetaData, &QAction::triggered, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
@@ -1056,7 +1058,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
         const auto &mds = doc->metadata()->getAllMetadata();
 
         QList<QHexMetadataItem> pmetas;
-        for (auto &item : s) {
+        for (const auto &item : s) {
             pmetas.push_back(mds.at(item.row()));
         }
 
@@ -1075,7 +1077,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
 
     connect(m_metadata->selectionModel(),
             &QItemSelectionModel::selectionChanged, m_aDelMetaData,
-            [=](const QItemSelection &, const QItemSelection &) {
+            [this](const QItemSelection &, const QItemSelection &) {
                 m_aDelMetaData->setEnabled(
                     m_metadata->selectionModel()->hasSelection());
             });
@@ -1104,7 +1106,7 @@ MainWindow::buildUpDecodingStrShowDock(ads::CDockManager *dock,
                               m_txtDecode);
 
     auto a = newAction(
-        ICONRES("copy"), tr("Copy"), [=]() { m_logbrowser->copy(); },
+        ICONRES("copy"), tr("Copy"), [this]() { m_logbrowser->copy(); },
         QKeySequence::Copy);
     a->setShortcutContext(Qt::WidgetShortcut);
     m_txtDecode->addAction(a);
@@ -1860,7 +1862,7 @@ void MainWindow::buildUpSettingDialog() {
     usedIDs.append(id);
     updateUI();
 
-    for (auto &page : m_settingPages) {
+    for (const auto &page : m_settingPages) {
         updateUI();
 
         auto name = page->name();
@@ -1893,7 +1895,7 @@ void MainWindow::buildUpSettingDialog() {
         if (page->showInRibbon()) {
             auto icon = page->categoryIcon();
             addPannelAction(m_pluginSettingsGroup, icon, name,
-                            [=] { m_setdialog->showConfig(id); });
+                            [this, id] { m_setdialog->showConfig(id); });
         }
         usedIDs.append(id);
     }
@@ -1951,7 +1953,7 @@ void MainWindow::installPluginEditorWidgets() {
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
          p != m_editorViewWidgets.constKeyValueEnd(); ++p) {
         decltype(newEditorViewWidgets)::mapped_type newCreatorList;
-        for (auto &wctor : p->second) {
+        for (const auto &wctor : p->second) {
             updateUI();
 
             auto id = wctor->id();
@@ -1984,7 +1986,7 @@ void MainWindow::installPluginEditorWidgets() {
             newCreatorList.append(wctor);
         }
 
-        for (auto &item : names) {
+        for (const auto &item : names) {
             menu->addAction(item.second);
         }
 
@@ -2430,7 +2432,7 @@ void MainWindow::on_checksum() {
         for (int i = 0; i < total; ++i) {
             header->hideSection(i);
         }
-        for (auto &c : cs) {
+        for (const auto &c : cs) {
             header->showSection(c);
         }
 
@@ -2589,7 +2591,7 @@ void MainWindow::on_bookmarkdel() {
 
         if (!rmOff.isEmpty()) {
             doc->beginMarco(QStringLiteral("[B-G] {cnt: %1}").arg(total));
-            for (auto &pos : rmOff) {
+            for (const auto &pos : rmOff) {
                 doc->RemoveBookMark(pos);
             }
             doc->endMarco();
@@ -2989,7 +2991,7 @@ void MainWindow::on_delLayout() {
         auto menu = m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
         Q_ASSERT(menu);
         auto actions = menu->actions();
-        for (auto &l : d.getResult()) {
+        for (const auto &l : d.getResult()) {
             auto r = dir.remove(l + QStringLiteral(".wing-layout"));
             if (r) {
                 auto r = std::find_if(
@@ -3107,7 +3109,7 @@ void MainWindow::on_update() {
 
 bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
     if (!views.isEmpty()) {
-        for (auto &editor : views) {
+        for (const auto &editor : views) {
             bool saved = editor->isSaved();
             if (saved) {
                 closeEditor(editor, true);
@@ -3116,7 +3118,7 @@ bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
 
         QVector<EditorInfo *> infos;
         infos.reserve(views.size());
-        for (auto &view : views) {
+        for (const auto &view : views) {
             if (!view->isClosed()) {
                 infos.append(view);
             }
@@ -3126,12 +3128,12 @@ bool MainWindow::try2CloseHexViews(const LinkedList<EditorView *> views) {
             auto ret = MutiSaveDialog::StatusCode(sd.exec());
             switch (ret) {
             case MutiSaveDialog::SAVE_DISCARD: {
-                for (auto &editor : views) {
+                for (const auto &editor : views) {
                     closeEditor(editor, true);
                 }
             } break;
             case MutiSaveDialog::SAVE_SAVE: {
-                for (auto &editor : views) {
+                for (const auto &editor : views) {
                     if (__save(editor)) {
                         closeEditor(editor, true);
                     }
@@ -3181,7 +3183,7 @@ ads::CDockWidget *MainWindow::buildDockWidget(ads::CDockManager *dock,
 
 EditorView *MainWindow::findEditorView(const QUrl &filename) {
     const auto &views = EditorView::instances();
-    for (auto &p : views) {
+    for (const auto &p : views) {
         if (p->fileNameUrl() == filename) {
             return p;
         }
@@ -3202,7 +3204,7 @@ bool MainWindow::newOpenFileSafeCheck() {
 void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
     for (auto p = m_editorViewWidgets.constKeyValueBegin();
          p != m_editorViewWidgets.constKeyValueEnd(); p++) {
-        for (auto &w : p->second) {
+        for (const auto &w : p->second) {
             auto v = w->create(editor);
             auto id = w->id();
             auto icon = w->icon();
@@ -3213,11 +3215,11 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         }
     }
 
-    for (auto &m : _scriptContexts) {
+    for (const auto &m : _scriptContexts) {
         editor->registerQMenu(m);
     }
 
-    for (auto &m : m_hexContextMenu) {
+    for (const auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
     }
 
@@ -3295,7 +3297,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
 }
 
 void MainWindow::registerClonedEditorView(EditorView *editor) {
-    for (auto &m : m_hexContextMenu) {
+    for (const auto &m : m_hexContextMenu) {
         editor->registerQMenu(m);
     }
 
@@ -3324,7 +3326,7 @@ void MainWindow::connectEditorView(EditorView *editor) {
     connect(editor, &EditorView::sigOnCopyFile, this, &MainWindow::on_copyfile);
     connect(editor, &EditorView::sigOnFindFile, this, &MainWindow::on_findfile);
     connect(editor, &EditorView::sigOnGoToLine, this, &MainWindow::on_gotoline);
-    connect(editor, &EditorView::sigOnMetadata, this, [=] {
+    connect(editor, &EditorView::sigOnMetadata, this, [this] {
         auto hexeditor = currentHexView();
         if (hexeditor == nullptr) {
             return;
@@ -3392,7 +3394,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
 
     if (!m_curConnections.isEmpty()) {
-        for (auto &c : m_curConnections) {
+        for (const auto &c : m_curConnections) {
             disconnect(c);
         }
         m_curConnections.clear();
@@ -3481,7 +3483,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
 
     auto menu = m_toolBtneditors[EDITOR_WINS]->menu();
-    for (auto &a : menu->actions()) {
+    for (const auto &a : menu->actions()) {
         auto id = a->property("__ID__").toString();
         if (id.isEmpty()) {
             continue;
@@ -3516,7 +3518,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
     _hashModel->updateCheckSumData(cur->checkSumResult());
 
-    for (auto &menu : m_hexContextMenu) {
+    for (const auto &menu : m_hexContextMenu) {
         menu->setProperty("__CONTEXT__", quintptr(cur->editorContext()));
     }
 
@@ -3597,7 +3599,7 @@ void MainWindow::loadFindResult(EditorView *view) {
 
 void MainWindow::openFiles(const QStringList &files) {
     QStringList errof;
-    for (auto &file : files) {
+    for (const auto &file : files) {
         bool isWs;
         if (AppManager::instance()->openFile(file, true, true, &isWs)) {
             errof.append(file);
@@ -3860,7 +3862,7 @@ IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
 void MainWindow::updateEditModeEnabled() {
     auto editor = currentEditor();
     auto b = (editor != nullptr);
-    for (auto &item : m_editStateWidgets) {
+    for (const auto &item : m_editStateWidgets) {
         item->setEnabled(b);
     }
     m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(b);
@@ -3874,7 +3876,7 @@ void MainWindow::updateEditModeEnabled() {
             doc->canUndo());
         updateWindowTitle(editor);
     } else {
-        for (auto &menu : m_hexContextMenu) {
+        for (const auto &menu : m_hexContextMenu) {
             menu->setProperty("__CONTEXT__", {});
         }
         _findResultModel->reset();
@@ -3916,7 +3918,7 @@ void MainWindow::adjustEditorFocus(EditorView *closedEditor) {
     if (m_dock->focusedDockWidget() == closedEditor) {
         const auto &views = EditorView::instances();
         if (!views.isEmpty()) {
-            for (auto &ev : views) {
+            for (const auto &ev : views) {
                 if (ev != closedEditor && ev->isCurrentTab()) {
                     ev->setFocus();
                 }
@@ -4426,7 +4428,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
 
         // remove temperaily
         QVector<EditorView *> hiddenView;
-        for (auto &view : views) {
+        for (const auto &view : views) {
             if (view->isClosed()) {
                 hiddenView.append(view);
             }
@@ -4438,7 +4440,7 @@ void MainWindow::restoreLayout(const QByteArray &layout) {
         // add back
         auto centeralWidget = m_dock->centralWidget();
         auto area = centeralWidget->dockAreaWidget();
-        for (auto &view : views) {
+        for (const auto &view : views) {
             m_dock->addDockWidget(ads::CenterDockWidgetArea, view, area);
             if (hiddenView.contains(view)) {
                 view->toggleView(false);

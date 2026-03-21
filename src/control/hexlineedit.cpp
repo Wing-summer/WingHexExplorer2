@@ -155,7 +155,7 @@ void HexLineEdit::contextMenuEvent(QContextMenuEvent *event) {
 
     if (m_mode == HexMode) {
         QList<QAction *> actions = menu->actions();
-        for (auto &action : actions) {
+        for (const auto &action : actions) {
             menu->removeAction(action);
             delete action;
         }
@@ -603,7 +603,7 @@ void HexLineEdit::insertAtLogicalPos(const QString &hexChars,
         return;
     }
     QString filtered;
-    for (auto &c : hexChars) {
+    for (const auto &c : hexChars) {
         if (isHexOrWildcard(c)) {
             filtered.append(c.toUpper());
         }

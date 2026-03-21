@@ -28,7 +28,7 @@ void AsIDBWatchModel::attachDebugger(asDebugger *debugger) {
 
 QStringList AsIDBWatchModel::expressionList() const {
     QStringList ret;
-    for (auto &item : m_watchItems) {
+    for (const auto &item : m_watchItems) {
         if (item) {
             ret.append(QString::fromStdString(item->expression));
         }
@@ -152,7 +152,7 @@ void AsIDBWatchModel::refresh() {
         if (cache) {
             QVector<asIDBExpected<asIDBVariable::WeakPtr>> newResults;
             newResults.reserve(m_watchItems.size());
-            for (auto &itemPtr : m_watchItems) {
+            for (const auto &itemPtr : m_watchItems) {
                 newResults.append(
                     cache->ResolveExpression(itemPtr->expression, 0));
             }
@@ -189,7 +189,7 @@ void AsIDBWatchModel::refresh() {
 }
 
 void AsIDBWatchModel::reloadExpressionList(const QStringList &expressions) {
-    for (auto &expression : expressions) {
+    for (const auto &expression : expressions) {
         auto exp = expression.trimmed();
         if (exp.isEmpty()) {
             return;

@@ -26,7 +26,7 @@ LayoutDelDialog::LayoutDelDialog(const QStringList &layouts, QWidget *parent)
     : QWidget(parent), ui(new Ui::LayoutDelDialog) {
     ui->setupUi(this);
 
-    for (auto &l : layouts) {
+    for (const auto &l : layouts) {
         auto lw = new QListWidgetItem(ICONRES(QStringLiteral("layout")), l);
         lw->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable |
                      Qt::ItemIsSelectable);

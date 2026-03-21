@@ -30,7 +30,7 @@ HistoryDelDialog::HistoryDelDialog(
       _isScriptFile(isScriptFile) {
     ui->setupUi(this);
 
-    for (auto &info : files) {
+    for (const auto &info : files) {
         const auto &url = info.url;
         auto lw = new QListWidgetItem;
 

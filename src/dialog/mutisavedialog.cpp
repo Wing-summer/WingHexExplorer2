@@ -47,7 +47,7 @@ MutiSaveDialog::MutiSaveDialog(const QVector<EditorInfo *> &editors,
     ui->listWidget->setItemDelegate(delegate);
 
     Q_ASSERT(edctl);
-    for (auto &e : editors) {
+    for (const auto &e : editors) {
         auto item = new QListWidgetItem(e->editorIcon(), e->infoFileName());
         item->setToolTip(e->infoTooltip());
         ui->listWidget->addItem(item);

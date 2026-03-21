@@ -232,7 +232,7 @@ void CheckSumDialog::populateData(QVector<int> &cs) {
                        Qt::ItemIsSelectable | Qt::ItemIsEnabled |
                        Qt::ItemIsUserTristate);
 
-        for (auto &item : children) {
+        for (const auto &item : children) {
             QTreeWidgetItem *child = new QTreeWidgetItem(root);
             child->setText(0, item.first);
             child->setData(0, Qt::UserRole, item.second);

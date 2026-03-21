@@ -351,7 +351,7 @@ bool QHexDocument::RemoveBookMarks(const QList<qsizetype> &pos) {
     } else {
         m_undostack->beginMacro(
             QStringLiteral("[B-G] {cnt: %1}").arg(pos.size()));
-        for (auto &p : pos) {
+        for (const auto &p : pos) {
             m_undostack->push(new BookMarkRemoveCommand(this, p, bookMark(p)));
         }
         m_undostack->endMacro();

@@ -241,7 +241,7 @@ void printMarcos(QTextStream &out) {
         marcos.insert(QLatin1String("__LANG__"), STRING_TYPE);
         marcos.insert(QLatin1String("__THEME__"), STRING_TYPE);
     }
-    for (auto &&item : marcos.asKeyValueRange()) {
+    for (const auto &&item : marcos.asKeyValueRange()) {
         out << item.second << ' ' << item.first << ';' << Qt::endl;
     }
 }

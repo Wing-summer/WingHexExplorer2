@@ -18,7 +18,7 @@
 #include "checksummodel.h"
 
 CheckSumModel::CheckSumModel(QObject *parent) : QAbstractTableModel(parent) {
-    for (auto &cs : CryptographicHash::supportedHashAlgorithms()) {
+    for (const auto &cs : CryptographicHash::supportedHashAlgorithms()) {
         _checkSumData.insert(cs, QString());
     }
 }

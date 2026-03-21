@@ -308,7 +308,7 @@ void QEditConfig::reload() {
 void QEditConfig::loadThemes() {
     QStringList themes;
     themes.append(tr("Default"));
-    for (auto &th : CodeEdit::syntaxRepo().themes()) {
+    for (const auto &th : CodeEdit::syntaxRepo().themes()) {
         themes.append(th.name());
     }
     ui->cbTheme->addItems(themes);

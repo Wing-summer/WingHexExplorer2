@@ -255,7 +255,7 @@ public:
         const CScriptDictionary *v =
             var->address.ResolveAs<const CScriptDictionary>();
 
-        for (auto &kvp : *v) {
+        for (const auto &kvp : *v) {
             auto child = var->CreateChildVariable(
                 fmt::format(FMT_STRING("[\"{}\"]"), kvp.GetKey()),
                 {kvp.GetTypeId(), false,
@@ -553,7 +553,7 @@ public:
                     std::get<QHash<QString, WingHex::IWingAngel::ExpandResult>>(
                         ret);
 
-                for (auto &&[key, value] : rc.asKeyValueRange()) {
+                for (const auto &&[key, value] : rc.asKeyValueRange()) {
                     auto k = fmt::format(FMT_STRING(R"([{}])"), key);
                     auto rId = typeIDCache.object(value.type);
                     int typeId;

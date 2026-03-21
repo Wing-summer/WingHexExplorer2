@@ -19,7 +19,7 @@ RibbonButtonGroup::RibbonButtonGroup(QWidget *parent)
 }
 
 RibbonButtonGroup::~RibbonButtonGroup() {
-    for (auto &btn : _buttons) {
+    for (const auto &btn : _buttons) {
         ui->horizontalLayout->removeWidget(btn);
         delete btn;
     }

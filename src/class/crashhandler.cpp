@@ -90,7 +90,7 @@ void CrashHandler::reportCrashAndExit() {
 
     size_t i = 1;
     ss << QStringLiteral("* Plugins:") << Qt::endl;
-    for (auto &plg : plgsys.plugins()) {
+    for (const auto &plg : plgsys.plugins()) {
         auto info = plgsys.getPluginInfo(plg);
 
         auto header = QStringLiteral("  ");
@@ -116,7 +116,7 @@ void CrashHandler::reportCrashAndExit() {
 
     i = 1;
     ss << QStringLiteral("* Devices:") << Qt::endl;
-    for (auto &plg : plgsys.devices()) {
+    for (const auto &plg : plgsys.devices()) {
         auto info = plgsys.getPluginInfo(plg);
 
         auto header = QStringLiteral("  ");

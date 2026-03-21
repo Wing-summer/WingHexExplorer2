@@ -348,9 +348,9 @@ public:
         }
 
         QVector<P> toInsert;
-        for (auto &v : regionSlices)
+        for (const auto &v : regionSlices)
             toInsert.append(v);
-        for (auto &v : insertsFromRemoved)
+        for (const auto &v : insertsFromRemoved)
             toInsert.append(v);
 
         auto equal_by_less = [](const P &a, const P &b) -> bool {

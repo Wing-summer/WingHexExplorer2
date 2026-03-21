@@ -188,7 +188,7 @@ QList<CodeInfoTip> AsCompletion::parseMarcos() {
     if (marcos.isEmpty()) {
         QStringList m{"define", "undef",  "if",      "else",  "endif",
                       "ifdef",  "ifndef", "include", "pragma"};
-        for (auto &i : m) {
+        for (const auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;
             tip.type = LSP::CompletionItemKind::Keyword;
@@ -234,7 +234,7 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
         auto sigs = r["signatures"].toArray();
 
         QList<WingSignatureTooltip::Signature> ss;
-        for (auto &&sig : sigs) {
+        for (const auto &&sig : sigs) {
             QJsonValue js = sig;
             WingSignatureTooltip::Signature s;
             s.label = js["label"].toString();

@@ -253,7 +253,7 @@ void RecentFileManager::clearFile() {
                      tr("NoHistoryDel"));
         return;
     }
-    for (auto &item : hitems) {
+    for (const auto &item : hitems) {
         m_menu->removeAction(item);
         delete item;
     }

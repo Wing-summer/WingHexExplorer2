@@ -364,7 +364,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
 
                 // then check
                 setEditMode(Output);
-                for (auto &v : vars) {
+                for (const auto &v : vars) {
                     auto idx = mod->GetGlobalVarIndexByName(v.toUtf8());
                     if (idx >= 0) {
                         indices.append(idx);
@@ -376,7 +376,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                 std::sort(indices.begin(), indices.end(), std::greater<int>());
 
                 // ok, remove
-                for (auto &i : indices) {
+                for (const auto &i : indices) {
                     mod->RemoveGlobalVar(i);
                 }
             }
@@ -463,7 +463,7 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
             auto r = lsp.requestSignatureHelp(url, line, character);
             auto sigs = r["signatures"].toArray();
             QList<WingSignatureTooltip::Signature> ss;
-            for (auto &&sig : sigs) {
+            for (const auto &&sig : sigs) {
                 QJsonValue js = sig;
                 WingSignatureTooltip::Signature s;
                 s.label = js["label"].toString();
@@ -835,7 +835,7 @@ void ScriptingConsole::enableLSP() {
 
                 clearSquiggle();
                 auto offline = block.blockNumber();
-                for (auto &d : diagnostics) {
+                for (const auto &d : diagnostics) {
                     auto t = _codes.count('\n') + 1;
                     if (d.range.start.line == t) {
                         addSquiggle(lsps(d.severity),

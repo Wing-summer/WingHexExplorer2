@@ -117,7 +117,7 @@ QStringList CryptographicHash::supportedHashAlgorithmStringList() {
     if (hashNames.isEmpty()) {
         auto hashes = supportedHashAlgorithms();
         auto hashe = QMetaEnum::fromType<CryptographicHash::Algorithm>();
-        for (auto &hash : hashes) {
+        for (const auto &hash : hashes) {
             hashNames << QString::fromLatin1(hashe.valueToKey(int(hash)));
         }
     }

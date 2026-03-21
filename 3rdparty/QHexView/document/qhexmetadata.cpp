@@ -40,7 +40,7 @@ QHexLineMetadata QHexMetadata::get(qsizetype line) const {
     }
 
     QHexLineMetadata ret;
-    for (auto &item : m_linemeta[line]) {
+    for (const auto &item : m_linemeta[line]) {
         ret.append(item);
     }
 
@@ -70,7 +70,7 @@ void QHexMetadata::RemoveMetadatas(const QList<QHexMetadataItem> &items) {
         RemoveMetadata(items.front());
     } else {
         m_undo->beginMacro(QStringLiteral("[M-G] {cnt: %1}").arg(items.size()));
-        for (auto &item : items) {
+        for (const auto &item : items) {
             RemoveMetadata(item);
         }
         m_undo->endMacro();
@@ -181,7 +181,7 @@ bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
 
 void QHexMetadata::removeMetadata(qsizetype begin, qsizetype end) {
     auto broken = mayBrokenMetaData(begin, end);
-    for (auto &item : broken) {
+    for (const auto &item : broken) {
         removeMetadata(item);
     }
 }
@@ -234,7 +234,7 @@ QHexLineMetadata QHexMetadata::gets(qsizetype line) {
         return {};
     }
 
-    for (auto &lms : m_linemeta[line]) {
+    for (const auto &lms : m_linemeta[line]) {
         ret.append(lms);
     }
 
@@ -247,7 +247,7 @@ QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
 
     QVector<MetaInfo> ret;
     MetaInfo g(begin, end);
-    for (auto &meta : m_metadata) {
+    for (const auto &meta : m_metadata) {
         if (!(end < meta.begin || begin > meta.end)) {
             auto m = MetaInfo(meta.begin, meta.end, meta.foreground,
                               meta.background, meta.comment);
@@ -264,10 +264,10 @@ QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
 }
 
 void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
-    for (auto &meta : metas) {
+    for (const auto &meta : metas) {
         m_metadata.mergeAdd(meta);
     }
-    for (auto &meta : m_metadata) {
+    for (const auto &meta : m_metadata) {
         addMetaLines(meta);
     }
     Q_EMIT metadataChanged();
@@ -331,7 +331,7 @@ void QHexMetadata::setLineWidth(quint8 width) {
         m_lineWidth = width;
 
         m_linemeta.clear();
-        for (auto &item : m_metadata) {
+        for (const auto &item : m_metadata) {
             addMetadata(item);
         }
 
@@ -355,7 +355,7 @@ void QHexMetadata::insertAdjust(qsizetype offset, qsizetype length) {
             }
         });
 
-    for (auto &meta : m_metadata) {
+    for (const auto &meta : m_metadata) {
         addMetaLines(meta);
     }
 
@@ -378,7 +378,7 @@ void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
             }
         });
 
-    for (auto &meta : m_metadata) {
+    for (const auto &meta : m_metadata) {
         addMetaLines(meta);
     }
 
@@ -422,7 +422,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
         m_metadata.erase(
             std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
 
-        for (auto &meta : m_metadata) {
+        for (const auto &meta : m_metadata) {
             addMetaLines(meta);
         }
 
@@ -452,7 +452,7 @@ void QHexMetadata::removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
             }
         });
 
-    for (auto &meta : metas) {
+    for (const auto &meta : metas) {
         m_metadata.insert(
             std::distance(m_metadata.constBegin(),
                           std::upper_bound(m_metadata.constBegin(),
@@ -460,7 +460,7 @@ void QHexMetadata::removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
             meta);
     }
 
-    for (auto &meta : m_metadata) {
+    for (const auto &meta : m_metadata) {
         addMetaLines(meta);
     }
 
@@ -538,10 +538,10 @@ QVector<QHexMetadataItem> QHexMetadata::mayBrokenMetaData(qsizetype begin,
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
     auto old = m_metadata;
     auto r = m_metadata.mergeAdd(mi);
-    for (auto &idx : r.removed) {
+    for (const auto &idx : r.removed) {
         removeLineMetadata(old.at(idx));
     }
-    for (auto &idx : r.inserted) {
+    for (const auto &idx : r.inserted) {
         addMetaLines(m_metadata.at(idx));
     }
     addMetaLines(mi);

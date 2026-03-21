@@ -612,7 +612,7 @@ static CScriptArray *toRawData(const QString &s) {
             [s]() {
                 QList<QChar> data;
                 data.reserve(s.length());
-                for (auto &ch : s) {
+                for (const auto &ch : s) {
                     data.append(ch);
                 }
                 return data;

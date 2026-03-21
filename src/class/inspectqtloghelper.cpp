@@ -31,7 +31,7 @@ void InspectQtLogHelper::init() {
     QObject::connect(a, &QAction::triggered, qApp, [this]() { _ctx->clear(); });
     menu->addAction(a);
 
-    for (auto &a : ma) {
+    for (const auto &a : ma) {
         a->setEnabled(true);
     }
 

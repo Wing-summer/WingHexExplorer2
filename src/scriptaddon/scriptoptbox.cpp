@@ -93,7 +93,7 @@ public:
             return nullptr;
         }
 
-        for (auto &&[w, t] : _data.asKeyValueRange()) {
+        for (const auto &&[w, t] : _data.asKeyValueRange()) {
             auto p = w->property(PROPERTY_DEFAULT);
             if (p.isNull()) {
                 continue;
@@ -152,7 +152,7 @@ public:
         auto dic = CScriptDictionary::Create(ctx->GetEngine());
 
         if (_dialog->exec()) {
-            for (auto &&[w, t] : _data.asKeyValueRange()) {
+            for (const auto &&[w, t] : _data.asKeyValueRange()) {
                 switch (t) {
                 case ControlType::Unknown:
                 case ControlType::BoolItems:
@@ -271,7 +271,7 @@ private:
         auto jobj = doc.object();
         _usedObjNames.clear();
 
-        for (auto &&[key, value] : jobj.asKeyValueRange()) {
+        for (const auto &&[key, value] : jobj.asKeyValueRange()) {
             if (key == QLatin1String("title")) {
                 w->setWindowTitle(value.toString());
             } else if (key == QLatin1String("fixedWidth")) {

@@ -75,7 +75,7 @@ inline QString escapeNonPrintable(const QChar &ch) {
 inline QString escapeNonPrintable(const QString &input) {
     QString out;
     out.reserve(input.size() * 2);
-    for (auto &ch : input) {
+    for (const auto &ch : input) {
         out.append(escapeNonPrintable(ch));
     }
     return out;
@@ -84,13 +84,20 @@ inline QString escapeNonPrintable(const QString &input) {
 template <typename T>
 class CScriptObjectView {
 public:
-    inline explicit CScriptObjectView(const T *data) noexcept : data_(data) {
+    inline constexpr explicit CScriptObjectView(const T *data) noexcept
+        : data_(data) {
         Q_ASSERT(data);
     }
 
-    inline ~CScriptObjectView() noexcept { data_ = nullptr; }
+    inline
+#if __cplusplus >= 202002L
+        constexpr
+#endif
+        ~CScriptObjectView() noexcept {
+        data_ = nullptr;
+    }
 
-    inline const T *data() const noexcept { return data_; }
+    inline constexpr const T *data() const noexcept { return data_; }
 
 private:
     const T *data_ = nullptr;
@@ -177,7 +184,7 @@ struct formatter<QChar, char> {
                 fmt::dynamic_format_arg_store<FormatContext> store;
                 uint32_t code = static_cast<uint32_t>(qc.unicode());
                 store.push_back(code);
-                return fmt::vformat_to(out, fmt::string_view(fmtstr), store);
+                return fmt::vformat_to(out, fmtstr, store);
             }
         }
 
@@ -189,7 +196,7 @@ struct formatter<QChar, char> {
             fmtstr += "}";
             fmt::dynamic_format_arg_store<FormatContext> store;
             store.push_back(utf8);
-            return fmt::vformat_to(out, fmt::string_view(fmtstr), store);
+            return fmt::vformat_to(out, fmtstr, store);
         }
     }
 };
@@ -360,8 +367,10 @@ struct formatter<CScriptArrayView> {
                     data.append(*static_cast<const QChar *>(elemPtr));
                 }
 
-                return fmt::format_to(
-                    out, range_type_ == AS_DEBUG_STRING ? "{:?}" : "{}", data);
+                if (range_type_ == AS_DEBUG_STRING) {
+                    return fmt::format_to(out, FMT_STRING("{:?}"), data);
+                }
+                return fmt::format_to(out, FMT_STRING("{}"), data);
             }
         }
 
@@ -473,7 +482,7 @@ struct formatter<CScriptDictionaryView> {
             std::vector<int> key_widths;
             key_widths.reserve(entries.size());
             int max_key_width = 0;
-            for (auto &e : entries) {
+            for (const auto &e : entries) {
                 int w = metrics.horizontalAdvance(
                             QString::fromStdString(e.key_disp)) /
                         spacew;
@@ -509,7 +518,8 @@ struct formatter<CScriptDictionaryView> {
                     }
                     auto childView = CScriptDictionaryView(
                         static_cast<CScriptDictionary *>(e.val_ptr));
-                    out = fmt::format_to(out, child_spec, childView);
+                    out = fmt::format_to(out, fmt::runtime(child_spec),
+                                         childView);
                 } else {
                     out = format_element_with_spec(e.val_ptr, e.val_type,
                                                    underlying_spec_, ctx);

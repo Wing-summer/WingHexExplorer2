@@ -34,7 +34,7 @@ QList<CodeInfoTip> AsConsoleCompletion::parseMarcos() {
             "del",
             "cls",
         };
-        for (auto &i : m) {
+        for (const auto &i : m) {
             CodeInfoTip tip;
             tip.name = i;
             tip.type = LSP::CompletionItemKind::Keyword;

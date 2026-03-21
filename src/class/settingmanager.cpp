@@ -251,7 +251,7 @@ void SettingManager::load() {
 QList<RecentFileManager::RecentInfo>
 SettingManager::getDataFromVarList(const QVariantList &varlist) const {
     QList<RecentFileManager::RecentInfo> infos;
-    for (auto &var : varlist) {
+    for (const auto &var : varlist) {
         if (var.canConvert<RecentFileManager::RecentInfo>()) {
             infos.append(var.value<RecentFileManager::RecentInfo>());
         }
@@ -262,7 +262,7 @@ SettingManager::getDataFromVarList(const QVariantList &varlist) const {
 QVariantList SettingManager::getVarList(
     const QList<RecentFileManager::RecentInfo> &infos) const {
     QVariantList varlist;
-    for (auto &info : infos) {
+    for (const auto &info : infos) {
         varlist.append(QVariant::fromValue(info));
     }
     return varlist;

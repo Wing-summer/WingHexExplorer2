@@ -62,7 +62,7 @@ std::any CStructVisitorParser::visitInclusiveOrExpression(
 
     quint64 ret = 0;
     bool isUnsigned = false;
-    for (auto &v : ctx->exclusiveOrExpression()) {
+    for (auto v : ctx->exclusiveOrExpression()) {
         auto r = visitExclusiveOrExpression(v);
         if (r.type() == typeid(quint64)) {
             auto rr = std::any_cast<quint64>(r);
@@ -121,7 +121,7 @@ std::any CStructVisitorParser::visitExclusiveOrExpression(
 
     quint64 v = 0;
     bool isUnsigned = false;
-    for (auto &ex : ctx->andExpression()) {
+    for (const auto &ex : ctx->andExpression()) {
         auto r = visitAndExpression(ex);
         if (r.type() == typeid(qint64)) {
             auto rv = std::any_cast<qint64>(r);
@@ -389,7 +389,7 @@ std::any CStructVisitorParser::visitAndExpression(
 
     quint64 v = std::numeric_limits<quint64>::max();
     bool isUnsigned = false;
-    for (auto &ex : ctx->shiftExpression()) {
+    for (const auto &ex : ctx->shiftExpression()) {
         auto r = visitShiftExpression(ex);
         if (r.type() == typeid(qint64)) {
             auto rv = std::any_cast<qint64>(r);
@@ -1441,7 +1441,7 @@ CStructVisitorParser::visitDeclaration(CStructParser::DeclarationContext *ctx) {
         QVector<QPair<QString, bool>> idens;
         auto typedefs = ctx->typeDefinition();
         idens.reserve(typedefs.size());
-        for (auto &ctx : typedefs) {
+        for (const auto &ctx : typedefs) {
             auto ex = ctx->Identifier();
             auto iden = QString::fromStdString(ex->getText());
 
@@ -1456,7 +1456,7 @@ CStructVisitorParser::visitDeclaration(CStructParser::DeclarationContext *ctx) {
         }
         auto spec = getSpecifier(ctx->typeSpecifier());
         if (spec) {
-            for (auto &&[iden, isPointer] : idens) {
+            for (const auto &[iden, isPointer] : idens) {
                 parser->defineTypedef(iden, spec->tname, isPointer);
             }
         }
@@ -1801,7 +1801,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
 
     QStringList used_names;
 
-    for (auto &m : mems->structDeclaration()) {
+    for (const auto &m : mems->structDeclaration()) {
         auto dl = getSpecifier(m->specifierQualifierList(), decl.alignment);
         if (!dl) {
             return std::nullopt;
@@ -1857,7 +1857,7 @@ std::optional<StructUnionDecl> CStructVisitorParser::parseStructOrUnion(
                 return std::nullopt;
             }
 
-            for (auto &sub : sd) {
+            for (const auto &sub : sd) {
                 VariableDeclaration var;
                 var.data_type = dl->tname;
                 var.fmt_type = fmttype;
@@ -2130,7 +2130,7 @@ CStructVisitorParser::parseEnum(CStructParser::EnumSpecifierContext *ctx) {
                          CTypeParser::StructResult::CountOfLimit, decl_name);
         return std::nullopt;
     }
-    for (auto &e : es) {
+    for (const auto &e : es) {
         QString name;
 
         auto en = e->enumerationConstant();

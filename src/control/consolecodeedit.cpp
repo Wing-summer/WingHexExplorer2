@@ -63,7 +63,7 @@ ConsoleCodeEdit::ConsoleCodeEdit(QWidget *parent) : CodeEdit(parent) {
                 };
 
                 clearSquiggle();
-                for (auto &d : diagnostics) {
+                for (const auto &d : diagnostics) {
                     addSquiggle(
                         lsps(d.severity),
                         {d.range.start.line + 1, d.range.start.character},
@@ -137,7 +137,7 @@ void ConsoleCodeEdit::keyPressEvent(QKeyEvent *event) {
         auto r = lsp.requestSignatureHelp(url, line, character);
         auto sigs = r["signatures"].toArray();
         QList<WingSignatureTooltip::Signature> ss;
-        for (auto &&sig : sigs) {
+        for (const auto &&sig : sigs) {
             QJsonValue js = sig;
             WingSignatureTooltip::Signature s;
             s.label = js["label"].toString();

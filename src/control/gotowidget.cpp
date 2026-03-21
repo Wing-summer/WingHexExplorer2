@@ -154,7 +154,7 @@ public:
         }
 
         qint64 ret = 0;
-        for (auto &v : ctx->exclusiveOrExpression()) {
+        for (const auto &v : ctx->exclusiveOrExpression()) {
             auto r = visitExclusiveOrExpression(v);
             if (r.has_value()) {
                 auto rr = std::any_cast<qint64>(r);
@@ -192,7 +192,7 @@ public:
         }
 
         qint64 v = 0;
-        for (auto &ex : ctx->andExpression()) {
+        for (const auto &ex : ctx->andExpression()) {
             auto r = visitAndExpression(ex);
             if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);
@@ -212,7 +212,7 @@ public:
         }
 
         quint64 v = std::numeric_limits<quint64>::max();
-        for (auto &ex : ctx->shiftExpression()) {
+        for (const auto &ex : ctx->shiftExpression()) {
             auto r = visitShiftExpression(ex);
             if (r.has_value()) {
                 auto rv = std::any_cast<qint64>(r);

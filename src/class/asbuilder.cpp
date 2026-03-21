@@ -33,7 +33,7 @@ int asBuilder::build(asIScriptModule *module) {
     module->ResetGlobalVars();
 
     auto sc = scriptData();
-    for (auto &&[section, data] : sc.asKeyValueRange()) {
+    for (const auto &&[section, data] : sc.asKeyValueRange()) {
         auto script = data.script.toUtf8();
         module->AddScriptSection(section.toUtf8(), script.data(),
                                  script.size());

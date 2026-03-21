@@ -65,6 +65,18 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
                 continue;
             }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+            WingHex::FunctionSig msig;
+            msig.fnName = m.nameView();
+            msig.types.fill(0);
+            msig.typesCount = total - 1;
+            Q_ASSERT(msig.types.size() >= msig.typesCount);
+
+            for (int i = 1; i < total; ++i) {
+                auto mt = m.parameterType(i);
+                msig.types[i - 1] = mt;
+            }
+#else
             WingHex::FunctionSig msig;
             msig.fnName = m.name();
             msig.types.reserve(total - 1);
@@ -73,7 +85,7 @@ PluginSystem::PluginSystem(QObject *parent) : QObject(parent) {
                 auto mt = m.parameterType(i);
                 msig.types.append(mt);
             }
-
+#endif
             _plgFns.insert(msig, m);
         }
     }
@@ -395,10 +407,10 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         State = None;
     }
 
-    static QHash<QString, IWingPluginBase *> cache;
+    static QCache<QString, IWingPluginBase *> cache(10);
     IWingPluginBase *rc = nullptr;
     if (cache.contains(rpuid)) {
-        rc = cache.value(rpuid);
+        rc = *cache.object(rpuid);
     } else {
         auto r = std::find_if(
             _pinfos.keyBegin(), _pinfos.keyEnd(), [=](IWingPluginBase *plg) {
@@ -409,7 +421,9 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
             return false;
         }
         rc = *r;
-        cache.insert(rpuid, rc);
+        auto rp = new IWingPluginBase *;
+        *rp = rc;
+        cache.insert(rpuid, rp);
     }
 
     switch (State) {
@@ -457,7 +471,11 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
             continue;
         }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+        if (met.nameView() == method) {
+#else
         if (met.name() == method) {
+#endif
             bool err = false;
             for (int i = 1; i < paramCount; ++i) {
                 if (metaTypes[i]->typeId == QMetaType::UnknownType) {
@@ -536,7 +554,8 @@ bool PluginSystem::invokeServiceImpl(const QObject *sender, const QString &puid,
         m, obj, c, nparamCount, nparameters.data(), ntypeNames.data(),
         nmetaTypes.data());
 
-    auto cstr = [](QMetaMethodInvoker::InvokeFailReason r) -> const char * {
+    static auto cstr =
+        [](QMetaMethodInvoker::InvokeFailReason r) -> const char * {
         switch (r) {
         case QMetaMethodInvoker::InvokeFailReason::ReturnTypeMismatch:
             return "ReturnTypeMismatch";
@@ -2234,13 +2253,13 @@ void PluginSystem::doneRegisterScriptObj() {
     api->setExcludeEvalIDs(excludeTypeId);
 
     auto ptr = api.data();
-    for (auto &p : _loadedplgs) {
+    for (const auto &p : _loadedplgs) {
         auto puid = getPUID(p);
         ptr->setCurrentPluginSession(puid.toUtf8());
         p->onRegisterScriptObj(ptr);
     }
 
-    for (auto &p : _loadeddevs) {
+    for (const auto &p : _loadeddevs) {
         auto puid = getPUID(p);
         ptr->setCurrentPluginSession(puid.toUtf8());
         p->onRegisterScriptObj(ptr);
@@ -2429,7 +2448,7 @@ QSet<int> PluginSystem::scriptHandles() const {
     static QSet<int> ret;
     if (_handleDirty) {
         ret.clear();
-        for (auto &ctx : m_plgviewMap[_angelplg].contexts) {
+        for (const auto &ctx : m_plgviewMap[_angelplg].contexts) {
             ret.insert(getUIDHandle(ctx->fid));
         }
     }
@@ -2670,7 +2689,7 @@ PluginSystem::checkPluginMetadata(const PluginInfo &meta, bool isPlg) {
         return PluginStatus::InvalidPlugin;
     }
     if (isPlg) {
-        for (auto &d : meta.dependencies) {
+        for (const auto &d : meta.dependencies) {
             if (!isPluginLoaded(d)) {
                 return PluginStatus::LackDependencies;
             }
@@ -2705,7 +2724,7 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
         auto v = m_viewBindings[view];
 
         // clean up
-        for (auto &plg : v.linkedplg) {
+        for (const auto &plg : v.linkedplg) {
             auto &handles = m_plgviewMap[plg];
             auto id = handles.currentFID;
             handles.contexts.removeIf(
@@ -2772,7 +2791,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                  params.at(1).canConvert<bool>());
         auto buffers = params.first().value<QByteArrayList>();
         auto isPreview = params.at(1).toBool();
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventSelectionChanged(buffers, isPreview);
         }
     } break;
@@ -2784,7 +2803,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         pos.column = cursor.column;
         pos.nibbleindex = cursor.nibbleindex;
         pos.lineWidth = cursor.lineWidth;
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventCursorPositionChanged(pos);
         }
     } break;
@@ -2792,7 +2811,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.at(0).toUrl();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Opened, fileType,
                                  fileName, -1, {});
         }
@@ -2803,7 +2822,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto oldFileName = params.at(1).toUrl();
         auto isExported = params.at(2).toBool();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventPluginFile(isExported
                                      ? IWingPlugin::PluginFileEvent::Exported
                                      : IWingPlugin::PluginFileEvent::Saved,
@@ -2814,7 +2833,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto newFileName = params.at(0).toUrl();
         auto oldFileName = params.at(1).toUrl();
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Switched,
                                  IWingPlugin::FileType::Invalid, oldFileName,
                                  -1, newFileName);
@@ -2822,7 +2841,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::AppReady: {
         Q_ASSERT(params.isEmpty());
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventReady();
         }
     } break;
@@ -2830,7 +2849,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.first().toString();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Closed, fileType,
                                  fileName, -1, {});
         }
@@ -2868,7 +2887,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         }
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::AppClosing:
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             auto ret = plg->eventClosing();
             if (!ret) {
                 Logger::warning(tr("AppClosingCanceled:") + plg->pluginName() +
@@ -2884,7 +2903,7 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto w = reinterpret_cast<QWidget *>(params.at(1).value<quintptr>());
         auto palette = reinterpret_cast<HexEditorContext *>(
             params.at(2).value<quintptr>());
-        for (auto &plg : _evplgs[event]) {
+        for (const auto &plg : _evplgs[event]) {
             plg->onPaintHexEditorView(painter, w, palette);
         }
     } break;
@@ -2971,7 +2990,7 @@ void PluginSystem::loadExtPlugin() {
         throw CrashCode::PluginSetting;
     }
 
-    for (auto &item : plgs) {
+    for (const auto &item : plgs) {
         loadPlugin<IWingPlugin>(item, udir);
     }
 
@@ -2980,7 +2999,7 @@ void PluginSystem::loadExtPlugin() {
         QStringList lazyplgs;
         lazyplgs.swap(_lazyplgs);
 
-        for (auto &item : lazyplgs) {
+        for (const auto &item : lazyplgs) {
             auto r = loadPlugin<IWingPlugin>(QFileInfo(item), udir);
             if (r) {
                 errorplg.append(r.value());
@@ -2992,10 +3011,10 @@ void PluginSystem::loadExtPlugin() {
         Logger::critical(tr("PluginLoadingFailedSummary"));
         Logger::newLine();
 
-        for (auto &lplg : errorplg) {
+        for (const auto &lplg : errorplg) {
             Logger::critical(tr("- PluginID:") + lplg.id);
             Logger::critical(tr("- Dependencies:"));
-            for (auto &d : lplg.dependencies) {
+            for (const auto &d : lplg.dependencies) {
                 Logger::critical(QString(4, ' ') + tr("PUID:") + d.puid);
                 Logger::critical(QString(4, ' ') + tr("Version:") +
                                  d.version.toString());
@@ -3025,7 +3044,7 @@ void PluginSystem::loadDevicePlugin() {
         throw CrashCode::PluginSetting;
     }
 
-    for (auto &item : plgs) {
+    for (const auto &item : plgs) {
         loadPlugin<IWingDevice>(item, udir);
     }
 }
@@ -3140,7 +3159,7 @@ QString PluginSystem::getPUID(IWingPluginBase *p) {
 }
 
 bool PluginSystem::isPluginLoaded(const WingDependency &d) {
-    for (auto &info : _pinfos) {
+    for (const auto &info : _pinfos) {
         if ((d.version.isNull() || info.version >= d.version) &&
             info.id == d.puid) {
             return true;
@@ -3150,7 +3169,7 @@ bool PluginSystem::isPluginLoaded(const WingDependency &d) {
 }
 
 bool PluginSystem::isPluginLoaded(const QString &id) {
-    for (auto &info : _pinfos) {
+    for (const auto &info : _pinfos) {
         if (info.id.compare(id, Qt::CaseInsensitive) == 0) {
             return true;
         }
@@ -3309,7 +3328,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
     auto dockWidgets = p->registeredDockWidgets();
     if (!dockWidgets.isEmpty()) {
-        for (auto &info : dockWidgets) {
+        for (const auto &info : dockWidgets) {
             auto widgetName = info.widgetName.trimmed();
             auto displayName = info.displayName.trimmed();
             if (displayName.isEmpty()) {
@@ -3386,16 +3405,16 @@ void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
 void PluginSystem::registerRibbonTools(
     const QList<WingRibbonToolBoxInfo> &tools) {
     if (!tools.isEmpty()) {
-        for (auto &item : tools) {
+        for (const auto &item : tools) {
             if (_win->m_ribbonMaps.contains(item.catagory)) {
                 if (!item.toolboxs.isEmpty()) {
                     auto &cat = _win->m_ribbonMaps[item.catagory];
-                    for (auto &group : item.toolboxs) {
+                    for (const auto &group : item.toolboxs) {
                         if (group.tools.isEmpty()) {
                             continue;
                         }
                         auto g = cat->addGroup(group.name);
-                        for (auto &tool : group.tools) {
+                        for (const auto &tool : group.tools) {
                             g->addButton(tool);
                         }
                     }
@@ -3411,12 +3430,12 @@ void PluginSystem::registerRibbonTools(
                         cat = new RibbonTabContent;
                     }
                     bool hasAdded = false;
-                    for (auto &group : item.toolboxs) {
+                    for (const auto &group : item.toolboxs) {
                         if (group.tools.isEmpty()) {
                             continue;
                         }
                         auto g = cat->addGroup(group.name);
-                        for (auto &tool : group.tools) {
+                        for (const auto &tool : group.tools) {
                             g->addButton(tool);
                         }
                         hasAdded = true;
@@ -3438,7 +3457,7 @@ void PluginSystem::registerRibbonTools(
 void PluginSystem::registeredSettingPages(const QVariant &itptr,
                                           const QList<SettingPage *> &pages) {
     if (!pages.isEmpty()) {
-        for (auto &page : pages) {
+        for (const auto &page : pages) {
             page->setProperty("__plg__", itptr);
         }
         _win->m_settingPages.append(pages);
@@ -3571,7 +3590,7 @@ void PluginSystem::destory() {
         qApp->exit(int(CrashCode::PluginSetting));
     }
 
-    for (auto &item : _loadedplgs) {
+    for (const auto &item : _loadedplgs) {
         auto set =
             std::make_unique<QSettings>(udir.absoluteFilePath(_pinfos[item].id),
                                         QSettings::Format::IniFormat);
@@ -3580,7 +3599,7 @@ void PluginSystem::destory() {
     }
     _loadedplgs.clear();
 
-    for (auto &item : _loadeddevs) {
+    for (const auto &item : _loadeddevs) {
         auto set =
             std::make_unique<QSettings>(udir.absoluteFilePath(_pinfos[item].id),
                                         QSettings::Format::IniFormat);

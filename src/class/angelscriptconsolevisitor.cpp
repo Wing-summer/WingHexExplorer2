@@ -31,7 +31,7 @@ std::any AngelScriptConsoleVisitor::visitScript(
 
     _declCode.clear();
 
-    for (auto &item : context->scriptItem()) {
+    for (const auto &item : context->scriptItem()) {
         if (item->declSpecifierSeq()) {
             _declCode.append(getSrcCode(item));
         }

@@ -54,7 +54,7 @@ LanguageManager::LanguageManager() {
 
     QHash<QString, QLocale> localeMap;
     auto langFiles = langDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (auto &langinfo : langFiles) {
+    for (const auto &langinfo : langFiles) {
         auto lang = langinfo.fileName();
         QLocale locale(lang);
         if (locale == QLocale::c()) {
@@ -146,7 +146,7 @@ bool LanguageManager::unpackTr(const QString &filename, const QLocale &locale) {
     }
 
     _data = {};
-    for (auto &file : reader.fileInfoList()) {
+    for (const auto &file : reader.fileInfoList()) {
         if (file.isValid() && file.isFile) {
             if (file.filePath == QStringLiteral("winghex_") + locale.name() +
                                      QStringLiteral(".qm")) {

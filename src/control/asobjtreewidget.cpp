@@ -78,7 +78,7 @@ QTreeWidgetItem *ASObjTreeWidget::createObjNode(const CodeInfoTip &node,
 void ASObjTreeWidget::createObjNodes(const QList<CodeInfoTip> &nodes,
                                      QTreeWidgetItem *parent) {
 
-    for (auto &n : nodes) {
+    for (const auto &n : nodes) {
         // only for code namespace completion
         auto c = createObjNode(n, parent);
         if (!n.children.isEmpty()) {

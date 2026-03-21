@@ -67,7 +67,7 @@ bool RemoveCommand::mergeWith(const QUndoCommand *other) {
         if (this->m_offset == ucmd->m_offset) {
             this->m_data.append(ucmd->m_data);
             auto bms = ucmd->_rmbms;
-            for (auto &&b : bms.asKeyValueRange()) {
+            for (const auto &&b : bms.asKeyValueRange()) {
                 this->_rmbms.insert(b.first + this->m_length, b.second);
             }
             auto metas = ucmd->_rmMetas;

@@ -106,7 +106,7 @@ void GeneralSettingDialog::reload() {
 
     auto &lang = LanguageManager::instance();
     auto langs = lang.langs();
-    for (auto &l : langs) {
+    for (const auto &l : langs) {
         ui->cbLanguage->addItem(lang.langDisplay(l), l);
     }
 

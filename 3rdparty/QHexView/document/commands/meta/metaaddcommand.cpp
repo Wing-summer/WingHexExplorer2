@@ -71,7 +71,7 @@ bool MetaAddCommand::mergeWith(const QUndoCommand *other) {
 
 void MetaAddCommand::undo() {
     m_hexmeta->removeMetadata(m_meta.begin, m_meta.end);
-    for (auto &meta : _brokenMetas) {
+    for (const auto &meta : _brokenMetas) {
         m_hexmeta->metadata(meta.begin, meta.end, meta.foreground,
                             meta.background, meta.comment);
     }

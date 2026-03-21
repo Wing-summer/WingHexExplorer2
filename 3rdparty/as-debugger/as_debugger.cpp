@@ -391,10 +391,10 @@ asIDBCache::ResolveExpression(std::string_view expr,
                 auto var = stack->scope.this_ptr.lock();
                 var->Expand();
 
-                for (auto &param : var->namedProps)
+                for (const auto &param : var->namedProps)
                     if (variable_name == param->identifier.name)
                         matches.push_back({param, param->identifier.name});
-                for (auto &param : var->indexedProps)
+                for (const auto &param : var->indexedProps)
                     if (variable_name == param->identifier.name)
                         matches.push_back({param, param->identifier.name});
             }
@@ -403,11 +403,11 @@ asIDBCache::ResolveExpression(std::string_view expr,
         // check globals
         CacheGlobals();
 
-        for (auto &global : globals->namedProps)
+        for (const auto &global : globals->namedProps)
             if (variable_name == global->identifier.name)
                 matches.push_back(
                     {global, global->identifier.name, global->identifier.ns});
-        for (auto &global : globals->indexedProps)
+        for (const auto &global : globals->indexedProps)
             if (variable_name == global->identifier.name)
                 matches.push_back(
                     {global, global->identifier.name, global->identifier.ns});
@@ -420,7 +420,7 @@ asIDBCache::ResolveExpression(std::string_view expr,
             return asIDBExpected(matches.empty() ? "can't find variable"
                                                  : "ambiguous variable name");
         else {
-            for (auto &match : matches) {
+            for (const auto &match : matches) {
                 if (variable_ns == match.ns) {
                     variable = match.var;
                     break;
@@ -467,7 +467,7 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
     if (eval_name[0] == '.')
         eval_name.remove_prefix(1);
 
-    for (auto &child : varp->namedProps) {
+    for (const auto &child : varp->namedProps) {
         if (child->identifier.name == eval_name)
             return ResolveSubExpression(child,
                                         eval_start == std::string_view::npos
@@ -475,7 +475,7 @@ asIDBCache::ResolveSubExpression(asIDBVariable::WeakPtr var,
                                             : rest.substr(eval_start));
     }
 
-    for (auto &child : varp->indexedProps) {
+    for (const auto &child : varp->indexedProps) {
         if (child->identifier.name == eval_name)
             return ResolveSubExpression(child,
                                         eval_start == std::string_view::npos
@@ -1266,7 +1266,7 @@ void asIDBFileWorkspace::CompileBreakpointPositions() {
                 debugger->_lastFunction = func;
             }
 
-            for (auto &bp : entries->second) {
+            for (const auto &bp : entries->second) {
                 if (row == bp.line) {
                     if (!bp.column.has_value() || bp.column.value() == col) {
                         break_from_bp = true;

@@ -24,10 +24,10 @@ AsIDBTreeModel::AsIDBTreeModel(QObject *parent) : QAbstractItemModel(parent) {}
 void AsIDBTreeModel::setRoot(const asIDBVariable::Ptr &r) {
     QVector<asIDBVariable::Ptr> roots;
     if (r) {
-        for (auto &item : r->namedProps) {
+        for (const auto &item : r->namedProps) {
             roots.append(item);
         }
-        for (auto &item : r->indexedProps) {
+        for (const auto &item : r->indexedProps) {
             roots.append(item);
         }
     }

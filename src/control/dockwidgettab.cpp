@@ -125,7 +125,7 @@ void createCloseExt(ads::CDockWidget *dockWidget, QMenu *menu,
     cmenu->addAction(DockWidgetTab::tr("Others"), parent, [dockWidget]() {
         auto app = AppManager::instance();
         LinkedList<T *> cviews;
-        for (auto &view : T::instances()) {
+        for (const auto &view : T::instances()) {
             if (view->isClosed()) {
                 continue;
             }

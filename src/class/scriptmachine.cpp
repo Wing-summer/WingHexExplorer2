@@ -309,7 +309,7 @@ void ScriptMachine::destoryMachine() {
         delete _debugger;
         delete _workspace;
 
-        for (auto &mgr : _ctxMgr) {
+        for (const auto &mgr : _ctxMgr) {
             if (mgr) {
                 mgr->AbortAll();
                 delete mgr;
@@ -743,7 +743,7 @@ bool ScriptMachine::executeScript(
     _engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, isDbg == 0);
 
     asBuilder builder(_engine);
-    for (auto &m : PluginSystem::instance().scriptMarcos()) {
+    for (const auto &m : PluginSystem::instance().scriptMarcos()) {
         builder.defineMacroWord(m);
     }
 
@@ -1767,7 +1767,7 @@ void ScriptMachine::executeCode(ConsoleMode mode, const QString &code,
     if (isDecl) {
         auto decls = visitor.declCode();
         if (!decls.isEmpty()) {
-            for (auto &s : visitor.declCode()) {
+            for (const auto &s : visitor.declCode()) {
                 auto r = mod->CompileGlobalVar(nullptr, s, 0);
                 if (r < 0) {
                     MessageInfo info;
