@@ -98,7 +98,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     }
 
     pico = ICONRES("plugindis");
-    auto blkplgs = plgsys.blockedPlugins();
+    const auto blkplgs = plgsys.blockedPlugins();
     for (const auto &meta : blkplgs) {
         auto lwi = new QListWidgetItem(pico, meta.id);
         auto flags = lwi->flags();
@@ -127,7 +127,7 @@ PluginSettingDialog::PluginSettingDialog(QWidget *parent)
     }
 
     pico = ICONRES("devextdis");
-    auto blkdevs = plgsys.blockedDevPlugins();
+    const auto blkdevs = plgsys.blockedDevPlugins();
     for (const auto &meta : blkdevs) {
         auto lwi = new QListWidgetItem(pico, meta.id);
         auto flags = lwi->flags();
@@ -304,7 +304,8 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
     widget->setSelectionMode(QListWidget::ExtendedSelection);
     widget->setContextMenuPolicy(Qt::ActionsContextMenu);
     widget->addAction(tr("SelectEnable"), widget, [widget]() {
-        for (const auto &item : widget->selectedItems()) {
+        const auto sels = widget->selectedItems();
+        for (const auto &item : sels) {
             auto flags = item->flags();
             if (flags.testFlag(Qt::ItemIsUserCheckable)) {
                 item->setCheckState(Qt::Checked);
@@ -312,7 +313,8 @@ void PluginSettingDialog::createPluginStandardMenu(QListWidget *widget) {
         }
     });
     widget->addAction(tr("SelectDisable"), widget, [widget]() {
-        for (const auto &item : widget->selectedItems()) {
+        const auto sels = widget->selectedItems();
+        for (const auto &item : sels) {
             auto flags = item->flags();
             if (flags.testFlag(Qt::ItemIsUserCheckable)) {
                 item->setCheckState(Qt::Unchecked);

@@ -135,7 +135,7 @@ void ConsoleCodeEdit::keyPressEvent(QKeyEvent *event) {
         syncUpdate();
 
         auto r = lsp.requestSignatureHelp(url, line, character);
-        auto sigs = r["signatures"].toArray();
+        const auto sigs = r["signatures"].toArray();
         QList<WingSignatureTooltip::Signature> ss;
         for (const auto &&sig : sigs) {
             QJsonValue js = sig;

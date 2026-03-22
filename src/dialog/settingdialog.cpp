@@ -104,7 +104,7 @@ SettingDialog::SettingDialog(const QIcon &icon, const QString &title,
         if (ret == QMessageBox::No) {
             return;
         }
-        for (const auto &p : m_pages) {
+        for (const auto &p : std::as_const(m_pages)) {
             p->restore();
         }
         toastTakeEffectReboot(nullptr);
@@ -127,7 +127,7 @@ void SettingDialog::addPage(WingHex::SettingPage *page) {
 }
 
 void SettingDialog::build() {
-    for (const auto &page : m_pages) {
+    for (const auto &page : std::as_const(m_pages)) {
         auto name = page->name();
         auto icon = page->categoryIcon();
         auto item = new QListWidgetItem(icon, name);

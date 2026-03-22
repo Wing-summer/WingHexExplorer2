@@ -78,7 +78,7 @@ EditorView::EditorView(QWidget *parent)
     hexLayout->addWidget(m_hex, 1);
     m_goto = new GotoWidget(this);
     connect(m_goto, &GotoWidget::jumpToLine, this,
-            [=](qsizetype pos, bool isline) {
+            [this](qsizetype pos, bool isline) {
                 auto cur = m_hex->cursor();
                 isline ? cur->moveTo(pos, 0) : cur->moveTo(pos);
             });
@@ -126,7 +126,7 @@ EditorView::EditorView(QWidget *parent)
               &EditorView::sigOnCheckSum);
     m_hex->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_hex, &QHexView::customContextMenuRequested, this,
-            [=](const QPoint &pos) { m_menu->popup(mapToGlobal(pos)); });
+            [this](const QPoint &pos) { m_menu->popup(mapToGlobal(pos)); });
 
     m_stack->setCurrentWidget(m_hexContainer);
 
@@ -176,7 +176,8 @@ EditorView::EditorView(QWidget *parent)
 
     // checksum table data
     _checkSumVisible.resize(CryptoAlgorithms::PreallocatedSize, true);
-    for (const auto &cs : CryptographicHash::supportedHashAlgorithms()) {
+    const auto as = CryptographicHash::supportedHashAlgorithms();
+    for (const auto &cs : as) {
         _checkSumData.insert(cs, QString());
     }
     _scrollPoints.assign(ScrollDataPoints::PreallocatedSize, QPoint{0, 0});
@@ -261,7 +262,7 @@ bool EditorView::isFindBusy() const {
 }
 
 void EditorView::getCheckSum(const QVector<int> &algorithmID) {
-    auto hashes = CryptographicHash::supportedHashAlgorithms();
+    const auto hashes = CryptographicHash::supportedHashAlgorithms();
     for (const auto &cs : hashes) {
         _checkSumData.insert(cs, QString());
     }
@@ -337,7 +338,7 @@ EditorView::FindError EditorView::find(const FindDialog::Result &result) {
         }
 
         auto lineWidth = m_hex->renderer()->hexLineWidth();
-        for (const auto &ritem : results) {
+        for (const auto &ritem : std::as_const(results)) {
             FindResultModel::FindResult r;
             r.offset = ritem;
             r.line = r.offset / lineWidth;
@@ -658,7 +659,7 @@ ErrFile EditorView::save(const QString &workSpaceName, const QString &path,
             return ErrFile::WorkSpaceUnSaved;
         }
         this->m_workSpaceName = workSpaceName;
-        for (const auto &item : m_others) {
+        for (const auto &item : std::as_const(m_others)) {
             if (item->hasUnsavedState()) {
                 item->setSaved();
             }
@@ -835,7 +836,7 @@ ErrFile EditorView::closeFile() {
         }
     }
 
-    for (const auto &c : m_cloneChildren) {
+    for (const auto &c : std::as_const(m_cloneChildren)) {
         if (c) {
             c->closeDockWidget();
         }
@@ -862,7 +863,7 @@ bool EditorView::isWingEditorViewEnabled(const QString &id) const {
 }
 
 bool EditorView::processWingEditorViewClosing() {
-    for (const auto &o : m_others) {
+    for (const auto &o : std::as_const(m_others)) {
         if (!o->onClosing()) {
             return false;
         }
@@ -871,7 +872,7 @@ bool EditorView::processWingEditorViewClosing() {
 }
 
 void EditorView::notifyOnWorkSpace(bool b) {
-    for (const auto &o : m_others) {
+    for (const auto &o : std::as_const(m_others)) {
         o->onWorkSpaceNotify(b);
     }
 }
@@ -907,7 +908,7 @@ void EditorView::generateIconBaseCache(const QIcon &baseIcon) {
         return;
     }
 
-    for (const auto &w : m_others) {
+    for (const auto &w : std::as_const(m_others)) {
         if (w) {
             m_iconCaches.insert(w, QIcon(new CompositeIconEngine(
                                        m_iconOrigin.value(w), baseIcon)));
@@ -937,7 +938,7 @@ bool EditorView::hasCloneChildren() const {
 }
 
 void EditorView::closeAllClonedChildren() {
-    for (const auto &c : m_cloneChildren) {
+    for (const auto &c : std::as_const(m_cloneChildren)) {
         if (c) {
             c->deleteDockWidget();
         }
@@ -1150,7 +1151,7 @@ void EditorView::applyWorkSpaceStyle(EditorView *view) {
     tab->setStyleSheet(QStringLiteral("QLabel {text-decoration: underline;}"));
 
     if (!view->isCloneFile()) {
-        for (const auto &c : view->m_cloneChildren) {
+        for (const auto &c : std::as_const(view->m_cloneChildren)) {
             if (c) {
                 applyWorkSpaceStyle(c);
             }
@@ -1163,7 +1164,7 @@ void EditorView::clearWorkSpaceStyle(EditorView *view) {
     tab->setStyleSheet({});
 
     if (!view->isCloneFile()) {
-        for (const auto &c : view->m_cloneChildren) {
+        for (const auto &c : std::as_const(view->m_cloneChildren)) {
             if (c) {
                 clearWorkSpaceStyle(c);
             }
@@ -2796,7 +2797,7 @@ EditorView *EditorView::clone() {
     }
 
     auto ev = new EditorView(this->parentWidget());
-    connect(ev, &EditorView::destroyed, this, [=] {
+    connect(ev, &EditorView::destroyed, this, [this, ev] {
         this->m_cloneChildren[this->m_cloneChildren.indexOf(ev)] = nullptr;
     });
 

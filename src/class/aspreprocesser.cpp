@@ -58,7 +58,7 @@ AsPreprocesser::AsPreprocesser(asIScriptEngine *engine) : engine(engine) {
         return QStringLiteral("\"%1\"").arg(finfo.fileName());
     });
 
-    for (const auto &m : *DEFAULT_MARCO) {
+    for (const auto &m : std::as_const(*DEFAULT_MARCO)) {
         defineMacroWord(m);
     }
 

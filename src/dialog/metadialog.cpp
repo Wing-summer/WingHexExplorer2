@@ -41,7 +41,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     iforeground->setEnabled(false);
     layout->addWidget(iforeground);
     connect(iforeground, &HueColorPickerSlider::colorChanged, this,
-            [=](QColor color) { _foreground = color.toRgb(); });
+            [this](QColor color) { _foreground = color.toRgb(); });
     _foreground = iforeground->color();
 
     layout->addSpacing(2);
@@ -56,7 +56,7 @@ MetaDialog::MetaDialog(QWidget *parent)
     ibackground->setEnabled(false);
     layout->addWidget(ibackground);
     connect(ibackground, &HueColorPickerSlider::colorChanged, this,
-            [=](QColor color) { _background = color.toRgb(); });
+            [this](QColor color) { _background = color.toRgb(); });
     _background = ibackground->color();
 
     layout->addSpacing(2);

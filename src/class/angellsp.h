@@ -40,17 +40,16 @@ public:
     virtual ~AngelLsp();
 
 public:
+    bool isActive() const;
+
     // Start/stop server (returns true if started)
     bool start();
 
-public slots:
     // convenience: synchronous shutdown
     void shutdownAndExit();
 
     bool restart();
     void restartWithGUI(QWidget *parent);
-
-    bool isActive() const;
 
 private:
     void stop();

@@ -202,7 +202,7 @@ void RecentFileManager::addRecentFile(const RecentInfo &info) {
                 a->setIcon(ICONRES(QStringLiteral("devext")));
             }
         }
-        connect(a, &QAction::triggered, this, [=] {
+        connect(a, &QAction::triggered, this, [this, a] {
             auto send = qobject_cast<QAction *>(sender());
             if (send) {
                 auto f = send->data().value<RecentInfo>();
@@ -253,7 +253,7 @@ void RecentFileManager::clearFile() {
                      tr("NoHistoryDel"));
         return;
     }
-    for (const auto &item : hitems) {
+    for (const auto &item : std::as_const(hitems)) {
         m_menu->removeAction(item);
         delete item;
     }

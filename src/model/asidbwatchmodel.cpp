@@ -152,7 +152,7 @@ void AsIDBWatchModel::refresh() {
         if (cache) {
             QVector<asIDBExpected<asIDBVariable::WeakPtr>> newResults;
             newResults.reserve(m_watchItems.size());
-            for (const auto &itemPtr : m_watchItems) {
+            for (const auto &itemPtr : std::as_const(m_watchItems)) {
                 newResults.append(
                     cache->ResolveExpression(itemPtr->expression, 0));
             }

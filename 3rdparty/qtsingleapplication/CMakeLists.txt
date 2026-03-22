@@ -14,14 +14,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Network)
 
 add_library(
     ${PROJECT_NAME} STATIC
-    src/qtlocalpeer.h
-    src/qtsingleapplication.h
-    src/qtsinglecoreapplication.h
-    src/qtlocalpeer.cpp
-    src/qtsingleapplication.cpp
-    src/qtsinglecoreapplication.cpp
-    src/qtlockedfile.h
-    src/qtlockedfile.cpp)
+    src/qtlocalpeer.h src/qtsingleapplication.h src/qtlocalpeer.cpp
+    src/qtsingleapplication.cpp src/qtlockedfile.h src/qtlockedfile.cpp)
 
 target_link_libraries(
     ${PROJECT_NAME}

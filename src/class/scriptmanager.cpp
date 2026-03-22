@@ -63,7 +63,8 @@ QStringList ScriptManager::getScriptFileNames(const QDir &dir) const {
         return {};
     }
     QStringList ret;
-    for (const auto &info : dir.entryInfoList({"*.as"}, QDir::Files)) {
+    const auto files = dir.entryInfoList({"*.as"}, QDir::Files);
+    for (const auto &info : files) {
         ret << info.absoluteFilePath();
     }
     return ret;
@@ -176,8 +177,9 @@ void ScriptManager::refreshUsrScriptsDbCats() {
     if (!scriptDir.exists()) {
         QDir().mkpath(m_usrScriptsPath);
     } else {
-        for (const auto &info :
-             scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const auto dirs =
+            scriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
             auto files = dir.entryList({"*.as"}, QDir::Files);
             m_usrScriptsDbCats << info.baseName();
@@ -194,8 +196,9 @@ void ScriptManager::refreshSysScriptsDbCats() {
 
     QDir sysScriptDir(m_sysScriptsPath);
     if (sysScriptDir.exists()) {
-        for (const auto &info :
-             sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const auto dirs =
+            sysScriptDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const auto &info : dirs) {
             QDir dir(info.absoluteFilePath());
             auto files = dir.entryList({"*.as"}, QDir::Files);
             m_sysScriptsDbCats << info.baseName();
@@ -275,7 +278,7 @@ ScriptManager::ensureDirMeta(const QFileInfo &info) {
         auto langName = LanguageManager::instance().defaultLocale().name();
         QSettings set(base.absoluteFilePath(QStringLiteral(".wingmtr")),
                       QSettings::IniFormat);
-        auto sections = set.childGroups();
+        const auto sections = set.childGroups();
         for (const auto &sec : sections) {
             set.beginGroup(sec);
             auto name = set.value(langName, sec).toString().trimmed();
@@ -319,7 +322,8 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
 
     auto hideCats = stm.sysHideCats();
     auto folder = ICONRES(QStringLiteral("scriptfolder"));
-    for (const auto &cat : sm.sysScriptsDbCats()) {
+    const auto sysdb = sm.sysScriptsDbCats();
+    for (const auto &cat : sysdb) {
         if (hideCats.contains(cat)) {
             continue;
         }
@@ -346,7 +350,8 @@ ScriptManager::buildUpScriptRunnerContext(RibbonButtonGroup *group,
 
     hideCats = stm.usrHideCats();
     folder = ICONRES(QStringLiteral("scriptfolderusr"));
-    for (const auto &cat : sm.usrScriptsDbCats()) {
+    const auto usrdb = sm.usrScriptsDbCats();
+    for (const auto &cat : usrdb) {
         if (hideCats.contains(cat)) {
             continue;
         }

@@ -164,7 +164,7 @@ void MetaDataModel::setDocument(QHexDocument *newDoc) {
     _doc = newDoc;
     if (_doc) {
         connect(_doc, &QHexDocument::metaDataChanged, this,
-                [=] { Q_EMIT this->layoutChanged(); });
+                [this] { Q_EMIT this->layoutChanged(); });
         connect(_doc, &QHexDocument::destroyed, this,
                 [this]() { _doc = nullptr; });
     }

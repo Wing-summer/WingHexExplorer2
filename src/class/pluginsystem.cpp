@@ -2253,13 +2253,13 @@ void PluginSystem::doneRegisterScriptObj() {
     api->setExcludeEvalIDs(excludeTypeId);
 
     auto ptr = api.data();
-    for (const auto &p : _loadedplgs) {
+    for (const auto &p : std::as_const(_loadedplgs)) {
         auto puid = getPUID(p);
         ptr->setCurrentPluginSession(puid.toUtf8());
         p->onRegisterScriptObj(ptr);
     }
 
-    for (const auto &p : _loadeddevs) {
+    for (const auto &p : std::as_const(_loadeddevs)) {
         auto puid = getPUID(p);
         ptr->setCurrentPluginSession(puid.toUtf8());
         p->onRegisterScriptObj(ptr);
@@ -2456,8 +2456,8 @@ QSet<int> PluginSystem::scriptHandles() const {
 }
 
 void PluginSystem::cleanScriptHandles(const QSet<int> &handles) {
-    auto diff = scriptHandles() - handles;
-    for (const auto &h : std::as_const(diff)) {
+    const auto diff = scriptHandles() - handles;
+    for (const auto &h : diff) {
         closeHandle(_angelplg, h);
     }
 }
@@ -2724,7 +2724,7 @@ void PluginSystem::cleanUpEditorViewHandle(EditorView *view) {
         auto v = m_viewBindings[view];
 
         // clean up
-        for (const auto &plg : v.linkedplg) {
+        for (const auto &plg : std::as_const(v.linkedplg)) {
             auto &handles = m_plgviewMap[plg];
             auto id = handles.currentFID;
             handles.contexts.removeIf(
@@ -2791,7 +2791,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                  params.at(1).canConvert<bool>());
         auto buffers = params.first().value<QByteArrayList>();
         auto isPreview = params.at(1).toBool();
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventSelectionChanged(buffers, isPreview);
         }
     } break;
@@ -2803,7 +2804,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         pos.column = cursor.column;
         pos.nibbleindex = cursor.nibbleindex;
         pos.lineWidth = cursor.lineWidth;
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventCursorPositionChanged(pos);
         }
     } break;
@@ -2811,7 +2813,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.at(0).toUrl();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Opened, fileType,
                                  fileName, -1, {});
         }
@@ -2822,7 +2825,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         auto oldFileName = params.at(1).toUrl();
         auto isExported = params.at(2).toBool();
         auto fileType = params.at(3).value<WingHex::IWingPlugin::FileType>();
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventPluginFile(isExported
                                      ? IWingPlugin::PluginFileEvent::Exported
                                      : IWingPlugin::PluginFileEvent::Saved,
@@ -2833,7 +2837,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto newFileName = params.at(0).toUrl();
         auto oldFileName = params.at(1).toUrl();
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Switched,
                                  IWingPlugin::FileType::Invalid, oldFileName,
                                  -1, newFileName);
@@ -2841,7 +2846,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
     } break;
     case WingHex::IWingPlugin::RegisteredEvent::AppReady: {
         Q_ASSERT(params.isEmpty());
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventReady();
         }
     } break;
@@ -2849,7 +2855,8 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
         Q_ASSERT(params.size() == 2);
         auto fileName = params.first().toString();
         auto fileType = params.at(1).value<WingHex::IWingPlugin::FileType>();
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->eventPluginFile(IWingPlugin::PluginFileEvent::Closed, fileType,
                                  fileName, -1, {});
         }
@@ -2886,8 +2893,9 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                                  fileType, fileName, id, {});
         }
     } break;
-    case WingHex::IWingPlugin::RegisteredEvent::AppClosing:
-        for (const auto &plg : _evplgs[event]) {
+    case WingHex::IWingPlugin::RegisteredEvent::AppClosing: {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             auto ret = plg->eventClosing();
             if (!ret) {
                 Logger::warning(tr("AppClosingCanceled:") + plg->pluginName() +
@@ -2896,14 +2904,15 @@ bool PluginSystem::dispatchEvent(IWingPlugin::RegisteredEvent event,
                 return ret;
             }
         }
-        break;
+    } break;
     case WingHex::IWingPlugin::RegisteredEvent::HexEditorViewPaint: {
         auto painter =
             reinterpret_cast<QPainter *>(params.at(0).value<quintptr>());
         auto w = reinterpret_cast<QWidget *>(params.at(1).value<quintptr>());
         auto palette = reinterpret_cast<HexEditorContext *>(
             params.at(2).value<quintptr>());
-        for (const auto &plg : _evplgs[event]) {
+        const auto &plgs = _evplgs[event];
+        for (const auto &plg : plgs) {
             plg->onPaintHexEditorView(painter, w, palette);
         }
     } break;
@@ -2976,7 +2985,7 @@ void PluginSystem::loadExtPlugin() {
                    QStringLiteral("plugin"));
     plugindir.setNameFilters({"*.wingplg"});
 
-    auto plgs = plugindir.entryInfoList();
+    const auto plgs = plugindir.entryInfoList();
     Logger::info(tr("FoundPluginCount") + QString::number(plgs.count()));
 
     if (!plgs.isEmpty()) {
@@ -2999,7 +3008,7 @@ void PluginSystem::loadExtPlugin() {
         QStringList lazyplgs;
         lazyplgs.swap(_lazyplgs);
 
-        for (const auto &item : lazyplgs) {
+        for (const auto &item : std::as_const(lazyplgs)) {
             auto r = loadPlugin<IWingPlugin>(QFileInfo(item), udir);
             if (r) {
                 errorplg.append(r.value());
@@ -3031,7 +3040,7 @@ void PluginSystem::loadDevicePlugin() {
                 QStringLiteral("devdrv"));
     devdir.setNameFilters({"*.wingdrv"});
 
-    auto plgs = devdir.entryInfoList();
+    const auto plgs = devdir.entryInfoList();
     Logger::info(tr("FoundDrvPluginCount") + QString::number(plgs.count()));
     if (!plgs.isEmpty()) {
         Logger::newLine();
@@ -3159,7 +3168,7 @@ QString PluginSystem::getPUID(IWingPluginBase *p) {
 }
 
 bool PluginSystem::isPluginLoaded(const WingDependency &d) {
-    for (const auto &info : _pinfos) {
+    for (const auto &info : std::as_const(_pinfos)) {
         if ((d.version.isNull() || info.version >= d.version) &&
             info.id == d.puid) {
             return true;
@@ -3169,7 +3178,7 @@ bool PluginSystem::isPluginLoaded(const WingDependency &d) {
 }
 
 bool PluginSystem::isPluginLoaded(const QString &id) {
-    for (const auto &info : _pinfos) {
+    for (const auto &info : std::as_const(_pinfos)) {
         if (info.id.compare(id, Qt::CaseInsensitive) == 0) {
             return true;
         }
@@ -3326,7 +3335,7 @@ void PluginSystem::loadPlugin(IWingDevice *p, PluginInfo &meta,
 }
 
 void PluginSystem::registerPluginDockWidgets(IWingPluginBase *p) {
-    auto dockWidgets = p->registeredDockWidgets();
+    const auto dockWidgets = p->registeredDockWidgets();
     if (!dockWidgets.isEmpty()) {
         for (const auto &info : dockWidgets) {
             auto widgetName = info.widgetName.trimmed();
@@ -3590,7 +3599,7 @@ void PluginSystem::destory() {
         qApp->exit(int(CrashCode::PluginSetting));
     }
 
-    for (const auto &item : _loadedplgs) {
+    for (const auto &item : std::as_const(_loadedplgs)) {
         auto set =
             std::make_unique<QSettings>(udir.absoluteFilePath(_pinfos[item].id),
                                         QSettings::Format::IniFormat);
@@ -3599,7 +3608,7 @@ void PluginSystem::destory() {
     }
     _loadedplgs.clear();
 
-    for (const auto &item : _loadeddevs) {
+    for (const auto &item : std::as_const(_loadeddevs)) {
         auto set =
             std::make_unique<QSettings>(udir.absoluteFilePath(_pinfos[item].id),
                                         QSettings::Format::IniFormat);

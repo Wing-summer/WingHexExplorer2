@@ -118,7 +118,7 @@ void AngelLsp::stop() {
     m_proc->blockSignals(true);
 
     // destroy timers for documents
-    for (const auto &t : m_docTimers) {
+    for (const auto &t : std::as_const(m_docTimers)) {
         if (t) {
             t->stop();
             t->deleteLater();

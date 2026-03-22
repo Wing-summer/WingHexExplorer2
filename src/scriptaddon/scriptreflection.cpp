@@ -103,7 +103,6 @@ public:
         }
 
         auto total = valueCount();
-        auto name = this->name();
         for (int i = 0; i < total; ++i) {
             asINT64 v = 0;
             auto name = type->GetEnumValueByIndex(i, &v);

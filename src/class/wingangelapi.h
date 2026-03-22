@@ -74,7 +74,7 @@ public:
 
     template <typename T>
     static void assignTmpBuffer(asQWORD &buffer, const T &v) {
-        static_assert(std::is_pod<T>());
+        static_assert(std::is_standard_layout<T>() && std::is_trivial<T>());
         static_assert(sizeof(T) <= sizeof(asQWORD));
         *reinterpret_cast<T *>(&buffer) = v;
     }
@@ -104,7 +104,7 @@ private:
 
     template <typename T>
     static T qvariantCastGetValue(void *buffer) {
-        static_assert(std::is_pod<T>());
+        static_assert(std::is_standard_layout<T>() && std::is_trivial<T>());
         static_assert(sizeof(T) <= sizeof(asQWORD));
         return *reinterpret_cast<T *>(buffer);
     }

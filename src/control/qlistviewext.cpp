@@ -20,7 +20,7 @@
 #include <QScrollBar>
 
 QListViewExt::QListViewExt(QWidget *parent) : QListView(parent) {
-    connect(verticalScrollBar(), &QScrollBar::rangeChanged, this, [=] {
+    connect(verticalScrollBar(), &QScrollBar::rangeChanged, this, [this] {
         auto model = this->model();
         if (model) {
             auto barv = model->property("barv").toInt();

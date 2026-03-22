@@ -358,7 +358,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
             } else {
                 // ok, then tokens should be devided by the space
                 exec.remove(0, 4);
-                auto vars = exec.split(' ', Qt::SkipEmptyParts);
+                const auto vars = exec.split(' ', Qt::SkipEmptyParts);
 
                 QList<asUINT> indices;
 
@@ -376,7 +376,7 @@ void ScriptingConsole::runConsoleCommand(const QString &code) {
                 std::sort(indices.begin(), indices.end(), std::greater<int>());
 
                 // ok, remove
-                for (const auto &i : indices) {
+                for (auto i : indices) {
                     mod->RemoveGlobalVar(i);
                 }
             }
@@ -461,7 +461,7 @@ void ScriptingConsole::keyPressEvent(QKeyEvent *e) {
             }
 
             auto r = lsp.requestSignatureHelp(url, line, character);
-            auto sigs = r["signatures"].toArray();
+            const auto sigs = r["signatures"].toArray();
             QList<WingSignatureTooltip::Signature> ss;
             for (const auto &&sig : sigs) {
                 QJsonValue js = sig;

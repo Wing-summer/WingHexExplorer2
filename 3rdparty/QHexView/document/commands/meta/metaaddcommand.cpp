@@ -42,9 +42,8 @@ inline QString constructText(const QHexMetadataItem &meta) {
 MetaAddCommand::MetaAddCommand(QHexMetadata *hexmeta,
                                const QHexMetadataItem &meta,
                                QUndoCommand *parent)
-    : MetaCommand(constructText(meta), hexmeta, meta, parent) {
-    _brokenMetas = m_hexmeta->mayBrokenMetaData(meta.begin, meta.end);
-}
+    : MetaCommand(constructText(meta), hexmeta, meta, parent),
+      _brokenMetas(m_hexmeta->mayBrokenMetaData(meta.begin, meta.end)) {}
 
 void MetaAddCommand::redo() {
     m_hexmeta->metadata(m_meta.begin, m_meta.end, m_meta.foreground,

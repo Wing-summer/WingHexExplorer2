@@ -40,7 +40,8 @@ QHexLineMetadata QHexMetadata::get(qsizetype line) const {
     }
 
     QHexLineMetadata ret;
-    for (const auto &item : m_linemeta[line]) {
+    const auto &lms = m_linemeta[line];
+    for (const auto &item : lms) {
         ret.append(item);
     }
 
@@ -180,7 +181,7 @@ bool QHexMetadata::removeMetadata(const QHexMetadataItem &item) {
 }
 
 void QHexMetadata::removeMetadata(qsizetype begin, qsizetype end) {
-    auto broken = mayBrokenMetaData(begin, end);
+    const auto broken = mayBrokenMetaData(begin, end);
     for (const auto &item : broken) {
         removeMetadata(item);
     }
@@ -234,8 +235,9 @@ QHexLineMetadata QHexMetadata::gets(qsizetype line) {
         return {};
     }
 
-    for (const auto &lms : m_linemeta[line]) {
-        ret.append(lms);
+    const auto &lms = m_linemeta[line];
+    for (const auto &l : lms) {
+        ret.append(l);
     }
 
     return ret;
@@ -247,7 +249,7 @@ QVector<QHexMetadata::MetaInfo> QHexMetadata::getRealMetaRange(qsizetype begin,
 
     QVector<MetaInfo> ret;
     MetaInfo g(begin, end);
-    for (const auto &meta : m_metadata) {
+    for (const auto &meta : std::as_const(m_metadata)) {
         if (!(end < meta.begin || begin > meta.end)) {
             auto m = MetaInfo(meta.begin, meta.end, meta.foreground,
                               meta.background, meta.comment);
@@ -267,7 +269,7 @@ void QHexMetadata::applyMetas(const QVector<QHexMetadataItem> &metas) {
     for (const auto &meta : metas) {
         m_metadata.mergeAdd(meta);
     }
-    for (const auto &meta : m_metadata) {
+    for (const auto &meta : std::as_const(m_metadata)) {
         addMetaLines(meta);
     }
     Q_EMIT metadataChanged();
@@ -331,7 +333,7 @@ void QHexMetadata::setLineWidth(quint8 width) {
         m_lineWidth = width;
 
         m_linemeta.clear();
-        for (const auto &item : m_metadata) {
+        for (const auto &item : std::as_const(m_metadata)) {
             addMetadata(item);
         }
 
@@ -355,7 +357,7 @@ void QHexMetadata::insertAdjust(qsizetype offset, qsizetype length) {
             }
         });
 
-    for (const auto &meta : m_metadata) {
+    for (const auto &meta : std::as_const(m_metadata)) {
         addMetaLines(meta);
     }
 
@@ -378,7 +380,7 @@ void QHexMetadata::insertAdjustRevert(qsizetype offset, qsizetype length) {
             }
         });
 
-    for (const auto &meta : m_metadata) {
+    for (const auto &meta : std::as_const(m_metadata)) {
         addMetaLines(meta);
     }
 
@@ -422,7 +424,7 @@ QVector<QHexMetadataItem> QHexMetadata::removeAdjust(qsizetype offset,
         m_metadata.erase(
             std::remove_if(m_metadata.begin(), m_metadata.end(), rmfn));
 
-        for (const auto &meta : m_metadata) {
+        for (const auto &meta : std::as_const(m_metadata)) {
             addMetaLines(meta);
         }
 
@@ -460,7 +462,7 @@ void QHexMetadata::removeAdjustRevert(const QVector<QHexMetadataItem> &metas,
             meta);
     }
 
-    for (const auto &meta : m_metadata) {
+    for (const auto &meta : std::as_const(m_metadata)) {
         addMetaLines(meta);
     }
 
@@ -537,7 +539,7 @@ QVector<QHexMetadataItem> QHexMetadata::mayBrokenMetaData(qsizetype begin,
 
 void QHexMetadata::addMetadata(const QHexMetadataItem &mi) {
     auto old = m_metadata;
-    auto r = m_metadata.mergeAdd(mi);
+    const auto r = m_metadata.mergeAdd(mi);
     for (const auto &idx : r.removed) {
         removeLineMetadata(old.at(idx));
     }

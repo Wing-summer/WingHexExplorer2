@@ -516,7 +516,8 @@ void MainWindow::buildUpDockSystem(QWidget *container) {
     connect(m_dock, &CDockManager::stateRestored, this, [this]() {
         // no allowing floating widgets
         QList<CDockWidget *> _dws;
-        for (const auto &dw : m_dock->dockWidgetsMap()) {
+        const auto map = m_dock->dockWidgetsMap();
+        for (const auto &dw : map) {
             if (dw->dockAreaWidget() == nullptr) {
                 _dws.append(dw);
             }
@@ -622,7 +623,8 @@ void MainWindow::finishBuildDockSystem() {
     }
 
     // set the first tab visible
-    for (const auto &item : m_dock->openedDockAreas()) {
+    const auto areas = m_dock->openedDockAreas();
+    for (const auto &item : areas) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
             updateUI();
             auto d = item->dockWidget(i);
@@ -692,7 +694,7 @@ MainWindow::buildUpFindResultDock(ads::CDockManager *dock,
     menu->setIcon(ICONRES(QStringLiteral("encoding")));
     auto aGroup = new QActionGroup(menu);
     aGroup->setParent(menu);
-    auto langs = Utilities::getEncodings();
+    const auto langs = Utilities::getEncodings();
     for (const auto &l : langs) {
         auto a = newCheckableAction(menu, l, [this, l]() {
             _findResultModel->setEncoding(l);
@@ -951,7 +953,7 @@ MainWindow::buildUpHexBookMarkDock(ads::CDockManager *dock,
         if (hexeditor == nullptr) {
             return;
         }
-        auto s = m_bookMark->selectionModel()->selectedRows();
+        const auto s = m_bookMark->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
 
         auto model = m_bookMark->model();
@@ -1052,7 +1054,7 @@ MainWindow::buildUpHexMetaDataDock(ads::CDockManager *dock,
         if (hexeditor == nullptr) {
             return;
         }
-        auto s = m_metadata->selectionModel()->selectedRows();
+        const auto s = m_metadata->selectionModel()->selectedRows();
         auto doc = hexeditor->document();
 
         const auto &mds = doc->metadata()->getAllMetadata();
@@ -1862,7 +1864,7 @@ void MainWindow::buildUpSettingDialog() {
     usedIDs.append(id);
     updateUI();
 
-    for (const auto &page : m_settingPages) {
+    for (const auto &page : std::as_const(m_settingPages)) {
         updateUI();
 
         auto name = page->name();
@@ -1986,7 +1988,7 @@ void MainWindow::installPluginEditorWidgets() {
             newCreatorList.append(wctor);
         }
 
-        for (const auto &item : names) {
+        for (const auto &item : std::as_const(names)) {
             menu->addAction(item.second);
         }
 
@@ -2432,7 +2434,7 @@ void MainWindow::on_checksum() {
         for (int i = 0; i < total; ++i) {
             header->hideSection(i);
         }
-        for (const auto &c : cs) {
+        for (const auto &c : std::as_const(cs)) {
             header->showSection(c);
         }
 
@@ -2991,7 +2993,8 @@ void MainWindow::on_delLayout() {
         auto menu = m_toolBtneditors[ToolButtonIndex::LAYOUT_ACTION]->menu();
         Q_ASSERT(menu);
         auto actions = menu->actions();
-        for (const auto &l : d.getResult()) {
+        const auto result = d.getResult();
+        for (const auto &l : result) {
             auto r = dir.remove(l + QStringLiteral(".wing-layout"));
             if (r) {
                 auto r = std::find_if(
@@ -3215,11 +3218,11 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
         }
     }
 
-    for (const auto &m : _scriptContexts) {
+    for (const auto &m : std::as_const(_scriptContexts)) {
         editor->registerQMenu(m);
     }
 
-    for (const auto &m : m_hexContextMenu) {
+    for (const auto &m : std::as_const(m_hexContextMenu)) {
         editor->registerQMenu(m);
     }
 
@@ -3297,7 +3300,7 @@ void MainWindow::registerEditorView(EditorView *editor, const QString &ws) {
 }
 
 void MainWindow::registerClonedEditorView(EditorView *editor) {
-    for (const auto &m : m_hexContextMenu) {
+    for (const auto &m : std::as_const(m_hexContextMenu)) {
         editor->registerQMenu(m);
     }
 
@@ -3394,7 +3397,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
 
     if (!m_curConnections.isEmpty()) {
-        for (const auto &c : m_curConnections) {
+        for (const auto &c : std::as_const(m_curConnections)) {
             disconnect(c);
         }
         m_curConnections.clear();
@@ -3483,7 +3486,8 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
         });
 
     auto menu = m_toolBtneditors[EDITOR_WINS]->menu();
-    for (const auto &a : menu->actions()) {
+    const auto as = menu->actions();
+    for (const auto &a : as) {
         auto id = a->property("__ID__").toString();
         if (id.isEmpty()) {
             continue;
@@ -3518,7 +3522,7 @@ void MainWindow::swapEditor(EditorView *old, EditorView *cur) {
     }
     _hashModel->updateCheckSumData(cur->checkSumResult());
 
-    for (const auto &menu : m_hexContextMenu) {
+    for (const auto &menu : std::as_const(m_hexContextMenu)) {
         menu->setProperty("__CONTEXT__", quintptr(cur->editorContext()));
     }
 
@@ -3862,7 +3866,7 @@ IWingPlugin::FileType MainWindow::getEditorViewFileType(EditorView *view) {
 void MainWindow::updateEditModeEnabled() {
     auto editor = currentEditor();
     auto b = (editor != nullptr);
-    for (const auto &item : m_editStateWidgets) {
+    for (const auto &item : std::as_const(m_editStateWidgets)) {
         item->setEnabled(b);
     }
     m_toolBtneditors[ToolButtonIndex::EDITOR_VIEWS]->setEnabled(b);
@@ -3876,7 +3880,7 @@ void MainWindow::updateEditModeEnabled() {
             doc->canUndo());
         updateWindowTitle(editor);
     } else {
-        for (const auto &menu : m_hexContextMenu) {
+        for (const auto &menu : std::as_const(m_hexContextMenu)) {
             menu->setProperty("__CONTEXT__", {});
         }
         _findResultModel->reset();

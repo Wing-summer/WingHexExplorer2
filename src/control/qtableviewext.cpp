@@ -20,7 +20,7 @@
 #include <QScrollBar>
 
 QTableViewExt::QTableViewExt(QWidget *parent) : QTableView(parent) {
-    connect(verticalScrollBar(), &QScrollBar::rangeChanged, this, [=] {
+    connect(verticalScrollBar(), &QScrollBar::rangeChanged, this, [this] {
         auto model = this->model();
         if (model) {
             auto barv = model->property("barv").toInt();

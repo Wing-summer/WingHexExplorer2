@@ -65,7 +65,7 @@ qsizetype QHexCursor::currentSelectionLength() const {
     }
 
     qsizetype len = 0;
-    auto res = QtConcurrent::blockingMappedReduced(
+    const auto res = QtConcurrent::blockingMappedReduced(
         m_sels, &QHexSelection::length,
         QOverload<
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

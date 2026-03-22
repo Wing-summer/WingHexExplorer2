@@ -56,7 +56,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
 
         values = jobj.value("metas");
         if (!values.isUndefined() && values.isArray()) {
-            auto metaitems = values.toArray();
+            const auto metaitems = values.toArray();
             for (const auto &&item : metaitems) {
                 auto linem = item.toObject();
                 auto begin = linem.value("begin");
@@ -97,7 +97,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
         }
         values = jobj.value("bookmarks");
         if (!values.isUndefined() && values.isArray()) {
-            auto array = values.toArray();
+            const auto array = values.toArray();
             for (const auto &&item : array) {
                 if (!item.isUndefined() && item.isObject()) {
                     auto sitem = item.toObject();
@@ -117,7 +117,7 @@ bool WorkSpaceManager::loadWorkSpace(const QString &filename, QUrl &file,
 
         values = jobj.value("plugindata");
         if (!values.isUndefined() && values.isArray()) {
-            auto array = values.toArray();
+            const auto array = values.toArray();
             for (const auto &&item : array) {
                 if (!item.isUndefined() && item.isObject()) {
                     auto sitem = item.toObject();

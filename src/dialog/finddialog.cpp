@@ -76,7 +76,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     auto b = new QPushButton(tr("None"), this);
     b->setCheckable(true);
-    connect(b, &QPushButton::toggled, this, [=](bool b) {
+    connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
             _result.dir = SearchDirection::None;
         }
@@ -90,7 +90,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     b = new QPushButton(tr("BeforeCursor"), this);
     b->setCheckable(true);
-    connect(b, &QPushButton::toggled, this, [=](bool b) {
+    connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
             _result.dir = SearchDirection::Foreword;
         }
@@ -100,7 +100,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
 
     b = new QPushButton(tr("AfterCursor"), this);
     b->setCheckable(true);
-    connect(b, &QPushButton::toggled, this, [=](bool b) {
+    connect(b, &QPushButton::toggled, this, [this](bool b) {
         if (b) {
             _result.dir = SearchDirection::Backword;
         }
@@ -111,7 +111,7 @@ FindDialog::FindDialog(const FindInfo &info, QWidget *parent)
     b = new QPushButton(tr("Selection"), this);
     b->setCheckable(true);
     if (info.isSel) {
-        connect(b, &QPushButton::toggled, this, [=](bool b) {
+        connect(b, &QPushButton::toggled, this, [this](bool b) {
             if (b) {
                 _result.dir = SearchDirection::Selection;
             }

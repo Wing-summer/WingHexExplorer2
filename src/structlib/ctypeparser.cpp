@@ -254,7 +254,7 @@ bool CTypeParser::parse(const QString &file) {
 #ifdef Q_OS_WINDOWS
     std::ifstream fs(file.toStdWString());
 #else
-    std::ifstream fs(std::filesystem::u8path(path.data()));
+    std::ifstream fs(std::filesystem::path(path.data()));
 #endif
 
     if (!fs.is_open()) {
@@ -1054,7 +1054,7 @@ void CTypeParser::dumpStructs(QTextStream &output) const {
                 output << var.var_name;
             }
 
-            for (const auto &dim : var.array_dims) {
+            for (const auto &dim : std::as_const(var.array_dims)) {
                 output << '[' << dim << ']';
             }
 
@@ -1116,7 +1116,7 @@ void CTypeParser::dumpUnions(QTextStream &output) const {
                 output << var.var_name;
             }
 
-            for (auto dim : var.array_dims) {
+            for (const auto &dim : std::as_const(var.array_dims)) {
                 output << '[' << dim << ']';
             }
             if (isCompleted) {
@@ -1143,7 +1143,7 @@ void CTypeParser::dumpEnums(QTextStream &output) const {
         output << QStringLiteral("enum ") << itv->first << ':' << Qt::endl;
 
         auto members = itv->second;
-        for (const auto &n : members) {
+        for (const auto &n : std::as_const(members)) {
             output << padding << n << '(';
             auto value = const_defs_.value(n);
             if (std::holds_alternative<quint64>(value)) {
@@ -1360,7 +1360,7 @@ CTypeParser::padStruct(QVector<VariableDeclaration> &members, int alignment) {
         // update element_count from array_dims if present (same as before) ...
         if (!member.array_dims.isEmpty()) {
             qint64 ec = 1;
-            for (qint64 d : member.array_dims) {
+            for (qint64 d : std::as_const(member.array_dims)) {
                 if (d == 0) {
                     ec = 0;
                     break;

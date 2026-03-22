@@ -747,7 +747,7 @@ void QHexRenderer::applyBookMark(QPainter *painter, QTextCursor &textcursor,
     auto pos = m_document->getLineBookmarksPos(line);
     auto height = lineHeight() - 2;
 
-    for (const auto &item : pos) {
+    for (const auto &item : std::as_const(pos)) {
         auto off = item % hexLineWidth();
 
         qreal begin, width;

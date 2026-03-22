@@ -219,12 +219,12 @@ QStringList StructParser::structOrUnionMemberNames(const QString &type) const {
     QStringList buffer;
     auto t = _parser->resolveTypeName(type);
     if (_parser->containsStruct(t)) {
-        auto r = _parser->structMembers(t);
+        const auto r = _parser->structMembers(t);
         for (const auto &m : r) {
             buffer.append(m.var_name);
         }
     } else if (_parser->containsUnion(t)) {
-        auto r = _parser->unionMembers(t);
+        const auto r = _parser->unionMembers(t);
         for (const auto &m : r) {
             buffer.append(m.var_name);
         }
@@ -238,12 +238,12 @@ StructParser::structOrUnionMemberDataTypes(const QString &type) const {
     QStringList buffer;
     auto t = _parser->resolveTypeName(type);
     if (_parser->containsStruct(t)) {
-        auto r = _parser->structMembers(t);
+        const auto r = _parser->structMembers(t);
         for (const auto &m : r) {
             buffer.append(m.data_type);
         }
     } else if (_parser->containsUnion(t)) {
-        auto r = _parser->unionMembers(t);
+        const auto r = _parser->unionMembers(t);
         for (const auto &m : r) {
             buffer.append(m.data_type);
         }
@@ -282,12 +282,12 @@ QStringList StructParser::structOrUnionMemberDecls(const QString &type) const {
     };
 
     if (_parser->containsStruct(t)) {
-        auto r = _parser->structMembers(t);
+        const auto r = _parser->structMembers(t);
         for (const auto &m : r) {
             buffer.append(op(m));
         }
     } else if (_parser->containsUnion(t)) {
-        auto r = _parser->unionMembers(t);
+        const auto r = _parser->unionMembers(t);
         for (const auto &m : r) {
             buffer.append(op(m));
         }
@@ -322,12 +322,12 @@ StructParser::structOrUnionMemberDeclWithoutNames(const QString &type) const {
     };
 
     if (_parser->containsStruct(t)) {
-        auto r = _parser->structMembers(t);
+        const auto r = _parser->structMembers(t);
         for (const auto &m : r) {
             buffer.append(op(m));
         }
     } else if (_parser->containsUnion(t)) {
-        auto r = _parser->unionMembers(t);
+        const auto r = _parser->unionMembers(t);
         for (const auto &m : r) {
             buffer.append(op(m));
         }
@@ -543,7 +543,7 @@ QVariantHash StructParser::readStruct(const char *ptr, const char *end,
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
-    auto struc = _parser->structMembers(type);
+    const auto struc = _parser->structMembers(type);
     QVariantHash content;
     // then slice and parse
     for (const auto &m : struc) {
@@ -579,7 +579,7 @@ StructParser::readStructMembers(const char *ptr, const char *end,
     if (!_parser->isCompletedStruct(type)) {
         return {};
     }
-    auto struc = _parser->structMembers(type);
+    const auto struc = _parser->structMembers(type);
 
     QSet<QString> mems;
     for (uint i = 0; i < total; ++i) {
@@ -671,7 +671,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
                         QVariantList rlist;
                         bool ok;
                         auto var = data.toLongLong(&ok);
-                        auto evs = _parser->enumMembers(m.fmt_type);
+                        const auto evs = _parser->enumMembers(m.fmt_type);
                         for (const auto &e : evs) {
                             auto ev = _parser->constVarValue(e);
                             if (std::holds_alternative<qint64>(ev)) {
@@ -691,8 +691,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
 
                         if (!ok) {
                             auto var = data.toULongLong();
-
-                            auto evs = _parser->enumMembers(m.fmt_type);
+                            const auto evs = _parser->enumMembers(m.fmt_type);
 
                             for (const auto &e : evs) {
                                 auto ev = _parser->constVarValue(e);
@@ -724,7 +723,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
                         CEnumValue rlist;
                         bool ok;
                         auto var = data.toLongLong(&ok);
-                        auto evs = _parser->enumMembers(m.fmt_type);
+                        const auto evs = _parser->enumMembers(m.fmt_type);
 
                         for (const auto &e : evs) {
                             auto ev = _parser->constVarValue(e);
@@ -746,7 +745,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
                         }
                         if (!ok) {
                             auto var = data.toULongLong();
-                            auto evs = _parser->enumMembers(m.fmt_type);
+                            const auto evs = _parser->enumMembers(m.fmt_type);
 
                             for (const auto &e : evs) {
                                 auto ev = _parser->constVarValue(e);
@@ -793,7 +792,7 @@ QVariant StructParser::readContent(const char *ptr, const char *end,
             auto size_v = size.value();
             auto ptrend = ptr + size_v;
             if (ptrend <= end) {
-                auto ms = _parser->unionMembers(dt);
+                const auto ms = _parser->unionMembers(dt);
                 QVariantHash ret;
                 for (const auto &m : ms) {
                     auto r = readContent(ptr, ptrend, m, efmtInVariantList,

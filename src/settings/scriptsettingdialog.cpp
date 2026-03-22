@@ -130,7 +130,7 @@ void ScriptSettingDialog::loadData() {
 
     if (set.scriptEnabled()) {
         auto &sm = ScriptManager::instance();
-        auto usrCats = sm.usrScriptsDbCats();
+        const auto usrCats = sm.usrScriptsDbCats();
         auto hidden = set.usrHideCats();
 
         QStringList buffer;
@@ -143,7 +143,7 @@ void ScriptSettingDialog::loadData() {
         m_usrHideCats.setContents(buffer);
 
         buffer.clear();
-        auto sysCats = sm.sysScriptsDbCats();
+        const auto sysCats = sm.sysScriptsDbCats();
         hidden = set.sysHideCats();
         for (const auto &cat : sysCats) {
             if (addCatagory(sm.sysDirMeta(cat), false, hidden.contains(cat))) {
@@ -181,12 +181,14 @@ void ScriptSettingDialog::createPluginStandardMenu() {
     widget->setSelectionMode(QListWidget::ExtendedSelection);
     widget->setContextMenuPolicy(Qt::ActionsContextMenu);
     widget->addAction(tr("SelectShow"), widget, [widget]() {
-        for (const auto &item : widget->selectedItems()) {
+        const auto sels = widget->selectedItems();
+        for (const auto &item : sels) {
             item->setCheckState(Qt::Checked);
         }
     });
     widget->addAction(tr("SelectHide"), widget, [widget]() {
-        for (const auto &item : widget->selectedItems()) {
+        const auto sels = widget->selectedItems();
+        for (const auto &item : sels) {
             item->setCheckState(Qt::Unchecked);
         }
     });

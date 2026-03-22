@@ -231,7 +231,7 @@ EncodingPopup::EncodingPopup(QWidget *parent) : FilteredTreePopup(parent) {
 
     auto encodings = Utilities::getEncodings();
 
-    for (const auto &e : encodings) {
+    for (const auto &e : std::as_const(encodings)) {
         auto item = new QTreeWidgetItem(tree(), QStringList{e});
         item->setData(0, Qt::UserRole, e);
     }

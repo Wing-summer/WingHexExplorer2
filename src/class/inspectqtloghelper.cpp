@@ -24,7 +24,7 @@ void InspectQtLogHelper::init() {
     _ctx->setOpenExternalLinks(true);
 
     auto menu = _ctx->createStandardContextMenu();
-    auto ma = menu->actions();
+    const auto ma = menu->actions();
 
     menu->addSeparator();
     auto a = new QAction(tr("Clear"), menu);

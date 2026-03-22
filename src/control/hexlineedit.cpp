@@ -154,7 +154,7 @@ void HexLineEdit::contextMenuEvent(QContextMenuEvent *event) {
     QMenu *menu = createStandardContextMenu();
 
     if (m_mode == HexMode) {
-        QList<QAction *> actions = menu->actions();
+        const QList<QAction *> actions = menu->actions();
         for (const auto &action : actions) {
             menu->removeAction(action);
             delete action;

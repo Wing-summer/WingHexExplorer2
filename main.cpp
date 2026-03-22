@@ -38,11 +38,12 @@ void loadEnvConfig(int argc, char *argv[]) {
     QSettings set(path, QSettings::IniFormat);
 
     // General
-    for (const auto &kv : set.childKeys()) {
+    const auto keys = set.childKeys();
+    for (const auto &kv : keys) {
         qputenv(qPrintable(kv), set.value(kv).toByteArray());
     }
 
-    auto groups = set.childGroups();
+    const auto groups = set.childGroups();
     auto evaluate = [](const QProcessEnvironment &env,
                        const QString &statement) {
         // Parse and evaluate statements:
@@ -113,7 +114,8 @@ void loadEnvConfig(int argc, char *argv[]) {
     constexpr auto syslen = std::char_traits<char>::length(WING_SYSTEM_NAME);
     if (syslen) {
         set.beginGroup(WING_SYSTEM_NAME);
-        for (const auto &kv : set.childKeys()) {
+        const auto keys = set.childKeys();
+        for (const auto &kv : keys) {
             qputenv(qPrintable(kv), set.value(kv).toByteArray());
         }
         set.endGroup();
@@ -122,7 +124,8 @@ void loadEnvConfig(int argc, char *argv[]) {
     for (const auto &g : groups) {
         if (evaluate(env, g)) {
             set.beginGroup(g);
-            for (const auto &kv : set.childKeys()) {
+            const auto keys = set.childKeys();
+            for (const auto &kv : keys) {
                 qputenv(qPrintable(kv), set.value(kv).toByteArray());
             }
             set.endGroup();

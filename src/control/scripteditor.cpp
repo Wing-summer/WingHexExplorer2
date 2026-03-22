@@ -309,7 +309,8 @@ bool ScriptEditor::formatCode() {
         return block.position() + qMin(loc.character, block.length() - 1);
     };
 
-    for (const auto &&vj : r.toArray()) {
+    const auto mods = r.toArray();
+    for (const auto &&vj : mods) {
         QJsonValue v = vj;
         auto range = AngelLsp::readLSPDocRange(v.toObject());
         TextEdit edit;
@@ -360,7 +361,7 @@ bool ScriptEditor::eventFilter(QObject *watched, QEvent *event) {
                 auto r = lsp.requestSignatureHelp(url, line, character);
                 auto sigs = r["signatures"].toArray();
                 QList<WingSignatureTooltip::Signature> ss;
-                for (const auto &&sig : sigs) {
+                for (const auto &&sig : std::as_const(sigs)) {
                     QJsonValue js = sig;
                     WingSignatureTooltip::Signature s;
                     s.label = js["label"].toString();

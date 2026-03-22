@@ -308,7 +308,7 @@ bool ScriptingDialog::about2Close() {
         }
     }
 
-    for (const auto &view : need2CloseView) {
+    for (const auto &view : std::as_const(need2CloseView)) {
         view->requestCloseDockWidget();
     }
 
@@ -910,7 +910,7 @@ void ScriptingDialog::buildUpDockSystem(QWidget *container) {
     buildSymbolShowDock(m_dock, ads::CenterDockWidgetArea, rightArea);
 
     // set the first tab visible
-    for (const auto &item : m_dock->openedDockAreas()) {
+    for (auto item : m_dock->openedDockAreas()) {
         for (int i = 0; i < item->dockWidgetsCount(); ++i) {
             updateUI();
             auto d = item->dockWidget(i);
@@ -1034,7 +1034,7 @@ void ScriptingDialog::updateEditModeEnabled() {
     auto editor = currentEditor();
     auto b = (editor != nullptr);
 
-    for (const auto &item : m_editStateWidgets) {
+    for (const auto &item : std::as_const(m_editStateWidgets)) {
         item->setEnabled(b);
     }
 
@@ -1065,7 +1065,7 @@ void ScriptingDialog::swapEditor(ScriptEditor *old, ScriptEditor *cur) {
     }
 
     if (!m_curConnections.isEmpty()) {
-        for (const auto &c : m_curConnections) {
+        for (const auto &c : std::as_const(m_curConnections)) {
             disconnect(c);
         }
         m_curConnections.clear();
@@ -1314,7 +1314,7 @@ void ScriptingDialog::startDebugScript(const QString &fileName) {
             PluginSystem::instance().scriptPragmaBegin();
         },
         [this, fileName]() {
-            for (const auto &e : _reditors) {
+            for (const auto &e : std::as_const(_reditors)) {
                 e->setReadOnly(false);
             }
 

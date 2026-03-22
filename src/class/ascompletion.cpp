@@ -231,7 +231,7 @@ void AsCompletion::onActivatedCodeComplete(const QModelIndex &index) {
 
         auto url = editor->lspFileNameURL();
         auto r = lsp.requestSignatureHelp(url, line, character);
-        auto sigs = r["signatures"].toArray();
+        const auto sigs = r["signatures"].toArray();
 
         QList<WingSignatureTooltip::Signature> ss;
         for (const auto &&sig : sigs) {
